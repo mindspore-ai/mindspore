@@ -225,6 +225,7 @@ class ModelImpl {
   bool IsEnableModelSharing(const std::pair<const void *, size_t> &model_buff);
 
   Status UpdateSharingWorkspaceConfig(const void *model_buff, size_t model_size, const std::string &model_path);
+  void UpdateProvider();
 
   friend class Model;
   friend class Serialization;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,15 @@ bool GeDynamicUtils::IsDynamicInputShapes(const std::vector<ShapeVector> &input_
   });
 }
 
-std::vector<ShapeVector> GeDynamicUtils::GetGraphInputShapes(const std::shared_ptr<mindspore::Context> &context,
-                                                             const ConfigInfos &config_infos) {
+bool GeDynamicUtils::IsDynamicInputShapes(const std::vector<std::pair<std::string, ShapeVector>> &input_shapes) {
+  return std::any_of(input_shapes.begin(), input_shapes.end(), [](const auto &item) {
+    auto &shape = item.second;
+    return std::any_of(shape.begin(), shape.end(), [](auto dim) { return dim < 0; });
+  });
+}
+
+std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphInputShapes(
+  const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos, std::string *input_shape_ptr) {
   // get input shape from AscendDeviceInfo
   auto ascend_info = GeUtils::GetAscendDeviceInfo(context);
   if (ascend_info == nullptr) {
@@ -60,7 +67,7 @@ std::vector<ShapeVector> GeDynamicUtils::GetGraphInputShapes(const std::shared_p
   }
   if (!input_shape_str.empty()) {
     auto input_shape_strs = lite::StrSplit(input_shape_str, ";");
-    std::vector<ShapeVector> input_shapes;
+    std::vector<std::pair<std::string, ShapeVector>> input_shapes;
     for (auto &shape_item_str : input_shape_strs) {
       auto split_pos = shape_item_str.rfind(":");
       if (split_pos == std::string::npos) {
@@ -75,7 +82,10 @@ std::vector<ShapeVector> GeDynamicUtils::GetGraphInputShapes(const std::shared_p
         MS_LOG(ERROR) << "Invalid input shape dims: " << shape_str << ", input_shape: " << input_shape_str;
         return {};
       }
-      input_shapes.push_back(shape);
+      input_shapes.push_back(std::make_pair(name, shape));
+    }
+    if (input_shape_ptr != nullptr) {
+      *input_shape_ptr = input_shape_str;
     }
     return input_shapes;
   }
@@ -241,7 +251,8 @@ std::vector<std::vector<int64_t>> GeDynamicUtils::GetDynamicDims(const std::shar
 
 static bool CheckDynamicDims(const std::vector<int64_t> &dynamic_batch_size,
                              const std::vector<std::vector<int64_t>> &dynamic_image_size,
-                             const std::vector<std::vector<int64_t>> &dynamic_dims) {
+                             const std::vector<std::vector<int64_t>> &dynamic_dims,
+                             const std::string &input_shape_str) {
   if (!dynamic_dims.empty()) {
     if (!dynamic_image_size.empty() || !dynamic_batch_size.empty()) {
       MS_LOG(ERROR) << "Option dynamic_dims, dynamic_image_size and dynamic_batch_size cannot exist simultaneously.";
@@ -252,13 +263,22 @@ static bool CheckDynamicDims(const std::vector<int64_t> &dynamic_batch_size,
       MS_LOG(ERROR) << "Option dynamic_dims, dynamic_image_size and dynamic_batch_size cannot exist simultaneously.";
       return false;
     }
+  } else if (dynamic_batch_size.empty()) {
+    MS_LOG(ERROR) << "Cannot find dynamic_dims, dynamic_batch_size or dynamic_image_size in AscendDeviceInfo or "
+                     "config file while there are dynamic dims in input shapes "
+                  << input_shape_str;
+    return false;
   }
   return true;
 }
 
-std::vector<ShapeVector> GeDynamicUtils::GetGraphOneRealShapes(const std::shared_ptr<mindspore::Context> &context,
-                                                               const ConfigInfos &config_infos) {
-  auto input_shapes = GetGraphInputShapes(context, config_infos);
+std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphOneRealShapes(
+  const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos, std::string *input_shape_ptr) {
+  std::string input_shape_str;
+  auto input_shapes = GetGraphInputShapes(context, config_infos, &input_shape_str);
+  if (input_shape_ptr != nullptr) {
+    *input_shape_ptr = input_shape_str;
+  }
   if (input_shapes.empty()) {
     MS_LOG(INFO) << "Not found input shape in AscendDeviceInfo or config file";
     return {};
@@ -271,18 +291,18 @@ std::vector<ShapeVector> GeDynamicUtils::GetGraphOneRealShapes(const std::shared
   auto dynamic_batch_size = GetDynamicBatchSize(context, config_infos);
   auto dynamic_image_size = GetDynamicImageSize(context, config_infos);
   auto dynamic_dims = GetDynamicDims(context, config_infos);
-  if (!CheckDynamicDims(dynamic_batch_size, dynamic_image_size, dynamic_dims)) {
+  if (!CheckDynamicDims(dynamic_batch_size, dynamic_image_size, dynamic_dims, input_shape_str)) {
     return {};
   }
   if (!dynamic_dims.empty()) {
     size_t dyn_count = 0;
     for (auto &input_shape : input_shapes) {
-      for (auto &dim : input_shape) {
+      for (auto &dim : input_shape.second) {
         if (dim == -1) {
           if (dyn_count >= dynamic_dims[0].size()) {
             MS_LOG(ERROR) << "Invalid dynamic_dims " << dynamic_dims
                           << " while dynamic dims in input_shape is more than " << (dyn_count + 1)
-                          << ", input shape: " << input_shapes;
+                          << ", input shape: " << input_shape_str;
             return {};
           }
           dim = dynamic_dims[0][dyn_count];
@@ -293,12 +313,12 @@ std::vector<ShapeVector> GeDynamicUtils::GetGraphOneRealShapes(const std::shared
   } else if (!dynamic_image_size.empty()) {
     for (auto &input_shape : input_shapes) {
       size_t dyn_count = 0;
-      for (auto &dim : input_shape) {
+      for (auto &dim : input_shape.second) {
         if (dim == -1) {
           if (dyn_count >= dynamic_image_size[0].size()) {
             MS_LOG(ERROR) << "Invalid dynamic_image_size " << dynamic_image_size
                           << " while dynamic dims in input_shape is more than " << (dyn_count + 1)
-                          << ", input shape: " << input_shapes;
+                          << ", input shape: " << input_shape_str;
             return {};
           }
           dim = dynamic_image_size[0][dyn_count];
@@ -306,15 +326,15 @@ std::vector<ShapeVector> GeDynamicUtils::GetGraphOneRealShapes(const std::shared
         }
       }
     }
-  } else if (!dynamic_batch_size.empty()) {
+  } else {  // dynamic_batch_size
     for (auto &input_shape : input_shapes) {
       size_t dyn_count = 0;
-      for (auto &dim : input_shape) {
+      for (auto &dim : input_shape.second) {
         if (dim == -1) {
           if (dyn_count >= 1) {
             MS_LOG(ERROR) << "Invalid dynamic_batch_size " << dynamic_batch_size
                           << " while dynamic dims in input_shape is more than " << (dyn_count + 1)
-                          << ", input shape: " << input_shapes;
+                          << ", input shape: " << input_shape_str;
             return {};
           }
           dim = dynamic_batch_size[0];
@@ -322,10 +342,6 @@ std::vector<ShapeVector> GeDynamicUtils::GetGraphOneRealShapes(const std::shared
         }
       }
     }
-  } else {
-    MS_LOG(ERROR) << "Cannot find dynamic_dims, dynamic_batch_size or dynamic_image_size in AscendDeviceInfo or "
-                     "config file while there are dynamic dims in input shapes "
-                  << input_shapes;
   }
   return input_shapes;
 }

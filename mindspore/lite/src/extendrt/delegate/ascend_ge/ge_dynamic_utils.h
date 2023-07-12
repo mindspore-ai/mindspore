@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <map>
+#include <utility>
 #include "include/api/context.h"
 #include "include/model.h"
 #include "include/transform/graph_ir/types.h"
@@ -28,10 +30,11 @@ namespace mindspore {
 class GeDynamicUtils {
  public:
   static bool IsDynamicInputShapes(const std::vector<ShapeVector> &input_shapes);
-  static std::vector<ShapeVector> GetGraphInputShapes(const std::shared_ptr<mindspore::Context> &context,
-                                                      const ConfigInfos &config_infos);
-  static std::vector<ShapeVector> GetGraphOneRealShapes(const std::shared_ptr<mindspore::Context> &context,
-                                                        const ConfigInfos &config_infos);
+  static bool IsDynamicInputShapes(const std::vector<std::pair<std::string, ShapeVector>> &input_shapes);
+  static std::vector<std::pair<std::string, ShapeVector>> GetGraphInputShapes(
+    const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos, std::string *input_shape);
+  static std::vector<std::pair<std::string, ShapeVector>> GetGraphOneRealShapes(
+    const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos, std::string *input_shape);
   static std::vector<int64_t> GetDynamicBatchSize(const std::shared_ptr<mindspore::Context> &context,
                                                   const ConfigInfos &config_infos);
   static std::vector<std::vector<int64_t>> GetDynamicImageSize(const std::shared_ptr<mindspore::Context> &context,

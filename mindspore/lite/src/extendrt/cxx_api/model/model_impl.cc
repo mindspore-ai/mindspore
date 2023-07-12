@@ -55,7 +55,6 @@ const char *const kDataFlowGraphName = "data_flow_graph";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 std::shared_mutex g_model_converter_lock;
-constexpr auto kAscendProviderGe = "ge";
 std::mutex g_load_mindir_lock;
 
 FuncGraphPtr CreateFuncGraphFromDataFlow(const void *model_data, size_t data_size) {
@@ -325,6 +324,20 @@ Status ModelImpl::UpdateSharingWorkspaceConfig(const void *model_buff, size_t mo
   return kSuccess;
 }
 
+void ModelImpl::UpdateProvider() {
+  if (context_ == nullptr) {
+    return;
+  }
+  auto provider = GetConfig(lite::kAscendContextSection, lite::kProvider);
+  if (!provider.empty()) {
+    for (auto &device_info : context_->MutableDeviceInfo()) {
+      if (device_info && device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider().empty()) {
+        device_info->SetProvider(provider);
+      }
+    }
+  }
+}
+
 Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -342,6 +355,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Invalid thread num " << thread_num;
     return kLiteError;
   }
+  UpdateProvider();
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Create session failed.";
@@ -409,6 +423,7 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
     MS_LOG(ERROR) << "Invalid thread num " << thread_num;
     return kLiteError;
   }
+  UpdateProvider();
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Create session failed.";
