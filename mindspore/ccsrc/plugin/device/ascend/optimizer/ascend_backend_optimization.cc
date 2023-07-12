@@ -405,6 +405,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
   ir_fusion_pm->AddPass(std::make_shared<AddStatusInputForRandomOperator>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropInputDilationFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
@@ -475,6 +477,8 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
   ir_fusion_pm->AddPass(std::make_shared<AddStatusInputForRandomOperator>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropInputDilationFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropFilterMul>());
@@ -598,6 +602,8 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
   opt_acl_pm->AddPass(std::make_shared<opt::GetNextForGE>());
+  opt_acl_pm->AddPass(std::make_shared<SyncBnSplit>());
+  opt_acl_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -883,8 +889,6 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   unify_mindir_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
   unify_mindir_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
   unify_mindir_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
-  unify_mindir_pm->AddPass(std::make_shared<SyncBnSplit>());
-  unify_mindir_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   unify_mindir_pm->AddPass(std::make_shared<opt::TensorShapeForGE>());
   unify_mindir_pm->AddPass(std::make_shared<TensorScatterAddFission>());
   unify_mindir_pm->AddPass(std::make_shared<TensorScatterSubFission>());
