@@ -1134,7 +1134,7 @@ class GatherV2(PrimitiveWithCheck):
         validator.check_int_range(axis_v, -rank, rank, validator.INC_LEFT, "axis", self.name)
 
 
-class SparseGatherV2(PrimitiveWithCheck):
+class SparseGatherV2(Primitive):
     """
     Returns a slice of input tensor based on the specified indices and axis.
 
@@ -1171,15 +1171,6 @@ class SparseGatherV2(PrimitiveWithCheck):
         """Initialize SparseGatherV2"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
         self.add_prim_attr('bprop_return_sparse', True)
-
-    def __check__(self, params, indices, axis):
-        validator.check_subclass("params", params['dtype'], mstype.tensor_type, self.name)
-        validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
-        validator.check_subclass("axis", axis['dtype'], [mstype.number], self.name)
-        axis_v = axis['value']
-        validator.check_value_type('axis', axis_v, [int], self.name)
-        rank = len(params['shape'])
-        validator.check_int_range(axis_v, -rank, rank, validator.INC_LEFT, "axis", self.name)
 
 
 class Padding(Primitive):
