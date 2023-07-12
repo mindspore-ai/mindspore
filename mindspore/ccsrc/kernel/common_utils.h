@@ -268,6 +268,14 @@ namespace math {
 BACKEND_EXPORT void SinCosf(float x, float *sinv, float *cosv);
 }
 
+inline void GetRawAddress(const std::vector<AddressPtr> &addrs, std::vector<void *> *raw_addrs) {
+  (void)std::transform(std::begin(addrs), std::end(addrs), std::back_inserter(*raw_addrs),
+                       [](const AddressPtr &address) -> void * {
+                         MS_EXCEPTION_IF_NULL(address);
+                         return address->addr;
+                       });
+}
+
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
   do {                                                                                                 \
     if ((actual_inputs_num) != (expect_inputs_num)) {                                                  \
