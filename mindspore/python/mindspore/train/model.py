@@ -234,6 +234,7 @@ class Model:
         self.need_load_ckpt = False
         self._lite_predictor = None
         self._mindspore_lite = None
+        self._lite_infer = True  # if backend lite infer fails, set False
 
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
@@ -1563,15 +1564,18 @@ class Model:
         """
         if backend not in ['lite', None]:
             raise ValueError(f"For Model.predict, `backend` should be 'lite' or None, but got {backend}")
-        if backend == "lite":
+        if backend == "lite" and self._lite_infer:
             # pylint: disable=broad-except
             try:
                 return self._predict_lite(*predict_data)
             except RuntimeError:
+                self._lite_infer = False
                 logger.warning("Lite inference failed, fallback to original inference!")
             except ImportError:
+                self._lite_infer = False
                 logger.warning("Import mindspore_lite failed, fallback to original inference!")
             except BaseException as e:
+                self._lite_infer = False
                 logger.warning(f"Lite inference failed, {e.__str__()}, fallback to original inference!")
 
         self._check_network_mode(self._predict_network, False)
