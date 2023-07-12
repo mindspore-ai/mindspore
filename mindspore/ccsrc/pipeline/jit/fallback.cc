@@ -374,6 +374,27 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVa
   return nullptr;
 }
 
+bool GetJitAnnotationSideEffectFromComment(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
+  const auto &location = debug_info->location();
+  if (location == nullptr) {
+    MS_LOG(DEBUG) << "Location info is null, node: " << node->DebugString();
+    return false;
+  }
+  const auto &comments = location->comments();
+  if (comments.empty()) {
+    return false;
+  }
+  // Only use the last comment.
+  const auto &comment = comments.back();
+  std::regex regex("^#\\s*@jit.typing:\\s*side_effect");
+  if (std::regex_match(comment, regex)) {
+    return true;
+  }
+  return false;
+}
+
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) {
   std::stringstream script_buffer;
   script_buffer << kPyExecPrefix << std::to_string(index);

@@ -126,6 +126,12 @@ bool IsSideEffectCNode(const AnfNodePtr &node) {
       MS_LOG(DEBUG) << "Side Effect Primitive CNode: " << node->DebugString();
       return true;
     }
+  } else if (node->isa<CNode>()) {
+    // Call side effect node.
+    auto first_node = node->cast<CNodePtr>()->input(0);
+    if (first_node->isa<CNode>() && IsSideEffectCNode(first_node)) {
+      return true;
+    }
   }
   return false;
 }
