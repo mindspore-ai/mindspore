@@ -1055,7 +1055,7 @@ BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
     return nullptr;
   }
   auto kernel_name = prim->name();
-  MS_LOG(INFO) << "Create operator " << kernel_name;
+  MS_LOG(DEBUG) << "Create operator " << kernel_name;
   auto ori_kernel_name = kernel_name;
   if (prim->HasAttr(kAttrMeOpName)) {
     ori_kernel_name = GetValue<std::string>(prim->GetAttr(kAttrMeOpName));
@@ -1065,7 +1065,7 @@ BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
   static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
   auto it = operator_fns.find(ori_kernel_name);
   if (it == operator_fns.end()) {
-    MS_LOG(INFO) << "Cannot create BaseOperator for " << ori_kernel_name;
+    MS_LOG(DEBUG) << "Cannot create BaseOperator for " << ori_kernel_name;
     return nullptr;
   }
   auto base_operator = it->second(prim);
