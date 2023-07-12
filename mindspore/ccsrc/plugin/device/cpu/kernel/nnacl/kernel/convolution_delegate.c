@@ -197,12 +197,14 @@ void ConvolutionDelegateFreeCopiedData(ConvolutionDelegateStruct *convolution_de
     free(convolution_delegate->origin_weight_);
   }
   convolution_delegate->origin_weight_ = NULL;
+  convolution_delegate->conv_.origin_weight_ = NULL;
   convolution_delegate->need_free_weight_ = false;
 
   if (convolution_delegate->origin_bias_ != NULL && convolution_delegate->need_free_bias_) {
     free(convolution_delegate->origin_bias_);
   }
   convolution_delegate->origin_bias_ = NULL;
+  convolution_delegate->conv_.origin_bias_ = NULL;
   convolution_delegate->need_free_bias_ = false;
 }
 
@@ -213,17 +215,16 @@ int ConvolutionDelegateResize(struct KernelBase *self) {
   if (convolution_delegate->convolution_ == NULL) {
     convolution_delegate->convolution_ = ConvolutionDelegateConvolutionSelect(convolution_delegate);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(convolution_delegate->convolution_);
-  }
-
-  (void)ConvBaseUpdateComputeInfo(convolution_delegate->convolution_);
-
-  int ret = convolution_delegate->convolution_->base_.Prepare(&convolution_delegate->convolution_->base_);
-  if (ret != NNACL_OK) {
-    self->Release(self);
-    return ret;
+    (void)ConvBaseUpdateComputeInfo(convolution_delegate->convolution_);
+    int ret = convolution_delegate->convolution_->base_.Prepare(&convolution_delegate->convolution_->base_);
+    if (ret != NNACL_OK) {
+      self->Release(self);
+      return ret;
+    }
   }
 
   ConvolutionDelegateFreeCopiedData(convolution_delegate);
+  (void)ConvBaseUpdateComputeInfo(convolution_delegate->convolution_);
   return convolution_delegate->convolution_->base_.Resize(&convolution_delegate->convolution_->base_);
 }
 
