@@ -428,8 +428,14 @@ int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   }
 
   for (uint32_t i = 0; i < input_num; ++i) {
-    if (!ext_info_handler_->UpdateInputShapeAndType(i, NOT_NULL(cnode))) {
-      MS_LOG(EXCEPTION) << "Update input shape failed, cnode:" << cnode->fullname_with_scope() << " input:" << i;
+    if (use_kernel_tensor()) {
+      if (!ext_info_handler_->UpdateInputShapeAndType(i, inputs[i])) {
+        MS_LOG(EXCEPTION) << "Update input shape failed, cnode:" << cnode->fullname_with_scope() << " input:" << i;
+      }
+    } else {
+      if (!ext_info_handler_->UpdateInputShapeAndType(i, NOT_NULL(cnode))) {
+        MS_LOG(EXCEPTION) << "Update input shape failed, cnode:" << cnode->fullname_with_scope() << " input:" << i;
+      }
     }
   }
 
@@ -438,6 +444,7 @@ int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
       MS_LOG(EXCEPTION) << "Update output shape failed, cnode:" << cnode->fullname_with_scope() << " output:" << i;
     }
   }
+  outputs_.clear();
 
   return 0;
 }

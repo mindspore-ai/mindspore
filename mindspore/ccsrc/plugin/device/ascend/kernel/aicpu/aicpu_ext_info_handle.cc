@@ -205,6 +205,20 @@ bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const No
   return UpdateShapeAndType(input_shape, NOT_NULL(input_shape_and_type_[input_index]));
 }
 
+bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const kernel::KernelTensorPtr &kernel_tensor) {
+  auto input_shape = kernel_tensor->GetShapeVector();
+  if (input_index >= input_shape_and_type_.size()) {
+    MS_LOG(ERROR) << "Invalid input_index: " << input_index
+                  << " the size of input_shape_and_type_ is: " << input_shape_and_type_.size();
+    return false;
+  }
+  if (input_shape.empty()) {
+    input_shape = {1};
+  }
+
+  return UpdateShapeAndType(input_shape, NOT_NULL(input_shape_and_type_[input_index]));
+}
+
 bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const NotNull<AnfNodePtr> &anf_node) {
   if (output_index >= output_num_) {
     MS_LOG(ERROR) << "output_index:" << output_index << " >= output_num_:" << output_num_ << ", node: " << node_name_;
