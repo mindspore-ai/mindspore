@@ -147,6 +147,7 @@ class GPUEnvChecker(EnvChecker):
             os.environ['LD_LIBRARY_PATH'] = akg_dir + ":" + os.environ['LD_LIBRARY_PATH']
         else:
             os.environ['LD_LIBRARY_PATH'] = akg_dir
+        os.environ['CUDA_CACHE_MAXSIZE'] = "4000000000"
 
     def _get_bin_path(self, bin_name):
         """Get bin path by bin name."""
