@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 /// \param once_compute_size: The final calculated size for each thread processing.
 /// \return Status code.
 Status AudioParallelLaunch(const std::function<void(size_t, size_t, size_t)> &task, size_t input_size, float block_size,
-                           size_t *task_num, size_t *once_compute_size);
+                           size_t task_num, size_t once_compute_size);
 
 /// \brief Compute the thread nums.
 /// \param input_size: Size of the input.
@@ -154,7 +154,7 @@ Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
       itr_out++;
     }
   };
-  AudioParallelLaunch(task, input_size, block_size, &task_num, &once_compute_size);
+  RETURN_IF_NOT_OK(AudioParallelLaunch(task, input_size, block_size, task_num, once_compute_size));
   *output = out;
   return Status::OK();
 }
@@ -222,7 +222,7 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       itr_out++;
     }
   };
-  AudioParallelLaunch(task, input_size, block_size, &task_num, &once_compute_size);
+  RETURN_IF_NOT_OK(AudioParallelLaunch(task, input_size, block_size, task_num, once_compute_size));
   *output = out;
   return Status::OK();
 }

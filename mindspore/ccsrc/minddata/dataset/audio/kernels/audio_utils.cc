@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,19 +45,19 @@ Status CountThreadNums(size_t input_size, float block_size, size_t *task_num, si
 }
 
 Status AudioParallelLaunch(const std::function<void(size_t, size_t, size_t)> &task, size_t input_size, float block_size,
-                           size_t *task_num, size_t *once_compute_size) {
+                           size_t task_num, size_t once_compute_size) {
   std::vector<std::thread> threads;
-  RETURN_IF_NOT_OK(CountThreadNums(input_size, block_size, task_num, once_compute_size));
+  RETURN_IF_NOT_OK(CountThreadNums(input_size, block_size, &task_num, &once_compute_size));
 
-  for (size_t i = 0; i < (*task_num) - 1; i++) {
-    size_t start = i * (*once_compute_size);
-    size_t end = start + (*once_compute_size);
+  for (size_t i = 0; i < task_num - 1; i++) {
+    size_t start = i * once_compute_size;
+    size_t end = start + once_compute_size;
     threads.push_back(std::thread(task, start, end, i));
   }
 
-  size_t start = ((*task_num) - 1) * (*once_compute_size);
+  size_t start = (task_num - 1) * once_compute_size;
   size_t end = input_size;
-  task(start, end, (*task_num) - 1);
+  task(start, end, task_num - 1);
 
   for (auto &thread : threads) {
     thread.join();
@@ -550,7 +550,7 @@ Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
       itr_out++;
     }
   };
-  AudioParallelLaunch(task, count, block_size, &task_num, &once_compute_size);
+  RETURN_IF_NOT_OK(AudioParallelLaunch(task, count, block_size, task_num, once_compute_size));
   *output = out;
 
   return Status::OK();
