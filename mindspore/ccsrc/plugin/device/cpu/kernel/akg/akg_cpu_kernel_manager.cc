@@ -23,7 +23,7 @@ void *AkgCpuKernelManagerAbs::SearchFunc(const std::string &kernel_name) const {
   if (iter == cpu_func_map_.end()) {
     return nullptr;
   } else {
-    return iter->second.second;
+    return iter->second.first;
   }
 }
 

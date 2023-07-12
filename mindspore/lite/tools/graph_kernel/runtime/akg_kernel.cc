@@ -15,6 +15,7 @@
  */
 
 #include "tools/graph_kernel/runtime/akg_kernel.h"
+#include <dlfcn.h>
 #include <algorithm>
 #include <utility>
 #include <numeric>
@@ -142,18 +143,6 @@ void AkgKernel::AkgParallelLaunchFunc(AkgParallelLambda flambda, void *cdata, in
   cached_runtimeargs_ = nullptr;
 }
 
-int AkgKernel::LoadAkgLib(void *data, size_t file_size) {
-  static std::once_flag flag;
-  static int ret;
-  std::call_once(flag, [&]() -> void {
-    if (lite::WriteToBin(kAkgKernelSo, data, file_size)) {
-      MS_LOG(ERROR) << "write data to " << kAkgKernelSo << " failed.";
-      ret = lite::RET_ERROR;
-    }
-  });
-  return ret;
-}
-
 int AkgKernel::Prepare() {
   if (kernel_func_ != nullptr) {
     return RET_OK;
@@ -167,17 +156,34 @@ int AkgKernel::Prepare() {
   }
   auto akg_lib_tensor = in_tensors_.at(in_tensors_.size() - 1);
   auto akg_lib_ptr = akg_lib_tensor->data();
-  if (!object_loader.LoadAkgLib(akg_lib_ptr)) {
-    MS_LOG(ERROR) << "Load object from tensor failed. Kernel name is  [" << kernel_name_ << "]";
+  auto akg_kernel_so = kernel_name_ + ".so";
+  std::string kernle_meta = "akg_kernel_meta_runtime";
+  if (lite::CreateDir(&kernle_meta) != RET_OK) {
+    MS_LOG(ERROR) << "cannot create dir " << kernle_meta;
+    return lite::RET_ERROR;
+  }
+  auto akg_kernel_path = kernle_meta + "/" + akg_kernel_so;
+  if (lite::WriteToBin(akg_kernel_path, akg_lib_ptr, akg_lib_tensor->Size())) {
+    MS_LOG(ERROR) << "write data to " << akg_kernel_so << " failed.";
+    return lite::RET_ERROR;
+  }
+  auto real_path = lite::RealPath(akg_kernel_path.c_str());
+  if (real_path.empty()) {
+    MS_LOG(ERROR) << "cannot access file:" << real_path << ".please check file if exists and file mod";
+    return lite::RET_ERROR;
+  }
+  lib_handle_ = dlopen(real_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  if (lib_handle_ == nullptr) {
+    MS_LOG(ERROR) << "Load library from tensor failed. Kernel name is  [" << akg_kernel_so << "]";
     return RET_ERROR;
   }
-  kernel_func_ = object_loader.LookupFunction(kernel_name_);
+  kernel_func_ = dlsym(lib_handle_, kernel_name_.c_str());
+  if (kernel_func_ == nullptr) {
+    MS_LOG(ERROR) << "Undefined symbol [" << kernel_name_ << "] in [" << akg_kernel_so << "]";
+    return RET_ERROR;
+  }
   // the last input tensor is akgkernels.so, so we need to remove it.
   in_tensors_.pop_back();
-  if (kernel_func_ == nullptr) {
-    MS_LOG(ERROR) << "Undefined symbol [" << kernel_name_ << "] in [" << kAkgKernelSo << "]";
-    return RET_ERROR;
-  }
   const size_t kAddrAlign = 32;
   const size_t kAddrAlignMask = 0x1f;
   const_inputs_.reserve(in_tensors_.size());
@@ -256,6 +262,13 @@ int AkgKernel::ReSize() {
     return mindspore::lite::RET_ERROR;
   }
   return mindspore::lite::RET_OK;
+}
+
+AkgKernel::~AkgKernel() {
+  if (lib_handle_ != nullptr) {
+    (void)dlclose(lib_handle_);
+    lib_handle_ = nullptr;
+  }
 }
 
 REG_KERNEL(kCPU, kNumberTypeBool, PrimType_Inner_GraphKernel, LiteKernelCreator<AkgKernel>)
