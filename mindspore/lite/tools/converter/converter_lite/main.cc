@@ -96,7 +96,6 @@ int main(int argc, const char **argv) {
       converter.SetTrainModel(flags.trainModel);
       converter.SetNoFusion(flags.disableFusion);
       converter.SetDevice(flags.device);
-      converter.SetProvider(flags.provider);
       converter.SetOptimizeTransformer(flags.optimizeTransformer);
 
       auto status = converter.Convert();

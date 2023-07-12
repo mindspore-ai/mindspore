@@ -109,6 +109,8 @@ static const char *const kModifyMixList = "mixprecision_list_path";
 static const char *const kEnableCustomOp = "enable_custom_op";
 static const char *const kPluginCustomOps = "plugin_custom_ops";
 static const char *const kAoeMode = "aoe_mode";
+static const char *const kProvider = "provider";
+static const char *const kAscendProviderGe = "ge";
 // ge options
 static const char *const kGeSessionOptionsSection = "ge_session_options";
 static const char *const kGeGraphOptionsSection = "ge_graph_options";

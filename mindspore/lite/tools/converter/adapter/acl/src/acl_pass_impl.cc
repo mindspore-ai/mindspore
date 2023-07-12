@@ -785,7 +785,7 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
 STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Set acl model options start.";
   MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
-  auto model_context = user_options_cfg_.AsModelContext();
+  auto model_context = user_options_cfg_.AsModelContext(param_->provider);
   CHECK_NULL_RETURN(model_context);
   options_ = std::make_shared<AclModelOptions>(model_context);
   CHECK_NULL_RETURN(options_);

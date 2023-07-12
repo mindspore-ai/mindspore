@@ -334,6 +334,10 @@ STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &p
 }
 
 STATUS ConverterFuncGraph::RunGeAoeOptimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  if (param->model_file.empty()) {
+    MS_LOG(INFO) << "Call from Model::Build, skip Aoe optimize";
+    return RET_OK;
+  }
   bool run_aoe = !param->aclModelOptionCfgParam.aoe_mode.empty();
   if (!run_aoe) {
     auto sec_it = param->config_infos.find(kAoeGlobalOptionsSection);
