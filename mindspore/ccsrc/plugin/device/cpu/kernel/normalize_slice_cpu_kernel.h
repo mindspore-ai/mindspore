@@ -20,7 +20,6 @@
 #include <map>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "mindspore/core/ops/tile_size.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
@@ -52,6 +51,13 @@ class NormalizeSliceInfoCpuKernelMod : public NativeCpuKernelMod {
 
   static std::vector<std::pair<KernelAttr, NormalizeSliceFunc>> func_list_;
   NormalizeSliceFunc kernel_func_;
+
+ private:
+  ShapeVector data_shape_;
+  size_t index_axis_ = 0;
+  int64_t expand_dims_mask_ = 0;
+  std::vector<int64_t> tuple_index_types_;
+  std::vector<int64_t> init_by_none_;
 };
 }  // namespace kernel
 }  // namespace mindspore

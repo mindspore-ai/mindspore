@@ -1307,23 +1307,25 @@ REG_BPROP_BUILDER("ScatterUpdate").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUN
   return {dout, ib->OutZeros(indices), ib->Gather(dout, indices, 0)};
 });
 
-REG_BPROP_BUILDER("NormalizeSlice").SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("NormalizeSlice").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(BODYFUNC(ib) {
   auto dim = ib->GetInput(kIndex0);
-  auto init_by_none = ib->GetInput(kIndex1);
-  auto start = ib->GetInput(kIndex2);
-  auto stop = ib->GetInput(kIndex3);
-  auto step = ib->GetInput(kIndex4);
-  return {ib->OutZeros(dim), ib->OutZeros(init_by_none), ib->OutZeros(start), ib->OutZeros(stop), ib->OutZeros(step)};
+  auto start = ib->GetInput(kIndex1);
+  auto stop = ib->GetInput(kIndex2);
+  auto step = ib->GetInput(kIndex3);
+  return {ib->OutZeros(dim), ib->OutZeros(start), ib->OutZeros(stop), ib->OutZeros(step)};
 });
 
-REG_BPROP_BUILDER("SliceToIndices").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("NormalizeDimIndex").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto data = ib->GetInput(kIndex0);
+  return {ib->ZerosLike(data)};
+});
+
+REG_BPROP_BUILDER("SliceToIndices").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(BODYFUNC(ib) {
   auto data_shape = ib->GetInput(kIndex0);
-  auto init_by_none = ib->GetInput(kIndex1);
-  auto start = ib->GetInput(kIndex2);
-  auto stop = ib->GetInput(kIndex3);
-  auto step = ib->GetInput(kIndex4);
-  return {ib->ZerosLike(data_shape), ib->ZerosLike(init_by_none), ib->ZerosLike(start), ib->ZerosLike(stop),
-          ib->ZerosLike(step)};
+  auto start = ib->GetInput(kIndex1);
+  auto stop = ib->GetInput(kIndex2);
+  auto step = ib->GetInput(kIndex3);
+  return {ib->ZerosLike(data_shape), ib->ZerosLike(start), ib->ZerosLike(stop), ib->ZerosLike(step)};
 });
 
 REG_BPROP_BUILDER("Fills").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {

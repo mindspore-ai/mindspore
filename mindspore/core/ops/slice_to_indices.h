@@ -22,7 +22,9 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSliceToIndices = "SliceToIndices";
-/// \brief Sequence addition operation
+/// \brief Normalize Slice index info start, stop, step when data shape is dynamic.
+// input: data_shape, init_by_none, start, stop, step
+// outputs: index, value_shape, start, stop, step
 class MIND_API SliceToIndices : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SliceToIndices);
