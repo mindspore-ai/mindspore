@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ class MemSwapScheduler {
                                  const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
                                  ActorSet *actor_set) const;
   void AddSwappableTensors(const DeviceContext *device_context, const std::shared_ptr<device::SwapStrategy> &strategy,
-                           const KernelGraphPtr &graph);
-  void AddSwappableRootParameter(const GraphCompilerInfo &graph_compiler_info);
+                           const KernelGraphPtr &graph) const;
+  void AddSwappableRootParameter(const GraphCompilerInfo &graph_compiler_info) const;
 
  private:
   const AID *recorder_aid_;

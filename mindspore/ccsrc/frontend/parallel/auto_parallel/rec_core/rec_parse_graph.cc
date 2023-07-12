@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -384,7 +384,8 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
         if (graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.size() > index_remove_node) {
           (void)graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.erase(exist_in_outgoing_auxinputs);
         } else {
-          MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove_node << ", out of range!";
+          MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove_node
+                        << ", which is out of range!";
         }
       }
       size_t idx = LongToSize(std::distance(outgoing_inputs->begin(), it));
@@ -501,7 +502,7 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
       if (outgoing_auxinputs->size() > index_entree) {
         (void)outgoing_auxinputs->erase(it);
       } else {
-        MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_entree << ", out of range!";
+        MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_entree << ", which is out of range.";
       }
     }
   }
