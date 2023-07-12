@@ -583,8 +583,7 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
   MS_LOG(INFO) << "BuildOutputDataGeTensor finish.";
 }
 
-void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph,
-                                        const std::vector<ShapeVector> &outputs_shape) const {
+void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph, const std::vector<ShapeVector> &) const {
   MS_LOG(INFO) << "Start AllocOutputMemory.";
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto ms_context = MsContext::GetInstance();
