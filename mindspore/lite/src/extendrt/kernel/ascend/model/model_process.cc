@@ -73,6 +73,9 @@ bool ModelProcess::PreInitModelResource() {
     MS_LOG(ERROR) << "Read model desc failed, ret = " << acl_ret;
     return false;
   }
+  dynamic_shape_options_.batch_size = GetDynamicBatch();
+  dynamic_shape_options_.image_size = GetDynamicImage();
+  dynamic_shape_options_.dynamic_dims = GetDynamicDims();
   if (!CheckAndSetDynFlag()) {
     MS_LOG(ERROR) << "Check and set dynamic flag failed";
     return false;
@@ -89,9 +92,7 @@ bool ModelProcess::PreInitModelResource() {
     data_input_num_ = input_infos_.size();
     return true;
   }
-  dynamic_shape_options_.batch_size = GetDynamicBatch();
-  dynamic_shape_options_.image_size = GetDynamicImage();
-  dynamic_shape_options_.dynamic_dims = GetDynamicDims();
+
   data_input_num_ = input_infos_.size();
   if (IsDynamicShape() && data_input_num_ > 0) {
     data_input_num_ -= 1;
@@ -265,13 +266,20 @@ bool ModelProcess::CheckAndSetDynFlag() {
       return false;
     }
     for (size_t j = 0; j < input_dims.dimCount; ++j) {
-      if (input_dims.dims[j] < 0 && buffer_size == 0) {
-        is_dynamic_input_ = true;
-        MS_LOG(INFO) << "The input of model is dynamic.";
-        break;
+      if (input_dims.dims[j] < 0) {
+        if (buffer_size == 0) {
+          is_dynamic_input_ = true;
+          MS_LOG(INFO) << "The input of model is dynamic.";
+          break;
+        } else {
+          if (!IsDynamicShape()) {
+            is_dynamic_shape_range_ = true;
+            MS_LOG(INFO) << "The input of model is dynamic shape range";
+          }
+        }
       }
     }
-    if (is_dynamic_input_) {
+    if (is_dynamic_input_ || is_dynamic_shape_range_) {
       break;
     }
   }
@@ -453,7 +461,7 @@ void ModelProcess::DestroyInputsBuffer() {
 }
 
 void ModelProcess::DestroyOutputsBuffer() {
-  if (!is_dynamic_input_) {
+  if (!is_dynamic_output_) {
     for (const auto &item : output_infos_) {
       if (!is_run_on_device_) {
         aclrtFree(item.device_data);
@@ -656,6 +664,9 @@ bool ModelProcess::Resize(const std::vector<ShapeVector> &new_shapes) {
   if (is_dynamic_input_) {
     return ResizeDynamicInputShape(new_shapes);
   }
+  if (is_dynamic_shape_range_) {
+    return ResizeDynamicInputShapeRange(new_shapes);
+  }
   if (!IsDynamicShape()) {
     MS_LOG(ERROR) << "Not support dynamic input";
     return false;
@@ -708,6 +719,22 @@ bool ModelProcess::ResizeDynamicInputShape(const std::vector<ShapeVector> &new_s
   return true;
 }
 
+bool ModelProcess::ResizeDynamicInputShapeRange(const std::vector<ShapeVector> &new_shapes) {
+  MS_LOG(INFO) << "Start to resize dynamic input shape range";
+  for (size_t i = 0; i < new_shapes.size(); ++i) {
+    std::vector<int64_t> shape = new_shapes[i];
+    input_infos_[i].dims = shape;
+    aclTensorDesc *input_desc =
+      aclCreateTensorDesc(ACL_FLOAT, new_shapes[i].size(), &new_shapes[i][0], ACL_FORMAT_NCHW);
+    auto ret = aclmdlSetDatasetTensorDesc(inputs_, input_desc, i);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Acl set dataset tensor desc failed";
+      return false;
+    }
+  }
+  MS_LOG(INFO) << "Resize dynamic input shape range success";
+  return true;
+}
 bool ModelProcess::ResizeDynamicBatchAndImageSize(const std::vector<ShapeVector> &new_shapes) {
   if (model_desc_ == nullptr || inputs_ == nullptr) {
     MS_LOG(ERROR) << "Model is not inited";
@@ -792,13 +819,13 @@ bool ModelProcess::CheckInputTensors(const std::vector<KernelTensorPtr> &input_t
     auto device_data = tensor->GetData();
     auto host_data = tensor->GetHostData();
     if (device_data != nullptr && device_data->addr != nullptr) {
-      if (!is_dynamic_input_ && device_data->size != info.buffer_size) {
+      if (!is_dynamic_input_ && !is_dynamic_shape_range_ && device_data->size != info.buffer_size) {
         MS_LOG(ERROR) << "Input " << i << " data size not match, required size " << info.buffer_size << ", given count "
                       << device_data->size;
         return false;
       }
     } else if (host_data != nullptr && host_data->addr != nullptr) {
-      if (!is_dynamic_input_ && host_data->size != info.buffer_size) {
+      if (!is_dynamic_input_ && !is_dynamic_shape_range_ && host_data->size != info.buffer_size) {
         MS_LOG(ERROR) << "Input " << i << " data size not match, required size " << info.buffer_size << ", given count "
                       << host_data->size;
         return false;
@@ -930,7 +957,7 @@ bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensorPtr> &output
       return false;
     }
     auto output_buffer_size = info.buffer_size;
-    if (is_dynamic_input_) {
+    if (is_dynamic_input_ || is_dynamic_shape_range_) {
       output_buffer = nullptr;
       output_buffer_size = 0;
     }
