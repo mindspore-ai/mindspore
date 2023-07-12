@@ -24,6 +24,7 @@ import mindspore.nn as nn
 import mindspore as ms
 from mindspore import Tensor, jit, context, Parameter
 from mindspore.ops import operations as P
+from mindspore.ops.operations._inner_ops import TopTypeof
 import mindspore.common.dtype as mstype
 from tests.security_utils import security_off_wrap
 
@@ -588,4 +589,48 @@ def test_print_param_value():
         assert test_net.p1 == 100
 
     patterns = {"Tensor(shape=[], dtype=Float32, value=100)"}
+    check_output(cap.output, patterns)
+
+
+def print_lambda_func(multiples):
+    return lambda data: print(data * multiples)
+
+
+def judge_tuple_index_dim_lambda(data, tuple_index):
+    index_dim = 0
+    for index in tuple_index:
+        if isinstance(TopTypeof()(index), mstype.TensorType) and index.dtype == mstype.bool_:
+            index_dim += index.ndim
+        else:
+            index_dim += 1
+    print_double_func = print_lambda_func(2)
+    print_double_func(data)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_in_lambda_func_graph_with_isolate_node():
+    """
+    Feature: graph raise.
+    Description: Test print in lambda func_graph.
+    Expectation: No exception.
+    """
+    @jit
+    def bool_index(data_input, index_input):
+        tuple_index = (0, index_input)
+        judge_tuple_index_dim_lambda(data_input, tuple_index)
+        return data_input
+
+    cap = Capture()
+    with capture(cap):
+        index = Tensor([[0, 1], [0, 1]], dtype=ms.bool_)
+        data = Tensor([[0, 1], [2, 3]])
+        output = bool_index(data, index)
+        sys.stdout.flush()
+        time.sleep(0.1)
+        assert (output == data).all()
+
+    patterns = {"Tensor(shape=[2, 2], dtype=Int64, value=\n[[0 2]\n [4 6]])"}
     check_output(cap.output, patterns)

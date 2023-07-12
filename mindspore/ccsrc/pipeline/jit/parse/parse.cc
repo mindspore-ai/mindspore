@@ -776,6 +776,19 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   AnfNodePtr lambda_body_node = ParseExprNode(func_block, body_node);
   lambda_body_node = HandleInterpret(block, lambda_body_node, body_node);
   current_fg->set_output(lambda_body_node);
+
+  // Add unused variables as isolate nodes.
+  for (auto &func_block_item : func_block_list_) {
+    MS_EXCEPTION_IF_NULL(func_block_item);
+    MS_EXCEPTION_IF_NULL(func_block_item->func_graph());
+    if (func_block_item->func_graph()->get_return() != nullptr) {
+      // Find unused variables.
+      func_block_item->FindIsolatedNodes();
+      // Attach all isolated nodes.
+      func_block_item->AttachIsolatedNodesBeforeReturn();
+    }
+  }
+
   GenerateArgsDefaultValueForFunction(func_block, node);
   return func_block;
 }
