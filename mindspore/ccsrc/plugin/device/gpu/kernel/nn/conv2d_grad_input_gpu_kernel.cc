@@ -362,13 +362,9 @@ int ConvGradInputBkwGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
       "cudnnSetConvolution2dDescriptor failed");
     dx_desc_real = dx_desc_;
   }
-  if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
-                                       "cudnnSetConvolutionMathType failed.")
-    algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
-  } else {
-    algo_ = SelectBackwardDataAlgorithm(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real, group_);
-  }
+  SetConvolutionMathType(conv_desc_, cudnn_data_type_);
+  algo_ =
+    SelectBackwardDataAlgorithm(cudnn_handle_, cudnn_data_type_, w_desc_, dy_desc_, conv_desc_, dx_desc_real, group_);
   InitSizeLists();
   return KRET_OK;
 }

@@ -71,7 +71,8 @@ def test_conv2d_max_device_memory():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('algo', ["normal", "performance"])
-def test_conv2d(algo):
+@pytest.mark.parametrize('conv_allow_tf32', [True, False])
+def test_conv2d(algo, conv_allow_tf32):
     """
     Feature: Test conv2d op
     Description: Test conv2d op
@@ -85,7 +86,7 @@ def test_conv2d(algo):
                         [[126, 138, 150],
                          [162, 174, 186],
                          [198, 210, 222]]]]).astype(np.float32)
-    gpu_config = {"conv_fprop_algo": algo}
+    gpu_config = {"conv_fprop_algo": algo, "conv_allow_tf32": conv_allow_tf32}
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU", gpu_config=gpu_config)
     conv2d = NetConv2d()
     output = conv2d(x, w)

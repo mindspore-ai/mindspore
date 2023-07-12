@@ -119,6 +119,7 @@ void RegMsContext(const py::module *m) {
     .value("conv_fprop_algo", MsCtxParam::MS_CTX_CONV_FPROP_ALGO)
     .value("conv_dgrad_algo", MsCtxParam::MS_CTX_CONV_DGRAD_ALGO)
     .value("conv_wgrad_algo", MsCtxParam::MS_CTX_CONV_WGRAD_ALGO)
+    .value("conv_allow_tf32", MsCtxParam::MS_CTX_CONV_ALLOW_TF32)
     .value("recompute_comm_overlap", MsCtxParam::MS_CTX_RECOMPUTE_COMM_OVERLAP)
     .value("matmul_grad_comm_overlap", MsCtxParam::MS_CTX_GRAD_COMM_OVERLAP)
     .value("enable_task_opt", MsCtxParam::MS_CTX_ENABLE_TASK_OPT)

@@ -136,6 +136,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_CONV_FPROP_ALGO, "normal");
   set_param<std::string>(MS_CTX_CONV_DGRAD_ALGO, "normal");
   set_param<std::string>(MS_CTX_CONV_WGRAD_ALGO, "normal");
+  set_param<bool>(MS_CTX_CONV_ALLOW_TF32, true);
 
   uint32_t kDefaultInterOpParallelThreads = 0;
   uint32_t kDefaultRuntimeNumThreads = 30;

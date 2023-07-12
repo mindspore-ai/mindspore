@@ -155,7 +155,31 @@ static std::string GetConvBwdFilterInfo(const std::string &msg, const cudnnTenso
   return oss.str();
 }
 
-static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(cudnnHandle_t handle, const cudnnTensorDescriptor_t &x_desc,
+static void SetConvolutionMathType(const cudnnConvolutionDescriptor_t &conv_desc,
+                                   const cudnnDataType_t &cudnn_data_type) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto math_type = CUDNN_DEFAULT_MATH;
+  // for gpu volta architecture
+  if (cudnn_data_type == CUDNN_DATA_HALF) {
+    math_type = CUDNN_TENSOR_OP_MATH;
+  } else if (cudnn_data_type == CUDNN_DATA_FLOAT) {
+// for gpu amper architecture
+#if CUDNN_VERSION >= 8000
+    auto conv_allow_tf32 = context_ptr->get_param<bool>(MS_CTX_CONV_ALLOW_TF32);
+    if (conv_allow_tf32) {
+      math_type = CUDNN_TENSOR_OP_MATH;
+    } else {
+      math_type = CUDNN_FMA_MATH;
+    }
+#endif
+  }
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc, math_type),
+                                      "cudnnSetConvolutionMathType failed.")
+}
+static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(const cudnnHandle_t &handle,
+                                                        const cudnnDataType_t &cudnn_data_type,
+                                                        const cudnnTensorDescriptor_t &x_desc,
                                                         const cudnnFilterDescriptor_t &w_desc,
                                                         const cudnnConvolutionDescriptor_t &conv_desc,
                                                         const cudnnTensorDescriptor_t &y_desc, const int &group) {
@@ -167,6 +191,9 @@ static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(cudnnHandle_t handle, co
   cudnnConvolutionFwdAlgoPerf_t perf_results;
 
   cudnnConvolutionFwdAlgo_t conv_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+  if (cudnn_data_type == CUDNN_DATA_HALF) {
+    return conv_algorithm;
+  }
   if (cudnn_fwd_algos.find(algo) != cudnn_fwd_algos.end()) {
     conv_algorithm = cudnn_fwd_algos[algo];
   } else if (algo == kConvNormalAlgoName) {
@@ -196,13 +223,17 @@ static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(cudnnHandle_t handle, co
 }
 
 static cudnnConvolutionBwdDataAlgo_t SelectBackwardDataAlgorithm(
-  cudnnHandle_t handle, const cudnnFilterDescriptor_t &w_desc, const cudnnTensorDescriptor_t &dy_desc,
-  const cudnnConvolutionDescriptor_t &conv_desc, const cudnnTensorDescriptor_t &dx_desc, const int &group) {
+  const cudnnHandle_t &handle, const cudnnDataType_t &cudnn_data_type, const cudnnFilterDescriptor_t &w_desc,
+  const cudnnTensorDescriptor_t &dy_desc, const cudnnConvolutionDescriptor_t &conv_desc,
+  const cudnnTensorDescriptor_t &dx_desc, const int &group) {
   auto context_ptr = MsContext::GetInstance();
   auto algo = context_ptr->get_param<std::string>(MS_CTX_CONV_DGRAD_ALGO);
   MS_EXCEPTION_IF_NULL(context_ptr);
 
   cudnnConvolutionBwdDataAlgo_t conv_algorithm = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
+  if (cudnn_data_type == CUDNN_DATA_HALF) {
+    return conv_algorithm;
+  }
   constexpr int requested_algo_count = 1;
   int returned_algo_count = 0;
   cudnnConvolutionBwdDataAlgoPerf_t perf_results;
@@ -236,8 +267,9 @@ static cudnnConvolutionBwdDataAlgo_t SelectBackwardDataAlgorithm(
 }
 
 static cudnnConvolutionBwdFilterAlgo_t SelectBackwardFilterAlgorithm(
-  cudnnHandle_t handle, const cudnnTensorDescriptor_t x_desc, const cudnnTensorDescriptor_t dy_desc,
-  const cudnnConvolutionDescriptor_t conv_desc, const cudnnFilterDescriptor_t dw_desc, const int &group) {
+  const cudnnHandle_t &handle, const cudnnDataType_t &cudnn_data_type, const cudnnTensorDescriptor_t x_desc,
+  const cudnnTensorDescriptor_t dy_desc, const cudnnConvolutionDescriptor_t conv_desc,
+  const cudnnFilterDescriptor_t dw_desc, const int &group) {
   auto context_ptr = MsContext::GetInstance();
   auto algo = context_ptr->get_param<std::string>(MS_CTX_CONV_WGRAD_ALGO);
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -246,6 +278,9 @@ static cudnnConvolutionBwdFilterAlgo_t SelectBackwardFilterAlgorithm(
   cudnnConvolutionBwdFilterAlgoPerf_t perf_results;
 
   cudnnConvolutionBwdFilterAlgo_t conv_algorithm = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
+  if (cudnn_data_type == CUDNN_DATA_HALF) {
+    return conv_algorithm;
+  }
   if (cudnn_bwd_filter_algos.find(algo) != cudnn_bwd_filter_algos.end()) {
     conv_algorithm = cudnn_bwd_filter_algos[algo];
   } else if (algo == kConvNormalAlgoName) {
