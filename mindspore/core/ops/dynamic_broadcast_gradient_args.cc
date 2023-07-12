@@ -82,14 +82,15 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
 }
 
-void UpdatePreIsOne(std::vector<bool> *prev_is_one, std::vector<bool> current_is_one) {
+void UpdatePreIsOne(std::vector<bool> *const prev_is_one, std::vector<bool> current_is_one) {
   for (size_t i = 0; i < kInputNum; ++i) {
     (*prev_is_one)[i] = current_is_one[i];
   }
 }
 
-void AddElementToGradReduceIdx(std::vector<std::vector<int64_t>> *grad_reduce_idx, std::vector<bool> current_is_one,
-                               bool none_is_one, const size_t largest_rank, size_t j) {
+void AddElementToGradReduceIdx(std::vector<std::vector<int64_t>> *const grad_reduce_idx,
+                               std::vector<bool> current_is_one, bool none_is_one, const size_t largest_rank,
+                               size_t j) {
   MS_EXCEPTION_IF_NULL(grad_reduce_idx);
   for (size_t i = 0; i < kInputNum; ++i) {
     if (current_is_one[i] && !none_is_one) {
