@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_FORMAT_TRANSPOSE_H_
 
 #include <vector>
+#include <string>
 #include "src/litert/lite_kernel.h"
 #include "nnacl/format_transpose_parameter.h"
 
@@ -33,6 +34,7 @@ class FormatTransposeCPUKernel : public LiteKernel {
   int Prepare() override { return RET_OK; }
   int ReSize() override { return RET_OK; }
   int Run() override;
+  std::string name() const override;
 
  private:
   FormatTransposeParameter *param_ = nullptr;

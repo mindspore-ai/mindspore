@@ -92,6 +92,22 @@ inline int WriteToBin(const std::string &file_path, void *data, const size_t siz
   return RET_OK;
 }
 
+inline std::string WriteStrToFile(const std::string &file_path, const std::string &file_name,
+                                  const std::string &content) {
+  std::fstream fs;
+  auto real_path = lite::RealPath(file_path.c_str());
+  auto full_path = real_path + "/" + file_name;
+  fs.open(full_path, std::ios::out);
+  if (!fs.good() || !fs.is_open()) {
+    MS_LOG(ERROR) << "Open dot file failed: " << full_path;
+    return "";
+  }
+  fs.write(content.c_str(), content.size());
+  fs.flush();
+  fs.close();
+  return full_path;
+}
+
 std::string GetDirectory(const std::string &path);
 
 bool ParserPathAndModelName(const std::string &output_path, std::string *save_path, std::string *model_name);

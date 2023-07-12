@@ -65,6 +65,12 @@ if(MSVC)
             ${CMAKE_CURRENT_SOURCE_DIR}/storage.cc)
 endif()
 
+if(MSLITE_ENABLE_DUMP)
+    set(LITE_SRC_COMMON_MID_SRC
+            ${LITE_SRC_COMMON_MID_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/graphviz_drawer.cc)
+endif()
+
 set(LITE_SRC_TRAIN_COMMON_MID_SRC
         ${LITE_SRC_TRAIN_COMMON_MID_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/quant_utils.cc

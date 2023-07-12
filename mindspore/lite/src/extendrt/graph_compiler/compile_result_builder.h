@@ -63,8 +63,8 @@ class CompileResultBuilder {
   StatusCode RemoveSeqGetItemNode();
   StatusCode RemoveMakeSeqNode();
   StatusCode RemoveDependNode();
-  // Replace `index`th output tensor of `node` by `dst_tensor` tensor.
-  void IsolateTensor(InferTensor *dst_tensor, const CompileNode *node, size_t index);
+  // Replace `dst_tensor` with `src_tensor`.
+  void ReplaceTensor(InferTensor *dst_tensor, const InferTensor *src_tensor);
 
  private:
   CompileResultPtr graph_ = nullptr;

@@ -127,11 +127,8 @@ StatusCode CompileResultBuilder::BuildOutputs(const AnfNodePtrList &outputs) {
   return kSuccess;
 }
 
-void CompileResultBuilder::IsolateTensor(InferTensor *dst_tensor, const CompileNode *node, size_t index) {
-  if (node == nullptr || index >= node->OutputSize()) {
-    return;
-  }
-  auto *src_tensor = node->GetOutput(index);
+// Replace `dst_tensor` with `src_tensor`.
+void CompileResultBuilder::ReplaceTensor(InferTensor *dst_tensor, const InferTensor *src_tensor) {
   // used as inputs of other node
   auto &nodes = graph_->GetMutableNodes();
   for (auto &compile_node : nodes) {
@@ -141,9 +138,9 @@ void CompileResultBuilder::IsolateTensor(InferTensor *dst_tensor, const CompileN
     compile_node->ReplaceInputTensor(dst_tensor, src_tensor);
   }
   // used as outputs of graph
-  auto &inputs = graph_->GetMutableInputs();
+  auto &outputs = graph_->GetMutableOutputs();
   std::replace_if(
-    inputs.begin(), inputs.end(), [&src_tensor](InferTensor *ele) { return ele == src_tensor; }, dst_tensor);
+    outputs.begin(), outputs.end(), [&src_tensor](InferTensor *ele) { return ele == src_tensor; }, dst_tensor);
 }
 
 StatusCode CompileResultBuilder::RemoveMakeSeqNode() {
@@ -162,7 +159,7 @@ StatusCode CompileResultBuilder::RemoveMakeSeqNode() {
       return kLiteError;
     }
     for (size_t i = 0; i < tensor_number; i++) {
-      IsolateTensor(node->GetInput(i), node, i);
+      ReplaceTensor(node->GetInput(i), node->GetOutput(i));
     }
     iter = nodes.erase(iter);
   }
@@ -187,7 +184,7 @@ StatusCode CompileResultBuilder::RemoveDependNode() {
       MS_LOG(ERROR) << "Depend node should has 1 outputs, but got " << node->OutputSize();
       return kLiteError;
     }
-    IsolateTensor(node->GetInput(0), node, 0);
+    ReplaceTensor(node->GetInput(0), node->GetOutput(0));
     iter = nodes.erase(iter);
   }
   return kSuccess;
@@ -214,10 +211,10 @@ StatusCode CompileResultBuilder::RemoveSeqGetItemNode() {
     }
     if (index_tensor->data_type() == kNumberTypeInt32) {
       auto idx = reinterpret_cast<int32_t *>(index_tensor->data())[0];
-      IsolateTensor(node->GetInput(idx), node, 0);
+      ReplaceTensor(node->GetInput(idx), node->GetOutput(0));
     } else if (index_tensor->data_type() == kNumberTypeInt64) {
       auto idx = reinterpret_cast<int64_t *>(index_tensor->data())[0];
-      IsolateTensor(node->GetInput(idx), node, 0);
+      ReplaceTensor(node->GetInput(idx), node->GetOutput(0));
     } else {
       MS_LOG(ERROR) << "`index_tensor` of GetItem should be a const tensor with int data type, but got "
                     << index_tensor->data_type();

@@ -157,7 +157,7 @@ std::string CompileNode::Dump(int indent) const {
   return oss.str();
 }
 
-void CompileNode::ReplaceInputTensor(InferTensor *dst, InferTensor *src) {
+void CompileNode::ReplaceInputTensor(InferTensor *dst, const InferTensor *src) {
   std::replace_if(
     inputs_.begin(), inputs_.end(), [&src](InferTensor *ele) { return ele == src; }, dst);
 }
@@ -191,6 +191,13 @@ std::vector<InferTensor *> &CompileResult::GetMutableInputs() {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
   return inputs_;
+}
+
+std::vector<InferTensor *> &CompileResult::GetMutableOutputs() {
+  if (assembled_) {
+    MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
+  }
+  return outputs_;
 }
 
 StatusCode CompileResult::AppendNode(CompileNode *node) {

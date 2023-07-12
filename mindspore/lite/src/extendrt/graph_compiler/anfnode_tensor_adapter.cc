@@ -69,9 +69,15 @@ InferTensor *TensorAdapter::Convert2Tensor(const AbstractBasePtr &abstract, cons
 }
 
 InferTensor *TensorAdapter::ToTensor(const std::string &tensor_name) {
-  std::vector<int32_t> int32_shape(shape_.size());
-  for (size_t i = 0; i < shape_.size(); i++) {
-    int32_shape[i] = static_cast<int32_t>(shape_[i]);
+  std::vector<int32_t> int32_shape;
+  if (std::any_of(shape_.begin(), shape_.end(),
+                  [](const ShapeValueDType &dim) { return dim == abstract::Shape::kShapeRankAny; })) {
+    int32_shape.emplace_back(-1);
+  } else {
+    int32_shape.resize(shape_.size());
+    for (size_t i = 0; i < shape_.size(); i++) {
+      int32_shape[i] = static_cast<int32_t>(shape_[i]);
+    }
   }
   auto tensor = InferTensor::CreateTensor(tensor_name, data_type_, int32_shape, data_, data_len_);
   if (tensor == nullptr) {
@@ -114,9 +120,19 @@ TensorAdapterPtr TensorAdapter::Create(const ParameterPtr &param_node, Format fo
     return nullptr;
   }
   adapter->compress_type_ = tensor_info->compression_type();
-  adapter->data_ = tensor_info->data_c();
+  adapter->data_ = malloc(tensor_info->Size());
+  if (adapter->data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc const tensor data failed.";
+    return nullptr;
+  }
+  auto ret = memcpy_s(adapter->data_, tensor_info->Size(), tensor_info->data_c(), tensor_info->Size());
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
+    free(adapter->data_);
+    return nullptr;
+  }
   adapter->data_len_ = tensor_info->Size();
-  adapter->own_data_ = false;
+  adapter->own_data_ = true;
   return adapter;
 }
 
@@ -144,9 +160,19 @@ TensorAdapterPtr TensorAdapter::CreateFromTensorValueNode(const ValueNodePtr &va
     MS_LOG(ERROR) << "Value of tensor-type value-node is not a Tensor, " << value_node->fullname_with_scope();
     return nullptr;
   }
-  adapter->data_ = data->data_c();
+  adapter->data_ = malloc(data->Size());
+  if (adapter->data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc const tensor data failed.";
+    return nullptr;
+  }
+  auto ret = memcpy_s(adapter->data_, data->Size(), data->data_c(), data->Size());
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
+    free(adapter->data_);
+    return nullptr;
+  }
   adapter->data_len_ = data->Size();
-  adapter->own_data_ = false;
+  adapter->own_data_ = true;
   return adapter;
 }
 
@@ -163,9 +189,13 @@ TensorAdapterPtr TensorAdapter::CreateFromInt32ImmValue(const ValueNodePtr &valu
   }
   auto data = GetValue<int32_t>(value);
   adapter->data_ = malloc(sizeof(int32_t));
+  if (adapter->data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc const tensor data failed.";
+    return nullptr;
+  }
   (reinterpret_cast<int32_t *>(adapter->data_))[0] = data;
   adapter->data_len_ = sizeof(int32_t);
-  adapter->own_data_ = false;
+  adapter->own_data_ = true;
   return adapter;
 }
 
@@ -182,9 +212,13 @@ TensorAdapterPtr TensorAdapter::CreateFromInt64ImmValue(const ValueNodePtr &valu
   }
   auto data = GetValue<int64_t>(value);
   adapter->data_ = malloc(sizeof(int64_t));
+  if (adapter->data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc const tensor data failed.";
+    return nullptr;
+  }
   (reinterpret_cast<int64_t *>(adapter->data_))[0] = data;
   adapter->data_len_ = sizeof(int64_t);
-  adapter->own_data_ = false;
+  adapter->own_data_ = true;
   return adapter;
 }
 
@@ -206,9 +240,13 @@ TensorAdapterPtr TensorAdapter::CreateFromBoolImmValue(const ValueNodePtr &value
   }
   auto data_value = data->value();
   adapter->data_ = malloc(sizeof(bool));
+  if (adapter->data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc const tensor data failed.";
+    return nullptr;
+  }
   (reinterpret_cast<bool *>(adapter->data_))[0] = data_value;
   adapter->data_len_ = sizeof(bool);
-  adapter->own_data_ = false;
+  adapter->own_data_ = true;
   return adapter;
 }
 
@@ -231,9 +269,13 @@ TensorAdapterPtr TensorAdapter::CreateFromNumberTypeValue(const ValueNodePtr &va
   }
   auto number_data = static_cast<int32_t>(number_type);
   adapter->data_ = malloc(sizeof(int32_t));
+  if (adapter->data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc const tensor data failed.";
+    return nullptr;
+  }
   (reinterpret_cast<int32_t *>(adapter->data_))[0] = number_data;
   adapter->data_len_ = sizeof(int32_t);
-  adapter->own_data_ = false;
+  adapter->own_data_ = true;
   return adapter;
 }
 
@@ -252,17 +294,49 @@ TensorAdapterPtr TensorAdapter::CreateFromIntSequenceValue(const ValueNodePtr &v
         value_seq->value().front()->type()->number_type() == kNumberTypeInt) {
       adapter->data_type_ = kNumberTypeInt32;
       auto data = GetValue<std::vector<int32_t>>(value_seq);
+      auto data_len = data.size() * sizeof(int32_t);
       adapter->shape_ = {static_cast<int64_t>(data.size())};
-      adapter->data_ = data.data();
-      adapter->data_len_ = data.size() * sizeof(int32_t);
-      adapter->own_data_ = false;
+      adapter->data_len_ = data_len;
+      if (data_len > 0) {
+        adapter->data_ = malloc(data_len);
+        if (adapter->data_ == nullptr) {
+          MS_LOG(ERROR) << "malloc const tensor data failed.";
+          return nullptr;
+        }
+        auto ret = memcpy_s(adapter->data_, data_len, data.data(), data_len);
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
+          free(adapter->data_);
+          return nullptr;
+        }
+        adapter->own_data_ = true;
+      } else {
+        adapter->data_ = nullptr;
+        adapter->own_data_ = false;
+      }
     } else if (value_seq->value().front()->type()->number_type() == kNumberTypeInt64) {
       adapter->data_type_ = kNumberTypeInt64;
       auto data = GetValue<std::vector<int64_t>>(value_seq);
+      auto data_len = data.size() * sizeof(int64_t);
       adapter->shape_ = {static_cast<int64_t>(data.size())};
-      adapter->data_ = data.data();
-      adapter->data_len_ = data.size() * sizeof(int64_t);
-      adapter->own_data_ = false;
+      adapter->data_len_ = data_len;
+      if (data_len > 0) {
+        adapter->data_ = malloc(data_len);
+        if (adapter->data_ == nullptr) {
+          MS_LOG(ERROR) << "malloc const tensor data failed.";
+          return nullptr;
+        }
+        auto ret = memcpy_s(adapter->data_, data_len, data.data(), data_len);
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
+          free(adapter->data_);
+          return nullptr;
+        }
+        adapter->own_data_ = true;
+      } else {
+        adapter->data_ = nullptr;
+        adapter->own_data_ = false;
+      }
     } else {
       MS_LOG(ERROR) << "only support integer value ValueSequence.";
       return nullptr;
