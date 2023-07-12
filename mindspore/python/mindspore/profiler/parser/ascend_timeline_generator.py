@@ -76,6 +76,11 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
 
         timeline_list = timeline_list.tolist()
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._model)
+        cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
+        if cpu_timeline_list:
+            timeline_list.extend(cpu_timeline_list)
+            timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
         min_cycle_counter = timeline_list[0][2]
 
         # Generate step time.
