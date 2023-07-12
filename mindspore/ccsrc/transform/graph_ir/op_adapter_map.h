@@ -190,6 +190,7 @@ constexpr const char kNameLRNGrad[] = "LRNGrad";
 constexpr const char kNameLSTMInputGrad[] = "LSTMInputGrad";
 constexpr const char kNameMatMul[] = "MatMul";
 constexpr const char kNameMatrixDiag[] = "MatrixDiag";
+constexpr const char kNameMatrixDiagV3[] = "MatrixDiagV3";
 constexpr const char kNameMatrixDiagPartD[] = "MatrixDiagPartD";
 constexpr const char kNameMatrixSetDiagD[] = "MatrixSetDiagD";
 constexpr const char kNameMaxPool3DGradGrad[] = "MaxPool3DGradGrad";

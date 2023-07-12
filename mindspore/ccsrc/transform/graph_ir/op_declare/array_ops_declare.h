@@ -19,6 +19,7 @@
 
 #include "inc/ops/array_ops.h"
 #include "inc/ops/selection_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_array_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -104,4 +105,17 @@ DECLARE_OP_USE_OUTPUT(QueueData)
 
 DECLARE_OP_ADAPTER(Size)
 DECLARE_OP_USE_OUTPUT(Size)
+
+DECLARE_OP_ADAPTER(Meshgrid)
+DECLARE_OP_USE_DYN_INPUT(Meshgrid)
+DECLARE_OP_USE_DYN_OUTPUT(Meshgrid)
+
+DECLARE_CUST_OP_ADAPTER(SliceGrad)
+DECLARE_CUST_OP_USE_OUTPUT(SliceGrad)
+
+DECLARE_CUST_OP_ADAPTER(MaskedSelectGrad)
+DECLARE_CUST_OP_USE_OUTPUT(MaskedSelectGrad)
+
+DECLARE_CUST_OP_ADAPTER(GatherDGradV2)
+DECLARE_CUST_OP_USE_OUTPUT(GatherDGradV2)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_

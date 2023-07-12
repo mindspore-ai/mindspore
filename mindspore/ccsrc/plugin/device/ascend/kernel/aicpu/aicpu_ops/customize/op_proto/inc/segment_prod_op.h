@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright (c) 2022-2022 Huawei Technologies Co., Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_KV_CACHE_MGR_H_
-#define MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_KV_CACHE_MGR_H_
+#ifndef CUSTOMIZE_OP_PROTO_INC_SEGMENT_PROD_OP_H
+#define CUSTOMIZE_OP_PROTO_INC_SEGMENT_PROD_OP_H
 
-#include "graph/operator_reg.h"
-#include "graph/operator.h"
+#include "op_proto_macro.h"
 
 namespace ge {
-REG_OP(KVCacheMgr)
-  .INPUT(past, TensorType({DT_FLOAT16}))
-  .INPUT(cur, TensorType({DT_FLOAT16}))
-  .INPUT(index, TensorType({DT_INT32}))
-  .OUTPUT(past, TensorType({DT_FLOAT16}))
-  .OP_END_FACTORY_REG(KVCacheMgr)
+REG_CUST_OP(SegmentProd)
+  .INPUT(x, TensorType::RealNumberType())
+  .INPUT(segment_ids, TensorType::IndexNumberType())
+  .OUTPUT(y, TensorType::RealNumberType())
+  .CUST_OP_END_FACTORY_REG(SegmentProd)
 }
-#endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_KV_CACHE_MGR_H_
+#endif

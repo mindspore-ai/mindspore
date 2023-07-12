@@ -208,4 +208,29 @@ INPUT_MAP(Size) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Size) = {{"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Size) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Size, kNameSize, ADPT_DESC(Size))
+
+// Meshgrid
+INPUT_MAP(Meshgrid) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(Meshgrid) = {{1, DYN_INPUT_DESC(x)}};
+ATTR_MAP(Meshgrid) = {{"indexing", ATTR_DESC(indexing, AnyTraits<std::string>())}};
+DYN_OUTPUT_MAP(Meshgrid) = {{0, DYN_OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Meshgrid, prim::kPrimMeshgrid->name(), ADPT_DESC(Meshgrid))
+
+// SliceGrad
+CUST_INPUT_MAP(SliceGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(begin)}, {4, INPUT_DESC(size)}};
+CUST_ATTR_MAP(SliceGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(SliceGrad) = {{0, OUTPUT_DESC(dx)}};
+REG_ADPT_DESC(SliceGrad, prim::kPrimSliceGrad->name(), CUST_ADPT_DESC(SliceGrad))
+
+// MaskedSelectGrad
+CUST_INPUT_MAP(MaskedSelectGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT_DESC(grad)}};
+CUST_ATTR_MAP(MaskedSelectGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(MaskedSelectGrad) = {{0, OUTPUT_DESC(dx)}};
+REG_ADPT_DESC(MaskedSelectGrad, prim::kPrimMaskedSelectGrad->name(), CUST_ADPT_DESC(MaskedSelectGrad))
+
+// GradDGradV2
+CUST_INPUT_MAP(GatherDGradV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(index)}, {3, INPUT_DESC(grad)}};
+CUST_ATTR_MAP(GatherDGradV2) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(GatherDGradV2) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(GatherDGradV2, prim::kPrimGatherDGradV2->name(), CUST_ADPT_DESC(GatherDGradV2))
 }  // namespace mindspore::transform

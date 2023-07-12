@@ -25,6 +25,13 @@ ATTR_MAP(Ger) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Ger) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Ger, prim::kGer, ADPT_DESC(Ger))
 
+// Svd
+INPUT_MAP(Svd) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Svd) = {{"compute_uv", ATTR_DESC(compute_uv, AnyTraits<bool>())},
+                 {"full_matrices", ATTR_DESC(full_matrices, AnyTraits<bool>())}};
+OUTPUT_MAP(Svd) = {{0, OUTPUT_DESC(sigma)}, {1, OUTPUT_DESC(u)}, {2, OUTPUT_DESC(v)}};
+REG_ADPT_DESC(Svd, prim::kPrimSvd->name(), ADPT_DESC(Svd))
+
 // LogMatrixDeterminant
 INPUT_MAP(LogMatrixDeterminant) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(LogMatrixDeterminant) = EMPTY_ATTR_MAP;
