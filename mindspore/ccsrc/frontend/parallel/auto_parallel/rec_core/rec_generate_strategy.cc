@@ -411,7 +411,6 @@ Strategies PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
   // the number of devices and the partition parts of the first dimension.
 
   if (s.size() == 1) {
-    // s.push_back(s_second);
     s.push_back(1);
   }
 
@@ -1470,7 +1469,7 @@ Dimensions PrepareExpandDimsInputStrategy(const std::vector<std::shared_ptr<Oper
 }
 
 Dimensions PrepareReshapeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
-                                       size_t outgoing_op_index, size_t i_input) {
+                                       size_t outgoing_op_index) {
   auto output_shape = ops[i_ops]->outputs_shape()[0];
   auto input_shape = ops[i_ops]->inputs_shape()[0];
   auto strategy = ops[outgoing_op_index]->selected_strategy();
@@ -1478,8 +1477,8 @@ Dimensions PrepareReshapeInputStrategy(const std::vector<std::shared_ptr<Operato
   return PrepareReshape(output_shape, input_shape, strategy->GetInputDim()[0]);
 }
 
-Dimensions PrepareGatherV2InputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
-                                        size_t outgoing_op_index, size_t i_input) {
+Dimensions PrepareGatherV2InputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t outgoing_op_index,
+                                        size_t i_input) {
   auto output_shape = ops[outgoing_op_index]->inputs_shape()[i_input];
 
   Dimensions index(output_shape.size() - 1, 0);
@@ -1567,10 +1566,10 @@ Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<O
     if (type == EXPAND_DIMS) {
       s = PrepareExpandDimsInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
     } else if (type == RESHAPE) {
-      s = PrepareReshapeInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
+      s = PrepareReshapeInputStrategy(ops, iter_ops, outgoing_op_index);
       return s;
     } else if (type == GATHERV2) {
-      s = PrepareGatherV2InputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
+      s = PrepareGatherV2InputStrategy(ops, outgoing_op_index, iter_op_inputs);
       return s;
     } else if (type == REDUCE_MEAN || type == REDUCE_MAX || type == REDUCE_MIN || type == REDUCE_SUM) {
       s = PrepareReduceInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
