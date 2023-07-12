@@ -77,8 +77,6 @@ int UpsampleTrilinear3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpsampleTrilinear3DInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUpsampleTrilinear3DOutputNum, kernel_name_);
   // shape
   x_shape_ = inputs.at(kIndex0)->GetShapeVector();
   y_shape_ = outputs.at(kIndex0)->GetShapeVector();

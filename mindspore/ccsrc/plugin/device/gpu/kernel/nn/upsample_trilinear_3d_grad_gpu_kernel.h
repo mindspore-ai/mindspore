@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_UPSAMPLE_TRILINEAR_3D_GRAD_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_UPSAMPLE_TRILINEAR_3D_GRAD_GPU_KERNEL_H_
 
-#include <iostream>
-#include <vector>
-#include <map>
-#include <utility>
-#include <string>
-#include <functional>
 #include <algorithm>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -49,6 +49,8 @@ class UpsampleTrilinear3DGradGpuKernelMod : public NativeGpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
+
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex2}; }
 
  private:
   template <typename T, typename S>

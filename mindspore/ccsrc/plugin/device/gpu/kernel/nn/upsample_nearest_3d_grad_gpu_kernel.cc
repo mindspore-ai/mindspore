@@ -15,20 +15,21 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/upsample_nearest_3d_grad_gpu_kernel.h"
+#include <algorithm>
 #include <functional>
-#include <utility>
 #include <iostream>
 #include <string>
-#include <algorithm>
+#include <utility>
+#include "kernel/kernel_get_value.h"
+#include "kernel/ops_utils.h"
 #include "mindspore/core/abstract/utils.h"
 #include "mindspore/core/ops/grad/upsample_nearest_3d_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_nearest_3d_grad_impl.cuh"
-#include "kernel/ops_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-const float kValueZero = 0.;
+const double kValueZero = 0.;
 constexpr int kUpsampleNearest3DGpuGradInputsNum = 3;
 constexpr int kUpsampleNearest3DGpuGradOutputsNum = 1;
 }  // namespace
@@ -71,6 +72,13 @@ int UpsampleNearest3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
+  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
+    scales_ = std::vector<double>(kIndex3, kValueZero);
+  } else {
+    if (!TryGetFloatValue(inputs, kIndex2, kernel_name_, &scales_)) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
+    }
+  }
   return KRET_OK;
 }
 
@@ -78,25 +86,13 @@ template <typename T>
 bool UpsampleNearest3DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                      const std::vector<AddressPtr> &workspace,
                                                      const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpsampleNearest3DGpuGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUpsampleNearest3DGpuGradOutputsNum, kernel_name_);
-  // fetch scales
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
-    scale_factors_ = std::vector<float>(kIndex3, kValueZero);
-  } else {
-    auto scale_factors_device = GetDeviceAddress<float>(inputs, kIndex2);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(reinterpret_cast<void *>(scale_factors_.data()), reinterpret_cast<void *>(scale_factors_device),
-                      input_size_list_[kIndex2], cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-      "For '" << kernel_name_ << "', "
-              << "cudaMemcpy input 'scales' to host failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - " + kernel_name_);
-  }
-  const float d_scale = ComputeScalesBackward<float>(static_cast<double>(scale_factors_[kIndex0]), dy_d_, dx_d_);
-  const float h_scale = ComputeScalesBackward<float>(static_cast<double>(scale_factors_[kIndex1]), dy_h_, dx_h_);
-  const float w_scale = ComputeScalesBackward<float>(static_cast<double>(scale_factors_[kIndex2]), dy_w_, dx_w_);
   auto dy = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
   auto dx = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+
+  const float d_scale = ComputeScalesBackward<float>(scales_[kIndex0], dy_d_, dx_d_);
+  const float h_scale = ComputeScalesBackward<float>(scales_[kIndex1], dy_h_, dx_h_);
+  const float w_scale = ComputeScalesBackward<float>(scales_[kIndex2], dy_w_, dx_w_);
+
   auto status = CalUpsampleNearest3DGrad(dy, n_, c_, dy_d_, dy_h_, dy_w_, dx_d_, dx_h_, dx_w_, d_scale, h_scale,
                                          w_scale, dx, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);

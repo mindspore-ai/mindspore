@@ -22,8 +22,8 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "kernel/kernel_get_value.h"
 #include "abstract/utils.h"
+#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "mindspore/core/ops/upsample_trilinear_3d.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_trilinear_3d_impl.cuh"
@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-const float kValueZero = 0.;
+const double kValueZero = 0.;
 constexpr int kInputsNum = 2;
 constexpr int kOutputsNum = 1;
 }  // namespace
@@ -63,8 +63,6 @@ int UpsampleTrilinear3DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
   std::vector<int64_t> output_shape = outputs[kIndex0]->GetShapeVector();
   n_ = input_shape[kIndex0];
@@ -80,7 +78,7 @@ int UpsampleTrilinear3DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
   if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
-    scales_ = std::vector<double>(kIndex3, static_cast<double>(kValueZero));
+    scales_ = std::vector<double>(kIndex3, kValueZero);
   } else {
     if (!TryGetFloatValue(inputs, kIndex1, kernel_name_, &scales_)) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";

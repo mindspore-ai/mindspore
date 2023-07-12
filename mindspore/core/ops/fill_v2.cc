@@ -92,11 +92,11 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     // Check the data type of the first input
     if (input1_type->isa<TensorType>()) {
       const std::set<TypePtr> input1_valid_types = {kInt32, kInt64};
-      (void)CheckAndConvertUtils::CheckTensorTypeValid("input1 datatype", input1_type, input1_valid_types, prim_name);
+      (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input1_type, input1_valid_types, prim_name);
     }
     // Check the data type of the second input and infer the data type of the output from the second input
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("output datatype", input2_type,
-                                                     common_valid_types_with_complex_and_bool, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("y", input2_type, common_valid_types_with_complex_and_bool,
+                                                     prim_name);
 
     return input2_type;
   }
