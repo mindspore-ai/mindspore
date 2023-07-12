@@ -3,7 +3,17 @@ mindspore.ops.BesselI0
 
 .. py:class:: mindspore.ops.BesselI0
 
-    逐元素计算输入数据的BesselI0函数值。
+    逐元素计算第一类零阶修正Bessel函数值。
+
+    计算公式定义如下：
+
+    .. math::
+        \begin{array}{ll} \\
+            I_{0}(x)=J_{0}(\mathrm{i} x)=\sum_{m=0}^{\infty}
+            \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
+        \end{array}
+
+    其中J_{0}是第一类零阶Bessel函数。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

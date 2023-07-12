@@ -3322,7 +3322,15 @@ def erfc(input):
 
 def bessel_j0(x):
     r"""
-    Computes the Bessel j0 function of x element-wise.
+    Computes Bessel function of the first kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            J_{0}(x) = \frac{1}{\pi} \int_{0}^{\pi} \cos (x \sin \theta) d \theta
+            =\sum_{m=0}^{\infty} \frac{(-1)^{m} x^{2 m}}{2^{2 m} (m !)^2}
+        \end{array}
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3351,7 +3359,15 @@ def bessel_j0(x):
 
 def bessel_j1(x):
     r"""
-    Computes the Bessel j1 function of x element-wise.
+    Computes Bessel function of the first kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            J_{1}(x) = \frac{1}{\pi} \int_{0}^{\pi} \cos (x \sin \theta- \theta) d \theta
+            =\sum_{m=0}^{\infty} \frac{(-1)^{m} x^{2 m+1}}{2^{2 m+1} m !(m+1) !}
+        \end{array}
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3380,7 +3396,15 @@ def bessel_j1(x):
 
 def bessel_i0(x):
     r"""
-    Computes the Bessel i0 function of x element-wise.
+    Computes modified Bessel function of the first kind, order 0 element-wise.
+
+    .. math::
+        \begin{array}{ll} \\
+            I_{0}(x)=J_{0}(\mathrm{i} x)=\sum_{m=0}^{\infty}
+            \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
+        \end{array}
+
+    where J_{0} is Bessel function of the first kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3409,7 +3433,17 @@ def bessel_i0(x):
 
 def bessel_i0e(x):
     r"""
-    Computes the Bessel i0e function of x element-wise.
+    Computes exponential scaled modified Bessel function of the first kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            \text I_{0e}(x)=e^{(-|x|)} * I_{0}(x)=e^{(-|x|)} * \sum_{m=0}^
+            {\infty} \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
+        \end{array}
+
+    where I_{0} is modified Bessel function of the first kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3438,7 +3472,17 @@ def bessel_i0e(x):
 
 def bessel_k0(x):
     r"""
-    Computes the Bessel k0 function of x element-wise.
+    Computes modified Bessel function of the second kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{0}(x)= \lim_{\nu \to 0} \left(\frac{\pi}{2}\right) \frac
+            {I_{-\nu}(x)-I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} d t
+        \end{array}
+
+    where I_{0} is modified Bessel function of the first kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3467,7 +3511,17 @@ def bessel_k0(x):
 
 def bessel_k0e(x):
     r"""
-    Computes the Bessel k0e function of x element-wise.
+    Computes exponential scaled modified Bessel function of the second kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{0e}(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
+            {\infty} e^{-x \cosh t} d t
+        \end{array}
+
+    where K_{0} is modified Bessel function of the second kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3496,7 +3550,16 @@ def bessel_k0e(x):
 
 def bessel_y0(x):
     r"""
-    Computes the Bessel y0 function of x element-wise.
+    Computes Bessel function of the second kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            Y_{0}(x)=\lim_{n \to 0} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
+        \end{array}
+
+    where J_{0} is Bessel function of the first kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3525,7 +3588,16 @@ def bessel_y0(x):
 
 def bessel_y1(x):
     r"""
-    Computes the Bessel y1 function of x element-wise.
+    Computes Bessel function of the second kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            Y_{1}(x)=\lim_{n \to 1} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
+        \end{array}
+
+    where J_{1} is Bessel function of the first kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -6528,7 +6600,15 @@ def bernoulli(input, p=0.5, seed=None):
 
 def bessel_i1(x):
     r"""
-    Computes the Bessel i1 function of x element-wise.
+    Computes modified Bessel function of the first kind, order 1 element-wise.
+
+    .. math::
+        \begin{array}{ll} \\
+            I_{1}(x)=\mathrm{i}^{-1} J_{1}(\mathrm{i} x)=\sum_{m=0}^
+            {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
+        \end{array}
+
+    where J_{1} is Bessel function of the first kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -6557,7 +6637,17 @@ def bessel_i1(x):
 
 def bessel_i1e(x):
     r"""
-    Computes the Bessel i1e function of x element-wise.
+    Computes exponential scaled modified Bessel function of the first kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            \text I_{1e}(x)=e^{(-|x|)} * I_{1}(x)=e^{(-|x|)} * \sum_{m=0}^
+            {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
+        \end{array}
+
+    where I_{1} is  modified Bessel function of the first kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -6586,7 +6676,17 @@ def bessel_i1e(x):
 
 def bessel_k1(x):
     r"""
-    Computes the Bessel k1 function of x element-wise.
+    Computes modified Bessel function of the second kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{1}(x)=\lim_{\nu \to 1} \left(\frac{\pi}{2}\right) \frac{I_{-\nu}(x)-
+            I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} \cosh (t) d t
+        \end{array}
+
+    where I_{1} is modified Bessel function of the first kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -6615,7 +6715,17 @@ def bessel_k1(x):
 
 def bessel_k1e(x):
     r"""
-    Computes the Bessel k1e function of x element-wise.
+    Computes exponential scaled modified Bessel function of the second kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{1e}(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
+            ^{\infty} e^{-x \cosh t} \cosh (t) d t
+        \end{array}
+
+     where K_{1} is modified Bessel function of the second kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
