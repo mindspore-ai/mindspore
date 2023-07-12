@@ -36,18 +36,18 @@ std::shared_ptr<DeviceSync> DeviceAddressFuture::Get() {
     if (future_.valid()) {
       // cppcheck-suppress unreadVariable
       GilReleaseWithCheck gil_release;
-      auto future_data = future_.get();
-      MS_EXCEPTION_IF_NULL(future_data);
-      if (future_data->GetException() != nullptr) {
-        std::rethrow_exception(future_data->GetException());
-      }
-      future_data_ = future_data;
+      future_data_ = future_.get();
     }
   });
 
   if (future_data_ != nullptr) {
+    if (future_data_->GetException() != nullptr) {
+      MS_LOG(DEBUG) << "Found exception in future data. Rethrow the exception.";
+      std::rethrow_exception(future_data_->GetException());
+    }
     return future_data_->GetData();
   } else {
+    MS_LOG(ERROR) << "The future data is null";
     return nullptr;
   }
 }
