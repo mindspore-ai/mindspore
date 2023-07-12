@@ -100,6 +100,8 @@ void ConvBaseRelease(ConvolutionBaseStruct *conv) {
 int ConvBasePrepare(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_FALSE(conv->base_.in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(conv->base_.out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
+
+  conv->out_format_ = conv->base_.out_[OUTPUT_INDEX]->format_;
   return ConvBaseUpdateComputeInfo(conv);
 }
 

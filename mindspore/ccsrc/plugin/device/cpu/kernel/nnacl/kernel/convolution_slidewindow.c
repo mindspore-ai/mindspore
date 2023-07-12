@@ -185,11 +185,6 @@ int ConvolutionSWResize(KernelBase *self) {
   ConvParameter *conv_param = (ConvParameter *)self->param_;
   NNACL_CHECK_NULL_RETURN_ERR(conv_param);
 
-  // is not 1x1 conv
-  if (!(conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1)) {
-    conv_sw->conv_.out_format_ = self->out_[OUTPUT_INDEX]->format_;
-  }
-
   int ret = ConvBaseCheckResizeValid(&conv_sw->conv_);
   if (ret != NNACL_OK) {
     return ret;
