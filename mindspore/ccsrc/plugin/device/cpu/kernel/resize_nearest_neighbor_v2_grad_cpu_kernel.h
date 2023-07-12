@@ -17,11 +17,12 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_KERNEL_H_
 
-#include <map>
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -40,7 +41,9 @@ class ResizeNearestNeighborV2GradCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
@@ -48,14 +51,24 @@ class ResizeNearestNeighborV2GradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T, typename S>
+  void RealCompute(T *const input, S *const output);
+
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  using ResizeNearestNeighborV2GradLaunchFunc =
+    std::function<bool(ResizeNearestNeighborV2GradCpuKernelMod *, const std::vector<AddressPtr> &,
+                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, ResizeNearestNeighborV2GradLaunchFunc>> func_list_;
+  ResizeNearestNeighborV2GradLaunchFunc kernel_func_;
+
   TypeId y_type_{kTypeUnknown};
+  size_t y_size_;
   bool align_corners_{false};
   bool half_pixel_centers_{false};
   std::vector<int64_t> grads_shape_;
   std::vector<int64_t> y_shape_;
-  std::unordered_map<char, size_t> dim_idx_map_;
 };
 }  // namespace kernel
 }  // namespace mindspore

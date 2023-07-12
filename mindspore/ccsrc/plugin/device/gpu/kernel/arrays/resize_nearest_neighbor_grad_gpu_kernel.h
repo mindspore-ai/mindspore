@@ -34,19 +34,26 @@ constexpr auto kInputNum = "inputs number";
 template <typename T, typename S = int64_t>
 class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ResizeNearestNeighborGradGpuKernelMod() : align_corners_(false), shape_size_(0), input_size_(0), input_num_(0) {}
+  ResizeNearestNeighborGradGpuKernelMod() {}
   ~ResizeNearestNeighborGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
+    float *work = GetDeviceAddress<float>(workspace, kIndex0);
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(work, 0, workspace[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "For ResizeNearestNeighborGrad, wrok cudaMemsetAsync failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(output, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "For ResizeNearestNeighborGrad, output cudaMemsetAsync failed.");
     float h_scale = Scaling(output_shape_[kIndex2], input_shape_[kIndex2], align_corners_);
     float w_scale = Scaling(output_shape_[kIndex3], input_shape_[kIndex3], align_corners_);
-    CalResizeNearestNeighborGrad(input_size_, input, input_shape_[kIndex0], input_shape_[kIndex1],
-                                 input_shape_[kIndex2], input_shape_[kIndex3], output, output_shape_[kIndex0],
-                                 output_shape_[kIndex1], output_shape_[kIndex2], output_shape_[kIndex3], align_corners_,
-                                 h_scale, w_scale, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalResizeNearestNeighborGrad<T>(work, input_size_, input, input_shape_[kIndex0], input_shape_[kIndex1],
+                                    input_shape_[kIndex2], input_shape_[kIndex3], output, output_shape_[kIndex0],
+                                    output_shape_[kIndex1], output_shape_[kIndex2], output_shape_[kIndex3],
+                                    align_corners_, h_scale, w_scale, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -59,6 +66,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     auto prim = base_operator->GetPrim();
     MS_EXCEPTION_IF_NULL(prim);
     align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
+    auto o_type = outputs[kIndex0]->GetDtype();
+    is_fp16 = (o_type == kNumberTypeFloat16);
     return true;
   }
 
@@ -94,6 +103,13 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       output_shape_.push_back(LongToInt(output_shape[i]));
     }
 
+    work_size_ = 0;
+    if (is_fp16) {
+      auto o_num = SizeOf(output_shape);
+      work_size_ = o_num * sizeof(float);
+    }
+    workspace_size_list_.push_back(work_size_);
+
     return KRET_OK;
   }
 
@@ -105,12 +121,14 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
                                            : in_size / static_cast<float>(out_size);
   }
 
+  bool is_fp16{false};
   bool align_corners_{false};
-  size_t shape_size_{0};
   std::vector<int> input_shape_;
   std::vector<int> output_shape_;
   int input_size_{0};
   size_t input_num_{0};
+  size_t shape_size_{0};
+  size_t work_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

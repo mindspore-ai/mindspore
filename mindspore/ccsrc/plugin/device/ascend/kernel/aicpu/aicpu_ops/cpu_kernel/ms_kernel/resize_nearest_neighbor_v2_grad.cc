@@ -20,11 +20,11 @@
 
 #include "cpu_kernel_utils.h"
 #include "cpu_types.h"
-#include "utils/kernel_util.h"
 #include "kernel_log.h"
 #include "securec.h"
 #include "status.h"
 #include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
 
 namespace {
 constexpr uint32_t kInputNum = 2;
@@ -33,6 +33,8 @@ constexpr uint32_t kDim1 = 1;
 constexpr uint32_t kDim4 = 4;
 constexpr uint32_t kIndex0 = 0;
 constexpr uint32_t kIndex1 = 1;
+constexpr uint32_t kIndex2 = 2;
+constexpr uint32_t kIndex3 = 3;
 constexpr uint32_t kNumElements2 = 2;
 const char *kResizeNearestNeighborV2Grad = "ResizeNearestNeighborV2Grad";
 }  // namespace
@@ -74,51 +76,18 @@ uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradParamC
   KERNEL_CHECK_FALSE(size_data[kIndex0] > 0 && size_data[kIndex1] > 0, KERNEL_STATUS_PARAM_INVALID,
                      "size elements must be positive but got height %d, width %d.", size_data[kIndex0],
                      size_data[kIndex1]);
+
+  AttrValue *align_corners_ptr = ctx.GetAttr("align_corners");
+  AttrValue *half_pixel_centers_ptr = ctx.GetAttr("half_pixel_centers");
+  align_corners = false;
+  half_pixel_centers = false;
+  if (align_corners_ptr != nullptr) {
+    align_corners = align_corners_ptr->GetBool();
+  }
+  if (half_pixel_centers_ptr != nullptr) {
+    half_pixel_centers = half_pixel_centers_ptr->GetBool();
+  }
   return KERNEL_STATUS_OK;
-}
-
-template <typename T>
-void ResizeNearestNeighborV2GradCpuKernel::InnerCompute(
-  Eigen::Index y, Eigen::Index out_y, Eigen::Index x,
-  Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> grads_4d,
-  Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> y_4d) {
-  const Eigen::Index out_x =
-    std::min((align_corners) ? static_cast<Eigen::Index>(roundf(Scaler(x, width_scale, half_pixel_centers)))
-                             : static_cast<Eigen::Index>(floorf(Scaler(x, width_scale, half_pixel_centers))),
-             out_width - 1);
-  for (Eigen::Index b = 0; b < batch_size; ++b) {
-    for (Eigen::Index c = 0; c < channels; ++c) {
-      if (data_format == "NHWC") {
-        y_4d(b, out_y, out_x, c) += grads_4d(b, y, x, c);
-      } else {
-        // data_format = NCHW
-        y_4d(b, c, out_y, out_x) += grads_4d(b, c, y, x);
-      }
-    }
-  }
-}
-
-template <>
-void ResizeNearestNeighborV2GradCpuKernel::InnerCompute(
-  Eigen::Index y, Eigen::Index out_y, Eigen::Index x,
-  Eigen::TensorMap<Eigen::Tensor<Eigen::half, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> grads_4d,
-  Eigen::TensorMap<Eigen::Tensor<Eigen::half, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> y_4d) {
-  const Eigen::Index out_x =
-    std::min((align_corners) ? static_cast<Eigen::Index>(roundf(Scaler(x, width_scale, half_pixel_centers)))
-                             : static_cast<Eigen::Index>(floorf(Scaler(x, width_scale, half_pixel_centers))),
-             out_width - 1);
-  for (Eigen::Index b = 0; b < batch_size; ++b) {
-    for (Eigen::Index c = 0; c < channels; ++c) {
-      if (data_format == "NHWC") {
-        y_4d(b, out_y, out_x, c) = static_cast<Eigen::half>(static_cast<float>(y_4d(b, out_y, out_x, c)) +
-                                                            static_cast<float>(grads_4d(b, y, x, c)));
-      } else {
-        // data_format = NCHW
-        y_4d(b, c, out_y, out_x) = static_cast<Eigen::half>(static_cast<float>(y_4d(b, c, out_y, out_x)) +
-                                                            static_cast<float>(grads_4d(b, c, y, x)));
-      }
-    }
-  }
 }
 
 uint32_t ResizeNearestNeighborV2GradCpuKernel::Compute(CpuKernelContext &ctx) {
@@ -129,24 +98,6 @@ uint32_t ResizeNearestNeighborV2GradCpuKernel::Compute(CpuKernelContext &ctx) {
   DataType data_type = DataType(grads->GetDataType());
   uint32_t res = KERNEL_STATUS_OK;
   switch (data_type) {
-    case DT_INT8:
-      res = ResizeNearestNeighborV2GradCompute<int8_t>(ctx);
-      break;
-    case DT_UINT8:
-      res = ResizeNearestNeighborV2GradCompute<uint8_t>(ctx);
-      break;
-    case DT_INT16:
-      res = ResizeNearestNeighborV2GradCompute<int16_t>(ctx);
-      break;
-    case DT_UINT16:
-      res = ResizeNearestNeighborV2GradCompute<uint16_t>(ctx);
-      break;
-    case DT_INT32:
-      res = ResizeNearestNeighborV2GradCompute<int32_t>(ctx);
-      break;
-    case DT_INT64:
-      res = ResizeNearestNeighborV2GradCompute<int64_t>(ctx);
-      break;
     case DT_FLOAT16:
       res = ResizeNearestNeighborV2GradCompute<Eigen::half>(ctx);
       break;
@@ -167,61 +118,65 @@ template <typename T>
 uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradCompute(CpuKernelContext &ctx) {
   Tensor *input_grads = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
-  std::vector<int64_t> grads_shape = input_grads->GetTensorShape()->GetDimSizes();
-  std::vector<int64_t> y_shape = output_y->GetTensorShape()->GetDimSizes();
-  AttrValue *align_corners_ptr = ctx.GetAttr("align_corners");
-  AttrValue *half_pixel_centers_ptr = ctx.GetAttr("half_pixel_centers");
-  AttrValue *data_format_ptr = ctx.GetAttr("data_format");
-  if (data_format_ptr != nullptr) {
-    data_format = data_format_ptr->GetString();
-  }
-  if (data_format == "NHWC") {
-    dim_idx_map_ = {
-      {'N', kFormatNHWCIndexN}, {'H', kFormatNHWCIndexH}, {'W', kFormatNHWCIndexW}, {'C', kFormatNHWCIndexC}};
-  } else if (data_format == "NCHW") {
-    dim_idx_map_ = {
-      {'N', kFormatNCHWIndexN}, {'C', kFormatNCHWIndexC}, {'H', kFormatNCHWIndexH}, {'W', kFormatNCHWIndexW}};
-  } else {
-    KERNEL_LOG_ERROR(
-      "For ResizeNearestNeighborV2Grad, data_format only support [NCHW, "
-      "NHWC], but get [%s].",
-      data_format);
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-  align_corners = false;
-  half_pixel_centers = false;
-  if (align_corners_ptr != nullptr) {
-    align_corners = align_corners_ptr->GetBool();
-  }
-  if (half_pixel_centers_ptr != nullptr) {
-    half_pixel_centers = half_pixel_centers_ptr->GetBool();
-  }
-  batch_size = grads_shape[dim_idx_map_['N']];
-  in_height = grads_shape[dim_idx_map_['H']];
-  in_width = grads_shape[dim_idx_map_['W']];
-  channels = grads_shape[dim_idx_map_['C']];
-
-  out_height = y_shape[dim_idx_map_['H']];
-  out_width = y_shape[dim_idx_map_['W']];
-
-  height_scale = CalculateResizeScale(out_height, in_height, align_corners);
-  width_scale = CalculateResizeScale(out_width, in_width, align_corners);
-
-  EigenTensor grads_et(input_grads, input_grads->GetData());
-  EigenTensor y_et(output_y, output_y->GetData());
-  auto grads_4d = grads_et.tensor<T, 4>();
-  auto y_4d = y_et.tensor<T, 4>();
-  y_4d.setZero();
-  for (Eigen::Index y = 0; y < in_height; ++y) {
-    const Eigen::Index out_y =
-      std::min((align_corners) ? static_cast<Eigen::Index>(roundf(Scaler(y, height_scale, half_pixel_centers)))
-                               : static_cast<Eigen::Index>(floorf(Scaler(y, height_scale, half_pixel_centers))),
-               out_height - 1);
-    for (Eigen::Index x = 0; x < in_width; ++x) {
-      InnerCompute(y, out_y, x, grads_4d, y_4d);
+  grads_shape = input_grads->GetTensorShape()->GetDimSizes();
+  y_shape = output_y->GetTensorShape()->GetDimSizes();
+  y_size = output_y->GetTensorShape()->NumElements();
+  bool is_fp16 = std::is_same<T, Eigen::half>::value;
+  auto grads_4d = reinterpret_cast<T *>(input_grads->GetData());
+  auto y_4d = reinterpret_cast<T *>(output_y->GetData());
+  if (is_fp16) {
+    // define for fp16
+    std::vector<float> y_work_copy(1);
+    y_work_copy.resize(y_size);
+    int ret = memset_s(y_work_copy.data(), y_size * sizeof(float), 0, y_size * sizeof(float));
+    KERNEL_CHECK_FALSE(ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                       "For 'ResizeNearestNeighborV2Grad', memset_s error. Error no: %d.", ret);
+    RealCompute<T, float>(grads_4d, y_work_copy.data());
+    for (size_t idx = 0; idx < y_size; ++idx) {
+      y_4d[idx] = static_cast<T>(y_work_copy[idx]);
     }
+  } else {
+    int ret = memset_s(y_4d, y_size * sizeof(T), 0, y_size * sizeof(T));
+    KERNEL_CHECK_FALSE(ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                       "For 'ResizeNearestNeighborV2Grad', memset_s error. Error no: %d.", ret);
+    RealCompute<T, T>(grads_4d, y_4d);
   }
   return KERNEL_STATUS_OK;
+}
+
+template <typename T, typename S>
+void ResizeNearestNeighborV2GradCpuKernel::RealCompute(T *const grads_4d, S *const y_4d) {
+  const int64_t batch_size = grads_shape[kIndex0];
+  const int64_t channels = grads_shape[kIndex1];
+  const int64_t in_height = grads_shape[kIndex2];
+  const int64_t in_width = grads_shape[kIndex3];
+  const int64_t in_hw = in_height * in_width;
+
+  const int64_t out_height = y_shape[kIndex2];
+  const int64_t out_width = y_shape[kIndex3];
+  const int64_t out_hw = out_height * out_width;
+
+  const float height_scale = CalculateResizeScale(out_height, in_height, align_corners);
+  const float width_scale = CalculateResizeScale(out_width, in_width, align_corners);
+
+  for (int64_t y = 0; y < in_height; ++y) {
+    int64_t out_y =
+      std::min((align_corners) ? static_cast<int64_t>(roundf(Scaler(y, height_scale, half_pixel_centers)))
+                               : static_cast<int64_t>(floorf(Scaler(y, height_scale, half_pixel_centers))),
+               out_height - 1);
+    for (int64_t x = 0; x < in_width; ++x) {
+      int64_t out_x =
+        std::min((align_corners) ? static_cast<int64_t>(roundf(Scaler(x, width_scale, half_pixel_centers)))
+                                 : static_cast<int64_t>(floorf(Scaler(x, width_scale, half_pixel_centers))),
+                 out_width - 1);
+      for (int64_t b = 0; b < batch_size; ++b) {
+        for (int64_t c = 0; c < channels; ++c) {
+          y_4d[(b * channels + c) * out_hw + out_y * out_width + out_x] +=
+            static_cast<S>(grads_4d[(b * channels + c) * in_hw + y * in_width + x]);
+        }
+      }
+    }
+  }
 }
 
 REGISTER_CPU_KERNEL(kResizeNearestNeighborV2Grad, ResizeNearestNeighborV2GradCpuKernel);

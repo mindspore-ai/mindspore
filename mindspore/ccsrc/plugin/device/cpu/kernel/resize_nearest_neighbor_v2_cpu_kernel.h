@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_NEAREST_NEIGHBOR_V2_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_NEAREST_NEIGHBOR_V2_CPU_KERNEL_H_
 
-#include <map>
 #include <algorithm>
-#include <unordered_map>
+#include <map>
 #include <memory>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "kernel/common_utils.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
@@ -40,7 +40,9 @@ class ResizeNearestNeighborV2CpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -48,13 +50,15 @@ class ResizeNearestNeighborV2CpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using ResizeNearestNeighborV2LaunchFunc = std::function<bool(
+    ResizeNearestNeighborV2CpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, ResizeNearestNeighborV2LaunchFunc>> func_list_;
+  ResizeNearestNeighborV2LaunchFunc kernel_func_;
 
-  TypeId y_type_{kTypeUnknown};
   bool align_corners_{false};
   bool half_pixel_centers_{false};
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;
-  std::unordered_map<char, size_t> dim_idx_map_;
 };
 }  // namespace kernel
 }  // namespace mindspore
