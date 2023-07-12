@@ -253,6 +253,16 @@ PrimitivePtr CastOperation::GetPrimByTypeId(const TypeId &type_id) const {
     return iter->second;
   }
 
+#ifndef ENABLE_TEST
+  auto cast_prim = std::make_shared<Primitive>(kCastOpName);
+  std::vector<std::string> input_names = {"x", "dst_type"};
+  std::vector<std::string> output_names = {"output"};
+  cast_prim->AddAttr("input_names", MakeValue(input_names));
+  cast_prim->AddAttr("output_names", MakeValue(output_names));
+  type_prim_cache_[type_id] = cast_prim;
+  cast_prim->EnableSharedMutex();
+  return cast_prim;
+#else
   py::gil_scoped_acquire gil;
   const auto &cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
   auto prim_adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
@@ -268,6 +278,7 @@ PrimitivePtr CastOperation::GetPrimByTypeId(const TypeId &type_id) const {
   type_prim_cache_[type_id] = primitive;
   primitive->EnableSharedMutex();
   return primitive;
+#endif
 }
 
 ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, const TypeId &type_id,
