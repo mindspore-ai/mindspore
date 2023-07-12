@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "kernel/kernel_get_value.h"
 #include "abstract/utils.h"
 #include "kernel/ops_utils.h"
 #include "mindspore/core/ops/upsample_trilinear_3d.h"
@@ -62,6 +63,8 @@ int UpsampleTrilinear3DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
   std::vector<int64_t> output_shape = outputs[kIndex0]->GetShapeVector();
   n_ = input_shape[kIndex0];
@@ -76,6 +79,13 @@ int UpsampleTrilinear3DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
+  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
+    scales_ = std::vector<double>(kIndex3, static_cast<double>(kValueZero));
+  } else {
+    if (!TryGetFloatValue(inputs, kIndex1, kernel_name_, &scales_)) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
+    }
+  }
   return KRET_OK;
 }
 
@@ -83,28 +93,9 @@ template <typename T, typename S>
 bool UpsampleTrilinear3DGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                    const std::vector<AddressPtr> &workspace,
                                                    const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
-    scales_ = std::vector<double>(kIndex3, static_cast<double>(kValueZero));
-  } else {
-    std::vector<float> tmp{kIndex3, kValueZero};
-    auto scales_device = GetDeviceAddress<float>(inputs, kIndex1);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(reinterpret_cast<void *>(tmp.data()), reinterpret_cast<void *>(scales_device),
-                      input_size_list_[kIndex1], cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-      "For '" << kernel_name_ << "', "
-              << "cudaMemcpy input 'scales' to host failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - " + kernel_name_);
-    for (size_t i = 0; i < kIndex3; ++i) {
-      scales_[i] = static_cast<double>(tmp[i]);
-    }
-  }
-
   const S depth_scale = AreaPixelComputeScale<S>(input_d_, output_d_, align_corners_, scales_[kIndex0]);
   const S height_scale = AreaPixelComputeScale<S>(input_h_, output_h_, align_corners_, scales_[kIndex1]);
   const S width_scale = AreaPixelComputeScale<S>(input_w_, output_w_, align_corners_, scales_[kIndex2]);
-
   auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
   auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
   auto status = CalUpsampleTrilinear3D<T, S>(input, n_, c_, input_d_, input_h_, input_w_, output_d_, output_h_,

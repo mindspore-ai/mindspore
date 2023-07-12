@@ -18,6 +18,7 @@
 #include <string>
 #include <utility>
 #include "kernel/ops_utils.h"
+#include "kernel/kernel_get_value.h"
 #include "ops/upsample_trilinear_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -76,6 +77,8 @@ int UpsampleTrilinear3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpsampleTrilinear3DInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUpsampleTrilinear3DOutputNum, kernel_name_);
   // shape
   x_shape_ = inputs.at(kIndex0)->GetShapeVector();
   y_shape_ = outputs.at(kIndex0)->GetShapeVector();
@@ -92,6 +95,13 @@ int UpsampleTrilinear3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
+  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
+    scales_ = std::vector<double>(kIndex3, kValueZero);
+  } else {
+    if (!TryGetFloatValue(inputs, kIndex1, kernel_name_, &scales_, false)) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
+    }
+  }
   return KRET_OK;
 }
 
@@ -99,17 +109,6 @@ template <typename T, typename S>
 bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                    const std::vector<kernel::AddressPtr> &workspace,
                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpsampleTrilinear3DInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUpsampleTrilinear3DOutputNum, kernel_name_);
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
-    scales_ = std::vector<double>(kIndex3, kValueZero);
-  } else {
-    scales_.clear();
-    auto scales_ptr = GetDeviceAddress<float>(inputs, kIndex1);
-    for (size_t i = 0; i < kIndex3; ++i) {
-      scales_.push_back(static_cast<double>(scales_ptr[i]));
-    }
-  }
   // treat batch and channels as one dimension
   int64_t channels = x_shape_[kIndex0] * x_shape_[kIndex1];
   int64_t input_depth = x_shape_[kIndex2];
@@ -120,9 +119,6 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   int64_t output_depth = y_shape_[kIndex2];
   int64_t output_height = y_shape_[kIndex3];
   int64_t output_width = y_shape_[kIndex4];
-
-  MS_EXCEPTION_IF_CHECK_FAIL(channels > 0 && output_depth > 0 && output_height > 0 && output_width > 0,
-                             "Invalid output shape.");
 
   auto x_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto y_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);

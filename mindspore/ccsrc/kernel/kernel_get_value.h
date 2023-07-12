@@ -16,15 +16,47 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELGETVALUE_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELGETVALUE_H_
 
-#include <vector>
-#include <string>
 #include <optional>
+#include <string>
+#include <vector>
+#include "include/backend/visible.h"
 #include "ir/anf.h"
 #include "kernel/kernel.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace kernel {
+BACKEND_EXPORT std::optional<std::vector<double>> TryGetFloatValueFromInputs(const std::vector<KernelTensorPtr> &inputs,
+                                                                             const size_t input_index,
+                                                                             const std::string &kernel_name,
+                                                                             bool data_from_host);
+
+inline bool TryGetFloatValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
+                             const std::string &kernel_name, double *attr_value, bool data_from_host = true) {
+  auto res = TryGetFloatValueFromInputs(inputs, input_index, kernel_name, data_from_host);
+  if (!res.has_value()) {
+    return false;
+  }
+  if (res.value().empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', value of the dynamic attr is empty!";
+  }
+  *attr_value = res.value()[0];
+  return true;
+}
+
+inline bool TryGetFloatValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
+                             const std::string &kernel_name, std::vector<double> *attr_value,
+                             bool data_from_host = true) {
+  auto res = TryGetFloatValueFromInputs(inputs, input_index, kernel_name, data_from_host);
+  if (!res.has_value()) {
+    return false;
+  }
+  *attr_value = res.value();
+  return true;
+}
+
+BACKEND_EXPORT bool TryGetFloatValue(const CNodePtr &kernel_node, const size_t input_index,
+                                     std::vector<double> *attr_value, bool data_from_host = true);
+
 BACKEND_EXPORT std::optional<std::vector<int64_t>> TryGetIntValueFromInputs(const std::vector<KernelTensorPtr> &inputs,
                                                                             const size_t input_index,
                                                                             const std::string &kernel_name,
