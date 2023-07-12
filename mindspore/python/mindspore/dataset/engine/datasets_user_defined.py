@@ -19,6 +19,7 @@ After declaring the dataset object, you can further apply dataset operations
 (e.g. filter, skip, concat, map, batch) on it.
 """
 import builtins
+import errno
 import math
 import os
 import signal
@@ -205,14 +206,21 @@ class SamplerFn:
             if multi_process is True:
                 try:
                     worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid, self.count)
-                except Exception:
-                    raise RuntimeError("Init multiprocessing.Queue() failed, This might be caused by insufficient shm, "
-                                       "and the recommended shm size is at least 5 GB.")
-                worker.daemon = True
-                # When multi processes fork a subprocess, the lock of the main process is copied to the subprocess,
-                # which may cause deadlock. Therefore, the subprocess startup is performed in the initialization phase.
-                # In this phase, the main process is not locked.
-                worker.start()
+                    worker.daemon = True
+                    # When multi processes fork a subprocess, the lock of the main process is copied to the subprocess,
+                    # which may cause deadlock. Therefore, the subprocess startup is performed in the initialization
+                    # phase. In this phase, the main process is not locked.
+                    worker.start()
+                except OSError as e:
+                    if e.errno == errno.EMFILE:
+                        raise RuntimeError("Failed to launch multiprocessing of GeneratorDataset: "
+                                           "Too many open files. Please check if `num_parallel_workers` "
+                                           "is set too large, or you are creating iterators multiple times. "
+                                           "You can also increase the limit using `ulimit -n` in the shell "
+                                           "to avoid this error.")
+                    raise
+                except Exception as e:
+                    raise RuntimeError("Failed to launch multiprocessing of GeneratorDataset: {0}".format(e))
                 self.pids.append(worker.pid)
                 self.need_join = True
             else:
@@ -773,18 +781,16 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             # memory enabled, there will be an exception thrown if there is not enough shared memory available
             if self.source_len == -1:
                 raise RuntimeError("Attempt to construct a random access dataset, '__len__' method is required!")
-            try:
-                if new_op.num_parallel_workers > 1:
-                    self.__validate_memory_usage()
 
-                    sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing,
-                                          self.max_rowsize)
-                    new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn_mp(sample_ids, sample_fn))
-                else:
-                    new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn(sample_ids, self.source))
-                new_op.sample_fn = sample_fn
-            except RuntimeError as e:
-                raise Exception(str(e))
+            if new_op.num_parallel_workers > 1:
+                self.__validate_memory_usage()
+
+                sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing,
+                                      self.max_rowsize)
+                new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn_mp(sample_ids, sample_fn))
+            else:
+                new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn(sample_ids, self.source))
+            new_op.sample_fn = sample_fn
         else:
             new_op.sampler = None
             new_op.sample_fn = sample_fn
