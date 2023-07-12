@@ -44,9 +44,7 @@ AbstractBasePtr GetAbstract(const AnfNodePtr &node) {
 
 inline bool IsPackTensor(const py::object &arg) { return py::hasattr(arg, "__pack__"); }
 
-inline bool IsHasValue(const ValuePtr &value) {
-  return (value != nullptr && !value->isa<ValueAny>() && !value->isa<None>());
-}
+inline bool IsHasValue(const ValuePtr &value) { return (value != nullptr && !value->isa<ValueAny>()); }
 
 bool IsTensorSequence(const py::object &arg) {
   if (!py::isinstance<py::tuple>(arg) && !py::isinstance<py::list>(arg)) {
@@ -77,6 +75,7 @@ std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim
   }
   // Python InferShape and InferValue.
   if ((infer_res == nullptr || need_infer_value) && !IsHasValue(val)) {
+    py::gil_scoped_acquire acquire;
     auto prim_py = prim->cast<PrimitivePyPtr>();
     auto py_infer_args = PreparePyInputs(abs_list);
     if (infer_res == nullptr) {
@@ -204,18 +203,18 @@ py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) 
     }
     return ValueToPyData(val);
   } else if (abs->isa<abstract::AbstractSequence>()) {
-    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>()->elements();
-    py::tuple tuple_node(abs_seq.size());
-    for (size_t i = 0; i < abs_seq.size(); ++i) {
-      tuple_node[i] = ConvertAbstractToParameter(abs_seq[i]);
-    }
-    return tuple_node;
-  } else if (abs->isa<abstract::AbstractNone>()) {
     if (!is_pynative_mode) {
       auto param = graphs_.top()->add_parameter();
       param->set_abstract(abs);
+      return ConvertCNodeToPython(param);
+    } else {
+      auto abs_seq = abs->cast<abstract::AbstractSequencePtr>()->elements();
+      py::tuple tuple_node(abs_seq.size());
+      for (size_t i = 0; i < abs_seq.size(); ++i) {
+        tuple_node[i] = ConvertAbstractToParameter(abs_seq[i]);
+      }
+      return tuple_node;
     }
-    return py::none();
   } else {
     if (!abs->isa<abstract::AbstractTensor>()) {
       MS_LOG(WARNING) << "Input should be Tensor, but get " << abs->ToString() << ".";
@@ -272,10 +271,16 @@ AnfNodePtr PackExpander::CNodeInfer(const CNodePtr &cnode) const {
 
 AnfNodePtr PackExpander::EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const {
   AbstractBasePtrList abs_list;
-  (void)std::transform(cnode_inputs.cbegin(), cnode_inputs.cend(), std::back_inserter(abs_list), GetAbstract);
+  {
+    py::gil_scoped_release release;
+    (void)std::transform(cnode_inputs.cbegin(), cnode_inputs.cend(), std::back_inserter(abs_list), GetAbstract);
+  }
   auto node = mindspore::prim::GenerateCNode(graphs_.top(), prim->name(), prim, abs_list, cnode_inputs);
-  auto cnode = node->cast<CNodePtr>();
-  node = CNodeInfer(cnode);
+  {
+    py::gil_scoped_release release;
+    auto cnode = node->cast<CNodePtr>();
+    node = CNodeInfer(cnode);
+  }
   return node;
 }
 
@@ -328,6 +333,7 @@ bool PackExpander::SetMixedPrecision(const py::object &obj) {
 }
 
 void PackExpander::RecoverMixedPrecision() {
+  py::gil_scoped_release release;
   mix_precision_types_.pop();
   if (!mix_precision_types_.empty()) {
     return SetMixedPrecisionFlagToGraph();
