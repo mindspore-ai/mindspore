@@ -96,6 +96,40 @@ class _AutoParallelContext:
         if self._context_handle is None:
             raise ValueError("Context handle is none in context!!!")
 
+    def set_frontend_scheduling(self, frontend_scheduling):
+        """
+        Enable/disable frontend scheduling pass.
+
+        Args:
+            frontend_scheduling(bool): enable/disable flag.
+        """
+        self.check_context_handle()
+        if not isinstance(frontend_scheduling, bool):
+            raise TypeError("frontend_scheduling is not a bool!")
+        self._context_handle.set_frontend_scheduling(frontend_scheduling)
+
+    def get_frontend_scheduling(self):
+        """ Get frontend scheduling flag """
+        self.check_context_handle()
+        return self._context_handle.get_frontend_scheduling()
+
+    def set_micro_scheduling(self, micro_scheduling):
+        """
+        Enable/disable micro scheduling pass.
+
+        Args:
+            micro_scheduling(bool): enable/disable flag.
+        """
+        self.check_context_handle()
+        if not isinstance(micro_scheduling, bool):
+            raise TypeError("micro_scheduling is not a bool!")
+        self._context_handle.set_micro_scheduling(micro_scheduling)
+
+    def get_micro_scheduling(self):
+        """ Get micro scheduling flag """
+        self.check_context_handle()
+        return self._context_handle.get_micro_scheduling()
+
     def set_device_num(self, device_num):
         """
         Set device num for auto parallel.
@@ -1047,6 +1081,8 @@ def auto_parallel_context():
 
 
 _set_auto_parallel_context_func_map = {
+    "micro_scheduling": auto_parallel_context().set_micro_scheduling,
+    "frontend_scheduling": auto_parallel_context().set_frontend_scheduling,
     "device_num": auto_parallel_context().set_device_num,
     "global_rank": auto_parallel_context().set_global_rank,
     "gradients_mean": auto_parallel_context().set_gradients_mean,
@@ -1076,6 +1112,8 @@ _set_auto_parallel_context_func_map = {
 
 
 _get_auto_parallel_context_func_map = {
+    "micro_scheduling": auto_parallel_context().get_micro_scheduling,
+    "frontend_scheduling": auto_parallel_context().get_frontend_scheduling,
     "device_num": auto_parallel_context().get_device_num,
     "global_rank": auto_parallel_context().get_global_rank,
     "gradients_mean": auto_parallel_context().get_gradients_mean,

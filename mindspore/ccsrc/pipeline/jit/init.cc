@@ -265,6 +265,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_device_num", &ParallelContext::device_num, "Get device num.")
     .def("set_hccl_test_avaible", &ParallelContext::set_hccl_test_available, "Set hccl test available.")
     .def("set_device_num", &ParallelContext::set_device_num, "Set device num.")
+    .def("set_frontend_scheduling", &ParallelContext::set_frontend_scheduling, "Set frontend scheduling.")
+    .def("get_frontend_scheduling", &ParallelContext::get_frontend_scheduling, "Get frontend scheduling.")
+    .def("set_micro_scheduling", &ParallelContext::set_micro_scheduling, "Set micro scheduling.")
+    .def("get_micro_scheduling", &ParallelContext::get_micro_scheduling, "Get micro scheduling.")
     .def("get_device_num_is_set", &ParallelContext::device_num_is_set, "Get device num is set.")
     .def("set_fusion_threshold_mb", &ParallelContext::set_fusion_threshold_mb, "Set fusion threshold.")
     .def("set_allgather_fusion_threshold_mb", &ParallelContext::set_allgather_fusion_threshold_mb,

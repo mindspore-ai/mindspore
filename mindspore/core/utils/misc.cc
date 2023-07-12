@@ -15,6 +15,8 @@
  */
 
 #include "utils/misc.h"
+#include <complex>
+#include <map>
 #ifndef _MSC_VER
 #include <cxxabi.h>
 #endif
@@ -32,5 +34,30 @@ std::string demangle(const char *name) {
   std::unique_ptr<char, void (*)(void *)> res{abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free};
   return (status == 0) ? res.get() : name;
 #endif
+}
+
+static std::map<TypeId, size_t> datatype_size_map = {{TypeId::kNumberTypeFloat16, sizeof(float) / 2},  // 1/2 of float
+                                                     {TypeId::kNumberTypeFloat32, sizeof(float)},
+                                                     {TypeId::kNumberTypeFloat64, sizeof(double)},
+                                                     {TypeId::kNumberTypeInt8, sizeof(int8_t)},
+                                                     {TypeId::kNumberTypeInt16, sizeof(int16_t)},
+                                                     {TypeId::kNumberTypeInt32, sizeof(int32_t)},
+                                                     {TypeId::kNumberTypeInt64, sizeof(int64_t)},
+                                                     {TypeId::kNumberTypeUInt8, sizeof(uint8_t)},
+                                                     {TypeId::kNumberTypeUInt16, sizeof(uint16_t)},
+                                                     {TypeId::kNumberTypeUInt32, sizeof(uint32_t)},
+                                                     {TypeId::kNumberTypeUInt64, sizeof(uint64_t)},
+                                                     {TypeId::kNumberTypeBool, sizeof(bool)},
+                                                     {TypeId::kNumberTypeFloat, sizeof(float)},
+                                                     {TypeId::kNumberTypeComplex64, sizeof(std::complex<float>)},
+                                                     {TypeId::kNumberTypeComplex128, sizeof(std::complex<double>)}};
+
+size_t GetDataTypeSize(const TypeId &type) {
+  if (datatype_size_map.find(type) != datatype_size_map.end()) {
+    return datatype_size_map[type];
+  } else {
+    MS_LOG(ERROR) << "Illegal tensor data type!";
+    return kTypeUnknown;
+  }
 }
 }  // namespace mindspore

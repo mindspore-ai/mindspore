@@ -139,10 +139,17 @@ class COMMON_EXPORT ParallelContext {
     enable_all_gather_fusion_ = enable_all_gather_fusion;
   }
   bool enable_all_gather_fusion() const { return enable_all_gather_fusion_; }
+
   void set_enable_reduce_scatter_fusion(bool enable_reduce_scatter_fusion) {
     enable_reduce_scatter_fusion_ = enable_reduce_scatter_fusion;
   }
   bool enable_reduce_scatter_fusion() const { return enable_reduce_scatter_fusion_; }
+
+  void set_frontend_scheduling(bool frontend_scheduling) { frontend_scheduling_ = frontend_scheduling; }
+  bool get_frontend_scheduling() const { return frontend_scheduling_; }
+
+  void set_micro_scheduling(bool micro_scheduling) { micro_scheduling_ = micro_scheduling; }
+  bool get_micro_scheduling() const { return micro_scheduling_; }
 
   void set_strategy_ckpt_load_file(const std::string &strategy_ckpt_load_file);
   std::string strategy_ckpt_load_file() const { return strategy_ckpt_load_file_; }
@@ -225,6 +232,9 @@ class COMMON_EXPORT ParallelContext {
   bool enable_all_reduce_fusion_;
   bool enable_all_gather_fusion_;
   bool enable_reduce_scatter_fusion_;
+  bool frontend_scheduling_;
+  bool micro_scheduling_;
+
   std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_indices_;
   std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_sizes_;
   std::string strategy_ckpt_load_file_;

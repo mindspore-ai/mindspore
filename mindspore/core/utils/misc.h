@@ -21,6 +21,7 @@
 #include <string>
 #include <sstream>
 #include "utils/log_adapter.h"
+#include "mindspore/core/mindapi/base/type_id.h"
 
 namespace mindspore {
 MS_CORE_API extern const int RET_SUCCESS;
@@ -34,5 +35,12 @@ MS_CORE_API extern const int RET_BREAK;
 ///
 /// \return The demangled name.
 MS_CORE_API extern std::string demangle(const char *name);
+
+/// \brief Utility function to calculate the size of data type.
+///
+/// \param[in] type The data type
+///
+/// \return the buff size for the type in
+MS_CORE_API extern size_t GetDataTypeSize(const TypeId &type);
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_MISC_H_

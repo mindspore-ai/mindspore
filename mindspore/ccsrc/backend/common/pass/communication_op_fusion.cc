@@ -29,6 +29,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "utils/hash_map.h"
+#include "ir/manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -464,6 +465,24 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
       tuple_getitem->set_abstract(communication_op_node_item->abstract());
       if (kernel_graph->IsInternalOutput(communication_op_node_item, 0)) {
         kernel_graph->ReplaceInternalOutput(communication_op_node_item, new_communication_op, 0, LongToSize(offset));
+      }
+      if (parallel::ParallelContext::GetInstance()->get_frontend_scheduling()) {
+        auto &users = manager->node_users()[communication_op_node_item];
+        for (auto &node : users) {
+          auto cnode = node.first->cast<CNodePtr>();
+          if (cnode->HasAttr("comp_comm_scheduling_depend")) {
+            MS_LOG(INFO) << "Start EdgeRemove: AllReduce to comp_comm_scheduling_depend";
+            std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), cnode->input(2)->cast<CNodePtr>()};
+            auto depend_node = cnode->func_graph()->NewCNode(depend_inputs);
+            depend_node->set_abstract(cnode->input(1)->cast<CNodePtr>()->abstract()->Clone());
+            depend_node->AddAttr("comp_comm_scheduling_depend", MakeValue(true));
+            MS_EXCEPTION_IF_NULL(depend_node);
+            if (!manager->Replace(cnode, depend_node)) {
+              MS_LOG(INTERNAL_EXCEPTION) << "Manager replace node failed";
+            }
+            MS_LOG(INFO) << "End EdgeRemove: AllReduce to comp_comm_scheduling_depend";
+          }
+        }
       }
       if (!manager->Replace(communication_op_node_item, tuple_getitem)) {
         MS_LOG(INTERNAL_EXCEPTION) << "Manager replace node failed";

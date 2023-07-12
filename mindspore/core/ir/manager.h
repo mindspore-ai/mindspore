@@ -365,12 +365,14 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   // Dynamic Analysis
   std::shared_ptr<ParentComputer> func_graph_parent_;
 
+  void ProcessEdgeRemove(const AnfNodePtr &node, int index, const AnfNodePtr &input);
+
  private:
   // Erase OneGraph From Manager
   void EraseOneGraph(const FuncGraphPtr &fg);
   void AddIntoManaged(const FuncGraphPtr &fg);
   void ProcessEdgeAdd(const AnfNodePtr &node, int index, const AnfNodePtr &input);
-  void ProcessEdgeRemove(const AnfNodePtr &node, int index, const AnfNodePtr &input);
+  // void ProcessEdgeRemove(const AnfNodePtr &node, int index, const AnfNodePtr &input);
   void ProcessInputsEdgeAdd(const CNodePtr &cnode);
   void ProcessInputsEdgeRemove(const CNodePtr &cnode);
   void AcquireNodes(std::vector<AnfNodePtr> &&nodes);

@@ -55,15 +55,6 @@ mindspore::HashMap<std::string, OpAdapterDescPtr> adpt_map_ = {
   {kNameCustomOp, std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Operator>>())}};
 }  // namespace
 
-size_t TransformUtil::GetDataTypeSize(const MeDataType &type) {
-  if (datatype_size_map.find(type) != datatype_size_map.end()) {
-    return datatype_size_map[type];
-  } else {
-    MS_LOG(ERROR) << "Illegal tensor data type!";
-    return kErrorSize;
-  }
-}
-
 AnfGraphPtr GetAnfGraph(uint32_t graph_id) { return nullptr; }
 MeTensorPtr ConvertGeTensor(const GeTensorPtr ge_tensor, const ShapeVector &request_dims) { return nullptr; }
 MeTensorPtr ConvertGeTensor(const GeTensorPtr &ge_tensor) { return nullptr; }
