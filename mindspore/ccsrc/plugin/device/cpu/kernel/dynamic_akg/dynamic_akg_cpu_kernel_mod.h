@@ -22,17 +22,15 @@
 #include <map>
 #include <utility>
 #include <unordered_map>
-#include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_manager.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
+#include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-class DynamicAkgCpuKernelManager : public AkgCpuKernelManagerAbs {
+class DynamicAkgCpuKernelManager : public AkgCpuKernelManager {
  public:
   DynamicAkgCpuKernelManager() = default;
   ~DynamicAkgCpuKernelManager();
 
-  void *GetFunction(const std::string &kernel_name) override;
   void GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name, std::string *fn_so,
                                 std::string *fn_kernel) const override;
 };

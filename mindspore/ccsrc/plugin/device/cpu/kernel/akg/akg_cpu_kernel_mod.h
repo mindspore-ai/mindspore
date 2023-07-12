@@ -19,9 +19,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 #include <unordered_map>
 #include "kernel/kernel.h"
-#include "plugin/device/cpu/kernel/akg/akg_kernel_loader.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_manager.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 
@@ -30,12 +30,11 @@ namespace kernel {
 class AkgCpuKernelManager : public AkgCpuKernelManagerAbs {
  public:
   AkgCpuKernelManager() = default;
-  ~AkgCpuKernelManager() = default;
+  virtual ~AkgCpuKernelManager();
 
-  void *GetFunction(const std::string &kernel_name) override;
-  void GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name, std::string *fn_so,
-                                std::string *fn_kernel) const override;
-  AkgLibraryLoader object_loader;
+  void *GetFunction(const std::string &kernel_name);
+  virtual void GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name, std::string *fn_so,
+                                        std::string *fn_kernel) const;
 };
 using AkgCpuKernelManagerPtr = std::shared_ptr<AkgCpuKernelManager>;
 class AkgCpuKernelMod : public CpuKernelMod {

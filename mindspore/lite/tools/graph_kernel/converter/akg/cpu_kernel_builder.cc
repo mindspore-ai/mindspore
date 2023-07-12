@@ -126,8 +126,8 @@ bool CpuKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
 bool CpuKernelBuilder::GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &custom_node,
                                               const CNodePtr &old_cnode) {
   auto fg = GetCNodeFuncGraph(old_cnode);
-  auto kernel_name = GetValue<std::string>(fg->get_attr("kernel_name")).append(".o");
-  auto real_kernel_name = kernel_name.substr(0, kernel_name.find("_kernel")).append(".o");
+  auto kernel_name = GetValue<std::string>(fg->get_attr("kernel_name")).append(".so");
+  auto real_kernel_name = kernel_name.substr(0, kernel_name.find("_kernel")).append(".so");
   auto param_node = CreateAkgKernelParameter(func_graph, "./akg_kernel_meta/" + real_kernel_name, real_kernel_name);
   if (param_node == nullptr) {
     return false;
