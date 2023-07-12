@@ -438,7 +438,7 @@ class Cell(Cell_):
         if self._enable_forward_pre_hook:
             cast_inputs = self._run_forward_pre_hook(cast_inputs)
         if self._enable_backward_hook:
-            output = self._backward_hook_construct(*cast_inputs)
+            output = self._backward_hook_construct(*cast_inputs, **kwargs)
         elif hasattr(self, "_shard_fn"):
             output = self._shard_fn(*cast_inputs, **kwargs)
         else:
@@ -1989,12 +1989,13 @@ class Cell(Cell_):
             handle = HookHandle(self, backward_hook_key, "_cell_backward_hook")
         return handle
 
-    def _backward_hook_construct(self, *inputs):
+    def _backward_hook_construct(self, *inputs, **kwargs):
         """
         Backward hook construct method to replace original construct method.
 
         Args:
             inputs: The input objects of Cell object.
+            kwargs (dict): Dictionary of variable keyword parameters.
 
         Returns:
             - **outputs** - The output objects of Cell object.
@@ -2006,10 +2007,11 @@ class Cell(Cell_):
             inputs = self._cell_backward_hook(inputs)
         else:
             inputs = self._cell_backward_hook(*inputs)
+            inputs = (inputs,)
         if isinstance(inputs, tuple):
-            outputs = self.construct(*inputs)
+            outputs = self.construct(*inputs, **kwargs)
         else:
-            outputs = self.construct(inputs)
+            outputs = self.construct(inputs, **kwargs)
         outputs = self._cell_backward_hook(outputs)
         return outputs
 
