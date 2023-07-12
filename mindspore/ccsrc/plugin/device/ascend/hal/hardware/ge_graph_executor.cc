@@ -538,7 +538,7 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
       }
       MS_LOG(INFO) << "ge input data " << ge_inputs.size() << " name: " << name << " size: " << output_addr->GetSize();
     } else {
-      need_update_input.emplace_back(node, ge_inputs.size());
+      (void)need_update_input.emplace_back(node, ge_inputs.size());
     }
     (void)ge_inputs.emplace_back(std::move(ge_tensor));
   }
@@ -573,8 +573,8 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
     auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(shapes, host_type, kOpFormat_DEFAULT);
     MS_EXCEPTION_IF_NULL(ge_tensor_desc);
     GeTensor ge_tensor(*ge_tensor_desc);
-    ge_outputs.emplace_back(std::move(ge_tensor));
-    graph_outputs.emplace_back(output_node, index);
+    (void)ge_outputs.emplace_back(std::move(ge_tensor));
+    (void)graph_outputs.emplace_back(output_node, index);
   }
   MS_EXCEPTION_IF_CHECK_FAIL(
     ge_outputs.size() == graph_outputs.size(),
@@ -918,8 +918,8 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       MS_LOG(EXCEPTION) << kv.first->DebugString() << ", index: " << kv.second << " is greater than "
                         << ge_inputs.size();
     }
-    ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
-                                 [](void *) {});
+    (void)ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()),
+                                       output_addr->GetSize(), [](void *) {});
   }
   for (size_t i = 0; i < ge_inputs.size(); ++i) {
     MS_LOG(INFO) << "Input " << i << " size " << ge_inputs[i].GetSize() << ", graph: " << kernel_graph->graph_id();
