@@ -418,9 +418,12 @@ LRScheduler类
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.StepLR
+    mindspore.nn.ChainedScheduler
+    mindspore.nn.ExponentialLR
     mindspore.nn.LinearLR
     mindspore.nn.LRScheduler
+    mindspore.nn.PolynomialLR
+    mindspore.nn.StepLR
 
 图像处理层
 -----------
