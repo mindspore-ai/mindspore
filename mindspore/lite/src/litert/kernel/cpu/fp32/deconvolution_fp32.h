@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_DECONVOLUTION_FP32_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_DECONVOLUTION_FP32_H_
 
+#ifdef ENABLE_NNACL_KERNEL_LIB
 #include <float.h>
 #include <vector>
 #include "src/litert/lite_kernel.h"
@@ -65,4 +66,5 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   float *output_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
+#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_DECONVOLUTION_FP32_H_

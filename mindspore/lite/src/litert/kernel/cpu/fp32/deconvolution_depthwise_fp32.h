@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_DECONVOLUTION_DEPTHWISE_FP32_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_DECONVOLUTION_DEPTHWISE_FP32_H_
 
+#ifdef ENABLE_NNACL_KERNEL_LIB
 #include <vector>
 #include "src/litert/lite_kernel.h"
 #include "src/litert/kernel/cpu/base/convolution_base.h"
@@ -49,5 +50,6 @@ class DeconvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
   bool need_align_ = false;
 };
 }  // namespace mindspore::kernel
+#endif
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_DECONVOLUTION_DEPTHWISE_FP32_H_
