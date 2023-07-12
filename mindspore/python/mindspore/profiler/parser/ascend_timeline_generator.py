@@ -81,7 +81,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         if cpu_timeline_list:
             timeline_list.extend(cpu_timeline_list)
             timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
-        min_cycle_counter = timeline_list[0][2]
+        min_cycle_counter = 0
+        if timeline_list:
+            min_cycle_counter = timeline_list[0][2]
 
         # Generate step time.
         self._set_step_start_and_end_op_name(timeline_list)
