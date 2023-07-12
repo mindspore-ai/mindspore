@@ -39,7 +39,6 @@ class ReduceBaseCPUKernel : public LiteKernel {
   void CalculateTmpBufferSize();
   void CalculateInnerOuterSize();
   void DecideIfOnlyCopy();
-  int CopyInputToOutput();
 
   int axes_[MAX_SHAPE_SIZE] = {0};
   int num_axes_{0};

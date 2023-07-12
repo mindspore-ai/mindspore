@@ -205,31 +205,4 @@ void ReduceBaseCPUKernel::DecideIfOnlyCopy() {
     only_copy_ = false;
   }
 }
-
-int ReduceBaseCPUKernel::CopyInputToOutput() {
-  auto in_tensor = in_tensors().front();
-  CHECK_NULL_RETURN(in_tensor);
-  auto out_tensor = out_tensors().front();
-  CHECK_NULL_RETURN(out_tensor);
-  if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
-      in_tensor->allocator() != ms_context_->allocator || op_parameter_->is_train_session_) {
-    CHECK_NULL_RETURN(out_tensor->data());
-    CHECK_NULL_RETURN(in_tensor->data());
-    MS_CHECK_FALSE(in_tensor->Size() == 0, RET_ERROR);
-    if (in_tensor->data() != out_tensor->data()) {
-      memcpy(out_tensor->data(), in_tensor->data(), in_tensor->Size());
-    }
-    return RET_OK;
-  }
-
-  out_tensor->FreeData();
-  out_tensor->ResetRefCount();
-  out_tensor->set_data(in_tensor->data());
-  if (in_tensor->IsConst()) {
-    out_tensor->set_own_data(false);
-  } else {
-    out_tensor->set_own_data(in_tensor->own_data());
-  }
-  return RET_OK;
-}
 }  // namespace mindspore::kernel
