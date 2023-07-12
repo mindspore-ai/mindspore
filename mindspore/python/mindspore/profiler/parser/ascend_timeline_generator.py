@@ -76,6 +76,11 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
 
         timeline_list = timeline_list.tolist()
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._model)
+        cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
+        if cpu_timeline_list:
+            timeline_list.extend(cpu_timeline_list)
+            timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
         min_cycle_counter = timeline_list[0][2]
 
         # Generate step time.
@@ -93,7 +98,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         if not step_time_list:
             iteration_time = op_summary[-1]['Task Start Time'] - op_summary[0]['Task Start Time'] + op_summary[-1][
                 'Task Duration'] + op_summary[-1]['Task Wait Time']
-            step_time_list = [[1, 'Steps', op_summary[0]['Task Start Time'], iteration_time]]
+            step_time_list = [['1', 'Steps', op_summary[0]['Task Start Time'], iteration_time]]
 
         # Add Scope Name.
         default_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "Default")

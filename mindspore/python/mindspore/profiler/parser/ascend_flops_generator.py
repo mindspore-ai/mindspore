@@ -72,7 +72,7 @@ class AscendFlopsGenerator:
         """
         try:
             with os.fdopen(os.open(flops_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as fp:
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR), 'w') as fp:
                 writer = csv.writer(fp)
                 writer.writerow(self.flops.dtype.names)
                 writer.writerows(self.flops.tolist())
@@ -80,14 +80,15 @@ class AscendFlopsGenerator:
             logging.critical('Errot occurred when write flops file: %s', err)
             raise ProfilerIOException()
         if os.path.exists(flops_path):
-            os.chmod(flops_path, stat.ST_MODE | stat.S_IWRITE)
+            os.chmod(flops_path, stat.S_IREAD | stat.S_IWRITE)
 
         try:
             with os.fdopen(os.open(flops_summary_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as json_file:
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
+                           'w') as json_file:
                 json.dump(self.flops_summary, json_file)
         except (IOError, OSError) as err:
             logging.critical('Errot occurred when write step trace point info file: %s', err)
             raise ProfilerIOException()
         if os.path.exists(flops_summary_path):
-            os.chmod(flops_summary_path, stat.ST_MODE | stat.S_IWRITE)
+            os.chmod(flops_summary_path, stat.S_IREAD | stat.S_IWRITE)

@@ -226,7 +226,8 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
                 logger.error("Error occur when analyse line: %s, Details is: %s", row, e)
                 continue
     if memory_info:
-        with os.fdopen(os.open(output_memory_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as csv_file:
+        with os.fdopen(os.open(output_memory_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
+                       'w') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=memory_header)
             csv_writer.writeheader()
             for item in memory_info:
@@ -254,7 +255,8 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
 
     if time_line:
         timeline_file = validate_and_normalize_path(output_timeline_file)
-        with os.fdopen(os.open(timeline_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as json_file:
+        with os.fdopen(os.open(timeline_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
+                       'w') as json_file:
             json.dump(time_line, json_file)
     else:
         logger.warning("No valid time_stamp is record in file: %s", input_file)
@@ -629,9 +631,6 @@ class Profiler:
         """
         if self._msprof_enable:
             return
-
-        self._start_time = int(time.time() * 1000000)
-        logger.info("Profiling: start time: %d", self._start_time)
 
         if not self._has_started:
             if not self._has_started_twice:
@@ -1094,6 +1093,11 @@ class Profiler:
 
     def _ascend_flops_analyse(self, op_summary):
         """Get op FLOPs from op_summary, write output_op_flops_x.csv."""
+        if len(op_summary.dtype) != 17:
+            logger.warning(
+                "[Profiler] Can not found cube fops and vector fops data in the op summary."
+            )
+
         try:
             dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
 
@@ -1182,9 +1186,11 @@ class Profiler:
         self._minddata_analyse(source_path)
         if self._op_time:
             op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path)
+            graph_ids = np.unique(op_summary['Model ID']).tolist()
             points = self._ascend_fpbp_analyse(op_summary, steptrace)
             self._ascend_op_analyse(op_summary, op_statistic)
-            self._ascend_step_trace_analyse(steptrace)
+            if len(graph_ids) == 1:
+                self._ascend_step_trace_analyse(steptrace)
             self._ascend_timeline_analyse(source_path, op_summary, steptrace)
             if self._dynamic_status:
                 self._ascend_dynamic_net_analyse(op_summary)
@@ -1192,7 +1198,6 @@ class Profiler:
             self._ascend_graph_memory_analyse(points)
             self._ascend_graph_hccl_analyse(source_path)
             self._ascend_graph_msadvisor_analyse(job_id)
-            graph_ids = np.unique(op_summary['Model ID']).tolist()
             ProfilerInfo.set_graph_ids(graph_ids)
 
     def _ascend_graph_start(self):
