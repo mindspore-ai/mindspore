@@ -544,15 +544,17 @@ if(PLATFORM_ARM64)
             install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib
                     RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
-                    DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_core.so.4.5
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
-                    DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgcodecs.so.4.5
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
-                    DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgproc.so.4.5
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(MSLITE_ENABLE_OPENCV)
+                install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
+                        DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_core.so.4.5
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
+                        DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgcodecs.so.4.5
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
+                        DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgproc.so.4.5
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
             if(MSLITE_ENABLE_ACL)
                 set(LITE_ACL_DIR ${TOP_DIR}/mindspore/lite/build/tools/converter/adapter/acl)
                 install(FILES ${LITE_ACL_DIR}/mslite_shared_lib/libmslite_shared_lib.so
@@ -587,16 +589,17 @@ if(PLATFORM_ARM64)
             if(MSLITE_ENABLE_RUNTIME_CONVERT)
                 install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
                         DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-
-                install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
-                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_core.so.4.5
-                        COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
-                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5
-                        COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
-                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
-                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                if(MSLITE_ENABLE_OPENCV)
+                    install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_core.so.4.5
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                endif()
             endif()
             if((MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
                 AND MSLITE_ENABLE_GRAPH_KERNEL AND CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -765,12 +768,14 @@ elseif(WIN32)
         install(FILES ${GLOG_LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
-        file(GLOB_RECURSE OPENCV_LIB_LIST
-                ${opencv_LIBPATH}/../bin/libopencv_core*
-                ${opencv_LIBPATH}/../bin/libopencv_imgcodecs*
-                ${opencv_LIBPATH}/../bin/libopencv_imgproc*
-                )
-        install(FILES ${OPENCV_LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_OPENCV)
+            file(GLOB_RECURSE OPENCV_LIB_LIST
+                    ${opencv_LIBPATH}/../bin/libopencv_core*
+                    ${opencv_LIBPATH}/../bin/libopencv_imgcodecs*
+                    ${opencv_LIBPATH}/../bin/libopencv_imgproc*
+                    )
+            install(FILES ${OPENCV_LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         if(NOT MSVC AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
             __install_micro_wrapper()
             __install_micro_codegen()
@@ -951,15 +956,17 @@ else()
         install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
-                DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_core.so.4.5
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
-                DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgcodecs.so.4.5
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
-                DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgproc.so.4.5
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_OPENCV)
+            install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
+                    DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_core.so.4.5
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
+                    DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgcodecs.so.4.5
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
+                    DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgproc.so.4.5
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
 
         if(MSLITE_ENABLE_ACL)
             set(LITE_ACL_DIR ${TOP_DIR}/mindspore/lite/build/tools/converter/adapter/acl)
@@ -995,15 +1002,17 @@ else()
             install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
 
-            install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
-                    DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_core.so.4.5
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
-                    DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
-                    DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(MSLITE_ENABLE_OPENCV)
+                install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
+                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_core.so.4.5
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
+                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
+                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
         endif()
         if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
             __install_micro_wrapper()

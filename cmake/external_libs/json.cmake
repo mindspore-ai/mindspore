@@ -24,8 +24,8 @@ if(EXISTS ${TOP_DIR}/mindspore/lite/providers/json/native_json.cfg)
 endif()
 if(ENABLE_NATIVE_JSON)
     file(STRINGS ${TOP_DIR}/mindspore/lite/providers/json/native_json.cfg native_json_path)
-    mindspore_add_pkg(nlohmann_json373
-            VER 3.7.3
+    mindspore_add_pkg(nlohmann_json3101
+            VER 3.10.1
             HEAD_ONLY ${INCLUDE}
             DIR ${native_json_path})
     add_library(mindspore::json ALIAS nlohmann_json3101)
