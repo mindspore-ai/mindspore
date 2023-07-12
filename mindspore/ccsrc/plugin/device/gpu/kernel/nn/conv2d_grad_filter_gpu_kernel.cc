@@ -214,14 +214,16 @@ void ConvGradFilterBkwGpuKernelMod::InitSizeLists() {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionBackwardFilterWorkspaceSize(cudnn_handle_, padded_descriptor_, dy_desc_, conv_desc_, dw_desc_,
                                                      algo_, reinterpret_cast<size_t *>(&workspace_size_)),
-      "cudnnGetConvolutionBackwardFilterWorkspaceSize failed");
+      GetConvBwdFilterInfo("cudnnGetConvolutionBackwardFilterWorkspaceSize failed", padded_descriptor_, dy_desc_,
+                           conv_desc_, dw_desc_));
     workspace_size_list_.push_back(padded_size_);
   } else {
     if (!is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnGetConvolutionBackwardFilterWorkspaceSize(cudnn_handle_, x_desc_, dy_desc_, conv_desc_, dw_desc_, algo_,
                                                        reinterpret_cast<size_t *>(&workspace_size_)),
-        "cudnnGetConvolutionBackwardFilterWorkspaceSize failed");
+        GetConvBwdFilterInfo("cudnnGetConvolutionBackwardFilterWorkspaceSize failed", padded_descriptor_, dy_desc_,
+                             conv_desc_, dw_desc_));
     }
   }
   (void)workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size_);

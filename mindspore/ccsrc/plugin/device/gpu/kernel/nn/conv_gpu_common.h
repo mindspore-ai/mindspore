@@ -54,6 +54,107 @@ static std::unordered_map<std::string, cudnnConvolutionBwdFilterAlgo_t> cudnn_bw
   {"winograd_nonfused", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED},
   {"fft_tiling", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT_TILING}};
 
+template <typename T>
+std::string GetArrayText(const T *values, const size_t len) {
+  std::ostringstream oss;
+  oss << "[";
+  for (size_t i = 0; i < len; ++i) {
+    if (i > 0) {
+      oss << ", ";
+    }
+    oss << values[i];
+  }
+  oss << "]";
+  return oss.str();
+}
+
+constexpr size_t CONV2D_DIM_SIZE = 2;
+constexpr size_t CONV2D_INPUT_DIM = 4;
+
+// get conv_desc info
+static std::ostream &operator<<(std::ostream &os, const cudnnConvolutionDescriptor_t conv_desc) {
+  int arrayLength;
+  int padA[CONV2D_DIM_SIZE];
+  int strideA[CONV2D_DIM_SIZE];
+  int dilationA[CONV2D_DIM_SIZE];
+  cudnnConvolutionMode_t mode;
+  cudnnDataType_t computeType;
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetConvolutionNdDescriptor(conv_desc, CONV2D_DIM_SIZE, &arrayLength, padA,
+                                                                      strideA, dilationA, &mode, &computeType),
+                                      "cudnnGetConvolutionNdDescriptor failed");
+
+  os << "padA = " << GetArrayText(padA, arrayLength) << ", strideA = " << GetArrayText(strideA, arrayLength)
+     << ", dilationA = " << GetArrayText(dilationA, arrayLength) << ", computeType = " << computeType;
+
+  return os;
+}
+
+// get tensor_desc info
+static std::ostream &operator<<(std::ostream &os, const cudnnTensorDescriptor_t tensor_desc) {
+  cudnnDataType_t dataType;
+  int nbDims;
+  int dimA[CONV2D_INPUT_DIM];
+  int strideA[CONV2D_INPUT_DIM];
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+    cudnnGetTensorNdDescriptor(tensor_desc, CONV2D_INPUT_DIM, &dataType, &nbDims, dimA, strideA),
+    "cudnnGetTensorNdDescriptor failed");
+  os << "dimA = " << GetArrayText(dimA, nbDims);
+
+  return os;
+}
+
+// get filter_desc info
+static std::ostream &operator<<(std::ostream &os, const cudnnFilterDescriptor_t dw_desc) {
+  cudnnDataType_t dataType;
+  cudnnTensorFormat_t format;
+  int nbDims;
+  int filterDimA[CONV2D_INPUT_DIM];
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+    cudnnGetFilterNdDescriptor(dw_desc, CONV2D_INPUT_DIM, &dataType, &format, &nbDims, filterDimA),
+    "cudnnGetFilterNdDescriptor failed");
+  os << "filterDimA = " << GetArrayText(filterDimA, nbDims) << ", format = " << format;
+
+  return os;
+}
+
+// get convolution forward info
+static std::string GetConvForwardInfo(const std::string &msg, const cudnnTensorDescriptor_t x_desc,
+                                      const cudnnFilterDescriptor_t w_desc,
+                                      const cudnnConvolutionDescriptor_t conv_desc,
+                                      const cudnnTensorDescriptor_t y_desc) {
+  std::ostringstream oss;
+
+  oss << msg << " conv_desc: " << conv_desc << " x_desc: " << x_desc << " w_desc: " << w_desc << " y_desc: " << y_desc;
+
+  return oss.str();
+}
+
+// get convolution backward data info
+static std::string GetConvBwdDataInfo(const std::string &msg, const cudnnFilterDescriptor_t &w_desc,
+                                      const cudnnTensorDescriptor_t &dy_desc,
+                                      const cudnnConvolutionDescriptor_t &conv_desc,
+                                      const cudnnTensorDescriptor_t &dx_desc) {
+  std::ostringstream oss;
+
+  oss << msg << " conv_desc: " << conv_desc << " w_desc: " << w_desc << " dy_desc: " << dy_desc
+      << " dx_desc: " << dx_desc;
+
+  return oss.str();
+}
+
+// get convolution backward filter info
+static std::string GetConvBwdFilterInfo(const std::string &msg, const cudnnTensorDescriptor_t x_desc,
+                                        const cudnnTensorDescriptor_t dy_desc,
+                                        const cudnnConvolutionDescriptor_t conv_desc,
+                                        const cudnnFilterDescriptor_t dw_desc) {
+  std::ostringstream oss;
+
+  oss << msg << " conv_desc: " << conv_desc << " x_desc: " << x_desc << " dy_desc: " << dy_desc
+      << " dw_desc: " << dw_desc;
+
+  return oss.str();
+}
+
 static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(cudnnHandle_t handle, const cudnnTensorDescriptor_t &x_desc,
                                                         const cudnnFilterDescriptor_t &w_desc,
                                                         const cudnnConvolutionDescriptor_t &conv_desc,
@@ -72,13 +173,13 @@ static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(cudnnHandle_t handle, co
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionForwardAlgorithm_v7(handle, x_desc, w_desc, conv_desc, y_desc, requested_algo_count,
                                              &returned_algo_count, &perf_results),
-      "cudnnGetConvolutionForwardAlgorithm_v7 failed");
+      GetConvForwardInfo("cudnnGetConvolutionForwardAlgorithm_v7 failed", x_desc, w_desc, conv_desc, y_desc));
     conv_algorithm = perf_results.algo;
   } else if (algo == kConvPerformanceAlgoName) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnFindConvolutionForwardAlgorithm(handle, x_desc, w_desc, conv_desc, y_desc, requested_algo_count,
                                            &returned_algo_count, &perf_results),
-      "cudnnFindConvolutionForwardAlgorithm failed");
+      GetConvForwardInfo("cudnnFindConvolutionForwardAlgorithm failed", x_desc, w_desc, conv_desc, y_desc));
     conv_algorithm = perf_results.algo;
   } else {
     MS_LOG(EXCEPTION) << "Conv fprop algo type: " << algo << " is not supported.";
@@ -88,7 +189,7 @@ static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(cudnnHandle_t handle, co
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionForwardAlgorithm(handle, x_desc, w_desc, conv_desc, y_desc,
                                           CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, 0, &conv_algorithm),
-      "cudnnGetConvolutionForwardAlgorithm failed");
+      GetConvForwardInfo("cudnnGetConvolutionForwardAlgorithm failed", x_desc, w_desc, conv_desc, y_desc));
   }
 #endif
   return conv_algorithm;
@@ -112,13 +213,13 @@ static cudnnConvolutionBwdDataAlgo_t SelectBackwardDataAlgorithm(
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionBackwardDataAlgorithm_v7(handle, w_desc, dy_desc, conv_desc, dx_desc, requested_algo_count,
                                                   &returned_algo_count, &perf_results),
-      "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
+      GetConvBwdDataInfo("cudnnGetConvolutionBackwardDataAlgorithm_v7 failed", w_desc, dy_desc, conv_desc, dx_desc));
     conv_algorithm = perf_results.algo;
   } else if (algo == kConvPerformanceAlgoName) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnFindConvolutionBackwardDataAlgorithm(handle, w_desc, dy_desc, conv_desc, dx_desc, requested_algo_count,
                                                 &returned_algo_count, &perf_results),
-      "cudnnFindConvolutionBackwardDataAlgorithm failed");
+      GetConvBwdDataInfo("cudnnFindConvolutionBackwardDataAlgorithm failed", w_desc, dy_desc, conv_desc, dx_desc));
     conv_algorithm = perf_results.algo;
   } else {
     MS_LOG(EXCEPTION) << "Conv dgrad algo type: " << algo << " is not supported.";
@@ -128,7 +229,7 @@ static cudnnConvolutionBwdDataAlgo_t SelectBackwardDataAlgorithm(
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionBackwardDataAlgorithm(handle, w_desc, dy_desc, conv_desc, dx_desc,
                                                CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, 0, &conv_algorithm),
-      "cudnnGetConvolutionBackwardDataAlgorithm failed");
+      GetConvBwdDataInfo("cudnnGetConvolutionBackwardDataAlgorithm failed", w_desc, dy_desc, conv_desc, dx_desc));
   }
 #endif
   return conv_algorithm;
@@ -151,23 +252,25 @@ static cudnnConvolutionBwdFilterAlgo_t SelectBackwardFilterAlgorithm(
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionBackwardFilterAlgorithm_v7(handle, x_desc, dy_desc, conv_desc, dw_desc, requested_algo_count,
                                                     &returned_algo_count, &perf_results),
-      "cudnnGetConvolutionBackwardFilterAlgorithm_v7 failed");
+      GetConvBwdFilterInfo("cudnnGetConvolutionBackwardFilterAlgorithm_v7 failed", x_desc, dy_desc, conv_desc,
+                           dw_desc));
     conv_algorithm = perf_results.algo;
   } else if (algo == kConvPerformanceAlgoName) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnFindConvolutionBackwardFilterAlgorithm(handle, x_desc, dy_desc, conv_desc, dw_desc, requested_algo_count,
                                                   &returned_algo_count, &perf_results),
-      "cudnnFindConvolutionBackwardFilterAlgorithm failed");
+      GetConvBwdFilterInfo("cudnnFindConvolutionBackwardFilterAlgorithm failed", x_desc, dy_desc, conv_desc, dw_desc));
     conv_algorithm = perf_results.algo;
   } else {
     MS_LOG(EXCEPTION) << "Conv wgrad algo type: " << algo << " is not supported.";
   }
 #if CUDNN_VERSION < 8000
   if (group > 1) {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetConvolutionBackwardFilterAlgorithm(
-                                          handle, x_desc, dy_desc, conv_desc, dw_desc,
-                                          CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, 0, &conv_algorithm),
-                                        "GetConvolutionBackwardFilterAlgorithm failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetConvolutionBackwardFilterAlgorithm(handle, x_desc, dy_desc, conv_desc, dw_desc,
+                                                 CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, 0,
+                                                 &conv_algorithm),
+      GetConvBwdFilterInfo("GetConvolutionBackwardFilterAlgorithm failed", x_desc, dy_desc, conv_desc, dw_desc));
   }
 #endif
   return conv_algorithm;

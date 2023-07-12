@@ -166,7 +166,7 @@ class AclRunner {
     acl_param_.input_buffer[i] = buffer;
   }
 
-  size_t GetNumRealInputs() {
+  size_t GetNumRealInputs() const {
     if (acl_param_.input_desc.empty()) {
       return 0;
     }
@@ -196,7 +196,7 @@ class AclRunner {
     acl_param_.output_buffer[i] = buffer;
   }
 
-  size_t GetNumRealOutputs() {
+  size_t GetNumRealOutputs() const {
     if (acl_param_.output_desc.empty()) {
       return 0;
     }

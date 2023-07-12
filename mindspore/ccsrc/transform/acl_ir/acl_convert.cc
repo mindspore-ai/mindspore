@@ -595,14 +595,14 @@ void AclConverter::AclRunnerAddAttr(const std::string &attrName, T value) {
 std::string AclConverter::DebugString() const {
   std::stringstream ss;
   ss << "[AclLaunchInfo]OpType:" << runner_.GetName() << std::endl;
-  for (size_t i = 0; i < input_str_.size(); ++i) {
+  for (size_t i = 0; i < runner_.GetNumRealInputs(); ++i) {
     ss << "InputDesc[" << i << "]:";
     ss << AclTensorDescString(input_str_[i]) << std::endl;
   }
   for (size_t i = 0; i < attr_map_str_.size(); ++i) {
     ss << "Attr[" << i << "] " << attr_map_str_[i] << std::endl;
   }
-  for (size_t i = 0; i < output_str_.size(); ++i) {
+  for (size_t i = 0; i < runner_.GetNumRealOutputs(); ++i) {
     ss << "OutputDesc[" << i << "]:";
     ss << AclTensorDescString(output_str_[i]) << std::endl;
   }
