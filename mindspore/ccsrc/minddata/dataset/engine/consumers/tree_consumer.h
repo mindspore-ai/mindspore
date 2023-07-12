@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ class TreeConsumer {
   /// \param step the step to reset the pipeline to.
   /// \param epoch_num the epoch to reset the pipeline to.
   /// \return Status error code
-  Status Reset(int64_t step, const int64_t epoch_num);
+  virtual Status Reset(int64_t step, const int64_t epoch_num);
 
   /// Function to stop the consumer.
   /// \return Status error code
