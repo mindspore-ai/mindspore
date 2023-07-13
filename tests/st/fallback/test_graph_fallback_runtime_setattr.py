@@ -19,7 +19,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import nn
 from mindspore import ops
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -545,3 +545,29 @@ def test_setattr_in_control_flow_2():
     net = SetattrNet()
     ret = net()
     assert ret == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_for_parameter():
+    """
+    Feature: Graph mode do not support setattr on Parameter.
+    Description: Support 'obj.attr = value'.
+    Expectation: ValueError.
+    """
+    class SetattrNet(nn.Cell):
+        def __init__(self):
+            super(SetattrNet, self).__init__()
+            self.x = Parameter(Tensor(np.array([1, 2, 3])), name='x')
+
+        def construct(self):
+            self.x.name = "x2"
+            return self.x
+
+    net = SetattrNet()
+    with pytest.raises(ValueError) as ex:
+        net()
+    assert "Do not support to set attribute for a parameter" in str(ex.value)

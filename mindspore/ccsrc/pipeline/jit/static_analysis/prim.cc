@@ -1365,6 +1365,9 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
   auto fg = cnode->func_graph();
 
   auto owner_abs = args_abs_list[0];
+  if (owner_abs->isa<abstract::AbstractRefTensor>()) {
+    MS_EXCEPTION(ValueError) << "Do not support to set attribute for a parameter.";
+  }
   auto owner_value = owner_abs->BuildValue();
   auto owner_node = cnode->input(1);
   constexpr auto debug_recursive_level = 2;
