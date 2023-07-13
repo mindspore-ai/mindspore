@@ -35,7 +35,7 @@ cus_flash_atten_op_info = TBERegOp("FlashAttentionPrimitive") \
     .attr("prev_block_num", "required", "int", "all", "65536") \
     .attr("next_block_num", "required", "int", "all", "65536") \
     .attr("high_precision", "required", "bool", "all", "false") \
-    .attr("tiling_stgy_name", "required", "str", "all", "xunfei") \
+    .attr("tiling_stgy_name", "required", "str", "all", "sparse") \
     .input(0, "query", False, "required", "all") \
     .input(1, "key", False, "required", "all") \
     .input(2, "value", False, "required", "all") \
@@ -80,7 +80,7 @@ cus_flash_atten_grad_op_info = TBERegOp("FlashAttentionGradPrimitive") \
     .attr("prev_block_num", "required", "int", "all", "65536") \
     .attr("next_block_num", "required", "int", "all", "65536") \
     .attr("high_precision", "required", "bool", "all", "false") \
-    .attr("tiling_stgy_name", "required", "str", "all", "xunfei") \
+    .attr("tiling_stgy_name", "required", "str", "all", "sparse") \
     .input(0, "query", False, "required", "all") \
     .input(1, "key", False, "required", "all") \
     .input(2, "value", False, "required", "all") \
@@ -127,7 +127,7 @@ cus_flash_atten_grad_op_info = TBERegOp("FlashAttentionGradPrimitive") \
 
 
 def get_flash_attention_grad(prev_block_num=65536, next_block_num=65536,
-                             tiling_stgy_name='xunfei', high_precision=False):
+                             tiling_stgy_name='sparse', high_precision=False):
     """get flash attention grad"""
 
     def infer_shape(q_shape, k_shape, v_shape, o_shape, do_shape, l_shape, m_shape,
@@ -164,7 +164,7 @@ def get_flash_attention_grad(prev_block_num=65536, next_block_num=65536,
     return bprop
 
 
-def get_flash_attention(prev_block_num=65536, next_block_num=65536, tiling_stgy_name='xunfei', high_precision=False):
+def get_flash_attention(prev_block_num=65536, next_block_num=65536, tiling_stgy_name='sparse', high_precision=False):
     """get_flash_attention"""
 
     def infer_shape(q_shape, k_shape, v_shape, dim_mask_shape, attn_mask_shape=None,
