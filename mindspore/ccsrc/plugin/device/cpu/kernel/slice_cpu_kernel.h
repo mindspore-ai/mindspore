@@ -24,6 +24,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/base/slice_base.h"
+#include "nnacl/kernel/slice.h"
 
 namespace mindspore {
 namespace kernel {
@@ -47,7 +48,7 @@ class SliceCpuKernelMod : public NativeCpuKernelMod {
                       const std::vector<int64_t> &size);
   size_t origin_dim_size_{0};
   int data_size_{4};
-  SliceParameter slice_param_;
+  SliceStruct slice_param_;
   size_t output_num_{1};
   TypeId param_dtype_{kNumberTypeInt32};
   std::vector<int64_t> input_shape_;

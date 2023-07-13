@@ -52,7 +52,6 @@ class NNaclInt8Serializer : public Serializer {
   void CodeStruct(const std::string &name, const PoolingComputeParam &pooling_parameter);
   void CodeStruct(const std::string &name, const QuantArg &in_quant, const QuantArg &out_quant);
   void CodeStruct(const std::string &name, const SoftmaxParameter &softmax_parameter);
-  void CodeStruct(const std::string &name, const SliceParameter &slice_parameter);
   void CodeStruct(const std::string &name, const BatchNormParameter &batchnorm_parameter);
   void CodeStruct(const std::string &name, const SoftmaxQuantArg &softmax_quant_parameter);
   void CodeStruct(const std::string &name, const ConcatInt8Args &ConcatInt8Args, int input_tensors, int in_shape,

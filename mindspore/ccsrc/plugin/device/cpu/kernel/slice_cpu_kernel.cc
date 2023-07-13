@@ -160,7 +160,7 @@ int SliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return KRET_OK;
 }
 
-void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceParameter *param, int data_size, size_t row_size) {
+void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceStruct *param, int data_size, size_t row_size) {
   size_t copy_size = IntToSize(data_size * param->size_[1]);
   for (size_t i = 0; i < row_size; ++i) {
     auto dst = output + data_size * param->size_[1] * SizeToInt(i);

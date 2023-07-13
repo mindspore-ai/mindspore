@@ -30,15 +30,25 @@ TEST_F(SliceInferTest, SliceInferTest0) {
   inputs[0]->shape_size_ = 2;
   inputs[0]->shape_[0] = 4;
   inputs[0]->shape_[1] = 4;
+
+  inputs[1] = new TensorC;
+  int begin[2] = {1, 1};
+  inputs.at(1)->shape_size_ = 1;
+  inputs.at(1)->shape_[0] = 2;
+  inputs.at(1)->data_ = begin;
+
+  inputs[2] = new TensorC;
+  int size[2] = {1, 3};
+  inputs.at(2)->shape_size_ = 1;
+  inputs.at(2)->shape_[0] = 2;
+  inputs.at(2)->data_ = size;
+
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SliceParameter *parameter = new SliceParameter;
-  parameter->begin_[0] = 1;
-  parameter->begin_[1] = 1;
-  parameter->size_[0] = 1;
-  parameter->size_[1] = 3;
   parameter->axis_[0] = 0;
   parameter->axis_[1] = 1;
+
   int ret = SliceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -47,9 +57,11 @@ TEST_F(SliceInferTest, SliceInferTest0) {
   ASSERT_EQ(outputs[0]->shape_[1], 3);
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
+    inputs[i]->data_ = nullptr;
     delete inputs[i];
   }
   for (size_t i = 0; i < outputs.size(); i++) {
+    outputs[i]->data_ = nullptr;
     delete outputs[i];
   }
 }
@@ -62,18 +74,26 @@ TEST_F(SliceInferTest, SliceInferTest1) {
   inputs[0]->shape_[0] = 3;
   inputs[0]->shape_[1] = 2;
   inputs[0]->shape_[2] = 4;
+
+  inputs[1] = new TensorC;
+  int begin[3] = {1, 0, 0};
+  inputs.at(1)->shape_size_ = 1;
+  inputs.at(1)->shape_[0] = 3;
+  inputs.at(1)->data_ = begin;
+
+  inputs[2] = new TensorC;
+  int size[3] = {1, 1, 3};
+  inputs.at(2)->shape_size_ = 1;
+  inputs.at(2)->shape_[0] = 3;
+  inputs.at(2)->data_ = size;
+
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SliceParameter *parameter = new SliceParameter;
-  parameter->begin_[0] = 1;
-  parameter->begin_[1] = 0;
-  parameter->begin_[2] = 0;
-  parameter->size_[0] = 1;
-  parameter->size_[1] = 1;
-  parameter->size_[2] = 3;
   parameter->axis_[0] = 0;
   parameter->axis_[1] = 1;
   parameter->axis_[2] = 2;
+
   int ret = SliceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -83,9 +103,11 @@ TEST_F(SliceInferTest, SliceInferTest1) {
   ASSERT_EQ(outputs[0]->shape_[2], 3);
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
+    inputs[i]->data_ = nullptr;
     delete inputs[i];
   }
   for (size_t i = 0; i < outputs.size(); i++) {
+    outputs[i]->data_ = nullptr;
     delete outputs[i];
   }
 }
@@ -98,18 +120,26 @@ TEST_F(SliceInferTest, SliceInferTest2) {
   inputs[0]->shape_[0] = 3;
   inputs[0]->shape_[1] = 2;
   inputs[0]->shape_[2] = 4;
+
+  inputs[1] = new TensorC;
+  int begin[3] = {1, 0, 0};
+  inputs.at(1)->shape_size_ = 1;
+  inputs.at(1)->shape_[0] = 3;
+  inputs.at(1)->data_ = begin;
+
+  inputs[2] = new TensorC;
+  int size[3] = {1, 2, 3};
+  inputs.at(2)->shape_size_ = 1;
+  inputs.at(2)->shape_[0] = 3;
+  inputs.at(2)->data_ = size;
+
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SliceParameter *parameter = new SliceParameter;
-  parameter->begin_[0] = 1;
-  parameter->begin_[1] = 0;
-  parameter->begin_[2] = 0;
-  parameter->size_[0] = 1;
-  parameter->size_[1] = 2;
-  parameter->size_[2] = 3;
   parameter->axis_[0] = 0;
   parameter->axis_[1] = 1;
   parameter->axis_[2] = 2;
+
   int ret = SliceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -119,9 +149,11 @@ TEST_F(SliceInferTest, SliceInferTest2) {
   ASSERT_EQ(outputs[0]->shape_[2], 3);
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
+    inputs[i]->data_ = nullptr;
     delete inputs[i];
   }
   for (size_t i = 0; i < outputs.size(); i++) {
+    outputs[i]->data_ = nullptr;
     delete outputs[i];
   }
 }
@@ -162,9 +194,11 @@ TEST_F(SliceInferTest, SliceInferTest3) {
   ASSERT_EQ(outputs[0]->shape_[2], 3);
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
+    inputs[i]->data_ = nullptr;
     delete inputs[i];
   }
   for (size_t i = 0; i < outputs.size(); i++) {
+    outputs[i]->data_ = nullptr;
     delete outputs[i];
   }
 }

@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_SIZE_H_
-#define NNACL_KERNEL_SIZE_H_
+#ifndef NNACL_KERNEL_SLICE_H_
+#define NNACL_KERNEL_SLICE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-typedef struct SizeStruct {
+typedef struct SliceStruct {
   KernelBase base_;
-} SizeStruct;
+  int data_type_size_;
+  int32_t begin_[DIMENSION_8D];
+  int32_t size_[DIMENSION_8D];
+  int32_t shape_[DIMENSION_8D];
+  int32_t end_[DIMENSION_8D];
+  int32_t param_length_;
+} SliceStruct;
 
-KernelBase *CreateSize(OpParameter *param, int data_type);
+KernelBase *CreateSlice(OpParameter *param, int data_type);
 
-#endif  // NNACL_KERNEL_SIZE_H_
+#endif  // NNACL_KERNEL_SLICE_H_

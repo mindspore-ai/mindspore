@@ -138,12 +138,6 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const int *list, i
   code << list[size - 1] << "};\n";
 }
 
-void NNaclInt8Serializer::CodeStruct(const std::string &name, const SliceParameter &slice_parameter) {
-  CodeBaseStruct("SliceParameter", name, slice_parameter.op_parameter_, ToString(slice_parameter.shape_),
-                 ToString(slice_parameter.begin_), ToString(slice_parameter.end_), ToString(slice_parameter.size_),
-                 slice_parameter.quant_arg_, slice_parameter.param_length_);
-}
-
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const BatchNormParameter &batchnorm_parameter) {
   CodeBaseStruct("BatchNormParameter", name, batchnorm_parameter.op_parameter_, batchnorm_parameter.epsilon_,
                  batchnorm_parameter.momentum_, batchnorm_parameter.unit_, batchnorm_parameter.units_,

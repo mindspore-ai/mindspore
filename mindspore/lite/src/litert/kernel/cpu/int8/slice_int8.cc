@@ -19,6 +19,7 @@
 #include "src/litert/kernel_registry.h"
 #include "nnacl/int8/slice_int8.h"
 #include "include/errorcode.h"
+#include "nnacl/base/slice_base.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -27,6 +28,16 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
+int SliceInt8CPUKernel::ReSize() {
+  InitSliceStruct(&slice_struct_, in_tensors_.front()->ConvertToTensorC(),
+                  in_tensors_.at(SECOND_INPUT)->ConvertToTensorC(), in_tensors_.at(THIRD_INPUT)->ConvertToTensorC());
+
+  if (slice_struct_.param_length_ < DIMENSION_8D) {
+    PadSliceParameterTo8D(&slice_struct_);
+  }
+  return RET_OK;
+}
+
 int SliceInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
@@ -34,7 +45,7 @@ int SliceInt8CPUKernel::Prepare() {
   auto output = out_tensors_.at(0);
   CHECK_NULL_RETURN(input);
   CHECK_NULL_RETURN(output);
-  CHECK_NULL_RETURN(param_);
+
   if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
       out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
     MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
@@ -44,21 +55,20 @@ int SliceInt8CPUKernel::Prepare() {
 
   auto in_quant_args = input->quant_params();
   MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");
-  param_->quant_arg_.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
-  param_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
+  quant_arg_.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
+  quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto out_quant_args = output->quant_params();
   MS_CHECK_TRUE_MSG(!out_quant_args.empty(), RET_ERROR, "Output quant param cannot be empty.");
-  param_->quant_arg_.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
-  param_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
+  quant_arg_.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
+  quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
-  QuantizeRoundParameterWithDoublePrecision(param_->quant_arg_.in_args_.scale_ / param_->quant_arg_.out_args_.scale_,
-                                            &param_->quant_arg_.multiplier_.multiplier_,
-                                            &param_->quant_arg_.multiplier_.left_shift_,
-                                            &param_->quant_arg_.multiplier_.right_shift_);
+  QuantizeRoundParameterWithDoublePrecision(quant_arg_.in_args_.scale_ / quant_arg_.out_args_.scale_,
+                                            &quant_arg_.multiplier_.multiplier_, &quant_arg_.multiplier_.left_shift_,
+                                            &quant_arg_.multiplier_.right_shift_);
 
-  param_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
-  param_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -71,7 +81,7 @@ int SliceInt8CPUKernel::DoSlice(int task_id) {
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
 
-  auto ret = SliceInt8(input_data, output_data, param_, task_id);
+  auto ret = SliceInt8(input_data, output_data, &slice_struct_, &quant_arg_, task_id, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SliceInt8 error ,task_id[" << task_id << "] error_code[" << ret << "]";
   }

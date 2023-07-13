@@ -19,22 +19,23 @@
 #include <float.h>
 #include "nnacl/errorcode.h"
 
-int SliceInt8(const int8_t *input, int8_t *output, const SliceParameter *param, int thread_id) {
-  double input_scale = param->quant_arg_.in_args_.scale_;
-  int input_zp = param->quant_arg_.in_args_.zp_;
-  double output_scale = param->quant_arg_.out_args_.scale_;
-  int output_zp = param->quant_arg_.out_args_.zp_;
+int SliceInt8(const int8_t *input, int8_t *output, const SliceStruct *param, const SliceQuantArg *quant_arg,
+              int thread_id, int thread_num) {
+  double input_scale = quant_arg->in_args_.scale_;
+  int input_zp = quant_arg->in_args_.zp_;
+  double output_scale = quant_arg->out_args_.scale_;
+  int output_zp = quant_arg->out_args_.zp_;
   const int base_offset = 20;
-  int act_min = param->quant_arg_.output_activation_min_;
-  int act_max = param->quant_arg_.output_activation_max_;
+  int act_min = quant_arg->output_activation_min_;
+  int act_max = quant_arg->output_activation_max_;
 
   size_t out_stride[8];
   out_stride[7] = 1;
   for (int i = 6; i >= 0; --i) {
     out_stride[i] = out_stride[i + 1] * param->size_[i + 1];
   }
-  NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
-  int count_per_thread = UP_DIV(param->size_[5], param->op_parameter_.thread_num_);
+
+  int count_per_thread = UP_DIV(param->size_[5], thread_num);
   size_t thread_begin = thread_id * count_per_thread;
   size_t thread_end = MSMIN(param->size_[5], thread_begin + count_per_thread);
   int unit_size = param->size_[7] * sizeof(int8_t);
@@ -75,11 +76,11 @@ int SliceInt8(const int8_t *input, int8_t *output, const SliceParameter *param, 
                   memcpy(output + out_offset, input + in_offset, unit_size);
                 } else {
                   for (c = 0; c < param->size_[7]; ++c) {
-                    int32_t output_val = MultiplyByQuantizedMultiplier(
-                                           input[in_offset + c] - input_zp, param->quant_arg_.multiplier_.multiplier_,
-                                           param->quant_arg_.multiplier_.left_shift_ + base_offset,
-                                           param->quant_arg_.multiplier_.right_shift_ - base_offset) +
-                                         output_zp;
+                    int32_t output_val =
+                      MultiplyByQuantizedMultiplier(input[in_offset + c] - input_zp, quant_arg->multiplier_.multiplier_,
+                                                    quant_arg->multiplier_.left_shift_ + base_offset,
+                                                    quant_arg->multiplier_.right_shift_ - base_offset) +
+                      output_zp;
                     output_val = MSMAX(INT8_MIN, MSMIN(output_val, INT8_MAX));
                     output[c + out_offset] = (int8_t)MSMAX(act_min, MSMIN(output_val, act_max));
                   }

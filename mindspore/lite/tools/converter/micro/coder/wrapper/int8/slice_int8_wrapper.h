@@ -19,11 +19,14 @@
 
 #include <stdint.h>
 #include "nnacl/slice_parameter.h"
+#include "nnacl/kernel/slice.h"
 
 typedef struct SliceArgs {
   int8_t *input_data_;
   int8_t *output_data_;
-  SliceParameter *param_;
+  SliceStruct *slice_struct_;
+  SliceQuantArg *quant_args_;
+  int thread_num_;
 } SliceArgs;
 
 int SliceInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
