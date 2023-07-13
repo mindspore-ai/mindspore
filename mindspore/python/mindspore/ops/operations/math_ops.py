@@ -8452,7 +8452,8 @@ class FFTWithSize(Primitive):
 
     Note:
         - FFT/IFFT requires complex64 or complex128 inputs, return complex64 or complex128 outputs.
-        - RFFT requires float32 or float64 inputs, return complex64 or complex128 outputs.
+        - RFFT requires bool, uint8, int8, int16, int32, int64, float32 and float64 inputs,
+          return complex64 or complex128 outputs.
         - IRFFT requires complex64 or complex128 inputs, return float32 or float64 outputs.
 
     .. warning::
@@ -8496,14 +8497,12 @@ class FFTWithSize(Primitive):
 
     Inputs:
         - **x** (Tensor) - The dimension of the input tensor must be greater than or equal to signal_ndim.
-          Supported types: float32, float64.
 
     Outputs:
         A tensor containing the complex-to-complex, real-to-complex or complex-to-real Fourier transform result.
 
     Raises:
         TypeError: If the input type of FFT/IFFT/IRFFT is not one of: complex64, complex128.
-        TypeError: If the input type of RFFT is not one of: float32, float64.
         TypeError: If the input type is not Tensor.
         ValueError: If `x` dimension is less than signal_ndim.
         ValueError: If signal_ndim is greater than 3 or less than 1.

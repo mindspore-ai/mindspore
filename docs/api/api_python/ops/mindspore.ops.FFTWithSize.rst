@@ -25,7 +25,8 @@ mindspore.ops.FFTWithSize
 
     .. note::
         - FFT/IFFT要求complex64或complex128类型的输入，返回complex64或complex128类型的输出。
-        - RFFT要求float32或float64类型的输入，返回complex64或complex128类型的输出。
+        - RFFT要求bool, uint8, int8, int16, int32, int64, float32或float64类型的输入，
+          返回complex64或complex128类型的输出。
         - IRFFT要求complex64或complex128类型的输入，返回float32或float64类型的输出。
 
     .. warning::
@@ -60,14 +61,13 @@ mindspore.ops.FFTWithSize
           - 除了最后一个维度外， `signal_sizes` 的维度与输入shape完全相同： :math:`signal_sizes[:-1]=x.shape[:-1]` 。
  
     输入：
-        - **x** (Tensor) - 输入Tensor的维数必须大于或等于 `signal_ndim` 。支持类型为：float32、float64。
+        - **x** (Tensor) - 输入Tensor的维数必须大于或等于 `signal_ndim` 。
 
     输出：
         Tensor，表示复数到复数、实数到复数或复数到实数傅里叶变换的结果。
 
     异常：
         - **TypeError** - 如果FFT/IFFT/IRFF的输入类型不是以下类型之一：complex64、complex128。
-        - **TypeError** - 如果RFFT的输入类型不是以下类型之一：float32、float64。
         - **TypeError** - 如果输入的类型不是Tensor。
         - **ValueError** - 如果输入 `x` 的维度小于 `signal_ndim` 。
         - **ValueError** - 如果 `signal_ndim` 大于3或小于1。
