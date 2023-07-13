@@ -472,7 +472,7 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
 #ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
-  if (profiler_inst->GetEnableFlag()) {
+  if (profiler_inst->GetEnableFlag() && profiler_inst->GetOpTimeFlag()) {
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
     auto ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();

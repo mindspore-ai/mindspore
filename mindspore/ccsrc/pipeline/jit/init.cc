@@ -89,7 +89,8 @@ void RegProfiler(const py::module *m) {
     .def("sync_enable", &Profiler::SyncEnable, py::arg("enable_flag"))
     .def("data_process_enable", &Profiler::DataProcessEnable, py::arg("enable_flag"))
     .def("step_profiling_enable", &Profiler::StepProfilingEnable, py::arg("enable_flag"),
-         "enable or disable step profiling");
+         "enable or disable step profiling")
+    .def("enable_op_time", &Profiler::EnableOpTime, "Enable op_time.");
 }
 void RegProfilerManager(const py::module *m) {
   (void)py::class_<ProfilerManager, std::shared_ptr<ProfilerManager>>(*m, "ProfilerManager")

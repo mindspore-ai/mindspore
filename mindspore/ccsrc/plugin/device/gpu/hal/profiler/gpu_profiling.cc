@@ -247,7 +247,7 @@ void CUPTICallBackFunc(void *user_data, CUpti_CallbackDomain domain, CUpti_Callb
   }
   auto gpu_profiler_inst = GPUProfiler::GetInstance();
   PROFILER_ERROR_IF_NULLPTR(gpu_profiler_inst);
-  if (!gpu_profiler_inst->GetEnableFlag()) {
+  if (!gpu_profiler_inst->GetEnableFlag() || !gpu_profiler_inst->GetOpTimeFlag()) {
     return;
   }
 
