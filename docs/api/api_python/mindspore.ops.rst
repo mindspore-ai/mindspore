@@ -641,6 +641,7 @@ Array操作
 
     mindspore.ops.clip_by_global_norm
     mindspore.ops.clip_by_value
+    mindspore.ops.clip_by_norm
 
 Parameter操作函数
 --------------------

@@ -28,6 +28,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 
 __all__ = [
     'clip_by_value',
+    'clip_by_norm',
     'clamp',
     'clip',
     'clip_by_global_norm',
@@ -42,6 +43,52 @@ partial_op = _get_cache_prim(P.Partial)()
 expand_dims = P.ExpandDims().add_prim_attr("grad_scale", True)
 get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
+
+
+def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
+    r"""
+    Clip norm of a set of input Tensors. This norm is the result of calculating the norm of all elements in the input
+    separately, connecting them into a vector, and then calculating the norm.
+
+    Args:
+          x (Union(Tensor, list[Tensor], tuple[Tensor])): Input that wishes to be clipped.
+          max_norm (Union(float, int)): The upper limit of the norm for this group of network parameters.
+          norm_type (Union(float, int)): Norm type. Default: ``2.0``.
+          error_if_nonfinite (bool): If it is ``True``, an exception is thrown if the total norm from the input
+              is nan, inf or -inf. If it is ``False``, no exception will be thrown.Default: ``False`` .
+
+    Returns:
+        Tensors, a list or tuple of Tensors, representing clipped Tensors.
+
+    Raises:
+          RuntimeError: If the total norm from the `x` is nan, inf or -inf.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor([[0.8748, 0.1425, 0.0076], [0.7721, 0.4084, 0.0552], [4.6376, 0.2914, 2.1120]])
+        >>> out = ops.clip_by_norm(x, max_norm=1)
+        >>> print(out)
+        [[0.16650201 0.02712224 0.00144652]
+         [0.14695495 0.07773139 0.0105063 ]
+         [0.8826814  0.0554626  0.40198016]]
+    """
+    if isinstance(x, Tensor):
+        x = [x]
+    if norm_type == float('inf'):
+        total_norm = max(i.abs().max() for i in x)
+    else:
+        total_norm = F.norm(F.stack([F.norm(i) for i in x]))
+    if error_if_nonfinite and F.logical_or(total_norm.isnan(), total_norm.isinf()):
+        raise RuntimeError(f"For clip_by_norm, the total norm of order {norm_type} from input is non-finite.")
+    clip_coef = max_norm / (total_norm + 1e-6)
+    ret = []
+    if clip_coef < 1:
+        for i in x:
+            ret.append(i.mul(clip_coef))
+    return ret
 
 
 def clip_by_value(x, clip_value_min=None, clip_value_max=None):
@@ -115,6 +162,7 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
         [[ 5. 20.  5.  7.]
          [ 5. 11.  6. 20.]]
     """
+
     def _clip_by_value(clip_min, clip_max, x):
         if not isinstance(x, Tensor):
             raise TypeError("For 'clip_by_value', the type of argument 'x' must be "
