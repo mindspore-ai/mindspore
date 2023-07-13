@@ -2489,15 +2489,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         `Tensor.fill` is deprecated, please use `ops.fill` instead.
         """
+        self._init_check()
         if value is None:
             if self.dtype not in (mstype.float16, mstype.float32, mstype.float64):
                 raise TypeError("For 'Tensor.fill', if the argument 'value' is None, the type of the original "
                                 "tensor must be float, but got {}.".format(self.dtype))
             value = Tensor(float('nan')).astype("float32")
             return tensor_operator_registry.get("tile")()(value, self.shape).astype(self.dtype)
-        if not isinstance(value, (int, float, bool)):
-            raise TypeError("For 'Tensor.fill', the type of the argument 'value' must be int, float or bool, "
-                            "but got {}.".format(type(value)))
         return tensor_operator_registry.get("fill")(self.dtype, self.shape, value)
 
     def fills(self, value):

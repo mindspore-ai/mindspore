@@ -743,7 +743,10 @@ def fill(type, shape, value):  # pylint: disable=redefined-outer-name
          [0. 0. 0.]
          [0. 0. 0.]]
     """
-    return fill_(type, shape, value)
+    if isinstance(shape, tuple):
+        shape = tuple_to_tensor_(shape, mstype.int32)
+    value = cast_(value, type)
+    return fillv2_(shape, value)
 
 
 def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-name
