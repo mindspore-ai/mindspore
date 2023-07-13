@@ -472,7 +472,9 @@ void RevertMakeTupleNode(const FuncGraphPtr &graph, const CNodePtr &cnode, Value
         (void)abs_list.emplace_back(input->abstract());
       }
       // Update knode inputs to make tuple inputs
-      auto cnode_tuple = graph->NewCNode(cnode_tuple_inputs);
+      auto cnode_graph = cnode->func_graph();
+      MS_EXCEPTION_IF_NULL(cnode_graph);
+      auto cnode_tuple = cnode_graph->NewCNode(cnode_tuple_inputs);
       auto abs = std::make_shared<abstract::AbstractTuple>(abs_list);
       cnode_tuple->set_abstract(abs);
       (void)new_inputs.emplace_back(cnode_tuple);

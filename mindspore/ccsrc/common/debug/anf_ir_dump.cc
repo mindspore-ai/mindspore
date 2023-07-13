@@ -576,6 +576,9 @@ void DumpOperands(const AnfNodePtr &node, const OrderedMap<AnfNodePtr, int32_t> 
         } else {
           auto input = in->cast<CNodePtr>();
           auto fg = input->func_graph();
+          if (fg == nullptr) {
+            MS_LOG(EXCEPTION) << "Get cnode fg nullptr " << node->DebugString();
+          }
           gsub->buffer << "$(@" << fg->ToString() << ":" << input->ToString() << ")";
         }
       } else if (in->isa<ValueNode>() && !IsValueNode<FuncGraph>(in)) {
