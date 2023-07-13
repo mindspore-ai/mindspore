@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <functional>
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
@@ -110,9 +111,96 @@ std::vector<int64_t> ReshapeInfo::GetInputShape(const AnfNodePtr &shape_input_no
   return origin_dst_shape;
 }
 
+bool OnlyOneDimDynamicShape(const Shape &shape) { return (std::count(shape.cbegin(), shape.cend(), -1) == 1); }
+
+int64_t AccumulateShape(const Shape &shape) {
+  return std::accumulate(shape.cbegin(), shape.cend(), 1, std::multiplies<int64_t>());
+}
+
+size_t DynamicShapeIndex(const Shape &shape) {
+  if (!OnlyOneDimDynamicShape(shape)) {
+    MS_LOG(EXCEPTION) << "The shape is not one dim dynamic: " << shape;
+  }
+
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (shape[i] == -1) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+Status ReshapeInfo::ComputeReplaceOpForDynamicShape() {
+  RankList dev_list = stage_device_list();
+  TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
+
+  TensorLayout fake_in;
+  TensorLayout fake_out;
+
+  // replace -1 shape to 1
+  Shape replace_shape_in = input_layout_.tensor_shape_origin().array();
+  Shape replace_shape_out = output_layout_.tensor_shape_origin().array();
+  (void)std::replace(replace_shape_in.begin(), replace_shape_in.end(), -1, 1);
+  (void)std::replace(replace_shape_out.begin(), replace_shape_out.end(), -1, 1);
+
+  if (fake_in.InitFromVector(input_layout_.device_arrangement_origin().array(),
+                             input_layout_.origin_tensor_map().array(), replace_shape_in) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Fake tensor layout for input init failed, the old input layout is "
+                  << input_layout_.ToString() << ", the replace input shape is " << replace_shape_in;
+    return FAILED;
+  }
+
+  if (fake_out.InitFromVector(output_layout_.device_arrangement_origin().array(),
+                              output_layout_.origin_tensor_map().array(), replace_shape_out) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Fake tensor layout for output init failed, the old output layout is "
+                  << output_layout_.ToString() << ", the replace output shape is " << replace_shape_out;
+    return FAILED;
+  }
+
+  if (tensor_redistribution.Init(fake_in, fake_out, dev_list) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Redistribution init failed";
+    return FAILED;
+  }
+
+  // use static shape to infer redistribution operator list
+  RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
+  if (redistribution_oplist_ptr == nullptr) {
+    MS_LOG(ERROR) << name_ << ": InferTensorRedistribution failed.";
+    return FAILED;
+  }
+  replace_op_ = redistribution_oplist_ptr->first;
+  replace_op_info_ = redistribution_oplist_ptr->second;
+
+  if (replace_op_.size() == 1 && replace_op_.front().first == RESHAPE) {
+    auto dst_shape = GetValue<std::vector<int64_t>>(replace_op_.front().second.second.front().first.second);
+    if (dst_shape.size() != output_layout_.tensor_shape_origin().array().size()) {
+      MS_LOG(ERROR) << name_ << ": The size of dst shape must equal to output origin shape, but the dst shape is"
+                    << dst_shape << ", output origin shape is " << output_layout_.tensor_shape_origin().array();
+      return FAILED;
+    }
+    size_t index = DynamicShapeIndex(output_layout_.tensor_shape_origin().array());  // find the dynamic dimension
+    dst_shape[index] = -1;                                                           // reset the dynamic dimension
+    replace_op_.front().second.second.front().first.second = MakeValue(dst_shape);
+    return SUCCESS;
+  }
+
+  MS_LOG(ERROR) << name_ << ": This sense is not supported, the input layout is " << input_layout_.ToString()
+                << ", the output layout is " << output_layout_.ToString();
+  return FAILED;
+}
+
 Status ReshapeInfo::ComputeReplaceOp() {
   RankList dev_list = stage_device_list();
   TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
+
+  // handle dynamic shape
+  auto input_shape = input_layout_.tensor_shape_origin().array();
+  auto output_shape = output_layout_.tensor_shape_origin().array();
+  if (OnlyOneDimDynamicShape(input_shape) && OnlyOneDimDynamicShape(output_shape) &&
+      (AccumulateShape(input_shape) == AccumulateShape(output_shape))) {
+    return ComputeReplaceOpForDynamicShape();
+  }
+
   if (tensor_redistribution.Init(input_layout_, output_layout_, dev_list) == FAILED) {
     if (is_generating_costs_) {
       MS_LOG(DEBUG) << name_ << ": tensor_redistribution init failed.";
