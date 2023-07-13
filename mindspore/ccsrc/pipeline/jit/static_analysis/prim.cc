@@ -1386,7 +1386,7 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
   constexpr auto internal_setattr_owner_str = "__internal_setattr_owner__";
   constexpr auto internal_setattr_value_str = "__internal_setattr_value__";
   std::stringstream script_buffer;
-  script_buffer << "__import__('mindspore').common._jit_fallback_utils.set_attr(" << internal_setattr_owner_str << ", "
+  script_buffer << "__import__('mindspore').common._utils._jit_fallback_set_attr(" << internal_setattr_owner_str << ", "
                 << attr_str->value() << ", " << internal_setattr_value_str << ")";
   MS_LOG(DEBUG) << "script: " << script_buffer.str();
   const auto script_setattr_str = std::make_shared<StringImm>(script_buffer.str());
