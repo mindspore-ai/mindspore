@@ -6,6 +6,7 @@
     .. note::
         - 如果 `file_name` 是文件路径的字符串，则会尝试加载同一批转换生成的所有MindRecord文件，如果缺少其中某个MindRecord文件，则会引发异常。
         - 如果 `file_name` 是文件路径组成的列表，则只加载列表中指定的MindRecord文件。
+        - 参数 `operator` 未发挥任何作用，会逐步废弃。
 
     参数：
         - **file_name** (str, list[str]) - MindRecord格式的数据集文件路径或文件路径组成的列表。

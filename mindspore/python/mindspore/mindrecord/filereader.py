@@ -16,6 +16,7 @@
 This module is to read data from MindRecord.
 """
 import platform
+from mindspore import log as logger
 
 from .shardreader import ShardReader
 from .shardheader import ShardHeader
@@ -34,6 +35,7 @@ class FileReader:
         If `file_name` is a file path, it tries to load all MindRecord files generated \
         in a conversion, and throws an exception if a MindRecord file is missing.
         If `file_name` is file path list, only the MindRecord files in the list are loaded.
+        The parameter `operator` has no effect and will be deprecated in a future version.
 
     Args:
         file_name (str, list[str]): One of MindRecord file path or file path list.
@@ -59,6 +61,9 @@ class FileReader:
 
     @check_parameter
     def __init__(self, file_name, num_consumer=4, columns=None, operator=None):
+        if operator is not None:
+            logger.warning("The parameter 'operator' will be deprecated in a future version.")
+
         if columns:
             if isinstance(columns, list):
                 self._columns = columns
