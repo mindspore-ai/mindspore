@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,16 @@ class PullBasedIteratorConsumer : public TreeConsumer {
   /// \param[out] vec std::vector of pairs of string to Tensor
   /// \return Status error code
   Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec) override;
+
+  /// Function to reset the current consumer to the provided step.
+  /// \note Reset is NOT supported for pull-based iterators.
+  /// \param step the step to reset the pipeline to.
+  /// \param epoch_num the epoch to reset the pipeline to.
+  /// \return Status error code
+  Status Reset(int64_t step, const int64_t epoch_num) {
+    RETURN_STATUS_UNEXPECTED(
+      "Failover reset is not supported for pull-based iterators (including when Debug mode is enabled).");
+  }
 
  protected:
   /// Method to return the name of the consumer
