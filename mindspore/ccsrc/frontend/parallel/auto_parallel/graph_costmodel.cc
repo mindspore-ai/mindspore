@@ -350,7 +350,7 @@ void CostGraph::ProcessDiffStraParams(const std::map<OperatorInfoPtr, StrategyPt
 }
 
 void CostGraph::ParamPropagation(const OperatorInfoPtr &curr_op, const std::shared_ptr<Edge> edge,
-                                 const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops) {
+                                 const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops) const {
   const auto &next_op = edge->next_operator();
   MS_LOG(INFO) << "params propagation at " << curr_op->name() << "->" << next_op->name();
   if ((configured_ops.find(next_op) != configured_ops.end())) {
