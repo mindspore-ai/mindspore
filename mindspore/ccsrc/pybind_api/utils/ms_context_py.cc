@@ -122,6 +122,7 @@ void RegMsContext(const py::module *m) {
     .value("conv_allow_tf32", MsCtxParam::MS_CTX_CONV_ALLOW_TF32)
     .value("recompute_comm_overlap", MsCtxParam::MS_CTX_RECOMPUTE_COMM_OVERLAP)
     .value("matmul_grad_comm_overlap", MsCtxParam::MS_CTX_GRAD_COMM_OVERLAP)
+    .value("matmul_allow_tf32", MsCtxParam::MS_CTX_MATMUL_ALLOW_TF32)
     .value("enable_task_opt", MsCtxParam::MS_CTX_ENABLE_TASK_OPT)
     .value("interleaved_matmul_comm", MsCtxParam::MS_CTX_INTERLEAVED_MATMUL_COMM)
     .value("interleaved_layernorm_comm", MsCtxParam::MS_CTX_INTERLEAVED_LAYERNORM_COMM);

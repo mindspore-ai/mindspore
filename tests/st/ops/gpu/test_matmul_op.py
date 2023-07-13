@@ -145,3 +145,33 @@ def test_matmul_tensor_api_modes(mode):
                           [550., 620., 690., 760., 830.],
                           [670., 756., 842., 928., 1014.]]], np.float32)
     np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_matmul_tensor_core(mode):
+    """
+    Feature: Test matmul tensor api.
+    Description: Test matmul tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    m = 300
+    n = 300
+    k = 400
+    x_np = np.random.randn(m * k).astype(np.float32)
+    y_np = np.random.randn(k * n).astype(np.float32)
+    x_np.shape = m, k
+    y_np.shape = k, n
+    x_ms = Tensor(x_np)
+    y_ms = Tensor(y_np)
+
+    context.set_context(gpu_config={"matmul_allow_tf32": False})
+    out_ms_fp32 = P.MatMul()(x_ms, y_ms).asnumpy()
+
+    context.set_context(gpu_config={"matmul_allow_tf32": True})
+    out_ms_tf32 = P.MatMul()(x_ms, y_ms).asnumpy()
+
+    assert np.abs(out_ms_fp32 - out_ms_tf32).mean() < 0.005

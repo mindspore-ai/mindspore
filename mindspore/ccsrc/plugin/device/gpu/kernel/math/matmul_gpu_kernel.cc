@@ -22,6 +22,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "mindspore/core/ops/mat_mul.h"
 #include "mindspore/core/ops/batch_matmul.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -133,11 +134,16 @@ cublasComputeType_t MatMulGpuKernelMod::GetComputeType() {
     compute_type = CUBLAS_COMPUTE_32F;
   } else if (dtype_a_ == CUDA_R_8I && dtype_c_ == CUDA_R_32I) {
     compute_type = CUBLAS_COMPUTE_32I;
-  } else if (dtype_a_ == CUDA_R_16F || dtype_a_ == CUDA_R_32F || (dtype_a_ == CUDA_R_8I && dtype_c_ == CUDA_R_32F)) {
+  } else if (dtype_a_ == CUDA_R_16F || (dtype_a_ == CUDA_R_8I && dtype_c_ == CUDA_R_32F)) {
     compute_type = CUBLAS_COMPUTE_32F;
-  } else if ((dtype_a_ == CUDA_R_32F && dtype_b_ == CUDA_R_32F) || (dtype_a_ == CUDA_C_32F && dtype_b_ == CUDA_C_32F)) {
+  } else if (dtype_a_ == CUDA_R_32F || dtype_a_ == CUDA_C_32F) {
     compute_type = CUBLAS_COMPUTE_32F;
-  } else if ((dtype_a_ == CUDA_R_64F && dtype_b_ == CUDA_R_64F) || (dtype_a_ == CUDA_C_64F && dtype_b_ == CUDA_C_64F)) {
+    auto context_ptr = MsContext::GetInstance();
+    auto matmul_allow_tf32 = context_ptr->get_param<bool>(MS_CTX_MATMUL_ALLOW_TF32);
+    if (matmul_allow_tf32) {
+      compute_type = CUBLAS_COMPUTE_32F_FAST_TF32;
+    }
+  } else if (dtype_a_ == CUDA_R_64F || dtype_a_ == CUDA_C_64F) {
     compute_type = CUBLAS_COMPUTE_64F;
   }
   return compute_type;
@@ -177,9 +183,6 @@ bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                           << lda << ", got ldb:" << ldb;
       }
     }
-
-    auto math_mode = static_cast<cublasMath_t>(CUBLAS_DEFAULT_MATH | CUBLAS_MATH_DISALLOW_REDUCED_PRECISION_REDUCTION);
-    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetMathMode(handle_, math_mode), "cublasSetMathMode failed.");
 #else
     cudaDataType_t compute_type = (dtype_a_ == CUDA_R_64F) ? CUDA_R_64F : CUDA_R_32F;
     if (dtype_a_ == CUDA_C_32F || dtype_a_ == CUDA_C_64F) {

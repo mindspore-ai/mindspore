@@ -204,7 +204,7 @@ mindspore.set_context
           - COMPATIBLE(``1``): 除支持基础语法外，还支持更多语法，如dict，list和scalar的操作等。
           - LAX(``2``): 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。
         - **gpu_config** (dict) - 设置GPU硬件平台专用的参数，默认不设置。
-          目前只支持GPU硬件平台上设置conv_fprop_algo、conv_dgrad_algo、conv_wgrad_algo和conv_allow_tf32参数。
+          目前只支持GPU硬件平台上设置conv_fprop_algo、conv_dgrad_algo、conv_wgrad_algo、conv_allow_tf32和matmul_allow_tf32参数。
 
           - **conv_fprop_algo** (str): 指定Cudnn的卷积前向算法。默认值： ``normal`` 。其值范围如下：
 
@@ -241,6 +241,8 @@ mindspore.set_context
             - winograd_nonfused: 该算法利用Winograd变形算法完成卷积计算。需要额外申请内存空间，保存中间结果。结果是确定的。
 
           - **conv_allow_tf32** (bool): 该标志表示是否开启卷积在CUDNN下的TF32张量核计算。默认值： ``True`` 。
+
+          - **matmul_allow_tf32** (bool): 该标志表示是否开启矩阵乘在CUBLAS下的TF32张量核计算。默认值： ``False`` 。
 
     异常：
         - **ValueError** - 输入key不是上下文中的属性。
