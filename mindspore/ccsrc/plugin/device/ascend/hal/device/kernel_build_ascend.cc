@@ -41,7 +41,7 @@ namespace device {
 namespace ascend {
 using mindspore::kernel::tbe::TbeUtils;
 using std::make_shared;
-constexpr size_t kMaxAttrMemListSize = 192;
+constexpr size_t kMaxAttrMemListSize = 191;
 static std::mutex compile_mtx;
 
 static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
