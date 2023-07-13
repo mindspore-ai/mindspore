@@ -4754,6 +4754,23 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return _index_put(self, values, indices)
 
 
+    def _offload(self):
+        r"""
+        Offload tensor parameter to host. Currently, only support for pynative mode.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> x = ms.Tensor([1, 2, 3], ms.int64)
+            >>> x._offload()
+        """
+        self._init_check()
+        return Tensor_._offload(self)
+
+
 def _vm_compare(*args):
     """Implement `vm_compare` for tensor."""
     obj_str = args[-1]
