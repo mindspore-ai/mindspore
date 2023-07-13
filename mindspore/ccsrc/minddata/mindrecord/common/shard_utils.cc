@@ -141,8 +141,8 @@ Status GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type, st
   return Status::OK();
 #else
   uint64_t ll_count = 0;
-  struct statfs disk_info;
-  if (statfs(common::SafeCStr(str_dir), &disk_info) == -1) {
+  struct statfs64 disk_info;
+  if (statfs64(common::SafeCStr(str_dir), &disk_info) == -1) {
     RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to get free disk size.");
   }
 

@@ -169,12 +169,12 @@ Status Task::Join(WaitFlag blocking) {
           // to interrupt everything one more time.
           std::stringstream ss;
           ss << get_id();
+          wait_times++;
           if (wait_times % kLogInterval == 0) {
             MS_LOG(WARNING) << "Task: " << my_name_ << " Thread ID " << ss.str()
                             << " is not finished and cannot be joined. Try to interrupt again.";
           }
           interrupt_svc->InterruptAll();
-          wait_times++;
 #ifdef WITH_BACKEND
           if (device_target == kAscendDevice) {
             // Because hostPush hung in DataQueueOp, wait 5 seconds and destroy the tdt
