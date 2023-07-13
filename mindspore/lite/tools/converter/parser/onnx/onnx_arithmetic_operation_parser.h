@@ -270,6 +270,14 @@ class OnnxOrParser : public OnnxNodeParser {
   PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
+class OnnxXorParser : public OnnxNodeParser {
+ public:
+  OnnxXorParser() : OnnxNodeParser("Xor") {}
+  ~OnnxXorParser() override = default;
+
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+};
+
 class OnnxNotParser : public OnnxNodeParser {
  public:
   OnnxNotParser() : OnnxNodeParser("Not") {}

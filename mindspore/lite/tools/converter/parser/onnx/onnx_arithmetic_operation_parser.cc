@@ -44,6 +44,7 @@
 #include "ops/logical_and.h"
 #include "ops/logical_not.h"
 #include "ops/logical_or.h"
+#include "ops/logical_xor.h"
 #include "ops/neg.h"
 #include "ops/round.h"
 #include "ops/sqrt.h"
@@ -214,6 +215,12 @@ PrimitiveCPtr OnnxOrParser::Parse(const onnx::GraphProto &onnx_graph, const onnx
   return prim->GetPrim();
 }
 
+PrimitiveCPtr OnnxXorParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::LogicalXor>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
 PrimitiveCPtr OnnxNotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::LogicalNot>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -324,6 +331,7 @@ OnnxNodeRegistrar g_onnxCeilParser("Ceil", new OnnxCeilParser());
 OnnxNodeRegistrar g_onnxLogParser("Log", new OnnxLogParser());
 OnnxNodeRegistrar g_onnxAndParser("And", new OnnxAndParser());
 OnnxNodeRegistrar g_onnxOrParser("Or", new OnnxOrParser());
+OnnxNodeRegistrar g_onnxXorParser("Xor", new OnnxXorParser());
 OnnxNodeRegistrar g_onnxNotParser("Not", new OnnxNotParser());
 OnnxNodeRegistrar g_onnxRoundParser("Round", new OnnxRoundParser());
 OnnxNodeRegistrar g_onnxReciprocalParser("Reciprocal", new OnnxReciprocalParser());
