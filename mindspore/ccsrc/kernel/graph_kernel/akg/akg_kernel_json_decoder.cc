@@ -37,6 +37,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
+#include "kernel/graph_kernel/graph_kernel_json_flags.h"
 
 namespace mindspore {
 namespace kernel {
