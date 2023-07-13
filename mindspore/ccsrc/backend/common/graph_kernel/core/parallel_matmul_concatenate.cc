@@ -134,7 +134,7 @@ bool ParallelMatMulConcatenater::IsSupportedOp(const AnfNodePtr n) {
     return false;
   }
   auto prim = GetCNodePrimitive(n);
-  if (prim == nullptr || unsupported_ops_.count(prim->name())) {
+  if (prim == nullptr || unsupported_ops_.count(prim->name()) != 0) {
     return false;
   }
   return true;

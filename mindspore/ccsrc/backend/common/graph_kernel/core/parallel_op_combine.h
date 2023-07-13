@@ -95,7 +95,7 @@ class ParallelOpCombiner {
   virtual AnfNodePtr MakeCombinedAnfNodePtrFromFollowingOps(const AnfNodePtr &data, const Group &branches,
                                                             size_t depth) = 0;
   virtual void UpdateGroupOutput(const AnfNodePtr &data, const Group &branches, size_t depth) = 0;
-  bool AutoUpdateInfo(const CNodePtr &to_update);
+  bool AutoUpdateInfo(const CNodePtr &to_update) const;
 
   std::map<size_t, AnfNodePtrList> GetUniqueInputs(const Group &branches, size_t depth) const;
 
