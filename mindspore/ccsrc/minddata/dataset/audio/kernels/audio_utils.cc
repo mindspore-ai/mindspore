@@ -35,6 +35,9 @@ Status CountThreadNums(size_t input_size, float block_size, size_t *task_num, si
   size_t thread_num =
     input_size < block_size * audio_thread_num ? std::ceil(input_size / block_size) : audio_thread_num;
   *once_compute_size = (input_size + thread_num - 1) / thread_num;
+  if (*once_compute_size % TWO == 1) {
+    *once_compute_size += 1;
+  }
   CHECK_FAIL_RETURN_UNEXPECTED((*once_compute_size) != 0,
                                "Invalid data, the value of 'once_compute_size' should not be 0, but got 0.");
   *task_num = input_size / (*once_compute_size);
@@ -44,20 +47,22 @@ Status CountThreadNums(size_t input_size, float block_size, size_t *task_num, si
   return Status::OK();
 }
 
-Status AudioParallelLaunch(const std::function<void(size_t, size_t, size_t)> &task, size_t input_size, float block_size,
-                           size_t task_num, size_t once_compute_size) {
+Status AudioParallelLaunch(const std::function<void(size_t, size_t, size_t, size_t)> &task, size_t input_size,
+                           float block_size) {
   std::vector<std::thread> threads;
+  size_t task_num = 0;
+  size_t once_compute_size = 0;
   RETURN_IF_NOT_OK(CountThreadNums(input_size, block_size, &task_num, &once_compute_size));
 
   for (size_t i = 0; i < task_num - 1; i++) {
     size_t start = i * once_compute_size;
     size_t end = start + once_compute_size;
-    threads.push_back(std::thread(task, start, end, i));
+    threads.push_back(std::thread(task, start, end, i, task_num));
   }
 
   size_t start = (task_num - 1) * once_compute_size;
   size_t end = input_size;
-  task(start, end, task_num - 1);
+  task(start, end, task_num - 1, task_num);
 
   for (auto &thread : threads) {
     thread.join();
@@ -520,14 +525,8 @@ Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   std::vector<std::thread> threads;
   size_t count = input->Size();
   float block_size = 30000;
-  size_t task_num = 0;
-  size_t once_compute_size = 0;
 
-  auto task = [&input, &out, &power, &once_compute_size, &task_num, &count](size_t start, size_t end, size_t num) {
-    if (once_compute_size % TWO == 1) {
-      start -= num;
-      end -= (num + 1);
-    }
+  auto task = [&input, &out, &power, &count](size_t start, size_t end, size_t num, size_t task_num) {
     if ((task_num - num) == 1) {
       end = count;
     }
@@ -550,7 +549,7 @@ Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
       itr_out++;
     }
   };
-  RETURN_IF_NOT_OK(AudioParallelLaunch(task, count, block_size, task_num, once_compute_size));
+  RETURN_IF_NOT_OK(AudioParallelLaunch(task, count, block_size));
   *output = out;
 
   return Status::OK();
