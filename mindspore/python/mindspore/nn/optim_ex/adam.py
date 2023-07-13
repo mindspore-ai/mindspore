@@ -97,11 +97,12 @@ class Adam(Optimizer):
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> loss_fn = nn.MAELoss()
-        >>> optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
+        >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), lr=0.1)
         >>> def forward_fn(data, label):
         ...     logits = net(data)
         ...     loss = loss_fn(logits, label)
+        ...     return loss, logits
         >>> grad_fn = mindspore.value_and_grad(forward_fn, None, optimizer.parameters, has_aux=True)
         >>> def train_step(data, label):
         ...     (loss, _), grads = grad_fn(data, label)

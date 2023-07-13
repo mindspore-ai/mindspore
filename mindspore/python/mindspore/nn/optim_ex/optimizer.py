@@ -54,11 +54,11 @@ class Optimizer(Cell):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    def __init__(self, params, defaluts):
+    def __init__(self, params, defaults):
         super(Optimizer, self).__init__(auto_prefix=False)
 
         param_groups = self._parameters_base_check(params, "params")
-        self.defaults = defaluts
+        self.defaults = defaults
         self.state = defaultdict(dict)
         self.param_groups = []
         self.parameters = []
