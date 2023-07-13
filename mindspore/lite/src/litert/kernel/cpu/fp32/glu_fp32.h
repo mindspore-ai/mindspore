@@ -36,6 +36,7 @@ class GluCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx) {
     glu_param_ = reinterpret_cast<GluParameter *>(op_parameter_);
     split_ptr_.resize(kSplitNum, nullptr);
+    split_param_.split_sizes_ = nullptr;
   }
   ~GluCPUKernel() override { FreeTmpBuffer(); }
 
