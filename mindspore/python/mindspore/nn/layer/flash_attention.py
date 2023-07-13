@@ -95,7 +95,7 @@ class FlashAttention(Cell):
                  dropout_rate=0.0,
                  prev_block_num=65536,
                  next_block_num=65536,
-                 tiling_stgy_name="xunfei",
+                 tiling_stgy_name="sparse",
                  dp=1,
                  mp=1,
                  high_precision=False,

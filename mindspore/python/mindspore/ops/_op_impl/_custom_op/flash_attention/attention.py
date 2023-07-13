@@ -31,7 +31,7 @@ from mindspore.ops._op_impl._custom_op.flash_attention.constants import UB
 from mindspore.ops._op_impl._custom_op.flash_attention.tik_ops_utils import TikOpsUtils
 from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.strategy import TilingPara
 from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.strategy import TilingStrategy
-from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.xunfei_tiling import XunfeiTiling
+from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.sparse_tiling import SparseTiling
 
 
 class FlashAttention(metaclass=ABCMeta):
@@ -88,7 +88,7 @@ class FlashAttention(metaclass=ABCMeta):
             self.precision_type = FP16
 
         if tiling_stgy_cls is None:
-            self.tiling_stgy = XunfeiTiling(self.Nq, self.N, self.d)
+            self.tiling_stgy = SparseTiling(self.Nq, self.N, self.d)
         else:
             self.tiling_stgy: TilingStrategy = tiling_stgy_cls(self.Nq, self.N, self.d)
         self.Br = None
