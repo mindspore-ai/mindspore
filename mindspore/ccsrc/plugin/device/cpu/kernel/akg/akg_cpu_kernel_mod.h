@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <utility>
 #include <unordered_map>
 #include "kernel/kernel.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_manager.h"
