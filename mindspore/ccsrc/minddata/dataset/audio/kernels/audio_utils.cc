@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,27 @@ Status CountThreadNums(size_t input_size, float block_size, size_t *task_num, si
   *task_num = input_size / (*once_compute_size);
   if (input_size % (*once_compute_size) != 0) {
     *task_num += 1;
+  }
+  return Status::OK();
+}
+
+Status AudioParallelLaunch(const std::function<void(size_t, size_t, size_t)> &task, size_t input_size, float block_size,
+                           size_t task_num, size_t once_compute_size) {
+  std::vector<std::thread> threads;
+  RETURN_IF_NOT_OK(CountThreadNums(input_size, block_size, &task_num, &once_compute_size));
+
+  for (size_t i = 0; i < task_num - 1; i++) {
+    size_t start = i * once_compute_size;
+    size_t end = start + once_compute_size;
+    threads.push_back(std::thread(task, start, end, i));
+  }
+
+  size_t start = (task_num - 1) * once_compute_size;
+  size_t end = input_size;
+  task(start, end, task_num - 1);
+
+  for (auto &thread : threads) {
+    thread.join();
   }
   return Status::OK();
 }
@@ -486,28 +507,6 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 }
 
 template <typename T>
-void NormImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> out, size_t start, size_t end,
-              float power) {
-  auto itr_start = input->begin<T>();
-  itr_start += start;
-  auto itr_end = input->begin<T>();
-  itr_end += end;
-  auto itr_out = out->begin<T>();
-  size_t offset = start / TWO;
-  itr_out += offset;
-
-  // calculate norm, using: .pow(2.).sum(-1).pow(0.5 * power)
-  for (auto itr = itr_start; itr != itr_end; itr++) {
-    auto a = static_cast<T>(*itr);
-    ++itr;
-    auto b = static_cast<T>(*itr);
-    auto res = pow(a, TWO) + pow(b, TWO);
-    *itr_out = static_cast<T>(pow(res, (HALF * power)));
-    itr_out++;
-  }
-}
-
-template <typename T>
 Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
   // calculate the output dimension
   auto input_size = input->shape().AsVector();
@@ -523,28 +522,35 @@ Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   float block_size = 30000;
   size_t task_num = 0;
   size_t once_compute_size = 0;
-  RETURN_IF_NOT_OK(CountThreadNums(count, block_size, &task_num, &once_compute_size));
 
-  for (int i = 0; i < task_num - 1; i++) {
-    size_t start = i * once_compute_size;
-    size_t end = start + once_compute_size;
+  auto task = [&input, &out, &power, &once_compute_size, &task_num, &count](size_t start, size_t end, size_t num) {
     if (once_compute_size % TWO == 1) {
-      start -= i;
-      end -= (i + 1);
+      start -= num;
+      end -= (num + 1);
     }
-    threads.push_back(std::thread(NormImpl<T>, input, out, start, end, power));
-  }
+    if ((task_num - num) == 1) {
+      end = count;
+    }
 
-  size_t start = (task_num - 1) * once_compute_size;
-  if (once_compute_size % TWO == 1) {
-    start -= (task_num - 1);
-  }
-  size_t end = count;
-  NormImpl<T>(input, out, start, end, power);
+    auto itr_start = input->begin<T>();
+    itr_start += start;
+    auto itr_end = input->begin<T>();
+    itr_end += end;
+    auto itr_out = out->begin<T>();
+    size_t offset = start / TWO;
+    itr_out += offset;
 
-  for (auto &thread : threads) {
-    thread.join();
-  }
+    // calculate norm, using: .pow(2.).sum(-1).pow(0.5 * power)
+    for (auto itr = itr_start; itr != itr_end; itr++) {
+      auto a = *itr;
+      ++itr;
+      auto b = *itr;
+      auto res = pow(a, TWO) + pow(b, TWO);
+      *itr_out = static_cast<T>(pow(res, (HALF * power)));
+      itr_out++;
+    }
+  };
+  RETURN_IF_NOT_OK(AudioParallelLaunch(task, count, block_size, task_num, once_compute_size));
   *output = out;
 
   return Status::OK();
