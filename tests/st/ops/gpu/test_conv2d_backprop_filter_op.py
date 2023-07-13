@@ -53,13 +53,14 @@ class Conv2dFilter(nn.Cell):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('algo', ["normal", "performance", "algo_0", "algo_1", "fft", "algo_3", "winograd_nonfused"])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_conv2d_backprop_filter(algo, mode):
+@pytest.mark.parametrize('conv_allow_tf32', [True, False])
+def test_conv2d_backprop_filter(algo, mode, conv_allow_tf32):
     """
     Feature: Test conv2d backprop filter op
     Description: Test conv2d backprop filter op
     Expectation: The value is processed as expected
     """
-    gpu_config = {"conv_wgrad_algo": algo}
+    gpu_config = {"conv_wgrad_algo": algo, "conv_allow_tf32": conv_allow_tf32}
     context.set_context(mode=mode, device_target="GPU", gpu_config=gpu_config)
     w = Tensor(np.array([[[[1, 0, -1], [1, 0, -1], [1, 0, -1]]]]).astype(np.float32))
     x = Tensor(np.array([[[

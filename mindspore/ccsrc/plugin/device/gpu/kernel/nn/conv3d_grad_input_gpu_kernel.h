@@ -165,11 +165,10 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
     pad_mode_ = kernel_ptr->get_pad_mode();
     SetStrideAndDilation(kernel_ptr->get_stride(), kernel_ptr->get_dilation());
     auto dx_desc_real = GetDxDescReal(pad_list);
-    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
-                                          "cudnnSetConvolutionMathType failed.")
-    }
-    algo_ = SelectBackwardDataAlgorithm(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real, group_);
+    SetConvolutionMathType(conv_desc_, cudnn_data_type_);
+
+    algo_ =
+      SelectBackwardDataAlgorithm(cudnn_handle_, cudnn_data_type_, w_desc_, dy_desc_, conv_desc_, dx_desc_real, group_);
     auto inplace_algo_ptr = base_operator->GetAttr("inplace_algo");
     if (inplace_algo_ptr == nullptr) {
       beta_ = 0;

@@ -317,6 +317,7 @@ class _Context:
                 - conv_fprop_algo (str): "normal", "performance" or user specifies conv forward algorithm directly.
                 - conv_dgrad_algo (str): "normal", "performance" or user specifies conv data grad algorithm directly.
                 - conv_wgrad_algo (str): "normal", "performance" or user specifies conv weight grad algorithm directly.
+                - conv_allow_tf32 (bool): ``False`` and ``True``.
         """
 
         gpu_cfgs = {'conv_fprop_algo': ["normal", "performance", "implicit_gemm", "precomp_gemm", "gemm", "direct",
@@ -324,7 +325,8 @@ class _Context:
                     'conv_dgrad_algo': ["normal", "performance", "algo_0", "algo_1", "fft", "fft_tiling", "winograd",
                                         "winograd_nonfused"],
                     'conv_wgrad_algo': ["normal", "performance", "algo_0", "algo_1", "fft", "algo_3", "fft_tiling",
-                                        "winograd_nonfused"]}
+                                        "winograd_nonfused"],
+                    'conv_allow_tf32': [True, False]}
         for gpu_key in gpu_config:
             if gpu_key not in gpu_cfgs:
                 raise ValueError(f"For 'context.set_context', the key of argument 'gpu_config' must be one of "
@@ -339,6 +341,8 @@ class _Context:
                 self.set_param(ms_ctx_param.conv_dgrad_algo, gpu_config[gpu_key])
             if gpu_key == 'conv_wgrad_algo':
                 self.set_param(ms_ctx_param.conv_wgrad_algo, gpu_config[gpu_key])
+            if gpu_key == 'conv_allow_tf32':
+                self.set_param(ms_ctx_param.conv_allow_tf32, gpu_config[gpu_key])
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
@@ -1267,8 +1271,8 @@ def set_context(**kwargs):
             - LAX(``2``): Compatible with all Python syntax as much as possible. However, execution performance may be
               affected and not optimal.
         gpu_config (dict): Set the parameters specific to gpu hardware platform. It is not set by default.
-            Currently, only setting `conv_fprop_algo` and `conv_dgrad_algo` and `conv_wgrad_algo` are supported on GPU
-            hardware platform.
+            Currently, only setting `conv_fprop_algo` and `conv_dgrad_algo` and `conv_wgrad_algo` and `conv_allow_tf32`
+            are supported on GPU hardware platform.
 
             - conv_fprop_algo (str): Specifies convolution forward algorithm and the default value is 'normal',
               The value range is as follows:
@@ -1333,6 +1337,9 @@ def set_context(**kwargs):
                 A significant memory workspace is needed to store intermediate results but less than fft for large size
                 images. The results are deterministic.
 
+            - conv_allow_tf32 (bool): The flag below controls to allow Tensor core TF32 computation on CUDNN and the
+              default value is ``True``.
+
     Raises:
         ValueError: If input key is not an attribute in context.
 
@@ -1366,7 +1373,7 @@ def set_context(**kwargs):
         >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True,
         ...                "atomic_clean_policy": 1, "op_precision_mode": "./op_precision_config_file"})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
-        >>> ms.set_context(gpu_config={"conv_fprop_algo": "performance"})
+        >>> ms.set_context(gpu_config={"conv_fprop_algo": "performance", "conv_allow_tf32": True})
     """
     ctx = _context()
     # set device target first

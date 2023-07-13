@@ -53,13 +53,14 @@ class Conv2dInput(nn.Cell):
 @pytest.mark.parametrize('algo', ["normal", "performance", "algo_0", "algo_1", "fft", "fft_tiling", "winograd",
                                   "winograd_nonfused"])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_conv2d_backprop_input(algo, mode):
+@pytest.mark.parametrize('conv_allow_tf32', [True, False])
+def test_conv2d_backprop_input(algo, mode, conv_allow_tf32):
     """
     Feature: Test conv2d backprop input op
     Description: Test conv2d backprop input op
     Expectation: The value is processed as expected
     """
-    gpu_config = {"conv_dgrad_algo": algo}
+    gpu_config = {"conv_dgrad_algo": algo, "conv_allow_tf32": conv_allow_tf32}
     context.set_context(mode=mode, device_target="GPU", gpu_config=gpu_config)
     w = Tensor(np.array([[[[1, 0, -1], [1, 0, -1], [1, 0, -1]]]]).astype(np.float32))
     x = Tensor(np.array([[[
@@ -106,7 +107,7 @@ def test_conv2d_backprop_input_vmap():
                           [[[[0., 16., 49., 52., 55., 38.], [48., 135., 263., 278., 233., 141.],
                              [156., 381., 678., 714., 558., 321.], [192., 465., 822., 858., 666., 381.],
                              [228., 517., 869., 902., 671., 371.], [168., 370., 607., 628., 457., 248.]]]]]
-                        ).astype(np.float32)
+                         ).astype(np.float32)
     output1 = vmap(conv2d_input, (1, None, None))(batch_dout, x, w)
     assert np.allclose(output1.asnumpy(), expected1, 0.0001, 0.0001)
 
@@ -118,7 +119,7 @@ def test_conv2d_backprop_input_vmap():
                           [[[[0., 9., 28., 58., 52., 33.], [36., 97., 185., 254., 203., 119.],
                              [120., 288., 507., 624., 477., 270.], [264., 588., 975., 1092., 801., 438.],
                              [264., 575., 935., 1022., 737., 397.], [180., 387., 622., 670., 478., 255.]]]]]
-                        ).astype(np.float32)
+                         ).astype(np.float32)
     output2 = vmap(conv2d_input, (None, 0, None))(dout, batch_x, w)
     assert np.allclose(output2.asnumpy(), expected2, 0.0001, 0.0001)
 
@@ -128,6 +129,6 @@ def test_conv2d_backprop_input_vmap():
                           [[[[144., 313., 508., 538., 388., 209.], [372., 801., 1289., 1358., 971., 519.],
                              [696., 1488., 2379., 2496., 1773., 942.], [840., 1788., 2847., 2964., 2097., 1110.],
                              [696., 1471., 2327., 2414., 1697., 893.], [420., 883., 1390., 1438., 1006., 527.]]]]]
-                        ).astype(np.float32)
+                         ).astype(np.float32)
     output3 = vmap(conv2d_input, (1, 0, None))(batch_dout, batch_x, w)
     assert np.allclose(output3.asnumpy(), expected3, 0.0001, 0.0001)

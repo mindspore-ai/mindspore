@@ -165,12 +165,9 @@ int Conv3dTransposeFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   pad_mode_ = kernel_ptr->get_pad_mode();
   SetPad(input_shape, filter_shape, &pad_list, &stride_pad_list);
   auto [input_desc_real, output_desc_real] = GetInputAndOutputDescReal(pad_list, stride_pad_list);
-  if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
-                                        "cudnnSetConvolutionMathType failed.")
-  }
-  algo_ =
-    SelectBackwardDataAlgorithm(cudnn_handle_, filter_desc_, input_desc_real, conv_desc_, output_desc_real, group_);
+  SetConvolutionMathType(conv_desc_, cudnn_data_type_);
+  algo_ = SelectBackwardDataAlgorithm(cudnn_handle_, cudnn_data_type_, filter_desc_, input_desc_real, conv_desc_,
+                                      output_desc_real, group_);
 
   if (base_operator->GetAttr("inplace_algo") == nullptr) {
     beta_ = 0;
