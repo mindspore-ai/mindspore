@@ -52,10 +52,6 @@ void Cast(CastCpuKernelFunc<S, T> *content, const S *in, T *out, size_t size) {
         out[i] = std::complex<float>(in[i] ? 1.0f : 0.0f, 0.0f);
       } else if constexpr (std::is_same_v<S, bool> && std::is_same_v<T, std::complex<double>>) {
         out[i] = std::complex<double>(in[i] ? 1.0 : 0.0, 0.0);
-      } else if constexpr (std::is_same_v<S, std::complex<float>> && std::is_same_v<T, bool>) {
-        out[i] = (std::real(in[i]) != 0.0f) || (std::imag(in[i]) != 0.0f);
-      } else if constexpr (std::is_same_v<S, std::complex<double>> && std::is_same_v<T, bool>) {
-        out[i] = (std::real(in[i]) != 0.0) || (std::imag(in[i]) != 0.0);
       } else if constexpr ((std::is_same_v<S, std::complex<float>>) || (std::is_same_v<S, std::complex<double>>)) {
         out[i] = static_cast<T>(std::real(in[i]));
       } else if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
