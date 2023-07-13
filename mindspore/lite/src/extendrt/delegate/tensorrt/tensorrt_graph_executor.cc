@@ -33,6 +33,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/extendrt/utils/func_graph_utils.h"
 #include "src/extendrt/delegate/tensorrt/optimizer/tensorrt_optimizer.h"
+#include "ops/custom.h"
 
 namespace mindspore::lite {
 namespace {
@@ -456,6 +457,10 @@ TensorRTOp *TensorRTExecutor::FindTensorRTOp(const CNodePtr &cnode, const BaseOp
   auto name = cnode->fullname_with_scope();
   auto node_type = base_operator->name();
   auto &plugin_factory = TensorRTRegistrationFactory::Get();
+  if (node_type == ops::kNameCustom) {
+    auto custom_node = std::dynamic_pointer_cast<ops::Custom>(base_operator);
+    node_type = custom_node->get_type();
+  }
   if (plugin_factory.HasKey(node_type)) {
     TensorRTOp *tensorrt_op = plugin_factory.GetCreator(node_type)(base_operator, input_tensors, output_tensors, name);
     if (tensorrt_op == nullptr) {
