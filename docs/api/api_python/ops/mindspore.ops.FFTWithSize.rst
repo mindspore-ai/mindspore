@@ -40,10 +40,10 @@ mindspore.ops.FFTWithSize
 
         - **real** (bool) - 表示该操作是否为实变换，与 `inverse` 共同决定具体的变换模式：
 
-            - `inverse` 为 ``False`` ， `real` 为 ``False`` ：对应FFT模式。
-            - `inverse` 为 ``True`` ， `real` 为 ``False`` ：对应IFFT模式。
-            - `inverse` 为 ``False`` ， `real` 为 ``True`` ：对应RFFT模式。
-            - `inverse` 为 ``True`` ，  `real` 为 ``True``  ：对应IRFFT模式。
+          - `inverse` 为 ``False`` ， `real` 为 ``False`` ：对应FFT模式。
+          - `inverse` 为 ``True`` ， `real` 为 ``False`` ：对应IFFT模式。
+          - `inverse` 为 ``False`` ， `real` 为 ``True`` ：对应RFFT模式。
+          - `inverse` 为 ``True`` ，  `real` 为 ``True``  ：对应IRFFT模式。
   
         - **norm** (str，可选) - 表示该操作的规范化方式，可选值：[ ``"backward"`` , ``"forward"`` , ``"ortho"`` ]。默认值： ``"backward"`` 。
   

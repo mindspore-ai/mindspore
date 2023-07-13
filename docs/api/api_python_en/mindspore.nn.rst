@@ -21,7 +21,6 @@ Basic Block
     mindspore.nn.GraphCell
     mindspore.nn.LossBase
     mindspore.nn.Optimizer
-    mindspore.nn.optim_ex.Optimizer
 
 Container
 ---------
@@ -304,6 +303,16 @@ Optimizer
     mindspore.nn.Rprop
     mindspore.nn.SGD
     mindspore.nn.thor
+
+Experimental Optimizer
+-----------------------
+
+.. msplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+    
+    mindspore.nn.optim_ex.Optimizer
     mindspore.nn.optim_ex.Adam
     mindspore.nn.optim_ex.AdamW
     mindspore.nn.optim_ex.SGD
@@ -376,8 +385,8 @@ During the training process, the optimizer takes result[current step] as current
     mindspore.nn.polynomial_decay_lr
     mindspore.nn.warmup_lr
 
-LRScheduler类
-^^^^^^^^^^^^^^^^
+LRScheduler Class
+^^^^^^^^^^^^^^^^^^
 
 The dynamic learning rates in this module are all subclasses of LRScheduler, this module should be used with optimizers
 in mindspore.nn.optim_ex, pass the optimizer instance to a LRScheduler when used. During the training process, the
