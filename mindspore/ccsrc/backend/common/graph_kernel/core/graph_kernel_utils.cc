@@ -356,21 +356,21 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
           }
         }
         inputs.push_back(iter->second);
-      } else {
-        // input is valuenode
-        auto input_value_node = input_i->cast<ValueNodePtr>();
-        auto input_value = input_value_node->value();
-        constexpr size_t idx = 2;
-        inner::NodePtr input_node;
-        if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && i == idx) {
-          input_node = std::make_shared<inner::ConstScalarNode>(input_value);
-        } else {
-          auto tensor = InputValue2Tensor(input_value);
-          MS_EXCEPTION_IF_NULL(tensor);
-          input_node = gb.Value(tensor);
-        }
-        inputs.push_back(input_node);
+        continue;
       }
+      // input is valuenode
+      auto input_value_node = input_i->cast<ValueNodePtr>();
+      auto input_value = input_value_node->value();
+      constexpr size_t idx = 2;
+      inner::NodePtr input_node;
+      if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && i == idx) {
+        input_node = std::make_shared<inner::ConstScalarNode>(input_value);
+      } else {
+        auto tensor = InputValue2Tensor(input_value);
+        MS_EXCEPTION_IF_NULL(tensor);
+        input_node = gb.Value(tensor);
+      }
+      inputs.push_back(input_node);
     }
     auto op = gb.Op(AnfUtils::GetCNodeName(node), ExtractBuildInfo(node), inputs, prim->attrs());
     node_map[node] = op;
@@ -380,15 +380,15 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
   }
   // set outputs
   auto output_node = func_graph->output();
-  if (IsPrimitiveCNode(output_node, prim::kPrimMakeTuple)) {
-    inner::NodePtrList outputs;
-    auto mt = output_node->cast<CNodePtr>();
-    (void)std::transform(mt->inputs().begin() + 1, mt->inputs().end(), std::back_inserter(outputs),
-                         [&node_map](const AnfNodePtr &no) { return node_map[no]; });
-    gb.SetOutputs(std::move(outputs));
-  } else {
+  if (!IsPrimitiveCNode(output_node, prim::kPrimMakeTuple)) {
     gb.SetOutputs({node_map[output_node]});
+    return gb.Get();
   }
+  inner::NodePtrList outputs;
+  auto mt = output_node->cast<CNodePtr>();
+  (void)std::transform(mt->inputs().begin() + 1, mt->inputs().end(), std::back_inserter(outputs),
+                       [&node_map](const AnfNodePtr &no) { return node_map[no]; });
+  gb.SetOutputs(std::move(outputs));
   return gb.Get();
 }
 

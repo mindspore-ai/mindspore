@@ -53,7 +53,7 @@ abstract::ShapePtr MatrixExpInferShape(const PrimitivePtr &primitive, const std:
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
   constexpr const int64_t kMinRank = 2;
-  (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kMinRank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", static_cast<int64_t>(x_rank), kGreaterEqual, kMinRank, prim_name);
   if (!IsDynamicShape(x_shape)) {
     if (x_shape[x_rank - kIndex1] != x_shape[x_rank - kIndex2]) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input expects a tensor of squared matrices"
