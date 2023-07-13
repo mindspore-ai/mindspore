@@ -68,8 +68,15 @@ bool AscendCommunicationGroup::Finalize() {
     return true;
   }
 
+  // This function will be called at a lonesome thread that has no rtContext, so HcclCommDestroy will be failed.
+  // Delete these codes when these threads can be bind.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  (void)rtSetDevice(device_id);
   RETURN_IF_FALSE_WITH_LOG(HcclCommDestroy(comm_) == static_cast<int32_t>(HCCL_SUCCESS),
                            "Failed to destroy HCCL communicator.");
+  (void)rtDeviceReset(device_id);
   initialized_ = false;
   comm_ = nullptr;
   return true;
