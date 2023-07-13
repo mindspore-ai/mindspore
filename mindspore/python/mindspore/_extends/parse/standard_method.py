@@ -2941,6 +2941,13 @@ def to_coo(x):
     return F.dense_to_sparse_coo(x)
 
 
+def tolist(x):
+    """
+    Convert a Tensor to List, if the input is Tensor scalar, Python scalar will be returned.
+    """
+    return x.asnumpy().tolist()
+
+
 @constexpr
 def check_select_condition(cond_type):
     """
@@ -3900,6 +3907,13 @@ def cos(x):
     Computes cosine of input element-wise.
     """
     return F.cos(x)
+
+
+def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
+    r"""
+    For details, please refer to :func:`mindspore.ops.count_nonzero`.
+    """
+    return F.count_nonzero(x, axis, keep_dims, dtype)
 
 
 def cov(x, *, correction=1, fweights=None, aweights=None):

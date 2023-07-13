@@ -3609,6 +3609,29 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('dense_to_sparse_csr')(self)
 
+    def tolist(self):
+        r"""
+        Convert a Tensor to List. If the input is Tensor scalar, a Python scalar will be returned.
+
+        Returns:
+            List or Python scalar.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]])
+            >>> out1 = x.tolist()
+            >>> print(out1)
+            [[1, 2, 3], [4, 5, 6]]
+            >>> out2 = x[0][0].tolist()
+            >>> print(out2)
+            1
+        """
+        self._init_check()
+        return self.asnumpy().tolist()
+
     def unbind(self, dim=0):
         r"""
         For details, please refer to :func:`mindspore.ops.unbind`.
@@ -4014,6 +4037,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         return tensor_operator_registry.get('conj')(self)
+
+    def count_nonzero(self, axis=(), keep_dims=False, dtype=mstype.int32):
+        r"""
+        For details, please refer to :func:`mindspore.ops.count_nonzero`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('count_nonzero')(self, axis, keep_dims, dtype)
 
     def cross(self, other, dim=None):
         r"""
