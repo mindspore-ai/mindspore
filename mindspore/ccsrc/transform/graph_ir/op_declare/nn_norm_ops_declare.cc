@@ -249,4 +249,11 @@ OUTPUT_MAP(SoftmaxGradExt) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(SoftmaxGradExt) = {{"axis", ATTR_DESC(axes, AnyTraits<int64_t>(), AnyTraits<int64_t>())},
                             {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>(), AnyTraits<bool>())}};
 REG_ADPT_DESC(SoftmaxGradExt, kSoftmaxGradExtOpName, ADPT_DESC(SoftmaxGradExt))
+
+// MVNV2
+INPUT_MAP(MVNV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MVNV2) = {{"eps", ATTR_DESC(eps, AnyTraits<float>())},
+                   {"axes", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(MVNV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MVNV2, kNameMVNV2, ADPT_DESC(MVNV2))
 }  // namespace mindspore::transform

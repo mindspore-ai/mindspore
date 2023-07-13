@@ -73,6 +73,8 @@ ADD_CONVERTER_TBE_OP(Shrink)
 ADD_CONVERTER_TBE_OP(ReduceLogSumExp)
 ADD_CONVERTER_TBE_OP(ReduceLogSum)
 ADD_CONVERTER_TBE_OP(SplitV)
+ADD_CONVERTER_TBE_OP(MVN)
+ADD_CONVERTER_TBE_OP(MVNV2)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

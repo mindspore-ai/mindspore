@@ -452,6 +452,7 @@ constexpr const char kNameReduceLogSumExp[] = "ReduceLogSumExp";
 constexpr const char kNameReduceLogSum[] = "ReduceLogSum";
 constexpr const char kNameSize[] = "Size";
 constexpr const char kNameTfIdfVectorizer[] = "TfIdfVectorizer";
+constexpr const char kNameMVNV2[] = "MVNV2";
 
 class OpAdapterDesc;
 
