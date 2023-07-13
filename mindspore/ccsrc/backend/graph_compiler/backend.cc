@@ -839,6 +839,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
     }
     WaitTaskFinish();
   }
+  python_adapter::PyAdapterCallback::ProcessUnPairedCellHook(true);
   MS_LOG(INFO) << "Status record: end run graph by single op";
 }
 
