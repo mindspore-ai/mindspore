@@ -375,9 +375,13 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         parameter_layout_dict = save_obj.parameter_layout_dict
         if _is_in_auto_parallel_mode() and not parameter_layout_dict:
             parameter_layout_dict = _get_parameter_layout()
-        save_obj.init_parameters_data()
+        if not _is_in_auto_parallel_mode():
+            save_obj.init_parameters_data()
         param_dict = OrderedDict()
         for _, param in save_obj.parameters_and_names():
+            not_sliced = not param.sliced
+            if _is_in_auto_parallel_mode() and (not_sliced or param.has_init):
+                continue
             param_dict[param.name] = param
         param_list = []
         if append_dict and "random_op" in append_dict:
@@ -1066,7 +1070,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     strict_load = Validator.check_bool(strict_load)
     logger.info("Execute the process of loading parameters into net.")
-    net.init_parameters_data()
+    if not _is_in_auto_parallel_mode():
+        net.init_parameters_data()
     param_not_load = []
     ckpt_not_load = list(parameter_dict.keys())
     for _, param in net.parameters_and_names():
