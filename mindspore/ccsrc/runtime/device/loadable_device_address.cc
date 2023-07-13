@@ -108,13 +108,13 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
   if (storage_info_.host_ptr_ == nullptr || storage_info_.host_ptr_mutable_) {
     storage_info_.host_ptr_ = swap_manager->AllocHostMemory(GetFileAlignSize());
     if (storage_info_.host_ptr_ == nullptr) {
-      MS_LOG(WARNING) << "Allocating host memory failed, size: " << size_;
+      MS_LOG(ERROR) << "Allocating host memory failed, size: " << size_;
       return false;
     }
   }
   if (status_ == DeviceAddressStatus::kInFile) {
     if (!CopyFileToHost(storage_info_.host_ptr_, storage_info_.file_name_, size_, async)) {
-      MS_LOG(WARNING) << "Copy data from file to host failed.";
+      MS_LOG(ERROR) << "Copy data from file to host failed.";
       return false;
     }
     if (async) {
@@ -129,7 +129,7 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
     }
   } else {
     if (!CopyDeviceToHost(storage_info_.host_ptr_, ptr_, size_, async, stream_id)) {
-      MS_LOG(WARNING) << "Copy data from device to host failed.";
+      MS_LOG(ERROR) << "Copy data from device to host failed.";
       return false;
     }
     if (async) {
@@ -159,12 +159,12 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
   if (ptr_ == nullptr) {
     ptr_ = swap_manager->AllocDeviceMemory(size_);
     if (ptr_ == nullptr) {
-      MS_LOG(WARNING) << "Allocating device memory failed, size: " << size_;
+      MS_LOG(ERROR) << "Allocating device memory failed, size: " << size_;
       return false;
     }
   }
   if (!CopyHostToDevice(ptr_, storage_info_.host_ptr_, size_, async, stream_id)) {
-    MS_LOG(WARNING) << "Copy data from host to device failed.";
+    MS_LOG(ERROR) << "Copy data from host to device failed.";
     return false;
   }
   if (async) {
@@ -196,12 +196,12 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
   if (storage_info_.file_name_.empty() || storage_info_.file_name_mutable_) {
     storage_info_.file_name_ = GetSwapFileName();
     if (!swap_manager->CreateFile(storage_info_.file_name_, GetFileAlignSize())) {
-      MS_LOG(WARNING) << "Create file for swapping failed.";
+      MS_LOG(ERROR) << "Create file for swapping failed. File size: " << GetFileAlignSize();
       return false;
     }
   }
   if (!CopyHostToFile(storage_info_.file_name_, storage_info_.host_ptr_, size_, async)) {
-    MS_LOG(WARNING) << "Copy data from host to file failed.";
+    MS_LOG(ERROR) << "Copy data from host to file failed.";
     return false;
   }
   if (async) {
