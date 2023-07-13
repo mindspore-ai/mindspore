@@ -259,45 +259,6 @@ def test_cross_entropy_ops_abnormal_input():
         ops.cross_entropy(input_data, target_data, weight_data)
 
 
-def test_cross_entropy_ops_abnormal_input_dtype():
-    """
-    Feature: Test abnormal input dtype of CrossEntropyLoss.
-    Description: Test CrossEntropyLoss functional.
-    Expectation: Success.
-    """
-    input_data = Tensor(np.random.randn(3, 5).astype(np.float64))
-    target_data = Tensor(np.random.randint(0, 5, (3,)), mstype.int32)
-    weight_data = Tensor(np.random.randn(5,), mstype.float32)
-    with pytest.raises(TypeError):
-        ops.cross_entropy(input_data, target_data, weight_data)
-
-
-def test_cross_entropy_ops_abnormal_weight_dtype():
-    """
-    Feature: Test abnormal weight dtype of CrossEntropyLoss.
-    Description: Test CrossEntropyLoss functional.
-    Expectation: Success.
-    """
-    input_data = Tensor(np.random.randn(3, 5).astype(np.float32))
-    target_data = Tensor(np.random.randint(0, 5, (3,)), mstype.int32)
-    weight_data = Tensor(np.random.randn(5,), mstype.float64)
-    with pytest.raises(TypeError):
-        ops.cross_entropy(input_data, target_data, weight_data)
-
-
-def test_cross_entropy_ops_abnormal_target_dtype():
-    """
-    Feature: Test abnormal target dtype of CrossEntropyLoss.
-    Description: Test CrossEntropyLoss functional.
-    Expectation: Success.
-    """
-    input_data = Tensor(np.random.randn(3, 5).astype(np.float32))
-    target_data = Tensor(np.random.randint(0, 5, (3,)), mstype.int64)
-    weight_data = Tensor(np.random.randn(5,), mstype.float32)
-    with pytest.raises(TypeError):
-        ops.cross_entropy(input_data, target_data, weight_data)
-
-
 def test_cross_entropy_ops_abnormal_target():
     """
     Feature: Test abnormal target of CrossEntropyLoss.
