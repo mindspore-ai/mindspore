@@ -483,10 +483,8 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
 #ifndef ENABLE_SECURITY
     auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
     MS_EXCEPTION_IF_NULL(profiler_inst);
-    if (profiler_inst->GetEnableFlag()) {
-      uint32_t pid = getpid();
-      profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
-    }
+    uint32_t pid = getpid();
+    profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
 #endif
 #ifdef ENABLE_DUMP_IR
     kernel::KernelLaunchInfo mem_info = {kernel_inputs, kernel_workspaces, kernel_outputs};
@@ -502,9 +500,7 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
     if (iter_dump_flag) {
       CPUE2eDump::DumpCNodeData(kernel, graph_id);
     }
-    if (profiler_inst->GetEnableFlag()) {
-      profiler_inst->OpDataProducerEnd();
-    }
+    profiler_inst->OpDataProducerEnd();
 #endif
     if (!ret) {
 #ifdef ENABLE_DUMP_IR

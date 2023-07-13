@@ -741,7 +741,7 @@ bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
   const auto &profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
 
-  if (!profiler_inst->GetEnableFlag()) {
+  if (!profiler_inst->GetEnableFlag() || !profiler_inst->GetOpTimeFlag()) {
 #endif
     auto lock = LockLaunchKernel(stream);
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();

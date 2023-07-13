@@ -646,6 +646,8 @@ class Profiler:
             return
 
         self._cpu_profiler.step_profiling_enable(True)
+        if self._op_time:
+            self._cpu_profiler.enable_op_time()
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
             if self._data_process:
@@ -653,6 +655,8 @@ class Profiler:
                 self._gpu_profiler.data_process_enable(True)
             if self._profile_framework or self._op_time:
                 self._gpu_profiler.step_profiling_enable(True)
+                if self._op_time:
+                    self._gpu_profiler.enable_op_time()
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             if self._data_process:
                 self._md_profiler.start()
@@ -1280,7 +1284,8 @@ class Profiler:
 
     def _cpu_analyse(self):
         """Collect and analyse cpu performance data."""
-
+        if not self._op_time:
+            return
         try:
             timeline_generator = CpuTimelineGenerator(self._output_path, self._rank_id, context.get_context("mode"))
             timeline_generator.init_timeline()

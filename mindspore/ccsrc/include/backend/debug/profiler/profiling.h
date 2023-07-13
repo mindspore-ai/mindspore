@@ -114,6 +114,8 @@ class BACKEND_EXPORT Profiler {
   virtual void OpDataProducerEnd() = 0;
   void RecordOneStepStartEndInfo();
   bool GetEnableFlag() const { return enable_flag_; }
+  void EnableOpTime() { op_time_ = true; }
+  bool GetOpTimeFlag() const { return op_time_; }
   std::string GetProfilingOptions() const { return profiling_options_; }
   std::string ProfileDataPath() const { return profile_data_path_; }
   void RecordOneStepStartEndInfo(std::string op_name);
@@ -137,6 +139,7 @@ class BACKEND_EXPORT Profiler {
   virtual void ClearInst() = 0;
   std::pair<double, double> single_op_launch_start_time_end_time_;
   bool enable_flag_ = false;
+  bool op_time_ = false;
   bool has_find_ = false;
   bool is_parallel_strategy = false;
   bool init_flag_ = false;

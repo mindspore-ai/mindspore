@@ -140,14 +140,19 @@ void CPUProfiler::OpDataProducerEndParallel(const std::string op_name) {
 }
 
 void CPUProfiler::OpDataProducerBegin(const std::string op_name, const uint32_t pid) {
+  if (!GetEnableFlag() || !GetOpTimeFlag()) {
+    return;
+  }
   op_time_start_ = GetHostMonoTimeStamp();
   op_time_mono_start_ = GetHostMonoTimeStamp();
   SetRunTimeData(op_name, pid);
-
   RecordGpuOneStepStartEndInfo();
 }
 
 void CPUProfiler::OpDataProducerEnd() {
+  if (!GetEnableFlag() || !GetOpTimeFlag()) {
+    return;
+  }
   float op_time_elapsed = 0;
   op_time_stop_ = GetHostMonoTimeStamp();
   op_time_elapsed = (op_time_stop_ - op_time_start_) / kNanosecondToMillisecond;
@@ -200,7 +205,7 @@ void CPUProfiler::RecordGpuOneStepStartEndInfo() {
 
   if (auto gpu_instance = Profiler::GetInstance(kGPUDevice);
       gpu_instance != nullptr && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) &&
-      gpu_instance->GetEnableFlag()) {
+      gpu_instance->GetEnableFlag() && gpu_instance->GetOpTimeFlag()) {
     gpu_instance->RecordOneStepStartEndInfo();
   }
 }
