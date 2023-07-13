@@ -45,6 +45,8 @@ class UpsampleNearest3dGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -55,9 +57,9 @@ class UpsampleNearest3dGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, UpsampleNearest3dFunc>> func_list_;
 
   void *cuda_stream_{nullptr};
-  std::vector<int32_t> input_shape_{};
-  std::vector<int32_t> output_shape_{};
-  std::vector<float> scale_factors_{0., 0., 0.};
+  std::vector<int64_t> input_shape_{};
+  std::vector<int64_t> output_shape_{};
+  std::vector<double> scales_{0., 0., 0.};
   std::vector<int64_t> none_list_{};
 };
 }  // namespace kernel

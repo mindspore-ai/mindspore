@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/upsample_trilinear_3d_grad_cpu_kernel.h"
 #include <string>
+#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -91,6 +92,13 @@ int UpsampleTrilinear3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
+  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
+    scales_ = std::vector<double>(kIndex3, kValueZero);
+  } else {
+    if (!TryGetFloatValue(inputs, kIndex2, kernel_name_, &scales_, false)) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
+    }
+  }
   return KRET_OK;
 }
 
@@ -98,20 +106,8 @@ template <typename T, typename S>
 bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                        const std::vector<kernel::AddressPtr> &workspace,
                                                        const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpsampleTrilinear3DGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUpsampleTrilinear3DGradOutputNum, kernel_name_);
-  // fetch scales
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
-    scales_ = std::vector<double>(kIndex3, kValueZero);
-  } else {
-    scales_.clear();
-    auto scales_ptr = GetDeviceAddress<float>(inputs, kIndex2);
-    for (size_t i = 0; i < kIndex3; ++i) {
-      scales_.push_back(static_cast<double>(scales_ptr[i]));
-    }
-  }
   // the input grad of backward process is the output of forward process
-  auto grad_output_ptr = static_cast<T *>(inputs[kIndex0]->addr);
+  auto grad_output_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   const int64_t total = CPUKernelUtils::CalcElementNum(input_shape_);
   S *grad_input_ptr = nullptr;
   bool is_fp16 = std::is_same<T, float16>::value;
@@ -121,7 +117,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
     grad_input_copy.resize(total, 0);
     grad_input_ptr = grad_input_copy.data();
   } else {
-    grad_input_ptr = static_cast<S *>(outputs[kIndex0]->addr);
+    grad_input_ptr = GetDeviceAddress<S>(outputs, kIndex0);
     int ret = memset_s(outputs[kIndex0]->addr, outputs[kIndex0]->size, 0, outputs[kIndex0]->size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
@@ -139,8 +135,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
 
   int64_t output_slice_size = output_depth * output_height * output_width;
   int64_t input_slice_size = input_depth * input_height * input_width;
-  MS_EXCEPTION_IF_CHECK_FAIL(channels != 0 && output_depth != 0 && output_height != 0 && output_width != 0,
-                             "Invalid output shape.");
+
   const S depth_scale = AreaPixelComputeScale<S>(input_depth, output_depth, align_corners_, scales_[kIndex0]);
   const S height_scale = AreaPixelComputeScale<S>(input_height, output_height, align_corners_, scales_[kIndex1]);
   const S width_scale = AreaPixelComputeScale<S>(input_width, output_width, align_corners_, scales_[kIndex2]);
@@ -148,6 +143,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
   WeightsAndIndices<S> *const d_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex0]->addr);
   WeightsAndIndices<S> *const h_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex1]->addr);
   WeightsAndIndices<S> *const w_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex2]->addr);
+
   (void)ComputeHelper<S>(d_helper, depth_scale, input_depth, output_depth, input_height * input_width);
   (void)ComputeHelper<S>(h_helper, height_scale, input_height, output_height, input_width);
   (void)ComputeHelper<S>(w_helper, width_scale, input_width, output_width, 1);
@@ -198,7 +194,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
   ParallelLaunch(loop3d, static_cast<size_t>(channels), block_size);
   // memcopy and cast for fp16
   if (is_fp16) {
-    T *real_input_ptr = static_cast<T *>(outputs[kIndex0]->addr);
+    T *real_input_ptr = GetDeviceAddress<T>(outputs, kIndex0);
     auto task_fp16 = [&](int64_t begin, int64_t end) {
       for (int64_t idx = begin; idx < end; ++idx) {
         real_input_ptr[idx] = static_cast<T>(grad_input_ptr[idx]);

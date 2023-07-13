@@ -45,7 +45,6 @@ class UpsampleTrilinear3DCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }

@@ -44,12 +44,14 @@ class UpsampleNearest3DCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
+
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  private:
   void ComputeNearestIndex(int64_t *const indices, const int64_t stride, const int64_t input_szie,
                            const int64_t output_size, const double scale) const;
+
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
@@ -57,9 +59,10 @@ class UpsampleNearest3DCpuKernelMod : public NativeCpuKernelMod {
                                            const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
   KernelRunFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list_;
+  size_t unit_size_{0};
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;
-  std::vector<float> scales_;
+  std::vector<double> scales_;
   std::vector<int64_t> none_list_;
 };
 }  // namespace kernel

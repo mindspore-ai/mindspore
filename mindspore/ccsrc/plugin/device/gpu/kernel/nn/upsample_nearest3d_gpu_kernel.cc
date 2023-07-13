@@ -16,21 +16,22 @@
 
 #include "plugin/device/gpu/kernel/nn/upsample_nearest3d_gpu_kernel.h"
 #include <algorithm>
-#include <vector>
-#include <memory>
+#include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
-#include <functional>
+#include <vector>
 #include "abstract/utils.h"
+#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
-#include "mindspore/core/ops/upsample_nearest_3d.h"
+#include "ops/upsample_nearest_3d.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_nearest_3d_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-const float kValueZero = 0.;
+const double kValueZero = 0.;
 }  // namespace
 bool UpsampleNearest3dGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
@@ -58,15 +59,18 @@ int UpsampleNearest3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_.clear();
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToInt);
-  output_shape_.clear();
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToInt);
+  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
   none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
+  }
+  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
+    scales_ = std::vector<double>(kIndex3, kValueZero);
+  } else {
+    if (!TryGetFloatValue(inputs, kIndex1, kernel_name_, &scales_)) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
+    }
   }
   return KRET_OK;
 }
@@ -75,27 +79,13 @@ template <typename T>
 bool UpsampleNearest3dGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 2, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
-    scale_factors_ = std::vector<float>(kIndex3, kValueZero);
-  } else {
-    auto scale_factors_device = GetDeviceAddress<float>(inputs, kIndex1);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(reinterpret_cast<void *>(scale_factors_.data()), reinterpret_cast<void *>(scale_factors_device),
-                      input_size_list_[kIndex1], cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-      "For '" << kernel_name_ << "', "
-              << "cudaMemcpy input 'scales' to host failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - " + kernel_name_);
-  }
-  const float scale_d =
-    ComputeScales<float>(static_cast<double>(scale_factors_[kIndex0]), input_shape_[kIndex2], output_shape_[kIndex2]);
-  const float scale_h =
-    ComputeScales<float>(static_cast<double>(scale_factors_[kIndex1]), input_shape_[kIndex3], output_shape_[kIndex3]);
-  const float scale_w =
-    ComputeScales<float>(static_cast<double>(scale_factors_[kIndex2]), input_shape_[kIndex4], output_shape_[kIndex4]);
   auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
   auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+
+  const float scale_d = ComputeScales<float>(scales_[kIndex0], input_shape_[kIndex2], output_shape_[kIndex2]);
+  const float scale_h = ComputeScales<float>(scales_[kIndex1], input_shape_[kIndex3], output_shape_[kIndex3]);
+  const float scale_w = ComputeScales<float>(scales_[kIndex2], input_shape_[kIndex4], output_shape_[kIndex4]);
+
   auto status = CalUpsampleNearest3d<T>(input, input_shape_[kIndex0], input_shape_[kIndex1], input_shape_[kIndex2],
                                         input_shape_[kIndex3], input_shape_[kIndex4], output_shape_[kIndex2],
                                         output_shape_[kIndex3], output_shape_[kIndex4], scale_d, scale_h, scale_w,

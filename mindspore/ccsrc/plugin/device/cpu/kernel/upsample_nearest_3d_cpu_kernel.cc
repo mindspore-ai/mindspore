@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/upsample_nearest_3d_cpu_kernel.h"
 #include <string>
 #include <utility>
+#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "ops/upsample_nearest_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -24,10 +25,11 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-const float kValueZero = 0.;
 constexpr auto kUpsampleNearest3DInputsNum = 2;
 constexpr auto kUpsampleNearest3DOutputNum = 1;
+const double kValueZero = 0.;
 }  // namespace
+
 void UpsampleNearest3DCpuKernelMod::ComputeNearestIndex(int64_t *const indices, const int64_t stride,
                                                         const int64_t input_szie, const int64_t output_size,
                                                         const double scale) const {
@@ -54,6 +56,7 @@ bool UpsampleNearest3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   kernel_func_ = func_list_[index].second;
+  unit_size_ = sizeof(int64_t);
   return true;
 }
 
@@ -68,14 +71,20 @@ int UpsampleNearest3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   x_shape_ = inputs.at(kIndex0)->GetShapeVector();
   y_shape_ = outputs.at(kIndex0)->GetShapeVector();
   // apply workspace
-  size_t unit_size = sizeof(int64_t);
-  workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex2]));
-  workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex3]));
-  workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex4]));
+  workspace_size_list_.push_back(unit_size_ * LongToSize(y_shape_[kIndex2]));
+  workspace_size_list_.push_back(unit_size_ * LongToSize(y_shape_[kIndex3]));
+  workspace_size_list_.push_back(unit_size_ * LongToSize(y_shape_[kIndex4]));
   // none_list
   none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
+  }
+  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
+    scales_ = std::vector<double>(kIndex3, kValueZero);
+  } else {
+    if (!TryGetFloatValue(inputs, kIndex1, kernel_name_, &scales_, false)) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
+    }
   }
   return KRET_OK;
 }
@@ -84,17 +93,6 @@ template <typename T>
 bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpsampleNearest3DInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUpsampleNearest3DOutputNum, kernel_name_);
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
-    scales_ = std::vector<float>(kIndex3, kValueZero);
-  } else {
-    scales_.clear();
-    auto scales_ptr = GetDeviceAddress<float>(inputs, kIndex1);
-    for (size_t i = 0; i < kIndex3; ++i) {
-      scales_.push_back(scales_ptr[i]);
-    }
-  }
   int64_t channels = x_shape_[kIndex0] * x_shape_[kIndex1];
   int64_t input_depth = x_shape_[kIndex2];
   int64_t input_height = x_shape_[kIndex3];
@@ -120,10 +118,9 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   int64_t *const d_helper = GetDeviceAddress<int64_t>(workspace, kIndex0);
   int64_t *const h_helper = GetDeviceAddress<int64_t>(workspace, kIndex1);
   int64_t *const w_helper = GetDeviceAddress<int64_t>(workspace, kIndex2);
-  ComputeNearestIndex(d_helper, input_height * input_width, input_depth, output_depth,
-                      static_cast<double>(scales_[kIndex0]));
-  ComputeNearestIndex(h_helper, input_width, input_height, output_height, static_cast<double>(scales_[kIndex1]));
-  ComputeNearestIndex(w_helper, 1, input_width, output_width, static_cast<double>(scales_[kIndex2]));
+  ComputeNearestIndex(d_helper, input_height * input_width, input_depth, output_depth, scales_[kIndex0]);
+  ComputeNearestIndex(h_helper, input_width, input_height, output_height, scales_[kIndex1]);
+  ComputeNearestIndex(w_helper, 1, input_width, output_width, scales_[kIndex2]);
 
   auto loop3d = [&](int64_t begin, int64_t end) {
     int64_t n{0}, od{0}, oh{0};

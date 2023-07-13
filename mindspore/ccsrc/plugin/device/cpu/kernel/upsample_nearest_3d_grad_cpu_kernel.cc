@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/upsample_nearest_3d_grad_cpu_kernel.h"
 #include <string>
 #include <utility>
+#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -77,6 +78,13 @@ int UpsampleNearest3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
+  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
+    scales_ = std::vector<double>(kIndex3, kValueZero);
+  } else {
+    if (!TryGetFloatValue(inputs, kIndex2, kernel_name_, &scales_, false)) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
+    }
+  }
   return KRET_OK;
 }
 
@@ -84,18 +92,6 @@ template <typename T, typename S>
 bool UpsampleNearest3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                      const std::vector<kernel::AddressPtr> &workspace,
                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpsampleNearest3DGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUpsampleNearest3DGradOutputNum, kernel_name_);
-  // fetch scales
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
-    scales_ = std::vector<double>(kIndex3, kValueZero);
-  } else {
-    scales_.clear();
-    auto scales_ptr = GetDeviceAddress<float>(inputs, kIndex2);
-    for (size_t i = 0; i < kIndex3; ++i) {
-      scales_.push_back(static_cast<double>(scales_ptr[i]));
-    }
-  }
   // the input grad of backward process is the output of forward process
   auto grad_output_ptr = static_cast<T *>(inputs[kIndex0]->addr);
   const int64_t total = CPUKernelUtils::CalcElementNum(input_shape_);
