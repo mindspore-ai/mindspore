@@ -826,7 +826,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
         >>> from mindspore import Tensor
         >>> from mindspore.common.initializer import initializer, One
         >>> from mindspore import Parameter
-        >>> data = Tensor(np.zeros([1, 2, 3]), mindspore.float32))
+        >>> data = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
         >>> w1 = Parameter(initializer(data, [1, 2, 3], mindspore.float32))
         >>> w2 = Parameter(initializer('ones', [1, 2, 3], mindspore.float32))
         >>> w3 = Parameter(initializer(One(), [1, 2, 3], mindspore.float32))

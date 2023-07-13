@@ -5,8 +5,8 @@ mindspore.nn.optim_ex.Optimizer
 
     用于参数更新的优化器基类。
 
-   .. warning::
-        这是一个实验性的优化器模块，需要和 `nn.lr_scheduler` 下的动态学习率接口配合使用。
+    .. warning::
+        这是一个实验性的优化器模块，需要和 `LRScheduler类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.nn.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。
 
     参数：
         - **params** (Union[list[Parameter], list[dict]]) - 网络参数的列表或指定了参数组的列表。
