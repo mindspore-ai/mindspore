@@ -221,7 +221,7 @@ bool ParallelOpCombiner::CheckLevel(const Group &branches, size_t depth) {
   return true;
 }
 
-bool ParallelOpCombiner::AutoUpdateInfo(const CNodePtr &to_update) {
+bool ParallelOpCombiner::AutoUpdateInfo(const CNodePtr &to_update) const {
   if (to_update->size() < 2) {
     MS_LOG(ERROR) << "Cannot auto update for " << to_update->fullname_with_scope() << " with input size "
                   << to_update->size();
