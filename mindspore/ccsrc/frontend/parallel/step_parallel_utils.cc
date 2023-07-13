@@ -55,6 +55,9 @@ size_t TOTAL_OPS = 0;
 // it will be one item in map with key: C, and value: (B, i)
 std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 
+// split tensor only for first input
+static const std::set<std::string> SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS = {PAD_V3};
+
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   if (!cnode) {
     return false;
@@ -884,7 +887,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      FLOORDIV, L2_NORMALIZE, ADD, MAXPOOL, AVGPOOL, VIRTUAL_DATA_SET, RELU, ONEHOT, DROPOUT_DO_MASK, REDUCE_MAX,
      REDUCE_MIN, ARGMAXWITHVALUE, ARGMINWITHVALUE, REDUCE_SUM, CONV2D, BATCH_NORM, LAYER_NORM, BIAS_ADD, ASSIGN_SUB,
      COS, ACOS, EXP, STACK, LOG, REDUCE_MEAN, REAL_DIV, SIGMOID, POW, MAXIMUM, MINIMUM, EQUAL, NOT_EQUAL, LOGICALNOT,
-     GATHERV2, SQRT, CONCAT, STRIDEDSLICE, GET_NEXT, CAST, NEG, SQUARE, BATCH_MATMUL, EXPAND_DIMS, SQUEEZE,
+     GATHERV2, SQRT, CONCAT, STRIDEDSLICE, GET_NEXT, CAST, NEG, SQUARE, BATCH_MATMUL, EXPAND_DIMS, SQUEEZE, PAD_V3,
      SPARSE_GATHERV2, TILE, DROPOUT,  SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, SIGMOID_CROSS_ENTROPY_WITH_LOGITS,
      SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, EMBEDDING_LOOKUP, SPLIT, BROADCAST_TO, ABS, ACOSH, ASIN, ASINH, ATAN,
      ATANH, CEIL, COSH, EXPM1, LOG1P, SIN, SINH, TAN, RSQRT, INV, RECIPROCAL, ROUND, FLOOR, SIGN, ERF, ERFC, ZEROSLIKE,
@@ -1820,6 +1823,13 @@ Shape mirror_group_list(const TensorLayoutPtr &layout) {
     MS_LOG(EXCEPTION) << "For layout:" << layout->ToString() << ", infer mirror failed";
   }
   return group_devices;
+}
+
+bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index) {
+  if (IsSomePrimitiveList(node, SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS) && index > 0) {
+    return true;
+  }
+  return false;
 }
 
 std::string GetSerialNumberString(size_t number) {

@@ -568,8 +568,12 @@ static void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int64
 
   // extract tensor layout
   if (LongToSize(index - 1) >= op_info->inputs_tensor_info().size()) {
-    MS_LOG(EXCEPTION) << "The index is out of range, index is  " << (index - 1) << ", vector size is  "
-                      << op_info->inputs_tensor_info().size();
+    if (IsIgnoreSplitTensor(next_node, index - 1)) {
+      MS_LOG(INFO) << op_info->name() << ": no need to split tensor for index " << (index - 1);
+      return;
+    }
+    MS_LOG(EXCEPTION) << op_info->name() << ": The index is out of range, index is  " << (index - 1)
+                      << ", vector size is  " << op_info->inputs_tensor_info().size();
   }
   TensorInfo tensor_info = op_info->inputs_tensor_info()[LongToSize(index - 1)];
   TensorLayout tensor_layout = tensor_info.tensor_layout();
