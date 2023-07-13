@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <dlfcn.h>
 #include <set>
 #include <string>
-#ifdef ENABLE_AOE
-#include "aoe/external/aoe.h"
+#if defined(ASCEND_910) || defined(ASCEND_910B)
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #endif
 #include "transform/graph_ir/aoe_util.h"
 
@@ -38,21 +39,48 @@ void AoeUtil::Initialize() {
     MS_LOG(INFO) << "Aoe already initialized.";
     return;
   }
-#ifdef ENABLE_AOE
+#if defined(ASCEND_910) || defined(ASCEND_910B)
+  auto ascend_path = device::ascend::GetAscendPath();
+  std::string aoe_plugin_path = "lib64/libaoe_tuning.so";
+  auto plugin_path = ascend_path + aoe_plugin_path;
+  auto ret = access(plugin_path.c_str(), F_OK);
+  if (ret != 0) {
+    MS_LOG(WARNING) << "plugin " << plugin_path << " not exist";
+    return;
+  }
+  plugin_handle_ = dlopen(plugin_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  if (plugin_handle_ == nullptr) {
+    MS_LOG(INFO) << "Cannot dlopen " << plugin_path << ", result = " << GetDlErrorMsg()
+                 << ", it can be ignored if not use aoe.";
+    return;
+  }
+  MS_LOG(INFO) << "load " << aoe_plugin_path << " success";
+  aoe_initialize_ = DlsymFuncObj(AoeInitialize, plugin_handle_);
+  aoe_finalize_ = DlsymFuncObj(AoeFinalize, plugin_handle_);
+  aoe_create_session_ = DlsymFuncObj(AoeCreateSession, plugin_handle_);
+  aoe_set_ge_gession_ = DlsymFuncObj(AoeSetGeSession, plugin_handle_);
+  aoe_set_tuning_graph_ = DlsymFuncObj(AoeSetTuningGraph, plugin_handle_);
+  aoe_tuning_graph_ = DlsymFuncObj(AoeTuningGraph, plugin_handle_);
+  aoe_destroy_session_ = DlsymFuncObj(AoeDestroySession, plugin_handle_);
+
   std::map<::ge::AscendString, ::ge::AscendString> globalOptions = {{AoeOptions::JOB_TYPE, ::ge::AscendString("1")}};
-  const Aoe::AoeStatus status = Aoe::AoeInitialize(globalOptions);
+  const Aoe::AoeStatus status = aoe_initialize_(globalOptions);
   if (status != Aoe::AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeInitialize failed.";
   }
   MS_LOG(INFO) << "AoeInitialize success.";
-#endif
   initialize_ = true;
+#endif
 }
 
 void AoeUtil::Destroy() {
-#ifdef ENABLE_AOE
+  if (!initialize_) {
+    MS_LOG(WARNING) << "AOE not initialize, stop destroy";
+    return;
+  }
+#if defined(ASCEND_910) || defined(ASCEND_910B)
   try {
-    const Aoe::AoeStatus status = Aoe::AoeFinalize();
+    const Aoe::AoeStatus status = aoe_finalize_();
     if (status != Aoe::AOE_SUCCESS) {
       MS_LOG(ERROR) << "AoeFinalize failed. status is " << status;
     }
@@ -63,7 +91,19 @@ void AoeUtil::Destroy() {
     MS_LOG(ERROR) << "Error occurred when  exec aoe finalize. Exception name: " << exName;
   }
 #endif
+  if (plugin_handle_ == nullptr) {
+    return;
+  }
+  aoe_initialize_ = nullptr;
+  aoe_finalize_ = nullptr;
+  aoe_create_session_ = nullptr;
+  aoe_set_ge_gession_ = nullptr;
+  aoe_set_tuning_graph_ = nullptr;
+  aoe_tuning_graph_ = nullptr;
+  aoe_destroy_session_ = nullptr;
   MS_LOG(INFO) << "AoeFinalization success.";
+  (void)dlclose(plugin_handle_);
+  plugin_handle_ = nullptr;
   initialize_ = false;
 }
 
@@ -72,56 +112,53 @@ AoeUtil &AoeUtil::GetInstance() {
   return instance;
 }
 
-#ifdef ENABLE_AOE
 Status AoeUtil::AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPtr &graph,
-                           const std::map<::ge::AscendString, ::ge::AscendString> &tuningOptions) {
+                           const std::map<::ge::AscendString, ::ge::AscendString> &tuningOptions) const {
   uint64_t sessionId = 0;
-  Aoe::AoeStatus status = Aoe::AoeCreateSession(sessionId);
+  Aoe::AoeStatus status = aoe_create_session_(sessionId);
   if (status != Aoe::AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeCreateSession failed.";
     return FAILED;
   }
   MS_LOG(DEBUG) << "AoeCreateSession success.";
 
-  status = Aoe::AoeSetGeSession(sessionId, ge_session);
+  status = aoe_set_ge_gession_(sessionId, ge_session);
   if (status != Aoe::AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeSetGeSession failed.";
     return FAILED;
   }
   MS_LOG(DEBUG) << "->AoeSetGeSession success.";
 
-  status = Aoe::AoeSetTuningGraph(sessionId, *graph);
+  status = aoe_set_tuning_graph_(sessionId, *graph);
   if (status != Aoe::AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeSetGraph failed.";
     return FAILED;
   }
   MS_LOG(DEBUG) << "->AoeSetGraph success.";
 
-  status = Aoe::AoeTuningGraph(sessionId, tuningOptions);
+  status = aoe_tuning_graph_(sessionId, tuningOptions);
   if (status != Aoe::AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeTuningGraph failed.";
-    (void)Aoe::AoeDestroySession(sessionId);
+    (void)aoe_destroy_session_(sessionId);
     return FAILED;
   }
   MS_LOG(DEBUG) << "->AoeTuningGraph success.";
 
-  status = Aoe::AoeDestroySession(sessionId);
+  status = aoe_destroy_session_(sessionId);
   if (status != Aoe::AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeDestroySession failed.";
     return FAILED;
   }
   return SUCCESS;
 }
-#else
-Status AoeUtil::AoeGeGraph(::ge::Session *, const transform::DfGraphPtr &,
-                           const std::map<::ge::AscendString, ::ge::AscendString> &) const {
-  return SUCCESS;
-}
-#endif
 
 Status AoeUtil::AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_session,
                                  const transform::DfGraphPtr &graph) const {
   MS_LOG(DEBUG) << "AoeOnlineGeGraph start.";
+  if (!initialize_) {
+    MS_LOG(WARNING) << "AOE not initialize";
+    return FAILED;
+  }
   if (ge_session == nullptr) {
     MS_LOG(ERROR) << "sess is null";
     return FAILED;
