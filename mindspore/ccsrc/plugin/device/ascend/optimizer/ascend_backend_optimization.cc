@@ -455,13 +455,13 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
 
 void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_RunOpIRFusionOptimization", 0, 0, 0);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (!context_ptr->get_param<bool>(MS_CTX_IR_FUSION_FLAG)) {
     MS_LOG(INFO) << "IRFusion is not enable, skip";
     return;
   }
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_RunOpIRFusionOptimization", 0, 0, 0);
 #ifdef ENABLE_DUMP_IR
   if (context_ptr->CanDump(kIntroductory)) {
     DumpIR("hwopt_d_ir_fusion_before.ir", kernel_graph);
@@ -771,18 +771,17 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
 }
 
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UBFusionOptimization", 0, 0, 0);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (!context_ptr->get_param<bool>(MS_CTX_IR_FUSION_FLAG)) {
     MS_LOG(INFO) << "UBFusion is not enable, skip";
     return;
   }
-
   if (kernel_graph->is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic shape skip fusion";
     return;
   }
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UBFusionOptimization", 0, 0, 0);
   auto pre_build = common::GetEnv(kDisablePrebuildEnv);
   if (pre_build.empty() || (pre_build != "true" && pre_build != "True")) {
     auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
