@@ -91,6 +91,7 @@
     mindspore.Tensor.copysign
     mindspore.Tensor.cos
     mindspore.Tensor.cosh
+    mindspore.Tensor.count_nonzero
     mindspore.Tensor.cov
     mindspore.Tensor.cross
     mindspore.Tensor.cummax
@@ -316,6 +317,7 @@
     mindspore.Tensor.to
     mindspore.Tensor.to_coo
     mindspore.Tensor.to_csr
+    mindspore.Tensor.tolist
     mindspore.Tensor.topk
     mindspore.Tensor.trace
     mindspore.Tensor.transpose
