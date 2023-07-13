@@ -2403,13 +2403,9 @@ def str_func(*data):
     if data_len == 0:
         return ''
     data = data[0]
-    if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error(
-            "str() does not support sparse tensor input.")
-    if not F.isconstant(data):
-        const_utils.raise_type_error(
-            "str() does not support non-constant input.")
-    return cast_to_str(data)
+    if F.isconstant(data):
+        return cast_to_str(data)
+    return data.__str__()
 
 
 @constexpr

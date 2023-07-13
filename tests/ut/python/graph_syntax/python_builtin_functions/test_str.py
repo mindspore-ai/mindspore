@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,25 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback buildin python function str"""
-import pytest
 import numpy as np
 from mindspore import jit, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
-
-
-def test_fallback_str_with_input_tensor():
-    """
-    Feature: JIT Fallback
-    Description: Test str() in graph mode with tensor input.
-    Expectation: No exception.
-    """
-    @jit
-    def foo(x):
-        return str(x)
-    with pytest.raises(TypeError) as ex:
-        foo(Tensor([1, 2, 4]))
-    assert "str() does not support non-constant input." in str(ex.value)
 
 
 def test_fallback_str_with_input_tensor_2():

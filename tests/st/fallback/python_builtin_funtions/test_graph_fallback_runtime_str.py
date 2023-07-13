@@ -20,7 +20,6 @@ from mindspore import Tensor, jit, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -39,3 +38,21 @@ def test_fallback_runtime_str():
 
     x = Tensor(np.array([1, 2, 3]))
     assert foo(x) == "[1 2 3]"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_str_with_input_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test str() in graph mode with tensor input.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        return str(x)
+    out = foo(Tensor([1, 2, 4]))
+    assert out == "[1 2 4]"
