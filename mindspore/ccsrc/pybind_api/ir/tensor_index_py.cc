@@ -142,8 +142,8 @@ ShapeVector TensorIndex::BroadCastShape(const ShapeVector &x_shape, const ShapeV
       MS_EXCEPTION(ValueError) << "For '" << index_op_type
                                << "', x.shape and y.shape need to broadcast. The value of x.shape["
                                << std::to_string(x_shape_index) << "] or y.shape[" << std::to_string(y_shape_index)
-                               << "] must be 1 or -1 when they are not the same but got x.shape =" << x_shape
-                               << "and y.shape = " << y_shape;
+                               << "] must be 1 or -1 when they are not the same, but got x.shape = " << x_shape
+                               << " and y.shape = " << y_shape;
     }
   }
   ShapeVector broadcast_shape_front;
