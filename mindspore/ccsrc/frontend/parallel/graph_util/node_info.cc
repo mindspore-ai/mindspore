@@ -495,11 +495,10 @@ const AnfNodePtr RealInputNode(const CNodePtr cnode, size_t index) {
     MS_LOG(EXCEPTION) << "cnode inputs size: " << cnode->size() << " is less equal index: " << index;
   }
   auto input0 = cnode->input(index);
-  if (!input0->isa<CNode>()) {
+  if (!IsPrimitiveCNode(input0)) {
     return input0;
   }
   auto prim = GetCNodePrimitive(input0);
-  MS_EXCEPTION_IF_NULL(prim);
   while (prim->name() == LOAD || prim->name() == DEPEND || prim->name() == UPDATESTATE) {
     if (prim->name() == LOAD || prim->name() == DEPEND) {
       input0 = input0->cast<CNodePtr>()->input(1);
