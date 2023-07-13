@@ -31,6 +31,17 @@ constexpr size_t kInput1Idx = 1;
 constexpr size_t kInput2Idx = 2;
 }  // namespace
 STATUS XorMapper::Mapper(const CNodePtr &cnode) {
+  /*
+   * input1(bool)  input2(bool)   input1(bool)          input2(bool)
+   * \              /                  \                    /
+   *  \            /               Cast1(bool to int)  Cast2(bool to int)
+   *   \          /                        \            /
+   *    LogicalXor          ===>             BitWiseXor
+   *       |                                    |
+   *       |                            Cast3(int to bool)
+   *       |                                    |
+   * output(bool)                           output(bool)
+   */
   ValueNodePtr value_node = nullptr;
   PrimitivePtr src_prim = nullptr;
   if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
