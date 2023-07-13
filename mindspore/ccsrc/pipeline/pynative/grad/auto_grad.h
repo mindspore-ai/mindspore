@@ -63,14 +63,14 @@ struct GradParam {
   bool is_control_flow{false};
   size_t input_size{0};
 
-  // For ms function domain
+  // For jit domain
   bool has_added_v{false};
-  bool is_ms_function_graph{false};
-  bool is_ms_function_self_dynamic_shape{false};
+  bool is_jit_graph{false};
+  bool is_jit_self_dynamic_shape{false};
 
   // For KPynativeWithFProp used
   FuncGraphPtr fg{nullptr};
-  // grad func graph for ms_function or fg
+  // grad func graph for jit or fg
   FuncGraphPtr source_fg{nullptr};
   // Op forward output used in bprop graph
   std::string graph_cache_key;
@@ -177,7 +177,7 @@ class AutoGradCellImpl {
   ~AutoGradCellImpl() = default;
   // Reverse connect bprop of op
   bool KPynativeOp(const GradParamPtr &grad_param);
-  // Reverse connect ms_function or higher order sub bprop funcgraph
+  // Reverse connect jit or higher order sub bprop funcgraph
   bool KPynativeWithFProp(const GradParamPtr &grad_param);
   // Update top cell output, record last_node
   void UpdateOutputNodeOfTopCell(const ValuePtr &sens_out);
@@ -192,7 +192,7 @@ class AutoGradCellImpl {
   }
   FuncGraphPtr GradFuncGraph(const GradParamPtr &grad_param);
   AnfNodePtr GetKnode(const PrimitivePtr &prim, const CNodePtr &cnode, const AnfNodePtrList &cnode_inputs,
-                      bool ms_function_by_value);
+                      bool jit_by_value);
   CNodePtr GetBpropGraphCNode(const GradParamPtr &grad_param, const AnfNodePtrList &args, AnfNodePtr *const tape_dout);
   CNodePtr GetBPropFromExpander(const GradParamPtr &grad_param, const AnfNodePtrList &args,
                                 AnfNodePtr *const tape_dout);

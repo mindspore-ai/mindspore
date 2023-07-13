@@ -256,7 +256,7 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
   return func_graph;
 }
 
-FuncGraphPtr MsFunctionBpropGraphPass(const ResourcePtr &resource, bool need_renormalize) {
+FuncGraphPtr JitBpropGraphPass(const ResourcePtr &resource, bool need_renormalize) {
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.inline_,
@@ -281,7 +281,7 @@ FuncGraphPtr MsFunctionBpropGraphPass(const ResourcePtr &resource, bool need_ren
   }
   MS_EXCEPTION_IF_NULL(resource);
   auto func_graph = resource->func_graph();
-  auto graph_opt = opt::Optimizer::MakeOptimizer("ms_function_bprop_graph_opt", resource, map);
+  auto graph_opt = opt::Optimizer::MakeOptimizer("jit_bprop_graph_opt", resource, map);
   return graph_opt->step(func_graph, false);
 }
 

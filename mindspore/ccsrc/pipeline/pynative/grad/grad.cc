@@ -1318,7 +1318,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr, co
   bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
   bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp, top_cell()->use_dynamic_shape_process());
   if (top_cell()->has_call_graph()) {
-    bprop_graph->set_flag(kFlagPyNativeWithMsFunctionCallGraph, true);
+    bprop_graph->set_flag(kFlagPyNativeWithJitCallGraph, true);
   }
   bprop_graph->set_attr(kAttrFuncGraphCellId, MakeValue(top_input_args_info_->obj_id));
   return bprop_graph;
@@ -1459,12 +1459,12 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   auto grad_fg = first_grad_fg;
   if (has_call_graph) {
     auto r = std::make_shared<pipeline::Resource>();
-    set_eliminate_forward(false);
+    jit()->set_eliminate_forward(false);
     (void)first_grad_fg->transforms().erase(kGrad);
     auto opt = opt::Optimizer::MakeEmptyOptimizer(r);
     opt->set_is_first_order_j(false);
     grad_fg = ad::Grad(first_grad_fg, opt);
-    set_eliminate_forward(true);
+    jit()->set_eliminate_forward(true);
   }
   auto op_grad_info = std::make_shared<OpGradInfo>();
   op_grad_info->input_value = op_run_info->op_grad_info->input_value;
@@ -1578,7 +1578,6 @@ void GradExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear grad res";
   grad_flag_ = false;
   grad_is_running_ = false;
-  eliminate_forward_ = true;
   custom_bprop_cell_count_ = 0;
   grad_order_ = 0;
   top_cell_ = nullptr;
@@ -1859,7 +1858,7 @@ void GradExecutor::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string 
   if (pre_top_cell == nullptr) {
     // First run top cell, save op output info for replace
     top_cell()->SaveTensorIdWithOpInfo(op_info, v);
-    MS_LOG(DEBUG) << "Top cell " << top_cell_->already_run_cell_id() << " run firstly";
+    MS_LOG(DEBUG) << "Top cell " << top_cell_->already_run_cell_id() << " run firstly, op info " << op_info;
     return;
   }
 
@@ -1869,7 +1868,7 @@ void GradExecutor::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string 
   }
 
   // Not first run top cell, do update
-  MS_LOG(DEBUG) << "Update top cell forward output tensor info";
+  MS_LOG(DEBUG) << "Update top cell forward output tensor info " << op_info;
   UpdateForwardOutputTensorInfo(op_info, v, pre_top_cell->replace_info());
 }
 
@@ -2050,7 +2049,7 @@ void GradExecutor::SaveDynamicDetectNodeInfoInFirstTime(const ValuePtrList &inpu
   (void)cell_id_with_dynamic_detect_nodes_[top_cell()->obj_id_with_grad_order()][top_cell()->cell_id()].emplace_back(
     node);
   MS_LOG(DEBUG) << "Save node " << (node->op_prim != nullptr ? node->op_prim->name() : "")
-                << " firstly, node_idx: " << node_idx << ", is_ms_function_node: " << node->is_graph_node
+                << " firstly, node_idx: " << node_idx << ", is_jit_node: " << node->is_graph_node
                 << ", graph_phase:" << node->graph_phase
                 << " obj_id_with_grad_order:" << top_cell()->obj_id_with_grad_order()
                 << ", cell id:" << top_cell()->cell_id();
@@ -2084,7 +2083,7 @@ bool GradExecutor::IsGraphDynamic(const ValuePtrList &inputs, const DynamicDetec
   }
 
   MS_LOG(DEBUG) << "Check node " << (node->op_prim != nullptr ? node->op_prim->name() : "") << " node_idx: " << node_idx
-                << ", is_ms_function_node: " << node->is_graph_node << ", graph_phase:" << node->graph_phase
+                << ", is_jit_node: " << node->is_graph_node << ", graph_phase:" << node->graph_phase
                 << " obj_id_with_grad_order:" << top_cell()->obj_id_with_grad_order()
                 << ", cell id:" << top_cell()->cell_id();
   const auto &dynamic_nodes =
@@ -2095,7 +2094,7 @@ bool GradExecutor::IsGraphDynamic(const ValuePtrList &inputs, const DynamicDetec
     return true;
   }
 
-  // 1.Detect ms_function phase
+  // 1.Detect jit phase
   const DynamicDetectNodeInfoPtr &old_node_info = dynamic_nodes[node_idx];
   if (node->is_graph_node) {
     if (!old_node_info->is_graph_node || node->graph_phase != old_node_info->graph_phase) {

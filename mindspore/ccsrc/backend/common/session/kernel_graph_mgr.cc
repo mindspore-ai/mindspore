@@ -25,7 +25,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
-#include "pipeline/pynative/grad/ms_function_call_graph.h"
+#include "pipeline/pynative/grad/jit/jit_call_graph.h"
 #include "utils/trace_base.h"
 #include "ir/func_graph_cloner.h"
 #ifndef ENABLE_SECURITY
@@ -1772,8 +1772,8 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
     new_cnode->set_attrs(cnode->attrs());
-    if (cnode->user_data<pynative::MsFunctionCallGraph>()) {
-      new_cnode->set_user_data(cnode->user_data<pynative::MsFunctionCallGraph>());
+    if (cnode->user_data<pynative::JitCallGraph>()) {
+      new_cnode->set_user_data(cnode->user_data<pynative::JitCallGraph>());
     }
     // record map relations between anf from ME and new anf node used in backend
     graph->FrontBackendMapAdd(node, new_cnode);

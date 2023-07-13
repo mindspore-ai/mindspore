@@ -88,7 +88,7 @@ void SetCallbackForInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
 void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
   op_run_info->async_status.disable_mix_precision =
     (forward_executor()->IsFirstCell() || forward_executor()->CellNotSetMixedPrecision(op_run_info));
-  op_run_info->async_status.is_ms_function_compiling = forward_executor()->is_ms_function_compiling();
+  op_run_info->async_status.is_jit_compiling = forward_executor()->is_jit_compiling();
   op_run_info->async_status.custom_bprop_cell_count = grad_executor()->custom_bprop_cell_count();
 }
 
@@ -250,8 +250,8 @@ void PyNativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::obj
   PyNativeExecutorTry(grad_executor()->GradGraph, grad, cell, weights, grad_position, args);
 }
 
-py::object PyNativeExecutor::GradMsFunction(const py::object &out, const py::args &args) const {
-  const auto &ret = grad_executor()->ms_function()->GradMsFunction(out, args);
+py::object PyNativeExecutor::GradJit(const py::object &out, const py::args &args) const {
+  const auto &ret = grad_executor()->jit()->GradJit(out, args);
   return ret;
 }
 
@@ -264,9 +264,9 @@ void PyNativeExecutor::WorkerJoin() {
   forward_executor_->WorkerJoin();
 }
 
-void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling, const std::string &phase) const {
-  forward_executor()->set_is_ms_function_compiling(is_compiling);
-  grad_executor()->ms_function()->set_graph_phase(phase);
+void PyNativeExecutor::SetJitCompileStatus(bool is_compiling, const std::string &phase) const {
+  forward_executor()->set_is_jit_compiling(is_compiling);
+  grad_executor()->jit()->set_graph_phase(phase);
 }
 
 void PyNativeExecutor::SetDynamicInput(const py::object &cell) const {
@@ -283,7 +283,7 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("new_graph", &PyNativeExecutor::NewGraph, "pynative new a graph.")
     .def("end_graph", &PyNativeExecutor::EndGraph, "pynative end a graph.")
     .def("check_run", &PyNativeExecutor::CheckAlreadyRun, "pynative check graph run before.")
-    .def("grad_ms_function", &PyNativeExecutor::GradMsFunction, "pynative grad for ms_function.")
+    .def("grad_jit", &PyNativeExecutor::GradJit, "pynative grad for jit.")
     .def("grad_net", &PyNativeExecutor::GradNet, "pynative grad graph.")
     .def("clear_res", &PyNativeExecutor::ClearRes, "pynative clear exception res.")
     .def("sync", &PyNativeExecutor::Sync, "pynative sync stream.")
@@ -301,8 +301,7 @@ void RegPyNativeExecutor(const py::module *m) {
          "set python executable path.")
     .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,
          py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.")
-    .def("set_ms_function_compile_status", &PyNativeExecutor::SetMsFunctionCompileStatus,
-         "set ms_funciton compile status.")
+    .def("set_jit_compile_status", &PyNativeExecutor::SetJitCompileStatus, "set jit compile status.")
     .def("real_run_op", &PyNativeExecutor::RealRunOp, "Run op pynatively.")
     .def("run_op_async", &PyNativeExecutor::RunOpStub, "run op asynchronously")
     .def("constant_folding", &PyNativeExecutor::CallConstantFolding, "Call Constant Folding Primitive");

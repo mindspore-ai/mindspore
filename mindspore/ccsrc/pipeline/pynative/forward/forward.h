@@ -84,10 +84,8 @@ class ForwardExecutor {
     MS_EXCEPTION_IF_NULL(infer_operation_);
     return infer_operation_;
   }
-  inline void set_is_ms_function_compiling(bool is_ms_function_compiling) {
-    is_ms_function_compiling_ = is_ms_function_compiling;
-  }
-  bool is_ms_function_compiling() const { return is_ms_function_compiling_; }
+  inline void set_is_jit_compiling(bool is_jit_compiling) { is_jit_compiling_ = is_jit_compiling; }
+  bool is_jit_compiling() const { return is_jit_compiling_; }
 
   void WorkerJoin() {
     frontend_queue_->WorkerJoin();
@@ -130,7 +128,7 @@ class ForwardExecutor {
   bool init_{false};
   bool lazy_build_{true};
   bool enable_async_{true};
-  bool is_ms_function_compiling_{false};
+  bool is_jit_compiling_{false};
   uint32_t device_id_{0};
   std::string device_target_;
   std::string last_target_{"Unknown"};

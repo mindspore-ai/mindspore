@@ -350,8 +350,8 @@ void ForwardExecutor::DispatchBackendTask(const FrontendOpRunInfoPtr &op_run_inf
       return;
     }
     // 4. Do op grad and record op info
-    // If ms function is compile, op info will not be find in second training step
-    if (!op_run_info->async_status.is_ms_function_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
+    // If jit is compile, op info will not be find in second training step
+    if (!op_run_info->async_status.is_jit_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
       grad()->ProcessOpGradInfo(op_run_info);
     }
   };
@@ -405,8 +405,8 @@ void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) 
     return;
   }
   // 4. Do op grad and record op info
-  // If ms function is compile, op info will not be find in second training step
-  if (!op_run_info->async_status.is_ms_function_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
+  // If jit is compile, op info will not be find in second training step
+  if (!op_run_info->async_status.is_jit_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
     grad()->ProcessOpGradInfo(op_run_info);
   }
   // output is dynamic shape. Need to update abstract and value.
@@ -775,7 +775,7 @@ void ForwardExecutor::ClearRes() {
   }
   init_ = false;
   lazy_build_ = false;
-  is_ms_function_compiling_ = false;
+  is_jit_compiling_ = false;
   cast_operation()->ClearRes();
   ClearNodeAbsMap();
   infer_operation()->ClearPrimAbsList();

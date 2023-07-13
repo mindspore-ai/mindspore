@@ -33,7 +33,6 @@
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/resource.h"
 #include "frontend/optimizer/ad/adjoint.h"
-#include "frontend/optimizer/ad/pynative_dfunctor.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/debug/trace.h"
 #include "include/common/utils/utils.h"

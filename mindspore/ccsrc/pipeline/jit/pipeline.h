@@ -92,10 +92,10 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
                                                                     const AbstractBasePtr &abs) const;
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
-  void SetPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase);
-  FuncGraphPtr GetPrimalFuncGraph(const std::string &phase);
-  FuncGraphPtr GetGradGraph(const std::string &phase);
-  void SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase);
+  void SetJitPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase);
+  FuncGraphPtr GetJitPrimalFuncGraph(const std::string &phase);
+  FuncGraphPtr GetJitGradGraph(const std::string &phase);
+  void SetJitGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase);
   py::bytes GetFuncGraphProto(const std::string &phase, const std::string &ir_type, const bool &incremental);
   py::bytes GetObfuscateFuncGraphProto(const std::string &phase, const bool &incremental, const float obf_ratio,
                                        const int branch_control_input);

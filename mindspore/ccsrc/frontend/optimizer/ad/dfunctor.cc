@@ -384,11 +384,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   }
   // Run in pynative mode, when @jit is used.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    auto pynative_exec = pynative::PyNativeExecutor::GetInstance();
-    auto grad_exec = pynative_exec->grad_executor();
-    if (grad_exec->eliminate_forward()) {
-      PynativeDFunctor::ReplaceEquivdout(k_app, cnode_morph);
-    }
+    pynative::PyNativeExecutor::GetInstance()->grad_executor()->jit()->ProcessCnodeFromAdGrad(k_app, cnode_morph);
   }
 
   for (size_t i = 0; i < param_adjoints.size(); ++i) {

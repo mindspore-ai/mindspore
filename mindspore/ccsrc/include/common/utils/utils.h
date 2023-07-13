@@ -1211,7 +1211,7 @@ constexpr auto kAttrMaxLength = "maxlength";
 constexpr auto kAttrIouThreshold = "iou_threshold";
 constexpr auto kAttrEnableEmbeddingStorage = "enable_embedding_storage";
 constexpr auto kAttrParameterKey = "parameter_key";
-constexpr auto kAttrMsFunctionCallNode = "ms_function_call_node";
+constexpr auto kAttrJitCallNode = "jit_call_node";
 constexpr auto kAttrFuncGraphCellId = "func_graph_cell_id";
 constexpr auto kAttrInsertDefaultValue = "insert_default_value";
 constexpr auto kAttrIsSparse = "IsSparse";
@@ -1247,9 +1247,9 @@ constexpr auto kFlagEnableZeroCopyInGraph = "enable_zero_copy_in_graph";
 constexpr auto kPrimCPrimPyMixed = "primc_primpy_mixed";
 constexpr auto kFlagEnableRunGraphBySingleOp = "enable_run_graph_by_single_op";
 constexpr auto kFlagHasControlFlow = "has_control_flow";
-constexpr auto kFlagPyNativeWithMsFunctionCallGraph = "pynative_with_ms_function_call_graph";
-constexpr auto kFlagMsFunctionCallGraph = "ms_function_call_graph";
-constexpr auto kFlagMSFunctionGraph = "ms_function_graph";
+constexpr auto kFlagPyNativeWithJitCallGraph = "pynative_with_jit_call_graph";
+constexpr auto kFlagJitCallGraph = "jit_call_graph";
+constexpr auto kFlagJitGraph = "jit_graph";
 constexpr auto kAttrPackFunction = "pack_func";
 
 // custom operator func type

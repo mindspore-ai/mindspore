@@ -400,8 +400,8 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
 
   auto root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
-  bool pynative_with_ms_function_call_graph = func_graph->has_flag(kFlagPyNativeWithMsFunctionCallGraph);
-  if (!pynative_with_ms_function_call_graph) {
+  bool pynative_with_jit_call_graph = func_graph->has_flag(kFlagPyNativeWithJitCallGraph);
+  if (!pynative_with_jit_call_graph) {
     UnifyMindIR(root_graph);
   }
   root_graph_ = root_graph;
@@ -434,7 +434,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
       CompileSubGraph(func_graph, device::RunMode::kKernelMode);
     }
   } else {
-    if (!pynative_with_ms_function_call_graph) {
+    if (!pynative_with_jit_call_graph) {
       ProcessNotSupportCnode(func_graph, device_context->GetDeviceType(), mindspore::device::DeviceType::kCPU);
     }
     CompileSubGraph(func_graph);
@@ -538,7 +538,7 @@ void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::
   MS_EXCEPTION_IF_NULL(root_graph->manager());
   const auto &sub_graphs = root_graph->manager()->func_graphs();
   for (const auto &sub_graph : sub_graphs) {
-    if (sub_graph != func_graph && sub_graph != nullptr && !sub_graph->has_flag(kFlagMsFunctionCallGraph)) {
+    if (sub_graph != func_graph && sub_graph != nullptr && !sub_graph->has_flag(kFlagJitCallGraph)) {
       MS_LOG(INFO) << "Compile sub graph " << sub_graph->ToString();
       CompileGraph(sub_graph, run_mode);
     }
@@ -770,7 +770,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
 
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
-  // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
+  // There will be more than one kernel graph in heterogeneous scenario in a jit of PyNative Mode.
   if (ms_execution_mode_ == kPynativeMode) {
     RunGraphByCondition(actor_info, graph_compiler_info, args, outputs);
     return;
