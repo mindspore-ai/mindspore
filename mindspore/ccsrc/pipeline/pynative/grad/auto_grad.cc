@@ -1134,6 +1134,10 @@ FuncGraphPtr AutoGradCellImpl::Finish(const tensor::TensorPtrList &weights, cons
   AnfNodePtrList params = ExtractParamters(weights);
   ReplacePrimalParameter(params, grad_attr.has_sens);
   PyNativeAlgo::Common::DumpGraphIR("before_final_opt.ir", ad_param()->tape_);
+  // Clear weights grad info
+  for (const auto &weight : weights) {
+    weight->set_auto_grad_meta_data(nullptr);
+  }
   return ad_param()->tape_;
 }
 
