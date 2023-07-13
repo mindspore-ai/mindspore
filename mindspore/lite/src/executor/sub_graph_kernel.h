@@ -28,6 +28,7 @@
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "src/litert/cpu_info.h"
+#include "src/executor/drawer_mark_filter.h"
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 #include "nnacl/constant_of_shape_parameter.h"
 #endif
@@ -100,6 +101,8 @@ class SubGraphKernel : public KernelExec {
 
   int ReSize() override;
 
+  int InferShape() override;
+
   virtual int MallocSubgraphInputs();
 
   void InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask_kernels) override;
@@ -113,6 +116,8 @@ class SubGraphKernel : public KernelExec {
   void set_nodes(const std::vector<KernelExec *> &node) { this->nodes_ = node; }
 
   std::vector<KernelExec *> &nodes() { return this->nodes_; }
+
+  const std::vector<KernelExec *> &immutable_nodes() const { return this->nodes_; }
 
   void DropNode(KernelExec *node);
 
@@ -145,6 +150,10 @@ class SubGraphKernel : public KernelExec {
   inline void SetGraphChanged(bool flag) { graph_changed_ = flag; }
 
   int SubGraphSplitByOperator(KernelsArray *out_kernels);
+
+  void Draw(const std::string &path, const std::string &file_name,
+            const std::vector<schema::PrimitiveType> &mark_types = {});
+  void Draw(const std::string &path, const std::string &file_name, const lite::MarkFilter &filter);
 
  protected:
   std::vector<KernelExec *> nodes_{};

@@ -1,0 +1,226 @@
+/**
+ * Copyright 2023 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "src/common/graphviz_drawer.h"
+#include <set>
+#include <algorithm>
+#include <sstream>
+#include <vector>
+
+namespace mindspore::lite {
+std::string Edge::From() const { return from_->name(); }
+std::string Edge::name() const { return this->name_; }
+
+void Edge::AppendOutput(const GVNode *to, size_t port) {
+  tos_.emplace_back(to);
+  to_ports_.emplace_back(port);
+}
+
+std::string Edge::Code() const {
+  std::ostringstream oss;
+  if (from_->type() == kNodeTypeCNode) {
+    oss << from_->prefix() << from_->name() << ":O" << from_port_ << " -> ";
+  } else {
+    oss << from_->prefix() << from_->name() << " -> ";
+  }
+  auto from_str = oss.str();
+  oss.str("");
+  for (size_t i = 0; i < tos_.size(); i++) {
+    auto to = tos_[i];
+    if (to->type() == kNodeTypeCNode) {
+      oss << from_str << to->prefix() << to->name() << ":I" << to_ports_[i] << " [label=\"" << info_ << "\"];";
+    } else {
+      oss << from_str << to->prefix() << to->name() << " [label=\"" << info_ << "\"];";
+    }
+  }
+  return oss.str();
+}
+
+GVNode *GVNode::CreateCNode(const std::string &name, size_t input_size, const std::vector<std::string> &output_names,
+                            const std::vector<std::string> &output_infos, bool highlight) {
+  auto node = new GVNode(name, kNodeTypeCNode, input_size, output_names.size(), highlight);
+  node->prefix_ = "Node_";
+  node->shape_ = "plaintext";
+  node->Init(output_names, output_infos);
+  return node;
+}
+
+GVNode *GVNode::CreateInput(const std::string &name, const std::vector<std::string> &output_names,
+                            const std::vector<std::string> &output_infos, bool highlight) {
+  auto node = new GVNode(name, kNodeTypeInput, 0, output_names.size(), highlight);
+  node->prefix_ = "Input_";
+  node->shape_ = "egg";
+  node->Init(output_names, output_infos);
+  return node;
+}
+
+GVNode *GVNode::CreateOutput(const std::string &name, size_t input_size, bool highlight) {
+  auto node = new GVNode(name, kNodeTypeOutput, input_size, 0, highlight);
+  node->prefix_ = "Output_";
+  node->shape_ = "egg";
+  node->Init({}, {});
+  return node;
+}
+
+GVNode *GVNode::CreateWeight(const std::string &name, const std::vector<std::string> &output_names,
+                             const std::vector<std::string> &output_infos, bool highlight) {
+  auto node = new GVNode(name, kNodeTypeWeight, 0, output_names.size(), highlight);
+  node->prefix_ = "Weight_";
+  node->shape_ = "octagon";
+  node->Init(output_names, output_infos);
+  return node;
+}
+
+GVNode::~GVNode() {
+  for (auto output : outputs_) {
+    delete output;
+  }
+  outputs_.clear();
+}
+
+void GVNode::Init(const std::vector<std::string> &output_names, const std::vector<std::string> &output_infos) {
+  inputs_.reserve(input_size_);
+  outputs_.reserve(output_size_);
+  MS_ASSERT(output_names.size() == output_size_);
+  for (size_t i = 0; i < output_size_; i++) {
+    auto edge = new Edge(output_names[i], this, i, output_infos[i]);
+    this->outputs_.emplace_back(edge);
+  }
+}
+
+size_t GVNode::FindCols() const {
+  auto max = std::max(input_size_, output_size_);
+  auto min = std::min(input_size_, output_size_);
+  if (min == 0 || max == 0) {
+    return 1;
+  }
+  size_t ret = max;
+  while (ret <= input_size_ * output_size_) {
+    if (ret % min == 0) {
+      break;
+    }
+    ret++;
+  }
+  while (ret <= input_size_ * output_size_) {
+    if (ret % max == 0) {
+      break;
+    }
+    ret += min;
+  }
+  return ret;
+}
+
+std::string GVNode::Code() const {
+  std::ostringstream oss;
+  if (type_ == kNodeTypeCNode) {
+    auto bgcolor = highlight_ ? "red" : "cornsilk";
+    oss << "\t"
+        << "\t"
+        << "\t"
+        << "\t";
+    auto indent = oss.str();
+    oss.str("");
+    auto cols = FindCols();
+    oss << "<<table port='core'>" << std::endl;
+    oss << indent << "<tr>";
+    auto input_cols = input_size_ == 0 ? 0 : cols / input_size_;
+    for (size_t i = 0; i < input_size_; i++) {
+      oss << "<td colspan='" << input_cols << "' port='I" << i << "'>I" << i << "</td>";
+    }
+    oss << "</tr>" << std::endl;
+    oss << indent << "<tr><td colspan='" << cols << "' bgcolor='" << bgcolor << "'>" << name_ << "</td></tr>"
+        << std::endl;
+    oss << indent << "<tr>";
+    auto output_cols = output_size_ == 0 ? 0 : cols / output_size_;
+    for (size_t i = 0; i < output_size_; i++) {
+      oss << "<td colspan='" << output_cols << "' port='O" << i << "'>O" << i << "</td>";
+    }
+    oss << "</tr>" << std::endl;
+    oss << indent << "</table>>";
+  } else {
+    oss << "\"" << name_ << "\"";
+  }
+  auto label = oss.str();
+  oss.str("");
+  oss << prefix_ << name_ << " [shape=" << shape_;
+  oss << ", label=" << label << "];";
+  return oss.str();
+}
+
+GVGraph::~GVGraph() {
+  for (auto *node : nodes_) {
+    delete node;
+  }
+  nodes_.clear();
+}
+
+void GVGraph::AppendNode(GVNode *node) {
+  if (node == nullptr) {
+    return;
+  }
+  nodes_.emplace_back(node);
+  node_map_[node->name()] = node;
+}
+
+int GVGraph::Link(const std::string &from_name, size_t from_port, const std::string &to_name, size_t to_port) {
+  auto from = node_map_.find(from_name);
+  if (from == node_map_.end()) {
+    MS_LOG(ERROR) << "Node " << from_name << " is not belong to this graph.";
+    return RET_ERROR;
+  }
+  MS_ASSERT(from->second != nullptr);
+  if (from_port >= from->second->output_size()) {
+    MS_LOG(ERROR) << "`from_port`(" << from_port << ") out of range of node(" << from_name
+                  << ")'s output ports number: " << from->second->output_size();
+    return RET_ERROR;
+  }
+  auto to = node_map_.find(to_name);
+  if (to == node_map_.end()) {
+    MS_LOG(ERROR) << "Node " << to_name << " is not belong to this graph.";
+    return RET_ERROR;
+  }
+  MS_ASSERT(to->second != nullptr);
+  if (to_port >= to->second->input_size()) {
+    MS_LOG(ERROR) << "`to_port`(" << to_port << ") out of range of node(" << to_name
+                  << ")'s input ports number: " << to->second->input_size();
+    return RET_ERROR;
+  }
+  if (to_port < to->second->inputs().size()) {
+    MS_LOG(ERROR) << "node(" << to_name << ")'s " << to_port << "th input port already link to "
+                  << to->second->inputs()[to_port]->From();
+    return RET_ERROR;
+  }
+  auto edge = from->second->outputs()[from_port];
+  edge->AppendOutput(to->second, to_port);
+  to->second->AppendInput(edge);
+  return RET_OK;
+}
+
+std::string GVGraph::Code() const {
+  std::ostringstream oss;
+  oss << "digraph " << name_ << " {" << std::endl;
+  for (auto node : nodes_) {
+    oss << node->Code() << std::endl;
+  }
+  for (auto node : nodes_) {
+    for (auto output : node->outputs()) {
+      oss << output->Code() << std::endl;
+    }
+  }
+  oss << "}";
+  return oss.str();
+}
+}  // namespace mindspore::lite

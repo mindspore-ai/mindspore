@@ -43,6 +43,10 @@ set(LITE_SRC
         ${LITE_DIR}/src/extendrt/utils/tensor_utils.cc
         )
 
+if(MSLITE_ENABLE_DUMP)
+    set(LITE_SRC ${LITE_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_kernel_drawer.cc)
+endif()
+
 set(MODEL_LOADER_FRAMEWORK_SRC
         ${LITE_DIR}/src/extendrt/mindir_loader/model_loader.cc
         )

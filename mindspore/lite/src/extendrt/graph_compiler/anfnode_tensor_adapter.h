@@ -85,7 +85,7 @@ class TensorAdapter {
   TensorCompressionType compress_type_ = TensorCompressionType::kNoCompression;
   TypeId data_type_{kTypeUnknown};
   bool is_const_{false};
-  std::vector<int64_t> shape_{};
+  ShapeVector shape_{};
   void *data_{nullptr};
   size_t data_len_{0};
   bool own_data_{true};

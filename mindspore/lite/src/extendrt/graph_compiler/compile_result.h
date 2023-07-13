@@ -54,7 +54,7 @@ class CompileNode {
   void SetName(const std::string &name) { name_ = name; }
   void AppendInputTensor(InferTensor *tensor);
   void AppendOutputTensor(InferTensor *tensor);
-  void ReplaceInputTensor(InferTensor *dst, InferTensor *src);
+  void ReplaceInputTensor(InferTensor *dst, const InferTensor *src);
   kernel::KernelAttr GetKernelAttr() const;
   std::string Dump(int indent = 0) const;
 
@@ -90,6 +90,7 @@ class CompileResult {
 
   std::vector<CompileNode *> &GetMutableNodes();
   std::vector<InferTensor *> &GetMutableInputs();
+  std::vector<InferTensor *> &GetMutableOutputs();
   StatusCode AppendNode(CompileNode *node);
   StatusCode AppendArgNode(CompileNode *node);
   StatusCode AppendTensor(InferTensor *tensor);

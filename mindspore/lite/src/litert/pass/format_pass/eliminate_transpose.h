@@ -24,7 +24,7 @@
 namespace mindspore::lite::pass {
 class EliminateTranspose : public FormatPass {
  public:
-  explicit EliminateTranspose(Format format) : FormatPass(format) {}
+  explicit EliminateTranspose(Format format) : FormatPass(format, "EliminateTranspose") {}
   virtual ~EliminateTranspose() = default;
   int RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Tensor *> *tensors);
 

@@ -16,6 +16,7 @@
 
 #include "src/executor/sub_graph_kernel.h"
 #include <algorithm>
+#include <fstream>
 #include <queue>
 #include "src/tensor.h"
 #include "src/tensorlist.h"
@@ -23,17 +24,54 @@
 #include "src/litert/kernel/cpu/fp16/fp16_op_handler.h"
 #endif
 #include "src/common/version_manager.h"
-#include "src/litert/infer_manager.h"
 #include "src/common/tensor_util.h"
+#include "src/common/file_utils.h"
 #include "src/common/utils.h"
-#include "src/common/prim_inner.h"
 #include "src/litert/kernel_exec_util.h"
+#include "src/executor/sub_graph_kernel_drawer.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_ERR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
+
+void SubGraphKernel::Draw(const std::string &path, const std::string &file_name,
+                          const std::vector<schema::PrimitiveType> &mark_types) {
+#ifndef ENABLE_DUMP
+  MS_LOG(INFO) << "Dump is not enabled, please set env 'export MSLITE_ENABLE_DUMP=on' to enable dump.";
+#else
+  auto drawer = lite::SubGraphKernelGVGraph::Create(*this, mark_types);
+  if (drawer == nullptr) {
+    MS_LOG(ERROR) << "Create drawer failed.";
+    return;
+  }
+  auto write_path = lite::WriteStrToFile(path, file_name, drawer->Code());
+  if (write_path.empty()) {
+    MS_LOG(ERROR) << "Save dot to file failed.";
+  } else {
+    MS_LOG(INFO) << "Save dot to " << write_path << " successfully.";
+  }
+#endif
+}
+
+void SubGraphKernel::Draw(const std::string &path, const std::string &file_name, const lite::MarkFilter &filter) {
+#ifndef ENABLE_DUMP
+  MS_LOG(INFO) << "Dump is not enabled, please set env 'export MSLITE_ENABLE_DUMP=on' to enable dump.";
+#else
+  auto drawer = lite::SubGraphKernelGVGraph::Create(*this, filter);
+  if (drawer == nullptr) {
+    MS_LOG(ERROR) << "Create drawer failed.";
+    return;
+  }
+  auto write_path = lite::WriteStrToFile(path, file_name, drawer->Code());
+  if (write_path.empty()) {
+    MS_LOG(ERROR) << "Save dot to file failed.";
+  } else {
+    MS_LOG(INFO) << "Save dot to " << write_path << " successfully.";
+  }
+#endif
+}
 
 std::string SubGraphKernel::ToString() const {
   std::ostringstream oss;
@@ -77,6 +115,25 @@ int SubGraphKernel::Execute(const KernelCallBack &before, const KernelCallBack &
   }
 
   return lite::RET_OK;
+}
+
+int SubGraphKernel::InferShape() {
+  int infer_ret = RET_OK;
+  for (auto kernel : nodes_) {
+    MS_ASSERT(kernel != nullptr);
+    auto ret = kernel->InferShape();
+    if (ret == RET_INFER_INVALID) {
+      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
+                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
+                   << "flag set to false.";
+      infer_ret = RET_INFER_INVALID;
+    } else if (ret != RET_OK) {
+      MS_LOG(ERROR) << "InferShape failed, type: "
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()));
+      return RET_INFER_ERR;
+    }
+  }
+  return infer_ret;
 }
 
 int SubGraphKernel::ReSize() {

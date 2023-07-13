@@ -52,6 +52,28 @@ int FormatTransposeCPUKernel::Run() {
                    height * width);
 }
 
+namespace {
+std::string FormatCStr(const FormatC &format) {
+  static std::vector<std::string> names = {"NCHW",        "NHWC",  "NHWC4", "HWKC", "HWCK",  "KCHW",   "CKHW",
+                                           "KHWC",        "CHWK",  "HW",    "HW4",  "NC",    "NC4",    "NC4HW4",
+                                           "NONE_FORMAT", "NCDHW", "NWC",   "NCW",  "NDHWC", "NC8HW8", "NC16HW16"};
+  if (format == FormatC::DEFAULT_FORMAT) {
+    return "DefaultFormat";
+  }
+  if (format < Format_MIN || format >= Format_MAX) {
+    return "UnknownFormat";
+  }
+  return names[format];
+}
+}  // namespace
+
+std::string FormatTransposeCPUKernel::name() const {
+  if (param_ == nullptr) {
+    return name_;
+  }
+  return name_ + "_" + FormatCStr(param_->src_format_) + "_" + FormatCStr(param_->dst_format_);
+}
+
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FormatTranspose, LiteKernelCreator<FormatTransposeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_FormatTranspose, LiteKernelCreator<FormatTransposeCPUKernel>)
 }  // namespace mindspore::kernel

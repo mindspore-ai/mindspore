@@ -26,7 +26,7 @@
 namespace mindspore::lite::pass {
 class InsertTranspose : public FormatPass {
  public:
-  explicit InsertTranspose(Format format) : FormatPass(format) {}
+  explicit InsertTranspose(Format format) : FormatPass(format, "InsertTranspose") {}
   virtual ~InsertTranspose() = default;
   int RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Tensor *> *tensors);
 

@@ -19,18 +19,23 @@
 
 #include <vector>
 #include <memory>
+#include <utility>
+#include <string>
 #include "src/executor/kernel_exec.h"
 #include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::lite::pass {
 class FormatPass {
  public:
-  explicit FormatPass(mindspore::Format format) : format_(format) {}
+  explicit FormatPass(mindspore::Format format, std::string name) : format_(format), name_(std::move(name)) {}
   virtual ~FormatPass() = default;
   virtual int RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Tensor *> *tensors) = 0;
 
+  std::string name() const { return name_; }
+
  protected:
   Format format_ = DEFAULT_FORMAT;
+  std::string name_{};
 };
 using FormatPassPtr = std::shared_ptr<FormatPass>;
 

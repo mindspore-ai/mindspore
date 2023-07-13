@@ -81,7 +81,7 @@ class MS_API IKernel {
   /// \brief obtain kernel's name.
   ///
   /// \return kernel's name.
-  std::string name() const { return this->name_; }
+  virtual std::string name() const { return this->name_; }
   /// \brief set kernel's name.
   ///
   /// \param[in] name define the kernel's name.

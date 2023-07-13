@@ -58,6 +58,7 @@ option(MSLITE_ENABLE_MODEL_PRE_INFERENCE "enable model do pre-inference when Bui
 option(MSLITE_EXPORT_COMPUTE_IR "export graph structure dotfile when debug mode" off)
 option(MSLITE_ENABLE_PACKAGE_WHEEL "enable package python wheel" off)
 option(MSLITE_ENABLE_OPENCV "enable opencv" on)
+option(MSLITE_ENABLE_DUMP "enable subgraph dump" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -108,6 +109,11 @@ endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_SERVER_INFERENCE})
     set(MSLITE_ENABLE_SERVER_INFERENCE $ENV{MSLITE_ENABLE_SERVER_INFERENCE})
+endif()
+
+if(DEFINED ENV{MSLITE_ENABLE_DUMP})
+    set(MSLITE_ENABLE_DUMP $ENV{MSLITE_ENABLE_DUMP})
+    add_compile_definitions(ENABLE_DUMP)
 endif()
 
 if(MSLITE_ENABLE_SERVER_INFERENCE OR MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
