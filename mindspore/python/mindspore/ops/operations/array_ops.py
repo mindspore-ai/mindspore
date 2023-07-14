@@ -1706,7 +1706,6 @@ class Fill(PrimitiveWithCheck):
         Deprecated
     """
 
-    @deprecated("2.2", "ops.FillV2", False)
     @prim_attr_register
     def __init__(self):
         """Initialize Fill"""
