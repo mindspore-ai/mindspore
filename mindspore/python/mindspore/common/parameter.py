@@ -827,7 +827,7 @@ class Parameter(Tensor_):
             >>> from mindspore import Tensor, Parameter
             >>> import numpy as np
             >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
-            >>> x.set_data(Tensor(np.array([[6, 6], [6, 6]], dtype=np.float32))
+            >>> x.set_data(Tensor(np.array([[6, 6], [6, 6]], dtype=np.float32)))
             Parameter (name=Parameter, shape=(2, 2), dtype=float32, requires=True)
         """
         if not isinstance(data, (Tensor, int, float)):
