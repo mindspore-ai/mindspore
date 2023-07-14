@@ -284,7 +284,7 @@ std::string CompileCacheManager::GetCachedSharedName() {
   std::string queue_name_cache_path = GetQueueNameCachePath();
   std::ifstream fin(queue_name_cache_path);
   if (!fin) {
-    MS_LOG(WARNING) << "Open the queue name cache file " << queue_name_cache_path << " failed.";
+    MS_LOG(WARNING) << "Can\'t open the queue name cache file " << queue_name_cache_path;
     return queue_name;
   }
   fin >> queue_name;
