@@ -97,7 +97,7 @@
             - **sink_size** (int) - 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值：-1。
             - **initial_epoch** (int) - 从哪个epoch开始训练，一般用于中断恢复训练场景。默认值：0。
 
-    .. py:method:: infer_predict_layout(*predict_data)
+    .. py:method:: infer_predict_layout(*predict_data, skip_backend_compile=False)
 
         在 `AUTO_PARALLEL` 或 `SEMI_AUTO_PARALLEL` 模式下为预测网络生成参数layout。数据可以是单个或多个张量。
 
@@ -105,6 +105,7 @@
 
         参数：
             - **predict_data** (Union[Tensor, list[Tensor], tuple[Tensor]], 可选) - 预测样本，数据可以是单个张量、张量列表或张量元组。
+            - **skip_backend_compile** (bool) - 生成参数layout时跳过后端编译流程。一般用于后端编译模型大小超过卡上内存的场景，其它场景不建议开启，开启时本次编译的缓存无法在二次编译时被使用。默认值： ``False``。
 
         返回：
             Dict，用于加载分布式checkpoint的参数layout字典。它总是作为 `load_distributed_checkpoint()` 函数的一个入参。
