@@ -786,6 +786,7 @@ int64_t BatchOp::GetTreeBatchSize() {
 
 Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
+  row->clear();
   if (eoe_received_) {
     UpdateRepeatAndEpochCounter();
     *row = TensorRow(TensorRow::kFlagEOE);
