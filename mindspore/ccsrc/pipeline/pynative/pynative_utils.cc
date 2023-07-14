@@ -34,35 +34,6 @@
 
 namespace mindspore {
 namespace pynative {
-static const mindspore::HashSet<std::string> kNotRealOP{
-  kMakeTupleOpName,
-  kMakeListNewOpName,
-  kTupleGetItemOpName,
-  kStopGradientOpName,
-  kUpdateStateOpName,
-  kLoadOPName,
-  kDependOpName,
-  kReturnOpName,
-  kNPUAllocFloatStatusOpName,
-  kNPUGetFloatStatusOpName,
-  kNPUClearFloatStatusOpName,
-  kMirrorOperatorOpName,
-  kSequenceSliceOpName,
-  kSequenceMulOpName,
-};
-bool IsRealOp(const PrimitivePtr &prim) {
-  MS_EXCEPTION_IF_NULL(prim);
-  return kNotRealOP.find(prim->name()) == kNotRealOP.end();
-}
-
-bool IsRealOp(const AnfNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &prim = GetCNodePrimitive(cnode);
-  if (prim == nullptr) {
-    return false;
-  }
-  return IsRealOp(prim);
-}
 namespace PyNativeAlgo {
 namespace {
 std::string GetObjIdFromPython(const py::handle &obj) {
@@ -656,7 +627,7 @@ void PyParser::PrepareOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) {
   // kIndex1 is for add output
   op_run_info->input_unused_in_bprop.resize(op_run_info->input_size + kIndex1, false);
   op_run_info->op_grad_info->input_value_grad_type.resize(op_run_info->input_size, TensorGradType::kConstant);
-  if (!op_run_info->is_ms_function_input) {
+  if (!op_run_info->is_jit_input) {
     const auto &unused_inputs = BpropExpander::GetUnusedInputs(op_run_info->op_grad_info->op_prim->name());
     for (size_t i = 0; i < op_run_info->input_size; ++i) {
       op_run_info->input_unused_in_bprop[i] = (unused_inputs.find(i) != unused_inputs.end());

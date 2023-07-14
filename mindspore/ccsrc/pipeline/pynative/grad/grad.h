@@ -26,7 +26,7 @@
 #include <map>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/top_cell.h"
-#include "pipeline/pynative/grad/ms_function_grad.h"
+#include "pipeline/pynative/grad/jit/jit_grad.h"
 #include "runtime/pynative/async/async_queue.h"
 #include "runtime/pynative/async/async_hqueue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
@@ -69,7 +69,7 @@ class GradExecutor {
   ~GradExecutor() = default;
   explicit GradExecutor(const ForwardExecutorPtr &forward_executor = nullptr)
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
-        ms_function_(std::make_shared<MsFunction>()),
+        jit_(std::make_shared<Jit>()),
         async_executor_(std::make_shared<AsyncHqueue>("grad_queue")) {}
 
   void Init();
@@ -92,9 +92,9 @@ class GradExecutor {
     MS_EXCEPTION_IF_NULL(top_cell_);
     return top_cell_;
   }
-  inline MsFunctionPtr ms_function() const {
-    MS_EXCEPTION_IF_NULL(ms_function_);
-    return ms_function_;
+  inline JitPtr jit() const {
+    MS_EXCEPTION_IF_NULL(jit_);
+    return jit_;
   }
   inline InputArgsInfoPtr top_input_args_info() const {
     MS_EXCEPTION_IF_NULL(top_input_args_info_);
@@ -107,9 +107,7 @@ class GradExecutor {
   inline bool enable_grad() const { return enable_grad_; }
   inline void set_enable_grad(bool enable_grad) { enable_grad_ = enable_grad; }
   inline bool RequiresGrad() const { return enable_grad() && grad_flag(); }
-  // Construct grad graph for ms_function
-  inline bool eliminate_forward() const { return eliminate_forward_; }
-  inline void set_eliminate_forward(bool eliminate_forward) { eliminate_forward_ = eliminate_forward; }
+  // Construct grad graph for jit
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
   inline AsyncHqueuePtr async_executor() const { return async_executor_; }
   void SetHookChanged(const py::object &cell) const;
@@ -237,7 +235,6 @@ class GradExecutor {
   bool grad_flag_{false};
   bool enable_grad_{true};
   bool grad_is_running_{false};
-  bool eliminate_forward_{true};
   bool save_graphs_{false};
   size_t custom_bprop_cell_count_{0};
   size_t obj_order_{0};
@@ -258,7 +255,7 @@ class GradExecutor {
   // Record all top cell which has been ran
   mindspore::OrderedMap<std::string, TopCellInfoPtr> already_run_top_cell_;
   ForwardExecutorWeakPtr forward_executor_;
-  MsFunctionPtr ms_function_;
+  JitPtr jit_;
   AsyncHqueuePtr async_executor_;
   mutable CellIdWithDynamicNodesMap cell_id_with_dynamic_detect_nodes_;
   std::set<std::string> dynamic_inputs_cells_;

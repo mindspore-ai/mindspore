@@ -329,7 +329,7 @@ PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
 
 FuncGraphPtr PrimBpropOptimizer::BpropGraphFinalOpt(const pipeline::ResourcePtr &res) const {
   MS_EXCEPTION_IF_NULL(res);
-  auto after_opt_bg = MsFunctionBpropGraphPass(res, false);
+  auto after_opt_bg = JitBpropGraphPass(res, false);
   return after_opt_bg;
 }
 

@@ -516,9 +516,9 @@ class _MindsporeFunctionExecutor:
         phase = ""
         try:
             if context.get_context("mode") == context.PYNATIVE_MODE:
-                _pynative_executor.set_ms_function_compile_status(True, phase)
+                _pynative_executor.set_jit_compile_status(True, phase)
                 phase = self.compile(self.fn.__name__, *args_list, **kwargs)
-                _pynative_executor.set_ms_function_compile_status(False, phase)
+                _pynative_executor.set_jit_compile_status(False, phase)
             else:
                 phase = self.compile(self.fn.__name__, *args_list, **kwargs)
         except Exception as err:
@@ -531,7 +531,7 @@ class _MindsporeFunctionExecutor:
         new_inputs = self._generate_run_args(args_list, kwargs)
         output = self._graph_executor(tuple(new_inputs), phase)
         if context.get_context("mode") == context.PYNATIVE_MODE:
-            output = _pynative_executor.grad_ms_function(output, *new_inputs)
+            output = _pynative_executor.grad_jit(output, *new_inputs)
 
         enable_ge = os.getenv("MS_ENABLE_GE") == "1"
         if enable_ge and self.jit_config_dict is None:
@@ -699,7 +699,7 @@ def _get_obj_id(input_obj):
     return obj_id + str(id(input_obj))
 
 
-def _get_ms_function_hash(hash_input):
+def _get_jit_hash(hash_input):
     """Get hash value of single object or list of objects."""
     if isinstance(list, tuple):
         return ".".join(map(_get_obj_id, hash_input))
@@ -787,7 +787,7 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None):
 
     def wrap_mindspore(func):
         if hash_args:
-            hash_obj = _get_ms_function_hash(hash_args)
+            hash_obj = _get_jit_hash(hash_args)
         else:
             hash_obj = int(time.time() * 1e9)
 
@@ -1367,18 +1367,18 @@ class _PyNativeExecutor:
         """
         self._executor.set_lazy_build(enable)
 
-    def grad_ms_function(self, output, *args):
+    def grad_jit(self, output, *args):
         """
-        Building grad graph decorated by ms_function.
+        Building grad graph decorated by jit.
 
         Args:
-            output (tuple): The function or cell decorated by ms_function output object.
-            args (tuple): Function or cell decorated by ms_function input arguments.
+            output (tuple): The function or cell decorated by jit output object.
+            args (tuple): Function or cell decorated by jit input arguments.
 
         Return:
             None.
         """
-        return self._executor.grad_ms_function(output, *args)
+        return self._executor.grad_jit(output, *args)
 
     def grad_flag(self):
         """
@@ -1422,17 +1422,17 @@ class _PyNativeExecutor:
         """
         self._executor.set_enable_grad(flag)
 
-    def set_ms_function_compile_status(self, status, phase):
+    def set_jit_compile_status(self, status, phase):
         """
-        Set ms_function is compiling
+        Set jit is compiling
 
         Args:
-            status(bool): ms_function compile status
+            status(bool): jit compile status
             phase (str): The phase of cell/function instance.
         Return:
             None.
         """
-        self._executor.set_ms_function_compile_status(status, phase)
+        self._executor.set_jit_compile_status(status, phase)
 
     def set_dynamic_input(self, obj):
         """

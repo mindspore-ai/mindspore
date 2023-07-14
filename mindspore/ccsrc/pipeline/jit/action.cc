@@ -204,54 +204,6 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
     });
   resource->SetResult(kOutput, run);
 }
-
-// Modify the output node of func_graph to add forward nodes used in bprop graph.
-void ModifyOutputNode(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  const auto &used_forward_nodes = func_graph->used_forward_nodes();
-  if (used_forward_nodes.empty()) {
-    return;
-  }
-
-  // Get original output node and abstract
-  auto original_output_node = func_graph->output();
-  MS_EXCEPTION_IF_NULL(original_output_node);
-  auto original_output_abs = original_output_node->abstract();
-  MS_EXCEPTION_IF_NULL(original_output_abs);
-
-  // Create a new make tuple node to hold all forward used nodes.
-  abstract::AbstractBasePtrList added_abs_list;
-  std::vector<AnfNodePtr> added_node_list{NewValueNode(prim::kPrimMakeTuple)};
-  std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(),
-                [&added_abs_list, &added_node_list](const AnfNodePtr &node) {
-                  MS_EXCEPTION_IF_NULL(node);
-                  added_node_list.push_back(node);
-                  added_abs_list.push_back(node->abstract());
-                });
-  AnfNodePtr added_output_node = nullptr;
-  AbstractBasePtr added_output_abs = nullptr;
-  if (added_abs_list.empty()) {
-    added_output_node = NewValueNode(MakeValue<int32_t>(1));
-    added_output_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(1));
-  } else {
-    added_output_node = func_graph->NewCNode(std::move(added_node_list));
-    added_output_abs = std::make_shared<abstract::AbstractTuple>(added_abs_list);
-  }
-  added_output_node->set_abstract(added_output_abs);
-  MS_LOG(DEBUG) << "Added output node info: " << added_output_node->DebugString();
-
-  // Merge original output node and used forward nodes to return node.
-  std::vector<AnfNodePtr> new_output_nodes{NewValueNode(prim::kPrimMakeTuple), original_output_node, added_output_node};
-  auto merge_node = func_graph->NewCNode(std::move(new_output_nodes));
-  abstract::AbstractBasePtrList new_output_abs{original_output_abs, added_output_abs};
-  merge_node->set_abstract(std::make_shared<abstract::AbstractTuple>(new_output_abs));
-  MS_LOG(DEBUG) << "Merge node info: " << merge_node->DebugString();
-  func_graph->set_output(merge_node);
-
-  // Clear
-  func_graph->set_modify_output(true);
-  func_graph->ClearUsedForwardNodes();
-}
 }  // namespace
 using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
@@ -875,52 +827,12 @@ bool CheckGraphOutputConstOrParameter(const FuncGraphPtr &func_graph) {
   return false;
 }
 
-bool EliminateForwardCNode(const ResourcePtr &resource) {
+bool GetJitBpropGraph(const ResourcePtr &resource) {
   // This function only works in Pynative mode. The func_graph is decorated with 'jit'.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     return true;
   }
-
-  auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
-  MS_EXCEPTION_IF_NULL(graph_executor);
-  auto phase = graph_executor->phase();
-  MS_LOG(DEBUG) << "The phase of current pipeline graph is: " << phase;
-  // Exporting graph in PyNative mode or only running forward process no need to do this action.
-  auto pynative_exec = pynative::PyNativeExecutor::GetInstance();
-  pynative_exec->grad_executor()->ms_function()->set_graph_phase(phase);
-  if (phase.find("export") == 0 || !pynative_exec->grad_flag()) {
-    MS_LOG(DEBUG) << "When exporting graph or only running forward process, no need to eliminate forward cnode.";
-    auto grad_exec = pynative_exec->grad_executor();
-    grad_exec->set_eliminate_forward(true);
-    return true;
-  }
-  MS_EXCEPTION_IF_NULL(resource);
-  auto ms_func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(ms_func_graph);
-  graph_executor->SetPrimalFuncGraph(BasicClone(ms_func_graph), phase);
-  auto clone_graph = pynative_exec->grad_executor()->ms_function()->ProcessMsFunctionFuncGraph(ms_func_graph);
-  if (clone_graph != nullptr) {
-    graph_executor->SetGradGraph(clone_graph, phase);
-    return true;
-  }
-
-  // Run grad process for func_graph and replace forward nodes with its output tensors.
-  MS_LOG(INFO) << "Run eliminate forward nodes action.";
-  auto grad_exec = pynative_exec->grad_executor();
-  bool eliminate_forward = grad_exec->eliminate_forward();
-  grad_exec->set_eliminate_forward(eliminate_forward && ms_func_graph->func_graphs_used().empty());
-  auto grad_graph = ad::Grad(BasicClone(ms_func_graph), opt::Optimizer::MakeEmptyOptimizer(resource));
-  MS_EXCEPTION_IF_NULL(grad_graph);
-  graph_executor->SetGradGraph(grad_graph, phase);
-  ModifyOutputNode(ms_func_graph);
-
-  // Keep roots for only keeping forward func graph in resource.
-  auto manager = resource->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  manager->KeepRoots({ms_func_graph});
-
-  grad_exec->set_eliminate_forward(true);
-  return true;
+  return pynative::PyNativeExecutor::GetInstance()->grad_executor()->jit()->GetJitGradGraph(resource);
 }
 
 bool EliminateSpecialOpNode(const ResourcePtr &resource) {
@@ -1618,7 +1530,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     (void)actions.emplace_back(std::make_pair(kAutoMonadReorder, OrderEnforceAction));
 
     // Eliminate forward cnode for grad graph
-    (void)actions.emplace_back(std::make_pair(kEliminateForwardCnode, EliminateForwardCNode));
+    (void)actions.emplace_back(std::make_pair(kGetJitBpropGraph, GetJitBpropGraph));
 
     // Eliminate the virtual mirror node
     (void)actions.emplace_back(std::make_pair(kEliminateSpecialOpNode, EliminateSpecialOpNode));

@@ -325,12 +325,12 @@ std::string GetObjDesc(const py::object &source) {
   std::string obj_desc;
   if (py::hasattr(source, parse::PYTHON_PARSE_METHOD)) {
     auto cell_class_name = source.attr("__class__").attr("__name__");
-    auto ms_function_name = source.attr(parse::PYTHON_PARSE_METHOD);
-    obj_desc = "'" + py::cast<std::string>(cell_class_name) + "." + py::cast<std::string>(ms_function_name) + "'";
+    auto jit_name = source.attr(parse::PYTHON_PARSE_METHOD);
+    obj_desc = "'" + py::cast<std::string>(cell_class_name) + "." + py::cast<std::string>(jit_name) + "'";
   } else {
     if (py::hasattr(source, "__name__")) {
-      auto ms_function_name = source.attr("__name__");
-      obj_desc = "'" + py::cast<std::string>(ms_function_name) + "'";
+      auto jit_name = source.attr("__name__");
+      obj_desc = "'" + py::cast<std::string>(jit_name) + "'";
     } else if (py::isinstance<Cell>(source)) {
       auto cell_class_name = source.attr("__class__").attr("__name__");
       obj_desc = "'" + py::cast<std::string>(cell_class_name) + ".construct'";
@@ -480,45 +480,45 @@ FuncGraphPtr GraphExecutorPy::GetFuncGraph(const std::string &phase) {
   return it->second->func_graph;
 }
 
-void GraphExecutorPy::SetPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase) {
+void GraphExecutorPy::SetJitPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase) {
   const auto it = info_.find(phase);
   if (it == info_.end()) {
     MS_LOG(INTERNAL_EXCEPTION) << "No executor info. found for phase: " << phase;
     return;
   }
   MS_EXCEPTION_IF_NULL(primal_func_graph);
-  it->second->primal_func_graph = primal_func_graph;
+  it->second->jit_primal_func_graph = primal_func_graph;
 }
 
-FuncGraphPtr GraphExecutorPy::GetPrimalFuncGraph(const std::string &phase) {
+FuncGraphPtr GraphExecutorPy::GetJitPrimalFuncGraph(const std::string &phase) {
   const auto it = info_.find(phase);
   if (it == info_.end()) {
     MS_LOG(INFO) << "No executor info. found for phase: " << phase;
     return nullptr;
   }
-  return it->second->primal_func_graph;
+  return it->second->jit_primal_func_graph;
 }
 
-FuncGraphPtr GraphExecutorPy::GetGradGraph(const std::string &phase) {
+FuncGraphPtr GraphExecutorPy::GetJitGradGraph(const std::string &phase) {
   const auto it = info_.find(phase);
   if (it == info_.end()) {
     MS_LOG(INFO) << "No executor info. found for phase: " << phase;
     return nullptr;
   }
-  return it->second->grad_graph;
+  return it->second->jit_grad_graph;
 }
 
-void GraphExecutorPy::SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase) {
+void GraphExecutorPy::SetJitGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase) {
   const auto it = info_.find(phase);
   if (it == info_.end()) {
     MS_LOG(INTERNAL_EXCEPTION) << "No executor info. found for phase: " << phase;
     return;
   }
-  if (it->second->grad_graph != nullptr) {
+  if (it->second->jit_grad_graph != nullptr) {
     MS_LOG(DEBUG) << "The grad graph has existed, phase is: " << phase;
   }
   MS_EXCEPTION_IF_NULL(grad_graph);
-  it->second->grad_graph = grad_graph;
+  it->second->jit_grad_graph = grad_graph;
 }
 
 compile::VmEvalFuncPtr GraphExecutorPy::GetVmEvalFunc(const std::string &phase) {

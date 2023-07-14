@@ -120,8 +120,8 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
     bool is_graph_kernel =
       (IsValueNode<FuncGraph>(inps[0]) &&
        inps[0]->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
-    bool is_pynative_ms_function_call_node = common::AnfAlgo::HasNodeAttr(kAttrMsFunctionCallNode, n->cast<CNodePtr>());
-    if (!IsValueNode<Primitive>(inps[0]) && !is_graph_kernel && !is_pynative_ms_function_call_node) {
+    bool is_pynative_jit_call_node = common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, n->cast<CNodePtr>());
+    if (!IsValueNode<Primitive>(inps[0]) && !is_graph_kernel && !is_pynative_jit_call_node) {
       MS_LOG(EXCEPTION) << "Input[0] must be a Primitive ValueNode, but get " << inps[0]->DebugString();
     }
     auto fn = inps[0];

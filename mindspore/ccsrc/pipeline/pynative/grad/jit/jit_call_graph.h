@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_FORWARD_TASK_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_FORWARD_TASK_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_JIT_JIT_CALL_GRAPH_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_JIT_JIT_CALL_GRAPH_H_
 
 #include <functional>
 #include <utility>
@@ -24,19 +24,19 @@
 
 namespace mindspore {
 namespace pynative {
-class BACKEND_EXPORT MsFunctionCallGraph {
+class BACKEND_EXPORT JitCallGraph {
  public:
-  explicit MsFunctionCallGraph(std::function<VectorRef(const VectorRef &arg_list)> call_back_func)
+  explicit JitCallGraph(std::function<VectorRef(const VectorRef &arg_list)> call_back_func)
       : call_back_func_(std::move(call_back_func)) {}
-  ~MsFunctionCallGraph() = default;
+  ~JitCallGraph() = default;
   VectorRef Run(const VectorRef &arg_list) { return call_back_func_(arg_list); }
 
   // Key for user data.
-  constexpr static char key[] = "MsFunctionCallGraph";
+  constexpr static char key[] = "JitCallGraph";
 
  private:
   std::function<VectorRef(const VectorRef &arg_list)> call_back_func_;
 };
 }  // namespace pynative
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_FORWARD_TASK_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_JIT_JIT_CALL_GRAPH_H_

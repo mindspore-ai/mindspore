@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,36 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/ad/pynative_dfunctor.h"
+#include "pipeline/pynative/grad/jit/jit_dfunctor.h"
 
 #include <memory>
+#include <string>
 #include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/pynative/pynative_utils.h"
 
 namespace mindspore {
-namespace ad {
-tensor::TensorPtr PynativeDFunctor::GenNewTensorInner(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {
+namespace pynative {
+namespace {
+const mindspore::HashSet<std::string> kNotRealOP{
+  kMakeTupleOpName,
+  kMakeListNewOpName,
+  kTupleGetItemOpName,
+  kStopGradientOpName,
+  kUpdateStateOpName,
+  kLoadOPName,
+  kDependOpName,
+  kReturnOpName,
+  kNPUAllocFloatStatusOpName,
+  kNPUGetFloatStatusOpName,
+  kNPUClearFloatStatusOpName,
+  kMirrorOperatorOpName,
+  kSequenceSliceOpName,
+  kSequenceMulOpName,
+};
+
+tensor::TensorPtr GenNewTensorInner(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {
   MS_EXCEPTION_IF_NULL(type_elem);
   MS_EXCEPTION_IF_NULL(shape_elem);
   auto shape = shape_elem->cast<abstract::ShapePtr>();
@@ -37,7 +55,7 @@ tensor::TensorPtr PynativeDFunctor::GenNewTensorInner(const TypePtr &type_elem, 
   return std::make_shared<tensor::Tensor>(type->type_id(), shape->shape());
 }
 
-ValuePtr PynativeDFunctor::NewValue(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {
+ValuePtr NewValue(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {
   MS_EXCEPTION_IF_NULL(type_elem);
   MS_EXCEPTION_IF_NULL(shape_elem);
   if (shape_elem->isa<abstract::TupleShape>()) {
@@ -68,7 +86,7 @@ ValuePtr PynativeDFunctor::NewValue(const TypePtr &type_elem, const BaseShapePtr
   MS_LOG(INTERNAL_EXCEPTION) << "Unknown shape: " << shape_elem->ToString() << ", type: " << type_elem->ToString();
 }
 
-ValueNodePtr PynativeDFunctor::GenNewTensor(const CNodePtr &cnode_morph) {
+ValueNodePtr GenNewTensor(const CNodePtr &cnode_morph) {
   MS_EXCEPTION_IF_NULL(cnode_morph);
   if (cnode_morph->forward().first != nullptr) {
     return cnode_morph->forward().first;
@@ -131,8 +149,8 @@ ValueNodePtr PynativeDFunctor::GenNewTensor(const CNodePtr &cnode_morph) {
   MS_LOG(INTERNAL_EXCEPTION) << "Unknown shape: " << cnode_shape->ToString() << ", type: " << cnode_type->ToString();
 }
 
-void PynativeDFunctor::GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNodePtr *forward_node,
-                                                      FuncGraphPtr *bprop_graph, FuncGraphPtr *fprop_graph) {
+void GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNodePtr *forward_node, FuncGraphPtr *bprop_graph,
+                                    FuncGraphPtr *fprop_graph) {
   MS_EXCEPTION_IF_NULL(k_app);
   MS_EXCEPTION_IF_NULL(fprop_graph);
   const auto &prim = k_app->input(0);
@@ -180,12 +198,10 @@ void PynativeDFunctor::GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNo
   *bprop_graph = GetValueNode<FuncGraphPtr>(bprop_vnode);
 }
 
-std::vector<AnfNodePtr> PynativeDFunctor::RunOutputReplace(const CNodePtr &forward_node,
-                                                           const FuncGraphPtr &bprop_graph,
-                                                           const FuncGraphPtr &fprop_graph,
-                                                           const CNodePtr &cnode_morph) {
+std::vector<AnfNodePtr> RunOutputReplace(const CNodePtr &forward_node, const FuncGraphPtr &bprop_graph,
+                                         const FuncGraphPtr &fprop_graph, const CNodePtr &cnode_morph) {
   MS_EXCEPTION_IF_NULL(cnode_morph);
-  if (!pynative::IsRealOp(cnode_morph)) {
+  if (!IsRealOp(cnode_morph)) {
     return {};
   }
   // Use manager to get the link relation among nodes.
@@ -214,9 +230,8 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunOutputReplace(const CNodePtr &forwa
   return used_forward_nodes;
 }
 
-std::vector<AnfNodePtr> PynativeDFunctor::RunInputReplace(const FuncGraphPtr &bprop_graph,
-                                                          const FuncGraphPtr &fprop_graph,
-                                                          const CNodePtr &cnode_morph) {
+std::vector<AnfNodePtr> RunInputReplace(const FuncGraphPtr &bprop_graph, const FuncGraphPtr &fprop_graph,
+                                        const CNodePtr &cnode_morph) {
   // Use manager to get the link relation among nodes.
   MS_EXCEPTION_IF_NULL(bprop_graph);
   MS_EXCEPTION_IF_NULL(fprop_graph);
@@ -234,7 +249,7 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunInputReplace(const FuncGraphPtr &bp
     const auto &input_node = cnode_morph->input(i + 1);
     MS_EXCEPTION_IF_NULL(input_node);
     // Parameter, ValueNode and StopGradient CNode no need to replace.
-    if (input_node->isa<Parameter>() || input_node->isa<ValueNode>() || !pynative::IsRealOp(input_node)) {
+    if (input_node->isa<Parameter>() || input_node->isa<ValueNode>() || !IsRealOp(input_node)) {
       continue;
     }
     // Replace forward input node by its output value.
@@ -260,11 +275,20 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunInputReplace(const FuncGraphPtr &bp
 
   return used_input_nodes;
 }
+}  // namespace
 
-void PynativeDFunctor::ReplaceEquivdout(const CNodePtr &k_app, const CNodePtr &cnode_morph) {
-  // The process of replacing forward node only works in pynative mode, when @jit is used.
+bool IsRealOp(const AnfNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &prim = GetCNodePrimitive(cnode);
+  if (prim == nullptr) {
+    return false;
+  }
+  return kNotRealOP.find(prim->name()) == kNotRealOP.end();
+}
+
+void ReplaceEquivOut(const CNodePtr &k_app, const CNodePtr &cnode_morph) {
   MS_EXCEPTION_IF_NULL(cnode_morph);
-  MS_LOG(DEBUG) << "Run replace for cnode morph: " << cnode_morph->DebugString(2);
+  MS_LOG(DEBUG) << "Run replace for cnode morph: " << cnode_morph->DebugString();
   // Get forward node and its fprop graph, bprop graph.
   MS_EXCEPTION_IF_NULL(k_app);
   CNodePtr forward_node = nullptr;
@@ -285,5 +309,5 @@ void PynativeDFunctor::ReplaceEquivdout(const CNodePtr &k_app, const CNodePtr &c
   ms_func_graph->set_used_forward_nodes(used_forward_nodes);
   ms_func_graph->set_used_forward_nodes(used_input_nodes);
 }
-}  // namespace ad
+}  // namespace pynative
 }  // namespace mindspore

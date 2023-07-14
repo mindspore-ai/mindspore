@@ -28,10 +28,10 @@
 namespace mindspore {
 namespace pipeline {
 struct ExecutorInfo {
-  FuncGraphPtr primal_func_graph{nullptr};
+  FuncGraphPtr jit_primal_func_graph{nullptr};
   FuncGraphPtr func_graph{nullptr};
   // The grad graph of func_graph, it will create in PyNative mode when @jit is used.
-  FuncGraphPtr grad_graph{nullptr};
+  FuncGraphPtr jit_grad_graph{nullptr};
   ResourcePtr resource{nullptr};
   // The num of input data.
   std::size_t arg_list_size;

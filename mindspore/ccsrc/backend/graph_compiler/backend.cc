@@ -29,7 +29,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "pipeline/jit/action.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "pipeline/pynative/grad/ms_function_call_graph.h"
+#include "pipeline/pynative/grad/jit/jit_call_graph.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "pybind_api/pybind_patch.h"
@@ -693,9 +693,9 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
 void MindRTBackend::RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args, VectorRef *outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  auto ms_function_special_graph = kernel->user_data<pynative::MsFunctionCallGraph>();
-  MS_EXCEPTION_IF_NULL(ms_function_special_graph);
-  *outputs = ms_function_special_graph->Run(args);
+  auto jit_call_graph = kernel->user_data<pynative::JitCallGraph>();
+  MS_EXCEPTION_IF_NULL(jit_call_graph);
+  *outputs = jit_call_graph->Run(args);
 }
 
 void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args,
@@ -745,7 +745,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
                            inputs[graph_index], &input_tensor_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
         WaitTaskFinish();
-      } else if (common::AnfAlgo::HasNodeAttr(kAttrMsFunctionCallNode, kernel)) {
+      } else if (common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, kernel)) {
         WaitTaskFinish();
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);

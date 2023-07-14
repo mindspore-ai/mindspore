@@ -256,7 +256,7 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
 
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
-    common::AnfAlgo::SetNodeAttr(kFlagMSFunctionGraph, MakeValue(true), kernel);
+    common::AnfAlgo::SetNodeAttr(kFlagJitGraph, MakeValue(true), kernel);
   }
 
   PROF_END(preprocess_before_run_graph);
@@ -414,7 +414,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   }
 #endif
   bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(kernel);
-  if (!is_dynamic_shape || !(common::AnfAlgo::GetBooleanAttr(kernel, kFlagMSFunctionGraph))) {
+  if (!is_dynamic_shape || !(common::AnfAlgo::GetBooleanAttr(kernel, kFlagJitGraph))) {
     auto iter = node_atomics_persistent_cache_.find(kernel);
     if (iter != node_atomics_persistent_cache_.end()) {
       std::lock_guard<std::mutex> locker(launch_mutex_);

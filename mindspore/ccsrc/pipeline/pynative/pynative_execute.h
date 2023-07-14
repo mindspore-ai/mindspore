@@ -69,7 +69,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   py::object Run() const;
   void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                const py::object &grad_position, const py::args &args) const;
-  py::object GradMsFunction(const py::object &out, const py::args &args) const;
+  py::object GradJit(const py::object &out, const py::args &args) const;
   void SetDynamicInput(const py::object &cell) const;
 
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
@@ -80,7 +80,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void SetLazyBuild(bool enable) const;
   bool IsFirstCell() const;
   void WorkerJoin();
-  void SetMsFunctionCompileStatus(bool is_compiling, const std::string &phase) const;
+  void SetJitCompileStatus(bool is_compiling, const std::string &phase) const;
 
  private:
   PyNativeExecutor() = default;

@@ -37,7 +37,7 @@
 #include "utils/info.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "pipeline/pynative/pynative_utils.h"
-#include "pipeline/pynative/grad/ms_function_call_graph.h"
+#include "pipeline/pynative/grad/jit/jit_call_graph.h"
 #include "pipeline/jit/action.h"
 #include "utils/profile.h"
 #include "include/common/utils/primitive_utils.h"
@@ -67,7 +67,7 @@ const mindspore::HashSet<std::string> kMetaFuncGraphOp{
 
 mindspore::HashMap<std::string, std::vector<std::pair<size_t, ValuePtr>>> node_attr_value_;
 mindspore::HashMap<std::string, FuncGraphPtr> pass_grad_graph_;
-mindspore::HashMap<std::string, pipeline::ResourcePtr> ms_function_call_graph_compile_cache_;
+mindspore::HashMap<std::string, pipeline::ResourcePtr> jit_call_graph_compile_cache_;
 
 inline bool IsPrimNeedGrad(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -236,10 +236,10 @@ FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph, bool is_
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_func_graph);
-  auto after_opt_bg = pipeline::MsFunctionBpropGraphPass(resource, true);
+  auto after_opt_bg = pipeline::JitBpropGraphPass(resource, true);
   if (is_controw_flow) {
     for (const auto &g : manager->func_graphs()) {
-      g->set_flag(kFlagMsFunctionCallGraph, true);
+      g->set_flag(kFlagJitCallGraph, true);
     }
   }
   PyNativeAlgo::Common::DumpGraphIR("bprop_builder_after_opt.ir", after_opt_bg);
@@ -284,22 +284,23 @@ AnfNodePtr HandleRealToComplex(const TensorPtr &input, const AbstractBasePtr &ab
   return new_din;
 }
 
-void SetMsFunctionCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, const std::string &cache_key,
-                            bool is_control_flow) {
+void SetJitCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, const std::string &cache_key,
+                     bool is_control_flow) {
   MS_EXCEPTION_IF_NULL(cnode);
-  common::AnfAlgo::SetNodeAttr(kAttrMsFunctionCallNode, MakeValue(true), cnode);
-  // kFlagMsFunctionCallGraph is set true to avoid compilig call_graph whe compiling the main graph
-  call_graph->set_flag(kFlagMsFunctionCallGraph, true);
+  common::AnfAlgo::SetNodeAttr(kAttrJitCallNode, MakeValue(true), cnode);
+  // kFlagJitCallGraph is set true to avoid compilig call_graph whe compiling the main graph
+  call_graph->set_flag(kFlagJitCallGraph, true);
   pipeline::ResourcePtr resource;
-  const auto it = ms_function_call_graph_compile_cache_.find(cache_key);
-  bool need_compile = (it == ms_function_call_graph_compile_cache_.end());
+  const auto it = jit_call_graph_compile_cache_.find(cache_key);
+  bool need_compile = (it == jit_call_graph_compile_cache_.end());
   if (need_compile) {
     resource = std::make_shared<pipeline::Resource>();
     resource->set_func_graph(call_graph);
-    (void)ms_function_call_graph_compile_cache_.emplace(cache_key, resource);
+    (void)jit_call_graph_compile_cache_.emplace(cache_key, resource);
   } else {
     resource = it->second;
   }
+  MS_EXCEPTION_IF_NULL(resource);
   auto fn = [resource, need_compile, is_control_flow](const VectorRef &arg_list) -> VectorRef {
     if (need_compile) {
       MS_LOG(DEBUG) << "Start emit action for graph " << resource->func_graph()->ToString();
@@ -307,10 +308,10 @@ void SetMsFunctionCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_grap
       manager->AddFuncGraph(resource->func_graph(), true);
       resource->SetBackendAsync([]() { return compile::CreateBackend(); });
       resource->func_graph()->set_flag(kFlagIsPynativeBpropGraph, true);
-      // kFlagMsFunctionCallGraph is set false to compile sub graph in control flow
+      // kFlagJitCallGraph is set false to compile sub graph in control flow
       if (is_control_flow) {
         for (const auto &g : manager->func_graphs()) {
-          g->set_flag(kFlagMsFunctionCallGraph, false);
+          g->set_flag(kFlagJitCallGraph, false);
         }
       }
       (void)TaskEmitAction(resource);
@@ -320,7 +321,7 @@ void SetMsFunctionCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_grap
     compile::VmEvalFuncPtr run = resource->GetResult(pipeline::kOutput).cast<compile::VmEvalFuncPtr>();
     return utils::cast<VectorRef>((*run)(arg_list));
   };
-  cnode->set_user_data<MsFunctionCallGraph>(std::make_shared<MsFunctionCallGraph>(fn));
+  cnode->set_user_data<JitCallGraph>(std::make_shared<JitCallGraph>(fn));
 }
 
 bool IsOutputBothEmpty(const AnfNodePtr &inputs_grad, const AnfNodePtr &weights_grad) {
@@ -366,8 +367,8 @@ bool ProcessMonadNode(const PrimitivePtr &prim, const CNodePtr &cnode, const Gra
     cnode->set_inputs(inputs);
   }
   MS_EXCEPTION_IF_NULL(grad_param);
-  // Ms function graph contain monad op
-  if (grad_param->is_ms_function_graph) {
+  // Jit graph contain monad op
+  if (grad_param->is_jit_graph) {
     for (size_t i = 1; i < cnode->size(); ++i) {
       cnode->set_input(i, common::AnfAlgo::VisitKernelWithReturnType(cnode->input(i), 0, false,
                                                                      {prim::kPrimTupleGetItem, prim::kPrimMakeTuple})
@@ -448,7 +449,7 @@ void ClearGradMetaData(const ValuePtr &value) {
   }
 }
 
-void RevertMakeTupleNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrList *input_value,
+void RevertMakeTupleNode(const FuncGraphPtr &tape_graph, const CNodePtr &cnode, ValuePtrList *input_value,
                          AnfNodePtrList *cnode_inputs) {
   MS_EXCEPTION_IF_NULL(cnode_inputs);
   MS_EXCEPTION_IF_NULL(input_value);
@@ -472,13 +473,15 @@ void RevertMakeTupleNode(const FuncGraphPtr &graph, const CNodePtr &cnode, Value
         (void)abs_list.emplace_back(input->abstract());
       }
       // Update knode inputs to make tuple inputs
-      auto cnode_tuple = graph->NewCNode(cnode_tuple_inputs);
+      auto cnode_graph = cnode->func_graph();
+      MS_EXCEPTION_IF_NULL(cnode_graph);
+      auto cnode_tuple = cnode_graph->NewCNode(cnode_tuple_inputs);
       auto abs = std::make_shared<abstract::AbstractTuple>(abs_list);
       cnode_tuple->set_abstract(abs);
       (void)new_inputs.emplace_back(cnode_tuple);
 
       // Update knode inputs
-      auto knode_input = graph->NewCNode(knode_inputs);
+      auto knode_input = tape_graph->NewCNode(knode_inputs);
       knode_input->set_abstract(abs);
       size_t begin_index = i + kIndex1;
       (void)cnode_inputs->erase(cnode_inputs->begin() + begin_index,
@@ -497,7 +500,7 @@ void RevertMakeTupleNode(const FuncGraphPtr &graph, const CNodePtr &cnode, Value
   cnode->EraseAttr(kTupleToMakeTuple);
 }
 
-void ProcessAttrNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrList *input_value,
+void ProcessAttrNode(const FuncGraphPtr &tape_graph, const CNodePtr &cnode, ValuePtrList *input_value,
                      AnfNodePtrList *cnode_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->HasAttr(kAttrConvertAttrNode)) {
@@ -517,7 +520,7 @@ void ProcessAttrNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrL
       node_attr_value_.erase(item);
     }
   }
-  RevertMakeTupleNode(graph, cnode, input_value, cnode_inputs);
+  RevertMakeTupleNode(tape_graph, cnode, input_value, cnode_inputs);
 }
 }  // namespace
 
@@ -749,11 +752,11 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
 CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const AnfNodePtrList &args,
                                          const FuncGraphPtr &bprop_graph, bool cache_hit, AnfNodePtr *const tape_dout) {
   AnfNodePtrList bprop_inputs(args.begin(), args.end());
-  bool is_ms_function_dynamic_shape = grad_param->is_ms_function_graph && grad_param->use_dynamic_shape_process;
+  bool is_jit_dynamic_shape = grad_param->is_jit_graph && grad_param->use_dynamic_shape_process;
   // Save replace info in first time
-  if (!cache_hit && is_ms_function_dynamic_shape && grad_param->has_added_v) {
-    const auto &ms_function = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor()->ms_function();
-    ms_function->SaveForwardOutputTensorInfoInBpropGraph(bprop_graph);
+  if (!cache_hit && is_jit_dynamic_shape && grad_param->has_added_v) {
+    const auto &jit = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor()->jit();
+    jit->SaveForwardOutputTensorInfoInBpropGraph(bprop_graph);
   }
 
   // Call by tape_
@@ -765,8 +768,8 @@ CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const A
   // get_bprop is a call node
   auto bprop_cnode = ad_param()->tape_->NewCNode(bprop_inputs);
   bprop_cnode->set_abstract(bprop_graph->output()->abstract());
-  if (is_ms_function_dynamic_shape) {
-    SetMsFunctionCallGraph(bprop_cnode, bprop_graph, grad_param->graph_cache_key, grad_param->is_control_flow);
+  if (is_jit_dynamic_shape) {
+    SetJitCallGraph(bprop_cnode, bprop_graph, grad_param->graph_cache_key, grad_param->is_control_flow);
     ad_param()->tape_->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   }
   // For replacing parameter and dout.
@@ -779,7 +782,7 @@ CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const A
 CNodePtr AutoGradCellImpl::GetBpropGraphCNode(const GradParamPtr &grad_param, const AnfNodePtrList &args,
                                               AnfNodePtr *const tape_dout) {
   MS_EXCEPTION_IF_NULL(grad_param);
-  if (grad_param->is_control_flow || grad_param->is_ms_function_self_dynamic_shape) {
+  if (grad_param->is_control_flow || grad_param->is_jit_self_dynamic_shape) {
     MS_LOG(DEBUG) << "Get control flow graph or dynamic shape";
     need_do_manager_replace_ = true;
     return GetBPropFromFProp(grad_param, args, tape_dout);
@@ -835,10 +838,9 @@ CNodePtr AutoGradCellImpl::GetBPropFromFProp(const GradParamPtr &grad_param, con
     }
     bprop_builder->set_output(bprop_builder->NewCNode(actual_out));
     // Call pass for optimize graph, such as inline
-    after_opt_fg =
-      OptimizeBpropBuilder(bprop_builder, grad_param->is_ms_function_graph && grad_param->use_dynamic_shape_process &&
-                                            grad_param->is_control_flow);
-    if (grad_param->is_ms_function_graph || !grad_param->use_dynamic_shape_process) {
+    after_opt_fg = OptimizeBpropBuilder(
+      bprop_builder, grad_param->is_jit_graph && grad_param->use_dynamic_shape_process && grad_param->is_control_flow);
+    if (grad_param->is_jit_graph || !grad_param->use_dynamic_shape_process) {
       pass_grad_graph_[grad_param->graph_cache_key] = BasicClone(after_opt_fg);
     }
   }
@@ -848,7 +850,7 @@ CNodePtr AutoGradCellImpl::GetBPropFromFProp(const GradParamPtr &grad_param, con
 FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
   MS_EXCEPTION_IF_NULL(grad_param);
   // Find ad graph in cache
-  if (grad_param->is_ms_function_graph || !grad_param->use_dynamic_shape_process) {
+  if (grad_param->is_jit_graph || !grad_param->use_dynamic_shape_process) {
     const auto it = pass_grad_graph_.find(grad_param->graph_cache_key);
     if (it != pass_grad_graph_.end()) {
       MS_LOG(DEBUG) << "Get ad grad graph by cache";
@@ -897,12 +899,12 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
   PyNativeAlgo::Common::DumpGraphIR("ad_output_graph.ir", ad_graph);
 
   // Save ad graph in cache
-  if (grad_param->is_ms_function_graph || !grad_param->use_dynamic_shape_process) {
+  if (grad_param->is_jit_graph || !grad_param->use_dynamic_shape_process) {
     pass_grad_graph_[grad_param->graph_cache_key] = BasicClone(ad_graph);
   }
   // Replace cnode with valuenode for reduce compute
-  bool ms_function_by_value = grad_param->is_ms_function_graph && grad_param->grad_by_value;
-  if (ms_function_by_value) {
+  bool jit_by_value = grad_param->is_jit_graph && grad_param->grad_by_value;
+  if (jit_by_value) {
     PyNativeAlgo::Common::ReplaceCNodeWithValueNode(ad_graph);
   }
   // Restore ad param
@@ -914,7 +916,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
   MS_EXCEPTION_IF_NULL(grad_param);
   // First handle parameters
   CreateParameterAdjoint(grad_param);
-  bool ms_function_by_value = grad_param->is_ms_function_graph && grad_param->grad_by_value;
+  bool jit_by_value = grad_param->is_jit_graph && grad_param->grad_by_value;
   const auto &order = TopoSort(grad_param->fg->output());
   for (const auto &node : order) {
     if (node == nullptr || !node->isa<CNode>()) {
@@ -942,7 +944,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
       continue;
     }
 
-    auto k_node = GetKnode(prim, cnode, cnode_inputs, ms_function_by_value);
+    auto k_node = GetKnode(prim, cnode, cnode_inputs, jit_by_value);
     MS_LOG(DEBUG) << "Build knode " << k_node->DebugString();
     // Set out
     auto out = PyNativeAlgo::Common::CreatOutputTensorValueByAbstract(cnode->abstract());
@@ -959,7 +961,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     auto ret = BpropExpander(&outputs, &ad_param()->users_).Run(input_node);
     if (!ret || outputs.empty()) {
       // Get bprop by meta graph
-      if (grad_param->is_ms_function_graph && kMetaFuncGraphOp.find(prim->name()) != kMetaFuncGraphOp.end()) {
+      if (grad_param->is_jit_graph && kMetaFuncGraphOp.find(prim->name()) != kMetaFuncGraphOp.end()) {
         MS_LOG(DEBUG) << "Get bprop graph by meta function graph";
         ProcessMetaFuncGraphOp(grad_param, prim, cnode, input_value, out);
         continue;
@@ -992,14 +994,14 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
 }
 
 AnfNodePtr AutoGradCellImpl::GetKnode(const PrimitivePtr &prim, const CNodePtr &cnode,
-                                      const AnfNodePtrList &cnode_inputs, bool ms_function_by_value) {
+                                      const AnfNodePtrList &cnode_inputs, bool jit_by_value) {
   if (IsPrimitiveEquals(prim, prim::kPrimMirror)) {
     return ad_param()->anfnode_to_variable_adjoint_.at(cnode->input(kIndex1))->k_node();
   } else {
     auto c_k_node = ad_param()->tape_->NewCNode(cnode_inputs);
     c_k_node->set_abstract(cnode->abstract());
-    // In ms function, copy forward graph cnode info to bprop graph
-    if (ms_function_by_value && cnode->forward().first != nullptr) {
+    // In jit, copy forward graph cnode info to bprop graph
+    if (jit_by_value && cnode->forward().first != nullptr) {
       auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(cnode->forward().first->value(),
                                                                      cnode->forward().first->abstract());
       c_k_node->set_forward(new_v_node, cnode->forward().second);
@@ -1040,7 +1042,7 @@ void AutoGradCellImpl::ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, co
   op_grad_info->input_value_grad_type = grad_param->op_grad_info->input_value_grad_type;
   auto meta_graph_grad_param =
     std::make_shared<GradParam>(op_grad_info, grad_param->grad_by_value, grad_param->use_dynamic_shape_process);
-  meta_graph_grad_param->is_ms_function_graph = true;
+  meta_graph_grad_param->is_jit_graph = true;
   // Set to control flow just let it go by ad::Grad, because grad_func_graph with no abstract
   meta_graph_grad_param->is_control_flow = true;
   meta_graph_grad_param->cnode = cnode;
@@ -1100,7 +1102,7 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, AnfNodePtrLis
     if (input_node->isa<ValueNode>()) {
       auto v_node = input_node->cast<ValueNodePtr>();
       (void)PyNativeAlgo::Common::SetValueGradInfo(v_node->value(), nullptr, TensorGradType::kConstant);
-      // In case of ms function forward graph and pynative bprop graph used same valuenode
+      // In case of jit forward graph and pynative bprop graph used same valuenode
       auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(v_node->value(), v_node->abstract());
       (void)cnode_inputs->emplace_back(new_v_node);
       (void)input_value.emplace_back(v_node->value());
@@ -2240,7 +2242,7 @@ void AutoGradCellImpl::ReplacePrimalParameter(const AnfNodePtrList &weights, boo
 void ClearPyNativeAutoGradStaticRes() {
   node_attr_value_.clear();
   pass_grad_graph_.clear();
-  ms_function_call_graph_compile_cache_.clear();
+  jit_call_graph_compile_cache_.clear();
 }
 }  // namespace autograd
 }  // namespace pynative

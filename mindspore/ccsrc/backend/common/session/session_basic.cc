@@ -504,7 +504,7 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
-  bool is_parallel_forward_ms_function =
+  bool is_parallel_forward_jit =
     !graph->has_flag(kFlagIsPynativeBpropGraph) &&
     (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
   for (const auto &input_node : graph->input_nodes()) {
@@ -523,7 +523,7 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
       bool is_dynamic = param->Shape()->IsDynamic();
       // Dynamic shape feed mode, shape is dynamic but max shape is ()
       if (!is_dynamic || !param_shape.empty()) {
-        if (!is_parallel_forward_ms_function && input_shape.size() != param_shape.size()) {
+        if (!is_parallel_forward_jit && input_shape.size() != param_shape.size()) {
           // Infer shape is -2, which indicates that the shape cannot be infer currently
           if (param_shape.size() == 1 && param_shape[0] == kInvalidShape) {
             parameter_index->emplace(param, index++);
@@ -538,8 +538,7 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
                             << ") are different, input index: " << index << ", parameter: " << param->DebugString();
         }
         for (size_t i = 0; i < input_shape.size(); i += 1) {
-          if (input_shape[i] < 0 ||
-              (!is_parallel_forward_ms_function && input_shape[i] != param_shape[i] && !is_dynamic)) {
+          if (input_shape[i] < 0 || (!is_parallel_forward_jit && input_shape[i] != param_shape[i] && !is_dynamic)) {
             MS_LOG(EXCEPTION) << "Input tensor shape(" << input_shape << ") and parameter shape(" << param_shape
                               << ") are different, input index: " << index << ", parameter: " << param->DebugString();
           }

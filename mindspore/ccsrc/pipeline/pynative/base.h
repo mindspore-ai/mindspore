@@ -62,7 +62,7 @@ struct BaseOpRunInfo {
 
 struct AsyncStatus {
   bool disable_mix_precision{false};
-  bool is_ms_function_compiling{false};
+  bool is_jit_compiling{false};
   size_t custom_bprop_cell_count{0};
 };
 
@@ -85,7 +85,7 @@ struct FrontendOpRunInfo {
   bool requires_grad = false;
   bool output_get_by_infer_value = false;
   bool should_be_cache = false;
-  bool is_ms_function_input = false;
+  bool is_jit_input = false;
   int mix_type{0};
   size_t input_size = 0;
   // real_out return to python; out_value in OpGradInfo may be fake value;
