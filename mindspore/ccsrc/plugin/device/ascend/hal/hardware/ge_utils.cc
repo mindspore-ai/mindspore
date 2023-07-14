@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
+
 #include <tuple>
+#include <utility>
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -89,6 +91,46 @@ OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic
   return options;
 }
 
+void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(option);
+  auto enable_io_reuse = common::GetEnv("MS_ENABLE_IO_REUSE");
+  auto enable_fea_refreshable = common::GetEnv("MS_FEA_REFRESHABLE");
+  if (enable_io_reuse != "1" || enable_fea_refreshable != "1" || !common::IsEnableRefMode()) {
+    return;
+  }
+  auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+  if (!outputs.empty()) {
+    std::string value;
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      auto output = outputs[i];
+      const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+      auto &output_node = output_with_index.first;
+      MS_EXCEPTION_IF_NULL(output_node);
+      // Parameter and value can not been reused.
+      if (output_node->isa<Parameter>() || output_node->isa<ValueNode>()) {
+        MS_LOG(INFO) << "Output is parameter or value node, not support reuse, index is: " << i;
+        continue;
+      }
+      (void)value.append(std::to_string(i));
+      (void)value.append(",");
+    }
+    if (!value.empty()) {
+      value.pop_back();
+      MS_LOG(INFO) << "key: ge.exec.outputReuseMemIndexes, value: " << value << ",Graph name: " << graph->ToString();
+      (void)option->insert(std::make_pair("ge.exec.outputReuseMemIndexes", value));
+    }
+  }
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (graph->has_flag(transform::kGraphFlagHasGetNext) || !ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
+    MS_LOG(INFO) << "key: ge.exec.inputReuseMemIndexes, value: 0."
+                 << ", Graph name: " << graph->ToString();
+    (void)option->insert(std::make_pair("ge.exec.inputReuseMemIndexes", "0"));
+  }
+}
+
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
@@ -115,7 +157,8 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   }
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + graph_name;
-  const auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
+  auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
+  GetComputeGraphReuseOptions(anf_graph, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
   (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
   if (common::IsEnableRefMode()) {
