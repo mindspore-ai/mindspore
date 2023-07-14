@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <vector>
+#include <string>
+#include <set>
 #include "include/api/types.h"
 #include "include/api/data_type.h"
 #include "include/api/format.h"
 #include "src/common/log_adapter.h"
 #include "third_party/securec/include/securec.h"
 #include "mindspore/lite/src/common/mutable_tensor_impl.h"
-#include "mindspore/lite/python/src/tensor_numpy_impl.h"
 #include "mindspore/core/ir/api_tensor_impl.h"
+#include "src/tensor.h"
 
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -157,15 +160,106 @@ bool IsCContiguous(const py::array &input) {
   return (flags & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_) != 0;
 }
 
+enum DataType GetDataType(const py::buffer_info &buf) {
+  std::set<char> fp_format = {'e', 'f', 'd'};
+  std::set<char> int_format = {'b', 'h', 'i', 'l', 'q'};
+  std::set<char> uint_format = {'B', 'H', 'I', 'L', 'Q'};
+  if (buf.format.size() == 1) {
+    char format = buf.format.front();
+    if (fp_format.find(format) != fp_format.end()) {
+      switch (buf.itemsize) {
+        case 2:
+          return DataType::kNumberTypeFloat16;
+        case 4:
+          return DataType::kNumberTypeFloat32;
+        case 8:
+          return DataType::kNumberTypeFloat64;
+      }
+    } else if (int_format.find(format) != int_format.end()) {
+      switch (buf.itemsize) {
+        case 1:
+          return DataType::kNumberTypeInt8;
+        case 2:
+          return DataType::kNumberTypeInt16;
+        case 4:
+          return DataType::kNumberTypeInt32;
+        case 8:
+          return DataType::kNumberTypeInt64;
+      }
+    } else if (uint_format.find(format) != uint_format.end()) {
+      switch (buf.itemsize) {
+        case 1:
+          return DataType::kNumberTypeUInt8;
+        case 2:
+          return DataType::kNumberTypeUInt16;
+        case 4:
+          return DataType::kNumberTypeUInt32;
+        case 8:
+          return DataType::kNumberTypeUInt64;
+      }
+    } else if (format == '?') {
+      return DataType::kNumberTypeBool;
+    }
+  }
+  MS_LOG(WARNING) << "Unsupported DataType format " << buf.format << " item size " << buf.itemsize;
+  return DataType::kTypeUnknown;
+}
+
+class PyBindAllocator : public Allocator {
+ public:
+  explicit PyBindAllocator(py::buffer_info &&py_buffer_info) : buffer_(std::move(py_buffer_info)) {}
+  ~PyBindAllocator() override{};
+  void *Malloc(size_t size) override { return nullptr; };
+  void Free(void *ptr) override {
+    if (buffer_.ptr != nullptr) {
+      py::gil_scoped_acquire acquire;
+      buffer_ = py::buffer_info();
+    }
+  }
+  int RefCount(void *ptr) override { return std::atomic_load(&ref_count_); }
+  int SetRefCount(void *ptr, int ref_count) override {
+    std::atomic_store(&ref_count_, ref_count);
+    return ref_count;
+  }
+
+  int DecRefCount(void *ptr, int ref_count) override {
+    if (ptr == nullptr) {
+      return 0;
+    }
+    auto ref = std::atomic_fetch_sub(&ref_count_, ref_count);
+    if ((ref - ref_count) <= 0) {
+      if (buffer_.ptr != nullptr) {
+        py::gil_scoped_acquire acquire;
+        buffer_ = py::buffer_info();
+      }
+    }
+    return (ref - ref_count);
+  }
+
+  int IncRefCount(void *ptr, int ref_count) override {
+    auto ref = std::atomic_fetch_add(&ref_count_, ref_count);
+    return (ref + ref_count);
+  }
+
+ private:
+  std::atomic_int ref_count_ = {0};
+  py::buffer_info buffer_;
+};
+
 bool SetTensorNumpyData(const MSTensorPtr &tensor_ptr, const py::array &input) {
+  if (tensor_ptr == nullptr) {
+    MS_LOG(ERROR) << "tensor_ptr is nullptr.";
+    return false;
+  }
   auto &tensor = *tensor_ptr;
   // Check format.
   if (!IsCContiguous(input)) {
     MS_LOG(ERROR) << "Numpy array is not C Contiguous";
     return false;
   }
+
   auto py_buffer_info = input.request();
-  auto py_data_type = TensorNumpyImpl::GetDataType(py_buffer_info);
+  auto py_data_type = GetDataType(py_buffer_info);
   if (py_data_type != tensor.DataType()) {
     MS_LOG(ERROR) << "Expect data type " << static_cast<int>(tensor.DataType()) << ", but got "
                   << static_cast<int>(py_data_type);
@@ -177,8 +271,22 @@ bool SetTensorNumpyData(const MSTensorPtr &tensor_ptr, const py::array &input) {
                   << tensor.Shape() << ", got shape " << py_buffer_info.shape;
     return false;
   }
-  auto tensor_impl = std::make_shared<TensorNumpyImpl>(tensor.Name(), std::move(py_buffer_info), tensor.Shape());
-  tensor = MSTensor(tensor_impl);
+
+  std::shared_ptr<PyBindAllocator> py_allocator = std::make_shared<PyBindAllocator>(std::move(py_buffer_info));
+  if (py_allocator == nullptr) {
+    MS_LOG(ERROR) << "malloc GeAllocator failed.";
+    return false;
+  }
+  if (tensor.Data() != nullptr) {
+    auto new_tensor_ptr = MSTensor::CreateTensor(tensor.Name(), tensor.DataType(), tensor.Shape(), nullptr, 0);
+    if (new_tensor_ptr == nullptr) {
+      MS_LOG(ERROR) << "new tensor failed.";
+      return false;
+    }
+    tensor = *new_tensor_ptr;
+  }
+  tensor.SetData(py_buffer_info.ptr, true);
+  tensor.SetAllocator(py_allocator);
   return true;
 }
 

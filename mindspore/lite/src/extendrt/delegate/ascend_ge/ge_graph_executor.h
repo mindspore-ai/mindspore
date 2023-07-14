@@ -29,8 +29,41 @@
 #include "common/config_infos.h"
 #include "include/transform/graph_ir/utils.h"
 #include "extendrt/delegate/ascend_ge/ge_device_context.h"
+#include "src/tensor.h"
 
 namespace mindspore {
+class GeAllocator : public Allocator {
+ public:
+  explicit GeAllocator(const std::function<void(uint8_t *)> &deleter) : deleter_(deleter) {}
+  ~GeAllocator() override{};
+  void *Malloc(size_t size) override { return nullptr; };
+  void Free(void *ptr) override {
+    if (ptr != nullptr && deleter_ != nullptr) {
+      deleter_(static_cast<uint8_t *>(ptr));
+    }
+  }
+  int RefCount(void *ptr) override { return std::atomic_load(&ref_count_); }
+  int SetRefCount(void *ptr, int ref_count) override {
+    std::atomic_store(&ref_count_, ref_count);
+    return ref_count;
+  }
+  int DecRefCount(void *ptr, int ref_count) override {
+    if (ptr == nullptr) {
+      return 0;
+    }
+    auto ref = std::atomic_fetch_sub(&ref_count_, ref_count);
+    return (ref - ref_count);
+  }
+  int IncRefCount(void *ptr, int ref_count) override {
+    auto ref = std::atomic_fetch_add(&ref_count_, ref_count);
+    return (ref + ref_count);
+  }
+
+ private:
+  const std::function<void(uint8_t *)> deleter_ = nullptr;
+  std::atomic_int ref_count_ = {0};
+};
+
 class GeGraphExecutor : public LiteGraphExecutor {
  public:
   GeGraphExecutor(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos)
@@ -40,16 +73,16 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options,
                     uint32_t *graph_id) override;
 
-  bool RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+  bool RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
                 const std::map<string, string> &compile_options) override;
 
-  bool Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+  bool Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
               const std::vector<ShapeVector> &dims) override {
     return true;
   }
 
-  std::vector<tensor::Tensor> GetInputInfos(uint32_t graph_id) override;
-  std::vector<tensor::Tensor> GetOutputInfos(uint32_t graph_id) override;
+  std::vector<mindspore::lite::Tensor *> GetInputInfos(uint32_t graph_id) override;
+  std::vector<mindspore::lite::Tensor *> GetOutputInfos(uint32_t graph_id) override;
   bool Init();
   bool AoeTuning(const FuncGraphPtr &graph);
 
@@ -69,11 +102,12 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool CreateSession();
   int64_t GetSessionId();
   transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph);
+  bool UpdateInputsOutputs(uint32_t graph_id, const FuncGraphPtr &anf_graph);
 
   bool AddGraph(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &options,
                 uint32_t *graph_id);
   bool RunGeInitGraph(uint32_t init_graph_id, const std::vector<tensor::TensorPtr> &init_tensors);
-  tensor::TensorPtr ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr, uint32_t graph_id, size_t idx);
+  bool GeMoveOutputData(::ge::Tensor *ge_tensor_ptr, lite::Tensor *output, uint32_t graph_id, size_t idx);
 
   static std::atomic_uint32_t global_graph_idx_;
   static uint32_t GetNextGraphIdx();
@@ -84,13 +118,14 @@ class GeGraphExecutor : public LiteGraphExecutor {
                              std::vector<::ge::Tensor> *outputs);
   bool AoeTuningGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options, uint32_t *graph_id);
 
-  std::map<uint32_t, std::vector<tensor::Tensor>> graph_inputs_;
-  std::map<uint32_t, std::vector<tensor::Tensor>> graph_outputs_;
-  std::map<uint32_t, std::vector<tensor::TensorPtr>> original_graph_outputs_;
-
   transform::DfGraphPtr CompileGraphCommon(const FuncGraphPtr &graph, const std::map<string, string> &compile_options,
                                            std::map<std::string, std::string> *ge_options_ptr);
   bool UpdateGraphInputs(const FuncGraphPtr &graph);
+
+  std::map<uint32_t, std::vector<lite::Tensor *>> graph_inputs_;
+  std::map<uint32_t, std::vector<lite::Tensor *>> graph_outputs_;
+  std::map<uint32_t, std::vector<TensorPtr>> original_graph_outputs_;
+  std::map<uint32_t, std::vector<TensorPtr>> original_graph_inputs_;
 };
 
 struct GeSessionContext {

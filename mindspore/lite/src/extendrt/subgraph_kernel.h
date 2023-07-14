@@ -23,10 +23,12 @@
 #include "ir/func_graph.h"
 #include "runtime/hardware/device_context.h"
 #include "kernel/common_utils.h"
+#include "src/extendrt/session/lite_graph_executor.h"
+
 namespace mindspore::kernel {
 class SubgraphKernel : public KernelMod {
  public:
-  SubgraphKernel(FuncGraphPtr subgraph, std::shared_ptr<device::GraphExecutor> executor)
+  SubgraphKernel(FuncGraphPtr subgraph, std::shared_ptr<LiteGraphExecutor> executor)
       : subgraph_(subgraph), executor_(executor) {}
   virtual ~SubgraphKernel() = default;
   bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> & /* inputs */,
@@ -42,7 +44,7 @@ class SubgraphKernel : public KernelMod {
 
  protected:
   FuncGraphPtr subgraph_;
-  std::shared_ptr<device::GraphExecutor> executor_;
+  std::shared_ptr<LiteGraphExecutor> executor_;
 };
 }  // namespace mindspore::kernel
 #endif

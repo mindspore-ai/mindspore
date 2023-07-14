@@ -973,7 +973,7 @@ int BenchmarkUnifiedApi::MarkAccuracy() {
       return status;
     }
   }
-  std::vector<MSTensor> outputs;
+  std::vector<MSTensor> outputs = ms_model_.GetOutputs();
   auto ret = ms_model_.Predict(ms_inputs_for_api_, &outputs, ms_before_call_back_, ms_after_call_back_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Inference error ";

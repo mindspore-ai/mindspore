@@ -31,6 +31,7 @@
 #include "src/extendrt/utils/kernel_build_utils.h"
 #include "src/extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
 #include "src/common/common.h"
+#include "src/litert/cxx_api/tensor/tensor_impl.h"
 #include "mindspore/core/ops/custom.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/runtime_utils.h"
@@ -236,7 +237,19 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
     auto tensor_name = FuncGraphUtils::GetTensorName(tensor);
     auto data_type = static_cast<DataType>(kernel_tensor->GetDtype());
     auto shape = kernel_tensor->GetShapeVector();
-    inputs_.push_back(std::make_shared<TensorDefaultImpl>(tensor_name, data_type, shape));
+    ShapeVector temp_shape;
+    if (IsDynamicShape(shape)) {
+      temp_shape = {1};
+    } else {
+      temp_shape = shape;
+    }
+    auto tensor_impl = LiteTensorImpl::CreateTensorImpl(tensor_name, data_type, temp_shape, nullptr, 0);
+    if ((tensor_impl == nullptr) || (tensor_impl->lite_tensor() == nullptr)) {
+      MS_LOG(ERROR) << "Create tensor failed.";
+      return kCoreFailed;
+    }
+    tensor_impl->SetShape(shape);
+    inputs_.push_back(tensor_impl);
     input_names_.push_back(FuncGraphUtils::GetTensorName(tensor));
   }
   for (size_t i = 0; i < output_tensors.size(); i++) {
@@ -245,11 +258,21 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
     auto tensor_name = FuncGraphUtils::GetTensorName(tensor);
     auto data_type = static_cast<DataType>(kernel_tensor->GetDtype());
     auto shape = kernel_tensor->GetShapeVector();
+    ShapeVector temp_shape;
     if (IsDynamicShape(shape)) {
       dyn_outshape_ = true;
       MS_LOG(INFO) << "The output shape is dynamic: " << shape;
+      temp_shape = {1};
+    } else {
+      temp_shape = shape;
     }
-    outputs_.push_back(std::make_shared<TensorDefaultImpl>(tensor_name, data_type, shape));
+    auto tensor_impl = LiteTensorImpl::CreateTensorImpl(tensor_name, data_type, temp_shape, nullptr, 0);
+    if ((tensor_impl == nullptr) || (tensor_impl->lite_tensor() == nullptr)) {
+      MS_LOG(ERROR) << "Create tensor failed.";
+      return kCoreFailed;
+    }
+    tensor_impl->SetShape(shape);
+    outputs_.push_back(tensor_impl);
     output_names_.push_back(FuncGraphUtils::GetTensorName(tensor));
   }
   return kSuccess;
@@ -299,26 +322,40 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
   return kSuccess;
 }
 
-Status SingleOpInferSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                                      std::vector<tensor::Tensor> *outputs, const MSKernelCallBack &before,
+Status SingleOpInferSession::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                                      std::vector<lite::Tensor *> *outputs, const MSKernelCallBack &before,
                                       const MSKernelCallBack &after) {
   return RunGraph(graph_id, inputs, outputs);
 }
 
-void SingleOpInferSession::SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs) {
+Status SingleOpInferSession::SetBackOutputIfDynamic(std::vector<lite::Tensor *> *outputs) {
   if (dyn_outshape_) {
     for (size_t i = 0; i < kernel_args_.outputs.size(); ++i) {
       ShapeVector shape = kernel_args_.outputs[i]->GetShapeVector();
-      (*outputs)[i].set_shape(shape);
       kernel::AddressPtr addr = kernel_args_.outputs[i]->GetHostData();
       TypeId out_type = kernel_args_.outputs[i]->GetDtype();
-      (*outputs)[i] = tensor::Tensor(out_type, shape, addr->addr, addr->size);
+      std::vector<int> new_shapes(shape.size());
+      std::transform(shape.begin(), shape.end(), new_shapes.begin(), [](int64_t c) { return static_cast<int>(c); });
+      (*outputs)[i]->FreeData();
+      (*outputs)[i]->set_shape(new_shapes);
+      (*outputs)[i]->set_data_type(out_type);
+      if ((*outputs)[i]->Size() != addr->size) {
+        MS_LOG(ERROR) << "Tensor " << (*outputs)[i]->tensor_name() << " shape invalid.";
+        return kLiteError;
+      }
+      void *dst_ptr = (*outputs)[i]->MutableData();
+      if (dst_ptr == nullptr) {
+        MS_LOG(ERROR) << "dst_ptr is nullptr.";
+        return kLiteError;
+      }
+      (void)memcpy(dst_ptr, addr->addr, addr->size);
     }
   }
+  return kSuccess;
 }
 
-Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tensor> &inputs,
-                                                 std::vector<tensor::Tensor> *outputs) {
+Status SingleOpInferSession::InitInputOutputData(const std::vector<lite::Tensor *> &inputs,
+                                                 std::vector<lite::Tensor *> *outputs) {
   if (inputs.size() != kernel_args_.inputs.size()) {
     MS_LOG(ERROR) << "Given inputs size " << inputs.size() << " != graph inputs size " << kernel_args_.inputs.size();
     return kLiteError;
@@ -326,26 +363,22 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
     auto &kernel_input = kernel_args_.inputs[i];
-    if (input.Size() != kernel_input->GetSizeInBytes()) {
-      MS_LOG(ERROR) << "Byte size of input " << i << " != the size expected, given size " << input.Size()
+    if (input->Size() != kernel_input->GetSizeInBytes()) {
+      MS_LOG(ERROR) << "Byte size of input " << i << " != the size expected, given size " << input->Size()
                     << ", expected size " << kernel_input->GetSizeInBytes()
                     << ", input shape: " << kernel_input->GetShapeVector();
       return kLiteError;
     }
-    auto input_device_address = input.device_address();
-    if (input_device_address != nullptr && input_device_address->GetMutablePtr() != nullptr) {
-      auto device_ptr = input_device_address->GetMutablePtr();
-      kernel_args_.inputs[i]->SetData(std::make_shared<kernel::Address>(device_ptr, input.Size()));
+    auto input_device_address = input->device_data();
+    if (input_device_address != nullptr) {
+      kernel_args_.inputs[i]->SetData(std::make_shared<kernel::Address>(input_device_address, input->Size()));
       kernel_args_.inputs[i]->SetHostData(nullptr);
     } else {
-      kernel_args_.inputs[i]->SetHostData(std::make_shared<kernel::Address>(input.data_c(), input.Size()));
+      kernel_args_.inputs[i]->SetHostData(std::make_shared<kernel::Address>(input->data(), input->Size()));
       kernel_args_.inputs[i]->SetData(nullptr);
     }
   }
-  if (outputs->empty()) {
-    std::transform(kernel_args_.outputs.begin(), kernel_args_.outputs.end(), std::back_inserter(*outputs),
-                   [](auto &item) { return tensor::Tensor(item->GetDtype(), item->GetShapeVector()); });
-  }
+
   if (outputs->size() != kernel_args_.outputs.size()) {
     MS_LOG(ERROR) << "Given outputs size " << outputs->size() << " != graph inputs size "
                   << kernel_args_.outputs.size();
@@ -354,27 +387,26 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
   for (size_t i = 0; i < outputs->size(); i++) {
     auto &output = (*outputs)[i];
     auto &kernel_output = kernel_args_.outputs[i];
-    if (!dyn_outshape_ && output.Size() != kernel_output->GetSizeInBytes()) {
-      MS_LOG(ERROR) << "Byte size of output " << i << " != the size expected, given size " << output.Size()
+    if (!dyn_outshape_ && output->Size() != kernel_output->GetSizeInBytes()) {
+      MS_LOG(ERROR) << "Byte size of output " << i << " != the size expected, given size " << output->Size()
                     << ", expected size " << kernel_output->GetSizeInBytes()
                     << ", output shape: " << kernel_output->GetShapeVector();
       return kLiteError;
     }
-    auto output_device_address = output.device_address();
-    if (output_device_address != nullptr && output_device_address->GetMutablePtr() != nullptr) {
-      auto device_ptr = output_device_address->GetMutablePtr();
-      kernel_args_.outputs[i]->SetData(std::make_shared<kernel::Address>(device_ptr, output.Size()));
+    auto output_device_address = output->device_data();
+    if (output_device_address != nullptr) {
+      kernel_args_.outputs[i]->SetData(std::make_shared<kernel::Address>(output_device_address, output->Size()));
       kernel_args_.outputs[i]->SetHostData(nullptr);
     } else {
-      kernel_args_.outputs[i]->SetHostData(std::make_shared<kernel::Address>(output.data_c(), output.Size()));
+      kernel_args_.outputs[i]->SetHostData(std::make_shared<kernel::Address>(output->MutableData(), output->Size()));
       kernel_args_.outputs[i]->SetData(nullptr);
     }
   }
   return kSuccess;
 }
 
-Status SingleOpInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inputs,
-                                      std::vector<tensor::Tensor> *outputs) {
+Status SingleOpInferSession::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                                      std::vector<lite::Tensor *> *outputs) {
   if (outputs == nullptr) {
     MS_LOG(ERROR) << "outputs cannot be nullptr";
     return kLiteError;
@@ -384,8 +416,12 @@ Status SingleOpInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor
     return kLiteError;
   }
   MS_LOG(DEBUG) << "SingleOpInferSession::RunGraph with input and outputs";
-  std::vector<ShapeVector> new_shapes;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(new_shapes), [](auto &t) { return t.shape_c(); });
+  std::vector<ShapeVector> new_shapes(inputs.size());
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto shape = inputs[i]->shape();
+    new_shapes[i].resize(shape.size());
+    std::transform(shape.begin(), shape.end(), new_shapes[i].begin(), [](int c) { return static_cast<int64_t>(c); });
+  }
   auto ret = OnNewInputShapes(new_shapes);
   if (ret != kSuccess) {
     return ret;
@@ -404,8 +440,7 @@ Status SingleOpInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor
     MS_LOG(ERROR) << "Failed to launch kernel, exception: " << e.what();
     return kLiteError;
   }
-  SetBackOutputIfDynamic(outputs);
-  return kSuccess;
+  return SetBackOutputIfDynamic(outputs);
 }
 
 Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &new_shapes) {
@@ -448,7 +483,7 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
   return kSuccess;
 }
 
-Status SingleOpInferSession::Resize(uint32_t, const std::vector<tensor::Tensor> &,
+Status SingleOpInferSession::Resize(uint32_t, const std::vector<lite::Tensor *> &,
                                     const std::vector<std::vector<int64_t>> &dims) {
   return OnNewInputShapes(dims);
 }

@@ -34,6 +34,7 @@
 #include "src/common/helper/external_tensor/memory_helper.h"
 #include "src/executor/kernel_exec.h"
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
+#include "src/common/tensor_util.h"
 
 namespace mindspore {
 namespace {
@@ -158,8 +159,66 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
   return true;
 }
 
-bool LiteRTGraphExecutor::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inputs,
-                                   std::vector<tensor::Tensor> *outputs,
+void LiteRTGraphExecutor::MoveOutputsData(const std::vector<lite::Tensor *> &dst_outputs,
+                                          const std::vector<lite::Tensor *> &src_outputs,
+                                          const std::vector<AllocatorPtr> &old_allocators) {
+  if (old_allocators.empty()) {
+    for (size_t i = 0; i < dst_outputs.size(); i++) {
+      MoveCommonTensorData(dst_outputs[i], src_outputs[i]);
+    }
+  } else {
+    for (size_t i = 0; i < old_allocators.size(); i++) {
+      MoveCommonTensorData(dst_outputs[i], src_outputs[i]);
+      src_outputs[i]->set_allocator(old_allocators[i]);
+    }
+  }
+}
+
+int LiteRTGraphExecutor::MoveInputsData(const std::vector<mindspore::lite::Tensor *> &dst_tensors,
+                                        const std::vector<lite::Tensor *> &src_tensors) {
+  for (size_t i = 0; i < src_tensors.size(); i++) {
+    auto input = dst_tensors.at(i);
+    auto &user_input = src_tensors.at(i);
+    if ((user_input == input) || (user_input->data() == input->data())) {
+      continue;
+    }
+    if (user_input->data_type() != input->data_type()) {
+      MS_LOG(ERROR) << "Tensor " << user_input->tensor_name() << " has a different data type from input"
+                    << input->tensor_name() << ".";
+      return kLiteError;
+    }
+    if (user_input->data() == nullptr) {
+      MS_LOG(ERROR) << "Tensor " << user_input->tensor_name() << " has no data.";
+      return kLiteError;
+    }
+    if (input->data_type() == kObjectTypeString) {
+#ifndef STRING_KERNEL_CLIP
+      input->set_shape(user_input->shape());
+      input->set_data(user_input->data(), false);
+#else
+      MS_LOG(ERROR) << unsupport_string_tensor_log;
+      return kLiteError;
+#endif
+    } else {
+      if (input->Size() != user_input->Size()) {
+#ifndef ENABLE_LITE_ACL
+        MS_LOG(ERROR) << "Tensor " << user_input->tensor_name() << " has wrong data size.";
+        return kLiteError;
+#else
+        MS_LOG(WARNING) << "Please check tensor " << user_input->tensor_name()
+                        << " has been modified data size by DVPP method.";
+        std::vector<int> truncate_shape = {static_cast<int>(user_input->ElementsNum())};
+        input->set_shape(truncate_shape);
+#endif
+      }
+      input->set_data(user_input->data(), false);
+    }
+  }
+  return RET_OK;
+}
+
+bool LiteRTGraphExecutor::RunGraph(uint32_t, const std::vector<lite::Tensor *> &inputs,
+                                   std::vector<lite::Tensor *> *outputs,
                                    const std::map<string, string> &compile_options) {
   MS_LOG(INFO) << "LiteRTGraphExecutor::RunGraph with input and outputs";
   MS_EXCEPTION_IF_NULL(outputs);
@@ -172,52 +231,38 @@ bool LiteRTGraphExecutor::RunGraph(uint32_t, const std::vector<tensor::Tensor> &
   if (input_tensors.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Wrong input size.";
   }
+  auto output_tensors = lite_session_->GetOutputsVector();
+  if (output_tensors.size() != outputs->size()) {
+    MS_LOG(EXCEPTION) << "Wrong output size.";
+  }
 
-  std::vector<void *> old_data;
-  for (size_t i = 0; i < inputs.size(); i++) {
-    auto input = input_tensors.at(i);
-    auto &user_input = inputs.at(i);
-    if (user_input.data_type() != input->data_type()) {
-      ResetTensorData(old_data, input_tensors);
-      MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has a different data type from input"
-                        << input->tensor_name() << ".";
-    }
-    if (user_input.data_c() == nullptr) {
-      ResetTensorData(old_data, input_tensors);
-      MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has no data.";
-    }
-    old_data.push_back(input->data());
-    if (input->data_type() == kObjectTypeString) {
-#ifndef STRING_KERNEL_CLIP
-      std::vector<int32_t> shape =
-        TruncateShape(user_input.shape_c(), input->data_type(), user_input.DataSize(), false);
-      if (shape.empty() && !(user_input.shape_c().empty())) {
-        ResetTensorData(old_data, input_tensors);
-        MS_LOG(EXCEPTION) << "Input dims of tensor " << user_input.id() << " is invalid.";
-      }
-      input->set_shape(shape);
-      input->set_data(user_input.data_c(), false);
-#else
-      MS_LOG(ERROR) << unsupport_string_tensor_log;
-      return kLiteError;
-#endif
-    } else {
-      if (user_input.data_c() != input->data()) {
-        if (input->Size() != user_input.Size()) {
-          ResetTensorData(old_data, input_tensors);
-#ifndef ENABLE_LITE_ACL
-          MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has wrong data size.";
-#else
-          MS_LOG(WARNING) << "Please check tensor " << user_input.id()
-                          << " has been modified data size by DVPP method.";
-          std::vector<int> truncate_shape = {static_cast<int>(user_input.DataSize())};
-          input->set_shape(truncate_shape);
-#endif
-        }
-        input->set_data(user_input.data_c(), false);
-      }
+  std::vector<void *> old_data(inputs.size());
+  for (size_t i = 0; i < input_tensors.size(); i++) {
+    old_data[i] = input_tensors.at(i)->data();
+  }
+  if (MoveInputsData(input_tensors, inputs) != RET_OK) {
+    ResetTensorData(old_data, input_tensors);
+    MS_LOG(ERROR) << "SetInputsData failed.";
+    return false;
+  }
+
+  bool output_set = false;
+  for (size_t i = 0; i < output_tensors.size(); i++) {
+    if ((*outputs)[i]->data() != nullptr && (output_tensors[i] != (*outputs)[i])) {
+      output_set = true;
+      break;
     }
   }
+
+  std::vector<AllocatorPtr> old_allocators;
+  if (output_set) {
+    old_allocators.resize(output_tensors.size());
+    std::transform(output_tensors.begin(), output_tensors.end(), old_allocators.begin(),
+                   [](auto &t) { return t->allocator(); });
+    std::vector<AllocatorPtr> tmp;
+    MoveOutputsData(output_tensors, *outputs, tmp);
+  }
+
   lite::KernelCallBack before_call_back = nullptr;
   lite::KernelCallBack after_call_back = nullptr;
   if (before_ != nullptr) {
@@ -240,22 +285,20 @@ bool LiteRTGraphExecutor::RunGraph(uint32_t, const std::vector<tensor::Tensor> &
     };
   }
   auto ret = lite_session_->RunGraph(before_call_back, after_call_back);
+  ResetTensorData(old_data, input_tensors);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Run graph failed.";
+    if (output_set) {
+      MoveOutputsData(*outputs, output_tensors, old_allocators);
+    }
     return false;
   }
+  MoveOutputsData(*outputs, output_tensors, old_allocators);
   MS_LOG(DEBUG) << "Run graph success.";
-  auto res = GetLiteSessionOutputs();
-  if (res.empty()) {
-    MS_LOG(DEBUG) << "Empty outputs.";
-    return false;
-  }
-  outputs->clear();
-  *outputs = TensorUtils::MSTensorToTensor(res);
   return true;
 }
 
-bool LiteRTGraphExecutor::Resize(uint32_t, const std::vector<tensor::Tensor> &inputs,
+bool LiteRTGraphExecutor::Resize(uint32_t, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<std::vector<int64_t>> &dims) {
   auto input_tensors = lite_session_->GetInputs();
   if (input_tensors.empty()) {
@@ -278,108 +321,26 @@ bool LiteRTGraphExecutor::Resize(uint32_t, const std::vector<tensor::Tensor> &in
   return true;
 }
 
-std::vector<tensor::Tensor> LiteRTGraphExecutor::GetInputInfos(uint32_t) {
+std::vector<mindspore::lite::Tensor *> LiteRTGraphExecutor::GetInputInfos(uint32_t) {
   if (lite_session_ == nullptr) {
     MS_LOG(ERROR) << "Session is null.";
     return {};
   }
-  auto inputs = lite_session_->GetInputs();
-  std::vector<tensor::Tensor> input_tensors;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto type_id = inputs[i]->data_type();
-    auto shape = inputs[i]->shape();
-    std::vector<int64_t> lite_shape;
-    std::transform(shape.begin(), shape.end(), std::back_inserter(lite_shape),
-                   [](int c) { return static_cast<int64_t>(c); });
-    auto tmp = tensor::Tensor(type_id, lite_shape);
-    tmp.set_name(inputs[i]->tensor_name());
-    input_tensors.push_back(tmp);
-  }
-  return input_tensors;
+  return lite_session_->GetInputs();
 }
 
-std::vector<tensor::Tensor> LiteRTGraphExecutor::GetOutputInfos(uint32_t) {
-  auto outputs = GetLiteSessionOutputs();
-  std::vector<tensor::Tensor> output_tensors;
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    auto type_id = static_cast<enum TypeId>(outputs[i].DataType());
-    auto tmp = tensor::Tensor(type_id, outputs[i].Shape());
-    tmp.set_name(outputs[i].Name());
-    output_tensors.push_back(tmp);
+std::vector<mindspore::lite::Tensor *> LiteRTGraphExecutor::GetOutputInfos(uint32_t) {
+  if (lite_session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return {};
   }
-  return output_tensors;
+  return lite_session_->GetOutputsVector();
 }
 
 void LiteRTGraphExecutor::ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors) {
   for (size_t j = 0; j < old_data.size(); j++) {
     tensors.at(j)->set_data(old_data.at(j));
   }
-}
-
-std::vector<MSTensor> LiteRTGraphExecutor::GetLiteSessionOutputs() {
-  std::vector<MSTensor> empty;
-  if (lite_session_ == nullptr) {
-    MS_LOG(ERROR) << "Session is null.";
-    return empty;
-  }
-  std::vector<MSTensor> res;
-  auto names = lite_session_->GetOutputTensorNames();
-  if (names.empty()) {
-    MS_LOG(ERROR) << "The output tensor name of this model is null.";
-    return empty;
-  }
-  auto outputs = lite_session_->GetOutputs();
-  if (outputs.empty()) {
-    MS_LOG(ERROR) << "The outputs of model is null.";
-    return empty;
-  }
-  if (names.size() != outputs.size()) {
-    MS_LOG(ERROR) << "The size of outputs dose not match the size of names.";
-    return empty;
-  }
-  res.resize(names.size());
-  for (size_t i = 0; i < names.size(); i++) {
-    auto impl = std::make_shared<LiteTensorImpl>(outputs[names[i]]);
-    if (impl == nullptr || impl->lite_tensor() == nullptr) {
-      MS_LOG(ERROR) << "Create tensor failed.";
-      return empty;
-    }
-    auto tensor = MSTensor(impl);
-    if (tensor == nullptr) {
-      MS_LOG(ERROR) << "Create tensor failed.";
-      return empty;
-    }
-    res[i] = tensor;
-  }
-  return res;
-}
-
-std::vector<int32_t> LiteRTGraphExecutor::TruncateShape(const std::vector<int64_t> &shape, TypeId type, size_t data_len,
-                                                        bool verify_size) {
-  std::vector<int32_t> empty;
-  if (shape.empty()) {
-    return empty;
-  }
-  std::vector<int32_t> truncated_shape;
-  truncated_shape.resize(shape.size());
-  size_t element_size = lite::DataTypeSize(type);
-  for (size_t i = 0; i < shape.size(); i++) {
-    auto dim = shape[i];
-    if (dim < 0 || dim > INT_MAX || (dim != 0 && element_size > INT_MAX / static_cast<size_t>(dim))) {
-      MS_LOG(ERROR) << "Invalid shape!dim: " << dim << ", element_size: " << element_size;
-      return empty;
-    } else {
-      element_size *= static_cast<size_t>(dim);
-      truncated_shape[i] = static_cast<int32_t>(dim);
-    }
-  }
-  if (verify_size) {
-    if (element_size != data_len) {
-      MS_LOG(ERROR) << "Invalid data size!element_size: " << element_size << ", data_len: " << data_len;
-      return empty;
-    }
-  }
-  return truncated_shape;
 }
 
 std::shared_ptr<lite::LiteSession> LiteRTGraphExecutor::CreateLiteSession(
@@ -462,8 +423,8 @@ bool LiteRTGraphExecutor::IsNeedExtractTensorData(mindspore::schema::MetaGraphT 
   return false;
 }
 
-static std::shared_ptr<device::GraphExecutor> LiteRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
-                                                                         const ConfigInfos &config_infos) {
+static std::shared_ptr<LiteGraphExecutor> LiteRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
+                                                                     const ConfigInfos &config_infos) {
   return std::make_shared<LiteRTGraphExecutor>(ctx, config_infos);
 }
 

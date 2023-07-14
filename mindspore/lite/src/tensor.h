@@ -24,6 +24,7 @@
 #include <numeric>
 #include <functional>
 #include <atomic>
+#include <algorithm>
 #include "include/api/format.h"
 #include "include/lite_types.h"
 #include "nnacl/tensor_c.h"
@@ -119,6 +120,25 @@ class Tensor {
     tensor_c_.shape_size_ = shape.size();
     for (size_t i = 0; i < shape.size(); ++i) {
       tensor_c_.shape_[i] = shape[i];
+    }
+  }
+  const std::vector<int64_t> &ShapeVector() const {
+    static std::vector<int64_t> shape_int64;
+    shape_int64.resize(tensor_c_.shape_size_);
+    std::transform(tensor_c_.shape_, tensor_c_.shape_ + tensor_c_.shape_size_, shape_int64.begin(),
+                   [](int c) { return static_cast<int64_t>(c); });
+    return shape_int64;
+  }
+  void SetShapeVector(const std::vector<int64_t> &shape) {
+    if (shape.size() > MAX_SHAPE_SIZE) {
+      FreeData();
+      tensor_c_.shape_size_ = 0;
+      MS_LOG(WARNING) << "The shape-size has exceeded the limit 8, now is " << shape.size();
+      return;
+    }
+    tensor_c_.shape_size_ = shape.size();
+    for (size_t i = 0; i < shape.size(); ++i) {
+      tensor_c_.shape_[i] = static_cast<int>(shape[i]);
     }
   }
 

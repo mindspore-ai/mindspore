@@ -22,6 +22,8 @@
 #include <tuple>
 #include "src/extendrt/infer_session.h"
 #include "mindspore/ccsrc/kernel/framework_utils.h"
+#include "src/tensor.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
 /// \brief Single Op Session implementation, used in Ascend Device Context.
@@ -33,11 +35,11 @@ class SingleOpInferSession : public InferSession {
   Status AscendInit(const std::shared_ptr<Context> &context);
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;
-  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+  Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                  std::vector<lite::Tensor *> *outputs) override;
+  Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
                   const MSKernelCallBack &before, const MSKernelCallBack &after) override;
-  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                  std::vector<tensor::Tensor> *outputs) override;
-  Status Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+  Status Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
                 const std::vector<std::vector<int64_t>> &dims) override;
   std::vector<MutableTensorImplPtr> GetOutputs(uint32_t graph_id) override;
   std::vector<MutableTensorImplPtr> GetInputs(uint32_t graph_id) override;
@@ -53,9 +55,8 @@ class SingleOpInferSession : public InferSession {
   Status BuildCustomAscendKernel(const CNodePtr &node);
   std::tuple<kernel::KernelModPtr, kernel::KernelArgs> BuildCustomAscendKernelImpl(const CNodePtr &node);
   Status InitInputOutputInfos(const FuncGraphPtr &graph);
-  void SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs);
-  Status InitInputOutputData(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs);
-
+  Status SetBackOutputIfDynamic(std::vector<lite::Tensor *> *outputs);
+  Status InitInputOutputData(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs);
   std::vector<MutableTensorImplPtr> inputs_;
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;

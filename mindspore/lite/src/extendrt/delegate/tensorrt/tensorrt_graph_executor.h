@@ -51,13 +51,18 @@ class TensorRTExecutor : public LiteGraphExecutor {
 
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options,
                     uint32_t *graph_id) override;
-  bool RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+  bool CompileGraph(const void *model_data, size_t data_size, const std::map<string, string> &compile_options,
+                    uint32_t *graph_id) override {
+    MS_LOG(ERROR) << "Unsupported ms model.";
+    return false;
+  }
+  bool RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
                 const std::map<string, string> &compile_options) override;
 
-  bool Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+  bool Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
               const std::vector<std::vector<int64_t>> &new_shapes) override;
-  std::vector<tensor::Tensor> GetInputInfos(uint32_t graph_id) override;
-  std::vector<tensor::Tensor> GetOutputInfos(uint32_t graph_id) override;
+  std::vector<lite::Tensor *> GetInputInfos(uint32_t graph_id) override;
+  std::vector<lite::Tensor *> GetOutputInfos(uint32_t graph_id) override;
 
  private:
   int ParseOptimizationProfile();

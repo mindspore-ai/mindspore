@@ -412,6 +412,8 @@ void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(this->output_tensor_map_.empty());
   auto graph_out_size = model->graph_.output_indices_.size();
+  this->output_vec_.reserve(graph_out_size);
+  this->output_tensor_names_.reserve(graph_out_size);
   for (size_t i = 0; i < graph_out_size; ++i) {
     size_t graph_out_index = model->graph_.output_indices_[i];
     MS_ASSERT(graph_out_index < this->tensors_.size());
@@ -427,6 +429,7 @@ void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
       this->output_tensor_map_.insert(std::make_pair(std::to_string(graph_out_index), out_tensor));
       this->output_tensor_names_.emplace_back(std::to_string(graph_out_index));
     }
+    this->output_vec_.emplace_back(out_tensor);
   }
 }
 
@@ -862,6 +865,8 @@ int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount() {
 }
 
 std::vector<mindspore::lite::Tensor *> LiteSession::GetInputs() const { return this->input_vec_; }
+
+std::vector<mindspore::lite::Tensor *> LiteSession::GetOutputsVector() const { return this->output_vec_; }
 
 int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &after) {
   bool expected = false;

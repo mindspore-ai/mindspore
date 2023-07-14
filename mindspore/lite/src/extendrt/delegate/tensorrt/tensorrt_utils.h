@@ -93,6 +93,7 @@ std::vector<int32_t> ConvertTensorAsIntVector(const TensorInfo &ms_tensor);
 bool SameDims(nvinfer1::Dims dims, const std::vector<int64_t> &shape);
 
 std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims);
+std::vector<int32_t> ConvertMSShapeInt32(const nvinfer1::Dims dims);
 
 std::vector<int64_t> NHWC2NCHW(std::vector<int64_t> nhwc_shape);
 
