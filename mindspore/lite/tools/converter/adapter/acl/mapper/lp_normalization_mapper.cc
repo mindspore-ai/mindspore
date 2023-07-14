@@ -29,6 +29,18 @@ namespace {
 constexpr size_t kNameLpNormInputNum = 1;
 }  // namespace
 STATUS LpNormalizationMapper::Mapper(const CNodePtr &cnode) {
+  /*
+   * input1                   input
+   *   |                       |
+   *   |                       |
+   *   |                      / \
+   * LpNormalization ===>    /   \
+   *   |                    |  LpNorm
+   *   |                     \   /
+   *   |                      Div
+   * output                    |
+   *                        output
+   */
   ValueNodePtr value_node = nullptr;
   PrimitivePtr src_prim = nullptr;
   if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {

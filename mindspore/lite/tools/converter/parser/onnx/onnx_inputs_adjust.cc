@@ -30,15 +30,18 @@
 #include "ops/reshape.h"
 #include "ops/cast.h"
 #include "ops/multinomial.h"
+#include "ops/one_hot.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/node_util.h"
+#include "tools/lite_exporter/fetch_content.h"
 
 namespace mindspore::lite {
 namespace {
 const std::vector<int> kNH2NCPerm = {0, 3, 1, 2};
+constexpr int kInputNum3 = 3;
 constexpr int kInputNum4 = 4;
 
 STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
@@ -548,6 +551,48 @@ STATUS AdjustMultinomial(const FuncGraphPtr &func_graph, const CNodePtr &cnode, 
   opt::UpdateManager(func_graph);
   return RET_OK;
 }
+
+STATUS AdjustOneHot(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  auto onehot_node = ops::GetOperator<ops::OneHot>(cnode->input(0));
+  MS_CHECK_TRUE_RET(onehot_node != nullptr, RET_ERROR);
+
+  auto prim = onehot_node->GetPrim();
+  MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
+
+  auto value_input = cnode->inputs()[kInputNum3];
+  MS_CHECK_TRUE_RET(value_input != nullptr, RET_ERROR);
+
+  DataInfo data_info;
+  if (cnode->inputs().size() > kInputNum3 &&
+      FetchDataFromParameterNode(cnode, kInputNum3, converter::kFmkTypeMs, &data_info, true) == lite::RET_OK) {
+    if (data_info.data_type_ != static_cast<int>(kNumberTypeFloat32)) {
+      MS_LOG(ERROR) << "data_type not correct";
+      return RET_ERROR;
+    }
+    if (data_info.data_.data() == nullptr) {
+      MS_LOG(ERROR) << "data is nullptr. " << cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
+    auto data1 = reinterpret_cast<float *>(data_info.data_.data())[FIRST_INPUT];
+    auto data2 = reinterpret_cast<float *>(data_info.data_.data())[SECOND_INPUT];
+    auto off_value_parameter = mindspore::opt::BuildFloatValueParameterNode(func_graph, data1, "off_value", true);
+    MS_CHECK_TRUE_RET(off_value_parameter != nullptr, RET_ERROR);
+
+    auto on_value_parameter = mindspore::opt::BuildFloatValueParameterNode(func_graph, data2, "on_value", true);
+    MS_CHECK_TRUE_RET(on_value_parameter != nullptr, RET_ERROR);
+
+    std::vector<AnfNodePtr> new_inputs;
+    new_inputs.push_back(cnode->inputs()[FIRST_INPUT]);
+    new_inputs.push_back(cnode->inputs()[SECOND_INPUT]);
+    new_inputs.push_back(cnode->inputs()[THIRD_INPUT]);
+    new_inputs.push_back(static_cast<AnfNodePtr>(on_value_parameter));
+    new_inputs.push_back(static_cast<AnfNodePtr>(off_value_parameter));
+    cnode->set_inputs(new_inputs);
+    opt::UpdateManager(func_graph);
+  }
+  return RET_OK;
+}
 }  // namespace
 
 bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::ConverterParameters &flag) {
@@ -597,6 +642,8 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::Co
       status = AdjustROIAlign(func_graph, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimMultinomial)) {
       status = AdjustMultinomial(func_graph, cnode, &need_update_manager);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimOneHot)) {
+      status = AdjustOneHot(func_graph, cnode);
     } else {
       continue;
     }
