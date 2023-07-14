@@ -540,7 +540,7 @@ void Softmax(T *input_, T *output_, size_t dim_size_, size_t outer_size_, size_t
       constexpr int InsP = sizeof(float4) / sizeof(T);
       dim3 block = SoftMaxGetBlockSize(InsP, dim_size_);
       cunn_SoftMaxForward<InsP, T, accumulate_t, is_log_softmax>
-        <<<grid, block, block.x * sizeof(T), cuda_stream>>>(output_, input_, dim_size_);
+        <<<grid, block, block.x * sizeof(accumulate_t), cuda_stream>>>(output_, input_, dim_size_);
       CUDA_CHECK();
     }
   } else {
