@@ -1573,7 +1573,7 @@ class Cell(Cell_):
             >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
             >>> net.to_float(mstype.float16)
             Conv2d<input_channels=120, output_channels=240, kernel_size=(4, 4), stride=(1, 1), pad_mode=same,
-            padding=0, dilation=(1, 1), group=1, has_bias=False, weight_init=normal, bias_init=zeros, format=NCHW>
+            padding=0, dilation=(1, 1), group=1, has_bias=False, weight_init=normal, bias_init=None, format=NCHW>
         """
         if dst_type not in (mstype.float16, mstype.float32):
             raise ValueError("For 'to_float', the argument 'dst_type' must be mstype.float32 or mstype.float16, "

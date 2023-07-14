@@ -4991,8 +4991,8 @@ def nanmedian(input, axis=-1, keepdims=False):
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> x = Tensor([[0.57, 0.11, float("nan")],
-        >>>             [0.38, float("nan"), float("nan")],
-        >>>             [0.36, 0.16, float("nan")]], mindspore.float32)
+        ...             [0.38, float("nan"), float("nan")],
+        ...             [0.36, 0.16, float("nan")]], mindspore.float32)
         >>> y, idx = ops.nanmedian(x, axis=0, keepdims=False)
         >>> print(y)
         [0.38 0.11  nan]
