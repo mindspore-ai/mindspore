@@ -442,7 +442,7 @@ class TensorDataImpl : public TensorData {
     }
 
     if (data_size_ > INT32_MAX) {
-      MS_EXCEPTION(MemoryError) << "Try to alloca a large memory, size is:" << data_size_ * sizeof(T);
+      MS_LOG(WARNING) << "Try to alloca a large memory, size is:" << data_size_ * sizeof(T);
     }
     // Lazy allocation.
     data_ = std::make_unique<T[]>(data_size_);
