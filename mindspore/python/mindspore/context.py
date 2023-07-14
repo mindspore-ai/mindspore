@@ -1168,7 +1168,7 @@ def set_context(**kwargs):
         enable_reduce_precision (bool): Whether to enable precision reduction.
             If the operator does not support the user-specified precision, the precision will
             be changed automatically. Default: ``True`` .
-        aoe_tune_mode (str): AOE tuning mode setting, It is not set by default.
+        aoe_tune_mode (str): AOE tuning mode setting, which is not set by default.
             When set to ``online`` , the tuning in online function is turned on.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: ``False`` .
