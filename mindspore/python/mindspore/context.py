@@ -1022,6 +1022,8 @@ def set_context(**kwargs):
     |                         +------------------------------+----------------------------+
     |                         |  enable_reduce_precision     |  Ascend                    |
     |                         +------------------------------+----------------------------+
+    |                         |  aoe_tune_mode               |  Ascend                    |
+    |                         +------------------------------+----------------------------+
     |                         |  check_bprop                 |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  max_call_depth              |  CPU/GPU/Ascend            |
@@ -1166,6 +1168,8 @@ def set_context(**kwargs):
         enable_reduce_precision (bool): Whether to enable precision reduction.
             If the operator does not support the user-specified precision, the precision will
             be changed automatically. Default: ``True`` .
+        aoe_tune_mode (str): AOE tuning mode setting, It is not set by default.
+            When set to ``online`` , the tuning in online function is turned on.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: ``False`` .
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: ``1000`` .
@@ -1360,6 +1364,7 @@ def set_context(**kwargs):
         >>> ms.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")
         >>> ms.set_context(reserve_class_name_in_scope=True)
         >>> ms.set_context(variable_memory_max_size="6GB")
+        >>> ms.set_context(aoe_tune_mode="online")
         >>> ms.set_context(check_bprop=True)
         >>> ms.set_context(max_device_memory="3.5GB")
         >>> ms.set_context(mempool_block_size="1GB")
