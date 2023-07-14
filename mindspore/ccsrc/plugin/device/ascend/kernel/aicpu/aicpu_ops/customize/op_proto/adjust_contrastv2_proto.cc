@@ -26,14 +26,14 @@ CUST_IMPLEMT_INFERFUNC(AdjustContrast, AdjustContrastInfer) {
   GeShape shape;
   std::string err_msg;
   auto contrast_factor_desc = op_desc->MutableInputDesc(1);
-  if (WithRank(contrast_factor_desc, 0, shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(contrast_factor_desc, 0, shape, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(1, DebugString(contrast_factor_desc->GetShape().GetDims()), "scalar");
     err_msg = string("failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
   auto images_desc = op_desc->MutableInputDesc(0);
-  if (WithRankAtLeast(images_desc, 3, shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRankAtLeast(images_desc, 3, shape, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(0, DebugString(images_desc->GetShape().GetDims()), "at least 3D");
     err_msg = string("failed to call WithRankAtLeast function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);

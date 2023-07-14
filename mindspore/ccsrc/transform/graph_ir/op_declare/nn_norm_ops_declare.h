@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
 
 #include "inc/ops/nn_norm_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_nn_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -118,4 +119,10 @@ DECLARE_OP_USE_OUTPUT(ConfusionSoftmaxGrad)
 
 DECLARE_OP_ADAPTER(MVNV2)
 DECLARE_OP_USE_OUTPUT(MVNV2)
+
+DECLARE_CUST_OP_ADAPTER(MultiMarginLossGrad)
+DECLARE_CUST_OP_USE_OUTPUT(MultiMarginLossGrad)
+
+DECLARE_CUST_OP_ADAPTER(MultiMarginLoss)
+DECLARE_CUST_OP_USE_OUTPUT(MultiMarginLoss)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_

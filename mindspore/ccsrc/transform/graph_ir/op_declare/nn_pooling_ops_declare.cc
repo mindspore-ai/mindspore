@@ -284,9 +284,96 @@ ATTR_MAP(Dilation2DBackpropInput) = {
 OUTPUT_MAP(Dilation2DBackpropInput) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Dilation2DBackpropInput, kNameDilation2DBackpropInput, ADPT_DESC(Dilation2DBackpropInput))
 
+// AdaptiveAvgPool3dGrad
+CUST_INPUT_MAP(AdaptiveAvgPool3dGrad) = {{1, INPUT_DESC(input_grad)}, {2, INPUT_DESC(orig_input_shape)}};
+CUST_ATTR_MAP(AdaptiveAvgPool3dGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(AdaptiveAvgPool3dGrad) = {{0, OUTPUT_DESC(output_grad)}};
+REG_ADPT_DESC(AdaptiveAvgPool3dGrad, prim::kPrimAdaptiveAvgPool3DGrad->name(), CUST_ADPT_DESC(AdaptiveAvgPool3dGrad));
+
+// AdaptiveMaxPool2dGrad
+CUST_INPUT_MAP(AdaptiveMaxPool2dGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(argmax)}};
+CUST_ATTR_MAP(AdaptiveMaxPool2dGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(AdaptiveMaxPool2dGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(AdaptiveMaxPool2dGrad, prim::kPrimAdaptiveMaxPool2DGrad->name(), CUST_ADPT_DESC(AdaptiveMaxPool2dGrad));
+
 // AdaptiveAvgPool2D
-INPUT_MAP(AdaptiveAvgPool2d) = {{1, INPUT_DESC(x)}};
-OUTPUT_MAP(AdaptiveAvgPool2d) = {{0, OUTPUT_DESC(y)}};
-ATTR_MAP(AdaptiveAvgPool2d) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
-REG_ADPT_DESC(AdaptiveAvgPool2d, kAdaptiveAvgPool2DOpName, ADPT_DESC(AdaptiveAvgPool2d))
+CUST_INPUT_MAP(AdaptiveAvgPool2D) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(AdaptiveAvgPool2D) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
+CUST_OUTPUT_MAP(AdaptiveAvgPool2D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AdaptiveAvgPool2D, prim::kPrimAdaptiveAvgPool2D->name(), CUST_ADPT_DESC(AdaptiveAvgPool2D));
+
+// AdaptiveAvgPool3D
+CUST_INPUT_MAP(AdaptiveAvgPool3d) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(AdaptiveAvgPool3d) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
+CUST_OUTPUT_MAP(AdaptiveAvgPool3d) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AdaptiveAvgPool3d, prim::kPrimAdaptiveAvgPool3D->name(), CUST_ADPT_DESC(AdaptiveAvgPool3d));
+
+// AdaptiveAvgPool2DGrad
+CUST_INPUT_MAP(AdaptiveAvgPool2DGrad) = {{1, INPUT_DESC(input_grad)}, {2, INPUT_DESC(orig_input_shape)}};
+CUST_ATTR_MAP(AdaptiveAvgPool2DGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(AdaptiveAvgPool2DGrad) = {{0, OUTPUT_DESC(output_grad)}};
+REG_ADPT_DESC(AdaptiveAvgPool2DGrad, prim::kPrimAdaptiveAvgPool2DGrad->name(), CUST_ADPT_DESC(AdaptiveAvgPool2DGrad));
+
+// DataFormatVecPermute
+INPUT_MAP(DataFormatVecPermute) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(DataFormatVecPermute) = {{"src_format", ATTR_DESC(src_format, AnyTraits<std::string>())},
+                                  {"dst_format", ATTR_DESC(dst_format, AnyTraits<std::string>())}};
+OUTPUT_MAP(DataFormatVecPermute) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DataFormatVecPermute, prim::kPrimDataFormatVecPermute->name(), ADPT_DESC(DataFormatVecPermute));
+
+// MaxPool3DGradWithArgmax
+CUST_INPUT_MAP(MaxPool3DGradWithArgmax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grads)}, {3, INPUT_DESC(argmax)}};
+CUST_ATTR_MAP(MaxPool3DGradWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>())},
+                                          {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
+                                          {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                                          {"dilation", ATTR_DESC(dilation, AnyTraits<std::vector<int64_t>>())},
+                                          {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
+                                          {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+                                          {"argmax_type", ATTR_DESC(argmax_type, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MaxPool3DGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxPool3DGradWithArgmax, prim::kPrimMaxPool3DGradWithArgmax->name(),
+              CUST_ADPT_DESC(MaxPool3DGradWithArgmax));
+
+// FractionalAvgPoolGrad
+INPUT_MAP(FractionalAvgPoolGrad) = {{1, INPUT_DESC(orig_input_tensor_shape)},
+                                    {2, INPUT_DESC(out_backprop)},
+                                    {3, INPUT_DESC(row_pooling_sequence)},
+                                    {4, INPUT_DESC(col_pooling_sequence)}};
+ATTR_MAP(FractionalAvgPoolGrad) = {{"overlapping", ATTR_DESC(overlapping, AnyTraits<bool>())}};
+OUTPUT_MAP(FractionalAvgPoolGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FractionalAvgPoolGrad, prim::kPrimFractionalAvgPoolGrad->name(), ADPT_DESC(FractionalAvgPoolGrad));
+
+// FractionalMaxPool
+INPUT_MAP(FractionalMaxPool) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(FractionalMaxPool) = {{"pooling_ratio", ATTR_DESC(pooling_ratio, AnyTraits<std::vector<float>>())},
+                               {"pseudo_random", ATTR_DESC(pseudo_random, AnyTraits<bool>())},
+                               {"overlapping", ATTR_DESC(overlapping, AnyTraits<bool>())},
+                               {"deterministic", ATTR_DESC(deterministic, AnyTraits<bool>())},
+                               {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                               {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+OUTPUT_MAP(FractionalMaxPool) = {
+  {0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(row_pooling_sequence)}, {2, OUTPUT_DESC(col_pooling_sequence)}};
+REG_ADPT_DESC(FractionalMaxPool, prim::kPrimFractionalMaxPool->name(), ADPT_DESC(FractionalMaxPool));
+
+// FractionalMaxPoolGrad
+INPUT_MAP(FractionalMaxPoolGrad) = {{1, INPUT_DESC(orig_input)},
+                                    {2, INPUT_DESC(orig_output)},
+                                    {3, INPUT_DESC(out_backprop)},
+                                    {4, INPUT_DESC(row_pooling_sequence)},
+                                    {5, INPUT_DESC(col_pooling_sequence)}};
+ATTR_MAP(FractionalMaxPoolGrad) = {{"overlapping", ATTR_DESC(overlapping, AnyTraits<bool>())}};
+OUTPUT_MAP(FractionalMaxPoolGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FractionalMaxPoolGrad, prim::kPrimFractionalMaxPoolGrad->name(), ADPT_DESC(FractionalMaxPoolGrad));
+
+// FractionalAvgPool
+INPUT_MAP(FractionalAvgPool) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(FractionalAvgPool) = {{"pooling_ratio", ATTR_DESC(pooling_ratio, AnyTraits<std::vector<float>>())},
+                               {"pseudo_random", ATTR_DESC(pseudo_random, AnyTraits<bool>())},
+                               {"overlapping", ATTR_DESC(overlapping, AnyTraits<bool>())},
+                               {"deterministic", ATTR_DESC(deterministic, AnyTraits<bool>())},
+                               {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                               {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+OUTPUT_MAP(FractionalAvgPool) = {
+  {0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(row_pooling_sequence)}, {2, OUTPUT_DESC(col_pooling_sequence)}};
+REG_ADPT_DESC(FractionalAvgPool, prim::kPrimFractionalAvgPool->name(), ADPT_DESC(FractionalAvgPool));
 }  // namespace mindspore::transform

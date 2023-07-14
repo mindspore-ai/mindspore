@@ -26,15 +26,13 @@ IMPLEMT_COMMON_INFERFUNC(AdaptiveAvgPool3dInferShape) {
     {ge::FORMAT_DHWCN, "DHWCN"}, {ge::FORMAT_NDHWC, "NDHWC"}, {ge::FORMAT_NCDHW, "NCDHW"}};
 
   // verify the dim of output_size
-  auto output_size_desc = op.GetInputDescByName("output_size");
-  auto output_size_dim = output_size_desc.GetShape().GetDimNum();
-  ge::AscendString op_name;
-  (void)op.GetName(op_name);
-  if (output_size_dim != 1) {
-    OP_LOGE("AdaptiveAvgPool3d", "Num Dim of output_szie is invalid");
+  std::vector<int64_t> output_size;
+  if (GRAPH_SUCCESS != op.GetAttr("output_size", output_size)) {
+    OP_LOGE(TbeGetName(op).c_str(), "GetOpAttr output_size failed!");
     return GRAPH_PARAM_INVALID;
   }
-
+  ge::AscendString op_name;
+  (void)op.GetName(op_name);
   auto input_desc = op.GetInputDescByName("x");
   TensorDesc out_desc = op.GetOutputDescByName("y");
 
@@ -56,38 +54,20 @@ IMPLEMT_COMMON_INFERFUNC(AdaptiveAvgPool3dInferShape) {
 
   std::vector<int64_t> input_size_shape = input_desc.GetShape().GetDims();
   auto input_size_dim_num = input_size_shape.size();
-  std::vector<int64_t> output_shape(input_size_dim_num);
-  for (uint64_t i = 0; i < input_size_dim_num - 3; ++i) {
-    output_shape[i] = input_size_shape[i];
-  }
-
-  Tensor output_size_tensor;
-  if (op.GetInputConstData("output_size", output_size_tensor) != GRAPH_SUCCESS) {
-    OP_LOGE("AdaptiveAvgPool3d", "failed to get tensor from output_size");
-    return GRAPH_FAILED;
-  }
-
-  int32_t *output_size_data = reinterpret_cast<int32_t *>(output_size_tensor.GetData());
-  if (output_size_data == nullptr) {
-    OP_LOGE("AdaptiveAvgPool3d", "output_size data is invalid");
-    return GRAPH_PARAM_INVALID;
-  }
-
-  auto output_size_num = output_size_desc.GetShape().GetShapeSize();
+  std::vector<int64_t> output_shape(input_size_shape.begin(), input_size_shape.end());
+  auto output_size_num = output_size.size();
   if (output_size_num == 1) {
     for (uint64_t i = input_size_dim_num - 3; i < input_size_dim_num; ++i) {
-      if (output_size_data[0] < 0) {
-        OP_LOGE("AdaptiveAvgPool3d", "Value of output_size can\'t be negative");
-        return GRAPH_PARAM_INVALID;
+      if (output_size[0] < 0) {
+        continue;
       }
-      output_shape[i] = output_size_data[0];
+      output_shape[i] = output_size[0];
     }
   } else if (output_size_num == 3) {
     for (uint64_t i = input_size_dim_num - 3; i < input_size_dim_num; ++i) {
-      auto data = output_size_data[i - input_size_dim_num + 3];
+      auto data = output_size[i - input_size_dim_num + 3];
       if (data < 0) {
-        OP_LOGE("AdaptiveAvgPool3d", "Value of output_size can\'t be negative");
-        return GRAPH_PARAM_INVALID;
+        continue;
       }
       output_shape[i] = data;
     }

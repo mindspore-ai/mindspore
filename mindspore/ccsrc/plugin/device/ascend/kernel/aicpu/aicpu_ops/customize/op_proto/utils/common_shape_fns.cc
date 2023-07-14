@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2022-2022 Huawei Technologies Co., Ltd.  All rights reserved.
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd 2019-2022. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,10 @@
 #include "common_shape_fns.h"
 #include <vector>
 #include <limits>
-#include <algorithm>
-#include <utility>
-#include <map>
 #include "op_log.h"
 #include "error_util.h"
 #include "graph/utils/op_desc_utils.h"
 #include "common/util/error_manager/error_manager.h"
-#include "util.h"
 
 namespace ge {
 const std::map<std::string, DataType> dtype_maps{{"DT_FLOAT", DT_FLOAT},
@@ -57,6 +53,42 @@ const std::map<std::string, DataType> dtype_maps{{"DT_FLOAT", DT_FLOAT},
                                                  {"DT_STRING_REF", DT_STRING_REF},
                                                  {"DT_DUAL", DT_DUAL},
                                                  {"DT_UNDEFINED", DT_UNDEFINED}};
+
+graphStatus WithRankAtLeast(const TensorDesc &tensor, int64_t rank, Shape &out, const ge::Operator &op) {
+  if (rank > INT32_MAX) {
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", rank, "] cannot exceed kint32max"));
+    return GRAPH_FAILED;
+  }
+  Shape s = tensor.GetShape();
+  std::vector<int64_t> dims = s.GetDims();
+  // dim.size() convert to be type int64_t can't overflow
+  int64_t size = static_cast<int64_t>(dims.size());
+  if (!((size >= rank) || (dims == UNKNOWN_SHAPE))) {
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", size, "] must be at least [", rank, "]"));
+    return GRAPH_FAILED;
+  }
+  out = s;
+  return GRAPH_SUCCESS;
+}
+
+graphStatus WithRankAtLeast(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape,
+                            const ge::Operator &op) {
+  if (rank > INT32_MAX) {
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", rank, "] cannot exceed kint32max"));
+    return GRAPH_FAILED;
+  }
+
+  GeShape s = tensorDesc->GetShape();
+  std::vector<int64_t> dims = s.GetDims();
+  // dim.size() convert to be type int64_t can't overflow
+  int64_t size = static_cast<int64_t>(dims.size());
+  if ((dims != UNKNOWN_RANK) && (size < rank)) {
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", size, "] must be at least [", rank, "]"));
+    return GRAPH_FAILED;
+  }
+  out_shape = s;
+  return GRAPH_SUCCESS;
+}
 
 graphStatus WithRankAtLeast(const TensorDesc &tensor, int64_t rank, Shape &out, const char *op_name) {
   if (rank > INT32_MAX) {
@@ -95,9 +127,9 @@ graphStatus WithRankAtLeast(const GeTensorDescPtr &tensorDesc, int64_t rank, GeS
   return GRAPH_SUCCESS;
 }
 
-graphStatus WithRankShape(GeShape &shape, int64_t rank, const char *op_name) {
+graphStatus WithRankShape(GeShape &shape, int64_t rank, const ge::Operator &op) {
   if (rank > INT32_MAX) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", rank, "] cannot exceed kint32max"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", rank, "] cannot exceed kint32max"));
     return GRAPH_FAILED;
   }
 
@@ -109,7 +141,7 @@ graphStatus WithRankShape(GeShape &shape, int64_t rank, const char *op_name) {
     return GRAPH_SUCCESS;
   }
   if (existing != rank) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", existing, "] must be [", rank, "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", existing, "] must be [", rank, "]"));
     return GRAPH_FAILED;
   }
 
@@ -118,9 +150,9 @@ graphStatus WithRankShape(GeShape &shape, int64_t rank, const char *op_name) {
   return GRAPH_SUCCESS;
 }
 
-graphStatus WithRank(const TensorDesc &tensor, int64_t rank, Shape &out, const char *op_name) {
+graphStatus WithRank(const TensorDesc &tensor, int64_t rank, Shape &out, const ge::Operator &op) {
   if (rank > INT32_MAX) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", rank, "] cannot exceed kint32max"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", rank, "] cannot exceed kint32max"));
     return GRAPH_FAILED;
   }
   Shape s = tensor.GetShape();
@@ -133,16 +165,16 @@ graphStatus WithRank(const TensorDesc &tensor, int64_t rank, Shape &out, const c
   }
 
   if (existing != rank) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", existing, "] must be [", rank, "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", existing, "] must be [", rank, "]"));
     return GRAPH_FAILED;
   }
   out = s;
   return GRAPH_SUCCESS;
 }
 
-graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape, const char *op_name) {
+graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape, const ge::Operator &op) {
   if (rank > INT32_MAX) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", rank, "] cannot exceed kint32max"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", rank, "] cannot exceed kint32max"));
     return GRAPH_FAILED;
   }
 
@@ -155,16 +187,16 @@ graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &o
   }
 
   if (existing != rank) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", existing, "] must be [", rank, "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", existing, "] must be [", rank, "]"));
     return GRAPH_FAILED;
   }
   out_shape = s;
   return GRAPH_SUCCESS;
 }
 
-graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, Shape &out_shape, const char *op_name) {
+graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, Shape &out_shape, const ge::Operator &op) {
   if (rank > INT32_MAX) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", rank, "] cannot exceed kint32max"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", rank, "] cannot exceed kint32max"));
     return GRAPH_FAILED;
   }
 
@@ -177,27 +209,27 @@ graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, Shape &out
   }
 
   if (existing != rank) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", existing, "] must be [", rank, "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", existing, "] must be [", rank, "]"));
     return GRAPH_FAILED;
   }
   out_shape = Shape(s.GetDims());
   return GRAPH_SUCCESS;
 }
 
-graphStatus WithValue(int64_t dim, int64_t value, int64_t &out, const char *op_name) {
+graphStatus WithValue(int64_t dim, int64_t value, int64_t &out, const ge::Operator &op) {
   out = value;
   if (dim == UNKNOWN_DIM) {
     return GRAPH_SUCCESS;
   }
 
   if (dim != value) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("dim[", dim, "] should be ", value));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("dim[", dim, "] should be ", value));
     return GRAPH_FAILED;
   }
   return GRAPH_SUCCESS;
 }
 
-graphStatus MergePrefix(const Shape &s, const Shape &prefix, Shape &s_out, Shape &prefix_out, const char *op_name) {
+graphStatus MergePrefix(const Shape &s, const Shape &prefix, Shape &s_out, Shape &prefix_out, const ge::Operator &op) {
   // Same shape and unknown rank
   if (!RankKnown(s) || !RankKnown(prefix)) {
     s_out = s;
@@ -208,7 +240,7 @@ graphStatus MergePrefix(const Shape &s, const Shape &prefix, Shape &s_out, Shape
   std::vector<int64_t> dims1 = s.GetDims();
   if ((dims1 != UNKNOWN_RANK) && (dims1.size() < rank)) {
     std::string err_msg = ConcatString("first shape rank[", dims1.size(), "] must be at least rank[", rank, "]");
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), err_msg);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, err_msg);
     return GRAPH_FAILED;
   }
 
@@ -220,7 +252,7 @@ graphStatus MergePrefix(const Shape &s, const Shape &prefix, Shape &s_out, Shape
     if (Merge(s.GetDim(i), prefix.GetDim(i), dims[i]) != GRAPH_SUCCESS) {
       std::string err_msg = ConcatString(i, "th dim of first shape", DebugString(s.GetDims()),
                                          " is not same as that of prefix shape", DebugString(prefix.GetDims()));
-      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), err_msg);
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, err_msg);
       return GRAPH_FAILED;
     }
   }
@@ -246,7 +278,7 @@ graphStatus Merge(int64_t dim1, int64_t dim2, int64_t &out) {
   return GRAPH_FAILED;
 }
 
-graphStatus Merge(const Shape &s0, const Shape &s1, Shape &out, const char *op_name) {
+graphStatus Merge(const Shape &s0, const Shape &s1, Shape &out, const ge::Operator &op) {
   // Same shape and unknown rank
   if (s0.GetDims() == s1.GetDims()) {
     out = s0;
@@ -263,7 +295,7 @@ graphStatus Merge(const Shape &s0, const Shape &s1, Shape &out, const char *op_n
   if (s1.GetDimNum() != rank) {
     std::string err_msg = ConcatString("different rank of first shape", DebugString(s0.GetDims()), " and second shape",
                                        DebugString(s1.GetDims()));
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), err_msg);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, err_msg);
     return GRAPH_FAILED;
   }
 
@@ -282,7 +314,7 @@ graphStatus Merge(const Shape &s0, const Shape &s1, Shape &out, const char *op_n
     } else if (d0 != d1) {
       std::string err_msg = ConcatString("different ", i, "th dim of first shape", DebugString(s0.GetDims()),
                                          " and second shape", DebugString(s1.GetDims()));
-      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), err_msg);
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, err_msg);
       return GRAPH_FAILED;
     }
   }
@@ -299,7 +331,7 @@ graphStatus Merge(const Shape &s0, const Shape &s1, Shape &out, const char *op_n
     if (Merge(s0.GetDim(i), s1.GetDim(i), dims[i]) == GRAPH_FAILED) {
       std::string err_msg = ConcatString("merge ", i, "th dim failed, first shape", DebugString(s0.GetDims()),
                                          " and second shape", DebugString(s1.GetDims()));
-      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), err_msg);
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, err_msg);
       return GRAPH_FAILED;
     }
   }
@@ -308,7 +340,7 @@ graphStatus Merge(const Shape &s0, const Shape &s1, Shape &out, const char *op_n
   return GRAPH_SUCCESS;
 }
 
-graphStatus Merge(const GeShape &s0, const GeShape &s1, GeShape &out, const char *op_name) {
+graphStatus Merge(const GeShape &s0, const GeShape &s1, GeShape &out, const ge::Operator &op) {
   // Same shape and unknown rank
   if (s0.GetDims() == s1.GetDims()) {
     out = s0;
@@ -325,7 +357,7 @@ graphStatus Merge(const GeShape &s0, const GeShape &s1, GeShape &out, const char
   if (s1.GetDimNum() != rank) {
     std::string err_msg = ConcatString("different rank of first shape", DebugString(s0.GetDims()), " and second shape",
                                        DebugString(s1.GetDims()));
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), err_msg);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, err_msg);
     return GRAPH_FAILED;
   }
 
@@ -344,7 +376,7 @@ graphStatus Merge(const GeShape &s0, const GeShape &s1, GeShape &out, const char
     } else if (d0 != d1) {
       std::string err_msg = ConcatString("different ", i, "th dim of first shape", DebugString(s0.GetDims()),
                                          " and second shape", DebugString(s1.GetDims()));
-      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), err_msg);
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, err_msg);
       return GRAPH_FAILED;
     }
   }
@@ -361,7 +393,7 @@ graphStatus Merge(const GeShape &s0, const GeShape &s1, GeShape &out, const char
     if (Merge(s0.GetDim(i), s1.GetDim(i), dims[i]) == GRAPH_FAILED) {
       std::string err_msg = ConcatString("merge ", i, "th dim failed, first shape", DebugString(s0.GetDims()),
                                          " and second shape", DebugString(s1.GetDims()));
-      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), err_msg);
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, err_msg);
       return GRAPH_FAILED;
     }
   }
@@ -403,7 +435,7 @@ void MergeRange(const std::vector<std::pair<int64_t, int64_t>> &shared_shape_ran
 }
 
 graphStatus MergeShapeAndRange(const ShapeAndRange &shared_shape_and_range, const ShapeAndRange &value_shape_and_range,
-                               ShapeAndRange &out, bool &shape_changed, const char *op_name) {
+                               ShapeAndRange &out, bool &shape_changed, const ge::Operator &op) {
   if (!RankKnown(shared_shape_and_range.shape_)) {
     out = {Shape(UNKNOWN_RANK), {}, value_shape_and_range.shape_type_};
     return GRAPH_SUCCESS;
@@ -445,7 +477,7 @@ graphStatus MergeShapeAndRange(const ShapeAndRange &shared_shape_and_range, cons
   return GRAPH_SUCCESS;
 }
 
-graphStatus ReplaceDim(const Shape &s, int64_t dim_index_in, int64_t new_dim, Shape &out, const char *op_name) {
+graphStatus ReplaceDim(const Shape &s, int64_t dim_index_in, int64_t new_dim, Shape &out, const ge::Operator &op) {
   if (!RankKnown(s)) {
     out = Shape(ge::UNKNOWN_SHAPE);
     return GRAPH_SUCCESS;
@@ -456,8 +488,8 @@ graphStatus ReplaceDim(const Shape &s, int64_t dim_index_in, int64_t new_dim, Sh
   }
   if (!FastBoundsCheck(dim_index, s.GetDimNum())) {
     out = Shape();
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("out of range: replace dim[", dim_index_in,
-                                                                      "] for shape with rank[", s.GetDimNum(), "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
+      op, ConcatString("out of range: replace dim[", dim_index_in, "] for shape with rank[", s.GetDimNum(), "]"));
     return GRAPH_FAILED;
   }
   std::vector<int64_t> dims = s.GetDims();
@@ -466,7 +498,7 @@ graphStatus ReplaceDim(const Shape &s, int64_t dim_index_in, int64_t new_dim, Sh
   return GRAPH_SUCCESS;
 }
 
-graphStatus ReplaceDim(const GeShape &s, int64_t dim_index_in, int64_t new_dim, GeShape &out, const char *op_name) {
+graphStatus ReplaceDim(const GeShape &s, int64_t dim_index_in, int64_t new_dim, GeShape &out, const ge::Operator &op) {
   if (!RankKnown(s)) {
     out = GeShape(UNKNOWN_RANK);
     return GRAPH_SUCCESS;
@@ -477,8 +509,8 @@ graphStatus ReplaceDim(const GeShape &s, int64_t dim_index_in, int64_t new_dim, 
   }
   if (!FastBoundsCheck(dim_index, s.GetDimNum())) {
     out = GeShape();
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("out of range: replace dim[", dim_index_in,
-                                                                      "] for shape with rank[", s.GetDimNum(), "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
+      op, ConcatString("out of range: replace dim[", dim_index_in, "] for shape with rank[", s.GetDimNum(), "]"));
     return GRAPH_FAILED;
   }
   std::vector<int64_t> dims = s.GetDims();
@@ -491,7 +523,7 @@ template <typename Ta, typename Tb>
 bool FastBoundsCheck(const Ta index, const Tb limit) {
   static_assert(std::is_integral<Ta>::value && std::is_integral<Tb>::value,
                 "FastBoundsCheck can only be used on integer types.");
-  using UIndex = typename std::make_unsigned<decltype(index + limit)>::type;
+  typedef typename std::make_unsigned<decltype(index + limit)>::type UIndex;
   return static_cast<UIndex>(index) < static_cast<UIndex>(limit);
 }
 
@@ -512,7 +544,7 @@ graphStatus Add(int64_t dim1, int64_t dim2, int64_t &out) {
   return GRAPH_SUCCESS;
 }
 
-graphStatus Subtract(int64_t dim1, int64_t dim2, int64_t &out, const char *op_name) {
+graphStatus Subtract(int64_t dim1, int64_t dim2, int64_t &out, const ge::Operator &op) {
   if (dim2 == 0) {
     out = dim1;
   } else if ((dim1 == UNKNOWN_DIM) || (dim2 == UNKNOWN_DIM)) {
@@ -520,7 +552,7 @@ graphStatus Subtract(int64_t dim1, int64_t dim2, int64_t &out, const char *op_na
   } else {
     if (dim1 < dim2) {
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-        string(op_name), ConcatString("negative dimension caused by subtracting. dim1[", dim1, "], dim2[", dim2, "]"));
+        op, ConcatString("negative dimension caused by subtracting. dim1[", dim1, "], dim2[", dim2, "]"));
       return GRAPH_FAILED;
     }
     out = dim1 - dim2;
@@ -528,10 +560,9 @@ graphStatus Subtract(int64_t dim1, int64_t dim2, int64_t &out, const char *op_na
   return GRAPH_SUCCESS;
 }
 
-graphStatus SubShape(const Shape &s, int64_t start, int64_t end, int64_t stride, Shape &out, const char *op_name) {
+graphStatus SubShape(const Shape &s, int64_t start, int64_t end, int64_t stride, Shape &out, const ge::Operator &op) {
   if (s.GetDimNum() > INT32_MAX) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name),
-                                        ConcatString("rank[", s.GetDimNum(), "] cannot exceed kint32max"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", s.GetDimNum(), "] cannot exceed kint32max"));
     return GRAPH_FAILED;
   }
   const int64_t rank = static_cast<int64_t>(s.GetDimNum());
@@ -557,7 +588,7 @@ graphStatus SubShape(const Shape &s, int64_t start, int64_t end, int64_t stride,
     start = rank + start;
     if (start < 0) {
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-        string(op_name), ConcatString("invalid start[", start - rank, "] to get sub shape with rank[", rank, "]"));
+        op, ConcatString("invalid start[", start - rank, "] to get sub shape with rank[", rank, "]"));
       return GRAPH_FAILED;
     }
   }
@@ -566,21 +597,21 @@ graphStatus SubShape(const Shape &s, int64_t start, int64_t end, int64_t stride,
     end = rank + end;
     if (end < 0) {
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-        string(op_name), ConcatString("invalid end[", end - rank, "] to get sub shape with rank[", rank, "]"));
+        op, ConcatString("invalid end[", end - rank, "] to get sub shape with rank[", rank, "]"));
       return GRAPH_FAILED;
     }
   }
 
   // stride > 0 and start > end
   if (!((stride <= 0 || start <= end))) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("start[", start, "] should be less than end[",
-                                                                      end, "] at positive stride[", stride, "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
+      op, ConcatString("start[", start, "] should be less than end[", end, "] at positive stride[", stride, "]"));
     return GRAPH_FAILED;
   }
   // stride < 0 and start < end
   if (!(stride >= 0 || start >= end)) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("start[", start, "] should be greater than end[",
-                                                                      end, "] at negative stride[", stride, "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
+      op, ConcatString("start[", start, "] should be greater than end[", end, "] at negative stride[", stride, "]"));
     return GRAPH_FAILED;
   }
   std::vector<int64_t> dims;
@@ -593,10 +624,10 @@ graphStatus SubShape(const Shape &s, int64_t start, int64_t end, int64_t stride,
 }
 
 graphStatus SubShape(const GeShape &src_shape, int64_t start, int64_t end, int64_t stride, GeShape &out_shape,
-                     const char *op_name) {
+                     const ge::Operator &op) {
   int64_t src_rank = src_shape.GetDimNum();
   if (src_rank > static_cast<int64_t>(std::numeric_limits<int32_t>::max())) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", src_rank, "] cannot exceed kint32max"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", src_rank, "] cannot exceed kint32max"));
     return GRAPH_FAILED;
   }
 
@@ -622,8 +653,7 @@ graphStatus SubShape(const GeShape &src_shape, int64_t start, int64_t end, int64
     start += src_rank;
     if (start < 0) {
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-        string(op_name),
-        ConcatString("invalid start[", start - src_rank, "] to get sub shape with rank[", src_rank, "]"));
+        op, ConcatString("invalid start[", start - src_rank, "] to get sub shape with rank[", src_rank, "]"));
       return GRAPH_FAILED;
     }
   }
@@ -632,18 +662,18 @@ graphStatus SubShape(const GeShape &src_shape, int64_t start, int64_t end, int64
     end += src_rank;
     if (end < 0) {
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-        string(op_name), ConcatString("invalid end[", end - src_rank, "] to get sub shape with rank[", src_rank, "]"));
+        op, ConcatString("invalid end[", end - src_rank, "] to get sub shape with rank[", src_rank, "]"));
       return GRAPH_FAILED;
     }
   }
 
   if (stride > 0 && start > end) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("start[", start, "] should be less than end[",
-                                                                      end, "] at positive stride[", stride, "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
+      op, ConcatString("start[", start, "] should be less than end[", end, "] at positive stride[", stride, "]"));
     return GRAPH_FAILED;
   } else if (stride < 0 && start < end) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("start[", start, "] should be greater than end[",
-                                                                      end, "] at negative stride[", stride, "]"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
+      op, ConcatString("start[", start, "] should be greater than end[", end, "] at negative stride[", stride, "]"));
     return GRAPH_FAILED;
   }
 
@@ -698,7 +728,7 @@ graphStatus Concatenate(const GeShape &s1, const GeShape &s2, GeShape &out) {
 
 graphStatus Matrix(int64_t dim1, int64_t dim2, Shape &out) {
   std::vector<int64_t> dims;
-  dims.reserve(DIM_VALUE2);  // The number of dims is 2.
+  dims.reserve(2);  // The number of dims is 2.
   dims.push_back(dim1);
   dims.push_back(dim2);
   Shape s(dims);
@@ -716,7 +746,7 @@ graphStatus Vector(int64_t dim, Shape &out) {
 }
 
 static graphStatus GetShapeDataFromShapeTensor(Operator &op, const string &dst_name, int64_t rank,
-                                               std::vector<int64_t> &data, const char *op_name) {
+                                               std::vector<int64_t> &data) {
   auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
   auto shape_data_desc = op_desc->MutableInputDesc(dst_name);
 
@@ -728,13 +758,13 @@ static graphStatus GetShapeDataFromShapeTensor(Operator &op, const string &dst_n
   DataType data_type = shape_data_desc->GetDataType();
   if (dims.size() != static_cast<size_t>(rank)) {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-      string(op_name), ConcatString("invalid shape data rank[", dims.size(), "], should be [", rank, "]"));
+      op, ConcatString("invalid shape data rank[", dims.size(), "], should be [", rank, "]"));
     return GRAPH_FAILED;
   }
   int64_t dim_value = ((rank > 0) && (dims[0] > 0)) ? dims[0] : 1;
   data.clear();
   if (dims[0] < 0) {
-    OP_LOGI(op_name, "Shape rank is %zu, dims[0] value is [%ld]", dims.size(), dims[0]);
+    OP_LOGI(op, "Shape rank is %zu, dims[0] value is [%ld]", dims.size(), dims[0]);
     data.push_back(UNKNOWN_DIM_NUM);
     return GRAPH_SUCCESS;
   }
@@ -747,7 +777,7 @@ static graphStatus GetShapeDataFromShapeTensor(Operator &op, const string &dst_n
         data.push_back(static_cast<int64_t>(shape_data[i]));
       }
     } else {
-      OP_LOGI(TbeGetName(op).c_str(), "Input [%s] is not a const tensor.", dst_name.c_str());
+      OP_LOGI(op, "Input [%s] is not a const tensor.", dst_name.c_str());
       for (int64_t i = 0; i < dim_value; i++) {
         data.push_back(UNKNOWN_DIM);
       }
@@ -759,14 +789,14 @@ static graphStatus GetShapeDataFromShapeTensor(Operator &op, const string &dst_n
         data.push_back(static_cast<int64_t>(shape_data[i]));
       }
     } else {
-      OP_LOGI(TbeGetName(op).c_str(), "Input [%s] is not a const tensor.", dst_name.c_str());
+      OP_LOGI(op, "Input [%s] is not a const tensor.", dst_name.c_str());
       for (int64_t i = 0; i < dim_value; i++) {
         data.push_back(UNKNOWN_DIM);
       }
     }
   } else {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-      string(op_name), ConcatString("invalid data type[", DTypeStr(data_type), "], should be DT_INT32 or DT_INT64"));
+      op, ConcatString("invalid data type[", DTypeStr(data_type), "], should be DT_INT32 or DT_INT64"));
     return GRAPH_FAILED;
   }
 
@@ -774,7 +804,7 @@ static graphStatus GetShapeDataFromShapeTensor(Operator &op, const string &dst_n
 }
 
 static graphStatus GetShapeDataFromConstData(const Tensor &tensor, int64_t rank, std::vector<int64_t> &data,
-                                             const char *op_name) {
+                                             const ge::Operator &op) {
   TensorDesc shape_data_desc = tensor.GetTensorDesc();
   Shape shape_data_shape = shape_data_desc.GetShape();
   std::vector<int64_t> dims = shape_data_shape.GetDims();
@@ -782,84 +812,83 @@ static graphStatus GetShapeDataFromConstData(const Tensor &tensor, int64_t rank,
 
   if (dims.size() != static_cast<size_t>(rank)) {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-      string(op_name), ConcatString("invalid shape data rank[", dims.size(), "], should be [", rank, "]"));
+      op, ConcatString("invalid shape data rank[", dims.size(), "], should be [", rank, "]"));
     return GRAPH_FAILED;
   }
   int64_t dim_value = rank > 0 ? dims[0] : 1;
-  OP_LOGI(op_name, "data_type = %d, dim_value = %ld", data_type, dim_value);
+  OP_LOGI(op, "data_type = %d, dim_value = %ld", data_type, dim_value);
   data.clear();
   data.reserve(dim_value);
   if (data_type == DT_INT32) {
     const int32_t *shape_data = reinterpret_cast<const int32_t *>(tensor.GetData());
     for (int64_t i = 0; i < dim_value; i++) {
-      OP_LOGI(op_name, "DT_INT32 i = %ld, shape_data[i] = %ld", i, static_cast<int64_t>(shape_data[i]));
+      OP_LOGI(op, "DT_INT32 i = %ld, shape_data[i] = %ld", i, static_cast<int64_t>(shape_data[i]));
       data.push_back(static_cast<int64_t>(shape_data[i]));
     }
   } else if (data_type == DT_INT64) {
     const int64_t *shape_data = reinterpret_cast<const int64_t *>(tensor.GetData());
     for (int64_t i = 0; i < dim_value; i++) {
-      OP_LOGI(op_name, "DT_INT64 i = %ld, shape_data[i] = %ld", i, shape_data[i]);
+      OP_LOGI(op, "DT_INT64 i = %ld, shape_data[i] = %ld", i, shape_data[i]);
       data.push_back(shape_data[i]);
     }
   } else {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-      string(op_name), ConcatString("invalid data type[", DTypeStr(data_type), "], should be DT_INT32 or DT_INT64"));
+      op, ConcatString("invalid data type[", DTypeStr(data_type), "], should be DT_INT32 or DT_INT64"));
     return GRAPH_FAILED;
   }
 
   return GRAPH_SUCCESS;
 }
 
-graphStatus MakeShapeFromShapeTensor(const Tensor &tensor, Shape &out, const char *op_name) {
+graphStatus MakeShapeFromShapeTensor(const Tensor &tensor, Shape &out, const ge::Operator &op) {
   std::vector<int64_t> shape_data;
-  GetShapeDataFromConstData(tensor, 1, shape_data, op_name);
+  GetShapeDataFromConstData(tensor, 1, shape_data, op);
   out = Shape(shape_data);
   return GRAPH_SUCCESS;
 }
 
-graphStatus MakeShapeFromShapeTensor(Operator &op, const string &dst_name, GeShape &out, const char *op_name) {
+graphStatus MakeShapeFromShapeTensor(Operator &op, const string &dst_name, GeShape &out) {
   std::vector<int64_t> shape_data;
-  if (GetShapeDataFromShapeTensor(op, dst_name, 1, shape_data, op_name) != GRAPH_SUCCESS) {
+  if (GetShapeDataFromShapeTensor(op, dst_name, 1, shape_data) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
   out = GeShape(shape_data);
   return GRAPH_SUCCESS;
 }
 
-graphStatus MakeDimForScalarInput(const Tensor &tensor, int64_t &out, const char *op_name) {
+graphStatus MakeDimForScalarInput(const Tensor &tensor, int64_t &out, const ge::Operator &op) {
   std::vector<int64_t> shape_data;
-  GetShapeDataFromConstData(tensor, 0, shape_data, op_name);
+  GetShapeDataFromConstData(tensor, 0, shape_data, op);
   out = shape_data[0];
   return GRAPH_SUCCESS;
 }
 
-graphStatus WithRankAtMost(const TensorDesc &tensor, int64_t rank, Shape &out, const char *op_name) {
+graphStatus WithRankAtMost(const TensorDesc &tensor, int64_t rank, Shape &out, const ge::Operator &op) {
   if (rank > INT32_MAX) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", rank, "] cannot exceed kint32max"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", rank, "] cannot exceed kint32max"));
     return GRAPH_FAILED;
   }
   Shape s = tensor.GetShape();
   std::vector<int64_t> dims = s.GetDims();
   if (!((dims.size() <= static_cast<size_t>(rank)) || (dims == ge::UNKNOWN_SHAPE))) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name),
-                                        ConcatString("invalid rank[", dims.size(), "], should be at most ", rank));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("invalid rank[", dims.size(), "], should be at most ", rank));
     return GRAPH_FAILED;
   }
   out = s;
   return GRAPH_SUCCESS;
 }
 
-graphStatus WithRankAtMost(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape, const char *op_name) {
+graphStatus WithRankAtMost(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape,
+                           const ge::Operator &op) {
   if (rank > INT32_MAX) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name), ConcatString("rank[", rank, "] cannot exceed kint32max"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", rank, "] cannot exceed kint32max"));
     return GRAPH_FAILED;
   }
 
   GeShape s = tensorDesc->GetShape();
   std::vector<int64_t> dims = s.GetDims();
   if ((dims != ge::UNKNOWN_RANK) && (dims.size() > static_cast<size_t>(rank))) {
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name),
-                                        ConcatString("invalid rank[", dims.size(), "], should be at most ", rank));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("invalid rank[", dims.size(), "], should be at most ", rank));
     return GRAPH_FAILED;
   }
 
@@ -881,20 +910,19 @@ graphStatus UnchangedShape(Operator &op, const string input_name, const string o
 }
 
 graphStatus Divide(const int64_t dividend, const int64_t divisor, const bool evenlyDivisible, int64_t &out,
-                   const char *op_name) {
+                   const ge::Operator &op) {
   if (divisor == 1) {
     out = dividend;
   } else if ((dividend == ge::UNKNOWN_DIM) || (divisor == ge::UNKNOWN_DIM)) {
     out = ge::UNKNOWN_DIM;
   } else {
     if (divisor <= 0) {
-      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name),
-                                          ConcatString("invalid divisor[", divisor, "], should be positive"));
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("invalid divisor[", divisor, "], should be positive"));
       return GRAPH_FAILED;
     }
     if (!((!evenlyDivisible) || (dividend % divisor) == 0)) {
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-        string(op_name), ConcatString("[", dividend, "] cannot be evenly divisible by [", divisor, "]"));
+        op, ConcatString("[", dividend, "] cannot be evenly divisible by [", divisor, "]"));
       return GRAPH_FAILED;
     }
     out = dividend / divisor;
@@ -970,25 +998,25 @@ bool ValueKnown(const Shape &shape, const size_t &dim_index) {
 }
 
 graphStatus ValidateSparseTensor(const TensorDesc &indices, const TensorDesc &values, const TensorDesc &shape,
-                                 const char *op_name) {
+                                 const ge::Operator &op) {
   // Validate ranks
   Shape unused_shape;
-  if (WithRank(indices, NUM_VALUE2, unused_shape, op_name) != GRAPH_SUCCESS) {  // The rank is 2.
+  if (WithRank(indices, 2, unused_shape, op) != GRAPH_SUCCESS) {  // The rank is 2.
     std::string err_msg = ConcatString("failed to call WithRank function, indices has wrong shape",
                                        DebugString(indices.GetShape().GetDims()), ", it should be 2D");
-    AICPU_INFER_SHAPE_CALL_ERR_REPORT(string(op_name), err_msg);
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(op, err_msg);
     return GRAPH_FAILED;
   }
-  if (WithRank(values, 1, unused_shape, op_name) != GRAPH_SUCCESS) {
+  if (WithRank(values, 1, unused_shape, op) != GRAPH_SUCCESS) {
     std::string err_msg = ConcatString("failed to call WithRank function, values has wrong shape",
                                        DebugString(values.GetShape().GetDims()), ", it should be 1D");
-    AICPU_INFER_SHAPE_CALL_ERR_REPORT(string(op_name), err_msg);
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(op, err_msg);
     return GRAPH_FAILED;
   }
-  if (WithRank(shape, 1, unused_shape, op_name) != GRAPH_SUCCESS) {
+  if (WithRank(shape, 1, unused_shape, op) != GRAPH_SUCCESS) {
     std::string err_msg = ConcatString("failed to call WithRank function, shape has wrong shape",
                                        DebugString(shape.GetShape().GetDims()), ", it should be 1D");
-    AICPU_INFER_SHAPE_CALL_ERR_REPORT(string(op_name), err_msg);
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(op, err_msg);
     return GRAPH_FAILED;
   }
 
@@ -998,9 +1026,8 @@ graphStatus ValidateSparseTensor(const TensorDesc &indices, const TensorDesc &va
   if (ValueKnown(indices_shape, 0)) {
     if (ValueKnown(values_shape, 0)) {
       if (indices_shape.GetDim(0) != values_shape.GetDim(0)) {
-        VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-          string(op_name), ConcatString("dim[0] of indices and dim[0] of value do not match, ", indices_shape.GetDim(0),
-                                        " and ", values_shape.GetDim(0)));
+        VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("dim[0] of indices and dim[0] of value do not match, ",
+                                                             indices_shape.GetDim(0), " and ", values_shape.GetDim(0)));
         return GRAPH_FAILED;
       }
     }
@@ -1011,9 +1038,8 @@ graphStatus ValidateSparseTensor(const TensorDesc &indices, const TensorDesc &va
   if (ValueKnown(indices_shape, 1)) {
     if (ValueKnown(sparse_shape, 0)) {
       if (indices_shape.GetDim(1) != sparse_shape.GetDim(0)) {
-        VECTOR_INFER_SHAPE_INNER_ERR_REPORT(string(op_name),
-                                            ConcatString("dim[1] of indices and dim[0] of sparse do not match, ",
-                                                         indices_shape.GetDim(1), " and ", sparse_shape.GetDim(0)));
+        VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("dim[1] of indices and dim[0] of sparse do not match, ",
+                                                             indices_shape.GetDim(1), " and ", sparse_shape.GetDim(0)));
         return GRAPH_FAILED;
       }
     }
@@ -1086,45 +1112,38 @@ std::string DTypeStr(DataType dtype) {
 }
 
 graphStatus SetShapeAndRange(Operator &op, const ShapeAndRange &feed_shape_and_range) {
-  AscendString op_name;
-  op.GetName(op_name);
   auto context = op.GetInferenceContext();
   std::vector<AscendString> marks;
   context->GetMarks(marks);
 
   if (!marks.empty()) {
-    OP_LOGI(TbeGetName(op).c_str(), "Set marks[0] = %s", marks[0].GetString());
+    OP_LOGI(op, "Set marks[0] = %s", marks[0].GetString());
     bool shape_changed = false;
     auto aicpu_resource_context = reinterpret_cast<AicpuResourceContext *>(context->GetResourceContext(marks[0]));
     if (aicpu_resource_context == nullptr) {
       aicpu_resource_context = new (std::nothrow) AicpuResourceContext();
       if (aicpu_resource_context == nullptr) {
-        AICPU_INFER_SHAPE_INNER_ERR_REPORT(std::string(op_name.GetString()),
-                                           std::string("new AicpuResourceContext failed."));
+        AICPU_INFER_SHAPE_INNER_ERR_REPORT(op, std::string("new AicpuResourceContext failed."));
         return GRAPH_FAILED;
       }
       aicpu_resource_context->shape_and_range_.push_back(feed_shape_and_range);
       if (context->SetResourceContext(marks[0], aicpu_resource_context) != GRAPH_SUCCESS) {
         delete aicpu_resource_context;
-        AICPU_INFER_SHAPE_CALL_ERR_REPORT(std::string(op_name.GetString()),
-                                          std::string("set resource context failed."));
+        AICPU_INFER_SHAPE_CALL_ERR_REPORT(op, std::string("set resource context failed."));
         return GRAPH_FAILED;
       }
       shape_changed = true;
     } else {
       auto &shape_and_range = aicpu_resource_context->shape_and_range_;
       if (shape_and_range.empty()) {
-        AICPU_INFER_SHAPE_CALL_ERR_REPORT(std::string(op_name.GetString()),
-                                          std::string("get resource context shape and ranges failed."));
+        AICPU_INFER_SHAPE_CALL_ERR_REPORT(op, std::string("get resource context shape and ranges failed."));
         return GRAPH_FAILED;
       }
-      MergeShapeAndRange(shape_and_range[0], feed_shape_and_range, shape_and_range[0], shape_changed,
-                         op_name.GetString());
+      MergeShapeAndRange(shape_and_range[0], feed_shape_and_range, shape_and_range[0], shape_changed, op);
     }
     if (shape_changed) {
       if (context->AddChangedResourceKey(marks[0]) != GRAPH_SUCCESS) {
-        AICPU_INFER_SHAPE_CALL_ERR_REPORT(std::string(op_name.GetString()),
-                                          std::string("add change resource key failed."));
+        AICPU_INFER_SHAPE_CALL_ERR_REPORT(op, std::string("add change resource key failed."));
         return GRAPH_FAILED;
       }
     }
@@ -1133,23 +1152,19 @@ graphStatus SetShapeAndRange(Operator &op, const ShapeAndRange &feed_shape_and_r
 }
 
 graphStatus GetShapeAndRange(Operator &op, ShapeAndRange &out, bool &geted, InferenceContextPtr infer_context) {
-  AscendString op_name;
-  op.GetName(op_name);
   std::vector<AscendString> marks;
   infer_context->GetMarks(marks);
   if (!marks.empty()) {
-    OP_LOGI(TbeGetName(op).c_str(), "Get marks[0] = %s", marks[0].GetString());
+    OP_LOGI(op, "Get marks[0] = %s", marks[0].GetString());
     if (infer_context->RegisterReliedOnResourceKey(marks[0]) != GRAPH_SUCCESS) {
-      AICPU_INFER_SHAPE_INNER_ERR_REPORT(std::string(op_name.GetString()),
-                                         std::string("register relied on resource key failed."));
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(op, std::string("register relied on resource key failed."));
       return GRAPH_FAILED;
     }
     auto aicpu_resource_context = reinterpret_cast<AicpuResourceContext *>(infer_context->GetResourceContext(marks[0]));
     if (aicpu_resource_context != nullptr) {
       auto &shape_and_range = aicpu_resource_context->shape_and_range_;
       if (shape_and_range.empty()) {
-        AICPU_INFER_SHAPE_INNER_ERR_REPORT(std::string(op_name.GetString()),
-                                           std::string("get resource context shape and ranges failed."));
+        AICPU_INFER_SHAPE_INNER_ERR_REPORT(op, std::string("get resource context shape and ranges failed."));
         return GRAPH_FAILED;
       }
       out.shape_ = shape_and_range[0].shape_;

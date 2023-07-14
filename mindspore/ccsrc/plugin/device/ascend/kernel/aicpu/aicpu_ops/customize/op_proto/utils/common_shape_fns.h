@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022-2022 Huawei Technologies Co., Ltd.  All rights reserved.
+ * Copyright 2019 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@
  * \file common_shape_fns.h
  * \brief
  */
-#ifndef OPS_BUILT_IN_OP_PROTO_UTIL_COMMON_SHAPE_FNS_H_
-#define OPS_BUILT_IN_OP_PROTO_UTIL_COMMON_SHAPE_FNS_H_
+#ifndef CUSTOMIZE_OP_PROTO_UTIL_COMMON_SHAPE_FNS_H_
+#define CUSTOMIZE_OP_PROTO_UTIL_COMMON_SHAPE_FNS_H_
 
 #include <string>
 #include <vector>
-#include <utility>
 #include "graph/tensor.h"
 #include "graph/operator.h"
 #include "graph/op_desc.h"
@@ -32,6 +31,7 @@
 #include "error_code.h"
 
 namespace ge {
+
 struct ShapeAndRange {
   Shape shape_;
   std::vector<std::pair<int64_t, int64_t>> shape_range_;
@@ -41,6 +41,25 @@ struct ShapeAndRange {
 struct AicpuResourceContext : public ResourceContext {
   std::vector<ShapeAndRange> shape_and_range_;
 };
+
+/**
+ * Check whether Shape's rank is at least rank
+ * @param tensor Input tensor
+ * @param rank expect val of Shape
+ * @param out Output Shape
+ * @return status whether Shape's condition Satisfied
+ */
+graphStatus WithRankAtLeast(const TensorDesc &tensor, int64_t rank, Shape &out, const ge::Operator &op);
+
+/**
+ * Check whether Shape's rank is at least rank
+ * @param tensor Input tensor
+ * @param rank expect val of Shape
+ * @param out Output Shape
+ * @return status whether Shape's condition Satisfied
+ */
+graphStatus WithRankAtLeast(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape,
+                            const ge::Operator &op);
 
 /**
  * Check whether Shape's rank is at least rank
@@ -67,7 +86,7 @@ graphStatus WithRankAtLeast(const GeTensorDescPtr &tensorDesc, int64_t rank, GeS
  * @param out Output Shape
  * @return status whether Shape's condition Satisfied
  */
-graphStatus WithRankShape(GeShape &shape, int64_t rank, const char *op_name);
+graphStatus WithRankShape(GeShape &shape, int64_t rank, const ge::Operator &op);
 
 /**
  * Check whether Shape's rank is equal to rank
@@ -76,7 +95,7 @@ graphStatus WithRankShape(GeShape &shape, int64_t rank, const char *op_name);
  * @param out Output Shape
  * @return status whether Shape's condition Satisfied
  */
-graphStatus WithRank(const TensorDesc &tensor, int64_t rank, Shape &out, const char *op_name);
+graphStatus WithRank(const TensorDesc &tensor, int64_t rank, Shape &out, const ge::Operator &op);
 
 /**
  * Check whether Shape's rank is equal to rank
@@ -85,7 +104,7 @@ graphStatus WithRank(const TensorDesc &tensor, int64_t rank, Shape &out, const c
  * @param out Output Shape
  * @return status whether Shape's condition Satisfied
  */
-graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape, const char *op_name);
+graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape, const ge::Operator &op);
 
 /**
  * Check whether Shape's rank is equal to rank
@@ -94,7 +113,7 @@ graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &o
  * @param out Output Shape
  * @return status whether Shape's condition Satisfied
  */
-graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, Shape &out_shape, const char *op_name);
+graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, Shape &out_shape, const ge::Operator &op);
 
 /**
  * Check whether dim is equal to value
@@ -103,7 +122,7 @@ graphStatus WithRank(const GeTensorDescPtr &tensorDesc, int64_t rank, Shape &out
  * @param out Output dim
  * @return status whether Dim is equal to value
  */
-graphStatus WithValue(int64_t dim, int64_t value, int64_t &out, const char *op_name);
+graphStatus WithValue(int64_t dim, int64_t value, int64_t &out, const ge::Operator &op);
 
 /**
  * Merge two shapes
@@ -113,7 +132,7 @@ graphStatus WithValue(int64_t dim, int64_t value, int64_t &out, const char *op_n
  * @param prefix_out prefix out shape val
  * @return status whether this operation success
  */
-graphStatus MergePrefix(const Shape &s, const Shape &prefix, Shape &s_out, Shape &prefix_out, const char *op_name);
+graphStatus MergePrefix(const Shape &s, const Shape &prefix, Shape &s_out, Shape &prefix_out, const ge::Operator &op);
 
 /**
  * Merge two dims of Shape
@@ -131,7 +150,7 @@ graphStatus Merge(int64_t dim1, int64_t dim2, int64_t &out);
  * @param out merged shape val
  * @return status whether this operation success
  */
-graphStatus Merge(const Shape &s0, const Shape &s1, Shape &out, const char *op_name);
+graphStatus Merge(const Shape &s0, const Shape &s1, Shape &out, const ge::Operator &op);
 
 /**
  * Merge two shapes
@@ -140,7 +159,7 @@ graphStatus Merge(const Shape &s0, const Shape &s1, Shape &out, const char *op_n
  * @param out merged Geshape val
  * @return status whether this operation success
  */
-graphStatus Merge(const GeShape &s0, const GeShape &s1, GeShape &out, const char *op_name);
+graphStatus Merge(const GeShape &s0, const GeShape &s1, GeShape &out, const ge::Operator &op);
 
 /**
  * Merge two shapes
@@ -171,7 +190,7 @@ void MergeRange(const std::vector<std::pair<int64_t, int64_t>> &shared_shape_ran
  * @return status whether this operation success
  */
 graphStatus MergeShapeAndRange(const ShapeAndRange &shared_shape_and_range, const ShapeAndRange &value_shape_and_range,
-                               ShapeAndRange &out, bool &shape_changed, const char *op_name);
+                               ShapeAndRange &out, bool &shape_changed, const ge::Operator &op);
 
 /**
  * Replace one dim in a given shape
@@ -181,7 +200,7 @@ graphStatus MergeShapeAndRange(const ShapeAndRange &shared_shape_and_range, cons
  * @param out new shape
  * @return status whether this operation success
  */
-graphStatus ReplaceDim(const Shape &s, int64_t dim_index_in, int64_t new_dim, Shape &out, const char *op_name);
+graphStatus ReplaceDim(const Shape &s, int64_t dim_index_in, int64_t new_dim, Shape &out, const ge::Operator &op);
 
 /**
  * Replace one dim in a given shape
@@ -191,7 +210,7 @@ graphStatus ReplaceDim(const Shape &s, int64_t dim_index_in, int64_t new_dim, Sh
  * @param out new shape
  * @return status whether this operation success
  */
-graphStatus ReplaceDim(const GeShape &s, int64_t dim_index_in, int64_t new_dim, GeShape &out, const char *op_name);
+graphStatus ReplaceDim(const GeShape &s, int64_t dim_index_in, int64_t new_dim, GeShape &out, const ge::Operator &op);
 
 /**
  * Check if it satisfies 0 <= index < limit
@@ -218,7 +237,7 @@ graphStatus Add(int64_t dim1, int64_t dim2, int64_t &out);
  * @param out Subtract dim val
  * @return status whether this operation success
  */
-graphStatus Subtract(int64_t dim1, int64_t dim2, int64_t &out, const char *op_name);
+graphStatus Subtract(int64_t dim1, int64_t dim2, int64_t &out, const ge::Operator &op);
 
 /**
  * Get SubShape according to start end index and step size stride
@@ -229,7 +248,7 @@ graphStatus Subtract(int64_t dim1, int64_t dim2, int64_t &out, const char *op_na
  * @param out sub shape output
  * @return status whether this operation success
  */
-graphStatus SubShape(const Shape &s, int64_t start, int64_t end, int64_t stride, Shape &out, const char *op_name);
+graphStatus SubShape(const Shape &s, int64_t start, int64_t end, int64_t stride, Shape &out, const ge::Operator &op);
 
 /**
  * Get SubShape according to start end index and step size stride
@@ -251,7 +270,8 @@ graphStatus SubShape(const GeShape &s, size_t start, size_t end, size_t stride, 
  * @param out sub shape output
  * @return status whether this operation success
  */
-graphStatus SubShape(const GeShape &s, int64_t start, int64_t end, int64_t stride, GeShape &out, const char *op_name);
+graphStatus SubShape(const GeShape &s, int64_t start, int64_t end, int64_t stride, GeShape &out,
+                     const ge::Operator &op);
 
 /**
  * Concatenate two shape
@@ -294,17 +314,16 @@ graphStatus Vector(int64_t dim, Shape &out);
  * @param out shape
  * @return status whether this operation success
  */
-graphStatus MakeShapeFromShapeTensor(const Tensor &tensor, Shape &out, const char *op_name);
+graphStatus MakeShapeFromShapeTensor(const Tensor &tensor, Shape &out, const ge::Operator &op);
 
 /**
  * Make shape from shape tensor
  * @param op Operator
  * @param dst_name const string &
  * @param out GeShape
- * @param op_name const char *
  * @return status whether this operation success
  */
-graphStatus MakeShapeFromShapeTensor(Operator &op, const string &dst_name, GeShape &out, const char *op_name);
+graphStatus MakeShapeFromShapeTensor(Operator &op, const string &dst_name, GeShape &out);
 
 /**
  * Make dim from scalar tensor
@@ -312,7 +331,7 @@ graphStatus MakeShapeFromShapeTensor(Operator &op, const string &dst_name, GeSha
  * @param out shape
  * @return status whether this operation success
  */
-graphStatus MakeDimForScalarInput(const Tensor &tensor, int64_t &out, const char *op_name);
+graphStatus MakeDimForScalarInput(const Tensor &tensor, int64_t &out, const ge::Operator &op);
 
 /**
  * Check whether Shape's rank is at most rank
@@ -321,7 +340,7 @@ graphStatus MakeDimForScalarInput(const Tensor &tensor, int64_t &out, const char
  * @param out output Shape
  * @return status whether Shape's condition Satisfied
  */
-graphStatus WithRankAtMost(const TensorDesc &tensor, int64_t rank, Shape &out, const char *op_name);
+graphStatus WithRankAtMost(const TensorDesc &tensor, int64_t rank, Shape &out, const ge::Operator &op);
 
 /**
  * Check whether Shape's rank is at most rank
@@ -330,7 +349,7 @@ graphStatus WithRankAtMost(const TensorDesc &tensor, int64_t rank, Shape &out, c
  * @param out output Shape
  * @return status whether Shape's condition Satisfied
  */
-graphStatus WithRankAtMost(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape, const char *op_name);
+graphStatus WithRankAtMost(const GeTensorDescPtr &tensorDesc, int64_t rank, GeShape &out_shape, const ge::Operator &op);
 
 /**
  * make a empty dim shape
@@ -357,7 +376,7 @@ graphStatus UnchangedShape(Operator &op, const string input_name, const string o
  * @return status whether this operation success
  */
 graphStatus Divide(const int64_t dividend, const int64_t divisor, const bool evenlyDivisible, int64_t &out,
-                   const char *op_name);
+                   const ge::Operator &op);
 
 /**
  * check shape fully defined or not
@@ -410,7 +429,7 @@ bool ValueKnown(const Shape &shape, const size_t &dim_index);
  * @return status whether this operation success
  */
 graphStatus ValidateSparseTensor(const TensorDesc &indices, const TensorDesc &values, const TensorDesc &shape,
-                                 const char *op_name);
+                                 const ge::Operator &op);
 
 /**
  * Fill op_desc with input shape
@@ -448,6 +467,7 @@ std::string DTypeStr(DataType dtype);
 graphStatus SetShapeAndRange(Operator &op, const ShapeAndRange &feed_shape_and_range);
 
 graphStatus GetShapeAndRange(Operator &op, ShapeAndRange &out, bool &geted, InferenceContextPtr infer_context);
+
 }  // namespace ge
 
-#endif  // OPS_BUILT_IN_OP_PROTO_UTIL_COMMON_SHAPE_FNS_H_
+#endif  // CUSTOMIZE_OP_PROTO_UTIL_COMMON_SHAPE_FNS_H_

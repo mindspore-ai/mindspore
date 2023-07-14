@@ -30,32 +30,32 @@ CUST_IMPLEMT_INFERFUNC(SparseAddmm, SparseAddmmInfer) {
   auto x1_shape_tensor = op.get_input_desc_x1_shape();
   auto x2_tensor = op.get_input_desc_x2();
   std::string err_msg;
-  if (WithRank(x1_indices_tensor, 2, unused_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x1_indices_tensor, 2, unused_shape, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(0, DebugString(x1_indices_tensor.GetShape().GetDims()), "2D");
     err_msg = string("failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
-  if (WithRank(x1_values_tensor, 1, unused_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x1_values_tensor, 1, unused_shape, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(1, DebugString(x1_values_tensor.GetShape().GetDims()), "1D");
     err_msg = string("failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
-  if (MakeShapeFromShapeTensor(op, "x1_shape", x1_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (MakeShapeFromShapeTensor(op, "x1_shape", x1_shape) != GRAPH_SUCCESS) {
     err_msg = ConcatString(
       "failed to call MakeShapeFromShapeTensor function to make shape from "
       "input[x1_shape]");
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
-  if (WithRankShape(x1_shape, 2, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRankShape(x1_shape, 2, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(2, DebugString(x1_shape.GetDims()), "2D");
     err_msg = string("failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
-  if (WithRank(x2_tensor, 2, x2_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x2_tensor, 2, x2_shape, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(3, DebugString(x2_tensor.GetShape().GetDims()), "2D");
     err_msg = string("failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);

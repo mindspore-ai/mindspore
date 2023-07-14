@@ -19,6 +19,7 @@
 
 #include "inc/ops/bitwise_ops.h"
 #include "inc/ops/elewise_calculation_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_elewise_calculation_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -46,6 +47,9 @@ DECLARE_OP_USE_OUTPUT(ZerosLike)
 
 DECLARE_OP_ADAPTER(OnesLike)
 DECLARE_OP_USE_OUTPUT(OnesLike)
+
+DECLARE_CUST_OP_ADAPTER(ArgMax)
+DECLARE_CUST_OP_USE_OUTPUT(ArgMax)
 
 DECLARE_OP_ADAPTER(ArgMaxD)
 DECLARE_OP_USE_OUTPUT(ArgMaxD)

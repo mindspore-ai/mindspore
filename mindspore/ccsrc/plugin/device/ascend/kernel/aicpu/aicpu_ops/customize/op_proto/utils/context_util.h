@@ -19,8 +19,8 @@
  * \brief
  */
 
-#ifndef CANN_OPS_BUILT_IN_CONTEXT_UTIL_H_
-#define CANN_OPS_BUILT_IN_CONTEXT_UTIL_H_
+#ifndef CANN_CUSTOMIZE_CONTEXT_UTIL_H_
+#define CANN_CUSTOMIZE_CONTEXT_UTIL_H_
 
 #include "runtime/infer_shape_context.h"
 #include "runtime/tiling_context.h"
@@ -43,4 +43,4 @@ namespace ops {
     return ret;                                                                                  \
   }
 }  // namespace ops
-#endif  // CANN_OPS_BUILT_IN_CONTEXT_UTIL_H_
+#endif  // CANN_CUSTOMIZE_CONTEXT_UTIL_H_

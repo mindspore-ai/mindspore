@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "transform/graph_ir/custom_op_proto/cust_elewise_calculation_ops.h"
 #include "ops/ascend_op_name.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
@@ -279,6 +280,13 @@ ATTR_MAP(OnesLike) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(OnesLike) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(OnesLike, kNameOnesLike, ADPT_DESC(OnesLike))
 
+// ArgMax
+CUST_INPUT_MAP(ArgMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
+CUST_ATTR_INPUT_MAP(ArgMax) = {{"axis", "dimension"}};
+CUST_ATTR_MAP(ArgMax) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+CUST_OUTPUT_MAP(ArgMax) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ArgMax, kNameArgmax, CUST_ADPT_DESC(ArgMax));
+
 // ArgMaxD
 INPUT_MAP(ArgMaxD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(ArgMaxD) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
@@ -291,7 +299,6 @@ INPUT_MAP(ArgMaxV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
 ATTR_INPUT_MAP(ArgMaxV2) = {{"axis", "dimension"}};
 ATTR_MAP(ArgMaxV2) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMaxV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ArgMax, kNameArgmax, ADPT_DESC(ArgMaxV2))
 REG_ADPT_DESC(ArgMaxV2, kNameArgMaxV2, ADPT_DESC(ArgMaxV2))
 
 // ArgMaxWithValue

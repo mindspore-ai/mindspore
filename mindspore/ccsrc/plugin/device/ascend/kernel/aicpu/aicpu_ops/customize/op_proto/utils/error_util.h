@@ -18,13 +18,12 @@
  * \file error_util.h
  * \brief
  */
-#ifndef OPS_COMMON_INC_ERROR_UTIL_H_
-#define OPS_COMMON_INC_ERROR_UTIL_H_
+#ifndef CUSTOMIZE_OP_PROTO_UTILS_ERROR_UTIL_H_
+#define CUSTOMIZE_OP_PROTO_UTILS_ERROR_UTIL_H_
 
 #include <sstream>
 #include <string>
 #include <vector>
-#include <utility>
 #include "common/util/error_manager/error_manager.h"
 #include "error_code.h"
 #include "graph/operator.h"
@@ -227,4 +226,4 @@ void GeInfershapeErrReport(const std::string &op_name, const std::string &op_typ
 void CommonRuntimeErrLog(const std::string &opname, const std::string &description);
 }  // namespace ge
 
-#endif  // OPS_COMMON_INC_ERROR_UTIL_H_
+#endif  // CUSTOMIZE_OP_PROTO_UTILS_ERROR_UTIL_H_

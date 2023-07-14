@@ -18,8 +18,8 @@
  * \file axis_util.h
  * \brief get the axis value
  */
-#ifndef OPS_BUILT_IN_OP_PROTO_UTIL_AXIS_UTIL_H_
-#define OPS_BUILT_IN_OP_PROTO_UTIL_AXIS_UTIL_H_
+#ifndef CUSTOMIZE_OP_PROTO_UTIL_AXIS_UTIL_H_
+#define CUSTOMIZE_OP_PROTO_UTIL_AXIS_UTIL_H_
 
 #include <memory>
 #include <functional>
@@ -142,4 +142,4 @@ class AxisUtil {
 };
 }  // namespace ge
 
-#endif  // OPS_BUILT_IN_OP_PROTO_UTIL_AXIS_UTIL_H_
+#endif  // CUSTOMIZE_OP_PROTO_UTIL_AXIS_UTIL_H_

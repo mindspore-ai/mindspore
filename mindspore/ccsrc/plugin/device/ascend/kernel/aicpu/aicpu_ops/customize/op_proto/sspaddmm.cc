@@ -111,19 +111,19 @@ CUST_IMPLEMT_INFERFUNC(Sspaddmm, SspaddmmInfer) {
   }
 
   // check dimension
-  if (WithRank(mat1_values_tensor, 1, unused_shape1, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(mat1_values_tensor, 1, unused_shape1, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(1, DebugString(mat1_values_tensor.GetShape().GetDims()), "1D");
     err_msg = string("MAT1 Values failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
-  if (WithRank(input_indices_tensor, 2, unused_shape2, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(input_indices_tensor, 2, unused_shape2, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(0, DebugString(input_indices_tensor.GetShape().GetDims()), "2D");
     err_msg = string("input indices failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
-  if (WithRank(input_values_tensor, 1, unused_shape1, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(input_values_tensor, 1, unused_shape1, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(1, DebugString(input_values_tensor.GetShape().GetDims()), "1D");
     err_msg = string("input values failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
@@ -134,7 +134,7 @@ CUST_IMPLEMT_INFERFUNC(Sspaddmm, SspaddmmInfer) {
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
-  if (WithRank(mat2_tensor, 2, mat2_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(mat2_tensor, 2, mat2_shape, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(3, DebugString(mat2_tensor.GetShape().GetDims()), "2D");
     err_msg = string("mat2 tensor failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);

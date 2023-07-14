@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/arg_max_op.h"
+#include "custom_op_proto/cust_elewise_calculation_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/op_const.h"
@@ -98,5 +98,5 @@ IMPLEMT_COMMON_INFERFUNC(ArgMaxInferShape) {
   return GRAPH_SUCCESS;
 }
 
-CUST_COMMON_INFER_FUNC_REG(ArgMaxV2, ArgMaxInferShape);
+CUST_COMMON_INFER_FUNC_REG(ArgMax, ArgMaxInferShape);
 }  // namespace ge

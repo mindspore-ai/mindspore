@@ -19,8 +19,8 @@
  * \brief
  */
 
-#ifndef CANN_OPS_BUILT_IN_OPS_CONST_H_
-#define CANN_OPS_BUILT_IN_OPS_CONST_H_
+#ifndef CANN_CUSTOMIZE_OPS_CONST_H_
+#define CANN_CUSTOMIZE_OPS_CONST_H_
 
 #include <vector>
 #include "external/graph/operator.h"
@@ -283,4 +283,4 @@ bool GetConstIntToShape(T *context, const int64_t const_idx, gert::Shape &const_
   return true;
 }
 }  // namespace ops
-#endif  // CANN_OPS_BUILT_IN_OPS_CONST_H_
+#endif  // CANN_CUSTOMIZE_OPS_CONST_H_

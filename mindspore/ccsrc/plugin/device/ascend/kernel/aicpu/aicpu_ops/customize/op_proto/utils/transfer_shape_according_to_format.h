@@ -18,8 +18,8 @@
  * \file transfer_shape_according_to_format.h
  * \brief set shape according to original format and current format
  */
-#ifndef OPS_BUILT_IN_OP_PROTO_UTIL_TRANSFER_SHAPE_ACCORDING_TO_FORMAT_H_
-#define OPS_BUILT_IN_OP_PROTO_UTIL_TRANSFER_SHAPE_ACCORDING_TO_FORMAT_H_
+#ifndef CUSTOMIZE_OP_PROTO_UTIL_TRANSFER_SHAPE_ACCORDING_TO_FORMAT_H_
+#define CUSTOMIZE_OP_PROTO_UTIL_TRANSFER_SHAPE_ACCORDING_TO_FORMAT_H_
 
 #include <memory>
 #include <functional>
@@ -121,4 +121,4 @@ class ShapeTransferAccordingToFormat {
 };
 }  // namespace ge
 
-#endif  // OPS_BUILT_IN_OP_PROTO_UTIL_TRANSFER_SHAPE_ACCORDING_TO_FORMAT_H_
+#endif  // CUSTOMIZE_OP_PROTO_UTIL_TRANSFER_SHAPE_ACCORDING_TO_FORMAT_H_

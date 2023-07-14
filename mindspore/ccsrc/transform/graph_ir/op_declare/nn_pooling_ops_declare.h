@@ -19,6 +19,7 @@
 
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "inc/ops/nn_pooling_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_nn_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -97,6 +98,36 @@ DECLARE_OP_USE_OUTPUT(Dilation2DBackpropFilter)
 DECLARE_OP_ADAPTER(Dilation2DBackpropInput)
 DECLARE_OP_USE_OUTPUT(Dilation2DBackpropInput)
 
-DECLARE_OP_ADAPTER(AdaptiveAvgPool2d)
-DECLARE_OP_USE_OUTPUT(AdaptiveAvgPool2d)
+DECLARE_CUST_OP_ADAPTER(AdaptiveAvgPool3dGrad)
+DECLARE_CUST_OP_USE_OUTPUT(AdaptiveAvgPool3dGrad)
+
+DECLARE_CUST_OP_ADAPTER(AdaptiveMaxPool2dGrad)
+DECLARE_CUST_OP_USE_OUTPUT(AdaptiveMaxPool2dGrad)
+
+DECLARE_CUST_OP_ADAPTER(AdaptiveAvgPool2D)
+DECLARE_CUST_OP_USE_OUTPUT(AdaptiveAvgPool2D)
+
+DECLARE_CUST_OP_ADAPTER(AdaptiveAvgPool3d)
+DECLARE_CUST_OP_USE_OUTPUT(AdaptiveAvgPool3d)
+
+DECLARE_CUST_OP_ADAPTER(AdaptiveAvgPool2DGrad)
+DECLARE_CUST_OP_USE_OUTPUT(AdaptiveAvgPool2DGrad)
+
+DECLARE_OP_ADAPTER(DataFormatVecPermute)
+DECLARE_OP_USE_OUTPUT(DataFormatVecPermute)
+
+DECLARE_CUST_OP_ADAPTER(MaxPool3DGradWithArgmax)
+DECLARE_CUST_OP_USE_OUTPUT(MaxPool3DGradWithArgmax)
+
+DECLARE_OP_ADAPTER(FractionalAvgPoolGrad)
+DECLARE_OP_USE_OUTPUT(FractionalAvgPoolGrad)
+
+DECLARE_OP_ADAPTER(FractionalMaxPool)
+DECLARE_OP_USE_OUTPUT(FractionalMaxPool)
+
+DECLARE_OP_ADAPTER(FractionalMaxPoolGrad)
+DECLARE_OP_USE_OUTPUT(FractionalMaxPoolGrad)
+
+DECLARE_OP_ADAPTER(FractionalAvgPool)
+DECLARE_OP_USE_OUTPUT(FractionalAvgPool)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_POOLING_OPS_DECLARE_H_

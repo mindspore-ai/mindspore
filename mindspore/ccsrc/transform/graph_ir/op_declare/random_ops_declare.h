@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RANDOM_OPS_DECLARE_H_
 
 #include "inc/ops/random_ops.h"
+#include "inc/ops/stateful_random_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_random_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -53,4 +55,13 @@ DECLARE_OP_USE_OUTPUT(RandomUniformInt)
 
 DECLARE_OP_ADAPTER(RandomUniform)
 DECLARE_OP_USE_OUTPUT(RandomUniform)
+
+DECLARE_CUST_OP_ADAPTER(LogNormalReverse)
+DECLARE_CUST_OP_USE_OUTPUT(LogNormalReverse)
+
+DECLARE_OP_ADAPTER(NonDeterministicInts)
+DECLARE_OP_USE_OUTPUT(NonDeterministicInts)
+
+DECLARE_CUST_OP_ADAPTER(Dropout2D)
+DECLARE_CUST_OP_USE_OUTPUT(Dropout2D)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RANDOM_OPS_DECLARE_H_

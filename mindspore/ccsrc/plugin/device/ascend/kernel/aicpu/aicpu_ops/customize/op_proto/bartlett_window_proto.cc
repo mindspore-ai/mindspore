@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/bartlett_window_op.h"
+#include "custom_op_proto/cust_spectral_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
@@ -22,14 +22,14 @@
 namespace ge {
 // ---------BartlettWindow-------------------
 IMPLEMT_COMMON_INFERFUNC(BartlettWindowInferShape) {
-  int dtype;
+  Operator::OpType dtype;
   Format input_format = op.GetInputDescByName("window_length").GetFormat();
   TensorDesc out_desc = op.GetOutputDescByName("y");
   Shape unused;
   std::string err_msg;
 
   // Set output shape
-  if (WithRankAtMost(op.GetInputDescByName("window_length"), 1, unused, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRankAtMost(op.GetInputDescByName("window_length"), 1, unused, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(1, DebugString(op.GetInputDescByName("window_length").GetShape().GetDims()), "at most 1D");
     err_msg = std::string("failed to call WithRankAtMost, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
@@ -39,19 +39,19 @@ IMPLEMT_COMMON_INFERFUNC(BartlettWindowInferShape) {
   auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
   op_desc->SetOpInferDepends(input_infer_depends);
   Tensor tensor;
+  Shape output_shape({UNKNOWN_DIM});
   if (op.GetInputConstData("window_length", tensor) == GRAPH_SUCCESS) {
-    auto tensor_data = reinterpret_cast<int64_t *>(tensor.GetData());
-    if (*tensor_data == 0) {
-      std::vector<int64_t> dim_vector = {};
-      Shape output_shape(dim_vector);
-      out_desc.SetShape(output_shape);
-    } else {
-      std::vector<int64_t> dim_vector = {};
-      dim_vector.push_back(*tensor_data);
-      Shape output_shape(dim_vector);
-      out_desc.SetShape(output_shape);
+    int64_t length;
+    if (MakeDimForScalarInput(tensor, length, op) != GRAPH_SUCCESS) {
+      return GRAPH_FAILED;
+    }
+    if (Vector(length, output_shape) != GRAPH_SUCCESS) {
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(),
+                                         string("fail to gen vector shape according dim bins."));
+      return GRAPH_FAILED;
     }
   }
+  out_desc.SetShape(output_shape);
 
   // Set output dtype
   if (op.GetAttr("dtype", dtype) != GRAPH_SUCCESS) {

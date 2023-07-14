@@ -25,41 +25,41 @@ CUST_IMPLEMT_INFERFUNC(CSRSparseMatrixToSparseTensor, CSRSparseMatrixToSparseTen
 
   GeShape x_dense_shape_shape;
   auto x_dense_shape_desc = op_desc->MutableInputDesc(0);
-  if (WithRank(x_dense_shape_desc, 1, x_dense_shape_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x_dense_shape_desc, 1, x_dense_shape_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input x_dense_shape must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape x_batch_pointers_shape;
   auto x_batch_pointers_desc = op_desc->MutableInputDesc(1);
-  if (WithRank(x_batch_pointers_desc, 1, x_batch_pointers_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x_batch_pointers_desc, 1, x_batch_pointers_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input x_batch_pointers must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape x_row_pointers_shape;
   auto x_row_pointers_desc = op_desc->MutableInputDesc(2);
-  if (WithRank(x_row_pointers_desc, 1, x_row_pointers_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x_row_pointers_desc, 1, x_row_pointers_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input x_row_pointers must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape x_col_indices_shape;
   auto x_col_indices_desc = op_desc->MutableInputDesc(3);
-  if (WithRank(x_col_indices_desc, 1, x_col_indices_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x_col_indices_desc, 1, x_col_indices_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input x_col_indices must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape x_values_shape;
   auto x_values_desc = op_desc->MutableInputDesc(4);
-  if (WithRank(x_values_desc, 1, x_values_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x_values_desc, 1, x_values_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input x_values must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape unused;
-  if (Merge(x_col_indices_shape, x_values_shape, unused, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (Merge(x_col_indices_shape, x_values_shape, unused, op) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
 
