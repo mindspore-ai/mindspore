@@ -202,6 +202,12 @@
 "mindspore/tests/st/ms_adapter/test_python_builtins.py"                                                 "unidiomatic-typecheck"
 "mindspore/tests/"                                                                                      "wrong-import-position"
 "mindspore/tests/"                                                                                      "wrong-import-order"
+"mindspore/tests/st/ops/dynamic_shape/"                                                                 "line-too-long"
+"mindspore/tests/st/ops/dynamic_shape/"                                                                 "missing-class-docstring"
+"mindspore/tests/st/ops/dynamic_shape/"                                                                 "missing-function-docstring"
+"mindspore/tests/st/ops/dynamic_shape/"                                                                 "relative-beyond-top-level"
+"mindspore/tests/st/ops/dynamic_shape/"                                                                 "too-many-arguments"
+"mindspore/tests/st/ops/dynamic_shape/"                                                                 "too-many-locals"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"
