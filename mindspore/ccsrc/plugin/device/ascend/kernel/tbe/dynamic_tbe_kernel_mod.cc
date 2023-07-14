@@ -294,9 +294,7 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
                          [](const AddressPtr &addr) { return addr->addr; });
   }
 
-  if (!tiling_data_.empty() && tiling_data_ptr_ != nullptr) {
-    runtimeargs.push_back(tiling_data_ptr_);
-  }
+  runtimeargs.push_back(tiling_data_ptr_);
 
   AddressPtr overflow_address_ptr = GetOverflowAddress();
   if (overflow_address_ptr != nullptr) {
