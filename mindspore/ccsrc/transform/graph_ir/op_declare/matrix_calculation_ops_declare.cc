@@ -251,4 +251,16 @@ ATTR_MAP(FillDiagonal) = {{"fill_value", ATTR_DESC(fill_value, AnyTraits<float>(
                           {"wrap", ATTR_DESC(wrap, AnyTraits<bool>())}};
 OUTPUT_MAP(FillDiagonal) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FillDiagonal, kNameFillDiagonal, ADPT_DESC(FillDiagonal));
+
+// Trace
+INPUT_MAP(Trace) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Trace) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Trace) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Trace, prim::kPrimTrace->name(), ADPT_DESC(Trace));
+
+// TraceGrad
+CUST_INPUT_MAP(TraceGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x_shape)}};
+CUST_ATTR_MAP(TraceGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(TraceGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(TraceGrad, prim::kPrimTraceGrad->name(), CUST_ADPT_DESC(TraceGrad));
 }  // namespace mindspore::transform

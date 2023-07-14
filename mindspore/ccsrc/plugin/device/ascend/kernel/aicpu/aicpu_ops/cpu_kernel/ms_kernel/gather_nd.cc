@@ -149,6 +149,10 @@ uint32_t GatherNdCpuKernel::GatherNdComputeRealKernel(CpuKernelContext &ctx) {
   for (int64_t i = 0; i < n_slices; ++i) {
     int64_t from_pos = 0;
     for (int64_t j = 0; j < indices_nd; ++j) {
+      if (indices_data[i * indices_nd + j] < 0) {
+        KERNEL_LOG_ERROR("For 'GatherNd', indices can't contain negative value.");
+        return KERNEL_STATUS_INNER_ERROR;
+      }
       from_pos += indices_data[i * indices_nd + j] * dims_to_count[j];
     }
     auto offset = i * slice_size;

@@ -64,4 +64,11 @@ INPUT_MAP(PadV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}, {3, INPUT_DES
 ATTR_MAP(PadV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(PadV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(PadV2, kNamePadV2, ADPT_DESC(PadV2))
+
+// PadV3Grad
+INPUT_MAP(PadV3Grad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
+ATTR_MAP(PadV3Grad) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())},
+                       {"paddings_contiguous", ATTR_DESC(paddings_contiguous, AnyTraits<bool>())}};
+OUTPUT_MAP(PadV3Grad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(PadV3Grad, kNamePadV3Grad, ADPT_DESC(PadV3Grad));
 }  // namespace mindspore::transform

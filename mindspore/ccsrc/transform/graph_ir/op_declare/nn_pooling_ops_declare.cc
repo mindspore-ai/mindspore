@@ -376,4 +376,10 @@ ATTR_MAP(FractionalAvgPool) = {{"pooling_ratio", ATTR_DESC(pooling_ratio, AnyTra
 OUTPUT_MAP(FractionalAvgPool) = {
   {0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(row_pooling_sequence)}, {2, OUTPUT_DESC(col_pooling_sequence)}};
 REG_ADPT_DESC(FractionalAvgPool, prim::kPrimFractionalAvgPool->name(), ADPT_DESC(FractionalAvgPool));
+
+// NthElement
+INPUT_MAP(NthElement) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(n)}};
+ATTR_MAP(NthElement) = {{"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(NthElement) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(NthElement, prim::kPrimNthElement->name(), ADPT_DESC(NthElement));
 }  // namespace mindspore::transform

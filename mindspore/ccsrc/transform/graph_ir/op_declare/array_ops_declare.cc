@@ -211,11 +211,11 @@ OUTPUT_MAP(Size) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Size, kNameSize, ADPT_DESC(Size))
 
 // Meshgrid
-INPUT_MAP(Meshgrid) = EMPTY_INPUT_MAP;
-DYN_INPUT_MAP(Meshgrid) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(Meshgrid) = {{"indexing", ATTR_DESC(indexing, AnyTraits<std::string>())}};
-DYN_OUTPUT_MAP(Meshgrid) = {{0, DYN_OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Meshgrid, prim::kPrimMeshgrid->name(), ADPT_DESC(Meshgrid))
+CUST_INPUT_MAP(Meshgrid) = EMPTY_INPUT_MAP;
+CUST_DYN_INPUT_MAP(Meshgrid) = {{1, DYN_INPUT_DESC(x)}};
+CUST_ATTR_MAP(Meshgrid) = {{"indexing", ATTR_DESC(indexing, AnyTraits<std::string>())}};
+CUST_DYN_OUTPUT_MAP(Meshgrid) = {{0, DYN_OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Meshgrid, prim::kPrimMeshgrid->name(), CUST_ADPT_DESC(Meshgrid))
 
 // SliceGrad
 CUST_INPUT_MAP(SliceGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(begin)}, {4, INPUT_DESC(size)}};
@@ -306,4 +306,30 @@ CUST_ATTR_MAP(LogSpace) = {{"steps", ATTR_DESC(steps, AnyTraits<int64_t>())},
                            {"base", ATTR_DESC(base, AnyTraits<int64_t>())}};
 CUST_OUTPUT_MAP(LogSpace) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LogSpace, prim::kPrimLogSpace->name(), CUST_ADPT_DESC(LogSpace));
+
+// UniqueConsecutive
+INPUT_MAP(UniqueConsecutive) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(UniqueConsecutive) = {{"return_idx", ATTR_DESC(return_idx, AnyTraits<bool>())},
+                               {"return_counts", ATTR_DESC(return_counts, AnyTraits<bool>())},
+                               {"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
+OUTPUT_MAP(UniqueConsecutive) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(idx)}, {2, OUTPUT_DESC(count)}};
+REG_ADPT_DESC(UniqueConsecutive, prim::kPrimUniqueConsecutive->name(), ADPT_DESC(UniqueConsecutive));
+
+// UpperBound
+INPUT_MAP(UpperBound) = {{1, INPUT_DESC(sorted_x)}, {2, INPUT_DESC(values)}};
+ATTR_MAP(UpperBound) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UpperBound) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpperBound, prim::kPrimUpperBound->name(), ADPT_DESC(UpperBound));
+
+// UnravelIndex
+INPUT_MAP(UnravelIndex) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(dims)}};
+ATTR_MAP(UnravelIndex) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UnravelIndex) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UnravelIndex, prim::kPrimUnravelIndex->name(), ADPT_DESC(UnravelIndex));
+
+// NoRepeatNGram
+CUST_INPUT_MAP(NoRepeatNGram) = {{1, INPUT_DESC(state_seq)}, {2, INPUT_DESC(log_probs)}};
+CUST_ATTR_MAP(NoRepeatNGram) = {{"ngram_size", ATTR_DESC(ngram_size, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(NoRepeatNGram) = {{0, OUTPUT_DESC(out)}};
+REG_ADPT_DESC(NoRepeatNGram, prim::kPrimNoRepeatNGram->name(), CUST_ADPT_DESC(NoRepeatNGram));
 }  // namespace mindspore::transform

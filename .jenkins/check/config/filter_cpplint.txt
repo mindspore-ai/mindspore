@@ -175,6 +175,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cast_kernels.cc" "build/include_order"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cast_kernels.h" "runtime/explicit"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cast_kernels.h" "whitespace/indent"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/meshgrid_kernels.h" "runtime/explicit"
 
 # custom AICPU op_protos
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/" "whitespace/ending_newline"

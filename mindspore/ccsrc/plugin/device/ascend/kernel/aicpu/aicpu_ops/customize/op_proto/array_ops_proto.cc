@@ -160,6 +160,11 @@ IMPLEMT_INFERFUNC(Expand, ExpandInferShape) {
         OP_LOGE(op_name, "Data shape are not compatible!");
         return GRAPH_FAILED;
       }
+    } else if (data_type == DT_INT16) {
+      if (!ExpandCalDim<int16_t>(data, vec_dim, x_dims, range_vector)) {
+        OP_LOGE(op_name, "Data shape are not compatible!");
+        return GRAPH_FAILED;
+      }
     } else {
       OP_LOGE(op_name, "Data type not supported!");
       return GRAPH_PARAM_INVALID;
@@ -412,12 +417,12 @@ static bool CheckSteps(const Operator &op, const string &attr_num_steps) {
 CUST_IMPLEMT_VERIFIER(LogSpace, LogSpaceVerify) {
   AscendString opName;
   op.GetName(opName);
-  if (op.GetInputDescByName("start").GetShape().GetDims().size() != 1) {
-    OP_LOGE(opName.GetString(), "Input start size must be 1.");
+  if (op.GetInputDescByName("start").GetShape().GetDims().size() > 1) {
+    OP_LOGE(opName.GetString(), "Input start size must be <= 1.");
     return GRAPH_FAILED;
   }
-  if (op.GetInputDescByName("end").GetShape().GetDims().size() != 1) {
-    OP_LOGE(opName.GetString(), "Input  end size must be 1.");
+  if (op.GetInputDescByName("end").GetShape().GetDims().size() > 1) {
+    OP_LOGE(opName.GetString(), "Input  end size must be <= 1.");
     return GRAPH_FAILED;
   }
   DataType input_type_start = op.GetInputDescByName("start").GetDataType();
@@ -462,4 +467,108 @@ CUST_COMMON_INFER_FUNC_REG(LogSpace, LogSpaceInferShape);
 // Registered verify function
 CUST_VERIFY_FUNC_REG(LogSpace, LogSpaceVerify);
 // --------------------------LogSpace END---------------------
+
+// ----------------UniqueConsecutive Begin-------------------
+IMPLEMT_INFERFUNC(UniqueConsecutive, UniqueConsecutiveInfer) {
+  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
+  auto x_desc_ptr = op_desc->MutableInputDesc(0);
+  auto y_desc_ptr = op_desc->MutableOutputDesc(0);
+  y_desc_ptr->SetDataType(x_desc_ptr->GetDataType());
+
+  auto idx_desc_ptr = op_desc->MutableOutputDesc(1);
+  auto count_desc_ptr = op_desc->MutableOutputDesc(2);
+
+  auto &y_shape = y_desc_ptr->MutableShape();
+  auto &idx_shape = idx_desc_ptr->MutableShape();
+  auto &count_shape = count_desc_ptr->MutableShape();
+
+  bool return_idx = false;
+  bool return_counts = false;
+  int64_t axis = 1000;
+
+  op.GetAttr("axis", axis);
+  op.GetAttr("return_idx", return_idx);
+  op.GetAttr("return_counts", return_counts);
+  count_shape.SetIsUnknownDimNum();
+  count_desc_ptr->SetDataType(DT_INT64);
+  idx_shape.SetIsUnknownDimNum();
+  idx_desc_ptr->SetDataType(DT_INT64);
+  y_shape.SetIsUnknownDimNum();
+
+  return GRAPH_SUCCESS;
+}
+
+INFER_FUNC_REG(UniqueConsecutive, UniqueConsecutiveInfer);
+// ----------------UniqueConsecutive End-----------------------
+
+// ----------------UpperBound-----------------------
+IMPLEMT_INFERFUNC(UpperBound, UpperBoundInfer) {
+  Shape unused_shape;
+  if (WithRank(op.GetInputDesc(0), 2, unused_shape, op) != GRAPH_SUCCESS) {
+    string err_msg = ConcatString("failed to call WithRank function, input[sorted_x] rank must be 2D, got rank[",
+                                  op.GetInputDesc(0).GetShape().GetDimNum(), "]");
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (WithRank(op.GetInputDesc(1), 2, unused_shape, op) != GRAPH_SUCCESS) {
+    string err_msg = ConcatString("failed to call WithRank function, input[values] rank must be 2D, got rank[",
+                                  op.GetInputDesc(1).GetShape().GetDimNum(), "]");
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  DataType type;
+  if (op.GetAttr("out_type", type) != GRAPH_SUCCESS) {
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("get attr[out_type] failed"));
+    return GRAPH_FAILED;
+  }
+
+  TensorDesc out_desc = op.GetOutputDescByName("y");
+  out_desc.SetShape(op.GetInputDesc(1).GetShape());
+  out_desc.SetDataType(type);
+  return op.UpdateOutputDesc("y", out_desc);
+}
+
+INFER_FUNC_REG(UpperBound, UpperBoundInfer);
+// ----------------UpperBound END-----------------------
+
+// ----------------UnravelIndex-----------------------
+IMPLEMT_INFERFUNC(UnravelIndex, UnravelIndexInfer) {
+  auto indices_desc = op.GetInputDesc(0);
+  auto dims_desc = op.GetInputDesc(1);
+
+  Shape dims_shape;
+  if (WithRank(dims_desc, 1, dims_shape, op) != GRAPH_SUCCESS) {
+    string err_msg = ConcatString("input[dims] must be 1D, real rank is ", dims_shape.GetDimNum());
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  Shape indices_shape;
+  if (WithRankAtMost(indices_desc, 1, indices_shape, op) != GRAPH_SUCCESS) {
+    string err_msg = ConcatString("input[indices] must be less than 1D, real rank is ", dims_shape.GetDimNum());
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  std::vector<int64_t> out_dims({-1, -1});
+  std::vector<int64_t> dims_shape_vec = dims_shape.GetDims();
+  std::vector<int64_t> indices_shape_vec = indices_shape.GetDims();
+  if (indices_shape.GetDimNum() == 0) {
+    out_dims.pop_back();
+  } else {
+    if (indices_shape_vec != ge::UNKNOWN_RANK && indices_shape_vec != ge::UNKNOWN_SHAPE) {
+      out_dims[1] = indices_shape_vec[0];
+    }
+  }
+  if (dims_shape_vec != ge::UNKNOWN_RANK && dims_shape_vec != ge::UNKNOWN_SHAPE) {
+    out_dims[0] = dims_shape_vec[0];
+  }
+
+  TensorDesc out_desc = op.GetOutputDescByName("y");
+  out_desc.SetShape(Shape(out_dims));
+  out_desc.SetDataType(indices_desc.GetDataType());
+  return op.UpdateOutputDesc("y", out_desc);
+}
+
+INFER_FUNC_REG(UnravelIndex, UnravelIndexInfer);
+// ----------------UnravelIndex END-----------------------
 }  // namespace ge

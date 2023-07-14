@@ -52,6 +52,7 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         ${CMAKE_CURRENT_SOURCE_DIR}/candidate_sampler_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cast_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/concat_offset_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/meshgrid_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/drop_out_gen_mask_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/expand_dims_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/flatten_kernels.cc

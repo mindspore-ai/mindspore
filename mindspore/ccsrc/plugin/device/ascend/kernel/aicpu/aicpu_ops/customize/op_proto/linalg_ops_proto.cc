@@ -404,4 +404,92 @@ CUST_IMPLEMT_VERIFIER(LuSolve, LuSolveVerify) {
 CUST_COMMON_INFER_FUNC_REG(LuSolve, LuSolveInferShape);
 CUST_VERIFY_FUNC_REG(LuSolve, LuSolveVerify);
 // -----------------------LuSolve END---------------------------------
+
+// -----------------------Qr---------------------------------
+IMPLEMT_INFERFUNC(Qr, QrInfer) {
+  auto tensor = op.get_input_desc_x();
+  Shape input;
+  if (WithRankAtLeast(tensor, 2, input, op) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+
+  Shape batch_shape;
+  if (SubShape(input, 0, -2, 1, batch_shape, op) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+
+  int dim_num = input.GetDimNum();
+  int m = input.GetDim(dim_num - 2);
+  int n = input.GetDim(dim_num - 1);
+  Shape q_shape;
+  Shape r_shape;
+  auto full_matrices = op.get_attr_full_matrices();
+
+  if (full_matrices) {
+    // [...,M,M]; [...,M,N], if full_matrices is true
+    Shape m_m_shape;
+    Shape m_n_shape;
+    Matrix(m, m, m_m_shape);
+    Matrix(m, n, m_n_shape);
+
+    Concatenate(batch_shape, m_m_shape, q_shape);
+    Concatenate(batch_shape, m_n_shape, r_shape);
+  } else {
+    // [...,M,P]; [...,P,N], if full_matrices is false
+    int p = m > n ? n : m;
+    Shape m_p_shape;
+    Shape p_n_shape;
+    Matrix(m, p, m_p_shape);
+    Matrix(p, n, p_n_shape);
+
+    Concatenate(batch_shape, m_p_shape, q_shape);
+    Concatenate(batch_shape, p_n_shape, r_shape);
+  }
+
+  DataType type = op.GetInputDescByName("x").GetDataType();
+  TensorDesc q_desc = op.GetOutputDescByName("q");
+  q_desc.SetShape(Shape(q_shape));
+  q_desc.SetDataType(type);
+  if (op.UpdateOutputDesc("q", q_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Update q desc failed.");
+    return GRAPH_FAILED;
+  }
+
+  TensorDesc r_desc = op.GetOutputDescByName("r");
+  r_desc.SetShape(Shape(r_shape));
+  r_desc.SetDataType(type);
+  if (op.UpdateOutputDesc("r", r_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Update r desc failed.");
+    return GRAPH_FAILED;
+  }
+
+  return GRAPH_SUCCESS;
+}
+
+INFER_FUNC_REG(Qr, QrInfer);
+// -----------------------Qr END---------------------------------
+
+// -----------------------CholeskyGrad---------------------------------
+IMPLEMT_INFERFUNC(CholeskyGrad, CholeskyGradInfer) {
+  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
+  auto x_desc = op_desc->MutableInputDesc(0);
+
+  GeShape y_shape;
+  if (MakeBatchSquareMatrix(x_desc, y_shape, op) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(),
+            "Op CholeskyGrad first input x tensor make batch square matrix "
+            "failed.");
+    return GRAPH_FAILED;
+  }
+
+  DataType type = x_desc->GetDataType();
+  auto y_desc = op_desc->MutableOutputDesc(0);
+  y_desc->SetShape(y_shape);
+  y_desc->SetDataType(type);
+
+  return GRAPH_SUCCESS;
+}
+
+INFER_FUNC_REG(CholeskyGrad, CholeskyGradInfer);
+// -----------------------CholeskyGrad END---------------------------------
 }  // namespace ge

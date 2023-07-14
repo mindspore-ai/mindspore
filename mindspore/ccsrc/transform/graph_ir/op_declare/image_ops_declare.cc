@@ -189,4 +189,27 @@ ATTR_MAP(ExtractGlimpse) = {{"noise", ATTR_DESC(noise, AnyTraits<std::string>())
                             {"uniform_noise", ATTR_DESC(uniform_noise, AnyTraits<bool>())}};
 OUTPUT_MAP(ExtractGlimpse) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ExtractGlimpse, prim::kPrimExtractGlimpse->name(), ADPT_DESC(ExtractGlimpse));
+
+// ScaleAndTranslateGrad
+INPUT_MAP(ScaleAndTranslateGrad) = {
+  {1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}, {3, INPUT_DESC(scale)}, {4, INPUT_DESC(translation)}};
+ATTR_MAP(ScaleAndTranslateGrad) = {{"kernel_type", ATTR_DESC(kernel_type, AnyTraits<std::string>())},
+                                   {"antialias", ATTR_DESC(antialias, AnyTraits<bool>())}};
+OUTPUT_MAP(ScaleAndTranslateGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ScaleAndTranslateGrad, prim::kPrimScaleAndTranslateGrad->name(), ADPT_DESC(ScaleAndTranslateGrad));
+
+// ResizeBicubicGrad
+INPUT_MAP(ResizeBicubicGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
+ATTR_MAP(ResizeBicubicGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
+                               {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeBicubicGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ResizeBicubicGrad, prim::kPrimResizeBicubicGrad->name(), ADPT_DESC(ResizeBicubicGrad));
+
+// ScaleAndTranslate
+INPUT_MAP(ScaleAndTranslate) = {
+  {1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}, {3, INPUT_DESC(scale)}, {4, INPUT_DESC(translation)}};
+ATTR_MAP(ScaleAndTranslate) = {{"kernel_type", ATTR_DESC(kernel_type, AnyTraits<std::string>())},
+                               {"antialias", ATTR_DESC(antialias, AnyTraits<bool>())}};
+OUTPUT_MAP(ScaleAndTranslate) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ScaleAndTranslate, prim::kPrimScaleAndTranslate->name(), ADPT_DESC(ScaleAndTranslate));
 }  // namespace mindspore::transform

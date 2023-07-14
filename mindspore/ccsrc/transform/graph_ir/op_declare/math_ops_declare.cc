@@ -309,4 +309,34 @@ CUST_INPUT_MAP(Gcd) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 CUST_ATTR_MAP(Gcd) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(Gcd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Gcd, prim::kPrimGcd->name(), CUST_ADPT_DESC(Gcd));
+
+// Orgqr
+CUST_INPUT_MAP(Orgqr) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(tau)}};
+CUST_ATTR_MAP(Orgqr) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Orgqr) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Orgqr, prim::kPrimOrgqr->name(), CUST_ADPT_DESC(Orgqr));
+
+// RaggedRange
+INPUT_MAP(RaggedRange) = {{1, INPUT_DESC(starts)}, {2, INPUT_DESC(limits)}, {3, INPUT_DESC(deltas)}};
+ATTR_MAP(RaggedRange) = {{"Tsplits", ATTR_DESC(Tsplits, AnyTraits<GEType>())}};
+OUTPUT_MAP(RaggedRange) = {{0, OUTPUT_DESC(rt_nested_splits)}, {1, OUTPUT_DESC(rt_dense_values)}};
+REG_ADPT_DESC(RaggedRange, prim::kPrimRaggedRange->name(), ADPT_DESC(RaggedRange));
+
+// Imag
+INPUT_MAP(Imag) = {{1, INPUT_DESC(input)}};
+ATTR_MAP(Imag) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Imag) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Imag, prim::kPrimImag->name(), ADPT_DESC(Imag));
+
+// Lgamma
+CUST_INPUT_MAP(Lgamma) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Lgamma) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Lgamma) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Lgamma, prim::kPrimLgamma->name(), CUST_ADPT_DESC(Lgamma));
+
+// Real
+INPUT_MAP(Real) = {{1, INPUT_DESC(input)}};
+ATTR_MAP(Real) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Real) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Real, prim::kPrimReal->name(), ADPT_DESC(Real));
 }  // namespace mindspore::transform

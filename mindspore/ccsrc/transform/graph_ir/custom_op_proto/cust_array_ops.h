@@ -22,13 +22,13 @@
 /* clang-format off */
 
 namespace ge {
-REG_OP(Meshgrid)
+REG_CUST_OP(Meshgrid)
   .DYNAMIC_INPUT(x, TensorType({DT_INT8, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32,
                                 DT_UINT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BOOL}))
   .DYNAMIC_OUTPUT(y, TensorType({DT_INT8, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32,
                                  DT_UINT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BOOL}))
   .ATTR(indexing, String, "")
-  .OP_END_FACTORY_REG(Meshgrid)
+  .CUST_OP_END_FACTORY_REG(Meshgrid)
 
 REG_CUST_OP(SliceGrad)
   .INPUT(dy, TensorType({DT_BOOL, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64,
@@ -104,5 +104,11 @@ REG_CUST_OP(LogSpace)
   .REQUIRED_ATTR(steps, Int)
   .REQUIRED_ATTR(base, Int)
   .CUST_OP_END_FACTORY_REG(LogSpace)
+
+REG_CUST_OP(Expand)
+    .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT8, DT_BOOL}))
+    .INPUT(shape, TensorType({DT_INT16, DT_INT32, DT_INT64}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT8, DT_BOOL}))
+    .CUST_OP_END_FACTORY_REG(Expand)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_ARRAY_OPS_H_

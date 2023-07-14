@@ -19,6 +19,7 @@
 
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "inc/ops/matrix_calculation_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_math_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -126,4 +127,10 @@ DECLARE_OP_USE_OUTPUT(Eye)
 
 DECLARE_OP_ADAPTER(FillDiagonal)
 DECLARE_OP_USE_OUTPUT(FillDiagonal)
+
+DECLARE_OP_ADAPTER(Trace)
+DECLARE_OP_USE_OUTPUT(Trace)
+
+DECLARE_CUST_OP_ADAPTER(TraceGrad)
+DECLARE_CUST_OP_USE_OUTPUT(TraceGrad)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATRIX_CALCULATION_OPS_DECLARE_H_

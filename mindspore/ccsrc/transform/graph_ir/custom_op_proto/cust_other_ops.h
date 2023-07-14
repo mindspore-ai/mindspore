@@ -19,6 +19,7 @@
 
 #include "graph/operator_reg.h"
 #include "graph/operator.h"
+#include "transform/graph_ir/custom_op_proto/op_proto_macro.h"
 
 /* clang-format off */
 
@@ -29,5 +30,12 @@ REG_OP(KVCacheMgr)
   .INPUT(index, TensorType({DT_INT32}))
   .OUTPUT(past, TensorType({DT_FLOAT16}))
   .OP_END_FACTORY_REG(KVCacheMgr)
+
+REG_CUST_OP(NoRepeatNGram)
+  .INPUT(state_seq, TensorType({DT_INT32}))
+  .INPUT(log_probs, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
+  .OUTPUT(out, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
+  .REQUIRED_ATTR(ngram_size, Int)
+  .CUST_OP_END_FACTORY_REG(NoRepeatNGram)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_OTHER_OPS_H_

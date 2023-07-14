@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_
 
 #include "inc/ops/math_ops.h"
+#include "inc/ops/ragged_math_ops.h"
 #include "inc/ops/spectral_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_math_ops.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
@@ -146,4 +147,19 @@ DECLARE_CUST_OP_USE_OUTPUT(Heaviside)
 
 DECLARE_CUST_OP_ADAPTER(Gcd)
 DECLARE_CUST_OP_USE_OUTPUT(Gcd)
+
+DECLARE_CUST_OP_ADAPTER(Orgqr)
+DECLARE_CUST_OP_USE_OUTPUT(Orgqr)
+
+DECLARE_OP_ADAPTER(RaggedRange)
+DECLARE_OP_USE_OUTPUT(RaggedRange)
+
+DECLARE_OP_ADAPTER(Imag)
+DECLARE_OP_USE_OUTPUT(Imag)
+
+DECLARE_CUST_OP_ADAPTER(Lgamma)
+DECLARE_CUST_OP_USE_OUTPUT(Lgamma)
+
+DECLARE_OP_ADAPTER(Real)
+DECLARE_OP_USE_OUTPUT(Real)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_

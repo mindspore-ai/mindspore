@@ -5,9 +5,11 @@
  */
 
 #include "inc/ops/math_ops.h"
+#include "inc/ops/ragged_math_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
+#include "utils/reduce_infer_util.h"
 
 namespace ge {
 // ----------------ComplexAbs-------------------
@@ -212,4 +214,113 @@ IMPLEMT_INFERFUNC(IsInf, IsInfInfer) {
 
 INFER_FUNC_REG(IsInf, IsInfInfer);
 // ----------------IsInf END------------------------
+
+// ----------------ReduceOp-------------------
+static bool InferReduceShapeProcess(const Operator &op, const int64_t input_x_idx, const int64_t output_y_idx,
+                                    const int64_t input_axes_idx) {
+  bool keep_dims = false;
+  op.GetAttr("keep_dims", keep_dims);
+  reduce_ops::CommonReduceInferWithInputAxes(op, input_x_idx, output_y_idx, input_axes_idx, keep_dims);
+  return true;
+}
+
+IMPLEMT_COMMON_INFERFUNC(TypicalReduceInferShape) {
+  OP_LOGD(TbeGetName(op), "Enter %s InferShape", TbeGetOpType(op).c_str());
+  const int64_t input_x_idx = 0;
+  const int64_t output_y_idx = 0;
+  const int64_t input_axes_idx = 1;
+  if (InferReduceShapeProcess(op, input_x_idx, output_y_idx, input_axes_idx)) {
+    return GRAPH_SUCCESS;
+  }
+  return GRAPH_FAILED;
+}
+
+COMMON_INFER_FUNC_REG(ReduceSum, TypicalReduceInferShape);
+// ----------------ReduceOp END-------------------
+
+// ----------------RaggedRange-------------------
+IMPLEMT_INFERFUNC(RaggedRange, RaggedRangeInfer) {
+  Shape starts;
+  Shape limits;
+  Shape deltas;
+  if (WithRankAtMost(op.GetInputDesc(0), 1, starts, op) != GRAPH_SUCCESS) {
+    std::string err_msg =
+      ConcatString("failed to call WithRankAtMost function, ", "input[starts] rank must be at most 1D, got rank[",
+                   op.GetInputDesc(0).GetShape().GetDimNum(), "]");
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (WithRankAtMost(op.GetInputDesc(1), 1, limits, op) != GRAPH_SUCCESS) {
+    std::string err_msg =
+      ConcatString("failed to call WithRankAtMost function, ", "input[limits] rank must be at most 1D, got rank[",
+                   op.GetInputDesc(1).GetShape().GetDimNum(), "]");
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (WithRankAtMost(op.GetInputDesc(2), 1, deltas, op) != GRAPH_SUCCESS) {
+    std::string err_msg =
+      ConcatString("failed to call WithRankAtMost function, input[deltas] ", "rank must be at most 1D, got rank[",
+                   op.GetInputDesc(2).GetShape().GetDimNum(), "]");
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  int64_t dim = ge::UNKNOWN_DIM;
+  int64_t starts_dim = starts.GetDim(0);
+  int64_t limits_dim = limits.GetDim(0);
+  int64_t deltas_dim = deltas.GetDim(0);
+  if (op.GetInputDesc(0).GetShape().GetDimNum() == 1) {
+    if (Merge(starts_dim, dim, dim) != GRAPH_SUCCESS) {
+      std::string err_msg = ConcatString("failed to call Merge function, the 0th dim[", starts_dim,
+                                         "] of input[starts] not equal UNKNOWN_DIM");
+      AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+      return GRAPH_FAILED;
+    }
+  }
+  if (op.GetInputDesc(1).GetShape().GetDimNum() == 1) {
+    if (Merge(limits_dim, dim, dim) != GRAPH_SUCCESS) {
+      std::string err_msg = ConcatString("failed to call Merge function, the 0th dim[", limits_dim,
+                                         "] of input[limits] not equal UNKNOWN_DIM");
+      AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+      return GRAPH_FAILED;
+    }
+  }
+  if (op.GetInputDesc(2).GetShape().GetDimNum() == 1) {
+    if (Merge(deltas_dim, dim, dim) != GRAPH_SUCCESS) {
+      std::string err_msg = ConcatString("failed to call Merge function, the 0th dim[", deltas_dim,
+                                         "] of input[deltas] not equal UNKNOWN_DIM");
+      AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+      return GRAPH_FAILED;
+    }
+  }
+
+  int64_t rt_nested_splits_dim = ge::UNKNOWN_DIM;
+  if (dim != ge::UNKNOWN_DIM) {
+    rt_nested_splits_dim = dim + 1;
+  } else if (op.GetInputDesc(0).GetShape().GetDimNum() == 0 && op.GetInputDesc(1).GetShape().GetDimNum() == 0 &&
+             op.GetInputDesc(2).GetShape().GetDimNum() == 0) {
+    rt_nested_splits_dim = 2;
+  }
+
+  DataType Tsplits_type;
+  if (op.GetAttr("Tsplits", Tsplits_type) != GRAPH_SUCCESS) {
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("get attr[Tsplits] failed"));
+    return GRAPH_FAILED;
+  }
+  TensorDesc rt_nested_desc = op.GetOutputDescByName("rt_nested_splits");
+  rt_nested_desc.SetShape(Shape({rt_nested_splits_dim}));
+  rt_nested_desc.SetDataType(Tsplits_type);
+  (void)op.UpdateOutputDesc("rt_nested_splits", rt_nested_desc);
+
+  DataType T_type = op.GetInputDescByName("starts").GetDataType();
+  std::vector<int64_t> unknow_dim_vec(1, UNKNOWN_DIM);
+  TensorDesc dense_desc = op.GetOutputDescByName("rt_dense_values");
+  dense_desc.SetShape(Shape(unknow_dim_vec));
+  dense_desc.SetDataType(T_type);
+  (void)op.UpdateOutputDesc("rt_dense_values", dense_desc);
+  return GRAPH_SUCCESS;
+}
+
+INFER_FUNC_REG(RaggedRange, RaggedRangeInfer);
+// ----------------RaggedRange END-------------------
 }  // namespace ge
