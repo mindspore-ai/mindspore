@@ -682,6 +682,61 @@ int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func
   return RET_OK;
 }
 
+int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                 size_t input_index, ParameterPtr *scales_node, ParameterPtr *zps_node,
+                                                 TypeId src_dtype, TypeId dst_dtype, int axis) {
+  auto input_node = cnode->input(input_index);
+  auto input_quant_params = quant::GetInputNodeQuantParam(cnode, input_index);
+  if (input_quant_params.empty()) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " index: " << input_index << " quant param is empty.";
+    return RET_ERROR;
+  }
+
+  if (dst_dtype == kNumberTypeFloat16) {
+    std::vector<float16> scales;
+    std::vector<float16> zps;
+    for (size_t i = 0; i < input_quant_params.size(); ++i) {
+      scales.push_back(static_cast<float16>(input_quant_params.at(i).scale * input_quant_params.at(i).varCorr));
+      zps.push_back(static_cast<float16>(-input_quant_params.at(i).zeroPoint +
+                                         input_quant_params.at(i).meanCorr /
+                                           (input_quant_params.at(i).scale * input_quant_params.at(i).varCorr)));
+    }
+    *scales_node = opt::BuildFloat16VecParameterNode(func_graph, scales, input_node->fullname_with_scope() + "-scales");
+    *zps_node = opt::BuildFloat16VecParameterNode(func_graph, zps, input_node->fullname_with_scope() + "-zps");
+  } else {
+    std::vector<float> scales;
+    std::vector<float> zps;
+    for (size_t i = 0; i < input_quant_params.size(); ++i) {
+      scales.push_back(static_cast<float>(input_quant_params.at(i).scale * input_quant_params.at(i).varCorr));
+      zps.push_back(static_cast<float>(-input_quant_params.at(i).zeroPoint +
+                                       input_quant_params.at(i).meanCorr /
+                                         (input_quant_params.at(i).scale * input_quant_params.at(i).varCorr)));
+    }
+    *scales_node = opt::BuildFloatVecParameterNode(func_graph, scales, input_node->fullname_with_scope() + "-scales");
+    *zps_node = opt::BuildFloatVecParameterNode(func_graph, zps, input_node->fullname_with_scope() + "-zps");
+  }
+  if (input_quant_params.size() > 1) {
+    ShapeVector shape;
+    if (opt::FetchShapeFromAbstract(input_node->abstract(), &shape) != lite::RET_OK) {
+      MS_LOG(ERROR) << "fetch shape failed." << input_node->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+    std::vector<int64_t> shape_vector = {};
+    for (size_t i = 0; i < shape.size(); i++) {
+      if (i == static_cast<size_t>(axis)) {
+        shape_vector.push_back((int64_t)input_quant_params.size());
+      } else {
+        shape_vector.push_back(1);
+      }
+    }
+    auto scales_abstract = (*scales_node)->abstract();
+    scales_abstract->set_shape(std::make_shared<abstract::Shape>(shape_vector));
+    auto zps_abstract = (*zps_node)->abstract();
+    zps_abstract->set_shape(std::make_shared<abstract::Shape>(shape_vector));
+  }
+  return RET_OK;
+}
+
 int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                       size_t input_index, TypeId src_dtype, TypeId dst_dtype, int axis,
                                                       AscendBackend ascend_backend) {
@@ -722,47 +777,10 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
   CHECK_NULL_RETURN(cast_cnode);
   ParameterPtr scales_node;
   ParameterPtr zps_node;
-  if (dst_dtype == kNumberTypeFloat16) {
-    std::vector<float16> scales;
-    std::vector<float16> zps;
-    for (size_t i = 0; i < input_quant_params.size(); ++i) {
-      scales.push_back(static_cast<float16>(input_quant_params.at(i).scale * input_quant_params.at(i).varCorr));
-      zps.push_back(static_cast<float16>(-input_quant_params.at(i).zeroPoint +
-                                         input_quant_params.at(i).meanCorr /
-                                           (input_quant_params.at(i).scale * input_quant_params.at(i).varCorr)));
-    }
-    scales_node = opt::BuildFloat16VecParameterNode(func_graph, scales, input_node->fullname_with_scope() + "-scales");
-    zps_node = opt::BuildFloat16VecParameterNode(func_graph, zps, input_node->fullname_with_scope() + "-zps");
-  } else {
-    std::vector<float> scales;
-    std::vector<float> zps;
-    for (size_t i = 0; i < input_quant_params.size(); ++i) {
-      scales.push_back(static_cast<float>(input_quant_params.at(i).scale * input_quant_params.at(i).varCorr));
-      zps.push_back(static_cast<float>(-input_quant_params.at(i).zeroPoint +
-                                       input_quant_params.at(i).meanCorr /
-                                         (input_quant_params.at(i).scale * input_quant_params.at(i).varCorr)));
-    }
-    scales_node = opt::BuildFloatVecParameterNode(func_graph, scales, input_node->fullname_with_scope() + "-scales");
-    zps_node = opt::BuildFloatVecParameterNode(func_graph, zps, input_node->fullname_with_scope() + "-zps");
-  }
-  if (input_quant_params.size() > 1) {
-    ShapeVector shape;
-    if (opt::FetchShapeFromAbstract(input_node->abstract(), &shape) != lite::RET_OK) {
-      MS_LOG(ERROR) << "fetch shape failed." << input_node->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
-    std::vector<int64_t> shape_vector = {};
-    for (size_t i = 0; i < shape.size(); i++) {
-      if (i == static_cast<size_t>(axis)) {
-        shape_vector.push_back((int64_t)input_quant_params.size());
-      } else {
-        shape_vector.push_back(1);
-      }
-    }
-    auto scales_abstract = scales_node->abstract();
-    scales_abstract->set_shape(std::make_shared<abstract::Shape>(shape_vector));
-    auto zps_abstract = zps_node->abstract();
-    zps_abstract->set_shape(std::make_shared<abstract::Shape>(shape_vector));
+  auto ret = CalculateScaleZPNode(func_graph, cnode, input_index, &scales_node, &zps_node, src_dtype, dst_dtype, axis);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fail to Remove node: " << input_node->fullname_with_scope() << " quant param";
+    return RET_ERROR;
   }
 
   auto add_cnode = NewAddNode(func_graph, cast_cnode, zps_node);
@@ -771,6 +789,14 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
   auto mul_cnode = NewMulNode(func_graph, add_cnode, scales_node);
   CHECK_NULL_RETURN(mul_cnode);
   auto node_map = manager->node_users();
+
+  // Remove QuantParam
+  ret = RemoveInputNodeQuantParam(cnode, input_index);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fail to Remove node: " << input_node->fullname_with_scope() << " quant param";
+    return RET_ERROR;
+  }
+
   AnfNodeIndexSet node_user;
   if (opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
     node_user = node_map[cnode];
