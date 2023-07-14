@@ -42,14 +42,6 @@ class Initializer:
 
     Args:
         kwargs (dict): Keyword arguments for Initializer.
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore.common.initializer import Initializer
-        >>> tensor = Initializer('ones', [1, 2, 3], mindspore.int32)
-        >>> print(tensor)
-        [[[1 1 1]
-          [1 1 1]]]
     """
 
     def __init__(self, **kwargs):
@@ -826,7 +818,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
         >>> from mindspore import Tensor
         >>> from mindspore.common.initializer import initializer, One
         >>> from mindspore import Parameter
-        >>> data = Tensor(np.zeros([1, 2, 3]), mindspore.float32))
+        >>> data = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
         >>> w1 = Parameter(initializer(data, [1, 2, 3], mindspore.float32))
         >>> w2 = Parameter(initializer('ones', [1, 2, 3], mindspore.float32))
         >>> w3 = Parameter(initializer(One(), [1, 2, 3], mindspore.float32))
