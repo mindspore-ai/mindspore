@@ -94,11 +94,9 @@ Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 /// \param task: Lambda functions to be processed.
 /// \param input_size: Size of the input.
 /// \param block_size: Customized size for each thread processing.
-/// \param task_num: The final calculated number of threads.
-/// \param once_compute_size: The final calculated size for each thread processing.
 /// \return Status code.
-Status AudioParallelLaunch(const std::function<void(size_t, size_t, size_t)> &task, size_t input_size, float block_size,
-                           size_t task_num, size_t once_compute_size);
+Status AudioParallelLaunch(const std::function<void(size_t, size_t, size_t, size_t)> &task, size_t input_size,
+                           float block_size);
 
 /// \brief Compute the thread nums.
 /// \param input_size: Size of the input.
@@ -121,17 +119,11 @@ Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
   std::vector<std::thread> threads;
   size_t input_size = input->Size();
   float block_size = 30000;
-  size_t task_num = 0;
-  size_t once_compute_size = 0;
-  auto task = [&input, &out, &once_compute_size, &task_num, &input_size](size_t start, size_t end, size_t num) {
+  auto task = [&input, &out, &input_size](size_t start, size_t end, size_t num, size_t task_num) {
     T o;
     T x;
     T y;
 
-    if (once_compute_size % TWO == 1) {
-      start -= num;
-      end -= (num + 1);
-    }
     if ((task_num - num) == 1) {
       end = input_size;
     }
@@ -154,7 +146,7 @@ Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
       itr_out++;
     }
   };
-  RETURN_IF_NOT_OK(AudioParallelLaunch(task, input_size, block_size, task_num, once_compute_size));
+  RETURN_IF_NOT_OK(AudioParallelLaunch(task, input_size, block_size));
   *output = out;
   return Status::OK();
 }
@@ -197,12 +189,11 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(output_shape, input->type(), &out));
 
   // Get the thread num and once compute size.
-  size_t task_num = 0;
-  size_t once_compute_size = 0;
   float block_size = 6000;
   size_t input_size = input->Size();
 
-  auto task = [&input, &out, &task_num, &input_size, &enhancement_amount_value](size_t start, size_t end, size_t num) {
+  auto task = [&input, &out, &input_size, &enhancement_amount_value](size_t start, size_t end, size_t num,
+                                                                     size_t task_num) {
     if ((task_num - num) == 1) {
       end = input_size;
     }
@@ -222,7 +213,7 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       itr_out++;
     }
   };
-  RETURN_IF_NOT_OK(AudioParallelLaunch(task, input_size, block_size, task_num, once_compute_size));
+  RETURN_IF_NOT_OK(AudioParallelLaunch(task, input_size, block_size));
   *output = out;
   return Status::OK();
 }
