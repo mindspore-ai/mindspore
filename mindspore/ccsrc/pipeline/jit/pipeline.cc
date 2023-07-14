@@ -863,10 +863,16 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   ResourcePtr resource = std::make_shared<Resource>(source);
   InitCompileCacheInfo(resource, phase_);
-  bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
+  bool enable_compile_cache = resource->EnableCompileCache();
+  bool use_compile_cache = enable_compile_cache && resource->func_graph();
   ConfigManager::GetInstance().ResetQueue(queue_name_);
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   compile_cache_context.SetUseCompileCache(use_compile_cache);
+  if (enable_compile_cache) {
+    std::string compile_cache_dep_files_hash = resource->GetCompileCacheManager()->GetCompileCacheDepFilesHash();
+    compile_cache_context.SetCompileCacheDepFilesHash(compile_cache_dep_files_hash);
+  }
+
   auto actions = GetPipeline(resource, phase_, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase_));
 

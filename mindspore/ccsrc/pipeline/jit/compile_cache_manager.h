@@ -54,6 +54,7 @@ class CompileCacheManager {
 
   void SetCompileCacheDir(const std::string &dir) { compile_cache_dir_ = dir; }
   std::string CompileCacheDir() const { return compile_cache_dir_; }
+  const std::string &GetCompileCacheDepFilesHash() const { return compile_cache_dep_files_hash_; }
 
  private:
   size_t compile_cache_id_;

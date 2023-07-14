@@ -21,6 +21,7 @@
 #ifndef ENABLE_LITE_ACL
 #include "include/common/utils/python_adapter.h"
 #endif
+#include "include/common/utils/compile_cache_context.h"
 
 namespace mindspore {
 namespace transform {
@@ -70,9 +71,13 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
     return Status::INVALID_ARGUMENT;
   }
 
+  auto &compile_cache_context = CompileCacheContext::GetInstance();
+  std::string compile_cache_dep_files_hash = compile_cache_context.CompileCacheDepFilesHash();
+
   int id = GenerateId();
   OptionMap new_options = options;
-  new_options.insert_or_assign("ge.graph_key", std::to_string(id));
+  std::string ge_graph_key = compile_cache_dep_files_hash + "_" + std::to_string(id);
+  new_options.insert_or_assign("ge.graph_key", ge_graph_key);
 
   DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, new_options);
   auto ret = graphs_.emplace(name, wrap_ptr);

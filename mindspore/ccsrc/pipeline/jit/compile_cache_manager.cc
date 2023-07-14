@@ -138,7 +138,8 @@ std::string GetCompileDepFilesHash(const py::list &dep_files) {
     std::string file_hash = system::sha256::GetHashFromFile(path);
     files_hash += file_hash;
   }
-  return files_hash;
+  std::string files_hash_hash = system::sha256::GetHashFromString(files_hash);
+  return files_hash_hash;
 }
 
 std::map<string, ValuePtr> GenerateWeightsValueMap(const py::dict &weights) {

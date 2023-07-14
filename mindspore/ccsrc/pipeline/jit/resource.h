@@ -146,6 +146,8 @@ class Resource : public ResourceBase {
   // Get the mutex for backend initializing.
   static std::mutex &GetBackendInitMutex() { return backend_init_mutex_; }
 
+  CompileCacheManagerPtr GetCompileCacheManager() { return compile_cache_manager_; }
+
  private:
   abstract::AnalysisEnginePtr engine_;
   FuncGraphPtr func_graph_;
