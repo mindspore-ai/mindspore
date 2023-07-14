@@ -19,7 +19,7 @@
 #include "nnacl/kernel/matmul_base.h"
 #include "nnacl/kernel/matmul_create.h"
 
-int ConvSW1x1Prepare(ConvolutionSW1x1Struct *sw_1x1) {
+int ConvSW1x1InitParam(ConvolutionSW1x1Struct *sw_1x1) {
   sw_1x1->matmul_->batch_ = 1;
   sw_1x1->matmul_->a_batch_ = 1;
   sw_1x1->matmul_->b_batch_ = 1;
@@ -68,13 +68,10 @@ int ConvolutionSW1x1Prepare(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
   NNACL_CHECK_NULL_RETURN_ERR(sw_1x1->matmul_);
 
-  sw_1x1->matmul_->matrix_b_.origin_ptr_ = sw_1x1->conv_.origin_weight_;
-  sw_1x1->matmul_->matrix_b_.has_origin_ = true;
-  sw_1x1->matmul_->matrix_c_.origin_ptr_ = sw_1x1->conv_.origin_bias_;
-  sw_1x1->matmul_->matrix_c_.has_origin_ = true;
+  sw_1x1->matmul_->a_const_ = IsConst(self->in_[FIRST_INPUT]) && !self->train_session_;
+  sw_1x1->matmul_->b_const_ = IsConst(self->in_[SECOND_INPUT]) && !self->train_session_;
 
-  sw_1x1->matmul_->a_const_ = false;
-  sw_1x1->matmul_->b_const_ = true;
+  sw_1x1->matmul_->infer_shape_ = sw_1x1->conv_.infershape_done_;
 
   sw_1x1->matmul_->base_.in_ = self->in_;
   sw_1x1->matmul_->base_.in_size_ = self->in_size_;
@@ -85,7 +82,7 @@ int ConvolutionSW1x1Prepare(KernelBase *self) {
   sw_1x1->matmul_->base_.thread_nr_ = self->thread_nr_;
   sw_1x1->matmul_->base_.env_ = self->env_;
 
-  return ConvSW1x1Prepare(sw_1x1);
+  return ConvSW1x1InitParam(sw_1x1);
 }
 
 int ConvolutionSW1x1Release(KernelBase *self) {
