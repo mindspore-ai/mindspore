@@ -16,6 +16,7 @@
 import functools
 import types
 import textwrap
+import inspect
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore._c_expression import PackExpander, PackNode
@@ -117,9 +118,12 @@ class _PackSourceBuilder:
     def get_code_source(self):
         """Return Pack Python code"""
         if self.is_method:
+            sig = inspect.signature(self.original_fn.pack_fn)
+            arg_num = len(sig.parameters) - 1
+            arg_str = ", ".join(["a{}".format(i) for i in range(arg_num)])
             new_src = textwrap.dedent(f"""
-                def {self.pack_fn_name}_wrap(self, *args, **kwargs):
-                    return self.{self.pack_fn_name}(*args, **kwargs)
+                def {self.pack_fn_name}_wrap(self, {arg_str}):
+                    return self.{self.pack_fn_name}({arg_str})
                 """)
         else:
             new_src = textwrap.dedent(f"""

@@ -17,6 +17,7 @@
 
 #include <utility>
 #include <algorithm>
+#include <string>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "ir/tensor.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -299,7 +300,14 @@ AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
     py::object node = py::getattr(arg, stub::PY_ATTR_STUB);
     return node.cast<std::shared_ptr<PackNode>>()->Get();
   } else if (py::hasattr(arg, "__parameter__") && py::isinstance<tensor::MetaTensor>(arg) && !is_pynative_mode) {
-    return parse::ResolveParameterObj(graphs_.top(), arg);
+    if (IsReuse()) {
+      auto param = graphs_.top()->add_parameter();
+      param->set_name(py::cast<std::string>(python_adapter::GetPyObjAttr(arg, "name")));
+      param->set_abstract(parse::GetParameterValue(arg)->ToAbstract());
+      return param;
+    } else {
+      return parse::ResolveParameterObj(graphs_.top(), arg);
+    }
   } else {
     auto val = parse::data_converter::PyDataToValue(arg);
     MS_EXCEPTION_IF_NULL(val);

@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "ir/anf.h"
 #include "ir/manager.h"
@@ -183,6 +184,7 @@ bool ResolveAll(const FuncGraphManagerPtr &manager);
 
 py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node);
 bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node);
+ValuePtr GetParameterValue(const py::object &param_obj);
 }  // namespace parse
 }  // namespace mindspore
 

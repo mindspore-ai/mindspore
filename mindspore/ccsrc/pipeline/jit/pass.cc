@@ -889,10 +889,15 @@ bool PackExpandPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  opt::OptPassConfig pack_expand = opt::OptPassConfig(mindspore::opt::irpass::PackExpand());
-  OptPassGroupMap map({{"pack_expand", pack_expand}});
-  auto pack_expand_opt = opt::Optimizer::MakeOptimizer("pack_expand", resource, map);
-  (void)pack_expand_opt->step(func_graph, false);
+  auto opt = opt::Optimizer::MakeEmptyOptimizer(resource);
+  opt::OptPass pack_expand = opt::OptPass(mindspore::opt::irpass::PackExpand());
+  if (pack_expand(func_graph, opt)) {
+    opt::irpass::OptimizeIRPassLib irpass;
+    opt::OptPassConfig after_resolve_pass = opt::OptPassConfig({irpass.replace_old_param_});
+    OptPassGroupMap map({{"after_resolve", after_resolve_pass}});
+    auto after_resolve = opt::Optimizer::MakeOptimizer("after_resolve", resource, map);
+    (void)after_resolve->step(func_graph, false);
+  }
   return true;
 }
 

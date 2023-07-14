@@ -66,6 +66,8 @@ class PackExpander {
 
   bool SetMixedPrecision(const py::object &obj);
   void RecoverMixedPrecision();
+  void SetReuse(bool reuse) { reuse_ = reuse; }
+  bool IsReuse() const { return reuse_; }
 
  private:
   AnfNodePtr EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const;
@@ -75,6 +77,7 @@ class PackExpander {
   py::object ConvertAbstractToParameter(const AbstractBasePtr &abs) const;
   void SetMixedPrecisionFlagToGraph() const;
 
+  bool reuse_{false};
   std::stack<FuncGraphPtr> graphs_;
   std::stack<AnfNodePtr> func_graph_node_;
   std::stack<MixedPrecisionType> mix_precision_types_;
