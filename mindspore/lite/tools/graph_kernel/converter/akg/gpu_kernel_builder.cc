@@ -19,6 +19,7 @@
 #include <fstream>
 #include <set>
 #include "utils/anf_utils.h"
+#include "kernel/graph_kernel/graph_kernel_json_flags.h"
 #include "tools/graph_kernel/converter/akg/utils.h"
 #include "tools/graph_kernel/converter/akg/cpu_kernel_builder.h"
 #include "nlohmann/json.hpp"

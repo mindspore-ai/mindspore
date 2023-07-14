@@ -27,6 +27,7 @@
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "kernel/graph_kernel/graph_kernel_json_flags.h"
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
 #ifdef ENABLE_GPU
 #include <cuda.h>

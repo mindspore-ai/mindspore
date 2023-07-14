@@ -27,6 +27,7 @@
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/python_adapter.h"
+#include "kernel/graph_kernel/graph_kernel_json_flags.h"
 #include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "kernel/framework_utils.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
