@@ -79,7 +79,7 @@ def cond(A, p=None):
         >>> print(ms.ops.cond(x))
         1.4142
         >>> print(ms.ops.cond(x, 'fro'))
-        1.1623
+        3.1622777
     """
     matrix_inverse = _get_cache_prim(P.MatrixInverse)(adjoint=False)
     if p is None:
