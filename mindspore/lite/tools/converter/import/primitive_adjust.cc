@@ -238,6 +238,24 @@ int MoveAttrMapCommon(const CNodePtr &cnode) {
   return lite::RET_OK;
 }
 
+int MoveAttrMapArgMaxWithValue(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+  MS_ASSERT(value_node != nullptr);
+  auto src_prim = GetValueNode<PrimitivePtr>(value_node);
+  if (src_prim == nullptr) {
+    MS_LOG(ERROR) << "value node is invalid.";
+    return lite::RET_ERROR;
+  }
+  ops::ArgMaxFusion dst_node;
+  auto dst_prim = dst_node.GetPrim();
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
+  dst_prim->SetAttrs(src_prim->attrs());
+  dst_prim->AddAttr(ops::kOutMaxValue, MakeValue(true));
+  value_node->set_value(dst_prim);
+  return lite::RET_OK;
+}
+
 int MoveAttrMapActivation(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
@@ -683,7 +701,7 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
 REGIST_PRIMITIVE_ADJUST(kNameAdd, MoveAttrMapCommon<ops::AddFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameAdder, MoveAttrMapAdder)
 REGIST_PRIMITIVE_ADJUST(kNameArgMax, MoveAttrMapCommon<ops::ArgMaxFusion>)
-REGIST_PRIMITIVE_ADJUST(kNameArgMaxWithValue, MoveAttrMapCommon<ops::ArgMaxFusion>)
+REGIST_PRIMITIVE_ADJUST(kNameArgMaxWithValue, MoveAttrMapArgMaxWithValue)
 REGIST_PRIMITIVE_ADJUST(kNameArgMin, MoveAttrMapCommon<ops::ArgMinFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameArgMinWithValue, MoveAttrMapCommon<ops::ArgMinFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPool, MoveAttrPool)
