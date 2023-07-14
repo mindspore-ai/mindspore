@@ -57,7 +57,7 @@ class CostGraph {
            std::map<OperatorInfoPtr, bool> *visited) const;
   void ProcessDiffStraParams(const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops);
   void ParamPropagation(const OperatorInfoPtr &curr_op, const std::shared_ptr<Edge> edge,
-                        const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops);
+                        const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops) const;
   // the edge is in the form: u --> v
   void AddEdge(OperatorInfoPtr u_node, OperatorInfoPtr v_node, const EdgePtr &edge);
   std::vector<std::shared_ptr<Edge>> GetOriginalPrevEdges(const OperatorInfoPtr &v_node) { return in_edges_[v_node]; }
