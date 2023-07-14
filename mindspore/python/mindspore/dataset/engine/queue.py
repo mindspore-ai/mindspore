@@ -18,11 +18,13 @@ between multiple processes in Python.  It has same API as multiprocessing.queue
 but it will pass large data through shared memory.
 """
 
-import multiprocessing.queues
+import errno
 import multiprocessing
-import types
 import queue
+import types
+
 import numpy as np
+
 from mindspore import log as logger
 from ..transforms.py_transforms_util import ExceptionHandler
 
@@ -45,7 +47,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
 
         # change max_rowsize in MB into bytes
         self.seg_size = max_rowsize * 1024 * 1024
-        ##pipe can hold up to 65,636 bytes at a time
+        # pipe can hold up to 65,636 bytes at a time
         # there is less benefit for small data. To small data it can be slower as we need to pass 100 bytes of metadata
         # and then access the shared memory.
         self.min_shared_mem = 10000
@@ -59,19 +61,16 @@ class _SharedQueue(multiprocessing.queues.Queue):
         self.count = count
         self.print_error = True
 
-        try:
-            for _ in range(self.num_seg):
+        for _ in range(self.num_seg):
+            try:
                 a = multiprocessing.Array("b", self.seg_size)
+            except OSError as e:
+                if e.errno == errno.ENOMEM:
+                    raise RuntimeError("Failed to allocate shared memory for {0} elements of {1}MB: {2}"
+                                       .format(self.num_seg, self.seg_size / 1024 / 1024, e))
+                raise
+            else:
                 self.shm_list.append(a)
-        except Exception:
-            raise RuntimeError(
-                "_SharedQueue: Error allocating "
-                + str(self.seg_size / 1024 / 1024)
-                + "MB, "
-                + str(self.num_seg)
-                + " elements."
-                + " This might be caused by insufficient shm, and the recommended shm size is at least 5 GB."
-            )
 
     def put_until(self, data, timeout=None, exit_signal=None):
         """Put data into the queue. Block until timeout is reached or exit_signal is set."""
@@ -195,6 +194,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
 
 class _Queue(multiprocessing.queues.Queue):
     """Specialized multiprocessing Queue that supports interrupted operations."""
+
     def __init__(self, size):
         super().__init__(size, ctx=multiprocessing.get_context())
 
