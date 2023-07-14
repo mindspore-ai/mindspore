@@ -8082,11 +8082,11 @@ class Zeta(Primitive):
     r"""
     Compute the Hurwitz zeta function ζ(x,q) of input Tensor.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
     .. math::
         \zeta \left ( x,q \right )=  \textstyle \sum_{n=0} ^ {\infty} \left ( q+n\right )^{-x}
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x** (Tensor) - A Tensor, types: float32, float64.

@@ -59,7 +59,8 @@ class AdamW(Optimizer):
 
     .. warning::
         This is an experimental optimizer API that is subject to change.
-        This module must be used with lr scheduler module in `nn.lr_scheduler`.
+        This module must be used with lr scheduler module in `LRScheduler Class
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#lrscheduler>`_ .
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
