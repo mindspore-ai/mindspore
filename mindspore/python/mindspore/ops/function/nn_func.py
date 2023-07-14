@@ -4369,7 +4369,7 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
         >>> import numpy as np
         >>> input1 = Tensor(np.array([0.3864, -2.4093, -1.4076]), ms.float32)
         >>> input2 = Tensor(np.array([-0.6012, -1.6681, 1.2928]), ms.float32)
-        >>> target = sign(Tensor(np.array([-2, -2, 3]), ms.float32))
+        >>> target = ops.Sign()(Tensor(np.array([-2, -2, 3]), ms.float32))
         >>> output = ops.margin_ranking_loss(input1, input2, target)
         >>> print(output)
         1.2293333
