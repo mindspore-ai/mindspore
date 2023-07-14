@@ -36,11 +36,12 @@ class Optimizer(Cell):
 
     .. warning::
         This is an experimental optimizer API that is subject to change.
-        This module must be used with lr scheduler module in `nn.lr_scheduler`.
+        This module must be used with lr scheduler module in `LRScheduler Class
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#lrscheduler>`_ .
 
     Args:
-        params (Union[list(Parameter), list(dict)]): an iterable of :class:`Parameter` s or
-            :class:`dict` s. Specifies what Tensors should be optimized.
+        params (Union[list(Parameter), list(dict)]): an iterable of :class:`mindspore.Parameter` or
+            dict. Specifies what Tensors should be optimized.
         defaults: (dict): a dict containing default values of optimization
             options (used when a parameter group doesn't specify them).
 

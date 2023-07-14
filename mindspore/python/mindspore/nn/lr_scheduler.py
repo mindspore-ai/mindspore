@@ -33,7 +33,8 @@ class LRScheduler():
 
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
-        This module must be used with optimizers in `nn.optim_ex`.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): The optimizer instance.
@@ -111,7 +112,8 @@ class StepLR(LRScheduler):
 
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
-        This module must be used with optimizers in `nn.optim_ex`.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
@@ -176,7 +178,8 @@ class LinearLR(LRScheduler):
 
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
-        This module must be used with optimizers in `nn.optim_ex`.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.

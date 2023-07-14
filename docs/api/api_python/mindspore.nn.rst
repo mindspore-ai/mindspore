@@ -21,7 +21,6 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.GraphCell
     mindspore.nn.LossBase
     mindspore.nn.Optimizer
-    mindspore.nn.optim_ex.Optimizer
 
 容器
 -----------
@@ -304,6 +303,16 @@ Dropout层
     mindspore.nn.Rprop
     mindspore.nn.SGD
     mindspore.nn.thor
+
+实验性优化器
+------------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.optim_ex.Optimizer
     mindspore.nn.optim_ex.Adam
     mindspore.nn.optim_ex.AdamW
     mindspore.nn.optim_ex.SGD
