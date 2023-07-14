@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 void BatchNormInt8(int8_t *output_ptr, const int8_t *input_ptr, const float *alpha_ptr, const float *beta_ptr,
-                   int task_id, BatchNormParameter *param);
+                   int task_id, int unit, int units, int channel);
 
 #ifdef __cplusplus
 }

@@ -19,9 +19,8 @@
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
 void BatchNormFp16(const float16_t *input, const float16_t *mean, const float16_t *variance,
-                   const BatchNormParameter *param, int task_id, float16_t *output) {
-  NNACL_CHECK_ZERO_RETURN(param->op_parameter_.thread_num_);
-  int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
+                   const BatchNormStruct *param, int task_id, int thread_num, float16_t *output) {
+  int units_per_thread = UP_DIV(param->unit_, thread_num);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
   int cur_offset = completed_units * param->channel_;
@@ -49,9 +48,9 @@ void BatchNormFp16(const float16_t *input, const float16_t *mean, const float16_
 }
 
 void FusedBatchNormFp16(const float16_t *input, const float16_t *scale, const float16_t *offset, const float16_t *mean,
-                        const float16_t *variance, const BatchNormParameter *param, int task_id, float16_t *output) {
-  NNACL_CHECK_ZERO_RETURN(param->op_parameter_.thread_num_);
-  int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
+                        const float16_t *variance, const BatchNormStruct *param, int task_id, int thread_num,
+                        float16_t *output) {
+  int units_per_thread = UP_DIV(param->unit_, thread_num);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
   int cur_offset = completed_units * param->channel_;
@@ -83,7 +82,7 @@ void FusedBatchNormFp16(const float16_t *input, const float16_t *scale, const fl
 }
 
 void FusedBatchNormFp16MeanVar(const float16_t *input, float16_t *run_mean, float16_t *run_var,
-                               const BatchNormParameter *param, float16_t *save_mean, float16_t *save_var) {
+                               const BatchNormStruct *param, float16_t *save_mean, float16_t *save_var) {
   const float N = (float)param->unit_;
   const float VN = N;
   const float VNUB = (N > 1.0f) ? (N - 1.0f) : 1.0f;

@@ -37,7 +37,6 @@ OpParameter *PopulateBatchNorm(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   param->epsilon_ = value->epsilon();
-  param->fused_ = false;
   param->is_training_ = value->is_training();
   return reinterpret_cast<OpParameter *>(param);
 }

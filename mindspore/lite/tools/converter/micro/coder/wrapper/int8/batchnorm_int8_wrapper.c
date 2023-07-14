@@ -20,6 +20,7 @@
 
 int BatchNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   BatchNormArgs *args = (BatchNormArgs *)(cdata);
-  BatchNormInt8(args->out_addr_, args->in_addr_, args->alpha_addr_, args->beta_addr_, task_id, args->batchnorm_param_);
+  BatchNormInt8(args->out_addr_, args->in_addr_, args->alpha_addr_, args->beta_addr_, task_id, args->unit_,
+                args->units_, args->channel_);
   return NNACL_OK;
 }

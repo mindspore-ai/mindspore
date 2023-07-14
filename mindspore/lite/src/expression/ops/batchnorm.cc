@@ -36,7 +36,7 @@ BatchNorm2dM::BatchNorm2dM(int outp, float momentum, float epsilon) {
   expr()->SetSize(bn_inputs);
   set_name(UniqueName("BatchNorm2D"));
   auto bn_param = reinterpret_cast<BatchNormParameter *>(op_param);
-  bn_param->channel_ = outp;
+  channel_ = outp;
   bn_param->momentum_ = momentum;
   bn_param->epsilon_ = epsilon;
   SetOpParam(op_param);

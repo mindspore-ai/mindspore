@@ -37,6 +37,7 @@
 #include "nnacl/int8/relux_int8.h"
 #include "wrapper/int8/concat_int8_wrapper.h"
 #include "nnacl/kernel/pooling.h"
+#include "nnacl/kernel/batch_norm.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclInt8Serializer : public Serializer {
@@ -52,7 +53,7 @@ class NNaclInt8Serializer : public Serializer {
   void CodeStruct(const std::string &name, const PoolingComputeParam &pooling_parameter);
   void CodeStruct(const std::string &name, const QuantArg &in_quant, const QuantArg &out_quant);
   void CodeStruct(const std::string &name, const SoftmaxParameter &softmax_parameter);
-  void CodeStruct(const std::string &name, const BatchNormParameter &batchnorm_parameter);
+  void CodeStruct(const std::string &name, const BatchNormStruct &bn_struct);
   void CodeStruct(const std::string &name, const SoftmaxQuantArg &softmax_quant_parameter);
   void CodeStruct(const std::string &name, const ConcatInt8Args &ConcatInt8Args, int input_tensors, int in_shape,
                   int out_shape);

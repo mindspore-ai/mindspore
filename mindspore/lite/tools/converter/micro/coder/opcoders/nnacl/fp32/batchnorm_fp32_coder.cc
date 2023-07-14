@@ -32,10 +32,12 @@ int BatchnormFP32Coder::Init() {
     return RET_ERROR;
   }
   int n_dim = static_cast<int>(input_shapes.size());
-  bn_parameter->channel_ = input_shapes.at(n_dim - 1);
-  bn_parameter->unit_ = 1;
+  batchnorm_struct_.epsilon_ = bn_parameter->epsilon_;
+  batchnorm_struct_.momentum_ = bn_parameter->momentum_;
+  batchnorm_struct_.channel_ = input_shapes.at(n_dim - 1);
+  batchnorm_struct_.unit_ = 1;
   for (int i = 0; i < n_dim - 1; i++) {
-    bn_parameter->unit_ *= input_shapes.at(i);
+    batchnorm_struct_.unit_ *= input_shapes.at(i);
   }
   if (default_momentum_ < 0.0f) {
     default_momentum_ = bn_parameter->momentum_;
@@ -45,7 +47,6 @@ int BatchnormFP32Coder::Init() {
 
 int BatchnormFP32Coder::DoCode(CoderContext *const context) {
   // attribute
-  auto bn_parameter = reinterpret_cast<BatchNormParameter *>(parameter_);
   if (Init() != RET_OK) {
     MS_LOG(ERROR) << "BatchnormFP32Coder Init error";
     return RET_ERROR;
@@ -58,14 +59,15 @@ int BatchnormFP32Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/fp32/batchnorm.h",
+            "nnacl/kernel/batch_norm.h",
           },
           {
             "nnacl/fp32/batchnorm.c",
           });
   NNaclFp32Serializer code;
-  code.CodeStruct("bn_parameter", *bn_parameter);
-  code.CodeFunction("BatchNormFp32", input_tensor_, mean_tensor, var_tensor, "&bn_parameter", kDefaultTaskId,
-                    output_tensor_);
+  code.CodeStruct("bn_struct", batchnorm_struct_);
+  code.CodeFunction("BatchNormFp32", input_tensor_, mean_tensor, var_tensor, "&bn_struct", kDefaultTaskId,
+                    kDefaultThreadNum, output_tensor_);
   MS_LOG(INFO) << "BatchnormFP32Code has been called";
   context->AppendCode(code.str());
   return lite::RET_OK;

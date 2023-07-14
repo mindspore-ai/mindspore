@@ -31,6 +31,7 @@ class BatchNorm2dM : public Node {
   std::vector<EXPR *> Grad(EXPR *expr) override;
   int UnPopulate(const std::unique_ptr<schema::CNodeT> &cnode) override;
   void SetLearn() override;
+  int channel_;
 };
 
 class BatchNorm2dGradM : public Node {

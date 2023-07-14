@@ -22,6 +22,7 @@
 #include "nnacl/fp32_grad/batch_norm_grad.h"
 #include "nnacl/fp32/batchnorm_fp32.h"
 #include "src/litert/kernel_registry.h"
+#include "nnacl/batchnorm_parameter.h"
 
 namespace mindspore {
 
@@ -127,7 +128,6 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   const int channels = 3;
   const int height = 4;
   const int width = 5;
-  bn_param->channel_ = channels;
   auto x_tensor = CreateInTensor("./bngrad/input_x_2_4_5_3.bin", {batch, height, width, channels});
 
   lite::Tensor scale_tensor(TypeId::kNumberTypeFloat32, {1, 1, 1, channels});

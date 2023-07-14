@@ -33,7 +33,7 @@ class TestPadInt8 : public mindspore::CommonTest {
 
 int PadInt8TestInit1(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outputs_, PadParameter *pad_param,
                      int8_t **correct) {
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {3}, mindspore::NHWC, lite::Category::CONST_TENSOR);
+  Tensor *in_t = new Tensor(kNumberTypeInt8, {3}, mindspore::NHWC, lite::Category::VAR);
   in_t->MallocData();
   int8_t in[] = {1, 1, 1};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
@@ -42,7 +42,11 @@ int PadInt8TestInit1(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {7}, mindspore::NHWC, lite::Category::CONST_TENSOR);
+  Tensor *in_t_pad = new Tensor(kNumberTypeInt8, {1}, mindspore::NHWC, lite::Category::VAR);
+  in_t->MallocData();
+  inputs_->push_back(in_t_pad);
+
+  Tensor *out_t = new Tensor(kNumberTypeInt8, {7}, mindspore::NHWC, lite::Category::VAR);
   out_t->MallocData();
   LiteQuantParam *out_quant_arg = new LiteQuantParam();
   out_quant_arg->zeroPoint = 10, out_quant_arg->scale = 0.31228156;
@@ -56,6 +60,7 @@ int PadInt8TestInit1(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   int padding[] = {0, 0, 0, 0, 0, 0, 2, 2};
   memcpy(pad_param->paddings_, padding, std::min(sizeof(padding), MAX_PAD_SIZE * sizeof(int)));
   pad_param->constant_value_ = 0;
+  pad_param->padding_length = in_t->ConvertToTensorC()->shape_size_ * Num2;
 
   return out_t->ElementsNum();
 }
@@ -68,17 +73,15 @@ TEST_F(TestPadInt8, PadInt8Test1) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   int8_t *correct;
   int total_size = PadInt8TestInit1(&inputs_, &outputs_, pad_param, &correct);
-  kernel::PadInt8CPUKernel *pad =
-    new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx);
+  kernel::PadInt8CPUKernel *pad = new kernel::PadInt8CPUKernel(&pad_param->op_parameter_, inputs_, outputs_, ctx);
 
-  pad->Prepare();
-  pad->Run();
-  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 0));
+  ASSERT_EQ(lite::RET_OK, pad->Prepare());
+  ASSERT_EQ(lite::RET_OK, pad->Run());
 
-  delete pad_param;
+  int8_t *output_data = reinterpret_cast<int8_t *>(outputs_[0]->MutableData());
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, total_size, 0));
+
   delete pad;
-  for (auto t : inputs_) delete t;
-  for (auto t : outputs_) delete t;
   free(correct);
 }
 
@@ -92,6 +95,10 @@ int PadInt8TestInit2(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   in_quant_arg->zeroPoint = 10, in_quant_arg->scale = 0.31228156;
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
+
+  Tensor *in_t_pad = new Tensor(kNumberTypeInt8, {1}, mindspore::NHWC, lite::Category::VAR);
+  in_t->MallocData();
+  inputs_->push_back(in_t_pad);
 
   Tensor *out_t = new Tensor(kNumberTypeInt8, {10, 5}, mindspore::NHWC, lite::Category::VAR);
   out_t->MallocData();
@@ -109,6 +116,7 @@ int PadInt8TestInit2(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   int padding[] = {0, 0, 0, 0, 3, 1, 1, 2};
   memcpy(pad_param->paddings_, padding, std::min(sizeof(padding), MAX_PAD_SIZE * sizeof(int)));
   pad_param->constant_value_ = 0;
+  pad_param->padding_length = in_t->ConvertToTensorC()->shape_size_ * Num2;
 
   return out_t->ElementsNum();
 }
@@ -121,17 +129,15 @@ TEST_F(TestPadInt8, PadInt8Test2) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   int8_t *correct;
   int total_size = PadInt8TestInit2(&inputs_, &outputs_, pad_param, &correct);
-  kernel::PadInt8CPUKernel *pad =
-    new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx);
+  kernel::PadInt8CPUKernel *pad = new kernel::PadInt8CPUKernel(&pad_param->op_parameter_, inputs_, outputs_, ctx);
 
-  pad->Prepare();
-  pad->Run();
-  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 0));
+  ASSERT_EQ(lite::RET_OK, pad->Prepare());
+  ASSERT_EQ(lite::RET_OK, pad->Run());
 
-  delete pad_param;
+  int8_t *output_data = reinterpret_cast<int8_t *>(outputs_[0]->MutableData());
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, total_size, 0));
+
   delete pad;
-  for (auto t : inputs_) delete t;
-  for (auto t : outputs_) delete t;
   free(correct);
 }
 
@@ -145,6 +151,10 @@ int PadInt8TestInit4(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   in_quant_arg->zeroPoint = 10, in_quant_arg->scale = 0.31228156;
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
+
+  Tensor *in_t_pad = new Tensor(kNumberTypeInt8, {1}, mindspore::NHWC, lite::Category::VAR);
+  in_t->MallocData();
+  inputs_->push_back(in_t_pad);
 
   Tensor *out_t = new Tensor(kNumberTypeInt8, {6, 6, 4, 3}, mindspore::NHWC, lite::Category::VAR);
   out_t->MallocData();
@@ -176,6 +186,7 @@ int PadInt8TestInit4(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   int padding[] = {3, 1, 1, 2, 2, 0, 1, 1};
   memcpy(pad_param->paddings_, padding, std::min(sizeof(padding), MAX_PAD_SIZE * sizeof(int)));
   pad_param->constant_value_ = 0;
+  pad_param->padding_length = in_t->ConvertToTensorC()->shape_size_ * Num2;
 
   return out_t->ElementsNum();
 }
@@ -189,17 +200,15 @@ TEST_F(TestPadInt8, PadInt8TestInit4) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   int8_t *correct;
   int total_size = PadInt8TestInit2(&inputs_, &outputs_, pad_param, &correct);
-  kernel::PadInt8CPUKernel *pad =
-    new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx);
+  kernel::PadInt8CPUKernel *pad = new kernel::PadInt8CPUKernel(&pad_param->op_parameter_, inputs_, outputs_, ctx);
 
-  pad->Prepare();
-  pad->Run();
-  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 0));
+  ASSERT_EQ(lite::RET_OK, pad->Prepare());
+  ASSERT_EQ(lite::RET_OK, pad->Run());
 
-  delete pad_param;
+  int8_t *output_data = reinterpret_cast<int8_t *>(outputs_[0]->MutableData());
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, total_size, 0));
+
   delete pad;
-  for (auto t : inputs_) delete t;
-  for (auto t : outputs_) delete t;
   free(correct);
 }
 }  // namespace mindspore

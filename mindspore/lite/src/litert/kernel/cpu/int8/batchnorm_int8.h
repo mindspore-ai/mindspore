@@ -29,9 +29,7 @@ class BatchnormInt8CPUKernel : public LiteKernel {
  public:
   BatchnormInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
-    batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~BatchnormInt8CPUKernel() override;
 
   int Prepare() override;
@@ -46,7 +44,9 @@ class BatchnormInt8CPUKernel : public LiteKernel {
   int8_t *out_addr_ = nullptr;
   float *alpha_addr_ = nullptr;
   float *beta_addr_ = nullptr;
-  BatchNormParameter *batchnorm_param_;
+  int channel_;
+  int unit_;
+  int units_;
 };
 }  // namespace mindspore::kernel
 

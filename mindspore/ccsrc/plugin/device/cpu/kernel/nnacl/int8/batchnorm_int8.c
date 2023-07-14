@@ -19,15 +19,15 @@
 #include "nnacl/batchnorm_parameter.h"
 
 void BatchNormInt8(int8_t *output_ptr, const int8_t *input_ptr, const float *alpha_ptr, const float *beta_ptr,
-                   int task_id, BatchNormParameter *param) {
-  int unit_st = task_id * param->unit_;
-  int unit_end = MSMIN((task_id + 1) * param->unit_, param->units_);
+                   int task_id, int unit, int units, int channel) {
+  int unit_st = task_id * unit;
+  int unit_end = MSMIN((task_id + 1) * unit, units);
   for (int u = unit_st; u < unit_end; u++) {
-    for (int c = 0; c < param->channel_; c++) {
-      int32_t output_tmp = round(input_ptr[u * param->channel_ + c] * alpha_ptr[c] + beta_ptr[c]);
+    for (int c = 0; c < channel; c++) {
+      int32_t output_tmp = round(input_ptr[u * channel + c] * alpha_ptr[c] + beta_ptr[c]);
       output_tmp = output_tmp > 127 ? 127 : output_tmp;
       output_tmp = output_tmp < -128 ? -128 : output_tmp;
-      output_ptr[u * param->channel_ + c] = (int8_t)output_tmp;
+      output_ptr[u * channel + c] = (int8_t)output_tmp;
     }
   }
 }

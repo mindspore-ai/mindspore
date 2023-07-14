@@ -40,7 +40,6 @@ OpParameter *PopulateFusedBatchNormOpParameter(const BaseOperatorPtr &base_opera
     free(param);
     return nullptr;
   }
-  param->fused_ = true;
   return reinterpret_cast<OpParameter *>(param);
 }
 

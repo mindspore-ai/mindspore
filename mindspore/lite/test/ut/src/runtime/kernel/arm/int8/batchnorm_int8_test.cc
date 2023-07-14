@@ -29,21 +29,6 @@ class TestBatchnormInt8 : public mindspore::CommonTest {
 };
 
 TEST_F(TestBatchnormInt8, FusedTest) {
-  std::vector<int8_t> in_data = {11, 41, 21, 51, 31, 61, -11, -41, -21, -51, -31, -61};
-  std::vector<int8_t> in_data1 = {4, 4};
-  std::vector<int8_t> in_data2 = {8, 33};
-  std::vector<int8_t> in_data3 = {35, 55};
-  std::vector<int8_t> in_data4 = {2, 3};
-  std::vector<lite::Tensor *> inputs_tensor;
-  std::vector<lite::Tensor *> outputs_tensor;
-
-  BatchNormParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_FusedBatchNorm;
-  op_param.epsilon_ = 0.001f;
-  op_param.fused_ = true;
-
-  std::vector<int> shape = {1, 1, 6, 2};
-
   lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.1;
   input_quant_arg.zeroPoint = 1;
@@ -63,87 +48,64 @@ TEST_F(TestBatchnormInt8, FusedTest) {
   output_quant_arg.scale = 0.8;
   output_quant_arg.zeroPoint = 0;
 
-  lite::Tensor input0_tensor;
-  lite::Tensor input1_tensor;
-  lite::Tensor input2_tensor;
-  lite::Tensor input3_tensor;
-  lite::Tensor input4_tensor;
-  inputs_tensor.push_back(&input0_tensor);
-  inputs_tensor.push_back(&input1_tensor);
-  inputs_tensor.push_back(&input2_tensor);
-  inputs_tensor.push_back(&input3_tensor);
-  inputs_tensor.push_back(&input4_tensor);
-  input0_tensor.set_data(in_data.data());
-  input1_tensor.set_data(in_data1.data());
-  input2_tensor.set_data(in_data2.data());
-  input3_tensor.set_data(in_data3.data());
-  input4_tensor.set_data(in_data4.data());
-  input0_tensor.set_shape(shape);
-  input1_tensor.set_shape({2});
-  input2_tensor.set_shape({2});
-  input3_tensor.set_shape({2});
-  input4_tensor.set_shape({2});
-  input0_tensor.AddQuantParam(input_quant_arg);
-  input1_tensor.AddQuantParam(input_quant_arg_1);
-  input2_tensor.AddQuantParam(input_quant_arg_2);
-  input3_tensor.AddQuantParam(input_quant_arg_3);
-  input4_tensor.AddQuantParam(input_quant_arg_4);
+  int8_t in_data0[] = {11, 41, 21, 51, 31, 61, -11, -41, -21, -51, -31, -61};
+  int8_t in_data1[] = {4, 4};
+  int8_t in_data2[] = {8, 33};
+  int8_t in_data3[] = {35, 55};
+  int8_t in_data4[] = {2, 3};
 
-  std::vector<int8_t> output(12);
-  // std::vector<int8_t> corr_out = {-18, -22, -16, -21, -14, -19, -22, -34, -24, -35, -26, -36 };
-  std::vector<int8_t> corr_out = {-22, -28, -20, -26, -17, -24, -28, -42, -30, -44, -33, -46};
-  lite::Tensor output0_tensor;
-  outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.set_data(output.data());
-  output0_tensor.set_shape(shape);
+  lite::Tensor input0(kNumberTypeInt8, {1, 1, 6, 2});
+  lite::Tensor input1(kNumberTypeInt8, {2});
+  lite::Tensor input2(kNumberTypeInt8, {2});
+  lite::Tensor input3(kNumberTypeInt8, {2});
+  lite::Tensor input4(kNumberTypeInt8, {2});
+  memcpy(input0.MutableData(), in_data0, input0.Size());
+  memcpy(input1.MutableData(), in_data1, input1.Size());
+  memcpy(input2.MutableData(), in_data2, input2.Size());
+  memcpy(input3.MutableData(), in_data3, input3.Size());
+  memcpy(input4.MutableData(), in_data4, input4.Size());
+  input0.AddQuantParam(input_quant_arg);
+  input1.AddQuantParam(input_quant_arg_1);
+  input2.AddQuantParam(input_quant_arg_2);
+  input3.AddQuantParam(input_quant_arg_3);
+  input4.AddQuantParam(input_quant_arg_4);
+  std::vector<lite::Tensor *> inputs_tensor = {&input0, &input1, &input2, &input3, &input4};
+
+  lite::Tensor output0_tensor(kNumberTypeInt8, {1, 1, 6, 2});
+  output0_tensor.MallocData();
   output0_tensor.AddQuantParam(output_quant_arg);
+  std::vector<lite::Tensor *> outputs_tensor = {&output0_tensor};
+
+  int thread_number = 3;
+  BatchNormParameter op_param;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_FusedBatchNorm;
+  op_param.epsilon_ = 0.001f;
+  op_param.op_parameter_.thread_num_ = thread_number;
+
+  lite::InnerContext ctx;
+  ctx.thread_num_ = thread_number;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_FusedBatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::InnerContext ctx;
-  ctx.thread_num_ = 3;
-  ASSERT_EQ(lite::RET_OK, ctx.Init());
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
-  printf("==================output data=================\n");
-  for (int i = 0; i < output0_tensor.ElementsNum(); i++) {
-    printf("%d, ", output[i]);
-  }
-  std::cout << std::endl;
-  ASSERT_EQ(0, CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001));
+  int8_t correct[] = {-22, -28, -20, -26, -17, -24, -28, -42, -30, -44, -33, -46};
+  int8_t *output_data = reinterpret_cast<int8_t *>(output0_tensor.data());
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, output0_tensor.ElementsNum(), 0.001));
 
-  input0_tensor.set_data(nullptr);
-  input1_tensor.set_data(nullptr);
-  input2_tensor.set_data(nullptr);
-  input3_tensor.set_data(nullptr);
-  input4_tensor.set_data(nullptr);
-  output0_tensor.set_data(nullptr);
+  kernel->set_parameter(nullptr);
   delete kernel;
-  MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
 }
 
 TEST_F(TestBatchnormInt8, BNTest) {
-  std::vector<int8_t> in_data = {11, 41, 21, 51, 31, 61, -11, -41, -21, -51, -31, -61};
-  std::vector<int8_t> in_data1 = {4, 14};
-  std::vector<int8_t> in_data2 = {29, 39};
-  std::vector<lite::Tensor *> inputs_tensor;
-  std::vector<lite::Tensor *> outputs_tensor;
-
-  BatchNormParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_BatchNorm;
-  op_param.epsilon_ = 0.001f;
-  op_param.fused_ = false;
-
-  std::vector<int> shape = {1, 1, 6, 2};
-
   lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.1;
   input_quant_arg.zeroPoint = 1;
@@ -157,59 +119,52 @@ TEST_F(TestBatchnormInt8, BNTest) {
   output_quant_arg.scale = 0.5;
   output_quant_arg.zeroPoint = 0;
 
-  lite::Tensor input0_tensor;
-  lite::Tensor input1_tensor;
-  lite::Tensor input2_tensor;
-  inputs_tensor.push_back(&input0_tensor);
-  inputs_tensor.push_back(&input1_tensor);
-  inputs_tensor.push_back(&input2_tensor);
-  input0_tensor.set_data(in_data.data());
-  input1_tensor.set_data(in_data1.data());
-  input2_tensor.set_data(in_data2.data());
-  input0_tensor.set_shape(shape);
-  input1_tensor.set_shape({2});
-  input2_tensor.set_shape({2});
-  input0_tensor.AddQuantParam(input_quant_arg);
-  input1_tensor.AddQuantParam(input_quant_arg_1);
-  input2_tensor.AddQuantParam(input_quant_arg_2);
+  int8_t in_data0[] = {11, 41, 21, 51, 31, 61, -11, -41, -21, -51, -31, -61};
+  int8_t in_data1[] = {4, 14};
+  int8_t in_data2[] = {29, 39};
 
-  std::vector<int8_t> output(12);
-  std::vector<int8_t> corr_out = {1, 3, 2, 4, 3, 5, -2, -5, -3, -6, -4, -7};
+  lite::Tensor input0(kNumberTypeInt8, {1, 1, 6, 2});
+  lite::Tensor input1(kNumberTypeInt8, {2});
+  lite::Tensor input2(kNumberTypeInt8, {2});
+  memcpy(input0.MutableData(), in_data0, input0.Size());
+  memcpy(input1.MutableData(), in_data1, input1.Size());
+  memcpy(input2.MutableData(), in_data2, input2.Size());
+  input0.AddQuantParam(input_quant_arg);
+  input1.AddQuantParam(input_quant_arg_1);
+  input2.AddQuantParam(input_quant_arg_2);
+  std::vector<lite::Tensor *> inputs_tensor = {&input0, &input1, &input2};
 
-  lite::Tensor output0_tensor;
-  outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.set_data(output.data());
-  output0_tensor.set_shape(shape);
+  lite::Tensor output0_tensor(kNumberTypeInt8, {1, 1, 6, 2});
+  output0_tensor.MallocData();
   output0_tensor.AddQuantParam(output_quant_arg);
+  std::vector<lite::Tensor *> outputs_tensor = {&output0_tensor};
+
+  int thread_number = 3;
+  BatchNormParameter op_param;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_BatchNorm;
+  op_param.epsilon_ = 0.001f;
+  op_param.op_parameter_.thread_num_ = thread_number;
+
+  lite::InnerContext ctx;
+  ctx.thread_num_ = thread_number;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_BatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::InnerContext ctx;
-  ctx.thread_num_ = 3;
-  ASSERT_EQ(lite::RET_OK, ctx.Init());
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
-  printf("==================output data=================\n");
-  for (int i = 0; i < output0_tensor.ElementsNum(); i++) {
-    printf("%d, ", output[i]);
-  }
-  std::cout << std::endl;
-  ASSERT_EQ(0, CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001));
+  int8_t corr_out[] = {1, 3, 2, 4, 3, 5, -2, -5, -3, -6, -4, -7};
+  int8_t *output_data = reinterpret_cast<int8_t *>(output0_tensor.data());
+  ASSERT_EQ(0, CompareOutputData(output_data, corr_out, output0_tensor.ElementsNum(), 0.001));
 
-  input0_tensor.set_data(nullptr);
-  input1_tensor.set_data(nullptr);
-  input2_tensor.set_data(nullptr);
-  output0_tensor.set_data(nullptr);
+  kernel->set_parameter(nullptr);
   delete kernel;
-  MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
 }
-
 }  // namespace mindspore
