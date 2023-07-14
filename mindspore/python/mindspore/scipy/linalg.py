@@ -306,7 +306,7 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore as ms
+        >>> import mindspore as ms
         >>> a = ms.Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
         >>> b = ms.Tensor(onp.array([1, 1, 1, 1]).astype(onp.float32))
         >>> c, low = ms.scipy.linalg.cho_factor(a)
