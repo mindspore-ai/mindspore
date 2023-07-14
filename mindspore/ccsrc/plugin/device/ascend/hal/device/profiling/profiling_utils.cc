@@ -37,6 +37,19 @@ constexpr uint64_t kProfilingBpEndLogId = 3;
 constexpr uint64_t kProfilingIterEndLogId = 4;
 constexpr auto kDouble = 2;
 
+const std::unordered_map<std::string, GeProfInfoType> kNamesToProfTypes = {
+  {"ModelExecute", GeProfInfoType::kModelExecute},
+  {"ModelLoad", GeProfInfoType::kModelLoad},
+  {"InputCopy", GeProfInfoType::kInputCopy},
+  {"OutputCopy", GeProfInfoType::kOutputCopy},
+  {"InferShape", GeProfInfoType::kInferShape},
+  {"CompatibleInferShape", GeProfInfoType::kCompatibleInferShape},
+  {"Tiling", GeProfInfoType::kTiling},
+  {"CompatibleTiling", GeProfInfoType::kCompatibleTiling},
+  {"StreamSync", GeProfInfoType::kStreamSync},
+  {"step_info", GeProfInfoType::kStepInfo},
+  {"task_memory_info", GeProfInfoType::kTaskMemoryInfo}};
+
 nlohmann::json GetContextProfilingOption() {
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
@@ -565,7 +578,7 @@ void ProfilingUtils::RecordModelExecute(const KernelGraphPtr kernel_graph) {
   }
 }
 
-void ProfilingUtils::RecordLaunchTaskBegin(const std::string &op_name, const bool is_op_name) {
+std::string ProfilingUtils::GetFullScopeName(const std::string &op_name, const bool is_op_name) {
   std::string full_scope_name;
   if (!is_op_name) {
     auto op_index = op_name.find("-op");
@@ -575,6 +588,11 @@ void ProfilingUtils::RecordLaunchTaskBegin(const std::string &op_name, const boo
   } else {
     full_scope_name = op_name;
   }
+  return full_scope_name;
+}
+
+void ProfilingUtils::RecordLaunchTaskBegin(const std::string &op_name, const bool is_op_name) {
+  std::string full_scope_name = GetFullScopeName(op_name, is_op_name);
   auto iter = node_addition_info_.find(full_scope_name);
   if (iter == node_addition_info_.end()) {
     MS_LOG(WARNING) << "Do not find op info: " << full_scope_name;
@@ -609,15 +627,7 @@ void ProfilingUtils::RegisterProfType() {
 }
 
 void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_name) {
-  std::string full_scope_name;
-  if (!is_op_name) {
-    auto op_index = op_name.find("-op");
-    if (op_index != std::string::npos) {
-      full_scope_name = op_name.substr(0, op_name.find("_", op_index + 1));
-    }
-  } else {
-    full_scope_name = op_name;
-  }
+  std::string full_scope_name = GetFullScopeName(op_name, is_op_name);
   auto iter = node_addition_info_.find(full_scope_name);
   if (iter == node_addition_info_.end()) {
     MS_LOG(WARNING) << "Do not find op info: " << full_scope_name;
@@ -647,7 +657,7 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
   }
 
   addition_info.api.endTime = prof_time;
-  addition_info.api.threadId = tid;
+  addition_info.api.threadId = static_cast<uint32_t>(tid);
   auto api_ret = MsprofReportApi(false, &addition_info.api);
   if (api_ret != MSPROF_ERROR_NONE) {
     MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
@@ -694,7 +704,7 @@ void ProfilingUtils::InitReportNode(const CNodePtr &cnode) {
   if (remain_index != 0UL) {
     TensorInfoWrapper tensor_info_wrapper{};
     BuildSingleTensorInfo(cnode, opName_hash_id, batch_size, remain_index, &tensor_info_wrapper);
-    addition_info.tensor_info_wrappers.emplace_back(tensor_info_wrapper);
+    (void)addition_info.tensor_info_wrappers.emplace_back(tensor_info_wrapper);
   }
   InitLaunchApi(opName_hash_id, &addition_info.api);
 

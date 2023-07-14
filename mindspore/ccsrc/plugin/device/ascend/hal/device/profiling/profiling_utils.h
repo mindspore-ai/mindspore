@@ -88,19 +88,6 @@ enum class GeProfInfoType {
   kEnd
 };
 
-const std::unordered_map<std::string, GeProfInfoType> kNamesToProfTypes = {
-  {"ModelExecute", GeProfInfoType::kModelExecute},
-  {"ModelLoad", GeProfInfoType::kModelLoad},
-  {"InputCopy", GeProfInfoType::kInputCopy},
-  {"OutputCopy", GeProfInfoType::kOutputCopy},
-  {"InferShape", GeProfInfoType::kInferShape},
-  {"CompatibleInferShape", GeProfInfoType::kCompatibleInferShape},
-  {"Tiling", GeProfInfoType::kTiling},
-  {"CompatibleTiling", GeProfInfoType::kCompatibleTiling},
-  {"StreamSync", GeProfInfoType::kStreamSync},
-  {"step_info", GeProfInfoType::kStepInfo},
-  {"task_memory_info", GeProfInfoType::kTaskMemoryInfo}};
-
 constexpr uint32_t kTensorInfoBytes = 44UL;
 constexpr uint32_t kTensorInfoBytesWithCap = 56U;
 
@@ -180,6 +167,7 @@ class ProfilingUtils {
                                      NotNull<std::set<std::string> *> getnext_outputs);
 
   static void SaveProfilingPoint(uint32_t graph_id, const std::string &node_name, uint32_t point_id);
+  static std::string GetFullScopeName(const std::string &op_name, const bool is_op_name);
 
   // graph id --> (kernel name list)
   inline static std::map<uint32_t, std::vector<CNodePtr>> graph_profiling_cnode_;
