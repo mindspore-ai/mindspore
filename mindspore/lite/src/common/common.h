@@ -114,6 +114,7 @@ static const char *const kAscendProviderGe = "ge";
 // ge options
 static const char *const kGeSessionOptionsSection = "ge_session_options";
 static const char *const kGeGraphOptionsSection = "ge_graph_options";
+static const char *const kGeGlobalOptionsSection = "ge_global_options";
 // distributed infer
 static const char *const kRankTableFilePathKey = "rank_table_file";
 // transformer
