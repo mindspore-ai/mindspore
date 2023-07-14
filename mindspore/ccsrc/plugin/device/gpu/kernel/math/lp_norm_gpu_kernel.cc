@@ -158,8 +158,9 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "LpNormGpuKernelMod cudaMemcpyAsync output_shape_ failed");
 
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(output, 0, output_elements_ * sizeof(T)),
-                                    "LpNormGpuKernelMod failed  to set output cuda memory to zeros.");
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+    cudaMemsetAsync(output, 0, output_elements_ * sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    "LpNormGpuKernelMod failed  to set output cuda memory to zeros.");
 
   // The workspace for device output high precision.
   if constexpr (std::is_same_v<T, half>) {
