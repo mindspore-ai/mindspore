@@ -308,7 +308,7 @@ ge::graphStatus CustomAkgOpInferFunc(ge::Operator &op) {
 ge::graphStatus CustomAkgOpInferFunc(ge::Operator &) { return ge::GRAPH_SUCCESS; }
 #endif
 
-ge::graphStatus CustomTbeOpInferFunc(ge::Operator &op) {
+ge::graphStatus CustomTbeAicpuOpInferFunc(ge::Operator &op) {
   auto op_key = GetCustomOpKey(op);
   MS_LOG(INFO) << "Start infer shape for op " << op_key;
   std::vector<ge::TensorDesc> outputs_info;

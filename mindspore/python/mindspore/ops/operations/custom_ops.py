@@ -937,13 +937,13 @@ class Custom(ops.PrimitiveWithInfer):
 
         tensor_inputs = _get_value_list("inputs")
         attr = _get_value_list("attr")
-        # input_names include tensor input names and attr input names
-        input_names = []
-        # attr_names only includes attr input names
+        input_names = []  # include tensor input names and attr input names
         attr_names = []
+        pure_input_names = []
         for item in tensor_inputs:
             if isinstance(item, dict) and item.get("name") is not None:
                 input_names.append(item["name"])
+                pure_input_names.append(item["name"])
         # attr is converted from inputs only when graph mode or when inputs name is also in reg info
         attr_to_input_safe = bool(input_names) or context.get_context("mode") == ms.GRAPH_MODE
         for item in attr:
@@ -958,7 +958,7 @@ class Custom(ops.PrimitiveWithInfer):
                 if attr_to_input_safe and (self.func_type == "tbe" or item.get("value", None) is None):
                     input_names.append(item["name"])
                 attr_names.append(item["name"])
-        cur_attr = {"input_names": input_names, "attr_names": attr_names}
+        cur_attr = {"input_names": input_names, "attr_names": attr_names, "pure_input_names": pure_input_names}
         # If func does not have attr, save current attr.
         # Else, check if current attr is same as previous saved one.
         prev_attr_names = attr_names
@@ -1007,7 +1007,12 @@ class Custom(ops.PrimitiveWithInfer):
 
     def _update_attr(self):
         """Add input_names, attr_names, primitive_target to primitive's attr."""
-        # add input_names, attr_names
+
+        def _add_prim_attr(key):
+            value = func_attr.get(key)
+            if value:
+                self.add_prim_attr(key, value)
+
         func_attr = {}
         if callable(self.func):
             inputs_num = len(inspect.signature(self.func).parameters)
@@ -1016,12 +1021,9 @@ class Custom(ops.PrimitiveWithInfer):
         elif isinstance(self.func, str):
             func_attr = Custom.attr_dict.get(self.func)
         if isinstance(func_attr, dict):
-            input_names = func_attr.get("input_names")
-            attr_names = func_attr.get("attr_names")
-            if input_names:
-                self.add_prim_attr("input_names", input_names)
-            if attr_names:
-                self.add_prim_attr("attr_names", attr_names)
+            _add_prim_attr("input_names")
+            _add_prim_attr("attr_names")
+            _add_prim_attr("pure_input_names")
         self._add_prim_target()
         if callable(self.func) and callable(self.out_shape):
             if hasattr(self.out_shape, "type") and getattr(self.out_shape, "type") == "autodiff":
