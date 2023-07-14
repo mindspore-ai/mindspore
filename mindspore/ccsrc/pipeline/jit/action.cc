@@ -53,6 +53,7 @@
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/ad/grad.h"
+#include "frontend/expander/pack/packfunc.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "backend/graph_compiler/transform.h"
@@ -473,6 +474,9 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
 namespace {
 // Get all the trainable parameters of the reusable cell.
 void GetTrainableParameters(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *parameters) {
+  if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on" && expander::IsPackGraph(fg)) {
+    return expander::GetPackGraphParams(fg, parameters);
+  }
   MS_EXCEPTION_IF_NULL(parameters);
   if (fg->manager() == nullptr) {
     MS_LOG(INFO) << fg->ToString() << " manager is null. This Cell init should not be assigned cell_attr_register.";
@@ -509,6 +513,9 @@ FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
     MS_LOG(INTERNAL_EXCEPTION) << "Clone func graph failed! " << fg->ToString();
   }
   auto reusing_graph = cloned_fg_iter->second;
+  if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on" && expander::IsPackGraph(fg)) {
+    return expander::UpdateReusingGraphForPack(reusing_graph, parameters);
+  }
 
   // Make the reusable graph to be the no_inline status.
   reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
