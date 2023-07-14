@@ -851,7 +851,8 @@ void GPUKernelRuntime::LaunchKernelWithoutMock(const session::KernelGraph *graph
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
 
-  if (profiler_inst->GetEnableFlag() && profiler::gpu::ProfilingUtils::IsFirstStep(graph->graph_id())) {
+  if (profiler_inst->GetEnableFlag() && profiler::gpu::ProfilingUtils::IsFirstStep(graph->graph_id()) &&
+      profiler_inst->GetOpTimeFlag()) {
     profiler::gpu::ProfilingTraceInfo profiling_trace =
       profiler::gpu::ProfilingUtils::GetProfilingTraceFromEnv(NOT_NULL(graph));
     profiler_inst->SetStepTraceOpName(profiling_trace);
@@ -859,7 +860,7 @@ void GPUKernelRuntime::LaunchKernelWithoutMock(const session::KernelGraph *graph
 #endif
   if (!profiling) {
 #ifndef ENABLE_SECURITY
-    if (profiler_inst->GetEnableFlag()) {
+    if (profiler_inst->GetEnableFlag() && profiler_inst->GetOpTimeFlag()) {
       profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), stream_);
     }
 #endif
@@ -873,7 +874,7 @@ void GPUKernelRuntime::LaunchKernelWithoutMock(const session::KernelGraph *graph
       MS_LOG(EXCEPTION) << "Launch kernel failed: " << kernel->fullname_with_scope();
     }
 #ifndef ENABLE_SECURITY
-    if (profiler_inst->GetEnableFlag()) {
+    if (profiler_inst->GetEnableFlag() && profiler_inst->GetOpTimeFlag()) {
       profiler_inst->OpDataProducerEnd();
       if (profiler_inst->GetSyncEnableFlag()) {
         CHECK_OP_RET_WITH_ERROR(SyncStream(), "Profiler SyncStream failed.");
