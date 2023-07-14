@@ -1176,6 +1176,40 @@ class Parser:
         logger.debug(f"The name '{var}' is an undefined symbol.")
         return None, None
 
+    def check_third_party_library_side_effect(self, var, attr):
+        """Check if value is from a third-party library."""
+        logger.debug(f"var '{var}'.")
+        logger.debug(f"attr '{attr}'.")
+        side_effect_attrs = {
+            "numpy": {"load", "save", "savez", "savez_compressed", "loadtxt", "savetxt", "genfromtxt", "fromregex",
+                      "fromstring", "tofile", "memmap", "open_memmap", "open", "exists", "abspath", "DataSource",
+                      "format"},
+            "pandas": {"read_csv", "to_csv", "read_excel", "to_excel", "read_json", "to_json", "read_html", "to_html",
+                       "read_sql", "to_sql", "read_feather", "to_feather", "read_parquet", "to_parquet", "read_pickle",
+                       "to_pickle"},
+            "scipy": {"loadmat", "savemat"},
+            "csv": {"reader", "writer"},
+            "json": {"load", "loads", "dump", "dumps"},
+            "pickle": {"load", "loads", "dump", "dumps"},
+            "h5py": {"File", "Group", "Dataset"},
+            "os": {"listdir", "isfile", "exists", "isdir", "mkdir", "remove", "rmdir", "symlink"},
+            "shutil": {"copy", "copy2", "copytree", "move", "rmtree"},
+            "pathlib": {"Path", "mkdir", "rmdir", "unlink", "rename", "symlink_to"},
+            "glob": {"glob", "iglob"},
+            "zipfile": {"zipfile", "ZipFile", "write", "extractall"}}
+        if var in self.global_namespace:
+            logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}.")
+            value = self.global_namespace[var]
+            value_str = value.__name__ if hasattr(value, '__name__') else str(value)
+            logger.debug(f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+            value = self.get_convert_object_for_mutable(value)
+            if is_from_third_party_library(value):
+                logger.debug(f"value: '{value}' is from third party library.")
+                # pylint: disable=get-dict-value-exception
+                if value_str in side_effect_attrs and attr in side_effect_attrs[value_str]:
+                    return True
+        return False
+
     def analyze_super(self, class_type_node, subclass_instance):
         """Analyze super and return a class instance."""
         sub_class = type(subclass_instance)

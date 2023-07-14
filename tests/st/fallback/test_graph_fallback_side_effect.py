@@ -14,6 +14,8 @@
 # ============================================================================
 """ test graph JIT Fallback runtime feature """
 
+import os
+import shutil
 import pytest
 import numpy as np
 import mindspore as ms
@@ -21,6 +23,8 @@ from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore import jit
 import mindspore.amp as amp
+import mindspore.nn as nn
+from mindspore.common.initializer import One
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -400,3 +404,83 @@ def test_if_after_for_in_if_numpy():
     net = PyExecuteNet(UserDefinedNet2())
     output = net()
     assert (output.asnumpy() == [3, 4]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_save_load():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with side effect operate from third-party module.
+    Expectation: No exception.
+    """
+    class LinearNet(nn.Cell):
+        def __init__(self, path_file):
+            super(LinearNet, self).__init__()
+            self.path_file = path_file
+            self.dense = nn.Dense(10, 1)
+
+        def construct(self, x):
+            x = self.dense(x)
+            np.save(self.path_file, x.asnumpy())
+            np.load('/tmp/test_fallback_save_load/tensor1.npy')
+            return x
+
+    file_name = 'tensor1'
+    path = f"/tmp/test_fallback_save_load/"
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+    os.makedirs(path)
+    model = LinearNet(os.path.join(path, file_name))
+    input_x = Tensor(shape=(1, 10), dtype=ms.float32, init=One())
+    output = model(input_x)
+    print("output:", output)
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_save_load_with_annotation():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with side effect operate from third-party module.
+    Expectation: No exception.
+    """
+    class LinearNet3(nn.Cell):
+        def __init__(self, path_file):
+            super(LinearNet3, self).__init__()
+            self.path_file = path_file
+            self.dense = nn.Dense(10, 1)
+
+        def construct(self, x):
+            x = self.dense(x)
+            np.save(self.path_file, x.asnumpy())
+            np.load('/tmp/test_fallback_save_load_with_annotation/tensor2.npy')  # @jit.typing: side_effect
+            return x
+
+    file_name = 'tensor2'
+    path = f"/tmp/test_fallback_save_load_with_annotation/"
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+    os.makedirs(path)
+    model = LinearNet3(os.path.join(path, file_name))
+    input_x = Tensor(shape=(1, 10), dtype=ms.float32, init=One())
+    output = model(input_x)
+    print("output:", output)
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass

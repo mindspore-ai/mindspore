@@ -107,35 +107,63 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     MS_LOG(DEBUG) << "py_global_dict: " << py::str(py_global_dict);
     (void)CallPythonPushGlobalParams(py_global_dict);
 
-    if (!IsPrimitiveCNode(cnode->input(input_index_three), prim::kPrimMakeDict)) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The 3rd input should be a dictionary, but got "
-                                 << cnode->input(input_index_three)->DebugString();
+    const auto &three_input = cnode->input(input_index_three);
+    if (!IsPrimitiveCNode(three_input, prim::kPrimMakeDict) && !IsValueNode<ValueDictionary>(three_input)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The 3rd input should be a dictionary, but got " << three_input->DebugString();
     }
-    const auto &local_dict_cnode = dyn_cast<CNode>(cnode->input(input_index_three));
-    MS_EXCEPTION_IF_NULL(local_dict_cnode);
-    const auto &local_dict_keys = local_dict_cnode->input(input_index_one);
-    const auto &local_dict_values = local_dict_cnode->input(input_index_two);
+
+    AnfNodePtr local_dict_keys = nullptr;
+    AnfNodePtr local_dict_values = nullptr;
+    if (IsValueNode<ValueDictionary>(three_input)) {
+      const auto &local_dict = GetValueNode<ValueDictionaryPtr>(three_input);
+      auto value_local_dict = local_dict->cast<ValueDictionaryPtr>();
+      if (value_local_dict->value().empty()) {
+        auto str_value = std::make_shared<StringImm>("None");
+        std::vector<ValuePtr> none_value{str_value};
+        const auto none_tuple = std::make_shared<ValueTuple>(none_value);
+        auto none_tuple_node = NewValueNode(none_tuple);
+        local_dict_keys = none_tuple_node;
+        local_dict_values = none_tuple_node;
+      } else {
+        std::vector<ValuePtr> key_vec;
+        std::vector<ValuePtr> value_vec;
+        for (auto key_value : value_local_dict->value()) {
+          (void)key_vec.emplace_back(key_value.first);
+          (void)value_vec.emplace_back(key_value.second);
+        }
+        local_dict_keys = NewValueNode(std::make_shared<ValueTuple>(key_vec));
+        local_dict_values = NewValueNode(std::make_shared<ValueTuple>(value_vec));
+      }
+    } else {
+      const auto &local_dict_cnode = dyn_cast<CNode>(three_input);
+      MS_EXCEPTION_IF_NULL(local_dict_cnode);
+      local_dict_keys = local_dict_cnode->input(input_index_one);
+      local_dict_values = local_dict_cnode->input(input_index_two);
+    }
+
     if ((!IsValueNode<ValueTuple>(local_dict_keys) && !IsPrimitiveCNode(local_dict_keys, prim::kPrimMakeTuple)) ||
         (!IsValueNode<ValueTuple>(local_dict_values) && !IsPrimitiveCNode(local_dict_values, prim::kPrimMakeTuple))) {
       MS_LOG(INTERNAL_EXCEPTION) << "The dictionary's keys and values should be a tuple, but got "
-                                 << local_dict_cnode->DebugString();
+                                 << three_input->DebugString();
     }
 
-    // Handle values and convert InterpretedObject element.
-    const auto &make_tuple_cnode = dyn_cast<CNode>(local_dict_values);
-    MS_EXCEPTION_IF_NULL(make_tuple_cnode);
-    const auto fg = make_tuple_cnode->func_graph();
-    for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
-      // Convert InterpretedObject value node to PyExecute CNode.
-      const auto &input = make_tuple_cnode->input(i);
-      const auto &value = GetValueNode<parse::InterpretedObjectPtr>(input);
-      if (value != nullptr) {
-        const auto interpreted_value = dyn_cast<parse::InterpretedObject>(value);
-        const std::string &key = interpreted_value->name();
-        const py::object &obj = interpreted_value->obj();
-        const auto &interpreted_node = fallback::ConvertPyObjectToPyExecute(fg, key, obj, input, true);
-        interpreted_node->set_debug_info(input->debug_info());
-        (void)transact.Replace(input, interpreted_node);
+    if (local_dict_values->isa<CNode>()) {
+      // Handle values and convert InterpretedObject element.
+      const auto &make_tuple_cnode = dyn_cast<CNode>(local_dict_values);
+      MS_EXCEPTION_IF_NULL(make_tuple_cnode);
+      const auto fg = make_tuple_cnode->func_graph();
+      for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
+        // Convert InterpretedObject value node to PyExecute CNode.
+        const auto &input = make_tuple_cnode->input(i);
+        const auto &value = GetValueNode<parse::InterpretedObjectPtr>(input);
+        if (value != nullptr) {
+          const auto interpreted_value = dyn_cast<parse::InterpretedObject>(value);
+          const std::string &key = interpreted_value->name();
+          const py::object &obj = interpreted_value->obj();
+          const auto &interpreted_node = fallback::ConvertPyObjectToPyExecute(fg, key, obj, input, true);
+          interpreted_node->set_debug_info(input->debug_info());
+          (void)transact.Replace(input, interpreted_node);
+        }
       }
     }
 

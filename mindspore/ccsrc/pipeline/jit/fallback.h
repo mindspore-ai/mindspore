@@ -64,7 +64,7 @@ using FormatedVariableTypeFunc = std::function<TypePtr(const std::string &)>;
 
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node,
                                         const FormatedVariableTypeFunc &format_type_func = FormatedVariableTypeFunc());
-
+bool GetJitAnnotationSideEffectFromComment(const AnfNodePtr &node);
 bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
 
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);

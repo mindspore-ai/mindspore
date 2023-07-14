@@ -1717,6 +1717,18 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   if (attr_str == "pop") {
     list_pop_target_obj_ = value_body;
   }
+  if (py::hasattr(value_body, "id")) {
+    // Check the value is side effect operate from third-party module. eg: np.load(xx) or ts.save(xxx)
+    auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(value_body, "id"));
+    MS_LOG(DEBUG) << "The Name id is " << name_id;
+    bool is_third_party_side_effect =
+      ast_->CallParserObjMethod(PYTHON_PARSE_CHECK_THIRD_PARTY_LIBRARY_SIDE_EFFECT, name_id, attr_str).cast<bool>();
+    if (is_third_party_side_effect) {
+      auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(attr_cnode->cast<CNodePtr>(), "getattr");
+      MS_LOG(DEBUG) << "pyexecute_node:" << pyexecute_node->DebugString();
+      return pyexecute_node;
+    }
+  }
   return attr_cnode;
 }
 

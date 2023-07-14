@@ -1759,6 +1759,18 @@ class AfterOptARewriter : public BaseRewriter {
     return res;
   }
 
+  AnfNodePtr ConvertNameSpaceToPyExecute(const FuncGraphPtr &fg, const ValueNodePtr &node,
+                                         const parse::NameSpacePtr &name_space) const {
+    // Support convert namespace to PyExecute.
+    const auto name_space_type = ValueToPyData(name_space);
+    MS_LOG(DEBUG) << "name_space_type: " << name_space_type;
+    auto res = fallback::ConvertPyObjectToPyExecute(fg, py::str(name_space_type).cast<std::string>(), name_space_type,
+                                                    node, true);
+    fallback::SetRealType(res, name_space);
+    MS_LOG(DEBUG) << "res: " << res->DebugString();
+    return res;
+  }
+
   AnfNodePtr GetPyExecuteFromValue(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValuePtr &value,
                                    bool py_execute_input) {
     MS_EXCEPTION_IF_NULL(fg);
@@ -1779,6 +1791,10 @@ class AfterOptARewriter : public BaseRewriter {
         auto class_type = GetValueNode<ClassTypePtr>(value_node);
         MS_EXCEPTION_IF_NULL(class_type);
         return ConvertClassTypeToPyExecute(fg, value_node, class_type);
+      } else if (value->isa<parse::NameSpace>()) {
+        auto name_space = GetValueNode<parse::NameSpacePtr>(value_node);
+        MS_EXCEPTION_IF_NULL(name_space);
+        return ConvertNameSpaceToPyExecute(fg, value_node, name_space);
       }
     }
     if (value->isa<parse::MsClassObject>()) {
