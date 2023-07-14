@@ -846,18 +846,32 @@ std::vector<tensor::TensorPtr> GetAllInputTensor(
 }
 
 void UpdateOutputShapeForCompileInfo(const std::vector<device::DeviceAddressPtr> &outputs_device_address,
-                                     const AbstractBasePtr &out_abstract) {
+                                     const CNodePtr &node) {
+  auto out_abstract = node->abstract();
+  MS_EXCEPTION_IF_NULL(out_abstract);
+  auto kernel_mod = AnfAlgo::GetKernelMod(node);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  auto need_retrieve = kernel_mod->IsNeedRetrieveOutputShape();
+  auto update_address = [&node, &need_retrieve, &outputs_device_address](const BaseShapePtr &shape_ptr, size_t index) {
+    const auto &shape_vector = BaseShapeToShape(shape_ptr);
+    outputs_device_address[index]->set_host_shape(shape_vector);
+    if (need_retrieve) {
+      auto output_size = AnfAlgo::GetOutputTensorMemSize(node, index, shape_vector);
+      outputs_device_address[index]->SetSize(output_size);
+    }
+  };
+
   if (out_abstract->isa<abstract::AbstractTuple>()) {
     auto abstract_tuple = out_abstract->cast<abstract::AbstractTuplePtr>();
     auto num = abstract_tuple->elements().size();
     for (size_t output_index = 0; output_index < num; ++output_index) {
       auto real_abstract = abstract_tuple->elements()[output_index];
       auto shape_ptr = real_abstract->BuildShape();
-      outputs_device_address[output_index]->set_host_shape(BaseShapeToShape(shape_ptr));
+      update_address(shape_ptr, output_index);
     }
   } else {
     auto shape_ptr = out_abstract->BuildShape();
-    outputs_device_address[0]->set_host_shape(BaseShapeToShape(shape_ptr));
+    update_address(shape_ptr, 0);
   }
 }
 
@@ -937,7 +951,7 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
 
     if (is_need_infer) {
       kernel::UpdateNodeShape(kernel);
-      UpdateOutputShapeForCompileInfo(execute_kernel.outputs_device_address_, kernel->abstract());
+      UpdateOutputShapeForCompileInfo(execute_kernel.outputs_device_address_, kernel);
     }
   }
 

@@ -173,6 +173,9 @@ BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_in
   if (AnfAlgo::NeedEraseCache(backend_op_run_info->op_prim)) {
     op_run_info->base_op_run_info.need_earse_cache = true;
   }
+  if (op_run_info->base_op_run_info.has_dynamic_output && op_run_info->base_op_run_info.op_name != kGetNextOpName) {
+    backend_op_run_info->base_op_run_info.use_dynamic_shape_process = true;
+  }
   return backend_op_run_info;
 }
 
@@ -495,9 +498,9 @@ VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_
 #endif
 
   VectorRef outputs;
-  const auto &cur_mind_rt_backend = GetMindRtBackend(op_run_info->base_op_run_info.device_target);
+  const auto &cur_mind_rt_backend = GetMindRtBackend(backend_op_run_info->base_op_run_info.device_target);
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-  bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
+  bool use_dynamic_shape_process = backend_op_run_info->base_op_run_info.use_dynamic_shape_process;
   if (use_dynamic_shape_process) {
     cur_mind_rt_backend->RunOpDynamic(backend_op_run_info, &outputs);
   } else {
