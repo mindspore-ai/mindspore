@@ -93,6 +93,7 @@ class ReshapeInfo : public OperatorInfo {
 
  private:
   Status ComputeReplaceOp();
+  Status ComputeReplaceOpForDynamicShape();
   void InferTensorInfoByLayout();
   void device_number();
   Status InferDefaultLayout(const Shape &shape, TensorLayout *const layout);
