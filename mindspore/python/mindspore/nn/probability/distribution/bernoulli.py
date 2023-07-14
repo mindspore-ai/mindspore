@@ -15,6 +15,7 @@
 """Bernoulli Distribution"""
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore import _checkparam as Validator
 from .distribution import Distribution
@@ -151,7 +152,6 @@ class Bernoulli(Distribution):
         self.cast = P.Cast()
         self.const = P.ScalarToTensor()
         self.floor = P.Floor()
-        self.fill = P.Fill()
         self.less = P.Less()
         self.shape = P.Shape()
         self.select = P.Select()
@@ -200,8 +200,8 @@ class Bernoulli(Distribution):
             MODE(B) = 1 if probs1 > 0.5 else = 0
         """
         probs1 = self._check_param_type(probs1)
-        zeros = self.fill(self.dtype, self.shape(probs1), 0.0)
-        ones = self.fill(self.dtype, self.shape(probs1), 1.0)
+        zeros = F.fill(self.dtype, self.shape(probs1), 0.0)
+        ones = F.fill(self.dtype, self.shape(probs1), 1.0)
         comp = self.less(0.5, probs1)
         return self.select(comp, ones, zeros)
 
@@ -278,9 +278,9 @@ class Bernoulli(Distribution):
         probs0 = self.broadcast((1.0 - probs1), broadcast_shape_tensor)
         comp_zero = self.less(value, 0.0)
         comp_one = self.less(value, 1.0)
-        zeros = self.fill(self.parameter_type, self.shape(
+        zeros = F.fill(self.parameter_type, self.shape(
             broadcast_shape_tensor), 0.0)
-        ones = self.fill(self.parameter_type, self.shape(
+        ones = F.fill(self.parameter_type, self.shape(
             broadcast_shape_tensor), 1.0)
         less_than_zero = self.select(comp_zero, zeros, probs0)
         return self.select(comp_one, less_than_zero, ones)

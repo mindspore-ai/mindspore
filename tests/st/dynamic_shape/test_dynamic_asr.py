@@ -794,9 +794,9 @@ class MultiTaskTrainOneStepCell(nn.Cell):
     def construct(self, *inputs):
         weights = self.weights
         (loss, aloss, closs) = self.network(*inputs)
-        sens = (P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens),
-                P.Fill()(P.DType()(aloss), P.Shape()(aloss), 0.0),
-                P.Fill()(P.DType()(closs), P.Shape()(closs), 0.0))
+        sens = (F.fill(P.DType()(loss), P.Shape()(loss), self.sens),
+                F.fill(P.DType()(aloss), P.Shape()(aloss), 0.0),
+                F.fill(P.DType()(closs), P.Shape()(closs), 0.0))
         grads = self.grad(self.network, weights)(*inputs, sens)
         grads = self.grad_reducer(grads)
         return (F.depend(loss, self.optimizer(grads)), aloss, closs)

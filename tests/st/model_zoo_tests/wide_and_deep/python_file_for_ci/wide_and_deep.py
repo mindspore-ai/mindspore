@@ -19,6 +19,7 @@ from mindspore import Parameter, ParameterTuple
 import mindspore.common.dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.nn.optim import Adam, FTRL
 from mindspore.common.initializer import Uniform, initializer
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
@@ -302,8 +303,8 @@ class TrainStepWrap(nn.Cell):
         weights_w = self.weights_w
         weights_d = self.weights_d
         loss_w, loss_d = self.network(batch_ids, batch_wts, label)
-        sens_w = P.Fill()(P.DType()(loss_w), P.Shape()(loss_w), self.sens)
-        sens_d = P.Fill()(P.DType()(loss_d), P.Shape()(loss_d), self.sens)
+        sens_w = F.fill(P.DType()(loss_w), P.Shape()(loss_w), self.sens)
+        sens_d = F.fill(P.DType()(loss_d), P.Shape()(loss_d), self.sens)
         grads_w = self.grad_w(self.loss_net_w, weights_w)(batch_ids, batch_wts,
                                                           label, sens_w)
         grads_d = self.grad_d(self.loss_net_d, weights_d)(batch_ids, batch_wts,

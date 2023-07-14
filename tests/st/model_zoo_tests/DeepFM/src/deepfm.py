@@ -20,6 +20,7 @@ from sklearn.metrics import roc_auc_score
 import mindspore.common.dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.nn import Dropout
 from mindspore.nn.optim import Adam
 from mindspore.train import Metric
@@ -315,7 +316,7 @@ class TrainStepWrap(nn.Cell):
     def construct(self, batch_ids, batch_wts, label):
         weights = self.weights
         loss = self.network(batch_ids, batch_wts, label)
-        sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)  #
+        sens = F.fill(P.DType()(loss), P.Shape()(loss), self.sens)  #
         grads = self.grad(self.network, weights)(batch_ids, batch_wts, label, sens)
         if self.reducer_flag:
             # apply grad reducer on grads

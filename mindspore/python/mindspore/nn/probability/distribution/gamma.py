@@ -15,6 +15,7 @@
 """Gamma Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 import mindspore.nn as nn
 from mindspore import _checkparam as Validator
@@ -185,7 +186,6 @@ class Gamma(Distribution):
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.dtypeop = P.DType()
-        self.fill = P.Fill()
         self.shape = P.Shape()
         self.select = P.Select()
         self.greater = P.Greater()
@@ -265,8 +265,8 @@ class Gamma(Distribution):
         """
         concentration, rate = self._check_param_type(concentration, rate)
         mode = (concentration - 1.) / rate
-        nan = self.fill(self.dtypeop(concentration),
-                        self.shape(concentration), np.nan)
+        nan = F.fill(self.dtypeop(concentration), self.shape(concentration),
+                     np.nan)
         comp = self.greater(concentration, 1.)
         return self.select(comp, mode, nan)
 

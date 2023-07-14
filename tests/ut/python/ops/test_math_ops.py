@@ -284,7 +284,6 @@ class NpuFloatNet(nn.Cell):
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()
         self.clear_status = P.NPUClearFloatStatus()
-        self.fill = P.Fill()
         self.shape_op = P.Shape()
         self.select = P.Select()
         self.less = P.Less()
@@ -303,7 +302,7 @@ class NpuFloatNet(nn.Cell):
         get_status = self.get_status(init)
         init = F.depend(init, get_status) # let reduce_sum depend on get_statusk
         flag_sum = self.reduce_sum(init, (0,))
-        base = self.cast(self.fill(self.dtype(res), self.shape_op(res), 0.0), self.dtype(flag_sum))
+        base = self.cast(F.fill(self.dtype(res), self.shape_op(res), 0.0), self.dtype(flag_sum))
         cond = self.less(base, flag_sum)
         out = self.select(cond, self.cast(base, self.dtype(res)), res)
         return out
@@ -314,11 +313,10 @@ class DiagNet(nn.Cell):
 
     def __init__(self):
         super(DiagNet, self).__init__()
-        self.fill = P.Fill()
         self.diag = P.Diag()
 
     def construct(self, x):
-        return x - self.diag(self.fill(mstype.float32, (3,), 1.0))
+        return x - self.diag(F.fill(mstype.float32, (3,), 1.0))
 
 
 class FmaxFunc(nn.Cell):

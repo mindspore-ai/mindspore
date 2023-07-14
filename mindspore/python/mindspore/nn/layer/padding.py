@@ -220,7 +220,7 @@ class _ConstantPadNd(Cell):
         output = ops.Pad(new_padding)(x)
         mask = ops.Pad(new_padding)(mask)
         ones = ops.OnesLike()(output)
-        value = ops.Fill()(output.dtype, output.shape, self.value)
+        value = ops.fill(output.dtype, output.shape, self.value)
         output = ops.Add()(ops.Mul()(mask, output), ops.Mul()(ops.Sub()(ones, mask), value))
         slice_op = ops.Slice()
         begin, size = _get_begin_size(output.shape, start, end)

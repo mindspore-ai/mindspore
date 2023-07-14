@@ -14,6 +14,7 @@
 # ============================================================================
 """PowerTransform Bijector"""
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from ..distribution._utils.utils import check_greater_equal_zero
 from ..distribution._utils.custom_ops import exp_generic, log_generic
 from .bijector import Bijector
@@ -68,10 +69,7 @@ class PowerTransform(Bijector):
         >>> print(ans4.shape)
         (3,)
     """
-
-    def __init__(self,
-                 power=0.,
-                 name='PowerTransform'):
+    def __init__(self, power=0., name='PowerTransform'):
         param = dict(locals())
         param['param_dict'] = {'power': power}
         super(PowerTransform, self).__init__(name=name, param=param)
@@ -84,7 +82,6 @@ class PowerTransform(Bijector):
         self.equal_base = P.Equal()
         self.exp = exp_generic
         self.expm1 = P.Expm1()
-        self.fill = P.Fill()
         self.log = log_generic
         self.log1p = P.Log1p()
         self.select_base = P.Select()
@@ -116,17 +113,18 @@ class PowerTransform(Bijector):
         power_local = self.cast_param_by_value(x, self.power)
 
         # broad cast the value of x and power
-        ones = self.fill(self.dtypeop(power_local),
-                         self.shape(x + power_local), 1.)
+        ones = F.fill(self.dtypeop(power_local), self.shape(x + power_local),
+                      1.)
         power_local = power_local * ones
         x = x * ones
-        safe_power = self.select_base(self.equal_base(power_local, P.ZerosLike()(power_local)),
-                                      ones,
-                                      power_local)
+        safe_power = self.select_base(
+            self.equal_base(power_local,
+                            P.ZerosLike()(power_local)), ones, power_local)
 
-        forward_v = self.select_base(self.equal_base(power_local, P.ZerosLike()(power_local)),
-                                     self.exp(x),
-                                     self.exp(self.log1p(x * safe_power) / safe_power))
+        forward_v = self.select_base(
+            self.equal_base(power_local,
+                            P.ZerosLike()(power_local)), self.exp(x),
+            self.exp(self.log1p(x * safe_power) / safe_power))
         return forward_v
 
     def _inverse(self, y):
@@ -137,17 +135,18 @@ class PowerTransform(Bijector):
         power_local = self.cast_param_by_value(y, self.power)
 
         # broad cast the value of x and power
-        ones = self.fill(self.dtypeop(power_local),
-                         self.shape(y + power_local), 1.)
+        ones = F.fill(self.dtypeop(power_local), self.shape(y + power_local),
+                      1.)
         power_local = power_local * ones
         y = y * ones
-        safe_power = self.select_base(self.equal_base(power_local, P.ZerosLike()(power_local)),
-                                      ones,
-                                      power_local)
+        safe_power = self.select_base(
+            self.equal_base(power_local,
+                            P.ZerosLike()(power_local)), ones, power_local)
 
-        inverse_v = self.select_base(self.equal_base(power_local, P.ZerosLike()(power_local)),
-                                     self.log(y),
-                                     self.expm1(self.log(y) * safe_power) / safe_power)
+        inverse_v = self.select_base(
+            self.equal_base(power_local,
+                            P.ZerosLike()(power_local)), self.log(y),
+            self.expm1(self.log(y) * safe_power) / safe_power)
 
         return inverse_v
 
@@ -167,14 +166,15 @@ class PowerTransform(Bijector):
         power_local = self.cast_param_by_value(x, self.power)
 
         # broad cast the value of x and power
-        ones = self.fill(self.dtypeop(power_local),
-                         self.shape(x + power_local), 1.)
+        ones = F.fill(self.dtypeop(power_local), self.shape(x + power_local),
+                      1.)
         power_local = power_local * ones
         x = x * ones
 
-        forward_log_j = self.select_base(self.equal_base(power_local, P.ZerosLike()(power_local)),
-                                         x,
-                                         (1. / power_local - 1) * self.log1p(x * power_local))
+        forward_log_j = self.select_base(
+            self.equal_base(power_local,
+                            P.ZerosLike()(power_local)), x,
+            (1. / power_local - 1) * self.log1p(x * power_local))
 
         return forward_log_j
 

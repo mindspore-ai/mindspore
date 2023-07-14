@@ -19,7 +19,6 @@ import mindspore
 from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.ops import operations as P
 
 class Layer1(nn.Cell):
     def __init__(self):
@@ -61,7 +60,6 @@ class SwitchNet(nn.Cell):
         self.layer2 = Layer2()
         self.layer3 = Layer3()
         self.layers = (self.layer1, self.layer2, self.layer3)
-        self.fill = P.Fill()
 
     def construct(self, x, index):
         y = self.layers[index](x)
@@ -75,7 +73,6 @@ class MySwitchNet(nn.Cell):
         self.layer2 = Layer2()
         self.layer3 = Layer3()
         self.layers = (self.layer1, self.layer2, self.layer3)
-        self.fill = P.Fill()
 
     def construct(self, x, index):
         y = self.layers[0](x)
@@ -99,7 +96,6 @@ class MySwitchNetPynative(nn.Cell):
         self.layer2 = Layer2()
         self.layer3 = Layer3()
         self.layers = (self.layer1, self.layer2, self.layer3)
-        self.fill = P.Fill()
 
     def construct(self, x, index):
         return self.layers[index](x)

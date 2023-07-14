@@ -36,7 +36,6 @@ class OhemLoss(nn.Cell):
         self.not_equal = P.NotEqual()
         self.equal = P.Equal()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.fill = P.Fill()
         self.transpose = P.Transpose()
         self.ignore_label = ignore_label
         self.loss_weight = 1.0
@@ -51,13 +50,13 @@ class OhemLoss(nn.Cell):
         weights = self.cast(self.not_equal(labels, self.ignore_label), mstype.float32) * self.loss_weight
         weighted_losses = self.mul(losses, weights)
         loss = self.reduce_sum(weighted_losses, (0,))
-        zeros = self.fill(mstype.float32, self.shape(weights), 0.0)
-        ones = self.fill(mstype.float32, self.shape(weights), 1.0)
+        zeros = F.fill(mstype.float32, self.shape(weights), 0.0)
+        ones = F.fill(mstype.float32, self.shape(weights), 1.0)
         present = self.select(self.equal(weights, zeros), zeros, ones)
         present = self.reduce_sum(present, (0,))
 
-        zeros = self.fill(mstype.float32, self.shape(present), 0.0)
-        min_control = self.fill(mstype.float32, self.shape(present), 1.0)
+        zeros = F.fill(mstype.float32, self.shape(present), 0.0)
+        min_control = F.fill(mstype.float32, self.shape(present), 1.0)
         present = self.select(self.equal(present, zeros), min_control, present)
         loss = loss / present
         return loss

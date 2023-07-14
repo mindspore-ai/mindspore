@@ -32,7 +32,6 @@ class NpuFloatNet(nn.Cell):
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()
         self.clear_status = P.NPUClearFloatStatus()
-        self.fill = P.Fill()
         self.shape_op = P.Shape()
         self.select = P.Select()
         self.less = P.Less()
@@ -52,8 +51,8 @@ class NpuFloatNet(nn.Cell):
         # let reduce_sum depend on get_statusk
         init = F.depend(init, get_status)
         flag_sum = self.reduce_sum(init, (0,))
-        base = self.cast(self.fill(self.dtype(
-            res), self.shape_op(res), 0.0), self.dtype(flag_sum))
+        base = self.cast(F.fill(self.dtype(res), self.shape_op(res), 0.0),
+                         self.dtype(flag_sum))
         cond = self.less(base, flag_sum)
         out = self.select(cond, self.cast(base, self.dtype(res)), res)
         return out

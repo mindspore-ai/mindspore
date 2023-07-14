@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore import dtype as mstype
-from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -46,13 +46,12 @@ def test_dtype_and_shape_as_attr_to_new_tensor():
     class Net(nn.Cell):
         def __init__(self, value):
             super(Net, self).__init__()
-            self.fill = P.Fill()
             self.value = value
 
         def construct(self, x):
             dtype = x.dtype
             shape = x.shape
-            y = self.fill(dtype, shape, self.value)
+            y = F.fill(dtype, shape, self.value)
             return y
 
     net = Net(2.2)

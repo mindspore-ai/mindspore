@@ -398,10 +398,16 @@ def slice2indices(input_slice, shape):
         return False
     ndim = len(shape)
     mesh = list()
-    grids = [P.Range()(P.Fill()(mstype.int64, (), start), P.Fill()(
-        mstype.int64, (), stop), P.Fill()(mstype.int64, (), step))]
-    grids += [P.Range()(Tensor(0, mstype.int64), P.Fill()(mstype.int64, (), dim_size),
-                        Tensor(1, mstype.int64)) for dim_size in shape[1:]]
+    range_op = P.Range()
+    cast_op = P.Cast()
+    grids = [
+        range_op(cast_op(start, mstype.int64), cast_op(stop, mstype.int64),
+                 cast_op(step, mstype.int64))
+    ]
+    grids += [
+        range_op(Tensor(0, mstype.int64), cast_op(dim_size, mstype.int64),
+                 Tensor(1, mstype.int64)) for dim_size in shape[1:]
+    ]
     for j, grid in enumerate(grids):
         mesh.append(P.Reshape()(grid, tuple(
             [grid.size if j == t else 1 for t in range(ndim)])))
@@ -543,7 +549,7 @@ def convert_scalar_to_tensor(data_shape, data_dtype, indices_shape, value, op_ty
         updates_shape = indices_shape + data_shape[1:]
     else:
         updates_shape = indices_shape[:-1] + data_shape[indices_shape[-1]:]
-    return P.Fill()(data_dtype, updates_shape, value)
+    return P.FillV2()(updates_shape, P.Cast()(value, data_dtype))
 
 
 def generate_updates_shape(data_shape, index_shape, op_type, is_dynamic):
@@ -865,11 +871,11 @@ def int_to_index(i, shape):
     _check(i, dim_size)
     i = (i + dim_size) % dim_size
     if len(shape) == 1:
-        return P.Fill()(mstype.int64, (1, 1), i)
+        return P.FillV2()((1, 1), P.Cast()(i, mstype.int64))
     mesh = list()
     ndim = len(shape) - 1
     for j, size in enumerate(shape[1:]):
-        grid = P.Range()(Tensor(0, mstype.int64), P.Fill()(mstype.int64, (), size), Tensor(1, mstype.int64))
+        grid = P.Range()(Tensor(0, mstype.int64), P.Cast()(size, mstype.int64), Tensor(1, mstype.int64))
         mesh.append(P.Reshape()(grid, tuple([size if j == t else 1 for t in range(ndim)])))
     shapes = map(P.Shape(), mesh)
     out_shape = infer_out_shape(*shapes)
@@ -877,7 +883,8 @@ def int_to_index(i, shape):
     for arr in mesh:
         mesh_arrays.append(P.BroadcastTo(out_shape)(arr))
     index = P.Stack(-1)(mesh_arrays)
-    return P.Concat(-1)((P.Fill()(mstype.int64, P.Shape()(index)[:-1] + (1,), i), index))
+    return P.Concat(-1)((P.FillV2()(P.Shape()(index)[:-1] + (1,),
+                                    P.Cast()(i, mstype.int64)), index))
 
 
 @constexpr

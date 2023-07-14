@@ -284,7 +284,7 @@ class ZeroLikeFillZero : public AnfVisitor {
  public:
   ZeroLikeFillZero() {
     py::gil_scoped_acquire gil;
-    PrimFill_ = prim::GetPythonOps("fill_", "mindspore.ops.functional")->cast<PrimitivePtr>();
+    PrimFill_ = prim::GetPythonOps("fill", "mindspore.ops.functional")->cast<PrimitivePtr>();
     PrimShape_ = prim::GetPythonOps("shape_", "mindspore.ops.functional")->cast<PrimitivePtr>();
     PrimDType_ = prim::GetPythonOps("dtype", "mindspore.ops.functional")->cast<PrimitivePtr>();
   }

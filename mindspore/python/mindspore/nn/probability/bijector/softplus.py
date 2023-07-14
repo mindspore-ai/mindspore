@@ -15,6 +15,7 @@
 """Softplus Bijector"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.nn.layer.activation import LogSigmoid
 from ..distribution._utils.custom_ops import exp_generic, log_generic
 from .bijector import Bijector
@@ -84,7 +85,6 @@ class Softplus(Bijector):
         self.abs = P.Abs()
         self.dtypeop = P.DType()
         self.cast = P.Cast()
-        self.fill = P.Fill()
         self.greater = P.Greater()
         self.less = P.Less()
         self.log_sigmoid = LogSigmoid()
@@ -103,7 +103,7 @@ class Softplus(Bijector):
         too_large = self.greater(x, -self.threshold)
         too_small_value = self.exp(x)
         too_large_value = x
-        ones = self.fill(self.dtypeop(x), self.shape(x), 1.0)
+        ones = F.fill(self.dtypeop(x), self.shape(x), 1.0)
         too_small_or_too_large = self.logicalor(too_small, too_large)
         x = self.select(too_small_or_too_large, ones, x)
         y = self.log(self.exp(x) + 1.0)
@@ -119,7 +119,7 @@ class Softplus(Bijector):
         too_large = self.greater(x, (-1) * self.threshold)
         too_small_value = self.log(x)
         too_large_value = x
-        ones = self.fill(self.dtypeop(x), self.shape(x), 1.0)
+        ones = F.fill(self.dtypeop(x), self.shape(x), 1.0)
         too_small_or_too_large = self.logicalor(too_small, too_large)
         x = self.select(too_small_or_too_large, ones, x)
         y = x + self.log(self.abs(self.expm1((-1)*x)))

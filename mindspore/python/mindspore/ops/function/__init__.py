@@ -34,7 +34,6 @@ from .array_func import (
     matrix_band_part,
     padding,
     fill,
-    fill_,
     full,
     full_like,
     chunk,

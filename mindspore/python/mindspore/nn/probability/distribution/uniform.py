@@ -14,6 +14,7 @@
 # ============================================================================
 """Uniform Distribution"""
 import numpy as np
+from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore import _checkparam as Validator
@@ -170,7 +171,6 @@ class Uniform(Distribution):
         self.cast = P.Cast()
         self.const = P.ScalarToTensor()
         self.dtypeop = P.DType()
-        self.fill = P.Fill()
         self.less = P.Less()
         self.lessequal = P.LessEqual()
         self.logicaland = P.LogicalAnd()
@@ -287,10 +287,10 @@ class Uniform(Distribution):
         value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
         low, high = self._check_param_type(low, high)
-        neg_ones = self.fill(self.dtype, self.shape(value), -1.0)
+        neg_ones = F.fill(self.dtype, self.shape(value), -1.0)
         prob = self.exp(neg_ones * self.log(high - low))
         broadcast_shape = self.shape(prob)
-        zeros = self.fill(self.dtypeop(prob), broadcast_shape, 0.0)
+        zeros = F.fill(self.dtypeop(prob), broadcast_shape, 0.0)
         comp_lo = self.less(value, low)
         comp_hi = self.lessequal(value, high)
         less_than_low = self.select(comp_lo, zeros, prob)
@@ -316,7 +316,7 @@ class Uniform(Distribution):
         kl = self.log(high_b - low_b) - self.log(high_a - low_a)
         comp = self.logicaland(self.lessequal(
             low_b, low_a), self.lessequal(high_a, high_b))
-        inf = self.fill(self.dtypeop(kl), self.shape(kl), np.inf)
+        inf = F.fill(self.dtypeop(kl), self.shape(kl), np.inf)
         return self.select(comp, kl, inf)
 
     def _cdf(self, value, low=None, high=None):
@@ -338,8 +338,8 @@ class Uniform(Distribution):
         low, high = self._check_param_type(low, high)
         prob = (value - low) / (high - low)
         broadcast_shape = self.shape(prob)
-        zeros = self.fill(self.dtypeop(prob), broadcast_shape, 0.0)
-        ones = self.fill(self.dtypeop(prob), broadcast_shape, 1.0)
+        zeros = F.fill(self.dtypeop(prob), broadcast_shape, 0.0)
+        ones = F.fill(self.dtypeop(prob), broadcast_shape, 1.0)
         comp_lo = self.less(value, low)
         comp_hi = self.less(value, high)
         less_than_low = self.select(comp_lo, zeros, prob)
