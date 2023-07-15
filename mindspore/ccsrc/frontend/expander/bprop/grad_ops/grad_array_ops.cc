@@ -1255,7 +1255,7 @@ REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
     return {dout};
   }
 
-  auto x_shape_node = ib->Shape(x, true);
+  auto x_shape_node = ib->Shape(x);
   auto broadcast_axes = ib->BroadcastGradientArgs(dout, x);
   MS_EXCEPTION_IF_CHECK_FAIL(!broadcast_axes.empty(), "BroadcastGradientArgs out should not be empty!");
   auto reduction_axes = broadcast_axes[kIndex1];
