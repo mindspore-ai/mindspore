@@ -1566,19 +1566,22 @@ std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
   }
   CheckGlobalDeviceManager();
   int64_t dev_num = g_device_manager->stage_device_num();
+  MS_EXCEPTION_IF_ZERO("dev_num", dev_num);
   TensorLayout input_tensor_layout;
   // create input_shape
   Shapes inputs_shape = GetNodeShape(node);
   Shape input_shape_array = inputs_shape[0];
-  if (input_shape_array.empty()) {
-    MS_LOG(EXCEPTION) << "Don't support reshape a scalar parameter.";
-  }
-  // create tensor_map
-  size_t shape_size = input_shape_array.size();
-  TensorMap input_tensor_map_array(SizeToLong(shape_size) - 1, -1);
-  (void)input_tensor_map_array.insert(input_tensor_map_array.cbegin(), 0);
+
   // create dev_matrix
   Shape dev_matrix_array = {dev_num};
+
+  // create tensor_map
+  size_t shape_size = input_shape_array.size();
+  TensorMap input_tensor_map_array(shape_size, MAP_NONE);
+  if ((shape_size > 0) && (input_shape_array[0] % dev_num == 0)) {
+    input_tensor_map_array[0] = 0;  // shard parameter's first dimension when parameter->Reshape->Op
+  }
+
   if (input_tensor_layout.InitFromVector(dev_matrix_array, input_tensor_map_array, input_shape_array) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Create tensor layout for parameter failed.";
   }
