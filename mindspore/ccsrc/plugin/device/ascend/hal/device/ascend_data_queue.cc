@@ -192,6 +192,11 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
+  aclError ret = aclrtSetDevice(device_id_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Acl open device " << device_id_ << " failed.";
+  }
+
 #if defined(ENABLE_PYTHON) && !defined(ENABLE_ANDROID)
   // There is a python flag in MindSpore to recognize if the runtime env is python.
   // If we only use MD feature, python_env_flag will not set to true,
@@ -253,6 +258,10 @@ AscendTdtQueue::~AscendTdtQueue() {
   }
   if (DataQueueMgr::GetInstance().IsCreated(channel_name_)) {
     DataQueueMgr::GetInstance().Free(channel_name_);
+  }
+  aclError rt_ret = aclrtResetDevice(device_id_);
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Reset device " << device_id_ << " failed.";
   }
 }
 

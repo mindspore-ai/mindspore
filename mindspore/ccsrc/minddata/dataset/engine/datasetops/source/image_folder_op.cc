@@ -344,12 +344,13 @@ Status ImageFolderOp::GetNumClasses(int64_t *num_classes) {
 Status ImageFolderOp::InitPullMode() {
   // to avoid the concurrent and multi end signal in StartAsyncWalk, explicitly set num_workers_ to 1
   num_workers_ = 1;
-  if (folder_name_queue_->empty()) {
-    RETURN_IF_NOT_OK(StartAsyncWalk());
-  }
-  if (image_name_queue_->empty()) {
-    RETURN_IF_NOT_OK(PrescanWorkerEntry(id()));
-  }
+  RETURN_IF_NOT_OK(folder_name_queue_->Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(image_name_queue_->Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(Name() + "::WalkDir",
+                                                      std::bind(&ImageFolderOp::StartAsyncWalk, this), nullptr, id()));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
+                                        std::bind(&ImageFolderOp::PrescanWorkerEntry, this, std::placeholders::_1),
+                                        Name() + "::PrescanWorkerEntry", id()));
   return PrepareData();
 }
 
