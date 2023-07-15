@@ -488,7 +488,8 @@
     "BNTrainingReduceGrad": "dynamic impl failed",
     "BNTrainingReduce": "dynamic impl failed",
     "BNTrainingUpdateGrad": "dynamic impl failed",
-    "BNTrainingUpdate": "dynamic impl failed"
+    "BNTrainingUpdate": "dynamic impl failed",
+    "MatMul": "Performance of fp16_DefaultFormat is lower than fp16_FracNZ"
   },
   "SkipNodes": [
     "Im2col",
@@ -531,7 +532,8 @@
     "AvgPool",
     "GatherNd",
     "Eye",
-    "BNInfer"
+    "BNInfer",
+    "MatMul"
   ],
   "FallbackOps": {
     "DeformableOffsets": [

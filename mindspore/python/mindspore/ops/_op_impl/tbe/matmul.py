@@ -34,16 +34,18 @@ matmul_op_info = TBERegOp("MatMul") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I8_Default,
                   DataType.I32_Default) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_Default, DataType.I8_Default,
-                  DataType.F16_FracNZ) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F32_Default, DataType.I8_Default,
-                  DataType.F32_FracNZ) \
-    .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.I8_Default,
-                  DataType.F32_NHWC) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.I8_Default,
-                  DataType.F32_Default) \
     .dtype_format(DataType.I32_NHWC, DataType.I32_NHWC, DataType.I32_NHWC, DataType.I8_Default,
                   DataType.I32_NHWC) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_Default, DataType.I8_Default,
+                  DataType.F16_FracNZ) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.I8_Default,
+                  DataType.F32_Default) \
+    .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.I8_Default,
+                  DataType.F32_NHWC) \
+    .dtype_format(DataType.I8_FracNZ, DataType.I8_FracZ, DataType.I32_Default, DataType.I8_Default,
+                  DataType.I32_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.I8_Default,
+                  DataType.F16_FracNZ) \
     .get_op_info()
 
 
