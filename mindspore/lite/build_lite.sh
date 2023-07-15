@@ -622,8 +622,16 @@ build_lite() {
           cp ${BASEPATH}/mindspore/lite/build/schema/model_generated.h ${schema_path}
           cp ${BASEPATH}/mindspore/lite/build/schema/ops_generated.h ${schema_path}
           cp ${BASEPATH}/mindspore/lite/build/schema/ops_types_generated.h ${schema_path}
-          local protobuf_arm_lib=${BASEPATH}/mindspore/lite/build/_deps/protobuf_arm-src/_build/libprotobuf-lite.a
-          if [ -e "$protobuf_arm_lib" ]; then
+          if [[ "${MSLITE_ENABLE_COREML}" == "ON" || "${MSLITE_ENABLE_COREML}" == "on" ]]; then
+            local protobuf_arm_lib=${BASEPATH}/mindspore/lite/build/_deps/protobuf_arm-src/_build/libprotobuf-lite.a
+            if [ ! -e "$protobuf_arm_lib" ]; then
+              local protobuf_arm_libpath=$(grep protobuf_arm_LIBPATH ${BASEPATH}/mindspore/lite/build/CMakeCache.txt | cut -d'=' -f2)
+              protobuf_arm_lib="${protobuf_arm_libpath}/libprotobuf-lite.a"
+            fi
+            if [ ! -e "$protobuf_arm_lib" ]; then
+              echo "failed to find libprotobuf-lite.a to build ios package"
+              exit 1
+            fi
             mkdir -p ${BASEPATH}/output/mindspore-lite.framework/third_party/protobuf
             cp $protobuf_arm_lib ${BASEPATH}/output/mindspore-lite.framework/third_party/protobuf/
           fi
