@@ -1277,7 +1277,7 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
   if (param_->ascendQuantParam.mode != lite::quant::AscendQuantMode::NONE) {
-    auto ascend_distribute_fake_quant_transform = lite::quant::AscendDistributeFakeQuantTransform(func_graph);
+    auto ascend_distribute_fake_quant_transform = lite::quant::AscendDistributeFakeQuantTransform(func_graph, param_);
     auto status = ascend_distribute_fake_quant_transform.Transform();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do AscendDistributeFakeQuantTransform failed.";
