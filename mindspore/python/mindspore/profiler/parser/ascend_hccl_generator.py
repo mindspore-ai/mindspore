@@ -67,7 +67,10 @@ def count_average(data):
     result = data
     if isinstance(data, list):
         if all(isinstance(x, (int, float)) for x in data):
-            result = sum(data) / len(data)
+            if data:
+                result = sum(data) / len(data)
+            else:
+                result = 0
         else:
             result = [count_average(x) for x in data]
     elif isinstance(data, dict):
