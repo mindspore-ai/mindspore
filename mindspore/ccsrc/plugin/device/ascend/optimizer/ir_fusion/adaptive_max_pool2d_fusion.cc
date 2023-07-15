@@ -113,8 +113,8 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(adaptive_max_pool2d, kIndex0);
-  if (input_shape.size() != kShape4dDims) {
-    MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D's input shape must equal to 4, but got " << input_shape.size();
+  if (input_shape.size() != kShape3dDims && input_shape.size() != kShape4dDims) {
+    MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D's input shape must equal to 3 or 4, but got " << input_shape.size();
   }
 
   // process output_size
@@ -125,8 +125,10 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   if (output_size.size() != kShape2dDims) {
     MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D's output_size shape should equal to 2.";
   }
-  int64_t height = input_shape.at(kDim2);
-  int64_t width = input_shape.at(kDim3);
+  size_t w_index = input_shape.size() - kIndex1;
+  size_t h_index = input_shape.size() - kIndex2;
+  int64_t height = input_shape.at(h_index);
+  int64_t width = input_shape.at(w_index);
   int64_t output_h = (output_size[kDim0] == -1) ? height : output_size[kDim0];
   int64_t output_w = (output_size[kDim1] == -1) ? width : output_size[kDim1];
   if ((output_h != -1 && output_h <= 0) || (output_w != -1 && output_w <= 0)) {
