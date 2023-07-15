@@ -186,6 +186,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
         shm_list_len = len(self.shm_list)
         for idx in range(shm_list_len):
             del self.shm_list[shm_list_len - idx - 1]
+        self.shm_list.clear()
         del self.shm_list
 
         self.close()
