@@ -56,9 +56,9 @@ class AscendFlopsGenerator:
             vec_flops = round(np.sum(self.flops['GFLOPS(10^9 vector)']) / np.sum(self.op_summary['Task Duration']), 4)
 
         self.flops_summary = {
-            'cube_FLOPs': np.sum(self.flops['MFLOPs(10^6 cube)']),
+            'cube_FLOPs': round(float(np.sum(self.flops['MFLOPs(10^6 cube)'])), 4),
             'cube_FLOPS': cube_flops,
-            'vec_FLOPs': np.sum(self.flops['MFLOPs(10^6 vector)']),
+            'vec_FLOPs': round(float(np.sum(self.flops['MFLOPs(10^6 vector)'])), 4),
             'vec_FLOPS': vec_flops
         }
 
