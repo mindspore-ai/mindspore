@@ -36,11 +36,11 @@ class QuantNodePass {
   ~QuantNodePass() = default;
 
   int Quant();
+  int QuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
+                  const std::vector<schema::QuantParamT> &quant_params, int preferred_dim);
 
  private:
   int DoWeightQuant(const CNodePtr &cnode);
-  int QuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                  const std::vector<schema::QuantParamT> &quant_params, int preferred_dim);
   int DoFullQuant(const CNodePtr &cnode);
   int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
   int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);

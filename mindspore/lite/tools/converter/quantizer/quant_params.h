@@ -66,6 +66,7 @@ constexpr auto kNarrowRangeList = "narrow_range_list";
 constexpr auto kDstDtypeList = "dst_dtype_list";
 constexpr auto kRoundTypeList = "round_type_list";
 constexpr auto kMultiplierList = "multiplier_list";
+constexpr auto kChannelAxis = "channel_axis";
 constexpr float kBinarySearchStep = 2.0;
 
 const std::set<PrimitivePtr> kHasBiasOperator = {prim::kPrimConv2DFusion,    prim::kPrimConv2dTransposeFusion,

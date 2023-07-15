@@ -24,6 +24,7 @@
 #include <set>
 #include <functional>
 #include <deque>
+#include "include/common/utils/convert_utils.h"
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "abstract/abstract_value.h"
@@ -503,6 +504,25 @@ int GetGatherPreferredDim(const CNodePtr &cnode) {
 }
 
 int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims) {
+  auto input_node = cnode->input(input_index + kPrimOffset);
+  if (input_node->isa<mindspore::Parameter>()) {
+    tensor::TensorPtr input_tensor = quant::GetNodeTensor(input_node);
+    if (input_tensor != nullptr) {
+      auto quantization_params = input_tensor->quant_params();
+      if (!quantization_params.empty()) {
+        auto quantization_param = quantization_params.front();
+        auto axis_attr = quantization_param->GetAttr(kChannelAxis);
+        if (axis_attr != nullptr) {
+          if (axis_attr->isa<Int64Imm>()) {
+            auto axis = axis_attr->cast<Int64ImmPtr>()->value();
+            MS_LOG(INFO) << "Quantization param axis is " << axis;
+            return axis;
+          }
+          MS_LOG(WARNING) << "Quantization param axis_attr is not int64";
+        }
+      }
+    }
+  }
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   if (primitive->name() == ops::kNameMatMulFusion || primitive->name() == ops::kNameMatMul ||
@@ -742,6 +762,12 @@ int ConvertCNodeFp16ToFp32(const CNodePtr &cnode) {
       }
       mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(
         kNumberTypeFloat32, tensor_info->shape_c(), fp32_data.data(), fp32_data.size() * sizeof(float));
+
+      tensor::TensorPtr input_tensor = quant::GetNodeTensor(input);
+      MS_CHECK_TRUE_MSG(input_tensor != nullptr, RET_NULL_PTR, "Get node tensor failed.");
+      auto quant_params = input_tensor->quant_params();
+      tensor_ptr->set_quant_param(quant_params);
+
       param_node->set_default_param(tensor_ptr);
       param_node->set_abstract(tensor_ptr->ToAbstract());
     }
@@ -846,6 +872,33 @@ std::vector<schema::QuantParamT> ConvertQuantizationParamToQuantParamT(const Qua
     }
   }
   return quant_params;
+}
+
+int RemoveInputNodeQuantParam(const CNodePtr &cnode, size_t index) {
+  if (cnode->size() <= index) {
+    MS_LOG(ERROR) << "index out of range, cnode input size is: " << cnode->size() << ", but index: " << index;
+    return RET_ERROR;
+  }
+  auto input_node = cnode->input(index);
+  CHECK_NULL_RETURN(input_node);
+  auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (IsGraphInput(input_node) && cnode_primitive->HasAttr(quant::kGraphInputQuantParam)) {
+    cnode_primitive->EraseAttr(quant::kGraphInputQuantParam);
+    return RET_OK;
+  } else if (input_node->isa<mindspore::CNode>() && cnode_primitive->HasAttr(quant::kQuantParam)) {
+    cnode_primitive->EraseAttr(quant::kQuantParam);
+    return RET_OK;
+  } else if (input_node->isa<mindspore::Parameter>() || input_node->isa<mindspore::ValueNode>()) {
+    tensor::TensorPtr input_tensor = quant::GetNodeTensor(input_node);
+    CHECK_NULL_RETURN(input_tensor);
+    input_tensor->set_quant_param({});
+    return RET_OK;
+  } else {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " input node with index: " << index
+                  << " Not supported for quant param";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 std::vector<schema::QuantParamT> GetInputNodeQuantParam(const CNodePtr &cnode, size_t index, size_t multi_ouput_index) {

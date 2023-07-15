@@ -111,6 +111,8 @@ class WeightQuantizer : public Quantizer {
                   bool compression = true);
 
   std::set<tensor::TensorPtr> GetWeightQuantizedTensors() { return this->weight_quantized_tensors_; }
+  int InsertAscendDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const ParameterPtr &parameter,
+                              int idx, const tensor::TensorPtr &tensor_info);
 
  private:
   int WeightQuantPerCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
@@ -129,8 +131,6 @@ class WeightQuantizer : public Quantizer {
                     int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true);
   int InsertDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const ParameterPtr &parameter, int idx,
                         const tensor::TensorPtr &tensor_info);
-  int InsertAscendDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const ParameterPtr &parameter,
-                              int idx, const tensor::TensorPtr &tensor_info);
 
  private:
   bool is_auto_tune_{false};
