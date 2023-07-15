@@ -723,6 +723,21 @@ bool ModelProcess::ResizeDynamicInputShapeRange(const std::vector<ShapeVector> &
   MS_LOG(INFO) << "Start to resize dynamic input shape range";
   for (size_t i = 0; i < new_shapes.size(); ++i) {
     std::vector<int64_t> shape = new_shapes[i];
+    auto buffer_size = aclmdlGetInputSizeByIndex(model_desc_, i);
+    auto data_type = aclmdlGetInputDataType(model_desc_, i);
+    size_t elem_count = 1;
+    for (size_t j = 0; j < shape.size(); ++j) {
+      if (shape[j] < 0) {
+        MS_LOG(ERROR) << "The resize shape has the dim less than 0";
+        return false;
+      }
+      elem_count *= shape[j];
+    }
+    auto new_buffer_size = elem_count * aclDataTypeSize(data_type);
+    if (new_buffer_size > buffer_size) {
+      MS_LOG(ERROR) << "The resize shape is over shape range";
+      return false;
+    }
     input_infos_[i].dims = shape;
     aclTensorDesc *input_desc =
       aclCreateTensorDesc(ACL_FLOAT, new_shapes[i].size(), &new_shapes[i][0], ACL_FORMAT_NCHW);
