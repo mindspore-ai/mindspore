@@ -14,6 +14,7 @@
 # ============================================================================
 
 import pytest
+import mindspore as ms
 from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -38,3 +39,24 @@ def test_fallback_bool_tensor_asnumpy():
 
     out = foo()
     assert not out
+
+
+@pytest.mark.skip(reason="RebuildKernelSelectBackoffOp Unsupported op[Shape].")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_bool_asnumpy():
+    """
+    Feature: JIT Fallback
+    Description: Test bool() in fallback runtime
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        return bool(x.asnumpy())
+
+    x = Tensor([-1.0], ms.float32)
+    res = foo(x)
+    assert res

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test tuple mul number """
-
 import pytest
 from mindspore import context, jit
 
@@ -21,18 +19,27 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_tuple_mul_non_integer_number():
+def test_fallback_string_operate():
     """
-    Feature: tuple multiple non-integer number.
-    Description: tuple can only multiply integer number.
-    Expectation: Raise TypeError.
+    Feature: Support is.
+    Description: Support string operate in fallback runtime.
+    Expectation: No exception.
     """
     @jit
     def foo():
-        x = (1, 2, 3, 4)
-        return x * 2.0
-    with pytest.raises(TypeError) as error_info:
-        foo()
-    assert "can't multiply sequence by non-int of type" in str(error_info)
+        var1 = 'Hello!'
+        var2 = "MindSpore"
+        out1 = var1[0]
+        out2 = var2[4:9]
+        out3 = var1 + var2
+        out4 = var2 * 2
+        out5 = str("H" in var1)
+        out6 = "My name is %s!" % var2
+        return out1 + "_" + out2 + "_" + out3 + "_" + out4 + "_" + out5 + "_" + out6
+
+    res = foo()
+    assert res == "H_Spore_Hello!MindSpore_MindSporeMindSpore_True_My name is MindSpore!"
