@@ -267,7 +267,7 @@ class _Context:
                             "must_keep_origin_dtype", "force_fp32", "allow_fp32_to_bf16",
                             "allow_mix_precision_fp16" and "allow_mix_precision_bf16".
                 - jit_compile (bool): ``False`` and ``True``.
-                - atomic_clean_policy (int): ``0`` and ``1``.
+                - atomic_clean_policy (int): ``0`` and ``1``. Default: ``1`` .
                 - op_precision_mode (str): config file path.
                 - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file.
                   If its value is None or '', it does not take effect. Default None.
@@ -1234,8 +1234,8 @@ def set_context(**kwargs):
                 the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
 
             - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
-            - atomic_clean_policy (int): The policy for cleaning memory occupied by atomic operators in the network
-              The default value is based on CANN.
+            - atomic_clean_policy (int): The policy for cleaning memory occupied by atomic operators in the network.
+              Default: ``1`` .
 
               - 0: The memory occupied by all atomic operators in the network is cleaned centrally.
               - 1: Memory is not cleaned centrally and each atomic operator in the network is cleaned separately.

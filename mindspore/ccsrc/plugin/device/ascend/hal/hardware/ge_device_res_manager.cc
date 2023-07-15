@@ -94,6 +94,13 @@ void GeDeviceResManager::GeSetContextOptions(const std::shared_ptr<MsContext> &m
   if (ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE) != "0") {
     (*options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
   }
+
+  auto atomic_clean_policy = ms_context_ptr->get_param<std::string>(MS_CTX_ATOMIC_CLEAN_POLICY);
+  if (atomic_clean_policy.empty()) {
+    atomic_clean_policy = "1";
+  }
+  (*options)["ge.exec.atomicCleanPolicy"] = atomic_clean_policy;
+  MS_LOG(INFO) << "Set GE atomic clean policy to " << atomic_clean_policy << ".";
 }
 
 void GeDeviceResManager::CreateSessionAndGraphRunner(bool is_training) {
