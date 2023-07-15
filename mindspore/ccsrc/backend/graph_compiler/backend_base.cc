@@ -18,6 +18,9 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
 
 #include "mindspore/core/ops/sparse_tensor_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
@@ -354,6 +357,43 @@ bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
   return false;
 }
 
+// If it is windows OS, create a child thread with 8M stack space to call `common::AnfAlgo::GetRealPrevNodesOutput`.
+#if defined(_WIN32) || defined(_WIN64)
+typedef struct {
+  const AnfNodePtr *anf_node_;
+  size_t input_idx_;
+  std::vector<KernelWithIndex> *nodes_ptr_;
+} WinThreadParam;
+
+DWORD WINAPI WinThreadFunction(PVOID para) {
+  auto p = static_cast<WinThreadParam *>(para);
+  MS_EXCEPTION_IF_NULL(p->anf_node_);
+  MS_EXCEPTION_IF_NULL(p->nodes_ptr_);
+  const AnfNodePtr &anf_node = *(p->anf_node_);
+  std::vector<KernelWithIndex> *nodes_ptr = p->nodes_ptr_;
+  auto inputs = common::AnfAlgo::GetRealPrevNodesOutput(anf_node, p->input_idx_);
+  nodes_ptr->insert(nodes_ptr->end(), inputs.begin(), inputs.end());
+  return 0;
+}
+
+void GetInputs(const AnfNodePtr &anf_node, size_t input_idx, std::vector<KernelWithIndex> *nodes_ptr) {
+  constexpr size_t stack_size = 1024 * 1024 * 8;
+  MS_LOG(INFO) << "Do GetRealPrevNodesOutput in windows os start";
+  WinThreadParam param;
+  param.anf_node_ = &anf_node;
+  param.input_idx_ = input_idx;
+  param.nodes_ptr_ = nodes_ptr;
+  auto handle = CreateThread(NULL, stack_size, WinThreadFunction, &param, 0, NULL);
+  WaitForSingleObject(handle, INFINITE);
+  MS_LOG(INFO) << "Do GetRealPrevNodesOutput in windows os end";
+}
+#else
+void GetInputs(const AnfNodePtr &anf_node, size_t input_idx, std::vector<KernelWithIndex> *nodes_ptr) {
+  auto inputs = common::AnfAlgo::GetRealPrevNodesOutput(anf_node, input_idx);
+  nodes_ptr->insert(nodes_ptr->end(), inputs.begin(), inputs.end());
+}
+#endif
+
 void SetPyExecuteSyncAttr(const CNodePtr &cnode) {
   if (!AnfUtils::IsRealKernel(cnode)) {
     return;
@@ -362,7 +402,8 @@ void SetPyExecuteSyncAttr(const CNodePtr &cnode) {
     return;
   }
   for (size_t i = 1; i < cnode->size(); ++i) {
-    auto inputs = common::AnfAlgo::GetRealPrevNodesOutput(cnode, i - 1);
+    std::vector<KernelWithIndex> inputs;
+    GetInputs(cnode, i - 1, &inputs);
     for (const auto &input_with_idx : inputs) {
       auto input = input_with_idx.first;
       if (IsPrimitiveCNode(input, prim::kPrimPyExecute)) {
