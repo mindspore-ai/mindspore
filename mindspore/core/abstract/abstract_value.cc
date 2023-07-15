@@ -152,7 +152,10 @@ void AbstractBase::set_trace_node_provider(const TraceNodeProvider &trace_node_p
   trace_node_provider_ = trace_node_provider;
 }
 
-inline AbstractBasePtr AbstractBase::Join(const AbstractBasePtr &other) { return shared_from_base<AbstractBase>(); }
+inline AbstractBasePtr AbstractBase::Join(const AbstractBasePtr &other) {
+  MS_EXCEPTION_IF_NULL(other);
+  return shared_from_base<AbstractBase>();
+}
 
 bool AbstractBase::IsBroaden() const { return value_ == kValueAny; }
 
