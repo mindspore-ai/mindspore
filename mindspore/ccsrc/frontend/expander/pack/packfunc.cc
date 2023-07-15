@@ -99,7 +99,8 @@ void ReorderParamsForReuseGraph(const FuncGraphPtr &graph, const PrimitivePyPtr 
   std::vector<AnfNodePtr> new_params{};
   for (auto &i : old_params) {
     auto found_in_fv_list = find_if(parameters.begin(), parameters.end(), [&i](const AnfNodePtr &fv_param) {
-      return !i->ToString().empty() && i->ToString() == fv_param->ToString();
+      auto name = i->cast<ParameterPtr>()->name();
+      return !name.empty() && name == fv_param->cast<ParameterPtr>()->name();
     });
     if (found_in_fv_list == parameters.end()) {
       new_params.push_back(i);
@@ -107,7 +108,8 @@ void ReorderParamsForReuseGraph(const FuncGraphPtr &graph, const PrimitivePyPtr 
   }
   for (auto &i : parameters) {
     auto found_in_fv_list = find_if(old_params.begin(), old_params.end(), [&i](const AnfNodePtr &fv_param) {
-      return !i->ToString().empty() && i->ToString() == fv_param->ToString();
+      auto name = i->cast<ParameterPtr>()->name();
+      return !name.empty() && name == fv_param->cast<ParameterPtr>()->name();
     });
     if (found_in_fv_list != old_params.end()) {
       new_params.push_back(*found_in_fv_list);
