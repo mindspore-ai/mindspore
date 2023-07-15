@@ -49,34 +49,6 @@ namespace {
 constexpr size_t MAX_LOGITS_DIMENSION = 8;
 constexpr size_t MIN_LOGITS_DIMENSION = 1;
 
-void GpuShapeCheck(const PrimitivePtr &primitive, const std::vector<int64_t> &input_shape,
-                   const std::vector<int64_t> &weight_shape, const std::vector<int64_t> &pos_weight_shape) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device_target != kGPUDevice) {
-    return;
-  }
-  auto prim_name = primitive->name();
-  auto input_rank = input_shape.size();
-  if (!IsDynamicRank(input_shape) && input_rank < MIN_LOGITS_DIMENSION) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of logits cannot be less than 1, but got "
-                             << input_rank;
-  }
-  if (!IsDynamicRank(input_shape) && input_rank > MAX_LOGITS_DIMENSION) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of logits cannot be greater than "
-                             << MAX_LOGITS_DIMENSION << ", but got " << input_rank;
-  }
-  if (!IsDynamicRank(weight_shape) && weight_shape.size() < 1) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of weight cannot be less than 1, but got "
-                             << weight_shape.size();
-  }
-  if (!IsDynamicRank(pos_weight_shape) && pos_weight_shape.size() < 1) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of pos_weight cannot be less than 1, but got "
-                             << pos_weight_shape.size();
-  }
-}
-
 abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -101,7 +73,6 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
   auto weight_shape_shape = weight_shape_map[kShape];
   auto pos_weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape());
   auto pos_weight_shape = pos_weight_shape_map[kShape];
-  GpuShapeCheck(primitive, logits_shape, weight_shape_shape, pos_weight_shape);
 
   auto value_ptr = primitive->GetAttr(kReduction);
   MS_EXCEPTION_IF_NULL(value_ptr);
