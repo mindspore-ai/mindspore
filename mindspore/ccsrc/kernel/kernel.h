@@ -31,6 +31,7 @@
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/tensor.h"
+#include "base/op_arg_base.h"
 #include "mindspore/core/ops/base_operator.h"
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
@@ -111,11 +112,187 @@ using TensorInfoPtr = std::shared_ptr<TensorInfo>;
 using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
 
 class KernelAttr;
-// we extend KernelTensor to represent tensor/map_tensor/list/tuple/scalar data type.
-class BACKEND_EXPORT KernelTensor {
+
+// A template class used to detect whether it is a valid container.
+template <typename T>
+struct ValidContainerChecker : std::false_type {};
+
+// A ValidContainerChecker's specialization to detect whether the type is std::vector.
+template <typename... Args>
+struct ValidContainerChecker<std::vector<Args...>> : std::true_type {};
+
+// A ValidContainerChecker's specialization to detect whether the type is std::string.
+template <>
+struct ValidContainerChecker<std::string> : std::true_type {};
+
+// A wrapper used to check the types std::string and std::vector.
+template <typename T>
+struct IsValidContainer {
+  static constexpr bool value = ValidContainerChecker<std::decay_t<T>>::value;
+};
+
+// KernelTensor is used to express input and output parameters of kernels.
+// KernelTensor is a generalized Tensor semantics, which can represent not only Tensor, but also the meta-information
+// of Scalar, Tuple, List and other data structures. It saves the shape, type, value and format information required by
+// operators Infer and Launch, and provides related Get/Set interfaces.
+class BACKEND_EXPORT KernelTensor : public OpArgBase {
  public:
   KernelTensor() = default;
   ~KernelTensor() = default;
+
+  // Constructor of KernelTensor by shape, type, value.
+  KernelTensor(const std::vector<ShapeVector> &shape, const TypePtr &type, const TypePtr &dtype,
+               const ValuePtr &value = nullptr, bool dynamic_len = false)
+      : shape_(shape), value_(value), dynamic_len_(dynamic_len) {
+    if (type) {
+      type_ = type;
+      type_id_ = type_->type_id();
+    }
+    if (dtype) {
+      dtype_ = dtype;
+      dtype_id_ = dtype_->type_id();
+    }
+  }
+
+  // Constructor of KernelTensor by shape, type, value.
+  KernelTensor(std::vector<ShapeVector> &&shape, const TypePtr &type, const TypePtr &dtype,
+               const ValuePtr &value = nullptr, bool dynamic_len = false)
+      : shape_(std::move(shape)), value_(value), dynamic_len_(dynamic_len) {
+    if (type) {
+      type_ = type;
+      type_id_ = type_->type_id();
+    }
+    if (dtype) {
+      dtype_ = dtype;
+      dtype_id_ = dtype_->type_id();
+    }
+  }
+
+  // Get the shape for Tensor/Sequence/Scalar.
+  const std::vector<ShapeVector> &shape() const { return shape_; }
+
+  // Set the shape for Tensor/Sequence/Scalar.
+  void set_shape(const std::vector<ShapeVector> &shape) { shape_ = shape; }
+
+  // Set the shape for Tensor/Sequence/Scalar.
+  void set_shape(std::vector<ShapeVector> &&shape) { shape_ = std::move(shape); }
+
+  // Get the shape for Tensor/Sequence/Scalar.
+  const std::vector<ShapeVector> &GetShape() override { return shape(); }
+
+  // Get the object type of the KernelTensor.
+  TypePtr type() const { return type_; }
+
+  // Set the type for the KernelTensor.
+  void set_type(const TypePtr &type) { type_ = type; }
+
+  // Get the object enum type id of the KernelTensor.
+  TypeId type_id() const { return type_id_; }
+
+  // Set the object enum type id of the KernelTensor.
+  void set_type_id(TypeId type_id) { type_id_ = type_id; }
+
+  // Get the object type of the KernelTensor.
+  TypePtr GetType() const override { return type(); }
+
+  // Get the data type of the KernelTensor.
+  TypePtr dtype() const { return dtype_; }
+
+  // Set the data type for the KernelTensor.
+  void set_dtype(const TypePtr &dtype) { dtype_ = dtype; }
+
+  // Get the data enum type id of the KernelTensor.
+  TypeId dtype_id() const { return dtype_id_; }
+
+  // Set the data enum type id of the KernelTensor.
+  void set_dtype_id(TypeId dtype_id) { dtype_id_ = dtype_id; }
+
+  // Get the value of the KernelTensor.
+  ValuePtr value() const { return value_; }
+
+  // Set the value for the KernelTensor.
+  void set_value(const ValuePtr &value) { value_ = value; }
+
+  // Get the value of the KernelTensor.
+  ValuePtr GetValue() const override { return value(); }
+
+  // Get the scalar value store in KernelTensor if exists.
+  // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
+  template <typename T, typename std::enable_if<std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
+  std::optional<T> GetValue() {
+    if (value_ && !value_->isa<ValueAny>()) {
+      return mindspore::GetValue<T>(value_);
+    }
+    if (host_value_.empty() && device_ptr_ == nullptr) {
+      return std::nullopt;
+    }
+    return *reinterpret_cast<T *>(host_value_.data());
+  }
+
+  // Get the std::vector/std::string value store in KernelTensor if exists.
+  // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
+  template <typename T, typename std::enable_if<IsValidContainer<T>::value>::type * = nullptr>
+  std::optional<T> GetValue() {
+    if (value_ && !value_->isa<ValueAny>()) {
+      return mindspore::GetValue<T>(value_);
+    }
+    if (host_value_.empty() && device_ptr_ == nullptr) {
+      return std::nullopt;
+    }
+    typename T::value_type *data = reinterpret_cast<typename T::value_type *>(host_value_.data());
+    size_t type_in_byte = GetTypeByte(dtype_);
+    if (type_in_byte == 0) {
+      // For kTypeNone or kTypeAny, return empty value.
+      return std::nullopt;
+    }
+
+    return T(data, data + size_ / type_in_byte);
+  }
+
+  // Get the value for pointer type, such as the pointer pointing the data of a Tensor store in value.
+  // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
+  template <typename T, typename std::enable_if<std::is_pointer_v<T>>::type * = nullptr>
+  std::optional<T> GetValue() {
+    if (value_ && value_->isa<tensor::Tensor>()) {
+      return reinterpret_cast<T>(value_->cast<tensor::TensorPtr>()->data_c());
+    }
+    return std::nullopt;
+  }
+
+  // Get the value for type which is not scalar, std::vector, std::string and pointer type store in KernelTensor
+  // if exists.
+  // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
+  template <typename T, typename std::enable_if<!IsValidContainer<T>::value &&
+                                                !std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
+  std::optional<T> GetValue() {
+    if (value_ && !value_->isa<ValueAny>()) {
+      return mindspore::GetValue<T>(value_);
+    }
+    return std::nullopt;
+  }
+
+  // Get the data format.
+  mindspore::Format format() const { return format_; }
+
+  // Set the data format.
+  void set_format(mindspore::Format format) { format_ = format; }
+
+  // Get whether the KernelTensor represents a dynamic length sequence.
+  bool dynamic_len() const override { return dynamic_len_; }
+
+  // Get pointer to the device side that corresponds to KernelTensor, used in runtime.
+  void *device_ptr() const { return device_ptr_; }
+
+  // Set pointer to the device side that corresponds to KernelTensor, used in runtime.
+  void set_device_ptr(void *ptr) { device_ptr_ = ptr; }
+
+  // Get the memory size in byte of the KernelTensor.
+  size_t size() const { return size_; }
+
+  // Set the memory size in byte of the KernelTensor.
+  void set_size(size_t size) { size_ = size; }
+
+  // The following member methods are required by the old KernelTensor.
   KernelTensor(const KernelTensor &copy_tensor) {
     meta_type_ = copy_tensor.meta_type_;
     meta_ = copy_tensor.meta_;
@@ -197,6 +374,46 @@ class BACKEND_EXPORT KernelTensor {
   void SetDeviceId(int32_t device_id) { device_id_ = device_id; }
 
  private:
+  // The flatten shape vector for Tensor/Scalar/Tuple/List.
+  // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_ is
+  // std::vector<ShapeVector>{{8, 16}}.
+  // 2. For Scalar type, shape_ contains an empty ShapeVector, i.e. std::vector<ShapeVector>{{}}.
+  // 3. For Tuple/List (all elements must be Tensor and Scalar) type, the shape_ is a list
+  // consists of the shape of all elements in Typle/List. For example, if a Tuple of the structure ((8,16), (8,16))
+  // contains two Tensors of shape (8, 16), then shape_ is std::vector<ShapeVector>{{8, 16}, {8, 16}}. A Tuple
+  // with a structure such as ((), ()) that contains two Scalar, the shape_ of this Tuple is
+  // std::vector<ShapeVector>{{}, {}}.
+  std::vector<ShapeVector> shape_{};
+
+  // The object type of the KernelTensor.
+  TypePtr type_{kTypeNone};
+  // The object enum type id of the KernelTensor.
+  TypeId type_id_{kTypeUnknown};
+
+  // The data type of the KernelTensor.
+  TypePtr dtype_{kTypeNone};
+  // The data enum type id of the KernelTensor.
+  TypeId dtype_id_{kTypeUnknown};
+
+  // Record the value in host.
+  ValuePtr value_{nullptr};
+
+  // The data format of the KernelTensor.
+  mindspore::Format format_{Format::DEFAULT_FORMAT};
+
+  // Used to record whether the KernelTensor represents a dynamic length sequence.
+  bool dynamic_len_{false};
+
+  // The buffer used to store the content which is copied from device side.
+  std::vector<uint8_t> host_value_;
+
+  // The pointer to the device side that corresponds to KernelTensor, used in runtime.
+  void *device_ptr_{nullptr};
+
+  // The memory size in byte of the KernelTensor.
+  size_t size_{0};
+
+  // The following member variables are required by the old KernelTensor.
   TypeId meta_type_{kObjectTypeTensorType};
   // meta is a type-safe union of TensorInfo, ScalarInfo, TupleInfo, ListInfo.
   std::variant<TensorInfo, ScalarInfo, TupleInfo, ListInfo> meta_{TensorInfo()};

@@ -29,6 +29,7 @@
 #include "utils/any.h"
 #include "utils/hash_map.h"
 #include "base/base.h"
+#include "base/op_arg_base.h"
 #include "base/user_data.h"
 #include "ir/dtype.h"
 #include "ir/value.h"
@@ -46,7 +47,7 @@ using AbstractBasePtrList = std::vector<AbstractBasePtr>;
 ///
 /// The abstract value is used in evaluator to express
 /// the type, shape and value of an anf node.
-class MS_CORE_API AbstractBase : public Base {
+class MS_CORE_API AbstractBase : public Base, public OpArgBase {
  public:
   using TraceNodeProvider = std::function<void(AnfNodePtr *node)>;
 
@@ -154,6 +155,23 @@ class MS_CORE_API AbstractBase : public Base {
   ///
   /// \return A pointer to the BaseShape.
   virtual BaseShapePtr BuildShape() const;
+
+  /// \brief Get the flatten shape vector.
+  ///
+  /// \return The flatten shape vector.
+  const std::vector<ShapeVector> &GetShape() override {
+    MS_LOG(EXCEPTION) << "The method 'shape_vector' doesn't implement";
+  }
+
+  /// \brief Get the object type of the AbstractBase.
+  ///
+  /// \return The object type.
+  TypePtr GetType() const override;
+
+  /// \brief Get the value of the Abstract.
+  ///
+  /// \return The value of the Abstract if exists, else return kValueAny.
+  ValuePtr GetValue() const override;
 
   /// \brief Clone an abstract from the abstract.
   ///
@@ -293,6 +311,11 @@ class MS_CORE_API AbstractScalar final : public AbstractBase {
   /// \param[in] is_variable Boolean value for flag 'is_variable_'.
   void set_is_variable(bool is_variable);
 
+  /// \brief Get the flatten shape vector.
+  ///
+  /// \return The flatten shape vector.
+  const std::vector<ShapeVector> &GetShape() override;
+
   std::size_t hash() const override;
 
   TypePtr BuildType() const override;
@@ -304,6 +327,8 @@ class MS_CORE_API AbstractScalar final : public AbstractBase {
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
 
  private:
+  // For Scalar type, shape_vector_ contains an empty ShapeVector, i.e. std::vector<ShapeVector>{{}}.
+  std::vector<ShapeVector> shape_vector_ = {{}};
   bool is_variable_{false};
 };
 using AbstractScalarPtr = std::shared_ptr<AbstractScalar>;
@@ -683,6 +708,11 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   /// \return A pointer to a value.
   const ValuePtr &get_shape_value() const;
 
+  /// \brief Get the flatten shape vector.
+  ///
+  /// \return The flatten shape vector.
+  const std::vector<ShapeVector> &GetShape() override;
+
   TypePtr BuildType() const override;
 
   BaseShapePtr BuildShape() const override;
@@ -724,6 +754,10 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   ValuePtr max_value_ = nullptr;
   ValuePtr shape_value_ = nullptr;
   bool is_adapter_ = false;
+
+  // For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is
+  // std::vector<ShapeVector>{{8, 16}}.
+  std::vector<ShapeVector> shape_vector_{};
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;
@@ -960,7 +994,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \brief Indicate whether the sequence is dynamic length.
   ///
   /// \return Boolean value indicates whether the sequence is dynamic length.
-  bool dynamic_len() const;
+  bool dynamic_len() const override;
 
   /// \brief Set the sequence to be dynamic length or not.
   ///
@@ -987,6 +1021,11 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   void set_dyn_len_arg();
   bool dyn_len_arg() const;
 
+  /// \brief Get the flatten shape vector.
+  ///
+  /// \return The flatten shape vector.
+  const std::vector<ShapeVector> &GetShape() override;
+
  protected:
   AbstractBasePtrList elements_;
   // Since there're not too many nodes, we just use vector here.
@@ -996,6 +1035,12 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   size_t space_num_{0};
   AbstractBasePtr dynamic_len_element_abs_ = nullptr;
   bool dyn_len_arg_ = false;
+  // For Tuple/List (all elements must be Tensor and Scalar) type, the shape_vector_ is a list
+  // consists of the shape of all elements in Typle/List. For example, if a Tuple of the structure ((8,16), (8,16))
+  // contains two Tensors of shape (8, 16), then shape_vector_ is std::vector<ShapeVector>{{8, 16}, {8, 16}}. A Tuple
+  // with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of this Tuple is
+  // std::vector<ShapeVector>{{}, {}}.
+  std::vector<ShapeVector> shape_vector_{};
 };
 using AbstractSequencePtr = std::shared_ptr<AbstractSequence>;
 

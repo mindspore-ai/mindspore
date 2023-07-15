@@ -17,7 +17,9 @@
 #define MINDSPORE_CORE_BASE_OP_ARG_BASE_H_
 
 #include <memory>
+#include <vector>
 #include "base/base.h"
+#include "ir/value.h"
 #include "mindapi/base/shape_vector.h"
 
 namespace mindspore {
@@ -31,32 +33,32 @@ class MS_CORE_API OpArgBase {
   /// \brief Default destructor of OpArgBase.
   ~OpArgBase() = default;
 
-  /// \brief Get the flatten shape vector.
+  /// \brief Get the flatten shape vector, only supports simple data structure(Tensor, Scalar, Tuple/List (all elements
+  /// must be Tensor and Scalar)).
   ///
   /// \return The flatten shape vector.
-  /// For Tensor type, return its shape.
-  /// For Scalar type, return an empty ShapeVector.
-  /// For simple Tuple/List type (where type and shape are exactly the same), shape vector is returned as the number of
-  /// elements + the shape of the element. For example, a tuple like ((3,4),(3,4)) containing two Tensor, the shape of
-  /// each Tensor is all same and is (3,4), the shape vector for the Tuple is (2,3,4) where 2 means the number of
-  /// elements in the Tuple.
-  /// For other types, the function should throw an exception that does not support obtaining a shape vector.
-  virtual const ShapeVector &shape_vector() const = 0;
-
-  /// \brief Set the flatten shape vector.
+  /// For Tensor type, return its shape. For example, a Tensor with shape (8, 16), 'GetShape()' return
+  /// std::vector<ShapeVector>{{8, 16}}.
   ///
-  /// \param[in] shape The flatten shape vector to be set.
-  virtual void set_shape_vector(const ShapeVector &shape_vector) = 0;
+  /// For Scalar type, return an std::vector<ShapeVector> containing an empty
+  /// ShapeVector, i.e. std::vector<ShapeVector>{{}}.
+  ///
+  /// For Tuple/List (all elements must be Tensor and Scalar) type, the GetShape() return value
+  /// consists of the shape of all elements in Typle/List. For example, if a Tuple of the structure ((8,16), (8,16))
+  /// contains two Tensors of shape (8, 16), then the Tuple's GetShape() returns the value:
+  /// std::vector<ShapeVector>{{8, 16}, {8, 16}}. A Tuple with a structure such as ((), ()) that contains two Scalar,
+  /// the GetShape() of this Tuple returns the value std::vector<ShapeVector>{{}, {}}.
+  virtual const std::vector<ShapeVector> &GetShape() = 0;
 
   /// \brief Get the object type of the OpArgBase.
   ///
   /// \return The object type of the OpArgBase.
-  virtual TypePtr type() const = 0;
+  virtual TypePtr GetType() const = 0;
 
-  /// \brief Set the type for the OpArgBase.
+  /// \brief Get the value of the OpArgBase.
   ///
-  /// \param[in] type The type of OpArgBase to be set.
-  virtual void set_type(const TypePtr &type) = 0;
+  /// \return The value of the OpArgBase if exists, else return kValueAny.
+  virtual ValuePtr GetValue() const = 0;
 
   /// \brief Get whether the OpArgBase represents a dynamic length sequence.
   ///
