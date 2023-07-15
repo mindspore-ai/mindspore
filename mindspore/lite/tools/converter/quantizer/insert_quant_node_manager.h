@@ -74,6 +74,10 @@ class InsertQuantNodeManager {
 
   int MarkDynamicQuantize(const CNodePtr &cnode);
 
+  int CalculateScaleZPNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
+                           ParameterPtr *scales_node, ParameterPtr *zps_node, TypeId src_dtype, TypeId dst_dtype,
+                           int axis);
+
   int InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index,
                                   bool activation_channel = true);
 

@@ -116,6 +116,8 @@ STATUS SetInputNodeQuantParam(const CNodePtr &cnode, size_t index, const std::ve
 
 tensor::TensorPtr GetNodeTensor(const AnfNodePtr &node);
 
+int RemoveInputNodeQuantParam(const CNodePtr &cnode, size_t index);
+
 std::vector<schema::QuantParamT> CloneQuantParam(const std::vector<schema::QuantParamT> &src);
 
 template <typename T>

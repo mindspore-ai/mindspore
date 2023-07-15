@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <set>
+#include <vector>
 #include "base/base.h"
 #include "tools/converter/cxx_api/converter_para.h"
 #include "tools/converter/quantizer/quant_helper/qat_transform.h"
@@ -27,6 +28,9 @@ namespace mindspore::lite::quant {
 class AscendDistributeFakeQuantTransform {
  public:
   explicit AscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph) : func_graph_(func_graph) {}
+  explicit AscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph,
+                                              const std::shared_ptr<ConverterPara> &param)
+      : func_graph_(func_graph), param_(param) {}
 
   ~AscendDistributeFakeQuantTransform();
 
@@ -37,10 +41,12 @@ class AscendDistributeFakeQuantTransform {
 
   int SetInputQuantParam(const FuncGraphPtr &func_graph);
 
-  int SetQuantParamWithFakeQuantNode(const CNodePtr &depend_node, const CNodePtr &current_node, int index);
+  int SetWeightQuantParam(const FuncGraphPtr &func_graph);
 
-  int CalQuantParam(const CNodePtr &cnode, const tensor::TensorPtr &min_value, const tensor::TensorPtr &max_value,
-                    int index);
+  std::vector<schema::QuantParamT> GetQuantParamWithFakeQuantNode(const CNodePtr &depend_node);
+
+  std::vector<schema::QuantParamT> CalQuantParam(const tensor::TensorPtr &min_value,
+                                                 const tensor::TensorPtr &max_value);
 
   int InsertAscendQuantDeQuantNode(const FuncGraphPtr &func_graph);
 
@@ -51,7 +57,8 @@ class AscendDistributeFakeQuantTransform {
   int NeedAscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph);
 
  private:
-  FuncGraphPtr func_graph_ = nullptr;
+  FuncGraphPtr func_graph_{nullptr};
+  const std::shared_ptr<mindspore::ConverterPara> param_{nullptr};
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_ASCEND_DISTRIBUTE_FAKE_QUANT_TRANSFORM
