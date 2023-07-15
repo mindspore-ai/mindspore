@@ -46,8 +46,6 @@ constexpr int64_t kIOUInputNums = 2;
 constexpr size_t kIOUInputDims = 2;
 constexpr size_t kCoordinatesIndex = 1;
 constexpr int64_t kCoordinatesSize = 4;
-constexpr float kDefaultValue = 1.0;
-const char kEpsName[] = "eps";
 }  // namespace
 MIND_API_OPERATOR_IMPL(IOU, BaseOperator);
 class IOUInfer : public abstract::OpInferBase {
@@ -61,9 +59,6 @@ class IOUInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
     (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
 
-    if (primitive->GetAttr(kEpsName) == nullptr) {
-      primitive->set_attr(kEpsName, MakeValue(kDefaultValue));
-    }
     auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
     MS_EXCEPTION_IF_NULL(x_shape_ptr);
     auto y_shape_ptr = input_args[kInputIndex1]->BuildShape();

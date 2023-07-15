@@ -41,7 +41,6 @@ abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            primitive->name());
-  (void)primitive->AddAttr("n", MakeValue(SizeToLong(elements.size())));
   auto shape_0 = elements[0]->BuildShape();
   auto element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_0);
   for (size_t i = 0; i < elements.size(); ++i) {

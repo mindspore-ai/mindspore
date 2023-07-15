@@ -2602,6 +2602,8 @@ class RaggedTensorToTensor(Primitive):
                 raise ValueError(
                     f"For {self.name}, the each element of row_partition_types must be 'ROW_SPLITS' "
                     f"when row_splits tensor.")
+        self.num_row_partition_tensors = len(row_partition_types)
+        self.add_prim_attr("num_row_partition_tensors", self.num_row_partition_tensors)
 
 
 class SparseCross(Primitive):

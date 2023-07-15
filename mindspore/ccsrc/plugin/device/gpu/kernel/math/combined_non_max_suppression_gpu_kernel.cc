@@ -71,25 +71,22 @@ int CombinedNonMaxSuppressionGpuKernelMod::Resize(const BaseOperatorPtr &base_op
                                                   const std::vector<KernelTensorPtr> &inputs,
                                                   const std::vector<KernelTensorPtr> &outputs,
                                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  for (const auto &input : inputs) {
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
+
   ResetResource();
   std::vector<size_t> input0_shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
                                                          inputs[kIndex0]->GetDeviceShapeAdaptively().end());
   std::vector<size_t> input1_shape = std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeAdaptively().begin(),
                                                          inputs[kIndex1]->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> output0_shape = std::vector<size_t>(outputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
+                                                          outputs[kIndex0]->GetDeviceShapeAdaptively().end());
   batch_size_ = static_cast<int>(input0_shape[kIndex0]);
   num_boxes_ = static_cast<int>(input0_shape[kIndex1]);
   q_ = static_cast<int>(input0_shape[kIndex2]);
   num_classes_ = static_cast<int>(input1_shape[kIndex2]);
-  auto prim = base_operator->GetPrim();
-  if ((prim->GetAttr("per_detections"))) {
-    per_detections_ = GetValue<int>(prim->GetAttr("per_detections"));
-  }
+  per_detections_ = static_cast<int>(output0_shape[kIndex1]);
 
   InitSizeLists();
   return KRET_OK;

@@ -193,7 +193,6 @@ class Conv3DBackpropInputInfer : public abstract::OpInferBase {
       forward_input_shape = {abstract::Shape::kShapeRankAny};
       return std::make_shared<abstract::Shape>(forward_input_shape);
     }
-    SetConv3DBackpropPadList(primitive, dout_shape, forward_input_shape);
     return std::make_shared<abstract::Shape>(forward_input_shape);
   }
 

@@ -132,7 +132,6 @@ abstract::TupleShapePtr SparseConcatInferShape(const PrimitivePtr &primitive,
   size_t values_expect_rank = 1;
   size_t shapes_expect_rank = 1;
   int64_t ConcatNum = SizeToLong(inputs_indices.size());
-  (void)primitive->AddAttr("N", MakeValue(ConcatNum));
 
   (void)CheckAndConvertUtils::CheckInteger("indices' num", ConcatNum, kGreaterThan, kNumOne, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("indices' num and values' num", ConcatNum, kEqual,

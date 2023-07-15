@@ -55,7 +55,6 @@ class RandomCategoricalCpuKernel : public NativeCpuKernelMod, public MatchKernel
 
  private:
   ShapeVector input_shape_;
-  int seed_{0};
   std::default_random_engine rng_;
 };
 }  // namespace kernel

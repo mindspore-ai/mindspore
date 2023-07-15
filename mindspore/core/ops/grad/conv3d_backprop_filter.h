@@ -59,8 +59,6 @@ class MIND_API Conv3DBackpropFilter : public BaseOperator {
   Format get_format() const;
   std::vector<int64_t> get_pad_list() const;
 };
-void SetConv3DBackpropPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
-                              const std::vector<int64_t> &x_size_v);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_Conv3DBackpropFilter_H_

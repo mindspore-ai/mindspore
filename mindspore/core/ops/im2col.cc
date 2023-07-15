@@ -159,14 +159,6 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
                              << "), but its components must be at least one.";
   }
 
-  // padding pads to 4 for tbe
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    std::vector<int64_t> padding_pads{pads.front(), pads.front(), pads.back(), pads.back()};
-    (void)primitive->AddAttr(kPads, MakeValue(padding_pads));
-  }
-
   // current only support NCHW
   std::vector<int64_t> out_shape = {in_n, in_c, kernel_product, total_block};
   return std::make_shared<abstract::Shape>(out_shape);

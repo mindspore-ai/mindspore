@@ -41,6 +41,27 @@
 #include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
 #include "backend/common/pass/convert_dynamic_broadcast_to.h"
 #include "backend/common/pass/broadcast_to_fusion.h"
+#include "backend/common/pass/accumulate_n_v2_fusion.h"
+#include "backend/common/pass/addn_fusion.h"
+#include "backend/common/pass/argmax_min_with_value_fusion.h"
+#include "backend/common/pass/batch_matmul_attr_fusion.h"
+#include "backend/common/pass/concat_offset_v1_fusion.h"
+#include "backend/common/pass/dynamic_rnn_fusion.h"
+#include "backend/common/pass/gather_fusion.h"
+#include "backend/common/pass/im2col_fusion.h"
+#include "backend/common/pass/iou_fusion.h"
+#include "backend/common/pass/log_fusion.h"
+#include "backend/common/pass/max_pool_with_argmax_v2_fusion.h"
+#include "backend/common/pass/nan_to_num_fusion.h"
+#include "backend/common/pass/parallel_concat_fusion.h"
+#include "backend/common/pass/ragged_tensor_to_sparse_fusion.h"
+#include "backend/common/pass/resize_v2_fusion.h"
+#include "backend/common/pass/sparse_concat_fusion.h"
+#include "backend/common/pass/sparse_cross_fusion.h"
+#include "backend/common/pass/sparse_tensor_dense_mat_mul_fusion.h"
+#include "backend/common/pass/split_fusion.h"
+#include "backend/common/pass/standard_normal_fusion.h"
+#include "backend/common/pass/conv3d_backprop_input_padlist_fusion.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 #ifdef ENABLE_DUMP_IR
@@ -70,6 +91,29 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   common_pm->AddPass(std::make_shared<AddDropoutAttrs>());
   common_pm->AddPass(std::make_shared<AddInputStructuralForPyExecute>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());
+  common_pm->AddPass(std::make_shared<AccumulateNV2Fusion>());
+  common_pm->AddPass(std::make_shared<AddNFusion>());
+  common_pm->AddPass(std::make_shared<ArgMaxWithValueFusion>());
+  common_pm->AddPass(std::make_shared<ArgMinWithValueFusion>());
+  common_pm->AddPass(std::make_shared<BatchMatMulAttrFusion>());
+  common_pm->AddPass(std::make_shared<ConcatOffsetV1Fusion>());
+  common_pm->AddPass(std::make_shared<DynamicRNNFusion>());
+  common_pm->AddPass(std::make_shared<GatherFusion>());
+  common_pm->AddPass(std::make_shared<Im2ColFusion>());
+  common_pm->AddPass(std::make_shared<IOUFusion>());
+  common_pm->AddPass(std::make_shared<LogFusion>());
+  common_pm->AddPass(std::make_shared<MaxPoolWithArgmaxV2Fusion>());
+  common_pm->AddPass(std::make_shared<NanToNumFusion>());
+  common_pm->AddPass(std::make_shared<ParallelConcatFusion>());
+  common_pm->AddPass(std::make_shared<RaggedTensorToSparseFusion>());
+  common_pm->AddPass(std::make_shared<ResizeV2Fusion>());
+  common_pm->AddPass(std::make_shared<SparseConcatFusion>());
+  common_pm->AddPass(std::make_shared<SparseCrossFusion>());
+  common_pm->AddPass(std::make_shared<SparseTensorDenseMatMulFusion>());
+  common_pm->AddPass(std::make_shared<SplitFusion>());
+  common_pm->AddPass(std::make_shared<StandardNormalFusion>());
+  common_pm->AddPass(std::make_shared<Conv3DBackpropInputPadListFusion>());
+  common_pm->AddPass(std::make_shared<Conv3DBackpropFilterPadListFusion>());
   return common_pm;
 }
 
@@ -108,6 +152,29 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   common_pm->AddPass(std::make_shared<ReduceOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());
+  common_pm->AddPass(std::make_shared<AccumulateNV2Fusion>());
+  common_pm->AddPass(std::make_shared<AddNFusion>());
+  common_pm->AddPass(std::make_shared<ArgMaxWithValueFusion>());
+  common_pm->AddPass(std::make_shared<ArgMinWithValueFusion>());
+  common_pm->AddPass(std::make_shared<BatchMatMulAttrFusion>());
+  common_pm->AddPass(std::make_shared<ConcatOffsetV1Fusion>());
+  common_pm->AddPass(std::make_shared<DynamicRNNFusion>());
+  common_pm->AddPass(std::make_shared<GatherFusion>());
+  common_pm->AddPass(std::make_shared<Im2ColFusion>());
+  common_pm->AddPass(std::make_shared<IOUFusion>());
+  common_pm->AddPass(std::make_shared<LogFusion>());
+  common_pm->AddPass(std::make_shared<MaxPoolWithArgmaxV2Fusion>());
+  common_pm->AddPass(std::make_shared<NanToNumFusion>());
+  common_pm->AddPass(std::make_shared<ParallelConcatFusion>());
+  common_pm->AddPass(std::make_shared<RaggedTensorToSparseFusion>());
+  common_pm->AddPass(std::make_shared<ResizeV2Fusion>());
+  common_pm->AddPass(std::make_shared<SparseConcatFusion>());
+  common_pm->AddPass(std::make_shared<SparseCrossFusion>());
+  common_pm->AddPass(std::make_shared<SparseTensorDenseMatMulFusion>());
+  common_pm->AddPass(std::make_shared<SplitFusion>());
+  common_pm->AddPass(std::make_shared<StandardNormalFusion>());
+  common_pm->AddPass(std::make_shared<Conv3DBackpropInputPadListFusion>());
+  common_pm->AddPass(std::make_shared<Conv3DBackpropFilterPadListFusion>());
   if (kernel_graph->has_attr(kAttrPackFunction)) {
     common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   }

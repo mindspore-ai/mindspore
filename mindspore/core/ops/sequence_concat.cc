@@ -57,8 +57,6 @@ abstract::ShapePtr SequenceConcatInferShape(const PrimitivePtr &primitive,
   auto elements = queue->elements();
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
                                            op_name);
-  (void)primitive->AddAttr("N", MakeValue(SizeToLong(elements.size())));
-  (void)primitive->AddAttr("inputNums", MakeValue(SizeToLong(elements.size())));
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
   auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];

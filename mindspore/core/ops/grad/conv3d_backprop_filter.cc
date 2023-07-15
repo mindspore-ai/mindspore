@@ -32,83 +32,10 @@ namespace {
 constexpr size_t kConv3DBackpropFilterInputIndex = 0;
 constexpr size_t kConv3DBackpropFilterDoutIndex = 1;
 constexpr size_t kConv3DBackpropFilterFilterSizeIndex = 2;
-constexpr size_t kConv3DBackpropFilterStrideDIndex = 2;
-constexpr size_t kConv3DBackpropFilterStrideHIndex = 3;
-constexpr size_t kConv3DBackpropFilterStrideWIndex = 4;
-constexpr size_t kConv3DBackpropFilterKernelDIndex = 0;
-constexpr size_t kConv3DBackpropFilterKernelHIndex = 1;
-constexpr size_t kConv3DBackpropFilterKernelWIndex = 2;
-constexpr size_t kConv3DBackpropFilterDilationDIndex = 2;
-constexpr size_t kConv3DBackpropFilterDilationHIndex = 3;
-constexpr size_t kConv3DBackpropFilterDilationWIndex = 4;
-constexpr int kConv3DBackpropFilterPadHalf = 2;
 constexpr int64_t kConv3DBackpropFilterPadSize = 6;
 constexpr int64_t kConv3DBackpropFilterStrideSize = 5;
 constexpr int64_t kConv3DBackpropFilterDilationSize = 5;
 }  // namespace
-
-void SetConv3DBackpropPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
-                              const std::vector<int64_t> &x_size_v) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  // check
-  auto kernel_size =
-    CheckAndConvertUtils::CheckIntOrTupleInt("attribute[kernel_size]", primitive->GetAttr(kKernelSize), prim_name);
-  auto stride = CheckAndConvertUtils::CheckIntOrTupleInt("attribute[stride]", primitive->GetAttr(kStride), prim_name);
-  auto dilation =
-    CheckAndConvertUtils::CheckIntOrTupleInt("attribute[dilation]", primitive->GetAttr(kDilation), prim_name);
-  // The pad_mode is valid by default. If pad_mode is not valid or same, then pad.
-  int64_t pad_mode;
-  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, False);
-  ShapeVector pad_list;
-  if (pad_mode == PadMode::VALID) {
-    pad_list = {0, 0, 0, 0, 0, 0};
-  } else if (pad_mode == PadMode::SAME) {
-    auto kernel_d = kernel_size[kConv3DBackpropFilterKernelDIndex];
-    auto kernel_h = kernel_size[kConv3DBackpropFilterKernelHIndex];
-    auto kernel_w = kernel_size[kConv3DBackpropFilterKernelWIndex];
-    auto stride_d = stride[kConv3DBackpropFilterStrideDIndex];
-    auto stride_h = stride[kConv3DBackpropFilterStrideHIndex];
-    auto stride_w = stride[kConv3DBackpropFilterStrideWIndex];
-    auto dilation_d = dilation[kConv3DBackpropFilterDilationDIndex];
-    auto dilation_h = dilation[kConv3DBackpropFilterDilationHIndex];
-    auto dilation_w = dilation[kConv3DBackpropFilterDilationWIndex];
-    int64_t pad_head = abstract::Shape::kShapeDimAny;
-    int64_t pad_tail = abstract::Shape::kShapeDimAny;
-    int64_t pad_top = abstract::Shape::kShapeDimAny;
-    int64_t pad_bottom = abstract::Shape::kShapeDimAny;
-    int64_t pad_left = abstract::Shape::kShapeDimAny;
-    int64_t pad_right = abstract::Shape::kShapeDimAny;
-    if (dout_shape_norm[kInputIndex2] != abstract::Shape::kShapeDimAny &&
-        x_size_v[kInputIndex2] != abstract::Shape::kShapeDimAny) {
-      auto pad_needed_d =
-        (dout_shape_norm[kInputIndex2] - 1) * stride_d + dilation_d * (kernel_d - 1) + 1 - x_size_v[kInputIndex2];
-      pad_needed_d = 0 > pad_needed_d ? 0 : pad_needed_d;
-      pad_head = pad_needed_d / kConv3DBackpropFilterPadHalf;
-      pad_tail = pad_needed_d - pad_head;
-    }
-    if (dout_shape_norm[kInputIndex3] != abstract::Shape::kShapeDimAny &&
-        x_size_v[kInputIndex3] != abstract::Shape::kShapeDimAny) {
-      auto pad_needed_h =
-        (dout_shape_norm[kInputIndex3] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[kInputIndex3];
-      pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
-      pad_top = pad_needed_h / kConv3DBackpropFilterPadHalf;
-      pad_bottom = pad_needed_h - pad_top;
-    }
-    if (dout_shape_norm[kInputIndex4] != abstract::Shape::kShapeDimAny &&
-        x_size_v[kInputIndex4] != abstract::Shape::kShapeDimAny) {
-      auto pad_needed_w =
-        (dout_shape_norm[kInputIndex4] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[kInputIndex4];
-      pad_needed_w = 0 > pad_needed_w ? 0 : pad_needed_w;
-      pad_left = pad_needed_w / kConv3DBackpropFilterPadHalf;
-      pad_right = pad_needed_w - pad_left;
-    }
-    pad_list = {pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right};
-  } else if (pad_mode == PadMode::PAD) {
-    pad_list = CheckAndConvertUtils::CheckIntOrTupleInt("attribute[pad]", primitive->GetAttr(kPad), prim_name);
-  }
-  (void)primitive->AddAttr(kPadList, MakeValue(pad_list));
-}
 
 MIND_API_OPERATOR_IMPL(Conv3DBackpropFilter, BaseOperator);
 void Conv3DBackpropFilter::Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode,
@@ -265,7 +192,6 @@ class Conv3DBackpropFilterInfer : public abstract::OpInferBase {
       std::vector<int64_t> out_shape = {abstract::Shape::kShapeRankAny};
       return std::make_shared<abstract::Shape>(out_shape);
     }
-    SetConv3DBackpropPadList(primitive, dout_shape, input_shape);
     return std::make_shared<abstract::Shape>(filter_size_v);
   }
 

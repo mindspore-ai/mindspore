@@ -77,11 +77,6 @@ abstract::TupleShapePtr SplitInferShape(const PrimitivePtr &primitive, const std
                              << "] must be divisible by output_num = " << output_num_value << ", but got "
                              << x_shape[pos];
   }
-  std::vector<int64_t> size_splits;
-  for (int64_t i = 0; i < output_num_value; ++i) {
-    size_splits.push_back(x_shape[pos] / output_num_value);
-  }
-  (void)primitive->AddAttr("size_splits", MakeValue(size_splits));
   auto output_shape = x_shape;
   if (!x_shape_ptr->IsDynamic() || output_shape[pos] > 0) {
     output_shape[pos] = x_shape[pos] / output_num_value;

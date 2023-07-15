@@ -34,23 +34,6 @@ namespace {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-void SetDefaultAttrs(const PrimitivePtr &primitive) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const std::string kBaseName = "base";
-  const std::string kScaleName = "scale";
-  const std::string kShiftName = "shift";
-  constexpr float value = 1.0;
-  if (primitive->GetAttr(kBaseName) == nullptr) {
-    primitive->set_attr(kBaseName, MakeValue(value));
-  }
-  if (primitive->GetAttr(kScaleName) == nullptr) {
-    primitive->set_attr(kScaleName, MakeValue(value));
-  }
-  if (primitive->GetAttr(kShiftName) == nullptr) {
-    primitive->set_attr(kShiftName, MakeValue(value));
-  }
-}
-
 template <typename T>
 void ImpleLog(void *origin, void *target, size_t size) {
   MS_EXCEPTION_IF_NULL(origin);
@@ -158,7 +141,6 @@ ValuePtr LogInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 MIND_API_OPERATOR_IMPL(Log, BaseOperator);
 AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  SetDefaultAttrs(primitive);
   auto type = LogInferType(primitive, input_args);
   auto shape = LogInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

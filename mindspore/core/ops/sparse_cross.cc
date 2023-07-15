@@ -134,7 +134,6 @@ abstract::TupleShapePtr SparseCrossInferShape(const PrimitivePtr &primitive,
   int64_t rank = indices_shape1[1];
   int64_t indices_row = 0;
   std::vector<int64_t> nnz(shape_shape1[0], 1);
-  (void)primitive->AddAttr("N", MakeValue(SizeToLong(inputs_indices1.size())));
   for (uint32_t r = 0; r < shape_shape1[0]; r++) {
     for (unsigned int i = 0; i < inputs_indices1.size(); i++) {
       auto indices_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices1[i]->BuildShape())[kShape];

@@ -35,8 +35,6 @@ class MIND_API EuclideanNorm : public BaseOperator {
   void set_keep_dims(const bool keep_dims);
 
   bool get_keep_dims() const;
-  // use to calculate size in kernel
-  std::vector<int64_t> get_axes() const;
 };
 
 MIND_API abstract::AbstractBasePtr EuclideanNormInfer(const abstract::AnalysisEnginePtr &,

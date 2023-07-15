@@ -25,6 +25,7 @@
 #include "mindspore/core/ops/euclidean_norm.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/euclidean_norm_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "kernel/kernel_get_value.h"
 
 namespace mindspore {
 namespace kernel {
@@ -68,8 +69,10 @@ int EuclideanNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
 
   auto kernel_ptr = std::make_shared<ops::EuclideanNorm>(base_operator->GetPrim());
-  axes_ = kernel_ptr->get_axes();
   keep_dims_ = kernel_ptr->get_keep_dims();
+  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &axes_)) {
+    MS_LOG(EXCEPTION) << "For" << kernel_name_ << ", can't get axis value from input!";
+  }
 
   data_type_ = inputs.at(kIndex0)->GetDtype();
   input_shape_.clear();

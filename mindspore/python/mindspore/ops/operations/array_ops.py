@@ -3384,6 +3384,9 @@ class ReverseV2(Primitive):
         for i, each in enumerate(axis):
             validator.check_value_type(f'axis[{i}]', each, [int], self.name)
         self.axis = axis
+        if isinstance(axis, list):
+            self.axis = tuple(axis)
+            self.add_prim_attr('axis', self.axis)
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 

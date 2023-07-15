@@ -60,30 +60,6 @@ TypePtr NanToNumInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   MS_EXCEPTION_IF_NULL(x_dtype);
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, x_valid_types, op_name);
-  auto dtype = x_dtype->cast<TensorTypePtr>();
-  TypeId dtype_id = dtype->element()->type_id();
-
-  auto nan_none = prim->GetAttr("nan_none");
-  if (nan_none != nullptr && GetValue<bool>(nan_none)) {
-    prim->set_attr("nan", MakeValue(static_cast<float>(0.0)));
-  }
-  auto posinf_none = prim->GetAttr("posinf_none");
-  if (posinf_none != nullptr && GetValue<bool>(posinf_none)) {
-    if (dtype_id == kNumberTypeFloat32) {
-      prim->set_attr("posinf", MakeValue(std::numeric_limits<float>::max()));
-    } else if (dtype_id == kNumberTypeFloat16) {
-      prim->set_attr("posinf", MakeValue(static_cast<float>(std::numeric_limits<float16>::max())));
-    }
-  }
-  auto neginf_none = prim->GetAttr("neginf_none");
-  if (neginf_none != nullptr && GetValue<bool>(neginf_none)) {
-    if (dtype_id == kNumberTypeFloat32) {
-      prim->set_attr("neginf", MakeValue(std::numeric_limits<float>::lowest()));
-    } else if (dtype_id == kNumberTypeFloat16) {
-      prim->set_attr("neginf", MakeValue(static_cast<float>(std::numeric_limits<float16>::lowest())));
-    }
-  }
-
   return x_dtype;
 }
 }  // namespace

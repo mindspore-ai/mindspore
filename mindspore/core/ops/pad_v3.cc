@@ -193,7 +193,6 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
       }
     }
   }
-  primitive->set_attr("padding_switched", MakeValue(paddings_val));
   std::vector<std::pair<int64_t, int64_t>> paddings_attr;
   for (int64_t i = 0; i < size; ++i) {
     if (nTwo * i >= paddings_size) {
@@ -252,7 +251,6 @@ AbstractBasePtr PadV3Infer(const abstract::AnalysisEnginePtr &, const PrimitiveP
 
 bool PadV3::get_paddings_contiguous() const { return GetValue<bool>(GetAttr("paddings_contiguous")); }
 std::string PadV3::get_mode() const { return GetValue<string>(GetAttr("mode")); }
-std::vector<int64_t> PadV3::get_paddings() const { return GetValue<std::vector<int64_t>>(GetAttr("padding_switched")); }
 
 MIND_API_OPERATOR_NAME_IMPL(PadV3, kNamePadV3, BaseOperator);
 

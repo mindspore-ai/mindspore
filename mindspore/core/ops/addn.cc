@@ -76,8 +76,6 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(elements.size()), kGreaterEqual, 1, prim_name);
-  (void)primitive->AddAttr("N", MakeValue(SizeToLong(elements.size())));
-  (void)primitive->AddAttr("n", MakeValue(SizeToLong(elements.size())));
   auto shape_0 = elements[0]->BuildShape();
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {

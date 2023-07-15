@@ -87,7 +87,6 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
   if (axis < 0) {
     axis += x_rank;
   }
-  (void)primitive->AddAttr("dimension", MakeValue(axis));
   // Calculate all the shapes.
   auto cal_shape = [axis, keep_dims](ShapeVector &shape, const ShapeVector &x_shape) -> void {
     (void)shape.insert(shape.end(), x_shape.begin(), x_shape.end());

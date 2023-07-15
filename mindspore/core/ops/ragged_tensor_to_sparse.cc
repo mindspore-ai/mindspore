@@ -80,9 +80,6 @@ abstract::TupleShapePtr RaggedTensorToSparseInferShape(const PrimitivePtr &primi
   abstract::ShapePtr out_indices = std::make_shared<abstract::Shape>(out_indices_shape);
   abstract::ShapePtr out_values = std::make_shared<abstract::Shape>(out_values_shape);
   abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(out_shape_shape);
-  auto splits_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kRttsFirstInput]->BuildShape())[kShape];
-  (void)primitive->AddAttr("RAGGED_RANK", MakeValue(SizeToLong(splits_shape.size())));
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{out_indices, out_values, out_shape});
 }

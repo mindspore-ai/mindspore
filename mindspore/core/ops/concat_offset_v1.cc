@@ -61,7 +61,6 @@ abstract::TupleShapePtr ConcatOffsetV1InferShape(const PrimitivePtr &primitive,
                    : input_args[1]->cast<abstract::AbstractListPtr>()->elements();
   (void)CheckAndConvertUtils::CheckInteger("input x tensor num", SizeToLong(tensors.size()), kGreaterEqual, kXTensorNum,
                                            prim_name);
-  (void)primitive->AddAttr("N", MakeValue(SizeToLong(tensors.size())));
   auto tensor0 = tensors[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor0);
   auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensor0->BuildShape())[kShape];

@@ -94,7 +94,6 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
       }
     }
   }
-  primitive->set_attr("padding_switched", MakeValue(paddings_val));
 
   std::vector<int64_t> out_shape;
   if (paddings_size == SizeToLong(kPaddingsSizeTwo)) {
@@ -157,9 +156,6 @@ AbstractBasePtr PadV3GradInfer(const abstract::AnalysisEnginePtr &, const Primit
 
 bool PadV3Grad::get_paddings_contiguous() const { return GetValue<bool>(GetAttr("paddings_contiguous")); }
 std::string PadV3Grad::get_mode() const { return GetValue<string>(GetAttr("mode")); }
-std::vector<int64_t> PadV3Grad::get_paddings() const {
-  return GetValue<std::vector<int64_t>>(GetAttr("padding_switched"));
-}
 
 MIND_API_OPERATOR_NAME_IMPL(PadV3Grad, kNamePadV3Grad, BaseOperator);
 
