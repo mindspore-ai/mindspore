@@ -244,6 +244,16 @@ std::vector<std::string> GetTuneOpsList(const std::string &d) {
   }
   return res;
 }
+
+std::string ReplaceString(const std::string &input, const std::string &search_str, const std::string &replace_str) {
+  auto ret = input;
+  size_t pos = ret.find(search_str);
+  while (pos != std::string::npos) {
+    ret.replace(pos, search_str.length(), replace_str);
+    pos = ret.find(search_str, pos + replace_str.length());
+  }
+  return ret;
+}
 }  // namespace
 
 void TbeKernelCompileManager::PrintProcessLog(const nlohmann::json &json,
@@ -549,7 +559,8 @@ void TbeKernelCompileManager::QueryProcess(const std::string &type, const std::s
         failed_log_ += oss.str();
         MS_LOG(INFO) << "Single op compile failed. " << oss.str();
       } else {
-        MS_LOG(INFO) << "Op " << kernel_name << " " << type << " failed,\n except_msg : " << target_status.except_msg;
+        MS_LOG(INFO) << "Op " << kernel_name << " " << type << " failed,\n except_msg : "
+                     << ReplaceString(target_status.except_msg, "RuntimeError", "RuntimeErr");
         (void)failed_job->emplace_back(target_status.target_job_id);
       }
     }
