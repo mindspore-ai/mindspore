@@ -465,7 +465,7 @@ Status ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, in
       RETURN_IF_NOT_OK_MR(AddBlobPageInfo(row_data, blob_page_ptr, cur_blob_page_offset, in));
 
       // start index field
-      AddIndexFieldByRawData(*detail_ptr, row_data);
+      RETURN_IF_NOT_OK_MR(AddIndexFieldByRawData(*detail_ptr, row_data));
       (*row_data_ptr)->push_back(std::move(row_data));
     }
   }
@@ -511,7 +511,10 @@ Status ShardIndexGenerator::ExecuteTransaction(const int &shard_no, sqlite3 *db,
       "-a): " +
       shard_address);
   }
-  (void)sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+  auto sql_code = sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(
+    sql_code == SQLITE_OK,
+    "Execute SQL statement `BEGIN TRANSACTION;` failed, SQLite result code: " + std::to_string(sql_code));
   for (int raw_page_id : raw_page_ids) {
     std::shared_ptr<std::string> sql_ptr;
     RELEASE_AND_RETURN_IF_NOT_OK_MR(GenerateRawSQL(fields_, &sql_ptr), db, in);
@@ -521,7 +524,10 @@ Status ShardIndexGenerator::ExecuteTransaction(const int &shard_no, sqlite3 *db,
     RELEASE_AND_RETURN_IF_NOT_OK_MR(BindParameterExecuteSQL(db, *sql_ptr, *row_data_ptr), db, in);
     MS_LOG(INFO) << "Insert " << row_data_ptr->size() << " rows to index db.";
   }
-  (void)sqlite3_exec(db, "END TRANSACTION;", nullptr, nullptr, nullptr);
+  sql_code = sqlite3_exec(db, "END TRANSACTION;", nullptr, nullptr, nullptr);
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(
+    sql_code == SQLITE_OK,
+    "Execute SQL statement `END TRANSACTION;` failed, SQLite result code: " + std::to_string(sql_code));
   in.close();
 
   // Close database
@@ -585,7 +591,9 @@ void ShardIndexGenerator::DatabaseWriter() {
     std::vector<int> raw_page_ids;
     for (uint64_t i = 0; i < total_pages; ++i) {
       std::shared_ptr<Page> page_ptr;
-      if (shard_header_.GetPage(shard_no, i, &page_ptr).IsError()) {
+      Status get_page_status = shard_header_.GetPage(shard_no, i, &page_ptr);
+      if (get_page_status.IsError()) {
+        MS_LOG(ERROR) << get_page_status.ToString();
         write_success_ = false;
         return;
       }
@@ -595,8 +603,9 @@ void ShardIndexGenerator::DatabaseWriter() {
         blob_id_to_page_id[page_ptr->GetPageTypeID()] = i;
       }
     }
-
-    if (ExecuteTransaction(shard_no, db, raw_page_ids, blob_id_to_page_id).IsError()) {
+    Status transaction_status = ExecuteTransaction(shard_no, db, raw_page_ids, blob_id_to_page_id);
+    if (transaction_status.IsError()) {
+      MS_LOG(ERROR) << transaction_status.ToString();
       write_success_ = false;
       return;
     }
@@ -604,6 +613,7 @@ void ShardIndexGenerator::DatabaseWriter() {
     shard_no = task_++;
   }
 }
+
 Status ShardIndexGenerator::Finalize(const std::vector<std::string> file_names) {
   CHECK_FAIL_RETURN_UNEXPECTED_MR(!file_names.empty(), "[Internal ERROR] the size of mindrecord files is 0.");
   ShardIndexGenerator sg{file_names[0]};
