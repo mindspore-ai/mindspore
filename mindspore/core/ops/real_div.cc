@@ -71,12 +71,119 @@ class MIND_API AGRealDivInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return RealDivInferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return RealDivInfer(engine, primitive, input_args);
   }
+
+  ValuePtr InferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    const int64_t input_num = 2;
+    MS_EXCEPTION_IF_NULL(prim);
+    auto op_name = prim->name();
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
+    auto x = input_args[0]->BuildValue();
+    auto y = input_args[1]->BuildValue();
+
+    if (!IsValueKnown(x) || !IsValueKnown(y) || !input_args[0]->isa<abstract::AbstractTensor>() ||
+        !input_args[1]->isa<abstract::AbstractTensor>()) {
+      return nullptr;
+    }
+    auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack());
+    auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack());
+    auto x_shape = x_shape_map[kShape];
+    auto y_shape = y_shape_map[kShape];
+    if (!x_shape.empty() || x_shape != y_shape) {
+      return nullptr;
+    }
+    auto x_tensor = x->cast<tensor::TensorPtr>();
+    auto y_tensor = y->cast<tensor::TensorPtr>();
+    TypeId x_dtype = x_tensor->data_type();
+    TypeId y_dtype = y_tensor->data_type();
+    if (x_dtype != y_dtype) {
+      return nullptr;
+    }
+    auto x_datac = x_tensor->data_c();
+    auto y_datac = y_tensor->data_c();
+    auto result_tensor = std::make_shared<tensor::Tensor>(x_dtype, x_shape);
+    auto result_datac = result_tensor->data_c();
+
+    switch (x_dtype) {
+      case kNumberTypeInt8: {
+        ImpleRealDiv<int8_t>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeInt16: {
+        ImpleRealDiv<int16_t>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeInt32: {
+        ImpleRealDiv<int32_t>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeInt64: {
+        ImpleRealDiv<int64_t>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeUInt8: {
+        ImpleRealDiv<uint8_t>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeUInt16: {
+        ImpleRealDiv<uint16_t>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeUInt32: {
+        ImpleRealDiv<uint32_t>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeUInt64: {
+        ImpleRealDiv<uint64_t>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeFloat16: {
+        ImpleRealDiv<float16>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeFloat32: {
+        ImpleRealDiv<float>(x_datac, y_datac, result_datac);
+        break;
+      }
+      case kNumberTypeFloat64: {
+        ImpleRealDiv<double>(x_datac, y_datac, result_datac);
+        break;
+      }
+      default: {
+        return nullptr;
+      }
+    }
+    return result_tensor;
+  }
+
+ private:
+  template <typename T>
+  void ImpleRealDiv(void *x, void *y, void *output) const {
+    MS_EXCEPTION_IF_NULL(x);
+    MS_EXCEPTION_IF_NULL(y);
+    auto dividend = reinterpret_cast<T *>(x);
+    auto divisor = reinterpret_cast<T *>(y);
+    auto out = reinterpret_cast<T *>(output);
+    auto zero = static_cast<T>(0);
+    if (*divisor == zero) {
+      if (*dividend == zero) {
+        *out = std::numeric_limits<T>::quiet_NaN();
+      }
+      if (std::numeric_limits<T>::has_infinity) {
+        *out = *dividend > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+      } else {
+        *out = *dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+      }
+    } else {
+      *out = static_cast<T>(*dividend / *divisor);
+    }
+  }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(RealDiv, prim::kPrimRealDiv, AGRealDivInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(RealDiv, prim::kPrimRealDiv, AGRealDivInfer, true);
 }  // namespace ops
 }  // namespace mindspore
