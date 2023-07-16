@@ -1019,7 +1019,7 @@ class Profiler:
             pass
         return points
 
-    def _ascend_op_analyse(self, op_summary, op_statistic):
+    def _ascend_op_analyse(self, op_summary, op_statistic, dynamic_status):
         """
         Ascend graph model hwts analyse.
 
@@ -1043,7 +1043,7 @@ class Profiler:
             output_timeline_data_path = os.path.join(self._output_path, f'output_timeline_data_{dev_id}.txt')
             output_timeline_data_path = validate_and_normalize_path(output_timeline_data_path)
 
-            op_analyser = AscendOPGenerator(op_summary, op_statistic)
+            op_analyser = AscendOPGenerator(op_summary, op_statistic, dynamic_status)
             op_analyser.parse()
             op_analyser.write(op_intermediate_detail_path, op_intermediate_type_path,
                               aicpu_intermediate_detail_path, framework_raw_path, output_timeline_data_path)
@@ -1192,7 +1192,7 @@ class Profiler:
             op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path)
             graph_ids = np.unique(op_summary['Model ID']).tolist()
             points = self._ascend_fpbp_analyse(op_summary, steptrace)
-            self._ascend_op_analyse(op_summary, op_statistic)
+            self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status)
             if len(graph_ids) == 1:
                 self._ascend_step_trace_analyse(steptrace)
             self._ascend_timeline_analyse(source_path, op_summary, steptrace)
