@@ -164,6 +164,8 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   AnfNodePtr return_node = graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
   std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
@@ -188,7 +190,7 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
         auto before_input = node->cast<CNodePtr>()->input(1);
         auto new_depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), before_input, last_need_depend});
         new_depend->set_abstract(before_input->abstract());
-        node->cast<CNodePtr>()->set_input(1, new_depend);
+        manager->SetEdge(node, 1, new_depend);
       }
       last_need_depend = node;
     } else if (IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(0))) {
@@ -203,7 +205,7 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
           }
           auto new_depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), before_input, last_need_depend});
           new_depend->set_abstract(before_input->abstract());
-          node->cast<CNodePtr>()->set_input(i, new_depend);
+          manager->SetEdge(node, i, new_depend);
         }
       }
       last_need_depend = node;
