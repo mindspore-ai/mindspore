@@ -26,9 +26,10 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException
 class AscendOPGenerator:
     """Generate ascend op data from DataFrame."""
 
-    def __init__(self, op_summary, op_statistic):
+    def __init__(self, op_summary, op_statistic, dynamic_status=False):
         self.op_summary = op_summary
         self.op_statistic = op_statistic
+        self.dynamic_status = dynamic_status
         self.op_detail = None
         self.op_type = None
         self.aicpu_detail = None
@@ -83,74 +84,79 @@ class AscendOPGenerator:
             output_timeline_data_path : output_timeline_data.txt path
         """
         # aicore intermediation detail
-        try:
-            with os.fdopen(os.open(aicore_intermediate_detail_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
-                           'w') as aicore_detail:
-                writer = csv.writer(aicore_detail)
-                writer.writerow(self.op_detail.dtype.names)
-                writer.writerows(self.op_detail.tolist())
-        except (IOError, OSError) as err:
-            logging.critical('Errot occurred when write aicore detail file: %s', err)
-            raise ProfilerIOException()
-        if os.path.exists(aicore_intermediate_detail_path):
-            os.chmod(aicore_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
+        if self.op_detail.shape[0] != 0:
+            try:
+                with os.fdopen(os.open(aicore_intermediate_detail_path,
+                                       os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
+                               'w') as aicore_detail:
+                    writer = csv.writer(aicore_detail)
+                    writer.writerow(self.op_detail.dtype.names)
+                    writer.writerows(self.op_detail.tolist())
+            except (IOError, OSError) as err:
+                logging.critical('Errot occurred when write aicore detail file: %s', err)
+                raise ProfilerIOException()
+            if os.path.exists(aicore_intermediate_detail_path):
+                os.chmod(aicore_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 
         # aicore intermediation type
-        try:
-            with os.fdopen(os.open(aicore_intermediate_type_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
-                           'w') as aicore_type:
-                writer = csv.writer(aicore_type)
-                writer.writerow(self.op_type.dtype.names)
-                writer.writerows(self.op_type.tolist())
-        except (IOError, OSError) as err:
-            logging.critical('Errot occurred when write aicore type file: %s', err)
-            raise ProfilerIOException()
-        if os.path.exists(aicore_intermediate_type_path):
-            os.chmod(aicore_intermediate_type_path, stat.S_IREAD | stat.S_IWRITE)
+        if self.op_type.shape[0] != 0:
+            try:
+                with os.fdopen(os.open(aicore_intermediate_type_path,
+                                       os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
+                               'w') as aicore_type:
+                    writer = csv.writer(aicore_type)
+                    writer.writerow(self.op_type.dtype.names)
+                    writer.writerows(self.op_type.tolist())
+            except (IOError, OSError) as err:
+                logging.critical('Errot occurred when write aicore type file: %s', err)
+                raise ProfilerIOException()
+            if os.path.exists(aicore_intermediate_type_path):
+                os.chmod(aicore_intermediate_type_path, stat.S_IREAD | stat.S_IWRITE)
 
         # aicpu_intermediation
-        try:
-            with os.fdopen(os.open(aicpu_intermediate_detail_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
-                           'w') as aicpu_type:
-                writer = csv.writer(aicpu_type)
-                writer.writerow(self.aicpu_detail.dtype.names)
-                writer.writerows(self.aicpu_detail.tolist())
-        except (IOError, OSError) as err:
-            logging.critical('Errot occurred when write aicpu detail file: %s', err)
-            raise ProfilerIOException()
-        if os.path.exists(aicpu_intermediate_detail_path):
-            os.chmod(aicpu_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
+        if self.aicpu_detail.shape[0] != 0:
+            try:
+                with os.fdopen(os.open(aicpu_intermediate_detail_path,
+                                       os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
+                               'w') as aicpu_type:
+                    writer = csv.writer(aicpu_type)
+                    writer.writerow(self.aicpu_detail.dtype.names)
+                    writer.writerows(self.aicpu_detail.tolist())
+            except (IOError, OSError) as err:
+                logging.critical('Errot occurred when write aicpu detail file: %s', err)
+                raise ProfilerIOException()
+            if os.path.exists(aicpu_intermediate_detail_path):
+                os.chmod(aicpu_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 
         # framwork_raw
-        try:
-            with os.fdopen(os.open(framework_raw_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
-                           'w') as framework:
-                writer = csv.writer(framework)
-                writer.writerow(self.framework_raw.dtype.names)
-                writer.writerows(self.framework_raw.tolist())
-        except (IOError, OSError) as err:
-            logging.critical('Errot occurred when write framework file: %s', err)
-            raise ProfilerIOException()
-        if os.path.exists(framework_raw_path):
-            os.chmod(framework_raw_path, stat.S_IREAD | stat.S_IWRITE)
+        if self.framework_raw.shape[0] != 0:
+            try:
+                with os.fdopen(os.open(framework_raw_path,
+                                       os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
+                               'w') as framework:
+                    writer = csv.writer(framework)
+                    writer.writerow(self.framework_raw.dtype.names)
+                    writer.writerows(self.framework_raw.tolist())
+            except (IOError, OSError) as err:
+                logging.critical('Errot occurred when write framework file: %s', err)
+                raise ProfilerIOException()
+            if os.path.exists(framework_raw_path):
+                os.chmod(framework_raw_path, stat.S_IREAD | stat.S_IWRITE)
 
         # output_timeline_data
-        try:
-            with os.fdopen(os.open(output_timeline_data_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
-                           'w') as output_timeline_data:
-                writer = csv.writer(output_timeline_data)
-                writer.writerow(['op_name', 'stream_id', 'start_time(us)', 'duration(ms)'])
-                writer.writerows(self.output_timeline_data.tolist())
-        except (IOError, OSError) as err:
-            logging.critical('Errot occurred when write output timeline data file: %s', err)
-            raise ProfilerIOException()
-        if os.path.exists(aicpu_intermediate_detail_path):
-            os.chmod(aicpu_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
+        if self.output_timeline_data.shape[0] != 0:
+            try:
+                with os.fdopen(os.open(output_timeline_data_path,
+                                       os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
+                               'w') as output_timeline_data:
+                    writer = csv.writer(output_timeline_data)
+                    writer.writerow(['op_name', 'stream_id', 'start_time(us)', 'duration(ms)'])
+                    writer.writerows(self.output_timeline_data.tolist())
+            except (IOError, OSError) as err:
+                logging.critical('Error occurred when write output timeline data file: %s', err)
+                raise ProfilerIOException()
+            if os.path.exists(aicpu_intermediate_detail_path):
+                os.chmod(aicpu_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _parse_op_detail(self, op_summary):
         """
@@ -250,8 +256,11 @@ class AscendOPGenerator:
                     }
             return json.dumps(op_info)
 
-        _, index, _, _ = np.unique(op_summary['Op Name'], return_index=True, return_inverse=True,
-                                   return_counts=True)
+        if self.dynamic_status:
+            index = list(range(op_summary.shape[0]))
+        else:
+            _, index, _, _ = np.unique(op_summary['Op Name'], return_index=True, return_inverse=True,
+                                       return_counts=True)
         framwork_raw = np.empty((len(index),), dtype=self.framwork_raw_dt)
 
         framwork_raw['task_id'] = op_summary[index]['Task ID']
