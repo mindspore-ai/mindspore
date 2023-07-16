@@ -154,6 +154,21 @@ def test_parallel_inference_ascend(model_path, in_data_path, input_shapes):
     runner_common_predict(context, model_path, in_data_path, input_shapes)
 
 
+def test_model_group_for_ascend(model_path, in_data_path, input_shapes):
+    # init model group context
+    model_group_context = mslite.Context()
+    model_group_context.target = ["ascend"]
+    model_group_context.ascend.device_id = 0
+    # init model group
+    model_group = mslite.ModelGroup()
+    model_group.add_model([model_path, model_path])  # test model group api for same model file.
+    model_group.cal_max_size_of_workspace(mslite.ModelType.MINDIR, model_group_context)
+    # use model one for inference
+    test_model_inference_ascend(model_file, in_data_file_list, shapes)
+    # use model two for inference
+    test_model_inference_ascend(model_file, in_data_file_list, shapes)
+
+
 if __name__ == '__main__':
     model_file = sys.argv[1]
     in_data_file = sys.argv[2]
@@ -186,6 +201,9 @@ if __name__ == '__main__':
     elif backend == "CPU_PARALLEL":
         test_parallel_inference_cpu(model_file, in_data_file_list, shapes)
         print("run parallel inference cpu success.")
+    elif backend == "Ascend_Model_Group":
+        test_model_group_for_ascend(model_file, in_data_file_list, shapes)
+        print("run model model group for ascend success.")
     else:
         raise RuntimeError('not support backend!')
     print("run success.")

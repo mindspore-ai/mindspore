@@ -229,6 +229,13 @@ if [[ ${backend} =~ "cloud" &&! ${backend} =~ "ge" ]]; then
       echo "Run_python_status failed"
       exit 1
   fi
+  Run_python_ST ${benchmark_test} ${benchmark_test} ${ms_models_path} ${model_data_path}'/models/hiai' "${models_python_cfg_file_list[*]}" "Ascend_Model_Group"
+  Run_python_model_group_status=$?
+  if [[ ${Run_python_model_group_status} != 0 ]];then
+      cat ${run_ascend_log_file}
+      echo "Run_python_model_group_status failed"
+      exit 1
+  fi
 fi
 
 if [[ ${backend} =~ "cloud" &&! ${backend} =~ "ge" ]]; then
