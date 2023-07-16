@@ -63,7 +63,7 @@ void AoeUtil::Initialize() {
   aoe_tuning_graph_ = DlsymFuncObj(AoeTuningGraph, plugin_handle_);
   aoe_destroy_session_ = DlsymFuncObj(AoeDestroySession, plugin_handle_);
 
-  std::map<::ge::AscendString, ::ge::AscendString> globalOptions = {{AoeOptions::JOB_TYPE, ::ge::AscendString("1")}};
+  std::map<::ge::AscendString, ::ge::AscendString> globalOptions = {{AoeOptions::JOB_TYPE, ::ge::AscendString("2")}};
   const Aoe::AoeStatus status = aoe_initialize_(globalOptions);
   if (status != Aoe::AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeInitialize failed.";
@@ -138,7 +138,7 @@ Status AoeUtil::AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPt
 
   status = aoe_tuning_graph_(sessionId, tuningOptions);
   if (status != Aoe::AOE_SUCCESS) {
-    MS_LOG(ERROR) << "AoeTuningGraph failed.";
+    MS_LOG(ERROR) << "AoeTuningGraph failed. status: " << status;
     (void)aoe_destroy_session_(sessionId);
     return FAILED;
   }
