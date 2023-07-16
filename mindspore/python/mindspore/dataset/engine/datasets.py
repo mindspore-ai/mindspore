@@ -3214,6 +3214,9 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                                 "ds.config.set_enable_watchdog(False) to block this error.")
                 os.kill(os.getpid(), signal.SIGTERM)
 
+        # release the workers
+        del workers
+
     @staticmethod
     def _terminate_processes(processes):
         """Terminate subprocesses"""
@@ -3463,9 +3466,27 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         return False
 
     def close_all_workers(self):
+        """Close all the subprocess workers"""
         if hasattr(self, 'workers') and self.workers is not None:
             for w in self.workers:
                 w.close()
+            check_interval = get_multiprocessing_timeout_interval()
+            for w in self.workers:
+                subprocess_file_descriptor = w.sentinel
+                st = time.time()
+                while _PythonMultiprocessing.is_process_alive(w.pid):
+                    time.sleep(0.01)  # sleep 10ms, waiting for the subprocess exit
+                    if time.time() - st > check_interval:
+                        logger.warning("Waiting for the subprocess worker [{}] to exit.".format(w.pid))
+                        st += check_interval
+                try:
+                    if w.is_alive():
+                        os.close(subprocess_file_descriptor)
+                except OSError as e:
+                    # Maybe the file descriptor had been released, so ignore the 'Bad file descriptor'
+                    if "Bad file descriptor" not in str(e):
+                        raise e
+
             # use clear to release the handle which is better than self.workers = None
             self.workers.clear()
             self.workers = None
