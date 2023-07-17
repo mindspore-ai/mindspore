@@ -63,7 +63,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None``, will use ``0``. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.1/dataset/cache.html>`_ .
             Default: ``None``, which means no cache is used.
 
     Raises:
@@ -77,7 +77,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
@@ -204,7 +204,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -218,7 +218,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
@@ -346,7 +346,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -360,7 +360,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
@@ -497,7 +497,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -511,7 +511,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -644,7 +644,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` .
             This argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -658,7 +658,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -781,7 +781,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -795,7 +795,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -985,7 +985,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This argument can only
             be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -999,7 +999,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.

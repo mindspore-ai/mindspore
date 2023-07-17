@@ -38,4 +38,4 @@ mindspore.shard
         - **TypeError** - 如果 `level` 不是int。
 
     教程样例：
-        - `函数式算子切分 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/mindspore/pynative_shard_function_parallel.html>`_
+        - `函数式算子切分 <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/mindspore/pynative_shard_function_parallel.html>`_

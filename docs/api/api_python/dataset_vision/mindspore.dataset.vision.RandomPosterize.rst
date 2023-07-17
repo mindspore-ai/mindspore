@@ -16,4 +16,4 @@ mindspore.dataset.vision.RandomPosterize
 
     教程样例：
         - `视觉变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/dataset/vision_gallery.html>`_

@@ -5,9 +5,9 @@ Neural Network Cell
 
 For building predefined building blocks or computational units in neural networks.
 
-For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of nn Interface <https://mindspore.cn/docs/en/master/note/dynamic_shape_nn.html>`_ .
+For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of nn Interface <https://mindspore.cn/docs/en/r2.1/note/dynamic_shape_nn.html>`_ .
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.nn` operators in MindSpore, please refer to the link `mindspore.nn API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_en.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.nn` operators in MindSpore, please refer to the link `mindspore.nn API Interface Change <https://gitee.com/mindspore/docs/blob/r2.1/resource/api_updates/nn_api_updates_en.md>`_ .
 
 Basic Block
 -----------
@@ -397,7 +397,7 @@ LRScheduler subclass dynamically changes the learning rate by calling the `step`
     import mindspore
     from mindspore import nn
     # Define the network structure of LeNet5. Refer to
-    # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+    # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
     net = LeNet5()
     loss_fn = nn.MAELoss()
     optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
@@ -412,7 +412,7 @@ LRScheduler subclass dynamically changes the learning rate by calling the `step`
         return loss
     for epoch in range(3):
         # Create the dataset taking MNIST as an example. Refer to
-        # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
         for data, label in create_dataset():
             train_step(data, label)
         scheduler.step()

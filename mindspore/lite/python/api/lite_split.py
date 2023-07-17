@@ -67,7 +67,7 @@ def split_network(network, checkpoint_filenames, train_strategy_filename, strict
                 or Customized encryption.
                 Default: 'AES-GCM'.
               - For details of using the customized encryption, please check the `tutorial
-                <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
+                <https://mindspore.cn/mindarmour/docs/en/r2.1/model_encrypt_protection.html>`_.
 
             - dataset (Dataset): Specifies the preprocessing method of the dataset, which is used to import the
               preprocessing of the dataset into MindIR.

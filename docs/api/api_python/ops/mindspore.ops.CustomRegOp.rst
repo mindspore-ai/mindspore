@@ -41,7 +41,7 @@ mindspore.ops.CustomRegOp
 
         教程样例：
             - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
+              <https://mindspore.cn/tutorials/experts/zh-CN/r2.1/operation/op_custom.html#aicpu类型的自定义算子开发>`_
 
     .. py:method:: dtype_format(*args)
 
@@ -55,7 +55,7 @@ mindspore.ops.CustomRegOp
 
         教程样例：
             - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
+              <https://mindspore.cn/tutorials/experts/zh-CN/r2.1/operation/op_custom.html#aicpu类型的自定义算子开发>`_
 
     .. py:method:: get_op_info()
 
@@ -63,7 +63,7 @@ mindspore.ops.CustomRegOp
 
         教程样例：
             - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
+              <https://mindspore.cn/tutorials/experts/zh-CN/r2.1/operation/op_custom.html#aicpu类型的自定义算子开发>`_
 
     .. py:method:: input(index=None, name=None, param_type="required", **kwargs)
 
@@ -87,7 +87,7 @@ mindspore.ops.CustomRegOp
 
         教程样例：
             - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
+              <https://mindspore.cn/tutorials/experts/zh-CN/r2.1/operation/op_custom.html#aicpu类型的自定义算子开发>`_
 
     .. py:method:: output(index=None, name=None, param_type="required", **kwargs)
 
@@ -111,7 +111,7 @@ mindspore.ops.CustomRegOp
 
         教程样例：
             - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
+              <https://mindspore.cn/tutorials/experts/zh-CN/r2.1/operation/op_custom.html#aicpu类型的自定义算子开发>`_
 
     .. py:method:: target(target=None)
 
@@ -125,4 +125,4 @@ mindspore.ops.CustomRegOp
 
         教程样例：
             - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
+              <https://mindspore.cn/tutorials/experts/zh-CN/r2.1/operation/op_custom.html#aicpu类型的自定义算子开发>`_

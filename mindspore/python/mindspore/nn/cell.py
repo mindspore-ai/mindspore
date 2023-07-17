@@ -203,7 +203,7 @@ class Cell(Cell_):
 
         Tutorial Examples:
             - `Cell and Parameter - Custom Cell Reverse
-              <https://mindspore.cn/tutorials/en/master/advanced/modules/layer.html#custom-cell-reverse>`_
+              <https://mindspore.cn/tutorials/en/r2.1/advanced/modules/layer.html#custom-cell-reverse>`_
         """
         return self._bprop_debug
 
@@ -1239,7 +1239,7 @@ class Cell(Cell_):
 
         Tutorial Examples:
             - `Model Training - Optimizer
-              <https://mindspore.cn/tutorials/en/master/beginner/train.html#optimizer>`_
+              <https://mindspore.cn/tutorials/en/r2.1/beginner/train.html#optimizer>`_
         """
         return list(filter(lambda x: x.requires_grad, self.get_parameters(expand=recurse)))
 
@@ -1326,7 +1326,7 @@ class Cell(Cell_):
 
         Tutorial Examples:
             - `Building a Network - Model Parameters
-              <https://mindspore.cn/tutorials/en/master/beginner/model.html#model-parameters>`_
+              <https://mindspore.cn/tutorials/en/r2.1/beginner/model.html#model-parameters>`_
         """
         cells = []
         if expand:
@@ -1595,7 +1595,7 @@ class Cell(Cell_):
         accelerate the algorithm in the algorithm library.
 
         If `boost_type` is not in the algorithm library, please view the algorithm in the algorithm library through
-        `algorithm library <https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_.
+        `algorithm library <https://gitee.com/mindspore/mindspore/tree/r2.1/mindspore/python/mindspore/boost>`_.
 
         Note:
             Some acceleration algorithms may affect the accuracy of the network, please choose carefully.
@@ -1652,7 +1652,7 @@ class Cell(Cell_):
 
         Tutorial Examples:
             - `Model Training - Implementing Training and Evaluation
-              <https://mindspore.cn/tutorials/en/master/beginner/train.html#implementing-training-and-evaluation>`_
+              <https://mindspore.cn/tutorials/en/r2.1/beginner/train.html#implementing-training-and-evaluation>`_
         """
         if mode is False:
             self._phase = 'predict'

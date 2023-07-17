@@ -2,7 +2,7 @@ mindspore.rewrite
 =================
 MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的前向计算过程进行修改的能力，如插入、删除和替换语句。
 
-如何快速使用ReWrite，请参考 `使用ReWrite修改网络 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/rewrite/rewrite_tutorial.html>`_ 。
+如何快速使用ReWrite，请参考 `使用ReWrite修改网络 <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/rewrite/rewrite_tutorial.html>`_ 。
 
 .. py:class:: mindspore.rewrite.SymbolTree(handler: SymbolTreeImpl)
 

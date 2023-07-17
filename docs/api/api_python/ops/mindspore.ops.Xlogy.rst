@@ -8,7 +8,7 @@
     更多参考详见 :func:`mindspore.ops.xlogy`。
 
     输入：
-        - **x** (Union[Tensor, number.Number, bool]) - 第一个输入为数值型。数据类型为 `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtpye>`_ 。
+        - **x** (Union[Tensor, number.Number, bool]) - 第一个输入为数值型。数据类型为 `number <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.html#mindspore.dtpye>`_ 。
         - **y** (Union[Tensor, number.Number, bool]) - 第二个输入为数值型。当第一个输入是Tensor或数据类型为数值型或bool的Tensor时， 则第二个输入是数值型或bool。当第一个输入是Scalar时，则第二个输入必须是数据类型为数值型或bool的Tensor。
 
     输出：

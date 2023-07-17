@@ -18,4 +18,4 @@ mindspore.amp.all_finite
     
     教程样例：
         - `自动混合精度 - 损失缩放
-          <https://mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html#损失缩放>`_
+          <https://mindspore.cn/tutorials/zh-CN/r2.1/advanced/mixed_precision.html#损失缩放>`_

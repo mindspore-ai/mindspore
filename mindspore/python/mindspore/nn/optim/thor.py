@@ -339,10 +339,10 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> temp = Tensor([4e-4, 1e-4, 1e-5, 1e-5], mstype.float32)
         >>> optim = nn.thor(net, learning_rate=temp, damping=temp, momentum=0.9, loss_scale=128, frequency=4)

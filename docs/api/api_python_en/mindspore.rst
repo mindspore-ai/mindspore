@@ -74,7 +74,7 @@ DataType
     ============================   =================
     Type                            Description
     ============================   =================
-    ``tensor``                      MindSpore's ``tensor`` type. Data format uses NCHW. For details, see `tensor <https://www.gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_.
+    ``tensor``                      MindSpore's ``tensor`` type. Data format uses NCHW. For details, see `tensor <https://www.gitee.com/mindspore/mindspore/blob/r2.1/mindspore/python/mindspore/common/tensor.py>`_.
     ``bool_``                       Boolean ``True`` or ``False``.
     ``int_``                        Integer scalar.
     ``uint``                        Unsigned integer scalar.

@@ -104,7 +104,7 @@ class SummaryCollector(Callback):
               training computational graph is collected. Default: ``True`` .
             - collect_train_lineage (bool): Whether to collect lineage data for the training phase,
               this field will be displayed on the `lineage page \
-              <https://www.mindspore.cn/mindinsight/docs/en/master/lineage_and_scalars_comparison.html>`_
+              <https://www.mindspore.cn/mindinsight/docs/en/r2.1/lineage_and_scalars_comparison.html>`_
               of MindInsight. Default: ``True`` .
             - collect_eval_lineage (bool): Whether to collect lineage data for the evaluation phase,
               this field will be displayed on the lineage page of MindInsight. Default: ``True`` .
@@ -186,10 +186,10 @@ class SummaryCollector(Callback):
         ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
         ...     ds_train = create_dataset()
         ...     # Define the network structure of LeNet5. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         ...     network = LeNet5(10)
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)

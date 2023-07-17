@@ -53,4 +53,4 @@ mindspore.dataset.audio.MelSpectrogram
 
     教程样例：
         - `音频变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/dataset/audio_gallery.html>`_

@@ -41,4 +41,4 @@ mindspore.export
 
     教程样例：
         - `保存与加载 - 保存和加载MindIR
-          <https://mindspore.cn/tutorials/zh-CN/master/beginner/save_load.html#保存和加载mindir>`_
+          <https://mindspore.cn/tutorials/zh-CN/r2.1/beginner/save_load.html#保存和加载mindir>`_

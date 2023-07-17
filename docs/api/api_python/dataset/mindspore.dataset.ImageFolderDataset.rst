@@ -18,7 +18,7 @@ mindspore.dataset.ImageFolderDataset
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值： ``False`` ，不解码。
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
-        - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
+        - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.1/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
         - **decrypt** (callable, 可选) - 图像解密函数，接受加密的图片路径并返回bytes类型的解密数据。默认值： ``None`` ，不进行解密。
 
     异常：
@@ -33,7 +33,7 @@ mindspore.dataset.ImageFolderDataset
 
     教程样例：
         - `使用数据Pipeline加载 & 处理数据集
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     .. note::
         - 如果 `decode` 参数的值为 ``False`` ，则得到的 `image` 列的shape为[undecoded_image_size]，如果为True则 `image` 列的shape为[H,W,C]。

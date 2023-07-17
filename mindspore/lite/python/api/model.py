@@ -103,7 +103,7 @@ class Model(BaseModel):
                 Model should use .mindir as suffix.
             model_type (ModelType): Define The type of input model file. Option is ``ModelType.MINDIR``.
                 For details, see
-                `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
+                `ModelType <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.ModelType.html>`_ .
             context (Context, optional): Define the context used to transfer options during execution.
                 Default: ``None``. ``None`` means the Context with cpu target.
             config_path (str, optional): Define the config file path. the config file is used to transfer user defined

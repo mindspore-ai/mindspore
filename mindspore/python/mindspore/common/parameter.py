@@ -998,7 +998,7 @@ class ParameterTuple(tuple):
 
         Tutorial Examples:
             - `Cell and Parameter - Parameter Tuple
-              <https://mindspore.cn/tutorials/en/master/advanced/modules/layer.html#parameter-tuple>`_
+              <https://mindspore.cn/tutorials/en/r2.1/advanced/modules/layer.html#parameter-tuple>`_
         """
         Validator.check_str_by_regular(prefix)
         new = []

@@ -30,4 +30,4 @@
     
     教程样例：
         - `分布式集合通信原语 - AllReduce
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/ops/communicate_ops.html#AllReduce>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/ops/communicate_ops.html#AllReduce>`_

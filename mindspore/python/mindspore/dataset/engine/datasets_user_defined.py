@@ -603,7 +603,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - If you configure `python_multiprocessing=True` (Default: ``True`` ) and `num_parallel_workers>1`
@@ -993,7 +993,7 @@ class NumpySlicesDataset(GeneratorDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1059,7 +1059,7 @@ class PaddedDataset(GeneratorDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds

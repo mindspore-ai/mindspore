@@ -53,11 +53,11 @@ class ReduceOp:
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with multiple devices.
 
@@ -141,11 +141,11 @@ class AllReduce(Primitive):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with multiple devices.
 
@@ -174,7 +174,7 @@ class AllReduce(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - AllReduce
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#AllReduce>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#AllReduce>`_
 
     """
 
@@ -227,11 +227,11 @@ class AllGather(PrimitiveWithInfer):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with 2 devices.
 
@@ -263,7 +263,7 @@ class AllGather(PrimitiveWithInfer):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - AllGather
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#AllGather>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#AllGather>`_
 
     """
 
@@ -449,11 +449,11 @@ class ReduceScatter(Primitive):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with 2 devices.
 
@@ -486,7 +486,7 @@ class ReduceScatter(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - ReduceScatter
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#ReduceScatter>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#ReduceScatter>`_
 
     """
 
@@ -588,11 +588,11 @@ class Broadcast(PrimitiveWithInfer):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with multiple devices.
 
@@ -623,7 +623,7 @@ class Broadcast(PrimitiveWithInfer):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - Broadcast
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#Broadcast>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#Broadcast>`_
 
     """
 
@@ -713,11 +713,11 @@ class NeighborExchange(Primitive):
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
+        <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.ops.html#communication-operator>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#notes>`_.
+        <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#notes>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to.
@@ -766,7 +766,7 @@ class NeighborExchange(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - NeighborExchange
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#NeighborExchange>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#NeighborExchange>`_
 
     """
 
@@ -799,7 +799,7 @@ class AlltoAll(PrimitiveWithInfer):
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#notes>`_.
+        <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#notes>`_.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.
@@ -830,11 +830,11 @@ class AlltoAll(PrimitiveWithInfer):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with 8 devices.
 
@@ -865,7 +865,7 @@ class AlltoAll(PrimitiveWithInfer):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - AlltoAll
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#AlltoAll>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#AlltoAll>`_
 
     """
 
@@ -913,7 +913,7 @@ class NeighborExchangeV2(Primitive):
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#notes>`_.
+        <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#notes>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one
@@ -951,11 +951,11 @@ class NeighborExchangeV2(Primitive):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with 2 devices.
 
@@ -989,7 +989,7 @@ class NeighborExchangeV2(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - NeighborExchangeV2
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#NeighborExchangeV2>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html#NeighborExchangeV2>`_
 
     """
 

@@ -830,7 +830,7 @@ class CustomRegOp(RegOp):
 
         Tutorial Examples:
             - `Custom Operators (Custom-based) - Defining Custom Operator of aicpu Type
-              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html#
+              <https://mindspore.cn/tutorials/experts/en/r2.1/operation/op_custom.html#
               defining-custom-operator-of-aicpu-type>`_
         """
         param_list = [index, name, param_type]
@@ -870,7 +870,7 @@ class CustomRegOp(RegOp):
 
         Tutorial Examples:
             - `Custom Operators (Custom-based) - Defining Custom Operator of aicpu Type
-              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html#
+              <https://mindspore.cn/tutorials/experts/en/r2.1/operation/op_custom.html#
               defining-custom-operator-of-aicpu-type>`_
         """
         param_list = [index, name, param_type]
@@ -898,7 +898,7 @@ class CustomRegOp(RegOp):
 
         Tutorial Examples:
             - `Custom Operators (Custom-based) - Defining Custom Operator of aicpu Type
-              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html#
+              <https://mindspore.cn/tutorials/experts/en/r2.1/operation/op_custom.html#
               defining-custom-operator-of-aicpu-type>`_
         """
         io_nums = len(self.inputs) + len(self.outputs)
@@ -955,7 +955,7 @@ class CustomRegOp(RegOp):
 
         Tutorial Examples:
             - `Custom Operators (Custom-based) - Defining Custom Operator of aicpu Type
-              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html#
+              <https://mindspore.cn/tutorials/experts/en/r2.1/operation/op_custom.html#
               defining-custom-operator-of-aicpu-type>`_
         """
         param_list = [name, param_type, value_type, default_value]
@@ -981,7 +981,7 @@ class CustomRegOp(RegOp):
 
         Tutorial Examples:
             - `Custom Operators (Custom-based) - Defining Custom Operator of aicpu Type
-              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html#
+              <https://mindspore.cn/tutorials/experts/en/r2.1/operation/op_custom.html#
               defining-custom-operator-of-aicpu-type>`_
         """
         if target is not None:
@@ -996,7 +996,7 @@ class CustomRegOp(RegOp):
 
         Tutorial Examples:
             - `Custom Operators (Custom-based) - Defining Custom Operator of aicpu Type
-              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html#
+              <https://mindspore.cn/tutorials/experts/en/r2.1/operation/op_custom.html#
               defining-custom-operator-of-aicpu-type>`_
         """
         op_info = {}

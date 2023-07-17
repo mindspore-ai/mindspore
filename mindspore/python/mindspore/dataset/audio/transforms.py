@@ -99,7 +99,7 @@ class AllpassBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_allpass_biquad
@@ -162,7 +162,7 @@ class AmplitudeToDB(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_amplitude_to_db
@@ -203,7 +203,7 @@ class Angle(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     def parse(self):
@@ -256,7 +256,7 @@ class BandBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_band_biquad
@@ -323,7 +323,7 @@ class BandpassBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_bandpass_biquad
@@ -385,7 +385,7 @@ class BandrejectBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_bandreject_biquad
@@ -445,7 +445,7 @@ class BassBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_bass_biquad
@@ -495,7 +495,7 @@ class Biquad(TensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_biquad
@@ -543,7 +543,7 @@ class ComplexNorm(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_complex_norm
@@ -610,7 +610,7 @@ class ComputeDeltas(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_compute_deltas
@@ -659,7 +659,7 @@ class Contrast(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_contrast
@@ -698,7 +698,7 @@ class DBToAmplitude(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_db_to_amplitude
@@ -741,7 +741,7 @@ class DCShift(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_dc_shift
@@ -783,7 +783,7 @@ class DeemphBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_deemph_biquad
@@ -839,7 +839,7 @@ class DetectPitchFrequency(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_detect_pitch_frequency
@@ -895,7 +895,7 @@ class Dither(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_dither
@@ -943,7 +943,7 @@ class EqualizerBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_equalizer_biquad
@@ -1005,7 +1005,7 @@ class Fade(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_fade
@@ -1054,7 +1054,7 @@ class Filtfilt(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_lfilter
@@ -1128,7 +1128,7 @@ class Flanger(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_flanger
@@ -1194,7 +1194,7 @@ class FrequencyMasking(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
 
     .. image:: frequency_masking_original.png
 
@@ -1239,7 +1239,7 @@ class Gain(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_gain
@@ -1309,7 +1309,7 @@ class GriffinLim(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_griffin_lim
@@ -1366,7 +1366,7 @@ class HighpassBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_highpass_biquad
@@ -1436,7 +1436,7 @@ class InverseMelScale(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_inverse_mel_scale
@@ -1521,7 +1521,7 @@ class InverseSpectrogram(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_inverse_spectrogram
@@ -1608,7 +1608,7 @@ class LFCC(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_lfcc
@@ -1682,7 +1682,7 @@ class LFilter(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_lfilter
@@ -1741,7 +1741,7 @@ class LowpassBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_lowpass_biquad
@@ -1780,7 +1780,7 @@ class Magphase(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_magphase
@@ -1822,7 +1822,7 @@ class MaskAlongAxis(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mask_along_axis
@@ -1873,7 +1873,7 @@ class MaskAlongAxisIID(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mask_along_axis_iid
@@ -1940,7 +1940,7 @@ class MelScale(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mel_scale
@@ -2041,7 +2041,7 @@ class MelSpectrogram(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mel_spectrogram
@@ -2128,7 +2128,7 @@ class MFCC(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mfcc
@@ -2196,7 +2196,7 @@ class MuLawDecoding(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mu_law_coding
@@ -2234,7 +2234,7 @@ class MuLawEncoding(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mu_law_coding
@@ -2280,7 +2280,7 @@ class Overdrive(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_overdrive
@@ -2342,7 +2342,7 @@ class Phaser(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_phaser
@@ -2392,7 +2392,7 @@ class PhaseVocoder(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_phase_vocoder
@@ -2451,7 +2451,7 @@ class PitchShift(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_pitch_shift
@@ -2523,7 +2523,7 @@ class Resample(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_resample
@@ -2572,7 +2572,7 @@ class RiaaBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_riaa_biquad
@@ -2619,7 +2619,7 @@ class SlidingWindowCmn(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_sliding_window_cmn
@@ -2685,7 +2685,7 @@ class SpectralCentroid(TensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_spectral_centroid
@@ -2758,7 +2758,7 @@ class Spectrogram(TensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_spectrogram
@@ -2825,7 +2825,7 @@ class TimeMasking(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
 
     .. image:: time_masking_original.png
 
@@ -2883,7 +2883,7 @@ class TimeStretch(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
 
     .. image:: time_stretch_rate1.5.png
 
@@ -2943,7 +2943,7 @@ class TrebleBiquad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_treble_biquad
@@ -3049,7 +3049,7 @@ class Vad(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_vad
@@ -3124,7 +3124,7 @@ class Vol(AudioTensorOperation):
 
     Tutorial Examples:
         - `Illustration of audio transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_vol

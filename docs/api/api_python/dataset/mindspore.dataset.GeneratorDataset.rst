@@ -37,7 +37,7 @@
 
     教程样例：
         - `使用数据Pipeline加载 & 处理数据集
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     .. note::
         - 如果配置 `python_multiprocessing=True` （默认值： ``True`` ） 和 `num_parallel_workers>1` （默认值：1） 表示启动了多进程方式进行数据load加速，

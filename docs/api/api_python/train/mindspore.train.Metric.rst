@@ -18,7 +18,7 @@ mindspore.train.Metric
 
         教程样例：
             - `评价指标 Metrics - 自定义Metrics
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/metric.html#自定义metrics>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.1/advanced/model/metric.html#自定义metrics>`_
 
     .. py:method:: eval()
         :abstractmethod:
@@ -30,7 +30,7 @@ mindspore.train.Metric
 
         教程样例：
             - `评价指标 Metrics - 自定义Metrics
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/metric.html#自定义metrics>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.1/advanced/model/metric.html#自定义metrics>`_
 
     .. py:method:: indexes
         :property:
@@ -68,4 +68,4 @@ mindspore.train.Metric
 
         教程样例：
             - `评价指标 Metrics - 自定义Metrics
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/metric.html#自定义metrics>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.1/advanced/model/metric.html#自定义metrics>`_

@@ -1134,7 +1134,7 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to ``True`` , acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
-            <https://www.mindspore.cn/tutorials/experts/en/master/optimize/graph_fusion_engine.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/r2.1/optimize/graph_fusion_engine.html>`_.
         graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
@@ -1245,7 +1245,7 @@ def set_context(**kwargs):
               to `Ascend community <https://www.hiascend.com/>`_ .
             - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
               can refer to `parallel_speed_up.json
-              <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
+              <https://gitee.com/mindspore/mindspore/blob/r2.1/config/parallel_speed_up.json>`_ .
               If its value is None or '', it does not take effect. Default None.
 
               - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if True.

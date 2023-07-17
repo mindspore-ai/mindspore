@@ -34,7 +34,7 @@ class LRScheduler():
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): The optimizer instance.
@@ -113,7 +113,7 @@ class StepLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
@@ -131,7 +131,7 @@ class StepLR(LRScheduler):
         >>> import mindspore
         >>> from mindspore import nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.MAELoss()
         >>> optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
@@ -150,7 +150,7 @@ class StepLR(LRScheduler):
         ...     return loss
         >>> for epoch in range(3):
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
         ...     for data, label in create_dataset():
         ...         train_step(data, label)
         ...     scheduler.step()
@@ -179,7 +179,7 @@ class LinearLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
@@ -206,7 +206,7 @@ class LinearLR(LRScheduler):
         >>> from mindspore.nn import LinearLR
         >>> from mindspore import nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.MAELoss()
         >>> optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
@@ -227,7 +227,7 @@ class LinearLR(LRScheduler):
         ...     return loss
         >>> for epoch in range(3):
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
         ...     for data, label in create_dataset():
         ...         train_step(data, label)
         ...     scheduler.step()
