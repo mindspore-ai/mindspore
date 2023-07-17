@@ -4134,6 +4134,7 @@ class Cosh(Primitive):
         >>> print(output)
         [1.0289385 1.364684 1.048436 1.0040528]
         >>> x = Tensor(2.1, mindspore.float32)
+        >>> output = cosh(x)
         >>> print(output)
         4.144313
     """
@@ -4916,7 +4917,7 @@ class LogicalXor(Primitive):
         >>> y = Tensor(np.array([True, False]), mindspore.bool_)
         >>> output = ops.LogicalXor()(x, y)
         >>> print(output)
-        [False, True]
+        [False True]
     """
 
     @prim_attr_register

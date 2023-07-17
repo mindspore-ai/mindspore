@@ -2679,6 +2679,10 @@ def cosh(input):
         >>> output = ops.cosh(x)
         >>> print(output)
         [1.0289385 1.364684 1.048436 1.0040528]
+        >>> x = Tensor(2.1, mindspore.float32)
+        >>> output = ops.cosh(x)
+        >>> print(output)
+        4.144313
     """
     return cosh_(input)
 
@@ -11547,7 +11551,7 @@ def logical_xor(input, other):
         >>> y = Tensor(np.array([True, False]), mindspore.bool_)
         >>> output = ops.logical_xor(x, y)
         >>> print(output)
-        [False, True]
+        [False True]
     """
     if isinstance(input, Tensor) and input.dtype != mstype.bool_:
         input = input.astype(mstype.bool_)
