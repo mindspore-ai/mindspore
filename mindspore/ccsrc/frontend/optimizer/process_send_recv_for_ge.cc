@@ -48,8 +48,7 @@ bool IsCommOps(const AnfNodePtr &node) {
   return IsOneOfPrimitiveCNode(node, kCommunicationOpsPrim);
 }
 
-std::tuple<FuncGraphPtr, CNodePtr> CreateNewCNode(const FuncGraphManagerPtr &manager, const CNodePtr &old_node,
-                                                  bool is_send) {
+std::tuple<FuncGraphPtr, CNodePtr> CreateNewCNode(const FuncGraphManagerPtr &, const CNodePtr &old_node, bool) {
   FuncGraphPtr fg = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> params;
 
@@ -109,7 +108,7 @@ void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node) {
   last_need_depend = call;
 
   manager->AddFuncGraph(fg);
-  manager->Replace(node, call);
+  (void)manager->Replace(node, call);
 }
 
 void ProcessRecv(const FuncGraphPtr &graph, const CNodePtr &node) {
@@ -135,7 +134,7 @@ void ProcessRecv(const FuncGraphPtr &graph, const CNodePtr &node) {
   last_need_depend = call;
 
   manager->AddFuncGraph(fg);
-  manager->Replace(node, call);
+  (void)manager->Replace(node, call);
 }
 
 void ProcessClearFloatStatus(const FuncGraphPtr &graph, const CNodePtr &node) {
