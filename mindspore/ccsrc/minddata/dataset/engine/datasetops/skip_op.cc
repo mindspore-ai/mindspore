@@ -53,7 +53,7 @@ Status SkipOp::GetNextRow(TensorRow *row) {
     RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
     if (row->eof()) {
       RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp",
-                                        {{"Flag", TensorRow(TensorRow::kFlagEOF).FlagName()}}));
+                                        {{"TensorRowFlags", TensorRow(TensorRow::kFlagEOF).FlagName()}}));
       return Status::OK();
     }
     if (row->eoe() && !once_only_) {
@@ -73,7 +73,7 @@ Status SkipOp::GetNextRow(TensorRow *row) {
       skip_count_ = 0;
     }
   }
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"TensorRowFlags", row->FlagName()}}));
   return Status::OK();
 }
 

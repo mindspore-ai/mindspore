@@ -200,7 +200,7 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
       CHECK_FAIL_RETURN_UNEXPECTED(row->eof(), "[Internal ERROR] Row must be an EOF.");
     }
   }
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"TensorRowFlags", row->FlagName()}}));
   return Status::OK();
 }
 

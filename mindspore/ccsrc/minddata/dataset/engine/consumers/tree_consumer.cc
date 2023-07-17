@@ -186,7 +186,8 @@ Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *const out) {
 
   // Return empty vector if there's no data
   if (res.empty()) {
-    RETURN_IF_NOT_OK(CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsVector", {{"Flag", res.FlagName()}}));
+    RETURN_IF_NOT_OK(
+      CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsVector", {{"TensorRowFlags", res.FlagName()}}));
     return Status::OK();
   }
 
@@ -224,7 +225,7 @@ Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr>
 
   // Return empty map if there's no data
   if (res.empty()) {
-    RETURN_IF_NOT_OK(CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsMap", {{"Flag", res.FlagName()}}));
+    RETURN_IF_NOT_OK(CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsMap", {{"TensorRowFlags", res.FlagName()}}));
     return Status::OK();
   }
 
@@ -259,7 +260,7 @@ Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string,
   // Return empty pair if there's no data
   if (curr_row.empty()) {
     RETURN_IF_NOT_OK(
-      CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsOrderedPair", {{"Flag", curr_row.FlagName()}}));
+      CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsOrderedPair", {{"TensorRowFlags", curr_row.FlagName()}}));
     return Status::OK();
   }
 

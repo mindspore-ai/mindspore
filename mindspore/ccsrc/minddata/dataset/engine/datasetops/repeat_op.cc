@@ -69,7 +69,8 @@ Status RepeatOp::GetNextRow(TensorRow *row) {
   while (row->eoe()) {
     RETURN_IF_NOT_OK(EoeReceived(0));
     if (state_ == OpState::kDeOpIdle) {
-      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
+      RETURN_IF_NOT_OK(
+        CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"TensorRowFlags", row->FlagName()}}));
       return Status::OK();
     }
     RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
@@ -78,7 +79,7 @@ Status RepeatOp::GetNextRow(TensorRow *row) {
   if (row->eof()) {
     RETURN_IF_NOT_OK(EofReceived(0));
   }
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"TensorRowFlags", row->FlagName()}}));
   return Status::OK();
 }
 
