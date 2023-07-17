@@ -222,7 +222,11 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
       continue;
     }
     auto special_info = input_info.at(ge_idx);
-    auto input_format = AnfAlgo::GetPrevNodeOutputFormat(node, i);
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
+    auto input_cnode = kernel_with_index.first->cast<CNodePtr>();
+    auto input_format = (input_cnode != nullptr && common::AnfAlgo::HasNodeAttr(kAttrAclSpecialFormat, input_cnode))
+                          ? kOpFormat_DEFAULT
+                          : AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
     if (!special_info.dev_format.empty()) {
       auto iter = std::find(special_info.dev_format.begin(), special_info.dev_format.end(), input_format);
       if (iter != special_info.dev_format.end()) {

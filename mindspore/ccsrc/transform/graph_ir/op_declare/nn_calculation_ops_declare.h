@@ -19,6 +19,7 @@
 
 #include "inc/ops/nn_calculation_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
+#include "transform/graph_ir/custom_op_proto/wkv_ops.h"
 #include "utils/hash_map.h"
 
 DECLARE_OP_ADAPTER(BiasAddGrad)
@@ -81,4 +82,10 @@ DECLARE_OP_USE_OUTPUT(Conv3DTranspose)
 
 DECLARE_OP_ADAPTER(DeformableConv2D)
 DECLARE_OP_USE_OUTPUT(DeformableConv2D)
+
+DECLARE_OP_ADAPTER(WKV)
+DECLARE_OP_USE_OUTPUT(WKV)
+
+DECLARE_OP_ADAPTER(WKVGrad)
+DECLARE_OP_USE_OUTPUT(WKVGrad)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_CALCULATION_OPS_DECLARE_H_
