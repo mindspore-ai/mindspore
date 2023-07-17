@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """hccl analyse model"""
+import copy
 import csv
 import fnmatch
 import json
@@ -147,7 +148,7 @@ class AscendHCCLGenerator:
                 raw = self._iteration_analyse(hccl_detail_data, iteration_id)
                 self.hccl_raw.append(raw)
         self.hccl_raw = sorted(self.hccl_raw, key=lambda x: x[0])
-        self.hccl_raw.append(count_average(calculate_average(self.hccl_raw)))
+        self.hccl_raw.append(copy.deepcopy(self.hccl_raw[-1]))
         self.hccl_raw[-1][0] = '-'
         for _, value in self.hccl_raw[-1][4].items():
             value[0] = '-'
