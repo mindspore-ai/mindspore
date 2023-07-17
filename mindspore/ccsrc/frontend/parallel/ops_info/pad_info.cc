@@ -127,6 +127,9 @@ Status PadV3Info::InferMirrorOps() {
 
   mirror_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
   mirror_ops_.push_back(mirror_op);
+  OperatorVector tmp;
+  mirror_ops_.push_back(tmp);
+  mirror_ops_.push_back(tmp);
   return SUCCESS;
 }
 
