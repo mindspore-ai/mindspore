@@ -225,7 +225,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     参数：
         - **network** (Cell) - 训练网络，当前网络只支持单个输出。
         - **optimizer** (Union[Cell]) - 用于更新网络参数的优化器。
-        - **sens** (numbers.Number) - 作为反向传播输入要填充的缩放数，默认值： ``None`` 。
+        - **sens** (numbers.Number) - 作为反向传播输入要填充的缩放数，默认值： ``None`` ，取 ``1.0`` 。
 
     输入：
         - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组，其shape为 :math:`(N, \ldots)`。

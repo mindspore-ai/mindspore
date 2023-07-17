@@ -113,7 +113,8 @@ class BoostTrainOneStepCell(TrainOneStepCell):
     Args:
         network (Cell): The training network. The network only supports single output.
         optimizer (Union[Cell]): Optimizer for updating the weights.
-        sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default: ``None`` .
+        sens (numbers.Number): The scaling number to be filled as the input of backpropagation.
+            Default: ``None`` , which is ``1.0`` .
 
     Inputs:
         - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
