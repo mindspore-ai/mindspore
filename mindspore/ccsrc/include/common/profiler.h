@@ -305,8 +305,6 @@ class COMMON_EXPORT ProfilerAnalyzer {
   std::vector<ProfilerDataPtr> data_;
   std::mutex data_mutex_;
   nlohmann::json json_infos_;
-  // Summary data that removed non-overlapping ranges from data_.
-  std::map<ProfilerModule, std::vector<ProfilerDataPtr>> summary_data_;
   // The data analyzed level is module-->event-->op.
   std::map<ProfilerModule, ProfilerModuleInfoPtr> module_infos_;
   std::map<ProfilerStage, ProfilerStatisticsInfoPtr> stage_infos_;
