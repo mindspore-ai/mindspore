@@ -182,7 +182,7 @@ mindspore.set_context
             - allow_mix_precision_bf16: 自动混合精度，针对全网算子，按照内置的优化策略，自动将部分算子的精度降低到bfloat16。
 
           - **jit_compile** (bool): 表示是否选择在线编译。默认值：以CANN设置的默认值为准。当设置为 ``False`` 时，优先选择系统中已经编译好的算子二进制文件，提升编译性能。
-          - **atomic_clean_policy** (int): 表示清理网络中atomic算子占用的内存的策略。默认值：以CANN设置的默认值为准。
+          - **atomic_clean_policy** (int): 表示清理网络中atomic算子占用的内存的策略。默认值： ``1`` 。
 
             - 0：集中清理网络中所有atomic算子占用的内存。
             - 1：不集中清理内存，对网络中每一个atomic算子进行单独清零。当网络中内存超限时，可以尝试此种清理方式，但可能会导致一定的性能损耗。
