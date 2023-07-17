@@ -59,7 +59,7 @@ Status ProjectOp::GetNextRow(TensorRow *row) {
   if (row->eoe()) {
     UpdateRepeatAndEpochCounter();
   }
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"TensorRowFlags", row->FlagName()}}));
   return Status::OK();
 }
 

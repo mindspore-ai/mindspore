@@ -204,7 +204,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
   RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerGet"));
   // Fetch next data row and map job list
   RETURN_IF_NOT_OK(FetchNextWork(worker_id, &in_row, &job_list));
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"Flag", in_row.FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"TensorRowFlags", in_row.FlagName()}}));
   RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerProcess"));
 
   // Now that init work is done, drop into the main fetching loop.
@@ -213,7 +213,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
   while (true) {
     // Handle special logic where row carries a ctrl flag.
     if (in_row.Flags() != TensorRow::kFlagNone) {
-      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", in_row.FlagName()}}));
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"TensorRowFlags", in_row.FlagName()}}));
       if (in_row.quit()) {
         break;
       }
@@ -227,14 +227,14 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
       TensorRow out_row;
       // Perform the compute function of TensorOp(s) and store the result in new_tensor_table.
       RETURN_IF_NOT_OK(WorkerCompute(in_row, &out_row, job_list));
-      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", in_row.FlagName()}}));
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"TensorRowFlags", in_row.FlagName()}}));
       // Push the row onto the connector for next operator to consume.
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(out_row)));
     }
     RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerGet"));
     // Fetch next data row and map job list
     RETURN_IF_NOT_OK(FetchNextWork(worker_id, &in_row, &job_list));
-    RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"Flag", in_row.FlagName()}}));
+    RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"TensorRowFlags", in_row.FlagName()}}));
     RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerProcess"));
   }
   return Status::OK();

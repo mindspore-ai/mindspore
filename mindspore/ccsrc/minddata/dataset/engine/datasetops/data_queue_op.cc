@@ -283,7 +283,7 @@ Status DataQueueOp::SendDataToAscend() {
       }
       RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToAscend"));
       RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
-      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToAscend", {{"Flag", curr_row.FlagName()}}));
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToAscend", {{"TensorRowFlags", curr_row.FlagName()}}));
       PrintEndInfoWhenFirstBatch(&first_push_flag_);
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, tdt_cost, &batch_start_time, &end_time,
@@ -354,8 +354,8 @@ Status DataQueueOp::SendDataToAscend() {
     RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToAscend"));
     // send epoch end flag: ACL_TENSOR_DATA_END_OF_SEQUENCE to tdt
     RETURN_IF_NOT_OK(SendEpochEndToAscend(curr_row, is_profiling_enable, &tdt_cost, &is_break_loop));
-    RETURN_IF_NOT_OK(
-      CollectOpInfoEnd(this->NameWithID(), "PushToAscend", {{"Flag", TensorRow(TensorRow::kFlagEOE).FlagName()}}));
+    RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToAscend",
+                                      {{"TensorRowFlags", TensorRow(TensorRow::kFlagEOE).FlagName()}}));
 
 #ifndef ENABLE_SECURITY
     RecordProfilingData(is_profiling_enable, true, &connector_size, &connector_capacity, &send_batch);
@@ -621,7 +621,7 @@ Status DataQueueOp::PushDataToGPU() {
 #endif
       RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToGPU"));
       RETURN_IF_NOT_OK(RetryPushData(items, is_profiling_enable, &push_cost));
-      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToGPU", {{"Flag", "Data"}}));
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToGPU", {{"TensorRowFlags", "Data"}}));
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, push_cost, &batch_start_time, &end_time,
                         gpu_connector_->capacity(), gpu_connector_->size());

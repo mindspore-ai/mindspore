@@ -106,16 +106,16 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
   TensorRow new_row;
   RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerGet"));
   RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&new_row));
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"Flag", new_row.FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"TensorRowFlags", new_row.FlagName()}}));
   RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerProcess"));
 
   while (!new_row.quit()) {
     // Getting a TensorRow to work on.
     if (new_row.eoe()) {
-      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", new_row.FlagName()}}));
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"TensorRowFlags", new_row.FlagName()}}));
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(new_row));
     } else if (new_row.eof()) {
-      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", new_row.FlagName()}}));
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"TensorRowFlags", new_row.FlagName()}}));
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(new_row));
     } else {
       RETURN_IF_NOT_OK(ValidateInColumns(in_columns_));
@@ -124,20 +124,21 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
       RETURN_IF_NOT_OK(WorkerCompute(new_row, &result));
 
       if (result) {
-        RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", new_row.FlagName()}}));
+        RETURN_IF_NOT_OK(
+          CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"TensorRowFlags", new_row.FlagName()}}));
         RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(new_row));
       } else {
         RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess",
-                                          {{"Flag", TensorRow(TensorRow::kFlagSkip).FlagName()}}));
+                                          {{"TensorRowFlags", TensorRow(TensorRow::kFlagSkip).FlagName()}}));
         RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagSkip)));
       }
     }
     RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerGet"));
     RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&new_row));
-    RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"Flag", new_row.FlagName()}}));
+    RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"TensorRowFlags", new_row.FlagName()}}));
     RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerProcess"));
   }
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", new_row.FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"TensorRowFlags", new_row.FlagName()}}));
   return Status::OK();
 }
 

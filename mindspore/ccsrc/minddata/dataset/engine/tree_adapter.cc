@@ -278,7 +278,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
       profiling_manager_->RecordEndOfEpoch(cur_batch_num_);
     }
 #endif
-    RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "GetNext", {{"Flag", row->FlagName()}}));
+    RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "GetNext", {{"TensorRowFlags", row->FlagName()}}));
     return Status::OK();
   }
   if (row->eof()) {
@@ -301,7 +301,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
     tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_, end_time);
   }
 #endif
-  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "GetNext", {{"Flag", row->FlagName()}}));
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "GetNext", {{"TensorRowFlags", row->FlagName()}}));
   return Status::OK();
 }
 
