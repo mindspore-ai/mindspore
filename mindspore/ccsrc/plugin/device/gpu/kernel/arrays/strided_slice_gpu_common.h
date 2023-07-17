@@ -36,7 +36,7 @@ class StridedSliceGpuCommon {
 
   void CollectInfo(const BaseOperatorPtr &base_operator) {
     auto shape_tmp = Convert2Long(input_shape_);
-    FillEmptyDims(base_operator, &begin_, &end_, &strides_, &shape_tmp);
+    FillEmptyDims(base_operator, &begin_, &end_, &strides_, &shape_tmp, true);
     input_shape_ = Convert2SizeT(shape_tmp);
     ParseStrideSliceMasks(base_operator, &begin_, &end_, &strides_, shape_tmp);
     FillOutputDim();
