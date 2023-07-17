@@ -211,10 +211,6 @@ void GeGraphExecutor::GetGeGraphOptions(const FuncGraphPtr &anf_graph,
   }
   uint32_t rank_id = ascend_device_info->GetRankID();
   ge_options["ge.graph_key"] = anf_graph->ToString() + "." + std::to_string(rank_id);
-  // 0: False, dynamic and static graph compile with cann opp_kernel*.run，GE default for pytorch
-  // 1: True, dynamic and static graph online compiler op
-  // 2: Auto, dynamic compile with cann opp_kernel*.run, static graph online compiler op，GE default for others
-  ge_options["ge.jit_compile"] = "2";
   auto config_it = config_infos_.find(lite::kGeGraphOptionsSection);
   if (config_it != config_infos_.end()) {
     for (auto &item : config_it->second) {
@@ -280,6 +276,9 @@ bool GeGraphExecutor::AddGraph(const transform::DfGraphPtr &graph, const std::ma
     return false;
   }
   auto graph_id = GetNextGraphIdx();
+  for (auto &option : options) {
+    MS_LOG(INFO) << "GE Graph " << graph_id << " option " << option.first << " = " << option.second;
+  }
   auto ge_status = ge_session_->AddGraph(static_cast<uint32_t>(graph_id), *(graph), options);
   if (ge_status != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Call GE AddGraph Failed: " << ge::GEGetErrorMsg();
@@ -327,8 +326,8 @@ bool GeGraphExecutor::UpdateGraphInputs(const FuncGraphPtr &graph) {
   }
   auto inputs = graph->get_inputs();
   if (inputs.size() != input_shapes.size()) {
-    MS_LOG(WARNING) << "FuncGraph input size " << inputs.size() << " != input size " << input_shapes.size()
-                    << " in AscendDeviceInfo or config file " << input_shapes.size();
+    MS_LOG(ERROR) << "FuncGraph input size " << inputs.size() << " != input size " << input_shapes.size()
+                  << " in AscendDeviceInfo or config file " << input_shapes.size();
     return false;
   }
   for (size_t i = 0; i < input_shapes.size(); i++) {
@@ -336,7 +335,7 @@ bool GeGraphExecutor::UpdateGraphInputs(const FuncGraphPtr &graph) {
     auto input_shape = input_shapes[i];
     auto para = node->cast<ParameterPtr>();
     if (para == nullptr) {
-      MS_LOG(WARNING) << "Cast input to Parameter failed";
+      MS_LOG(ERROR) << "Cast input to Parameter failed";
       return false;
     }
     auto it = std::find_if(input_shapes.begin(), input_shapes.end(),
@@ -347,7 +346,7 @@ bool GeGraphExecutor::UpdateGraphInputs(const FuncGraphPtr &graph) {
     }
     auto abstract = para->abstract();
     if (abstract == nullptr) {
-      MS_LOG(WARNING) << "Get input abstract failed";
+      MS_LOG(ERROR) << "Get input abstract failed";
       return false;
     }
     MS_LOG(INFO) << "Update shape of input " << i << " to " << it->second;
@@ -736,6 +735,10 @@ std::shared_ptr<ge::Session> GeSessionManager::CreateGeSession(
     ge_session = s_it->second.ge_session.lock();
   }
   if (ge_session == nullptr) {
+    for (auto &option : session_options) {
+      MS_LOG(INFO) << "GE Session (lite session id " << session_id << ") option " << option.first << " = "
+                   << option.second;
+    }
     ge_session = std::make_shared<ge::Session>(session_options);
     if (ge_session == nullptr) {
       MS_LOG(ERROR) << "Failed to create ge session";
@@ -747,11 +750,20 @@ std::shared_ptr<ge::Session> GeSessionManager::CreateGeSession(
     ge_session_map_[session_id] = session_context;
     MS_LOG(INFO) << "Create ge session successfully, lite session id: " << session_id;
   } else {
+    auto map_as_string = [](const std::map<std::string, std::string> &options) {
+      std::stringstream ss;
+      ss << "{";
+      for (auto &item : options) {
+        ss << "" << item.first << ":" << item.second << ",";
+      }
+      ss << "}";
+      return ss.str();
+    };
     auto old_options = s_it->second.session_options;
     if (old_options != session_options) {
       MS_LOG(ERROR)
         << "Session options is not equal in diff config infos when models' weights are shared, last session options: "
-        << old_options << ", current session options: " << session_options;
+        << map_as_string(old_options) << ", current session options: " << map_as_string(session_options);
       return nullptr;
     }
     MS_LOG(INFO) << "Get ge session from session map, lite session id: " << session_id;

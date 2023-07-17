@@ -71,8 +71,7 @@ std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphInputSh
     for (auto &shape_item_str : input_shape_strs) {
       auto split_pos = shape_item_str.rfind(":");
       if (split_pos == std::string::npos) {
-        MS_LOG(ERROR) << "The input_shape should be in format of name:shape;name:shape, but got [" << shape_item_str
-                      << "]";
+        MS_LOG(ERROR) << "The input_shape should be in format of name:shape;name:shape, but got " << input_shape_str;
         return {};
       }
       std::string name = shape_item_str.substr(0, split_pos);
@@ -131,7 +130,7 @@ std::vector<int64_t> GeDynamicUtils::GetDynamicBatchSize(const std::shared_ptr<m
     MS_LOG(ERROR) << "Invalid dynamic_batch_size " << dynamic_batch_size;
     return {};
   }
-  return {};
+  return dynamic_batch_size_nums;
 }
 
 std::vector<std::vector<int64_t>> GeDynamicUtils::GetDynamicImageSize(

@@ -289,14 +289,14 @@ static void SetOption(std::map<std::string, std::string> *aoe_options, const std
   if (it == config_options.end()) {
     return;
   }
-  aoe_options->emplace(key, it->second);
+  (*aoe_options)[key] = it->second;
 }
 
 static void SetOption(std::map<std::string, std::string> *aoe_options, const std::string &key,
                       const std::function<std::string()> &func) {
   auto option = func();
   if (!option.empty()) {
-    aoe_options->emplace(key, option);
+    (*aoe_options)[key] = option;
   }
 }
 
