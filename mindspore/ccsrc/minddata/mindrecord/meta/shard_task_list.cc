@@ -364,6 +364,28 @@ void ShardTaskList::SetPartitionedShardSampleCount(
   generator_ids_.SetShardSampleCount(partitioned_shard_sample_count_);
 }
 
+void ShardTaskList::UpdatePartitionedShardSampleCountByNumSamples(const int64_t &num_samples) {
+  auto count = num_samples;
+  std::vector<PartitionedShardSampleCount> new_partitioned_shard_sample_count = {};
+  for (int32_t i = 0; i < partitioned_shard_sample_count_.size(); i++) {
+    auto start = partitioned_shard_sample_count_[i].start;
+    if (partitioned_shard_sample_count_[i].end - start <= count) {
+      new_partitioned_shard_sample_count.push_back(partitioned_shard_sample_count_[i]);
+      count = count - (partitioned_shard_sample_count_[i].end - start);
+    } else {
+      PartitionedShardSampleCount pssc;
+      pssc.task_type = partitioned_shard_sample_count_[i].task_type;
+      pssc.shard_id = partitioned_shard_sample_count_[i].shard_id;
+      pssc.start = start;
+      pssc.end = start + count;
+      new_partitioned_shard_sample_count.push_back(pssc);
+      break;
+    }
+  }
+
+  SetPartitionedShardSampleCount(new_partitioned_shard_sample_count);
+}
+
 std::vector<int64_t> ShardTaskList::GetNextSampleIds() {
   return generator_ids_.GetNextSampleIds(need_shuffle_, shuffle_seed_);
 }
