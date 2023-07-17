@@ -801,16 +801,15 @@ class ConvertColor(ImageTensorOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
-        >>> import mindspore.dataset.vision.ConvertMode as ConvertMode
         >>>
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>>
         >>> # Convert RGB images to GRAY images
-        >>> convert_op = vision.ConvertColor(ConvertMode.COLOR_RGB2GRAY)
+        >>> convert_op = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2GRAY)
         >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
         ...                                                 input_columns=["image"])
         >>> # Convert RGB images to BGR images
-        >>> convert_op = vision.ConvertColor(ConvertMode.COLOR_RGB2BGR)
+        >>> convert_op = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2BGR)
         >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
         ...                                                 input_columns=["image"])
 
