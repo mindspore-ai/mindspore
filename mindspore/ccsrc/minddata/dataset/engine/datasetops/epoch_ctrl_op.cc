@@ -55,7 +55,7 @@ Status EpochCtrlOp::GetNextRow(TensorRow *row) {
   if (row->eoe()) {
     RETURN_IF_NOT_OK(EoeReceived(0));
   }
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"TensorRowFlags", row->FlagName()}}));
   return Status::OK();
 }
 

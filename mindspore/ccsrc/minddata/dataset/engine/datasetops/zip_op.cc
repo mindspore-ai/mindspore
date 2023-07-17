@@ -135,7 +135,7 @@ Status ZipOp::GetNextRow(TensorRow *row) {
     MS_LOG(DEBUG) << "Zip operator is now draining child inputs.";
     RETURN_IF_NOT_OK(drainPipeline(skip_child, false));
   }
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"TensorRowFlags", row->FlagName()}}));
   return Status::OK();
 }
 

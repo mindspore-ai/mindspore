@@ -38,35 +38,35 @@ namespace dataset {
 
 using PadInfo = std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>>;
 
-enum batchCtrl : int8_t { kNoCtrl = 0, kEOE = 1, kEOF = 2, kQuit = 3, kWait = 4 };
+enum BatchCtrl : int8_t { kNoCtrl = 0, kEOE = 1, kEOF = 2, kQuit = 3, kWait = 4 };
 
 // Parameters associate with one batch.
 // This struct is used for both internal control and python callback.
 // This struct is bound to python with read-only access.
 struct CBatchInfo {
-  CBatchInfo(int64_t ep, int64_t bat, int64_t cur, batchCtrl ctrl)
+  CBatchInfo(int64_t ep, int64_t bat, int64_t cur, BatchCtrl ctrl)
       : epoch_num_(ep), batch_num_(bat), total_batch_num_(cur), ctrl_(ctrl) {}
-  CBatchInfo(int64_t ep, int64_t bat, int64_t cur) : CBatchInfo(ep, bat, cur, batchCtrl::kNoCtrl) {}
-  CBatchInfo() : CBatchInfo(0, 0, 0, batchCtrl::kNoCtrl) {}
-  explicit CBatchInfo(batchCtrl ctrl) : CBatchInfo(0, 0, 0, ctrl) {}
+  CBatchInfo(int64_t ep, int64_t bat, int64_t cur) : CBatchInfo(ep, bat, cur, BatchCtrl::kNoCtrl) {}
+  CBatchInfo() : CBatchInfo(0, 0, 0, BatchCtrl::kNoCtrl) {}
+  explicit CBatchInfo(BatchCtrl ctrl) : CBatchInfo(0, 0, 0, ctrl) {}
   int64_t epoch_num_;        // i-th epoch. i starts from 0
   int64_t batch_num_;        // i-th batch since the start of current epoch. i starts from 0
   int64_t total_batch_num_;  // i-th batch since the start of first epoch. i starts from 0
-  batchCtrl ctrl_;           // No control=0, EOE=1, EOF=2, Quit=3
+  BatchCtrl ctrl_;           // No control=0, EOE=1, EOF=2, Quit=3
   const int64_t get_batch_num() const { return batch_num_; }
   const int64_t get_epoch_num() const { return epoch_num_; }
 
   std::string FlagName() const {
     switch (ctrl_) {
-      case batchCtrl::kNoCtrl:
+      case BatchCtrl::kNoCtrl:
         return "Data";
-      case batchCtrl::kEOE:
+      case BatchCtrl::kEOE:
         return "EOE";
-      case batchCtrl::kEOF:
+      case BatchCtrl::kEOF:
         return "EOF";
-      case batchCtrl::kQuit:
+      case BatchCtrl::kQuit:
         return "Quit";
-      case batchCtrl::kWait:
+      case BatchCtrl::kWait:
         return "Wait";
       default:
         return "Unknown";
