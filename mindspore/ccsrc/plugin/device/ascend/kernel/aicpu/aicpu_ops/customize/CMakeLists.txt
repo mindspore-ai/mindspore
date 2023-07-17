@@ -19,7 +19,7 @@ function(GEN_OPS_INFO_FILE output_dir output_file_name_prefix)
         if(NOT "x${INI_FILES}" STREQUAL "x")
             execute_process(
                 COMMAND mkdir -p ${output_dir}
-                COMMAND ${PYTHON_EXECUTABLE} ${AICPU_INI_2_JSON_PY} ${INI_FILES} ${output_dir}/${output_file_name})
+                COMMAND ${Python3_EXECUTABLE} ${AICPU_INI_2_JSON_PY} ${INI_FILES} ${output_dir}/${output_file_name})
         else()
             message(STATUS "ini file not exists.")
             execute_process(COMMAND mkdir -p ${output_dir})
