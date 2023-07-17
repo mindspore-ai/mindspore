@@ -34,6 +34,12 @@ static constexpr char kValidPadModeUpperCase[] = "VALID";
 // Used by Pooling and Conv2d
 static constexpr char kValidPadModeLowerCase[] = "valid";
 
+// Used by Pooling and Conv2d
+static constexpr char kPadPadModeUpperCase[] = "PAD";
+
+// Used by Pooling and Conv2d
+static constexpr char kPadPadModeLowerCase[] = "pad";
+
 // Used by Pooling
 static constexpr char kAvgPoolingModeUpperCase[] = "AVG";
 

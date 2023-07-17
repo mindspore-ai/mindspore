@@ -63,3 +63,18 @@ def test_conv2d_depthwiseconv2d_tensor():
     input_data = Tensor(np.ones([3, 128, 127, 114]), dtype=mstype.float32)
     output = net(input_data)
     assert output.shape == (3, 128, 32, 28)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv2d_depthwiseconv2d_nhwc_pad():
+    """
+    Feature: Test conv2d depth wise op with pad mode
+    Description: Test conv2d depth wise op with pad mode
+    Expectation: The value is processed as expected
+    """
+    net = nn.Conv2d(128, 128, (2, 3), stride=4, pad_mode='pad', padding=1, group=128, weight_init='normal')
+    input_data = Tensor(np.ones([3, 128, 127, 114]), dtype=mstype.float32)
+    output = net(input_data)
+    assert output.shape == (3, 128, 32, 29)
