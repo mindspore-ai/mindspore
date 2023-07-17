@@ -96,7 +96,7 @@ void CPUDeviceContext::Initialize() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->IsDefaultDeviceTarget() && ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
-    MS_LOG(WARNING)
+    MS_LOG(INFO)
       << "No device_target set, set CPU as default. You can call mindspore.set_context(device_target=\"XXX\")";
   }
 #endif  // __linux__
