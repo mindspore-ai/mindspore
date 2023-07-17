@@ -122,6 +122,7 @@ bool AscendMemAdapter::DeInitialize() {
 
   auto ret = FreeToRts(device_mem_base_addr_);
   if (ret) {
+    MS_LOG(INFO) << " Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
     device_hbm_total_size_ = 0;
     device_hbm_free_size_ = 0;
     max_available_ms_hbm_size_ = 0;
@@ -135,7 +136,6 @@ bool AscendMemAdapter::DeInitialize() {
     static_mem_offset_ = 0;
     static_memory_block_list_.clear();
 
-    MS_LOG(INFO) << " Ascend Memory Adapter initialize success, statistics:" << DevMemStatistics();
     initialized_ = false;
   }
 
@@ -211,12 +211,12 @@ std::string AscendMemAdapter::DevMemDetailInfo() const {
 }
 
 size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
+  static const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   size_t size_from_context;
   auto max_device_memory = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
   auto soc_version = device::ascend::GetSocVersion();
-  static const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
   const float kAscendMaxDeviceMemory =
     kAscend910BVersions.find(soc_version) != kAscend910BVersions.end() ? 64.0f : 32.0f;
   if (max_device_memory <= kAscendMaxDeviceMemory) {
