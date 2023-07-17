@@ -729,9 +729,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         [0.2 1.2 2.4]
     """
 
-    def __init__(self, name, read_value=False, need_raise=False):
+    def __init__(self, name, read_value=False):
         """Initialize MultitypeFuncGraph."""
-        MultitypeFuncGraph_.__init__(self, name, need_raise)
+        MultitypeFuncGraph_.__init__(self, name)
         self.entries = list()
         if read_value:
             self.set_signatures((
@@ -783,6 +783,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
     # pylint: disable=missing-docstring
     def set_doc_url(self, doc_url):
         self.set_doc_url_(doc_url)
+
+    def set_need_raise(self):
+        self.set_need_raise_()
 
 
 class HyperMap(HyperMap_):

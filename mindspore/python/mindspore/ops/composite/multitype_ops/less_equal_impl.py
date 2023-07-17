@@ -23,7 +23,9 @@ from mindspore.ops.operations import _sequence_ops as _seq
 
 # less_equal is a metagraph object which will determine if two objects are less_equal according to input type
 # using ".register" decorator
-less_equal = base.MultitypeFuncGraph("less_equal", True, True)
+less_equal = base.MultitypeFuncGraph("less_equal", True)
+
+less_equal.set_need_raise()
 
 
 @less_equal.register("Number", "Number")

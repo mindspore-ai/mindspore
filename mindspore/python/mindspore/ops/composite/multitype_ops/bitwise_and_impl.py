@@ -21,7 +21,9 @@ from mindspore.ops.operations import _inner_ops as inner
 
 # bitwise_and is a metagraph object which will generate function according to input type
 # using ".register" decorator
-bitwise_and = base.MultitypeFuncGraph("bitwise_and", True, True)
+bitwise_and = base.MultitypeFuncGraph("bitwise_and", True)
+
+bitwise_and.set_need_raise()
 
 
 @bitwise_and.register("Number", "Number")
@@ -46,4 +48,3 @@ def _tensor_bitwise_and_scalar(x, y):
 def _scalar_bitwise_and_tensor(x, y):
     """Returns x & y where x and y are all tensors."""
     return F.bitwise_and(x, y)
-    
