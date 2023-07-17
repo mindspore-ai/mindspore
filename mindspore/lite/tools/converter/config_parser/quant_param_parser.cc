@@ -321,10 +321,8 @@ int QuantParamParser::ParseAscendQuant(const AscendQuantString &ascend_quant_str
   if (!ascend_quant_string.mode.empty()) {
     if (ascend_quant_string.mode == "ACL") {
       ascend_quant->mode = quant::ACL;
-      return RET_OK;
     } else if (ascend_quant_string.mode == "GE") {
       ascend_quant->mode = quant::GE;
-      return RET_OK;
     } else {
       MS_LOG(ERROR) << "INPUT ILLEGAL: AscendQuantMode must be ACL|GE.";
       return RET_INPUT_PARAM_INVALID;
