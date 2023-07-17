@@ -216,7 +216,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
             - **parameters** (list) - 训练网络的新权重。
             - **origin_params** (list) - 训练网络的初始权重。
 
-.. py:class:: mindspore.boost.BoostTrainOneStepCell(network, optimizer, sens=1.0)
+.. py:class:: mindspore.boost.BoostTrainOneStepCell(network, optimizer, sens=None)
 
     Boost网络训练封装类。
 
@@ -225,7 +225,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     参数：
         - **network** (Cell) - 训练网络，当前网络只支持单个输出。
         - **optimizer** (Union[Cell]) - 用于更新网络参数的优化器。
-        - **sens** (numbers.Number) - 作为反向传播输入要填充的缩放数，默认值： ``1.0`` 。
+        - **sens** (numbers.Number) - 作为反向传播输入要填充的缩放数，默认值： ``None`` 。
 
     输入：
         - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组，其shape为 :math:`(N, \ldots)`。
