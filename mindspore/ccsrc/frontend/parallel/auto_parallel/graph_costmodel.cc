@@ -309,7 +309,8 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
 }
 
 // An additional propagation to deal with incontinuous strategy between the ops that share params.
-void CostGraph::ProcessDiffStraParams(const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops) {
+void CostGraph::ProcessDiffStraParams(
+  const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops) const {
   for (auto &curr_identity_op : _diff_stra_params) {
     auto succ_edges = curr_identity_op->succ_edges();
     auto is_target = [&](const std::shared_ptr<Edge> &edge) {
