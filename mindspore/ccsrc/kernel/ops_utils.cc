@@ -38,7 +38,7 @@ std::vector<bool> Dec2Bin(const int64_t &mask) {
 }
 
 void FillEmptyDims(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                   std::vector<int64_t> *stride, ShapeVector *input_shape) {
+                   std::vector<int64_t> *stride, ShapeVector *input_shape, bool is_gpu_strided) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
@@ -60,7 +60,13 @@ void FillEmptyDims(const BaseOperatorPtr &base_operator, std::vector<int64_t> *b
 
     if (i < _begin.size()) {
       int64_t dim = _input_shape[i];
-      _begin[i] = std::min(_begin[i] < 0 ? std::max(_begin[i] + dim, static_cast<int64_t>(0)) : _begin[i], dim);
+      if (is_gpu_strided) {
+        // GPU kernel is flattened using offset to get stride slice
+        _begin[i] = std::min(_begin[i] < 0 ? std::max(_begin[i] + dim, static_cast<int64_t>(0)) : _begin[i], dim - 1);
+      } else {
+        // CPU using for begin is larger than end the circle will be break
+        _begin[i] = std::min(_begin[i] < 0 ? std::max(_begin[i] + dim, static_cast<int64_t>(0)) : _begin[i], dim);
+      }
     } else {
       _begin.push_back(0);
     }
