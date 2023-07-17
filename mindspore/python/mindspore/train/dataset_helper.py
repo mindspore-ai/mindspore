@@ -393,15 +393,15 @@ class DatasetHelper:
         Stop send data about data sink.
 
         Examples:
-            >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import nn
-            >>> from mindspore import dataset as ds
-            >>>
-            >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
-            >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
-            >>> set_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=False)
-            >>> set_helper.stop_send()
+            >>> import numpy as np
+            >>> # Define a dataset pipeline
+            >>> def generator():
+            ...    for i in range(5):
+            ...        yield (np.ones((32, 10)),)
+            >>> train_dataset = ms.dataset.GeneratorDataset(generator, ["data"])
+            >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True, sink_size=-1)
+            >>> dataset_helper.stop_send()
         """
         self.iter.stop_send()
 
