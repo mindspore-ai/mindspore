@@ -63,7 +63,6 @@ class Optimizer(Cell):
         self.state = defaultdict(dict)
         self.param_groups = []
         self.parameters = []
-        self.lrs = []
         self.map_ = C.Map()
         self.group_start_id = [0]
         if not isinstance(param_groups[0], dict):
@@ -73,7 +72,19 @@ class Optimizer(Cell):
             self.add_param_group(i, param_group)
             self.group_start_id.append(self.group_start_id[-1] + len(param_group["params"]))
         self.parameters = ParameterTuple(self.parameters)
-        self.lrs = ParameterTuple(self.lrs)
+
+    def __repr__(self):
+        format_string = self.__class__.__name__ + ' ('
+        for i, group in enumerate(self.param_groups):
+            format_string += '\n'
+            format_string += 'Parameter Group {0}\n'.format(i)
+            for key in sorted(group.keys()):
+                if key != 'params':
+                    format_string += '    {0}: {1}\n'.format(key, group[key].value()) \
+                        if key == "lr" and isinstance(group[key], Parameter) \
+                        else '    {0}: {1}\n'.format(key, group[key])
+        format_string += ')'
+        return format_string
 
     def add_param_group(self, group_id, param_group):
         r"""
@@ -97,7 +108,6 @@ class Optimizer(Cell):
         param_group["weight_decay"] = weight_decay
         param_group["grad_centralization"] = self._preprocess_grad_centralization(
             param_group.get('grad_centralization', False))
-        self.lrs.append(lr)
         self.param_groups.append(param_group)
 
     @staticmethod

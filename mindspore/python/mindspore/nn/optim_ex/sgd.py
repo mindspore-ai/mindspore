@@ -127,7 +127,9 @@ class SGD(Optimizer):
             params, grads, accums, stats = self._init_group(group, gradients, params, grads,
                                                             accums, stats, group_id)
             opt = P.SGD(group["dampening"], group["weight_decay"], group["nesterov"])
-            lr = self.lrs[group_id]
+            lr = group["lr"]
+            if isinstance(lr, float):
+                lr = self.op_cast(group["lr"], mstype.float32)
             momentum = self.op_cast(group["momentum"], mstype.float32)
             self.apply_sgd(opt, params, grads, lr, accums, momentum, stats, group["maximize"],
                            group["grad_centralization"])

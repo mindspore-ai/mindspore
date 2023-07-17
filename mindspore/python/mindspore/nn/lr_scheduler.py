@@ -90,7 +90,7 @@ class LRScheduler():
         """
         Return last computed learning rate by current scheduler.
         """
-        return [lr.value() for lr in self.optimizer.lrs]
+        return [group["lr"].value() for group in self.optimizer.param_groups]
 
     def step(self):
         """
@@ -100,7 +100,7 @@ class LRScheduler():
         values = self._get_lr()
         for i in range(self.groups_num):
             lr = values[i]
-            lr = F.depend(lr, F.assign(self.optimizer.lrs[i], lr))
+            lr = F.depend(lr, F.assign(self.optimizer.param_groups[i]["lr"], lr))
             self._print_lr(self.verbose, i, lr)
 
 
