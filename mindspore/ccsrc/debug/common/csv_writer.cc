@@ -46,7 +46,7 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header, boo
   std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
   bool first_time_opening = !fs->FileExist(file_path_value);
-  ChangeFileMode(file_path_value, S_IWUSR);
+  ChangeFileMode(file_path_value, S_IWUSR | S_IRUSR);
   if (first_time_opening || trunc) {
     // remove any possible output from previous runs
     file_.open(file_path_value, std::ios::out | std::ios::trunc | std::ios::binary);
