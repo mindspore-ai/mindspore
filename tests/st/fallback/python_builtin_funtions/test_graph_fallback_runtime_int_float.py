@@ -14,6 +14,7 @@
 # ============================================================================
 
 import pytest
+import mindspore as ms
 from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -55,3 +56,24 @@ def test_fallback_float():
 
     res = foo(Tensor([-1.0]))
     assert res == -1.0
+
+
+@pytest.mark.skip(reason="ScalarToRawMemory memcpy failed.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_int_asnumpy():
+    """
+    Feature: JIT Fallback
+    Description: Test int() in fallback runtime
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        return int(x.asnumpy())
+
+    x = Tensor([-1.0], ms.float32)
+    res = foo(x)
+    assert res == -1

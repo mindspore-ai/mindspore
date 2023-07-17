@@ -12,27 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test tuple mul number """
+""" test tuple index """
 
 import pytest
-from mindspore import context, jit
+import mindspore as ms
+import mindspore.nn as nn
+from mindspore import context
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
+@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_tuple_mul_non_integer_number():
+def test_tuple_index_is_tensor_in_control_flow():
     """
-    Feature: tuple multiple non-integer number.
-    Description: tuple can only multiply integer number.
-    Expectation: Raise TypeError.
+    Feature: Support tuple while the index is Tensor.
+    Description: Support tuple while the index is Tensor.
+    Expectation: No exception.
     """
-    @jit
-    def foo():
-        x = (1, 2, 3, 4)
-        return x * 2.0
-    with pytest.raises(TypeError) as error_info:
-        foo()
-    assert "can't multiply sequence by non-int of type" in str(error_info)
+    class Net(nn.Cell):
+        def construct(self, x):
+            y = (1, 2, 3, 4)
+            index = x[0] + 1
+            if x[index] > 0:
+                return y[index]
+            return y[index] * 2
+
+    x = ms.Tensor([-1], ms.int32)
+    net = Net()
+    ret = net(x)
+    assert ret == 2

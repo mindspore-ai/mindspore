@@ -18,6 +18,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor, context, jit
+import mindspore.nn as nn
 from mindspore.nn import Cell
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -209,3 +210,21 @@ def test_dict_error_3():
     with pytest.raises(RuntimeError) as ex:
         foo(x)
     assert "key only supports string, number, constant tensor and tuple, but got" in str(ex.value)
+
+
+@pytest.mark.skip(reason="No support yet.")
+def test_dict_multiple_duplicate_keys():
+    """
+    Feature: Support dict.
+    Description: Support dict with multiple duplicate keys.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            name = 'Name'
+            tinydict = {'Name': 'Runoob', 'Age': 7, name: 'Manni'}
+            return tinydict['Name']  # pylint: disable=get-dict-value-exception
+
+    net = Net()
+    ret = net()
+    assert ret == 'Manni'
