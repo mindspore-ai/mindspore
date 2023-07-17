@@ -198,18 +198,18 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
   (*ge_options)["ge.exec.memoryOptimizationPolicy"] = "MemoryPriority";
   MS_LOG(INFO) << "Set GE topo mode to memory-priority.";
 
+  auto ge_use_static_memory = common::GetEnv("GE_USE_STATIC_MEMORY");
+  if (ge_use_static_memory.empty()) {
+    (*ge_options)["ge.exec.staticMemoryPolicy"] = "2";
+    MS_LOG(INFO) << "Set staticMemoryPolicy to default mode.";
+  }
+
   if (ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE) != "") {
     (*ge_options)["ge.jit_compile"] = ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE);
     MS_LOG(INFO) << "Set jit_compile " << ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE) << ".";
   } else {
     (*ge_options)["ge.jit_compile"] = "2";
     MS_LOG(INFO) << "The default value of jit_compile is set to 2.";
-  }
-
-  if (auto atomic_clean_policy = ms_context_ptr->get_param<std::string>(MS_CTX_ATOMIC_CLEAN_POLICY);
-      !atomic_clean_policy.empty()) {
-    (*ge_options)["ge.exec.atomicCleanPolicy"] = atomic_clean_policy;
-    MS_LOG(INFO) << "Set GE atomic clean policy to " << atomic_clean_policy << ".";
   }
 
   SetAscendHF32Config(ms_context_ptr, ge_options);
