@@ -685,6 +685,8 @@ int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func
 int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                  size_t input_index, ParameterPtr *scales_node, ParameterPtr *zps_node,
                                                  TypeId src_dtype, TypeId dst_dtype, int axis) {
+  CHECK_NULL_RETURN(scales_node);
+  CHECK_NULL_RETURN(zps_node);
   auto input_node = cnode->input(input_index);
   auto input_quant_params = quant::GetInputNodeQuantParam(cnode, input_index);
   if (input_quant_params.empty()) {
@@ -715,6 +717,10 @@ int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph,
     *scales_node = opt::BuildFloatVecParameterNode(func_graph, scales, input_node->fullname_with_scope() + "-scales");
     *zps_node = opt::BuildFloatVecParameterNode(func_graph, zps, input_node->fullname_with_scope() + "-zps");
   }
+  if (*scales_node == nullptr || *zps_node == nullptr) {
+    MS_LOG(ERROR) << "Failed to build scales node, zps node ";
+    return RET_ERROR;
+  }
   if (input_quant_params.size() > 1) {
     ShapeVector shape;
     if (opt::FetchShapeFromAbstract(input_node->abstract(), &shape) != lite::RET_OK) {
@@ -730,8 +736,10 @@ int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph,
       }
     }
     auto scales_abstract = (*scales_node)->abstract();
+    CHECK_NULL_RETURN(scales_abstract);
     scales_abstract->set_shape(std::make_shared<abstract::Shape>(shape_vector));
     auto zps_abstract = (*zps_node)->abstract();
+    CHECK_NULL_RETURN(zps_abstract);
     zps_abstract->set_shape(std::make_shared<abstract::Shape>(shape_vector));
   }
   return RET_OK;
