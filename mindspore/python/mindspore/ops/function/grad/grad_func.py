@@ -654,7 +654,7 @@ def _check_jvp_input_v_len(inputs_len, v_len):
 def jvp(fn, inputs, v, has_aux=False):
     """
     Compute the jacobian-vector-product of the given network. `jvp` matches
-    `forward-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#forward-mode-ad>`_.
+    `forward-mode differentiation <https://www.mindspore.cn/docs/en/r2.1/design/auto_gradient.html#forward-mode-ad>`_.
 
     Args:
         fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single Tensor or tuple of
@@ -864,7 +864,7 @@ def _check_tensor(inputs):
 def vjp(fn, *inputs, has_aux=False):
     """
     Compute the vector-jacobian-product of the given network. `vjp` matches
-    `reverse-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#reverse-mode-ad>`_.
+    `reverse-mode differentiation <https://www.mindspore.cn/docs/en/r2.1/design/auto_gradient.html#reverse-mode-ad>`_.
 
     Args:
         fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single Tensor or tuple of
@@ -1055,7 +1055,7 @@ _vmap = _Vmap()
 def jacfwd(fn, grad_position=0, has_aux=False):
     """
     Compute Jacobian via forward mode, corresponding to
-    `forward-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#forward-mode-ad>`_.
+    `forward-mode differentiation <https://www.mindspore.cn/docs/en/r2.1/design/auto_gradient.html#forward-mode-ad>`_.
     When number of outputs is much greater than that of inputs, it's better to calculate Jacobian via forward mode than
     reverse mode to get better performance.
 
@@ -1225,7 +1225,7 @@ _grad = _Grad(get_by_position=True, has_aux=False, sens_param=True)
 def jacrev(fn, grad_position=0, has_aux=False):
     """
     Compute Jacobian via reverse mode, corresponding to
-    `reverse-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#reverse-mode-ad>`_.
+    `reverse-mode differentiation <https://www.mindspore.cn/docs/en/r2.1/design/auto_gradient.html#reverse-mode-ad>`_.
     When number of inputs is much greater than that of outputs, it's better to calculate Jacobian via reverse mode than
     forward mode to get better performance.
 
@@ -1356,7 +1356,7 @@ def stop_gradient(value):
     StopGradient is used for eliminating the effect of a value on the gradient, such as truncating
     the gradient propagation from an output of a function.
     For more details, please refer to `Stop Gradient
-    <https://www.mindspore.cn/tutorials/en/master/beginner/autograd.html#stop-gradient>`_.
+    <https://www.mindspore.cn/tutorials/en/r2.1/beginner/autograd.html#stop-gradient>`_.
 
     Args:
         value (Any): The value whose effect on the gradient to be eliminated.

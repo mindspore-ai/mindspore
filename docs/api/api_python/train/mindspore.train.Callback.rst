@@ -11,7 +11,7 @@ mindspore.train.Callback
     自定义Callback场景下，在类方法中通过 `RunContext.original_args()` 方法可以获取模型训练或推理过程中已有
     的上下文信息，此信息为一个存储了已有属性的字典型变量。用户也可以在此信息中添加其他的自定义属性。此外，
     通过调用 `request_stop` 方法来停止训练过程。有关自定义Callback的具体用法，请查看
-    `回调机制Callback <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/model/callback.html>`_。
+    `回调机制Callback <https://www.mindspore.cn/tutorials/zh-CN/r2.1/advanced/model/callback.html>`_。
 
     .. py:method:: begin(run_context)
 

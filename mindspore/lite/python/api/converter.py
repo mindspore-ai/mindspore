@@ -76,7 +76,7 @@ class Converter:
 
     Convert to MindSpore model is recommended. Currently, Convert to MindSpore Lite model is supported,
     but it will be deprecated in the future. If you want to convert to MindSpore Lite model, please use
-    `converter_tool <https://www.mindspore.cn/lite/docs/en/master/use/cloud_infer/converter_tool.html>`_  instead of
+    `converter_tool <https://www.mindspore.cn/lite/docs/en/r2.1/use/cloud_infer/converter_tool.html>`_  instead of
     The Python interface. The Model api and ModelParallelRunner api only support MindSpore model.
 
     Note:
@@ -326,7 +326,7 @@ class Converter:
             parameters ( `scale` and `zero point` ) of the model input Tensor are available. The following 4
             DataTypes are supported: ``DataType.FLOAT32`` , ``DataType.INT8`` , ``DataType.UINT8`` ,
             ``DataType.UNKNOWN``. For details, see
-            `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+            `DataType <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.DataType.html>`_ .
 
             - DataType.FLOAT32: 32-bit floating-point number.
             - DataType.INT8:    8-bit integer.
@@ -346,7 +346,7 @@ class Converter:
                 the quantization parameters ( `scale` and `zero point` ) of the model input Tensor are available. The
                 following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
                 DataType.UNKNOWN. For details, see
-                `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+                `DataType <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.DataType.html>`_ .
 
                 - DataType.FLOAT32: 32-bit floating-point number.
                 - DataType.INT8:    8-bit integer.
@@ -372,7 +372,7 @@ class Converter:
         Returns:
             Format, the input format of model. Only Valid for 4-dimensional input. The following 2 input formats are
             supported: ``Format.NCHW``, ``Format.NHWC``. For details,
-            see `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
+            see `Format <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.Format.html>`_ .
 
             - Format.NCHW: Store Tensor data in the order of batch N, channel C, height H and width W.
             - Format.NHWC: Store Tensor data in the order of batch N, height H, width W and channel C.
@@ -388,7 +388,7 @@ class Converter:
         Args:
             input_format (Format): Set the input format of model. Only Valid for 4-dimensional input.The
                 following 2 input formats are supported: Format.NCHW | Format.NHWC. For details,
-                see `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
+                see `Format <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.Format.html>`_ .
 
                 - Format.NCHW: Store Tensor data in the order of batch N, channel C, height H and width W.
                 - Format.NHWC: Store Tensor data in the order of batch N, height H, width W and channel C.
@@ -538,7 +538,7 @@ class Converter:
             DataTypes are supported: ``DataType.FLOAT32`` , ``DataType.INT8`` , ``DataType.UINT8`` ,
             ``DataType.UNKNOWN``.
             For details, see
-            `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+            `DataType <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.DataType.html>`_ .
 
             - DataType.FLOAT32: 32-bit floating-point number.
             - DataType.INT8:    8-bit integer.
@@ -558,7 +558,7 @@ class Converter:
                 when the quantization parameters ( `scale` and `zero point` ) of the model output Tensor are available.
                 The following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
                 DataType.UNKNOWN. For details, see
-                `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+                `DataType <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.DataType.html>`_ .
 
                 - DataType.FLOAT32: 32-bit floating-point number.
                 - DataType.INT8:    8-bit integer.
@@ -585,7 +585,7 @@ class Converter:
             ModelType, the model type needs to be export. Options are ``ModelType.MINDIR`` , ``ModelType.MINDIR_LITE``.
             Convert to MindSpore model is recommended. Currently, Convert to MindSpore Lite model is supported,
             but it will be deprecated in the future. For details, see
-            `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
+            `ModelType <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.ModelType.html>`_ .
         """
         return model_type_cxx_py_map.get(self._converter.get_save_type())
 
@@ -598,7 +598,7 @@ class Converter:
             save_type (ModelType): Set the model type needs to be export. Options are ModelType.MINDIR |
                 ModelType.MINDIR_LITE. Convert to MindSpore model is recommended. Currently, Convert to MindSpore Lite
                 model is supported, but it will be deprecated in the future. For details, see
-                `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
+                `ModelType <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.ModelType.html>`_ .
 
         Raises:
             TypeError: `save_type` is not a ModelType.
@@ -647,7 +647,7 @@ class Converter:
         Args:
             fmk_type (FmkType): Input model framework type. Options are ``FmkType.TF`` , ``FmkType.CAFFE`` ,
                 ``FmkType.ONNX`` , ``FmkType.MINDIR`` , ``FmkType.TFLITE`` , ``FmkType.PYTORCH``. For details, see
-                `FmkType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.FmkType.html>`_ .
+                `FmkType <https://mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.FmkType.html>`_ .
             model_file (str): Set the path of the input model when convert. For example,
                 ``"/home/user/model.prototxt"``. Options are TF: ``"model.pb"`` , CAFFE: ``"model.prototxt"`` ,
                 ONNX: ``"model.onnx"`` , MINDIR: ``"model.mindir"`` , TFLITE: ``"model.tflite"`` ,
@@ -667,9 +667,9 @@ class Converter:
                 post-training, offline split op to parallel, disable op fusion ability and set plugin so path.
                 `config_file` uses the `key = value` method to define the related parameters.
                 For the configuration parameters related to post training quantization, please refer to
-                `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
+                `quantization <https://www.mindspore.cn/lite/docs/en/r2.1/use/post_training_quantization.html>`_ .
                 For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+                `extension  <https://www.mindspore.cn/lite/docs/en/r2.1/use/nnie.html#extension-configuration>`_ .
                 For example, "/home/user/model.cfg". Default: ``""``, indicating that no configuration file.
 
         Raises:
@@ -750,10 +750,10 @@ class Converter:
                 Default: ``""`` .
 
                 For the configuration parameters related to post training quantization, please refer to
-                `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
+                `quantization <https://www.mindspore.cn/lite/docs/en/r2.1/use/post_training_quantization.html>`_ .
 
                 For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+                `extension  <https://www.mindspore.cn/lite/docs/en/r2.1/use/nnie.html#extension-configuration>`_ .
 
                 - ``"common_quant_param"``: Common quantization parameter.
                 - ``"mixed_bit_weight_quant_param"``: Mixed bit weight quantization parameter.
@@ -767,10 +767,10 @@ class Converter:
                 Default: ``None``, ``None`` is equivalent to {}.
 
                 For the configuration parameters related to post training quantization, please refer to
-                `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
+                `quantization <https://www.mindspore.cn/lite/docs/en/r2.1/use/post_training_quantization.html>`_ .
 
                 For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+                `extension  <https://www.mindspore.cn/lite/docs/en/r2.1/use/nnie.html#extension-configuration>`_ .
 
         Raises:
             TypeError: `section` is not a str.

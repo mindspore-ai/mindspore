@@ -54,7 +54,7 @@
 
         教程样例：
             - `Cell与参数 - 自定义Cell反向
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/modules/layer.html#自定义cell反向>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.1/advanced/modules/layer.html#自定义cell反向>`_
 
     .. py:method:: cast_inputs(inputs, dst_type)
 
@@ -288,7 +288,7 @@
             迭代器，Cell的名称和Cell本身。
 
         教程样例：
-            - `网络构建 - 模型参数 <https://mindspore.cn/tutorials/zh-CN/master/beginner/model.html#模型参数>`_
+            - `网络构建 - 模型参数 <https://mindspore.cn/tutorials/zh-CN/r2.1/beginner/model.html#模型参数>`_
 
     .. py:method:: parameters_broadcast_dict(recurse=True)
 
@@ -423,7 +423,7 @@
         为了提升网络性能，可以配置boost内的算法让框架自动使能该算法来加速网络训练。
 
         请确保 `boost_type` 所选择的算法在
-        `algorithm library <https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_ 算法库中。
+        `algorithm library <https://gitee.com/mindspore/mindspore/tree/r2.1/mindspore/python/mindspore/boost>`_ 算法库中。
 
         .. note:: 部分加速算法可能影响网络精度，请谨慎选择。
 
@@ -524,7 +524,7 @@
             Cell类型，Cell本身。
 
         教程样例：
-            - `模型训练 - 训练与评估实现 <https://mindspore.cn/tutorials/zh-CN/master/beginner/train.html#训练与评估实现>`_
+            - `模型训练 - 训练与评估实现 <https://mindspore.cn/tutorials/zh-CN/r2.1/beginner/train.html#训练与评估实现>`_
 
     .. py:method:: shard(in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0)
 
@@ -577,7 +577,7 @@
             List类型，可训练参数列表。
 
         教程样例：
-            - `模型训练 - 优化器 <https://mindspore.cn/tutorials/zh-CN/master/beginner/train.html#优化器>`_
+            - `模型训练 - 优化器 <https://mindspore.cn/tutorials/zh-CN/r2.1/beginner/train.html#优化器>`_
 
     .. py:method:: untrainable_params(recurse=True)
 

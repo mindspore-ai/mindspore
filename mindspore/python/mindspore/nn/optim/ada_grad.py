@@ -166,7 +166,7 @@ class Adagrad(Optimizer):
         >>> import mindspore.nn as nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Adagrad(params=net.trainable_params())

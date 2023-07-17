@@ -28,7 +28,7 @@ mindspore.dataset.text.JiebaTokenizer
 
     教程样例：
         - `文本变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/dataset/text_gallery.html>`_
 
     .. py:method:: add_dict(user_dict)
 

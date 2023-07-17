@@ -17,7 +17,7 @@ mindspore.nn.ReLU
         :align: center
 
     输入：
-        - **x** (Tensor) - 用于计算ReLU的任意维度的Tensor。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_。
+        - **x** (Tensor) - 用于计算ReLU的任意维度的Tensor。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_。
 
     输出：
         Tensor，数据类型和shape与 `x` 相同。

@@ -37,7 +37,7 @@ class Initializer:
         Initializers are intended to be used for delayed initialization in parallel mode rather than Tensor
         initialization. If you have to use Initializers to create a Tensor, :func:`mindspore.Tensor.init_data` should be
         followed in most of the cases. For more information, please refer to `mindspore.Tensor.init_data
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.init_data.html#
+        <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore/Tensor/mindspore.Tensor.init_data.html#
         mindspore-tensor-init-data>`_ .
 
     Args:

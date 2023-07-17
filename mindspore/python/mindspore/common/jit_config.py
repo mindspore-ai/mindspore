@@ -45,7 +45,7 @@ class JitConfig:
         >>> jitconfig = JitConfig(jit_level="O1")
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>>
         >>> net.set_jit_config(jitconfig)

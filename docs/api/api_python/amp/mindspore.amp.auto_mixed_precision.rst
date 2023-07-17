@@ -30,7 +30,7 @@ mindspore.amp.auto_mixed_precision
     [:class:`mindspore.nn.BatchNorm1d`, :class:`mindspore.nn.BatchNorm2d`, :class:`mindspore.nn.BatchNorm3d`,
     :class:`mindspore.nn.LayerNorm`]
 
-    关于自动混合精度的详细介绍，请参考 `自动混合精度 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html>`_ 。
+    关于自动混合精度的详细介绍，请参考 `自动混合精度 <https://www.mindspore.cn/tutorials/zh-CN/r2.1/advanced/mixed_precision.html>`_ 。
 
     参数：
         - **network** (Cell) - 定义网络结构。

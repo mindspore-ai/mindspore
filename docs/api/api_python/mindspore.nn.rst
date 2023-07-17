@@ -5,9 +5,9 @@ mindspore.nn
 
 用于构建神经网络中的预定义构建块或计算单元。
 
-动态shape的支持情况详见 `nn接口动态shape支持情况 <https://mindspore.cn/docs/zh-CN/master/note/dynamic_shape_nn.html>`_ 。
+动态shape的支持情况详见 `nn接口动态shape支持情况 <https://mindspore.cn/docs/zh-CN/r2.1/note/dynamic_shape_nn.html>`_ 。
 
-MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.nn API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.nn API接口变更 <https://gitee.com/mindspore/docs/blob/r2.1/resource/api_updates/nn_api_updates_cn.md>`_ 。
 
 基本构成单元
 ------------
@@ -392,7 +392,7 @@ LRScheduler类
     import mindspore
     from mindspore import nn
     # Define the network structure of LeNet5. Refer to
-    # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+    # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
     net = LeNet5()
     loss_fn = nn.MAELoss()
     optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
@@ -407,7 +407,7 @@ LRScheduler类
         return loss
     for epoch in range(3):
         # Create the dataset taking MNIST as an example. Refer to
-        # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
         for data, label in create_dataset():
             train_step(data, label)
         scheduler.step()

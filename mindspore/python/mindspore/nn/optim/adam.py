@@ -719,7 +719,7 @@ class Adam(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Adam(params=net.trainable_params())
@@ -985,7 +985,7 @@ class AdamWeightDecay(Optimizer):
         There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used
         and `drop_overflow_update` in `FixedLossScaleManager` is set to False, optimizer needs to set the 'loss_scale'.
         As this optimizer has no argument of `loss_scale`, so `loss_scale` needs to be processed by other means, refer
-        document `LossScale <https://www.mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_ to
+        document `LossScale <https://www.mindspore.cn/tutorials/en/r2.1/advanced/mixed_precision.html>`_ to
         process `loss_scale` correctly.
 
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
@@ -1069,7 +1069,7 @@ class AdamWeightDecay(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamWeightDecay(params=net.trainable_params())
@@ -1282,7 +1282,7 @@ class AdamOffload(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamOffload(params=net.trainable_params())

@@ -479,7 +479,7 @@ def convert_class_to_function(cls_str, cls_obj):
                          f"supported in 'construct' or @jit decorated function. Try to create {cls_str} " \
                          f"instances external such as initialized in the method '__init__' before assigning. " \
                          f"For more details, please refer to " \
-                         f"https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n")
+                         f"https://www.mindspore.cn/docs/zh-CN/r2.1/design/dynamic_graph_and_static_graph.html \n")
     return convert_class_to_function_map.get(cls_str)
 
 

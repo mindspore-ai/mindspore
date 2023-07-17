@@ -180,7 +180,7 @@ class Metric(metaclass=ABCMeta):
 
         Tutorial Examples:
             - `Evaluation Metrics - Customized Metrics
-              <https://mindspore.cn/tutorials/en/master/advanced/model/metric.html#customized-metrics>`_
+              <https://mindspore.cn/tutorials/en/r2.1/advanced/model/metric.html#customized-metrics>`_
         """
         raise NotImplementedError('Must define clear function to use this base class')
 
@@ -194,7 +194,7 @@ class Metric(metaclass=ABCMeta):
 
         Tutorial Examples:
             - `Evaluation Metrics - Customized Metrics
-              <https://mindspore.cn/tutorials/en/master/advanced/model/metric.html#customized-metrics>`_
+              <https://mindspore.cn/tutorials/en/r2.1/advanced/model/metric.html#customized-metrics>`_
         """
         raise NotImplementedError('Must define eval function to use this base class')
 
@@ -211,7 +211,7 @@ class Metric(metaclass=ABCMeta):
 
         Tutorial Examples:
             - `Evaluation Metrics - Customized Metrics
-              <https://mindspore.cn/tutorials/en/master/advanced/model/metric.html#customized-metrics>`_
+              <https://mindspore.cn/tutorials/en/r2.1/advanced/model/metric.html#customized-metrics>`_
         """
         raise NotImplementedError('Must define update function to use this base class')
 

@@ -501,12 +501,12 @@ class Profiler:
             >>> # Profiler init.
             >>> profiler = Profiler()
             >>> # Train Model or eval Model, taking LeNet5 as an example.
-            >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # Refer to https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> # Create the dataset taking MNIST as an example.
-            >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # Refer to https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
             >>> dataloader = create_dataset()
             >>> model = Model(net, loss, optimizer)
             >>> model.train(5, dataloader, dataset_sink_mode=False)

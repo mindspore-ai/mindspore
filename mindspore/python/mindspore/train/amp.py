@@ -305,7 +305,7 @@ def auto_mixed_precision(network, amp_level="O0"):
     :class:`mindspore.nn.LayerNorm`]
 
     For details on automatic mixed precision, refer to
-    `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_ .
+    `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/r2.1/advanced/mixed_precision.html>`_ .
 
     Args:
         network (Cell): Definition of the network.
@@ -324,7 +324,7 @@ def auto_mixed_precision(network, amp_level="O0"):
     Examples:
         >>> from mindspore import amp
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> network = LeNet5()
         >>> amp_level = "O1"
         >>> net = amp.auto_mixed_precision(network, amp_level)
@@ -510,7 +510,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     Examples:
         >>> from mindspore import amp, nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> network = LeNet5()
         >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(reduction="mean")
         >>> net_opt = nn.Momentum(network.trainable_params(), learning_rate=0.01, momentum=0.9)
@@ -640,7 +640,7 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
     Examples:
         >>> from mindspore import amp, nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> custom_white_list = amp.get_white_list()
         >>> custom_white_list.append(nn.Flatten)

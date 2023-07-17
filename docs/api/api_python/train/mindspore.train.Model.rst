@@ -75,7 +75,7 @@
 
         教程样例：
             - `高阶封装：Model - 训练及保存模型
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model.html#训练及保存模型>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.1/advanced/model.html#训练及保存模型>`_
 
     .. py:method:: eval_network
         :property:
@@ -106,7 +106,7 @@
 
         教程样例：
             - `高阶封装：Model - 训练及保存模型
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model.html#训练及保存模型>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.1/advanced/model.html#训练及保存模型>`_
 
     .. py:method:: infer_predict_layout(*predict_data, skip_backend_compile=False)
 

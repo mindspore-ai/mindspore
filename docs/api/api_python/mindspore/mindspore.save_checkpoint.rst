@@ -24,4 +24,4 @@ mindspore.save_checkpoint
         - **TypeError** - 如果参数 `ckpt_file_name` 不是字符串类型。
 
     教程样例：
-        - `保存与加载 - 保存和加载模型权重 <https://mindspore.cn/tutorials/zh-CN/master/beginner/save_load.html#保存和加载模型权重>`_
+        - `保存与加载 - 保存和加载模型权重 <https://mindspore.cn/tutorials/zh-CN/r2.1/beginner/save_load.html#保存和加载模型权重>`_

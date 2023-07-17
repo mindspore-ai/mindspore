@@ -3,9 +3,9 @@ mindspore.ops.primitive
 
 可用于Cell的构造函数的算子。
 
-动态shape的支持情况详见 `算子动态shape支持情况 <https://mindspore.cn/docs/zh-CN/master/note/dynamic_shape_primitive.html>`_ 。
+动态shape的支持情况详见 `算子动态shape支持情况 <https://mindspore.cn/docs/zh-CN/r2.1/note/dynamic_shape_primitive.html>`_ 。
 
-算子级并行过程各算子的使用约束详见 `算子级并行使用约束 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_parallel.html>`_ 。
+算子级并行过程各算子的使用约束详见 `算子级并行使用约束 <https://www.mindspore.cn/docs/zh-CN/r2.1/note/operator_list_parallel.html>`_ 。
 
 模块导入方法如下：
 
@@ -13,7 +13,7 @@ mindspore.ops.primitive
 
     import mindspore.ops as ops
 
-MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops.primitive API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops.primitive API接口变更 <https://gitee.com/mindspore/docs/blob/r2.1/resource/api_updates/ops_api_updates_cn.md>`_ 。
 
 算子原语
 ----------
@@ -618,15 +618,15 @@ Parameter操作算子
 通信算子
 ----------------
 
-在分布式训练中进行数据传输涉及通信操作，详情请参考 `分布式集合通信原语 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/ops/communicate_ops.html>`_ 。
+在分布式训练中进行数据传输涉及通信操作，详情请参考 `分布式集合通信原语 <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/ops/communicate_ops.html>`_ 。
 
 注意，以下列表中的接口需要先配置好通信环境变量。
 
 针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `Ascend指导文档 \
-<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_ascend.html#准备环节>`_ 。
+<https://www.mindspore.cn/tutorials/experts/zh-CN/r2.1/parallel/train_ascend.html#准备环节>`_ 。
 
 针对GPU设备，用户需要准备host文件和mpi，详见 `GPU指导文档 \
-<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#准备环节>`_ 。
+<https://www.mindspore.cn/tutorials/experts/zh-CN/r2.1/parallel/train_gpu.html#准备环节>`_ 。
 
 .. mscnplatwarnautosummary::
     :toctree: ops

@@ -716,8 +716,8 @@ def fill(type, shape, value):  # pylint: disable=redefined-outer-name
 
     Args:
         type (mindspore.dtype): The specified type of output tensor. The data type only supports
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+            `bool_ <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.html#mindspore.dtype>`_ and
+            `number <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.html#mindspore.dtype>`_ .
         shape (Union(Tensor, tuple[int])): The specified shape of output tensor.
         value (Union(Tensor, number.Number, bool)): Value to fill the returned tensor.
 
@@ -1455,7 +1455,7 @@ def size(input_x):
 
     Args:
         input_x (Tensor): Input parameters, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
         int. A scalar representing the elements' size of `input_x`, tensor is the number of elements
@@ -2156,13 +2156,13 @@ def concat(tensors, axis=0):
     Alias for :func:`mindspore.ops.cat()`.
 
     Tutorial Examples:
-        - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/master/beginner/tensor.html#tensor-operation>`_
+        - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/r2.1/beginner/tensor.html#tensor-operation>`_
         - `FGSM Network Adversarial Attack - Implementing FGSM
-          <https://mindspore.cn/tutorials/application/en/master/cv/fgsm.html#implementing-fgsm>`_
+          <https://mindspore.cn/tutorials/application/en/r2.1/cv/fgsm.html#implementing-fgsm>`_
         - `Vision Transformer Image Classification - Building ViT as a whole
-          <https://mindspore.cn/tutorials/application/en/master/cv/vit.html#building-vit-as-a-whole>`_
+          <https://mindspore.cn/tutorials/application/en/r2.1/cv/vit.html#building-vit-as-a-whole>`_
         - `Sentiment Classification Implemented by RNN - Dense
-          <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
+          <https://mindspore.cn/tutorials/application/en/r2.1/nlp/sentiment_analysis.html#dense>`_
     """
     return cat(tensors, axis)
 
@@ -3490,7 +3490,7 @@ def gather(input_params, input_indices, axis, batch_dims=0):
            out of range.
 
         2. The data type of input_params cannot be
-           `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
+           `bool_ <https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
            platform currently.
 
     Args:

@@ -135,7 +135,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         >>> from mindspore import boost
         >>> from mindspore import nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)

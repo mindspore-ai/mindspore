@@ -37,7 +37,7 @@
 
     教程样例：
         - `使用数据Pipeline加载 & 处理数据集
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     .. note::
         - 需要用户提前在云存储上创建同步用的目录，然后通过 `sync_obs_path` 指定。

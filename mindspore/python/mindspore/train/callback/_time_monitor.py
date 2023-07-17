@@ -38,13 +38,13 @@ class TimeMonitor(Callback):
         >>> from mindspore.train import Model, TimeMonitor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> time_monitor = TimeMonitor()
         >>> model.train(10, dataset, callbacks=time_monitor)

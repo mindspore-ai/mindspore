@@ -3,10 +3,10 @@ mindspore.ops.primitive
 
 operators that can be used for constructor function of Cell
 
-For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of primitive Interface <https://mindspore.cn/docs/en/master/note/dynamic_shape_primitive.html>`_ .
+For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of primitive Interface <https://mindspore.cn/docs/en/r2.1/note/dynamic_shape_primitive.html>`_ .
 
 For the details about the usage constraints of each operator in the operator parallel process,
-refer to `Usage Constraints During Operator Parallel <https://www.mindspore.cn/docs/en/master/note/operator_list_parallel.html>`_ .
+refer to `Usage Constraints During Operator Parallel <https://www.mindspore.cn/docs/en/r2.1/note/operator_list_parallel.html>`_ .
 
 The module import method is as follows:
 
@@ -14,7 +14,7 @@ The module import method is as follows:
 
     import mindspore.ops as ops
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.primitive` operators in MindSpore, please refer to the link `mindspore.ops.primitive API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates_en.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.primitive` operators in MindSpore, please refer to the link `mindspore.ops.primitive API Interface Change <https://gitee.com/mindspore/docs/blob/r2.1/resource/api_updates/ops_api_updates_en.md>`_ .
 
 Operator Primitives
 -------------------
@@ -619,13 +619,13 @@ Data Operation Operator
 Communication Operator
 ----------------------
 
-Distributed training involves communication operations for data transfer. For more details, refer to `Distributed Set Communication Primitives <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html>`_ .
+Distributed training involves communication operations for data transfer. For more details, refer to `Distributed Set Communication Primitives <https://www.mindspore.cn/docs/en/r2.1/api_python/samples/ops/communicate_ops.html>`_ .
 
 Note that the APIs in the following list need to preset communication environment variables. For
 the Ascend devices, users need to prepare the rank table, set rank_id and device_id. Please see the `Ascend tutorial \
-<https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#configuring-distributed-environment-variables>`_ for more details.
+<https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_ascend.html#configuring-distributed-environment-variables>`_ for more details.
 For the GPU device, users need to prepare the host file and mpi, please see the `GPU tutorial \
-<https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_.
+<https://www.mindspore.cn/tutorials/experts/en/r2.1/parallel/train_gpu.html#preparation>`_.
 
 .. msplatwarnautosummary::
     :toctree: ops

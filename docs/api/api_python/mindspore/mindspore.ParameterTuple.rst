@@ -26,4 +26,4 @@ mindspore.ParameterTuple
 
         教程样例：
             - `Cell与参数 - Parameter Tuple
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/modules/layer.html#parameter-tuple>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.1/advanced/modules/layer.html#parameter-tuple>`_

@@ -19,7 +19,7 @@ mindspore.dataset.CelebADataset
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值： ``None`` ，读取全部样本图片。
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
-        - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
+        - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.1/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
         - **decrypt** (callable, 可选) - 图像解密函数，接受加密的图片路径并返回bytes类型的解密数据。默认值： ``None`` ，不进行解密。
 
     异常：
@@ -34,7 +34,7 @@ mindspore.dataset.CelebADataset
 
     教程样例：
         - `使用数据Pipeline加载 & 处理数据集
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/dataset/dataset_gallery.html>`_
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 
