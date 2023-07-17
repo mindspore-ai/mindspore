@@ -21,7 +21,9 @@ from mindspore.ops.operations import _inner_ops as inner
 
 # bitwise_xor is a metagraph object which will generate function according to input type
 # using ".register" decorator
-bitwise_xor = base.MultitypeFuncGraph("bitwise_xor", True, True)
+bitwise_xor = base.MultitypeFuncGraph("bitwise_xor", True)
+
+bitwise_xor.set_need_raise()
 
 
 @bitwise_xor.register("Number", "Number")

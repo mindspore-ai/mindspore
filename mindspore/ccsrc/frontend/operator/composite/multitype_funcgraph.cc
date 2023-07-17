@@ -32,8 +32,7 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-MultitypeFuncGraph::MultitypeFuncGraph(const std::string &name, bool need_raise)
-    : MetaFuncGraph(name), need_raise_(need_raise) {
+MultitypeFuncGraph::MultitypeFuncGraph(const std::string &name) : MetaFuncGraph(name) {
   fn_cache_.clear();
   // def multitype(*args:ref):
   signatures_ = std::vector<Signature>({{"args", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindVarPositional}});

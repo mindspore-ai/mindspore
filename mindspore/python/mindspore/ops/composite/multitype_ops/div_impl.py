@@ -23,11 +23,12 @@ from mindspore.ops import functional as F
 from mindspore.common import COOTensor
 
 
-div = base.MultitypeFuncGraph("div", True, True)
+div = base.MultitypeFuncGraph("div", True)
 """
 div is a metafuncgraph object which will div two objects according to input type
 using ".register" decorator
 """
+div.set_need_raise()
 
 
 @div.register("CSRTensor", "Tensor")

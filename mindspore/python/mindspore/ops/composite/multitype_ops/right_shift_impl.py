@@ -20,7 +20,9 @@ from mindspore.ops.operations import _inner_ops as inner
 
 # right_shift is a metagraph object which will generate function according to input type
 # using ".register" decorator
-right_shift = base.MultitypeFuncGraph("right_shift", True, True)
+right_shift = base.MultitypeFuncGraph("right_shift", True)
+
+right_shift.set_need_raise()
 
 
 @right_shift.register("Number", "Number")
