@@ -798,6 +798,14 @@ ValueNodePtr KernelGraphMgr::CreateNewValueNode(const AnfNodePtr &anf, KernelGra
   if (value->isa<None>()) {
     return nullptr;
   }
+  // Copy data from device if the tensor is an output of Op or Graph.
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    if (!tensor->is_forward_output()) {
+      tensor->data_sync();
+    }
+  }
   auto new_value_node = graph->NewValueNode(value_node);
   graph->FrontBackendMapAdd(anf, new_value_node);
   graph->AddValueNodeToGraph(new_value_node);
