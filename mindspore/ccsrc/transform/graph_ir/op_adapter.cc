@@ -27,36 +27,48 @@
 
 namespace mindspore {
 namespace transform {
-enum class CustomOpType { kAkg, kTbe };
-
 ge::graphStatus CustomAkgOpInferFunc(ge::Operator &op);
 
-ge::graphStatus CustomTbeOpInferFunc(ge::Operator &op);
+ge::graphStatus CustomTbeAicpuOpInferFunc(ge::Operator &op);
 
-// check a Custom node is an akg kernel, it should be called in the case of node is a Custom node.
-bool IsAkgOp(const AnfNodePtr &node) {
-  auto prim = GetCNodePrimitive(node);
+enum class CustomOpType { kUnKnown, kAkg, kTbe, kAiCpu };
+
+CustomOpType GetCustomOpTypeDetail(const PrimitivePtr &prim) {
   if (prim == nullptr) {
-    return false;
+    return CustomOpType::kUnKnown;
   }
   auto type = prim->GetAttr("type");
-  return (type != nullptr && GetValue<std::string>(type) == "GraphKernel");
-}
-
-bool IsTbeOp(const PrimitivePtr &prim) {
-  if (prim == nullptr) {
-    return false;
+  if (type != nullptr && GetValue<std::string>(type) == "GraphKernel") {
+    return CustomOpType::kAkg;
   }
   auto func_type = prim->GetAttr("func_type");
-  return (func_type != nullptr && GetValue<std::string>(func_type) == "tbe");
+  if (func_type != nullptr) {
+    auto func_type_value = GetValue<std::string>(func_type);
+    if (func_type_value == "tbe") {
+      return CustomOpType::kTbe;
+    } else if (func_type_value == "aicpu") {
+      return CustomOpType::kAiCpu;
+    }
+  }
+  return CustomOpType::kUnKnown;
 }
 
-void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, const CustomOpType &type) {
+ValuePtr GetCustomOpInputNames(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  // MS Custom op 'input_names' include attr names, which is not expected
+  auto value = prim->GetAttr("pure_input_names");
+  if (value == nullptr) {
+    value = prim->GetAttr("input_names");
+  }
+  return value;
+}
+
+void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, bool is_akg) {
   if (ge::OperatorFactoryImpl::IsExistOp(op_type)) {
     return;
   }
   MS_EXCEPTION_IF_NULL(prim);
-  auto input_names_v = prim->GetAttr("input_names");
+  auto input_names_v = GetCustomOpInputNames(prim);
   MS_EXCEPTION_IF_NULL(input_names_v);
   auto input_names = GetValue<std::vector<std::string>>(input_names_v);
   auto output_names_v = prim->GetAttr("output_names");
@@ -64,7 +76,7 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
   auto output_names = GetValue<std::vector<std::string>>(output_names_v);
   // Register op create function, which describes how to create a custom op
   (void)ge::OperatorFactoryImpl::RegisterOperatorCreator(
-    op_type, [op_type, input_names, output_names, type](const std::string &name) {
+    op_type, [op_type, input_names, output_names, is_akg](const std::string &name) {
       auto op = ge::CustomOperator(name, op_type);
       for (const auto &in_name : input_names) {
         op.CustomInputRegister(in_name);
@@ -72,19 +84,19 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
       for (const auto &out_name : output_names) {
         op.CustomOutputRegister(out_name);
       }
-      if (type == CustomOpType::kAkg) {
+      if (is_akg) {
         op.CustomRequiredAttrRegister("info_path");
         op.CustomInferFuncRegister(CustomAkgOpInferFunc);
-      } else if (type == CustomOpType::kTbe) {
-        op.CustomInferFuncRegister(CustomTbeOpInferFunc);
+      } else {
+        op.CustomInferFuncRegister(CustomTbeAicpuOpInferFunc);
       }
       return op;
     });
   // Register op infer shape function
-  if (type == CustomOpType::kAkg) {
+  if (is_akg) {
     (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomAkgOpInferFunc);
-  } else if (type == CustomOpType::kTbe) {
-    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomTbeOpInferFunc);
+  } else {
+    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomTbeAicpuOpInferFunc);
   }
 }
 
@@ -103,7 +115,7 @@ Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const P
   // Create the map of custom op from input index to input name.
   mindspore::HashMap<int, std::string> input_map;
   auto op_type = GetCustomOpType(prim);
-  auto value = prim->GetAttr("input_names");
+  auto value = GetCustomOpInputNames(prim);
   if (value == nullptr) {
     (*cus_output_map_)[op_type] = std::map<int, std::string>{};
     return NOT_FOUND;
@@ -150,7 +162,8 @@ Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const 
 
 std::string OpAdapterImpl::GetCustomOpType(const PrimitivePtr &prim) const {
   MS_EXCEPTION_IF_NULL(prim);
-  if (IsTbeOp(prim)) {
+  auto detail_type = GetCustomOpTypeDetail(prim);
+  if (detail_type == CustomOpType::kTbe) {
     auto func_name = prim->GetAttr("func_name");
     if (func_name == nullptr) {
       MS_LOG(ERROR) << "Custom tbe op has no 'func_name' attr.";
@@ -190,13 +203,14 @@ OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
     MS_LOG(WARNING) << "Custom op node has no output_names, op[" << prim->name() << "].";
   }
 
-  if (IsAkgOp(anf)) {
+  auto detail_type = GetCustomOpTypeDetail(prim);
+  if (detail_type == CustomOpType::kAkg) {
     op->CustomRequiredAttrRegister("info_path");
     op->CustomInferFuncRegister(CustomAkgOpInferFunc);
-    RegisterCustomOp(prim, op_type, CustomOpType::kAkg);
-  } else if (IsTbeOp(prim)) {
-    op->CustomInferFuncRegister(CustomTbeOpInferFunc);
-    RegisterCustomOp(prim, op_type, CustomOpType::kTbe);
+    RegisterCustomOp(prim, op_type, true);
+  } else if (detail_type == CustomOpType::kTbe || detail_type == CustomOpType::kAiCpu) {
+    op->CustomInferFuncRegister(CustomTbeAicpuOpInferFunc);
+    RegisterCustomOp(prim, op_type, false);
   } else {
     MS_LOG(INFO) << "For custom operators, users need to define and implement the Infershape function by themselves.";
   }
