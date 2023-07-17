@@ -290,6 +290,8 @@ void SetMsFunctionCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_grap
   common::AnfAlgo::SetNodeAttr(kAttrMsFunctionCallNode, MakeValue(true), cnode);
   // kFlagMsFunctionCallGraph is set true to avoid compilig call_graph whe compiling the main graph
   call_graph->set_flag(kFlagMsFunctionCallGraph, true);
+  // call graph not inline to grad top
+  call_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   pipeline::ResourcePtr resource;
   const auto it = ms_function_call_graph_compile_cache_.find(cache_key);
   bool need_compile = (it == ms_function_call_graph_compile_cache_.end());
@@ -1432,7 +1434,9 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
     const auto &valuenode = din->cast<ValueNodePtr>();
     const auto &value = valuenode->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>()) {
+    auto type = value->type();
+    if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
+        (type != nullptr && type->isa<String>())) {
       return;
     }
     tensor::TensorPtr tensor_ptr = nullptr;
@@ -1443,7 +1447,8 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
     } else if (value->isa<ValueList>()) {
       tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
     } else {
-      MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get " << value->ToString();
+      MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
+                        << ", value " << value->ToString();
     }
     MS_EXCEPTION_IF_NULL(tensor_ptr);
     valuenode->set_value(tensor_ptr);
