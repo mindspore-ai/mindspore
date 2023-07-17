@@ -231,6 +231,7 @@ class GradExecutor {
   void SaveDynamicDetectNodeInfoInFirstTime(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node,
                                             size_t node_idx) const;
   bool IsGraphDynamic(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node, size_t node_idx) const;
+  void DispatchGradQueueTask(const std::function<void(void)> task) const;
   bool init_{false};
   bool grad_flag_{false};
   bool enable_grad_{true};
