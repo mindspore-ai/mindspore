@@ -183,7 +183,6 @@ void ProfilerAnalyzer::Clear() {
   // Reset the saved data.
   json_infos_.clear();
   data_.clear();
-  summary_data_.clear();
   module_infos_.clear();
   stage_infos_.clear();
 }
@@ -224,7 +223,6 @@ void ProfilerAnalyzer::StartStep() {
   step_time_ = 0;
   module_total_time_ = 0;
   data_.clear();
-  summary_data_.clear();
   module_infos_.clear();
   stage_infos_.clear();
   step_start_time_ = GetTimeStamp();
@@ -306,7 +304,6 @@ void ProfilerAnalyzer::EndStep() {
   step_time_ = 0;
   module_total_time_ = 0;
   data_.clear();
-  summary_data_.clear();
   module_infos_.clear();
   stage_infos_.clear();
 #endif
