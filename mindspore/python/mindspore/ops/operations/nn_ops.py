@@ -8594,6 +8594,9 @@ class Conv3DTranspose(Primitive):
         W_{out} = (W_{in} - 1) \times \text{stride}[2] - 2 \times \text{pad}[2] + \text{dilation}[2]
         \times (\text{kernel_size}[2] - 1) + \text{output_padding}[2] + 1
 
+    Note:
+        In Ascend, `group` must be equal to 1.
+
     Args:
         in_channel (int): The channel of the input x.
         out_channel (int): The channel of the weight x.
@@ -8627,7 +8630,8 @@ class Conv3DTranspose(Primitive):
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: ``1`` .
         dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: ``1`` .
-        group (int): Splits input into groups. Default: ``1`` . Only 1 is currently supported.
+        group (int): The number of groups into which the filter is divided. `in_channels`
+            and `out_channels` must be divisible by `group`. Default: ``1`` .
         output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: ``0`` .
         data_format (str): The optional value for data format. Currently only ``'NCDHW'`` is supported.
             Default: ``'NCDHW'``.
@@ -8726,8 +8730,16 @@ class Conv3DTranspose(Primitive):
         self.add_prim_attr('pad_list', self.pad_list)
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.add_prim_attr('mode', self.mode)
-        self.group = validator.check_equal_int(group, 1, 'group', self.name)
+        validator.check_value_type("group", group, (int,), self.name)
+        validator.check_int_range(group, 1, out_channel, validator.INC_BOTH, "group", self.name)
+        if self.out_channel % group != 0:
+            raise ValueError("The argument 'group' should be divisible by 'out_channel'")
+        device_target = context.get_context("device_target")
+        if device_target == "Ascend" and group != 1:
+            raise ValueError("On Ascend platform, group = 1 must be satisfied.")
+        self.group = group
         self.add_prim_attr('groups', self.group)
+
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.add_prim_attr('data_format', self.format)
 
