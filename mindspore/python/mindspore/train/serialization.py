@@ -1142,6 +1142,15 @@ def _whether_load_param(specify_prefix, filter_prefix, param_name):
     return whether_load
 
 
+def _init_parameter_data_in_parallel_mode(net, parameter_dict):
+    """In parallel mode, only init the paraemters in ckpt."""
+    for _, param in net.parameters_and_names():
+        if param.name in parameter_dict and param.has_init:
+            logger.warning("{} is not init while load ckpt.".format(param.name))
+            new_tensor = param.init_data()
+            param._update_tensor_data(new_tensor)
+
+
 def load_param_into_net(net, parameter_dict, strict_load=False):
     """
     Load parameters into network, return parameter list that are not loaded in the network.
@@ -1201,6 +1210,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     logger.info("Execute the process of loading parameters into net.")
     if not _is_in_auto_parallel_mode():
         net.init_parameters_data()
+    else:
+        _init_parameter_data_in_parallel_mode(net, parameter_dict)
     param_not_load = []
     ckpt_not_load = list(parameter_dict.keys())
     for _, param in net.parameters_and_names():
