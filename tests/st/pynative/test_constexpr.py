@@ -23,18 +23,18 @@ def _temp_func():
 
 @constexpr(check=False)
 def _is_need_compile(func):
-    # No matter what the value of mode is, in ms_function scenario, this function always returns true.
+    # No matter what the value of mode is, in jit scenario, this function always returns true.
     return func is None
 
 
 @jit
-def run_in_ms_function():
+def run_in_jit():
     return _is_need_compile(_temp_func)
 
 
 @constexpr
 def run_in_pyhon(func):
-    # No matter what the value of mode is, in ms_function scenario, this function always returns true.
+    # No matter what the value of mode is, in jit scenario, this function always returns true.
     return func is None
 
 
@@ -48,4 +48,4 @@ def test_constexpr():
     Expectation: success
     """
     assert not run_in_pyhon(_temp_func)
-    assert run_in_ms_function()
+    assert run_in_jit()

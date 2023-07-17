@@ -30,8 +30,8 @@ from mindspore.nn import GraphCell
 @pytest.mark.env_onecard
 def test_add_tensor():
     """
-    Feature: Test MindIR Export msfunction with decorator.
-    Description: test msfunction export as mindir.
+    Feature: Test MindIR Export jit with decorator.
+    Description: test jit export as mindir.
     Expectation: No exception, assert True.
     """
 

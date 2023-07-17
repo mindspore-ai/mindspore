@@ -52,10 +52,10 @@ class GraphNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function_support_parameter_as_input():
+def test_pynative_jit_support_parameter_as_input():
     """
-    Feature: PyNative ms_function support parameter as input.
-    Description: PyNative ms_function support parameter as input.
+    Feature: PyNative jit support parameter as input.
+    Description: PyNative jit support parameter as input.
     Expectation: The calculation result is correct.
     """
     if platform.system() == 'Windows':
