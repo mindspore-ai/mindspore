@@ -578,6 +578,7 @@ constexpr char KLDIV_LOSS[] = "KLDivLoss";
 constexpr char LIN_SPACE[] = "LinSpace";
 constexpr char SORT[] = "SORT";
 constexpr char FILLV2[] = "FillV2";
+constexpr char WKV[] = "WKV";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
