@@ -4640,7 +4640,7 @@ class PadV3(Primitive):
         >>> pad = Net(mode="reflect", paddings_contiguous=True)
         >>> output = pad(x)
         >>> print(output)
-        [[[1., 0., 1., 0.]]]
+        [[[1. 0. 1. 0.]]]
         >>> # case2: mode="constant", padding_contigous=False
         >>> class Net(nn.Cell):
         ...    def __init__(self, mode, paddings_contiguous):
@@ -4655,7 +4655,7 @@ class PadV3(Primitive):
         >>> pad = Net(mode="constant", paddings_contiguous=False)
         >>> output = pad(x)
         >>> print(output)
-        [[[1.5, 0., 1., 2., 1.5]]])
+        [[1.5 0. 1. 2. 1.5]]
     """
 
     @prim_attr_register
