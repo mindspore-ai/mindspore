@@ -1072,6 +1072,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
       GilReleaseWithCheck release_gil;
       async_executor_->Clear();
     }
+    async_executor_->CheckException();
     top_cell()->ClearParamGradInfo();
     AsyncClearTopCell();
     set_top_cell(already_run_top_cell);
@@ -1083,6 +1084,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
     GilReleaseWithCheck release_gil;
     async_executor_->Wait();
   }
+  async_executor_->CheckException();
   set_top_cell(already_run_top_cell);
   AsyncClearTopCell();
   op_num_in_bprop_graph_ = top_cell()->op_index();
@@ -1845,7 +1847,10 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const {
   if (forward()->enable_async()) {
     auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
     auto fn = [auto_grad_cell_ptr, grad_param]() { auto_grad_cell_ptr->KPynativeOp(grad_param); };
-    async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
+    bool success = async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
+    if (!success) {
+      async_executor_->CheckException();
+    }
   } else {
     top_cell()->auto_grad_cell_ptr()->KPynativeOp(grad_param);
   }

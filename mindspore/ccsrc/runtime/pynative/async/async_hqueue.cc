@@ -20,6 +20,7 @@
 #include "include/common/utils/signal_util.h"
 #endif
 #include "utils/log_adapter.h"
+#include "utils/ms_exception.h"
 #include "mindrt/include/fork_utils.h"
 
 namespace mindspore {
@@ -79,7 +80,13 @@ void AsyncHqueue::WorkerLoop() {
       if (LIKELY(task != nullptr)) {
         // cppcheck-suppress unreadVariable
         if (LIKELY(!stop_)) {
-          task->Run();
+          try {
+            task->Run();
+          } catch (const std::exception &e) {
+            MS_LOG(INFO) << "Grad queue catch excption: " << e.what();
+            e_ptr_ = std::current_exception();
+            stop_ = true;
+          }
         }
         delete task;
         spin_count_ = 0;
@@ -112,11 +119,15 @@ void AsyncHqueue::Init() {
   worker_ = std::make_unique<std::thread>(&AsyncHqueue::WorkerLoop, this);
 }
 
-void AsyncHqueue::Push(AsyncTask *task) {
+bool AsyncHqueue::Push(AsyncTask *task) {
   // For process fork will cause thread confusion
   if (!init_) {
     Init();
     init_ = true;
+  }
+  if (stop_ && e_ptr_ != nullptr) {
+    delete task;
+    return false;
   }
   while (!tasks_hqueque_.Enqueue(task)) {
   }
@@ -128,6 +139,7 @@ void AsyncHqueue::Push(AsyncTask *task) {
     std::unique_lock<std::mutex> lock(task_mutex_);
     task_cond_var_->notify_one();
   }
+  return true;
 }
 
 void AsyncHqueue::Wait() {
@@ -175,6 +187,16 @@ void AsyncHqueue::ReinitAfterFork() {
   if (worker_ != nullptr) {
     (void)worker_.release();
     worker_ = std::make_unique<std::thread>(&AsyncHqueue::WorkerLoop, this);
+  }
+}
+
+void AsyncHqueue::CheckException() {
+  if (stop_ && e_ptr_ != nullptr) {
+    Wait();
+    const auto temp_ptr = e_ptr_;
+    e_ptr_ = nullptr;
+    stop_ = false;
+    std::rethrow_exception(temp_ptr);
   }
 }
 }  // namespace pynative
