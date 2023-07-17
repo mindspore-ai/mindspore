@@ -43,9 +43,9 @@ const AnfNodePtr AscendConvertTupleInputToDynamicInput::Process(const FuncGraphP
   // pack_fission, addn_fission, and HandleControlFlow
 
   bool is_communication_op = common::AnfAlgo::IsCommunicationOp(node);
-  static const PrimitiveSet need_unfold_node = {prim::kPrimAddN,        prim::kPrimConcatD,    prim::kPrimPack,
-                                                prim::kPrimStack,       prim::kPrimCallInline, prim::kPrimPrint,
-                                                prim::kPrimSwitchLayer, prim::kPrimCall,       prim::kPrimSwitch};
+  static const PrimitiveSet need_unfold_node = {
+    prim::kPrimAddN,  prim::kPrimConcatD,     prim::kPrimPack, prim::kPrimStack,  prim::kPrimCallInline,
+    prim::kPrimPrint, prim::kPrimSwitchLayer, prim::kPrimCall, prim::kPrimSwitch, prim::kPrimConcat};
   PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(prim);
   if (!is_communication_op && need_unfold_node.find(prim) == need_unfold_node.end()) {

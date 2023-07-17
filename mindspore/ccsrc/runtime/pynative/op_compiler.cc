@@ -195,14 +195,6 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
     (void)op_compiler_info->execute_kernel_list_.emplace_back(exe_kernel_info);
   }
 }
-
-void CheckBackendPolicy() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->backend_policy() == "ge") {
-    MS_LOG(EXCEPTION) << "GE backend is not support in PyNative RunOp!";
-  }
-}
 }  // namespace
 
 OpCompiler::OpCompiler() {
@@ -277,7 +269,6 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   }
 
   MS_LOG(INFO) << "Run Op cache miss " << op_run_info->base_op_run_info.graph_info;
-  CheckBackendPolicy();
 
   *single_op_cache_hit = false;
   // Generate kernel graph.

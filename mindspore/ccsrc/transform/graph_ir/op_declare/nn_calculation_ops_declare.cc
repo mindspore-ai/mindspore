@@ -275,4 +275,18 @@ ATTR_MAP(DeformableConv2D) = {
 };
 OUTPUT_MAP(DeformableConv2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DeformableConv2D, kDeformableConv2dOpName, ADPT_DESC(DeformableConv2D))
+
+// WKV
+INPUT_MAP(WKV) = {{1, INPUT_DESC(w)}, {2, INPUT_DESC(u)}, {3, INPUT_DESC(k)}, {4, INPUT_DESC(v)},
+                  {5, INPUT_DESC(m)}, {6, INPUT_DESC(p)}, {7, INPUT_DESC(q)}};
+ATTR_MAP(WKV) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(WKV) = {{0, OUTPUT_DESC(o)}, {1, OUTPUT_DESC(mo)}, {2, OUTPUT_DESC(po)}, {3, OUTPUT_DESC(qo)}};
+REG_ADPT_DESC(WKV, kNameWKV, ADPT_DESC(WKV))
+
+// WKVGrad
+INPUT_MAP(WKVGrad) = {
+  {1, INPUT_DESC(w)}, {2, INPUT_DESC(u)}, {3, INPUT_DESC(k)}, {4, INPUT_DESC(v)}, {5, INPUT_DESC(gy)}};
+ATTR_MAP(WKVGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(WKVGrad) = {{0, OUTPUT_DESC(gw)}, {1, OUTPUT_DESC(gu)}, {2, OUTPUT_DESC(gk)}, {3, OUTPUT_DESC(gv)}};
+REG_ADPT_DESC(WKVGrad, kNameWKVGrad, ADPT_DESC(WKVGrad))
 }  // namespace mindspore::transform
