@@ -204,12 +204,6 @@ int GetExecutionMode() {
   return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
 }
 
-bool EnablePyNativeSyncRunning() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-}
-
 void UpdateTensorAddress(const session::BackendOpRunInfoPtr &op_run_info,
                          const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
   auto &output_tensors = op_run_info->output_tensors;
@@ -594,6 +588,26 @@ TensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_compiler_inf
     tensor->data_sync(false);
   }
   return tensor;
+}
+
+#if !defined(__APPLE__)
+bool EnablePyNativeSyncRunning() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  return ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+}
+#endif
+
+bool DisableRunOpAsync(const OpCompilerInfoPtr &op_compiler_info, const session::BackendOpRunInfoPtr &op_run_info) {
+#if defined(__APPLE__)
+  return true;
+#else
+  return op_run_info->base_op_run_info.has_dynamic_output ||  // Infer output is dynamic.
+         op_compiler_info->graph_output_dynamic_ ||           // Graph output is dynamic after IR Pass. (e.g. Dropout)
+         op_compiler_info->need_erase_ ||                     // Random op cache need to be erased.
+         GetExecutionMode() == kGraphMode ||                  // Cannot find a wait point before compile graph.
+         EnablePyNativeSyncRunning();                         // context.set_context(pynative_synchronize=True)
+#endif
 }
 }  // namespace
 
@@ -1014,11 +1028,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
 
   auto device_context = op_compiler_info->device_context_;
   auto &op_executor = runtime::OpExecutor::GetInstance();
-  bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
-  bool async_exec_disabled = is_dynamic_shape || op_compiler_info->need_erase_ ||
-                             !op_run_info->base_op_run_info.lazy_build || GetExecutionMode() == kGraphMode ||
-                             EnablePyNativeSyncRunning();
-  if (!async_exec_disabled) {
+  if (!DisableRunOpAsync(op_compiler_info, op_run_info)) {
     MS_LOG(DEBUG) << "Async exec enabled, op: " << op_run_info->base_op_run_info.op_name;
     DispatchOpTask(single_op_cache_hit, outputs, op_compiler_info, op_run_info);
     return;
@@ -1044,7 +1054,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
   ClearInputDeviceAddress(graph, device_context);
 
-  if (is_dynamic_shape) {
+  if (op_run_info->base_op_run_info.has_dynamic_output || op_compiler_info->graph_output_dynamic_) {
     UpdateOutputAbstract(*outputs, op_run_info);
   }
   if (op_compiler_info->need_erase_) {
@@ -1080,15 +1090,12 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(outputs);
 
-  bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
-  auto async_exec_disabled = is_dynamic_shape || !op_run_info->base_op_run_info.lazy_build ||
-                             GetExecutionMode() == kGraphMode || EnablePyNativeSyncRunning();
   auto device_context = op_compiler_info->device_context_;
   if (!single_op_cache_hit) {
     CompileSingleOpGraph(op_compiler_info->graph_, device_context, true);
     GetIgnoreSyncHostToDeviceList(op_compiler_info);
   }
-  if (!async_exec_disabled) {
+  if (!DisableRunOpAsync(op_compiler_info, op_run_info)) {
     MS_LOG(DEBUG) << "Async exec enabled, op: " << op_run_info->base_op_run_info.op_name;
     // Create graph output device address
     auto device_address_list = runtime::DeviceAddressUtils::CreateGraphOutputDeviceAddress(

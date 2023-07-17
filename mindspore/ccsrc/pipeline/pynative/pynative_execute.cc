@@ -255,8 +255,6 @@ py::object PyNativeExecutor::GradJit(const py::object &out, const py::args &args
   return ret;
 }
 
-void PyNativeExecutor::SetLazyBuild(bool enable) const { forward_executor()->set_lazy_build(enable); }
-
 bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
 
 void PyNativeExecutor::WorkerJoin() {
@@ -287,7 +285,6 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("grad_net", &PyNativeExecutor::GradNet, "pynative grad graph.")
     .def("clear_res", &PyNativeExecutor::ClearRes, "pynative clear exception res.")
     .def("sync", &PyNativeExecutor::Sync, "pynative sync stream.")
-    .def("set_lazy_build", &PyNativeExecutor::SetLazyBuild, "pynative build kernel async")
     .def("__call__", &PyNativeExecutor::Run, "pynative executor run grad graph.")
     .def("grad_flag", &PyNativeExecutor::grad_flag, "pynative grad flag")
     .def("enable_grad", &PyNativeExecutor::enable_grad, "pynative enable grad, used for with no_grad")

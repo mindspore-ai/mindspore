@@ -64,7 +64,6 @@ class ForwardExecutor {
   void SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const;
   AbstractBasePtr GetNodeAbsById(const std::string &id) const;
   void ClearRes();
-  void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
   bool EnablePipeline(const std::string &op_name) const;
   bool enable_async() const;
   inline const std::string &device_target() const { return device_target_; }
@@ -126,7 +125,6 @@ class ForwardExecutor {
 
  private:
   bool init_{false};
-  bool lazy_build_{true};
   bool enable_async_{true};
   bool is_jit_compiling_{false};
   uint32_t device_id_{0};

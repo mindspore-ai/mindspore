@@ -430,7 +430,6 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   } else {
     op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->forward_use_dynamic_shape_process();
   }
-  op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)],
                                                   stub);
@@ -489,10 +488,6 @@ VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_
   // get graph info for checking it whether existing in the cache
   backend_op_run_info->base_op_run_info.graph_info = pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(
     backend_op_run_info->base_op_run_info, backend_op_run_info->op_prim);
-
-#if defined(__APPLE__)
-  backend_op_run_info->base_op_run_info.lazy_build = false;
-#endif
 
   VectorRef outputs;
   const auto &cur_mind_rt_backend = GetMindRtBackend(op_run_info->base_op_run_info.device_target);
@@ -777,7 +772,6 @@ void ForwardExecutor::ClearRes() {
     item.second->ClearOpExecutorResource();
   }
   init_ = false;
-  lazy_build_ = false;
   is_jit_compiling_ = false;
   cast_operation()->ClearRes();
   ClearNodeAbsMap();

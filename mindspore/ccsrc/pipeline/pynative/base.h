@@ -41,7 +41,6 @@ struct BaseOpRunInfo {
   uint64_t py_prim_id_{0};
   bool has_dynamic_output = false;
   bool is_mixed_precision_cast = false;
-  bool lazy_build = false;
   bool use_dynamic_shape_process = false;
   bool need_earse_cache = false;
   std::string op_name;

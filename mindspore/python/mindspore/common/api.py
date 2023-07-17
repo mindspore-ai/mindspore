@@ -1355,18 +1355,6 @@ class _PyNativeExecutor:
         """
         self._executor.sync()
 
-    def set_lazy_build(self, enable):
-        """
-        The switch of lazy build.
-
-        Args:
-            enable (bool): Specifies whether the lazy build is enable.
-
-        Return:
-            None.
-        """
-        self._executor.set_lazy_build(enable)
-
     def grad_jit(self, output, *args):
         """
         Building grad graph decorated by jit.

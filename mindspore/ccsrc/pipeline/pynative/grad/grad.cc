@@ -1812,7 +1812,9 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const {
 
 void GradExecutor::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const {
   const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
-  if (pre_top_cell == nullptr) {
+  // The shape of the last two steps is the same, and the pre_top_cell is not empty.
+  // But if dynamic shape is enabled at this point, you still need to execute SaveTensorIdWithOpInfo.
+  if (pre_top_cell == nullptr || use_dynamic_shape_process()) {
     // First run top cell, save op output info for replace
     top_cell()->SaveTensorIdWithOpInfo(op_info, v);
     MS_LOG(DEBUG) << "Top cell " << top_cell_->already_run_cell_id() << " run firstly, op info " << op_info;
