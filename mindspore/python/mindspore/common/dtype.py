@@ -189,8 +189,9 @@ def pytype_to_dtype(obj):
 
     Examples:
         >>> import mindspore as ms
-        >>> ms.dtype_to_nptype(bool)
-        mindspore.bool_
+        >>> out = ms.pytype_to_dtype(bool)
+        >>> print(out)
+        Bool
     """
 
     if isinstance(obj, np.dtype):
@@ -285,7 +286,8 @@ def dtype_to_pytype(type_):
 
     Examples:
         >>> import mindspore as ms
-        >>> ms.dtype_to_nptype(ms.bool_)
+        >>> out = ms.dtype_to_pytype(ms.bool_)
+        >>> print(out)
         <class 'bool'>
     """
 

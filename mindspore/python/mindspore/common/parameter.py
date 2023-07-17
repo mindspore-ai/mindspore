@@ -745,7 +745,7 @@ class Parameter(Tensor_):
             >>> import numpy as np
             >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
             >>> x.data
-            Parameter (name=Parameter, shape=(2, 2), dtype=float32, requires=True)
+            Parameter (name=param, shape=(2, 2), dtype=Float32, requires_grad=True)
         """
         return self
 
