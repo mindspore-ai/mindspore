@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,15 +105,9 @@ void AddMissingAttrs(const CNodePtr &cnode, kernel::OpImplyType imply_type,
     if (missing_attrs.find(attr_name) == missing_attrs.end()) {
       continue;
     }
-    // If attr's param_type is required, it should have default value.
-    // If attr have default value, we should parse it no matter whether its param_type is required or not.
     auto default_value = attr->default_value();
-    if (default_value.empty() && attr->param_type() != "required") {
-      continue;
-    }
     if (default_value.empty()) {
-      MS_LOG(EXCEPTION) << "attr [" << attr_name << "] in the registration information of op [" << op_name
-                        << "] does not have a value." << trace::DumpSourceLines(cnode);
+      continue;
     }
     ParseAttrDefaultValue(op_name, attr_name, default_value, attr->type(), primitive);
     need_update = true;
@@ -139,10 +133,15 @@ AnfNodePtr BuildCustom(const PatternMap &m, const AnfNodePtr &) {
     }
   }
   if (missing_attrs.empty()) {
-    return nullptr;
+    return cnode;
   }
-  kernel::OpImplyType imply_type =
-    func_type == kCustomTypeAICPU ? kernel::OpImplyType::kImplyAICPU : kernel::OpImplyType::kImplyAKG;
+  kernel::OpImplyType imply_type = kernel::OpImplyType::kImplyAKG;
+  if (func_type == kCustomTypeAICPU) {
+    imply_type = kernel::OpImplyType::kImplyAICPU;
+  } else if (func_type == kCustomTypeTbe) {
+    imply_type = kernel::OpImplyType::kImplyTBE;
+  }
+  // Fetch attr value form reg info and set it to node's attr
   AddMissingAttrs(cnode, imply_type, missing_attrs);
 
   return cnode;
@@ -155,16 +154,12 @@ bool CustomOpRegInfoToAttr::CheckMatchedDAG(const PatternMap &, const FuncGraphP
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   auto func_type = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType);
-  // AKG/AICPU need to process attr, TBE will process later in the json creating phase.
-  if (!IsOneOfCustomAkgType(func_type) || func_type == kCustomTypeAICPU) {
+  if (!IsOneOfCustomAkgType(func_type) && func_type != kCustomTypeAICPU && func_type != kCustomTypeTbe) {
     return false;
   }
   // Early return if current node does not have attr
   auto attr_names = primitive->GetAttr(kAttrAttrNames);
-  if (attr_names == nullptr) {
-    return false;
-  }
-  return true;
+  return (attr_names != nullptr);
 }
 
 void CustomOpRegInfoToAttr::DefineSrcPattern(SrcPattern *src_pattern) {
