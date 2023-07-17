@@ -203,6 +203,7 @@ ShardTask ShardTaskList::GetTaskByID(int64_t id) {
   shard_id = file_ids_[shard_id];
 
   // get the row id in the shard
+  row_id = id;
   for (int32_t i = 0; i < shuffled_shard_sample_count_.size(); i++) {
     if (id < shuffled_shard_sample_count_[i]) {
       if (i > 0) {
