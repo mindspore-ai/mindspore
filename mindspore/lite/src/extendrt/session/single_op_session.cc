@@ -206,6 +206,10 @@ Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
   kernel::KernelModPtr kernel_mod;
   kernel::KernelArgs args;
   std::tie(kernel_mod, args) = BuildCustomAscendKernelImpl(cnode);
+  if (is_multi_model_sharing_mem_prepare_) {
+    MS_LOG(INFO) << "using ascend workspace sharing.";
+    return kSuccess;
+  }
   if (kernel_mod == nullptr) {
     MS_LOG(ERROR) << "Build ascend kernel failed for node: " << cnode->fullname_with_scope();
     return kLiteError;
