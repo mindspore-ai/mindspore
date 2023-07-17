@@ -29,6 +29,8 @@ typedef struct ConvolutionDelegateStruct {
   float *origin_bias_;
   bool need_free_weight_;
   bool need_free_bias_;
+  bool input_const_;
+  bool weight_const_;
 } ConvolutionDelegateStruct;
 
 KernelBase *CreateConvlutionDelegate(ConvParameter *conv_param);

@@ -129,8 +129,8 @@ int MatmulBasePackMatrixAImplOpt(MatmulStruct *matmul) { return NNACL_ERR; }
 
 int MatmulBasePackMatrixAImpl(MatmulStruct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  float *src_ptr = (matmul->matrix_a_.has_origin_) ? (matmul->matrix_a_.origin_ptr_)
-                                                   : (float *)(matmul->base_.in_[FIRST_INPUT]->data_);
+  float *src_ptr = (matmul->matrix_a_.origin_ptr_ != NULL) ? (matmul->matrix_a_.origin_ptr_)
+                                                           : (float *)(matmul->base_.in_[FIRST_INPUT]->data_);
   NNACL_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
   NNACL_CHECK_TRUE_RET(matmul->matrix_a_.pack_ptr_ != NULL, NNACL_ERR);
   NNACL_CHECK_TRUE_RET(matmul->matrix_a_pack_fun_ != NULL, NNACL_ERR);
@@ -149,8 +149,8 @@ int MatmulBasePackMatrixAImpl(MatmulStruct *matmul) {
 int MatmulBasePackMatrixBImpl(MatmulStruct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
 
-  float *src_ptr =
-    matmul->matrix_b_.has_origin_ ? matmul->matrix_b_.origin_ptr_ : (float *)matmul->base_.in_[SECOND_INPUT]->data_;
+  float *src_ptr = matmul->matrix_b_.origin_ptr_ != NULL ? matmul->matrix_b_.origin_ptr_
+                                                         : (float *)matmul->base_.in_[SECOND_INPUT]->data_;
   NNACL_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
   NNACL_CHECK_TRUE_RET(matmul->matrix_b_.pack_ptr_ != NULL, NNACL_ERR);
   NNACL_CHECK_TRUE_RET(matmul->matrix_b_pack_fun_ != NULL, NNACL_ERR);
@@ -251,7 +251,7 @@ int MatmulBaseBackupConstMatrix(MatmulStruct *matmul, MatrixInfo *matrix_info, i
   void *src_ptr = matmul->base_.in_[index]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(src_ptr);
   (void)memcpy(matrix_info->origin_ptr_, src_ptr, backup_size);
-  matrix_info->has_origin_ = true;
+  matrix_info->origin_need_free_ = true;
   return NNACL_OK;
 }
 
@@ -416,7 +416,7 @@ int MatmulBasePackBiasMatrix(MatmulStruct *matmul) {
     return NNACL_OK;
   }
   TensorC *bias_tensor = matmul->base_.in_[THIRD_INPUT];
-  float *bias_src = matmul->matrix_c_.has_origin_ ? matmul->matrix_c_.origin_ptr_ : (float *)bias_tensor->data_;
+  float *bias_src = matmul->matrix_c_.origin_ptr_ != NULL ? matmul->matrix_c_.origin_ptr_ : (float *)bias_tensor->data_;
   NNACL_CHECK_NULL_RETURN_ERR(bias_src);
 
   int bias_num = GetElementNum(bias_tensor);
@@ -434,10 +434,10 @@ int MatmulBasePackBiasMatrix(MatmulStruct *matmul) {
     (void)memcpy(matmul->matrix_c_.pack_ptr_, bias_src, bias_num * sizeof(float));
     (void)memset(matmul->matrix_c_.pack_ptr_ + bias_num, 0, (matmul->matrix_c_.pack_size_ - bias_num) * sizeof(float));
   }
-  if (matmul->matrix_c_.has_origin_) {
+  if (matmul->matrix_c_.origin_need_free_) {
     matmul->base_.env_->Free(matmul->base_.env_->allocator_, matmul->matrix_c_.origin_ptr_);
     matmul->matrix_c_.origin_ptr_ = NULL;
-    matmul->matrix_c_.has_origin_ = false;
+    matmul->matrix_c_.origin_need_free_ = false;
   }
   return NNACL_OK;
 }
@@ -626,7 +626,7 @@ int MatmulBaseCompute(struct KernelBase *self) {
 void InitMatrixInfo(MatrixInfo *info) {
   info->need_pack_ = false;
   info->has_packed_ = false;
-  info->has_origin_ = false;
+  info->origin_need_free_ = false;
   info->pack_size_ = -1;
   info->origin_ptr_ = NULL;
   info->pack_ptr_ = NULL;

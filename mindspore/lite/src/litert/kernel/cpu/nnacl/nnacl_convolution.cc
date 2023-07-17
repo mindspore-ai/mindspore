@@ -41,6 +41,17 @@ int ConvolutionKernel::Prepare() {
   return NNACLKernel::Prepare();
 }
 
+int ConvolutionKernel::ReSize() {
+  if (kernel_ == nullptr) {
+    return RET_ERROR;
+  }
+
+  ConvolutionBaseStruct *conv = reinterpret_cast<ConvolutionBaseStruct *>(kernel_);
+  conv->infershape_done_ = InferShapeDone();
+
+  return NNACLKernel::ReSize();
+}
+
 NNACLKernel *NNACLConvolutionOpt(OpParameter *parameter, const std::vector<lite::Tensor *> &in,
                                  const std::vector<lite::Tensor *> &out, const lite::InnerContext *ctx) {
   reinterpret_cast<ConvParameter *>(parameter)->thread_num_ = ctx->thread_num_;

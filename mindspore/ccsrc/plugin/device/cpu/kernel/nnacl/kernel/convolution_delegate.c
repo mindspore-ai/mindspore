@@ -135,7 +135,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelega
 
 #ifdef ENABLE_AVX
   if (conv == NULL && CheckAvxUseSW1x1Conv(conv_param)) {
-    conv = CreateConvolutionSW1x1(conv_param);
+    conv = CreateConvolutionSW1x1(conv_param, convolution_delegate->input_const_, convolution_delegate->weight_const_);
   }
 
   if (conv == NULL && CheckAvxUseSWConv(conv_param, convolution_delegate->conv_.base_.thread_nr_)) {
@@ -223,9 +223,15 @@ int ConvolutionDelegateResize(struct KernelBase *self) {
     }
   }
 
-  ConvolutionDelegateFreeCopiedData(convolution_delegate);
   (void)ConvBaseUpdateComputeInfo(convolution_delegate->convolution_);
-  return convolution_delegate->convolution_->base_.Resize(&convolution_delegate->convolution_->base_);
+  int ret = convolution_delegate->convolution_->base_.Resize(&convolution_delegate->convolution_->base_);
+  if (ret != NNACL_OK) {
+    self->Release(self);
+    return ret;
+  }
+
+  ConvolutionDelegateFreeCopiedData(convolution_delegate);
+  return NNACL_OK;
 }
 
 int ConvolutionDelegatePrepare(struct KernelBase *self) {
@@ -242,6 +248,9 @@ int ConvolutionDelegatePrepare(struct KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ == THREE_TENSOR && self->in_[THIRD_INPUT] != NULL &&
                       self->in_[THIRD_INPUT]->data_type_ != kNumberTypeFloat32,
                     NNACL_CONVOLUTION_BIAS_DATATYPE_INVALID);
+
+  convolution_delegate->input_const_ = IsConst(self->in_[FIRST_INPUT]) && !self->train_session_;
+  convolution_delegate->weight_const_ = IsConst(self->in_[SECOND_INPUT]) && !self->train_session_;
 
   return ConvolutionDelegateGetWeightAndBias(convolution_delegate);
 }
