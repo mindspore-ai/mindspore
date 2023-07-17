@@ -11,7 +11,14 @@ mindspore.ops.MatrixDiagPartV3
     更多参考详见 :func:`mindspore.ops.matrix_diag_part`。
 
     参数：
-        - **align** (str, 可选) - 一个字符串，指定超对角线和次对角线的对齐方式。可选字符串有： ``"RIGHT_LEFT"`` 、 ``"LEFT_RIGHT"`` 、 ``"LEFT_LEFT"`` 、 ``"RIGHT_RIGHT"`` 。例如， ``"RIGHT_LEFT"`` 表示将超对角线与右侧对齐（左侧填充行），将次对角线与左侧对齐（右侧填充行）。默认值： ``"RIGHT_LEFT"`` 。
+        - **align** (str, 可选) - 可选字符串，指定超对角线和次对角线的对齐方式。
+          可选值： ``"RIGHT_LEFT"`` 、 ``"LEFT_RIGHT"`` 、 ``"LEFT_LEFT"`` 、 ``"RIGHT_RIGHT"`` 。
+          默认值： ``"RIGHT_LEFT"`` 。
+
+          - ``"RIGHT_LEFT"`` 表示将超对角线与右侧对齐（左侧填充行），将次对角线与左侧对齐（右侧填充行）。
+          - ``"LEFT_RIGHT"`` 表示将超对角线与左侧对齐（右侧填充行），将次对角线与右侧对齐（左侧填充行）。
+          - ``"LEFT_LEFT"`` 表示将超对角线和次对角线均与左侧对齐（右侧填充行）。
+          - ``"RIGHT_RIGHT"`` 表示将超对角线与次对角线均右侧对齐（左侧填充行）。
 
     输入：
         - **x** (Tensor) - 输入Tensor，维度r需要满足 r >= 2。

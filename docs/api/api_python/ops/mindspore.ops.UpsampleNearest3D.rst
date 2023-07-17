@@ -11,8 +11,8 @@ mindspore.ops.UpsampleNearest3D
 
     输入：
         - **x** (Tensor) - Shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的五维Tensor。支持的数据类型：[uint8, float16, float32, float64]。
-        - **output_size** (Union[tuple[int], list[int]]) - 指定输出体积大小的元组或int列表。默认值：``None``。
-        - **scales** (Union[tuple[float], list[float]]) - 指定上采样因子的元组或float列表。默认值：``None``。
+        - **output_size** (Union[tuple[int], list[int]]) - 指定输出体积大小的元组或int列表。默认值： ``None`` 。
+        - **scales** (Union[tuple[float], list[float]]) - 指定上采样因子的元组或float列表。默认值： ``None`` 。
 
     输出：
         - **y** (Tensor) - 上采样输出。其shape :math:`(N, C, D_{out}, H_{out}, W_{out})` ，数据类型与 `x` 相同。

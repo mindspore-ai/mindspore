@@ -1444,20 +1444,21 @@ class Conv2D(Primitive):
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
         mode (int): Modes for different convolutions. The value is currently not used. Default: ``1`` .
-        pad_mode (str): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` and ``"pad"`` . Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: Adopts the way of completion. The height and width of the output will be equal to
-              the input `x` divided by stride. The padding will be evenly calculated in top and bottom,
-              left and right possiblily.
-              Otherwise, the last extra padding will be calculated from the bottom and the right side.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
               If this mode is set, `pad` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `pad` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the height and width directions is determined by the `pad` parameter.
+              If this mode is set, `pad` must be greater than or equal to 0.
 
-            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output will be
-              returned without padding. Extra pixels will be discarded. If this mode is set, `pad` must be 0.
-
-            - ``"pad"``: Implicit paddings on both sides of the input `x`. The number of `pad` will be padded to the
-              input Tensor borders. `pad` must be greater than or equal to 0.
         pad (Union(int, tuple[int])): Implicit paddings on both sides of the input `x`. If `pad` is one integer,
                     the paddings of top, bottom, left and right are the same, equal to pad. If `pad` is a tuple
                     with four integers, the paddings of top, bottom, left and right will be equal to pad[0],
@@ -1823,16 +1824,17 @@ class MaxPool(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             not only the height of movement but also the width of movement, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: ``1`` .
-        pad_mode (str): The optional value of pad mode is ``"same"`` or ``"valid"`` .
-            Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` or ``"valid"`` . Default: ``"valid"`` .
 
-            - ``"same"``: Adopts the way of completion. The height and width of the output will be the same
-              as the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top, bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the bottom and the right side.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded.
 
-            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output
-              will be returned without padding. Extra pixels will be discarded.
         data_format (str) : The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
 
@@ -1896,16 +1898,17 @@ class MaxPoolV1(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an integer that represents
             the height and width of movement are both strides, or a tuple of two integers that
             represent height and width of movement, respectively. Default: ``1`` .
-        pad_mode (str): The optional value for pad mode, is ``"same"`` or ``"valid"`` .
-            Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` or ``"valid"`` . Default: ``"valid"`` .
 
-            - ``"same"``: Adopts the way of completion. The height and width of the output will be the same
-              as the input. The number of padding will be calculated in horizontal and vertical
-              directions, and evenly distributed to top and bottom, left and right if possible.
-              Otherwise, the extra padding will be done from the bottom and the right side.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded.
 
-            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of the
-              output will be returned without padding. Extra pixels will be discarded.
         data_format (str) : The optional value for data format, is ``'NCHW'`` or ``'NHWC'`` .
             Default: ``'NCHW'`` .
 
@@ -2035,19 +2038,21 @@ class MaxPool3D(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             not only the depth, height of movement but also the width of movement,, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: ``1`` .
-        pad_mode (str): The optional value of pad mode is ``"SAME"`` , ``"VALID"`` or ``"PAD"`` .
-            Default: ``"VALID"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"SAME"`` , ``"VALID"`` or ``"PAD"`` . Default: ``"VALID"`` .
 
-            - ``"SAME"``: Adopts the way of completion. The height and width of the output will be the same
-              as the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top, bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the bottom and the right side.
-
-            - ``"VALID"``: Adopts the way of discarding. The possible largest height and width of output
-              will be returned without padding. Extra pixels will be discarded.
-
-            - ``"PAD"``: Implicit paddings on both sides of the input in depth, height and width. The number of
-              ``"PAD"`` will be padded to the input Tensor borders. "pad_list" must be greater than or equal to 0.
+            - ``"SAME"``: Pad the input around its depth/height/width dimension so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally.  If the amount is even,
+              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              to the front/right/bottom side.
+              If this mode is set, `pad_list` must be 0.
+            - ``"VALID"``: No padding is applied to the input, and the output returns the maximum
+              possible depth, height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `pad_list` must be 0.
+            - ``"PAD"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the depth, height and width dimension is determined by the `pad_list` parameter.
+              If this mode is set, `pad_list` must be greater than or equal to 0.
 
         pad_list (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the
             paddings of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
@@ -2356,14 +2361,17 @@ class AvgPool(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: ``1`` .
-        pad_mode (str, optional): The optional value for pad mode, is ``'same'`` or ``'valid'`` .
-            Default: ``'valid'`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` or ``"valid"`` . Default: ``"valid"`` .
 
-            - ``'same'``: The height and width of the output are the same as the input divided by 'strides'
-              and rounded up.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded.
 
-            - ``'valid'``: Returns the output of the valid calculation without filling. Redundant pixels that
-              do not satisfy the calculation will be discarded.
         data_format (str, optional): The format of input and output data. It should be ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
 
@@ -2460,16 +2468,17 @@ class AvgPoolV1(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an integer that represents
             the height and width of movement are both strides, or a tuple of two integers that
             represent height and width of movement, respectively. Default: ``1`` .
-        pad_mode (str): The optional value for pad mode, should be one of ``"same"`` or ``"valid"`` .
-            Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` or ``"valid"`` . Default: ``"valid"`` .
 
-            - ``"same"``: Adopts the way of completion. The height and width of output will be the same as
-              the input. The total number of padding will be calculated horizontally and vertically,
-              and evenly distributed to top and bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from bottom and right.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded.
 
-            - ``"valid"``: Adopts the way of discarding. The largest possible height and width of output
-              will be returned without padding. Extra pixels will be discarded.
         data_format (str): The format of input and output data. Should be ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
 
@@ -2717,8 +2726,21 @@ class Conv2DTranspose(Conv2DBackpropInput):
     Args:
         out_channel (int): The dimensionality of the output space.
         kernel_size (Union[int, tuple[int]]): The size of the convolution window.
-        pad_mode (str): Modes to fill padding. It could be ``"valid"`` , ``"same"`` , or ``"pad"`` .
-            Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
+
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+              If this mode is set, `pad` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `pad` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the height and width directions is determined by the `pad` parameter.
+              If this mode is set, `pad` must be greater than or equal to 0.
+
             Please refer to :class:`mindspore.nn.Conv2dTranspose` for more specifications about `pad_mode`.
         pad (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the paddings
                     of top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers,
@@ -2850,8 +2872,13 @@ class NLLLoss(Primitive):
         \end{array}\right.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: ``"none"`` , ``"mean"`` , or ``"sum"`` .
-          Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         ignore_index (int): Specifies a target value that is ignored
             and does not contribute to the input gradient. Default: ``-100`` .
 
@@ -3162,7 +3189,11 @@ class SmoothL1Loss(Primitive):
         beta (float, optional): A parameter used to control the point where the function will change between
             L1 to L2 loss. The value should be greater than zero. Default: ``1.0`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'none'`` .
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Input Tensor of any dimension. Data type must be float16, float32 or float64.
@@ -3211,12 +3242,12 @@ class MultiMarginLoss(Primitive):
     Args:
         p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: ``1`` .
         margin (int, optional): A parameter to change pairwise distance. Default: ``1.0`` .
-        reduction (str, optional): Apply specific reduction method to the output: ``"none"`` ,
-            ``"mean"`` , ``"sum"`` . Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
 
-            - ``"none"``: no reduction will be applied.
-            - ``"mean"``: the sum of the output will be divided by the number of elements in the output.
-            - ``"sum"``: the output will be summed.
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **inputs** (Tensor) - Input , with shape :math:`(N, C)`. Data type only support float32, float16
@@ -3270,8 +3301,12 @@ class SoftMarginLoss(Primitive):
     where :math:`x.nelement()` is the number of elements of x.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: ``"none"`` , ``"mean"`` or ``"sum"`` .
-          Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
@@ -4475,8 +4510,12 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``'mean'`` , ``'sum'`` , and
-            ``'none'`` , not case sensitive. If ``'none'`` , do not perform reduction. Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Input logits. Data type must be float16 or float32.
@@ -4678,8 +4717,14 @@ class MirrorPad(Primitive):
     Pads the input tensor according to the paddings and mode.
 
     Args:
-        mode (str): Specifies the padding mode. The optional values are ``'REFLECT'`` and ``'SYMMETRIC'`` .
+        mode (str, optional): An optional string specifying the pad method.
+            The optional values are ``'REFLECT'`` and ``'SYMMETRIC'`` .
             Default: ``'REFLECT'`` .
+
+            - ``'REFLECT'``: Reflect the value on the edge while omitting the last one.
+              For example, pad [1, 2, 3, 4] with 2 elements on both sides will result in [3, 2, 1, 2, 3, 4, 3, 2].
+            - ``'SYMMETRIC'```: Reflect the value on the edge while repeating the last one.
+              For example, pad [1, 2, 3, 4] with 2 elements on both sides will result in [2, 1, 1, 2, 3, 4, 4, 3].
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
@@ -4691,7 +4736,6 @@ class MirrorPad(Primitive):
           indicates how many sizes to be extended behind the input tensor in the `D` th dimension. Both
           paddings[D, 0] and paddings[D, 1] must be no greater than input_x.dim_size(D)
           (or input_x.dim_size(D) - 1) if mode is SYMMETRIC (if REFLECT, respectively).
-
 
     Outputs:
         Tensor, the tensor after padding.
@@ -5759,8 +5803,12 @@ class BinaryCrossEntropy(Primitive):
         - The value of :math:`x` must range from 0 to 1.
 
     Args:
-        reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of ``'none'`` , ``'mean'`` or ``'sum'`` . Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - The predictive value whose data type must be float16 or float32,
@@ -7917,21 +7965,22 @@ class AvgPool3D(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: ``1`` .
-        pad_mode (str): The optional value for pad mode, is ``"same"`` , ``"valid"`` , ``"pad"`` .
-            Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: Adopts the way of completion. The depth, height and width of the output will be the same
-              as the input. The total number of padding will be calculated in depth, horizontal and vertical
-              directions and evenly distributed to head and tail, top and bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the tail, bottom and the right side.
+            - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally.  If the amount is even,
+              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              to the front/right/bottom side.
               If this mode is set, `pad` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible depth, height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `pad` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the depth, height and width dimension is determined by the `pad` parameter.
+              If this mode is set, `pad` must be greater than or equal to 0.
 
-            - ``"valid"``: Adopts the way of discarding. The possible largest depth, height and width of output
-              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
-              must be 0.
-
-            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
-              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
         pad (Union(int, tuple[int], list[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer,
             the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
             If `pad` is a tuple of six integers, the padding of head, tail, top, bottom, left and right equal to
@@ -8054,21 +8103,21 @@ class Conv3D(Primitive):
         stride (Union[int, tuple[int]], optional): The distance of kernel moving, it can be an int number
             that represents the depth, height and width of movement or a tuple of three int numbers that
             represent depth, height and width movement respectively. Default: ``1`` .
-        pad_mode (str, optional): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` and ``"pad"`` . Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: Adopts the way of completion. The depth, height and width of the output will be equal to
-              the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
-              left and right directions possiblily.
-              Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
+            - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally.  If the amount is even,
+              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              to the front/right/bottom side.
               If this mode is set, `pad` must be 0.
-
-            - ``"valid"``: Adopts the way of discarding. The possible largest depth, height and width of output
-              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
-              must be 0.
-
-            - ``"pad"``: Implicit paddings on both sides of the input in depth, height and width. The number of `pad`
-              will be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible depth, height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `pad` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the depth, height and width dimension is determined by the `pad` parameter.
+              If this mode is set, `pad` must be greater than or equal to 0.
 
         pad (Union(int, tuple[int]), optional): The pad value to be filled. Default: ``0`` .
             If `pad` is an integer, the paddings
@@ -8122,11 +8171,11 @@ class Conv3D(Primitive):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} = \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
+                D_{out} = \left \lfloor{\frac{D_{in} + pad[0] + pad[1] - (\text{dilation[0]} - 1) \times
                 \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} = \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + pad[2] + pad[3] - (\text{dilation[1]} - 1) \times
                 \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} = \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + pad[4] + pad[5] - (\text{dilation[2]} - 1) \times
                 \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -8227,8 +8276,22 @@ class Conv3DBackpropInput(Primitive):
         out_channel (int): The dimension of the output.
         kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
         mode (int): Modes for different convolutions. Not currently used.
-        pad_mode (str): Modes to fill padding. It could be ``"valid"`` , ``"same"`` , or ``"pad"`` .
-                    Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
+
+            - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally.  If the amount is even,
+              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              to the front/right/bottom side.
+              If this mode is set, `pad` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible depth, height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `pad` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the depth, height and width dimension is determined by the `pad` parameter.
+              If this mode is set, `pad` must be greater than or equal to 0.
+
         pad (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the
                     paddings of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a
                     tuple of four integers, the padding of head, tail, top, bottom, left and right equal to pad[0],
@@ -8452,8 +8515,13 @@ class CTCLossV2(Primitive):
 
     Args:
         blank (int, optional): The blank label. Default: ``0`` .
-        reduction (str, optional): Apply specific reduction method to the output. Currently only support ``'none'`` ,
-            not case sensitive. Default: ``"none"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         zero_infinity (bool, optional): If loss is infinite, this parameter determines whether to set that loss
             and its correlated gradient to zero. Default: ``False`` .
 
@@ -8611,21 +8679,21 @@ class Conv3DTranspose(Primitive):
             A tuple of 3 ints means the first value is for the depth, the second value is for the height and the
             other is for the width of the kernel.
         mode (int): Modes for different convolutions. Default is ``1`` . It is currently not used.
-        pad_mode (str): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: Adopts the way of completion. The depth, height and width of the output will be equal to
-              the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
-              left and right directions possiblily.
-              Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
+            - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally.  If the amount is even,
+              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              to the front/right/bottom side.
               If this mode is set, `pad` must be 0.
-
-            - ``"valid"``: Adopts the way of discarding. The possible largest depth, height and width of output
-              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
-              and `output_padding` must be 0.
-
-            - ``"pad"``: Implicit paddings on both sides of the input in depth, height and width. The number of `pad`
-              will be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible depth, height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `pad` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the depth, height and width dimension is determined by the `pad` parameter.
+              If this mode is set, `pad` must be greater than or equal to 0.
 
         pad (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the paddings
              of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six integers,
@@ -8803,14 +8871,17 @@ class Dilation2D(Primitive):
                                       each sampling location. Its value must be greater or equal to 1 and bounded by
                                       the height and width of the input `x`.
 
-        pad_mode (str, optional): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` . Default: ``"same"`` . Both upper and lower case are supported.
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` or ``"valid"`` . Default: ``"valid"`` .
 
-            - ``"same"``: Adopts the way of completion. The height and width of the output will be the same as
-              the input `x`.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded.
 
-            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output will be
-              returned without padding. Extra pixels will be discarded.
         data_format (str, optional): The value for data format, only ``'NCHW'`` is supported at present.
             Default: ``"NCHW"`` .
 
@@ -9427,8 +9498,8 @@ class MultilabelMarginLoss(Primitive):
             ``'sum'`` . Default: ``'mean'`` .
 
             - ``'none'``: no reduction will be applied.
-            - ``'mean'``: the sum of the output will be divided by the number of elements in the output.
-            - ``'sum'``: the output will be summed.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
@@ -9703,8 +9774,22 @@ class GridSampler3D(Primitive):
     Args:
         interpolation_mode (str, optional): An optional string specifying the interpolation method.
             The optional values are ``"bilinear"`` or ``"nearest"`` . Default: ``"bilinear"`` .
+
+            - ``"nearest"``: Nearest neighbor interpolation. Each output pixel is assigned the value of the
+              nearest input pixel. This method is simple and fast but can result in blocky or pixelated outputs.
+            - ``"bilinear"``: Bilinear interpolation. Each output pixel is a weighted average of the four nearest input
+              pixels, computed using bilinear interpolation. This method produces smoother results compared
+              to nearest neighbor interpolation.
+
         padding_mode (str, optional): An optional string specifying the pad method.
             The optional values are ``"zeros"`` , ``"border"`` or ``"reflection"`` . Default: ``"zeros"`` .
+            When the sampling grid is outside input's bounds, effects of various padding modes are as follows:
+
+            - ``"zeros"``: Pads the input tensor with zeros.
+            - ``"border"``: Pads the input tensor with the values of the pixels on the border of the tensor.
+            - ``"reflection"``: Pads the input tensor by reflecting the values of the pixels at the
+              boundary of the tensor.
+
         align_corners (bool, optional): An optional bool specifying alignment method. If set to ``True`` ,
             the extrema (-1 and 1) are considered as referring to
             the center points of the input’s corner pixels. If set to ``False`` , they are instead considered as
@@ -10187,8 +10272,12 @@ class TripletMarginLoss(Primitive):
         p (int, optional): The norm degree for pairwise distance. Default: ``2`` .
         eps (float, optional): Default: ``1e-6`` .
         swap (bool, optional): The distance swap. Default: ``False`` .
-        reduction (str, optional): Apply specific reduction method to the
-            output: ``"none"`` , ``"mean"`` , ``"sum"`` . Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.
@@ -10312,6 +10401,13 @@ class GridSampler2D(Primitive):
         interpolation_mode (str, optional): An optional string specifying the interpolation method.
             The optional values are
             ``"bilinear"`` or ``"nearest"`` . Default: ``"bilinear"`` .
+
+            - ``"nearest"``: Nearest neighbor interpolation. Each output pixel is assigned the value of the
+              nearest input pixel. This method is simple and fast but can result in blocky or pixelated outputs.
+            - ``"bilinear"``: Bilinear interpolation. Each output pixel is a weighted average of the four nearest input
+              pixels, computed using bilinear interpolation. This method produces smoother results compared
+              to nearest neighbor interpolation.
+
         padding_mode (str, optional): An optional string specifying the pad method.
             The optional values are ``"zeros"`` , ``"border"`` or ``"reflection"`` . Default: ``"zeros"`` .
             When the sampling grid is outside input's bounds, effects of various padding modes are as follows:
@@ -10418,7 +10514,7 @@ class UpsampleNearest3D(Primitive):
     This operator scale up the volumetric input with specified `output_size` or `scales` factors, using nearest
     neighbor algorithm.
 
-    One of `output_size` or `scales` must be given, and can not be specified both.
+    One of `output_size` or `scales` must be given, and can not specified both at the same time.
 
     Inputs:
         - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.

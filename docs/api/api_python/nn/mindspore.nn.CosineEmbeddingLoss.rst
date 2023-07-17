@@ -15,7 +15,11 @@ mindspore.nn.CosineEmbeddingLoss
 
     参数：
         - **margin** (float) - 指定运算的调节因子，取值范围[-1.0, 1.0]。默认值： ``0.0`` 。
-        - **reduction** (str) - 指定输出结果的计算方式。可选值为 ``"none"`` 、 ``"mean"`` 或 ``"sum"`` ，分别表示不指定计算方式、使用均值计算和使用求和计算。默认值： ``"mean"`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits_x1** (Tensor) - 输入Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。

@@ -1561,9 +1561,10 @@ def inplace_add(x, v, indices):
             `indices` refers to the left-most dimension.
 
     Args:
-        x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
-        v (Tensor): The second input is a tensor that has the same dimension sizes as `x` except
-            the first dimension, which must be the same as indices' size. It has the same data type with `x`.
+        x (Tensor): The tensor to be added. It has shape :math:`(N,*)` where :math:`*` means
+            any number of additional dimensions.
+        v (Tensor):  The value tensor add to `x`. It has the same dimension sizes as `x` except
+          the first dimension, whose size must be the same as `indices`. It has the same data type with `x`.
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
             to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
 
@@ -1651,10 +1652,10 @@ def inplace_sub(x, v, indices):
         `indices` refers to the left-most dimension.
 
     Args:
-        x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
-            Tensors of arbitrary dimensions are supported.
-        v (Tensor): The second input is a tensor who has the same dimension sizes as `x` except
-            the first dimension, which must be the same as indices' size. It has the same data type with `x`.
+        x (Tensor): TThe tensor to be subtracted. It has shape :math:`(N,*)` where :math:`*` means
+            any number of additional dimensions.
+        v (Tensor): The value tensor subtract from `x`. It has the same dimension sizes as `x` except
+            the first dimension, whose size must be the same as `indices`. It has the same data type with `x`.
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
             to subtract with `v`. It is an int or tuple, whose value is in [0, the first dimension size of `x`).
 

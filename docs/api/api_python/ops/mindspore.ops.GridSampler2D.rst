@@ -11,13 +11,17 @@ mindspore.ops.GridSampler2D
     更多参考详见 :func:`mindspore.ops.grid_sample`。
 
     参数：
-        - **interpolation_mode** (str，可选) - 指定插值方法的可选字符串。可选值为： ``"bilinear"`` 、 ``"nearest"`` ，默认值： ``"bilinear"`` 。
-        - **padding_mode** (str，可选) - 指定填充模式的可选字符串。可选值为： ``"zeros"`` 、 ``"border"`` 或者 ``"reflection"`` ，默认值：``"zeros"`` 。
+        - **interpolation_mode** (str，可选) - 指定插值方法的可选字符串。可选值为： ``'bilinear'`` 、 ``'nearest'`` ，默认值： ``'bilinear'`` 。
+
+          - ``'nearest'``：最近邻插值。每个输出像素的值为最近的输入像素的值。这种方法简单快速，但可能导致块状或像素化的输出。
+          - ``'bilinear'``：双线性插值。每个输出像素是最接近的四个输入像素的加权平均值，使用双线性插值计算。与最近邻插值相比，此方法产生更平滑的结果。
+
+        - **padding_mode** (str，可选) - 指定填充模式的可选字符串。可选值为： ``'zeros'`` 、 ``'border'`` 或者 ``'reflection'`` ，默认值： ``'zeros'`` 。
           当采样grid超出输入Tensor的边界时，各种填充模式效果如下：
 
-          - ``"zeros"`` ：使用零填充输入Tensor。
-          - ``"border"`` ：使用Tensor边缘上像素的值填充输入Tensor。
-          - ``"reflection"`` ：通过反射Tensor边界处的像素值，并将反射值沿着Tensor的边界向外扩展来填充输入Tensor。
+          - ``'zeros'`` ：使用零填充输入Tensor。
+          - ``'border'`` ：使用Tensor边缘上像素的值填充输入Tensor。
+          - ``'reflection'`` ：通过反射Tensor边界处的像素值，并将反射值沿着Tensor的边界向外扩展来填充输入Tensor。
 
         - **align_corners** (bool，可选) - 一个可选bool。如果为 ``True`` ，输入和输出Tensor的角像素是对齐的，如果为 ``False`` ，
           则不使用角像素对齐。默认值：``False`` 。

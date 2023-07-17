@@ -17,7 +17,11 @@ mindspore.nn.GaussianNLLLoss
     关键字参数：
         - **full** (bool，可选) - 指定损失函数中的常数部分。如果 :math:`full=True`，则常数 `const.` 为 :math:`0.5 * log(2\pi)`。默认值： ``False`` 。
         - **eps** (float，可选) - 用于提高log的稳定性。默认值： ``1e-6`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的计算方式， ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。 :math:`*` 代表着任意数量的额外维度。

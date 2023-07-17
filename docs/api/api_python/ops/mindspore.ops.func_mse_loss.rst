@@ -11,7 +11,11 @@ mindspore.ops.mse_loss
         - **input** (Tensor) - 任意维度的Tensor。
         - **target** (Tensor) - 输入标签，任意维度的Tensor。大多数场景下与 `input` 具有相同的shape。
           但是，也支持在两者shape不相同的情况下，通过广播保持一致。
-        - **reduction** (str，可选) - 对loss应用特定的归约方法。可选 ``'mean'`` 、 ``'none'`` 、 ``'sum'`` 。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     返回：
         Tensor，数据类型为float，如果 `reduction` 为 ``'mean'`` 或 ``'sum'`` 时，shape为0；如果 `reduction` 为 ``'none'`` ，输入的shape则是广播之后的shape。

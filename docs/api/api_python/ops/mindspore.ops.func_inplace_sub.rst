@@ -9,8 +9,8 @@ mindspore.ops.inplace_sub
         `indices` 只能沿着最高轴进行索引。
 
     参数：
-        - **x** (Tensor) - 待更新的Tensor，支持的数据类型包括float16、float32、float64、int32。
-        - **v** (Tensor) - 待减去的值，除第零维外每一维度需与 `x` 相同。数据类型应与 `x` 相同。
+        - **x** (Tensor) - 输入Tensor，shape为：:math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
+        - **v** (Tensor) - 从 `x` 减去的Tensor。除第一个维度之外shape必须与 `x` 的shape相同。第一个维度必须与 `indices` 的长度相同。数据类型与 `x` 相同。
         - **indices** (Union[int, tuple]) - 待更新值在原Tensor中的索引。取值范围[0, len(x))。若为tuple，则大小与 `v` 的第一维度大小相同。
 
     返回：

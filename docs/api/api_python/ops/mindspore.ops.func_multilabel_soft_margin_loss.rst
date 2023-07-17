@@ -21,7 +21,11 @@ mindspore.ops.multilabel_soft_margin_loss
         - **input** (Tensor) - shape为 :math:`(N, C)` 的Tensor，N为batch size，C为类别个数。
         - **target** (Tensor) - 目标值，数据类型和shape与 `input` 的相同。
         - **weight** (Union[Tensor, int, float]) - 每个类别的缩放权重。默认值： ``None`` 。
-        - **reduction** (str) - 指定应用于输出结果的计算方式。取值为 ``"mean"`` ， ``"sum"`` ，或 ``"none"`` 。默认值： ``"mean"`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的加权平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     返回：
         Tensor，数据类型和 `input` 相同。如果 `reduction` 为"none"，其shape为 :math:`(N)` 。否则，其shape为0。

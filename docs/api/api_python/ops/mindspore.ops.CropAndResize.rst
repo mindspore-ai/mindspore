@@ -9,7 +9,11 @@ mindspore.ops.CropAndResize
         如果输出shape依赖于 `crop_size` 的值，则 `crop_size` 必须为常量。目前该算子仅在 `method` 为"bilinear"支持反向， 其他方法将直接返回0。
 
     参数：
-        - **method** (str, 可选) - 指定调整大小的采样方法，为可选字符串。提供的方法有： ``"bilinear"`` 、 ``"nearest"`` 或 ``"bilinear_v2"`` 。 ``"bilinear"`` 代表标准双线性插值算法， ``"nearest"`` 代表最近邻差值算法，而"bilinear_v2"在某些情况下可能会产生更好的结果。默认值： ``"bilinear"`` 。
+        - **method** (str, 可选) - 指定调整大小的采样方法，为可选字符串。提供的方法有： ``"bilinear"`` 、 ``"nearest"`` 或 ``"bilinear_v2"`` 。 ``"bilinear"`` 代表标准双线性插值算法， ``"bilinear_v2"`` 为优化后的双线性插值算法，在某些情况下可能会产生更好的结果（更高的精度和速度）。默认值： ``"bilinear"`` 。
+          
+          - ``"nearest"``：最近邻插值。每个输出像素的值为最近的输入像素的值。这种方法简单快速，但可能导致块状或像素化的输出。
+          - ``"bilinear"``：双线性插值。每个输出像素是最接近的四个输入像素的加权平均值，使用双线性插值计算。与最近邻插值相比，此方法产生更平滑的结果。
+
         - **extrapolation_value** (float, 可选) - 外插值，数据类型为float。默认值： ``0.0`` 。
 
     输入：

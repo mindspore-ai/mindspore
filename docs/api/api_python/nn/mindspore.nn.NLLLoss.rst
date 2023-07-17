@@ -25,7 +25,11 @@ mindspore.nn.NLLLoss
     参数：
         - **weight** (Tensor) - 指定各类别的权重。若值不为None，则shape为 :math:`(C,)`。数据类型仅支持float32或float16。默认值： ``None`` 。
         - **ignore_index** (int) - 指定target中需要忽略的值(一般为填充值)，使其不对梯度产生影响。默认值： ``-100`` 。
-        - **reduction** (str) - 指定应用于输出结果的计算方式，比如 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的加权平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对 :math:`K` 维数据)。`inputs` 需为对数概率。数据类型仅支持float32或float16。

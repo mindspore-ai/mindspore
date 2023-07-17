@@ -180,17 +180,20 @@ class Conv2d(_Conv):
             The data type is an integer or a tuple of two or four integers. An integer represents the movement step size
             in both height and width directions. A tuple of two integers represents the movement step size in the height
             and width directions respectively. Default: ``1`` .
-        pad_mode (str): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
-              If this mode is set, the value of `padding` must be 0.
-
-            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
-              calculation will be discarded. If this mode is set, the value of `padding` must be 0.
-
-            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
-              If this mode is set, the value of `padding` must be greater than or equal to 0.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the height and width directions is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): The number of padding on the height and width directions of the input.
             The data type is an integer or a tuple of four integers. If `padding` is an integer,
@@ -371,17 +374,20 @@ class Conv1d(_Conv):
         out_channels (int): The channel number of the output tensor of the Conv1d layer.
         kernel_size (int): Specifies the width of the 1D convolution kernel.
         stride (int): The movement stride of the 1D convolution kernel. Default: ``1`` .
-        pad_mode (str): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
-              If this mode is set, the value of `padding` must be 0.
-
-            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
-              calculation will be discarded. If this mode is set, the value of `padding` must be 0.
-
-            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
-              If this mode is set, the value of `padding` must be greater than or equal to 0.
+            - ``"same"``: Pad the input at the begin and end so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally. If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess padding is goes to the right side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible length. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              at the begin and end is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (int): The number of padding on both sides of input.
             The value should be greater than or equal to 0. Default: ``0`` .
@@ -572,17 +578,21 @@ class Conv3d(_Conv):
             The data type is an integer or a tuple of three integers. An integer represents the movement step size
             in depth, height and width directions. A tuple of three integers represents the movement step size
             in the depth, height and width directions respectively. Default: ``1`` .
-        pad_mode (str): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
-              If this mode is set, the value of `padding` must be 0.
-
-            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
-              calculation will be discarded. If this mode is set, the value of `padding` must be 0.
-
-            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
-              If this mode is set, the value of `padding` must be greater than or equal to 0.
+            - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally.  If the amount is even,
+              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              to the front/right/bottom side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible depth, height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the depth, height and width dimension is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of the input.
             The data type is an integer or a tuple of six integers. If `padding` is an integer,
@@ -776,17 +786,21 @@ class Conv3dTranspose(_Conv):
             The data type is an integer or a tuple of three integers. An integer represents the movement step size
             in depth, height and width directions. A tuple of three integers represents the movement step size
             in the depth, height and width directions respectively. Default: ``1`` .
-        pad_mode (str): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"``  .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
-              If this mode is set, the value of `padding` must be 0.
-
-            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
-              calculation will be discarded. If this mode is set, the value of `padding` must be 0.
-
-            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
-              If this mode is set, the value of `padding` must be greater than or equal to 0.
+            - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally.  If the amount is even,
+              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              to the front/right/bottom side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible depth, height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the depth, height and width dimension is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of the input.
             The data type is an integer or a tuple of six integers. If `padding` is an integer,
@@ -996,17 +1010,20 @@ class Conv2dTranspose(_Conv):
             The data type is an integer or a tuple of two integers. An integer represents the movement step size
             in both height and width directions. A tuple of two integers represents the movement step size in the height
             and width directions respectively. Default: ``1`` .
-        pad_mode (str): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
-              If this mode is set, the value of `padding` must be 0.
-
-            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
-              calculation will be discarded. If this mode is set, the value of `padding` must be 0.
-
-            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
-              If this mode is set, the value of `padding` must be greater than or equal to 0.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the height and width directions is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): The number of padding on the height and width directions of the input.
             The data type is an integer or a tuple of four integers. If `padding` is an integer,
@@ -1218,17 +1235,20 @@ class Conv1dTranspose(_Conv):
         out_channels (int): The channel number of the output tensor of the Conv1dTranspose layer.
         kernel_size (int): Specifies the width of the 1D convolution kernel.
         stride (int): The movement stride of the 1D convolution kernel. Default: ``1`` .
-        pad_mode (str): Specifies padding mode. The optional values are
-            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
-              If this mode is set, the value of `padding` must be 0.
-
-            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
-              calculation will be discarded. If this mode is set, the value of `padding` must be 0.
-
-            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
-              If this mode is set, the value of `padding` must be greater than or equal to 0.
+            - ``"same"``: Pad the input at the begin and end so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally. If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess padding is goes to the right side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible length. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              at the begin and end is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (int): The number of padding on both sides of input.
             The value should be greater than or equal to 0. Default: ``0`` .

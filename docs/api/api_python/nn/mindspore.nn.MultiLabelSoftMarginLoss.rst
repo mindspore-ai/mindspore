@@ -19,7 +19,11 @@ mindspore.nn.MultiLabelSoftMarginLoss
 
     参数：
         - **weight** (Union[Tensor, int, float]) - 每个类别的缩放权重。默认值： ``None`` 。
-        - **reduction** (str) - 指定应用于输出结果的计算方式。取值为 ``'mean'`` ， ``'sum'`` 或 ``'none'`` 。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的加权平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **x** (Tensor) - shape为(N, C)的Tensor，N为batch size，C为类别个数。

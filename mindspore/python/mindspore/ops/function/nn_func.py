@@ -1201,9 +1201,12 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
         pos_weight (Tensor): A weight of positive examples. Must be a vector with length equal to the
           number of classes. It can be broadcast to a tensor with shape of `logits`.
           Data type must be float16 or float32.
-        reduction (str): Type of reduction to be applied to loss. The optional values
-             are ``'mean'`` , ``'sum'`` , and ``'none'`` ,
-             not case sensitive. If ``'none'`` , do not perform reduction. Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor or Scalar, if `reduction` is 'none', it's a tensor with the same shape and type as input `logits`.
@@ -2221,6 +2224,7 @@ def interpolate(input,
         mode (str): The sampling algorithm.
             One of 'nearest', 'linear' (3D only), 'bilinear' (4D only), 'trilinear' (5D only), 'bicubic' (4D only),
             'area', 'nearest-exact'(3D and 4D). Default: ``"nearest"`` .
+
         align_corners (bool): If True, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
             aligns the corners of data and resized data. If False, rescale by :math:`new\_height / height`.
             Default: ``None`` .
@@ -2565,10 +2569,12 @@ def soft_margin_loss(input, target, reduction='mean'):
     Args:
         input (Tensor): Predict data. Data type must be float16 or float32.
         target (Tensor): Ground truth data, with the same type and shape as `logits`.
-        reduction (str, optional): Implements the reduction method to the output with ``'none'`` , ``'mean'`` ,
-            or ``'sum'`` ,
-            respectively indicate that no calculation is specified, that the mean is used, and that is calculated
-            using summation. Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Outputs:
         Tensor or Scalar. If `reduction` is ``'none'``, its shape is the same as `logits`.
@@ -3701,8 +3707,13 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
             data type must be float16 or float32. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored
             and does not contribute to the input gradient. Default: ``-100`` .
-        reduction (str):  Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , or ``'sum'`` .
-            Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: ``0.0`` .
 
@@ -3798,8 +3809,13 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
             The data type must be float16 or float32. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored
             and does not contribute to the input gradient. Default: ``-100`` .
-        reduction (str):  Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , or ``'sum'`` .
-            Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: ``0.0`` .
 
@@ -3916,9 +3932,12 @@ def l1_loss(input, target, reduction='mean'):
         input (Tensor): Predicted value, Tensor of any dimension.
         target (Tensor): Target value, usually has the same shape as the `input`.
             If `input` and `target` have different shape, make sure they can broadcast to each other.
-        reduction (str, optional): Type of reduction to be applied to loss.
-            The optional value is ``"mean"`` , ``"sum"`` or
-            ``"none"`` . Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `input`.
@@ -3983,8 +4002,12 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
         target (Tensor): Ground truth data, tensor of shape :math:`(N, *)`, same shape and dtype as the `input`.
         beta (float): A parameter used to control the point where the function will change between
             L1 to L2 loss. The value should be greater than zero. Default: ``1.0`` .
-        reduction (str): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` or ``'sum'`` .
-            Default: ``'none'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `input`.
@@ -4410,9 +4433,12 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
         target (Tensor): Contains value 1 or -1. Suppose the shape of `input1` is
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
         margin (float, optional): Should be in [-1.0, 1.0]. Default: 0.0.
-        reduction (str, optional): Specifies which reduction to be applied to the output. It must be one of
-          ``"none"`` , ``"mean"`` , and ``"sum"`` ,
-          meaning no reduction, reduce mean and sum on output, respectively. Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor or Scalar, if `reduction` is "none", its shape is the same as `target`.
@@ -4568,10 +4594,20 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
             H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input`.
         mode (str): An optional string specifying the interpolation method. The optional values are
-            'bilinear', 'nearest'. Default: ``'bilinear'`` . Note: `bicubic` is not supported yet. When
+            ``'bilinear'``, ``'nearest'``. Default: ``'bilinear'`` . Note: `bicubic` is not supported yet. When
             `mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
             be trilinear. However, when the input is 4-D, the interpolation mode will legistimately be bilinear.
             Default: ``'bilinear'`` .
+
+            - ``'nearest'``: Nearest neighbor interpolation. Each output pixel is assigned the value of the
+              nearest input pixel. This method is simple and fast but can result in blocky or pixelated outputs.
+            - ``'bilinear'``: Bilinear interpolation. Each output pixel is a weighted average of the four nearest input
+              pixels, computed using bilinear interpolation. This method produces smoother results compared
+              to nearest neighbor interpolation.
+            - ``'trilinear'`: Trilinear interpolation. This is an extension of bilinear interpolation to 3D data.
+              It performs bilinear interpolation in the two spatial dimensions and linear interpolation along
+              the third dimension. It is commonly used for volume or 3D image interpolation.
+
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
             "reflection". Default: ``'zeros'`` .
         align_corners (bool): An optional bool. If set to `True`, the extrema (-1 and 1) are considered as referring to
@@ -4652,10 +4688,13 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         input_lengths (Union(tuple, Tensor)): Lengths of the input. A tuple or Tensor of shape(N).
         target_lengths (Union(tuple, Tensor)): Lengths of the target. A tuple or Tensor of shape(N).
         blank (int, optional): The blank label. Default: ``0`` .
-        reduction (str, optional): Implements the reduction method to the output with
-            ``'none'`` , ``'mean'`` , or ``'sum'`` ,
-            respectively indicate that no calculation is specified, that the mean is used, and that is calculated
-            using summation. Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         zero_infinity (bool, optional): Whether to set infinite loss and correlation gradient to 0. Default: ``False`` .
 
     Returns:
@@ -4739,8 +4778,12 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         full (bool, optional): Include the constant term in the loss calculation. When :math:`full=True`,
             the constant term will be :math:`const = 0.5*log(2\pi)`. Default: ``False``.
         eps (float, optional): Used to improve the stability of log function must be greater than 0. Default: ``1e-6`` .
-        reduction (str, optional): Apply specific reduction method to the
-            output: ``"none"``, ``"mean"``, or ``"sum"``. Default: ``'mean'``.
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
@@ -4866,9 +4909,12 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
             Has the same shape as `inputs`, contains -1 or 1.
         margin (float, int): Threshold defined by Hinge Embedding Loss :math:`margin`.
             Represented as :math:`\Delta` in the formula. Default: ``1.0`` .
-        reduction (str): Specify the computing method to be applied to the outputs:
-            ``'none'`` , ``'mean'`` , or ``'sum'`` .
-            Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
@@ -5486,9 +5532,13 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
         target (Tensor): Target value, has same dtype and shape as the `input` in common cases.
             However, when the shape of `target` is different from the shape of `input`,
             and they should be broadcasted to each other.
-        reduction (str): Type of reduction to be applied to loss.
-            The optional values are ``'mean'`` , ``'sum'`` and ``'none'`` .
-            Default: ``'mean'``.
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         delta (Union[int, float]): The threshold to change between two type of loss.
             The value must be greater than zero. Default: ``1.0`` .
 
@@ -5753,11 +5803,12 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
             the loss function
             will not consider any sample weights, and each sample will be treated as having equal importance
             when calculating the loss.
-        reduction (str, optional): Specify the protocol calculation method used to output the results.
-            Its value must be one of ``'none'`` , ``'mean'`` or ``'sum'`` ,
-            respectively indicate that no calculation method is
-            specified, using the average value for calculation, and using summation for calculation, not case-sensitive.
-            Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor or Scalar. Returns Tensor that has the same dtype and shape as `logits` if `reduction` is 'none'.
@@ -6117,7 +6168,7 @@ def glu(x, axis=-1):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, ops
@@ -6163,9 +6214,9 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
-            - ``'none'`` : no reduction will be applied.
-            - ``'mean'`` : the sum of the output will be divided by the number of elements in the output.
-            - ``'sum'`` : the output will be summed.
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor. If `reduction` is 'none', returns a Tensor with the same shape as `target`.
@@ -6235,9 +6286,9 @@ def multilabel_margin_loss(input, target, reduction='mean'):
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
-            - ``'none'`` : no reduction will be applied.
-            - ``'mean'`` : the sum of the output will be divided by the number of elements in the output.
-            - ``'sum'`` : the output will be summed.
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         - **outputs** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
@@ -6295,9 +6346,12 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
         input (Tensor): A tensor of shape :math:`(N, C)` , where N is batch size and C is number of classes.
         target (Tensor): The label target Tensor which has the same shape as `input`.
         weight (Union[Tensor, int, float]): The manual rescaling weight given to each class. Default: ``None``.
-        reduction (str): Specifies which reduction to be applied to the output. It must be one of
-            ``'none'`` , ``'mean'`` , and ``'sum'`` , meaning no reduction, reduce mean and sum on output, respectively.
-            Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor, the data type is the same as input, if the reduction is 'none',
@@ -6690,8 +6744,12 @@ def mse_loss(input, target, reduction='mean'):
         target (Tensor): The input label. Tensor of any dimension, same shape as the `input` in common cases.
             However, it supports that the shape of `input` is different from the shape of `target`
             and they should be broadcasted to each other.
-        reduction (str, optional): Type of reduction to be applied to loss.
-            The optional values are ``"mean"`` , ``"none"`` and ``"sum"`` . Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor, loss of type float, the shape is zero if `reduction` is ``'mean'`` or ``'sum'`` ,
@@ -6794,8 +6852,12 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
         eps (float, optional): Add small value to avoid division by zero. Default: ``1e-06``.
         swap (bool, optional): The distance swap change the negative distance to the distance between positive
             sample and negative sample. Default: ``False`` .
-        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , ``'sum'`` .
-            Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Returns:
         Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.

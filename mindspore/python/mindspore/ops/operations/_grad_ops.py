@@ -2573,7 +2573,12 @@ class MultilabelMarginLossGrad(Primitive):
     Compute the gradients of MultilabelMarginLoss operation.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **y_grad** (Tensor) - The gradients of loss to output of MultilabelMarginLoss function, with
@@ -2917,7 +2922,12 @@ class MultiMarginLossGrad(Primitive):
     Args:
         p (int): Optional. The norm degree for pairwise distance.Should be 1 or 2. Default: 1.
         margin (float): Optional. A parameter to change pairwise distance. Default: 1.0.
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **y_grad** (Tensor) - If it's not a scalar, the shape of 'y_grad' :math:`(N, C)`.

@@ -43,8 +43,12 @@ class LossBase(Cell):
     to apply reduction to loss values.
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-            ``"none"`` . Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the (weighted) mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Raises:
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
@@ -213,9 +217,12 @@ class L1Loss(LossBase):
         \end{cases}
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-            ``"none"`` . Default: ``"mean"`` . If `reduction` is ``"mean"`` or ``"sum"`` , then output a scalar Tensor,
-            if `reduction` is ``"none"`` , the shape of the output Tensor is the broadcasted shape.
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Predicted value, Tensor of any dimension.
@@ -283,8 +290,12 @@ class MSELoss(LossBase):
         \end{cases}
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-            ``"none"`` . Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - The predicted value of the input. Tensor of any dimension.
@@ -422,8 +433,12 @@ class MAELoss(LossBase):
         \end{cases}
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-                         ``"none"`` . Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(M, *)` where :math:`*` means, any number of
@@ -487,9 +502,12 @@ class MarginRankingLoss(LossBase):
 
     Args:
         margin (float, optional): Specify the adjustment factor of the operation. Default: ``0.0`` .
-        reduction (str, optional): Specifies which reduction to be applied to the output. It must be one of
-            ``"none"`` , ``"mean"`` , and ``"sum"`` , meaning no reduction, reduce mean and sum on output,
-            respectively. Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **input1** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number
@@ -582,8 +600,12 @@ class SmoothL1Loss(LossBase):
     Args:
         beta (float): The loss function calculates the threshold of the transformation between L1Loss and L2Loss.
             Default: ``1.0`` .
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-                         ``"none"`` . Default: ``"none"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be one of float16,
@@ -643,8 +665,12 @@ class SoftMarginLoss(LossBase):
     :math:`x.nelement()` represents the number of element of `x` .
 
     Args:
-        reduction (str): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , ``'sum'`` .
-            Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
@@ -710,9 +736,13 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
         of entry is a valid one.
 
     Args:
-        sparse (bool): Specifies whether labels use sparse format or not. Default: ``False`` .
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-            ``"none"`` . If ``"none"`` , do not perform reduction. Default: ``"none"`` .
+        sparse (bool, optional): Specifies whether labels use sparse format or not. Default: ``False`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, C)` . Data type must be float16 or float32.
@@ -984,8 +1014,12 @@ class SampledSoftmaxLoss(LossBase):
         remove_accidental_hits (bool): Whether to remove "accidental hits"
             where a sampled class equals to one of the labels classes. Default: ``True`` .
         seed (int): Random seed for candidate sampling. Default: 0
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-            ``"none"`` . If ``"none"`` , do not perform reduction. Default: ``"none"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **weights** (Tensor) - Tensor of shape :math:`(C, dim)`.
@@ -1228,8 +1262,13 @@ class TripletMarginWithDistanceLoss(LossBase):
         swap (bool): The distance swap is described in detail in the paper
             `Learning shallow convolutional feature descriptors with triplet losses` by
             V. Balntas, E. Riba et al. Default: ``False`` .
-        reduction (str): Apply specific reduction method to the output:
-            ``'none'`` , ``'mean'`` , ``'sum'`` . Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         margin (float): Make a margin between the positive pair and the negative pair. Default: ``1.0`` .
 
     Inputs:
@@ -1333,8 +1372,12 @@ class PoissonNLLLoss(LossBase):
         full (bool, optional): Whether include the Stirling approximation term in the loss calculation.
             Default: ``False`` .
         eps (float, optional): Lower bound of `input` when calculating logarithms. Default: ``1e-08`` .
-        reduction (str, optional): Apply specific reduction method to the output:
-            ``'none'`` , ``'mean'`` , ``'sum'`` . Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **input** (Tensor) - The input Tensor. The shape can be any number of dimensions.
@@ -1419,9 +1462,12 @@ class MultiLabelSoftMarginLoss(LossBase):
 
     Args:
         weight (Union[Tensor, int, float]): The manual rescaling weight given to each class. Default: ``None`` .
-        reduction (str): Specifies which reduction to be applied to the output. It must be one of
-            ``'none'`` , ``'mean'`` , and ``'sum'`` , meaning no reduction, reduce mean and sum on output,
-            respectively. Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **x** (Tensor) - A tensor of shape (N, C), where N is batch size and C is number
@@ -1481,8 +1527,8 @@ class MultiMarginLoss(LossBase):
             ``'sum'`` . Default: ``'mean'`` .
 
             - ``'none'``: no reduction will be applied.
-            - ``'mean'``: the sum of the output will be divided by the number of elements in the output.
-            - ``'sum'``: the output will be summed.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
         weight (Tensor, optional): The rescaling weight to each class with shape :math:`(C,)`. Data type only
             support float32, float16 or float64. Default: ``None`` , all classes are weighted equally.
@@ -1575,8 +1621,12 @@ class BCELoss(LossBase):
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             And it must have the same shape and data type as `inputs`. Default: ``None`` .
-        reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of ``'none'`` , ``'mean'`` , ``'sum'`` . Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - The input tensor with shape :math:`(N, *)` where :math:`*` means, any number
@@ -1650,9 +1700,12 @@ class CosineEmbeddingLoss(LossBase):
 
     Args:
         margin (float): Should be in [-1.0, 1.0]. Default: ``0.0`` .
-        reduction (str): Specifies which reduction to be applied to the output. It must be one of
-            ``"none"`` , ``"mean"`` , and ``"sum"`` , meaning no reduction,
-            reduce mean and sum on output, respectively. Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits_x1** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number
@@ -1744,7 +1797,11 @@ class MultilabelMarginLoss(LossBase):
 
     Args:
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``"mean"`` .
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
@@ -1811,8 +1868,13 @@ class BCEWithLogitsLoss(LossBase):
         \end{cases}
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``'mean'`` , ``'sum'`` , and
-            ``'none'`` . If ``'none'`` , do not perform reduction. Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             If not None, it can be broadcast to a tensor with shape of `logits`,
             data type must be float16 or float32. Default: ``None`` .
@@ -1932,9 +1994,12 @@ class FocalLoss(LossBase):
         gamma (float): Gamma is used to adjust the steepness of weight curve in focal loss. Default: ``2.0`` .
         weight (Union[Tensor, None]): A rescaling weight applied to the loss of each batch element. The dimension of
                                       weight should be 1. If None, no weight is applied. Default: ``None`` .
-        reduction (str): Type of reduction to be applied to loss. The optional values
-                         are ``"mean"`` , ``"sum"`` , and ``"none"``.
-                         If "none", do not perform reduction. Default: ``"mean"`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape should be :math:`(N, C)` or :math:`(N, C, H)` or :math:`(N, C, H, W)`.
@@ -2060,9 +2125,13 @@ class HuberLoss(LossBase):
         \end{cases}
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-            ``"none"`` . If `reduction` is ``"mean"`` or ``"sum"`` , then output a scalar Tensor, if `reduction` is
-            ``"none"`` , the shape of the output Tensor is the broadcasted shape. Default: ``"mean"``.
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         delta (Union[int, float]): The threshold to change between two type of loss.
             The value must be positive. Default: ``1.0`` .
 
@@ -2150,7 +2219,12 @@ class TripletMarginLoss(LossBase):
         swap (bool, optional): The distance swap change the negative distance to the distance between positive
             sample and negative sample. Default: ``False`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``"mean"`` .
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         margin (Union[Tensor, float]) - Make a margin between the positive pair and the negative pair.
             Default: ``1.0`` .
 
@@ -2253,8 +2327,12 @@ class NLLLoss(LossBase):
             The data type only supports float32 or float16. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored (typically for padding value)
             and does not contribute to the gradient. Default: ``-100`` .
-        reduction (str):  Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , or ``'sum'`` .
-            Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, C)`
@@ -2394,8 +2472,13 @@ class CrossEntropyLoss(LossBase):
             The data type only supports float32 or float16. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored (typically for padding value)
             and does not contribute to the gradient. Default: ``-100`` .
-        reduction (str):  Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , or ``'sum'`` .
-            Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: ``0.0`` .
 
@@ -2562,8 +2645,13 @@ class CTCLoss(LossBase):
 
     Args:
         blank (int, optional): The blank label. Default: ``0`` .
-        reduction (str, optional): Implements the reduction method to the output with
-            ``'none'`` , ``'mean'`` , or ``'sum'`` . Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
+
         zero_infinity (bool, optional): If loss is infinite, this parameter determines whether to set that loss
             and its correlated gradient to zero. Default: ``False`` .
 
@@ -2669,8 +2757,12 @@ class GaussianNLLLoss(LossBase):
         full (bool, optional): Whether include the constant term in the loss calculation. When :math:`full=True`,
             the constant term `const.` will be :math:`0.5 * log(2\pi)`. Default: ``False`` .
         eps (float, optional): Used to improve the stability of log function. Default: ``1e-6`` .
-        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , or
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)` or :math:`(*)` where :math:`*` means any number of
@@ -2758,8 +2850,12 @@ class HingeEmbeddingLoss(LossBase):
     Args:
         margin (float, int): Threshold defined by Hinge Embedding Loss :math:`margin`.
             Represented as :math:`\Delta` in the formula. Default: ``1.0`` .
-        reduction (str): Specify the computing method to be applied to the outputs: ``'none'`` , ``'mean'`` , or
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the outputelements will be summed.
 
     Inputs:
         - **logits** (Tensor) - The predicted value, expressed as :math:`x` in the equation.
