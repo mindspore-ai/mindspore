@@ -137,6 +137,7 @@ class MINDRECORD_API ShardTaskList {
   void SetFileIds(const std::vector<int32_t> &file_ids);
   void SetShuffledShardSampleCount(const std::vector<int64_t> &shuffled_shard_sample_count);
   void SetPartitionedShardSampleCount(const std::vector<PartitionedShardSampleCount> &partitioned_shard_sample_count);
+  void UpdatePartitionedShardSampleCountByNumSamples(const int64_t &num_samples);
   std::vector<int64_t> GetNextSampleIds();
 
   uint32_t categories;

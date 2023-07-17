@@ -229,6 +229,12 @@ Status ShardSample::UpdatePartitionWhenSlowMode(ShardTaskList &tasks) {
   }
 
   tasks.SetPartitionedShardSampleCount(vpssc);
+
+  // update vpssc by no_of_samples_
+  if (no_of_samples_ != 0) {
+    tasks.UpdatePartitionedShardSampleCountByNumSamples(no_of_samples_);
+  }
+
   return Status::OK();
 }
 

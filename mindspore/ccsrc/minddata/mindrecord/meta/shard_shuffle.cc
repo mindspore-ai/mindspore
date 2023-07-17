@@ -218,6 +218,9 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
     tasks.SetFileIds(file_ids);
     tasks.need_shuffle_ = true;
     tasks.shuffle_seed_ = shuffle_seed_;
+    int64_t samples_to_assign =
+      (no_of_samples_ > 0 && no_of_samples_ < tasks.SizeAfterSampling()) ? no_of_samples_ : tasks.SizeAfterSampling();
+    tasks.UpdatePartitionedShardSampleCountByNumSamples(samples_to_assign);
   }
   return Status::OK();
 }
