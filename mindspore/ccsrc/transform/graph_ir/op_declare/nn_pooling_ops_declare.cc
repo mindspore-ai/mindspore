@@ -220,7 +220,8 @@ ATTR_MAP(AvgPoolV2) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), An
                        {"pad", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                        {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                        {"global", ATTR_DESC(global_pooling, AnyTraits<bool>())},
-                       {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())}};
+                       {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
+                       {"divisor_override", ATTR_DESC(divisor_override, AnyTraits<int>())}};
 OUTPUT_MAP(AvgPoolV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AvgPoolV2, kNameAvgPoolV2, ADPT_DESC(AvgPoolV2))
 

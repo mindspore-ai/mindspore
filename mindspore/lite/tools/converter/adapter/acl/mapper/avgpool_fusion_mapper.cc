@@ -25,6 +25,7 @@
 
 namespace mindspore {
 namespace lite {
+constexpr const char *kDivisorOverride = "divisor_override";
 STATUS AvgPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   ValueNodePtr value_node = nullptr;
   PrimitivePtr src_prim = nullptr;
@@ -39,6 +40,10 @@ STATUS AvgPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   CreateTargetPrim(src_prim, &dst_prim, fmk_type);
   CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
+  if (!dst_prim->HasAttr(kDivisorOverride)) {
+    // default value of divisor_override is 0
+    dst_prim->AddAttr(kDivisorOverride, 0);
+  }
   if (AdjustPoolAttr(fmk_type, kNameAvgPoolFusion, dst_prim) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adjust pool attr failed.";
     return lite::RET_ERROR;
