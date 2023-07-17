@@ -401,6 +401,10 @@ uint32_t AscendDeviceInfo::GetDeviceID() const {
     MS_LOG(ERROR) << "Invalid context.";
     return 0;
   }
+  if (data_->params.find(kModelOptionAscendDeviceID) == data_->params.end()) {
+    MS_LOG(ERROR) << "params have no device id.";
+    return 0;
+  }
   return GetValue<uint32_t>(data_, kModelOptionAscendDeviceID);
 }
 

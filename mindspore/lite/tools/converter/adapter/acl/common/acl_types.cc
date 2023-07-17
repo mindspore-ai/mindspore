@@ -67,7 +67,9 @@ std::shared_ptr<mindspore::Context> AclModelOptionCfg::AsModelContext(const std:
   MS_CHECK_TRUE_MSG(model_context != nullptr, nullptr, "model_context is nullptr.");
   auto ascend_info = std::make_shared<AscendDeviceInfo>();
   MS_CHECK_TRUE_MSG(ascend_info != nullptr, nullptr, "ascend_info is nullptr.");
-  ascend_info->SetDeviceID(device_id);
+  if (this->device_id > 0) {
+    ascend_info->SetDeviceID(device_id);
+  }
   ascend_info->SetProvider(provider);
   SetAclModelInitOptions(*this, ascend_info);
   SetAclModelBuildOptions(*this, ascend_info);

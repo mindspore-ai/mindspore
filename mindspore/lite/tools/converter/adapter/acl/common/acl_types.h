@@ -29,8 +29,8 @@ namespace lite {
 namespace acl {
 struct AclModelOptionCfg {
   bool offline;
-  int32_t device_id = 0;
-  DataType output_type;
+  int32_t device_id = -1;
+  DataType output_type = DataType::kInvalidType;
   std::vector<size_t> dynamic_batch_size;
   std::map<int32_t, std::vector<int32_t>> input_shape_map;
   std::string input_format;

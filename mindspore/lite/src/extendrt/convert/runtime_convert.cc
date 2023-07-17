@@ -111,7 +111,7 @@ void SetParamByAscendInfo(const std::shared_ptr<mindspore::ConverterPara> &param
       }
     }
   }
-  if (ascend_info->GetDeviceID() >= 0) {
+  if (ascend_info->GetDeviceID() > 0) {
     param->aclModelOptionCfgParam.device_id = ascend_info->GetDeviceID();
   }
   if (ascend_info->GetOutputType() != mindspore::DataType::kTypeUnknown) {
