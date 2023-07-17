@@ -107,7 +107,7 @@ Status BatchOp::operator()() {
     batch_num = 0;
     epoch_num++;
     RETURN_IF_NOT_OK(
-      worker_in_queues_[NextWorkerID()]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOE))));
+      worker_in_queues_[NextWorkerID()]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(BatchCtrl::kEOE))));
     RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(epoch_num, batch_num, cnt - epoch_num)));
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
@@ -122,7 +122,7 @@ Status BatchOp::operator()() {
     UpdateRepeatAndEpochCounter();
   }  // end of EofHandled() == false
   RETURN_IF_NOT_OK(
-    worker_in_queues_[NextWorkerID()]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOF))));
+    worker_in_queues_[NextWorkerID()]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(BatchCtrl::kEOF))));
   // EOF received, send quit signal to all workers
   for (int32_t ind = 0; ind < num_workers_; ind++) {
     RETURN_IF_NOT_OK(SendQuitFlagToWorker(NextWorkerID()));
@@ -306,38 +306,40 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
 
   RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerGet"));
   RETURN_IF_NOT_OK(worker_in_queues_[workerId]->PopFront(&table_pair));
-  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"Flag", table_pair.second.FlagName()}}));
+  RETURN_IF_NOT_OK(
+    CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"TensorRowFlags", table_pair.second.FlagName()}}));
   RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerProcess"));
 
-  while (table_pair.second.ctrl_ != batchCtrl::kQuit) {
-    if (table_pair.second.ctrl_ == batchCtrl::kNoCtrl) {
+  while (table_pair.second.ctrl_ != BatchCtrl::kQuit) {
+    if (table_pair.second.ctrl_ == BatchCtrl::kNoCtrl) {
       TensorRow batched_tensor_row;
       RETURN_IF_NOT_OK(MakeBatchedRow(std::move(table_pair), &batched_tensor_row));
-      RETURN_IF_NOT_OK(
-        CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", TensorRow(TensorRow::kFlagNone).FlagName()}}));
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess",
+                                        {{"TensorRowFlags", TensorRow(TensorRow::kFlagNone).FlagName()}}));
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(std::move(batched_tensor_row)));
-    } else if (table_pair.second.ctrl_ == batchCtrl::kEOE) {
-      RETURN_IF_NOT_OK(
-        CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", TensorRow(TensorRow::kFlagEOE).FlagName()}}));
+    } else if (table_pair.second.ctrl_ == BatchCtrl::kEOE) {
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess",
+                                        {{"TensorRowFlags", TensorRow(TensorRow::kFlagEOE).FlagName()}}));
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
-    } else if (table_pair.second.ctrl_ == batchCtrl::kEOF) {
-      RETURN_IF_NOT_OK(
-        CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", TensorRow(TensorRow::kFlagEOF).FlagName()}}));
+    } else if (table_pair.second.ctrl_ == BatchCtrl::kEOF) {
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess",
+                                        {{"TensorRowFlags", TensorRow(TensorRow::kFlagEOF).FlagName()}}));
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
-    } else if (table_pair.second.ctrl_ == batchCtrl::kWait) {
-      RETURN_IF_NOT_OK(
-        CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", TensorRow(TensorRow::kFlagWait).FlagName()}}));
+    } else if (table_pair.second.ctrl_ == BatchCtrl::kWait) {
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess",
+                                        {{"TensorRowFlags", TensorRow(TensorRow::kFlagWait).FlagName()}}));
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagWait)));
       RETURN_IF_NOT_OK(TaskManager::FindMe()->Wait());  // wait for auto tune update workers successful
       TaskManager::FindMe()->Clear();
     }
     RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerGet"));
     RETURN_IF_NOT_OK(worker_in_queues_[workerId]->PopFront(&table_pair));
-    RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"Flag", table_pair.second.FlagName()}}));
+    RETURN_IF_NOT_OK(
+      CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"TensorRowFlags", table_pair.second.FlagName()}}));
     RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerProcess"));
   }
-  RETURN_IF_NOT_OK(
-    CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", TensorRow(TensorRow::kFlagQuit).FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess",
+                                    {{"TensorRowFlags", TensorRow(TensorRow::kFlagQuit).FlagName()}}));
   return Status::OK();
 }
 
@@ -841,12 +843,12 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
 }
 
 Status BatchOp::SendWaitFlagToWorker(int32_t worker_id) {
-  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kWait))));
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(BatchCtrl::kWait))));
   return Status::OK();
 }
 
 Status BatchOp::SendQuitFlagToWorker(int32_t worker_id) {
-  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kQuit))));
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(BatchCtrl::kQuit))));
   return Status::OK();
 }
 

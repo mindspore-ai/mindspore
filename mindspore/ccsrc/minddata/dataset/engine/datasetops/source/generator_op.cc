@@ -232,7 +232,7 @@ Status GeneratorOp::operator()() {
         eoe = e.matches(PyExc_StopIteration);
         // Pop up non StopIteration Python Exception
         if (!eoe) {
-          RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "__next__", {{"Flag", "Exception"}}));
+          RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "__next__", {{"TensorRowFlags", "Exception"}}));
           std::string traceback;
           try {
             // Construct python-like traceback
@@ -251,7 +251,7 @@ Status GeneratorOp::operator()() {
           e.restore();
           RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, traceback);
         }
-        RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "__next__", {{"Flag", "StopIteration"}}));
+        RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "__next__", {{"TensorRowFlags", "StopIteration"}}));
         // Restore exception to python
         e.restore();
 
