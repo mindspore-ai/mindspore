@@ -62,7 +62,7 @@ def dataset_generator():
         yield (np.ones((32, 2 * i), dtype=np.float32), np.ones((32, 2 * i), dtype=np.float32))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -75,8 +75,8 @@ def test_ascend_profiling():
         add = Net()
         add(Tensor(x), Tensor(y))
         profiler.analyse()
-        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/Framework.task_desc_info*")) == 2
-        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/Framework.tensor_data_info*")) == 2
+        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/summary/op_summary*")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/summary/op_statistic*")) == 1
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/l2_cache.data*")) >= 2
 
 
@@ -97,7 +97,7 @@ def test_ascend_pynative_profiling():
         add = Net()
         add(Tensor(x), Tensor(y))
         profiler.analyse()
-        assert len(glob.glob(f"{tmpdir}/profiler*/output_timeline_data_*.txt")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/ascend_timeline_display_*.json")) == 1
 
 
 @pytest.mark.level1
