@@ -43,6 +43,7 @@ std::string GeneratePyExecuteScriptForBinOrComp(const std::string &left, const s
                                                 const std::string &op);
 std::string GeneratePyExecuteScriptForUnary(const std::string &operand, const std::string &op);
 std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice);
+std::string GeneratePyExecuteScriptForCallNode(const AnfNodePtr &call_node, const std::string &name_id);
 
 // Create a PyExecute CNode by old node or debug_info.
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,

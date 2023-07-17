@@ -1469,6 +1469,8 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
         call_cnode->set_interpret(true);
         call_cnode = HandleInterpret(block, call_cnode, node);
       }
+      auto new_expr_src = fallback::GeneratePyExecuteScriptForCallNode(call_cnode, name_id);
+      fallback::SetNodeExprSrc(call_cnode, new_expr_src);
       return call_cnode;
     } else if (syntax_support != SYNTAX_SUPPORTED) {
       call_cnode->set_interpret(true);

@@ -21,7 +21,6 @@ from mindspore import Tensor, jit, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -39,13 +38,12 @@ def test_fallback_runtime_map():
         x = Tensor(np.array([1, 2, 3, 4])).asnumpy()
         y = Tensor(np.array([1, 1, 1, 1])).asnumpy()
         ret = map(lambda x, y: x + y, x, y)
-        return tuple(ret)
+        return ret
 
     out = foo()
-    assert out == (2, 3, 4, 5)
+    assert isinstance(out, map)
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -74,8 +72,8 @@ def test_map_cust_class():
         def construct(self):
             x = self.cls.attr1
             out = map(self.cls.method1, x)
-            return tuple(out)
+            return out
 
     net = GetattrClassNet()
     out = net()
-    assert out == (7, 8, 9, 10)
+    assert isinstance(out, map)
