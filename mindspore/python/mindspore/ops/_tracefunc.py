@@ -74,7 +74,7 @@ class PackFunc(Primitive):
         self.add_prim_attr("is_pynative_mode", is_pynative_mode)
 
     def __call__(self, *args, **kwargs):
-        if _RunOpHook.current and _RunOpHook.current.hook is PackFunc._trace_run_op:
+        if PackFunc.is_tracing():
             if self.cell_obj:
                 args = (self.cell_obj, *args)
             return self.func(*args, **kwargs)
@@ -88,6 +88,10 @@ class PackFunc(Primitive):
                 ret = self._run_op(args)
             return ret
         return self._run_op(args)
+
+    @staticmethod
+    def is_tracing():
+        return _RunOpHook.current and _RunOpHook.current.hook is PackFunc._trace_run_op
 
     @staticmethod
     def _trace_run_op(obj, args):
