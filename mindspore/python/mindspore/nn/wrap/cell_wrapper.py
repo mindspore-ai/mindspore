@@ -329,7 +329,7 @@ class TrainOneStepCell(Cell):
         network (Cell): The training network. The network only supports single output.
         optimizer (Union[Cell]): Optimizer for updating the network parameters.
         sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is
-            ``1.0`` .
+            ``None`` .
         return_grad (bool): Whether to return gradient. If ``True``, it will return the gradient in the form of a dict
             while returning loss. The key of the dict is the parameter name corresponding to the gradient, and value
             is the gradient value. Default value is ``False`` .
@@ -376,14 +376,21 @@ class TrainOneStepCell(Cell):
         >>> train_net = nn.TrainOneStepCell(loss_net, optim)
     """
 
-    def __init__(self, network, optimizer, sens=1.0, return_grad=False):
+    def __init__(self, network, optimizer, sens=None, return_grad=False):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
         self.optimizer = optimizer
         self.weights = self.optimizer.parameters
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
+        self.grad_no_sens = C.GradOperation(get_by_list=True)
         self.sens = sens
+        if self.sens == 0:
+            raise ValueError("The input argument of 'sens' can not be 0.")
+        self.sense_flag = True
+        if self.sens is None:
+            self.sense_flag = False
+            self.sens = 1.0
         self.return_grad = return_grad
         if return_grad:
             self.weights_name = [i.name for i in self.optimizer.parameters]
@@ -411,9 +418,24 @@ class TrainOneStepCell(Cell):
             self._jit_config_dict = network.jit_config_dict
 
     def construct(self, *inputs):
+        if not self.sense_flag:
+            return self._no_sens_impl(*inputs)
         loss = self.network(*inputs)
         sens = F.fill(loss.dtype, loss.shape, self.sens)
         grads = self.grad(self.network, self.weights)(*inputs, sens)
+        grads = self.grad_reducer(grads)
+        loss = F.depend(loss, self.optimizer(grads))
+        if self.return_grad:
+            grad_with_param_name = {}
+            for index, value in enumerate(grads):
+                grad_with_param_name[self.weights_name[index]] = value
+            return loss, grad_with_param_name
+        return loss
+
+    def _no_sens_impl(self, *inputs):
+        """construct implementation when the 'sens' parameter is passed in."""
+        loss = self.network(*inputs)
+        grads = self.grad_no_sens(self.network, self.weights)(*inputs)
         grads = self.grad_reducer(grads)
         loss = F.depend(loss, self.optimizer(grads))
         if self.return_grad:
@@ -656,7 +678,7 @@ class _TrainPipelineAccuStepCell(TrainOneStepCell):
     """
     Wraps the network with an optimizer in pipeline mode.
     """
-    def __init__(self, network, optimizer, sens=1.0):
+    def __init__(self, network, optimizer, sens=None):
         super(_TrainPipelineAccuStepCell, self).__init__(network, optimizer, sens)
         self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
         self.hyper_map = ops.HyperMap()
@@ -665,10 +687,25 @@ class _TrainPipelineAccuStepCell(TrainOneStepCell):
             self._jit_config_dict = network.jit_config_dict
 
     def construct(self, *inputs):
-        weights = self.weights
+        if not self.sense_flag:
+            return self._no_sens_impl(*inputs)
         loss = self.network(*inputs)
         sens = ops.Fill()(ops.DType()(loss), ops.Shape()(loss), self.sens)
-        grads = self.grad(self.network, weights)(*inputs, sens)
+        grads = self.grad(self.network, self.weights)(*inputs, sens)
+        accu_grads = ops.depend(self.accu_grads, grads)
+        if self.opt_shard:
+            succ = self.optimizer(grads)
+        else:
+            succ = self.optimizer(accu_grads)
+        loss = ops.depend(loss, succ)
+        clear = self.hyper_map(_pipeline_clear_grad, accu_grads, grads)
+        loss = ops.depend(loss, clear)
+        return loss
+
+    def _no_sens_impl(self, *inputs):
+        """construct implementation when the 'sens' parameter is passed in."""
+        loss = self.network(*inputs)
+        grads = self.grad_no_sens(self.network, self.weights)(*inputs)
         accu_grads = ops.depend(self.accu_grads, grads)
         if self.opt_shard:
             succ = self.optimizer(grads)

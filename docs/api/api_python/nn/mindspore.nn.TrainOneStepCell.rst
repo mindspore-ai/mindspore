@@ -1,7 +1,7 @@
 mindspore.nn.TrainOneStepCell
 =============================
 
-.. py:class:: mindspore.nn.TrainOneStepCell(network, optimizer, sens=1.0, return_grad=False)
+.. py:class:: mindspore.nn.TrainOneStepCell(network, optimizer, sens=None, return_grad=False)
 
     训练网络封装类。
 
@@ -11,7 +11,7 @@ mindspore.nn.TrainOneStepCell
     参数：
         - **network** (Cell) - 训练网络。只支持单输出网络。
         - **optimizer** (Union[Cell]) - 用于更新网络参数的优化器。
-        - **sens** (numbers.Number) - 反向传播的输入，缩放系数。默认值为 ``1.0`` 。
+        - **sens** (numbers.Number) - 反向传播的输入，缩放系数。默认值为 ``None`` 。
         - **return_grad** (bool) - 是否返回梯度，若为 ``True`` ，则会在返回loss的同时以字典的形式返回梯度，字典的key为梯度对应的参数名，value为梯度值。默认值为 ``False`` 。
 
     输入：

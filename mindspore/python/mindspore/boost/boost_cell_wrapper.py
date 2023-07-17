@@ -113,7 +113,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
     Args:
         network (Cell): The training network. The network only supports single output.
         optimizer (Union[Cell]): Optimizer for updating the weights.
-        sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default: ``1.0`` .
+        sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default: ``None`` .
 
     Inputs:
         - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
@@ -162,7 +162,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         >>> train_net = boost.BoostTrainOneStepCell(loss_net, optim)
     """
 
-    def __init__(self, network, optimizer, sens=1.0):
+    def __init__(self, network, optimizer, sens=None):
         super(BoostTrainOneStepCell, self).__init__(network, optimizer, sens)
         self.hyper_map = C.HyperMap()
         self.freeze = isinstance(optimizer, FreezeOpt)
@@ -211,6 +211,8 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         if self.freeze:
             loss = self.gradient_freeze_process(*inputs)
         else:
+            if not self.sense_flag:
+                return self._no_sens_impl(*inputs)
             loss = self.network(*inputs)
             sens = F.fill(loss.dtype, loss.shape, self.sens)
             grads = self.grad(self.network, self.weights)(*inputs, sens)
@@ -335,6 +337,22 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         if not getattr(self.optimizer, "dim_reduce", None):
             return False
         return True
+
+    def _no_sens_impl(self, *inputs):
+        """construct implementation when the 'sens' parameter is passed in."""
+        loss = self.network(*inputs)
+        sens = F.fill(loss.dtype, loss.shape, self.sens)
+        grads = self.grad_no_sens(self.network, self.weights)(*inputs)
+        grads = self.grad_reducer(grads)
+        if self.use_grad_accumulation:
+            loss = self.gradient_accumulation_process(loss, grads, sens, *inputs)
+        else:
+            if self.enable_dim_reduce:
+                loss = F.depend(loss, self.dim_reduce(loss, grads, sens, self.weights, self.weights_clone, *inputs))
+            elif self.enable_adasum:
+                loss = F.depend(loss, self.adasum_process(loss, grads))
+            else:
+                loss = F.depend(loss, self.optimizer(grads))
 
     def __init_dim_reduce(self):
         """dim reduce algorithm init method."""
