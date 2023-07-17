@@ -78,8 +78,9 @@ int64_t CeilDiv(int64_t a, int64_t b) {
 void CheckOutshapeValid(const PrimitivePtr &primitive, const std::vector<int64_t> &out_shape,
                         const std::vector<int64_t> &in_shape, const std::vector<int64_t> &kernel_size,
                         const std::vector<int64_t> &strides) {
+  bool is_dynamic_shape = std::any_of(in_shape.begin(), in_shape.end(), [](int64_t in) { return in == -1; });
   for (auto out : out_shape) {
-    if (out <= 0 && out != -1) {
+    if (out <= 0 && !is_dynamic_shape) {
       MS_EXCEPTION(ValueError)
         << "For '" << primitive->name()
         << "', the each element of the output shape must be larger than 0, but got output shape: " << out_shape

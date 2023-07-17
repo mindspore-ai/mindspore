@@ -1783,8 +1783,13 @@ class _Pool(PrimitiveWithInfer):
                 out_w = math.ceil(input_w / stride_w)
         out_shape = [batch, channel, out_h, out_w] if self.format == "NCHW" else [batch, out_h, out_w, channel]
 
-        for shape_value in out_shape:
-            if shape_value <= 0 and shape_value != -1:
+        is_dynamic_shape = False
+        for in_shape_val in x_shape_norm:
+            if in_shape_val == -1:
+                is_dynamic_shape = True
+
+        for out_shape_val in out_shape:
+            if out_shape_val <= 0 and not is_dynamic_shape:
                 raise ValueError(f"For '{self.name}', the each element of the output shape must be larger than 0, "
                                  f"but got output shape: {out_shape}. The input shape: {x_shape}, "
                                  f"kernel size: {self.kernel_size}, strides: {self.strides}."
