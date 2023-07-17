@@ -22,7 +22,7 @@ mindspore.ops.conv3d
     .. note::
 
         1. 在Ascend平台上，目前只支持 :math:`groups=1` 。
-        2. 在Ascend平台上，目前只支持 :math:`dialtion=1` 。
+        2. 在Ascend平台上，目前只支持 :math:`dilation=1` 。
 
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。
