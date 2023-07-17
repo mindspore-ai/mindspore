@@ -350,7 +350,7 @@ class QuantDtype(enum.Enum):
 
     Tutorial Examples:
         - `Quantization algorithm in Golden Stick
-          <https://www.mindspore.cn/golden_stick/docs/en/master/quantization/slb.html
+          <https://www.mindspore.cn/golden_stick/docs/en/r0.3/quantization/slb.html
           #applying-the-quantization-algorithm>`_
     """
     INT1 = 0
