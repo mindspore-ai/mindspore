@@ -2142,7 +2142,7 @@ void GradExecutor::CheckGraphDynamic(const ValuePtrList &inputs, const DynamicDe
   bool use_dynamic_shape_process = IsGraphDynamic(inputs, node, node_idx);
   top_cell()->IncreaseOpIndex();
   if (use_dynamic_shape_process) {
-    MS_LOG(INFO) << "Set use_dynamic_shape_process: " << use_dynamic_shape_process;
+    MS_LOG(DEBUG) << "Set use_dynamic_shape_process: " << use_dynamic_shape_process;
     top_cell()->set_use_dynamic_shape_process(use_dynamic_shape_process);
     py::gil_scoped_acquire gil_acquire;
     (void)cell_id_with_dynamic_detect_nodes_.erase(top_cell()->obj_id_with_grad_order());

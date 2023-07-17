@@ -908,8 +908,10 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   MS_LOG(INFO) << "Run eliminate forward nodes action.";
   auto grad_exec = pynative_exec->grad_executor();
   bool eliminate_forward = grad_exec->eliminate_forward();
-  grad_exec->set_eliminate_forward(eliminate_forward && ms_func_graph->func_graphs_used().empty());
-  auto grad_graph = ad::Grad(BasicClone(ms_func_graph), opt::Optimizer::MakeEmptyOptimizer(resource));
+  bool is_not_control_flow = ms_func_graph->func_graphs_used().empty();
+  grad_exec->set_eliminate_forward(eliminate_forward && is_not_control_flow);
+  auto grad_graph = ad::Grad(is_not_control_flow ? ms_func_graph : BasicClone(ms_func_graph),
+                             opt::Optimizer::MakeEmptyOptimizer(resource));
   MS_EXCEPTION_IF_NULL(grad_graph);
   graph_executor->SetGradGraph(grad_graph, phase);
   ModifyOutputNode(ms_func_graph);
