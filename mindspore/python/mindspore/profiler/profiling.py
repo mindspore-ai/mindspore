@@ -70,7 +70,7 @@ AICORE_METRICS_DICT = {
 
 class DeviceSupportParam(Enum):
     """The device target enum."""
-    CPU = ['start', 'start_profile', 'output_path', 'timeline_limit', 'profile_framework']
+    CPU = ['start', 'start_profile', 'output_path', 'timeline_limit', 'profile_framework', 'op_time']
     GPU = ['start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'sync_enable', 'op_time',
            'profile_framework']
     ASCEND = ['start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
@@ -1181,6 +1181,8 @@ class Profiler:
         self._ascend_profiler.finalize()
 
         job_id = self._get_profiling_job_id()
+        if not job_id:
+            return
         logger.info("Profiling: job id is %s ", job_id)
 
         self._check_output_path(output_path=self._output_path)
@@ -1443,7 +1445,7 @@ class Profiler:
                   "please check whether job dir or prof dir(name startswith JOB or PROF) in output path " \
                   "was generated, or may be the device id from job dir dismatch the " \
                   "device_id in current process.".format(self._output_path)
-            raise RuntimeError(msg)
+            logger.warning(msg)
 
         return job_id
 
