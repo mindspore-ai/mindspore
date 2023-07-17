@@ -48,6 +48,7 @@ bool IsInitDataSetQueueNode(const AnfNodePtr &node);
 void ClearGeSessionAndRunner();
 void InitializeAoeUtil();
 void DestroyAoeUtil();
+void EnableAoeOffline();
 
 // convert_type
 std::vector<GeTensorPtr> ConvertInputTensors(const std::vector<MeTensorPtr> &me_tensors, const std::string &format);

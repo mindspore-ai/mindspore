@@ -396,6 +396,28 @@ class _Context:
             raise ValueError(f"For 'context.set_context', the argument 'aoe_tune_mode' must be in "
                              f"['online', 'offline'], but got {tune_mode}.")
 
+    def set_aoe_config(self, aoe_config):
+        """
+        Enable aoe config.
+
+        Args:
+            aoe_config (dict):
+                - job_type (str): "1", "2".
+        """
+
+        aoe_cfgs = {'job_type': ["1", "2"]}
+        for aoe_config_key in aoe_config:
+            if aoe_config_key not in aoe_cfgs:
+                raise ValueError(f"For 'context.set_context', the key of argument 'aoe_config' must be one of "
+                                 f"{aoe_cfgs}, but got {aoe_config_key}.")
+            supported_value = aoe_cfgs.get(aoe_config_key)
+            if aoe_config[aoe_config_key] not in supported_value:
+                raise ValueError(f"For 'aoe_config', the value of argument {aoe_config_key} must be one of "
+                                 f"{supported_value}, but got {aoe_config[aoe_config_key]}.")
+            if aoe_config_key == 'job_type':
+                self.set_param(ms_ctx_param.aoe_job_type, aoe_config[aoe_config_key])
+
+
     def set_device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
             raise ValueError(f"For 'context.set_context', the argument 'device_id' must be in range [0, 4095], "
@@ -535,6 +557,7 @@ class _Context:
         'ascend_config': set_ascend_config,
         'jit_syntax_level': set_jit_syntax_level,
         'gpu_config': set_gpu_config,
+        'aoe_config': set_aoe_config,
     }
 
     @property
@@ -956,7 +979,7 @@ def _check_target_specific_cfgs(device, arg_key):
 
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=(bool, int),
-                 save_graphs_path=str, enable_dump=bool, aoe_tune_mode=str,
+                 save_graphs_path=str, enable_dump=bool, aoe_tune_mode=str, aoe_config=dict,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_auto_mixed_precision=bool, inter_op_parallel_num=int,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
@@ -1023,6 +1046,8 @@ def set_context(**kwargs):
     |                         |  enable_reduce_precision     |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  aoe_tune_mode               |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  aoe_config                  |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  check_bprop                 |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
@@ -1170,6 +1195,13 @@ def set_context(**kwargs):
             be changed automatically. Default: ``True`` .
         aoe_tune_mode (str): AOE tuning mode setting, It is not set by default.
             When set to ``online`` , the tuning in online function is turned on.
+            When set to ``offline`` , ge graph will be save for offline tuning.
+        aoe_config (dict): Set the parameters specific to Ascend Optimization Engine. It is not set by default.
+
+            - job_type (str): Mode type setting, default value is 2.
+
+              - 1: subgraph tuning;
+              - 2: operator tuning.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: ``False`` .
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: ``1000`` .
@@ -1365,6 +1397,7 @@ def set_context(**kwargs):
         >>> ms.set_context(reserve_class_name_in_scope=True)
         >>> ms.set_context(variable_memory_max_size="6GB")
         >>> ms.set_context(aoe_tune_mode="online")
+        >>> ms.set_context(aoe_config={"job_type": "2"})
         >>> ms.set_context(check_bprop=True)
         >>> ms.set_context(max_device_memory="3.5GB")
         >>> ms.set_context(mempool_block_size="1GB")

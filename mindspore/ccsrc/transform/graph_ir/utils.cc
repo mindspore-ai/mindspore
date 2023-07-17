@@ -315,6 +315,8 @@ void InitializeAoeUtil() { AoeUtil::GetInstance().Initialize(); }
 
 void DestroyAoeUtil() { AoeUtil::GetInstance().Destroy(); }
 
+void EnableAoeOffline() { AoeUtil::GetInstance().SetOfflineEnvDumpGeGraph(); }
+
 // convert
 
 DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix) {

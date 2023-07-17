@@ -81,6 +81,9 @@ void GeDeviceContext::Initialize() {
   if (ms_context->EnableAoeOnline()) {
     transform::InitializeAoeUtil();
   }
+  if (ms_context->EnableAoeOffline()) {
+    transform::EnableAoeOffline();
+  }
   initialized_ = true;
 }
 
