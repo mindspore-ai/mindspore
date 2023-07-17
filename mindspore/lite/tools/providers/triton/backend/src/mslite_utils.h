@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_MSLITE_BACKEND_SRC_MSLITE_UTILS_H_
-#define MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_MSLITE_BACKEND_SRC_MSLITE_UTILS_H_
+#ifndef MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_BACKEND_SRC_MSLITE_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_BACKEND_SRC_MSLITE_UTILS_H_
 
 #include <map>
 #include "include/api/data_type.h"
@@ -25,7 +25,7 @@ namespace triton {
 namespace backend {
 namespace mslite {
 static inline mindspore::DataType GetMSDataTypeFromTritonServerDataType(TRITONSERVER_DataType data_type) {
-  std::map<TRITONSERVER_DataType, mindspore::DataType> ms_types = {
+  static const std::map<TRITONSERVER_DataType, mindspore::DataType> ms_types = {
     {TRITONSERVER_TYPE_INVALID, mindspore::DataType::kInvalidType},
     {TRITONSERVER_TYPE_BOOL, mindspore::DataType::kNumberTypeBool},
     {TRITONSERVER_TYPE_UINT8, mindspore::DataType::kNumberTypeUInt8},
@@ -45,7 +45,7 @@ static inline mindspore::DataType GetMSDataTypeFromTritonServerDataType(TRITONSE
 }
 
 static inline TRITONSERVER_DataType GetTritonServerDataTypeFromMSDataType(mindspore::DataType data_type) {
-  std::map<mindspore::DataType, TRITONSERVER_DataType> triton_types = {
+  static const std::map<mindspore::DataType, TRITONSERVER_DataType> triton_types = {
     {mindspore::DataType::kInvalidType, TRITONSERVER_TYPE_INVALID},
     {mindspore::DataType::kNumberTypeBool, TRITONSERVER_TYPE_BOOL},
     {mindspore::DataType::kNumberTypeUInt8, TRITONSERVER_TYPE_UINT8},
@@ -65,4 +65,4 @@ static inline TRITONSERVER_DataType GetTritonServerDataTypeFromMSDataType(mindsp
 }  // namespace mslite
 }  // namespace backend
 }  // namespace triton
-#endif  // MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_MSLITE_BACKEND_SRC_MSLITE_UTILS_H_
+#endif  // MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_BACKEND_SRC_MSLITE_UTILS_H_
