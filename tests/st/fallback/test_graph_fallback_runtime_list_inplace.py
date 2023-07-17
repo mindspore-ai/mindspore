@@ -899,3 +899,88 @@ def test_list_in_joined_str():
     with pytest.raises(TypeError) as raise_info:
         foo(x, y, z)
     assert "The input is [1, 2, 3]" in str(raise_info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_in_joined_str_2():
+    """
+    Feature: dynamic length list do not run inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(a):
+        x = [a, a+1]
+        raise TypeError(f"The input is {x}")
+
+    with pytest.raises(TypeError) as raise_info:
+        foo(Tensor([1]))
+    assert "The input is [Tensor(shape=[1], dtype=Int64, value= [1]), Tensor(shape=[1], dtype=Int64, value= [2])]"\
+           in str(raise_info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_in_joined_str_3():
+    """
+    Feature: dynamic length list do not run inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(a):
+        x = mutable((a, [a, a+1]))
+        raise TypeError(f"The input is {x}")
+
+    with pytest.raises(TypeError) as raise_info:
+        foo(Tensor([1]))
+    assert "The input is (Tensor(shape=[1], dtype=Int64, value= [1]), [Tensor(shape=[1], dtype=Int64, value= [1])," \
+           " Tensor(shape=[1], dtype=Int64, value= [2])])" in str(raise_info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_in_joined_str_4():
+    """
+    Feature: dynamic length list do not run inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(a):
+        x = mutable([a, [a, a+1]])
+        raise TypeError(f"The input is {x}")
+
+    with pytest.raises(TypeError) as raise_info:
+        foo(Tensor([1]))
+    assert "The input is [Tensor(shape=[1], dtype=Int64, value= [1]), [Tensor(shape=[1], dtype=Int64, value= [1])," \
+           " Tensor(shape=[1], dtype=Int64, value= [2])]]" in str(raise_info.value)
+
+
+@pytest.mark.skip(reason="PyExecute handle list user data failed.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_in_joined_str_5():
+    """
+    Feature: dynamic length list do not run inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(a):
+        x = [a, a+1]
+        raise TypeError(f"{x}")
+
+    with pytest.raises(TypeError) as raise_info:
+        foo(Tensor([1]))
+    assert "[Tensor(shape=[1], dtype=Int64, value= [1]), Tensor(shape=[1], dtype=Int64, value= [2])]" \
+           in str(raise_info.value)

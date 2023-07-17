@@ -23,6 +23,7 @@
 #include <functional>
 #include <utility>
 #include <memory>
+#include <vector>
 #include <unordered_map>
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sparse_tensor_ops.h"
@@ -1574,25 +1575,7 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto kConvertToListString = "list(map(str, __inner_convert_object__))";
     constexpr auto kConvertToListKey = "__inner_convert_object__";
     std::vector<AnfNodePtr> list_str_value_list = {NewValueNode(prim::kPrimMakeTuple)};
-    (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list),
-                         [&fg](const AnfNodePtr &node) {
-                           auto abs = node->abstract();
-                           if (abs == nullptr || !abs->isa<abstract::AbstractList>()) {
-                             return node;
-                           }
-                           // Do not handle nested sequence with list element now.
-                           const std::string input_str = "__internal_list_input__";
-                           const std::string func_str = "list";
-                           const std::string script_str = func_str + "(" + input_str + ")";
-                           const auto script_str_val = std::make_shared<StringImm>(script_str);
-                           const auto input_str_val = std::make_shared<StringImm>(input_str);
-                           auto key_str_val = std::make_shared<ValueTuple>(std::vector<ValuePtr>{input_str_val});
-                           auto key_val_node = fg->NewCNode({std::make_shared<ValueNode>(prim::kPrimMakeTuple), node});
-                           AnfNodePtr ret =
-                             fallback::CreatePyExecuteCNode(fg, NewValueNode(script_str_val), NewValueNode(key_str_val),
-                                                            key_val_node, node->debug_info());
-                           return ret;
-                         });
+    std::copy(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list));
 
     std::vector<AnfNodePtr> list_str_key_list = {NewValueNode(prim::kPrimMakeTuple), NewValueNode(kConvertToListKey)};
     auto list_str_key_node = fg->NewCNode(list_str_key_list);
@@ -2288,6 +2271,123 @@ bool RewriterForExport(const FuncGraphPtr &root, const pipeline::ResourcePtr &re
   manager->AddFuncGraph(root);
   ExportRewriter rewriter(root, manager);
   return rewriter.Execute();
+}
+
+bool CheckNeedConvertList(const AbstractBasePtr &abs) {
+  if (abs == nullptr || !abs->isa<abstract::AbstractSequence>()) {
+    return false;
+  }
+  // If abstract has real type/shape, it means the corresponding node is PyExecute.
+  // Do not covert PyExecute node.
+  if (fallback::HasRealType(abs) || fallback::HasRealShape(abs)) {
+    return false;
+  }
+  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  if (seq_abs->dynamic_len()) {
+    return false;
+  }
+  if (seq_abs->isa<abstract::AbstractList>()) {
+    return true;
+  }
+  const auto &elements = seq_abs->elements();
+  return std::any_of(elements.begin(), elements.end(),
+                     [](const AbstractBasePtr &abs) { return CheckNeedConvertList(abs); });
+}
+
+AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPtr &fg) {
+  MS_EXCEPTION_IF_NULL(fg);
+  auto abs = node->abstract();
+  if (!CheckNeedConvertList(abs)) {
+    return node;
+  }
+  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
+  const auto elements = seq_abs->elements();
+  if (abs->isa<abstract::AbstractList>()) {
+    const std::string element_prefix = "__list_element_";
+    std::stringstream script_buffer;
+    script_buffer << "[";
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    for (size_t i = 0; i < elements.size(); ++i) {
+      auto element_abs = elements[i];
+      auto element_node =
+        fg->NewCNode({NewValueNode(prim::kPrimListGetItem), node, NewValueNode(MakeValue<int64_t>(i))});
+      element_node->set_abstract(element_abs);
+      auto new_element_node = ConvertToPyExecuteListInner(element_node, fg);
+      std::string element_name = element_prefix + std::to_string(i) + "__";
+      script_buffer << element_name << ",";
+      (void)key_value_names_list.emplace_back(NewValueNode(element_name));
+      (void)key_value_list.emplace_back(new_element_node);
+    }
+    script_buffer << "]";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+    return fallback::CreatePyExecuteCNode(fg, NewValueNode(script_str), key_value_name_tuple, key_value_tuple,
+                                          node->debug_info());
+  }
+  std::vector<AnfNodePtr> new_make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < elements.size(); ++i) {
+    auto element_abs = elements[i];
+    auto element_node =
+      fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(MakeValue<int64_t>(i))});
+    element_node->set_abstract(element_abs);
+    auto new_element_node = ConvertToPyExecuteListInner(element_node, fg);
+    (void)new_make_tuple_inputs.emplace_back(new_element_node);
+  }
+  return fg->NewCNode(new_make_tuple_inputs);
+}
+
+bool ConvertToPyExecuteList(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(graph);
+  AnfNodePtr return_node = graph->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
+  bool change = false;
+  constexpr size_t pyexecute_min_len = 4;
+  constexpr size_t pyexecute_value_index = 3;
+  for (auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode->size() < pyexecute_min_len) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The minimum len of input to PyExecute should " << pyexecute_min_len << " but got "
+                                 << cnode->size() << " for node: " << cnode->DebugString();
+    }
+    auto value_input = cnode->input(pyexecute_value_index);
+    auto new_value_input = ConvertToPyExecuteListInner(value_input, graph);
+    if (value_input == new_value_input) {
+      continue;
+    }
+    auto tr = manager->Transact();
+    tr.SetEdge(cnode, pyexecute_value_index, new_value_input);
+    tr.Commit();
+    change = true;
+  }
+  return change;
+}
+
+bool ConvertPyExecuteListInput(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
+  auto manager = resource->manager();
+  const auto func_graphs_used_total = root->func_graphs_used_total();
+  bool change = false;
+  for (const auto &fg : func_graphs_used_total) {
+    auto cur_change = ConvertToPyExecuteList(fg, manager);
+    change = change || cur_change;
+  }
+  bool root_change = ConvertToPyExecuteList(root, manager);
+  change = change || root_change;
+  if (change) {
+    abstract::AbstractBasePtrList new_args_spec;
+    (void)std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
+                         [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
+    (void)pipeline::Renormalize(resource, root, new_args_spec);
+  }
+  return change;
 }
 
 static inline bool OrderPyExecuteCNode(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager) {
