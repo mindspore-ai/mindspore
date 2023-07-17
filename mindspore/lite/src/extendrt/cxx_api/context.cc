@@ -317,7 +317,7 @@ void GPUDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
   } else if (precision_mode == StringToChar("preferred_fp16")) {
     data_->params[kModelOptionGPUEnableFP16] = true;
   } else {
-    MS_LOG(ERROR) << "GPU only support mode enforce_fp32 and preferred_fp16.";
+    MS_LOG(ERROR) << "GPU only support mode enforce_fp32 and preferred_fp16. Now the precision mode is fp32 as default";
     return;
   }
   data_->params[kModelOptionGPUPrecisionMode] = CharToString(precision_mode);
