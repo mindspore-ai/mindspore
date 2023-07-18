@@ -2088,6 +2088,15 @@ void ClearResPart1() {
   runtime::GraphScheduler::GetInstance().Clear();
   runtime::ProfilerAnalyzer::GetInstance().Clear();
 
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() != "ge") {
+    // clear runtime resource before destroy hccl comm
+    MS_LOG(INFO) << "Start clear kernel runtime...";
+    device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+    MS_LOG(INFO) << "End clear kernel runtime.";
+  }
+
   MS_LOG(INFO) << "Start Finalize StreamSynchronizer...";
   device::StreamSynchronizer::GetInstance()->Finalize();
   MS_LOG(INFO) << "End Finalize StreamSynchronizer...";
@@ -2118,6 +2127,10 @@ void ClearResPart2() {
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
     device_context->GetDeprecatedInterface()->ClearGraphWrapper();
     device_context->GetDeprecatedInterface()->ClearOpAdapterMap();
+    // clear runtime resource after clear graph when ge
+    MS_LOG(INFO) << "Start clear kernel runtime...";
+    device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+    MS_LOG(INFO) << "End clear kernel runtime.";
   } else {
     MS_LOG(INFO) << "Start clear ConfigManager...";
     ConfigManager::GetInstance().ResetIterNum();
@@ -2128,9 +2141,6 @@ void ClearResPart2() {
   ConfigManager::GetInstance().ResetIterNum();
   MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
-  MS_LOG(INFO) << "Start clear kernel runtime...";
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-  MS_LOG(INFO) << "End clear kernel runtime.";
 
   MS_LOG(INFO) << "Start clear device context...";
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
