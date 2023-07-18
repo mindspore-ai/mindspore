@@ -64,9 +64,13 @@ const BaseRef KVCacheMgrOneBranchFusion::DefinePattern() const {
   MS_CHECK_TRUE_RET(is_mul != nullptr, {});
   VectorRef mul_ref({is_mul, input_1_key_, expandims_ref});
 
+  auto is_load = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimLoad>);
+  MS_CHECK_TRUE_RET(is_load != nullptr, {});
+  VectorRef load_ref({is_load, input_2_key_past_, std::make_shared<Var>()});
+
   auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAdd>);
   MS_CHECK_TRUE_RET(is_add != nullptr, {});
-  VectorRef add_ref({is_add, input_2_key_past_, mul_ref});
+  VectorRef add_ref({is_add, load_ref, mul_ref});
 
   return add_ref;
 }
