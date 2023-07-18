@@ -352,6 +352,9 @@ class SamplerFn:
     def _stop_subprocess(self):
         """Only the main process can call join."""
         if self.need_join is True and self.ppid == os.getpid():
+            # close the watch dog first
+            self._abort_watchdog()
+
             if hasattr(self, 'eof') and self.eof is not None and not self.eof.is_set():
                 self.eof.set()
             self.need_join = False
@@ -360,12 +363,41 @@ class SamplerFn:
                     try:
                         # del the queue first
                         del w.res_queue
+                        del w.idx_queue
+
+                        # close all the subprocess workers
+                        w.terminate()
+                        w.join()
+                        w.close()
                     except Exception:  # pylint: disable=W0703
                         # Block all errors when join
                         continue
+
+            # release the file descriptor handle
+            check_interval = get_multiprocessing_timeout_interval()
+            for w in self.workers:
+                try:
+                    subprocess_file_descriptor = w.sentinel
+                    st = time.time()
+                    while _PythonMultiprocessing.is_process_alive(w.pid):
+                        time.sleep(0.01)  # sleep 10ms, waiting for the subprocess exit
+                        if time.time() - st > check_interval:
+                            logger.warning("Waiting for the subprocess worker [{}] to exit.".format(w.pid))
+                            st += check_interval
+                except ValueError as e:
+                    if "process object is closed" in str(e):
+                        continue
+                    raise e
+                try:
+                    if w.is_alive():
+                        os.close(subprocess_file_descriptor)
+                except OSError as e:
+                    # Maybe the file descriptor had been released, so ignore the 'Bad file descriptor'
+                    if "Bad file descriptor" not in str(e):
+                        raise e
+
             self.workers.clear()
             self.workers = None
-            self._abort_watchdog()
 
     def _abort_watchdog(self):
         if hasattr(self, 'eot') and self.eot is not None and not self.eot.is_set():
@@ -544,7 +576,8 @@ class _GeneratorWorkerMp(multiprocessing.Process):
 
     def __del__(self):
         # del all the Queue & SharedQueue when the iter had been deleted from ITERATORS_LIST
-        del self.idx_queue
+        if hasattr(self, 'idx_queue'):
+            del self.idx_queue
         if hasattr(self, 'res_queue'):
             # del the queue when has
             del self.res_queue
