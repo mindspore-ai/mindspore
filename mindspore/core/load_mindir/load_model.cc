@@ -106,8 +106,10 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const mindspore::HashMap<s
         vec.push_back(value.top());
         value.pop();
       }
-      // pop "["
-      rules.pop();
+      if (!rules.empty()) {
+        // pop "["
+        rules.pop();
+      }
       // make tuple for names
       std::string res = "dummy";
       // make tuple for values
