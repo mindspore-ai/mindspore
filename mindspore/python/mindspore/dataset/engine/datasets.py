@@ -3098,6 +3098,9 @@ class _MPWorker(multiprocessing.Process):
                 # del the handle which hold by master
                 del self.pipe.in_queue
                 del self.pipe.res_queue
+                super().terminate()
+                super().join()
+                super().close()
 
         except ValueError:
             # Process has been closed already
@@ -3359,10 +3362,11 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         atexit.register(self.terminate)
 
     def terminate(self):
+        # close watch dog first and then close all the workers
+        self.abort_watchdog()
         self.close_all_workers()
         if hasattr(self, "warning_ctl"):
             del self.warning_ctl
-        self.abort_watchdog()
 
     def get_pids(self):
         """
@@ -3472,13 +3476,18 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                 w.close()
             check_interval = get_multiprocessing_timeout_interval()
             for w in self.workers:
-                subprocess_file_descriptor = w.sentinel
-                st = time.time()
-                while _PythonMultiprocessing.is_process_alive(w.pid):
-                    time.sleep(0.01)  # sleep 10ms, waiting for the subprocess exit
-                    if time.time() - st > check_interval:
-                        logger.warning("Waiting for the subprocess worker [{}] to exit.".format(w.pid))
-                        st += check_interval
+                try:
+                    subprocess_file_descriptor = w.sentinel
+                    st = time.time()
+                    while _PythonMultiprocessing.is_process_alive(w.pid):
+                        time.sleep(0.01)  # sleep 10ms, waiting for the subprocess exit
+                        if time.time() - st > check_interval:
+                            logger.warning("Waiting for the subprocess worker [{}] to exit.".format(w.pid))
+                            st += check_interval
+                except ValueError as e:
+                    if "process object is closed" in str(e):
+                        continue
+                    raise e
                 try:
                     if w.is_alive():
                         os.close(subprocess_file_descriptor)
