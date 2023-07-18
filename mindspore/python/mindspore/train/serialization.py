@@ -380,7 +380,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         param_dict = OrderedDict()
         for _, param in save_obj.parameters_and_names():
             not_sliced = not param.sliced
-            if _is_in_auto_parallel_mode() and (not_sliced or param.has_init):
+            is_graph_mode = context.get_context('mode') == context.GRAPH_MODE
+            # All parameters are initialized immediately under PyNative mode, skip this judgement.
+            if is_graph_mode and _is_in_auto_parallel_mode() and (not_sliced or param.has_init):
                 continue
             param_dict[param.name] = param
         param_list = []
