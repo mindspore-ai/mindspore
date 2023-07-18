@@ -29,6 +29,8 @@
 #include "include/common/pybind_api/api_register.h"
 #include "pipeline/jit/debug/trace.h"
 #include "frontend/operator/ops.h"
+#include "mindspore/core/utils/ms_context.h"
+#include "pipeline/jit/fallback.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -280,6 +282,20 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
 }
 
 FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_abs_list) {
+  const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  bool has_any =
+    std::any_of(args_abs_list.begin(), args_abs_list.end(), [](const TypePtr &type) { return type->isa<AnyType>(); });
+  if (allow_fallback_runtime && has_any) {
+    FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
+    AnfNodePtrList node_inputs{};
+    for (auto type : args_abs_list) {
+      node_inputs.push_back(func_graph->add_parameter());
+    }
+    auto ret_node =
+      fallback::GeneratePyExecuteNodeWithScriptSrc(func_graph, args_abs_list, node_inputs, node_expr_src_);
+    func_graph->set_output(ret_node);
+    return func_graph;
+  }
   FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
   ptrGraph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ptrGraph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);

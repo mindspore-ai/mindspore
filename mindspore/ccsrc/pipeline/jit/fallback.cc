@@ -537,6 +537,24 @@ std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const 
   return res;
 }
 
+std::string GeneratePyExecuteScriptForCallNode(const AnfNodePtr &call_node, const std::string &name_id) {
+  auto call_cnode = call_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(call_cnode);
+  std::string new_expr_src = name_id + "(";
+  for (size_t index = 1; index < call_cnode->inputs().size(); ++index) {
+    auto call_input = call_cnode->input(index);
+    auto str = GetNodeExprSrc(call_input);
+    auto real_str = ConvertToRealStr(str);
+    auto unicode_str = ConvertRealStrToUnicodeStr(real_str, index);
+    if (index != call_cnode->inputs().size() - 1) {
+      new_expr_src += unicode_str + ", ";
+    } else {
+      new_expr_src += unicode_str + ")";
+    }
+  }
+  return new_expr_src;
+}
+
 bool ContainsSequenceAnyType(const AbstractBasePtr &abs) {
   if (abs == nullptr) {
     return false;
