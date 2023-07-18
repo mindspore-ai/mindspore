@@ -1155,7 +1155,12 @@ void CheckPrimBpropReturnSparse(const FuncGraphPtr &primal_graph) {
                    if (has_sparse_bprop_prim) {
                      return EXCLUDE;
                    }
-                   auto prim = GetCNodePrimitiveWithoutDoSignature(node);
+                   PrimitivePtr prim = nullptr;
+                   if (node->isa<CNode>()) {
+                     prim = GetCNodePrimitiveWithoutDoSignature(node);
+                   } else {
+                     prim = GetPrimitiveWithoutDoSignature(node);
+                   }
                    if (prim != nullptr) {
                      bool sparse_bprop = GetPrimitiveFlag(prim, GRAPH_FLAG_BPROP_RETURN_SPARSE);
                      if (sparse_bprop) {

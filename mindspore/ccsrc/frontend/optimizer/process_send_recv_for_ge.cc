@@ -27,7 +27,6 @@
 
 namespace mindspore::opt {
 namespace {
-AnfNodePtr last_need_depend = nullptr;
 bool IsSendRecvOps(const AnfNodePtr &node) {
   static const PrimitiveSet kSendRecvOpsPrim = {prim::kPrimSend, prim::kPrimReceive};
   return IsOneOfPrimitiveCNode(node, kSendRecvOpsPrim);
@@ -80,7 +79,8 @@ std::tuple<FuncGraphPtr, CNodePtr> CreateNewCNode(const FuncGraphManagerPtr &, c
   return {fg, new_node};
 }
 
-void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node) {
+void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node, AnfNodePtr *last_need_depend) {
+  MS_EXCEPTION_IF_NULL(last_need_depend);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto [fg, new_send] = CreateNewCNode(manager, node, true);
@@ -95,8 +95,8 @@ void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node) {
   std::vector<AnfNodePtr> call_params;
   call_params.push_back(NewValueNode(fg));
   for (size_t i = 1; i < node->inputs().size(); i++) {
-    if (last_need_depend != nullptr) {
-      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), last_need_depend});
+    if (*last_need_depend != nullptr) {
+      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), *last_need_depend});
       new_depend->set_abstract(node->input(i)->abstract());
       call_params.push_back(new_depend);
     } else {
@@ -105,13 +105,14 @@ void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node) {
   }
   auto call = graph->NewCNode(call_params);
   call->set_abstract(value_abs);
-  last_need_depend = call;
+  *last_need_depend = call;
 
   manager->AddFuncGraph(fg);
   (void)manager->Replace(node, call);
 }
 
-void ProcessRecv(const FuncGraphPtr &graph, const CNodePtr &node) {
+void ProcessRecv(const FuncGraphPtr &graph, const CNodePtr &node, AnfNodePtr *last_need_depend) {
+  MS_EXCEPTION_IF_NULL(last_need_depend);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
 
@@ -121,8 +122,8 @@ void ProcessRecv(const FuncGraphPtr &graph, const CNodePtr &node) {
   std::vector<AnfNodePtr> call_params;
   call_params.push_back(NewValueNode(fg));
   for (size_t i = 1; i < node->inputs().size(); i++) {
-    if (last_need_depend != nullptr) {
-      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), last_need_depend});
+    if (*last_need_depend != nullptr) {
+      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), *last_need_depend});
       new_depend->set_abstract(node->input(i)->abstract());
       call_params.push_back(new_depend);
     } else {
@@ -131,7 +132,7 @@ void ProcessRecv(const FuncGraphPtr &graph, const CNodePtr &node) {
   }
   auto call = graph->NewCNode(call_params);
   call->set_abstract(node->abstract());
-  last_need_depend = call;
+  *last_need_depend = call;
 
   manager->AddFuncGraph(fg);
   (void)manager->Replace(node, call);
@@ -163,6 +164,7 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
   if (!is_enable_ge || !is_cell_reuse) {
     return;
   }
+  AnfNodePtr last_need_depend = nullptr;
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -178,9 +180,9 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
       continue;
     }
     if (IsPrimitiveCNode(node, prim::kPrimSend)) {
-      ProcessSend(graph, node->cast<CNodePtr>());
+      ProcessSend(graph, node->cast<CNodePtr>(), &last_need_depend);
     } else if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
-      ProcessRecv(graph, node->cast<CNodePtr>());
+      ProcessRecv(graph, node->cast<CNodePtr>(), &last_need_depend);
     } else if (IsPrimitiveCNode(node, prim::kPrimNPUClearFloatStatusV2)) {
       ProcessClearFloatStatus(graph, node->cast<CNodePtr>());
     } else if (IsCommOps(node)) {
