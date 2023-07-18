@@ -64,6 +64,7 @@
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include "tools/converter/anf_transform_for_ge.h"
+#include "tools/converter/adapter/acl/common/acl_types_utils.h"
 #include "src/extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 
 namespace mindspore {
@@ -361,7 +362,7 @@ STATUS ConverterFuncGraph::RunGeAoeOptimize(const std::shared_ptr<ConverterPara>
     MS_LOG(ERROR) << "Failed to register ge pass plugin";
     return RET_ERROR;
   }
-  auto context = param->aclModelOptionCfgParam.AsModelContext(param->provider);
+  auto context = lite::acl::AsModelContext(param->aclModelOptionCfgParam, param->provider);
   if (context == nullptr) {
     MS_LOG(ERROR) << "Failed to converter ascend options to Model Context";
     return RET_ERROR;

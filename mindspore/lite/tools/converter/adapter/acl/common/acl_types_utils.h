@@ -14,15 +14,23 @@
  * limitations under the License.
  */
 
-#include "tools/converter/adapter/acl/common/acl_types.h"
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_COMMON_ACL_TYPES_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_COMMON_ACL_TYPES_UTILS_H_
+
+#include <string>
+#include <vector>
+#include <map>
+#include <memory>
+#include "include/api/data_type.h"
+#include "include/api/context.h"
 #include "mindspore/lite/src/common/log_util.h"
+#include "tools/converter/adapter/acl/common/acl_types.h"
 
 namespace mindspore {
 namespace lite {
 namespace acl {
-namespace {
-void SetAclModelInitOptions(const lite::acl::AclModelOptionCfg &acl_config,
-                            const std::shared_ptr<AscendDeviceInfo> &ascend_info) {
+static void SetAclModelInitOptions(const lite::acl::AclModelOptionCfg &acl_config,
+                                   const std::shared_ptr<mindspore::AscendDeviceInfo> &ascend_info) {
   if (!acl_config.fusion_switch_config_file_path.empty()) {
     ascend_info->SetFusionSwitchConfigPath(acl_config.fusion_switch_config_file_path);
   }
@@ -34,8 +42,8 @@ void SetAclModelInitOptions(const lite::acl::AclModelOptionCfg &acl_config,
   }
 }
 
-void SetAclModelBuildOptions(const lite::acl::AclModelOptionCfg &acl_config,
-                             const std::shared_ptr<AscendDeviceInfo> &ascend_info) {
+static void SetAclModelBuildOptions(const lite::acl::AclModelOptionCfg &acl_config,
+                                    const std::shared_ptr<mindspore::AscendDeviceInfo> &ascend_info) {
   if (acl_config.output_type != DataType::kInvalidType) {
     ascend_info->SetOutputType(acl_config.output_type);
   }
@@ -61,18 +69,19 @@ void SetAclModelBuildOptions(const lite::acl::AclModelOptionCfg &acl_config,
     ascend_info->SetInsertOpConfigPath(acl_config.insert_op_config_file_path);
   }
 }
-}  // namespace
-std::shared_ptr<mindspore::Context> AclModelOptionCfg::AsModelContext(const std::string &provider) const {
+
+static std::shared_ptr<mindspore::Context> AsModelContext(const lite::acl::AclModelOptionCfg &acl_config,
+                                                          const std::string &provider) {
   auto model_context = std::make_shared<mindspore::Context>();
   MS_CHECK_TRUE_MSG(model_context != nullptr, nullptr, "model_context is nullptr.");
-  auto ascend_info = std::make_shared<AscendDeviceInfo>();
+  auto ascend_info = std::make_shared<mindspore::AscendDeviceInfo>();
   MS_CHECK_TRUE_MSG(ascend_info != nullptr, nullptr, "ascend_info is nullptr.");
-  if (this->device_id > 0) {
-    ascend_info->SetDeviceID(device_id);
+  if (acl_config.device_id > 0) {
+    ascend_info->SetDeviceID(acl_config.device_id);
   }
   ascend_info->SetProvider(provider);
-  SetAclModelInitOptions(*this, ascend_info);
-  SetAclModelBuildOptions(*this, ascend_info);
+  SetAclModelInitOptions(acl_config, ascend_info);
+  SetAclModelBuildOptions(acl_config, ascend_info);
 
   model_context->MutableDeviceInfo().emplace_back(ascend_info);
   return model_context;
@@ -80,3 +89,5 @@ std::shared_ptr<mindspore::Context> AclModelOptionCfg::AsModelContext(const std:
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
+
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_COMMON_ACL_TYPES_UTILS_H_

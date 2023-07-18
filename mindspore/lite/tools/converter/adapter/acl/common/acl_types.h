@@ -52,8 +52,6 @@ struct AclModelOptionCfg {
   std::map<std::string, std::string> build_options_map;
   std::map<std::string, std::string> aoe_global_options_map;
   std::map<std::string, std::string> aoe_tuning_options_map;
-
-  std::shared_ptr<mindspore::Context> AsModelContext(const std::string &provider) const;
 };
 
 constexpr auto kOutputShapes = "outputs_shape";
