@@ -209,7 +209,7 @@ class AutoGradCellImpl {
                                     const VariableAdjointPtr &variable_adjoint, bool is_custom_prim);
   // Back propagate for one node;
   void UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs);
+                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs, bool grad_by_value);
   void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &din, const ValuePtr &input_arg,
                       const AbstractBasePtr &abs);
 
@@ -263,7 +263,7 @@ class AutoGradCellImpl {
 
   // Convert
   void ConvertValueNodeValueToTensor(const AnfNodePtr &din);
-  CNodePtr ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target,
+  CNodePtr ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target, bool grad_by_value,
                                    bool is_dynamic_shape = false);
   void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node);
 
