@@ -3,7 +3,17 @@ mindspore.ops.BesselK1e
 
 .. py:class:: mindspore.ops.BesselK1e
 
-    逐元素计算输入数据的BesselK1e函数值。
+    逐元素计算指数缩放第二类一阶修正Bessel函数值。
+
+    计算公式定义如下：
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{1e}(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
+            ^{\infty} e^{-x \cosh t} \cosh (t) d t
+        \end{array}
+
+    其中K_{1}是第二类一阶修正Bessel函数。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

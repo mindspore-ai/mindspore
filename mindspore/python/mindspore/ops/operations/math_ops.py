@@ -5992,8 +5992,18 @@ class BitwiseXor(_BitwiseBinaryOp):
 
 
 class BesselI0(Primitive):
-    """
-    Computes BesselI0 of input element-wise.
+    r"""
+    Computes modified Bessel function of the first kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            I_{0}(x)=J_{0}(\mathrm{i} x)=\sum_{m=0}^{\infty}
+            \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
+        \end{array}
+
+    where J_{0} is Bessel function of the first kind, order 0.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6027,8 +6037,18 @@ class BesselI0(Primitive):
 
 
 class BesselI1(Primitive):
-    """
-    Computes BesselI1 of input element-wise.
+    r"""
+    Computes modified Bessel function of the first kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            I_{1}(x)=\mathrm{i}^{-1} J_{1}(\mathrm{i} x)=\sum_{m=0}^
+            {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
+        \end{array}
+
+    where J_{1} is Bessel function of the first kind, order 1.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6063,14 +6083,17 @@ class BesselI1(Primitive):
 
 class BesselI0e(Primitive):
     r"""
-    Computes BesselI0e of input element-wise.
+    Computes exponential scaled modified Bessel function of the first kind, order 0 element-wise.
 
     The formula is defined as:
 
     .. math::
-        BesselI0e(x) = \exp(|x|) * bessel\_i0(x)
+        \begin{array}{ll} \\
+            \text I_{0e}(x)=e^{(-|x|)} * I_{0}(x)=e^{(-|x|)} * \sum_{m=0}^
+            {\infty} \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
+        \end{array}
 
-    where bessel_i0 is Bessel function of the first kind with 0 order.
+    where I_{0} is modified Bessel function of the first kind, order 0.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -6105,14 +6128,17 @@ class BesselI0e(Primitive):
 
 class BesselI1e(Primitive):
     r"""
-    Computes BesselI1e of input element-wise.
+    Computes exponential scaled modified Bessel function of the first kind, order 1 element-wise.
 
     The formula is defined as:
 
     .. math::
-        BesselI1e(x) = \exp(|x|) * bessel\_i1(x)
+        \begin{array}{ll} \\
+            \text I_{1e}(x)=e^{(-|x|)} * I_{1}(x)=e^{(-|x|)} * \sum_{m=0}^
+            {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
+        \end{array}
 
-    where bessel_i1 is Bessel function of the first kind with 1 order.
+    where I_{1} is  modified Bessel function of the first kind, order 1.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -6147,7 +6173,17 @@ class BesselI1e(Primitive):
 
 class BesselK0(Primitive):
     r"""
-    Computes BesselK0 of input element-wise.
+    Computes modified Bessel function of the second kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{0}(x)= \lim_{\nu \to 0} \left(\frac{\pi}{2}\right) \frac
+            {I_{-\nu}(x)-I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} d t
+        \end{array}
+
+    where I_{0} is modified Bessel function of the first kind, order 0.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6183,7 +6219,17 @@ class BesselK0(Primitive):
 
 class BesselK1(Primitive):
     r"""
-    Computes BesselK1 of input element-wise.
+    Computes modified Bessel function of the second kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{1}(x)=\lim_{\nu \to 1} \left(\frac{\pi}{2}\right) \frac{I_{-\nu}(x)-
+            I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} \cosh (t) d t
+        \end{array}
+
+    where I_{1} is modified Bessel function of the first kind, order 1.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6218,8 +6264,18 @@ class BesselK1(Primitive):
 
 
 class BesselK0e(Primitive):
-    """
-    Computes BesselK0e of input element-wise.
+    r"""
+    Computes exponential scaled modified Bessel function of the second kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{0e}(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
+            {\infty} e^{-x \cosh t} d t
+        \end{array}
+
+    where K_{0} is modified Bessel function of the second kind, order 0.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6254,8 +6310,18 @@ class BesselK0e(Primitive):
 
 
 class BesselK1e(Primitive):
-    """
-    Computes BesselK1e of input element-wise.
+    r"""
+    Computes exponential scaled modified Bessel function of the second kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{1e}(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
+            ^{\infty} e^{-x \cosh t} \cosh (t) d t
+        \end{array}
+
+     where K_{1} is modified Bessel function of the second kind, order 1.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6290,8 +6356,16 @@ class BesselK1e(Primitive):
 
 
 class BesselJ0(Primitive):
-    """
-    Computes BesselJ0 of input element-wise.
+    r"""
+    Computes Bessel function of the first kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            J_{0}(x) = \frac{1}{\pi} \int_{0}^{\pi} \cos (x \sin \theta) d \theta
+            =\sum_{m=0}^{\infty} \frac{(-1)^{m} x^{2 m}}{2^{2 m} (m !)^2}
+        \end{array}
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6327,8 +6401,16 @@ class BesselJ0(Primitive):
 
 
 class BesselJ1(Primitive):
-    """
-    Computes BesselJ1 of input element-wise.
+    r"""
+    Computes Bessel function of the first kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            J_{1}(x) = \frac{1}{\pi} \int_{0}^{\pi} \cos (x \sin \theta- \theta) d \theta
+            =\sum_{m=0}^{\infty} \frac{(-1)^{m} x^{2 m+1}}{2^{2 m+1} m !(m+1) !}
+        \end{array}
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6364,8 +6446,17 @@ class BesselJ1(Primitive):
 
 
 class BesselY0(Primitive):
-    """
-    Computes BesselY0 of input element-wise.
+    r"""
+    Computes Bessel function of the second kind, order 0 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            Y_{0}(x)=\lim_{n \to 0} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
+        \end{array}
+
+    where J_{0} is Bessel function of the first kind, order 0.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6401,8 +6492,17 @@ class BesselY0(Primitive):
 
 
 class BesselY1(Primitive):
-    """
-    Computes BesselY1 of input element-wise.
+    r"""
+    Computes Bessel function of the second kind, order 1 element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        \begin{array}{ll} \\
+            Y_{1}(x)=\lim_{n \to 1} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
+        \end{array}
+
+    where J_{1} is Bessel function of the first kind, order 1.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.

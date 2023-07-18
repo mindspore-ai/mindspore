@@ -3,7 +3,17 @@ mindspore.ops.BesselK0e
 
 .. py:class:: mindspore.ops.BesselK0e
 
-    逐元素计算输入数据的BesselK0e函数值。
+    逐元素计算指数缩放第二类零阶修正Bessel函数值。
+
+    计算公式定义如下：
+
+    .. math::
+        \begin{array}{ll} \\
+            K_{0e}(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
+            {\infty} e^{-x \cosh t} d t
+        \end{array}
+
+    其中K_{0}是第二类零阶修正Bessel函数。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

@@ -3,7 +3,16 @@ mindspore.ops.BesselY0
 
 .. py:class:: mindspore.ops.BesselY0
 
-    逐元素计算输入数据的BesselY0函数值。
+    逐元素计算输入数据的第二类零阶Bessel函数。
+
+    计算公式定义如下：
+
+    .. math::
+        \begin{array}{ll} \\
+            Y_{0}(x)=\lim_{n \to 0} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
+        \end{array}
+
+    其中J_{n0}第一类零阶的Bessel函数。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
