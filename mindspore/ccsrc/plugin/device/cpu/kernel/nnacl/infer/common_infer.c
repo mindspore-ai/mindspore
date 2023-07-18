@@ -62,6 +62,21 @@ void ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size
   *dst_shape_size = i;
 }
 
+bool Int64ShapeSet(int *dst_shape, size_t *dst_shape_size, const int64_t *src_shape, size_t src_shape_size) {
+  if (dst_shape_size == NULL || dst_shape == NULL || src_shape == NULL) {
+    return false;
+  }
+  size_t i = 0;
+  for (; i < src_shape_size && i < MAX_SHAPE_SIZE; i++) {
+    if (MS_UNLIKELY(src_shape[i] > (int64_t)INT32_MAX || src_shape[i] < (int64_t)INT32_MIN)) {
+      return false;
+    }
+    dst_shape[i] = (int32_t)(src_shape[i]);
+  }
+  *dst_shape_size = i;
+  return true;
+}
+
 void ShapePush(int *shape, size_t *shape_size, int value) {
   if (*shape_size >= MAX_SHAPE_SIZE) {
     return;

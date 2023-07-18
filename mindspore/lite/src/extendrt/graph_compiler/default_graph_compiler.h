@@ -48,14 +48,21 @@ class DefaultGraphCompiler : public infer::abstract::GraphCompiler {
   std::vector<InferKernel *> Schedule(const CompileResultPtr &compile_result);
 
  private:
+  Status CreateExecPlanKernels(const std::vector<GraphSegmentPtr> &graph_segments,
+                               std::vector<AnfNodePtrList> *segments_inputs,
+                               std::vector<AnfNodePtrList> *segments_outputs);
+  Status CreateExecPlanInputs(const FuncGraphPtr &func_graph, std::vector<AnfNodePtrList> *segments_inputs);
+  Status CreateExecPlanOutputs(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtrList> &segments_outputs);
   InferTensor *CreateTensor(const AnfNodePtr &node);
   std::vector<InferTensor *> CreateTensors(const std::vector<AnfNodePtr> &nodes);
   Status GetDTAndShapeFromParameter(const ParameterPtr &parameter, TypeId *data_type, ShapeVector *shape_vector);
   Status GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract, TypeId *data_type,
                                    ShapeVector *shape_vector);
-  std::vector<AnfNodePtr> GetGraphOutput(AnfNodePtr origin_output);
+  std::vector<AnfNodePtr> SkipMakeTuple(AnfNodePtr origin_node);
 
  private:
+  std::shared_ptr<infer::ExecutionPlan> execution_plan_{nullptr};
+  std::vector<InferTensor *> graph_input_tensors_;
   mindspore::HashMap<AnfNodePtr, InferTensor *> anf_tensor_map_;
   SingleGraphSchedulerPtr scheduler_{nullptr};
   const std::shared_ptr<Context> &context_;

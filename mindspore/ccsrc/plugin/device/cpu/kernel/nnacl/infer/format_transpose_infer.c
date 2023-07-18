@@ -36,7 +36,8 @@ int FormatTransposeInferShape(const TensorC *const *inputs, size_t inputs_size, 
     return NNACL_INFER_INVALID;
   }
   if (input->shape_size_ != DIMENSION_4D) {
-    return NNACL_INFER_INVALID;
+    SetShapeArray(output, input->shape_, input->shape_size_);
+    return NNACL_OK;
   }
 
   int input_b = GetBatch(input);

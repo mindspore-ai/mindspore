@@ -86,6 +86,39 @@ static const std::unordered_map<schema::PrimitiveType, bool> dynamic_format_kern
 static TransInfoPair NHWC2NCHWTrans = {Format::NHWC, Format::NCHW};
 static TransInfoPair NCHW2NHWCTrans = {Format::NCHW, Format::NHWC};
 
+template <typename T>
+T TransFormAxis(T axis, const TransInfoPair &trans) {
+  if (IsSameTranspose(trans, NHWC2NCHWTrans)) {
+    switch (axis) {
+      case kNHWC_N:
+        return kNCHW_N;
+      case kNHWC_H:
+        return kNCHW_H;
+      case kNHWC_W:
+        return kNCHW_W;
+      case kNHWC_C:
+        return kNCHW_C;
+      default:
+        return axis;
+    }
+  }
+  if (IsSameTranspose(trans, NCHW2NHWCTrans)) {
+    switch (axis) {
+      case kNCHW_N:
+        return kNHWC_N;
+      case kNCHW_H:
+        return kNHWC_H;
+      case kNCHW_W:
+        return kNHWC_W;
+      case kNCHW_C:
+        return kNHWC_C;
+      default:
+        return axis;
+    }
+  }
+  return axis;
+}
+
 class TransposeStrategy {
  public:
   TransposeStrategy() = default;

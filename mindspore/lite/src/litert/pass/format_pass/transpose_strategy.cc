@@ -19,6 +19,14 @@
 #include "nnacl/arg_min_max_parameter.h"
 #include "nnacl/concat_parameter.h"
 #include "nnacl/crop_parameter.h"
+#include "nnacl/softmax_parameter.h"
+#include "nnacl/split_parameter.h"
+#include "nnacl/squeeze_parameter.h"
+#include "nnacl/stack_parameter.h"
+#include "nnacl/unsqueeze_parameter.h"
+#include "nnacl/unstack_parameter.h"
+#include "nnacl/slice_parameter.h"
+#include "nnacl/strided_slice_parameter.h"
 
 namespace mindspore::lite::pass {
 static const std::set<schema::PrimitiveType> arithmetic_kernel_lists = {
@@ -100,7 +108,7 @@ bool TransposeStrategy::CheckFusion(const kernel::KernelExec *kernel, TransInfoP
   }
   auto in_and_out_size = kernel->in_tensors().size() + kernel->out_kernels().size();
   if ((input_count + output_count) <= in_and_out_size / C2NUM) {
-    MS_LOG(INFO) << "The fusion can't decrease transpose op number.";
+    MS_LOG(DEBUG) << "The fusion can't decrease transpose op number.";
     return false;
   }
   if (IsNoneTranspose(*pre_trans)) {
@@ -122,42 +130,54 @@ bool TransposeStrategy::CheckFusion(const kernel::KernelExec *kernel, TransInfoP
   return true;
 }
 
-int TransFormAxis(int axis, const TransInfoPair &trans) {
-  if (IsSameTranspose(trans, NHWC2NCHWTrans)) {
-    switch (axis) {
-      case kNHWC_N:
-        return kNCHW_N;
-      case kNHWC_H:
-        return kNCHW_H;
-      case kNHWC_W:
-        return kNCHW_W;
-      case kNHWC_C:
-        return kNCHW_C;
-      default:
-        return axis;
-    }
-  }
-  if (IsSameTranspose(trans, NCHW2NHWCTrans)) {
-    switch (axis) {
-      case kNCHW_N:
-        return kNHWC_N;
-      case kNCHW_H:
-        return kNHWC_H;
-      case kNCHW_W:
-        return kNHWC_W;
-      case kNCHW_C:
-        return kNHWC_C;
-      default:
-        return axis;
-    }
-  }
-  return axis;
-}
-
 int HandleArgMinMaxKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
   auto arg_min_max_param = reinterpret_cast<ArgMinMaxParameter *>(kernel->op_parameter());
   CHECK_NULL_RETURN(arg_min_max_param);
   arg_min_max_param->axis_ = TransFormAxis(arg_min_max_param->axis_, trans);
+  return RET_OK;
+}
+
+int HandleSoftMaxKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
+  auto param = reinterpret_cast<SoftmaxParameter *>(kernel->op_parameter());
+  CHECK_NULL_RETURN(param);
+  param->axis_ = TransFormAxis(param->axis_, trans);
+  return RET_OK;
+}
+
+int HandleSplitKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
+  auto param = reinterpret_cast<SplitParameter *>(kernel->op_parameter());
+  CHECK_NULL_RETURN(param);
+  param->split_dim_ = TransFormAxis(param->split_dim_, trans);
+  return RET_OK;
+}
+
+int HandleSqueezeKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
+  auto param = reinterpret_cast<SqueezeParameter *>(kernel->op_parameter());
+  CHECK_NULL_RETURN(param);
+  for (size_t i = 0; i < param->axis_size_; i++) {
+    param->axis_[i] = TransFormAxis(param->axis_[i], trans);
+  }
+  return RET_OK;
+}
+
+int HandleUnSqueezeKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
+  auto param = reinterpret_cast<UnSqueezeParameter *>(kernel->op_parameter());
+  CHECK_NULL_RETURN(param);
+  param->axis_ = TransFormAxis(param->axis_, trans);
+  return RET_OK;
+}
+
+int HandleStackKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
+  auto param = reinterpret_cast<StackParameter *>(kernel->op_parameter());
+  CHECK_NULL_RETURN(param);
+  param->axis_ = TransFormAxis(param->axis_, trans);
+  return RET_OK;
+}
+
+int HandleUnStackKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
+  auto param = reinterpret_cast<UnstackParameter *>(kernel->op_parameter());
+  CHECK_NULL_RETURN(param);
+  param->axis_ = TransFormAxis(param->axis_, trans);
   return RET_OK;
 }
 
@@ -183,14 +203,14 @@ static const std::map<schema::PrimitiveType, std::function<int(kernel::KernelExe
     {schema::PrimitiveType_Concat, HandleConcatKernel},
     {schema::PrimitiveType_Crop, HandleCropKernel},
     {schema::PrimitiveType_SliceFusion, nullptr},
-    {schema::PrimitiveType_Softmax, nullptr},
-    {schema::PrimitiveType_Split, nullptr},
-    {schema::PrimitiveType_Squeeze, nullptr},
-    {schema::PrimitiveType_Stack, nullptr},
+    {schema::PrimitiveType_Softmax, HandleSoftMaxKernel},
+    {schema::PrimitiveType_Split, HandleSplitKernel},
+    {schema::PrimitiveType_Squeeze, HandleSqueezeKernel},
+    {schema::PrimitiveType_Stack, HandleStackKernel},
     {schema::PrimitiveType_StridedSlice, nullptr},
-    {schema::PrimitiveType_Unsqueeze, nullptr},
-    {schema::PrimitiveType_Unstack, nullptr},
-    {schema::PrimitiveType_LogSoftmax, nullptr},
+    {schema::PrimitiveType_Unsqueeze, HandleUnSqueezeKernel},
+    {schema::PrimitiveType_Unstack, HandleUnStackKernel},
+    {schema::PrimitiveType_LogSoftmax, HandleSoftMaxKernel},
 };
 
 int TransposeStrategy::ChangeKernelAxis(kernel::KernelExec *kernel, const TransInfoPair &trans) {

@@ -68,6 +68,11 @@ InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
     MS_LOG(ERROR) << "Optimize format of executionplan failed.";
     return nullptr;
   }
+  infer_ret = kernel->InferShape();
+  if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
+    MS_LOG(ERROR) << "InferShape SubGraph kernel failed.";
+    return nullptr;
+  }
 
   return kernel;
 }

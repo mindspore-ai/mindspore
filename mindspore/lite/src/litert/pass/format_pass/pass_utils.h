@@ -31,6 +31,8 @@ struct TransInfoPair {
   TransInfoPair(Format src, Format dst) : src_format_(src), dst_format_(dst) {}
 };
 
+inline bool IsNCHWFormat(Format format) { return format == NCHW || format == NC4HW4 || format == NC8HW8; }
+
 bool IsNoneTranspose(const TransInfoPair &trans);
 
 bool IsSameTranspose(const TransInfoPair &trans0, const TransInfoPair &trans1);
@@ -41,7 +43,30 @@ kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const T
                                           const std::string &name, const lite::InnerContext *ctx,
                                           const kernel::KernelKey &desc);
 
-void SetShape(const Tensor *src_tensor, Tensor *dst_tensor);
+template <typename ShapeDT>
+std::vector<ShapeDT> TransShape(const std::vector<ShapeDT> &shape, const TransInfoPair &trans, bool *ret) {
+  *ret = true;
+  if (shape.size() != DIMENSION_4D) {
+    return shape;
+  }
+  if (trans.src_format_ == trans.dst_format_ || (IsNCHWFormat(trans.src_format_) && IsNCHWFormat(trans.dst_format_))) {
+    return shape;
+  }
+  if (IsNCHWFormat(trans.src_format_) && trans.dst_format_ == NHWC) {
+    return {shape[0], shape[2], shape[3], shape[1]};
+  } else if (trans.src_format_ == NHWC && IsNCHWFormat(trans.dst_format_)) {
+    return {shape[0], shape[3], shape[1], shape[2]};
+  } else {
+    MS_LOG(WARNING) << "Unsupported transpose perm, from " << FormatEnumToString(trans.src_format_) << " to "
+                    << FormatEnumToString(trans.dst_format_);
+    *ret = false;
+    return {};
+  }
+}
+
+bool TransTensorShapeAndFormat(Tensor *tensor, Format dst_format);
+bool SetShape(const Tensor *src_tensor, Tensor *dst_tensor);
+bool SetShape4D(const Tensor *src_tensor, Tensor *dst_tensor);
 
 int InsertPreTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
                        const TransInfoPair &trans_info, const size_t &index);
