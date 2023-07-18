@@ -133,22 +133,23 @@ class StepLR(LRScheduler):
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> loss_fn = nn.MAELoss()
-        >>> optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
+        >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), lr=0.05)
         >>> # Assuming optimizer uses lr = 0.05 for all groups
-        >>> # lr = 0.05     if epoch < 30
-        >>> # lr = 0.005    if 30 <= epoch < 60
-        >>> # lr = 0.0005   if 60 <= epoch < 90
-        >>> scheduler = nn.StepLR(optimizer, step_size=30, gamma=0.1)
+        >>> # lr = 0.05     if epoch < 2
+        >>> # lr = 0.005    if 2 <= epoch < 4
+        >>> # lr = 0.0005   if 4 <= epoch < 6
+        >>> scheduler = nn.StepLR(optimizer, step_size=2, gamma=0.1)
         >>> def forward_fn(data, label):
         ...     logits = net(data)
         ...     loss = loss_fn(logits, label)
+        ...     return loss, logits
         >>> grad_fn = mindspore.value_and_grad(forward_fn, None, optimizer.parameters, has_aux=True)
         >>> def train_step(data, label):
         ...     (loss, _), grads = grad_fn(data, label)
         ...     optimizer(grads)
         ...     return loss
-        >>> for epoch in range(3):
+        >>> for epoch in range(6):
         ...     # Create the dataset taking MNIST as an example. Refer to
         ...     # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
         ...     for data, label in create_dataset():
@@ -208,8 +209,8 @@ class LinearLR(LRScheduler):
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> loss_fn = nn.MAELoss()
-        >>> optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
+        >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), lr=0.05)
         >>> # Assuming optimizer uses lr = 0.05 for all groups
         >>> # lr = 0.025    if epoch == 0
         >>> # lr = 0.03125  if epoch == 1
@@ -220,12 +221,13 @@ class LinearLR(LRScheduler):
         >>> def forward_fn(data, label):
         ...     logits = net(data)
         ...     loss = loss_fn(logits, label)
+        ...     return loss, logits
         >>> grad_fn = mindspore.value_and_grad(forward_fn, None, optimizer.parameters, has_aux=True)
         >>> def train_step(data, label):
         ...     (loss, _), grads = grad_fn(data, label)
         ...     optimizer(grads)
         ...     return loss
-        >>> for epoch in range(3):
+        >>> for epoch in range(5):
         ...     # Create the dataset taking MNIST as an example. Refer to
         ...     # https://gitee.com/mindspore/docs/blob/r2.1/docs/mindspore/code/mnist.py
         ...     for data, label in create_dataset():

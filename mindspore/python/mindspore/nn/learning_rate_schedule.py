@@ -107,7 +107,7 @@ class ExponentialDecayLR(LearningRateSchedule):
         >>> exponential_decay_lr = nn.ExponentialDecayLR(learning_rate, decay_rate, decay_steps)
         >>> lr = exponential_decay_lr(global_step)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
         super(ExponentialDecayLR, self).__init__()
@@ -177,7 +177,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
         >>> natural_exp_decay_lr = nn.NaturalExpDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> lr = natural_exp_decay_lr(global_step)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
         super(NaturalExpDecayLR, self).__init__()
@@ -248,7 +248,7 @@ class InverseDecayLR(LearningRateSchedule):
         >>> inverse_decay_lr = nn.InverseDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> lr = inverse_decay_lr(global_step)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
         super(InverseDecayLR, self).__init__()
@@ -307,7 +307,7 @@ class CosineDecayLR(LearningRateSchedule):
         >>> cosine_decay_lr = nn.CosineDecayLR(min_lr, max_lr, decay_steps)
         >>> lr = cosine_decay_lr(global_steps)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     def __init__(self, min_lr, max_lr, decay_steps):
         super(CosineDecayLR, self).__init__()
@@ -391,7 +391,7 @@ class PolynomialDecayLR(LearningRateSchedule):
         >>> polynomial_decay_lr = nn.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
         >>> lr = polynomial_decay_lr(global_step)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     def __init__(self, learning_rate, end_learning_rate, decay_steps, power, update_decay_steps=False):
         super(PolynomialDecayLR, self).__init__()
@@ -474,7 +474,7 @@ class WarmUpLR(LearningRateSchedule):
         >>> warmup_lr = nn.WarmUpLR(learning_rate, warmup_steps)
         >>> lr = warmup_lr(global_step)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     def __init__(self, learning_rate, warmup_steps):
         super(WarmUpLR, self).__init__()
