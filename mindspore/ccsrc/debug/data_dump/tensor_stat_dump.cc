@@ -106,7 +106,11 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
     type = "unsupported(" + std::to_string(data->GetType()) + ")";
     MS_LOG(INFO) << "Unsupported tensor data_type " << type << " for tensor " << data->GetName();
   }
-  if (!OpenStatisticsFile(dump_path)) {
+  std::string filename = dump_path + "/" + kCsvFileName;
+  // try to open file
+  CsvWriter csv;
+  if (!csv.OpenFile(filename, kCsvHeader)) {
+    MS_LOG(WARNING) << "Open statistic dump file failed, skipping current statistics";
     return false;
   }
   const DebugServices::TensorStat &stat = DebugServices::GetTensorStatistics(data);
@@ -117,7 +121,7 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
     shape << (i > 0 ? "," : "") << stat.shape[i];
   }
   shape << ")\"";
-  CsvWriter &csv = CsvWriter::GetInstance();
+
   csv.WriteToCsv(op_type_);
   csv.WriteToCsv(op_name_);
   csv.WriteToCsv(task_id_);
@@ -144,6 +148,7 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   csv.WriteToCsv(stat.neg_inf_count);
   csv.WriteToCsv(stat.pos_inf_count);
   csv.WriteToCsv(stat.zero_count, true);
+  csv.CloseFile();
   return true;
 }
 }  // namespace mindspore
