@@ -107,6 +107,7 @@ std::vector<schema::QuantParamT> AscendDistributeFakeQuantTransform::GetQuantPar
 int AscendDistributeFakeQuantTransform::RemoveWeightRedundantNode(const FuncGraphPtr &func_graph,
                                                                   const CNodePtr &cnode) {
   auto manager = func_graph->manager();
+  CHECK_NULL_RETURN(manager);
   // Remove Weight Parameter-Cast Node
   auto weight_node = cnode->input(kWeightIndex + kPrimOffset);
   if (opt::CheckPrimitiveType(weight_node, prim::kPrimCast)) {
@@ -142,6 +143,7 @@ int AscendDistributeFakeQuantTransform::RemoveWeightRedundantNode(const FuncGrap
 int AscendDistributeFakeQuantTransform::SetWeightQuantParam(const FuncGraphPtr &func_graph) {
   const std::set<PrimitivePtr> fake_quant_types = {prim::kPrimFakeQuantPerLayer, prim::kPrimFakeQuantPerChannel};
   auto manager = func_graph->manager();
+  CHECK_NULL_RETURN(manager);
   auto quant_node_pass = QuantNodePass(func_graph);
   auto weight_quantizer = WeightQuantizer(param_);
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
@@ -229,6 +231,7 @@ int AscendDistributeFakeQuantTransform::SetInputQuantParam(const FuncGraphPtr &f
                                                       prim::kPrimAllReduce, prim::kPrimSplit};
   const std::set<PrimitivePtr> fake_quant_types = {prim::kPrimFakeQuantPerLayer, prim::kPrimFakeQuantPerChannel};
   auto manager = func_graph->manager();
+  CHECK_NULL_RETURN(manager);
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto op_name = cnode->fullname_with_scope();
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -401,6 +404,7 @@ int AscendDistributeFakeQuantTransform::DoSingleGraphAscendDistributeFakeQuantTr
 
   // Remove Load Node
   auto manager = func_graph->manager();
+  CHECK_NULL_RETURN(manager);
   auto node_list = TopoSort(func_graph->get_return());
   auto redundant_op_pass = std::make_shared<opt::RemoveRedundantOpPass>(false);
   for (auto &node : node_list) {
