@@ -46,6 +46,7 @@ class AoeUtil {
   void RemoveWaitOptimizedGraph(const std::set<std::string> &optimized_graph_names);
   void AddOptimizeGraph(const std::string &graph_name);
   std::set<std::string> GetWaitOptimizeGraph() const;
+  void SetOfflineEnvDumpGeGraph();
 
  private:
   std::set<std::string> wait_optimize_graphs_;

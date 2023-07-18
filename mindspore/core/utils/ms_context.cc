@@ -73,6 +73,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
   set_param<std::string>(MS_CTX_TUNE_MODE, "NO_TUNE");
   set_param<std::string>(MS_CTX_AOE_TUNE_MODE, "");
+  set_param<std::string>(MS_CTX_AOE_JOB_TYPE, "2");
   set_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS, "");
 
   set_param<uint32_t>(MS_CTX_TSD_REF, 0);
@@ -471,6 +472,11 @@ void MsContext::ResetContext() {
 bool MsContext::EnableAoeOnline() const {
   std::string aoe_tune_mode = MsContext::GetInstance()->get_param<std::string>(MS_CTX_AOE_TUNE_MODE);
   return aoe_tune_mode == "online";
+}
+
+bool MsContext::EnableAoeOffline() const {
+  std::string aoe_tune_mode = MsContext::GetInstance()->get_param<std::string>(MS_CTX_AOE_TUNE_MODE);
+  return aoe_tune_mode == "offline";
 }
 
 template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;

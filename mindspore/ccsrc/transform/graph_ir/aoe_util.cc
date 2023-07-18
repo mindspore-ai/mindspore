@@ -19,7 +19,10 @@
 #if defined(ASCEND_910) || defined(ASCEND_910B)
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #endif
+#include "include/common/debug/common.h"
 #include "transform/graph_ir/aoe_util.h"
+#include "utils/file_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace transform {
@@ -62,8 +65,10 @@ void AoeUtil::Initialize() {
   aoe_set_tuning_graph_ = DlsymFuncObj(AoeSetTuningGraph, plugin_handle_);
   aoe_tuning_graph_ = DlsymFuncObj(AoeTuningGraph, plugin_handle_);
   aoe_destroy_session_ = DlsymFuncObj(AoeDestroySession, plugin_handle_);
-
-  std::map<::ge::AscendString, ::ge::AscendString> globalOptions = {{AoeOptions::JOB_TYPE, ::ge::AscendString("1")}};
+  auto ms_context = MsContext::GetInstance();
+  std::string aoe_job_type = ms_context->get_param<std::string>(MS_CTX_AOE_JOB_TYPE);
+  std::map<::ge::AscendString, ::ge::AscendString> globalOptions = {
+    {AoeOptions::JOB_TYPE, ::ge::AscendString(aoe_job_type.c_str())}};
   const Aoe::AoeStatus status = aoe_initialize_(globalOptions);
   if (status != Aoe::AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeInitialize failed.";
@@ -117,28 +122,28 @@ Status AoeUtil::AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPt
   uint64_t sessionId = 0;
   Aoe::AoeStatus status = aoe_create_session_(sessionId);
   if (status != Aoe::AOE_SUCCESS) {
-    MS_LOG(ERROR) << "AoeCreateSession failed.";
+    MS_LOG(ERROR) << "AoeCreateSession failed. error code:" << status;
     return FAILED;
   }
   MS_LOG(DEBUG) << "AoeCreateSession success.";
 
   status = aoe_set_ge_gession_(sessionId, ge_session);
   if (status != Aoe::AOE_SUCCESS) {
-    MS_LOG(ERROR) << "AoeSetGeSession failed.";
+    MS_LOG(ERROR) << "AoeSetGeSession failed. error code:" << status;
     return FAILED;
   }
   MS_LOG(DEBUG) << "->AoeSetGeSession success.";
 
   status = aoe_set_tuning_graph_(sessionId, *graph);
   if (status != Aoe::AOE_SUCCESS) {
-    MS_LOG(ERROR) << "AoeSetGraph failed.";
+    MS_LOG(ERROR) << "AoeSetGraph failed. error code:" << status;
     return FAILED;
   }
   MS_LOG(DEBUG) << "->AoeSetGraph success.";
 
   status = aoe_tuning_graph_(sessionId, tuningOptions);
-  if (status != Aoe::AOE_SUCCESS) {
-    MS_LOG(ERROR) << "AoeTuningGraph failed.";
+  if (status != Aoe::AOE_SUCCESS && status != Aoe::AOE_ERROR_NON_OPTIMIZE_GRAPH) {
+    MS_LOG(ERROR) << "AoeTuningGraph failed. error code:" << status;
     (void)aoe_destroy_session_(sessionId);
     return FAILED;
   }
@@ -146,7 +151,7 @@ Status AoeUtil::AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPt
 
   status = aoe_destroy_session_(sessionId);
   if (status != Aoe::AOE_SUCCESS) {
-    MS_LOG(ERROR) << "AoeDestroySession failed.";
+    MS_LOG(ERROR) << "AoeDestroySession failed. error code:" << status;
     return FAILED;
   }
   return SUCCESS;
@@ -206,5 +211,17 @@ void AoeUtil::RemoveWaitOptimizedGraph(const std::set<std::string> &optimized_gr
 void AoeUtil::AddOptimizeGraph(const std::string &graph_name) { wait_optimize_graphs_.insert(graph_name); }
 
 std::set<std::string> AoeUtil::GetWaitOptimizeGraph() const { return wait_optimize_graphs_; }
+
+void AoeUtil::SetOfflineEnvDumpGeGraph() {
+  auto file_path = GetSaveGraphsPathName("aoe_dump");
+  auto real_path = FileUtils::CreateNotExistDirs(file_path, true);
+  if (!real_path.has_value()) {
+    MS_LOG(WARNING) << "fail to create aoe dump dir " << real_path.value();
+    return;
+  }
+  common::SetEnv("DUMP_GE_GRAPH", "1");
+  common::SetEnv("DUMP_GRAPH_LEVEL", "4");
+  common::SetEnv("DUMP_GRAPH_PATH", real_path.value().c_str());
+}
 }  // namespace transform
 }  // namespace mindspore

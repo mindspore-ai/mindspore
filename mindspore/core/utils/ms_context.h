@@ -154,6 +154,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_ENV_CONFIG_PATH,
   MS_CTX_TUNE_MODE,
   MS_CTX_AOE_TUNE_MODE,
+  MS_CTX_AOE_JOB_TYPE,
   MS_CTX_GRAPH_KERNEL_FLAGS,
   MS_CTX_INFER_PRECISION_MODE,  // GPU inference precision mode configured by Serving or Unify API.
   MS_CTX_DETERMINISTIC,
@@ -243,6 +244,7 @@ class MS_CORE_API MsContext {
 
   void ResetContext();  // Reset ms context. Only called in child process after fork occurs.
   bool EnableAoeOnline() const;
+  bool EnableAoeOffline() const;
 
  private:
   void RefreshExecutionMode();
