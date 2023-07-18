@@ -155,6 +155,7 @@ void ProfilerAnalyzer::Initialize() {
   if (init_) {
     return;
   }
+  std::unique_lock<std::mutex> lock(data_mutex_);
   init_ = true;
 
   if (common::GetEnv(kEnableRuntimeProfiler) != "1") {
@@ -172,19 +173,42 @@ void ProfilerAnalyzer::Initialize() {
   detail_info_file_name_ = GetRealPathName(kDetailInfoFileName + now_time + ".csv");
 }
 
+void ProfilerAnalyzer::ProcessData() {
+  for (const auto &[step_info_ptr, span] : data_line_) {
+    step_time_ = step_info_ptr->step_time_;
+    // Process module overlapping data.
+    ProcessModuleSummaryData(span);
+    // Process data.
+    for (auto &data : span) {
+      SaveJsonData(data);
+      AnalyzeSummaryData(data);
+    }
+    AddPythonSummaryData(step_info_ptr->step_time_);
+    // Dump data.
+    DumpDetailData(step_info_ptr->step_, span);
+    DumpSummaryData(step_info_ptr->step_);
+    // Clear temp data.
+    module_total_time_ = 0ull;
+    module_infos_.clear();
+    stage_infos_.clear();
+  }
+}
+
 void ProfilerAnalyzer::Clear() {
-  if (!profiler_enable_) {
+  std::unique_lock<std::mutex> lock(data_mutex_);
+  if (!init_ || !profiler_enable_ || data_line_.empty()) {
     return;
   }
+  ProcessData();
 
   // Dump json data.
   DumpJsonData();
-
-  // Reset the saved data.
+#ifdef WITH_BACKEND
   json_infos_.clear();
+#endif
   data_.clear();
-  module_infos_.clear();
-  stage_infos_.clear();
+  data_line_.clear();
+  init_ = false;
 }
 
 uint64_t ProfilerAnalyzer::GetTimeStamp() const noexcept {
@@ -216,26 +240,21 @@ void ProfilerAnalyzer::StartStep() {
     return;
   }
 
-  ++step_;
-
   std::unique_lock<std::mutex> lock(data_mutex_);
+  ++step_;
   // Reset the saved data.
-  step_time_ = 0;
-  module_total_time_ = 0;
   data_.clear();
-  module_infos_.clear();
-  stage_infos_.clear();
   step_start_time_ = GetTimeStamp();
 }
 
-void ProfilerAnalyzer::ProcessModuleSummaryData() {
-  if (data_.empty()) {
+void ProfilerAnalyzer::ProcessModuleSummaryData(const ProfilerDataSpan &span) {
+  if (span.empty()) {
     return;
   }
 
   // Use multimap as start_time_ may be same.
   std::map<ProfilerModule, std::multimap<uint64_t, ProfilerDataPtr>> ordered_data;
-  for (auto &data : data_) {
+  for (auto &data : span) {
     (void)ordered_data[data->module_].emplace(data->start_time_, data);
   }
   for (const auto &data_item : ordered_data) {
@@ -274,39 +293,15 @@ void ProfilerAnalyzer::EndStep() {
     return;
   }
 
-#ifdef WITH_BACKEND
-  step_time_ = GetTimeStamp() - step_start_time_;
-#endif
-
   std::unique_lock<std::mutex> lock(data_mutex_);
   if (data_.empty()) {
     return;
   }
 
-  // Process module overlapping data.
-  ProcessModuleSummaryData();
-
-  // Process data.
-  for (auto &data : data_) {
-    MS_EXCEPTION_IF_NULL(data);
-    SaveJsonData(data);
-    AnalyzeSummaryData(data);
-  }
-
-  AddPythonSummaryData();
-
-  // Dump data.
-  DumpDetailData();
-  DumpSummaryData();
-
 #ifdef WITH_BACKEND
-  // Reset the saved data.
-  step_time_ = 0;
-  module_total_time_ = 0;
-  data_.clear();
-  module_infos_.clear();
-  stage_infos_.clear();
+  step_time_ = GetTimeStamp() - step_start_time_;
 #endif
+  (void)data_line_.emplace_back(std::make_shared<StepInfo>(step_, step_time_), std::move(data_));
 }
 
 void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
@@ -327,8 +322,8 @@ void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
   (void)json_infos_.emplace_back(json_data);
 }
 
-void ProfilerAnalyzer::AddPythonSummaryData() {
-  uint64_t python_time = step_time_;
+void ProfilerAnalyzer::AddPythonSummaryData(const uint64_t span_time) {
+  uint64_t python_time = span_time;
   (void)std::for_each(stage_infos_.begin(), stage_infos_.end(),
                       [&python_time](const std::pair<ProfilerStage, ProfilerStatisticsInfoPtr> &iter) {
                         python_time -= iter.second->total_time_;
@@ -428,7 +423,7 @@ void ProfilerAnalyzer::DumpJsonData() const {
   ChangeFileMode(json_file_name_, S_IRUSR);
 }
 
-void ProfilerAnalyzer::DumpDetailData() const {
+void ProfilerAnalyzer::DumpDetailData(const size_t step, const ProfilerDataSpan &span) const {
   ChangeFileMode(detail_info_file_name_, S_IWUSR);
   std::ofstream ofs(detail_info_file_name_, std::ofstream::app);
   if (!ofs.is_open()) {
@@ -436,8 +431,8 @@ void ProfilerAnalyzer::DumpDetailData() const {
     return;
   }
 
-  ofs << "[Step:" << step_ << " step_time:" << step_time_ << "us, module_total_time:" << module_total_time_ << "us]\n";
-  for (auto &data : data_) {
+  ofs << "[Step:" << step << " step_time:" << step_time_ << "us, module_total_time:" << module_total_time_ << "us]\n";
+  for (auto &data : span) {
     MS_EXCEPTION_IF_NULL(data);
     std::string title_name = data->is_stage_ ? ("stage:" + kProfilerStageString.at(data->stage_))
                                              : ("module:" + kProfilerModuleString.at(data->module_));
@@ -450,10 +445,10 @@ void ProfilerAnalyzer::DumpDetailData() const {
   ChangeFileMode(detail_info_file_name_, S_IRUSR);
 }
 
-void ProfilerAnalyzer::DumpSummaryData() const {
+void ProfilerAnalyzer::DumpSummaryData(const size_t step) const {
   // Fill the summary info.
   std::stringstream string_stream;
-  string_stream << "[Step:" << step_ << ", step_time:" << step_time_ << "us, module_total_time:" << module_total_time_
+  string_stream << "[Step:" << step << ", step_time:" << step_time_ << "us, module_total_time:" << module_total_time_
                 << "us]\n";
   DumpModuleSummaryData(string_stream);
   DumpStageSummaryData(string_stream);
