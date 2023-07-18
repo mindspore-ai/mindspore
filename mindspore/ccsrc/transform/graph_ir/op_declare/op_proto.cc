@@ -109,7 +109,8 @@ std::vector<enum ge::DataType> ParseGeTypes(const std::string &tensor_types) {
     {"DT_UINT8", {DT_UINT8}},
     {"DT_UNDEFINED", {DT_UNDEFINED}},
     {"DT_VARIANT", {DT_VARIANT}},
-    {"TensorType", {}},
+    {"TensorType", {}},  // class TensorType
+    {"ge", {}},          // namespace ge
     {"ALL", {DT_BOOL,   DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16,  DT_INT32,
              DT_INT64,  DT_INT8,       DT_QINT16,    DT_QINT32, DT_QINT8, DT_QUINT16, DT_QUINT8, DT_RESOURCE,
              DT_STRING, DT_UINT16,     DT_UINT32,    DT_UINT64, DT_UINT8, DT_BF16}},
