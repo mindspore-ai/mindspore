@@ -17,6 +17,7 @@ import numpy as np
 from mindspore import context
 from mindspore.common import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops.functional import stop_gradient
 from mindspore.ops.operations import _inner_ops as inner
@@ -149,7 +150,6 @@ class Categorical(Distribution):
         self.dtypeop = P.DType()
         self.exp = exp_generic
         self.expand_dim = P.ExpandDims()
-        self.fill = P.Fill()
         self.gather = P.GatherNd()
         self.greater = P.Greater()
         self.issubclass = inner.IsSubClass()
@@ -292,7 +292,7 @@ class Categorical(Distribution):
         # here we simulate casting to int but still keeping float dtype
         value = self.cast(value, self.dtypeop(probs))
 
-        zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
+        zeros = F.fill(self.dtypeop(value), self.shape(value), 0.0)
         between_zero_neone = self.logicand(self.less(value, 0,),
                                            self.greater(value, -1.))
         value = self.select(between_zero_neone,
@@ -338,8 +338,8 @@ class Categorical(Distribution):
         # reshape into label shape N
         logits_pmf = self.gather(self.reshape(
             logits, (-1, num_classes)), index)
-        nan = self.fill(self.dtypeop(logits_pmf),
-                        self.shape(logits_pmf), self.nan)
+        nan = F.fill(self.dtypeop(logits_pmf), self.shape(logits_pmf),
+                     self.nan)
         logits_pmf = self.select(out_of_bound, nan, logits_pmf)
         ans = self.reshape(logits_pmf, label_shape)
         if drop_dim:
@@ -359,7 +359,7 @@ class Categorical(Distribution):
 
         value = self.cast(value, self.dtypeop(probs))
 
-        zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
+        zeros = F.fill(self.dtypeop(value), self.shape(value), 0.0)
         between_zero_neone = self.logicand(
             self.less(value, 0,), self.greater(value, -1.))
         value = self.select(between_zero_neone, zeros, P.Floor()(value))
@@ -394,7 +394,7 @@ class Categorical(Distribution):
         # reshape probs and fill less_than_zero places with 0
         probs = self.reshape(probs, (-1, num_classes))
         cdf = self.gather(self.cumsum(probs, 1), index)
-        zeros = self.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
+        zeros = F.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
         cdf = self.select(less_than_zero, zeros, cdf)
         cdf = self.reshape(cdf, label_shape)
 
@@ -425,7 +425,7 @@ class Categorical(Distribution):
             sample_shape = (1,)
 
         probs_2d = self.reshape(probs, (-1, num_classes))
-        sample_tensor = self.fill(self.dtype, shape, 1.0)
+        sample_tensor = F.fill(self.dtype, shape, 1.0)
         sample_tensor = self.reshape(sample_tensor, (-1, 1))
         num_sample = self.shape(sample_tensor)[0]
         samples = C.multinomial(probs_2d, num_sample, seed=self.seed)

@@ -59,7 +59,6 @@ class LambGPUOrigin(nn.Cell):
         self.op_norm = layer.Norm()
         self.op_select = P.Select()
         self.op_greater = P.Greater()
-        self.op_fill = P.Fill()
         self.op_dtype = P.DType()
 
     def construct(self, beta1, beta2, eps, global_step, lr, weight_decay, decay_flag):
@@ -82,12 +81,12 @@ class LambGPUOrigin(nn.Cell):
 
         g_norm_hat = self.op_norm(self.op_mul(next_mm, self.op_rsqrt(next_vv + eps)) + weight_decay * param_fp32)
         zeros = F.zeros_like(w_norm)
-        ones = self.op_fill(self.op_dtype(w_norm), self.op_shape(w_norm), 1.0)
+        ones = F.fill(self.op_dtype(w_norm), self.op_shape(w_norm), 1.0)
         trust_ratio = self.op_select(
             self.op_greater(w_norm, zeros),
             self.op_select(self.op_greater(g_norm, zeros), w_norm / g_norm_hat, ones),
             ones)
-        tens = self.op_fill(self.op_dtype(trust_ratio), self.op_shape(trust_ratio), 10.0)
+        tens = F.fill(self.op_dtype(trust_ratio), self.op_shape(trust_ratio), 10.0)
         trust_ratio = ops.clip_by_value(trust_ratio, zeros, tens)
         update = next_mm / (self.op_sqrt(next_vv) + eps)
 

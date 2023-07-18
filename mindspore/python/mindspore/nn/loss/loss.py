@@ -1575,7 +1575,6 @@ class MultiMarginLoss(LossBase):
         """Initialize MultiMarginLoss."""
         super(MultiMarginLoss, self).__init__()
         self.multi_margin_loss = MultiMarginLossOp(p=p, margin=margin, reduction=reduction)
-        self.generate_ones = ops.Fill()
         self.weight = weight
 
     def construct(self, x, target, weight=None):
@@ -1587,7 +1586,7 @@ class MultiMarginLoss(LossBase):
         if not weight_one:
             _check_is_tensor('weight', weight, self.cls_name)
         else:
-            weight = self.generate_ones(x.dtype, x.astype('float32')[0].shape, 1)
+            weight = F.fill(x.dtype, x.astype('float32')[0].shape, 1)
         loss = self.multi_margin_loss(x, target, weight)
         return loss
 

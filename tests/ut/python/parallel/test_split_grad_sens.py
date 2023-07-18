@@ -22,6 +22,7 @@ from mindspore import context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 def setup_function():
@@ -48,7 +49,7 @@ class GradWrap2(nn.Cell):
 
     def construct(self, x, y, b):
         loss = self.network(x, y, b)
-        sens = P.Fill()(mstype.float32, P.Shape()(loss), 1.0)
+        sens = F.fill(mstype.float32, P.Shape()(loss), 1.0)
         return grad_all_with_sens(self.network)(x, y, b, sens)
 
 

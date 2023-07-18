@@ -15,6 +15,7 @@
 """Utility functions to help distribution class."""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
@@ -52,7 +53,6 @@ def log_generic(input_x):
     log = P.Log()
     less = P.Less()
     lessequal = P.LessEqual()
-    fill = P.Fill()
     cast = P.Cast()
     dtype = P.DType()
     shape = P.Shape()
@@ -61,8 +61,8 @@ def log_generic(input_x):
 
     if not checktype(dtype(input_x), mstype.float_):
         input_x = cast(input_x, mstype.float32)
-    nan = fill(dtype(input_x), shape(input_x), np.nan)
-    inf = fill(dtype(input_x), shape(input_x), np.inf)
+    nan = F.fill(dtype(input_x), shape(input_x), np.nan)
+    inf = F.fill(dtype(input_x), shape(input_x), np.inf)
     neg_x = less(input_x, 0.0)
     nonpos_x = lessequal(input_x, 0.0)
     log_x = log(input_x)

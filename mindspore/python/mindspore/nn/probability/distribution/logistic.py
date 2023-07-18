@@ -15,6 +15,7 @@
 """Logistic Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
@@ -153,7 +154,6 @@ class Logistic(Distribution):
         self.dtypeop = P.DType()
         self.exp = exp_generic
         self.expm1 = P.Expm1()
-        self.fill = P.Fill()
         self.less = P.Less()
         self.log = log_generic
         self.log1p = P.Log1p()
@@ -179,7 +179,7 @@ class Logistic(Distribution):
         too_small_value = self.exp(x)
         too_large_value = x
         too_small_or_too_large = self.logicalor(too_small, too_large)
-        ones = self.fill(self.dtypeop(x), self.shape(x), 1.0)
+        ones = F.fill(self.dtypeop(x), self.shape(x), 1.0)
         x = self.select(too_small_or_too_large, ones, x)
         y = self.log(self.exp(x) + 1.0)
         return self.select(too_small, too_small_value, self.select(too_large, too_large_value, y))

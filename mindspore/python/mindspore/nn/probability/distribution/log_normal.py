@@ -15,6 +15,7 @@
 """LogNormal Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 import mindspore.nn.probability.bijector as msb
 import mindspore.nn.probability.distribution as msd
@@ -101,7 +102,6 @@ class LogNormal(msd.TransformedDistribution):
         self.expm1 = P.Expm1()
         self.log = log_generic
         self.erf = P.Erf()
-        self.fill = P.Fill()
         self.greater = P.Greater()
         self.select = P.Select()
         self.shape = P.Shape()
@@ -202,7 +202,7 @@ class LogNormal(msd.TransformedDistribution):
         cdf = self.distribution("cdf", inverse_value, mean, sd)
 
         # to increase numerical stability, set cdf = 0 when value <= 0
-        zeros = self.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
+        zeros = F.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
 
         return self.select(self.greater(value, 0.), cdf, zeros)
 

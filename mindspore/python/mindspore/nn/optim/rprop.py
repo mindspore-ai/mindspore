@@ -189,8 +189,8 @@ class Rprop(Optimizer):
         self.prev = self._parameters.clone(prefix="prev", init='zeros')
         self.step_size = self._parameters.clone(prefix="step_size", init='zeros')
 
-        self.fill = P.Fill()
         self.sign = P.Sign()
+        self.fill = P.FillV2()
         self.assign = P.Assign()
         self.assignadd = P.AssignAdd()
         self.cast = P.Cast()
@@ -221,14 +221,26 @@ class Rprop(Optimizer):
             param_fp32 = self.cast(param, mstype.float32)
 
             sign = self.sign(gradient_fp32 * prev)
-            sign = self.select(sign > 0, self.fill(mstype.float32, sign.shape, self.etaplus), sign)
-            sign = self.select(sign < 0, self.fill(mstype.float32, sign.shape, self.etaminus), sign)
-            sign = self.select(sign == 0, self.fill(mstype.float32, sign.shape, 1.), sign)
+            sign = self.select(
+                sign > 0,
+                self.fill(sign.shape, self.cast(self.etaplus, mstype.float32)),
+                sign)
+            sign = self.select(
+                sign < 0,
+                self.fill(sign.shape, self.cast(self.etaminus,
+                                                mstype.float32)), sign)
+            sign = self.select(
+                sign == 0, self.fill(sign.shape,
+                                     self.cast(1., mstype.float32)), sign)
 
-            step_size_fp32 = ops.clip_by_value(step_size_fp32 * sign, self.step_size_min, self.step_size_max)
+            step_size_fp32 = ops.clip_by_value(step_size_fp32 * sign,
+                                               self.step_size_min,
+                                               self.step_size_max)
 
-            gradient_update = self.select(sign == self.etaminus, self.fill(mstype.float32, sign.shape, 0.),
-                                          gradient_fp32)
+            gradient_update = self.select(
+                sign == self.etaminus,
+                self.fill(sign.shape, self.cast(0., mstype.float32)),
+                gradient_fp32)
             next_param = param_fp32 - self.sign(gradient_update) * step_size_fp32
 
             self.assign(param, self.cast(next_param, param.dtype))

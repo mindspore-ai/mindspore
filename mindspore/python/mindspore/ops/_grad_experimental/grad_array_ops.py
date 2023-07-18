@@ -398,7 +398,6 @@ def get_bprop_extract_volume_patches(self):
     expend_dims = P.ExpandDims()
     scatter_nd = P.ScatterNd()
     slice_op = P.Slice()
-    fill = P.Fill()
     dtype = P.DType()
     cast = P.Cast()
     matmul = P.MatMul()
@@ -466,7 +465,7 @@ def get_bprop_extract_volume_patches(self):
         idx_tensor = concat((expend_dims(x_idx_patched, -1), expend_dims(out_idx, -1)))
         idx_map = P.Reshape()(idx_tensor, (-1, 2))
         sp_shape = (x_indices_num, out_indices_num)
-        sp_mat_full = scatter_nd(idx_map, fill(dtype(dout), (out_indices_num,), 1), sp_shape)
+        sp_mat_full = scatter_nd(idx_map, F.fill(dtype(dout), (out_indices_num,), 1), sp_shape)
         sp_tensor = slice_op(sp_mat_full, (1, 0), (x_indices_num - 1, out_indices_num))
 
         grad = P.Transpose()(dout, (0, 2, 3, 4, 1))

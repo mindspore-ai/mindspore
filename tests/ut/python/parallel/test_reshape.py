@@ -25,6 +25,7 @@ from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.parallel import set_algo_parameters
 from mindspore.train import Model
@@ -414,7 +415,7 @@ class TrainOneStepCell(nn.Cell):
     def construct(self, data):
         weights = self.weights
         loss = self.network(data)
-        sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
+        sens = F.fill(P.DType()(loss), P.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(data, sens)
 
         self.optimizer(grads)

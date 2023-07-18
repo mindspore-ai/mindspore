@@ -356,7 +356,7 @@ class DistributedGradReducer(Cell):
         ...     def construct(self, *args):
         ...         weights = self.weights
         ...         loss = self.network(*args)
-        ...         sens = ops.Fill()(ops.DType()(loss), ops.Shape()(loss), self.sens)
+        ...         sens = F.fill(ops.DType()(loss), ops.Shape()(loss), self.sens)
         ...         grads = self.grad(self.network, weights)(*args, sens)
         ...         if self.reducer_flag:
         ...             # apply grad reducer on grads

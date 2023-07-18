@@ -21,6 +21,7 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.optim import Adam, FTRL
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 def setup_function():
@@ -98,8 +99,8 @@ class TrainStepWrap(nn.Cell):
         weights_w = self.weights_w
         weights_d = self.weights_d
         loss_w, loss_d = self.network(x)
-        sens_w = P.Fill()(P.DType()(loss_w), P.Shape()(loss_w), self.sens)
-        sens_d = P.Fill()(P.DType()(loss_d), P.Shape()(loss_d), self.sens)
+        sens_w = F.fill(P.DType()(loss_w), P.Shape()(loss_w), self.sens)
+        sens_d = F.fill(P.DType()(loss_d), P.Shape()(loss_d), self.sens)
         grads_w = self.grad_w(self.loss_net_w, weights_w)(x, sens_w)
         self.optimizer_w(grads_w)
         grads_d = self.grad_d(self.loss_net_d, weights_d)(x, sens_d)

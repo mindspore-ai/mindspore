@@ -15,6 +15,7 @@
 """Beta Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 import mindspore.nn as nn
 from mindspore import _checkparam as Validator
@@ -186,7 +187,6 @@ class Beta(Distribution):
         self.pow = P.Pow()
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
-        self.fill = P.Fill()
         self.shape = P.Shape()
         self.select = P.Select()
         self.logicaland = P.LogicalAnd()
@@ -266,7 +266,7 @@ class Beta(Distribution):
         comp2 = self.greater(concentration0, 1.)
         cond = self.logicaland(comp1, comp2)
         batch_shape = self.shape(concentration1 + concentration0)
-        nan = self.fill(self.dtype, batch_shape, np.nan)
+        nan = F.fill(self.dtype, batch_shape, np.nan)
         mode = (concentration1 - 1.) / (concentration1 + concentration0 - 2.)
         return self.select(cond, mode, nan)
 
@@ -379,7 +379,7 @@ class Beta(Distribution):
             sample_shape = (1,)
         else:
             sample_shape = origin_shape
-        ones = self.fill(self.dtype, sample_shape, 1.0)
+        ones = F.fill(self.dtype, sample_shape, 1.0)
         sample_gamma1 = C.gamma(
             sample_shape, alpha=concentration1, beta=ones, seed=self.seed)
         sample_gamma2 = C.gamma(

@@ -65,8 +65,6 @@ from mindspore.ops._utils.utils import ms_arrange
 tuple_to_tensor_ = TupleToTensor()
 eye_ = P.Eye()
 fills_ = Fills()
-fill_ = P.Fill()
-fillv2_ = P.FillV2()
 ones_ = P.Ones()
 ones_like_ = P.OnesLike()
 tile_ = P.Tile()
@@ -746,7 +744,7 @@ def fill(type, shape, value):  # pylint: disable=redefined-outer-name
     if isinstance(shape, tuple):
         shape = tuple_to_tensor_(shape, mstype.int32)
     value = cast_(value, type)
-    return fillv2_(shape, value)
+    return _get_cache_prim(P.FillV2)()(shape, value)
 
 
 def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-name
@@ -791,7 +789,7 @@ def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-nam
         raise TypeError(f"For 'ops.full', 'dtype' must be mindspore.type, but got {dtype}.")
     if isinstance(size, list):
         size = tuple(size)
-    return fill_(dtype, size, fill_value)
+    return F.fill(dtype, size, fill_value)
 
 
 def full_like(input, fill_value, *, dtype=None):
@@ -6893,18 +6891,17 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     x_shape = input.shape
     n, m = x_shape[-2:]
 
-    fill_op = _get_cache_prim(P.Fill)()
     e = _get_cache_prim(P.Eye)()(n, m, dtype)
     if offset >= m or offset <= -n:
-        e = fill_op(dtype, (n, m), 0)
+        e = F.fill(dtype, (n, m), 0)
     elif offset != 0:
         e = e.astype(mstype.float32)
         if offset > 0:
-            e_left = fill_op(mstype.float32, (n, offset), 0)
+            e_left = F.fill(mstype.float32, (n, offset), 0)
             e_right = e[..., 0:m - offset:1]
             e = _get_cache_prim(P.Concat)(1)((e_left, e_right)).astype(dtype)
         elif offset < 0:
-            e_upper = fill_op(mstype.float32, (-offset, m), 0)
+            e_upper = F.fill(mstype.float32, (-offset, m), 0)
             e_lower = e[0:n + offset:1, ...]
             e = _get_cache_prim(P.Concat)(0)((e_upper, e_lower)).astype(dtype)
     e = F.broadcast_to(e, x_shape)
@@ -7690,7 +7687,6 @@ __all__ = [
     'matrix_band_part',
     'padding',
     'fill',
-    'fill_',
     'fills',
     'tile',
     'size',

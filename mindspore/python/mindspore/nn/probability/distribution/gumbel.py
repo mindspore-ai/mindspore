@@ -15,6 +15,7 @@
 """Gumbel Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 import mindspore.nn.probability.bijector as msb
@@ -101,7 +102,6 @@ class Gumbel(TransformedDistribution):
         self.const = P.ScalarToTensor()
         self.exp = exp_generic
         self.expm1 = P.Expm1()
-        self.fill = P.Fill()
         self.lgamma = P.Lgamma()
         self.log = log_generic
         self.shape = P.Shape()
@@ -163,7 +163,7 @@ class Gumbel(TransformedDistribution):
         """
         The mode of the distribution.
         """
-        return self.loc * self.fill(self.parameter_type, self.shape(self.scale), 1.0)
+        return self.loc * F.fill(self.parameter_type, self.shape(self.scale), 1.0)
 
     def _sd(self):
         r"""
@@ -173,7 +173,7 @@ class Gumbel(TransformedDistribution):
             STD(X) = \frac{\pi}{\sqrt(6)} * scale
         """
         scale = self.scale * \
-            self.fill(self.parameter_type, self.broadcast_shape, 1.0)
+            F.fill(self.parameter_type, self.broadcast_shape, 1.0)
         return scale * np.pi / self.sqrt(self.const(6., mstype.float32))
 
     def _entropy(self):
@@ -184,7 +184,7 @@ class Gumbel(TransformedDistribution):
             H(X) = 1. + \log(scale) + Euler-Mascheroni_constant
         """
         scale = self.scale * \
-            self.fill(self.parameter_type, self.broadcast_shape, 1.0)
+            F.fill(self.parameter_type, self.broadcast_shape, 1.0)
         return 1. + self.log(scale) + np.euler_gamma
 
     def _log_prob(self, value):

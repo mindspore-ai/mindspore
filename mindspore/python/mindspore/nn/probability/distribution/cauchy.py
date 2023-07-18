@@ -170,7 +170,6 @@ class Cauchy(Distribution):
         self.const = P.ScalarToTensor()
         self.dtypeop = P.DType()
         self.exp = exp_generic
-        self.fill = P.Fill()
         self.less = P.Less()
         self.log = log_generic
         self.log1p = log1p_generic

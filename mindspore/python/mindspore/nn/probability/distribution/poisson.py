@@ -15,6 +15,7 @@
 """Poisson Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
@@ -149,7 +150,6 @@ class Poisson(Distribution):
         self.floor = P.Floor()
         self.dtypeop = P.DType()
         self.shape = P.Shape()
-        self.fill = P.Fill()
         self.less = P.Less()
         self.equal = P.Equal()
         self.select = P.Select()
@@ -228,8 +228,8 @@ class Poisson(Distribution):
         value = self.cast(value, self.dtype)
         rate = self._check_param_type(rate)
         log_rate = self.log(rate)
-        zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
-        inf = self.fill(self.dtypeop(value), self.shape(value), np.inf)
+        zeros = F.fill(self.dtypeop(value), self.shape(value), 0.0)
+        inf = F.fill(self.dtypeop(value), self.shape(value), np.inf)
         safe_x = self.select(self.less(value, zeros), zeros, value)
         y = log_rate * safe_x - self.lgamma(safe_x + 1.)
         comp = self.equal(value, safe_x)
@@ -254,7 +254,7 @@ class Poisson(Distribution):
         value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
         rate = self._check_param_type(rate)
-        zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
+        zeros = F.fill(self.dtypeop(value), self.shape(value), 0.0)
         comp = self.less(value, zeros)
         safe_x = self.select(comp, zeros, value)
         cdf = 1. - self.igamma(1. + safe_x, rate)

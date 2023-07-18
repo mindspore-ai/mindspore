@@ -690,7 +690,7 @@ class _TrainPipelineAccuStepCell(TrainOneStepCell):
         if not self.sense_flag:
             return self._no_sens_impl(*inputs)
         loss = self.network(*inputs)
-        sens = ops.Fill()(ops.DType()(loss), ops.Shape()(loss), self.sens)
+        sens = ops.fill(ops.DType()(loss), ops.Shape()(loss), self.sens)
         grads = self.grad(self.network, self.weights)(*inputs, sens)
         accu_grads = ops.depend(self.accu_grads, grads)
         if self.opt_shard:

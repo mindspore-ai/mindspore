@@ -530,7 +530,7 @@ class YoloLossBlock(nn.Cell):
         true_xy = y_true[:, :, :, :, :2] * grid_shape - grid
         true_wh = y_true[:, :, :, :, 2:4]
         true_wh = P.Select()(P.Equal()(true_wh, 0.0),
-                             P.Fill()(P.DType()(true_wh), P.Shape()(true_wh), 1.0),
+                             F.fill(P.DType()(true_wh), P.Shape()(true_wh), 1.0),
                              true_wh)
         true_wh = P.Log()(true_wh / self.anchors * self.input_shape)
         box_loss_scale = 2 - y_true[:, :, :, :, 2:3] * y_true[:, :, :, :, 3:4]
@@ -666,7 +666,7 @@ class TrainingWrapper(nn.Cell):
     def construct(self, *args):
         weights = self.weights
         loss = self.network(*args)
-        sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
+        sens = F.fill(P.DType()(loss), P.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(*args, sens)
         if self.reducer_flag:
             # apply grad reducer on grads

@@ -16,6 +16,7 @@
 import numpy as np
 from mindspore import _checkparam as validator
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 from .distribution import Distribution
@@ -125,7 +126,6 @@ class TransformedDistribution(Distribution):
         self.cast_base = P.Cast()
         self.equal_base = P.Equal()
         self.select_base = P.Select()
-        self.fill_base = P.Fill()
 
         # broadcast bijector batch_shape and distribution batch_shape
         self._broadcast_shape = self._broadcast_bijector_dist()
@@ -176,9 +176,9 @@ class TransformedDistribution(Distribution):
         """
         if self.batch_shape is None or self.bijector.batch_shape is None:
             return None
-        bijector_shape_tensor = self.fill_base(
+        bijector_shape_tensor = F.fill(
             self.dtype, self.bijector.batch_shape, 0.0)
-        dist_shape_tensor = self.fill_base(self.dtype, self.batch_shape, 0.0)
+        dist_shape_tensor = F.fill(self.dtype, self.batch_shape, 0.0)
         return (bijector_shape_tensor + dist_shape_tensor).shape
 
     def _cdf(self, value, *args, **kwargs):
