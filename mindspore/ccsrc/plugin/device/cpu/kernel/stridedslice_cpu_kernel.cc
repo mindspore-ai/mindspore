@@ -148,7 +148,6 @@ void StridedSliceCpuKernelMod::InitSliceParam(const BaseOperatorPtr &base_operat
     {kNumberTypeUInt16, {::kNumberTypeUInt16, sizeof(uint16_t)}},
     {kNumberTypeUInt32, {::kNumberTypeUInt32, sizeof(uint32_t)}},
     {kNumberTypeUInt64, {::kNumberTypeUInt64, sizeof(uint64_t)}},
-    {kNumberTypeFloat16, {::kNumberTypeFloat16, sizeof(float16)}},
     {kNumberTypeFloat32, {::kNumberTypeFloat32, sizeof(float)}},
     {kNumberTypeFloat64, {::kNumberTypeFloat64, sizeof(double)}},
     {kNumberTypeComplex64, {::kNumberTypeComplex64, sizeof(complex64)}},
@@ -292,7 +291,6 @@ std::vector<KernelAttr> StridedSliceCpuKernelMod::GetOpSupport() {
 std::vector<std::pair<KernelAttr, StridedSliceCpuKernelMod::StridedSliceFunc>> StridedSliceCpuKernelMod::func_list_ = {
   {STRIDEDSLICE_CPU_REG(kNumberTypeFloat64, double)},
   {STRIDEDSLICE_CPU_REG(kNumberTypeFloat32, float)},
-  {STRIDEDSLICE_CPU_REG(kNumberTypeFloat16, float16)},
   {STRIDEDSLICE_CPU_REG(kNumberTypeInt64, int64_t)},
   {STRIDEDSLICE_CPU_REG(kNumberTypeInt32, int32_t)},
   {STRIDEDSLICE_CPU_REG(kNumberTypeInt16, int16_t)},
@@ -307,7 +305,6 @@ std::vector<std::pair<KernelAttr, StridedSliceCpuKernelMod::StridedSliceFunc>> S
 
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat16, kNumberTypeInt64, float16, int64_t)},
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t)},
@@ -322,7 +319,6 @@ std::vector<std::pair<KernelAttr, StridedSliceCpuKernelMod::StridedSliceFunc>> S
 
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t)},
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, int32_t)},
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t)},
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
   {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t)},
