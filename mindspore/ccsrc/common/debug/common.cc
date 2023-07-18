@@ -27,6 +27,7 @@
 #include "utils/log_adapter.h"
 #include "utils/file_utils.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/compile_cache_context.h"
 
 namespace mindspore {
 bool Common::NeedMapping(const std::string &origin_name) {
@@ -375,8 +376,7 @@ std::string Common::GetCompilerCachePath() {
 }
 
 std::string Common::GetAndCreateCompilerCacheDir() {
-  std::string ms_compiler_cache_enable = common::GetEnv(kCompilerCacheEnable);
-  if (ms_compiler_cache_enable.empty() || ms_compiler_cache_enable == "0") {
+  if (!CompileCacheEnable()) {
     return "";
   }
   std::string compiler_cache_path = GetCompilerCachePath();

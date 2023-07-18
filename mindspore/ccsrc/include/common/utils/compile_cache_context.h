@@ -92,6 +92,11 @@ class COMMON_EXPORT CompileCacheContext {
   void SetRestrictedScenarios(bool restricted_scenarios) { restricted_scenarios_ = restricted_scenarios; }
   void Clear();
 
+  void SetCompileCacheDepFilesHash(const std::string &compile_cache_dep_files_hash) {
+    compile_cache_dep_files_hash_ = compile_cache_dep_files_hash;
+  }
+  std::string CompileCacheDepFilesHash() { return compile_cache_dep_files_hash_; }
+
  private:
   CompileCacheContext() = default;
   ~CompileCacheContext() = default;
@@ -111,6 +116,7 @@ class COMMON_EXPORT CompileCacheContext {
   // param is a backend node but we can find its correspond frontend param.
   mindspore::HashSet<AnfNodePtr> backend_param_gen_from_frontend_param_;
   bool restricted_scenarios_{false};
+  std::string compile_cache_dep_files_hash_ = "";
 };
 }  // namespace mindspore
 
