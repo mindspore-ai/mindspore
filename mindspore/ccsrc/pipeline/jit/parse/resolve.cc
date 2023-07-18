@@ -250,6 +250,9 @@ bool ContainsParameterConstants(const ValuePtr &value) {
     return std::any_of(value_dict->value().begin(), value_dict->value().end(),
                        [](const auto &v) { return ContainsParameterConstants(v.second); });
   }
+  if (!value->isa<tensor::Tensor>()) {
+    return false;
+  }
   auto abs = value->ToAbstract();
   MS_EXCEPTION_IF_NULL(abs);
   return abs->isa<abstract::AbstractRefTensor>();

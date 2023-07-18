@@ -294,7 +294,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassMemberOrSelf(const std::string &attr_o
 void FunctionBlock::CheckUndefinedSymbol(const std::string &var, const AnfNodePtr &node) const {
   if (node->isa<ValueNode>()) {
     auto value = GetValuePtr<ValueProblem>(node->cast<ValueNodePtr>());
-    if ((value != nullptr) && (value->IsUndefined())) {
+    if (!is_dead_block() && value != nullptr && value->IsUndefined()) {
       MS_EXCEPTION(NameError) << "The name '" << var << "' is not defined, or not supported in graph mode.";
     }
   }
@@ -463,8 +463,8 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
 
 AnfNodePtr FunctionBlock::DoResolve(const AnfNodePtr &node, const std::shared_ptr<NameSpace> &name_space,
                                     const std::shared_ptr<Symbol> &resolve_symbol) {
-  static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
-  if (Parser::defer_resolve() || (boost_parse != "2" && boost_parse != "3")) {
+  static const auto boost_parse = common::GetEnv("MS_DEV_GREED_PARSE");
+  if (Parser::defer_resolve() || boost_parse != "1") {
     return node;
   }
   // Directly resolve the symbol.
