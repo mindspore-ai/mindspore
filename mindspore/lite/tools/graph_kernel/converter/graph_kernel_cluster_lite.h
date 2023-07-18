@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,29 @@
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_CLUSTER_LITE_H_
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "backend/common/graph_kernel/core/graph_kernel_cluster.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "ir/func_graph.h"
 
 namespace mindspore::graphkernel {
 class GraphKernelClusterLite : public GraphKernelCluster {
  public:
-  GraphKernelClusterLite() : GraphKernelCluster() {}
+  GraphKernelClusterLite() : GraphKernelCluster() {
+    auto cb = Callback::Instance();
+    if (cb != nullptr) {
+      device_ = cb->GetTargetFromContext();
+    }
+  }
   ~GraphKernelClusterLite() override = default;
 
  protected:
   std::vector<PrimitivePtr> GetClusterableOpList() override;
   bool IsClusterableOp(const AnfNodePtr &node) override;
+
+ private:
+  std::string device_;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_CLUSTER_LITE_H_
