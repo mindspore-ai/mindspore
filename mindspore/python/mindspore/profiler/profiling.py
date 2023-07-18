@@ -70,7 +70,7 @@ AICORE_METRICS_DICT = {
 
 class DeviceSupportParam(Enum):
     """The device target enum."""
-    CPU = ['start', 'start_profile', 'output_path', 'timeline_limit', 'profile_framework']
+    CPU = ['start', 'start_profile', 'output_path', 'timeline_limit', 'profile_framework', 'op_time']
     GPU = ['start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'sync_enable', 'op_time',
            'profile_framework']
     ASCEND = ['start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
