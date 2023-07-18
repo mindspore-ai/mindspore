@@ -207,6 +207,8 @@ constexpr size_t kAxis2 = 2;
 constexpr size_t kAxis3 = 3;
 constexpr size_t kAxis4 = 4;
 constexpr size_t kAxis5 = 5;
+constexpr size_t kInputArgsSizeTwo = 2;
+constexpr size_t kInputArgsSizeOne = 1;
 
 inline std::vector<int64_t> CheckTuple(const std::string &prim_name, const std::string &attr_name,
                                        const ValuePtr &attr) {
@@ -235,13 +237,24 @@ inline bool CheckShape(const std::string &op, const ShapeVector &shape) {
   }
   return true;
 }
+
+inline void Conv3DTransposeInferCheck(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                                      bool infer_shape) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const int64_t input_num = infer_shape ? kInputArgsSizeTwo : kInputArgsSizeOne;
+  (void)CheckAndConvertUtils::CheckInteger("Conv3DTranspose infer check", SizeToLong(input_args.size()), kGreaterEqual,
+                                           input_num, primitive->name());
+}
 }  // namespace
 
 class Conv3DTransposeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
+    Conv3DTransposeInferCheck(primitive, input_args, true);
     auto prim_name = primitive->name();
 
     std::map<std::string, TypePtr> types;
@@ -307,6 +320,7 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    Conv3DTransposeInferCheck(primitive, input_args, false);
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     auto x_dtype = input_args[0]->BuildType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, primitive->name());
