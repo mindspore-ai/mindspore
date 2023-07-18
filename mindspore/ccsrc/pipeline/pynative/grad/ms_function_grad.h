@@ -69,6 +69,7 @@ class MsFunction {
   void RecordForwardGraphForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                        const FuncGraphPtr &ms_func_graph) const;
   void UpdateMsFunctionlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v);
+  bool IsGraphDynamic(const FuncGraphPtr &func_graph);
   void Reset();
   // The graph phase is used to obtain backend graph that is complied by ms_function
   std::string graph_phase_;

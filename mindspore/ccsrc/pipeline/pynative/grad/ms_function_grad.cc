@@ -421,6 +421,21 @@ void MsFunction::UpdateMsFunctionlForwardTensorInfoInBpropGraph(const std::strin
   UpdateForwardOutputTensorInfo(op_info, v, it->second);
 }
 
+bool MsFunction::IsGraphDynamic(const FuncGraphPtr &func_graph) {
+  for (const auto &param : func_graph->parameters()) {
+    if (param->isa<Parameter>() && !param->cast<ParameterPtr>()->has_default()) {
+      const auto &abs = param->abstract();
+      if (abs != nullptr && abs->BuildShape()->IsDynamic()) {
+        return true;
+      }
+    }
+  }
+  if (auto abs = func_graph->output()->abstract(); abs != nullptr && abs->BuildShape()->IsDynamic()) {
+    return true;
+  }
+  return false;
+}
+
 void MsFunction::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {
   const auto it = graph_phase_with_replace_info_.find(graph_phase_);
   if (it == graph_phase_with_replace_info_.end()) {
@@ -442,7 +457,7 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
     ms_function_compile_info_[graph_phase_].is_control_flow_ = true;
     return nullptr;
   }
-  if (auto abs = ms_func_graph->output()->abstract(); abs != nullptr && abs->BuildShape()->IsDynamic()) {
+  if (IsGraphDynamic(ms_func_graph)) {
     MS_LOG(DEBUG) << "Get dynamic shape";
     ms_function_compile_info_[graph_phase_].is_dynamic_shape_ = true;
     return nullptr;
