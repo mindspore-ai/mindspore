@@ -17,8 +17,8 @@
 #include "transform/graph_ir/op_declare/nn_norm_ops_declare.h"
 #include <string>
 #include <vector>
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
+#include "ops/math_ops.h"
+#include "ops/nn_ops.h"
 
 namespace mindspore::transform {
 // SoftmaxV2
@@ -221,7 +221,7 @@ INPUT_MAP(Roll) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Roll) = {{"shift", ATTR_DESC(shifts, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                   {"axis", ATTR_DESC(dims, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Roll) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Roll, prim::kRoll, ADPT_DESC(Roll))
+REG_ADPT_DESC(Roll, mindspore::kRollOpName, ADPT_DESC(Roll))
 
 // Renorm
 INPUT_MAP(Renorm) = {{1, INPUT_DESC(x)}};

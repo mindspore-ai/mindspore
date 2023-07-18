@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CORE_OPS_SEQUENCE_STACK_H_
 #define MINDSPORE_CORE_OPS_SEQUENCE_STACK_H_
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 #include "mindspore/core/ops/sequence_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
@@ -29,7 +29,7 @@ class MIND_API SequenceStack : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceStack);
   /// \brief Constructor.
-  SequenceStack() : BaseOperator(prim::kSequenceStack) {}
+  SequenceStack() : BaseOperator(kSequenceStackOpName) {}
   /// \brief Init function.
   void Init(const int64_t axis);
   /// \brief Set axis.

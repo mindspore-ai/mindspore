@@ -19,10 +19,10 @@
 #include <vector>
 #include <string>
 
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/math_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/math_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -84,7 +84,7 @@ const AnfNodePtr PostBatchNormAddReluFusion::Process(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(umonad);
   MS_EXCEPTION_IF_NULL(z);
 
-  auto prim = std::make_shared<Primitive>(kBatchNormWithAddAndActivation);
+  auto prim = std::make_shared<Primitive>(kBatchNormWithAddAndActivationOpName);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x, scale, bias, mean, var, z, umonad};
   auto fused_batch_norm_with_add_relu = graph->NewCNode(inputs);

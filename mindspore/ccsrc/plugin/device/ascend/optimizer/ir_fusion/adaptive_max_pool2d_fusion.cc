@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-#include "mindspore/core/ops/conv_pool_ops.h"
+#include "ops/conv_pool_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "abstract/dshape.h"
 #include "include/backend/anf_runtime_algorithm.h"

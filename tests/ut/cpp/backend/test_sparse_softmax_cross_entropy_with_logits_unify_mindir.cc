@@ -15,7 +15,7 @@
  */
 #include <memory>
 #include "backend/graph_optimizer_test_framework.h"
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/sequence_ops.h"
 #include "common/common_test.h"
 #include "plugin/device/ascend/optimizer/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "include/common/utils/anfalgo.h"
@@ -48,7 +48,7 @@ TEST_F(SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR, test_sparse_softmax_cross
     .AddCNode("softmax_cross_entropy_with_logits",
               {std::make_shared<Primitive>("SoftmaxCrossEntropyWithLogits"), "x1", "one_hot"})
     .AddCNode("tuple_get_item",
-              {std::make_shared<Primitive>(prim::kTupleGetItem), "softmax_cross_entropy_with_logits", "x2"})
+              {std::make_shared<Primitive>(kTupleGetItemOpName), "softmax_cross_entropy_with_logits", "x2"})
     .AddCNode("reduce_mean", {std::make_shared<Primitive>("ReduceMean"), "tuple_get_item", "x3"});
   EXPECT_TRUE(checker.build_pattern_map(c.GetGraph()->output()));
 }
@@ -72,7 +72,7 @@ TEST_F(SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR, test_sparse_softmax_cross
     .AddCNode("softmax_cross_entropy_with_logits",
               {std::make_shared<Primitive>("SoftmaxCrossEntropyWithLogits"), "x1", "one_hot"})
     .AddCNode("tuple_get_item",
-              {std::make_shared<Primitive>(prim::kTupleGetItem), "softmax_cross_entropy_with_logits", "x2"})
+              {std::make_shared<Primitive>(prim::kPrimTupleGetItem->name()), "softmax_cross_entropy_with_logits", "x2"})
     .AddCNode("reduce_mean", {std::make_shared<Primitive>("ReduceMean"), "tuple_get_item", "x3"});
   EXPECT_FALSE(checker.build_pattern_map(c.GetGraph()->output()));
 }

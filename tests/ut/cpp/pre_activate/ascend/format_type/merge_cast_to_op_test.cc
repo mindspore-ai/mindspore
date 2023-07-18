@@ -23,6 +23,7 @@
 #include "kernel/kernel_build_info.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/common/utils/anfalgo.h"
+#include "ops/ascend_op_name.h"
 
 #define private public
 #define protected public

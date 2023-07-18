@@ -15,6 +15,7 @@
  */
 
 #include "runtime/device/launch_mul.h"
+#include "ops/math_op_name.h"
 #include "abstract/utils.h"
 #include "backend/common/session/single_kernel_graph.h"
 #include "include/backend/anf_runtime_algorithm.h"

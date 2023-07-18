@@ -20,6 +20,8 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+#include "ops/other_op_name.h"
+#include "ops/framework_op_name.h"
 #include "kernel/graph_kernel_info.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
@@ -203,9 +205,9 @@ void InsertStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &kernel_
 bool GenSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph> &kernel_graph,
                                    const CNodePtr &mock_send_node, const CNodePtr &mock_recv_node, CNodePtr *send_node,
                                    CNodePtr *recv_node) {
-  *send_node = CreateStreamSwitchNode(kernel_graph, kSendOpName);
+  *send_node = CreateStreamSwitchNode(kernel_graph, kStreamSendOpName);
   MS_EXCEPTION_IF_NULL(*send_node);
-  *recv_node = CreateStreamSwitchNode(kernel_graph, kRecvOpName);
+  *recv_node = CreateStreamSwitchNode(kernel_graph, kStreamRecvOpName);
   MS_EXCEPTION_IF_NULL(*recv_node);
 
   cudaEvent_t event = nullptr;

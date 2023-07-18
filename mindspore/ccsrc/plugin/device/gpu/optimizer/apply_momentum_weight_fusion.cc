@@ -17,10 +17,10 @@
 
 #include <vector>
 
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/math_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -58,7 +58,7 @@ const AnfNodePtr ApplyMomentumWeightDecayFusion::Process(const FuncGraphPtr &gra
   MS_EXCEPTION_IF_NULL(momentum);
   MS_EXCEPTION_IF_NULL(monad_state);
 
-  auto prim = std::make_shared<Primitive>(kFusedWeightApplyMomentum);
+  auto prim = std::make_shared<Primitive>(kFusedWeightApplyMomentumOpName);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), weight_decay, variable, accumulation,
                                     learning_rate,      gradient,     momentum, monad_state};

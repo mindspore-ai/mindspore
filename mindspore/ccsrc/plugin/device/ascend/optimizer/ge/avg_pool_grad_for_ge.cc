@@ -20,7 +20,7 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
-#include "mindspore/core/ops/conv_pool_ops.h"
+#include "ops/conv_pool_ops.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

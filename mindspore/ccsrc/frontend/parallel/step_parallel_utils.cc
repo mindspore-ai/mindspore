@@ -16,40 +16,40 @@
 
 #include "frontend/parallel/step_parallel_utils.h"
 
-#include <cinttypes>
 #include <algorithm>
+#include <cinttypes>
 
 #include <map>
+#include <memory>
+#include <queue>
 #include <set>
 #include <string>
 #include <utility>
-#include <queue>
-#include <memory>
 
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "utils/hash_map.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
-#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/parameter_manager.h"
-#include "frontend/parallel/dynamic_creator.h"
+#include "include/common/utils/comm_manager.h"
+#include "include/common/utils/parallel_context.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
-#include "utils/trace_base.h"
-#include "include/common/utils/comm_manager.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/other_ops.h"
+#include "ops/sequence_ops.h"
+#include "utils/parallel_node_check.h"
+#include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
-#include "mindspore/core/utils/parallel_node_check.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace parallel {
@@ -743,7 +743,7 @@ std::pair<std::shared_ptr<AnfNode>, int> BFSParallelCareNode(const AnfNodePtr &n
     } else {
       if (IsSomePrimitive(cnode, RETURN)) {
         FindReturnUser(cnode, all_nodes, &queue_node);
-      } else if (IsSomePrimitive(cnode, prim::kTupleGetItem)) {
+      } else if (IsSomePrimitive(cnode, kTupleGetItemOpName)) {
         auto tuple_index = LongToSize(GetValue<int64_t>(GetValueNode(cnode->input(2))));
         if (tuple_index != IntToSize(index - 1)) {
           continue;
@@ -1446,9 +1446,9 @@ bool CrossInterNode(CNodePtr *prev_cnode, ValueNodePtr *prev_prim_anf_node, Prim
 }
 
 bool IsCarePrevCNode(const CNodePtr &prev_cnode, const PrimitivePtr &prev_prim) {
-  return (IsValueNode<FuncGraph>(prev_cnode->input(0))) || (prev_prim->name() == prim::kTupleGetItem) ||
-         (prev_prim->name() == prim::kDepend) || (prev_prim->name() == prim::kMakeList) ||
-         (prev_prim->name() == prim::kLoad) || (prev_prim->name() == prim::kMakeTuple) ||
+  return (IsValueNode<FuncGraph>(prev_cnode->input(0))) || (prev_prim->name() == kTupleGetItemOpName) ||
+         (prev_prim->name() == kDependOpName) || (prev_prim->name() == kMakeListOpName) ||
+         (prev_prim->name() == kLoadOpName) || (prev_prim->name() == kMakeTupleOpName) ||
          IsAutoParallelCareNode(prev_cnode);
 }
 
@@ -1489,7 +1489,7 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
       } else if (IsAutoParallelCareNode(prev_cnode)) {
         name_inputs.push_back(prev_cnode->UniqueId());
         break;
-      } else if (prev_prim->name() == prim::kTupleGetItem) {
+      } else if (prev_prim->name() == kTupleGetItemOpName) {
         // In this case, 'prev_anf_node' is 'tuple_getitem', the actual precursor node is node before
         // this 'tuple_getitem'
         output_index = LongToSize(GetValue<int64_t>(GetValueNode(prev_cnode->input(INDEX_TWO))));
@@ -1503,7 +1503,7 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
         if (!IsAutoParallelCareNode(prev_cnode) && !IsValueNode<FuncGraph>(prev_cnode->input(0))) {
           MS_LOG(EXCEPTION) << "Did not create OperatorInfo for : " << prev_prim->name();
         }
-      } else if (prev_prim->name() == prim::kMakeTuple) {
+      } else if (prev_prim->name() == kMakeTupleOpName) {
         prev_node = prev_cnode->input(output_index + 1);
         prev_cnode = prev_node->cast<CNodePtr>();
         output_index = 0;
@@ -1512,7 +1512,7 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
           name_inputs.push_back(prev_node->UniqueId());
           break;
         }
-      } else if (prev_prim->name() == prim::kDepend || prev_prim->name() == prim::kLoad) {
+      } else if (prev_prim->name() == kDependOpName || prev_prim->name() == kLoadOpName) {
         // In this case, 'prev_anf_node' is 'depend', the actual precursor node is node before
         // this 'depend'
         prev_node = prev_cnode->input(1);

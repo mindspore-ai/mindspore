@@ -18,7 +18,8 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
-#include "mindspore/core/ops/math_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/math_ops.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"

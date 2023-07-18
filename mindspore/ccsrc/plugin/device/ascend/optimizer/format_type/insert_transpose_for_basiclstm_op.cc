@@ -17,8 +17,9 @@
 #include "plugin/device/ascend/optimizer/format_type/insert_transpose_for_basiclstm_op.h"
 #include <memory>
 #include <vector>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/sequence_ops.h"
+#include "ops/array_ops.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "plugin/device/ascend/optimizer/create_node_helper.h"

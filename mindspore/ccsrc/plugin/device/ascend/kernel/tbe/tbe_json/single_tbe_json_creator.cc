@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
 #include <algorithm>
 #include <string>
+#include "ops/conv_pool_op_name.h"
+#include "ops/other_op_name.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

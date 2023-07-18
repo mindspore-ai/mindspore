@@ -25,7 +25,7 @@
 #include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/array_op_name.h"
 
 namespace mindspore::graphkernel {
 struct Branch {
@@ -102,7 +102,7 @@ class ParallelOpCombiner {
   FuncGraphPtr main_graph_;
   AnfNodePtr combined_;
   std::unordered_map<AnfNodePtr, AnfNodePtrSet> children_map_;
-  std::unordered_set<std::string> unsupported_ops_{prim::kTranspose, prim::kReshape};
+  std::unordered_set<std::string> unsupported_ops_{mindspore::kTransposeOpName, mindspore::kReshapeOpName};
 
  private:
   void CombineBranches(const Group &branches);

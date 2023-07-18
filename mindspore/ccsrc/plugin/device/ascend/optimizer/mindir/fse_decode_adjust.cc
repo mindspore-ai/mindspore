@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 
+#include "ops/lite_op_name.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "include/backend/optimizer/helper.h"

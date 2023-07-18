@@ -21,18 +21,13 @@
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "utils/hash_map.h"
+#include "ops/random_op_name.h"
 
 namespace mindspore {
 namespace prim {
 // Random
-constexpr auto kStandardNormal = "StandardNormal";
-constexpr auto kRandomGammaGrad = "RandomGammaGrad";
-constexpr auto kUniform = "Uniform";
-constexpr auto kStandardLaplace = "StandardLaplace";
-
-// Random
 GVAR_DEF(PrimitivePtr, kPrimStandardLaplace, std::make_shared<Primitive>("StandardLaplace"));
-GVAR_DEF(PrimitivePtr, kPrimStandardNormal, std::make_shared<Primitive>(kStandardNormal));
+GVAR_DEF(PrimitivePtr, kPrimStandardNormal, std::make_shared<Primitive>(kStandardNormalOpName));
 GVAR_DEF(PrimitivePtr, kPrimParameterizedTruncatedNormal, std::make_shared<Primitive>("ParameterizedTruncatedNormal"));
 GVAR_DEF(PrimitivePtr, kPrimRandomNormal, std::make_shared<Primitive>("RandomNormal"));
 GVAR_DEF(PrimitivePtr, kPrimNonDeterministicInts, std::make_shared<Primitive>("NonDeterministicInts"));
@@ -49,7 +44,7 @@ GVAR_DEF(PrimitivePtr, kPrimLogUniformCandidateSampler, std::make_shared<Primiti
 GVAR_DEF(PrimitivePtr, kPrimMultinomial, std::make_shared<Primitive>("Multinomial"));
 GVAR_DEF(PrimitivePtr, kPrimMultinomialWithReplacement, std::make_shared<Primitive>("MultinomialWithReplacement"));
 GVAR_DEF(PrimitivePtr, kPrimRandomChoiceWithMask, std::make_shared<Primitive>("RandomChoiceWithMask"));
-GVAR_DEF(PrimitivePtr, kPrimUniform, std::make_shared<Primitive>(kUniform));
+GVAR_DEF(PrimitivePtr, kPrimUniform, std::make_shared<Primitive>(kUniformOpName));
 }  // namespace prim
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_BASE_RANDOM_OPS_H_

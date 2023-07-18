@@ -123,7 +123,7 @@ const AnfNodePtr ApplyMomentumWeightDecayScaleFusion::Process(const FuncGraphPtr
   MS_EXCEPTION_IF_NULL(momentum);
   MS_EXCEPTION_IF_NULL(monad_state);
 
-  auto prim = std::make_shared<Primitive>(kFusedWeightScaleApplyMomentum);
+  auto prim = std::make_shared<Primitive>(kFusedWeightScaleApplyMomentumOpName);
   MS_EXCEPTION_IF_NULL(prim);
   auto gradient = GetCastInput(cast_gradient);
   MS_EXCEPTION_IF_NULL(gradient);

@@ -21,6 +21,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/distributed/init.h"
+#include "ops/ascend_op_name.h"
 
 namespace mindspore {
 namespace {

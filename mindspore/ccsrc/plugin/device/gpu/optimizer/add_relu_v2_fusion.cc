@@ -82,7 +82,7 @@ const AnfNodePtr AddReluV2Fusion::Process(const FuncGraphPtr &graph, const AnfNo
     return nullptr;
   }
 
-  auto prim = std::make_shared<Primitive>(kFusedAddReluV2Name);
+  auto prim = std::make_shared<Primitive>(kFusedAddReluV2OpName);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2};
   auto add_relu = graph->NewCNode(inputs);

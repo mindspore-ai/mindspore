@@ -21,12 +21,13 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameTensorToTuple = "TensorToTuple";
 /// \brief TensorToTuple op is used to convert tensor to tuple.
 class MIND_API TensorToTuple : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorToTuple);
   /// \brief Constructor.
-  TensorToTuple() : BaseOperator(prim::kTensorToTuple) { InitIOName({"input_tensor"}, {"output_data"}); }
+  TensorToTuple() : BaseOperator(kNameTensorToTuple) { InitIOName({"input_tensor"}, {"output_data"}); }
   /// \brief Init.
   void Init() const {}
 };

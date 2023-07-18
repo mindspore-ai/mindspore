@@ -24,12 +24,12 @@
 #include <utility>
 #include <memory>
 #include <unordered_map>
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/sparse_tensor_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/structure_ops.h"
+#include "ops/sparse_tensor_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/array_ops.h"
+#include "ops/arithmetic_ops.h"
+#include "ops/framework_ops.h"
 #include "abstract/abstract_value.h"
 #include "base/base.h"
 #include "pipeline/jit/debug/trace.h"
@@ -727,10 +727,10 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   static inline const mindspore::HashMap<std::string, int64_t> sparse_attr_map = {
-    {prim::kCSRTensorGetIndptr, 0},     {prim::kCSRTensorGetIndices, 1}, {prim::kCSRTensorGetValues, 2},
-    {prim::kCSRTensorGetDenseShape, 3}, {prim::kCOOTensorGetIndices, 0}, {prim::kCOOTensorGetValues, 1},
-    {prim::kCOOTensorGetDenseShape, 2}, {prim::kRowTensorGetIndices, 0}, {prim::kRowTensorGetValues, 1},
-    {prim::kRowTensorGetDenseShape, 2}};
+    {kCSRTensorGetIndptrOpName, 0},     {kCSRTensorGetIndicesOpName, 1}, {kCSRTensorGetValuesOpName, 2},
+    {kCSRTensorGetDenseShapeOpName, 3}, {kCOOTensorGetIndicesOpName, 0}, {kCOOTensorGetValuesOpName, 1},
+    {kCOOTensorGetDenseShapeOpName, 2}, {kRowTensorGetIndicesOpName, 0}, {kRowTensorGetValuesOpName, 1},
+    {kRowTensorGetDenseShapeOpName, 2}};
 
   // From:
   //   SparseTensorGetXXX(sparse) # index

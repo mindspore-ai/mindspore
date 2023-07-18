@@ -94,7 +94,7 @@ const AnfNodePtr BatchNormReluFusion::Process(const FuncGraphPtr &graph, const A
   MS_EXCEPTION_IF_NULL(var);
   MS_EXCEPTION_IF_NULL(umonad);
 
-  auto prim = std::make_shared<Primitive>(kBatchNormWithActivation);
+  auto prim = std::make_shared<Primitive>(kBatchNormWithActivationOpName);
   MS_EXCEPTION_IF_NULL(prim);
   prim->AddAttr(mindspore::ops::kActivationType, MakeValue(static_cast<int64_t>(mindspore::ActivationType::RELU)));
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x, scale, bias, mean, var, umonad};

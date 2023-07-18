@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include "backend/common/graph_kernel/split_model/area.h"
+#include "ops/math_op_name.h"
 
 namespace mindspore::graphkernel::inner {
 class CircleChecker {

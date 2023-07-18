@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
-#include <unordered_set>
 #include <string>
-#include "mindspore/core/ops/conv_pool_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "kernel/kernel_fusion.h"
+#include <unordered_set>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "utils/ms_context.h"
-#include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
+#include "kernel/kernel_fusion.h"
+#include "ops/array_op_name.h"
+#include "ops/conv_pool_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
+#include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -82,7 +85,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchSingleFusionPattern(const sess
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL && AnfAlgo::GetFusionType(cnode) == kPatternElemWise &&
-        common::AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName) {
+        common::AnfAlgo::GetCNodeName(cnode) == kReLUGradV2OpName) {
       MatchConv2DBackpropInputEltwiseEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

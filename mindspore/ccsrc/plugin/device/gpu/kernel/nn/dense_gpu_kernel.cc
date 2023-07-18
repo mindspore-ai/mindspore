@@ -19,7 +19,8 @@
 #include <algorithm>
 #include <utility>
 #include <memory>
-#include "mindspore/core/ops/dense.h"
+#include "ops/nn_op_name.h"
+#include "ops/dense.h"
 
 namespace mindspore {
 namespace kernel {

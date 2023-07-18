@@ -26,7 +26,7 @@ class MIND_API bit_and : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(bit_and);
   /// \brief Constructor.
-  bit_and() : BaseOperator(prim::kScalarBitwiseAnd) {}
+  bit_and() : BaseOperator(kScalarBitwiseAndOpName) {}
   /// \brief Init.
   void Init() const {}
 };

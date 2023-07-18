@@ -26,7 +26,7 @@ class MIND_API MakeList : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MakeList);
   /// \brief Constructor.
-  MakeList() : BaseOperator(prim::kMakeList) {}
+  MakeList() : BaseOperator(kMakeListOpName) {}
   /// \brief Init.
   void Init() const {}
 };

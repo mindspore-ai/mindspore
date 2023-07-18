@@ -23,6 +23,9 @@
 #include <set>
 #include <random>
 
+#include "ops/ascend_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/framework_op_name.h"
 #include "backend/common/somas/somas_node.h"
 #include "backend/common/somas/somas_solver_pre.h"
 #include "backend/common/somas/somas_stream.h"

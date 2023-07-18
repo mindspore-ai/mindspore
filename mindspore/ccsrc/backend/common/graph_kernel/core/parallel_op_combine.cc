@@ -31,6 +31,7 @@
 #include "include/common/utils/utils.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "utils/ms_context.h"
+#include "ops/array_ops.h"
 #include "backend/common/graph_kernel/adapter/callback_impl.h"
 
 namespace mindspore::graphkernel {

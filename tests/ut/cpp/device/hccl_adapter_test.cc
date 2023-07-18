@@ -15,6 +15,7 @@
  */
 #include <memory>
 #include "common/common_test.h"
+#include "ops/other_op_name.h"
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

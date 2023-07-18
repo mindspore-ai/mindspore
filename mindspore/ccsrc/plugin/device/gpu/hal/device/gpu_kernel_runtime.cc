@@ -17,7 +17,8 @@
 #include <algorithm>
 #include <map>
 #include <chrono>
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/framework_op_name.h"
+#include "ops/sequence_ops.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
@@ -1211,7 +1212,7 @@ void GPUKernelRuntime::AllocCommunicationOpDynamicRes(const session::KernelGraph
   auto &kernels = graph->execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (common::AnfAlgo::IsCommunicationOp(kernel) && common::AnfAlgo::GetCNodeName(kernel) != kHcomSendOpName &&
+    if (common::AnfAlgo::IsCommunicationOp(kernel) && common::AnfAlgo::GetCNodeName(kernel) != kSendOpName &&
         common::AnfAlgo::GetCNodeName(kernel) != kReceiveOpName) {
       AllocCommunicationOpInputDynamicRes(kernel);
     }

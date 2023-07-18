@@ -16,9 +16,9 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include <algorithm>
 #include <vector>
-#include "mindspore/core/ops/sparse_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/sparse_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
 #include "pybind_api/ir/primitive_py.h"

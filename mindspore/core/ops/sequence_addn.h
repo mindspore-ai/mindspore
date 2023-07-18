@@ -27,7 +27,7 @@ class MIND_API SequenceAddN : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceAddN);
   /// \brief Constructor.
-  SequenceAddN() : BaseOperator(prim::kSequenceAddN) {}
+  SequenceAddN() : BaseOperator(kSequenceAddNOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

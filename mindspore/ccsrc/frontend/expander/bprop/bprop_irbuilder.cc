@@ -19,7 +19,8 @@
 #include <algorithm>
 #include <vector>
 #include <limits>
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/sequence_op_name.h"
+#include "ops/array_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
@@ -140,7 +141,7 @@ NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) const {
   constexpr int64_t new_axis_mask = 0;
   constexpr int64_t shrink_axis_mask = 1;
   return Emit(
-    prim::kStridedSlice,
+    kStridedSliceOpName,
     {node, EmitValue(MakeValue(begin_strides)), EmitValue(MakeValue(end_strides)), EmitValue(MakeValue(step_strides))},
     {{kAttrBeginMask, MakeValue(begin_mask)},
      {kAttrEndMask, MakeValue(end_mask)},
@@ -178,7 +179,7 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
       }
     }
   }
-  return Emit(prim::kStridedSlice, {x, Value(begin_strides), Value(end_strides), Value(step_strides)},
+  return Emit(kStridedSliceOpName, {x, Value(begin_strides), Value(end_strides), Value(step_strides)},
               {{kAttrBeginMask, zero},
                {kAttrEndMask, MakeValue(SizeToLong(end_mask))},
                {kAttrEllipsisMask, zero},

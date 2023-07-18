@@ -18,8 +18,8 @@
 #include <vector>
 #include <string>
 
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/math_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/math_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -84,7 +84,7 @@ const AnfNodePtr AddReluGradV2Fusion::Process(const FuncGraphPtr &graph, const A
     return nullptr;
   }
 
-  auto prim = std::make_shared<Primitive>(kFusedAddReluGradV2Name);
+  auto prim = std::make_shared<Primitive>(kFusedAddReluGradV2OpName);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, mask};
   auto add_relugrad = graph->NewCNode(inputs);

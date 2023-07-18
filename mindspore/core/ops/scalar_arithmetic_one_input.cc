@@ -52,8 +52,9 @@ using ScalarImplFunc = std::function<ValuePtr(const ValuePtr &)>;
 
 template <typename T>
 ScalarImplFunc ChooseFunction(const std::string &prim_name) {
-  std::map<std::string, ScalarImplFunc> infer_value_func_map = {
-    {prim::kScalarUadd, UaddImpl<T>}, {prim::kScalarUsub, UsubImpl<T>}, {prim::kScalarLog, LogImpl<T>}};
+  std::map<std::string, ScalarImplFunc> infer_value_func_map = {{mindspore::kScalarUaddOpName, UaddImpl<T>},
+                                                                {mindspore::kScalarUsubOpName, UsubImpl<T>},
+                                                                {mindspore::kScalarLogOpName, LogImpl<T>}};
   auto iter = infer_value_func_map.find(prim_name);
   if (iter == infer_value_func_map.end()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "' don't support. Only support [Uadd, Usub, Log]";
@@ -82,7 +83,7 @@ class ScalarOneInputInfer : public abstract::OpInferBase {
     auto x_type = input_args[0]->BuildType();
     std::set<TypePtr> check_types = {kInt32, kInt64, kFloat32, kFloat64};
     (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
-    if (prim_name == prim::kScalarLog) {
+    if (prim_name == mindspore::kScalarLogOpName) {
       return kFloat32;
     }
     return x_type;

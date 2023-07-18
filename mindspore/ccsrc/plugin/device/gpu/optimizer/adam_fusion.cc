@@ -160,7 +160,7 @@ const AnfNodePtr AdamFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr
   param->set_abstract(param_input->abstract());
 
   // Fused into a FusedAdam operator.
-  auto prim = std::make_shared<Primitive>(kFusedAdamName);
+  auto prim = std::make_shared<Primitive>(kFusedAdamOpName);
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_value = NewValueNode(prim);
   std::vector<AnfNodePtr> inputs = {

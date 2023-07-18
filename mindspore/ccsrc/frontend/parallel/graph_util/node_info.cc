@@ -19,9 +19,9 @@
 #include <string>
 #include <utility>
 
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "ir/param_info.h"
 #include "ir/meta_tensor.h"
 #include "include/common/utils/python_adapter.h"
@@ -366,7 +366,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
   }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
-  if (prim->name() == prim::kTupleGetItem) {
+  if (prim->name() == prim::kPrimTupleGetItem->name()) {
     *out_index = GetTupleGetItemIndex(cnode);
     // find tuple_get_item's previous node
     auto pre_node = cnode->input(1);

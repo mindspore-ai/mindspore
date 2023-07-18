@@ -20,80 +20,47 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/primitive.h"
+#include "ops/sparse_op_name.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
 // COOTensor
-constexpr auto kMakeCOOTensor = "MakeCOOTensor";
-constexpr auto kCOOTensorGetValues = "COOTensorGetValues";
-constexpr auto kCOOTensorGetIndices = "COOTensorGetIndices";
-constexpr auto kCOOTensorGetDenseShape = "COOTensorGetDenseShape";
-constexpr auto kCOOTensorDenseMatmul = "COOTensorDenseMatmul";
+GVAR_DEF(PrimitivePtr, kPrimMakeCOOTensor, std::make_shared<Primitive>(kMakeCOOTensorOpName));
+GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetValues, std::make_shared<Primitive>(kCOOTensorGetValuesOpName));
+GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetIndices, std::make_shared<Primitive>(kCOOTensorGetIndicesOpName));
+GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetDenseShape, std::make_shared<Primitive>(kCOOTensorGetDenseShapeOpName));
+GVAR_DEF(PrimitivePtr, kPrimCOOTensorDenseMatmul, std::make_shared<Primitive>(kCOOTensorDenseMatmulOpName));
 
 // RowTensor
-constexpr auto kMakeRowTensor = "MakeRowTensor";
-constexpr auto kRowTensorGetValues = "RowTensorGetValues";
-constexpr auto kRowTensorGetIndices = "RowTensorGetIndices";
-constexpr auto kRowTensorGetDenseShape = "RowTensorGetDenseShape";
-constexpr auto kRowTensorAdd = "RowTensorAdd";
+GVAR_DEF(PrimitivePtr, kPrimMakeRowTensor, std::make_shared<Primitive>(kMakeRowTensorOpName));
+GVAR_DEF(PrimitivePtr, kPrimRowTensorGetValues, std::make_shared<Primitive>(kRowTensorGetValuesOpName));
+GVAR_DEF(PrimitivePtr, kPrimRowTensorGetIndices, std::make_shared<Primitive>(kRowTensorGetIndicesOpName));
+GVAR_DEF(PrimitivePtr, kPrimRowTensorGetDenseShape, std::make_shared<Primitive>(kRowTensorGetDenseShapeOpName));
+GVAR_DEF(PrimitivePtr, kPrimRowTensorAdd, std::make_shared<Primitive>(kRowTensorAddOpName));
 
 // CSRTensor
-constexpr auto kMakeCSRTensor = "MakeCSRTensor";
-constexpr auto kCSRTensorGetValues = "CSRTensorGetValues";
-constexpr auto kCSRTensorGetIndptr = "CSRTensorGetIndptr";
-constexpr auto kCSRTensorGetIndices = "CSRTensorGetIndices";
-constexpr auto kCSRTensorGetDenseShape = "CSRTensorGetDenseShape";
-constexpr auto kIsCSRFunc = "IsCSRFunc";
+GVAR_DEF(PrimitivePtr, kPrimMakeCSRTensor, std::make_shared<Primitive>(kMakeCSRTensorOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetValues, std::make_shared<Primitive>(kCSRTensorGetValuesOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndptr, std::make_shared<Primitive>(kCSRTensorGetIndptrOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndices, std::make_shared<Primitive>(kCSRTensorGetIndicesOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetDenseShape, std::make_shared<Primitive>(kCSRTensorGetDenseShapeOpName));
 
 // MapTensor
-constexpr auto kMakeMapParameter = "MakeMapParameter";
-constexpr auto kMapTensorGet = "MapTensorGet";
-constexpr auto kMapTensorPut = "MapTensorPut";
-constexpr auto kMapTensorErase = "MapTensorErase";
-constexpr auto kMapTensorPutWithStatus = "MapTensorPutWithStatus";
-constexpr auto kMapTensorGetDefaultValue = "MapTensorGetDefaultValue";
-constexpr auto kMapTensorGetPermitFilterValue = "MapTensorGetPermitFilterValue";
-constexpr auto kMapTensorGetEvictFilterValue = "MapTensorGetEvictFilterValue";
-constexpr auto kMapTensorGetKeys = "MapTensorGetKeys";
-constexpr auto kMapTensorGetValues = "MapTensorGetValues";
-constexpr auto kMapTensorGetData = "MapTensorGetData";
-constexpr auto kMapTensorGetGrad = "MapTensorGetGrad";
-
-// COOTensor
-GVAR_DEF(PrimitivePtr, kPrimMakeCOOTensor, std::make_shared<Primitive>(kMakeCOOTensor));
-GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetValues, std::make_shared<Primitive>(kCOOTensorGetValues));
-GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetIndices, std::make_shared<Primitive>(kCOOTensorGetIndices));
-GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetDenseShape, std::make_shared<Primitive>(kCOOTensorGetDenseShape));
-GVAR_DEF(PrimitivePtr, kPrimCOOTensorDenseMatmul, std::make_shared<Primitive>(kCOOTensorDenseMatmul));
-
-// RowTensor
-GVAR_DEF(PrimitivePtr, kPrimMakeRowTensor, std::make_shared<Primitive>(kMakeRowTensor));
-GVAR_DEF(PrimitivePtr, kPrimRowTensorGetValues, std::make_shared<Primitive>(kRowTensorGetValues));
-GVAR_DEF(PrimitivePtr, kPrimRowTensorGetIndices, std::make_shared<Primitive>(kRowTensorGetIndices));
-GVAR_DEF(PrimitivePtr, kPrimRowTensorGetDenseShape, std::make_shared<Primitive>(kRowTensorGetDenseShape));
-GVAR_DEF(PrimitivePtr, kPrimRowTensorAdd, std::make_shared<Primitive>(kRowTensorAdd));
-
-// CSRTensor
-GVAR_DEF(PrimitivePtr, kPrimMakeCSRTensor, std::make_shared<Primitive>(kMakeCSRTensor));
-GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetValues, std::make_shared<Primitive>(kCSRTensorGetValues));
-GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndptr, std::make_shared<Primitive>(kCSRTensorGetIndptr));
-GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndices, std::make_shared<Primitive>(kCSRTensorGetIndices));
-GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetDenseShape, std::make_shared<Primitive>(kCSRTensorGetDenseShape));
-
-// MapTensor
-GVAR_DEF(PrimitivePtr, kPrimMakeMapParameter, std::make_shared<Primitive>(kMakeMapParameter));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGet, std::make_shared<Primitive>(kMapTensorGet));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorPut, std::make_shared<Primitive>(kMapTensorPut));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorErase, std::make_shared<Primitive>(kMapTensorErase));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorPutWithStatus, std::make_shared<Primitive>(kMapTensorPutWithStatus));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetDefaultValue, std::make_shared<Primitive>(kMapTensorGetDefaultValue));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetPermitFilterValue, std::make_shared<Primitive>(kMapTensorGetPermitFilterValue));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetEvictFilterValue, std::make_shared<Primitive>(kMapTensorGetEvictFilterValue));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetKeys, std::make_shared<Primitive>(kMapTensorGetKeys));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetValues, std::make_shared<Primitive>(kMapTensorGetValues));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetData, std::make_shared<Primitive>(kMapTensorGetData));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetGrad, std::make_shared<Primitive>(kMapTensorGetGrad));
+GVAR_DEF(PrimitivePtr, kPrimMakeMapParameter, std::make_shared<Primitive>(kMakeMapParameterOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGet, std::make_shared<Primitive>(kMapTensorGetOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorPut, std::make_shared<Primitive>(kMapTensorPutOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorErase, std::make_shared<Primitive>(kMapTensorEraseOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorPutWithStatus, std::make_shared<Primitive>(kMapTensorPutWithStatusOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetDefaultValue, std::make_shared<Primitive>(kMapTensorGetDefaultValueOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetPermitFilterValue,
+         std::make_shared<Primitive>(kMapTensorGetPermitFilterValueOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetEvictFilterValue,
+         std::make_shared<Primitive>(kMapTensorGetEvictFilterValueOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetKeys, std::make_shared<Primitive>(kMapTensorGetKeysOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetValues, std::make_shared<Primitive>(kMapTensorGetValuesOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetData, std::make_shared<Primitive>(kMapTensorGetDataOpName));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetGrad, std::make_shared<Primitive>(kMapTensorGetGradOpName));
 }  // namespace prim
 }  // namespace mindspore
 

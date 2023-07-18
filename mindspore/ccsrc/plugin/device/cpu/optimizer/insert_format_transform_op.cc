@@ -20,9 +20,9 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/array_ops.h"
 #include "utils/hash_set.h"
 #include "kernel/kernel_build_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -197,7 +197,7 @@ void InsertTransformOpForOutput(const FuncGraphPtr &graph, const AnfNodePtr &nod
 }
 }  // namespace
 
-const mindspore::HashSet<std::string> kChannelLastKernel = {prim::kBiasAdd};
+const mindspore::HashSet<std::string> kChannelLastKernel = {mindspore::kBiasAddOpName};
 
 bool InsertFormatTransformOpCPU::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);

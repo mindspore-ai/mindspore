@@ -18,14 +18,17 @@
 #include <algorithm>
 #include <map>
 #include <set>
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/lite_op_name.h"
+#include "ops/structure_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/other_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/math_ops.h"
+#include "ops/array_ops.h"
+#include "ops/arithmetic_ops.h"
+#include "ops/framework_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "include/common/utils/utils.h"
@@ -46,7 +49,7 @@ namespace {
 constexpr size_t kNopNodeRealInputIndex = 1;
 
 const PrimitiveSet expand_prims = {prim::kPrimMakeTuple};
-const std::set<std::string> kNodeTupleOutSet = {prim::kMakeTuple, prim::kGetNext};
+const std::set<std::string> kNodeTupleOutSet = {kMakeTupleOpName, kGetNextOpName};
 
 void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index, std::vector<KernelWithIndex> *inputs) {
   MS_EXCEPTION_IF_NULL(node);
@@ -1120,7 +1123,7 @@ bool AnfAlgo::IsInplaceNode(const mindspore::AnfNodePtr &kernel, const string &t
 
 bool AnfAlgo::IsCommunicationOp(const AnfNodePtr &node) {
   static const std::set<std::string> kCommunicationOpNames = {kAllReduceOpName,     kAllGatherOpName,  kBroadcastOpName,
-                                                              kReduceScatterOpName, kHcomSendOpName,   kReceiveOpName,
+                                                              kReduceScatterOpName, kSendOpName,       kReceiveOpName,
                                                               kAllToAllvOpName,     kMuxReceiveOpName, kMuxSendOpName};
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
@@ -1899,10 +1902,16 @@ AnfNodePtr AnfAlgo::GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> 
 }
 
 bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
-  static mindspore::HashSet<std::string> nop_nodes = {
-    prim::kPrimReshape->name(), kExpandDimsOpName,           prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
-    kFlattenGradOpName,         prim::kPrimReformat->name(), prim::kTupleToTensor,       prim::kScalarToTensor,
-    prim::kTensorToTuple,       prim::kTensorToScalar};
+  static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(),
+                                                      kExpandDimsOpName,
+                                                      prim::kPrimSqueeze->name(),
+                                                      prim::kPrimFlatten->name(),
+                                                      kFlattenGradOpName,
+                                                      prim::kPrimReformat->name(),
+                                                      prim::kPrimTupleToTensor->name(),
+                                                      prim::kPrimScalarToTensor->name(),
+                                                      prim::kPrimTensorToTuple->name(),
+                                                      prim::kPrimTensorToScalar->name()};
   if (node == nullptr || !node->isa<CNode>()) {
     return false;
   }

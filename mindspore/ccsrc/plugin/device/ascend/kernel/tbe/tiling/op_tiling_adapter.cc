@@ -19,6 +19,7 @@
 #include <unordered_set>
 
 #include "plugin/device/ascend/kernel/tbe/tiling/op_tiling_adapter.h"
+#include "ops/array_op_name.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

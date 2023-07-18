@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/fused_batch_norm_fusion.h"
 #include <memory>
 #include <algorithm>
+#include "ops/nn_op_name.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/array_ops.h"

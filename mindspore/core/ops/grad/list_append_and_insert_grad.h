@@ -27,7 +27,7 @@ class MIND_API ListAppendAndInsertGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListAppendAndInsertGrad);
   /// \brief Constructor.
-  ListAppendAndInsertGrad() : BaseOperator(prim::kListAppendAndInsertGrad) {
+  ListAppendAndInsertGrad() : BaseOperator(kListAppendAndInsertGradOpName) {
     InitIOName({"input_data", "index"}, {"output_data"});
   }
   /// \brief Init function.

@@ -19,10 +19,12 @@
 #include <map>
 #include <memory>
 #include <random>
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/comparison_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/other_ops.h"
+#include "ops/comparison_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
 #include "include/common/utils/utils.h"

@@ -19,8 +19,7 @@
 #include <set>
 #include <string>
 #include <list>
-
-#include "mindspore/core/ops/other_ops.h"
+#include "ops/other_ops.h"
 #include "utils/hash_set.h"
 #include "base/base_ref_utils.h"
 #include "ir/tensor.h"

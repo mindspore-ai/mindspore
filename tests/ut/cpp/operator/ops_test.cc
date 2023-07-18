@@ -18,20 +18,20 @@
 #include <vector>
 
 #include "common/common_test.h"
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/conv_pool_ops.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/image_ops.h"
-#include "mindspore/core/ops/comparison_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "ir/value.h"
-#include "pybind_api/ir/primitive_py.h"
-#include "pipeline/jit/parse/parse_base.h"
-#include "include/common/utils/python_adapter.h"
 #include "frontend/operator/ops.h"
+#include "include/common/utils/python_adapter.h"
+#include "ir/value.h"
+#include "ops/arithmetic_ops.h"
+#include "ops/array_ops.h"
+#include "ops/comparison_ops.h"
+#include "ops/conv_pool_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/image_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/structure_ops.h"
+#include "pipeline/jit/parse/parse_base.h"
+#include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore {
 namespace prim {
@@ -44,52 +44,52 @@ class TestOps : public UT::Common {
 
 // Arithmetic
 TEST_F(TestOps, ScalarAddTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarAdd);
+  auto prim = std::make_shared<Primitive>(kScalarAddOpName);
   ASSERT_EQ(prim->name(), kPrimScalarAdd->name());
 }
 
 TEST_F(TestOps, ScalarSubTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarSub);
+  auto prim = std::make_shared<Primitive>(kScalarSubOpName);
   ASSERT_EQ(prim->name(), kPrimScalarSub->name());
 }
 
 TEST_F(TestOps, ScalarMulTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarMul);
+  auto prim = std::make_shared<Primitive>(kScalarMulOpName);
   ASSERT_EQ(prim->name(), kPrimScalarMul->name());
 }
 
 TEST_F(TestOps, ScalarDivTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarDiv);
+  auto prim = std::make_shared<Primitive>(kScalarDivOpName);
   ASSERT_EQ(prim->name(), kPrimScalarDiv->name());
 }
 
 TEST_F(TestOps, ScalarModTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarMod);
+  auto prim = std::make_shared<Primitive>(kScalarModOpName);
   ASSERT_EQ(prim->name(), kPrimScalarMod->name());
 }
 
 TEST_F(TestOps, ScalarPowTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarPow);
+  auto prim = std::make_shared<Primitive>(kScalarPowOpName);
   ASSERT_EQ(prim->name(), kPrimScalarPow->name());
 }
 
 TEST_F(TestOps, ScalarTruncTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarTrunc);
+  auto prim = std::make_shared<Primitive>(kScalarTruncOpName);
   ASSERT_EQ(prim->name(), kPrimScalarTrunc->name());
 }
 
 TEST_F(TestOps, ScalarFloorTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarFloor);
+  auto prim = std::make_shared<Primitive>(kScalarFloorOpName);
   ASSERT_EQ(prim->name(), kPrimScalarFloor->name());
 }
 
 TEST_F(TestOps, ScalarUaddTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarUadd);
+  auto prim = std::make_shared<Primitive>(kScalarUaddOpName);
   ASSERT_EQ(prim->name(), kPrimScalarUadd->name());
 }
 
 TEST_F(TestOps, ScalarUsubTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarUsub);
+  auto prim = std::make_shared<Primitive>(kScalarUsubOpName);
   ASSERT_EQ(prim->name(), kPrimScalarUsub->name());
 }
 
@@ -120,17 +120,17 @@ TEST_F(TestOps, ScalarTanTest) {
 
 // Comparisons
 TEST_F(TestOps, ScalarEqTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarEq);
+  auto prim = std::make_shared<Primitive>(kScalarEqOpName);
   ASSERT_EQ(prim->name(), kPrimScalarEq->name());
 }
 
 TEST_F(TestOps, ScalarLtTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarLt);
+  auto prim = std::make_shared<Primitive>(kScalarLtOpName);
   ASSERT_EQ(prim->name(), kPrimScalarLt->name());
 }
 
 TEST_F(TestOps, ScalarGtTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarGt);
+  auto prim = std::make_shared<Primitive>(kScalarGtOpName);
   ASSERT_EQ(prim->name(), kPrimScalarGt->name());
 }
 
@@ -140,12 +140,12 @@ TEST_F(TestOps, ScalarNeTest) {
 }
 
 TEST_F(TestOps, ScalarLeTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarLe);
+  auto prim = std::make_shared<Primitive>(kScalarLeOpName);
   ASSERT_EQ(prim->name(), kPrimScalarLe->name());
 }
 
 TEST_F(TestOps, ScalarGeTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarGe);
+  auto prim = std::make_shared<Primitive>(kScalarGeOpName);
   ASSERT_EQ(prim->name(), kPrimScalarGe->name());
 }
 
@@ -192,7 +192,7 @@ TEST_F(TestOps, MakeListTest) {
 }
 
 TEST_F(TestOps, TupleGetItemTest) {
-  auto prim = std::make_shared<Primitive>(kTupleGetItem);
+  auto prim = std::make_shared<Primitive>(kTupleGetItemOpName);
   ASSERT_EQ(prim->name(), kPrimTupleGetItem->name());
 }
 
@@ -443,7 +443,7 @@ TEST_F(TestOps, GetConv2DPrimPyTest) {
   ASSERT_TRUE(conv2d_ptr);
   if (nullptr != conv2d_ptr) {
     MS_LOG(INFO) << "Get PrimitivePyPtr: " << conv2d_ptr->name();
-    if(!conv2d_ptr->HasComputeFunction()){
+    if (!conv2d_ptr->HasComputeFunction()) {
       MS_LOG(EXCEPTION) << "" << conv2d_ptr->name() << "'s compute function is not implemented";
     }
 

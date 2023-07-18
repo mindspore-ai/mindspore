@@ -20,17 +20,12 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/primitive.h"
+#include "ops/other_op_name.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
-// spectral
-constexpr auto kBartlettWindow = "BartlettWindow";
-
-// Inner op for fall back
-constexpr auto kInnerAbs = "inner_abs";
-
-GVAR_DEF(PrimitivePtr, kPrimInnerAbs, std::make_shared<Primitive>(kInnerAbs));
+GVAR_DEF(PrimitivePtr, kPrimInnerAbs, std::make_shared<Primitive>(kInnerAbsOpName));
 GVAR_DEF(PrimitivePtr, kPrimInnerRound, std::make_shared<Primitive>("inner_round"));
 GVAR_DEF(PrimitivePtr, kPrimInnerLen, std::make_shared<Primitive>("inner_len"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicLossScale, std::make_shared<Primitive>("_DynamicLossScale"));
@@ -39,7 +34,7 @@ GVAR_DEF(PrimitivePtr, kPrimPopulationCount, std::make_shared<Primitive>("Popula
 GVAR_DEF(PrimitivePtr, kPrimOpaquePredicate, std::make_shared<Primitive>("OpaquePredicate"));
 
 // spectral
-GVAR_DEF(PrimitivePtr, kPrimBartlettWindow, std::make_shared<Primitive>(kBartlettWindow));
+GVAR_DEF(PrimitivePtr, kPrimBartlettWindow, std::make_shared<Primitive>(kBartlettWindowOpName));
 GVAR_DEF(PrimitivePtr, kPrimBlackmanWindow, std::make_shared<Primitive>("BlackmanWindow"));
 GVAR_DEF(PrimitivePtr, kPrimHammingWindow, std::make_shared<Primitive>("HammingWindow"));
 
@@ -74,8 +69,6 @@ GVAR_DEF(PrimitivePtr, kPrimVirtualAssignAdd, std::make_shared<Primitive>("_Virt
 GVAR_DEF(PrimitivePtr, kPrimVirtualAccuGrad, std::make_shared<Primitive>("_VirtualAccuGrad"));
 GVAR_DEF(PrimitivePtr, kPrimVirtualPipelineEnd, std::make_shared<Primitive>("_VirtualPipelineEnd"));
 GVAR_DEF(PrimitivePtr, kPrimMirrorMicroStep, std::make_shared<Primitive>("_MirrorMicroStepOperator"));
-GVAR_DEF(PrimitivePtr, kPrimStreamSend, std::make_shared<Primitive>("StreamSend"));
-GVAR_DEF(PrimitivePtr, kPrimStreamRecv, std::make_shared<Primitive>("StreamRecv"));
 
 // Quant ops
 GVAR_DEF(PrimitivePtr, kPrimBatchNormFold, std::make_shared<Primitive>("BatchNormFold"));

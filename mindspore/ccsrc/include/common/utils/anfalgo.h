@@ -17,27 +17,29 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_ANFALGO_H
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_ANFALGO_H
 
+#include <functional>
 #include <iostream>
-#include <string>
-#include <vector>
+#include <map>
+#include <memory>
+#include <optional>
 #include <set>
+#include <string>
 #include <tuple>
 #include <utility>
-#include <memory>
-#include <map>
-#include <functional>
-#include <optional>
-#include "ir/anf.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "ir/func_graph.h"
-#include "ir/dtype.h"
+#include <vector>
 #include "base/base.h"
-#include "ir/primitive.h"
-#include "ir/kernel_info_dev.h"
 #include "include/common/utils/contract.h"
-#include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/visible.h"
+#include "ir/anf.h"
+#include "ir/dtype.h"
+#include "ir/func_graph.h"
+#include "ir/kernel_info_dev.h"
+#include "ir/primitive.h"
+#include "ops/array_op_name.h"
+#include "ops/other_op_name.h"
+#include "ops/sequence_ops.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace common {

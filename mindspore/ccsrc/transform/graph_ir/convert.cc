@@ -34,16 +34,17 @@
 #include "include/common/utils/utils.h"
 #include "include/transform/graph_ir/utils.h"
 #include "ir/graph_utils.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/conv_pool_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/image_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/lite_ops.h"
+#include "ops/array_ops.h"
+#include "ops/conv_pool_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/image_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/nn_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/other_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/structure_ops.h"
+#include "ops/lite_ops.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "transform/graph_ir/op_adapter.h"
@@ -2052,7 +2053,7 @@ OutHandler DfGraphConvertor::GetNormalOpInput(const AnfNodePtr &node, const AnfN
 }
 
 void DfGraphConvertor::DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pred, size_t i) {
-  if (pred->isa<CNode>() && GetCNodeTargetFuncName(pred->cast<CNodePtr>()) == prim::kTupleGetItem) {
+  if (pred->isa<CNode>() && GetCNodeTargetFuncName(pred->cast<CNodePtr>()) == mindspore::kTupleGetItemOpName) {
     compute_sout_ << op_draw_name_[pred->cast<CNodePtr>()->input(1).get()] << " -> " << op_draw_name_[node.get()] << ":"
                   << i << endl;
   } else if (pred->isa<Parameter>()) {

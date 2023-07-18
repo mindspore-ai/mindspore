@@ -27,7 +27,7 @@ class MIND_API SequenceSliceGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceSliceGrad);
   /// \brief Constructor.
-  SequenceSliceGrad() : BaseOperator(prim::kSequenceSliceGrad) {
+  SequenceSliceGrad() : BaseOperator(kSequenceSliceGradOpName) {
     InitIOName({"dy", "x", "start", "stop", "step"}, {"output"});
   }
   /// \brief Init function.

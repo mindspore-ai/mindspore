@@ -46,11 +46,11 @@
 #include "ir/anf.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/math_ops.h"
+#include "ops/other_ops.h"
+#include "ops/sequence_ops.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
@@ -787,7 +787,7 @@ static void ConstructCNodeCostGraphEdges(const mindspore::CNodePtr &cnode, const
         CreateEdgeBetweenTwoOps(prev_op_info, node_op_info, cnode, prev_cnode, prim, prev_prim, output_index, i,
                                 &edge_count);
         break;
-      } else if (prev_prim->name() == prim::kTupleGetItem) {
+      } else if (prev_prim->name() == prim::kPrimTupleGetItem->name()) {
         // In this case, 'prev_anf_node' is 'tuple_getitem', the actual precursor node is node before
         // this 'tuple_getitem'
         output_index = LongToSize(GetValue<int64_t>(GetValueNode(prev_cnode->input(2))));
@@ -800,7 +800,7 @@ static void ConstructCNodeCostGraphEdges(const mindspore::CNodePtr &cnode, const
           MS_LOG(EXCEPTION) << "Did not create OperatorInfo for : " << prev_prim->name();
         }
         is_before_tuple_get_item = true;
-      } else if (prev_prim->name() == prim::kMakeTuple) {
+      } else if (prev_prim->name() == kMakeTupleOpName) {
         if (!is_before_tuple_get_item) {
           CreateEdgeAccrossMakeList(cnode, prim, node_op_info, &prev_cnode, &prev_prim_anf_node, &prev_prim,
                                     &edge_count);
@@ -813,10 +813,10 @@ static void ConstructCNodeCostGraphEdges(const mindspore::CNodePtr &cnode, const
           break;
         }
         is_before_tuple_get_item = false;
-      } else if (prev_prim->name() == prim::kMakeList) {
+      } else if (prev_prim->name() == kMakeListOpName) {
         CreateEdgeAccrossMakeList(cnode, prim, node_op_info, &prev_cnode, &prev_prim_anf_node, &prev_prim, &edge_count);
         break;
-      } else if (prev_prim->name() == prim::kDepend || prev_prim->name() == prim::kLoad) {
+      } else if (prev_prim->name() == kDependOpName || prev_prim->name() == kLoadOpName) {
         // In this case, 'prev_anf_node' is 'depend', the actual precursor node is node before
         // this 'depend'
         prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
@@ -1178,7 +1178,7 @@ std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::st
 
 CNodePtr GetInternalOperatorInfo(const CNodePtr &cnode, const ValueNodePtr &prim_anf_node) {
   auto prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-  if (prim->name() == prim::kTupleGetItem || prim->name() == DEPEND) {
+  if (prim->name() == prim::kPrimTupleGetItem->name() || prim->name() == DEPEND) {
     auto prev_cnode = cnode->input(1)->cast<CNodePtr>();
     if (prev_cnode == nullptr || !IsValueNode<Primitive>(prev_cnode->input(0))) {
       return nullptr;
@@ -1202,7 +1202,7 @@ CNodePtr GetInternalOperatorInfo(const CNodePtr &cnode, const ValueNodePtr &prim
     }
 
     auto prev_prim = prev_cnode->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
-    while (prev_prim->name() == prim::kTupleGetItem || prev_prim->name() == DEPEND) {
+    while (prev_prim->name() == prim::kPrimTupleGetItem->name() || prev_prim->name() == DEPEND) {
       prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
       if (prev_cnode == nullptr || !IsValueNode<Primitive>(prev_cnode->input(0))) {
         return nullptr;

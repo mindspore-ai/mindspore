@@ -15,20 +15,22 @@
  */
 
 #include "frontend/parallel/graph_util/graph_splitter.h"
-#include <unordered_map>
-#include <set>
-#include <vector>
-#include <string>
-#include <utility>
 #include <algorithm>
 #include <memory>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include "include/common/debug/draw.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/parallel_context.h"
 #include "include/common/utils/utils.h"
 #include "mindspore/core/utils/ms_context.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/debug/draw.h"
-#include "include/common/utils/parallel_context.h"
+#include "ops/array_op_name.h"
+#include "ops/framework_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/sequence_ops.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/ps_context.h"
 #endif
@@ -103,8 +105,8 @@ CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr
   auto item_index_value_node = NewValueNode(MakeValue(UlongToLong(item_index)));
   MS_EXCEPTION_IF_NULL(item_index_value_node);
 
-  std::vector<AnfNodePtr> tuple_get_item_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kTupleGetItem)),
-                                                   node_with_tuple_output, item_index_value_node};
+  std::vector<AnfNodePtr> tuple_get_item_inputs = {NewValueNode(prim::kPrimTupleGetItem), node_with_tuple_output,
+                                                   item_index_value_node};
   CNodePtr tuple_get_item_node = func_graph->NewCNode(tuple_get_item_inputs);
   MS_EXCEPTION_IF_NULL(tuple_get_item_node);
   tuple_get_item_node->set_abstract(tuple_abstract->cast<abstract::AbstractTuplePtr>()->elements()[item_index]);
@@ -882,7 +884,7 @@ std::pair<CNodePtr, CNodePtr> ParameterServerMode::CreateNodesForMakeTuple(const
                                                                            size_t total_inputs_number) {
   MS_EXCEPTION_IF_NULL(input);
   CNodePtr make_tuple_node = CreateNodeWithInterProcessEdgeOnPServer(
-    prim::kMakeTuple, input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, total_inputs_number);
+    kMakeTupleOpName, input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, total_inputs_number);
   MS_EXCEPTION_IF_NULL(make_tuple_node);
   // For MakeTuple node on Parameter Server, we get the first input as its abstract because the other inputs are
   // supposed to be the same as the first one.
@@ -941,7 +943,7 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
     // Concat node must have attribute "axis" or kernel building will fail.
     size_t axis_index = 0;
     common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(UlongToLong(axis_index)), new_node);
-  } else if (many_to_one_node_name == prim::kMakeTuple) {
+  } else if (many_to_one_node_name == kMakeTupleOpName) {
     AbstractBasePtrList abstract_list;
     auto first_input = new_node_inputs.begin();
     std::advance(first_input, 1);

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/bnupdate_eltwise_eltwise_fusion_pass.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/nn_op_name.h"
+#include "ops/sequence_ops.h"
+#include "ops/math_ops.h"
+#include "ops/framework_ops.h"
 #include "utils/hash_set.h"
 #include "kernel/kernel_fusion.h"
 #include "include/common/debug/anf_ir_dump.h"

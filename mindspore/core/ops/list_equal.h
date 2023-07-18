@@ -26,7 +26,7 @@ class MIND_API list_equal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(list_equal);
   /// \brief Constructor.
-  list_equal() : BaseOperator(prim::kListEqual) {}
+  list_equal() : BaseOperator(kListEqualOpName) {}
   /// \brief Init.
   void Init() const {}
 };

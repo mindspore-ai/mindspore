@@ -21,12 +21,13 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameScalarLog = "ScalarLog";
 /// \brief ScalarDiv op is used to div between variable scalar.
 class MIND_API ScalarLog : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScalarLog);
   /// \brief Constructor.
-  ScalarLog() : BaseOperator(prim::kScalarLog) {}
+  ScalarLog() : BaseOperator(kNameScalarLog) {}
   /// \brief Init.
   void Init() const {}
 };

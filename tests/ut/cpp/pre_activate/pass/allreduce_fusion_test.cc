@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/backend_common_test.h"
+#include "ops/other_op_name.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"

@@ -231,10 +231,12 @@ using MathImplFunc = std::function<ValuePtr(const ValuePtr &, const ValuePtr &, 
 template <typename T>
 MathImplFunc ChooseFunc(const std::string &prim_name) {
   std::map<std::string, MathImplFunc> infer_value_func_map = {
-    {prim::kScalarAdd, AddImpl<T>}, {prim::kScalarSub, SubImpl<T>}, {prim::kScalarMul, MulImpl<T>},
-    {prim::kScalarDiv, DivImpl<T>}, {prim::kScalarMod, ModImpl<T>}, {prim::kScalarEq, EqImpl<T>},
-    {prim::kScalarGt, GtImpl<T>},   {prim::kScalarLt, LtImpl<T>},   {prim::kScalarGe, GeImpl<T>},
-    {prim::kScalarLe, LeImpl<T>},   {prim::kScalarPow, PowImpl<T>}, {prim::kScalarFloordiv, FloorDivImpl<T>}};
+    {mindspore::kScalarAddOpName, AddImpl<T>}, {mindspore::kScalarSubOpName, SubImpl<T>},
+    {mindspore::kScalarMulOpName, MulImpl<T>}, {mindspore::kScalarDivOpName, DivImpl<T>},
+    {mindspore::kScalarModOpName, ModImpl<T>}, {mindspore::kScalarEqOpName, EqImpl<T>},
+    {mindspore::kScalarGtOpName, GtImpl<T>},   {mindspore::kScalarLtOpName, LtImpl<T>},
+    {mindspore::kScalarGeOpName, GeImpl<T>},   {mindspore::kScalarLeOpName, LeImpl<T>},
+    {mindspore::kScalarPowOpName, PowImpl<T>}, {mindspore::kScalarFloordivOpName, FloorDivImpl<T>}};
   auto iter = infer_value_func_map.find(prim_name);
   if (iter == infer_value_func_map.end()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -266,12 +268,13 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
     auto x_type = input_args[0]->BuildType();
     auto y_type = input_args[kIndex1]->BuildType();
     std::set<TypePtr> check_types = {kInt32, kInt64, kFloat32, kFloat64, kBool};
-    std::set<std::string> compare_ops = {prim::kScalarEq, prim::kScalarGe, prim::kScalarGt, prim::kScalarLt,
-                                         prim::kScalarLe};
+    std::set<std::string> compare_ops = {mindspore::kScalarEqOpName, mindspore::kScalarGeOpName,
+                                         mindspore::kScalarGtOpName, mindspore::kScalarLtOpName,
+                                         mindspore::kScalarLeOpName};
     (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
     (void)CheckAndConvertUtils::CheckSubClass("y_dtype", y_type, check_types, prim_name);
     auto iter = compare_ops.find(prim_name);
-    if (prim_name == prim::kScalarDiv) {
+    if (prim_name == mindspore::kScalarDivOpName) {
       return kFloat32;
     }
     if (iter != compare_ops.end()) {

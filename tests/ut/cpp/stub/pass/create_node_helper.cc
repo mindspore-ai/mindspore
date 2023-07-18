@@ -18,7 +18,8 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/array_op_name.h"
+#include "ops/framework_ops.h"
 #include "plugin/device/ascend/optimizer/mindir/reg_ascend_vm_op_adaptation_info.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"

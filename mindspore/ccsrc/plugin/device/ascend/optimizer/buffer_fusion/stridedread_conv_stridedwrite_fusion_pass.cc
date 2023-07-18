@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/stridedread_conv_stridedwrite_fusion_pass.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/array_op_name.h"
+#include "ops/framework_ops.h"
 #include "kernel/kernel_fusion.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

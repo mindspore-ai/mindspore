@@ -16,17 +16,20 @@
 #include "backend/common/pass/const_input_to_attr.h"
 
 #include <vector>
-#include "mindspore/core/ops/sparse_ops.h"
-#include "mindspore/core/ops/conv_pool_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/image_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "utils/anf_utils.h"
-#include "include/common/utils/utils.h"
-#include "utils/log_adapter.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/utils.h"
+#include "ops/array_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/conv_pool_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/image_ops.h"
+#include "ops/lite_op_name.h"
+#include "ops/math_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/sparse_ops.h"
+#include "utils/anf_utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace opt {

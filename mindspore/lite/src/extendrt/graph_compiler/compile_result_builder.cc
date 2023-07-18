@@ -147,7 +147,7 @@ StatusCode CompileResultBuilder::RemoveMakeSeqNode() {
   auto &nodes = graph_->GetMutableNodes();
   for (auto iter = nodes.begin(); iter != nodes.end();) {
     auto &node = *iter;
-    if (node->GetType() != prim::kMakeTuple && node->GetType() != prim::kMakeList) {
+    if (node->GetType() != kMakeTupleOpName && node->GetType() != kMakeListOpName) {
       iter++;
       continue;
     }
@@ -170,7 +170,7 @@ StatusCode CompileResultBuilder::RemoveDependNode() {
   auto &nodes = graph_->GetMutableNodes();
   for (auto iter = nodes.begin(); iter != nodes.end();) {
     auto &node = *iter;
-    if (node->GetType() != prim::kDepend) {
+    if (node->GetType() != kDependOpName) {
       iter++;
       continue;
     }
@@ -194,8 +194,8 @@ StatusCode CompileResultBuilder::RemoveSeqGetItemNode() {
   auto &nodes = graph_->GetMutableNodes();
   for (auto iter = nodes.begin(); iter != nodes.end();) {
     auto &node = *iter;
-    if (node->GetType() != prim::kTupleGetItem && node->GetType() != prim::kListGetItem &&
-        node->GetType() != "array_getitem" && node->GetType() != prim::kSliceGetItem) {
+    if (node->GetType() != kTupleGetItemOpName && node->GetType() != kListGetItemOpName &&
+        node->GetType() != "array_getitem" && node->GetType() != kSliceGetItemOpName) {
       iter++;
       continue;
     }

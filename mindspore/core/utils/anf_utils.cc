@@ -19,10 +19,10 @@
 #include <string>
 #include <list>
 #include <algorithm>
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/structure_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/other_ops.h"
+#include "ops/framework_ops.h"
 #include "utils/trace_base.h"
 #include "utils/hash_map.h"
 #include "utils/os.h"

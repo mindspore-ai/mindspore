@@ -27,7 +27,7 @@ class MIND_API ListInplacePop : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListInplacePop);
   /// \brief Constructor.
-  ListInplacePop() : BaseOperator(prim::kListInplacePop) {
+  ListInplacePop() : BaseOperator(kListInplacePopOpName) {
     InitIOName({"input_data", "target_index"}, {"output_data"});
   }
   /// \brief Init function.

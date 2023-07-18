@@ -16,34 +16,54 @@
 
 #include "frontend/operator/prim_to_function.h"
 
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/comparison_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 namespace mindspore {
 // namespace to support prim related definition
 namespace prim {
 
 PrimToFunction::PrimToFunction()
-    : prim_func_type_map_({{"bool_not", kPrimTypeNumOneArg},        {"scalar_cos", kPrimTypeNumOneArg},
-                           {"scalar_exp", kPrimTypeNumOneArg},      {kScalarFloor, kPrimTypeNumOneArg},
-                           {kScalarLog, kPrimTypeNumOneArg},        {"scalar_sin", kPrimTypeNumOneArg},
-                           {"scalar_tan", kPrimTypeNumOneArg},      {kScalarTrunc, kPrimTypeNumOneArg},
-                           {"typeof", kPrimTypeNumOneArg},          {kScalarUadd, kPrimTypeNumOneArg},
-                           {kScalarUsub, kPrimTypeNumOneArg},       {kScalarAdd, kPrimTypeNumTwoArgs},
-                           {"bool_and", kPrimTypeNumTwoArgs},       {"bool_eq", kPrimTypeNumTwoArgs},
-                           {"bool_or", kPrimTypeNumTwoArgs},        {kScalarDiv, kPrimTypeNumTwoArgs},
-                           {kScalarEq, kPrimTypeNumTwoArgs},        {kScalarGe, kPrimTypeNumTwoArgs},
-                           {kScalarGt, kPrimTypeNumTwoArgs},        {kScalarLe, kPrimTypeNumTwoArgs},
-                           {kScalarLt, kPrimTypeNumTwoArgs},        {"scalar_ne", kPrimTypeNumTwoArgs},
-                           {kScalarMod, kPrimTypeNumTwoArgs},       {kScalarMul, kPrimTypeNumTwoArgs},
-                           {kScalarPow, kPrimTypeNumTwoArgs},       {kScalarSub, kPrimTypeNumTwoArgs},
-                           {kScalarFloordiv, kPrimTypeNumTwoArgs},  {kScalarBitwiseAnd, kPrimTypeNumTwoArgs},
-                           {kScalarBitwiseOr, kPrimTypeNumTwoArgs}, {"bit_xor", kPrimTypeNumTwoArgs},
-                           {"bit_left_shift", kPrimTypeNumTwoArgs}, {"bit_right_shift", kPrimTypeNumTwoArgs},
-                           {kStringNot, kPrimTypeStrOneArg},        {kStringConcat, kPrimTypeStrTwoArgs},
-                           {kStringIn, kPrimTypeStrTwoArgs},        {kStringEq, kPrimTypeStrTwoArgs},
-                           {kStringLt, kPrimTypeStrTwoArgs},        {kStringGt, kPrimTypeStrTwoArgs},
-                           {kStringLe, kPrimTypeStrTwoArgs},        {kStringGe, kPrimTypeStrTwoArgs}}) {}
+    : prim_func_type_map_({{"bool_not", kPrimTypeNumOneArg},
+                           {"scalar_cos", kPrimTypeNumOneArg},
+                           {"scalar_exp", kPrimTypeNumOneArg},
+                           {kScalarFloorOpName, kPrimTypeNumOneArg},
+                           {kScalarLogOpName, kPrimTypeNumOneArg},
+                           {"scalar_sin", kPrimTypeNumOneArg},
+                           {"scalar_tan", kPrimTypeNumOneArg},
+                           {kScalarTruncOpName, kPrimTypeNumOneArg},
+                           {"typeof", kPrimTypeNumOneArg},
+                           {kScalarUaddOpName, kPrimTypeNumOneArg},
+                           {kScalarUsubOpName, kPrimTypeNumOneArg},
+                           {kScalarAddOpName, kPrimTypeNumTwoArgs},
+                           {"bool_and", kPrimTypeNumTwoArgs},
+                           {"bool_eq", kPrimTypeNumTwoArgs},
+                           {"bool_or", kPrimTypeNumTwoArgs},
+                           {kScalarDivOpName, kPrimTypeNumTwoArgs},
+                           {kScalarEqOpName, kPrimTypeNumTwoArgs},
+                           {kScalarGeOpName, kPrimTypeNumTwoArgs},
+                           {kScalarGtOpName, kPrimTypeNumTwoArgs},
+                           {kScalarLeOpName, kPrimTypeNumTwoArgs},
+                           {kScalarLtOpName, kPrimTypeNumTwoArgs},
+                           {"scalar_ne", kPrimTypeNumTwoArgs},
+                           {kScalarModOpName, kPrimTypeNumTwoArgs},
+                           {kScalarMulOpName, kPrimTypeNumTwoArgs},
+                           {kScalarPowOpName, kPrimTypeNumTwoArgs},
+                           {kScalarSubOpName, kPrimTypeNumTwoArgs},
+                           {kScalarFloordivOpName, kPrimTypeNumTwoArgs},
+                           {kScalarBitwiseAndOpName, kPrimTypeNumTwoArgs},
+                           {kScalarBitwiseOrOpName, kPrimTypeNumTwoArgs},
+                           {"bit_xor", kPrimTypeNumTwoArgs},
+                           {"bit_left_shift", kPrimTypeNumTwoArgs},
+                           {"bit_right_shift", kPrimTypeNumTwoArgs},
+                           {kStringNotOpName, kPrimTypeStrOneArg},
+                           {kStringConcatOpName, kPrimTypeStrTwoArgs},
+                           {kStringInOpName, kPrimTypeStrTwoArgs},
+                           {kStringEqOpName, kPrimTypeStrTwoArgs},
+                           {kStringLtOpName, kPrimTypeStrTwoArgs},
+                           {kStringGtOpName, kPrimTypeStrTwoArgs},
+                           {kStringLeOpName, kPrimTypeStrTwoArgs},
+                           {kStringGeOpName, kPrimTypeStrTwoArgs}}) {}
 
 bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *func) const {
   if (func != nullptr) {

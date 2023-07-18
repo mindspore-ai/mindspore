@@ -25,7 +25,7 @@
 #include "google/protobuf/util/json_util.h"
 #include "nlohmann/json.hpp"
 #include "proto/profiling_parallel.pb.h"
-
+#include "ops/ascend_op_name.h"
 #ifdef WITH_BACKEND
 #include "include/backend/distributed/ps/ps_context.h"
 #include "include/backend/distributed/ps/util.h"

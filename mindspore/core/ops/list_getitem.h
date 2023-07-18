@@ -27,7 +27,7 @@ class MIND_API list_getitem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(list_getitem);
   /// \brief Constructor.
-  list_getitem() : BaseOperator(prim::kListGetItem) { InitIOName({"input", "index"}, {"output"}); }
+  list_getitem() : BaseOperator(kListGetItemOpName) { InitIOName({"input", "index"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -21,6 +21,7 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
+#include "ops/ascend_op_name.h"
 #include "include/common/utils/anfalgo.h"
 #include "graph/def_types.h"
 #include "include/backend/anf_runtime_algorithm.h"

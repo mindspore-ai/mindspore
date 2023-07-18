@@ -20,9 +20,9 @@
 #include <algorithm>
 #include <tuple>
 #include <regex>
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/structure_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
@@ -1466,7 +1466,7 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_ab
   ValuePtr in_axes = CheckAxes(in_axes_arg, true, nparam, cell_size);
   ValuePtr out_axes = CheckAxes(out_axes_arg);
 
-  PrimitivePtr kprim_vmap = std::make_shared<Primitive>(prim::kVmap, kSideEffectPropagate);
+  PrimitivePtr kprim_vmap = std::make_shared<Primitive>(kVmapOpName, kSideEffectPropagate);
   kprim_vmap->set_attr("in_axes", in_axes);
   kprim_vmap->set_attr("out_axes", out_axes);
   kprim_vmap->set_attr("cell_size", MakeValue(cell_size));

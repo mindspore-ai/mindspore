@@ -18,7 +18,8 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include "mindspore/core/ops/math_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/math_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"

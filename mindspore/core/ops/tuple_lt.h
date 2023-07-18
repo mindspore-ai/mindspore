@@ -27,7 +27,7 @@ class MIND_API tuple_lt : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(tuple_lt);
   /// \brief Constructor.
-  tuple_lt() : BaseOperator(prim::kTupleLt) {}
+  tuple_lt() : BaseOperator(kTupleLtOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

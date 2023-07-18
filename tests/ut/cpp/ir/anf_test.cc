@@ -18,7 +18,7 @@
 
 #include "common/common_test.h"
 
-#include "mindspore/core/ops/arithmetic_ops.h"
+#include "ops/arithmetic_ops.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "ir/func_graph.h"
@@ -38,7 +38,7 @@ class TestAnf : public UT::Common {
 };
 
 TEST_F(TestAnf, test_ValueNode) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarAdd);
+  auto prim = std::make_shared<Primitive>(kScalarAddOpName);
   ValueNodePtr c = NewValueNode(prim);
   ASSERT_EQ(c->isa<ValueNode>(), true);
   ASSERT_EQ(IsValueNode<Primitive>(c), true);

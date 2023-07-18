@@ -20,9 +20,10 @@
 #include <vector>
 #include <string>
 
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/array_op_name.h"
+#include "ops/sequence_ops.h"
+#include "ops/other_ops.h"
+#include "ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"

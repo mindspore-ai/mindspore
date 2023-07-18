@@ -16,15 +16,15 @@
 #include <algorithm>
 
 #include "common/common_test.h"
-#include "mindspore/core/ops/arithmetic_ops.h"
 #include "common/py_func_graph_fetcher.h"
+#include "ops/arithmetic_ops.h"
 
-#include "ir/manager.h"
-#include "utils/log_adapter.h"
-#include "ir/func_graph_cloner.h"
-#include "pipeline/jit/parse/parse.h"
-#include "ir/graph_utils.h"
 #include "include/common/debug/draw.h"
+#include "ir/func_graph_cloner.h"
+#include "ir/graph_utils.h"
+#include "ir/manager.h"
+#include "pipeline/jit/parse/parse.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 class FuncGraphIndex {
@@ -170,7 +170,7 @@ TEST_F(TestCloner, test_clone_simple) {
   Cloner cl2(gs);
   auto g3 = cl2[g];
 
-  std::vector<Primitive> results = {Primitive(prim::kScalarAdd), Primitive(prim::kScalarMul), Primitive("Return")};
+  std::vector<Primitive> results = {Primitive(kScalarAddOpName), Primitive(kScalarMulOpName), Primitive("Return")};
   AnfNodeSet d3 = AnfNodeSet(DeepScopedGraphSearch(g3->get_return()));
   common = d1 & d3;
   for (auto &x : common) {

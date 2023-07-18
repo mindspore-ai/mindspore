@@ -24,6 +24,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
 #include "acl/acl_rt.h"
+#include "ops/array_op_name.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore::device::ascend {

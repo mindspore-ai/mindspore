@@ -22,44 +22,22 @@
 #include <string>
 #include "ir/anf.h"
 #include "ir/primitive.h"
+#include "ops/structure_op_name.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
 // String
-constexpr auto kStringEq = "string_eq";
-constexpr auto kStringLt = "string_lt";
-constexpr auto kStringGt = "string_gt";
-constexpr auto kStringLe = "string_le";
-constexpr auto kStringGe = "string_ge";
-constexpr auto kStringConcat = "string_concat";
-constexpr auto kStringNot = "string_not";
-constexpr auto kStringIn = "string_in";
-constexpr auto kStringMul = "string_mul";
-constexpr auto kStringGetItem = "string_getitem";
-
-constexpr auto kGetNext = "GetNext";
-constexpr auto kGetNextFromQueue = "GetNextFromQueue";
-constexpr auto kDynamicGetNextV2 = "DynamicGetNextV2";
-
-// Statements
-constexpr auto kVmapStackAssign = "VmapStackAssign";
-constexpr auto kVmapUnstackAssign = "VmapUnstackAssign";
-constexpr auto kSliceGetItem = "SliceGetItem";
-constexpr auto kCond = "Cond";
-constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
-
-// String
-GVAR_DEF(PrimitivePtr, kPrimStringEq, std::make_shared<Primitive>(kStringEq));
-GVAR_DEF(PrimitivePtr, kPrimStringLt, std::make_shared<Primitive>(kStringLt));
-GVAR_DEF(PrimitivePtr, kPrimStringGt, std::make_shared<Primitive>(kStringGt));
-GVAR_DEF(PrimitivePtr, kPrimStringLe, std::make_shared<Primitive>(kStringLe));
-GVAR_DEF(PrimitivePtr, kPrimStringGe, std::make_shared<Primitive>(kStringGe));
-GVAR_DEF(PrimitivePtr, kPrimStringConcat, std::make_shared<Primitive>(kStringConcat));
-GVAR_DEF(PrimitivePtr, kPrimStringNot, std::make_shared<Primitive>(kStringNot));
-GVAR_DEF(PrimitivePtr, kPrimStringIn, std::make_shared<Primitive>(kStringIn));
-GVAR_DEF(PrimitivePtr, kPrimStringMul, std::make_shared<Primitive>(kStringMul));
-GVAR_DEF(PrimitivePtr, kPrimStringGetItem, std::make_shared<Primitive>(kStringGetItem));
+GVAR_DEF(PrimitivePtr, kPrimStringEq, std::make_shared<Primitive>(kStringEqOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringLt, std::make_shared<Primitive>(kStringLtOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringGt, std::make_shared<Primitive>(kStringGtOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringLe, std::make_shared<Primitive>(kStringLeOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringGe, std::make_shared<Primitive>(kStringGeOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringConcat, std::make_shared<Primitive>(kStringConcatOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringNot, std::make_shared<Primitive>(kStringNotOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringIn, std::make_shared<Primitive>(kStringInOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringMul, std::make_shared<Primitive>(kStringMulOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringGetItem, std::make_shared<Primitive>(kStringGetItemOpName));
 
 // Stack ops
 GVAR_DEF(PrimitivePtr, kPrimStackInit, std::make_shared<Primitive>("StackInit"));
@@ -79,21 +57,22 @@ GVAR_DEF(PrimitivePtr, kPrimReducedShape, std::make_shared<Primitive>("reduced_s
 GVAR_DEF(PrimitivePtr, kPrimStopGradient, std::make_shared<Primitive>("StopGradient"));
 GVAR_DEF(PrimitivePtr, kPrimFakeBprop, std::make_shared<Primitive>("fake_bprop"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcastGradientArgs, std::make_shared<Primitive>("BroadcastGradientArgs"));
-GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastGradientArgs, std::make_shared<Primitive>(kDynamicBroadcastGradientArgs));
+GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastGradientArgs,
+         std::make_shared<Primitive>(kDynamicBroadcastGradientArgsOpName));
 GVAR_DEF(PrimitivePtr, kPrimConvertToAdapterTensor, std::make_shared<Primitive>("ConvertToAdapterTensor"));
 GVAR_DEF(PrimitivePtr, kPrimConvertToMsTensor, std::make_shared<Primitive>("ConvertToMsTensor"));
 
 // Statements
 GVAR_DEF(PrimitivePtr, kPrimUnroll, std::make_shared<Primitive>("Unroll"));
-GVAR_DEF(PrimitivePtr, kPrimVmapStackAssign, std::make_shared<Primitive>(kVmapStackAssign));
-GVAR_DEF(PrimitivePtr, kPrimVmapUnstackAssign, std::make_shared<Primitive>(kVmapUnstackAssign));
+GVAR_DEF(PrimitivePtr, kPrimVmapStackAssign, std::make_shared<Primitive>(kVmapStackAssignOpName));
+GVAR_DEF(PrimitivePtr, kPrimVmapUnstackAssign, std::make_shared<Primitive>(kVmapUnstackAssignOpName));
 GVAR_DEF(PrimitivePtr, kPrimMakeSlice, std::make_shared<Primitive>("make_slice"));
-GVAR_DEF(PrimitivePtr, kPrimSliceGetItem, std::make_shared<Primitive>(kSliceGetItem));
+GVAR_DEF(PrimitivePtr, kPrimSliceGetItem, std::make_shared<Primitive>(kSliceGetItemOpName));
 GVAR_DEF(PrimitivePtr, kPrimGetAttr, std::make_shared<Primitive>("getattr"));
 GVAR_DEF(PrimitivePtr, kPrimTileShape, std::make_shared<Primitive>("tile_shape"));
 GVAR_DEF(PrimitivePtr, kPrimGenerateShapeIndex, std::make_shared<Primitive>("generate_shape_index"));
 GVAR_DEF(PrimitivePtr, kPrimGenerateInverseIndex, std::make_shared<Primitive>("generate_inverse_index"));
-GVAR_DEF(PrimitivePtr, kPrimCond, std::make_shared<Primitive>(kCond));
+GVAR_DEF(PrimitivePtr, kPrimCond, std::make_shared<Primitive>(kCondOpName));
 GVAR_DEF(PrimitivePtr, kPrimJoinedStr, std::make_shared<Primitive>("JoinedStr"));
 GVAR_DEF(PrimitivePtr, kPrimTileSize, std::make_shared<Primitive>("TileSize"));
 GVAR_DEF(PrimitivePtr, kPrimNormalizeSlice, std::make_shared<Primitive>("NormalizeSlice"));
@@ -122,9 +101,9 @@ GVAR_DEF(PrimitivePtr, kPrimIsElementUnknown, std::make_shared<Primitive>("IsEle
 GVAR_DEF(PrimitivePtr, kPrimIsTensorBoolCond, std::make_shared<Primitive>("IsTensorBoolCond"));
 
 // GetNext
-GVAR_DEF(PrimitivePtr, kPrimGetNext, std::make_shared<Primitive>(kGetNext));
-GVAR_DEF(PrimitivePtr, kPrimGetNextFromQueue, std::make_shared<Primitive>(kGetNextFromQueue));
-GVAR_DEF(PrimitivePtr, kPrimDynamicGetNextV2, std::make_shared<Primitive>(kDynamicGetNextV2));
+GVAR_DEF(PrimitivePtr, kPrimGetNext, std::make_shared<Primitive>(kGetNextOpName));
+GVAR_DEF(PrimitivePtr, kPrimGetNextFromQueue, std::make_shared<Primitive>(kGetNextFromQueueOpName));
+GVAR_DEF(PrimitivePtr, kPrimDynamicGetNextV2, std::make_shared<Primitive>(kDynamicGetNextV2OpName));
 
 class DoSignaturePrimitive : public Primitive {
  public:

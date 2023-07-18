@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "include/backend/optimizer/optimizer.h"
+#include "ops/ascend_op_name.h"
 
 namespace mindspore {
 namespace opt {

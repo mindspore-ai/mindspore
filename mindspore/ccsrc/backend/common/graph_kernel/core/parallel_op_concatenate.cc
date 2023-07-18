@@ -65,9 +65,9 @@ AnfNodePtr ParallelOpConcatenater::MakeCombinedAnfNodePtrFromFollowingOps(const 
   auto orig_node = b0.GetOp(static_cast<int>(depth));
   MS_EXCEPTION_IF_NULL(orig_node);
   CNodePtr new_node;
-  if (GetCNodePrimitive(orig_node)->name() == prim::kReshape) {
+  if (GetCNodePrimitive(orig_node)->name() == kReshapeOpName) {
     new_node = GraphBuilder::NewReshapeNode(main_graph_, overall_inputs, orig_node);
-  } else if (GetCNodePrimitive(orig_node)->name() == prim::kTranspose) {
+  } else if (GetCNodePrimitive(orig_node)->name() == kTransposeOpName) {
     new_node = GraphBuilder::NewTransposeNode(main_graph_, overall_inputs);
   } else {
     new_node = GraphBuilder::NewElemwiseNoAttrNode(main_graph_, overall_inputs);

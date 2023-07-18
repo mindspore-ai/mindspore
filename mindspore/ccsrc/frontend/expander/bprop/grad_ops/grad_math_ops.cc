@@ -16,11 +16,11 @@
 #include <unordered_set>
 
 #include "frontend/expander/bprop/bprop_irbuilder.h"
-#include "mindspore/core/ops/math_ops.h"
 #include "include/common/utils/utils.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "utils/ms_context.h"
 #include "ir/functor.h"
+#include "ops/math_ops.h"
 
 namespace mindspore::expander::bprop {
 NodePtrList CheckBpropExpander(const BpropIRBuilder *ib) {

@@ -21,6 +21,7 @@
 #include <string>
 #include <algorithm>
 
+#include "ops/array_op_name.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"

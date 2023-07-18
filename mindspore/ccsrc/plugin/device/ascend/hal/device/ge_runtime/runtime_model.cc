@@ -23,6 +23,7 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"
 #include "mindspore/core/utils/log_adapter.h"
+#include "ops/ascend_op_name.h"
 #include "include/common/utils/utils.h"
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"

@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CORE_OPS_SEQUENCE_UNSTACK_H_
 #define MINDSPORE_CORE_OPS_SEQUENCE_UNSTACK_H_
 
-#include <map>
-#include <string>
-#include <memory>
 #include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
@@ -34,7 +34,7 @@ class MIND_API SequenceUnstack : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceUnstack);
   /// \brief Constructor.
-  SequenceUnstack() : BaseOperator(prim::kSequenceUnstack) {}
+  SequenceUnstack() : BaseOperator(kNameSequenceUnstack) {}
   void Init(const int64_t axis = 0);
   void set_axis(const int64_t axis);
   int64_t get_axis() const;

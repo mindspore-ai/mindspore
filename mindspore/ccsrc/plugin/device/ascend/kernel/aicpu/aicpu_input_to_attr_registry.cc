@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.h"
 
+#include "ops/array_op_name.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 

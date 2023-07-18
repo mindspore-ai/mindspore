@@ -15,6 +15,7 @@
  */
 
 #include "include/common/utils/comm_manager.h"
+#include "ops/ascend_op_name.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/parallel_context.h"

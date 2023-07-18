@@ -17,8 +17,8 @@
 #include "transform/graph_ir/op_declare/transformation_ops_declare.h"
 #include <string>
 #include <vector>
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
+#include "ops/array_ops.h"
+#include "ops/nn_ops.h"
 
 namespace mindspore::transform {
 // Flatten
@@ -31,8 +31,8 @@ REG_ADPT_DESC(Flatten, prim::kPrimFlatten->name(), ADPT_DESC(Flatten))
 INPUT_MAP(Unpack) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Unpack) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}, {"num", ATTR_DESC(num, AnyTraits<int64_t>())}};
 DYN_OUTPUT_MAP(Unpack) = {{0, DYN_OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Unstack, prim::kUnstack, ADPT_DESC(Unpack))
-REG_ADPT_DESC(Unpack, prim::kUnpack, ADPT_DESC(Unpack))
+REG_ADPT_DESC(Unstack, mindspore::kUnstackOpName, ADPT_DESC(Unpack))
+REG_ADPT_DESC(Unpack, mindspore::kUnpackOpName, ADPT_DESC(Unpack))
 
 // ExtractImagePatches
 INPUT_MAP(ExtractImagePatches) = {{1, INPUT_DESC(x)}};

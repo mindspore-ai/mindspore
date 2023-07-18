@@ -20,6 +20,7 @@
 #include "backend/operator/ops_backend_infer_function.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/profiler.h"
+#include "ops/nn_op_name.h"
 
 namespace mindspore {
 namespace pynative {

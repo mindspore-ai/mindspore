@@ -26,11 +26,14 @@
 #include <tuple>
 #include <algorithm>
 #include <functional>
-#include "mindspore/core/ops/conv_pool_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/conv_pool_ops.h"
+#include "ops/other_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "plugin/device/ascend/kernel/kernel_query.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/oplib/super_bar.h"
@@ -42,7 +45,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "utils/trace_base.h"
-#include "mindspore/core/ops/op_name.h"
+#include "ops/op_name.h"
 #include "kernel/common_utils.h"
 #include "kernel/kernel_build_info.h"
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
@@ -109,7 +112,7 @@ bool IsCubeKernel(const CNodePtr &node) {
     kConv3DBackpropInputDOpName, kConv3DTransposeOpName, kConv3DTransposeDOpName,
     // conv dw
     kConv2DBackpropFilterOpName, kConv2DBackpropFilterDOpName, kDepthwiseConv2DBackpropFilterOpName,
-    kDepthwiseConv2DBackpropDFilterOpName, kConv3DBackpropFilterOpName, kConv3DBackpropFilterDOpName};
+    kDepthwiseConv2DBackpropFilterDOpName, kConv3DBackpropFilterOpName, kConv3DBackpropFilterDOpName};
 
   auto op_name = common::AnfAlgo::GetCNodeName(node);
   return kCubeKernelSet.find(op_name) != kCubeKernelSet.end();

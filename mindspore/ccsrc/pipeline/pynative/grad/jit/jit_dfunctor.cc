@@ -18,8 +18,11 @@
 
 #include <memory>
 #include <string>
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+
+#include "ops/sequence_op_name.h"
+#include "ops/structure_ops.h"
+#include "ops/other_ops.h"
+#include "ops/framework_ops.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/pynative/pynative_utils.h"
 
@@ -32,7 +35,7 @@ const mindspore::HashSet<std::string> kNotRealOP{
   kTupleGetItemOpName,
   kStopGradientOpName,
   kUpdateStateOpName,
-  kLoadOPName,
+  kLoadOpName,
   kDependOpName,
   kReturnOpName,
   kNPUAllocFloatStatusOpName,

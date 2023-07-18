@@ -17,7 +17,8 @@
 #include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 
 #include <runtime/rt.h>
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/task_stream.h"
@@ -41,7 +42,7 @@ namespace {
 void GetSendReceiveStream(const std::vector<CNodePtr> &anf_node_list, std::set<uint32_t> *send_recv_stream_ids) {
   for (const auto &node : anf_node_list) {
     auto node_name = common::AnfAlgo::GetCNodeName(node);
-    if (node_name == kHcomSendOpName || node_name == kReceiveOpName) {
+    if (node_name == kSendOpName || node_name == kReceiveOpName) {
       uint32_t stream_id = AnfAlgo::GetStreamId(node);
       send_recv_stream_ids->insert(stream_id);
     }

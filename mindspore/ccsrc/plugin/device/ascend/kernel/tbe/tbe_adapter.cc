@@ -24,6 +24,10 @@
 #include <set>
 #include <algorithm>
 #include <unordered_map>
+#include "ops/conv_pool_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/math_op_name.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/oplib/opinfo.h"
@@ -78,12 +82,12 @@ bool TbeAdapter::IsSpecialFusionComputeNode(const std::vector<mindspore::AnfNode
 
 bool TbeAdapter::GetSpecInputLayers(const std::string &op_name, const std::vector<mindspore::AnfNodePtr> &reorder_layer,
                                     std::map<const AnfNodePtr, FusionDataType> *spec_data_input) {
-  if ((op_name == kReluGradV2OpName || op_name == kAddNOpName || op_name == kTensorAddOpName) &&
+  if ((op_name == kReLUGradV2OpName || op_name == kAddNOpName || op_name == kTensorAddOpName) &&
       reorder_layer.empty()) {
     MS_LOG(WARNING) << "Fusion error: node(" << op_name << " )'s input is null. ";
     return false;
   }
-  if (op_name == kReluGradV2OpName) {
+  if (op_name == kReLUGradV2OpName) {
     (*spec_data_input)[reorder_layer[0]] = kFusionReLUGradV2;
   } else if (op_name == kAddNOpName) {
     for (const auto &it : reorder_layer) {

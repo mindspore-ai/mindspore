@@ -18,17 +18,17 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <functional>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <utility>
-#include <functional>
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/lite_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/lite_ops.h"
+#include "ops/math_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/nn_optimizer_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/mkldnn/eltwise_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
@@ -1194,7 +1194,7 @@ std::vector<KernelAttr> ArithmeticSelfCpuKernelMod::GetOpSupport() {
 bool IdentityCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  if (kernel_name_ != prim::kIdentity) {
+  if (kernel_name_ != mindspore::kIdentityOpName) {
     MS_LOG(ERROR) << "For 'Identity', the kernel name must be 'Identity', but got " << kernel_name_;
     return false;
   }

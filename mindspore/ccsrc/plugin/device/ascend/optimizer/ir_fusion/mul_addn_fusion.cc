@@ -16,8 +16,9 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/mul_addn_fusion.h"
 #include <vector>
 #include <memory>
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/math_ops.h"
+#include "ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"

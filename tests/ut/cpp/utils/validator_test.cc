@@ -17,7 +17,7 @@
 #include <string>
 #include "common/common_test.h"
 
-#include "mindspore/core/ops/arithmetic_ops.h"
+#include "ops/arithmetic_op_name.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/validator.h"
 #include "pipeline/jit/parse/parse.h"
@@ -36,7 +36,7 @@ class TestValidator : public UT::Common {
 };
 
 TEST_F(TestValidator, ValidateOperation01) {
-  auto node = NewValueNode(std::make_shared<Primitive>(prim::kScalarAdd));
+  auto node = NewValueNode(std::make_shared<Primitive>(kScalarAddOpName));
   ValidateOperation(node);
   // normally, the above statement should not exit, so expected the following statement execute
   EXPECT_TRUE(true);

@@ -19,7 +19,7 @@
 #include <map>
 #include <utility>
 #include <algorithm>
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/framework_ops.h"
 #include "external/platform/platform_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

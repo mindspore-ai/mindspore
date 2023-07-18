@@ -43,6 +43,7 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNormalize = "normalize";
 void EditDistance::Init(const bool normalize) { this->set_normalize(normalize); }
 void EditDistance::set_normalize(const bool normalize) { (void)this->AddAttr(kNormalize, api::MakeValue(normalize)); }
 bool EditDistance::normalize() const {

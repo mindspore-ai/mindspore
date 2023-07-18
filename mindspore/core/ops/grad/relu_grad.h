@@ -28,7 +28,7 @@ namespace ops {
 class MIND_API ReluGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ReluGrad);
-  ReluGrad() : BaseOperator(prim::kReLUGrad) { InitIOName({"x"}, {"output"}); }
+  ReluGrad() : BaseOperator(kReLUGradOpName) { InitIOName({"x"}, {"output"}); }
   void Init() const {}
 };
 }  // namespace ops

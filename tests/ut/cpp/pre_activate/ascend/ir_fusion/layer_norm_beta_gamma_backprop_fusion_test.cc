@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/backend_common_test.h"
+#include "ops/nn_op_name.h"
 #include "common/py_func_graph_fetcher.h"
 #include "include/backend/kernel_info.h"
 #include "include/common/debug/anf_ir_dump.h"

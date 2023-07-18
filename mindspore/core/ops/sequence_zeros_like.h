@@ -27,7 +27,7 @@ class MIND_API SequenceZerosLike : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceZerosLike);
   /// \brief Constructor.
-  SequenceZerosLike() : BaseOperator(prim::kSequenceZerosLike) {}
+  SequenceZerosLike() : BaseOperator(kSequenceZerosLikeOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

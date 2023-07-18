@@ -16,7 +16,11 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/batchmatmul_eltwise_fusion_pass.h"
 #include <set>
 #include <string>
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/nn_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/lite_op_name.h"
+#include "ops/framework_ops.h"
 #include "kernel/kernel_fusion.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -69,7 +73,7 @@ bool BatchMatmulEltwiseFusionPass::MatchPattern2(const CNodePtr &eltwise,
                                                  mindspore::HashSet<AnfNodePtr> *record) const {
   // bmm - eltwise
   const std::set<string> kElemTypeList = {kFusedMulAddOpName, kAddOpName,  kTruncateDivOpName,
-                                          kRealDivOpName,     kReluOpName, kReluGradOpName};
+                                          kRealDivOpName,     kReluOpName, kReLUGradOpName};
   if (kElemTypeList.find(common::AnfAlgo::GetCNodeName(eltwise)) == kElemTypeList.end()) {
     return false;
   }

@@ -19,6 +19,7 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include "mindspore/core/ops/ascend_op_name.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
@@ -69,7 +70,7 @@ std::string GetTransOpName(const std::string &spec_format) {
 AnfNodePtr GetOriginNode(bool is_insert_output, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto orig_node = node;
-  if (is_insert_output && node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == prim::kTupleGetItem) {
+  if (is_insert_output && node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == mindspore::kTupleGetItemOpName) {
     auto cnode = node->cast<CNodePtr>();
     orig_node = cnode->input(kRealInputNodeIndexInTupleGetItem);
   }

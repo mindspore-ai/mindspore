@@ -26,7 +26,7 @@ class MIND_API scalar_eq : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(scalar_eq);
   /// \brief Constructor.
-  scalar_eq() : BaseOperator(prim::kScalarEq) {}
+  scalar_eq() : BaseOperator(kScalarEqOpName) {}
   /// \brief Init.
   void Init() const {}
 };

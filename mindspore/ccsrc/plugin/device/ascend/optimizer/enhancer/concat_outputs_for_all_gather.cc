@@ -17,8 +17,9 @@
 #include "plugin/device/ascend/optimizer/enhancer/concat_outputs_for_all_gather.h"
 #include <utility>
 #include <algorithm>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/other_op_name.h"
+#include "ops/sequence_ops.h"
+#include "ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/optimizer/helper.h"

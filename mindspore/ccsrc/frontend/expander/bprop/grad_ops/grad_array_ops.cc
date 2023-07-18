@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <numeric>
 #include <vector>
+#include "ops/array_op_name.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"

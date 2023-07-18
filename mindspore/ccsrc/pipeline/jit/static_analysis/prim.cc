@@ -38,12 +38,13 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "ir/anf.h"
 #include "ir/cell.h"
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/comparison_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/structure_ops.h"
+#include "ops/arithmetic_ops.h"
+#include "ops/comparison_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/other_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/structure_ops.h"
+#include "ops/array_op_name.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pipeline/jit/fallback.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -67,9 +68,9 @@ using ClassTypePtr = std::shared_ptr<parse::ClassType>;
 namespace abstract {
 using mindspore::parse::PyObjectWrapper;
 
-mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{prim::kMakeTuple,  prim::kMakeList,   prim::kSwitch,
-                                                                 prim::kEnvironSet, prim::kEnvironGet, prim::kLoad,
-                                                                 prim::kUpdateState};
+mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{kMakeTupleOpName,  kMakeListOpName,   kSwitchOpName,
+                                                                 kEnvironSetOpName, kEnvironGetOpName, kLoadOpName,
+                                                                 kUpdateStateOpName};
 
 // The Python primitives who visit tuple/list elements, but not consume all elements.
 // Including:
@@ -77,9 +78,9 @@ mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{prim::kMakeTupl
 // - Consume partial elements, not all. For instance, TupleGetItem.
 // Map{"primitive name", {vector<int>:"index to transparent pass, -1 means all elements"}}
 mindspore::HashMap<std::string, std::vector<int>> prims_transparent_pass_sequence{
-  {prim::kReturn, std::vector({0})},       {prim::kDepend, std::vector({0})},     {prim::kidentity, std::vector({0})},
-  {prim::kMakeTuple, std::vector({-1})},   {prim::kMakeList, std::vector({-1})},  {prim::kListAppend, std::vector({0})},
-  {prim::kTupleGetItem, std::vector({0})}, {prim::kListGetItem, std::vector({0})}};
+  {kReturnOpName, std::vector({0})},       {kDependOpName, std::vector({0})},     {kidentityOpName, std::vector({0})},
+  {kMakeTupleOpName, std::vector({-1})},   {kMakeListOpName, std::vector({-1})},  {kListAppendOpName, std::vector({0})},
+  {kTupleGetItemOpName, std::vector({0})}, {kListGetItemOpName, std::vector({0})}};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &out_conf) {
@@ -99,7 +100,7 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   auto &func = do_signature->function();
   auto do_signature_func = dyn_cast_ptr<Primitive>(func);
   if (do_signature_func != nullptr) {
-    if (do_signature_func->name() == prim::kIsInstance) {
+    if (do_signature_func->name() == kIsInstanceOpName) {
       // Handle for DDE.
       for (size_t i = 0; i < args_abs_list.size(); ++i) {
         MS_EXCEPTION_IF_NULL(args_abs_list[i]);

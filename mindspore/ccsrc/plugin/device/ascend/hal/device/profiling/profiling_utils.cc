@@ -16,6 +16,7 @@
 #include <sys/syscall.h>
 #include <algorithm>
 #include "kernel/kernel.h"
+#include "ops/structure_op_name.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

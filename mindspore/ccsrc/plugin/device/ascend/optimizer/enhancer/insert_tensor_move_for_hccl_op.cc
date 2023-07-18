@@ -17,7 +17,9 @@
 #include <vector>
 #include <set>
 #include <string>
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/structure_op_name.h"
+#include "ops/framework_ops.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

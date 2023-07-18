@@ -19,6 +19,7 @@
 #include <string>
 #include <algorithm>
 #include <functional>
+#include "ops/conv_pool_op_name.h"
 
 namespace mindspore {
 namespace kernel {

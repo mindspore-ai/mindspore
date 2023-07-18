@@ -27,7 +27,7 @@ class MIND_API SequenceAddOffset : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceAddOffset);
   /// \brief Constructor.
-  SequenceAddOffset() : BaseOperator(prim::kSequenceAddOffset) {}
+  SequenceAddOffset() : BaseOperator(kSequenceAddOffsetOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

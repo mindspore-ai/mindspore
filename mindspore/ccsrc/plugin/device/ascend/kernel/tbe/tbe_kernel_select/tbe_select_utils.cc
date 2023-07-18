@@ -20,6 +20,7 @@
 #include <memory>
 #include <map>
 #include <string>
+#include "ops/array_op_name.h"
 #include "base/base.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/backend/anf_runtime_algorithm.h"

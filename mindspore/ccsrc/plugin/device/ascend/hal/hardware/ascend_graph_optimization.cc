@@ -21,8 +21,9 @@
 #include <string>
 #include <memory>
 #include <utility>
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/array_op_name.h"
+#include "ops/math_ops.h"
+#include "ops/framework_ops.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"

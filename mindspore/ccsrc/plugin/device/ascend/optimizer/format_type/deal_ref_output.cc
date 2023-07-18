@@ -19,9 +19,9 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "kernel/oplib/oplib.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

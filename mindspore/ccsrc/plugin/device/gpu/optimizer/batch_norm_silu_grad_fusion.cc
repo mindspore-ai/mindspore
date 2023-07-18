@@ -19,8 +19,8 @@
 #include <vector>
 #include <string>
 
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/nn_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -77,7 +77,7 @@ const AnfNodePtr BatchNormSiluGradFusion::Process(const FuncGraphPtr &graph, con
   auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
   MS_EXCEPTION_IF_NULL(bias);
 
-  auto prim = std::make_shared<Primitive>(kBatchNormGradWithActivation);
+  auto prim = std::make_shared<Primitive>(kBatchNormGradWithActivationOpName);
   MS_EXCEPTION_IF_NULL(prim);
   prim->AddAttr(mindspore::ops::kActivationType, MakeValue(static_cast<int64_t>(mindspore::ActivationType::SWISH)));
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy, x, scale, save_mean, save_var, reserve, bias, y};

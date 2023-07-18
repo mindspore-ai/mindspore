@@ -27,7 +27,7 @@ class MIND_API ListInplaceReverse : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListInplaceReverse);
   /// \brief Constructor.
-  ListInplaceReverse() : BaseOperator(prim::kListInplaceReverse) { InitIOName({"input_data"}, {"output_data"}); }
+  ListInplaceReverse() : BaseOperator(kListInplaceReverseOpName) { InitIOName({"input_data"}, {"output_data"}); }
   /// \brief Init function.
   void Init() const {}
 };

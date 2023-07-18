@@ -28,10 +28,10 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/value.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/other_ops.h"
+#include "ops/sequence_ops.h"
 #include "utils/parallel_node_check.h"
 
 namespace mindspore {

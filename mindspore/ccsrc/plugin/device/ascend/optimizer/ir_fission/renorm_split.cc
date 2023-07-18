@@ -18,8 +18,9 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/math_ops.h"
+#include "ops/nn_op_name.h"
+#include "ops/array_ops.h"
+#include "ops/math_ops.h"
 namespace mindspore {
 namespace opt {
 namespace {

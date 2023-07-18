@@ -28,7 +28,7 @@ class MIND_API Padding : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Padding);
   /// \brief Constructor.
-  Padding() : BaseOperator(prim::kPadding) { InitIOName({"x"}, {"y"}); }
+  Padding() : BaseOperator(kPaddingOpName) { InitIOName({"x"}, {"y"}); }
 
   void Init(int64_t pad_dim_size = 8);
 

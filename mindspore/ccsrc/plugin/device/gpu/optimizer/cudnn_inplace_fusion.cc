@@ -25,8 +25,10 @@
 #include <utility>
 #include <string>
 
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -46,7 +48,8 @@ struct AnfNodeIndex {
 };
 
 // opname, output idx
-std::map<string, uint32_t> kInplaceOpNames = {{kConv2DBackpropInputOpName, 0}, {kBatchNormGradWithAddAndActivation, 3}};
+std::map<string, uint32_t> kInplaceOpNames = {{kConv2DBackpropInputOpName, 0},
+                                              {kBatchNormGradWithAddAndActivationOpName, 3}};
 
 std::set<string> kSkipOpNames = {
   kTensorAddOpName,
@@ -54,7 +57,7 @@ std::set<string> kSkipOpNames = {
 
 // opname, input idx
 std::map<string, uint32_t> kAggregatesOpNames = {
-  {kConv2DBackpropInputOpName, 0}, {kMaxPoolGradOpName, 2}, {kBatchNormGradWithAddAndActivation, 0}};
+  {kConv2DBackpropInputOpName, 0}, {kMaxPoolGradOpName, 2}, {kBatchNormGradWithAddAndActivationOpName, 0}};
 
 constexpr size_t inplace_node_size = 2;
 

@@ -22,8 +22,9 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "include/transform/graph_ir/types.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/structure_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/structure_ops.h"
+#include "ops/ascend_op_name.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "transform/acl_ir/acl_adapter_info.h"
 #include "transform/acl_ir/ge_adapter_info.h"
@@ -187,7 +188,7 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  static const std::set<std::string> excuded_nodes = {prim::kCTCLoss, prim::kGetNext, prim::kPadV3, prim::kPadV3Grad};
+  static const std::set<std::string> excuded_nodes = {kCTCLossOpName, kGetNextOpName, kPadV3OpName, kPadV3GradOpName};
   std::string name = GetCNodeFuncName(cnode);
   if (excuded_nodes.count(name) != 0) {
     return KernelType::UNKNOWN_KERNEL_TYPE;

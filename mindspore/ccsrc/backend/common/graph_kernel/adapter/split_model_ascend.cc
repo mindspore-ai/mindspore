@@ -16,6 +16,9 @@
 #include "backend/common/graph_kernel/adapter/split_model_ascend.h"
 #include <memory>
 #include <string>
+#include "ops/array_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel::inner {

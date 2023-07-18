@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.h"
 #include <memory>
 #include <string>
+#include "ops/array_op_name.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/common_utils.h"
 #include "kernel/framework_utils.h"

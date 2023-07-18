@@ -31,6 +31,7 @@
 #include "include/backend/distributed/constants.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/anfalgo.h"
+#include "ops/ascend_op_name.h"
 
 static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
 static constexpr const auto kHcclDeployModeEnv = "DEPLOY_MODE";

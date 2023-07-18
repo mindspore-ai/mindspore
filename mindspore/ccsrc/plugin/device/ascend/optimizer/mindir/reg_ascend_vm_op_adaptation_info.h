@@ -16,10 +16,22 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_VM_OP_ADAPTATION_INFO_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_VM_OP_ADAPTATION_INFO_H_
 
+#include "ops/arithmetic_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/ascend_op_name.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/image_op_name.h"
+#include "ops/lite_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/nn_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/sequence_op_name.h"
+#include "ops/sparse_op_name.h"
+#include "ops/structure_op_name.h"
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "plugin/device/ascend/optimizer/mindir/reg_ascend_vm_op_adaptation_funcs.h"
 #include "include/common/utils/utils.h"
+#include "plugin/device/ascend/optimizer/mindir/reg_ascend_vm_op_adaptation_funcs.h"
 
 namespace mindspore::opt {
 #define REG_ASCEND_VM_OP_ADAPTATION_INFO(me_op_name) REG_OP_ADAPTATION_INFO(me_op_name, kAscendDevice, true)
@@ -42,7 +54,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kMeanGradOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kPullWeightOpName).set_input_attr_info(1).set_input_attr_info(2);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kPushOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kPushWeightOpName).set_input_attr_info(1).set_input_attr_info(2);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kROIAlignGradName).set_input_attr_info(2, "listInt");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kROIAlignGradOpName).set_input_attr_info(2, "listInt");
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSimpleMeanGradOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSubscalarOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherDGradV2OpName).set_input_attr_info(1).set_is_ascend_mindir();
@@ -135,7 +147,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kAdamOpName)
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyAdagradV2OpName).set_backend_op_name(kApplyAdagradV2DOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyAdamWithAmsgradOpName).set_backend_op_name(kApplyAdamWithAmsgradDOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyRMSPropOpName)
-  .set_target_op_name(kApplyRMSPropDOpname)
+  .set_target_op_name(kApplyRMSPropDOpName)
   .set_input_attr_info(5, "float")
   .set_input_attr_info(6, "float")
   .set_input_attr_info(7, "float");
@@ -267,7 +279,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kCumulativeLogsumexpOpName)
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kDepthwiseConv2dNativeBackpropFilterOpName)
   .set_backend_op_name(kDepthwiseConv2DBackpropFilterOpName)
-  .set_target_op_name(kDepthwiseConv2DBackpropDFilterOpName)
+  .set_target_op_name(kDepthwiseConv2DBackpropFilterDOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "listInt");
 

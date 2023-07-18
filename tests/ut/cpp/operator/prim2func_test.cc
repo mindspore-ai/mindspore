@@ -19,7 +19,7 @@
 
 #include "common/common_test.h"
 
-#include "mindspore/core/ops/arithmetic_ops.h"
+#include "ops/arithmetic_ops.h"
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "frontend/operator/prim_to_function.h"
@@ -34,7 +34,7 @@ class TestPrimFunc : public UT::Common {
 };
 
 TEST_F(TestPrimFunc, ScalarAddTest) {
-  auto prim = std::make_shared<Primitive>(prim::kScalarAdd);
+  auto prim = std::make_shared<Primitive>(kScalarAddOpName);
   FunctionPtr func = nullptr;
   PrimToFunction::GetInstance().GetFunction(prim, &func);
 

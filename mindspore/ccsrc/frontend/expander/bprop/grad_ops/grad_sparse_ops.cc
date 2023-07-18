@@ -19,6 +19,7 @@
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
+#include "ops/array_op_name.h"
 
 namespace mindspore::expander::bprop {
 namespace {

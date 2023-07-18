@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "ops/nn_optimizer_op_name.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/momentum_impl.cuh"

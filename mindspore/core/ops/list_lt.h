@@ -27,7 +27,7 @@ class MIND_API list_lt : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(list_lt);
   /// \brief Constructor.
-  list_lt() : BaseOperator(prim::kListLt) {}
+  list_lt() : BaseOperator(kListLtOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

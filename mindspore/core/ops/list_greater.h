@@ -26,7 +26,7 @@ class MIND_API list_greater_than : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(list_greater_than);
   /// \brief Constructor.
-  list_greater_than() : BaseOperator(prim::kListGreaterThan) {}
+  list_greater_than() : BaseOperator(kListGreaterThanOpName) {}
   /// \brief Init.
   void Init() const {}
 };
@@ -35,7 +35,7 @@ class MIND_API list_greater_equal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(list_greater_equal);
   /// \brief Constructor.
-  list_greater_equal() : BaseOperator(prim::kListGreaterEqual) {}
+  list_greater_equal() : BaseOperator(kListGreaterEqualOpName) {}
   /// \brief Init.
   void Init() const {}
 };

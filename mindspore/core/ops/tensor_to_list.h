@@ -26,7 +26,7 @@ class MIND_API TensorToList : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorToList);
   /// \brief Constructor.
-  TensorToList() : BaseOperator(prim::kTensorToList) { InitIOName({"input_tensor"}, {"output_data"}); }
+  TensorToList() : BaseOperator(kTensorToListOpName) { InitIOName({"input_tensor"}, {"output_data"}); }
   /// \brief Init.
   void Init() const {}
 };

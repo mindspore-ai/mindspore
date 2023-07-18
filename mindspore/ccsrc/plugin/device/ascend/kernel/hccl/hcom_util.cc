@@ -18,8 +18,11 @@
 #include <memory>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
+#include "ops/ascend_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/other_op_name.h"
+#include "utils/ms_context.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -85,12 +88,12 @@ bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> 
   MS_EXCEPTION_IF_NULL(data_type_list);
   size_t tensor_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
-  if (op_name == kReceiveOpName || op_name == kMuxReceiveOpName) {
+  if (op_name == mindspore::kReceiveOpName || op_name == mindspore::kMuxReceiveOpName) {
     tensor_num = AnfAlgo::GetOutputTensorNum(anf_node);
   }
   for (size_t i = 0; i < tensor_num; ++i) {
     TypeId type_ptr;
-    if (op_name == kReceiveOpName || op_name == kMuxReceiveOpName) {
+    if (op_name == mindspore::kReceiveOpName || op_name == mindspore::kMuxReceiveOpName) {
       type_ptr = AnfAlgo::GetOutputDeviceDataType(anf_node, i);
     } else {
       type_ptr = AnfAlgo::GetInputDeviceDataType(anf_node, i);
@@ -149,8 +152,8 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
   size_t size = common::AnfAlgo::GetInputTensorNum(anf_node);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (common::AnfAlgo::GetCNodeName(anf_node) == kReceiveOpName ||
-      common::AnfAlgo::GetCNodeName(anf_node) == kMuxReceiveOpName) {
+  if (common::AnfAlgo::GetCNodeName(anf_node) == mindspore::kReceiveOpName ||
+      common::AnfAlgo::GetCNodeName(anf_node) == mindspore::kMuxReceiveOpName) {
     size = AnfAlgo::GetOutputTensorNum(anf_node);
   }
   for (size_t i = 0; i < size; ++i) {

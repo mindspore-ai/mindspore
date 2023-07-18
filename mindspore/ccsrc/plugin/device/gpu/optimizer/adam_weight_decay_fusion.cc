@@ -165,7 +165,7 @@ const AnfNodePtr AdamWeightDecayFusion::Process(const FuncGraphPtr &graph, const
   param->set_abstract(param_input->abstract());
 
   // Fused into a FusedAdamWeightDecay operator.
-  auto prim = std::make_shared<Primitive>(kFusedAdamWeightDecayName);
+  auto prim = std::make_shared<Primitive>(kFusedAdamWeightDecayOpName);
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_value = NewValueNode(prim);
   std::vector<AnfNodePtr> inputs = {

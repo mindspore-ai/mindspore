@@ -16,6 +16,9 @@
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/nn_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
@@ -304,7 +307,7 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("ReLU").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit(kReluGradOpName, {dout, out});
+  auto dx = ib->Emit(kReLUGradOpName, {dout, out});
   return {dx};
 });
 

@@ -17,8 +17,9 @@
 
 #include <algorithm>
 #include <queue>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/array_ops.h"
+
+#include "ops/sequence_ops.h"
+#include "ops/array_ops.h"
 #include "include/common/expander/core/infer.h"
 #include "utils/anf_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -43,7 +44,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
 
   NodePtr OutZeros(const NodePtr &node) const override {
     need_infer_ = false;
-    auto ret = Emit(prim::kZerosLike, {node});
+    auto ret = Emit(kZerosLikeOpName, {node});
     need_infer_ = true;
     return ret;
   }
@@ -68,7 +69,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
       // temporary solution, remove this after input parameter's value is set.
       throw ShapeCalcException("ShapeCalc is not supported in pynative mode.");
     }
-    if (prim->name() == prim::kTupleGetItem) {
+    if (prim->name() == kTupleGetItemOpName) {
       // if the getitem's real input is a ValueSequence, just return the real Value of that.
       auto getitem_value = EmitGetItemValue(inputs);
       if (getitem_value != nullptr) {
