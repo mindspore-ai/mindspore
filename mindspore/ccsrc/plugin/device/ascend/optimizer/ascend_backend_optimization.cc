@@ -208,7 +208,7 @@
 #include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
-#include "plugin/device/ascend/optimizer/ge/add_depend_for_all_gather.h"
+#include "plugin/device/ascend/optimizer/ge/hcom/add_depend_for_all_gather.h"
 #include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
 #include "plugin/device/ascend/optimizer/ge/convert_condition_input_to_scalar.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_depend_remover.h"
