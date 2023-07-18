@@ -15,7 +15,11 @@ mindspore.ops.soft_margin_loss
     参数：
         - **input** (Tensor) - 预测值。数据类型必须为float16或float32。
         - **target** (Tensor) - 真实标签，数据类型和shape与 `logits` 相同。
-        - **reduction** (str，可选) - 对输出应用归约方法。可选值为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` ，分别表示不指定计算方式、使用均值计算和使用求和计算。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输出：
         Tensor或Scalar。如果 `reduction` 为 ``'none'`` ，其shape与 `logits` 相同。否则，将返回Scalar。

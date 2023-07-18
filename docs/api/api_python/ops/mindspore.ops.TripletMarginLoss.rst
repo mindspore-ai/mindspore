@@ -24,7 +24,11 @@ mindspore.ops.TripletMarginLoss
         - **p** (int，可选) - 成对距离的范数。默认值： ``2`` 。
         - **eps** (float，可选) - 默认值： ``1e-6`` 。
         - **swap** (bool，可选) - 距离交换。默认值： ``False`` 。
-        - **reduction** (str，可选) - 指定要应用于输出的规约计算方式。取值为 ``"mean"`` 、 ``"sum"`` 或 ``"none"`` 。默认值： ``"mean"`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **x** (Tensor) - 从训练集随机选取的样本。数据类型为BasicType。

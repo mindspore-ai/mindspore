@@ -14,7 +14,11 @@ mindspore.nn.SampledSoftmaxLoss
         - **sampled_values** (Union[list, tuple]) - 抽样候选值。由 `*CandidateSampler` 函数返回的(`sampled_candidates`, `true_expected_count` , `sampled_expected_count`)的list或tuple。如果默认值为None，则应用 `UniformCandidateSampler` 。默认值： ``None`` 。
         - **remove_accidental_hits** (bool) - 是否移除抽样中的目标类等于标签的情况。默认值： ``True`` 。
         - **seed** (int) - 抽样的随机种子。默认值： ``0`` 。
-        - **reduction** (str) - 指定应用于输出结果的计算方式。取值为 ``"mean"`` ， ``"sum"`` ，或 ``"none"`` 。取值为 ``"none"`` ，则不执行reduction。默认值： ``"none"`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **weights** (Tensor) - 输入的权重，shape为 :math:`(C, dim)` 的Tensor。

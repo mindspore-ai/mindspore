@@ -25,7 +25,11 @@ mindspore.nn.HingeEmbeddingLoss
 
     参数：
         - **margin** (float, int) - Hinge Embedding Loss公式定义的阈值 :math:`margin`。公式中表示为 :math:`\Delta`。默认值： ``1.0``。
-        - **reduction** (str) - 指定应用于输出结果的计算方式， ``'none'`` 、 ``'mean'`` 或 ``'sum'`` ，默认值： ``'mean'``。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - 预测值，公式中表示为 :math:`x`，shape为 :math:`(*)`。 :math:`*` 代表着任意数量的维度。

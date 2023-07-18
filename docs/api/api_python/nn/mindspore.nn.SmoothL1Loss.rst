@@ -33,7 +33,11 @@ mindspore.nn.SmoothL1Loss
 
     参数：
         - **beta** (float) - 损失函数计算在L1Loss和L2Loss间变换的阈值。默认值： ``1.0`` 。
-        - **reduction** (str) - 缩减输出的方法。默认值： ``'none'`` 。其他选项： ``'mean'`` 和 ``'sum'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - 预测值，任意维度Tensor。数据类型为float16、float32或float64。

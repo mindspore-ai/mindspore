@@ -22,7 +22,11 @@ mindspore.nn.MultilabelMarginLoss
         该算子仅考虑从前方开始的连续非负目标块。这允许不同的样本具有不同数量的目标类别。
 
     参数：
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式。取值为 ``"mean"`` ， ``"sum"`` ，或 ``"none"`` 。默认值： ``"mean"`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **x** (Tensor) - 预测值。hape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`

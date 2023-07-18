@@ -20,11 +20,11 @@ mindspore.ops.multi_margin_loss
         - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认值： ``1`` 。
         - **margin** (int, 可选) - 改变对偶距离的参数。默认值： ``1`` 。
         - **weight** (Tensor, 可选) - 每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。默认值： ``None`` 。
-        - **reduction** (str, 可选) - 对输出应用特定的缩减方法：可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` 。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``'none'``：不应用缩减方法。
-          - ``'mean'``：输出的值总和除以输出的元素个数。
-          - ``'sum'``：输出的总和。
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的加权平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     返回：
         - **outputs** - 当 `reduction` 为"none"时，类型为Tensor，shape和 `target` 相同。否则，为标量。

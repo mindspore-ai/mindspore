@@ -24,7 +24,11 @@ mindspore.ops.BinaryCrossEntropy
         - :math:`x` 的值必须在0到1之间。
 
     参数：
-        - **reduction** (str) - 指定输出的计算方式。取值为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的加权平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - 输入预测值。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。

@@ -6,8 +6,11 @@ mindspore.ops.MirrorPad
     通过指定的填充模式和大小对输入Tensor进行填充。
 
     参数：
-        - **mode** (str) - 指定填充模式。可选值： ``'REFLECT'`` 和 ``'SYMMETRIC'`` 。
-          默认值： ``'REFLECT'`` 。
+        - **mode** (str，可选) - 指定填充模式的可选字符串。可选值为： ``'REFLECT'`` 和 ``'SYMMETRIC'`` 。默认值： ``'REFLECT'`` 。
+          当采样grid超出输入Tensor的边界时，各种填充模式效果如下：
+
+          - ``'REFLECT'`` ：使用零填充输入Tensor。例如，向 [1, 2, 3, 4] 的两边分别填充2个元素，结果为 [3, 2, 1, 2, 3, 4, 3, 2]。
+          - ``"SYMMETRIC"`` ：使用Tensor边缘上像素的值填充输入Tensor。例如，向 [1, 2, 3, 4] 的两边分别填充2个元素，结果为 [2, 1, 1, 2, 3, 4, 4, 3]。
 
     输入：
         - **input_x** (Tensor) - shape: :math:`(N, *)` ，其中 :math:`*` 表示任何数量的附加维度。

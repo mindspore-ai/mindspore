@@ -28,7 +28,7 @@ mindspore.ops.MaxUnpool3D
           - 三个整数的元组，分别表示深度、高度和宽度方向的移动步长。
           - 如果 `strides` 为0或(0, 0, 0)，那么 `strides` 等于 `ksize` 。
   
-        - **pads** (Union[int, tuple[int]]，可选) - 需要被填充的值。默认值： ``0`` 。
+        - **pads** (Union[int, tuple[int]]，可选) - 指定填充量。默认值： ``0`` 。
 
           - 如果 `pads` 是一个整数，则深度、高度和宽度方向的填充数量相同，都等于 `pads` 。
           - 如果 `pads` 是含三个整数的元组，则深度、高度和宽度方向的填充数量分别等于 `pads[0]` 、 `pads[1]` 和 `pads[2]`。

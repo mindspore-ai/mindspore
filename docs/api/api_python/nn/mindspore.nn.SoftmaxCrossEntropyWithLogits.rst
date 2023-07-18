@@ -23,8 +23,12 @@ mindspore.nn.SoftmaxCrossEntropyWithLogits
         虽然目标值是互斥的，即目标值中只有一个为正，但预测的概率不为互斥。只要求输入的预测概率分布有效。
 
     参数：
-        - **sparse** (bool) - 指定目标值是否使用稀疏格式。默认值： ``False`` 。
-        - **reduction** (str) - 指定应用于输出结果的计算方式。取值为"mean"，"sum"，或"none"。取值为"none"，则不执行reduction。默认值： ``"none"`` 。
+        - **sparse** (bool，可选) - 指定目标值是否使用稀疏格式。默认值： ``False`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - shape :math:`(N, C)` 的Tensor。数据类型为float16或float32。

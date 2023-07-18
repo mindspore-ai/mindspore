@@ -15,7 +15,11 @@ mindspore.nn.FocalLoss
     参数：
         - **gamma** (float) - gamma用于调整Focal Loss的权重曲线的陡峭程度。默认值： ``2.0`` 。
         - **weight** (Union[Tensor, None]) - Focal Loss的权重，维度为1。如果为None，则不使用权重。默认值： ``None`` 。
-        - **reduction** (str) - loss的计算方式。取值为 ``"mean"`` 、 ``"sum"`` 或 ``"none"``。默认值： ``"mean"``。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的加权平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - shape为 :math:`(N, C)` 、 :math:`(N, C, H)` 、或 :math:`(N, C, H, W)` 的Tensor，其中 :math:`C` 是分类的数量，值大于1。如果shape为 :math:`(N, C, H, W)` 或 :math:`(N, C, H)` ，则 :math:`H` 或 :math:`H` 和 :math:`W` 的乘积应与 `labels` 的相同。

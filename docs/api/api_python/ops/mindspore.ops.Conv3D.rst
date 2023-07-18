@@ -27,11 +27,11 @@ mindspore.ops.Conv3D
         - **kernel_size** (Union[int, tuple[int]]) - 指定三维卷积核的深度、高度和宽度。可以为单个int或包含三个整数的Tuple。一个整数表示卷积核的深度、高度和宽度均为该值。包含三个整数的Tuple分别表示卷积核的深度、高度和宽度。
         - **mode** (int，可选) - 指定不同的卷积模式。此值目前未被使用。默认值： ``1`` 。
         - **stride** (Union[int, tuple[int]]，可选) - 卷积核移动的步长，可以为单个int或三个int组成的tuple。一个int表示在深度、高度和宽度方向的移动步长均为该值。三个int组成的tuple分别表示在深度、高度和宽度方向的移动步长。默认值： ``1`` 。
-        - **pad_mode** (str，可选) - 指定填充模式。取值为 ``"same"`` ， ``"valid"`` ，或 ``"pad"`` 。默认值： ``"valid"`` 。
+        - **pad_mode** (str，可选) - 指定填充模式，填充值为0。可选值为 ``"same"`` ， ``"valid"`` 或 ``"pad"`` 。默认值： ``"valid"`` 。
 
-          - **same**: 输出的高度和宽度分别与输入整除 `stride` 后的值相同。填充将被均匀地添加到高和宽的两侧，剩余填充量将被添加到维度末端。若设置该模式，`padding` 的值必须为0。
-          - **valid**: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `padding` 的值必须为0。
-          - **pad**: 对输入 `inputs` 进行填充。在输入的高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
+          - ``"same"``：在输入的深度、高度和宽度维度进行填充，使得当 `stride` 为 ``1`` 时，输入和输出的shape一致。待填充的量由算子内部计算，若为偶数，则均匀得填充在四周，若为奇数，多余的填充量将补充在前方/底部/右侧。如果设置了此模式， `pad` 必须为0。
+          - ``"valid"``：不对输入进行填充，返回输出可能的最大深度、高度和宽度，不能构成一个完整stride的额外的像素将被丢弃。如果设置了此模式， `pad` 必须为0。
+          - ``"pad"``：对输入填充指定的量。在这种模式下，在输入的深度、高度和宽度方向上填充的量由 `pad` 参数指定。如果设置此模式， `pad` 必须大于或等于0。
 
         - **pad** (Union(int, tuple[int])，可选) - 填充值。如果 `pad` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `pad` 。如果 `pad` 是6个整数的Tuple，则前部、后部、顶部、底部、左边和右边的填充分别等于填充 `pad[0]` 、 `pad[1]` 、 `pad[2]` 、 `pad[3]` 、 `pad[4]` 和 `pad[5]` 。默认值： ``0`` 。
         - **dilation** (Union[int, tuple[int]]，可选) - 卷积核膨胀尺寸。数据类型为int或由3个int组成的tuple： :math:`(dilation_d, dilation_h, dilation_w)`。目前在Ascend后端， 只支持该值为1。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。前后、垂直和水平方向上，其取值范围分别为[1, D]、[1, H]和[1, W]。默认值： ``1`` 。
@@ -71,11 +71,11 @@ mindspore.ops.Conv3D
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} = \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
+                D_{out} = \left \lfloor{\frac{D_{in} + pad[0] + pad[1] - (\text{dilation[0]} - 1) \times
                 \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} = \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + pad[2] + pad[3] - (\text{dilation[1]} - 1) \times
                 \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} = \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + pad[4] + pad[5] - (\text{dilation[2]} - 1) \times
                 \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 

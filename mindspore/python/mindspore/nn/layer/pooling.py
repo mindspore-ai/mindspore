@@ -297,16 +297,21 @@ class MaxPool3d(_PoolNd):
             or a tuple of three int numbers that represent depth, height and width of movement respectively.
             The value must be a positive integer. If the value is None, the default value `kernel_size` is used.
             Default: ``1`` .
-        pad_mode (str): The optional value for pad mode, is ``"same"`` , ``"valid"`` or ``"pad"`` , not case sensitive.
-            Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: The output shape is the same as the input shape evenly divided by `stride`.
-
-            - ``"valid"``: The possible largest height and width of output
-              will be returned without padding. Extra pixels will be discarded.
-
-            - ``"pad"``: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number
-              of zeros. If this mode is set, `padding` must be greater than or equal to 0.
+            - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally.  If the amount is even,
+              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              to the front/right/bottom side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible depth, height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the depth, height and width dimension is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int], list[int])): Pooling padding value. Default: ``0`` .
             `padding` can only be an integer or a tuple/list containing one or three integers.
@@ -437,16 +442,20 @@ class MaxPool2d(_PoolNd):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number or a single element tuple that
             represents the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: ``1`` .
-        pad_mode (str): The optional value for pad mode, is ``"same"`` , ``"valid"`` or ``"pad"`` , not case sensitive.
-            Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: The output shape is the same as the input shape evenly divided by `stride`.
-
-            - ``"valid"``: The possible largest height and width of output
-              will be returned without padding. Extra pixels will be discarded.
-
-            - ``"pad"``: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number
-              of zeros. If this mode is set, `padding` must be greater than or equal to 0.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the height and width directions is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int], list[int])): Specifies the padding value of the pooling operation.
             Default: ``0`` . `padding` can only be an integer or a tuple/list containing one or two integers. If
@@ -596,18 +605,20 @@ class MaxPool1d(_PoolNd):
         kernel_size (int): The size of kernel used to take the max value, Default: ``1`` .
         stride (int): The distance of kernel moving, an int number that represents
             the width of movement is stride, Default: ``1`` .
-        pad_mode (str): The optional value for pad mode, is ``"same"`` , ``"valid"`` or ``"pad"`` , not case sensitive.
-            Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: Adopts the way of completion. The total number of padding will be calculated in horizontal
-              and vertical directions and evenly distributed to top and bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the bottom and the right side.
-
-            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output
-              will be returned without padding. Extra pixels will be discarded.
-
-            - ``"pad"``: Performs padding on the input. Adds padding size of zeros to both ends of the input.
-              If this mode is set, padding must be greater than or equal to 0.
+            - ``"same"``: Pad the input at the begin and end so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally. If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess padding is goes to the right side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible length. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              at the begin and end is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int], list[int])): Padding value for the pooling. Default value is 0.
             padding can only be an integer or a tuple/list containing a single integer, in which case padding times or
@@ -787,16 +798,20 @@ class AvgPool3d(_PoolNd):
             element tuple that represents the depth, height and width of movement, or a tuple of three positive integers
             that represents depth, height and width of movement respectively. If the value is None, the default value
             `kernel_size` is used. Default: ``1`` .
-        pad_mode (str, optional): Specifies the padding method of pooling, optional values are ``"same"``, ``"valid"``
-            or ``"pad"`` , case insensitive. Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - same: The depth, height and width of the output is the same as the value after the input is divided
-              by stride.
-
-            - valid: Returns the output obtained by effective calculation without padding.
-              The excess pixels that do not meet the calculation will be discarded.
-
-            - pad: Pads the input. Fill the front, back, top, and bottom of the input with 0s of size `padding`.
+            - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally.  If the amount is even,
+              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              to the front/right/bottom side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible depth, height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the depth, height and width dimension is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int], list[int]), optional): Pooling padding value, only 'pad' mode can be set to
@@ -912,17 +927,20 @@ class AvgPool2d(_PoolNd):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number or a single element tuple that
             represents the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: ``1`` .
-        pad_mode (str) - Specifies the padding method of pooling, optional values are ``"same"``, ``"valid"`` or
-            ``"pad"`` , case insensitive. Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - ``"same"``: The height and width of the output is the same as the value after the input is divided by
-              stride.
-
-            - ``"valid"``: Returns the output obtained by effective calculation without padding.
-              The excess pixels that do not meet the calculation will be discarded.
-
-            - ``"pad"``: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number
-              of zeros. If this mode is set, `padding` must be greater than or equal to 0.
+            - ``"same"``: Pad the input around its edges so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible height and width. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              in the height and width directions is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
             Default: ``0`` . `padding` can only be an integer or a tuple/list containing one or two integers.
@@ -1062,16 +1080,20 @@ class AvgPool1d(_PoolNd):
         kernel_size (int): The size of kernel window used to take the average value, Default: ``1`` .
         stride (int): The distance of kernel moving, an int number that represents
             the width of movement is strides, Default: ``1`` .
-        pad_mode (str) - Specifies the padding method of pooling, optional values are ``"same"``, ``"valid"`` or
-            ``"pad"`` , case insensitive. Default: ``"valid"`` .
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
-            - same: The width of the output is the same as the value after the input is divided by stride.
-
-            - valid: Returns the output obtained by effective calculation without padding.
-              The excess pixels that do not meet the calculation will be discarded.
-
-            - pad: Performs padding on the input. Adds padding size of zeros to both ends of the input.
-              If this mode is set, padding must be greater than or equal to ``0`` .
+            - ``"same"``: Pad the input at the begin and end so that the shape of input and output
+              are the same when `stride` is set to ``1``.
+              The amount of padding to is calculated by the operator internally. If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess padding is goes to the right side.
+              If this mode is set, `padding` must be 0.
+            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+              possible length. Extra pixels that could not complete a full stride will
+              be discarded. If this mode is set, `padding` must be 0.
+            - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
+              at the begin and end is determined by the `padding` parameter.
+              If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
             Default: ``0`` . padding can only be an integer or a tuple/list containing a single integer, in which case

@@ -26,7 +26,11 @@ mindspore.nn.PoissonNLLLoss
         - **log_input** (bool，可选) - 是否使用对数输入。默认值： ``True`` 。
         - **full** (bool，可选) - 是否在损失计算中包括斯特林近似项。默认值： ``False`` 。
         - **eps** (float，可选) - 算对数时 `input` 的下界。默认值： ``1e-08`` 。
-        - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **input** (Tensor) - 输入Tensor。shape可以是任意维。

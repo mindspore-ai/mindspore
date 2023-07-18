@@ -27,7 +27,11 @@ mindspore.nn.BCELoss
 
     参数：
         - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。与输入数据的shape和数据类型相同。默认值： ``None`` 。
-        - **reduction** (str) - 指定输出结果的计算方式。可选值有： ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的加权平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为float16或float32。

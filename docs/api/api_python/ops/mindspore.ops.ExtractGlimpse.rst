@@ -17,7 +17,7 @@
           
           - 当 `noise` 为 ``"uniform"`` 或者 ``"gaussian"`` ，其填充结果是变量。
           - 当 `noise` 为 ``"zero"`` ，则 `uniform_noise` 必须为 ``False`` ，这样填充的噪声才是0，保证结果的正确。
-          - 当 `uniform_noise` 为 ``True`` ， `noise` 仅可以为 ``"uniform"`` 。当 `uniform_noise` 为 ``False`` ， `noise` 可以为 ``"uniform"`` 、 ``"gaussian"`` 和 ``"zero"`` 。
+          - 当 `uniform_noise` 为 ``True`` ， `noise` 仅可以为 ``"uniform"`` 。当 `uniform_noise` 为 ``False`` ， `noise` 可以为 ``"uniform"`` 、 ``"gaussian"`` 或 ``"zero"`` 。
 
     输入：
         - **x** (Tensor) - 一个 `4-D` 的Tensor，shape为 :math:`(batch_size, height, width, channels)` ，dtype为float32。

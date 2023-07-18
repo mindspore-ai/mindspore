@@ -27,7 +27,11 @@ mindspore.ops.hinge_embedding_loss
         - **inputs** (Tensor) - 预测值，公式中表示为 :math:`x`。
         - **targets** (Tensor) - 标签值，公式中表示为 :math:`y`，和 `inputs` 具有相同shape，包含1或-1。
         - **margin** (float, int) - Hinge Embedding Loss公式定义的阈值 :math:`margin`。公式中表示为 :math:`\Delta`。默认值： ``1.0`` 。
-        - **reduction** (str) - 指定应用于输出结果的计算方式， ``'none'``、 ``'mean'`` 、 ``'sum'`` 。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     返回：
         Tensor或Tensor scalar，根据 :math:`reduction` 计算的loss。

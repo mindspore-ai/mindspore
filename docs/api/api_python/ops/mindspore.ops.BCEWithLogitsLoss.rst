@@ -41,7 +41,11 @@ mindspore.ops.BCEWithLogitsLoss
     :math:`P_c>1` 增大召回率, :math:`P_c<1` 增大精度。
 
     参数：
-        - **reduction** (str) - 指定用于输出结果的计算方式。取值为 ``'mean'`` 、 ``'sum'`` 或 ``'none'`` ，不区分大小写。如果取值为 ``'none'`` ，则不执行 `reduction` 。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的加权平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - 输入预测值，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。数据类型必须为float16或float32。

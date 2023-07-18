@@ -205,7 +205,7 @@ class ExtractGlimpse(Primitive):
             - When `noise` is ``'zero'`` , the value of `uniform_noise` must be ``'False'`` and the
               filling noise will be zero so that the result is fixed.
             - When `uniform_noise` is ``'True'`` , the value of `noise` only can be ``'uniform'`` .
-              When `uniform_noise` is ``'False'`` , the value of `noise` can be ``'uniform'`` , ``'gaussian'`` and
+              When `uniform_noise` is ``'False'`` , the value of `noise` can be ``'uniform'`` , ``'gaussian'`` or
               ``'zero'`` .
 
     Inputs:
@@ -278,8 +278,16 @@ class CropAndResize(Primitive):
     Args:
         method (str, optional): An optional string that specifies the sampling method for resizing.
             It can be ``"bilinear"`` , ``"nearest"`` or ``"bilinear_v2"`` . The option "bilinear" stands for standard
-            ``"bilinear"`` interpolation algorithm, while ``"bilinear_v2"`` may result in better result in some cases.
+            ``"bilinear"`` interpolation algorithm and ``"bilinear"`` is the optimized variant of ``"bilinear"``, it
+            may achieve better result(higher precision and speed).
             Default: ``"bilinear"`` .
+
+            - ``"nearest"``: Nearest neighbor interpolation. Each output pixel is assigned the value of the
+              nearest input pixel. This method is simple and fast but can result in blocky or pixelated outputs.
+            - ``"bilinear"`: Bilinear interpolation. Each output pixel is a weighted average of the four nearest input
+              pixels, computed using bilinear interpolation. This method produces smoother results compared
+              to nearest neighbor interpolation.
+
         extrapolation_value (float, optional): An optional float value used extrapolation, if applicable.
             Default: ``0.0`` .
 

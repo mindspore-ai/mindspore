@@ -26,7 +26,11 @@ mindspore.ops.l1_loss
     参数：
         - **input** (Tensor) - 预测值，任意维度的Tensor。
         - **target** (Tensor) - 目标值，通常情况与 `input` 的shape相同。如果 `input` 和 `target` 的shape不同，需要保证他们之间可以互相广播。
-        - **reduction** (str, optional) - 应用于loss的reduction类型。取值为 ``"mean"`` ， ``"sum"`` 或 ``"none"`` 。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     返回：
         Tensor或Scalar，如果 `reduction` 为 ``none`` ，则返回与 `input` 具有相同shape和dtype的Tensor。否则，将返回Scalar。

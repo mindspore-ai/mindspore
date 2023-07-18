@@ -1484,10 +1484,20 @@ class MatrixDiagPartV3(Primitive):
     Refer to :func:`mindspore.ops.matrix_diag_part` for more details.
 
     Args:
-        align (str, optional): An optional string from: "RIGHT_LEFT"(default),
-            "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
-            It specifies how superdiagonals and subdiagonals should be aligned, respectively. "RIGHT_LEFT"
-            aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
+        align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
+            Supported values: ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
+            Default: ``"RIGHT_LEFT"`` .
+
+            - When set to ``"RIGHT_LEFT"`` , the alignment of superdiagonals will be towards the right side
+              (padding the row on the left), while subdiagonals will be towards the left side
+              (padding the row on the right)
+            - When set to ``"LEFT_RIGHT"`` , the alignment of superdiagonals will be towards the left side
+              (padding the row on the right), while subdiagonals will be towards the right side
+              (padding the row on the left)
+            - When set to ``"LEFT_LEFT"`` , the alignment of  both superdiagonals and subdiagonals will be towards
+              the left side(padding the row on the right).
+            - When set to ``"RIGHT_RIGHT"`` , the alignment of both superdiagonals and subdiagonals will be towards
+              the right side(padding the row on the left).
 
     Inputs:
         - **x** (Tensor) - Rank r, where r >= 2.

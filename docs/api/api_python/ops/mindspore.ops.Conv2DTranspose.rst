@@ -8,7 +8,13 @@ mindspore.ops.Conv2DTranspose
     参数：
         - **out_channel** (int) - 输出的通道数。
         - **kernel_size** (Union[int, tuple[int]]) - 卷积核的大小。
-        - **pad_mode** (str) - 填充的模式。它可以是 ``"valid"`` 、 ``"same"`` 或 ``"pad"`` 。默认值： ``"valid"`` 。请参考 :class:`mindspore.nn.Conv2dTranspose` 了解更多 `pad_mode` 的使用规则。
+        - **pad_mode** (str，可选) - 指定填充模式，填充值为0。可选值为 ``"same"`` ， ``"valid"`` 或 ``"pad"`` 。默认值： ``"valid"`` 。
+
+          - ``"same"``：在输入的四周填充，使得当 `stride` 为 ``1`` 时，输入和输出的shape一致。待填充的量由算子内部计算，若为偶数，则均匀得填充在四周，若为奇数，多余的填充量将补充在底部/右侧。如果设置了此模式， `pad` 必须为0。
+          - ``"valid"``：不对输入进行填充，返回输出可能的最大高度和宽度，不能构成一个完整stride的额外的像素将被丢弃。如果设置了此模式， `pad` 必须为0。
+          - ``"pad"``：对输入填充指定的量。在这种模式下，在输入的高度和宽度方向上填充的量由 `pad` 参数指定。如果设置此模式， `pad` 必须大于或等于0。
+          请参考 :class:`mindspore.nn.Conv2dTranspose` 了解更多 `pad_mode` 的使用规则。
+
         - **pad** (Union[int, tuple[int]]) - 指定要填充的填充值。默认值： ``0`` 。如果 `pad` 是整数，则顶部、底部、左侧和右侧的填充都等于 `pad` 。如果 `pad` 是四个整数的tuple，则顶部、底部、左侧和右侧的填充分别等于pad[0]、pad[1]、pad[2]和pad[3]。
         - **pad_list** (Union[str, None]) - 卷积填充方式，如（顶部、底部、左、右）。默认值： ``None`` ，表示不使用此参数。
         - **mode** (int) - 指定不同的卷积模式。当前未使用该值。默认值： ``1`` 。
