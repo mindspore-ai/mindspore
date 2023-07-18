@@ -58,14 +58,17 @@ class LstmCpuKernelMod : public MKLCpuKernelMod {
  private:
   void InitOutputSize(const std::vector<KernelTensorPtr> &outputs);
 
-  int weight_size_{0};
-  int weight_h_size_{0};
-  int input_size_{0};
-  int hidden_size_{0};
-  int num_layers_{0};
-  int batch_size_{0};
-  int seq_len_{0};
-  int num_directions_{0};
+  int64_t weight_size_{0};
+  int64_t weight_h_size_{0};
+  int64_t weight_r_size_{0};
+  int64_t input_size_{0};
+  int64_t hidden_size_{0};
+  int64_t num_layers_{0};
+  int64_t batch_size_{0};
+  int64_t seq_len_{0};
+  int64_t num_directions_{0};
+  int64_t proj_size_{0};
+  int64_t real_hidden_size_{0};
   bool bidirectional_{false};
   bool has_bias_{false};
   bool is_training_{false};
@@ -73,13 +76,16 @@ class LstmCpuKernelMod : public MKLCpuKernelMod {
 
   dnnl::memory::dims weights_dims_;
   dnnl::memory::dims weights_h_dims_;
+  dnnl::memory::dims weights_r_dims_;
   dnnl::memory::dims bias_dims_;
   dnnl::lstm_forward::primitive_desc prim_desc_;
   dnnl::memory::desc bias_desc_;
   dnnl::memory user_weights_memory_;
   dnnl::memory user_weights_h_memory_;
+  dnnl::memory user_weights_r_memory_;
   dnnl::memory weights_memory_;
   dnnl::memory weights_h_memory_;
+  dnnl::memory weights_r_memory_;
   dnnl::memory bias_memory_;
 };
 }  // namespace kernel

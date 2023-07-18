@@ -62,6 +62,8 @@ bool LSTMGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   hidden_size_ = op_prim->get_hidden_size();
   num_layers_ = op_prim->get_num_layers();
   has_bias_ = op_prim->get_has_bias();
+  proj_size_ = op_prim->get_proj_size();
+  real_hidden_size_ = proj_size_ > 0 ? proj_size_ : hidden_size_;
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -103,12 +105,15 @@ int LSTMGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   }
   weight_size_ = 0;
   weight_h_size_ = 0;
+  weight_r_size_ = 0;
   for (int64_t i = 0; i < num_layers_; ++i) {
     weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
-    weight_h_size_ += gate_size * hidden_size_;
+    weight_h_size_ += gate_size * real_hidden_size_;
+    weight_r_size_ += proj_size_ * hidden_size_;
   }
   weight_size_ = weight_size_ * num_directions_;
   weight_h_size_ = weight_h_size_ * num_directions_;
+  weight_r_size_ = weight_r_size_ * num_directions_;
   if (num_directions_ * num_layers_ != src_h_shape[0]) {
     MS_LOG(ERROR) << "Error iteration shape!";
     return KRET_RESIZE_FAILED;
@@ -124,13 +129,14 @@ void LSTMGradCpuKernelMod::InitDnnl() {
     direction = dnnl::rnn_direction::bidirectional_concat;
   }
   dim src_dims = {seq_len_, batch_size_, input_size_};
-  dim src_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
+  dim src_h_dims = {num_layers_, num_directions_, batch_size_, real_hidden_size_};
   dim src_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   weights_dims_ = {num_layers_, num_directions_, input_size_, kNumberFour, hidden_size_};
-  weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, kNumberFour, hidden_size_};
+  weights_h_dims_ = {num_layers_, num_directions_, real_hidden_size_, kNumberFour, hidden_size_};
+  weights_r_dims_ = {num_layers_, num_directions_, hidden_size_, proj_size_};
   bias_dims_ = {num_layers_, num_directions_, kNumberFour, hidden_size_};
-  dim dst_dims = {seq_len_, batch_size_, static_cast<int64_t>(hidden_size_) * num_directions_};
-  dim dst_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
+  dim dst_dims = {seq_len_, batch_size_, real_hidden_size_ * num_directions_};
+  dim dst_h_dims = {num_layers_, num_directions_, batch_size_, real_hidden_size_};
   dim dst_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dnnl::memory::desc src_desc = formatted_md(src_dims, tag::tnc);
   dnnl::memory::desc src_h_desc = formatted_md(src_h_dims, tag::ldnc);
@@ -141,15 +147,17 @@ void LSTMGradCpuKernelMod::InitDnnl() {
   dnnl::memory::desc dst_c_desc = formatted_md(dst_c_dims, tag::ldnc);
   auto weights_desc = formatted_md(weights_dims_, tag::any);
   auto weights_h_desc = formatted_md(weights_h_dims_, tag::any);
+  auto weights_r_desc = proj_size_ > 0 ? formatted_md(weights_r_dims_, tag::any) : dnnl::memory::desc();
+  auto peepole_desc = dnnl::memory::desc();
 
-  auto forward_desc = CreatePrimitive<dnnl::lstm_forward::desc>(dnnl::prop_kind::forward_training, direction, src_desc,
-                                                                src_h_desc, src_c_desc, weights_desc, weights_h_desc,
-                                                                bias_desc, dst_desc, dst_h_desc, dst_c_desc);
+  auto forward_desc = CreatePrimitive<dnnl::lstm_forward::desc>(
+    dnnl::prop_kind::forward_training, direction, src_desc, src_h_desc, src_c_desc, weights_desc, weights_h_desc,
+    peepole_desc, weights_r_desc, bias_desc, dst_desc, dst_h_desc, dst_c_desc);
   auto prim_forward_desc = CreateDesc<dnnl::lstm_forward::primitive_desc>(*forward_desc, eng);
   auto backward_desc = CreatePrimitive<dnnl::lstm_backward::desc>(
-    dnnl::prop_kind::backward, direction, src_desc, src_h_desc, src_c_desc, weights_desc, weights_h_desc, bias_desc,
-    dst_desc, dst_h_desc, dst_c_desc, src_desc, src_h_desc, src_c_desc, weights_desc, weights_h_desc, bias_desc,
-    dst_desc, dst_h_desc, dst_c_desc);
+    dnnl::prop_kind::backward, direction, src_desc, src_h_desc, src_c_desc, weights_desc, weights_h_desc, peepole_desc,
+    weights_r_desc, bias_desc, dst_desc, dst_h_desc, dst_c_desc, src_desc, src_h_desc, src_c_desc, weights_desc,
+    weights_h_desc, peepole_desc, weights_r_desc, bias_desc, dst_desc, dst_h_desc, dst_c_desc);
   prim_backward_desc_ = CreateDesc<dnnl::lstm_backward::primitive_desc>(*backward_desc, eng, prim_forward_desc);
   primitive_ = CreatePrimitive<dnnl::lstm_backward>(prim_backward_desc_);
   auto wksp_desc = GetWorkspaceDesc(prim_forward_desc);
@@ -159,24 +167,31 @@ void LSTMGradCpuKernelMod::InitDnnl() {
   // construct fw memory
   weights_layer_desc_ = GetWeightsLayerDesc(prim_backward_desc_);
   weights_iter_desc_ = GetWeightsIterDesc(prim_backward_desc_);
+  weights_proj_desc_ = GetWeightsProjectionDesc(prim_backward_desc_);
   bias_desc_ = GetBiasDesc(prim_backward_desc_);
   auto weights_mem_desc = CreateDesc<dnnl::memory::desc>(weights_dims_, dt::f32, tag::ldgoi);
   auto weights_h_mem_desc = CreateDesc<dnnl::memory::desc>(weights_h_dims_, dt::f32, tag::ldgoi);
+  auto weights_r_mem_desc = CreateDesc<dnnl::memory::desc>(weights_r_dims_, dt::f32, tag::ldoi);
   user_weights_memory_ = CreateDesc<dnnl::memory>(weights_mem_desc, eng);
   user_weights_h_memory_ = CreateDesc<dnnl::memory>(weights_h_mem_desc, eng);
+  user_weights_r_memory_ = CreateDesc<dnnl::memory>(weights_r_mem_desc, eng);
   weights_memory_ = CreateDesc<dnnl::memory>(weights_layer_desc_, eng);
   weights_h_memory_ = CreateDesc<dnnl::memory>(weights_iter_desc_, eng);
+  weights_r_memory_ = CreateDesc<dnnl::memory>(weights_proj_desc_, eng);
   bias_memory_ = CreateDesc<dnnl::memory>(bias_desc_, eng);
 
   // construct bw memory
   diff_weights_layer_desc_ = GetDiffWeightsLayerDesc(prim_backward_desc_);
   diff_weights_iter_desc_ = GetDiffWeightsIterDesc(prim_backward_desc_);
+  diff_weights_proj_desc_ = GetDiffWeightsProjectionDesc(prim_backward_desc_);
   diff_bias_desc_ = GetDiffBiasDesc(prim_backward_desc_);
   diff_weights_memory_ = CreateDesc<dnnl::memory>(diff_weights_layer_desc_, eng);
   diff_weights_h_memory_ = CreateDesc<dnnl::memory>(diff_weights_iter_desc_, eng);
+  diff_weights_r_memory_ = CreateDesc<dnnl::memory>(diff_weights_proj_desc_, eng);
   diff_bias_memory_ = CreateDesc<dnnl::memory>(diff_bias_desc_, eng);
   user_diff_weights_memory_ = CreateDesc<dnnl::memory>(weights_mem_desc, eng);
   user_diff_weights_h_memory_ = CreateDesc<dnnl::memory>(weights_h_mem_desc, eng);
+  user_diff_weights_r_memory_ = CreateDesc<dnnl::memory>(weights_r_mem_desc, eng);
 }
 
 void LSTMGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &src_h_desc,
@@ -188,6 +203,7 @@ void LSTMGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, con
   AddArgument(DNNL_ARG_SRC_ITER_C, src_c_desc);
   AddArgument(DNNL_ARG_WEIGHTS_LAYER, weights_layer_desc_);
   AddArgument(DNNL_ARG_WEIGHTS_ITER, weights_iter_desc_);
+  AddArgument(DNNL_ARG_WEIGHTS_PROJECTION, weights_proj_desc_);
   AddArgument(DNNL_ARG_BIAS, bias_desc);
   AddArgument(DNNL_ARG_DST_LAYER, dst_desc);
   AddArgument(DNNL_ARG_DST_ITER, dst_h_desc);
@@ -197,6 +213,7 @@ void LSTMGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, con
   AddArgument(DNNL_ARG_DIFF_SRC_ITER_C, src_c_desc);
   AddArgument(DNNL_ARG_DIFF_WEIGHTS_LAYER, diff_weights_layer_desc_);
   AddArgument(DNNL_ARG_DIFF_WEIGHTS_ITER, diff_weights_iter_desc_);
+  AddArgument(DNNL_ARG_DIFF_WEIGHTS_PROJECTION, diff_weights_proj_desc_);
   AddArgument(DNNL_ARG_DIFF_BIAS, bias_desc);
   AddArgument(DNNL_ARG_DIFF_DST_LAYER, dst_desc);
   AddArgument(DNNL_ARG_DIFF_DST_ITER, dst_h_desc);
@@ -211,6 +228,7 @@ void LSTMGradCpuKernelMod::SetArgumentHandleOp(const std::vector<kernel::Address
   SetArgumentHandle(DNNL_ARG_SRC_ITER_C, inputs[kSrcIterCIdx]->addr);
   SetArgumentHandle(DNNL_ARG_WEIGHTS_LAYER, GetDataHandle(weights_memory_));
   SetArgumentHandle(DNNL_ARG_WEIGHTS_ITER, GetDataHandle(weights_h_memory_));
+  SetArgumentHandle(DNNL_ARG_WEIGHTS_PROJECTION, GetDataHandle(weights_r_memory_));
   SetArgumentHandle(DNNL_ARG_BIAS, GetDataHandle(bias_memory_));
   SetArgumentHandle(DNNL_ARG_DST_LAYER, inputs[kDstLayerIdx]->addr);
   SetArgumentHandle(DNNL_ARG_DST_ITER, inputs[kDstIterIdx]->addr);
@@ -221,6 +239,7 @@ void LSTMGradCpuKernelMod::SetArgumentHandleOp(const std::vector<kernel::Address
   SetArgumentHandle(DNNL_ARG_DIFF_SRC_ITER_C, outputs[kSrcIterCIdx]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_WEIGHTS_LAYER, GetDataHandle(diff_weights_memory_));
   SetArgumentHandle(DNNL_ARG_DIFF_WEIGHTS_ITER, GetDataHandle(diff_weights_h_memory_));
+  SetArgumentHandle(DNNL_ARG_DIFF_WEIGHTS_PROJECTION, GetDataHandle(diff_weights_r_memory_));
   SetArgumentHandle(DNNL_ARG_DIFF_BIAS, GetDataHandle(diff_bias_memory_));
   SetArgumentHandle(DNNL_ARG_DIFF_DST_LAYER, inputs[kDiffDstLayerIdx]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_DST_ITER, inputs[kDiffDstIterIdx]->addr);
@@ -241,13 +260,20 @@ bool LSTMGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstmGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstmGradOutputsNum, kernel_name_);
+  size_t offset = 0;
   SetDataHandle(user_weights_memory_, inputs[kInputWeightIndex]->addr);
-  SetDataHandle(user_weights_h_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + weight_size_);
+  offset += weight_size_;
+  SetDataHandle(user_weights_h_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + offset);
+  offset += weight_h_size_;
   Reorder(&user_weights_memory_, &weights_memory_);
   Reorder(&user_weights_h_memory_, &weights_h_memory_);
+  if (proj_size_ > 0) {
+    SetDataHandle(user_weights_r_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + offset);
+    Reorder(&user_weights_r_memory_, &weights_r_memory_);
+    offset += weight_r_size_;
+  }
   if (has_bias_) {
-    SetDataHandle(bias_memory_,
-                  reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + weight_size_ + weight_h_size_);
+    SetDataHandle(bias_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + offset);
   } else {
     auto dst_ptr = GetDataHandle(bias_memory_);
     auto size = GetSize(bias_desc_);
@@ -256,16 +282,23 @@ bool LSTMGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
     }
   }
 
+  offset = 0;
   SetDataHandle(user_diff_weights_memory_, outputs[kOutputWeightIndex]->addr);
-  SetDataHandle(user_diff_weights_h_memory_,
-                reinterpret_cast<float *>(outputs[kOutputWeightIndex]->addr) + weight_size_);
+  offset += weight_size_;
+  SetDataHandle(user_diff_weights_h_memory_, reinterpret_cast<float *>(outputs[kOutputWeightIndex]->addr) + offset);
+  offset += weight_h_size_;
   ResetMemory(user_diff_weights_memory_, "user weights grad");
   ResetMemory(user_diff_weights_h_memory_, "user weights iter grad");
   ResetMemory(diff_weights_memory_, "weights grad");
   ResetMemory(diff_weights_h_memory_, "weights iter grad");
+  if (proj_size_ > 0) {
+    SetDataHandle(user_diff_weights_r_memory_, reinterpret_cast<float *>(outputs[kOutputWeightIndex]->addr) + offset);
+    ResetMemory(user_diff_weights_r_memory_, "user weights projection grad");
+    ResetMemory(diff_weights_r_memory_, "weights projection grad");
+    offset += weight_r_size_;
+  }
   if (has_bias_) {
-    SetDataHandle(diff_bias_memory_,
-                  reinterpret_cast<float *>(outputs[kOutputWeightIndex]->addr) + weight_size_ + weight_h_size_);
+    SetDataHandle(diff_bias_memory_, reinterpret_cast<float *>(outputs[kOutputWeightIndex]->addr) + offset);
   }
   auto dst_ptr = GetDataHandle(diff_bias_memory_);
   auto size = GetSize(diff_bias_desc_);
@@ -276,6 +309,9 @@ bool LSTMGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   ExecutePrimitive();
   Reorder(&diff_weights_memory_, &user_diff_weights_memory_);
   Reorder(&diff_weights_h_memory_, &user_diff_weights_h_memory_);
+  if (proj_size_ > 0) {
+    Reorder(&diff_weights_r_memory_, &user_diff_weights_r_memory_);
+  }
   return true;
 }
 
