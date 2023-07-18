@@ -694,8 +694,8 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
     variable_adjoint->set_is_fake_bprop(true);
     variable_adjoint->set_fake_prim_name(prim->name());
   }
-  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
-                  grad_param->op_grad_info->input_abs);
+  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
+                  grad_param->grad_by_value);
   MS_LOG(DEBUG) << "Finish update next edges, "
                 << "prim is: " << prim->name() << " variable is: " << variable_adjoint->ToString();
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
@@ -741,8 +741,8 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
     din->set_abstract(grad_param->op_grad_info->input_abs[i]);
     (void)outputs.emplace_back(din);
   }
-  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
-                  grad_param->op_grad_info->input_abs);
+  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
+                  grad_param->grad_by_value);
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(grad_param->cnode, variable_adjoint));
   SetGradMetaData(grad_param->op_grad_info->out_value, variable_adjoint);
@@ -986,7 +986,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     for (size_t i = 1; i < cnode->size(); ++i) {
       (void)input_abs.emplace_back(cnode->input(i)->abstract());
     }
-    UpdateNextEdges(variable_adjoint, outputs, input_value, input_abs);
+    UpdateNextEdges(variable_adjoint, outputs, input_value, input_abs, grad_param->grad_by_value);
     SetGradMetaData(out, variable_adjoint);
     (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(node, variable_adjoint));
     (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
@@ -1354,7 +1354,7 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForMakeTuple(const AnfNodePtr &input_node
     (void)make_tuple_dout.emplace_back(d);
     AddUser(dout, d, 1);
   }
-  UpdateNextEdges(variable_adjoint, make_tuple_dout, input_value, input_abs);
+  UpdateNextEdges(variable_adjoint, make_tuple_dout, input_value, input_abs, false);
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(input_node, variable_adjoint));
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   return k_node;
@@ -1407,7 +1407,7 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForTupleGetItem(const AnfNodePtr &input_n
                      SpecialType::kZerosLikeType)
       ->cast<CNodePtr>();
   UpdateNextEdges(variable_adjoint, {tuple_getitem_dout_value, index_dout_value}, {v_tuple, index_value},
-                  {tuple_item_cnode->input(kIndex1)->abstract(), tuple_item_cnode->input(kIndex2)->abstract()});
+                  {tuple_item_cnode->input(kIndex1)->abstract(), tuple_item_cnode->input(kIndex2)->abstract()}, false);
   AddUser(dout, tuple_getitem_dout_value, index_value_int + 1);
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(input_node, variable_adjoint));
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
@@ -1500,20 +1500,20 @@ void AutoGradCellImpl::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &nod
 }
 
 CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target,
-                                                   bool is_dynamic_shape) {
+                                                   bool grad_by_value, bool is_dynamic_shape) {
   MS_EXCEPTION_IF_NULL(cnode);
   const auto &prim = GetCNodePrimitive(cnode);
   if (prim == nullptr) {
     MS_LOG(DEBUG) << "Get cnode not primitive " << cnode->DebugString();
     return cnode;
   }
-  auto traverse_fn = [this, &device_target, is_dynamic_shape](const CNodePtr &cnode) {
+  auto traverse_fn = [this, &device_target, is_dynamic_shape, grad_by_value](const CNodePtr &cnode) {
     for (size_t i = 1; i < cnode->size(); ++i) {
       // Avoidig infinite loops
       if (!cnode->HasAttr(kIsKNode)) {
         if (cnode->input(i)->isa<CNode>()) {
-          cnode->set_input(i,
-                           ConvertConstInputToAttr(cnode->input(i)->cast<CNodePtr>(), device_target, is_dynamic_shape));
+          cnode->set_input(i, ConvertConstInputToAttr(cnode->input(i)->cast<CNodePtr>(), device_target, grad_by_value,
+                                                      is_dynamic_shape));
         }
       }
     }
@@ -1550,8 +1550,10 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
         }
       }
       cnode->AddAttr(kAttrConvertAttrNode, MakeValue(true));
-      auto &pair = node_attr_value_[cnode->ToString()];
-      (void)pair.emplace_back(std::make_pair(i, value));
+      if (!grad_by_value) {
+        auto &pair = node_attr_value_[cnode->ToString()];
+        (void)pair.emplace_back(std::make_pair(i, value));
+      }
       prim->set_attr(input_names_vec[i], value);
     } else {
       (void)new_inputs.emplace_back(input_node);
@@ -1564,7 +1566,8 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
 }
 
 void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs) {
+                                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs,
+                                       bool grad_by_value) {
   size_t input_size = input_value.size();
   if (dins.size() != input_size) {
     MS_LOG(EXCEPTION) << "The size of dins " << dins.size() << " is not same as input_value " << input_size;
@@ -1577,7 +1580,7 @@ void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const
                   << din->DebugString();
 #ifndef ENABLE_TEST
     // VM no need run pass
-    din = ConvertConstInputToAttr(din, device_target_);
+    din = ConvertConstInputToAttr(din, device_target_, grad_by_value);
     ConvertValueNodeValueToTensor(din);
 #endif
     UpdateNextEdge(fn, din, input_value[i], abs[i]);
