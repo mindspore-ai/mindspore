@@ -15,6 +15,9 @@ mindspore.ops.cholesky_solve
     .. math::
         output = (input2 * input2^{T})^{{-1}}input
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input** (Tensor) - shape为 :math:`(*, N, M)` 的Tensor，表示2D或3D矩阵，数据类型是float32或float64。
         - **input2** (Tensor) - shape为 :math:`(*, N, N)` 的Tensor，表示由2D或3D方阵组成上三角或下三角的Cholesky因子，数据类型是float32或float64。 `input` 和 `input2` 必须具有相同的数据类型。

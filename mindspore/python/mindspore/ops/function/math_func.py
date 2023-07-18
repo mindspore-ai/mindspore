@@ -1146,6 +1146,9 @@ def floor_divide(input, other):
     where the :math:`floor` indicates the Floor operator, for more details,
     please refer to the :class:`mindspore.ops.Floor` operator.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
@@ -3704,6 +3707,9 @@ def lu_solve(b, LU_data, LU_pivots):
 
     LU decomposition of a matrix can be generated from :func:`mindspore.scipy.linalg.lu_factor` .
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         b (Tensor): Column vector `b` in the above equation. It has shape :math:`(*, m, k)`,
             where :math:`*` is batch dimensions, with data type float32, float16.
@@ -5119,9 +5125,6 @@ def ormqr(input, tau, other, left=True, transpose=False):
     Calculates two matrices multiplication of a product of a general matrix with Householder matrices.
     Calculates the product of a matrix C(given by `other`) with dimensions (m, n) and a matrix Q which is represented
     using Householder reflectors (`input`, `tau`). Returns a Tensor.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): Tensor of shape :math:`(*, mn, k)`, when `left` is True, mn equals to m,
@@ -7878,6 +7881,9 @@ def logcumsumexp(input, axis):
     Compute the cumulative log-sum-exp of the input tensor `input` along `axis` .
     For example, if `input` is a tensor [a, b, c] and `axis` is 0, the output will be [a, log(exp(a) + exp(b)),
     log(exp(a) + exp(b) + exp(c))].
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor) - The input tensor. Must be one of the following types: float16, float32, float64.
@@ -10745,6 +10751,9 @@ def cholesky_solve(input, input2, upper=False):
     .. math::
         output = (input2 * input2^{T})^{{-1}}input
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,
             with float32 or float64 data type.
@@ -12866,6 +12875,9 @@ def vecdot(x, y, *, axis=-1):
     .. math::
 
         \sum_{i=1}^{n} \bar{x_{i}}{y_{i}}
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         x (Tensor): First batch of vectors. The shape of Tensor is :math:`(*,N)`

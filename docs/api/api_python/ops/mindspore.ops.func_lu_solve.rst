@@ -7,6 +7,9 @@ mindspore.ops.lu_solve
 
     一个矩阵的LU分解可以由 :func:`mindspore.scipy.linalg.lu_factor` 得到。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **b** (Tensor) - 上面公式的列向量 `b` 。 `b` 的shape为 :math:`(*, m, k)`，其中 :math:`*` 是batch的维度， 数据类型是float32、float16。
         - **LU_data** (Tensor) - LU分解的结果。shape为 :math:`(*, m, m)` ，其中 :math:`*` 是batch的维度。
