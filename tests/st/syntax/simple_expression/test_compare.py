@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 # ============================================================================
 """ test syntax for logic expression """
 
+import pytest
 import mindspore.nn as nn
 import mindspore
 from mindspore import context
@@ -31,21 +32,51 @@ class Net(nn.Cell):
         return x > y
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_compare_bool_vs_bool():
+    """
+    Feature: simple expression
+    Description: test compare.
+    Expectation: No exception
+    """
     net = Net()
     ret = net(True, True)
-    print(ret)
+    assert not ret
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_compare_bool_vs_int():
+    """
+    Feature: simple expression
+    Description: test compare.
+    Expectation: No exception
+    """
     net = Net()
     ret = net(True, 1)
-    print(ret)
+    assert not ret
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_compare_tensor_int_vs_tensor_float():
+    """
+    Feature: simple expression
+    Description: test compare.
+    Expectation: No exception
+    """
     x = Tensor(1, mindspore.int32)
     y = Tensor(1.5, mindspore.float64)
     net = Net()
     ret = net(x, y)
-    print(ret)
+    assert not ret

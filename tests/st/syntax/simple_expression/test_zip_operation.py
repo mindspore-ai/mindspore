@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,19 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, Parameter
+from mindspore import Tensor, Parameter, context
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 import mindspore as ms
 
+context.set_context(mode=context.GRAPH_MODE)
 
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_zip_operation_args_size():
     """
     Feature: Check the size of inputs of ZipOperation.
@@ -53,6 +60,11 @@ def test_zip_operation_args_size():
         assert np.all(out.asnumpy() == 1)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_zip_operation_args_type():
     """
     Feature: Check the type of inputs of ZipOperation.

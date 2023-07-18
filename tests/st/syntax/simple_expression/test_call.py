@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 # ============================================================================
 """ test syntax for logic expression """
 
+import pytest
 import numpy as np
 
 import mindspore.nn as nn
@@ -25,58 +26,29 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE)
 
 
-class ArgumentNum(nn.Cell):
-    def __init__(self):
+class Net(nn.Cell):
+    def __init__(self,):
         super().__init__()
         self.matmul = P.MatMul()
 
     def construct(self, x, y):
-        super(ArgumentNum, 2, 3).aa()
         out = self.matmul(x, y)
         return out
 
 
-def test_super_argument_num():
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_call():
+    """
+    Feature: simple expression
+    Description: call network.
+    Expectation: No exception
+    """
     x = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
     y = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
-    net = ArgumentNum()
+    net = Net()
     ret = net(x, y)
-    print(ret)
-
-
-class ArgumentNotSelf(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.matmul = P.MatMul()
-
-    def construct(self, x, y):
-        super(ArgumentNotSelf, 2).aa()
-        out = self.matmul(x, y)
-        return out
-
-
-def test_super_argument_not_self():
-    x = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
-    y = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
-    net = ArgumentNotSelf()
-    ret = net(x, y)
-    print(ret)
-
-
-class ArgumentType(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.matmul = P.MatMul()
-
-    def construct(self, x, y):
-        super(ArgumentType, self).aa()
-        out = self.matmul(x, y)
-        return out
-
-
-def test_super_argument_type():
-    x = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
-    y = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
-    net = ArgumentType()
-    ret = net(x, y)
-    print(ret)
+    assert (ret.asnumpy() == [[3, 3, 3, 3]]).all()

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
 # ============================================================================
 """ test syntax for logic expression """
 
+import pytest
 import mindspore.nn as nn
-import mindspore
 from mindspore import context
-from mindspore.common.tensor import Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -27,20 +26,23 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.m = 1
 
-    def construct(self, x, y):
-        x += 1
-        #x += self.x
-        print(x)
-        #x = y
-        x = "aaa"
-        #x = 5.0
-        return x
+    def construct(self, x):
+        return ~x
 
 
-def test_assign():
-    net = Net()
-    y = Tensor((1), mindspore.int32)
-    x = 1
-    ret = net(x, y)
-    print(ret)
-    print(x)
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_invert():
+    """
+    Feature: simple expression
+    Description: test invert operator.
+    Expectation: No exception
+    """
+    with pytest.raises(TypeError) as err:
+        net = Net()
+        ret = net(1)
+        print(ret)
+    assert "For Primitive[LogicalNot], the input argument[x] must be a Tensor but got Int64" in str(err)

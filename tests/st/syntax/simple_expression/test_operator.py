@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,14 @@ from mindspore.ops import functional as F
 from mindspore.nn import Cell
 import mindspore as ms
 
+context.set_context(mode=context.GRAPH_MODE)
 
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_inner_scalar_divisor():
     """
     Feature: Check whether the divisor of inner scalar is zero.
@@ -38,7 +45,6 @@ def test_inner_scalar_divisor():
         def construct(self, x):
             return x + self.param_a + 5 / 0
 
-    context.set_context(device_target="GPU")
     x = Tensor(2, dtype=ms.int32)
     net = Net()
     with pytest.raises(Exception, match="The divisor could not be zero."):
@@ -46,6 +52,11 @@ def test_inner_scalar_divisor():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_inner_scalar_mod():
     """
     Feature: Check the input of inner scalar mod.
@@ -67,6 +78,11 @@ def test_inner_scalar_mod():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_inner_scalar_mod_args_length():
     """
     Feature: Check the length of input of inner scalar mod.
@@ -89,6 +105,11 @@ def test_inner_scalar_mod_args_length():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_input_is_empty():
     """
     Feature: Check the length of inputs of make_range operator.
@@ -104,11 +125,17 @@ def test_make_range_input_is_empty():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="For 'range', the arguments could not be empty."):
+    with pytest.raises(RuntimeError) as err:
         ret = net(x, y)
         print("ret:", ret)
+    assert "For 'make_range', the input size should within [1, 3] but got0" in str(err)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_step_zero():
     """
     Feature: Check the length of inputs of make_range operator.
@@ -129,6 +156,11 @@ def test_make_range_step_zero():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_error_input_1():
     """
     Feature: Check the inputs of make_range operator.
@@ -144,11 +176,17 @@ def test_make_range_error_input_1():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="For 'range', while the argument 'start'"):
+    with pytest.raises(RuntimeError) as err:
         ret = net(x, y)
         print("ret:", ret)
+    assert "For 'make_range', while the argument 'start' 1 is greater than the argument 'stop' -1" in str(err)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_error_input_2():
     """
     Feature: Check the length of inputs of make_range operator.
@@ -164,11 +202,17 @@ def test_make_range_error_input_2():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="For 'range', while the argument 'start'"):
+    with pytest.raises(RuntimeError) as err:
         ret = net(x, y)
         print("ret:", ret)
+    assert "For 'make_range', when the argument 'start' -1 is less than or equal to the argument 'stop' 1" in str(err)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_input_type():
     """
     Feature: Check the type of inputs of make_range operator.
@@ -184,11 +228,17 @@ def test_make_range_input_type():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="The type of inputs in range operator only support int64 number."):
+    with pytest.raises(TypeError) as err:
         ret = net(x, y)
         print("ret:", ret)
+    assert "For 'make_range', the 1th input should be a int scalar but got AbstractScalar" in str(err)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_input_type_2():
     """
     Feature: Check the type of inputs of make_range operator.
@@ -204,11 +254,17 @@ def test_make_range_input_type_2():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="The type of inputs in range operator only support int64 number."):
+    with pytest.raises(TypeError) as err:
         ret = net(x, y)
         print("ret:", ret)
+    assert "For 'make_range', the 2th input should be a int scalar but got AbstractScalar" in str(err)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_input_type_3():
     """
     Feature: Check the type of inputs of make_range operator.
@@ -224,11 +280,17 @@ def test_make_range_input_type_3():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="The type of inputs in range operator only support int64 number."):
+    with pytest.raises(TypeError) as err:
         ret = net(x, y)
         print("ret:", ret)
+    assert "For 'make_range', the 0th input should be a int scalar but got AbstractScalar" in str(err)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_input_size():
     """
     Feature: Check the size of inputs of make_range operator.
@@ -244,11 +306,17 @@ def test_make_range_input_size():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(Exception, match="For 'range', the size of arguments could not exceed 3."):
+    with pytest.raises(RuntimeError) as err:
         ret = net(x, y)
         print("ret:", ret)
+    assert "For 'make_range', the input size should within [1, 3] but got4" in str(err)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_overflow():
     """
     Feature: Check the size of inputs of range operator.
@@ -270,6 +338,11 @@ def test_make_range_overflow():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_range_overflow_2():
     """
     Feature: Check the size of inputs of make_range operator.
@@ -291,6 +364,11 @@ def test_make_range_overflow_2():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_typeof():
     """
     Feature: Check the size of inputs of typeof operator.
@@ -309,6 +387,11 @@ def test_typeof():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tuple_div():
     """
     Feature: Check the size of inputs of tuple_div operator.
@@ -327,6 +410,11 @@ def test_tuple_div():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tuple_div_type():
     """
     Feature: Check the size of inputs of tuple_div operator.
@@ -345,6 +433,11 @@ def test_tuple_div_type():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tuple_div_zero():
     """
     Feature: Check the size of inputs of tuple_div operator.
@@ -363,6 +456,11 @@ def test_tuple_div_zero():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tuple_div_input_is_not_divisible():
     """
     Feature: Check whether the inputs of tuple_div is divisible.
@@ -381,6 +479,11 @@ def test_tuple_div_input_is_not_divisible():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_make_slice_scalar():
     """
     Feature: Check whether the scalar input of make_slice is int or bool.
