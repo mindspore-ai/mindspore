@@ -764,7 +764,20 @@ CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const A
   MS_EXCEPTION_IF_NULL(tape_dout);
   *tape_dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), grad_param->op_grad_info->out_abs,
                                 SpecialType::kZerosLikeType);
-  (void)bprop_inputs.emplace_back(*tape_dout);
+  bool is_from_fprop = grad_param->is_control_flow || grad_param->is_ms_function_self_dynamic_shape;
+  if (!is_from_fprop && is_ms_function_dynamic_shape &&
+      grad_param->op_grad_info->out_abs->isa<abstract::AbstractSequence>()) {
+    auto abs_seq = grad_param->op_grad_info->out_abs->cast<abstract::AbstractSequencePtr>();
+    for (size_t i = 0; i < abs_seq->size(); ++i) {
+      CNodePtr din =
+        ad_param()->tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), *tape_dout, NewValueNode(SizeToLong(i))});
+      din->set_abstract(abs_seq->elements()[i]);
+      (void)bprop_inputs.emplace_back(din);
+      AddUser(*tape_dout, din, kIndex1);
+    }
+  } else {
+    (void)bprop_inputs.emplace_back(*tape_dout);
+  }
   (void)bprop_inputs.insert(bprop_inputs.cbegin(), NewValueNode(bprop_graph));
   // get_bprop is a call node
   auto bprop_cnode = ad_param()->tape_->NewCNode(bprop_inputs);
@@ -898,6 +911,13 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
   ad_graph_out->set_abstract(std::make_shared<abstract::AbstractTuple>(out_abs_list));
   ad_param()->tape_->set_output(ad_graph_out);
   auto ad_graph = ad_param()->tape_;
+  if (grad_param->is_ms_function_graph && grad_param->use_dynamic_shape_process &&
+      ad_graph->parameters().back()->abstract()->isa<abstract::AbstractSequence>()) {
+    auto manager = MakeManager();
+    MS_EXCEPTION_IF_NULL(manager);
+    manager->AddFuncGraph(ad_graph);
+    PyNativeAlgo::Common::ProcessTupleParam(ad_graph, ad_graph->parameters().size() - kIndex1);
+  }
   PyNativeAlgo::Common::DumpGraphIR("ad_output_graph.ir", ad_graph);
 
   // Save ad graph in cache
@@ -1064,16 +1084,6 @@ void AutoGradCellImpl::CreateParameterAdjoint(const GradParamPtr &grad_param) co
   for (size_t i = 0; i < graph_parameters.size(); ++i) {
     MS_LOG(DEBUG) << "Get param " << graph_parameters[i]->DebugString();
     ParameterPtr param = ad_param()->tape_->add_parameter();
-    auto tensor = PyNativeAlgo::Common::GetTensorFromParam(graph_parameters[i]);
-    // Weight parameter
-    if (tensor != nullptr) {
-      const auto &param_info = tensor->param_info();
-      MS_EXCEPTION_IF_NULL(param_info);
-      const auto &param_name = param_info->name();
-      param->set_name(param_name);
-      param->debug_info()->set_name(param_name);
-      param->set_default_param(tensor);
-    }
     param->set_abstract(graph_parameters[i]->abstract());
     auto zeros_like_dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), graph_parameters[i]->abstract(),
                                             SpecialType::kZerosLikeType);
