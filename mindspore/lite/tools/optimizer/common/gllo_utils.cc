@@ -1362,7 +1362,7 @@ std::pair<CNodePtr, int> GetRealCertainVarInput(const CNodePtr &cnode, size_t in
   MS_CHECK_TRUE_MSG(cnode->input(index) != nullptr, {}, "required input is nullptr");
   auto real_input_cnode = cnode->input(index)->cast<CNodePtr>();
   if (real_input_cnode == nullptr) {
-    MS_LOG(WARNING) << "input node is not a cnode.";
+    MS_LOG(DEBUG) << "input node is not a cnode.";
     return {};
   }
   int item_index = 0;

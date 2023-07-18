@@ -200,6 +200,9 @@ int LiteTensorExtractor::GetCNodeConstInputToAbstract(const CNodePtr &cnode, con
       MS_LOG(DEBUG) << "abstract already have const data.";
       continue;
     }
+    if (data_info.data_.size() == 0) {
+      continue;
+    }
 
     if (input_tensor->Size() > 0 && input_tensor->Size() == data_info.data_.size()) {
       if (EOK != common::huge_memcpy(reinterpret_cast<uint8_t *>(input_tensor->data_c()), input_tensor->Size(),
@@ -207,7 +210,7 @@ int LiteTensorExtractor::GetCNodeConstInputToAbstract(const CNodePtr &cnode, con
         MS_LOG(ERROR) << "memcpy_s failed.";
         return RET_ERROR;
       }
-    } else if (data_info.data_.size() != 0) {
+    } else {
       MS_LOG(ERROR) << "the size of tensor data: {" << input_tensor->Size() << "} is not equal to the size of node: {"
                     << data_info.data_.size() << "}";
       return RET_ERROR;
