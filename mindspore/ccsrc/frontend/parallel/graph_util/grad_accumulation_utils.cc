@@ -168,7 +168,7 @@ void TagMicroBatchBpEndPrim(const FuncGraphPtr &root) {
     auto cnode = (*node)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto prim = GetCNodePrimitive(cnode);
-    if (!prim || IsInParallelBlackList(prim) ||
+    if (!prim || !IsParallelConsiderCNode(cnode) ||
         IsSomePrimitiveList(cnode, {prim::kPrimTupleGetItem->name(), prim::kPrimMakeTuple->name()})) {
       continue;
     }

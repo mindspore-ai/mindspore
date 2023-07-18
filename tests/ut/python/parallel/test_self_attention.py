@@ -96,6 +96,11 @@ class Net(nn.Cell):
 
 
 def test_self_attention_standalone():
+    """
+    Feature: SelfAttention
+    Description: Verify the result of SelfAttention
+    Expectation: success
+    """
     context.reset_auto_parallel_context()
     set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="stand_alone")

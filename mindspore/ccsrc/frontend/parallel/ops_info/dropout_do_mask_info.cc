@@ -197,7 +197,6 @@ void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
 // of DropoutGenMask according to the strategy of DropoutDoMask. When the DropoutDoMask performs repeated calculation
 // and both seeds of DropoutGenMask are 0, two new seeds are automatically generated for DropoutGenMask.
 std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodePtr &cnode) {
-  std::vector<Operator> replace_ops;
   MS_EXCEPTION_IF_NULL(cnode);
   PrimitivePtr prim = GetDropoutGenMaskPrim(cnode);
   MS_EXCEPTION_IF_NULL(prim);
@@ -221,6 +220,7 @@ std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodeP
     MS_LOG(EXCEPTION) << "The attrs of dropout gen mask must be have seed0 and seed1";
   }
 
+  std::vector<Operator> replace_ops;
   Shape input_slice_shape = inputs_tensor_info_[0].slice_shape();
   int64_t seed_0 = GetValue<int64_t>(attr[SEED0]);
   int64_t seed_1 = GetValue<int64_t>(attr[SEED1]);

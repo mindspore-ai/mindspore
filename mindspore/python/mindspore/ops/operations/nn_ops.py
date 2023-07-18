@@ -11368,3 +11368,68 @@ class PromptFlashAttention(Primitive):
         validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
         self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths"],
                                 outputs=["attention_out"])
+
+
+class FlashAttentionScore(Primitive):
+    r"""
+    FlashAttentionScore.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+    B -- Batch size
+    S -- Sequence length
+    H -- Hidden size
+    N -- Num heads
+    D -- Dim size
+    Args:
+        head_num (int): The number of the heads.
+        keep_prob (float): The keep probability of dropout. Default: 1.0.
+        scale_value (float): The scale value. Default: 1.0.
+        pre_tokens (int): Previous tokens. Default: 65536.
+        next_tokens (int): Next tokens. Default: 65536.
+        inner_precise (int): Specify the execution mode, where 0 indicates high precision mode and 1 indicates high
+        performance mode. Default: 0.
+        input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "SBH"].
+        Currently, only BSH is supported. Default: "BSH".
+
+    Inputs:
+        - **query** (Tensor) - The query tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)`.
+        - **key** (Tensor) - The key tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)`.
+        - **value** (Tensor) - The value tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)`.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
+          For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
+        - **drop_mask** (Tensor) - The dropout mask tensor with data type of UInt8.
+          Input tensor of shape :math:`(B, N, S, S // 8) or ()`.
+        - **real_shift** (None) - The position embedding code of float16 or float32, not implemented yet.
+        - **padding_mask** (None) - The padding mask of float16 or float32, not implemented yet.
+
+    Outputs:
+        - **attention_out** (Tensor) - (B, S, H)
+        - **softmax_max** (Tensor) - (B, N, S, 16)/(B, N, S, 8) when fp16/fp32
+        - **softmax_sum** (Tensor) - (B, N, S, 16)/(B, N, S, 8) when fp16/fp32
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=65536, next_tokens=65536, inner_precise=0,
+                 input_layout="BSH"):
+        """Initialize FlashAttentionScore"""
+        validator.check_value_type('head_num', head_num, [int], self.name)
+        validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
+        validator.check_float(keep_prob, 0.0, validator.GE, "keep_prob", self.name)
+        validator.check_float(keep_prob, 1.0, validator.LE, "keep_prob", self.name)
+        validator.check_value_type('scale_value', scale_value, [float], self.name)
+        validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
+        validator.check_value_type('next_tokens', next_tokens, [int], self.name)
+        validator.check_value_type('inner_precise', inner_precise, [int], self.name)
+        if inner_precise not in [0, 1]:
+            raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
+        validator.check_value_type('input_layout', input_layout, [str], self.name)
+        if input_layout not in ["BSH"]:
+            raise ValueError(f"Attribute 'input_layout' must be either 'bsh' or 'sbh', but got {input_layout}")
+        self.init_prim_io_names(
+            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask'],
+            outputs=['attention_out', 'softmax_max', 'softmax_sum'])
