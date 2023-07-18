@@ -402,7 +402,9 @@ class _Context:
 
         Args:
             aoe_config (dict):
-                - job_type (str): "1", "2".
+                - job_type (str): ``"1"``, ``"2"``. Default: ``"2"`` .
+                  - ``"1"``: subgraph tuning.
+                  - ``"2"``: operator tuning.
         """
 
         aoe_cfgs = {'job_type': ["1", "2"]}
@@ -1194,14 +1196,15 @@ def set_context(**kwargs):
             If the operator does not support the user-specified precision, the precision will
             be changed automatically. Default: ``True`` .
         aoe_tune_mode (str): AOE tuning mode setting, which is not set by default.
-            When set to ``online`` , the tuning in online function is turned on.
-            When set to ``offline`` , ge graph will be save for offline tuning.
+            When set to ``"online"`` , the tuning in online function is turned on.
+            When set to ``"offline"`` , ge graph will be save for offline tuning.
         aoe_config (dict): Set the parameters specific to Ascend Optimization Engine. It is not set by default.
 
-            - job_type (str): Mode type setting, default value is 2.
+            - job_type (str): Mode type setting, default value is ``"2"``.
 
-              - 1: subgraph tuning;
-              - 2: operator tuning.
+              - ``"1"``: subgraph tuning;
+              - ``"2"``: operator tuning.
+
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: ``False`` .
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: ``1000`` .
