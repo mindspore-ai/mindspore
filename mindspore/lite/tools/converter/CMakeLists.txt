@@ -50,7 +50,6 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/inputs_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unify_format.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl/plugin/acl_pass_plugin.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl/common/acl_types.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/*.cc
         ${SRC_DIR}/extendrt/delegate/plugin/ascend_ge_executor_plugin.cc
         ${SRC_DIR}/common/quant_utils.cc
