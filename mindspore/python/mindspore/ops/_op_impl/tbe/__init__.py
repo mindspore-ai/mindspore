@@ -16,11 +16,11 @@
 """tbe ops"""
 from .broadcast_to import _broadcast_to_tbe  # The name is occupied
 from .broadcast_to_ds import _broadcast_to_ds_tbe  # The name is occupied
-from .batch_to_space import _batch_to_space_tbe  # attr type is listInt，not listListInt
-from .batch_to_space_nd import _batch_to_space_nd_tbe  # attr type is listInt，not listListInt
+from .batch_to_space import _batch_to_space_tbe  # attr type is listInt, not listListInt
+from .batch_to_space_nd import _batch_to_space_nd_tbe  # attr type is listInt, not listListInt
 from .batch_to_space_nd_v2 import _batch_to_space_nd_v2_tbe  # The name is occupied
-from .space_to_batch import _space_to_batch_tbe  # attr type is listInt，not listListInt
-from .space_to_batch_nd import _space_to_batch_nd_tbe  # attr type is listInt，not listListInt
+from .space_to_batch import _space_to_batch_tbe  # attr type is listInt, not listListInt
+from .space_to_batch_nd import _space_to_batch_nd_tbe  # attr type is listInt, not listListInt
 from .dynamic_gru_v2 import _dynamic_gru_v2_tbe  # input4 is None, GE will change to hidden op by pass
 from .dynamic_rnn import _dynamic_rnn_tbe  # input4 is None, GE will change to hidden op by pass
 from .kl_div_loss_grad import _kl_div_loss_grad_tbe  # Accuracy issues

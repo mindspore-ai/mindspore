@@ -36,9 +36,9 @@ class CommunicationInfo(Enum):
         RDMA: Communication link between servers in cluster training.
         SDMA: Communication link inside server in cluster training.
         LOCAL: The operation of this card has no transmission process.
-        RDMASEND：Communication operator of RDMA link.
-        REDUCE_INLINE：Communication operator of SDMA link.
-        MEMCPY：Communication operator of SDMA link.
+        RDMASEND: Communication operator of RDMA link.
+        REDUCE_INLINE: Communication operator of SDMA link.
+        MEMCPY: Communication operator of SDMA link.
         NOTIFY_RECORD: Communication operator of SDMA link.
         NOTIFY_WAIT: operator of LOCAL.
     """
@@ -277,7 +277,7 @@ class HcclParser:
     def _get_communication_operator_name_mapping_info(self):
         """Get the name of communication operators mapping between hccl and step trace."""
         dir_path = self._validate_dir_path(self._source_dir)
-        # The name of the operator in hccl is like：operatorName_{Ordered_number}_xx_xx.
+        # The name of the operator in hccl is like: operatorName_{Ordered_number}_xx_xx.
         operators_names_in_hccl = [entry.name for entry in os.scandir(dir_path) if entry.is_dir()]
         operators_names_in_hccl_set = set({i.split('_')[0] for i in operators_names_in_hccl})
         op_names_in_hccl_dic = dict()

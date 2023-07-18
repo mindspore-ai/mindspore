@@ -72,7 +72,7 @@ class StructType(Enum):
         """
         Parse the binary data to get the unpacked data.
 
-        Args：
+        Args:
             data_struct (dict): Key is the data name, value is StructType.
             binary_data (str): This value should be a binary string.
             special_func (Callable): This is a callable function,

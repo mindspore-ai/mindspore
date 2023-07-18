@@ -317,7 +317,7 @@ class FlopsParser:
         For op_name like "Default/network", the "network" will be renamed as "network(Default)".
         For op_name like "recompute_Default/network", "network" --> "network(recompute_Default)".
         For op_name like "Gradients/network", "network" --> "network(Gradients)".
-        For op_name like "Gradients/recompute_Default/network"，"network" --> "network(recompute_Gradients)".
+        For op_name like "Gradients/recompute_Default/network", "network" --> "network(recompute_Gradients)".
         """
         # Only extracts the scope name, remove the operator name.
         scope_list = op_name.split('/')[:-1]

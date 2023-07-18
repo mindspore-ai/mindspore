@@ -478,7 +478,7 @@ class NonMaxSuppressionWithOverlaps(Primitive):
     Raises:
         TypeError: If the dtype of `overlaps` , `scores` `overlap_threshold` and `score_threshold`
                    is not float16, float32 or float64.
-        TypeError: If `overlaps` or `scores` is not Tensor。
+        TypeError: If `overlaps` or `scores` is not Tensor.
         TypeError: If `max_output_size` is not Tensor or Scalar.If `max_output_size` is not int32.
         TypeError: If `overlap_threshold` is not Tensor or scalar. If its type is not float16, float32 or float64.
         TypeError: If `score_threshold` is not Tensor or scalar. If its type is not float16, float32 or float64.

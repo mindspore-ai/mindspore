@@ -1580,7 +1580,7 @@ class Profiler:
         self._profile_framework = kwargs.pop("profile_framework", "all")
         if self._profile_framework not in ["memory", "time", "all", None]:
             logger.warning(f"For '{self.__class__.__name__}', the parameter profile_framework must be one of ['memory',"
-                           f" 'time', 'all', None]，but got {self._profile_framework}, it will be set to 'all'.")
+                           f" 'time', 'all', None], but got {self._profile_framework}, it will be set to 'all'.")
             self._profile_framework = "all"
 
     def _host_info_analyse(self):

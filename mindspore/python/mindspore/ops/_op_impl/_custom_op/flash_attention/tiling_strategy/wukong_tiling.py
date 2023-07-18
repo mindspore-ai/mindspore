@@ -29,7 +29,7 @@ class WukongTiling(TilingStrategy):
         反向的空间分布待详细分析
         N = (4096, 1024, 256, 64) 或 77
         Nq = (4096, 1024, 256, 64)
-        d = dv = (40, 80, 160， 160)
+        d = dv = (40, 80, 160,  160)
         """
         if self.N <= 77:  # [77, 64]
             # cross-attention or self-attention of (64, 64, 160)

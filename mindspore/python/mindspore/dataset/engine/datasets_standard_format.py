@@ -376,7 +376,7 @@ class OBSMindDataset(GeneratorDataset):
         dataset_files (list[str]): List of files in cloud storage to be read and file path is in
             the format of s3://bucketName/objectKey.
         server (str): Endpoint for accessing cloud storage.
-            If it's OBS Service of Huawei Cloud，the endpoint is
+            If it's OBS Service of Huawei Cloud, the endpoint is
             like ``<obs.cn-north-4.myhuaweicloud.com>`` (Region cn-north-4).
             If it's Minio which starts locally, the endpoint is like ``<https://127.0.0.1:9000>``.
         ak (str): Access key ID of cloud storage.
