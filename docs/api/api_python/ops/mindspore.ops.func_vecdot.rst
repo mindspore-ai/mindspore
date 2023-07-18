@@ -12,6 +12,9 @@ mindspore.ops.vecdot
 
         \sum_{i=1}^{n} \bar{x_{i}}{y_{i}}
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **x** (Tensor) - 进行点积运算的第一批向量。它的shape是 :math:`(*,N)` ，其中 :math:`*` 表示任意额外的维度。它支持广播。
         - **y** (Tensor) - 进行点积运算的第二批向量。它的shape是 :math:`(*,N)` ，其中 :math:`*` 表示任意额外的维度。它支持广播。
