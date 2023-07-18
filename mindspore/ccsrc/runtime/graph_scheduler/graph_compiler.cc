@@ -122,13 +122,7 @@ bool ExportCompileCache(const FuncGraphPtr &func_graph, const device::DeviceType
   }
   return true;
 }
-}  // namespace
 
-GraphCompilerInfo::~GraphCompilerInfo() {
-  GraphScheduler::GetInstance().Clear(name_, graphs_, origin_parameters_order_, control_node_parser_);
-}
-
-namespace {
 // Fetch the real input of the nop node recursively.
 AnfNodePtr FetchRealNodeByNopNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -317,6 +311,35 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
     }
   }
 }
+
+void UseCacheToCompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) {
+  auto &compile_cache_context = CompileCacheContext::GetInstance();
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 0);
+  compile_cache_context.SetFusionOpBuildInfoFlag(true);
+  device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
+  compile_cache_context.SetFusionOpBuildInfoFlag(false);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 1);
+  // Kernels that are not supported by other device can be backed off and rebuilt on the CPU.
+#ifdef WITH_BACKEND
+  if (!graph->is_from_single_op()) {
+    auto cpu_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {kCPUDevice, device_context->device_context_key().device_id_});
+    MS_EXCEPTION_IF_NULL(cpu_context);
+    auto cpu_executor = dynamic_cast<device::cpu::CPUKernelExecutor *>(cpu_context->GetKernelExecutor(false).get());
+    MS_EXCEPTION_IF_NULL(cpu_executor);
+    cpu_executor->RebuildKernelSelectBackoffOp(graph->execution_order());
+  }
+#endif
+#ifndef ENABLE_SECURITY
+  // Update needed dump kernels for mindRT.
+  DumpJsonParser::GetInstance().UpdateNeedDumpKernels(*graph.get());
+#endif
+  if (graph->is_dynamic_shape()) {
+    auto profiler_manage_inst = profiler::ProfilerManager::GetInstance();
+    MS_EXCEPTION_IF_NULL(profiler_manage_inst);
+    profiler_manage_inst->SetNetDynamicShapeStatus();
+  }
+}
 }  // namespace
 
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
@@ -395,6 +418,10 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
 
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
+}
+
+GraphCompilerInfo::~GraphCompilerInfo() {
+  GraphScheduler::GetInstance().Clear(name_, graphs_, origin_parameters_order_, control_node_parser_);
 }
 
 GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
@@ -577,12 +604,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   const auto &context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (use_cache_to_compile_graph_) {
-    auto &compile_cache_context = CompileCacheContext::GetInstance();
-    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 0);
-    compile_cache_context.SetFusionOpBuildInfoFlag(true);
-    device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
-    compile_cache_context.SetFusionOpBuildInfoFlag(false);
-    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 1);
+    UseCacheToCompileGraphImpl(graph, device_context);
   } else {
 #ifdef ENABLE_DUMP_IR
     if (context->CanDump(kIntroductory)) {
@@ -600,50 +622,46 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 0);
     device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
     (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 1);
-  }
 
-  // Kernels that are not supported by other device can be backed off and rebuilt on the CPU.
+    // Kernels that are not supported by other device can be backed off and rebuilt on the CPU.
 #ifdef WITH_BACKEND
-  if (!graph->is_from_single_op()) {
-    auto cpu_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {kCPUDevice, device_context->device_context_key().device_id_});
-    MS_EXCEPTION_IF_NULL(cpu_device_context);
-    auto cpu_executor =
-      dynamic_cast<device::cpu::CPUKernelExecutor *>(cpu_device_context->GetKernelExecutor(false).get());
-    MS_EXCEPTION_IF_NULL(cpu_executor);
-    cpu_executor->RebuildKernelSelectBackoffOp(graph->execution_order());
-  }
-#endif
-
-  // Read the output and input ref map and set to the kernel graph.
-  AnfAlgo::AddOutInRefToGraph(graph);
-
-  // Optimize the nop node.
-  if (!run_in_pynative) {
-    OptimizeNopNode(graph.get());
-#ifdef ENABLE_DUMP_IR
-    if (context->CanDump(kIntroductory)) {
-      DumpIR("hwopt_comm_after_eliminate_nopnode_" + graph->ToString() + ".ir", graph, true);
+    if (!graph->is_from_single_op()) {
+      auto cpu_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {kCPUDevice, device_context->device_context_key().device_id_});
+      MS_EXCEPTION_IF_NULL(cpu_device_context);
+      auto cpu_executor =
+        dynamic_cast<device::cpu::CPUKernelExecutor *>(cpu_device_context->GetKernelExecutor(false).get());
+      MS_EXCEPTION_IF_NULL(cpu_executor);
+      cpu_executor->RebuildKernelSelectBackoffOp(graph->execution_order());
     }
 #endif
-  }
+
+    // Read the output and input ref map and set to the kernel graph.
+    AnfAlgo::AddOutInRefToGraph(graph);
+
+    // Optimize the nop node.
+    if (!run_in_pynative) {
+      OptimizeNopNode(graph.get());
+#ifdef ENABLE_DUMP_IR
+      if (context->CanDump(kIntroductory)) {
+        DumpIR("hwopt_comm_after_eliminate_nopnode_" + graph->ToString() + ".ir", graph, true);
+      }
+#endif
+    }
 
 #ifndef ENABLE_SECURITY
-  session_->SetSummaryNodes(graph.get());
-  // Update needed dump kernels for mindRT.
-  DumpJsonParser::GetInstance().UpdateNeedDumpKernels(*graph.get());
+    session_->SetSummaryNodes(graph.get());
+    // Update needed dump kernels for mindRT.
+    DumpJsonParser::GetInstance().UpdateNeedDumpKernels(*graph.get());
 #endif
 
-  // dynamic shape pass of graphmode
-  auto kernel_graph = graph->cast<KernelGraphPtr>();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  if (kernel_graph->is_dynamic_shape()) {
-    opt::DynamicShapeConvertPass(graph);
-  }
-  auto profiler_manage_inst = profiler::ProfilerManager::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_manage_inst);
-  if (kernel_graph->is_dynamic_shape()) {
-    profiler_manage_inst->SetNetDynamicShapeStatus();
+    // dynamic shape pass of graphmode
+    if (graph->is_dynamic_shape()) {
+      opt::DynamicShapeConvertPass(graph);
+      auto profiler_manage_inst = profiler::ProfilerManager::GetInstance();
+      MS_EXCEPTION_IF_NULL(profiler_manage_inst);
+      profiler_manage_inst->SetNetDynamicShapeStatus();
+    }
   }
 
   if (export_compile_cache_) {

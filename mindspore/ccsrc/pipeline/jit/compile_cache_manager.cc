@@ -117,7 +117,13 @@ std::string GetDepFilesHashPath() {
   return dep_files_hash_path;
 }
 
-std::string GetGroupCkptSavePath() { return GetGraphCacheDir() + "/" + kGroupCkptFileName; }
+std::string GetGroupCkptSavePath() {
+  auto group_info_save_path = common::GetEnv("GROUP_INFO_FILE");
+  if (!group_info_save_path.empty()) {
+    return group_info_save_path;
+  }
+  return GetGraphCacheDir() + "/" + kGroupCkptFileName;
+}
 
 std::string GetQueueNameCachePath() {
   std::string queue_name_cache_path = GetGraphCacheDir() + "/" + GetRole() + kQueueNameCacheFileName;

@@ -39,7 +39,6 @@ void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph &graph) {
   if (!(device::CommonSomasAllocator::Assign(graph))) {
     MS_LOG(EXCEPTION) << "Somas Allocate Failed.";
   }
-
   size_t total_allocated_size = graph.somas_whole_block_size();
   MS_LOG(INFO) << "Graph " << graph.graph_id() << ": TotalSomasReuseDynamicSize [" << total_allocated_size << "]";
   if (total_allocated_size > 0) {

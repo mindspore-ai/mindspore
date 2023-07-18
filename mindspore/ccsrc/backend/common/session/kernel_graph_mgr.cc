@@ -603,9 +603,41 @@ void SaveNodesKernelInfoAndParamsName(const KernelGraphPtr &kg, const std::vecto
   (*kg_json)[kNodesKernelInfo] = kernels_info_json;
 }
 
+std::vector<nlohmann::json> SaveSummaryNodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &save_map) {
+  std::vector<nlohmann::json> ret_json;
+  for (const auto &i : save_map) {
+    nlohmann::json iter_json;
+    const auto &first = i.first;
+    const auto &node = i.second.first;
+    const auto &name = GetAnfUniqueCacheName(node);
+    const auto &index = i.second.second;
+    iter_json.push_back(first);
+    iter_json.push_back(name);
+    iter_json.push_back(index);
+    ret_json.push_back(iter_json);
+  }
+  return ret_json;
+}
+
 nlohmann::json GenKernelGraphJson(const KernelGraphPtr &kg, const std::vector<AnfNodePtr> &isolated_nodes) {
   nlohmann::json kg_json;
   SaveNodesKernelInfoAndParamsName(kg, isolated_nodes, &kg_json);
+  kg_json[kGraphId] = kg->graph_id();
+  kg_json[kRunMode] = kg->RunMode();
+  kg_json[kIsLoopCountSink] = kg->is_loop_count_sink();
+  kg_json[kIsDynamicShape] = kg->is_dynamic_shape();
+  kg_json[kDeviceTarget] = kg->device_target();
+  kg_json[kRootGraphId] = kg->root_graph_id();
+  kg_json[kExecutable] = kg->executable();
+  kg_json[kHasRecursiveCall] = kg->recursive_call();
+  kg_json[kHasSubgraphMultiCall] = kg->subgraph_multi_call();
+  kg_json[kNeedInline] = kg->need_inline();
+  kg_json[kIsNeedGil] = kg->is_need_gil();
+  kg_json[kIsFromSingleOp] = kg->is_from_single_op();
+  kg_json[kLabelNum] = kg->label_num();
+#ifndef ENABLE_SECURITY
+  kg_json[kSummaryNodeExist] = kg->summary_node_exist();
+#endif
   const auto &back_front_anf_json = SaveAnfToAnfMap(kg->backend_front_anf_map());
   if (!back_front_anf_json.empty()) {
     kg_json[kBackendFrontAnf] = back_front_anf_json;
@@ -614,7 +646,6 @@ nlohmann::json GenKernelGraphJson(const KernelGraphPtr &kg, const std::vector<An
   if (!internal_params_to_front_node_json.empty()) {
     kg_json[kInternalParameterToFrontNode] = internal_params_to_front_node_json;
   }
-
   const auto &ref_in_out_map_json = SaveAnfIndexToAnfIndexMap(kg->GetRefMap());
   if (!ref_in_out_map_json.empty()) {
     kg_json[kRefInOutMap] = ref_in_out_map_json;
@@ -643,20 +674,6 @@ nlohmann::json GenKernelGraphJson(const KernelGraphPtr &kg, const std::vector<An
   if (!child_graph_order_json.empty()) {
     kg_json[kChildGraphOrder] = child_graph_order_json;
   }
-  kg_json[kGraphId] = kg->graph_id();
-  kg_json[kRunMode] = kg->RunMode();
-  kg_json[kIsLoopCountSink] = kg->is_loop_count_sink();
-  kg_json[kIsDynamicShape] = kg->is_dynamic_shape();
-  kg_json[kDeviceTarget] = kg->device_target();
-  kg_json[kRootGraphId] = kg->root_graph_id();
-  kg_json[kExecutable] = kg->executable();
-  kg_json[kHasRecursiveCall] = kg->recursive_call();
-  kg_json[kHasSubgraphMultiCall] = kg->subgraph_multi_call();
-  kg_json[kNeedInline] = kg->need_inline();
-  kg_json[kIsNeedGil] = kg->is_need_gil();
-  kg_json[kIsFromSingleOp] = kg->is_from_single_op();
-  kg_json[kLabelNum] = kg->label_num();
-
   const auto &start = kg->get_start_label();
   if (start) {
     kg_json[kStartLabel] = GetAnfUniqueCacheName(start);
@@ -681,8 +698,13 @@ nlohmann::json GenKernelGraphJson(const KernelGraphPtr &kg, const std::vector<An
   if (!index_set.empty()) {
     kg_json[kCommSubGraphIds] = index_set;
   }
+#ifndef ENABLE_SECURITY
+  const auto &summary_nodes_json = SaveSummaryNodes(kg->summary_nodes());
+  if (!summary_nodes_json.empty()) {
+    kg_json[kSummaryNodes] = summary_nodes_json;
+  }
+#endif
   auto &context = CompileCacheContext::GetInstance();
-
   auto front_graph = context.GetFrontendGraphByBackendGraph(kg);
   if (front_graph) {
     kg_json[kCorrespondFrontendGraph] = front_graph->ToString();
@@ -1934,6 +1956,7 @@ void HandleGraphInputsOutputs(const nlohmann::json &graph_json, KernelGraph *gra
 
 void HandleGraphSimpleAttr(const nlohmann::json &graph_json, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Handle graph " << graph->ToString() << " simple attr.";
   auto &context = CompileCacheContext::GetInstance();
   graph->set_run_mode(graph_json[kRunMode]);
   graph->set_is_loop_count_sink(graph_json[kIsLoopCountSink]);
@@ -1947,6 +1970,10 @@ void HandleGraphSimpleAttr(const nlohmann::json &graph_json, KernelGraph *graph)
   graph->set_is_from_single_op(graph_json[kIsFromSingleOp]);
   graph->set_subgraph_multi_call(graph_json[kHasSubgraphMultiCall]);
   graph->set_label_num(graph_json[kLabelNum]);
+#ifndef ENABLE_SECURITY
+  // set summary_node of graph
+  graph->set_summary_node_exist(graph_json[kSummaryNodeExist]);
+#endif
   if (graph_json.contains(kStartLabel)) {
     auto start_label = context.FindBackNodeByBackName(graph_json[kStartLabel]);
     if (start_label) {
@@ -1971,29 +1998,15 @@ void HandleGraphSimpleAttr(const nlohmann::json &graph_json, KernelGraph *graph)
       auto param = node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(param);
       param->set_name(name);
-      MS_LOG(INFO) << "Param " << param->DebugString() << " set name " << name;
     }
   }
+  MS_LOG(INFO) << "Handle graph " << graph->ToString() << " simple attr success.";
 }
 
-void HandleGraphComplexAttr(const mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> &graphs,
-                            const nlohmann::json &graph_json, KernelGraph *graph) {
+void HandleAttrAboutOtherGraph(const mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> &graphs,
+                               const nlohmann::json &graph_json, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &context = CompileCacheContext::GetInstance();
-  std::vector<CNodePtr> execution_order;
-  const auto &execution_order_json = graph_json[kExecutionOrder];
-  for (const auto &order : execution_order_json) {
-    auto node = context.FindBackNodeByBackName(order);
-    MS_EXCEPTION_IF_NULL(node);
-    execution_order.push_back(node->cast<CNodePtr>());
-  }
-  graph->set_execution_order(execution_order);
-  if (graph_json.contains(kCommSubGraphIds)) {
-    const auto &comm_sub_grpah_ids_json = graph_json[kCommSubGraphIds];
-    for (const auto &iter : comm_sub_grpah_ids_json) {
-      graph->RecordNewCommSubGraphId(iter);
-    }
-  }
   if (graph_json.contains(kPreGraphs)) {
     const auto &pre_graphs_json = graph_json[kPreGraphs];
     for (const auto &iter : pre_graphs_json) {
@@ -2028,6 +2041,28 @@ void HandleGraphComplexAttr(const mindspore::HashMap<GraphId, std::shared_ptr<Ke
     }
     graph->set_child_graph_order(child_graph_order);
   }
+}
+
+void HandleGraphComplexAttr(const mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> &graphs,
+                            const nlohmann::json &graph_json, KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Handle graph " << graph->ToString() << " complex attr.";
+  auto &context = CompileCacheContext::GetInstance();
+  std::vector<CNodePtr> execution_order;
+  const auto &execution_order_json = graph_json[kExecutionOrder];
+  for (const auto &order : execution_order_json) {
+    auto node = context.FindBackNodeByBackName(order);
+    MS_EXCEPTION_IF_NULL(node);
+    execution_order.push_back(node->cast<CNodePtr>());
+  }
+  graph->set_execution_order(execution_order);
+  if (graph_json.contains(kCommSubGraphIds)) {
+    const auto &comm_sub_grpah_ids_json = graph_json[kCommSubGraphIds];
+    for (const auto &iter : comm_sub_grpah_ids_json) {
+      graph->RecordNewCommSubGraphId(iter);
+    }
+  }
+  HandleAttrAboutOtherGraph(graphs, graph_json, graph);
   if (graph_json.contains(kInternalParameterToFrontNode)) {
     const auto &internal_parameter_to_front_node_json = graph_json[kInternalParameterToFrontNode];
     HashMap<AnfNodePtr, AnfWithOutIndex> internal_parameter_to_front_node;
@@ -2072,6 +2107,22 @@ void HandleGraphComplexAttr(const mindspore::HashMap<GraphId, std::shared_ptr<Ke
       graph->AddValueNodeToGraph(value_node);
     }
   }
+#ifndef ENABLE_SECURITY
+  if (graph_json.contains(kSummaryNodes)) {
+    const auto &summary_nodes_json = graph_json[kSummaryNodes];
+    std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes;
+    for (const auto &iter : summary_nodes_json) {
+      const auto &first = iter.at(0);
+      const auto &name = iter.at(kIndexOne);
+      auto node = context.FindBackNodeByBackName(name);
+      MS_EXCEPTION_IF_NULL(node);
+      const auto &index = iter.at(kIndexTwo);
+      summary_nodes[first] = std::make_pair(node, index);
+    }
+    graph->set_summary_nodes(summary_nodes);
+  }
+#endif
+  MS_LOG(INFO) << "Handle graph " << graph->ToString() << " complex attr success.";
 }
 
 bool KernelGraphMgr::ParseKernelGraphNodesAndAttrs(const nlohmann::json &model_json) {
@@ -2112,11 +2163,6 @@ bool KernelGraphMgr::ParseKernelGraphNodesAndAttrs(const nlohmann::json &model_j
     graph->SetInputNodes();
     SetInputNodeUsage(graph, manager);
     graph->SetOptimizerFlag();
-#ifndef ENABLE_SECURITY
-    if (ExistSummaryNode(graph.get())) {
-      graph->set_summary_node_exist(true);
-    }
-#endif
   }
   return true;
 }
