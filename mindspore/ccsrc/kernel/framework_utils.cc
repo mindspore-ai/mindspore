@@ -1198,6 +1198,10 @@ static const mindspore::HashMap<std::string, std::set<int64_t>> try_get_value_in
   {kConv2DBackpropFilterOpName, ShapeSet{2}},
   {kConv2DBackpropInputOpName, ShapeSet{2}},
   {kRandomCategoricalOpName, ShapeSet{1, 2}},
+  {kUpsampleTrilinear3DOpName, ShapeSet{1}},
+  {kUpsampleNearest3DOpName, ShapeSet{1}},
+  {kUpsampleTrilinear3DGradOpName, ShapeSet{2}},
+  {kUpsampleNearest3DGradOpName, ShapeSet{2}},
 };
 
 std::set<int64_t> GetShapeSetFromResizeMap(const CNodePtr &node) {
