@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/comparison_ops.h"
 #include "mindspore/core/ops/array_ops.h"
-#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
@@ -67,8 +66,15 @@ bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
   if (!GraphKernelCluster::IsClusterableOp(node)) {
     return false;
   }
-  // check if the node has dynamic shape
   auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  if (device_ == "Ascend") {
+    auto type_id = cb->GetOutputInferType(node, 0);
+    if (type_id == kNumberTypeInt64) {
+      return false;
+    }
+  }
+  // check if the node has dynamic shape
   auto cnode = node->cast<CNodePtr>();
   for (size_t i = 0; i < cnode->size() - 1; i++) {
     if (!cnode->input(i + 1)->isa<Parameter>() && !cnode->input(i + 1)->isa<ValueNode>() &&

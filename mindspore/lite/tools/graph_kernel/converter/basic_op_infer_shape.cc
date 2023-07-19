@@ -88,7 +88,33 @@ BaseShapePtr ShapeInferShape(const PrimitivePtr &primitive, const std::vector<Ab
   return std::make_shared<abstract::Shape>(ShapeVector{rank});
 }
 
+AbstractBasePtrList RectifyBatchMatMul(const AbstractBasePtrList &orig_abs_list) {
+  AbstractBasePtrList abs_list = orig_abs_list;
+  if (abs_list.size() < kIndex2) {
+    return abs_list;
+  }
+  auto shape0_ptr = CheckAndConvertUtils::GetTensorInputShape("BatchMatMul", orig_abs_list, 0);
+  MS_EXCEPTION_IF_NULL(shape0_ptr);
+  auto x0_shape = shape0_ptr->shape();
+  auto shape1_ptr = CheckAndConvertUtils::GetTensorInputShape("BatchMatMul", orig_abs_list, 1);
+  MS_EXCEPTION_IF_NULL(shape1_ptr);
+  auto x1_shape = shape1_ptr->shape();
+  if (x0_shape.size() < x1_shape.size()) {
+    ShapeVector new_x0_shape(x1_shape.size() - x0_shape.size(), 1);
+    new_x0_shape.insert(new_x0_shape.end(), x0_shape.begin(), x0_shape.end());
+    abs_list[0] = orig_abs_list[0]->Clone();
+    SetAbstractShape(abs_list[0], std::make_shared<abstract::Shape>(new_x0_shape));
+  } else if (x0_shape.size() > x1_shape.size()) {
+    ShapeVector new_x1_shape(x0_shape.size() - x1_shape.size(), 1);
+    new_x1_shape.insert(new_x1_shape.end(), x1_shape.begin(), x1_shape.end());
+    abs_list[1] = orig_abs_list[1]->Clone();
+    SetAbstractShape(abs_list[1], std::make_shared<abstract::Shape>(new_x1_shape));
+  }
+  return abs_list;
+}
+
 using OpInferFunc = std::function<BaseShapePtr(const PrimitivePtr &, const std::vector<AbstractBasePtr> &)>;
+using OpRectifyFunc = std::function<AbstractBasePtrList(const AbstractBasePtrList &)>;
 }  // namespace
 
 inline mindspore::Format FormatStringToEnum(const std::string &format) {
@@ -264,6 +290,15 @@ bool DynOpInferShape::InferShapeRealKernel(const CNodePtr &cnode) const {
   if (prim_name == "Shape" && cnode->abstract()->isa<abstract::AbstractTensor>()) {
     SetAbstractShape(cnode->abstract(), ShapeInferShape(prim, abs_list));
     return true;
+  }
+  // some op's abstract does not satisfy core/ops infer
+  if (prim_name == "StridedSlice") {
+    return true;
+  }
+  static std::unordered_map<std::string, OpRectifyFunc> rectify_map{{"BatchMatMul", RectifyBatchMatMul}};
+  auto rec_iter = rectify_map.find(prim_name);
+  if (rec_iter != rectify_map.end()) {
+    abs_list = rec_iter->second(abs_list);
   }
   auto found = abstract::GetPrimitiveInferImpl(prim);
   if (found.has_value() && found.value().IsImplInferShapeAndType()) {

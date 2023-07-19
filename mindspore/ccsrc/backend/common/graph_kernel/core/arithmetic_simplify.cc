@@ -577,6 +577,19 @@ class ReshapePatternTree : public PatternTree {
   }
 };
 
+class FloatCheckPatternTree : public PatternTree {
+ public:
+  explicit FloatCheckPatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~FloatCheckPatternTree() = default;
+
+ protected:
+  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+    auto type_id = origin_root->type;
+    return (type_id == kNumberTypeFloat || type_id == kNumberTypeFloat16 || type_id == kNumberTypeFloat32 ||
+            type_id == kNumberTypeFloat64);
+  }
+};
+
 /*       A
         /
        Neg
@@ -669,7 +682,7 @@ static std::vector<Expression> expressions = {
   {47, "RealDiv(A,Sqrt(A))=Sqrt(A)", EXPR_PATTERN(PatternTree)},
   {48, "RealDiv(A,Sqrt(B))=Mul(A,Rsqrt(B))", EXPR_PATTERN(PatternTree)},
   {49, "RealDiv(A,Rsqrt(B))=Mul(A,Sqrt(B))", EXPR_PATTERN(PatternTree)},
-  {50, "RealDiv(A,const1)=Mul(A,Reciprocal(const1))", EXPR_PATTERN(PatternTree)},
+  {50, "RealDiv(A,const1)=Mul(A,Reciprocal(const1))", EXPR_PATTERN(FloatCheckPatternTree)},
   {51, "RealDiv(RealDiv(A,B),RealDiv(C,D))=RealDiv(Mul(A,D),Mul(B,C))", EXPR_PATTERN(PatternTree)},
   {52, "RealDiv(Neg(A),const1)=RealDiv(A,Neg(const1))", EXPR_PATTERN(PatternTree)},
   {53, "RealDiv(RealDiv(A,B),C)=RealDiv(A,Mul(B,C))", EXPR_PATTERN(PatternTree)},
