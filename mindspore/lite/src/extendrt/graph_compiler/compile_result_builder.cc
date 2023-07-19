@@ -42,10 +42,6 @@ StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
   std::vector<std::unique_ptr<InferTensor>> results;
   for (auto &input : inputs) {
     results.clear();
-    auto parameter = utils::cast<ParameterPtr>(input);
-    if (parameter != nullptr && parameter->has_default()) {
-      continue;  // TransformSegmentToAnfGraph puts all input and weight into 'inputs'. In inference, we skip weight.
-    }
     auto ret = CreateTensorsFromAbstract(input->abstract(), &results, compile_option_->graph_input_format);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Create tensors from abstract of segments input failed, input : "

@@ -90,16 +90,9 @@ int PackConstData(Tensor *tensor, const TransInfoPair &pre_trans) {
   auto original_data = tensor->data();
   auto original_own_data = tensor->own_data();
 
-  auto batch = tensor->Batch();
-  auto height = tensor->Height();
-  auto width = tensor->Width();
-  auto channel = tensor->Channel();
-  tensor->set_format(static_cast<mindspore::Format>(pre_trans.dst_format_));
-  if (tensor->format() == NHWC) {
-    tensor->set_shape({batch, height, width, channel});
-  }
-  if (tensor->format() == NCHW || tensor->format() == NC4HW4 || tensor->format() == NC8HW8) {
-    tensor->set_shape({batch, channel, height, width});
+  if (!TransTensorShapeAndFormat(tensor, pre_trans.dst_format_)) {
+    MS_LOG(ERROR) << "Transpose tensor shape and format failed";
+    return RET_ERROR;
   }
   tensor->set_data(nullptr);
 
@@ -239,6 +232,7 @@ int EliminateTranspose::EliminateForSingleKernel(kernel::SubGraphKernel *subgrap
     }
     kernel_iter = find(kernels->begin(), kernels->end(), kernel);
     (void)kernel_iter++;
+    MS_LOG(INFO) << "Fuse transpose across: " << kernel->name();
   }
   return RET_OK;
 }
@@ -249,14 +243,18 @@ int EliminateTranspose::HorizontalTransposeFusionPass(kernel::SubGraphKernel *su
   for (const auto &tensor : in_tensors) {
     tensor_queue.push(tensor);
   }
+  std::set<lite::Tensor *> visited;
   while (!tensor_queue.empty()) {
     auto tensor = tensor_queue.front();
     tensor_queue.pop();
+    visited.insert(tensor);
     auto in_kernel = kernel::KernelExecUtil::FindInKernelForTensorInSubGraph(tensor, subgraph);
     auto out_kernels = kernel::KernelExecUtil::FindOutKernelsForTensorInSubGraph(tensor, subgraph);
     for (const auto &out_kernel : out_kernels) {
       for (const auto &out_tensor : out_kernel->out_tensors()) {
-        tensor_queue.push(out_tensor);
+        if (visited.find(out_tensor) == visited.end()) {
+          tensor_queue.push(out_tensor);
+        }
       }
     }
 
@@ -313,6 +311,11 @@ int EliminateTranspose::HorizontalTransposeFusionPass(kernel::SubGraphKernel *su
       subgraph->DropNode(to_delete);
       delete to_delete;
     }
+    if (in_kernel != nullptr) {
+      MS_LOG(INFO) << "Fuse horizontal-transposes after: " << in_kernel->name();
+    } else {
+      MS_LOG(INFO) << "Fuse horizontal-transposes on tensor: " << tensor->tensor_name();
+    }
   }
   return RET_OK;
 }
@@ -330,23 +333,26 @@ int EliminateTranspose::DoubleTransposeFusion(kernel::SubGraphKernel *subgraph) 
     }
 
     auto pre_kernel = kernel->in_kernels().at(0);
-    if (IsContain(subgraph->nodes(), kernel->in_kernels().at(0)) == false) {
+    if (!IsContain(subgraph->nodes(), kernel->in_kernels().at(0))) {
       continue;
     }
 
     TransInfoPair post_trans_info;
     if (GetTransposeInfo(kernel, &post_trans_info) != RET_OK) {
-      MS_LOG(INFO) << "The kernel " << kernel->name() << " isn't transpose and can't be fused.";
+      MS_LOG(DEBUG) << "The kernel " << kernel->name() << " isn't transpose and can't be eliminated.";
       continue;
     }
 
     TransInfoPair pre_trans_info;
     if (GetTransposeInfo(pre_kernel, &pre_trans_info) != RET_OK) {
-      MS_LOG(INFO) << "The kernel " << pre_kernel->name() << " isn't transpose and can't be fused.";
+      MS_LOG(DEBUG) << "The kernel " << pre_kernel->name() << " isn't transpose and can't be eliminated.";
       continue;
     }
 
     if (pre_trans_info.dst_format_ != post_trans_info.src_format_) {
+      MS_LOG(DEBUG) << "Two transposes" << pre_kernel->name() << " and " << kernel->name()
+                    << " connected front and back but with unsatisfied perm and can not be eliminated."
+                    << "Maybe we can fuse them into one transpose.";
       continue;
     }
 

@@ -36,8 +36,7 @@
 #include "src/common/common.h"
 
 namespace mindspore::lite {
-static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
-                                                            prim::kPrimSwitch,   prim::kPrimMakeTuple,
+static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 static constexpr auto ms_infer_backend_name = "mindspore_lite_backend";
 
@@ -111,79 +110,34 @@ std::vector<InferKernel *> DefaultGraphCompiler::Schedule(const CompileResultPtr
   return {scheduler_->Schedule(compile_result)};
 }
 
-std::vector<AnfNodePtr> DefaultGraphCompiler::GetGraphOutput(AnfNodePtr origin_output) {
-  std::vector<AnfNodePtr> graph_outputs;
-  if (!origin_output->isa<CNode>()) {
-    // not cnode, return origin output node
-    graph_outputs.emplace_back(origin_output);
-    return graph_outputs;
+std::vector<AnfNodePtr> DefaultGraphCompiler::SkipMakeTuple(AnfNodePtr origin_node) {
+  if (!origin_node->isa<CNode>()) {
+    // not cnode, return origin node
+    return {origin_node};
   }
-
-  // cnode, if MakeTuple, split it into multiple output node
-  auto cnode = origin_output->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    MS_LOG(ERROR) << "cast origin output node into cnode failed";
-    return {};
-  }
+  auto cnode = origin_node->cast<CNodePtr>();
+  MS_ASSERT(cnode != nullptr);
 
   if (!IsPrimitive(cnode->input(0), prim::kPrimMakeTuple)) {
-    // not MakeTuple node, return origin output node
-    graph_outputs.emplace_back(origin_output);
-    return graph_outputs;
+    return {origin_node};
   }
 
-  // MakeTuple Node, get the input node
+  std::vector<AnfNodePtr> results;
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
-    graph_outputs.emplace_back(cnode->input(i));
+    auto real_nodes = SkipMakeTuple(cnode->input(i));
+    results.insert(results.end(), real_nodes.begin(), real_nodes.end());
   }
-  return graph_outputs;
+  return results;
 }
 
-std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGCompile(
-  const std::vector<GraphSegmentPtr> &graph_segments, const FuncGraphPtr &func_graph) {
-  auto execution_plan = std::make_shared<infer::ExecutionPlan>();
-  anf_tensor_map_.clear();
-
-  // set func graph manager
-  auto func_manager = func_graph->manager();
-  if (func_manager == nullptr) {
-    func_manager = Manage(func_graph, true);
-    func_graph->set_manager(func_manager);
-  }
-
-  // Convert FuncGraph Input and Output AnfNode to Tensor and save in Execution Plan
-  auto graph_inputs = func_graph->get_inputs();
-  if (graph_inputs.empty()) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph inputs node failed";
-    return nullptr;
-  }
-  auto graph_output = func_graph->output();
-  if (graph_output == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph output node failed";
-    return nullptr;
-  }
-  std::vector<AnfNodePtr> graph_outputs = GetGraphOutput(graph_output);
-  std::vector<InferTensor *> graph_input_tensors;
-  auto graph_output_tensors = CreateTensors(graph_outputs);
-  if (graph_output_tensors.size() != graph_outputs.size()) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile create graph output tensor failed";
-    return nullptr;
-  }
-  for (size_t i = 0; i < graph_outputs.size(); i++) {
-    auto output_node = graph_outputs[i];
-    auto output_tensor = graph_output_tensors[i];
-    auto it = anf_tensor_map_.find(output_node);
-    if (it == anf_tensor_map_.end()) {
-      anf_tensor_map_[output_node] = output_tensor;
-    }
-  }
-  execution_plan->SetOutputs(graph_output_tensors);
-  execution_plan->SetContext(inner_context_);
-  auto *output_isolate_map = new std::unordered_map<InferTensor *, InferTensor *>();
+Status DefaultGraphCompiler::CreateExecPlanKernels(const std::vector<GraphSegmentPtr> &graph_segments,
+                                                   std::vector<AnfNodePtrList> *segments_inputs,
+                                                   std::vector<AnfNodePtrList> *segments_outputs) {
+  MS_ASSERT(execution_plan_ != nullptr);
   for (const auto &graph_segment : graph_segments) {
     if (graph_segment->nodes_.size() == 1) {
       auto &node = graph_segment->nodes_[0];
-      if (opt::CheckPrimitiveType(node, prim::kPrimReturn) || opt::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+      if (opt::CheckPrimitiveType(node, prim::kPrimReturn)) {
         continue;
       }
     }
@@ -191,49 +145,154 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGComp
     AnfNodePtrList inputs;
     AnfNodePtrList outputs;
     std::tie(fg, inputs, outputs) = FuncGraphUtils::TransformSegmentToAnfGraph(graph_segment->nodes_);
+    // TransformSegmentToAnfGraph puts all input and weight into 'inputs'. In inference, we erase weight.
+    for (auto iter = inputs.begin(); iter != inputs.end();) {
+      if (utils::isa<ParameterPtr>(*iter) && (utils::cast<ParameterPtr>(*iter))->has_default()) {
+        iter = inputs.erase(iter);
+      } else {
+        iter++;
+      }
+    }
     auto compile_result = this->Compile(graph_segment, inputs, outputs);
     if (compile_result == nullptr) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile convert to CompileResult failed";
-      delete output_isolate_map;
-      return nullptr;
+      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateExecPlanKernels convert to CompileResult failed";
+      return kLiteError;
     }
     auto kernels = this->Schedule(compile_result);
     if (kernels.size() != 1 || kernels[0] == nullptr) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile schedule graph segment failed";
-      delete output_isolate_map;
-      return nullptr;
+      MS_LOG(ERROR) << "Only support one subgraph from one graph segment now, got " << kernels.size();
+      return kLiteError;
     }
+    segments_inputs->emplace_back(inputs);
+    segments_outputs->emplace_back(outputs);
     auto kernel = kernels[0];
     kernel->set_context(inner_context_.get());
-    for (size_t i = 0; i < kernel->in_tensors().size(); i++) {
-      auto input_tensor = kernel->in_tensors()[i];
-      auto input_node = inputs[i];
+    execution_plan_->AddKernel(kernel);
+  }
+  return kSuccess;
+}
+
+Status DefaultGraphCompiler::CreateExecPlanInputs(const FuncGraphPtr &func_graph,
+                                                  std::vector<AnfNodePtrList> *segments_inputs) {
+  MS_ASSERT(execution_plan_ != nullptr);
+  MS_ASSERT(segments_inputs != nullptr);
+  MS_ASSERT(graph_input_tensors_.empty());
+  auto graph_inputs = func_graph->get_inputs();
+  if (graph_inputs.empty()) {
+    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph inputs node failed";
+    return kLiteError;
+  }
+  MS_ASSERT(execution_plan_->GetKernels().size() == segments_inputs->size());
+  for (size_t i = 0; i < execution_plan_->GetKernels().size(); i++) {
+    auto &inputs = (*segments_inputs)[i];
+    auto kernel = execution_plan_->GetKernels()[i];
+    if (MS_UNLIKELY(kernel->in_tensors().size() != inputs.size())) {
+      MS_LOG(ERROR) << "Subgraph has " << kernel->in_tensors().size() << " inputs while segment has " << inputs.size()
+                    << " inputs.";
+      return kLiteError;
+    }
+    for (size_t j = 0; j < kernel->in_tensors().size(); j++) {
+      auto input_tensor = kernel->in_tensors()[j];
+      auto input_node = inputs[j];
       auto it = std::find_if(graph_inputs.begin(), graph_inputs.end(),
                              [&input_node](const AnfNodePtr &node) { return node == input_node; });
       if (it != graph_inputs.end()) {
         input_tensor->set_category(GRAPH_INPUT);
-        graph_input_tensors.emplace_back(input_tensor);
+        graph_input_tensors_.emplace_back(input_tensor);
       }
     }
-    for (size_t i = 0; i < kernel->out_tensors().size(); i++) {
-      auto output_tensor = kernel->out_tensors()[i];
-      auto output_node = outputs[i];
+  }
+  execution_plan_->SetInputs(graph_input_tensors_);
+  return kSuccess;
+}
+
+Status DefaultGraphCompiler::CreateExecPlanOutputs(const FuncGraphPtr &func_graph,
+                                                   const std::vector<AnfNodePtrList> &segments_outputs) {
+  MS_ASSERT(execution_plan_ != nullptr);
+  anf_tensor_map_.clear();
+  auto graph_output = func_graph->output();
+  if (graph_output == nullptr) {
+    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph output node failed";
+    return kLiteError;
+  }
+  std::vector<AnfNodePtr> graph_outputs = SkipMakeTuple(graph_output);
+
+  auto graph_output_tensors = CreateTensors(graph_outputs);
+  if (graph_output_tensors.size() != graph_outputs.size()) {
+    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile create graph output tensor failed";
+    return kLiteError;
+  }
+  for (size_t i = 0; i < graph_outputs.size(); i++) {
+    auto output_node = graph_outputs[i];
+    auto output_tensor = graph_output_tensors[i];
+    auto it = anf_tensor_map_.find(output_node);
+    if (it != anf_tensor_map_.end()) {
+      MS_LOG(ERROR) << "";
+      return kLiteError;
+    }
+    anf_tensor_map_[output_node] = output_tensor;
+  }
+  execution_plan_->SetOutputs(graph_output_tensors);
+
+  auto *output_isolate_map = new std::unordered_map<InferTensor *, InferTensor *>();
+  for (size_t i = 0; i < execution_plan_->GetKernels().size(); i++) {
+    AnfNodePtrList real_segment_outputs;
+    for (auto &output : segments_outputs[i]) {
+      auto no_tuple_output = SkipMakeTuple(output);
+      real_segment_outputs.insert(real_segment_outputs.end(), no_tuple_output.begin(), no_tuple_output.end());
+    }
+    auto kernel = execution_plan_->GetKernels()[i];
+    if (MS_UNLIKELY(kernel->out_tensors().size() != real_segment_outputs.size())) {
+      MS_LOG(ERROR) << "Subgraph has " << kernel->in_tensors().size() << " outputs while segment has "
+                    << real_segment_outputs.size() << " outputs.";
+      return kLiteError;
+    }
+    for (size_t j = 0; j < kernel->out_tensors().size(); j++) {
+      auto output_tensor = kernel->out_tensors()[j];
+      auto &output_node = real_segment_outputs[j];
       auto it = anf_tensor_map_.find(output_node);
       if (it != anf_tensor_map_.end()) {
         auto outter_tensor = it->second;
         (*output_isolate_map)[output_tensor] = outter_tensor;
-      } else {
-        anf_tensor_map_[output_node] = output_tensor;
       }
     }
-    execution_plan->AddKernel(kernel);
   }
-  execution_plan->SetInputs(graph_input_tensors);
-  execution_plan->SetOutputsMap(output_isolate_map);
-
-  return execution_plan;
+  execution_plan_->SetOutputsMap(output_isolate_map);
+  return kSuccess;
 }
 
+std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGCompile(
+  const std::vector<GraphSegmentPtr> &graph_segments, const FuncGraphPtr &func_graph) {
+  execution_plan_ = std::make_shared<infer::ExecutionPlan>();
+  execution_plan_->SetContext(inner_context_);
+
+  // set func graph manager
+  auto func_manager = func_graph->manager();
+  if (func_manager == nullptr) {
+    func_manager = Manage(func_graph, true);
+    func_graph->set_manager(func_manager);
+  }
+  std::vector<AnfNodePtrList> segments_inputs;
+  std::vector<AnfNodePtrList> segments_outputs;
+  auto ret = CreateExecPlanKernels(graph_segments, &segments_inputs, &segments_outputs);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Create graph subgraphs failed";
+    return nullptr;
+  }
+  ret = CreateExecPlanInputs(func_graph, &segments_inputs);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Create graph input tensors failed";
+    return nullptr;
+  }
+  ret = CreateExecPlanOutputs(func_graph, segments_outputs);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Create graph output tensors failed";
+    return nullptr;
+  }
+  return execution_plan_;
+}
+
+// todo remove
 InferTensor *DefaultGraphCompiler::CreateTensor(const AnfNodePtr &node) {
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
@@ -249,7 +308,7 @@ InferTensor *DefaultGraphCompiler::CreateTensor(const AnfNodePtr &node) {
     if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
       auto tensor = TensorAdapter::Convert2Tensor(abstract, abstract->name());
       if (tensor == nullptr) {
-        MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
+        MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
         return nullptr;
       }
       return tensor;
@@ -347,7 +406,7 @@ std::vector<InferTensor *> DefaultGraphCompiler::CreateTensors(const std::vector
           if (utils::isa<mindspore::abstract::AbstractTensorPtr>(element)) {
             auto tensor = TensorAdapter::Convert2Tensor(element, element->name());
             if (tensor == nullptr) {
-              MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << element;
+              MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
               return {};
             }
             tensors.emplace_back(tensor);
@@ -355,11 +414,19 @@ std::vector<InferTensor *> DefaultGraphCompiler::CreateTensors(const std::vector
         }
       } else {
         auto tensor = this->CreateTensor(node);
+        if (tensor == nullptr) {
+          MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
+          return {};
+        }
         tensors.emplace_back(tensor);
       }
     } else {
       // node must be Parameter
       auto tensor = this->CreateTensor(node);
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
+        return {};
+      }
       tensors.emplace_back(tensor);
     }
   }

@@ -31,9 +31,6 @@
 #include "litert/cxx_api/tensor/tensor_impl.h"
 
 namespace mindspore {
-static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
-                                                            prim::kPrimSwitch,   prim::kPrimMakeTuple,
-                                                            prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 Status DefaultInferSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MS_LOG(INFO) << "DefaultInferSession::Init";
   // Set MSContext::GetInstance param

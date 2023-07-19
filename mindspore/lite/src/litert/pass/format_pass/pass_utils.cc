@@ -24,13 +24,6 @@
 #include "nnacl/arg_min_max_parameter.h"
 
 namespace mindspore::lite::pass {
-static const std::map<FormatC, std::string> format_str = {
-  {Format_NCHW, "NCHW"}, {Format_NHWC, "NHWC"}, {Format_NC4HW4, "NC4HW4"}, {Format_NCHW, "NC8HW8"}};
-
-std::string GetFormatStr(const FormatC &format) {
-  return format_str.find(format) != format_str.end() ? format_str.at(format) : "";
-}
-
 bool IsNoneTranspose(const TransInfoPair &trans) {
   return trans.src_format_ == Format::DEFAULT_FORMAT && trans.dst_format_ == Format::DEFAULT_FORMAT;
 }
@@ -82,38 +75,72 @@ kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const T
   return kernel;
 }
 
-void SetShape(const Tensor *src_tensor, Tensor *dst_tensor) {
+bool SetShape(const Tensor *src_tensor, Tensor *dst_tensor) {
+  auto shape = src_tensor->shape();
+  if (shape.size() != DIMENSION_4D) {
+    dst_tensor->set_shape(shape);
+    return true;
+  }
+  if (std::any_of(shape.begin(), shape.end(), [](int dim) { return dim == -1; })) {
+    dst_tensor->set_shape({-1});
+    return true;
+  }
+  bool ret;
+  auto new_shape = TransShape(src_tensor->shape(), {src_tensor->format(), dst_tensor->format()}, &ret);
+  if (!ret) {
+    MS_LOG(ERROR) << "Transpose shape of tensor failed";
+    return false;
+  }
+  dst_tensor->set_shape(new_shape);
+  return true;
+}
+
+bool SetShape4D(const Tensor *src_tensor, Tensor *dst_tensor) {
   auto shape = src_tensor->shape();
   auto invalid_shape = {-1};
   if (shape.size() != DIMENSION_4D) {
     dst_tensor->set_shape(invalid_shape);
-    return;
+    return true;
   }
-  if (std::any_of(shape.begin(), shape.end(), [](int dim) { return dim == -1; })) {
-    dst_tensor->set_shape(invalid_shape);
-    return;
+  return SetShape(src_tensor, dst_tensor);
+}
+
+bool TransTensorShapeAndFormat(Tensor *tensor, Format dst_format) {
+  auto shape = tensor->shape();
+  if (shape.size() != DIMENSION_4D) {
+    tensor->set_shape(shape);
+    return true;
   }
-  auto batch = src_tensor->Batch();
-  auto height = src_tensor->Height();
-  auto width = src_tensor->Width();
-  auto channel = src_tensor->Channel();
-  if (dst_tensor->format() == NHWC) {
-    dst_tensor->set_shape({batch, height, width, channel});
+  bool ret;
+  auto new_shape = TransShape(tensor->shape(), {tensor->format(), dst_format}, &ret);
+  if (!ret) {
+    MS_LOG(ERROR) << "Transpose shape of tensor failed";
+    return false;
   }
-  if (dst_tensor->format() == NCHW || dst_tensor->format() == NC4HW4 || dst_tensor->format() == NC8HW8) {
-    dst_tensor->set_shape({batch, channel, height, width});
-  }
-  return;
+  tensor->set_shape(new_shape);
+  tensor->set_format(dst_format);
+  return true;
 }
 
 int InsertPreTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
                        const TransInfoPair &trans_info, const size_t &index) {
   auto trans_name = kernel->name() + "_pre_" + std::to_string(index);
   auto in_tensor = kernel->in_tensors().at(index);
+  auto in_tensor_shape = in_tensor->shape();
+  if (std::all_of(in_tensor_shape.begin(), in_tensor_shape.end(), [](const int &dim) { return dim >= 0; }) &&
+      in_tensor_shape.size() != DIMENSION_4D) {
+    MS_LOG(INFO) << index << "th input tensor of kernel " << kernel->name()
+                 << " is infershaped and do not have 4 dimensions, skip inserting transpose kernel.";
+    return RET_OK;
+  }
   auto out_tensor = new (std::nothrow) Tensor(in_tensor->data_type(), {}, (Format)trans_info.dst_format_);
   CHECK_NULL_RETURN(out_tensor);
   out_tensor->set_tensor_name(trans_name + "_output");
-  SetShape(in_tensor, out_tensor);
+  if (!SetShape4D(in_tensor, out_tensor)) {
+    MS_LOG(ERROR) << "Sync shape from in_tensor to out_tensor failed.";
+    delete out_tensor;
+    return RET_ERROR;
+  }
 
   auto trans_kernel =
     CreateFormatTranspose(in_tensor, out_tensor, trans_info, trans_name, kernel->Context(), kernel->desc());
@@ -132,10 +159,21 @@ int InsertPostTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *ke
   auto trans_name = kernel->name() + "_post_" + std::to_string(index);
 
   auto out_tensor = kernel->out_tensors().at(index);
+  auto out_tensor_shape = out_tensor->shape();
+  if (std::all_of(out_tensor_shape.begin(), out_tensor_shape.end(), [](const int &dim) { return dim >= 0; }) &&
+      out_tensor_shape.size() != DIMENSION_4D) {
+    MS_LOG(INFO) << index << "th output tensor of kernel " << kernel->name()
+                 << " is infershaped and do not have 4 dimensions, skip inserting transpose kernel.";
+    return RET_OK;
+  }
   auto in_tensor = new (std::nothrow) Tensor(out_tensor->data_type(), {}, (Format)trans_info.src_format_);
   CHECK_NULL_RETURN(in_tensor);
   in_tensor->set_tensor_name(trans_name + "_input");
-  SetShape(out_tensor, in_tensor);
+  if (!SetShape4D(out_tensor, in_tensor)) {
+    MS_LOG(ERROR) << "Sync shape from in_tensor to out_tensor failed.";
+    delete out_tensor;
+    return RET_ERROR;
+  }
 
   auto trans_kernel =
     CreateFormatTranspose(in_tensor, out_tensor, trans_info, trans_name, kernel->Context(), kernel->desc());

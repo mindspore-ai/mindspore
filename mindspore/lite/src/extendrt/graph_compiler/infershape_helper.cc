@@ -127,7 +127,12 @@ void TransposeShape(std::vector<InferTensor *> *tensors, int transpose_type) {
   }
 }
 
-int SyncInferRetToLiteTensor(const CompileNode &node) {
+int SyncInferRetToLiteTensor(const CompileNode &node, const int &infer_ret) {
+  if (infer_ret == RET_INFER_INVALID) {
+    for (auto *output : node.GetOutputs()) {
+      output->set_shape({-1});
+    }
+  }
   auto cnode = node.GetCNode();
   MS_ASSERT(cnode != nullptr);
   auto abstract = cnode->abstract();
@@ -140,7 +145,7 @@ int SyncInferRetToLiteTensor(const CompileNode &node) {
     }
     for (size_t i = 0; i < elements.size(); i++) {
       if (!TensorAdapter::SetDTAndShapeFromAbTensorToLiteTensor(elements[i], node.GetOutput(i))) {
-        MS_LOG(ERROR) << "Sync infershape result from Abstract to InferTensor failed, abstract : " << node.GetName();
+        MS_LOG(ERROR) << "Sync infershape result from Abstract to InferTensor failed, node : " << node.GetName();
         return RET_ERROR;
       }
     }
@@ -148,7 +153,7 @@ int SyncInferRetToLiteTensor(const CompileNode &node) {
   }
   if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
     if (!TensorAdapter::SetDTAndShapeFromAbTensorToLiteTensor(abstract, node.GetOutput(0))) {
-      MS_LOG(ERROR) << "Sync infershape result from Abstract to InferTensor failed, abstract : " << node.GetName();
+      MS_LOG(ERROR) << "Sync infershape result from Abstract to InferTensor failed, node : " << node.GetName();
       return RET_ERROR;
     }
     return RET_OK;
@@ -157,7 +162,7 @@ int SyncInferRetToLiteTensor(const CompileNode &node) {
   return RET_ERROR;
 }
 
-int SyncInferRetToCNode(const CompileNode &node) {
+int SyncInferRetToCNodeNative(const CompileNode &node) {
   auto cnode = node.GetCNode();
   MS_ASSERT(cnode != nullptr);
   const auto &outputs = node.GetOutputs();
@@ -202,6 +207,22 @@ int SyncInferRetToCNode(const CompileNode &node) {
   return RET_ERROR;
 }
 
+int SyncInferRetToCNode(const CompileNode &node, const int &infer_ret) {
+  const auto &outputs = node.GetOutputs();
+  if (infer_ret == RET_INFER_INVALID) {
+    for (auto *output : outputs) {
+      output->set_shape({abstract::Shape::kShapeRankAny});
+    }
+  }
+  auto ret = SyncInferRetToCNodeNative(node);
+  if (infer_ret == RET_INFER_INVALID) {
+    for (auto *output : outputs) {
+      output->set_shape({-1});
+    }
+  }
+  return ret;
+}
+
 int InferShapeByNNACL(CompileNode *node, OpParameter *op_parameter, Format format, InferContext *context) {
   if (format != NHWC && format != NCHW) {
     MS_LOG(ERROR) << "NNACL infershape only support NCHW or NHWC format, got " << FormatEnumToString(format);
@@ -231,20 +252,10 @@ int InferShapeByNNACL(CompileNode *node, OpParameter *op_parameter, Format forma
   if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
     return infer_ret;
   }
-  if (infer_ret == RET_INFER_INVALID) {
-    for (auto *output : outputs) {
-      output->set_shape({abstract::Shape::kShapeRankAny});
-    }
-  }
-  auto ret = SyncInferRetToCNode(*node);
+  auto ret = SyncInferRetToCNode(*node, infer_ret);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Sync infershape result from InferTensor to Abstract failed: " << node->GetName();
     return ret;
-  }
-  if (infer_ret == RET_INFER_INVALID) {
-    for (auto *output : outputs) {
-      output->set_shape({-1});
-    }
   }
   return infer_ret;
 }
@@ -272,7 +283,7 @@ int InferShapeByOps(CompileNode *node, Format format) {
     return infer_ret;
   }
 
-  auto ret = SyncInferRetToLiteTensor(*node);
+  auto ret = SyncInferRetToLiteTensor(*node, infer_ret);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Sync infershape result from Abstract to InferTensor failed: " << node->GetName();
     return ret;
