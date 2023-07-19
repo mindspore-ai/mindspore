@@ -997,10 +997,6 @@ class Tanh(Primitive):
         >>> output = tanh(input_x)
         >>> print(output)
         [0.7615941 0.9640276 0.9950547 0.9993293 0.9999092]
-        >>> input_x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = tanh(input_x)
-        >>> print(output)
-        (1.0195323-0.023145922j)
     """
 
     @prim_attr_register
