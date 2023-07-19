@@ -229,7 +229,7 @@ bool IsConstant(const ValuePtr &value) {
   return true;
 }
 
-FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph, bool is_controw_flow) {
+FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph, const GradParamPtr &grad_param) {
   PyNativeAlgo::Common::DumpGraphIR("bprop_builder_before_opt.ir", bprop_func_graph);
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   resource->set_func_graph(bprop_func_graph);
@@ -237,10 +237,17 @@ FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph, bool is_
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_func_graph);
   auto after_opt_bg = pipeline::JitBpropGraphPass(resource, true);
-  if (is_controw_flow) {
+  auto is_control_flow =
+    grad_param->is_jit_graph && grad_param->use_dynamic_shape_process && grad_param->is_control_flow;
+  if (is_control_flow) {
     for (const auto &g : manager->func_graphs()) {
       g->set_flag(kFlagJitCallGraph, true);
     }
+  }
+  auto abs_seq = after_opt_bg->parameters().back()->abstract()->cast<abstract::AbstractSequencePtr>();
+  if (abs_seq != nullptr && !abs_seq->dynamic_len() && grad_param->is_jit_graph &&
+      grad_param->use_dynamic_shape_process) {
+    PyNativeAlgo::Common::ProcessTupleParam(after_opt_bg, after_opt_bg->parameters().size() - kIndex1);
   }
   PyNativeAlgo::Common::DumpGraphIR("bprop_builder_after_opt.ir", after_opt_bg);
   return after_opt_bg;
@@ -290,6 +297,8 @@ void SetJitCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, cons
   common::AnfAlgo::SetNodeAttr(kAttrJitCallNode, MakeValue(true), cnode);
   // kFlagJitCallGraph is set true to avoid compilig call_graph whe compiling the main graph
   call_graph->set_flag(kFlagJitCallGraph, true);
+  // call graph not inline to grad top
+  call_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   pipeline::ResourcePtr resource;
   const auto it = jit_call_graph_compile_cache_.find(cache_key);
   bool need_compile = (it == jit_call_graph_compile_cache_.end());
@@ -763,7 +772,21 @@ CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const A
   MS_EXCEPTION_IF_NULL(tape_dout);
   *tape_dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), grad_param->op_grad_info->out_abs,
                                 SpecialType::kZerosLikeType);
-  (void)bprop_inputs.emplace_back(*tape_dout);
+  if (is_jit_dynamic_shape && grad_param->op_grad_info->out_abs->isa<abstract::AbstractSequence>()) {
+    auto abs_seq = grad_param->op_grad_info->out_abs->cast<abstract::AbstractSequencePtr>();
+    // Dynamic len has no size current
+    if (!abs_seq->dynamic_len()) {
+      for (size_t i = 0; i < abs_seq->size(); ++i) {
+        CNodePtr din =
+          ad_param()->tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), *tape_dout, NewValueNode(SizeToLong(i))});
+        din->set_abstract(abs_seq->elements()[i]);
+        (void)bprop_inputs.emplace_back(din);
+        AddUser(*tape_dout, din, kIndex1);
+      }
+    }
+  } else {
+    (void)bprop_inputs.emplace_back(*tape_dout);
+  }
   (void)bprop_inputs.insert(bprop_inputs.cbegin(), NewValueNode(bprop_graph));
   // get_bprop is a call node
   auto bprop_cnode = ad_param()->tape_->NewCNode(bprop_inputs);
@@ -838,8 +861,7 @@ CNodePtr AutoGradCellImpl::GetBPropFromFProp(const GradParamPtr &grad_param, con
     }
     bprop_builder->set_output(bprop_builder->NewCNode(actual_out));
     // Call pass for optimize graph, such as inline
-    after_opt_fg = OptimizeBpropBuilder(
-      bprop_builder, grad_param->is_jit_graph && grad_param->use_dynamic_shape_process && grad_param->is_control_flow);
+    after_opt_fg = OptimizeBpropBuilder(bprop_builder, grad_param);
     if (grad_param->is_jit_graph || !grad_param->use_dynamic_shape_process) {
       pass_grad_graph_[grad_param->graph_cache_key] = BasicClone(after_opt_fg);
     }
@@ -896,6 +918,14 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
   ad_graph_out->set_abstract(std::make_shared<abstract::AbstractTuple>(out_abs_list));
   ad_param()->tape_->set_output(ad_graph_out);
   auto ad_graph = ad_param()->tape_;
+  auto abs_seq = ad_graph->parameters().back()->abstract()->cast<abstract::AbstractSequencePtr>();
+  if (abs_seq != nullptr && !abs_seq->dynamic_len() && grad_param->is_jit_graph &&
+      grad_param->use_dynamic_shape_process) {
+    auto manager = MakeManager();
+    MS_EXCEPTION_IF_NULL(manager);
+    manager->AddFuncGraph(ad_graph);
+    PyNativeAlgo::Common::ProcessTupleParam(ad_graph, ad_graph->parameters().size() - kIndex1);
+  }
   PyNativeAlgo::Common::DumpGraphIR("ad_output_graph.ir", ad_graph);
 
   // Save ad graph in cache
@@ -1062,16 +1092,6 @@ void AutoGradCellImpl::CreateParameterAdjoint(const GradParamPtr &grad_param) co
   for (size_t i = 0; i < graph_parameters.size(); ++i) {
     MS_LOG(DEBUG) << "Get param " << graph_parameters[i]->DebugString();
     ParameterPtr param = ad_param()->tape_->add_parameter();
-    auto tensor = PyNativeAlgo::Common::GetTensorFromParam(graph_parameters[i]);
-    // Weight parameter
-    if (tensor != nullptr) {
-      const auto &param_info = tensor->param_info();
-      MS_EXCEPTION_IF_NULL(param_info);
-      const auto &param_name = param_info->name();
-      param->set_name(param_name);
-      param->debug_info()->set_name(param_name);
-      param->set_default_param(tensor);
-    }
     param->set_abstract(graph_parameters[i]->abstract());
     auto zeros_like_dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), graph_parameters[i]->abstract(),
                                             SpecialType::kZerosLikeType);
@@ -1432,7 +1452,9 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
     const auto &valuenode = din->cast<ValueNodePtr>();
     const auto &value = valuenode->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>()) {
+    auto type = value->type();
+    if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
+        (type != nullptr && type->isa<String>())) {
       return;
     }
     tensor::TensorPtr tensor_ptr = nullptr;
@@ -1443,7 +1465,8 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
     } else if (value->isa<ValueList>()) {
       tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
     } else {
-      MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get " << value->ToString();
+      MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
+                        << ", value " << value->ToString();
     }
     MS_EXCEPTION_IF_NULL(tensor_ptr);
     valuenode->set_value(tensor_ptr);

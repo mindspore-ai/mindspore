@@ -396,52 +396,6 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
   input_args_info->has_sens = true;
 }
 
-void PlantTupleSens(const FuncGraphPtr &bprop_graph, const abstract::AbstractSequencePtr &abs_seq,
-                    AnfNodePtrList *make_tuple, AnfNodePtrList *new_param) {
-  MS_EXCEPTION_IF_NULL(bprop_graph);
-  MS_EXCEPTION_IF_NULL(make_tuple);
-  MS_EXCEPTION_IF_NULL(new_param);
-  MS_EXCEPTION_IF_NULL(abs_seq);
-  for (size_t i = 0; i < abs_seq->size(); ++i) {
-    if (abs_seq->elements()[i]->isa<abstract::AbstractSequence>()) {
-      PlantTupleSens(bprop_graph, abs_seq->elements()[i]->cast<abstract::AbstractSequencePtr>(), make_tuple, new_param);
-    } else if (abs_seq->elements()[i]->isa<abstract::AbstractTensor>()) {
-      auto plant_param = bprop_graph->add_parameter();
-      plant_param->set_abstract(abs_seq->elements()[i]);
-      (void)make_tuple->emplace_back(plant_param);
-      (void)new_param->emplace_back(plant_param);
-    }
-  }
-}
-
-void ProcessTupleSens(const FuncGraphPtr &bprop_graph, const InputArgsInfoPtr &input_args_info) {
-  MS_EXCEPTION_IF_NULL(input_args_info);
-  auto bprop_params = bprop_graph->parameters();
-  auto sens_param = bprop_params[input_args_info->input_size];
-  MS_EXCEPTION_IF_NULL(sens_param->abstract());
-  const auto &sens_abstract = sens_param->abstract();
-  MS_EXCEPTION_IF_NULL(sens_abstract);
-  if (!sens_abstract->isa<abstract::AbstractSequence>()) {
-    MS_LOG(EXCEPTION) << "Get wrong sens " << sens_abstract->ToString();
-  }
-  MS_LOG(DEBUG) << "Process tuple sens " << sens_abstract->ToString();
-  auto it = std::find(bprop_params.begin(), bprop_params.end(), sens_param);
-  it = bprop_params.erase(it);
-  const auto &abs_seq = sens_abstract->cast<abstract::AbstractSequencePtr>();
-  AnfNodePtrList make_tuple{NewValueNode(prim::kPrimMakeTuple)};
-  AnfNodePtrList new_param;
-  PlantTupleSens(bprop_graph, abs_seq, &make_tuple, &new_param);
-  (void)bprop_params.insert(it, new_param.begin(), new_param.end());
-  bprop_graph->set_parameters(bprop_params);
-  auto make_tuple_sens = bprop_graph->NewCNode(make_tuple);
-  make_tuple_sens->set_abstract(sens_abstract);
-  auto manager = bprop_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto tr = manager->Transact();
-  (void)tr.Replace(sens_param, make_tuple_sens);
-  tr.Commit();
-}
-
 std::string GetWeightsObjIdsByWeights(const py::object &weights) {
   auto is_require_grad = [](const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(value);
@@ -1170,7 +1124,7 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
     (void)opt::EnvironConversion(resource);
   }
   if (grad_attr.has_sens && top_input_args_info_->input_arg_value_vec.back()->isa<ValueSequence>()) {
-    ProcessTupleSens(bprop_graph, top_input_args_info_);
+    PyNativeAlgo::Common::ProcessTupleParam(bprop_graph, top_input_args_info_->input_size);
   }
   top_cell()->SaveForwardOutputTensorInfoInBpropGraph(resource->func_graph());
   PyNativeAlgo::Common::DumpGraphIR("launch_bprop_graph.ir", bprop_graph);

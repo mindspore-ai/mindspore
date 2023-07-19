@@ -68,6 +68,7 @@ struct Common {
   static TensorGradType SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell);
   static void SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph,
                                           const TopCellInfoPtr &top_cell);
+  static void ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position);
 };
 
 // Parser python
