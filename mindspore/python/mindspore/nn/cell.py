@@ -2290,13 +2290,12 @@ class Cell(Cell_):
     def _run_tracefunc(self, *args, **kwargs):
         """ Run Packed Cell in Pack."""
         args = self._mixed_precision_cast(args)
-        if hasattr(self, "bprop") or hasattr(self, "_pipeline_stage"):
+        if hasattr(self, "bprop") or hasattr(self, "_pipeline_stage") or self.get_flags():
             expander = PackExpander.get_instance()
-            args = expander.begin_graph(self, *args)
+            args = expander.begin_subgraph(self, *args)
             args = [_convert_tensor(a) for a in args]
-            with _SetMixedPrecision(self):
-                output = self._run_construct(args, kwargs)
-            ret = expander.end_graph(output)
+            output = self._run_construct(args, kwargs)
+            ret = expander.end_subgraph(output)
             output = _convert_tensor(ret)
         else:
             with _SetMixedPrecision(self):
