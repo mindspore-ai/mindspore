@@ -140,6 +140,10 @@ FuncGraphPtr ConverterFuncGraph::Load(const std::shared_ptr<ConverterPara> &para
 void SetIsGraphDynamicShapeAttr(const FuncGraphPtr &func_graph) {
   bool dyn_shape_value = false;
   for (auto input : func_graph->get_inputs()) {
+    if (input->Shape() == nullptr) {
+      MS_LOG(WARNING) << "input shape is nullptr!";
+      continue;
+    }
     if (input->Shape()->IsDynamic()) {
       dyn_shape_value = true;
     }
