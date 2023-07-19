@@ -143,6 +143,25 @@ ValuePtr CreateNonTensorByAbstract(const abstract::AbstractBasePtr &abs) {
     MS_LOG(EXCEPTION) << "Get unsupported type " << type_id;
   }
 }
+
+void PlantTupleParam(const FuncGraphPtr &bprop_graph, const abstract::AbstractSequencePtr &abs_seq,
+                     AnfNodePtrList *make_tuple, AnfNodePtrList *new_param) {
+  MS_EXCEPTION_IF_NULL(bprop_graph);
+  MS_EXCEPTION_IF_NULL(make_tuple);
+  MS_EXCEPTION_IF_NULL(new_param);
+  MS_EXCEPTION_IF_NULL(abs_seq);
+  for (size_t i = 0; i < abs_seq->size(); ++i) {
+    if (abs_seq->elements()[i]->isa<abstract::AbstractSequence>()) {
+      PlantTupleParam(bprop_graph, abs_seq->elements()[i]->cast<abstract::AbstractSequencePtr>(), make_tuple,
+                      new_param);
+    } else if (abs_seq->elements()[i]->isa<abstract::AbstractTensor>()) {
+      auto plant_param = bprop_graph->add_parameter();
+      plant_param->set_abstract(abs_seq->elements()[i]);
+      (void)make_tuple->emplace_back(plant_param);
+      (void)new_param->emplace_back(plant_param);
+    }
+  }
+}
 }  // namespace
 
 AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
@@ -582,6 +601,33 @@ void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info
     MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
                   << tensor_value->ToString() << ". Its name is: " << param->name();
   }
+}
+
+void Common::ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position) {
+  auto bprop_params = bprop_graph->parameters();
+  auto target_param = bprop_params[position];
+  MS_EXCEPTION_IF_NULL(target_param->abstract());
+  const auto &target_abstract = target_param->abstract();
+  MS_EXCEPTION_IF_NULL(target_abstract);
+  if (!target_abstract->isa<abstract::AbstractSequence>()) {
+    MS_LOG(EXCEPTION) << "Get wrong param " << target_abstract->ToString();
+  }
+  MS_LOG(DEBUG) << "Process tuple param " << target_abstract->ToString();
+  auto it = std::find(bprop_params.begin(), bprop_params.end(), target_param);
+  it = bprop_params.erase(it);
+  const auto &abs_seq = target_abstract->cast<abstract::AbstractSequencePtr>();
+  AnfNodePtrList make_tuple{NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList new_param;
+  PlantTupleParam(bprop_graph, abs_seq, &make_tuple, &new_param);
+  (void)bprop_params.insert(it, new_param.begin(), new_param.end());
+  bprop_graph->set_parameters(bprop_params);
+  auto make_tuple_param = bprop_graph->NewCNode(make_tuple);
+  make_tuple_param->set_abstract(target_abstract);
+  auto manager = bprop_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto tr = manager->Transact();
+  (void)tr.Replace(target_param, make_tuple_param);
+  tr.Commit();
 }
 
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
