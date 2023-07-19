@@ -1038,6 +1038,12 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   if (!resource->EnableCompileCache()) {
     return;
   }
+  // Disable cache graph when the cell reusing is enable.
+  static bool enable_graph_reusing =
+    (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
+  if (enable_graph_reusing) {
+    return;
+  }
 #ifdef ENABLE_PROFILE
   double t1 = GetTime();
 #endif
