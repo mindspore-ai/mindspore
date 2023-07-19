@@ -190,7 +190,7 @@ def test_fallback_add_meta_5():
     assert ret == (Tensor(1), Tensor(2), Tensor(3), Tensor(4), Tensor(5))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
