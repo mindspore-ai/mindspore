@@ -1427,10 +1427,6 @@ def log(input):
         >>> output = ops.log(x)
         >>> print(output)
         [0.        0.6931472 1.3862944]
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = ops.log(x)
-        >>> print(output)
-        (1.0647107+0.7610128j)
     """
     return log_(input)
 
@@ -2720,10 +2716,6 @@ def tanh(input):
         >>> output = ops.tanh(input)
         >>> print(output)
         [0.7615941 0.9640276 0.9950547 0.9993293 0.9999092]
-        >>> input = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = ops.tanh(input)
-        >>> print(output)
-        (1.0195323-0.023145922j)
     """
     return tanh_(input)
 
@@ -10090,10 +10082,6 @@ def log1p(input):
         >>> output = ops.log1p(x)
         >>> print(output)
         [0.6931472 1.0986123 1.609438 ]
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = ops.log1p(x)
-        >>> print(output)
-        (1.3054024+0.57296616j)
     """
     _log1p = _get_cache_prim(P.Log1p)()
     return _log1p(input)

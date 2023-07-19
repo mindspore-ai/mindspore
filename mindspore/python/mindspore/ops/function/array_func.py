@@ -4786,13 +4786,6 @@ def broadcast_to(input, shape): # pylint: disable=redefined-outer-name
         >>> print(output)
         [[1. 1.]
          [2. 2.]]
-        >>> shape = (1, 3, 3)
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = ops.broadcast_to(x, shape)
-        >>> print(output)
-        [[[2.1+2.j 2.1+2.j 2.1+2.j]
-         [2.1+2.j 2.1+2.j 2.1+2.j]
-         [2.1+2.j 2.1+2.j 2.1+2.j]]]
     """
     if isinstance(shape, Tensor) or F.is_sequence_value_unknown(shape):
         _dyn_broadcast_to = _get_cache_prim(DynamicBroadcastTo)()
