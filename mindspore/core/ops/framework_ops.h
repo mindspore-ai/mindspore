@@ -24,18 +24,27 @@
 #include "ir/primitive.h"
 #include "ir/scalar.h"
 #include "ir/value.h"
+#include "ops/framework_op_name.h"
 #include "utils/flags.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
 /*
- * core_ops.h has been decomposed to following files:
+ * The origin core_ops.h has been decomposed to following files:
  * arithmetic_ops.h, array_ops.h, comparison_ops.h,
  * image_ops.h, lite_ops.h, math_ops.h, nn_ops.h,
  * nn_optimizer_ops.h, other_ops.h, conv_pool_ops.h,
  * random_ops.h, sequence_ops.h, sparse_ops.h,
- * sparse_tensor_ops.h, structure_ops.h
+ * sparse_tensor_ops.h, structure_ops.h.
+ *
+ * The const strings, which were in core_ops.h and common/utils/utils.h
+ * were moved to the following *_op_name files:
+ * framework_op_name.h, arithmetic_op_name.h, array_op_name.h,
+ * comparison_op_name.h, image_op_name.h, lite_op_name.h,
+ * math_op_name.h, nn_op_name.h, nn_optimizer_op_name.h,
+ * other_op_name.h, conv_pool_op_name.h, random_op_name.h,
+ * sequence_op_name.h, sparse_op_name.h, structure_op_name.h.
  */
 GVAR_DEF(ValuePtr, kValueOne, std::make_shared<Int64Imm>(1));
 #define COMMA ,
@@ -44,43 +53,6 @@ GVAR_DEF(mindspore::HashMap<std::string COMMA ValuePtr>, kSideEffectPropagate,
 #undef COMMA
 GVAR_DEF(PrimitivePtr, kPrimIdentityMath, std::make_shared<Primitive>("Identity", kSideEffectPropagate));
 
-constexpr auto kGather = "Gather";
-
-// Attribute
-constexpr auto kSetAttr = "setattr";
-constexpr auto kRint = "Rint";
-constexpr auto kReverseV2 = "ReverseV2";
-constexpr auto kNoRepeatNGram = "NoRepeatNGram";
-constexpr auto kSearchSorted = "SearchSorted";
-
-// Meta Function Graph
-constexpr auto kJ = "J";
-constexpr auto kVmap = "Vmap";
-constexpr auto kTaylor = "Taylor";
-
-// Others
-constexpr auto kLoad = "Load";
-constexpr auto kDepend = "Depend";
-constexpr auto kidentity = "identity";
-constexpr auto kEnvironCreate = "EnvironCreate";
-constexpr auto kEnvironSet = "EnvironSet";
-constexpr auto kEnvironGet = "EnvironGet";
-constexpr auto kEnvironAdd = "EnvironAdd";
-constexpr auto kPopulationCount = "PopulationCount";
-constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
-constexpr auto kMutable = "mutable";
-constexpr auto kGetGrad = "GetGrad";
-constexpr auto kSetSize = "SetSize";
-constexpr auto kPackFunc = "PackFunc";
-constexpr auto kIsInstance = "isinstance";
-constexpr auto kLower = "Lower";
-
-// Framework
-constexpr auto kUpdateState = "UpdateState";
-constexpr auto kReturn = "Return";
-constexpr auto kSwitch = "Switch";
-constexpr auto kSelect = "Select";
-
 // Shape
 GVAR_DEF(PrimitivePtr, kPrimShapeMul, std::make_shared<Primitive>("shape_mul"));
 GVAR_DEF(PrimitivePtr, kPrimShapeMulGrad, std::make_shared<Primitive>("ShapeMulGrad"));
@@ -88,35 +60,35 @@ GVAR_DEF(PrimitivePtr, kPrimShape, std::make_shared<Primitive>("Shape"));
 GVAR_DEF(PrimitivePtr, kPrimDType, std::make_shared<Primitive>("DType"));
 
 // SideEffectPropagate
-GVAR_DEF(PrimitivePtr, kPrimDepend, std::make_shared<Primitive>(kDepend, kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimDepend, std::make_shared<Primitive>(kDependOpName, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimPartial, std::make_shared<Primitive>("Partial", kSideEffectPropagate));
-GVAR_DEF(PrimitivePtr, kPrimIdentity, std::make_shared<Primitive>(kidentity, kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimIdentity, std::make_shared<Primitive>(kidentityOpName, kSideEffectPropagate));
 
 // Other primitive not used by backend but used in core;
 GVAR_DEF(PrimitivePtr, kPrimStateSetItem, std::make_shared<Primitive>("state_setitem"));
-GVAR_DEF(PrimitivePtr, kPrimJ, std::make_shared<Primitive>(kJ, kSideEffectPropagate));
-GVAR_DEF(PrimitivePtr, kPrimVmap, std::make_shared<Primitive>(kVmap, kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimJ, std::make_shared<Primitive>(kJOpName, kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimVmap, std::make_shared<Primitive>(kVmapOpName, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimShard, std::make_shared<Primitive>("Shard", kSideEffectPropagate));
-GVAR_DEF(PrimitivePtr, kPrimTaylor, std::make_shared<Primitive>(kTaylor));
+GVAR_DEF(PrimitivePtr, kPrimTaylor, std::make_shared<Primitive>(kTaylorOpName));
 
 // Control ops
 GVAR_DEF(PrimitivePtr, kPrimMerge, std::make_shared<Primitive>("Merge"));
 
 // Other miscellaneous
-GVAR_DEF(PrimitivePtr, kPrimEnvironCreate, std::make_shared<Primitive>(kEnvironCreate));
-GVAR_DEF(PrimitivePtr, kPrimEnvironSet, std::make_shared<Primitive>(kEnvironSet));
-GVAR_DEF(PrimitivePtr, kPrimEnvironGet, std::make_shared<Primitive>(kEnvironGet));
-GVAR_DEF(PrimitivePtr, kPrimEnvironAdd, std::make_shared<Primitive>(kEnvironAdd));
-GVAR_DEF(PrimitivePtr, kPrimEnvironDestroyAll, std::make_shared<Primitive>(kEnvironDestroyAll));
-GVAR_DEF(PrimitivePtr, kPrimSetSize, std::make_shared<Primitive>(kSetSize));
+GVAR_DEF(PrimitivePtr, kPrimEnvironCreate, std::make_shared<Primitive>(kEnvironCreateOpName));
+GVAR_DEF(PrimitivePtr, kPrimEnvironSet, std::make_shared<Primitive>(kEnvironSetOpName));
+GVAR_DEF(PrimitivePtr, kPrimEnvironGet, std::make_shared<Primitive>(kEnvironGetOpName));
+GVAR_DEF(PrimitivePtr, kPrimEnvironAdd, std::make_shared<Primitive>(kEnvironAddOpName));
+GVAR_DEF(PrimitivePtr, kPrimEnvironDestroyAll, std::make_shared<Primitive>(kEnvironDestroyAllOpName));
+GVAR_DEF(PrimitivePtr, kPrimSetSize, std::make_shared<Primitive>(kSetSizeOpName));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimPyFunc, std::make_shared<Primitive>("PyFunc"));
 GVAR_DEF(PrimitivePtr, kPrimCheckValid, std::make_shared<Primitive>("CheckValid"));
 GVAR_DEF(PrimitivePtr, kPrimReformat, std::make_shared<Primitive>("Reformat"));
-GVAR_DEF(PrimitivePtr, kPrimLoad, std::make_shared<Primitive>(kLoad));
-GVAR_DEF(PrimitivePtr, kPrimMutable, std::make_shared<Primitive>(kMutable));
-GVAR_DEF(PrimitivePtr, kPrimGetGrad, std::make_shared<Primitive>(kGetGrad));
+GVAR_DEF(PrimitivePtr, kPrimLoad, std::make_shared<Primitive>(kLoadOpName));
+GVAR_DEF(PrimitivePtr, kPrimMutable, std::make_shared<Primitive>(kMutableOpName));
+GVAR_DEF(PrimitivePtr, kPrimGetGrad, std::make_shared<Primitive>(kGetGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimHookBackward, std::make_shared<Primitive>("HookBackward"));
 GVAR_DEF(PrimitivePtr, kPrimCellBackwardHook, std::make_shared<Primitive>("CellBackwardHook"));
 GVAR_DEF(PrimitivePtr, kPrimPrintShapeType, std::make_shared<Primitive>("PrintShapeType"));
@@ -147,8 +119,8 @@ GVAR_DEF(PrimitivePtr, kPrimPyExecute,
                                                     {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)},
                                                      {std::string("primitive_target"), MakeValue("CPU")}})));
 GVAR_DEF(PrimitivePtr, kPrimSetAttr,
-         std::make_shared<Primitive>(kSetAttr, mindspore::HashMap<std::string, ValuePtr>(
-                                                 {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
+         std::make_shared<Primitive>(kSetAttrOpName, mindspore::HashMap<std::string, ValuePtr>(
+                                                       {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
 
 // Used to build graph which have keyword arguments
 GVAR_DEF(PrimitivePtr, kPrimExtractKeywordArg, std::make_shared<Primitive>("extract_keyword_arg"));
@@ -164,7 +136,7 @@ GVAR_DEF(PrimitivePtr, kPrimCustom, std::make_shared<Primitive>("Custom"));
 GVAR_DEF(PrimitivePtr, kPrimTypeOf, std::make_shared<Primitive>("typeof"));
 GVAR_DEF(PrimitivePtr, kPrimTopTypeOf, std::make_shared<Primitive>("TopTypeof"));
 GVAR_DEF(PrimitivePtr, kPrimHasType, std::make_shared<Primitive>("hastype"));
-GVAR_DEF(PrimitivePtr, kPrimIsInstance, std::make_shared<Primitive>(kIsInstance));
+GVAR_DEF(PrimitivePtr, kPrimIsInstance, std::make_shared<Primitive>(kIsInstanceOpName));
 GVAR_DEF(PrimitivePtr, kPrimResolve, std::make_shared<Primitive>("resolve"));
 GVAR_DEF(PrimitivePtr, kPrimEmbed, std::make_shared<Primitive>("embed"));
 GVAR_DEF(PrimitivePtr, kPrimRefToEmbed, std::make_shared<Primitive>("RefToEmbed"));
@@ -181,6 +153,8 @@ GVAR_DEF(PrimitivePtr, kPrimMixedPrecisionCast, std::make_shared<Primitive>("Mix
 GVAR_DEF(PrimitivePtr, kPrimAngleAtomEnergy, std::make_shared<Primitive>("AngleAtomEnergy"));
 
 // Framework ops
+GVAR_DEF(PrimitivePtr, kPrimStreamSend, std::make_shared<Primitive>(kStreamSendOpName));
+GVAR_DEF(PrimitivePtr, kPrimStreamRecv, std::make_shared<Primitive>(kStreamRecvOpName));
 GVAR_DEF(PrimitivePtr, kPrimSliceToIndices, std::make_shared<Primitive>("SliceToIndices"));
 GVAR_DEF(PrimitivePtr, kPrimTensorMove, std::make_shared<Primitive>("TensorMove"));
 GVAR_DEF(PrimitivePtr, kPrimMemCpyAsync, std::make_shared<Primitive>("memcpy_async"));
@@ -188,20 +162,20 @@ GVAR_DEF(PrimitivePtr, kPrimSend, std::make_shared<Primitive>("Send"));
 GVAR_DEF(PrimitivePtr, kPrimReceive, std::make_shared<Primitive>("Receive"));
 GVAR_DEF(PrimitivePtr, kPrimRpcSend, std::make_shared<Primitive>("RpcSend"));
 GVAR_DEF(PrimitivePtr, kPrimRpcRecv, std::make_shared<Primitive>("RpcRecv"));
-GVAR_DEF(PrimitivePtr, kPrimUpdateState, std::make_shared<Primitive>(kUpdateState));
-GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>(kReturn));
-GVAR_DEF(PrimitivePtr, kPrimSwitch, std::make_shared<Primitive>(kSwitch));
-GVAR_DEF(PrimitivePtr, kPrimSelect, std::make_shared<Primitive>(kSelect));
-GVAR_DEF(PrimitivePtr, kPrimCall, std::make_shared<Primitive>("call"));
+GVAR_DEF(PrimitivePtr, kPrimUpdateState, std::make_shared<Primitive>(kUpdateStateOpName));
+GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>(kReturnOpName));
+GVAR_DEF(PrimitivePtr, kPrimSwitch, std::make_shared<Primitive>(kSwitchOpName));
+GVAR_DEF(PrimitivePtr, kPrimSelect, std::make_shared<Primitive>(kSelectOpName));
+GVAR_DEF(PrimitivePtr, kPrimCall, std::make_shared<Primitive>(kCallOpName));
 GVAR_DEF(PrimitivePtr, kPrimRaise,
          std::make_shared<Primitive>("raise", mindspore::HashMap<std::string, ValuePtr>(
                                                 {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
 GVAR_DEF(PrimitivePtr, kPrimCallInline, std::make_shared<Primitive>("call_inline"));
 GVAR_DEF(PrimitivePtr, kPrimSwitchLayer, std::make_shared<Primitive>("switch_layer"));
-GVAR_DEF(PrimitivePtr, kPrimLower, std::make_shared<Primitive>(kLower));
+GVAR_DEF(PrimitivePtr, kPrimLower, std::make_shared<Primitive>(kLowerOpName));
 
 // Pack
-GVAR_DEF(PrimitivePtr, kPrimPackFunc, std::make_shared<Primitive>(kPackFunc));
+GVAR_DEF(PrimitivePtr, kPrimPackFunc, std::make_shared<Primitive>(kPackFuncOpName));
 }  // namespace prim
 }  // namespace mindspore
 

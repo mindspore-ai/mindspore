@@ -26,7 +26,7 @@ class MIND_API RealMakeTuple : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RealMakeTuple);
   /// \brief Constructor.
-  RealMakeTuple() : BaseOperator(prim::kRealMakeTuple) {}
+  RealMakeTuple() : BaseOperator(kRealMakeTupleOpName) {}
   /// \brief Init.
   void Init() const {}
 };

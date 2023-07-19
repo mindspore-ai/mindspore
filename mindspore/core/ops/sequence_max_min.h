@@ -27,7 +27,7 @@ class MIND_API SequenceMax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceMax);
   /// \brief Constructor.
-  SequenceMax() : BaseOperator(prim::kSequenceMax) {}
+  SequenceMax() : BaseOperator(kSequenceMaxOpName) {}
   /// \brief Init function.
   void Init() const {}
 };
@@ -36,7 +36,7 @@ class MIND_API SequenceMin : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceMin);
   /// \brief Constructor.
-  SequenceMin() : BaseOperator(prim::kSequenceMin) {}
+  SequenceMin() : BaseOperator(kSequenceMinOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

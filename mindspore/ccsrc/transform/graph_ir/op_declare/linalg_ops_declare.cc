@@ -16,14 +16,14 @@
 
 #include "transform/graph_ir/op_declare/linalg_ops_declare.h"
 
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/math_ops.h"
+#include "ops/arithmetic_op_name.h"
+#include "ops/math_ops.h"
 namespace mindspore::transform {
 // Ger
 INPUT_MAP(Ger) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Ger) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Ger) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Ger, prim::kGer, ADPT_DESC(Ger))
+REG_ADPT_DESC(Ger, kGerOpName, ADPT_DESC(Ger))
 
 // Svd
 INPUT_MAP(Svd) = {{1, INPUT_DESC(x)}};
@@ -36,23 +36,23 @@ REG_ADPT_DESC(Svd, prim::kPrimSvd->name(), ADPT_DESC(Svd))
 INPUT_MAP(LogMatrixDeterminant) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(LogMatrixDeterminant) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogMatrixDeterminant) = {{0, OUTPUT_DESC(sign)}, {1, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(LogMatrixDeterminant, prim::kLogMatrixDeterminant, ADPT_DESC(LogMatrixDeterminant))
+REG_ADPT_DESC(LogMatrixDeterminant, kLogMatrixDeterminantOpName, ADPT_DESC(LogMatrixDeterminant))
 
 // MatrixInverse
 INPUT_MAP(MatrixInverse) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(MatrixInverse) = {{"adjoint", ATTR_DESC(adjoint, AnyTraits<bool>())}};
 OUTPUT_MAP(MatrixInverse) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixInverse, prim::kMatrixInverse, ADPT_DESC(MatrixInverse))
+REG_ADPT_DESC(MatrixInverse, kMatrixInverseOpName, ADPT_DESC(MatrixInverse))
 
 // MatrixDeterminant
 INPUT_MAP(MatrixDeterminant) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(MatrixDeterminant) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixDeterminant) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixDeterminant, prim::kMatrixDeterminant, ADPT_DESC(MatrixDeterminant))
+REG_ADPT_DESC(MatrixDeterminant, kMatrixDeterminantOpName, ADPT_DESC(MatrixDeterminant))
 
 // MatrixSolve
 INPUT_MAP(MatrixSolve) = {{1, INPUT_DESC(matrix)}, {2, INPUT_DESC(rhs)}};
 ATTR_MAP(MatrixSolve) = {{"adjoint", ATTR_DESC(adjoint, AnyTraits<bool>())}};
 OUTPUT_MAP(MatrixSolve) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixSolve, prim::kMatrixSolve, ADPT_DESC(MatrixSolve))
+REG_ADPT_DESC(MatrixSolve, kMatrixSolveOpName, ADPT_DESC(MatrixSolve))
 }  // namespace mindspore::transform

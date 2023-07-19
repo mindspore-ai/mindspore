@@ -19,6 +19,12 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include "ops/structure_op_name.h"
+#include "ops/sparse_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/other_op_name.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"

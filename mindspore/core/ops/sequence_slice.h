@@ -27,7 +27,7 @@ class MIND_API SequenceSlice : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceSlice);
   /// \brief Constructor.
-  SequenceSlice() : BaseOperator(prim::kSequenceSlice) {}
+  SequenceSlice() : BaseOperator(kSequenceSliceOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

@@ -20,9 +20,12 @@
 #include <map>
 #include <set>
 #include <functional>
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/lite_op_name.h"
+#include "ops/structure_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 #include "ir/anf.h"
 #include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"

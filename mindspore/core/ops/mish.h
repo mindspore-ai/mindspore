@@ -23,7 +23,7 @@ namespace ops {
 class MIND_API Mish : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Mish);
-  Mish() : BaseOperator(prim::kMish) { InitIOName({"x"}, {"output"}); }
+  Mish() : BaseOperator(kMishOpName) { InitIOName({"x"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -16,6 +16,7 @@
 #include "plugin/device/gpu/kernel/data/dataset_profiling.h"
 
 #include <fstream>
+#include "ops/structure_op_name.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"

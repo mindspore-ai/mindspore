@@ -27,7 +27,7 @@ class MIND_API ListInplaceClear : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListInplaceClear);
   /// \brief Constructor.
-  ListInplaceClear() : BaseOperator(prim::kListInplaceClear) { InitIOName({"input_data"}, {"output_data"}); }
+  ListInplaceClear() : BaseOperator(kListInplaceClearOpName) { InitIOName({"input_data"}, {"output_data"}); }
   /// \brief Init function.
   void Init() const {}
 };

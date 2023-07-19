@@ -17,6 +17,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "ops/ascend_op_name.h"
+#include "ops/array_op_name.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 

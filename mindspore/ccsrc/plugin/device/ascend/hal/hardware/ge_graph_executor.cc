@@ -47,6 +47,7 @@
 #include "ge/ge_graph_compile_summary.h"
 #include "kernel/kernel_build_info.h"
 #include "inc/ops/array_ops.h"
+#include "ops/nn_op_name.h"
 #include "ops/array_ops.h"
 #include "pybind_api/gil_scoped_long_running.h"
 

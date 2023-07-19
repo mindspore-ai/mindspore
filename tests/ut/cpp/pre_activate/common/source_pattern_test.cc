@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
+#include "ops/math_op_name.h"
 #define private public
 #define protected public
 #include "include/backend/optimizer/pattern_to_pattern.h"

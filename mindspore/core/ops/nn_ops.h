@@ -20,50 +20,11 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/primitive.h"
+#include "ops/nn_op_name.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
-// Loss
-constexpr auto kCTCLoss = "CTCLoss";
-constexpr auto kNLLLoss = "NLLLoss";
-constexpr auto kNLLLossGrad = "NLLLossGrad";
-constexpr auto kMultiMarginLoss = "MultiMarginLoss";
-constexpr auto kMultiMarginLossGrad = "MultiMarginLossGrad";
-constexpr auto kMultilabelMarginLoss = "MultilabelMarginLoss";
-constexpr auto kMultilabelMarginLossGrad = "MultilabelMarginLossGrad";
-constexpr auto kTripletMarginLoss = "TripletMarginLoss";
-
-constexpr auto kLayerNorm = "LayerNorm";
-constexpr auto kLayerNormGrad = "LayerNormGrad";
-constexpr auto kPadV3 = "PadV3";
-constexpr auto kPadV3Grad = "PadV3Grad";
-constexpr auto kMirrorPadGrad = "MirrorPadGrad";
-constexpr auto kDataFormatVecPermute = "DataFormatVecPermute";
-constexpr auto kDropoutGenMask = "DropoutGenMask";
-constexpr auto kDropoutGenMaskV3 = "DropoutGenMaskV3";
-constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
-constexpr auto kDropoutDoMask = "DropoutDoMask";
-constexpr auto kDropoutDoMaskV3 = "DropoutDoMaskV3";
-constexpr auto kDropout = "Dropout";
-constexpr auto kDropoutGrad = "DropoutGrad";
-constexpr auto kDropout2D = "Dropout2D";
-constexpr auto kDropout3D = "Dropout3D";
-constexpr auto kMish = "Mish";
-constexpr auto kLRN = "LRN";
-constexpr auto kGridSampler2D = "GridSampler2D";
-constexpr auto kGridSampler2DGrad = "GridSampler2DGrad";
-constexpr auto kGridSampler3D = "GridSampler3D";
-constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
-constexpr auto kHSwish = "HSwish";
-constexpr auto kHSwishGrad = "HSwishGrad";
-constexpr auto kNuclearNorm = "NuclearNorm";
-constexpr auto kIFMR = "IFMR";
-constexpr auto kRenorm = "Renorm";
-constexpr auto kChannelShuffle = "ChannelShuffle";
-constexpr auto kBiasAdd = "BiasAdd";
-constexpr auto kBiasAddGrad = "BiasAddGrad";
-
 // Loss
 GVAR_DEF(PrimitivePtr, kPrimBCEWithLogitsLoss, std::make_shared<Primitive>("BCEWithLogitsLoss"));
 GVAR_DEF(PrimitivePtr, kPrimFlattenGrad, std::make_shared<Primitive>("FlattenGrad"));
@@ -76,14 +37,14 @@ GVAR_DEF(PrimitivePtr, kPrimSoftmaxV2WithDropoutDoMaskV3, std::make_shared<Primi
 GVAR_DEF(PrimitivePtr, kPrimLogSoftmax, std::make_shared<Primitive>("LogSoftmax"));
 GVAR_DEF(PrimitivePtr, kPrimLogSoftmaxV2, std::make_shared<Primitive>("LogSoftmaxV2"));
 GVAR_DEF(PrimitivePtr, kPrimLogSoftmaxGrad, std::make_shared<Primitive>("LogSoftmaxGrad"));
-GVAR_DEF(PrimitivePtr, kPrimMultilabelMarginLoss, std::make_shared<Primitive>(kMultilabelMarginLoss));
-GVAR_DEF(PrimitivePtr, kPrimMultilabelMarginLossGrad, std::make_shared<Primitive>(kMultilabelMarginLossGrad));
+GVAR_DEF(PrimitivePtr, kPrimMultilabelMarginLoss, std::make_shared<Primitive>(kMultilabelMarginLossOpName));
+GVAR_DEF(PrimitivePtr, kPrimMultilabelMarginLossGrad, std::make_shared<Primitive>(kMultilabelMarginLossGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimCTCLossV2, std::make_shared<Primitive>("CTCLossV2"));
 GVAR_DEF(PrimitivePtr, kPrimCTCLossV2Grad, std::make_shared<Primitive>("CTCLossV2Grad"));
-GVAR_DEF(PrimitivePtr, kPrimCTCLoss, std::make_shared<Primitive>(kCTCLoss));
-GVAR_DEF(PrimitivePtr, kPrimNLLLoss, std::make_shared<Primitive>(kNLLLoss));
-GVAR_DEF(PrimitivePtr, kPrimNLLLossGrad, std::make_shared<Primitive>(kNLLLossGrad));
-GVAR_DEF(PrimitivePtr, kPrimTripletMarginLoss, std::make_shared<Primitive>(kTripletMarginLoss));
+GVAR_DEF(PrimitivePtr, kPrimCTCLoss, std::make_shared<Primitive>(kCTCLossOpName));
+GVAR_DEF(PrimitivePtr, kPrimNLLLoss, std::make_shared<Primitive>(kNLLLossOpName));
+GVAR_DEF(PrimitivePtr, kPrimNLLLossGrad, std::make_shared<Primitive>(kNLLLossGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimTripletMarginLoss, std::make_shared<Primitive>(kTripletMarginLossOpName));
 GVAR_DEF(PrimitivePtr, kPrimBinaryCrossEntropy, std::make_shared<Primitive>("BinaryCrossEntropy"));
 GVAR_DEF(PrimitivePtr, kPrimBinaryCrossEntropyGrad, std::make_shared<Primitive>("BinaryCrossEntropyGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSmoothL1Loss, std::make_shared<Primitive>("SmoothL1Loss"));
@@ -105,8 +66,8 @@ GVAR_DEF(PrimitivePtr, kPrimSparseSoftmaxCrossEntropyWithLogits,
          std::make_shared<Primitive>("SparseSoftmaxCrossEntropyWithLogits"));
 GVAR_DEF(PrimitivePtr, kPrimSparseSoftmaxCrossEntropyWithLogitsV2,
          std::make_shared<Primitive>("SparseSoftmaxCrossEntropyWithLogitsV2"));
-GVAR_DEF(PrimitivePtr, kPrimMultiMarginLoss, std::make_shared<Primitive>(kMultiMarginLoss));
-GVAR_DEF(PrimitivePtr, kPrimMultiMarginLossGrad, std::make_shared<Primitive>(kMultiMarginLossGrad));
+GVAR_DEF(PrimitivePtr, kPrimMultiMarginLoss, std::make_shared<Primitive>(kMultiMarginLossOpName));
+GVAR_DEF(PrimitivePtr, kPrimMultiMarginLossGrad, std::make_shared<Primitive>(kMultiMarginLossGradOpName));
 GVAR_DEF(PrimitivePtr, kSoftmaxGradExt, std::make_shared<Primitive>("SoftmaxGradExt"));
 GVAR_DEF(PrimitivePtr, kPrimOneHot, std::make_shared<Primitive>("OneHot"));
 GVAR_DEF(PrimitivePtr, kPrimOneHotD, std::make_shared<Primitive>("OneHotD"));
@@ -115,24 +76,24 @@ GVAR_DEF(PrimitivePtr, kPrimPdist, std::make_shared<Primitive>("Pdist"));
 GVAR_DEF(PrimitivePtr, kPrimPdistGrad, std::make_shared<Primitive>("PdistGrad"));
 
 // pad
-GVAR_DEF(PrimitivePtr, kPrimPadV3, std::make_shared<Primitive>(kPadV3));
-GVAR_DEF(PrimitivePtr, kPrimPadV3Grad, std::make_shared<Primitive>(kPadV3Grad));
-GVAR_DEF(PrimitivePtr, kPrimMirrorPadGrad, std::make_shared<Primitive>(kMirrorPadGrad));
+GVAR_DEF(PrimitivePtr, kPrimPadV3, std::make_shared<Primitive>(kPadV3OpName));
+GVAR_DEF(PrimitivePtr, kPrimPadV3Grad, std::make_shared<Primitive>(kPadV3GradOpName));
+GVAR_DEF(PrimitivePtr, kPrimMirrorPadGrad, std::make_shared<Primitive>(kMirrorPadGradOpName));
 
 // Norm
-GVAR_DEF(PrimitivePtr, kPrimRenorm, std::make_shared<Primitive>(kRenorm));
-GVAR_DEF(PrimitivePtr, kPrimNuclearNorm, std::make_shared<Primitive>(kNuclearNorm));
+GVAR_DEF(PrimitivePtr, kPrimRenorm, std::make_shared<Primitive>(kRenormOpName));
+GVAR_DEF(PrimitivePtr, kPrimNuclearNorm, std::make_shared<Primitive>(kNuclearNormOpName));
 GVAR_DEF(PrimitivePtr, kPrimL2Normalize, std::make_shared<Primitive>("L2Normalize"));
 GVAR_DEF(PrimitivePtr, kPrimL2NormalizeGrad, std::make_shared<Primitive>("L2NormalizeGrad"));
-GVAR_DEF(PrimitivePtr, kPrimLayerNorm, std::make_shared<Primitive>(kLayerNorm));
-GVAR_DEF(PrimitivePtr, kPrimLayerNormGrad, std::make_shared<Primitive>(kLayerNormGrad));
+GVAR_DEF(PrimitivePtr, kPrimLayerNorm, std::make_shared<Primitive>(kLayerNormOpName));
+GVAR_DEF(PrimitivePtr, kPrimLayerNormGrad, std::make_shared<Primitive>(kLayerNormGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormGradGrad, std::make_shared<Primitive>("LayerNormGradGrad"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackprop, std::make_shared<Primitive>("LayerNormXBackprop"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackpropV2, std::make_shared<Primitive>("LayerNormXBackpropV2"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormBetaGammaBackprop, std::make_shared<Primitive>("LayerNormBetaGammaBackprop"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormBetaGammaBackpropV2, std::make_shared<Primitive>("LayerNormBetaGammaBackpropV2"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNorm, std::make_shared<Primitive>("BatchNorm"));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormWithActivation, std::make_shared<Primitive>("BatchNormWithActivation"));
+GVAR_DEF(PrimitivePtr, kPrimBatchNormWithActivation, std::make_shared<Primitive>(kBatchNormWithActivationOpName));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormWithAddAndActivation,
          std::make_shared<Primitive>("BatchNormWithAddAndActivation"));
 GVAR_DEF(PrimitivePtr, kPrimBNInfer, std::make_shared<Primitive>("BNInfer"));
@@ -180,24 +141,24 @@ GVAR_DEF(PrimitivePtr, kPrimDataFormatDimMap, std::make_shared<Primitive>("DataF
 GVAR_DEF(PrimitivePtr, kPrimDataFormatVecPermute, std::make_shared<Primitive>("DataFormatVecPermute"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicStitch, std::make_shared<Primitive>("DynamicStitch"));
 GVAR_DEF(PrimitivePtr, kPrimDetectionPostProcess, std::make_shared<Primitive>("DetectionPostProcess"));
-GVAR_DEF(PrimitivePtr, kPrimBiasAddGrad, std::make_shared<Primitive>(kBiasAddGrad));
-GVAR_DEF(PrimitivePtr, kPrimBiasAdd, std::make_shared<Primitive>(kBiasAdd));
+GVAR_DEF(PrimitivePtr, kPrimBiasAddGrad, std::make_shared<Primitive>(kBiasAddGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimBiasAdd, std::make_shared<Primitive>(kBiasAddOpName));
 GVAR_DEF(PrimitivePtr, kPrimBiasSubGrad, std::make_shared<Primitive>("BiasSubGrad"));
-GVAR_DEF(PrimitivePtr, kPrimLrn, std::make_shared<Primitive>(kLRN));
+GVAR_DEF(PrimitivePtr, kPrimLrn, std::make_shared<Primitive>(kLRNOpName));
 GVAR_DEF(PrimitivePtr, kPrimLrnGrad, std::make_shared<Primitive>("LRNGrad"));
 GVAR_DEF(PrimitivePtr, kPrimLog1p, std::make_shared<Primitive>("Log1p"));
-GVAR_DEF(PrimitivePtr, kPrimDropoutGenMask, std::make_shared<Primitive>(kDropoutGenMask));
-GVAR_DEF(PrimitivePtr, kPrimDropoutGenMaskV3, std::make_shared<Primitive>(kDropoutGenMaskV3));
-GVAR_DEF(PrimitivePtr, kPrimStatelessDropOutGenMask, std::make_shared<Primitive>(kStatelessDropOutGenMask));
-GVAR_DEF(PrimitivePtr, kPrimDropoutDoMask, std::make_shared<Primitive>(kDropoutDoMask));
+GVAR_DEF(PrimitivePtr, kPrimDropoutGenMask, std::make_shared<Primitive>(kDropoutGenMaskOpName));
+GVAR_DEF(PrimitivePtr, kPrimDropoutGenMaskV3, std::make_shared<Primitive>(kDropoutGenMaskV3OpName));
+GVAR_DEF(PrimitivePtr, kPrimStatelessDropOutGenMask, std::make_shared<Primitive>(kStatelessDropOutGenMaskOpName));
+GVAR_DEF(PrimitivePtr, kPrimDropoutDoMask, std::make_shared<Primitive>(kDropoutDoMaskOpName));
 GVAR_DEF(PrimitivePtr, kPrimDropOutDoMask, std::make_shared<Primitive>("DropOutDoMask"));
-GVAR_DEF(PrimitivePtr, kPrimDropoutDoMaskV3, std::make_shared<Primitive>(kDropoutDoMaskV3));
+GVAR_DEF(PrimitivePtr, kPrimDropoutDoMaskV3, std::make_shared<Primitive>(kDropoutDoMaskV3OpName));
 GVAR_DEF(PrimitivePtr, kPrimDropOutDoMaskV3, std::make_shared<Primitive>("DropOutDoMaskV3"));
 GVAR_DEF(PrimitivePtr, kPrimDropOutDoMaskV3D, std::make_shared<Primitive>("DropOutDoMaskV3D"));
-GVAR_DEF(PrimitivePtr, kPrimDropoutGrad, std::make_shared<Primitive>(kDropoutGrad));
-GVAR_DEF(PrimitivePtr, kPrimDropout, std::make_shared<Primitive>(kDropout));
-GVAR_DEF(PrimitivePtr, kPrimDropout2D, std::make_shared<Primitive>(kDropout2D));
-GVAR_DEF(PrimitivePtr, kPrimDropout3D, std::make_shared<Primitive>(kDropout3D));
+GVAR_DEF(PrimitivePtr, kPrimDropoutGrad, std::make_shared<Primitive>(kDropoutGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimDropout, std::make_shared<Primitive>(kDropoutOpName));
+GVAR_DEF(PrimitivePtr, kPrimDropout2D, std::make_shared<Primitive>(kDropout2DOpName));
+GVAR_DEF(PrimitivePtr, kPrimDropout3D, std::make_shared<Primitive>(kDropout3DOpName));
 GVAR_DEF(PrimitivePtr, kPrimUniformInt, std::make_shared<Primitive>("UniformInt"));
 GVAR_DEF(PrimitivePtr, kPrimUniformReal, std::make_shared<Primitive>("UniformReal"));
 GVAR_DEF(PrimitivePtr, kPrimCudnnUniformReal, std::make_shared<Primitive>("CudnnUniformReal"));
@@ -221,10 +182,10 @@ GVAR_DEF(PrimitivePtr, kPrimSoftShrink, std::make_shared<Primitive>("SoftShrink"
 GVAR_DEF(PrimitivePtr, kPrimSoftShrinkGrad, std::make_shared<Primitive>("SoftShrinkGrad"));
 GVAR_DEF(PrimitivePtr, kPrimHShrink, std::make_shared<Primitive>("HShrink"));
 GVAR_DEF(PrimitivePtr, kPrimHShrinkGrad, std::make_shared<Primitive>("HShrinkGrad"));
-GVAR_DEF(PrimitivePtr, kPrimHSwish, std::make_shared<Primitive>(kHSwish));
+GVAR_DEF(PrimitivePtr, kPrimHSwish, std::make_shared<Primitive>(kHSwishOpName));
 GVAR_DEF(PrimitivePtr, kPrimHardSwish, std::make_shared<Primitive>("HardSwish"));
 GVAR_DEF(PrimitivePtr, kPrimHardSwishGrad, std::make_shared<Primitive>("HardSwishGrad"));
-GVAR_DEF(PrimitivePtr, kPrimHSwishGrad, std::make_shared<Primitive>(kHSwishGrad));
+GVAR_DEF(PrimitivePtr, kPrimHSwishGrad, std::make_shared<Primitive>(kHSwishGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimDeformableOffsets, std::make_shared<Primitive>("DeformableOffsets"));
 GVAR_DEF(PrimitivePtr, kPrimDeformableConv2d, std::make_shared<Primitive>("DeformableConv2d"));
 GVAR_DEF(PrimitivePtr, kPrimLARSUpdate, std::make_shared<Primitive>("LARSUpdate"));
@@ -235,15 +196,15 @@ GVAR_DEF(PrimitivePtr, kPrimROIAlign, std::make_shared<Primitive>("ROIAlign"));
 GVAR_DEF(PrimitivePtr, kPrimROIAlignGrad, std::make_shared<Primitive>("ROIAlignGrad"));
 GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdate, std::make_shared<Primitive>("BNTrainingUpdate"));
 GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdateGrad, std::make_shared<Primitive>("BNTrainingUpdateGrad"));
-GVAR_DEF(PrimitivePtr, kPrimMish, std::make_shared<Primitive>(kMish));
+GVAR_DEF(PrimitivePtr, kPrimMish, std::make_shared<Primitive>(kMishOpName));
 GVAR_DEF(PrimitivePtr, kPrimBiasDropoutAdd, std::make_shared<Primitive>("BiasDropoutAdd"));
 GVAR_DEF(PrimitivePtr, kPrimNthElement, std::make_shared<Primitive>("NthElement"));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler2D, std::make_shared<Primitive>(kGridSampler2D));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler2DGrad, std::make_shared<Primitive>(kGridSampler2DGrad));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler3D, std::make_shared<Primitive>(kGridSampler3D));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler3DGrad, std::make_shared<Primitive>(kGridSampler3DGrad));
-GVAR_DEF(PrimitivePtr, kPrimIFMR, std::make_shared<Primitive>(kIFMR));
-GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannelShuffle));
+GVAR_DEF(PrimitivePtr, kPrimGridSampler2D, std::make_shared<Primitive>(kGridSampler2DOpName));
+GVAR_DEF(PrimitivePtr, kPrimGridSampler2DGrad, std::make_shared<Primitive>(kGridSampler2DGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimGridSampler3D, std::make_shared<Primitive>(kGridSampler3DOpName));
+GVAR_DEF(PrimitivePtr, kPrimGridSampler3DGrad, std::make_shared<Primitive>(kGridSampler3DGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimIFMR, std::make_shared<Primitive>(kIFMROpName));
+GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannelShuffleOpName));
 }  // namespace prim
 }  // namespace mindspore
 

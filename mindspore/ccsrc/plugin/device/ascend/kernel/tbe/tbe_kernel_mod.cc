@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
 
 #include <algorithm>
+#include "ops/other_op_name.h"
 #include "runtime/rt.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"

@@ -27,7 +27,7 @@ class MIND_API sequence_len : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(sequence_len);
   /// \brief Constructor.
-  sequence_len() : BaseOperator(prim::kSequenceLen) {}
+  sequence_len() : BaseOperator(kSequenceLenOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

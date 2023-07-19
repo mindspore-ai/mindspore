@@ -15,6 +15,8 @@
  */
 #include "backend/common/graph_kernel/split_model/fuse_pattern.h"
 #include <sstream>
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/array_op_name.h"
 
 namespace mindspore::graphkernel::inner {
 bool FuseReshape::Match(const AreaPtr &dom) {

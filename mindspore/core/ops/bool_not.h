@@ -26,7 +26,7 @@ class MIND_API bool_not : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(bool_not);
   /// \brief Constructor.
-  bool_not() : BaseOperator(prim::kBoolNot) {}
+  bool_not() : BaseOperator(kBoolNotOpName) {}
   /// \brief Init.
   void Init() const {}
 };

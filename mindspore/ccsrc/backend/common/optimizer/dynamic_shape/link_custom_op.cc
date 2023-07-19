@@ -178,8 +178,9 @@ void LinkCustomOp::AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList
   auto make_tuple_node = g->NewCNode(mk_inputs);
 
   // Get first element item form that maketuple and return.
-  auto get_1st_item = g->NewCNode(AnfNodePtrList{NewValueNode(std::make_shared<Primitive>(prim::kTupleGetItem)),
-                                                 make_tuple_node, NewValueNode(SizeToLong(kTupleFirstItemIndex))});
+  auto get_1st_item =
+    g->NewCNode(AnfNodePtrList{NewValueNode(std::make_shared<Primitive>(mindspore::kTupleGetItemOpName)),
+                               make_tuple_node, NewValueNode(SizeToLong(kTupleFirstItemIndex))});
   // The getitem node always obtains the first input of the maketuple, which is the output in the original graph,
   // so set the abstract of the output to the getitem node.
   get_1st_item->set_abstract(output_node->abstract());

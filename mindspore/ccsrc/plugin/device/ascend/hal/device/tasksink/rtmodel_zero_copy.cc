@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include "ops/ascend_op_name.h"
 #include "runtime/rt.h"
 #include "external/acl/acl_rt.h"
 #include "ir/tensor.h"

@@ -26,8 +26,8 @@
 #include "include/common/utils/parallel_context.h"
 #include "ir/graph_utils.h"
 #include "kernel/kernel_build_info.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/sequence_ops.h"
 #include "utils/hash_map.h"
 #include "ir/manager.h"
 
@@ -137,7 +137,7 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
   size_t communication_op_node_size = communication_op_info.communication_op_nodes.size();
   MS_LOG(INFO) << "graph " << op_name_ << " node size " << communication_op_node_size;
 
-  if (op_name_ == kHcomSendOpName || op_name_ == kReceiveOpName) {
+  if (op_name_ == kSendOpName || op_name_ == kReceiveOpName) {
     if (communication_op_node_size == 0) {
       return false;
     }

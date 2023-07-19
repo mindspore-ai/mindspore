@@ -16,8 +16,12 @@
 
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_clip_by_norm_fission.h"
 #include <algorithm>
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/lite_op_name.h"
+#include "ops/comparison_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/nn_ops.h"
+#include "ops/array_ops.h"
 #include "ir/anf.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"

@@ -16,8 +16,9 @@
 #include "plugin/device/ascend/optimizer/ir_fission/resize_linear1d_fission.h"
 #include <memory>
 #include <vector>
-#include "mindspore/core/ops/image_ops.h"
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/lite_op_name.h"
+#include "ops/image_ops.h"
+#include "ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"

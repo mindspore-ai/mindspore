@@ -15,6 +15,7 @@
  */
 
 #include "common/backend_common_test.h"
+#include "ops/array_op_name.h"
 #include "common/py_func_graph_fetcher.h"
 #include "include/backend/kernel_info.h"
 #include "include/backend/anf_runtime_algorithm.h"

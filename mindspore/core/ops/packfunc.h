@@ -27,7 +27,7 @@ class MIND_API PackFunc : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(PackFunc);
   /// \brief Constructor.
-  PackFunc() : BaseOperator(prim::kPackFunc) {}
+  PackFunc() : BaseOperator(kPackFuncOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/kernel/rts/rt_kernel_info.h"
 #include <unordered_map>
 #include <algorithm>
+#include "ops/ascend_op_name.h"
+#include "ops/other_op_name.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/anf_runtime_algorithm.h"

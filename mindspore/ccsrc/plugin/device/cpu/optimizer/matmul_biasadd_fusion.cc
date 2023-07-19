@@ -26,7 +26,9 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "kernel/common_utils.h"
-#include "mindspore/core/ops/nn_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/ascend_op_name.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "utils/ms_context.h"
@@ -49,7 +51,7 @@ AnfNodePtr MatMulBiasAddFusionCPU::CreateMatmulWithBias(const FuncGraphPtr &grap
   }
 
   std::vector<AnfNodePtr> inputs;
-  (void)inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(kFusedMatMulBiasAddName)));
+  (void)inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(kFusedMatMulBiasAddOpName)));
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x0_));
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x1_));
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x2_));

@@ -28,7 +28,7 @@ class MIND_API Dropout2D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Dropout2D);
   /// \brief Constructor.
-  Dropout2D() : BaseOperator(prim::kDropout2D) { InitIOName({"input_x"}, {"output"}); }
+  Dropout2D() : BaseOperator(kDropout2DOpName) { InitIOName({"input_x"}, {"output"}); }
 
   void Init(float keep_prob = 0.0);
 
@@ -41,7 +41,7 @@ class MIND_API Dropout3D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Dropout3D);
   /// \brief Constructor.
-  Dropout3D() : BaseOperator(prim::kDropout3D) { InitIOName({"input_x"}, {"output"}); }
+  Dropout3D() : BaseOperator(kDropout3DOpName) { InitIOName({"input_x"}, {"output"}); }
 
   void Init(float keep_prob = 0.0);
 

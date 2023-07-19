@@ -16,18 +16,18 @@
 
 #include "backend/common/pass/insert_type_transform_op.h"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
-#include <algorithm>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/arithmetic_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
+#include "include/common/utils/utils.h"
 #include "kernel/common_utils.h"
 #include "kernel/framework_utils.h"
+#include "ops/arithmetic_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/sequence_ops.h"
 
 namespace mindspore {
 namespace opt {
@@ -206,9 +206,10 @@ AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
 }
 
 void SetBackOffFlag(const KernelBuildInfoPtr &build_info, const CNodePtr &cnode) {
-  std::vector<std::string> back_off_op_list = {prim::kTupleToTensor,  prim::kScalarToTensor, prim::kTensorToTuple,
-                                               prim::kTensorToScalar, prim::kRealMakeTuple,  prim::kRealTupleGetItem,
-                                               prim::kTupleSetItem};
+  std::vector<std::string> back_off_op_list = {prim::kPrimTupleToTensor->name(), prim::kPrimScalarToTensor->name(),
+                                               prim::kPrimTensorToTuple->name(), prim::kPrimTensorToScalar->name(),
+                                               prim::kPrimRealMakeTuple->name(), prim::kPrimRealTupleGetItem->name(),
+                                               prim::kPrimTupleSetItem->name()};
   if (std::find(back_off_op_list.begin(), back_off_op_list.end(), common::AnfAlgo::GetCNodeName(cnode)) !=
       back_off_op_list.end()) {
     build_info->set_valid(false);
@@ -587,7 +588,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
   MS_EXCEPTION_IF_NULL(node);
 
   // Use TupleToTensor op as the input of this node. Then TupleUnfoldToTuple pattern will be matched.
-  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kTupleToTensor));
+  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, input};
   CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
@@ -683,7 +684,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(node);
 
   // Simply insert TupleToTensor op between 'input' and 'node'.
-  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kTupleToTensor));
+  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, input};
   CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
@@ -721,7 +722,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(node);
 
   // Simply insert ScalarToTensor op between 'input' and 'node'.
-  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kScalarToTensor));
+  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimScalarToTensor->name()));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, input};
   CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
@@ -748,7 +749,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToTuple(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(node);
 
   // Create TensorToTuple op.
-  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kTensorToTuple));
+  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTensorToTuple->name()));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, input};
   CNodePtr tensor_to_tuple = func_graph->NewCNode(inputs);
@@ -770,7 +771,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToScalar(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(node);
 
   // Create TensorToScalar op.
-  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kTensorToScalar));
+  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTensorToScalar->name()));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, input};
   CNodePtr tensor_to_scalar = func_graph->NewCNode(inputs);

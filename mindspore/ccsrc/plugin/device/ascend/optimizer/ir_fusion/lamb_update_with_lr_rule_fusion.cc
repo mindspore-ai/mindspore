@@ -17,8 +17,10 @@
 
 #include <memory>
 #include <vector>
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/comparison_op_name.h"
+#include "ops/math_ops.h"
+#include "ops/framework_ops.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

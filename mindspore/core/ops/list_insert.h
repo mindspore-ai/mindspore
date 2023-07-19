@@ -27,7 +27,7 @@ class MIND_API ListInsert : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListInsert);
   /// \brief Constructor.
-  ListInsert() : BaseOperator(prim::kListInsert) { InitIOName({"input_data", "index", "target"}, {"output_data"}); }
+  ListInsert() : BaseOperator(kListInsertOpName) { InitIOName({"input_data", "index", "target"}, {"output_data"}); }
   /// \brief Init function.
   void Init() const {}
 };

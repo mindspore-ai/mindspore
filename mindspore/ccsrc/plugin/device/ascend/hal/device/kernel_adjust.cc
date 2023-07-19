@@ -24,7 +24,12 @@
 #include <queue>
 #include <set>
 
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/structure_op_name.h"
+#include "ops/other_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/sequence_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
@@ -100,7 +105,7 @@ CNodePtr CreateEventApplyKernel(const std::shared_ptr<session::KernelGraph> &gra
 CNodePtr KernelAdjust::CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,
                                              uint32_t event_id) const {
   MS_EXCEPTION_IF_NULL(graph_ptr);
-  auto send_op = std::make_shared<Primitive>(kSendOpName);
+  auto send_op = std::make_shared<Primitive>(kStreamSendOpName);
   MS_EXCEPTION_IF_NULL(send_op);
   auto send_apply = std::make_shared<ValueNode>(send_op);
   MS_EXCEPTION_IF_NULL(send_apply);
@@ -110,7 +115,7 @@ CNodePtr KernelAdjust::CreateSendApplyKernel(const std::shared_ptr<session::Kern
 CNodePtr KernelAdjust::CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,
                                              uint32_t event_id) const {
   MS_EXCEPTION_IF_NULL(graph_ptr);
-  auto recv_op = std::make_shared<Primitive>(kRecvOpName);
+  auto recv_op = std::make_shared<Primitive>(kStreamRecvOpName);
   MS_EXCEPTION_IF_NULL(recv_op);
   auto recv_apply = std::make_shared<ValueNode>(recv_op);
   MS_EXCEPTION_IF_NULL(recv_apply);

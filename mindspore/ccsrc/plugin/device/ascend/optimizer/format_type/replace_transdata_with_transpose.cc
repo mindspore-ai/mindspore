@@ -19,7 +19,7 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/array_ops.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 

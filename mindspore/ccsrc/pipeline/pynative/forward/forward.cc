@@ -19,8 +19,11 @@
 #include <algorithm>
 #include <unordered_set>
 #include <vector>
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/structure_op_name.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/nn_op_name.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/python_fallback_running.h"

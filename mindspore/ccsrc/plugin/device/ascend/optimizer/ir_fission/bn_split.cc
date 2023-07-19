@@ -20,7 +20,10 @@
 #include <string>
 #include <limits>
 
-#include "mindspore/core/ops/nn_ops.h"
+#include "ops/other_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/nn_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "include/backend/optimizer/helper.h"

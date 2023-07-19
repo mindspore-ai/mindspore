@@ -20,8 +20,8 @@
 #include <utility>
 #include <memory>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "mindspore/core/ops/mat_mul.h"
-#include "mindspore/core/ops/batch_matmul.h"
+#include "ops/batch_matmul.h"
+#include "ops/math_op_name.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -84,7 +84,7 @@ bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
       transpose_x2_ = CUBLAS_OP_T;
     }
   }
-  if (kernel_name_ == kFusedMatMulBiasAddName) {
+  if (kernel_name_ == kFusedMatMulBiasAddOpName) {
     is_fused_matmul_biasadd_ = true;
   }
   return true;
@@ -254,7 +254,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, MatMulGpuKernelMod::MatM
          .AddInputAttr(kNumberTypeComplex128)
          .AddOutputAttr(kNumberTypeComplex128),
        &MatMulGpuKernelMod::LaunchKernel<Complex<double>, Complex<double>>}}},
-    {kFusedMatMulBiasAddName,
+    {kFusedMatMulBiasAddOpName,
      {{KernelAttr()
          .AddInputAttr(kNumberTypeFloat64)
          .AddInputAttr(kNumberTypeFloat64)
@@ -294,6 +294,6 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, MatMul,
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchMatMul,
                                  []() { return std::make_shared<MatMulGpuKernelMod>(kBatchMatMulOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, FusedMatMulBiasAdd,
-                                 []() { return std::make_shared<MatMulGpuKernelMod>(kFusedMatMulBiasAddName); });
+                                 []() { return std::make_shared<MatMulGpuKernelMod>(kFusedMatMulBiasAddOpName); });
 }  // namespace kernel
 }  // namespace mindspore

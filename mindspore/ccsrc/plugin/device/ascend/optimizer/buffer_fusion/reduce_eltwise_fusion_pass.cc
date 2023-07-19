@@ -15,7 +15,9 @@
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/reduce_eltwise_fusion_pass.h"
 #include <vector>
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/framework_ops.h"
 #include "kernel/kernel_fusion.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/anf_runtime_algorithm.h"

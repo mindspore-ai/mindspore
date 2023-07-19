@@ -16,17 +16,17 @@
 
 #ifndef MINDSPORE_CORE_OPS_SCALAR_TO_TENSOR_H_
 #define MINDSPORE_CORE_OPS_SCALAR_TO_TENSOR_H_
-#include "mindspore/core/ops/arithmetic_ops.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameScalarToTensor = "ScalarToTensor";
 /// \brief ScalarToTensor op is used to convert tuple to tensor.
 class MIND_API ScalarToTensor : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScalarToTensor);
   /// \brief Constructor.
-  ScalarToTensor() : BaseOperator(prim::kScalarToTensor) { InitIOName({"input_scalar", "dtype"}, {"output_data"}); }
+  ScalarToTensor() : BaseOperator(kNameScalarToTensor) { InitIOName({"input_scalar", "dtype"}, {"output_data"}); }
   /// \brief Init.
   void Init() const {}
 };

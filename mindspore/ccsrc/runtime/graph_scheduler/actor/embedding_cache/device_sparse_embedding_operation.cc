@@ -18,6 +18,7 @@
 #include <string>
 #include <limits>
 #include "runtime/graph_scheduler/actor/embedding_cache/device_sparse_embedding_operation.h"
+#include "ops/sparse_op_name.h"
 #include "ir/map_tensor.h"
 
 namespace mindspore {

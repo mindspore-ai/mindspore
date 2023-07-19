@@ -27,7 +27,7 @@ class MIND_API ListInplaceExtend : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListInplaceExtend);
   /// \brief Constructor.
-  ListInplaceExtend() : BaseOperator(prim::kListInplaceExtend) {
+  ListInplaceExtend() : BaseOperator(kListInplaceExtendOpName) {
     InitIOName({"input_data", "target_input"}, {"output_data"});
   }
   /// \brief Init function.

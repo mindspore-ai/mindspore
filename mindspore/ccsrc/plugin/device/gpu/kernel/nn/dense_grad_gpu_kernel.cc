@@ -19,7 +19,8 @@
 #include <algorithm>
 #include <utility>
 #include <memory>
-#include "mindspore/core/ops/grad/dense_grad.h"
+#include "ops/nn_op_name.h"
+#include "ops/grad/dense_grad.h"
 
 namespace mindspore {
 namespace kernel {

@@ -18,7 +18,7 @@
 #include <string>
 #include <set>
 #include "plugin/device/ascend/hal/device/ascend_label_assign.h"
-#include "mindspore/core/ops/other_ops.h"
+#include "ops/other_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 

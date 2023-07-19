@@ -29,7 +29,15 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/graph_utils.h"
+#include "kernel/oplib/oplib.h"
+#include "mindspore/ccsrc/include/common/debug/common.h"
 #include "nlohmann/json.hpp"
+#include "ops/array_op_name.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/framework_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/nn_ops.h"
+#include "ops/sequence_ops.h"
 
 namespace mindspore {
 namespace kernel {

@@ -16,6 +16,7 @@
 
 #include "backend/common/mem_reuse/mem_reuse_checker.h"
 #include <fstream>
+#include "ops/framework_op_name.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -28,7 +29,7 @@ MemReuseChecker &MemReuseChecker::GetInstance() {
 void MemReuseChecker::CheckSignalOps(const CNodePtr &c_node) const {
   MS_EXCEPTION_IF_NULL(c_node);
   std::string node_name = common::AnfAlgo::GetCNodeName(c_node);
-  if (node_name == kSendOpName || node_name == kRecvOpName) {
+  if (node_name == kStreamSendOpName || node_name == kStreamRecvOpName) {
     MS_LOG(INFO) << "MemReuseChecker check op_name of  Send or Send";
     // get op's info && check
     MS_LOG(INFO) << "op: " << node_name << " in_num: " << common::AnfAlgo::GetInputTensorNum(c_node)

@@ -23,6 +23,10 @@
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "include/common/utils/utils.h"
+#include "ops/array_op_name.h"
+#include "ops/ascend_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/other_op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -55,7 +59,7 @@ class BACKEND_EXPORT CommunicationOpFusion : public Pass {
 
 class SendFusion : public CommunicationOpFusion {
  public:
-  explicit SendFusion(size_t groups = 1) : CommunicationOpFusion("send_fusion", kHcomSendOpName, groups) {}
+  explicit SendFusion(size_t groups = 1) : CommunicationOpFusion("send_fusion", kSendOpName, groups) {}
   ~SendFusion() override = default;
 };
 

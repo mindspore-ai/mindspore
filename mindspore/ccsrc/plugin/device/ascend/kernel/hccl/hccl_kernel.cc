@@ -17,6 +17,10 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel.h"
 
 #include <map>
+#include "ops/ascend_op_name.h"
+#include "ops/other_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/framework_op_name.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
@@ -35,7 +39,7 @@ static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
   {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
   {mindspore::kAllGatherOpName, mindspore::kHcomOpTypeAllGather},
   {mindspore::kBroadcastOpName, mindspore::kHcomOpTypeBroadcast},
-  {mindspore::kHcomSendOpName, mindspore::kHcomOpTypeSend},
+  {mindspore::kSendOpName, mindspore::kHcomOpTypeSend},
   {mindspore::kReceiveOpName, mindspore::kHcomOpTypeReceive},
   {mindspore::kReduceScatterOpName, mindspore::kHcomOpTypeReduceScatter}};
 std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
@@ -97,7 +101,7 @@ HcclKernel::~HcclKernel() {
 bool HcclKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   op_name_ = common::AnfAlgo::GetCNodeName(anf_node);
-  if (op_name_ == kHcomSendOpName) {
+  if (op_name_ == kSendOpName) {
     if (!HcomUtil::GetHcomDestRank(anf_node, &dest_rank_)) {
       MS_LOG(ERROR) << "GetHcomDestRank fail!";
       return false;

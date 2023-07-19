@@ -27,11 +27,11 @@
 #include "kernel/common_utils.h"
 #include "kernel/framework_utils.h"
 #include "kernel/kernel_build_info.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/other_ops.h"
+#include "ops/sequence_ops.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
@@ -43,7 +43,8 @@ namespace {
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 constexpr size_t k5dDims = 5;
-const std::set<std::string> kOpAssignKernelNameList = {prim::kAssign, prim::kAssignAdd, prim::kAssignSub};
+const std::set<std::string> kOpAssignKernelNameList = {mindspore::kAssignOpName, mindspore::kAssignAddOpName,
+                                                       mindspore::kAssignSubOpName};
 
 std::vector<AnfNodePtr> GetCallRealOutputs(const AnfNodePtr &call_node) {
   auto item_with_index =

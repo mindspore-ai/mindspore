@@ -16,21 +16,24 @@
 
 #ifndef MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_EMITTER_H_
 #define MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_EMITTER_H_
-#include <memory>
-#include <vector>
-#include <string>
-#include <utility>
-#include <unordered_set>
 #include <map>
+#include <memory>
+#include <string>
 #include <tuple>
-#include "ir/func_graph.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "ops/shape_calc.h"
-#include "ir/functor.h"
-#include "include/common/utils/utils.h"
-#include "include/common/expander/core/node.h"
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include "include/common/expander/core/infer.h"
+#include "include/common/expander/core/node.h"
+#include "include/common/utils/utils.h"
+#include "ir/func_graph.h"
+#include "ir/functor.h"
+#include "ops/array_op_name.h"
+#include "ops/comparison_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/math_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/shape_calc.h"
 
 namespace mindspore {
 namespace expander {
@@ -58,7 +61,7 @@ class COMMON_EXPORT Emitter {
   NodePtr MakeTuple(const NodePtrList &inputs) const { return EmitOp(prim::kPrimMakeTuple, inputs); }
   NodePtr MakeList(const NodePtrList &inputs) const { return EmitOp(prim::kPrimMakeList, inputs); }
   NodePtr TupleGetItem(const NodePtr &input, size_t i) const {
-    return Emit(prim::kTupleGetItem, {input, Value(static_cast<int64_t>(i))});
+    return Emit(mindspore::kTupleGetItemOpName, {input, Value(static_cast<int64_t>(i))});
   }
 
   NodePtr Cast(const NodePtr &node, const TypePtr &type) const;
@@ -67,10 +70,10 @@ class COMMON_EXPORT Emitter {
   NodePtr Reshape(const NodePtr &node, const NodePtr &shape) const;
   NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) const { return Reshape(node, Value(shape)); }
   NodePtr ExpandDims(const NodePtr &node, int64_t axis) const { return Emit(kExpandDimsOpName, {node, Value(axis)}); }
-  NodePtr Abs(const NodePtr &node) const { return Emit(prim::kAbs, {node}); }
-  NodePtr Neg(const NodePtr &node) const { return Emit(prim::kNeg, {node}); }
-  NodePtr Reciprocal(const NodePtr &node) const { return Emit(prim::kReciprocal, {node}); }
-  NodePtr Square(const NodePtr &node) const { return Emit(prim::kSquare, {node}); }
+  NodePtr Abs(const NodePtr &node) const { return Emit(mindspore::kAbsOpName, {node}); }
+  NodePtr Neg(const NodePtr &node) const { return Emit(mindspore::kNegOpName, {node}); }
+  NodePtr Reciprocal(const NodePtr &node) const { return Emit(mindspore::kReciprocalOpName, {node}); }
+  NodePtr Square(const NodePtr &node) const { return Emit(mindspore::kSquareOpName, {node}); }
   NodePtr Sign(const NodePtr &node) const { return Emit(prim::kPrimSign->name(), {node}); }
   NodePtr Exp(const NodePtr &x) const;
   NodePtr Log(const NodePtr &x) const;
@@ -82,11 +85,19 @@ class COMMON_EXPORT Emitter {
     return Emit(kConcatOpName, {MakeTuple(inputs)}, {{kAttrAxis, MakeValue(axis)}});
   }
 
-  NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kAdd, lhs, rhs); }
-  NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kSub, lhs, rhs); }
-  NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kMul, lhs, rhs); }
+  NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) const {
+    return UnifyDtypeAndEmit(mindspore::kAddOpName, lhs, rhs);
+  }
+  NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) const {
+    return UnifyDtypeAndEmit(mindspore::kSubOpName, lhs, rhs);
+  }
+  NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) const {
+    return UnifyDtypeAndEmit(mindspore::kMulOpName, lhs, rhs);
+  }
   NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kDivOpName, lhs, rhs); }
-  NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kRealDiv, lhs, rhs); }
+  NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const {
+    return UnifyDtypeAndEmit(mindspore::kRealDivOpName, lhs, rhs);
+  }
   NodePtr Mod(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("Mod", lhs, rhs); }
   NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kPowOpName, lhs, rhs); }
   NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;

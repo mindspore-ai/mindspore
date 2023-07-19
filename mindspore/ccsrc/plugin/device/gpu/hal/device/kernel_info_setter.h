@@ -23,10 +23,11 @@
 #include <memory>
 #include <map>
 #include "ir/anf.h"
-#include "mindspore/core/ops/conv_pool_ops.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/conv_pool_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/array_ops.h"
+#include "ops/math_op_name.h"
 #include "ir/dtype.h"
 #include "include/common/utils/utils.h"
 #include "kernel/kernel.h"
@@ -56,11 +57,11 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {kAvgPoolOpName, {{0}, {0}}},
   {kAvgPoolGradOpName, {{0, 1, 2}, {0}}},
   {kBatchNormOpName, {{0}, {0}}},
-  {kBatchNormWithActivation, {{0}, {0}}},
-  {kBatchNormWithAddAndActivation, {{0, 5}, {0}}},
+  {kBatchNormWithActivationOpName, {{0}, {0}}},
+  {kBatchNormWithAddAndActivationOpName, {{0, 5}, {0}}},
   {kBatchNormGradOpName, {{0, 1}, {0}}},
-  {kBatchNormGradWithActivation, {{0, 1, 7}, {0}}},
-  {kBatchNormGradWithAddAndActivation, {{0, 1, 7}, {0, 3}}},
+  {kBatchNormGradWithActivationOpName, {{0, 1, 7}, {0}}},
+  {kBatchNormGradWithAddAndActivationOpName, {{0, 1, 7}, {0, 3}}},
   {kBiasAddOpName, {{0}, {0}}},
   {prim::kPrimBiasAddGrad->name(), {{0}, {}}},
   // Format insensitive.

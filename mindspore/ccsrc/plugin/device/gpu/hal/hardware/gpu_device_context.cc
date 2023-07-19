@@ -65,6 +65,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/gpu/hal/device/gpu_pin_mem_pool.h"
 #include "include/common/profiler.h"
+#include "ops/ascend_op_name.h"
 
 namespace mindspore {
 namespace device {

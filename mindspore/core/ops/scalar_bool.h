@@ -21,12 +21,13 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameScalarBool = "ScalarBool";
 /// \brief ScalarBool op is used to calculate the input true or false.
 class MIND_API ScalarBool : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScalarBool);
   /// \brief Constructor.
-  ScalarBool() : BaseOperator(prim::kScalarBool) {}
+  ScalarBool() : BaseOperator(kNameScalarBool) {}
   /// \brief Init.
   void Init() const {}
 };

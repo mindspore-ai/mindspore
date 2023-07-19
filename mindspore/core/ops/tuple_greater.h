@@ -26,7 +26,7 @@ class MIND_API tuple_greater_than : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(tuple_greater_than);
   /// \brief Constructor.
-  tuple_greater_than() : BaseOperator(prim::kTupleGreaterThan) {}
+  tuple_greater_than() : BaseOperator(kTupleGreaterThanOpName) {}
   /// \brief Init.
   void Init() const {}
 };
@@ -35,7 +35,7 @@ class MIND_API tuple_greater_equal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(tuple_greater_equal);
   /// \brief Constructor.
-  tuple_greater_equal() : BaseOperator(prim::kTupleGreaterEqual) {}
+  tuple_greater_equal() : BaseOperator(kTupleGreaterEqualOpName) {}
   /// \brief Init.
   void Init() const {}
 };

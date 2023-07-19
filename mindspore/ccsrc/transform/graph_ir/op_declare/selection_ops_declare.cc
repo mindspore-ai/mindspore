@@ -16,10 +16,11 @@
 
 #include "transform/graph_ir/op_declare/selection_ops_declare.h"
 #include <vector>
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
+#include "ops/array_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/framework_ops.h"
+#include "ops/math_ops.h"
+#include "ops/nn_ops.h"
 
 namespace mindspore::transform {
 // CumulativeLogsumexp

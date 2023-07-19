@@ -18,31 +18,13 @@
 #define MINDSPORE_CORE_BASE_CONV_POOL_OPS_H_
 
 #include <memory>
+#include "ops/conv_pool_op_name.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
-constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";
-constexpr auto kFractionalMaxPoolGradWithFixedKsize = "FractionalMaxPoolGradWithFixedKsize";
-constexpr auto kAdaptiveMaxPool3D = "AdaptiveMaxPool3D";
-constexpr auto kFractionalMaxPool3DWithFixedKsize = "FractionalMaxPool3DWithFixedKsize";
-constexpr auto kFractionalMaxPool3DGradWithFixedKsize = "FractionalMaxPool3DGradWithFixedKsize";
-constexpr auto kFractionalMaxPool = "FractionalMaxPool";
-constexpr auto kFractionalMaxPoolGrad = "FractionalMaxPoolGrad";
-constexpr auto kFractionalAvgPool = "FractionalAvgPool";
-constexpr auto kFractionalAvgPoolGrad = "FractionalAvgPoolGrad";
-constexpr auto kMaxUnpool2D = "MaxUnpool2D";
-constexpr auto kMaxUnpool2DGrad = "MaxUnpool2DGrad";
-constexpr auto kMaxUnpool3D = "MaxUnpool3D";
-constexpr auto kMaxUnpool3DGrad = "MaxUnpool3DGrad";
-constexpr auto kAdaptiveMaxPool2D = "AdaptiveMaxPool2D";
-constexpr auto kMaxPool3DWithArgmax = "MaxPool3DWithArgmax";
-constexpr auto kMaxPool3DGradWithArgmax = "MaxPool3DGradWithArgmax";
-constexpr auto kAdaptiveMaxPool3DGrad = "AdaptiveMaxPool3DGrad";
-constexpr auto kConv2DTranspose = "Conv2DTranspose";
-
 // Conv
 GVAR_DEF(PrimitivePtr, kPrimConv2DBackpropInput, std::make_shared<Primitive>("Conv2DBackpropInput"));
 GVAR_DEF(PrimitivePtr, kPrimConv2DBackpropInputD, std::make_shared<Primitive>("Conv2DBackpropInputD"));
@@ -52,7 +34,7 @@ GVAR_DEF(PrimitivePtr, kPrimConv3DBackpropInput, std::make_shared<Primitive>("Co
 GVAR_DEF(PrimitivePtr, kPrimConv3DBackpropFilter, std::make_shared<Primitive>("Conv3DBackpropFilter"));
 GVAR_DEF(PrimitivePtr, kPrimConv2D, std::make_shared<Primitive>("Conv2D"));
 GVAR_DEF(PrimitivePtr, kPrimConv3D, std::make_shared<Primitive>("Conv3D"));
-GVAR_DEF(PrimitivePtr, kPrimConv2DTranspose, std::make_shared<Primitive>(kConv2DTranspose));
+GVAR_DEF(PrimitivePtr, kPrimConv2DTranspose, std::make_shared<Primitive>(kConv2DTransposeOpName));
 GVAR_DEF(PrimitivePtr, kPrimConv3DTranspose, std::make_shared<Primitive>("Conv3DTranspose"));
 GVAR_DEF(PrimitivePtr, kPrimDepthwiseConv2dNative, std::make_shared<Primitive>("DepthwiseConv2dNative"));
 GVAR_DEF(PrimitivePtr, kPrimDepthwiseConv2dNativeD, std::make_shared<Primitive>("DepthwiseConv2dNativeD"));
@@ -73,9 +55,9 @@ GVAR_DEF(PrimitivePtr, kPrimFractionalAvgPoolGrad, std::make_shared<Primitive>("
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool2DGrad, std::make_shared<Primitive>("AdaptiveMaxPool2DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool3DGrad, std::make_shared<Primitive>("AdaptiveMaxPool3DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPoolWithFixedKsize,
-         std::make_shared<Primitive>(kFractionalMaxPoolWithFixedKsize));
+         std::make_shared<Primitive>(kFractionalMaxPoolWithFixedKsizeOpName));
 GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPoolGradWithFixedKsize,
-         std::make_shared<Primitive>(kFractionalMaxPoolGradWithFixedKsize));
+         std::make_shared<Primitive>(kFractionalMaxPoolGradWithFixedKsizeOpName));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveAvgPool3D, std::make_shared<Primitive>("AdaptiveAvgPool3D"));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveAvgPool3DGrad, std::make_shared<Primitive>("AdaptiveAvgPool3DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveAvgPool2D, std::make_shared<Primitive>("AdaptiveAvgPool2D"));
@@ -102,10 +84,10 @@ GVAR_DEF(PrimitivePtr, kPrimMaxPoolGradGradWithArgmax, std::make_shared<Primitiv
 GVAR_DEF(PrimitivePtr, kPrimMaxPoolWithArgmaxV2, std::make_shared<Primitive>("MaxPoolWithArgmaxV2"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPool3DWithArgmax, std::make_shared<Primitive>("MaxPool3DWithArgmax"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPool3DGradWithArgmax, std::make_shared<Primitive>("MaxPool3DGradWithArgmax"));
-GVAR_DEF(PrimitivePtr, kPrimMaxUnpool2D, std::make_shared<Primitive>(kMaxUnpool2D));
-GVAR_DEF(PrimitivePtr, kPrimMaxUnpool2DGrad, std::make_shared<Primitive>(kMaxUnpool2DGrad));
-GVAR_DEF(PrimitivePtr, kPrimMaxUnpool3D, std::make_shared<Primitive>(kMaxUnpool3D));
-GVAR_DEF(PrimitivePtr, kPrimMaxUnpool3DGrad, std::make_shared<Primitive>(kMaxUnpool3DGrad));
+GVAR_DEF(PrimitivePtr, kPrimMaxUnpool2D, std::make_shared<Primitive>(kMaxUnpool2DOpName));
+GVAR_DEF(PrimitivePtr, kPrimMaxUnpool2DGrad, std::make_shared<Primitive>(kMaxUnpool2DGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimMaxUnpool3D, std::make_shared<Primitive>(kMaxUnpool3DOpName));
+GVAR_DEF(PrimitivePtr, kPrimMaxUnpool3DGrad, std::make_shared<Primitive>(kMaxUnpool3DGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimAvgPool, std::make_shared<Primitive>("AvgPool"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPool3D, std::make_shared<Primitive>("AvgPool3D"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPool3DD, std::make_shared<Primitive>("AvgPool3DD"));
@@ -116,9 +98,9 @@ GVAR_DEF(PrimitivePtr, kPrimAvgPoolGradVm, std::make_shared<Primitive>("AvgPoolG
 GVAR_DEF(PrimitivePtr, kPrimAvgPoolGradGe, std::make_shared<Primitive>("AvgPoolGradGe"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPoolV1, std::make_shared<Primitive>("AvgPoolV1"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPoolGradV1, std::make_shared<Primitive>("AvgPoolGradV1"));
-GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool2D, std::make_shared<Primitive>(kAdaptiveMaxPool2D));
+GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool2D, std::make_shared<Primitive>(kAdaptiveMaxPool2DOpName));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool2d, std::make_shared<Primitive>("AdaptiveMaxPool2d"));
-GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool3D, std::make_shared<Primitive>(kAdaptiveMaxPool3D));
+GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool3D, std::make_shared<Primitive>(kAdaptiveMaxPool3DOpName));
 }  // namespace prim
 }  // namespace mindspore
 

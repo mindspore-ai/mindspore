@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include "ops/conv_pool_op_name.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"

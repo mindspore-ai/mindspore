@@ -20,7 +20,8 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "mindspore/core/ops/nn_ops.h"
+#include "ops/array_op_name.h"
+#include "ops/nn_ops.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {

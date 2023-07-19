@@ -16,8 +16,8 @@
 
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include <queue>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"

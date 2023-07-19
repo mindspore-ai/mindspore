@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include "ops/ascend_op_name.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
 

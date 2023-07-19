@@ -295,7 +295,7 @@ void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node) {
     }
     PrimitivePtr value_node_prim = GetValueNode<PrimitivePtr>(uses_cnode->input(0));
     MS_EXCEPTION_IF_NULL(value_node_prim);
-    if (value_node_prim->name() == prim::kTupleGetItem) {
+    if (value_node_prim->name() == prim::kPrimTupleGetItem->name()) {
       if (uses_set.size() > 1) {
         MS_LOG(EXCEPTION) << "Now only support one output, but got " << uses_set.size();
       }
@@ -1840,7 +1840,7 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
   }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
-  if (prim->name() == prim::kTupleGetItem) {
+  if (prim->name() == prim::kPrimTupleGetItem->name()) {
     auto tuple_index = GetTupleGetItemIndex(cnode);
     auto tuple_getitem_input = cnode->input(1)->cast<CNodePtr>();
     if (IsValueNode<FuncGraph>(tuple_getitem_input->input(0))) {
@@ -2189,7 +2189,7 @@ static std::vector<std::pair<CNodePtr, LossNodeInfo>> GetSensLossPairs(const Fun
     }
 
     auto expect_tuple_getitem_cnode = expect_tuple_getitem->cast<CNodePtr>();
-    if (!IsSomePrimitive(expect_tuple_getitem_cnode, prim::kTupleGetItem)) {
+    if (!IsSomePrimitive(expect_tuple_getitem_cnode, prim::kPrimTupleGetItem->name())) {
       continue;
     }
 

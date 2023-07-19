@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <vector>
-#include "include/common/utils/utils.h"
 #include "ir/anf.h"
 #include "ir/functor.h"
 #include "mindapi/base/macros.h"
@@ -27,11 +26,11 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kAttrValueDepend = "value_depend";
-
+constexpr auto kNameShapeCalc = "ShapeCalc";
 class MIND_API ShapeCalc : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ShapeCalc);
-  ShapeCalc() : BaseOperator(kShapeCalc) { InitIOName({"inputs"}, {"outputs"}); }
+  ShapeCalc() : BaseOperator(kNameShapeCalc) { InitIOName({"inputs"}, {"outputs"}); }
 
   ShapeCalcFunctorPtr get_functor() const;
   std::vector<int64_t> get_value_depend() const;

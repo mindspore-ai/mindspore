@@ -23,6 +23,8 @@
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
+#include "ops/framework_op_name.h"
+#include "ops/structure_op_name.h"
 
 namespace mindspore {
 namespace device {
@@ -124,7 +126,7 @@ void AscendSomas::InitEventInfo(const session::KernelGraph &graph) {
   auto &kernels = graph.execution_order();
   for (const auto &kernel : kernels) {
     auto type = common::AnfAlgo::GetCNodeName(kernel);
-    if (type == kSendOpName) {
+    if (type == kStreamSendOpName) {
       auto event = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel, kAttrEventId);
       auto iter = event_map_.find(event);
       if (iter == event_map_.end()) {
@@ -134,7 +136,7 @@ void AscendSomas::InitEventInfo(const session::KernelGraph &graph) {
       } else {
         iter->second.send_ = kernel;
       }
-    } else if (type == kRecvOpName) {
+    } else if (type == kStreamRecvOpName) {
       auto event = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel, kAttrEventId);
       auto iter = event_map_.find(event);
       if (iter == event_map_.end()) {

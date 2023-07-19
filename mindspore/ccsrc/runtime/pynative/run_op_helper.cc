@@ -21,6 +21,7 @@
 #include <memory>
 #include <map>
 #include <algorithm>
+#include "ops/structure_op_name.h"
 #include "utils/log_adapter.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/optimizer/helper.h"

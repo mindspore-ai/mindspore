@@ -20,110 +20,57 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/primitive.h"
+#include "ops/sparse_op_name.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
 // Sparse ops
-constexpr auto kSparseFillEmptyRowsGrad = "SparseFillEmptyRowsGrad";
-constexpr auto kSparseSparseMinimum = "SparseSparseMinimum";
-constexpr auto kSparseCross = "SparseCross";
-constexpr auto kRaggedTensorToTensor = "RaggedTensorToTensor";
-constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
-constexpr auto kSparseFillEmptyRows = "SparseFillEmptyRows";
-constexpr auto kSparseToDenseV2 = "SparseToDenseV2";
-constexpr auto kSparseSoftmax = "SparseSoftmax";
-constexpr auto kSparseAddmm = "SparseAddmm";
-constexpr auto kSparseSparseMaximum = "SparseSparseMaximum";
-constexpr auto kCSRReduceSum = "CSRReduceSum";
-constexpr auto kCSRMV = "CSRMV";
-constexpr auto kCSRMM = "CSRMM";
-constexpr auto kCSRMul = "CSRMul";
-constexpr auto kCSRGather = "CSRGather";
-constexpr auto kCSR2COO = "CSR2COO";
-constexpr auto kSparseDenseCwiseAdd = "SparseDenseCwiseAdd";
-constexpr auto kSparseDenseCwiseDiv = "SparseDenseCwiseDiv";
-constexpr auto kSparseDenseCwiseMul = "SparseDenseCwiseMul";
-constexpr auto kCOO2CSR = "COO2CSR";
-constexpr auto kCSRDiv = "CSRDiv";
-constexpr auto kDenseToDenseSetOperation = "DenseToDenseSetOperation";
-constexpr auto kSparseMatrixAdd = "SparseMatrixAdd";
-constexpr auto kSparseMatrixMul = "SparseMatrixMul";
-constexpr auto kSparseAdd = "SparseAdd";
-constexpr auto kSparseSegmentMeanGrad = "SparseSegmentMeanGrad";
-constexpr auto kSparseSegmentMeanWithNumSegments = "SparseSegmentMeanWithNumSegments";
-constexpr auto kSparseConcat = "SparseConcat";
-constexpr auto kSparseMatrixNNZ = "SparseMatrixNNZ";
-constexpr auto kSparseMatrixTranspose = "SparseMatrixTranspose";
-constexpr auto kSparseMatrixSoftmax = "SparseMatrixSoftmax";
-constexpr auto kSparseMatrixMatMul = "SparseMatrixMatMul";
-constexpr auto kSparseMatrixSparseMatMul = "SparseMatrixSparseMatMul";
-constexpr auto kSparseMatrixOrderingAMD = "SparseMatrixOrderingAMD";
-constexpr auto kSparseSegmentSum = "SparseSegmentSum";
-constexpr auto kSparseSegmentSumGrad = "SparseSegmentSumGrad";
-constexpr auto kSparseSegmentSumWithNumSegments = "SparseSegmentSumWithNumSegments";
-constexpr auto kSparseSegmentSqrtN = "SparseSegmentSqrtN";
-constexpr auto kSparseSegmentSqrtNGrad = "SparseSegmentSqrtNGrad";
-constexpr auto kSparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSegments";
-constexpr auto kRaggedTensorToSparse = "RaggedTensorToSparse";
-constexpr auto kDenseToSparseSetOperation = "DenseToSparseSetOperation";
-constexpr auto kSparseTensorToCSRSparseMatrix = "SparseTensorToCSRSparseMatrix";
-constexpr auto kCSRSparseMatrixToSparseTensor = "CSRSparseMatrixToSparseTensor";
-constexpr auto kSparseSplit = "SparseSplit";
-constexpr auto kSparseReshape = "SparseReshape";
-constexpr auto kSparseReorder = "SparseReorder";
-constexpr auto kSparseSegmentMean = "SparseSegmentMean";
-
-// Sparse Grad ops
-constexpr auto kSparseAddGrad = "SparseAddGrad";
-constexpr auto kSparseTensorDenseAdd = "SparseTensorDenseAdd";
-constexpr auto kSparseSlice = "SparseSlice";
-constexpr auto kSparseSliceGrad = "SparseSliceGrad";
-
-// Sparse ops
-GVAR_DEF(PrimitivePtr, kPrimSparseReorder, std::make_shared<Primitive>(kSparseReorder));
-GVAR_DEF(PrimitivePtr, kPrimSparseReshape, std::make_shared<Primitive>(kSparseReshape));
-GVAR_DEF(PrimitivePtr, kPrimSparseSparseMinimum, std::make_shared<Primitive>(kSparseSparseMinimum));
-GVAR_DEF(PrimitivePtr, kPrimDenseToSparseSetOperation, std::make_shared<Primitive>(kDenseToSparseSetOperation));
-GVAR_DEF(PrimitivePtr, kPrimSparseCross, std::make_shared<Primitive>(kSparseCross));
-GVAR_DEF(PrimitivePtr, kPrimRaggedTensorToTensor, std::make_shared<Primitive>(kRaggedTensorToTensor));
-GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseMatmul, std::make_shared<Primitive>(kSparseTensorDenseMatmul));
-GVAR_DEF(PrimitivePtr, kPrimSparseFillEmptyRows, std::make_shared<Primitive>(kSparseFillEmptyRows));
-GVAR_DEF(PrimitivePtr, kPrimSparseToDenseV2, std::make_shared<Primitive>(kSparseToDenseV2));
-GVAR_DEF(PrimitivePtr, kPrimSparseSoftmax, std::make_shared<Primitive>(kSparseSoftmax));
-GVAR_DEF(PrimitivePtr, kPrimSparseAddmm, std::make_shared<Primitive>(kSparseAddmm));
-GVAR_DEF(PrimitivePtr, kPrimSparseMatrixMul, std::make_shared<Primitive>(kSparseMatrixMul));
-GVAR_DEF(PrimitivePtr, kPrimSparseSparseMaximum, std::make_shared<Primitive>(kSparseSparseMaximum));
-GVAR_DEF(PrimitivePtr, kPrimCSRReduceSum, std::make_shared<Primitive>(kCSRReduceSum));
-GVAR_DEF(PrimitivePtr, kPrimCSRMV, std::make_shared<Primitive>(kCSRMV));
-GVAR_DEF(PrimitivePtr, kPrimCSRMM, std::make_shared<Primitive>(kCSRMM));
-GVAR_DEF(PrimitivePtr, kPrimCSRMul, std::make_shared<Primitive>(kCSRMul));
-GVAR_DEF(PrimitivePtr, kPrimSparseDenseCwiseAdd, std::make_shared<Primitive>(kSparseDenseCwiseAdd));
-GVAR_DEF(PrimitivePtr, kPrimSparseDenseCwiseDiv, std::make_shared<Primitive>(kSparseDenseCwiseDiv));
-GVAR_DEF(PrimitivePtr, kPrimSparseDenseCwiseMul, std::make_shared<Primitive>(kSparseDenseCwiseMul));
-GVAR_DEF(PrimitivePtr, kPrimCSRGather, std::make_shared<Primitive>(kCSRGather));
-GVAR_DEF(PrimitivePtr, kPrimCSR2COO, std::make_shared<Primitive>(kCSR2COO));
-GVAR_DEF(PrimitivePtr, kPrimCOO2CSR, std::make_shared<Primitive>(kCOO2CSR));
-GVAR_DEF(PrimitivePtr, kPrimCSRDiv, std::make_shared<Primitive>(kCSRDiv));
-GVAR_DEF(PrimitivePtr, kPrimSparseSplit, std::make_shared<Primitive>(kSparseSplit));
-GVAR_DEF(PrimitivePtr, kPrimDenseToDenseSetOperation, std::make_shared<Primitive>(kDenseToDenseSetOperation));
-GVAR_DEF(PrimitivePtr, kPrimSparseMatrixAdd, std::make_shared<Primitive>(kSparseMatrixAdd));
-GVAR_DEF(PrimitivePtr, kPrimSparseAdd, std::make_shared<Primitive>(kSparseAdd));
-GVAR_DEF(PrimitivePtr, kPrimSparseSegmentMean, std::make_shared<Primitive>(kSparseSegmentMean));
+GVAR_DEF(PrimitivePtr, kPrimSparseReorder, std::make_shared<Primitive>(kSparseReorderOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseReshape, std::make_shared<Primitive>(kSparseReshapeOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseSparseMinimum, std::make_shared<Primitive>(kSparseSparseMinimumOpName));
+GVAR_DEF(PrimitivePtr, kPrimDenseToSparseSetOperation, std::make_shared<Primitive>(kDenseToSparseSetOperationOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseCross, std::make_shared<Primitive>(kSparseCrossOpName));
+GVAR_DEF(PrimitivePtr, kPrimRaggedTensorToTensor, std::make_shared<Primitive>(kRaggedTensorToTensorOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseMatmul, std::make_shared<Primitive>(kSparseTensorDenseMatmulOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseFillEmptyRows, std::make_shared<Primitive>(kSparseFillEmptyRowsOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseToDenseV2, std::make_shared<Primitive>(kSparseToDenseV2OpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseSoftmax, std::make_shared<Primitive>(kSparseSoftmaxOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseAddmm, std::make_shared<Primitive>(kSparseAddmmOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixMul, std::make_shared<Primitive>(kSparseMatrixMulOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseSparseMaximum, std::make_shared<Primitive>(kSparseSparseMaximumOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRReduceSum, std::make_shared<Primitive>(kCSRReduceSumOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRMV, std::make_shared<Primitive>(kCSRMVOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRMM, std::make_shared<Primitive>(kCSRMMOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRMul, std::make_shared<Primitive>(kCSRMulOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseDenseCwiseAdd, std::make_shared<Primitive>(kSparseDenseCwiseAddOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseDenseCwiseDiv, std::make_shared<Primitive>(kSparseDenseCwiseDivOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseDenseCwiseMul, std::make_shared<Primitive>(kSparseDenseCwiseMulOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRGather, std::make_shared<Primitive>(kCSRGatherOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSR2COO, std::make_shared<Primitive>(kCSR2COOOpName));
+GVAR_DEF(PrimitivePtr, kPrimCOO2CSR, std::make_shared<Primitive>(kCOO2CSROpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRDiv, std::make_shared<Primitive>(kCSRDivOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseSplit, std::make_shared<Primitive>(kSparseSplitOpName));
+GVAR_DEF(PrimitivePtr, kPrimDenseToDenseSetOperation, std::make_shared<Primitive>(kDenseToDenseSetOperationOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixAdd, std::make_shared<Primitive>(kSparseMatrixAddOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseAdd, std::make_shared<Primitive>(kSparseAddOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentMean, std::make_shared<Primitive>(kSparseSegmentMeanOpName));
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentMeanGrad, std::make_shared<Primitive>("SparseSegmentMeanGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentMeanWithNumSegments,
          std::make_shared<Primitive>("SparseSegmentMeanWithNumSegments"));
 GVAR_DEF(PrimitivePtr, kPrimDenseToCSRSparseMatrix, std::make_shared<Primitive>("DenseToCSRSparseMatrix"));
-GVAR_DEF(PrimitivePtr, kPrimSparseTensorToCSRSparseMatrix, std::make_shared<Primitive>(kSparseTensorToCSRSparseMatrix));
-GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToSparseTensor, std::make_shared<Primitive>(kCSRSparseMatrixToSparseTensor));
-GVAR_DEF(PrimitivePtr, kPrimSparseConcat, std::make_shared<Primitive>(kSparseConcat));
-GVAR_DEF(PrimitivePtr, kPrimSparseMatrixNNZ, std::make_shared<Primitive>(kSparseMatrixNNZ));
-GVAR_DEF(PrimitivePtr, kPrimSparseMatrixSoftmax, std::make_shared<Primitive>(kSparseMatrixSoftmax));
-GVAR_DEF(PrimitivePtr, kPrimSparseMatrixMatMul, std::make_shared<Primitive>(kSparseMatrixMatMul));
-GVAR_DEF(PrimitivePtr, kPrimSparseMatrixSparseMatMul, std::make_shared<Primitive>(kSparseMatrixSparseMatMul));
+GVAR_DEF(PrimitivePtr, kPrimSparseTensorToCSRSparseMatrix,
+         std::make_shared<Primitive>(kSparseTensorToCSRSparseMatrixOpName));
+GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToSparseTensor,
+         std::make_shared<Primitive>(kCSRSparseMatrixToSparseTensorOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseConcat, std::make_shared<Primitive>(kSparseConcatOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixNNZ, std::make_shared<Primitive>(kSparseMatrixNNZOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixSoftmax, std::make_shared<Primitive>(kSparseMatrixSoftmaxOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixMatMul, std::make_shared<Primitive>(kSparseMatrixMatMulOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixSparseMatMul, std::make_shared<Primitive>(kSparseMatrixSparseMatMulOpName));
 GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToDense, std::make_shared<Primitive>("CSRSparseMatrixToDense"));
-GVAR_DEF(PrimitivePtr, kPrimSparseMatrixTranspose, std::make_shared<Primitive>(kSparseMatrixTranspose));
-GVAR_DEF(PrimitivePtr, kPrimSparseMatrixOrderingAMD, std::make_shared<Primitive>(kSparseMatrixOrderingAMD));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixTranspose, std::make_shared<Primitive>(kSparseMatrixTransposeOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixOrderingAMD, std::make_shared<Primitive>(kSparseMatrixOrderingAMDOpName));
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSum, std::make_shared<Primitive>("SparseSegmentSum"));
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSumGrad, std::make_shared<Primitive>("SparseSegmentSumGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSumWithNumSegments,
@@ -132,17 +79,17 @@ GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtN, std::make_shared<Primitive>("Spa
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNGrad, std::make_shared<Primitive>("SparseSegmentSqrtNGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNWithNumSegments,
          std::make_shared<Primitive>("SparseSegmentSqrtNWithNumSegments"));
-GVAR_DEF(PrimitivePtr, kPrimRaggedTensorToSparse, std::make_shared<Primitive>(kRaggedTensorToSparse));
+GVAR_DEF(PrimitivePtr, kPrimRaggedTensorToSparse, std::make_shared<Primitive>(kRaggedTensorToSparseOpName));
 GVAR_DEF(PrimitivePtr, kPrimSparseToDense, std::make_shared<Primitive>("SparseToDense"));
 GVAR_DEF(PrimitivePtr, kPrimSparseCountSparseOutput, std::make_shared<Primitive>("SparseCountSparseOutput"));
 GVAR_DEF(PrimitivePtr, kPrimSspaddmm, std::make_shared<Primitive>("Sspaddmm"));
 
 // Sparse Grad ops
-GVAR_DEF(PrimitivePtr, kPrimSparseAddGrad, std::make_shared<Primitive>(kSparseAddGrad));
-GVAR_DEF(PrimitivePtr, kPrimSparseFillEmptyRowsGrad, std::make_shared<Primitive>(kSparseFillEmptyRowsGrad));
-GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseAdd, std::make_shared<Primitive>(kSparseTensorDenseAdd));
-GVAR_DEF(PrimitivePtr, kPrimSparseSlice, std::make_shared<Primitive>(kSparseSlice));
-GVAR_DEF(PrimitivePtr, kPrimSparseSliceGrad, std::make_shared<Primitive>(kSparseSliceGrad));
+GVAR_DEF(PrimitivePtr, kPrimSparseAddGrad, std::make_shared<Primitive>(kSparseAddGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseFillEmptyRowsGrad, std::make_shared<Primitive>(kSparseFillEmptyRowsGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseAdd, std::make_shared<Primitive>(kSparseTensorDenseAddOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseSlice, std::make_shared<Primitive>(kSparseSliceOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseSliceGrad, std::make_shared<Primitive>(kSparseSliceGradOpName));
 }  // namespace prim
 }  // namespace mindspore
 

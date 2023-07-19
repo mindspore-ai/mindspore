@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 
-#include "mindspore/core/ops/math_ops.h"
+#include "ops/math_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"

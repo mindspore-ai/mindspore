@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include <set>
+#include "ops/nn_op_name.h"
 #include "utils/hash_set.h"
 #include "backend/common/pass/const_input_to_attr.h"
 #include "include/common/utils/utils.h"

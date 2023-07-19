@@ -18,7 +18,8 @@
 #include <vector>
 #include <memory>
 
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/framework_op_name.h"
+#include "ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"

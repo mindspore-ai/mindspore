@@ -27,7 +27,7 @@ class MIND_API InSequence : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(InSequence);
   /// \brief Constructor.
-  InSequence() : BaseOperator(prim::kInSequence) {}
+  InSequence() : BaseOperator(kInSequenceOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "ops/conv_pool_op_name.h"
+#include "ops/math_op_name.h"
 #include "backend/common/pass/const_input_to_attr.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/kernel_graph.h"

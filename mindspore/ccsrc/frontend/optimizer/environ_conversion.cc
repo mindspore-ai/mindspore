@@ -21,7 +21,7 @@
 #include <utility>
 #include <unordered_map>
 
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/framework_ops.h"
 #include "abstract/abstract_function.h"
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
@@ -188,9 +188,9 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
       const auto old_attr_value = GetValue<int>(old_attr);
       if (old_attr_value != type_id) {
         if (IsPrimitiveCNode(node, prim::kPrimEnvironSet)) {
-          prim = std::make_shared<Primitive>(prim::kEnvironSet);
+          prim = std::make_shared<Primitive>(kEnvironSetOpName);
         } else {
-          prim = std::make_shared<Primitive>(prim::kEnvironGet);
+          prim = std::make_shared<Primitive>(kEnvironGetOpName);
         }
         MS_EXCEPTION_IF_NULL(prim);
         prim->set_attr(attr_name, MakeValue(static_cast<int>(type_id)));

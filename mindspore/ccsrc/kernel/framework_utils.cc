@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-#include <set>
-#include <map>
-#include <utility>
+#include "kernel/framework_utils.h"
 #include <algorithm>
+#include <map>
+#include <set>
+#include <utility>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
-#include "kernel/oplib/oplib.h"
 #include "kernel/common_utils.h"
-#include "kernel/framework_utils.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
+#include "kernel/oplib/oplib.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
+#include "ops/array_op_name.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/framework_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/random_op_name.h"
+#include "ops/image_op_name.h"
+#include "ops/nn_ops.h"
+#include "ops/sequence_ops.h"
 #include "utils/file_utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
@@ -1183,7 +1188,7 @@ static const mindspore::HashMap<std::string, std::set<int64_t>> try_get_value_in
   {kReduceProdOpName, ShapeSet{1}},
   {kReduceAllOpName, ShapeSet{1}},
   {kReduceAnyOpName, ShapeSet{1}},
-  {kROIAlignGradName, ShapeSet{2}},
+  {kROIAlignGradOpName, ShapeSet{2}},
   {kSliceOpName, ShapeSet{1, 2}},
   {kSliceGradOpName, ShapeSet{2, 3, 4}},
   {kTensorCopySlicesOpName, ShapeSet{2, 3, 4}},

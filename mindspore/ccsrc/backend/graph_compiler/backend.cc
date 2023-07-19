@@ -20,7 +20,9 @@
 #include <map>
 #include <stack>
 #include <unordered_map>
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/nn_op_name.h"
+#include "ops/structure_op_name.h"
 #include "include/common/utils/parallel_context.h"
 #include "backend/graph_compiler/transform.h"
 #include "backend/common/session/session_factory.h"

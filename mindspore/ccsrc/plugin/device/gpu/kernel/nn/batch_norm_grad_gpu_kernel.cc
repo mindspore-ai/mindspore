@@ -15,13 +15,14 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/batch_norm_grad_gpu_kernel.h"
-#include <map>
 #include <algorithm>
-#include <utility>
+#include <map>
 #include <memory>
-#include "mindspore/core/ops/grad/batch_norm_grad.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
+#include <utility>
+#include "ops/grad/batch_norm_grad.h"
+#include "ops/nn_op_name.h"
 #include "ops/op_name.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -47,17 +48,19 @@ bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
 
   if (kernel_name_ == kBatchNormGradOpName) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormGradWithActivation && activation_type_ == mindspore::ActivationType::RELU) {
+  } else if (kernel_name_ == kBatchNormGradWithActivationOpName &&
+             activation_type_ == mindspore::ActivationType::RELU) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
-  } else if (kernel_name_ == kBatchNormGradWithActivation && activation_type_ == mindspore::ActivationType::SWISH) {
+  } else if (kernel_name_ == kBatchNormGradWithActivationOpName &&
+             activation_type_ == mindspore::ActivationType::SWISH) {
     // batch_norm grad + silu grad fusion
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormGradWithAddAndActivation) {
+  } else if (kernel_name_ == kBatchNormGradWithAddAndActivationOpName) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
   } else {
     MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNormGradOpName << ", "
-                      << kBatchNormGradWithActivation << ", " << kBatchNormGradWithAddAndActivation << ", but got "
-                      << kernel_name_;
+                      << kBatchNormGradWithActivationOpName << ", " << kBatchNormGradWithAddAndActivationOpName
+                      << ", but got " << kernel_name_;
   }
 
   InitResource();
@@ -312,7 +315,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGradGpuKernelMo
                                                       .AddOutputAttr(kNumberTypeFloat32)   // dscale
                                                       .AddOutputAttr(kNumberTypeFloat32),  // dbias
                                                     &BatchNormGradGpuKernelMod::LaunchKernel<half>}}},
-                                                 {kBatchNormGradWithActivation,
+                                                 {kBatchNormGradWithActivationOpName,
                                                   {{KernelAttr()
                                                       .AddInputAttr(kNumberTypeFloat32)    // dy
                                                       .AddInputAttr(kNumberTypeFloat32)    // x
@@ -339,7 +342,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGradGpuKernelMo
                                                       .AddOutputAttr(kNumberTypeFloat32)   // dscale
                                                       .AddOutputAttr(kNumberTypeFloat32),  // dbias
                                                     &BatchNormGradGpuKernelMod::LaunchKernel<half>}}},
-                                                 {kBatchNormGradWithAddAndActivation,
+                                                 {kBatchNormGradWithAddAndActivationOpName,
                                                   {{KernelAttr()
                                                       .AddInputAttr(kNumberTypeFloat32)    // dy
                                                       .AddInputAttr(kNumberTypeFloat32)    // x
@@ -388,10 +391,10 @@ std::vector<KernelAttr> BatchNormGradGpuKernelMod::GetOpSupport() {
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNormGrad,
                                  []() { return std::make_shared<BatchNormGradGpuKernelMod>(kBatchNormGradOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNormGradWithActivation, []() {
-  return std::make_shared<BatchNormGradGpuKernelMod>(kBatchNormGradWithActivation);
+  return std::make_shared<BatchNormGradGpuKernelMod>(kBatchNormGradWithActivationOpName);
 });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNormGradWithAddAndActivation, []() {
-  return std::make_shared<BatchNormGradGpuKernelMod>(kBatchNormGradWithAddAndActivation);
+  return std::make_shared<BatchNormGradGpuKernelMod>(kBatchNormGradWithAddAndActivationOpName);
 });
 }  // namespace kernel
 }  // namespace mindspore

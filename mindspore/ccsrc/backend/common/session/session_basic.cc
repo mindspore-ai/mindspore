@@ -22,7 +22,10 @@
 #include <functional>
 #include <unordered_map>
 
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/structure_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/sequence_ops.h"
 #include "utils/hash_map.h"
 #include "ops/primitive_c.h"
 #include "ir/manager.h"

@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include "include/backend/anf_runtime_algorithm.h"
+#include "ops/framework_op_name.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"

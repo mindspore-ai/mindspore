@@ -17,8 +17,11 @@
 #include <unordered_set>
 #include <set>
 #include <string>
-#include "mindspore/core/ops/conv_pool_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/lite_op_name.h"
+#include "ops/conv_pool_ops.h"
+#include "ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
@@ -46,7 +49,7 @@ void Conv2DBackpropEltwiseFusionPass::MatchConv2DBackpropInputEltwise(const CNod
     // if cnode is ReluGradV2, we need do further check
     // skip when output0 of Conv2DBackpropInputD is fp32, it may be slower
     const std::unordered_set<TypeId> fp32_types{TypeId::kNumberTypeFloat32, TypeId::kNumberTypeFloat};
-    if (common::AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName &&
+    if (common::AnfAlgo::GetCNodeName(cnode) == kReLUGradV2OpName &&
         fp32_types.count(AnfAlgo::GetOutputDeviceDataType(eltwise_input, kIndex0)) > 0) {
       return;
     }
@@ -69,7 +72,7 @@ void Conv2DBackpropEltwiseFusionPass::MatchSingleFusionPattern(const session::Ke
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    std::set<std::string> support_node_names = {kReluGradV2OpName, kReluOpName, kPReluOpName, kLeakyReluOpName,
+    std::set<std::string> support_node_names = {kReLUGradV2OpName, kReluOpName, kPReluOpName, kLeakyReluOpName,
                                                 kAddOpName};
     std::set<std::string> support_fusion_types = {kPatternElemWise, kPatternBroadcast};
     if (support_node_names.count(common::AnfAlgo::GetCNodeName(cnode)) > 0 &&

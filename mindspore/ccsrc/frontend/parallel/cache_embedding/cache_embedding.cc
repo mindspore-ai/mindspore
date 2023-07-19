@@ -15,6 +15,7 @@
  */
 
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
+
 #include <random>
 #include <vector>
 #include <list>
@@ -23,12 +24,13 @@
 #include <memory>
 #include <string>
 #include <algorithm>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+
+#include "ops/sequence_ops.h"
+#include "ops/other_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "include/backend/optimizer/helper.h"

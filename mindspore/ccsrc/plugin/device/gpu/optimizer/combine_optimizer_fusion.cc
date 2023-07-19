@@ -16,6 +16,8 @@
 
 #include <unordered_map>
 #include "plugin/device/gpu/optimizer/combine_optimizer_fusion.h"
+#include "ops/ascend_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -31,8 +33,8 @@ std::unordered_map<std::string, std::string> kOptimizerMap;
 
 void CombineOptimizerFusion::InitCombineOptimizer() {
   REGISTER_COMBINE_OPTIMIZER_TYPE(kOptimizerMap, kApplyMomentumOpName, kCombineMomentumOpName);
-  REGISTER_COMBINE_OPTIMIZER_TYPE(kOptimizerMap, kFusedScaleApplyMomentum, kCombineScaleMomentumOpName);
-  REGISTER_COMBINE_OPTIMIZER_TYPE(kOptimizerMap, kFusedWeightScaleApplyMomentum,
+  REGISTER_COMBINE_OPTIMIZER_TYPE(kOptimizerMap, kFusedScaleApplyMomentumOpName, kCombineScaleMomentumOpName);
+  REGISTER_COMBINE_OPTIMIZER_TYPE(kOptimizerMap, kFusedWeightScaleApplyMomentumOpName,
                                   kCombineWeightDecayScaleMomentumOpName);
 }
 

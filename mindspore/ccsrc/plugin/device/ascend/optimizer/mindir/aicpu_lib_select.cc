@@ -20,9 +20,21 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
-#include "mindspore/core/ops/conv_pool_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/sparse_ops.h"
+#include "ops/arithmetic_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/ascend_op_name.h"
+#include "ops/comparison_op_name.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/image_op_name.h"
+#include "ops/lite_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/nn_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/other_op_name.h"
+#include "ops/random_op_name.h"
+#include "ops/sequence_op_name.h"
+#include "ops/sparse_op_name.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 
 namespace mindspore {
@@ -32,15 +44,15 @@ static const std::unordered_set<std::string> kAICpuOpNames = {kDropoutGenMaskOpN
                                                               kEnvironSetOpName,
                                                               kEnvironGetOpName,
                                                               kEnvironDestroyAllOpName,
-                                                              kPriorityReplayBufferCreate,
-                                                              kPriorityReplayBufferPush,
-                                                              kPriorityReplayBufferSample,
-                                                              kPriorityReplayBufferUpdate,
-                                                              kPriorityReplayBufferDestroy,
-                                                              kReservoirReplayBufferCreate,
-                                                              kReservoirReplayBufferPush,
-                                                              kReservoirReplayBufferSample,
-                                                              kReservoirReplayBufferDestroy,
+                                                              kPriorityReplayBufferCreateOpName,
+                                                              kPriorityReplayBufferPushOpName,
+                                                              kPriorityReplayBufferSampleOpName,
+                                                              kPriorityReplayBufferUpdateOpName,
+                                                              kPriorityReplayBufferDestroyOpName,
+                                                              kReservoirReplayBufferCreateOpName,
+                                                              kReservoirReplayBufferPushOpName,
+                                                              kReservoirReplayBufferSampleOpName,
+                                                              kReservoirReplayBufferDestroyOpName,
                                                               kConcatOffsetOpName,
                                                               kSequenceAddOpName,
                                                               kSequenceAddNOpName,
@@ -106,8 +118,8 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kArgMaxWithValueOpName,
   mindspore::kArgminOpName,
   mindspore::kArgMinWithValueOpName,
-  mindspore::KAsinGradOpName,
-  mindspore::KAsinhGradOpName,
+  mindspore::kAsinGradOpName,
+  mindspore::kAsinhGradOpName,
   mindspore::kAvgPoolV1OpName,
   mindspore::kAvgPoolGradV1OpName,
   mindspore::kNextAfterOpName,
@@ -116,11 +128,11 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kBatchMatMulOpName,
   mindspore::kCoalesceOpName,
   mindspore::kDepthToSpaceOpName,
-  mindspore::kDenseToDenseSetOperation,
+  mindspore::kDenseToDenseSetOperationOpName,
   mindspore::kCropAndResizeGradBoxesOpName,
   mindspore::kCropAndResizeGradImageOpName,
   mindspore::kDivOpName,
-  mindspore::kReluGradOpName,
+  mindspore::kReLUGradOpName,
   mindspore::kRightShiftOpName,
   mindspore::kNonDeterministicIntsOpName,
   mindspore::kMvlgammaOpName,
@@ -153,7 +165,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kSparseSegmentMeanWithNumSegmentsOpName,
   mindspore::kListDiffOpName,
   mindspore::kLogOpName,
-  mindspore::kTruncatedNormal,
+  mindspore::kTruncatedNormalOpName,
   mindspore::kTraceOpName,
   mindspore::kTraceGradOpName,
   mindspore::kTridiagonalSolveOpName,
@@ -298,7 +310,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kZerosLikeOpName,
   mindspore::kMatrixBandPartOpName,
   mindspore::kDenseToCSRSparseMatrixOpName,
-  mindspore::kDenseToSparseSetOperation,
+  mindspore::kDenseToSparseSetOperationOpName,
   mindspore::kDiagOpName,
   mindspore::kDiagonalOpName,
   mindspore::kDiagPartOpName,
@@ -356,7 +368,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kSparseToDenseV2OpName,
   mindspore::kTrilOpName,
   mindspore::kBernoulliOpName,
-  mindspore::kGluOpName,
+  mindspore::kGLUOpName,
   mindspore::kGluGradOpName,
   mindspore::kBesselI0OpName,
   mindspore::kRandomPoissonOpName,

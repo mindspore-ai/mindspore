@@ -24,8 +24,8 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/backend/optimizer/helper.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/other_ops.h"
+#include "ops/array_ops.h"
+#include "ops/other_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {

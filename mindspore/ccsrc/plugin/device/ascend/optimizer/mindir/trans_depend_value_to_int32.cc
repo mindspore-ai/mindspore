@@ -19,6 +19,8 @@
 #include <vector>
 #include <memory>
 
+#include "ops/conv_pool_op_name.h"
+#include "ops/array_op_name.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"

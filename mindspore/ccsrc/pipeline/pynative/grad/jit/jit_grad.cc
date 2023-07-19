@@ -18,7 +18,11 @@
 
 #include <utility>
 #include "frontend/optimizer/ad/grad.h"
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/structure_op_name.h"
+#include "ops/other_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/sequence_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/grad/jit/jit_dfunctor.h"
 #include "include/common/utils/anfalgo.h"

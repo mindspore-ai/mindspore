@@ -17,7 +17,7 @@
 
 #include <memory>
 #include <string>
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/array_ops.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {
@@ -49,7 +49,7 @@ AnfNodePtr InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePt
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  CNodePtr new_node = kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kIdentity)), cnode});
+  CNodePtr new_node = kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), cnode});
   MS_EXCEPTION_IF_NULL(new_node);
 
   const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, 0);

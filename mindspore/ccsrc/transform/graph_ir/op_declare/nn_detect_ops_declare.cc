@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "mindspore/core/ops/conv_pool_ops.h"
+#include "ops/image_op_name.h"
 
 namespace mindspore::transform {
 // BoundingBoxEncode

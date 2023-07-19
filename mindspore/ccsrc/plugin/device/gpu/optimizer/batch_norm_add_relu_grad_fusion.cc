@@ -20,9 +20,9 @@
 #include <vector>
 #include <string>
 
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/nn_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -91,7 +91,7 @@ void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const A
   std::vector<AnfNodePtr> bn_add_relu_grad_output;
   CreateMultipleOutputsOfAnfNode(graph, bn_add_relu_grad, kBNAddReluGradOutputNum, &bn_add_relu_grad_output);
   if (bn_add_relu_grad_output.size() != kBNAddReluGradOutputNum) {
-    MS_LOG(EXCEPTION) << "The output size of node " << kBatchNormGradWithAddAndActivation << " must be "
+    MS_LOG(EXCEPTION) << "The output size of node " << kBatchNormGradWithAddAndActivationOpName << " must be "
                       << kBNAddReluGradOutputNum << ", but it is " << bn_add_relu_grad_output.size();
   }
 
@@ -146,7 +146,7 @@ bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
     return false;
   }
   auto forward_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_getitem), 0);
-  if (common::AnfAlgo::GetCNodeName(forward_node) != kBatchNormWithAddAndActivation) {
+  if (common::AnfAlgo::GetCNodeName(forward_node) != kBatchNormWithAddAndActivationOpName) {
     return false;
   }
 
@@ -195,7 +195,7 @@ const AnfNodePtr BatchNormAddReluGradFusion::Process(const FuncGraphPtr &graph, 
   if (!GetValue<bool>(is_train)) {
     return nullptr;
   }
-  auto prim = std::make_shared<Primitive>(kBatchNormGradWithAddAndActivation);
+  auto prim = std::make_shared<Primitive>(kBatchNormGradWithAddAndActivationOpName);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy, x, scale, save_mean, save_var, reserve, bias, y};
   auto fused_batch_norm_add_relu_grad = graph->NewCNode(inputs);

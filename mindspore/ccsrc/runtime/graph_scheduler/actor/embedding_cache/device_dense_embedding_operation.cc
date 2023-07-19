@@ -17,6 +17,8 @@
 #include <limits>
 #include <vector>
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
+#include "ops/nn_op_name.h"
+#include "ops/array_op_name.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/device_dense_embedding_operation.h"
 
 namespace mindspore {

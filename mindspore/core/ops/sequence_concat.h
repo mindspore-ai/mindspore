@@ -28,7 +28,7 @@ class MIND_API SequenceConcat : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceConcat);
   /// \brief Constructor.
-  SequenceConcat() : BaseOperator(prim::kSequenceConcat) {}
+  SequenceConcat() : BaseOperator(kSequenceConcatOpName) {}
   /// \brief Init function.
   void Init(const int64_t axis = 0);
   /// \brief Set axis.

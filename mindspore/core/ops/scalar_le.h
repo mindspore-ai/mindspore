@@ -26,7 +26,7 @@ class MIND_API scalar_le : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(scalar_le);
   /// \brief Constructor.
-  scalar_le() : BaseOperator(prim::kScalarLe) {}
+  scalar_le() : BaseOperator(kScalarLeOpName) {}
   /// \brief Init.
   void Init() const {}
 };

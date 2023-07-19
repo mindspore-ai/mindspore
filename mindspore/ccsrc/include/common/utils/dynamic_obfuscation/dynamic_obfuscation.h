@@ -23,10 +23,11 @@
 #include <stack>
 #include <set>
 #include "load_mindir/load_model.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/lite_ops.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/nn_optimizer_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/math_ops.h"
+#include "ops/lite_ops.h"
 #include "include/common/visible.h"
 #include "include/common/utils/utils.h"
 

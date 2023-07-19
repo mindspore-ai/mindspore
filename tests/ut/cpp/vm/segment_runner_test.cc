@@ -16,9 +16,10 @@
 #include <algorithm>
 
 #include "common/common_test.h"
-#include "mindspore/core/ops/comparison_ops.h"
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+
+#include "ops/comparison_ops.h"
+#include "ops/arithmetic_ops.h"
+#include "ops/framework_ops.h"
 #include "common/py_func_graph_fetcher.h"
 #include "ir/manager.h"
 #include "utils/log_adapter.h"
@@ -49,7 +50,7 @@ class TestCompileSegmentRunner : public UT::Common {
 };
 
 TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
-  FuncGraphPtr g = get_py_fun_(prim::kScalarAdd);
+  FuncGraphPtr g = get_py_fun_(kScalarAddOpName);
   // g was managed by local variable manager in get_py_fun_ and that manager will be freed as no reference.
   // so a new manager should be declared to make get_outputs() in segment_runner.cc happy.
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
@@ -65,7 +66,7 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
 }
 
 TEST_F(TestCompileSegmentRunner, test_MsVmConvert2) {
-  FuncGraphPtr g = get_py_fun_(prim::kScalarMul);
+  FuncGraphPtr g = get_py_fun_(kScalarMulOpName);
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
 
   BackendPtr b = std::make_shared<Backend>("vm");

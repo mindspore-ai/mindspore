@@ -99,7 +99,7 @@ CNodePtr CreateReluGradV2(const FuncGraphPtr &graph, const CNodePtr &relu_grad, 
   MS_EXCEPTION_IF_NULL(relu_grad);
   MS_EXCEPTION_IF_NULL(second_input);
 
-  auto prim = std::make_shared<Primitive>(kReluGradV2OpName);
+  auto prim = std::make_shared<Primitive>(kReLUGradV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu_grad->input(1), second_input};
   auto new_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(new_node);

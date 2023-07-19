@@ -16,6 +16,9 @@
 
 #include "transform/graph_ir/op_declare/nn_training_ops_declare.h"
 #include <string>
+#include "ops/ascend_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/nn_op_name.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 
 namespace mindspore::transform {
@@ -385,7 +388,7 @@ INPUT_MAP(ApplyRMSProp) = {
 ATTR_INPUT_MAP(ApplyRMSProp) = {{"rho", "rho"}, {"momentum", "momentum"}, {"epsilon", "epsilon"}};
 ATTR_MAP(ApplyRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyRMSProp) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyRMSProp, kApplyRMSPropDOpname, ADPT_DESC(ApplyRMSProp))
+REG_ADPT_DESC(ApplyRMSProp, kApplyRMSPropDOpName, ADPT_DESC(ApplyRMSProp))
 
 // ApplyProximalAdagrad
 INPUT_MAP(ApplyProximalAdagrad) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},

@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "ops/array_op_name.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"

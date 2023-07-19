@@ -21,6 +21,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/convert_utils_base.h"
+#include "ops/ascend_op_name.h"
 #include "runtime/dev.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"

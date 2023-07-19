@@ -16,7 +16,8 @@
 
 #include "backend/common/pass/reduce_optimizer.h"
 #include <vector>
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 

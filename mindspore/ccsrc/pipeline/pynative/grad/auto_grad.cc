@@ -17,33 +17,33 @@
  */
 
 #include "pipeline/pynative/grad/auto_grad.h"
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include <algorithm>
-#include "mindspore/core/ops/structure_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/other_ops.h"
+#include "frontend/expander/bprop/bprop.h"
+#include "frontend/operator/composite/composite.h"
+#include "frontend/optimizer/ad/dfunctor.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/convert_utils_py.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
+#include "include/common/utils/primitive_utils.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
-#include "frontend/optimizer/ad/dfunctor.h"
-#include "frontend/operator/composite/composite.h"
-#include "utils/info.h"
-#include "frontend/expander/bprop/bprop.h"
-#include "pipeline/pynative/pynative_utils.h"
-#include "pipeline/pynative/grad/jit/jit_call_graph.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/math_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/other_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/structure_ops.h"
 #include "pipeline/jit/action.h"
-#include "utils/profile.h"
-#include "include/common/utils/primitive_utils.h"
 #include "pipeline/jit/pass.h"
+#include "pipeline/pynative/grad/jit/jit_call_graph.h"
+#include "pipeline/pynative/pynative_utils.h"
 #include "pybind_api/gil_scoped_long_running.h"
-#include "include/backend/optimizer/helper.h"
+#include "utils/info.h"
+#include "utils/profile.h"
 
 namespace mindspore {
 namespace pynative {
@@ -57,7 +57,7 @@ const mindspore::HashSet<std::string> kGradBlackList{kMakeTupleOpName,         k
                                                      kUpdateStateOpName,       kNPUAllocFloatStatusOpName,
                                                      kNPUGetFloatStatusOpName, kNPUClearFloatStatusOpName};
 
-const mindspore::HashSet<std::string> kMonadOp = {kLoadOPName, kDependOpName, kUpdateStateOpName};
+const mindspore::HashSet<std::string> kMonadOp = {kLoadOpName, kDependOpName, kUpdateStateOpName};
 
 const mindspore::HashSet<std::string> kMetaFuncGraphOp{
   kPyExecuteOpName,

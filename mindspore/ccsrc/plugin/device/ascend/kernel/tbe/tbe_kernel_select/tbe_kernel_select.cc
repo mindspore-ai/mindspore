@@ -22,9 +22,10 @@
 #include <utility>
 #include <vector>
 #include "include/backend/optimizer/helper.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/array_op_name.h"
+#include "ops/math_ops.h"
+#include "ops/nn_ops.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"

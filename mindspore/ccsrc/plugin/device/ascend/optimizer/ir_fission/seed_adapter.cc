@@ -18,6 +18,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "ops/ascend_op_name.h"
+#include "ops/random_op_name.h"
+#include "ops/nn_op_name.h"
 #include "include/backend/optimizer/helper.h"
 #include "kernel/kernel_build_info.h"
 #include "include/common/utils/utils.h"

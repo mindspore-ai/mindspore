@@ -17,6 +17,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include "ops/array_op_name.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"

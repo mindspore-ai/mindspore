@@ -17,6 +17,10 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_
 
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
+#include "ops/sparse_op_name.h"
+#include "ops/sequence_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/arithmetic_op_name.h"
 
 // Do not add operators here, the input to attribute function has been abandoned
 namespace mindspore::opt {

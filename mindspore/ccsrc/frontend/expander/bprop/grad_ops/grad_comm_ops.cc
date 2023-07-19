@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "frontend/expander/bprop/bprop_irbuilder.h"
+#include "ops/other_op_name.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
 #include "ir/anf.h"

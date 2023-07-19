@@ -18,10 +18,11 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "ops/ascend_op_name.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/math_ops.h"
+#include "ops/nn_optimizer_ops.h"
 
 namespace mindspore::transform {
 INPUT_MAP(ClipByValue) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(clip_value_min)}, {3, INPUT_DESC(clip_value_max)}};
@@ -679,13 +680,13 @@ REG_ADPT_DESC(Threshold, kNameThreshold, ADPT_DESC(Threshold))
 INPUT_MAP(Addcdiv) = {{1, INPUT_DESC(input_data)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}, {4, INPUT_DESC(value)}};
 ATTR_MAP(Addcdiv) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Addcdiv) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Addcdiv, prim::kAddcdiv, ADPT_DESC(Addcdiv))
+REG_ADPT_DESC(Addcdiv, prim::kPrimAddcdiv->name(), ADPT_DESC(Addcdiv))
 
 // Addcmul
 INPUT_MAP(Addcmul) = {{1, INPUT_DESC(input_data)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}, {4, INPUT_DESC(value)}};
 ATTR_MAP(Addcmul) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Addcmul) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Addcmul, prim::kAddcmul, ADPT_DESC(Addcmul))
+REG_ADPT_DESC(Addcmul, prim::kPrimAddcmul->name(), ADPT_DESC(Addcmul))
 
 // Lerp
 INPUT_MAP(Lerp) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(end)}, {3, INPUT_DESC(weight)}};

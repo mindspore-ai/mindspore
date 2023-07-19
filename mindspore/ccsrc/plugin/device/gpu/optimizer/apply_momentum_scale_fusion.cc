@@ -81,7 +81,7 @@ const AnfNodePtr ApplyMomentumScaleFusion::Process(const FuncGraphPtr &graph, co
   MS_EXCEPTION_IF_NULL(momentum);
   MS_EXCEPTION_IF_NULL(monad_state);
 
-  auto prim = std::make_shared<Primitive>(kFusedScaleApplyMomentum);
+  auto prim = std::make_shared<Primitive>(kFusedScaleApplyMomentumOpName);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), scale,    variable, accumulation,
                                     learning_rate,      gradient, momentum, monad_state};

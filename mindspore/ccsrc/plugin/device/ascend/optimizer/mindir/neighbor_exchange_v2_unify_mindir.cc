@@ -19,9 +19,9 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/other_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"

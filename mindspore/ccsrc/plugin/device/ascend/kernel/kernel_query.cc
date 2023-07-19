@@ -17,8 +17,8 @@
 #include "plugin/device/ascend/kernel/kernel_query.h"
 #include <algorithm>
 #include <string>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 #include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
@@ -203,7 +203,7 @@ AnfNodePtr ConvertAllTupleInputsToTensor(const FuncGraphPtr &graph, const CNodeP
     auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
     MS_EXCEPTION_IF_NULL(input_node);
     if (common::AnfAlgo::IsTupleOutput(input_node)) {
-      auto prim = NewValueNode(std::make_shared<Primitive>(prim::kTupleToTensor));
+      auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
       MS_EXCEPTION_IF_NULL(prim);
       AnfNodePtrList inputs = {prim, input_node};
       CNodePtr tuple_to_tensor = graph->NewCNode(inputs);

@@ -15,8 +15,8 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.h"
 #include <vector>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/nn_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

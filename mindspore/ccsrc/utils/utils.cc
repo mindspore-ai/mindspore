@@ -18,8 +18,19 @@
 
 #include <set>
 #include <string>
-
-#include "mindspore/core/ops/sparse_ops.h"
+#include "ops/array_op_name.h"
+#include "ops/ascend_op_name.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/framework_op_name.h"
+#include "ops/image_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/nn_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/other_op_name.h"
+#include "ops/random_op_name.h"
+#include "ops/sequence_op_name.h"
+#include "ops/sparse_op_name.h"
+#include "ops/structure_op_name.h"
 #include "utils/convert_utils_base.h"
 namespace mindspore {
 namespace {
@@ -103,29 +114,29 @@ bool IsOneOfOperator(const std::string &name) {
                                                         kApplyProximalAdagradDOpName,
                                                         kApplyProximalGradientDescentOpName,
                                                         kApplyRMSPropOpName,
-                                                        kApplyRMSPropDOpname,
+                                                        kApplyRMSPropDOpName,
                                                         kAdamApplyOneWithDecayOpName,
                                                         kAdamApplyOneWithDecayAssignOpName,
-                                                        kFusedAdamWeightDecayName,
-                                                        kAdamWeightDecayName,
-                                                        kFusedCastAdamWeightDecayName,
-                                                        kFusedAdamName,
-                                                        kFusedAdaFactorName,
-                                                        kFusedAdaFactorWithGlobalNormName,
-                                                        kFusedSparseAdamName,
+                                                        kFusedAdamWeightDecayOpName,
+                                                        kAdamWeightDecayOpName,
+                                                        kFusedCastAdamWeightDecayOpName,
+                                                        kFusedAdamOpName,
+                                                        kFusedAdaFactorOpName,
+                                                        kFusedAdaFactorWithGlobalNormOpName,
+                                                        kFusedSparseAdamOpName,
                                                         kFusedMulApplyMomentumOpName,
-                                                        kFusedWeightScaleApplyMomentum,
-                                                        kFusedScaleApplyMomentum,
+                                                        kFusedWeightScaleApplyMomentumOpName,
+                                                        kFusedScaleApplyMomentumOpName,
                                                         kApplyCenteredRMSPropOpName,
                                                         kApplyCenteredRMSPropDOpName,
-                                                        kFusedSparseFtrlName,
-                                                        kFusedSparseProximalAdagradName,
-                                                        kFusedSparseLazyAdamName,
+                                                        kFusedSparseFtrlOpName,
+                                                        kFusedSparseProximalAdagradOpName,
+                                                        kFusedSparseLazyAdamOpName,
                                                         kSparseApplyFtrlOpName,
                                                         kSparseApplyFtrlDOpName,
                                                         kSparseApplyFtrlV2OpName,
                                                         kSparseApplyFtrlV2DOpName,
-                                                        kSGDName,
+                                                        kSGDOpName,
                                                         kLARSUpdateOpName,
                                                         kLarsV2UpdateOpName,
                                                         kCombineWeightDecayScaleMomentumOpName,
@@ -161,11 +172,11 @@ bool IsOneOfComputeDepend(const std::string &name) {
                                                        kNonMaxSuppressionV3OpName,
                                                        kNonMaxSuppressionWithOverlapsOpName,
                                                        kCoalesceOpName,
-                                                       kTruncatedNormal,
-                                                       kNonDeterministicInts,
+                                                       kTruncatedNormalOpName,
+                                                       kNonDeterministicIntsOpName,
                                                        kFractionalAvgPoolGradOpName,
-                                                       kDenseToDenseSetOperation,
-                                                       kDenseToSparseSetOperation,
+                                                       kDenseToDenseSetOperationOpName,
+                                                       kDenseToSparseSetOperationOpName,
                                                        kSegmentMaxOpName,
                                                        kCSRSparseMatrixToSparseTensorOpName,
                                                        kSegmentMinOpName,
@@ -180,7 +191,7 @@ bool IsOneOfComputeDepend(const std::string &name) {
                                                        kSparseSparseMinimumOpName,
                                                        kSparseSparseMaximumOpName,
                                                        kRpcRecvOpName,
-                                                       kSparseFillEmptyRows,
+                                                       kSparseFillEmptyRowsOpName,
                                                        kSparseCrossOpName,
                                                        kAdaptiveMaxPool3DOpName,
                                                        kDynamicBroadcastGradientArgsOpName};

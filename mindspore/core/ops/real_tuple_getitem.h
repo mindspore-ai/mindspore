@@ -26,7 +26,7 @@ class MIND_API RealTupleGetItem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RealTupleGetItem);
   /// \brief Constructor.
-  RealTupleGetItem() : BaseOperator(prim::kRealTupleGetItem) { InitIOName({"input", "index"}, {"output"}); }
+  RealTupleGetItem() : BaseOperator(kRealTupleGetItemOpName) { InitIOName({"input", "index"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore

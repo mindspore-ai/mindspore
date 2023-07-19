@@ -19,6 +19,7 @@
 #include "utils/log_adapter.h"
 #include "include/common/debug/common.h"
 #include "debug/utils.h"
+#include "ops/ascend_op_name.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 #include "include/backend/anf_runtime_algorithm.h"

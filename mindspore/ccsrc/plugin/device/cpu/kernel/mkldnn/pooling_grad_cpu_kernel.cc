@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/mkldnn/pooling_grad_cpu_kernel.h"
 #include <functional>
 #include <unordered_map>
+#include "ops/conv_pool_op_name.h"
 #include "utils/profile.h"
 #include "kernel/ops_utils.h"
 

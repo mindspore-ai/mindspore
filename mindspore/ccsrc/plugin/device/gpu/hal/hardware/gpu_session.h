@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <string>
 #include <map>
+#include "ops/ascend_op_name.h"
 #include "backend/common/session/session_basic.h"
 #include "include/backend/kernel_graph.h"
 #include "backend/common/session/session_factory.h"

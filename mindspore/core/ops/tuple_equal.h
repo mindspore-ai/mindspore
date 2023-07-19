@@ -26,7 +26,7 @@ class MIND_API tuple_equal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(tuple_equal);
   /// \brief Constructor.
-  tuple_equal() : BaseOperator(prim::kTupleEqual) {}
+  tuple_equal() : BaseOperator(kTupleEqualOpName) {}
   /// \brief Init.
   void Init() const {}
 };

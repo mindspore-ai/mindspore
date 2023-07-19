@@ -21,6 +21,7 @@
 #include "graph/def_types.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "utils/log_adapter.h"
+#include "ops/structure_op_name.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 #include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"

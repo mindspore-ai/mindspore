@@ -17,6 +17,8 @@
 #include "include/backend/distributed/ps/util.h"
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/ascend_op_name.h"
+#include "mindspore/core/ops/other_op_name.h"
 #include "utils/hash_map.h"
 #include "include/backend/distributed/ps/constants.h"
 #include "include/backend/distributed/ps/ps_context.h"

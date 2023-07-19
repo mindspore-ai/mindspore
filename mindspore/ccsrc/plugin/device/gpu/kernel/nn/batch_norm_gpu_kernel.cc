@@ -15,13 +15,15 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/batch_norm_gpu_kernel.h"
-#include <map>
 #include <algorithm>
-#include <utility>
+#include <map>
 #include <memory>
-#include "mindspore/core/ops/batch_norm.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
+#include <utility>
+#include "ops/batch_norm.h"
+#include "ops/math_op_name.h"
+#include "ops/nn_op_name.h"
 #include "ops/op_name.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -70,7 +72,7 @@ bool BatchNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                               epsilon_),
       "Kernel launch failed");
   }
-  if (kernel_name_ == kBatchNormWithActivation && activation_type_ == mindspore::ActivationType::SWISH) {
+  if (kernel_name_ == kBatchNormWithActivationOpName && activation_type_ == mindspore::ActivationType::SWISH) {
     UnaryOpsCudaFunc<ElwiseOpType::kSiLU, T, T>(output_size_ / sizeof(T), y, y,
                                                 reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
@@ -95,16 +97,17 @@ bool BatchNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 
   if (kernel_name_ == kBatchNormOpName) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormWithActivation && activation_type_ == mindspore::ActivationType::RELU) {
+  } else if (kernel_name_ == kBatchNormWithActivationOpName && activation_type_ == mindspore::ActivationType::RELU) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
-  } else if (kernel_name_ == kBatchNormWithActivation && activation_type_ == mindspore::ActivationType::SWISH) {
+  } else if (kernel_name_ == kBatchNormWithActivationOpName && activation_type_ == mindspore::ActivationType::SWISH) {
     // batch_norm + silu cuda kernel fusion
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormWithAddAndActivation) {
+  } else if (kernel_name_ == kBatchNormWithAddAndActivationOpName) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
   } else {
-    MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNormOpName << ", " << kBatchNormWithActivation
-                      << ", " << kBatchNormWithAddAndActivation << ", but got " << kernel_name_;
+    MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNormOpName << ", "
+                      << kBatchNormWithActivationOpName << ", " << kBatchNormWithAddAndActivationOpName << ", but got "
+                      << kernel_name_;
   }
 
   auto iter = kernel_attr_map_.find(kernel_name_);
@@ -338,7 +341,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGpuKernelMod::B
                                                   .AddOutputAttr(kNumberTypeFloat32)
                                                   .AddOutputAttr(kNumberTypeFloat32),
                                                 &BatchNormGpuKernelMod::LaunchKernel<half>}}},
-                                             {kBatchNormWithActivation,
+                                             {kBatchNormWithActivationOpName,
                                               {{KernelAttr()
                                                   .AddInputAttr(kNumberTypeFloat32)
                                                   .AddInputAttr(kNumberTypeFloat32)
@@ -363,7 +366,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGpuKernelMod::B
                                                   .AddOutputAttr(kNumberTypeFloat32)
                                                   .AddOutputAttr(kNumberTypeFloat32),
                                                 &BatchNormGpuKernelMod::LaunchKernel<half>}}},
-                                             {kBatchNormWithAddAndActivation,
+                                             {kBatchNormWithAddAndActivationOpName,
                                               {{KernelAttr()
                                                   .AddInputAttr(kNumberTypeFloat32)
                                                   .AddInputAttr(kNumberTypeFloat32)
@@ -409,10 +412,11 @@ std::vector<KernelAttr> BatchNormGpuKernelMod::GetOpSupport() {
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNorm,
                                  []() { return std::make_shared<BatchNormGpuKernelMod>(kBatchNormOpName); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNormWithActivation,
-                                 []() { return std::make_shared<BatchNormGpuKernelMod>(kBatchNormWithActivation); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNormWithActivation, []() {
+  return std::make_shared<BatchNormGpuKernelMod>(kBatchNormWithActivationOpName);
+});
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchNormWithAddAndActivation, []() {
-  return std::make_shared<BatchNormGpuKernelMod>(kBatchNormWithAddAndActivation);
+  return std::make_shared<BatchNormGpuKernelMod>(kBatchNormWithAddAndActivationOpName);
 });
 }  // namespace kernel
 }  // namespace mindspore

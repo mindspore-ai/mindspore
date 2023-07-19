@@ -18,6 +18,10 @@
 #include <memory>
 #include <algorithm>
 #include <set>
+#include "ops/ascend_op_name.h"
+#include "ops/other_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/framework_op_name.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/kernel/hccl/hcom_util.h"
@@ -40,7 +44,7 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   if (parallel_context_instance->enable_parallel_optimizer() && op_name == kBroadcastOpName) {
     return kOpFormat_DEFAULT;
   }
-  if (op_name == kReceiveOpName || op_name == kHcomSendOpName || op_name == kAllToAllvOpName ||
+  if (op_name == kReceiveOpName || op_name == kSendOpName || op_name == kAllToAllvOpName ||
       op_name == kMuxReceiveOpName) {
     return kOpFormat_DEFAULT;
   }
@@ -71,7 +75,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (op_name != kAllGatherOpName && op_name != kAllReduceOpName && op_name != kBroadcastOpName &&
-      op_name != kReduceScatterOpName && op_name != kHcomSendOpName && op_name != kReceiveOpName &&
+      op_name != kReduceScatterOpName && op_name != kSendOpName && op_name != kReceiveOpName &&
       op_name != kAllToAllvOpName && op_name != kMuxReceiveOpName && op_name != kMuxSendOpName) {
     MS_LOG(DEBUG) << "Hccl does not have op [" << op_name << "]";
     return;

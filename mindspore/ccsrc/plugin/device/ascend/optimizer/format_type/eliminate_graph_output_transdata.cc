@@ -20,7 +20,8 @@
 #include <string>
 #include <tuple>
 #include <vector>
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/array_op_name.h"
+#include "ops/sequence_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
 

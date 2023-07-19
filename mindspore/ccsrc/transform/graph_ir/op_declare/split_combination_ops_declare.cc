@@ -16,7 +16,7 @@
 
 #include "transform/graph_ir/op_declare/split_combination_ops_declare.h"
 #include <vector>
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/array_ops.h"
 
 namespace mindspore::transform {
 // SplitD
@@ -38,7 +38,7 @@ INPUT_MAP(Pack) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(Pack) = {{1, DYN_INPUT_DESC(x)}};
 ATTR_MAP(Pack) = {{"num", ATTR_DESC(N, AnyTraits<int64_t>())}, {"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Pack) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Stack, prim::kStack, ADPT_DESC(Pack))
+REG_ADPT_DESC(Stack, mindspore::kStackOpName, ADPT_DESC(Pack))
 REG_ADPT_DESC(Pack, prim::kPrimPack->name(), ADPT_DESC(Pack))
 
 // ParallelConcat

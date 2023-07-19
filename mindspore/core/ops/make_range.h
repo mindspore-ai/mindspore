@@ -27,7 +27,7 @@ class MIND_API make_range : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(make_range);
   /// \brief Constructor.
-  make_range() : BaseOperator(prim::kMakeRange) {}
+  make_range() : BaseOperator(kMakeRangeOpName) {}
   /// \brief Init function.
   void Init() const {}
 };

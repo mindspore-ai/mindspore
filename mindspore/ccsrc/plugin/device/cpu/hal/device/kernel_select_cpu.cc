@@ -15,26 +15,29 @@
  */
 
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
-#include <string>
-#include <memory>
 #include <algorithm>
+#include <memory>
 #include <set>
+#include <string>
 #include <unordered_set>
-#include "mindspore/core/ops/sparse_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "kernel/oplib/oplib.h"
-#include "plugin/device/cpu/kernel/pyfunc/py_func_cpu_kernel.h"
-#include "plugin/device/cpu/kernel/custom/custom_aot_cpu_kernel.h"
-#include "plugin/device/cpu/kernel/custom/custom_julia_cpu_kernel.h"
-#include "utils/trace_base.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
-#include "mindspore/core/ops/op_name.h"
+#include "kernel/oplib/oplib.h"
+#include "ops/arithmetic_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/math_ops.h"
+#include "ops/nn_op_name.h"
+#include "ops/nn_optimizer_op_name.h"
+#include "ops/op_name.h"
+#include "ops/random_op_name.h"
+#include "ops/sparse_ops.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/device/cpu/kernel/custom/custom_aot_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/custom/custom_julia_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/pyfunc/py_func_cpu_kernel.h"
+#include "plugin/factory/ms_factory.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace device {
@@ -73,11 +76,11 @@ static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpNam
                                                         kApplyAdamWithAmsgradOpName,
                                                         kApplyAdamWithAmsgradV2OpName,
                                                         kApplyFtrlOpName,
-                                                        prim::kMatrixBandPart,
-                                                        prim::kGer,
-                                                        prim::kCdist,
-                                                        prim::kCdistGrad,
-                                                        prim::kSparseSegmentMean};
+                                                        kMatrixBandPartOpName,
+                                                        kGerOpName,
+                                                        kCdistOpName,
+                                                        kCdistGradOpName,
+                                                        kSparseSegmentMeanOpName};
 
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
   size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);

@@ -25,6 +25,7 @@
 #include <map>
 #include <tuple>
 #include <set>
+#include "ops/ascend_op_name.h"
 #include "utils/hash_map.h"
 #include "backend/common/session/session_basic.h"
 #include "include/backend/kernel_graph.h"

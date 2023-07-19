@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 #include <set>
+#include "ops/array_op_name.h"
 #include "utils/ms_context.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"

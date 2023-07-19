@@ -20,10 +20,10 @@
 #include <functional>
 #include <unordered_set>
 #include <utility>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/math_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "include/common/utils/convert_utils.h"
 #include "ir/functor.h"
 #include "ops/primitive_c.h"
@@ -126,15 +126,15 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) const {
   MS_EXCEPTION_IF_NULL(node);
   auto [success, dst_shape] = GetIntList(shape);
   if (!success) {
-    return Emit(prim::kReshape, {node, shape});
+    return Emit(kReshapeOpName, {node, shape});
   }
   auto node_shape = node->shape();
   if (dst_shape.size() != node_shape.size()) {
-    return Emit(prim::kReshape, {node, shape});
+    return Emit(kReshapeOpName, {node, shape});
   }
   for (size_t i = 0; i < dst_shape.size(); ++i) {
     if (dst_shape[i] != node_shape[i] && dst_shape[i] != -1) {
-      return Emit(prim::kReshape, {node, shape});
+      return Emit(kReshapeOpName, {node, shape});
     }
   }
   return node;
@@ -195,7 +195,7 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     auto v = value_node->value();
     MS_EXCEPTION_IF_NULL(v);
     if (v->isa<ValueSequence>()) {
-      return Emit(prim::kSequenceZerosLike, {node});
+      return Emit(kSequenceZerosLikeOpName, {node});
     } else if (v->isa<Scalar>()) {
       return EmitValue(CreateZeroScalar(v->type()));
     } else if (v->isa<Type>()) {
@@ -209,7 +209,7 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
   MS_EXCEPTION_IF_NULL(abs);
 
   if (abs->isa<abstract::AbstractTensor>()) {
-    return Emit(prim::kZerosLike, {node});
+    return Emit(kZerosLikeOpName, {node});
   } else if (abs->isa<abstract::AbstractMonad>() || abs->isa<abstract::AbstractType>() ||
              abs->isa<abstract::AbstractNone>()) {
     return node;
@@ -218,7 +218,7 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     if (!sequence_abs->dynamic_len() && sequence_abs->empty()) {
       return node;
     }
-    return Emit(prim::kSequenceZerosLike, {node});
+    return Emit(kSequenceZerosLikeOpName, {node});
   } else if (abs->isa<abstract::AbstractScalar>()) {
     auto value = CreateZeroScalar(abs->BuildType());
     return EmitValue(value);
@@ -385,7 +385,7 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtr
       args[i] = inputs[i];
     }
   }
-  auto out = Emit(kShapeCalc, args, {{kAttrFunctor, functor}, {ops::kAttrValueDepend, MakeValue(value_depend)}});
+  auto out = Emit(kShapeCalcOpName, args, {{kAttrFunctor, functor}, {ops::kAttrValueDepend, MakeValue(value_depend)}});
   MS_EXCEPTION_IF_NULL(out);
   auto abs = out->abstract();
   MS_EXCEPTION_IF_NULL(abs);

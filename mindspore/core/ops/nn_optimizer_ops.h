@@ -20,68 +20,39 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/primitive.h"
+#include "ops/nn_optimizer_op_name.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
-// optimizer
-constexpr auto kAssign = "Assign";
-constexpr auto kAssignAdd = "AssignAdd";
-constexpr auto kAssignSub = "AssignSub";
-constexpr auto kApplyAddSign = "ApplyAddSign";
-constexpr auto kSparseApplyCenteredRMSProp = "SparseApplyCenteredRMSProp";
-constexpr auto kSparseApplyAdagrad = "SparseApplyAdagrad";
-constexpr auto kSparseApplyAdagradV2 = "SparseApplyAdagradV2";
-constexpr auto kSparseApplyRMSProp = "SparseApplyRMSProp";
-constexpr auto kSparseApplyAdadelta = "SparseApplyAdadelta";
-constexpr auto kApplyRMSProp = "ApplyRMSProp";
-constexpr auto kSparseApplyAdagradDA = "SparseApplyAdagradDA";
-constexpr auto kSparseApplyMomentum = "SparseApplyMomentum";
-constexpr auto kSparseApplyProximalGradientDescent = "SparseApplyProximalGradientDescent";
-
-// activation
-constexpr auto kGeLUGrad = "GeLUGrad";
-constexpr auto kFastGeLU = "FastGeLU";
-constexpr auto kFastGeLUGrad = "FastGeLUGrad";
-constexpr auto kReLU = "ReLU";
-constexpr auto kReLUGrad = "ReluGrad";
-constexpr auto kReLU6 = "ReLU6";
-constexpr auto kSiLU = "SiLU";
-constexpr auto kReLUV2 = "ReLUV2";
-constexpr auto kReLUV3 = "ReLUV3";
-constexpr auto kReLUGradV2 = "ReluGradV2";
-constexpr auto kGLU = "GLU";
-constexpr auto kGluGrad = "GluGrad";
-constexpr auto kGeLU = "GeLU";
-
 // Activation
 GVAR_DEF(PrimitivePtr, kPrimCeLU, std::make_shared<Primitive>("CeLU"));
 GVAR_DEF(PrimitivePtr, kPrimCeluV2, std::make_shared<Primitive>("CeluV2"));
-GVAR_DEF(PrimitivePtr, kPrimReluGrad, std::make_shared<Primitive>(kReLUGrad));
+GVAR_DEF(PrimitivePtr, kPrimReluGrad, std::make_shared<Primitive>(kReLUGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimReluGradV2, std::make_shared<Primitive>("ReluGradV2"));
 GVAR_DEF(PrimitivePtr, kPrimReLU6Grad, std::make_shared<Primitive>("ReLU6Grad"));
 GVAR_DEF(PrimitivePtr, kPrimRelu6Grad, std::make_shared<Primitive>("Relu6Grad"));
-GVAR_DEF(PrimitivePtr, kPrimGeLU, std::make_shared<Primitive>(kGeLU));
+GVAR_DEF(PrimitivePtr, kPrimGeLU, std::make_shared<Primitive>(kGeLUOpName));
 GVAR_DEF(PrimitivePtr, kPrimGelu, std::make_shared<Primitive>("Gelu"));
-GVAR_DEF(PrimitivePtr, kPrimGeLUGrad, std::make_shared<Primitive>(kGeLUGrad));
+GVAR_DEF(PrimitivePtr, kPrimGeLUGrad, std::make_shared<Primitive>(kGeLUGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimGeluGrad, std::make_shared<Primitive>("GeluGrad"));
-GVAR_DEF(PrimitivePtr, kPrimFastGeLU, std::make_shared<Primitive>(kFastGeLU));
+GVAR_DEF(PrimitivePtr, kPrimFastGeLU, std::make_shared<Primitive>(kFastGeLUOpName));
 GVAR_DEF(PrimitivePtr, kPrimFastGelu, std::make_shared<Primitive>("FastGelu"));
-GVAR_DEF(PrimitivePtr, kPrimFastGeLUGrad, std::make_shared<Primitive>(kFastGeLUGrad));
+GVAR_DEF(PrimitivePtr, kPrimFastGeLUGrad, std::make_shared<Primitive>(kFastGeLUGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimFastGeluGrad, std::make_shared<Primitive>("FastGeluGrad"));
-GVAR_DEF(PrimitivePtr, kPrimReLU, std::make_shared<Primitive>(kReLU));
+GVAR_DEF(PrimitivePtr, kPrimReLU, std::make_shared<Primitive>(kReLUOpName));
 GVAR_DEF(PrimitivePtr, kPrimRelu, std::make_shared<Primitive>("Relu"));
 GVAR_DEF(PrimitivePtr, kPrimElu, std::make_shared<Primitive>("Elu"));
 GVAR_DEF(PrimitivePtr, kPrimEluGrad, std::make_shared<Primitive>("EluGrad"));
-GVAR_DEF(PrimitivePtr, kPrimReLU6, std::make_shared<Primitive>(kReLU6));
-GVAR_DEF(PrimitivePtr, kPrimReLUV2, std::make_shared<Primitive>(kReLUV2));
+GVAR_DEF(PrimitivePtr, kPrimReLU6, std::make_shared<Primitive>(kReLU6OpName));
+GVAR_DEF(PrimitivePtr, kPrimReLUV2, std::make_shared<Primitive>(kReLUV2OpName));
 GVAR_DEF(PrimitivePtr, kPrimReluV2, std::make_shared<Primitive>("ReluV2"));
-GVAR_DEF(PrimitivePtr, kPrimReLUV3, std::make_shared<Primitive>(kReLUV3));
+GVAR_DEF(PrimitivePtr, kPrimReLUV3, std::make_shared<Primitive>(kReLUV3OpName));
 GVAR_DEF(PrimitivePtr, kPrimPReLU, std::make_shared<Primitive>("PReLU"));
 GVAR_DEF(PrimitivePtr, kPrimPRelu, std::make_shared<Primitive>("PRelu"));
 GVAR_DEF(PrimitivePtr, kPrimPReLUGrad, std::make_shared<Primitive>("PReLUGrad"));
-GVAR_DEF(PrimitivePtr, kPrimGLU, std::make_shared<Primitive>(kGLU));
-GVAR_DEF(PrimitivePtr, kPrimGluGrad, std::make_shared<Primitive>(kGluGrad));
+GVAR_DEF(PrimitivePtr, kPrimGLU, std::make_shared<Primitive>(kGLUOpName));
+GVAR_DEF(PrimitivePtr, kPrimGluGrad, std::make_shared<Primitive>(kGluGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimSeLU, std::make_shared<Primitive>("SeLU"));
 GVAR_DEF(PrimitivePtr, kPrimSelu, std::make_shared<Primitive>("Selu"));
 GVAR_DEF(PrimitivePtr, kPrimSiLU, std::make_shared<Primitive>("SiLU"));
@@ -89,24 +60,24 @@ GVAR_DEF(PrimitivePtr, kPrimSiLUGrad, std::make_shared<Primitive>("SiLUGrad"));
 
 // nn optimizer
 GVAR_DEF(PrimitivePtr, kPrimDynamicAssign, std::make_shared<Primitive>("DynamicAssign"));
-GVAR_DEF(PrimitivePtr, kPrimAssign, std::make_shared<Primitive>(kAssign));
-GVAR_DEF(PrimitivePtr, kPrimAssignAdd, std::make_shared<Primitive>(kAssignAdd));
-GVAR_DEF(PrimitivePtr, kPrimAssignSub, std::make_shared<Primitive>(kAssignSub));
+GVAR_DEF(PrimitivePtr, kPrimAssign, std::make_shared<Primitive>(kAssignOpName));
+GVAR_DEF(PrimitivePtr, kPrimAssignAdd, std::make_shared<Primitive>(kAssignAddOpName));
+GVAR_DEF(PrimitivePtr, kPrimAssignSub, std::make_shared<Primitive>(kAssignSubOpName));
 GVAR_DEF(PrimitivePtr, kPrimFusedAdam, std::make_shared<Primitive>("FusedAdam"));
 GVAR_DEF(PrimitivePtr, kPrimFusedAdaFactor, std::make_shared<Primitive>("FusedAdaFactor"));
 GVAR_DEF(PrimitivePtr, kPrimFusedAdaFactorWithGlobalNorm, std::make_shared<Primitive>("FusedAdaFactorWithGlobalNorm"));
 GVAR_DEF(PrimitivePtr, kPrimFusedAdamWeightDecay, std::make_shared<Primitive>("FusedAdamWeightDecay"));
 GVAR_DEF(PrimitivePtr, kPrimSGD, std::make_shared<Primitive>("SGD"));
 GVAR_DEF(PrimitivePtr, kPrimApplyProximalAdagrad, std::make_shared<Primitive>("ApplyProximalAdagrad"));
-GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdadelta, std::make_shared<Primitive>(kSparseApplyAdadelta));
-GVAR_DEF(PrimitivePtr, kPrimApplyRMSProp, std::make_shared<Primitive>(kApplyRMSProp));
-GVAR_DEF(PrimitivePtr, kPrimSparseApplyCenteredRMSProp, std::make_shared<Primitive>(kSparseApplyCenteredRMSProp));
+GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdadelta, std::make_shared<Primitive>(kSparseApplyAdadeltaOpName));
+GVAR_DEF(PrimitivePtr, kPrimApplyRMSProp, std::make_shared<Primitive>(kApplyRMSPropOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseApplyCenteredRMSProp, std::make_shared<Primitive>(kSparseApplyCenteredRMSPropOpName));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdagrad, std::make_shared<Primitive>("SparseApplyAdagrad"));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdagradV2, std::make_shared<Primitive>("SparseApplyAdagradV2"));
-GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdagradDA, std::make_shared<Primitive>(kSparseApplyAdagradDA));
-GVAR_DEF(PrimitivePtr, kPrimSparseApplyMomentum, std::make_shared<Primitive>(kSparseApplyMomentum));
+GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdagradDA, std::make_shared<Primitive>(kSparseApplyAdagradDAOpName));
+GVAR_DEF(PrimitivePtr, kPrimSparseApplyMomentum, std::make_shared<Primitive>(kSparseApplyMomentumOpName));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyProximalGradientDescent,
-         std::make_shared<Primitive>(kSparseApplyProximalGradientDescent));
+         std::make_shared<Primitive>(kSparseApplyProximalGradientDescentOpName));
 GVAR_DEF(PrimitivePtr, kPrimAdam, std::make_shared<Primitive>("Adam"));
 GVAR_DEF(PrimitivePtr, kPrimAdamWeightDecay, std::make_shared<Primitive>("AdamWeightDecay"));
 GVAR_DEF(PrimitivePtr, kPrimAdamNoUpdateParam, std::make_shared<Primitive>("AdamNoUpdateParam"));

@@ -18,31 +18,21 @@
 #define MINDSPORE_CORE_BASE_COMPARISON_OPS_H_
 
 #include <memory>
+#include "ops/comparison_op_name.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
-// Comparisons
-constexpr auto kScalarEq = "scalar_eq";
-constexpr auto kScalarLt = "scalar_lt";
-constexpr auto kScalarGt = "scalar_gt";
-constexpr auto kScalarLe = "scalar_le";
-constexpr auto kScalarGe = "scalar_ge";
-constexpr auto kScalarBool = "ScalarBool";
-constexpr auto kBoolNot = "bool_not";
-constexpr auto kNotEqual = "NotEqual";
-constexpr auto kLogicalXor = "LogicalXor";
-
-GVAR_DEF(PrimitivePtr, kPrimScalarEq, std::make_shared<Primitive>(kScalarEq));
-GVAR_DEF(PrimitivePtr, kPrimScalarLt, std::make_shared<Primitive>(kScalarLt));
-GVAR_DEF(PrimitivePtr, kPrimScalarGt, std::make_shared<Primitive>(kScalarGt));
+GVAR_DEF(PrimitivePtr, kPrimScalarEq, std::make_shared<Primitive>(kScalarEqOpName));
+GVAR_DEF(PrimitivePtr, kPrimScalarLt, std::make_shared<Primitive>(kScalarLtOpName));
+GVAR_DEF(PrimitivePtr, kPrimScalarGt, std::make_shared<Primitive>(kScalarGtOpName));
 GVAR_DEF(PrimitivePtr, kPrimScalarNe, std::make_shared<Primitive>("scalar_ne"));
-GVAR_DEF(PrimitivePtr, kPrimScalarLe, std::make_shared<Primitive>(kScalarLe));
-GVAR_DEF(PrimitivePtr, kPrimScalarGe, std::make_shared<Primitive>(kScalarGe));
-GVAR_DEF(PrimitivePtr, kPrimScalarBool, std::make_shared<Primitive>(kScalarBool));
-GVAR_DEF(PrimitivePtr, kPrimBoolNot, std::make_shared<Primitive>(kBoolNot));
+GVAR_DEF(PrimitivePtr, kPrimScalarLe, std::make_shared<Primitive>(kScalarLeOpName));
+GVAR_DEF(PrimitivePtr, kPrimScalarGe, std::make_shared<Primitive>(kScalarGeOpName));
+GVAR_DEF(PrimitivePtr, kPrimScalarBool, std::make_shared<Primitive>(kScalarBoolOpName));
+GVAR_DEF(PrimitivePtr, kPrimBoolNot, std::make_shared<Primitive>(kBoolNotOpName));
 GVAR_DEF(PrimitivePtr, kPrimBoolAnd, std::make_shared<Primitive>("bool_and"));
 GVAR_DEF(PrimitivePtr, kPrimBoolOr, std::make_shared<Primitive>("bool_or"));
 GVAR_DEF(PrimitivePtr, kPrimBoolEq, std::make_shared<Primitive>("bool_eq"));
@@ -56,11 +46,11 @@ GVAR_DEF(PrimitivePtr, kPrimGreaterEqual, std::make_shared<Primitive>("GreaterEq
 GVAR_DEF(PrimitivePtr, kPrimLess, std::make_shared<Primitive>("Less"));
 GVAR_DEF(PrimitivePtr, kPrimLessEqual, std::make_shared<Primitive>("LessEqual"));
 GVAR_DEF(PrimitivePtr, kPrimEqual, std::make_shared<Primitive>("Equal"));
-GVAR_DEF(PrimitivePtr, kPrimNotEqual, std::make_shared<Primitive>(kNotEqual));
+GVAR_DEF(PrimitivePtr, kPrimNotEqual, std::make_shared<Primitive>(kNotEqualOpName));
 GVAR_DEF(PrimitivePtr, kPrimLogicalAnd, std::make_shared<Primitive>("LogicalAnd"));
 GVAR_DEF(PrimitivePtr, kPrimLogicalOr, std::make_shared<Primitive>("LogicalOr"));
 GVAR_DEF(PrimitivePtr, kPrimLogicalNot, std::make_shared<Primitive>("LogicalNot"));
-GVAR_DEF(PrimitivePtr, kPrimLogicalXor, std::make_shared<Primitive>(kLogicalXor));
+GVAR_DEF(PrimitivePtr, kPrimLogicalXor, std::make_shared<Primitive>(kLogicalXorOpName));
 GVAR_DEF(PrimitivePtr, kPrimEqualCount, std::make_shared<Primitive>("EqualCount"));
 GVAR_DEF(PrimitivePtr, kPrimApproximateEqual, std::make_shared<Primitive>("ApproximateEqual"));
 GVAR_DEF(PrimitivePtr, kPrimDistribute, std::make_shared<Primitive>("distribute"));

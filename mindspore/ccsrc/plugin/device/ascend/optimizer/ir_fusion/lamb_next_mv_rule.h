@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include "utils/hash_map.h"
-#include "mindspore/core/ops/math_ops.h"
+#include "ops/math_ops.h"
 #include "ir/anf.h"
 #include "include/backend/optimizer/pattern_engine.h"
 #include "include/backend/optimizer/helper.h"

@@ -20,8 +20,11 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/conv_pool_op_name.h"
+#include "ops/other_op_name.h"
+#include "ops/array_op_name.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
