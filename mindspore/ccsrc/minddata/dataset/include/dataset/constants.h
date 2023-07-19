@@ -269,13 +269,6 @@ enum class DATASET_API SamplingStrategy {
   kEdgeWeight = 1  ///< Sampling with edge weight as probability.
 };
 
-/// \brief Possible values for output format in get all neighbors function of gnn dataset
-enum class DATASET_API OutputFormat {
-  kNormal = 0,  ///< Normal format.
-  kCoo = 1,     ///< COO format.
-  kCsr = 2      ///< CSR format.
-};
-
 /// \brief Possible options for fade shape.
 enum class DATASET_API FadeShape {
   kLinear = 0,       ///< Fade shape is linear mode.

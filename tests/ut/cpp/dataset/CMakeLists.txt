@@ -114,7 +114,6 @@ SET(DE_UT_SRCS
         fill_op_test.cc
         c_api_vision_gaussian_blur_test.cc
         global_context_test.cc
-        gnn_graph_test.cc
         image_process_test.cc
         interrupt_test.cc
         ir_callback_test.cc
