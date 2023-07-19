@@ -72,11 +72,11 @@ class TransformUtil {
    * Parameters:
    *     tensor: [MeTensor] the data tensor in ME
    *     format: [string] the data format in ME op
-   *     is_input: [bool] whether the tensor is used as input, default:false
+   *     copy: [bool] whether copy tensor data, default:true
    * Return：
    *     [GeTensor] the data tensor in GE
    * */
-  static GeTensorPtr ConvertTensor(const MeTensorPtr &tensor, const std::string &format);
+  static GeTensorPtr ConvertTensor(const MeTensorPtr &tensor, const std::string &format, bool copy = true);
 
   /*
    * Parameters:
