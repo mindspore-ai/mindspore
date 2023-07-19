@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""tiling for xunfei """
+"""tiling for sparse """
 from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.strategy import TilingPara
 from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.strategy import TilingStrategy
 
 
-class XunfeiTiling(TilingStrategy):
-    """A tiling strategy implementation for xunfei ipt model shape"""
+class SparseTiling(TilingStrategy):
+    """A tiling strategy implementation for sparse shape"""
 
     @classmethod
     def strategy_name(cls):
-        return "xunfei"
+        return "sparse"
 
     def tiling(self) -> TilingPara:
         self.Br = min(128, self.Nq)
