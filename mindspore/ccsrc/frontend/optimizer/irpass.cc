@@ -290,12 +290,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // recompute
   set_cell_output_no_recompute_ = MakeSubstitution(std::make_shared<SetCellOutputNoRecompute>(),
                                                    "set_cell_output_no_recompute", IsValueNode<FuncGraph>);
-  add_recompute_primal_ =
-    MakeSubstitution(std::make_shared<AddRecomputePrimal>(), "add_recompute_primal", prim::kPrimTupleGetItem);
   remove_not_recompute_node_ =
     MakeSubstitution(std::make_shared<RemoveNotRecomputeNode>(), "remove_not_recompute_node", IsCNode);
-  add_recompute_depend_ =
-    MakeSubstitution(std::make_shared<AddRecomputeDepend>(), "add_recompute_depend", prim::kPrimTupleGetItem);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

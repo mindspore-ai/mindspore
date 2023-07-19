@@ -443,14 +443,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
   opt::OptPassConfig recompute_prepare = opt::OptPassConfig({irpass.set_cell_output_no_recompute_});
   opt::OptPassConfig get_grad = opt::OptPassConfig({irpass.get_grad_eliminate_});
-
-  opt::OptPassConfig cell_reuse_cell_recompute_pass = opt::OptPassConfig(
-    {
-      irpass.add_recompute_primal_,
-      irpass.remove_not_recompute_node_,
-      irpass.add_recompute_depend_,
-    },
-    false, true);
+  opt::OptPassConfig cell_reuse_handle_not_recompute_node_pass =
+    opt::OptPassConfig({irpass.remove_not_recompute_node_}, false, true);
 
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
   OptPassGroupMap map_a({{"expand_dump_flag", opt::OptPassConfig(opt::irpass::ExpandDumpFlag())},
@@ -470,8 +464,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
-                         {"cell_reuse_cell_primitive_pass", opt::OptPassConfig(opt::irpass::AddRecomputePrimitive)},
-                         {"cell_reuse_cell_recompute_pass", cell_reuse_cell_recompute_pass},
+                         {"cell_reuse_recompute_pass", opt::OptPassConfig(opt::irpass::AddRecomputeNodes)},
+                         {"cell_reuse_handle_not_recompute_node_pass", cell_reuse_handle_not_recompute_node_pass},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
