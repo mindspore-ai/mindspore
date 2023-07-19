@@ -275,16 +275,16 @@ void SSLSocketOperation::Handshake(int fd, Connection *conn) const {
   } else {
     // Failed to handshake. Throw exception and catch it in main thread.
     try {
-      MS_LOG(ERROR) << "ssl handshake info -- retval:" << retval << ", error:" << err << ", errno:" << errno
-                    << ", conn:" << conn->send_to.c_str();
+      MS_LOG(WARNING) << "ssl handshake info -- retval:" << retval << ", error:" << err << ", errno:" << errno
+                      << ", conn:" << conn->send_to.c_str();
       uint64_t error = 0;
       while ((error = ERR_get_error()) > 0) {
-        MS_LOG(ERROR) << "ssl handshake errno: " << error << ", err info: " << ERR_reason_error_string(error);
+        MS_LOG(WARNING) << "ssl handshake errno: " << error << ", err info: " << ERR_reason_error_string(error);
       }
       conn->error_code = err;
       conn->state = ConnectionState::kDisconnecting;
-      MS_LOG(EXCEPTION) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
-                        << ", err info: " << err_msg;
+      MS_LOG(WARNING) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
+                      << ", err info: " << err_msg;
     } catch (const std::exception &e) {
       MsException::Instance().SetException();
     }
