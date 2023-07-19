@@ -146,6 +146,7 @@ py::object PackExpander::BeginFuncGraph(const py::object &obj, const py::args &i
   auto graph = std::make_shared<FuncGraph>();
   graphs_.push(graph);
   parse::data_converter::SetFuncGraphByCellObj(graph, obj);
+  parse::UpdateFuncGraphFlags(obj, graph, true);
   AnfNodePtrList node_inputs = {NewValueNode(graph)};
   auto args = py::cast<py::tuple>(inputs);
   py::tuple outputs(inputs.size());
@@ -353,8 +354,8 @@ void RegPackExpanderPy(const py::module *m) {
   (void)py::class_<PackExpander, std::shared_ptr<PackExpander>>(*m, "PackExpander")
     .def_static("get_instance", &PackExpander::Instance, "PackExpander get_instance.")
     .def("emit", &PackExpander::Emit, "emit op in current graph")
-    .def("begin_graph", &PackExpander::BeginFuncGraph, "begin graph in current graph")
-    .def("end_graph", &PackExpander::EndFuncGraph, "end graph in current graph")
+    .def("begin_subgraph", &PackExpander::BeginFuncGraph, "begin subgraph in current graph")
+    .def("end_subgraph", &PackExpander::EndFuncGraph, "end subgraph in current graph")
     .def("set_mixed_precision", &PackExpander::SetMixedPrecision, "set mixed precision by python cell.")
     .def("recover_mixed_precision", &PackExpander::RecoverMixedPrecision, "recover mixed precision.");
 }
