@@ -266,7 +266,7 @@ STATUS NodeInferShape::ConvertAbstractListToNCOrNH(const CNodePtr &cnode, Abstra
 }
 
 STATUS NodeInferShape::SetCNodeAbstractByConvert(const CNodePtr &cnode, const AbstractBasePtr &result, STATUS infer_ret,
-                                                 bool change, FormatTransNodeType perm) {
+                                                 bool change, FormatTransNodeType perm, const Format &format) {
   AbstractBasePtr abs = result;
   if (abs == nullptr) {
     abs = cnode->abstract();
@@ -339,7 +339,7 @@ STATUS NodeInferShape::SetCNodeAbstractByConvert(const CNodePtr &cnode, const Ab
     return lite::RET_ERROR;
   }
 
-  std::vector<int64_t> outputs_format(output_size, NHWC);
+  std::vector<int64_t> outputs_format(output_size, format);
   auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (anf_prim == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
@@ -354,7 +354,7 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
   STATUS infer_ret = RET_OK;
   AbstractBasePtrList abs_list;
   if (LiteTensorExtractor::GetCNodeInputAbstractLists(cnode, &abs_list) != RET_OK) {
-    MS_LOG(ERROR) << "GetCNodeInputAbstractLists failed.";
+    MS_LOG(ERROR) << "GetCNodeInputAbstractLists for ops: " << cnode->fullname_with_scope() << " failed.";
     return lite::RET_ERROR;
   }
 
@@ -366,7 +366,7 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
   (void)anf_prim->AddAttr(kInferDone, MakeValue<bool>(false));
 
   if (LiteTensorExtractor::GetCNodeConstInputToAbstract(cnode, abs_list, fmk_type_, train_flag_) != RET_OK) {
-    MS_LOG(ERROR) << "GetCNodeConstInputToAbstract failed.";
+    MS_LOG(ERROR) << "GetCNodeConstInputToAbstract for ops: " << cnode->fullname_with_scope() << " failed.";
     return RET_ERROR;
   }
   Format ori_format = Format::NHWC;
@@ -392,7 +392,9 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
   (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(ori_format)));
   if (infer_ret == lite::RET_OK) {
     (void)anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
-    auto set_status = SetCNodeAbstractByConvert(cnode, result, infer_ret, changed, kNCHW2NHWC);
+    auto input_format = NHWC;
+    (void)opt::DetermineCertainVarInputFormat(cnode, 1, &input_format);
+    auto set_status = SetCNodeAbstractByConvert(cnode, result, infer_ret, changed, kNCHW2NHWC, input_format);
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << "SetCNodeAbstractByConvert failed: " << cnode->fullname_with_scope();
       return set_status;

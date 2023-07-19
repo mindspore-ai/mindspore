@@ -51,7 +51,7 @@ class NodeInferShape {
   STATUS ConvertAbstractListToNCOrNH(const CNodePtr &cnode, AbstractBasePtrList abs_list, FormatTransNodeType perm,
                                      bool *changed);
   STATUS SetCNodeAbstractByConvert(const CNodePtr &cnode, const AbstractBasePtr &abstract, STATUS infer_ret,
-                                   bool change, FormatTransNodeType perm);
+                                   bool change, FormatTransNodeType perm, const Format &format);
   STATUS SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, const std::vector<lite::Tensor *> &outputs, int status);
   abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
   abstract::AbstractBasePtr ConvertTensorListToAbstract(lite::Tensor *tensor);

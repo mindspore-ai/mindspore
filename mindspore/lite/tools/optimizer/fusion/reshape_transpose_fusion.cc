@@ -71,17 +71,7 @@ std::unordered_map<std::string, VectorRef> ReshapeTransposeFusion::DefinePattern
 bool CheckTransposeCanFused(const FuncGraphPtr &func_graph, const CNodePtr &transpose, const std::vector<int> &perm) {
   MS_ASSERT(func_graph != nullptr && transpose != nullptr);
   MS_CHECK_TRUE_RET(transpose->size() == kInputSizeThree, false);
-  Format in_format = mindspore::NHWC;
-  if (DetermineCertainVarInputFormat(transpose, 1, &in_format) != lite::RET_OK) {
-    MS_LOG(WARNING) << "Determine in_format of transpose failed.";
-    return false;
-  }
-  Format out_format = mindspore::NHWC;
-  if (DetermineCertainOutputFormat(transpose, 0, &out_format) != lite::RET_OK) {
-    MS_LOG(WARNING) << "Determine out_format of transpose failed.";
-    return false;
-  }
-  if (out_format != in_format) {
+  if (perm == kNH2NC || perm == kNC2NH) {
     return false;
   }
   auto input_abstract = GetCNodeInputAbstract(transpose, 1);

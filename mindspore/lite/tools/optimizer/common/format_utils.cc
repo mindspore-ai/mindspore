@@ -305,8 +305,8 @@ int DetermineCertainVarInputFormat(const CNodePtr &cnode, size_t index, Format *
   MS_CHECK_TRUE_MSG(cnode != nullptr && format != nullptr, RET_ERROR, "function's parameter is nullptr.");
   auto var_input_info = GetRealCertainVarInput(cnode, index);
   if (var_input_info.first == nullptr) {
-    MS_LOG(ERROR) << "cannot get the real var input.";
-    return RET_ERROR;
+    MS_LOG(DEBUG) << "cannot get the real var input.";
+    return RET_OK;
   }
   auto real_input_cnode = var_input_info.first;
   auto item_index = var_input_info.second;
