@@ -124,6 +124,7 @@ class OptParamMgrImpl : public OptParamMgr {
     if (param_size < param_split_threshold) {
       MS_LOG(INFO) << "Parallel optimizer: the size of " << parameter->ToString() << "(" << param_size
                    << "KB) is smaller than the threshold(" << param_split_threshold << "KB). Skipped.";
+      parameter->cast<ParameterPtr>()->param_info()->set_parallel_optimizer(false);
       return false;
     }
     return true;
