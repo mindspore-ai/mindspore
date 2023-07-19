@@ -160,7 +160,7 @@ void AclRunner::AoeDump() {
   // Dump acl graph for aoe.
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(kFully)) {
+  if (context_ptr->EnableAoeOffline()) {
     auto file_path = GetSaveGraphsPathName("acl_dump");
     auto real_path = FileUtils::CreateNotExistDirs(file_path, true);
     if (!real_path.has_value()) {
