@@ -796,7 +796,7 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   for (auto &func_block_item : func_block_list_) {
     MS_EXCEPTION_IF_NULL(func_block_item);
     MS_EXCEPTION_IF_NULL(func_block_item->func_graph());
-    if (func_block_item->func_graph()->get_return() != nullptr) {
+    if (!func_block_item->isolated_nodes().empty()) {
       // Find unused variables.
       func_block_item->FindIsolatedNodes();
       // Attach all isolated nodes.
