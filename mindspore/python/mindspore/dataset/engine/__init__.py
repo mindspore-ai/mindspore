@@ -31,7 +31,6 @@ from .datasets_text import *
 from .datasets_audio import *
 from .datasets_standard_format import *
 from .datasets_user_defined import *
-from .graphdata import GraphData, Graph, InMemoryGraphDataset, ArgoverseDataset, SamplingStrategy, OutputFormat
 from .iterators import *
 from .obs.obs_mindrecord_dataset import *
 from .samplers import *
@@ -106,10 +105,6 @@ __all__ = ["Caltech101Dataset",        # Vision
            "GeneratorDataset",         # User Defined
            "NumpySlicesDataset",       # User Defined
            "PaddedDataset",            # User Defined
-           "GraphData",                # Graph
-           "Graph",                    # Graph
-           "InMemoryGraphDataset",     # Graph
-           "ArgoverseDataset",         # Graph
            "DistributedSampler",       # Sampler
            "RandomSampler",            # Sampler
            "SequentialSampler",        # Sampler

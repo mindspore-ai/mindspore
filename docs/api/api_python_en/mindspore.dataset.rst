@@ -117,19 +117,6 @@ User Defined
     mindspore.dataset.PaddedDataset
     mindspore.dataset.RandomDataset
 
-Graph
-------
-
-.. autosummary::
-    :toctree: dataset
-    :nosignatures:
-    :template: classtemplate_dataset.rst
-
-    mindspore.dataset.ArgoverseDataset
-    mindspore.dataset.Graph
-    mindspore.dataset.GraphData
-    mindspore.dataset.InMemoryGraphDataset
-
 Sampler
 --------
 
