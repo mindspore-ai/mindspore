@@ -1956,10 +1956,6 @@ class Neg(Primitive):
         >>> output = neg(x)
         >>> print(output)
         [-1.  -2.   1.  -2.   0.   3.5]
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = neg(x)
-        >>> print(output)
-        (-2.1-2j)
     """
 
     @prim_attr_register
@@ -2487,10 +2483,6 @@ class Sqrt(Primitive):
         >>> output = sqrt(x)
         >>> print(output)
         [1. 2. 3.]
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = sqrt(x)
-        >>> print(output)
-        (1.5811388+0.6324555j)
     """
 
     @prim_attr_register
@@ -2528,11 +2520,6 @@ class Reciprocal(PrimitiveWithCheck):
         >>> output = reciprocal(x)
         >>> print(output)
         [1.   0.5  0.25]
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> reciprocal = ops.Reciprocal()
-        >>> output = reciprocal(x)
-        >>> print(output)
-        (0.24970272-0.23781213j)
     """
 
     @prim_attr_register
@@ -3064,10 +3051,6 @@ class Log(Primitive):
         >>> output = log(x)
         >>> print(output)
         [0.        0.6931472 1.3862944]
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = log(x)
-        >>> print(output)
-        (1.0647107+0.7610128j)
     """
 
     @prim_attr_register
@@ -3104,10 +3087,6 @@ class Log1p(Primitive):
         >>> output = log1p(x)
         >>> print(output)
         [0.6931472 1.0986123 1.609438 ]
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = log1p(x)
-        >>> print(output)
-        (1.3054024+0.57296616j)
     """
 
     @prim_attr_register
@@ -4168,10 +4147,6 @@ class Asinh(Primitive):
         >>> output = asinh(x)
         >>> print(output)
         [-2.3124382  1.1947632  1.8184465  5.298342 ]
-        >>> x = Tensor(2.5-2j, mindspore.complex128)
-        >>> output = asinh(x)
-        >>> print(output)
-        (1.8629147540260123-0.651363391978073j)
     """
 
     @prim_attr_register
@@ -5735,10 +5710,6 @@ class Tan(Primitive):
         >>> output = tan(x)
         >>> print(output)
         [-1.5574081 0. 1.5574081]
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = tan(x)
-        >>> print(output)
-        (-0.032499686+1.0175982j)
     """
 
     @prim_attr_register
@@ -5806,10 +5777,6 @@ class Atanh(Primitive):
         >>> output = atanh(x)
         >>> print(output)
         [ 0.         -0.54930615]
-        >>> x = Tensor(-2.1+1.0j, mindspore.complex128)
-        >>> output = atanh(x)
-        >>> print(output)
-        (-0.3922011092740576+1.3579098575159307j)
     """
 
     @prim_attr_register
