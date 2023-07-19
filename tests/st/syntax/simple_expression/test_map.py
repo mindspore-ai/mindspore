@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,18 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, nn, Parameter
+from mindspore import Tensor, nn, Parameter, context
 from mindspore.nn import Cell
 import mindspore as ms
 
+context.set_context(mode=context.GRAPH_MODE)
 
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_map_args_size():
     """
     Feature: Check the size of inputs of map.
@@ -48,11 +55,16 @@ def test_map_args_size():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_map_args_type():
     """
     Feature: Check the type of inputs of Map().
-    Description: The type of inputs of Map() must be list, tuple or class.
-    Expectation: The type of inputs of Map() must be list, tuple or class.
+    Description: The type of inputs of Map() must be list, tuple.
+    Expectation: The type of inputs of Map() must be list, tuple.
     """
     class MapNet(Cell):
         def __init__(self):
@@ -70,11 +82,16 @@ def test_map_args_type():
     input_me_x = Tensor(input_np_x)
 
     net = MapNet()
-    with pytest.raises(Exception, match="Map can only be applied to list, tuple and class"):
+    with pytest.raises(Exception, match="Map can only be applied to list, tuple"):
         ret = net(input_me_x)
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_map_args_full_make_list():
     """
     Feature: Check the types of all inputs in Map.
@@ -99,6 +116,11 @@ def test_map_args_full_make_list():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_map_args_full_make_list_same_length():
     """
     Feature: Check the length of list input Map.
@@ -123,6 +145,11 @@ def test_map_args_full_make_list_same_length():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_map_args_full_make_tuple_same_length():
     """
     Feature: Check the length of tuple input Map.
@@ -147,6 +174,11 @@ def test_map_args_full_make_tuple_same_length():
         print("ret:", ret)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_map_param_cast():
     """
     Feature: Check the ref type when insert auto cast.

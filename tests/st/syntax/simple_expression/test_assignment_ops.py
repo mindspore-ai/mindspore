@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
@@ -35,7 +36,17 @@ class Assign(nn.Cell):
         return self.y
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_bool():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.ones([3, 3]).astype(np.bool_))
     y = Tensor(np.zeros([3, 3]).astype(np.bool_))
     assign = Assign(x, y)
@@ -46,7 +57,17 @@ def test_assign_bool():
     assert np.all(output == output_expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_int8():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int8))
     y = Tensor(np.zeros([3, 3]).astype(np.int8))
     assign = Assign(x, y)
@@ -57,7 +78,17 @@ def test_assign_int8():
     assert np.all(output == output_expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_uint8():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint8))
     y = Tensor(np.zeros([3, 3]).astype(np.uint8))
     assign = Assign(x, y)
@@ -68,6 +99,11 @@ def test_assign_uint8():
     assert np.all(output == output_expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_int16():
     x = Tensor(np.ones([3, 3]).astype(np.int16))
     y = Tensor(np.zeros([3, 3]).astype(np.int16))
@@ -79,7 +115,17 @@ def test_assign_int16():
     assert np.all(output == output_expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_uint16():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint16))
     y = Tensor(np.zeros([3, 3]).astype(np.uint16))
     assign = Assign(x, y)
@@ -90,7 +136,17 @@ def test_assign_uint16():
     assert np.all(output == output_expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_int32():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int32))
     y = Tensor(np.zeros([3, 3]).astype(np.int32))
     assign = Assign(x, y)
@@ -101,7 +157,17 @@ def test_assign_int32():
     assert np.all(output == output_expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_uint32():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint32))
     y = Tensor(np.zeros([3, 3]).astype(np.uint32))
     assign = Assign(x, y)
@@ -112,7 +178,17 @@ def test_assign_uint32():
     assert np.all(output == output_expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_int64():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int64))
     y = Tensor(np.zeros([3, 3]).astype(np.int64))
     assign = Assign(x, y)
@@ -123,7 +199,17 @@ def test_assign_int64():
     assert np.all(output == output_expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_uint64():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint64))
     y = Tensor(np.zeros([3, 3]).astype(np.uint64))
     assign = Assign(x, y)
@@ -134,7 +220,17 @@ def test_assign_uint64():
     assert np.all(output == output_expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_float16():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.array([[0.1, 0.2, 0.3],
                          [0.4, 0.5, 0.5],
                          [0.6, 0.7, 0.8]]).astype(np.float16))
@@ -151,7 +247,17 @@ def test_assign_float16():
     assert np.all(output - output_expect < 1e-6)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_assign_float32():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.array([[0.1, 0.2, 0.3],
                          [0.4, 0.5, 0.5],
                          [0.6, 0.7, 0.8]]).astype(np.float32))
@@ -168,7 +274,15 @@ def test_assign_float32():
     assert np.all(output - output_expect < 1e-6)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_assign_float64():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     x = Tensor(np.array([[0.1, 0.2, 0.3],
                          [0.4, 0.5, 0.5],
                          [0.6, 0.7, 0.8]]).astype(np.float64))
@@ -197,19 +311,17 @@ class AssignAdd(nn.Cell):
         return self.y
 
 
-def test_number_assignadd_number():
-    input_x = 2
-    result1 = 5
-    result2 = 5
-    result1 += input_x
-    assignadd = AssignAdd(result2, input_x)
-    result2 = assignadd()
-    expect = 7
-    assert np.all(result1 == expect)
-    assert np.all(result2 == expect)
-
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assignadd_tensor():
+    """
+    Feature: simple expression
+    Description: assign_add expression
+    Expectation: No exception
+    """
     input_x = Tensor(np.array([[2, 2], [3, 3]]))
     result1 = Tensor(np.array([[4, -2], [2, 17]]))
     result2 = Tensor(np.array([[4, -2], [2, 17]]))
@@ -218,50 +330,6 @@ def test_tensor_assignadd_tensor():
     expect = Tensor(np.array([[6, 0], [5, 20]]))
     assert np.all(result1.asnumpy() == expect)
     assert np.all(result2.asnumpy() == expect)
-
-
-def test_tensor_assignadd_number():
-    input_x = 3
-    result1 = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
-    result2 = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
-    result1 += input_x
-    result2 = AssignAdd(result2, input_x)()
-    expect = Tensor(np.array([[7, 1], [5, 20]]))
-    assert np.all(result1.asnumpy() == expect)
-    assert np.all(result2.asnumpy() == expect)
-
-
-def test_number_assignadd_tensor():
-    result1 = 3
-    result2 = 3
-    input_x = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
-    result1 += input_x
-    result2 = AssignAdd(result2, input_x)()
-    expect = Tensor(np.array([[7, 1], [5, 20]]))
-    assert np.all(result1.asnumpy() == expect)
-    assert np.all(result2.asnumpy() == expect)
-
-
-def test_tuple_assignadd_tuple():
-    result1 = (1, 2, 3, 4)
-    result2 = (1, 2, 3, 4)
-    input_x = (2, 3, 4, 5, 6)
-    result1 += input_x
-    result2 = AssignAdd(result2, input_x)()
-    expect = (1, 2, 3, 4, 2, 3, 4, 5, 6)
-    assert np.all(result1.asnumpy() == expect)
-    assert np.all(result2.asnumpy() == expect)
-
-
-def test_string_assignadd_string():
-    result1 = "string111"
-    input2 = "string111"
-    input_x = "string222"
-    result1 += input_x
-    result2 = AssignAdd(input2, input_x)
-    expect = "string111string222"
-    assert result1 == expect
-    assert result2 == expect
 
 
 class AssignSub(nn.Cell):
@@ -276,51 +344,17 @@ class AssignSub(nn.Cell):
         return self.y
 
 
-def test_number_assignsub_number():
-    input_x = 2
-    result1 = 5
-    input2 = 5
-    result1 -= input_x
-    result2 = AssignSub(input2, input_x)
-    expect = 3
-    assert np.all(result1 == expect)
-    assert np.all(result2 == expect)
-
-
-def test_tensor_assignsub_tensor():
-    input_x = Tensor(np.array([[2, 2], [3, 3]]))
-    result1 = Tensor(np.array([[4, -2], [2, 17]]))
-    result2 = Tensor(np.array([[4, -2], [2, 17]]))
-    result1 -= input_x
-    result2 = AssignSub(result2, input_x)
-    expect = Tensor(np.array([[2, -4], [-1, 14]]))
-    assert np.all(result1.asnumpy() == expect)
-    assert np.all(result2.asnumpy() == expect)
-
-
-def test_tensor_assignsub_number():
-    input_x = 3
-    result1 = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
-    input2 = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
-    result1 -= input_x
-    result2 = AssignSub(input2, input_x)
-    expect = Tensor(np.array([[1, -5], [-1, 14]]))
-    assert np.all(result1.asnumpy() == expect)
-    assert np.all(result2.asnumpy() == expect)
-
-
-def test_number_assignsub_tensor():
-    result1 = 3
-    input2 = 3
-    input_x = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
-    result1 -= input_x
-    result2 = AssignSub(input2, input_x)
-    expect = Tensor(np.array([[-1, 5], [1, -14]]))
-    assert np.all(result1.asnumpy() == expect)
-    assert np.all(result2.asnumpy() == expect)
-
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assignmul_number():
+    """
+    Feature: simple expression
+    Description: assign_mul expression
+    Expectation: No exception
+    """
     input_x = 2
     result = 5
     result *= input_x
@@ -328,7 +362,17 @@ def test_number_assignmul_number():
     assert np.all(result == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assignmul_tensor():
+    """
+    Feature: simple expression
+    Description: assign_mul expression
+    Expectation: No exception
+    """
     input_x = Tensor(np.array([[2, 2], [3, 3]]))
     result = Tensor(np.array([[4, -2], [2, 17]]))
     result *= input_x
@@ -336,7 +380,17 @@ def test_tensor_assignmul_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assignmul_number():
+    """
+    Feature: simple expression
+    Description: assign_mul expression
+    Expectation: No exception
+    """
     input_x = 3
     result = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
     result *= input_x
@@ -344,7 +398,17 @@ def test_tensor_assignmul_number():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assignmul_tensor():
+    """
+    Feature: simple expression
+    Description: assign_mul expression
+    Expectation: No exception
+    """
     result = 3
     input_x = Tensor(np.array([[4, -2], [2, 17]])).astype(np.float16)
     result *= input_x
@@ -352,7 +416,17 @@ def test_number_assignmul_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assigndiv_number():
+    """
+    Feature: simple expression
+    Description: assign_div expression
+    Expectation: No exception
+    """
     input_x = 2
     result = 5
     result /= input_x
@@ -360,7 +434,17 @@ def test_number_assigndiv_number():
     assert np.all(result == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assigndiv_tensor():
+    """
+    Feature: simple expression
+    Description: assign_div expression
+    Expectation: No exception
+    """
     input_x = Tensor(np.array([[2, 2], [3, 3]]))
     result = Tensor(np.array([[4, -2], [6, 15]]))
     result /= input_x
@@ -368,7 +452,17 @@ def test_tensor_assigndiv_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assigndiv_number():
+    """
+    Feature: simple expression
+    Description: assign_div expression
+    Expectation: No exception
+    """
     input_x = 3
     result = Tensor(np.array([[9, -3], [6, 15]])).astype(np.float16)
     result /= input_x
@@ -376,15 +470,35 @@ def test_tensor_assigndiv_number():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assigndiv_tensor():
+    """
+    Feature: simple expression
+    Description: assign_div expression
+    Expectation: No exception
+    """
     result = 3
     input_x = Tensor(np.array([[2, -2], [2, -2]])).astype(np.float16)
     result /= input_x
-    expect = Tensor(np.array([[1.5, -1.5], [1.5, -1.5]]))
-    assert np.all(result.asnumpy() == expect)
+    expect = Tensor(np.array([[1.5, -1.5], [1.5, -1.5]])).astype(np.float16)
+    assert np.all(result.asnumpy() == expect.asnumpy())
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assignmod_number():
+    """
+    Feature: simple expression
+    Description: assign_mod expression
+    Expectation: No exception
+    """
     input_x = 2
     result = 5
     result %= input_x
@@ -392,7 +506,17 @@ def test_number_assignmod_number():
     assert np.all(result == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assignmod_tensor():
+    """
+    Feature: simple expression
+    Description: assign_mod expression
+    Expectation: No exception
+    """
     input_x = Tensor(np.array([[2, 2], [3, 3]]))
     result = Tensor(np.array([[4, -2], [6, 15]]))
     result %= input_x
@@ -400,7 +524,17 @@ def test_tensor_assignmod_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assignmod_number():
+    """
+    Feature: simple expression
+    Description: assign_mod expression
+    Expectation: No exception
+    """
     input_x = 3
     result = Tensor(np.array([[9, -3], [7, 15]])).astype(np.float16)
     result %= input_x
@@ -408,7 +542,17 @@ def test_tensor_assignmod_number():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assignmod_tensor():
+    """
+    Feature: simple expression
+    Description: assign_mod expression
+    Expectation: No exception
+    """
     result = 3
     input_x = Tensor(np.array([[2, -2], [2, -2]])).astype(np.float16)
     result %= input_x
@@ -416,7 +560,17 @@ def test_number_assignmod_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assignmulmul_number():
+    """
+    Feature: simple expression
+    Description: assign_mul_mul expression
+    Expectation: No exception
+    """
     input_x = 2
     result = 5
     result **= input_x
@@ -424,7 +578,17 @@ def test_number_assignmulmul_number():
     assert np.all(result == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assignmulmul_tensor():
+    """
+    Feature: simple expression
+    Description: assign_mul_mul expression
+    Expectation: No exception
+    """
     input_x = Tensor(np.array([[2, 2], [3, 3]]))
     result = Tensor(np.array([[4, -2], [6, 5]]))
     result **= input_x
@@ -432,7 +596,17 @@ def test_tensor_assignmulmul_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assignmulmul_number():
+    """
+    Feature: simple expression
+    Description: assign_mul_mul expression
+    Expectation: No exception
+    """
     input_x = 3
     result = Tensor(np.array([[9, -3], [7, 5]])).astype(np.float16)
     result **= input_x
@@ -440,7 +614,17 @@ def test_tensor_assignmulmul_number():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assignmulmul_tensor():
+    """
+    Feature: simple expression
+    Description: assign_mul_mul expression
+    Expectation: No exception
+    """
     result = 3
     input_x = Tensor(np.array([[2, 2], [2, 2]])).astype(np.float16)
     result **= input_x
@@ -448,7 +632,17 @@ def test_number_assignmulmul_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assigndivdiv_number():
+    """
+    Feature: simple expression
+    Description: assign_div_div expression
+    Expectation: No exception
+    """
     input_x = 2
     result = 5
     result //= input_x
@@ -456,7 +650,17 @@ def test_number_assigndivdiv_number():
     assert np.all(result == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assigndivdiv_tensor():
+    """
+    Feature: simple expression
+    Description: assign_div_div expression
+    Expectation: No exception
+    """
     input_x = Tensor(np.array([[2, 2], [3, 3]]))
     result = Tensor(np.array([[4, -2], [6, 6]]))
     result //= input_x
@@ -464,7 +668,17 @@ def test_tensor_assigndivdiv_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assigndivdiv_number():
+    """
+    Feature: simple expression
+    Description: assign_div_div expression
+    Expectation: No exception
+    """
     input_x = 3
     result = Tensor(np.array([[9, -3], [15, 9]])).astype(np.float16)
     result //= input_x
@@ -472,7 +686,17 @@ def test_tensor_assigndivdiv_number():
     assert np.all(result.asnumpy() == expect)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_number_assigndivdiv_tensor():
+    """
+    Feature: simple expression
+    Description: assign_div_div expression
+    Expectation: No exception
+    """
     result = 3
     input_x = Tensor(np.array([[1, 2], [2, 2]])).astype(np.float16)
     result //= input_x

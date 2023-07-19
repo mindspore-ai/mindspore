@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,29 +14,39 @@
 # ============================================================================
 """ test syntax for logic expression """
 
-import numpy as np
-
+import pytest
 import mindspore.nn as nn
-import mindspore
 from mindspore import context
-from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net(nn.Cell):
-    def __init__(self,):
-        super().__init__()
-        self.matmul = P.MatMul()
+    def __init__(self):
+        super(Net, self).__init__()
+        self.m = 1
 
-    def construct(self, x, y):
-        out = self.matmul(x, y)
-        return out
+    def construct(self, x):
+        x += 1
+        print(x)
+        x = "aaa"
+        return x
 
-def test_call():
-    x = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
-    y = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_assign():
+    """
+    Feature: simple expression
+    Description: assign expression
+    Expectation: No exception
+    """
     net = Net()
-    ret = net(x, y)
+    x = 1
+    ret = net(x)
     print(ret)
+    print(x)
+    assert ret == "aaa"

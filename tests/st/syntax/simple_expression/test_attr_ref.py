@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 # ============================================================================
 """ test syntax for logic expression """
 
+import pytest
 import mindspore.nn as nn
 import mindspore
 from mindspore import context
@@ -32,14 +33,25 @@ class Net(nn.Cell):
     def construct(self, x, y):
         self.weight = x
         self.m = 3
-        #self.l = 1
-        #y.weight = x
         print(self.weight)
         return x
 
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_attr_ref():
-    x = Tensor(4, mindspore.float32)
-    net_y = Net()
-    net = Net()
-    ret = net(x, net_y)
-    print(ret)
+    """
+    Feature: simple expression
+    Description: check the inputs types of network.
+    Expectation: No exception
+    """
+    with pytest.raises(TypeError, match="The inputs types of the outermost network 'Net.construct' support bool, int, "
+                                        "float, None, Tensor, Parameter, mstype.Number"):
+        x = Tensor(4, mindspore.float32)
+        net_y = Net()
+        net = Net()
+        ret = net(x, net_y)
+        print(ret)

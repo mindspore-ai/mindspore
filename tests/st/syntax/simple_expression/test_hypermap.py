@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,20 +16,28 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor
+from mindspore import Tensor, context
 from mindspore.common.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 
+context.set_context(mode=context.GRAPH_MODE)
+
 add = P.Add()
 hyper_map = C.HyperMap()
+
 
 @jit
 def main_noleaf(x, y):
     return hyper_map(add, x, y)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_hypermap_noleaf_tuple_list_mix():
     """
     Feature: Check the types of inputs of HyperMap.
@@ -42,6 +50,11 @@ def test_hypermap_noleaf_tuple_list_mix():
         main_noleaf((tensor1, 1), [tensor2, 2])
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_hypermap_noleaf_tuple_length():
     """
     Feature: Check the length of arg of Tuple in HyperMap.
@@ -54,6 +67,11 @@ def test_hypermap_noleaf_tuple_length():
         main_noleaf((tensor1, 1), (tensor2, 2, 2))
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_hypermap_noleaf_list_length():
     """
     Feature: Check the length of arg of List in HyperMap.
@@ -66,6 +84,11 @@ def test_hypermap_noleaf_list_length():
         main_noleaf([tensor1], [tensor2, tensor2])
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_hypermap_noleaf_list_tuple():
     """
     Feature: Check the types of inputs of HyperMap.
@@ -78,6 +101,11 @@ def test_hypermap_noleaf_list_tuple():
         main_noleaf([tensor1], (tensor2, tensor2))
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tuple_slice_stop_index():
     """
     Feature: Check the type of stop index of slice.
@@ -111,6 +139,11 @@ def test_tuple_slice_stop_index():
         print("output:", output)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tuple_slice_start_index():
     """
     Feature: Check the type of start index of slice.
@@ -150,6 +183,11 @@ def test_tuple_slice_start_index():
         print("output:", output)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tuple_slice_step():
     """
     Feature: Check the type of step of slice.
