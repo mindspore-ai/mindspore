@@ -20,11 +20,12 @@ from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
 
-mod = base.MultitypeFuncGraph("mod", True, True)
+mod = base.MultitypeFuncGraph("mod", True)
 """
 `mod` is a metafuncgraph object which will compute the mod of two objects
 using ".register" decorator.
 """
+mod.set_need_raise()
 
 
 @mod.register("Number", "Number")

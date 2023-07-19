@@ -36,7 +36,7 @@ namespace mindspore {
 namespace prim {
 class MultitypeFuncGraph : public MetaFuncGraph {
  public:
-  explicit MultitypeFuncGraph(const std::string &name, bool need_raise = false);
+  explicit MultitypeFuncGraph(const std::string &name);
   ~MultitypeFuncGraph() override = default;
   MS_DECLARE_PARENT(MultitypeFuncGraph, MetaFuncGraph)
 
@@ -47,6 +47,7 @@ class MultitypeFuncGraph : public MetaFuncGraph {
   virtual void PyRegister(const py::tuple &tuple, const py::function &py_fn);
 
   void set_doc_url(const std::string &doc_url) { doc_url_ = doc_url; }
+  void set_need_raise() { need_raise_ = true; }
   FuncGraphPtr GenerateFromTypes(const TypePtrList &types) override;
   size_t GetPyFnCacheSize() const { return fn_cache_py_.size(); }
   const TypeListMap<py::function> &GetPyFunctions() const { return fn_cache_py_; }
@@ -58,7 +59,7 @@ class MultitypeFuncGraph : public MetaFuncGraph {
   TypeListMap<specialize_fn> fn_cache_;
   TypeListMap<py::function> fn_cache_py_;
   std::string doc_url_;
-  bool need_raise_;
+  bool need_raise_ = false;
 };
 using MultitypeFuncGraphPtr = std::shared_ptr<MultitypeFuncGraph>;
 }  // namespace prim

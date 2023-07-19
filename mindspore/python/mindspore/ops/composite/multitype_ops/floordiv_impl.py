@@ -20,11 +20,12 @@ from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
 
-floordiv = base.MultitypeFuncGraph("floordiv", True, True)
+floordiv = base.MultitypeFuncGraph("floordiv", True)
 """
 `floordiv` is a metafuncgraph object which will compute the floordiv of two objects
 using ".register" decorator.
 """
+floordiv.set_need_raise()
 
 
 @floordiv.register("Number", "Number")
