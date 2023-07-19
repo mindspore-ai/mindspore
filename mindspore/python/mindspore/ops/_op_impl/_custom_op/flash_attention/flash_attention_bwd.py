@@ -366,7 +366,7 @@ def flash_attention_grad(Query, Key, Value, Output, dO, rowsum, rowmax, dim_mask
                          prev_block_num=65536,
                          next_block_num=65536,
                          high_precision=False,
-                         tiling_stgy_name='xunfei',
+                         tiling_stgy_name='sparse',
                          kernel_name="flash_attention_grad",
                          disable_debug=True):
     """
