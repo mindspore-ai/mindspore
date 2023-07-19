@@ -595,7 +595,7 @@ class Conv3d(_Conv):
             every `k` elements. The value of `k` on the depth, height and width directions is in range of
             [1, D], [1, H] and [1, W] respectively. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by `group`. Default: ``1`` . Only 1 is currently supported.
+            divisible by `group`. Default: ``1`` .
         has_bias (bool): Whether the Conv3d layer has a bias parameter. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
@@ -799,7 +799,7 @@ class Conv3dTranspose(_Conv):
             every `k` elements. The value of `k` on the depth, height and width directions is in range of
             [1, D], [1, H] and [1, W] respectively. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by `group`. Default: ``1`` . Only 1 is currently supported.
+            divisible by `group`. Default: ``1`` .
         output_padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of
             the output. The data type is an integer or a tuple of six integers. If `output_padding` is an integer,
             then the head, tail, top, bottom, left, and right padding are all equal to `output_padding`.
@@ -904,6 +904,10 @@ class Conv3dTranspose(_Conv):
                  bias_init=None,
                  data_format='NCDHW'):
         """Initialize Conv3dTranspose."""
+        if not (in_channels % group == 0 and out_channels % group == 0):
+            raise ValueError("The argument 'group' should be divisible by 'in_channels' " \
+                             "and 'out_channels'")
+
         kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.cls_name)
         stride = _check_3d_int_or_tuple("stride", stride, self.cls_name)
         dilation = _check_3d_int_or_tuple("dilation", dilation, self.cls_name)
