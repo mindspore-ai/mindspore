@@ -571,7 +571,7 @@ class FlashAttentionFwd(FlashAttention):
 
 
 def flash_attention(q, k, v, dim_mask, attn_mask, dropout_mask, alibi_mask, y, l, m,
-                    prev_block_num=65536, next_block_num=65536, high_precision=False, tiling_stgy_name='xunfei',
+                    prev_block_num=65536, next_block_num=65536, high_precision=False, tiling_stgy_name='sparse',
                     kernel_name="flash_attention", disable_debug=True):
     """
     algorithm: flash_attention_backward

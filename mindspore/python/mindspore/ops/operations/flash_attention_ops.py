@@ -47,7 +47,7 @@ class FlashAttentionPrimitive(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, prev_block_num=65536, next_block_num=65536, high_precision=False,
-                 name="flash_attention", tiling_stgy_name='xunfei'):
+                 name="flash_attention", tiling_stgy_name='sparse'):
         super().__init__(name)
         # pylint: disable=unused-import
         from mindspore.ops._op_impl._custom_op.flash_attention.flash_attention_impl import flash_attention_impl

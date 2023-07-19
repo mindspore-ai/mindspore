@@ -33,7 +33,7 @@ cus_flash_atten_op_info = TBERegOp("FlashAttentionPrimitive") \
     .attr("prev_block_num", "required", "int", "all", "65536") \
     .attr("next_block_num", "required", "int", "all", "65536") \
     .attr("high_precision", "required", "bool", "all", "false") \
-    .attr("tiling_stgy_name", "required", "str", "all", "xunfei") \
+    .attr("tiling_stgy_name", "required", "str", "all", "sparse") \
     .input(0, "q", False, "required", "all") \
     .input(1, "k", False, "required", "all") \
     .input(2, "v", False, "required", "all") \
@@ -90,7 +90,7 @@ cus_flash_atten_grad_op_info = TBERegOp("FlashAttentionGradPrimitive") \
     .attr("prev_block_num", "required", "int", "all", "65536")\
     .attr("next_block_num", "required", "int", "all", "65536")\
     .attr("high_precision", "required", "bool", "all", "false") \
-    .attr("tiling_stgy_name", "required", "str", "all", "xunfei")\
+    .attr("tiling_stgy_name", "required", "str", "all", "sparse")\
     .input(0, "q", False, "required", "all") \
     .input(1, "k", False, "required", "all") \
     .input(2, "v", False, "required", "all") \
@@ -140,7 +140,7 @@ cus_flash_atten_grad_op_info = TBERegOp("FlashAttentionGradPrimitive") \
 @op_info_register(cus_flash_atten_grad_op_info)
 def flash_attention_grad_impl(q, k, v, o, dout, l, m, dim_mask, attn_mask, dropout_mask, alibi_mask,
                               dq, dk, dv, prev_block_num, next_block_num,
-                              high_precision, tiling_stgy_name="xunfei"):
+                              high_precision, tiling_stgy_name="sparse"):
     flash_attention_grad(q, k, v, o, dout, l, m, dim_mask, attn_mask, dropout_mask, alibi_mask,
                          dq, dk, dv, prev_block_num, next_block_num,
                          high_precision=high_precision,
