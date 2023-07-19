@@ -37,21 +37,25 @@ class UpsampleTrilinear3DNet(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu
 @pytest.mark.env_onecard
-def test_upsample_trilinear_3d_dynamic_shape():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_upsample_trilinear_3d_dynamic_shape(mode):
     """
     Feature: Test UpsampleTrilinear3D op in gpu.
     Description: Test the ops in dynamic shape.
     Expectation: Expect correct shape result.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    context.set_context(mode=mode, device_target='GPU')
     net = UpsampleTrilinear3DNet()
-    output_size = [2, 4, 4]
-    scales = None
-    x_dyn = Tensor(shape=[None, 1, 1, 2, 2], dtype=ms.float32)
-    net.set_inputs(x_dyn, output_size, scales)
-    x = Tensor(np.arange(1, 5, dtype=np.float32).reshape((1, 1, 1, 2, 2)))
+    output_size = None
+    scales = [2., 2., 2.]
+    x = Tensor(
+        np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                  16]).reshape([1, 1, 2, 2, 4]), ms.float32)
+    x_dyn = Tensor(shape=[None for _ in range(5)], dtype=ms.float32)
     output = net(x, output_size, scales)
-    expect_shape = (1, 1, 2, 4, 4)
+    net.set_inputs(x_dyn, output_size, scales)
+    output = net(x, output_size, scales)
+    expect_shape = (1, 1, 4, 4, 8)
     assert expect_shape == output.asnumpy().shape
 
 
