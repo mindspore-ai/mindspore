@@ -592,6 +592,10 @@ int InferShapePass::InferSubgraph(const int64_t &subgraph_index, MetaGraphT *gra
     auto &node = graph->nodes.at(infer_node_index);
     MSLITE_CHECK_PTR(node);
     infer_node_indexes.erase(infer_node_indexes.begin());
+    if (node->primitive == nullptr) {
+      MS_LOG(WARNING) << "node primitive is nullptr!";
+      continue;
+    }
     auto node_type = node->primitive->value.type;
     if (node_type == PrimitiveType_Call) {
       ret = InferCallNode(node, graph);
