@@ -14,6 +14,7 @@
 # ============================================================================
 import os
 import shutil
+import tempfile
 
 import sys
 import csv
@@ -118,11 +119,8 @@ def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers
 
 
 def cleanup():
-    data_path = os.path.join(os.getcwd(), "data")
     kernel_meta_path = os.path.join(os.getcwd(), "kernel_data")
     cache_path = os.path.join(os.getcwd(), "__pycache__")
-    if os.path.exists(data_path):
-        shutil.rmtree(data_path)
     if os.path.exists(kernel_meta_path):
         shutil.rmtree(kernel_meta_path)
     if os.path.exists(cache_path):
@@ -134,15 +132,16 @@ class TestProfiler:
     rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
     mnist_path = '/home/workspace/mindspore_dataset/mnist'
 
-    @classmethod
-    def setup_class(cls):
-        """Run begin all test case start."""
+    def setup(self):
+        """Run begin each test case start."""
         cleanup()
+        self.data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
 
-    @staticmethod
-    def teardown():
+    def teardown(self):
         """Run after each test case end."""
         cleanup()
+        if os.path.exists(self.data_path):
+            shutil.rmtree(self.data_path)
 
     @pytest.mark.level2
     @pytest.mark.platform_x86_cpu
@@ -205,13 +204,14 @@ class TestProfiler:
         if ds_train.get_dataset_size() == 0:
             raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
         if only_profile_host:
-            profiler = Profiler(output_path='data', op_time=False,
+            profiler = Profiler(output_path=self.data_path, op_time=False,
                                 parallel_strategy=False, aicore_metrics=-1, data_process=False,
                                 profile_framework=profile_framework)
         else:
-            profiler = Profiler(profile_memory=profile_memory, output_path='data', profile_framework=profile_framework)
-        profiler_name = os.listdir(os.path.join(os.getcwd(), 'data'))[0]
-        self.profiler_path = os.path.join(os.getcwd(), f'data/{profiler_name}/')
+            profiler = Profiler(profile_memory=profile_memory, output_path=self.data_path,
+                                profile_framework=profile_framework)
+        profiler_name = 'profiler/'
+        self.profiler_path = os.path.join(self.data_path, profiler_name)
         lenet = LeNet5()
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         optim = Momentum(lenet.trainable_params(), learning_rate=0.1, momentum=0.9)
