@@ -4613,7 +4613,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
             - ``'bilinear'``: Bilinear interpolation. Each output pixel is a weighted average of the four nearest input
               pixels, computed using bilinear interpolation. This method produces smoother results compared
               to nearest neighbor interpolation.
-            - ``'trilinear'`: Trilinear interpolation. This is an extension of bilinear interpolation to 3D data.
+            - ``'trilinear'``: Trilinear interpolation. This is an extension of bilinear interpolation to 3D data.
               It performs bilinear interpolation in the two spatial dimensions and linear interpolation along
               the third dimension. It is commonly used for volume or 3D image interpolation.
 
