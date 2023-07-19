@@ -814,11 +814,6 @@ class Squeeze(Primitive):
         [[1. 1.]
          [1. 1.]
          [1. 1.]]
-        >>> input_x = Tensor(2.1+2j, mindspore.complex64)
-        >>> squeeze = ops.Squeeze()
-        >>> output = squeeze(input_x)
-        >>> print(output)
-        (2.1+2j)
     """
 
     @prim_attr_register
@@ -6182,14 +6177,6 @@ class BroadcastTo(PrimitiveWithCheck):
         >>> print(output)
         [[1. 1.]
          [2. 2.]]
-        >>>
-        >>> shape = (1, 3, 3)
-        >>> x = Tensor(2.1+2j, mindspore.complex64)
-        >>> output = ops.BroadcastTo(shape=shape)(x)
-        >>> print(output)
-        [[[2.1+2.j 2.1+2.j 2.1+2.j]
-         [2.1+2.j 2.1+2.j 2.1+2.j]
-         [2.1+2.j 2.1+2.j 2.1+2.j]]]
     """
 
     @prim_attr_register
