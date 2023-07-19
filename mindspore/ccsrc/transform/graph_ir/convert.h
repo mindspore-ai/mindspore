@@ -155,6 +155,7 @@ class DfGraphConvertor {
   DfGraphConvertor &GenerateCheckpointGraph();
   DfGraphConvertor &GenerateBroadcastGraph(const TensorOrderMap &tensors);
   void InitParamWithData(const TensorOrderMap &tensors);
+  bool NodeInputKeepUpdate(const AnfNodePtr &node);
   OutHandler GetNormalOpInput(const AnfNodePtr &node, const AnfNodePtr &pred);
   void DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pred, size_t i);
   void SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node);
