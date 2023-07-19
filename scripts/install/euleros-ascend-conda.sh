@@ -57,7 +57,7 @@ if [[ "$PYTHON_VERSION" == "3.8" && ${MINDSPORE_VERSION:0:3} == "1.6" ]]; then
     exit 1
 fi
 
-if ! (ls ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl 1> /dev/null 2>&1); then
+if ! (ls ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-any.whl 1> /dev/null 2>&1); then
     echo "can not find whl packages in LOCAL_ASCEND=${LOCAL_ASCEND}, please check whether it is a valid path."
     exit 1
 fi
@@ -120,11 +120,10 @@ conda create -n $env_name python=${PYTHON_VERSION} ${openssl_constraint} -c cond
 conda activate $env_name
 
 pip install sympy
-pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-any.whl
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/hccl-*-py3-none-any.whl
 
-install_name="mindspore-ascend"
+install_name="mindspore"
 if [[ $MINDSPORE_VERSION != "EMPTY" ]]; then
     install_name="${install_name}=${MINDSPORE_VERSION}"
 fi
