@@ -25,7 +25,7 @@ from ...operations._sequence_ops import SequenceSlice
 
 DOC_URL = "https://mindspore.cn/search/en?inputValue=Index%20values"
 
-getitem = base.MultitypeFuncGraph('getitem', False, True)
+getitem = base.MultitypeFuncGraph('getitem', False)
 """
 getitem is a metafuncgraph object which will get item from an object according to input type
 using ".register" decorator.
