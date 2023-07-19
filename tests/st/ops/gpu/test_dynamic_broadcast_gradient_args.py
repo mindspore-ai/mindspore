@@ -14,13 +14,16 @@
 # ============================================================================
 import numpy as np
 import pytest
-
+import mindspore
 import mindspore.nn as nn
 import mindspore.context as context
-
+import mindspore.ops.operations as ops
+from mindspore.ops import composite as C
 from mindspore.ops.operations import _inner_ops
+from mindspore import Tensor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+grad = C.GradOperation(get_all=True)
 
 
 class Net(nn.Cell):
@@ -48,5 +51,73 @@ def test_net():
     r0_expected = [2]
     r1_expected = [0]
 
-    assert np.array_equal(r0_expected, r0.asnumpy())
-    assert np.array_equal(r1_expected, r1.asnumpy())
+    assert np.array_equal(r0_expected, r0)
+    assert np.array_equal(r1_expected, r1)
+
+
+class NetWrap(nn.Cell):
+    def __init__(self):
+        super(NetWrap, self).__init__()
+        self.shape = ops.Shape()
+        self.broadcastto = _inner_ops.DynamicBroadcastTo()
+
+    def construct(self, data, shape):
+        shape = self.shape(shape)
+        return self.broadcastto(data, shape)
+
+
+class GradWrap(nn.Cell):
+    def __init__(self, network):
+        super(GradWrap, self).__init__()
+        self.network = network
+
+    def construct(self, data, shape):
+        gout = grad(self.network)(data, shape)
+        return gout
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_broadcast_to_net():
+    """
+    Feature: Test DynamicBroadcastTo grad process. The input shape is not dynamic.
+    Description: The input shape is not dynamic.
+    Expectation: Assert that results is right.
+    """
+    data = Tensor(np.array([1, 2, 3]), mindspore.int64)
+    shape = Tensor(np.zeros((2, 3)), mindspore.int64)
+    grad_net = GradWrap(NetWrap())
+    output = grad_net(data, shape)
+    expected_0 = [2, 2, 2]
+    expected_1 = [[0, 0, 0], [0, 0, 0]]
+    assert np.array_equal(output[0].asnumpy(), expected_0)
+    assert np.array_equal(output[1].asnumpy(), expected_1)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_broadcast_to_net_dyn():
+    """
+    Feature: Test DynamicBroadcastTo grad process. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results is right.
+    """
+    data = Tensor(np.array([1, 2, 3]), mindspore.int64)
+    shape = Tensor(np.zeros((2, 3)), mindspore.int64)
+    grad_net = GradWrap(NetWrap())
+
+    data_dyn = [None for _ in data.shape]
+    data_input_dyn = Tensor(shape=data_dyn, dtype=data.dtype)
+
+    shape_dyn = [None for _ in shape.shape]
+    shape_input_dyn = Tensor(shape=shape_dyn, dtype=shape.dtype)
+
+    grad_net.set_inputs(data_input_dyn, shape_input_dyn)
+
+    output = grad_net(data, shape)
+    expected_0 = [2, 2, 2]
+    expected_1 = [[0, 0, 0], [0, 0, 0]]
+    assert np.array_equal(output[0].asnumpy(), expected_0)
+    assert np.array_equal(output[1].asnumpy(), expected_1)

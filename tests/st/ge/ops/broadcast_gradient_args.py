@@ -45,8 +45,8 @@ def test_broadcast_gradient_args():
     r0_expected = [2]
     r1_expected = [0]
 
-    assert np.array_equal(r0_expected, r0.asnumpy())
-    assert np.array_equal(r1_expected, r1.asnumpy())
+    assert np.array_equal(r0_expected, r0)
+    assert np.array_equal(r1_expected, r1)
 
 
 if __name__ == "__main__":
