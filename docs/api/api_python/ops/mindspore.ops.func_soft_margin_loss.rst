@@ -12,6 +12,9 @@ mindspore.ops.soft_margin_loss
 
     其中 :math:`x.nelement()` 是 :math:`x` 的元素数量。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input** (Tensor) - 预测值。数据类型必须为float16或float32。
         - **target** (Tensor) - 真实标签，数据类型和shape与 `logits` 相同。

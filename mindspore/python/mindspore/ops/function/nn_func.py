@@ -2566,6 +2566,9 @@ def soft_margin_loss(input, target, reduction='mean'):
 
     where :math:`x.nelement()` is the number of elements of :math:`x`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): Predict data. Data type must be float16 or float32.
         target (Tensor): Ground truth data, with the same type and shape as `logits`.
@@ -2955,6 +2958,9 @@ def dense(input, weight, bias=None):
     .. math::
         output = input * weight^{T} + bias
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): Input Tensor of shape :math:`(*, in\_channels)`,
             where :math:`*` means any number of additional dimensions.
@@ -3010,6 +3016,9 @@ def bidense(input1, input2, weight, bias=None):
 
     .. math::
         output = input1^{T} weight input2 + bias
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         input1 (Tensor): Input Tensor of shape :math:`(*, in1\_channels)`,
@@ -5229,7 +5238,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         ValueError: If `pad_mode` is not equal to 'pad' and `padding` is greater than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore
@@ -5371,7 +5380,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         ValueError: If `pad_mode` is not equal to 'pad' and `padding` is greater than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore
@@ -5958,7 +5967,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         ValueError: If `pad_mode` is not equal to 'pad' and `pad` is greater than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

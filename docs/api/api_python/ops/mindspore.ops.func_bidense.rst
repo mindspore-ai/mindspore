@@ -8,6 +8,9 @@ mindspore.ops.bidense
     .. math::
         output = input1^{T} weight input2 + bias
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input1** (Tensor) - 输入Tensor，shape是 :math:`(*, in1\_channels)` ，其中 :math:`*` 表示任意的附加维度，除最后一维外的维度与 `input2` 保持一致。
         - **input2** (Tensor) - 输入Tensor，shape是 :math:`(*, in2\_channels)` ，其中 :math:`*` 表示任意的附加维度，除最后一维外的维度与 `input1` 保持一致。

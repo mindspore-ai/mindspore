@@ -725,6 +725,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         .. math::
             f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}
 
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
         Args:
             median (float, optional): the location parameter, specifying the location
                 of the peak of the distribution. Default: 0.0.
@@ -759,6 +762,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             \text{f}(x;1.0,2.0)=\frac{1}{x\delta \sqrt[]{2\pi} }e^{-\frac{(\ln x-\mu )^2}{2\delta ^2} }
 
         where :math:`\mu`, :math:`\delta` is mean and standard deviation of  lognormal distribution respectively.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
 
         Args:
             mean (float, optional): the mean of normal distribution. With float data type.
@@ -1459,6 +1465,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def floor_divide(self, other):
         """
         For details, please refer to :func:`mindspore.ops.floor_divide`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
         """
         self._init_check()
         return tensor_operator_registry.get('floor_divide')(self, other)
@@ -1540,6 +1549,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def logcumsumexp(self, axis):
         r"""
         For details, please refer to :func:`mindspore.ops.logcumsumexp`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
         """
         self._init_check()
         return tensor_operator_registry.get('logcumsumexp')(self, axis)
@@ -3744,6 +3756,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def eigvals(self):
         r"""
         For details, please refer to :func:`mindspore.ops.eigvals`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
         """
         return tensor_operator_registry.get("eigvals")()(self)
 
@@ -4079,6 +4094,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def cholesky_solve(self, input2, upper=False):
         r"""
         For details, please refer to :func:`mindspore.ops.cholesky_solve`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
         """
         self._init_check()
         return tensor_operator_registry.get('cholesky_solve')(self, input2, upper)
@@ -4654,6 +4672,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def lu_solve(self, LU_data, LU_pivots):
         r"""
         For details, please refer to :func:`mindspore.ops.lu_solve`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
         """
         self._init_check()
         return tensor_operator_registry.get('lu_solve')(self, LU_data, LU_pivots)
@@ -4679,10 +4700,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         r"""
         For details, please refer to :func:`mindspore.ops.ormqr`,
         Args `input2` and `input3` correspond to the args `tau` and `other` of :func:`mindspore.ops.ormqr`.
-
-        .. warning::
-            This is an experimental API that is subject to change or deletion.
-
         """
         self._init_check()
         return tensor_operator_registry.get('ormqr')(self, input2, input3, left, transpose)
