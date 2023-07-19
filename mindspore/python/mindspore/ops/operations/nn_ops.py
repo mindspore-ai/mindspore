@@ -11238,18 +11238,23 @@ class Dense(Primitive):
     Applies dense connected operator for the input. The implement of the operation is as:
 
     .. math::
-        \text{output} = \text{x} * \text{w} + \text{b},
+        output = x * w + b,
 
-    where :math:`x` is the input tensor, :math:`\text{w}` is a weight matrix with the same data type as the :math:`x` ,
-    and :math:`\text{b}` is a bias vector with the same data type as the :math:`x` (only if has_bias is True).
+    where :math:`x` is the input tensor, :math:`w` is a weight matrix with the same data type as the :math:`x` ,
+    and :math:`b` is a bias vector with the same data type as the :math:`x` (only if `has_bias` is ``True``).
 
     Args:
-        has_bias (bool): Specifies whether the layer uses a bias vector :math:`\text{b}`. Default: True.
+        has_bias (bool, optional): Specifies whether the layer uses a bias vector :math:`b`. Default: ``True``.
 
     Inputs:
         - **x** (Union[Tensor, Parameter]) - The input tensor with data type of float16, float32 or float64.
+          The shape must meet the following requirement: :math:`len(x.shape)>1` .
         - **w** (Union[Tensor, Parameter]) - The weight tensor with data type of float16, float32 or float64.
+          The shape must meet the following requirements: :math:`len(w.shape)=2` . :math:`w.shape[0]=x.shape[-2]` ,
+          :math:`w.shape[1]=x.shape[-1]` .
         - **b** (Union[Tensor, Parameter]) - The bias tensor with data type of float16, float32 or float64.
+          If `has_bias` is ``True``, the shape must meet the following requirements: :math:`len(b.shape)=1` ,
+          :math:`b.shape[0]=x.shape[-2]` .
 
     Outputs:
         Tensor of shape :math:`(*x.shape[:-1], w.shape[0])`.
@@ -11258,14 +11263,15 @@ class Dense(Primitive):
         TypeError: If `has_bias` is not a bool.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations import nn_ops
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> x = Tensor(np.random.random((4, 5, 6, 7)).astype(np.float32))
         >>> weight = Parameter(np.random.random((6, 7)).astype(np.float32))
         >>> bias = Parameter(np.random.random((6,)).astype(np.float32))
-        >>> dense = nn_ops.Dense()
+        >>> dense = ops.Dense()
         >>> output = dense(x, weight, bias)
         >>> print(output.shape)
         (4, 5, 6, 6)
