@@ -61,13 +61,18 @@ STATUS LSTMMapper::Mapper(const CNodePtr &cnode) {
       return lite::RET_ERROR;
     }
     auto bidirectional_attr = src_prim->GetAttr("bidirectional");
-    bool bidirectional = GetValue<bool>(bidirectional_attr);
-    if (!bidirectional) {
-      MS_LOG(ERROR) << "not support bidirectional is false.";
-      return RET_ERROR;
+    if (bidirectional_attr == nullptr) {
+      MS_LOG(INFO) << "This onnx lstm op hasn't attribute named 'bidirectional', set default 'forward'";
+      dst_prim->SetAttrs({{"direction", MakeValue("forward")}});
+    } else {
+      bool bidirectional = GetValue<bool>(bidirectional_attr);
+      if (!bidirectional) {
+        dst_prim->SetAttrs({{"direction", MakeValue("forward")}});
+      } else {
+        dst_prim->SetAttrs({{"direction", MakeValue("bidirectional")}});
+      }
     }
     std::vector<AnfNodePtr> new_inputs;
-    dst_prim->SetAttrs({{"direction", MakeValue("bidirectional")}});
     new_inputs.insert(new_inputs.end(), cnode->inputs().begin(), cnode->inputs().begin() + kNumOnnxInputSize);
     cnode->set_inputs(new_inputs);
   } else {
