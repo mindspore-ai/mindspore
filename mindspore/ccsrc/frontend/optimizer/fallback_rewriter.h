@@ -33,6 +33,7 @@ bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &man
 bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource, bool vm_pipeline);
 bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 bool RewriterForExport(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
+bool ConvertPyExecuteListInput(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 }  // namespace opt
 }  // namespace mindspore
 
