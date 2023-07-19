@@ -8,6 +8,9 @@ mindspore.ops.dense
     .. math::
         output = input * weight^{T} + bias
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input** (Tensor) - 输入Tensor，shape是 :math:`(*, in\_channels)`，其中 :math:`*` 表示任意的附加维度。
         - **weight** (Tensor) - 输入Tensor的权重，shape是 :math:`(out\_channels, in\_channels)` 或 :math:`(in\_channels)`。
