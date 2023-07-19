@@ -508,7 +508,7 @@ bool GeGraphExecutor::RunGeInitGraph(uint32_t init_graph_id, const std::vector<t
   std::vector<::ge::Tensor> ge_inputs;
   for (size_t i = 0; i < init_tensors.size(); i++) {
     auto &input = init_tensors[i];
-    auto ge_tensor = transform::TransformUtil::ConvertTensor(input, kOpFormat_NCHW);
+    auto ge_tensor = transform::TransformUtil::ConvertTensor(input, kOpFormat_NCHW, false);
     if (ge_tensor == nullptr) {
       MS_LOG(ERROR) << "Failed to converter input " << i << " ME Tensor to GE Tensor";
       return false;
@@ -527,23 +527,21 @@ bool GeGraphExecutor::RunGeInitGraph(uint32_t init_graph_id, const std::vector<t
 
 bool GeGraphExecutor::RunGeGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs,
                                       std::vector<::ge::Tensor> *outputs) {
-  std::mutex mutex;
-  std::condition_variable condition;
   bool is_finished = false;
   bool end_of_sequence = false;
-  std::unique_lock<std::mutex> lock(mutex);
-  auto call_back = [=, &is_finished, &end_of_sequence, &condition](ge::Status ge_status,
-                                                                   const std::vector<ge::Tensor> &ge_outputs) {
+  std::promise<void> promise;
+  auto call_back = [outputs, &is_finished, &end_of_sequence, &promise](ge::Status ge_status,
+                                                                       const std::vector<ge::Tensor> &ge_outputs) {
     if (ge_status == ge::GRAPH_SUCCESS) {
       *outputs = ge_outputs;
       is_finished = true;
     } else if (ge_status == ge::END_OF_SEQUENCE) {
-      MS_LOG(WARNING) << "RunAsync out of range: End of sequence.";
+      MS_LOG(ERROR) << "RunAsync out of range: End of sequence.";
       end_of_sequence = true;
     } else {
       MS_LOG(ERROR) << "RunAsync failed.";
     }
-    condition.notify_all();
+    promise.set_value();
     return;
   };
   if (ge_session_ == nullptr) {
@@ -555,11 +553,11 @@ bool GeGraphExecutor::RunGeGraphAsync(uint32_t graph_id, const std::vector<::ge:
     MS_LOG(ERROR) << "Call GE RunGraphAsync Failed: " << ge::GEGetErrorMsg();
     return false;
   }
-  if (!is_finished) {
-    condition.wait(lock);
-  }
+  auto future = promise.get_future();
+  future.wait();
   if (end_of_sequence) {
-    throw(std::runtime_error("End of sequence."));
+    MS_LOG(ERROR) << "Failed to call GE RunGraphAsync: End of sequence";
+    return false;
   }
   return is_finished;
 }
@@ -593,7 +591,8 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
     MS_LOG(INFO) << "Input " << i << " shape " << input.shape_c() << ", datatype " << input.data_type();
-    auto ge_tensor = transform::TransformUtil::ConvertTensor(std::make_shared<tensor::Tensor>(input), kOpFormat_NCHW);
+    auto ge_tensor =
+      transform::TransformUtil::ConvertTensor(std::make_shared<tensor::Tensor>(input), kOpFormat_NCHW, false);
     if (ge_tensor == nullptr) {
       MS_LOG(ERROR) << "Failed to converter input " << i << " ME Tensor to GE Tensor";
       return false;

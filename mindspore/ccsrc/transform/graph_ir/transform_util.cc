@@ -41,6 +41,18 @@ const size_t kIdx1 = 1;
 const size_t kIdx2 = 2;
 const size_t kIdx3 = 3;
 
+namespace {
+class MsTensorRel {
+ public:
+  explicit MsTensorRel(const MeTensorPtr &tensor) : tensor_(tensor) {}
+  ~MsTensorRel() = default;
+  void Rel() const { tensor_ = nullptr; }
+
+ private:
+  mutable MeTensorPtr tensor_;
+};
+}  // namespace
+
 class TensorRefData : public tensor::TensorData {
  public:
   TensorRefData(void *data, ssize_t data_size, ssize_t itemsize, ssize_t ndim)
@@ -309,7 +321,7 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
 }
 #endif
 
-GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::string &format) {
+GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::string &format, bool copy) {
   // get tensor data type size
   MS_EXCEPTION_IF_NULL(tensor);
   auto me_data_type = tensor->data_type();
@@ -336,10 +348,27 @@ GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::s
     MS_LOG(ERROR) << "Failed to get Tensor Desc";
     return nullptr;
   }
-  GeTensorPtr tensor_ptr = make_shared<GeTensor>(*desc, static_cast<uint8_t *>(tensor->data_c()), data_buff_size);
-  if (tensor_ptr != nullptr) {
-    MS_LOG(INFO) << "Convert Me Tensor to Ge Tensor success!";
+  GeTensorPtr tensor_ptr = make_shared<GeTensor>(*desc);
+  if (tensor_ptr == nullptr) {
+    MS_LOG(ERROR) << "Failed to convert Me Tensor to Ge Tensor success!";
+    return nullptr;
   }
+  if (copy) {
+    auto ret = tensor_ptr->SetData(static_cast<uint8_t *>(tensor->data_c()), data_buff_size);
+    if (ret != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call ge::Tensor SetData(const uint8_t*, size), data size " << data_buff_size;
+      return nullptr;
+    }
+  } else {
+    MsTensorRel rel(tensor);
+    auto ret = tensor_ptr->SetData(static_cast<uint8_t *>(tensor->data_c()), data_buff_size,
+                                   [rel](uint8_t *) -> void { rel.Rel(); });
+    if (ret != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call ge::Tensor SetData(uint8_t*, size, DeleteFunc), data size " << data_buff_size;
+      return nullptr;
+    }
+  }
+  MS_LOG(INFO) << "Convert Me Tensor to Ge Tensor success!";
   return tensor_ptr;
 }
 
