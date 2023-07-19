@@ -149,8 +149,15 @@ mindspore.set_context
           有关更多选项，可以参考实现代码。
 
         - **enable_reduce_precision** (bool) - 表示是否开启降低精度计算。默认值： ``True`` 。设置为 ``True`` 时，不支持用户指定的精度，且精度将自动更改。设置为 ``False`` 时，如果未指定用例的精度，则会报错并退出。
-        - **aoe_tune_mode** (str) - 表示启动AOE调优，默认不设置。设置为 ``online`` 时，将启动在线调优。
-        - **check_bprop** (bool) - 表示是否检查反向传播节点，以确保反向传播节点输出的形状(shape)和数据类型与输入参数相同。默认值： ``False`` 。
+        - **aoe_tune_mode** (str) - 表示启动AOE调优，默认不设置。设置为 ``online`` 时，将启动在线调优，设置为 ``offline`` 时，将为离线调优保存GE图 。
+        - **aoe_config** (dict) - 设置aoe工具专用的参数，默认不设置。
+
+          - **job_type** (str): 设置调优类型，有算子调优和子图调优。默认为算子调优。
+
+            - ``"1"``: 设置为子图调优。
+            - ``"2"``: 设置为算子调优。
+
+        - **check_bprop** (bool) - 表示是否检查反向传播节点，以确保反向传播节点输出的shape和数据类型与输入参数相同。默认值： ``False`` 。
         - **max_call_depth** (int) - 指定函数调用的最大深度。其值必须为正整数。默认值： ``1000`` 。当嵌套Cell太深或子图数量太多时，需要设置 `max_call_depth` 参数。系统最大堆栈深度应随着 `max_call_depth` 的调整而设置为更大的值，否则可能会因为系统堆栈溢出而引发 "core dumped" 异常。
         - **grad_for_scalar** (bool) - 表示是否获取标量梯度。默认值： ``False`` 。当 `grad_for_scalar` 设置为True时，则可以导出函数的标量输入。由于后端目前不支持伸缩操作，所以该接口只支持在前端可推演的简单操作。
         - **enable_compile_cache** (bool) - 表示是否加载或者保存前端编译的图。当 `enable_compile_cache` 被设置为True时，在第一次执行的过程中，一个硬件无关的编译缓存会被生成并且导出为一个MINDIR文件。当该网络被再次执行时，如果 `enable_compile_cache` 仍然为True并且网络脚本没有被更改，那么这个编译缓存会被加载。注意目前只支持有限的Python脚本更改的自动检测，这意味着可能有正确性风险。默认值： ``False`` 。这是一个实验特性，可能会被更改或者删除。
