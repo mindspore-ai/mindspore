@@ -103,67 +103,6 @@ const AnfNodePtr SetConv3DBackpropPadList(const AnfNodePtr &node, const std::vec
 
   return cnode;
 }
-
-std::vector<int64_t> GetForwardInputShape(const AnfNodePtr &node) {
-  auto input_size_abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(input_size_abs);
-  auto input_size_value = input_size_abs->BuildValue();
-  MS_EXCEPTION_IF_NULL(input_size_value);
-  auto node_name = node->fullname_with_scope();
-
-  if (!input_size_value->isa<ValueAny>() && !input_size_value->isa<None>()) {
-    if (input_size_value->isa<tensor::Tensor>()) {
-      return CheckAndConvertUtils::CheckTensorIntValue("input_size", input_size_value, node_name);
-    } else if (input_size_value->isa<ValueSequence>()) {
-      return CheckAndConvertUtils::CheckIntOrTupleInt("input_size", input_size_value, node_name);
-    }
-  } else if (input_size_abs->isa<abstract::AbstractTensor>()) {
-    auto abs_tensor = input_size_abs->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(abs_tensor);
-    auto abs_tensor_shape = abs_tensor->shape()->shape();
-    if (abs_tensor_shape.size() != 1) {
-      MS_EXCEPTION(ValueError) << "For " << node_name << ", input_size must be one-dimensional.";
-    }
-    if (IsDynamic(abs_tensor_shape)) {
-      return std::vector<int64_t>{abstract::Shape::kShapeRankAny};
-    }
-    auto shape_value = abs_tensor->get_shape_value();
-    if (shape_value == nullptr) {
-      return std::vector<int64_t>(abs_tensor_shape[0], abstract::Shape::kShapeDimAny);
-    } else {
-      auto shape_vector = GetValue<std::vector<int64_t>>(shape_value);
-      auto errinfo = node_name + ", input_size has illegal shape of shape value";
-      MS_EXCEPTION_IF_CHECK_FAIL(LongToSize(abs_tensor_shape[0]) == shape_vector.size(), errinfo);
-      return shape_vector;
-    }
-  } else if (input_size_abs->isa<abstract::AbstractSequence>()) {
-    auto abs_seq = dyn_cast<abstract::AbstractSequence>(input_size_abs);
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    if (abs_seq->dynamic_len()) {
-      return std::vector<int64_t>{abstract::Shape::kShapeRankAny};
-    }
-    std::vector<int64_t> shape_vector;
-    for (auto element : abs_seq->elements()) {
-      auto element_val = element->BuildValue();
-      if (element_val == kValueAny) {
-        (void)shape_vector.emplace_back(abstract::Shape::kShapeDimAny);
-      } else if (element_val->isa<Int64Imm>()) {
-        (void)shape_vector.emplace_back(GetValue<int64_t>(element_val));
-      } else if (element_val->isa<Int32Imm>()) {
-        (void)shape_vector.emplace_back(GetValue<int32_t>(element_val));
-      } else {
-        MS_EXCEPTION(TypeError) << "For " << node_name
-                                << " the input_size must be one of ['tuple', 'list'] with all Int elements, but got "
-                                << input_size_abs->ToString();
-      }
-    }
-    return shape_vector;
-  }
-  auto size_type = input_size_abs->BuildType();
-  MS_EXCEPTION_IF_NULL(size_type);
-  MS_EXCEPTION(TypeError) << "For " << node_name << ", the input_size must be Tensor/Tuple/List, but got"
-                          << size_type->ToString() << ".";
-}
 }  // namespace
 
 const BaseRef Conv3DBackpropInputPadListFusion::DefinePattern() const {
@@ -180,7 +119,7 @@ const AnfNodePtr Conv3DBackpropInputPadListFusion::Process(const FuncGraphPtr &g
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_size_node = cnode->input(kIndex3);
   MS_EXCEPTION_IF_NULL(input_size_node);
-  auto forward_input_shape = GetForwardInputShape(input_size_node);
+  auto forward_input_shape = common::AnfAlgo::GetOutputInferShape(cnode, kIndex0);
   auto filter_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex0);
   auto dout_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex1);
   if (IsDynamicRank(forward_input_shape) || IsDynamicRank(dout_shape) || IsDynamicRank(filter_shape)) {
