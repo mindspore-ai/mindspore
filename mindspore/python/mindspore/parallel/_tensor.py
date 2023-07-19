@@ -246,6 +246,8 @@ def _load_tensor_by_layout(tensor, layout):
         raise ValueError("The length of layout must be larger than 5! layout is {}".format(layout))
     dev_mat = layout[0]
     tensor_map = layout[1]
+    if len(tensor_map) == 0:
+        return tensor
     uniform_split = layout[4]
     group = layout[5]
     if uniform_split == 0:
