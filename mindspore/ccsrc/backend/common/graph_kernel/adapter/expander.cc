@@ -194,26 +194,60 @@ AnfNodePtr ProcessCustomOpDeco::Run(const AnfNodePtr &node) {
   return new_node;
 }
 
-AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
+AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &)> &func) {
   if (!CanExpandFallback(node)) {
     return nullptr;
   }
+  auto cnode = node->cast<CNodePtr>();
   auto expander = GetExpander(node);
   auto res = expander->Run(node);
   auto expand_fg = GetCNodeFuncGraph(res);
-  if (expand_fg != nullptr) {
-    auto todos = TopoSort(expand_fg->get_return());
-    for (const auto &n : todos) {
-      auto cnode = n->cast<CNodePtr>();
-      if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) {
-        continue;
+  if (expand_fg == nullptr) {
+    return nullptr;
+  }
+  // For Ascend, the selectkernel function may check and change the input Parameter of kernel,
+  // so we replace the inner Parameter to outer Parameter
+  bool need_replace_parameter = Callback::Instance()->GetTargetFromContext() == kAscendDevice;
+  std::map<AnfNodePtr, AnfNodePtr> param_map;
+  if (need_replace_parameter) {
+    auto &params = expand_fg->parameters();
+    for (size_t i = 0; i < params.size(); i++) {
+      if (cnode->input(i + 1)->isa<Parameter>()) {
+        param_map[params[i]] = cnode->input(i + 1);
       }
-      auto suc = func(cnode);
-      if (!suc) {
-        MS_LOG(DEBUG) << "Expanding core ops [" << cnode->fullname_with_scope() << "] failed.";
-        res = nullptr;
-        break;
+    }
+    need_replace_parameter = !param_map.empty();
+  }
+
+  auto todos = TopoSort(expand_fg->output());
+  for (const auto &inner_node : todos) {
+    if (!AnfUtils::IsRealCNodeKernel(inner_node)) {
+      continue;
+    }
+    bool suc = false;
+    auto inner_cnode = inner_node->cast<CNodePtr>();
+    if (need_replace_parameter) {
+      std::vector<std::pair<size_t, AnfNodePtr>> ori_input;
+      for (size_t i = 1; i < inner_cnode->size(); i++) {
+        auto iter = param_map.find(inner_cnode->input(i));
+        if (iter != param_map.end()) {
+          MS_LOG(DEBUG) << "Replace " << inner_cnode->input(i)->DebugString() << " by " << iter->second->DebugString();
+          (void)ori_input.emplace_back(i, inner_cnode->input(i));
+          inner_cnode->set_input(i, iter->second);
+        }
       }
+      suc = func(inner_cnode);
+      // recover the origin inputs
+      for (auto &ori : ori_input) {
+        inner_cnode->set_input(ori.first, ori.second);
+      }
+    } else {
+      suc = func(inner_cnode);
+    }
+    if (!suc) {
+      MS_LOG(DEBUG) << "Expanding core ops [" << inner_node->fullname_with_scope() << "] failed.";
+      res = nullptr;
+      break;
     }
   }
 #ifdef ENABLE_DUMP_IR

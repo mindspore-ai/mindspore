@@ -86,8 +86,7 @@ BACKEND_EXPORT void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, cons
 /**
  * Try Expand cnode with check func.
  */
-BACKEND_EXPORT AnfNodePtr TryExpandCNode(const AnfNodePtr &node,
-                                         const std::function<bool(const CNodePtr &kernel_node)> &func);
+BACKEND_EXPORT AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &)> &func);
 
 /**
  * Check if node can be expanded fallback.
