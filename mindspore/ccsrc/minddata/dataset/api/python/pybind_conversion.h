@@ -94,15 +94,6 @@ py::list shapesToListOfShape(std::vector<TensorShape> shapes);
 py::list typesToListOfType(std::vector<DataType> types);
 
 Status toIntMapTensor(py::dict value, std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> *feature);
-
-// abstract similar logic in gnn bindings part into one function
-Status convertNumpyData(const py::array &edges, const py::dict &node_feat, const py::dict &edge_feat,
-                        const py::dict &graph_feat, const py::array &node_type, const py::array &edge_type,
-                        std::shared_ptr<Tensor> *edge_tensor,
-                        std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> *node_feat_map,
-                        std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> *edge_feat_map,
-                        std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> *graph_feat_map,
-                        std::shared_ptr<Tensor> *node_type_tensor, std::shared_ptr<Tensor> *edge_type_tensor);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_API_PYTHON_PYBIND_CONVERSION_H_
