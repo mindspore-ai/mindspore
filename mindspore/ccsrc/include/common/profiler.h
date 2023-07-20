@@ -17,12 +17,14 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_PROFILER_PROFILER_H_
 #define MINDSPORE_CCSRC_RUNTIME_PROFILER_PROFILER_H_
 
-#include <vector>
-#include <string>
+#include <list>
 #include <map>
 #include <memory>
-#include <thread>
 #include <mutex>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 #include "nlohmann/json.hpp"
 #include "utils/os.h"
 #include "utils/ms_utils.h"
@@ -132,6 +134,14 @@ class COMMON_EXPORT ProfilerStageRecorder {
   ProfilerStage stage_{ProfilerStage::kDefault};
   uint64_t start_time_{0};
 };
+
+struct StepInfo {
+  StepInfo(size_t step, uint64_t step_time) : step_(step), step_time_(step_time) {}
+  const size_t step_;
+  const uint64_t step_time_;
+};
+
+using StepInfoPtr = std::shared_ptr<StepInfo>;
 
 struct ProfilerData {
   ProfilerData(ProfilerModule module, ProfilerEvent event, const std::string &op_name, bool is_inner_event,
@@ -245,6 +255,7 @@ struct ProfilerModuleInfo {
 };
 using ProfilerModuleInfoPtr = std::shared_ptr<ProfilerModuleInfo>;
 
+using ProfilerDataSpan = std::list<ProfilerDataPtr>;
 class COMMON_EXPORT ProfilerAnalyzer {
  public:
   static ProfilerAnalyzer &GetInstance() noexcept;
@@ -262,20 +273,25 @@ class COMMON_EXPORT ProfilerAnalyzer {
   uint64_t GetTimeStamp() const noexcept;
   std::string GetBriefName(const std::string &scope_name) const;
 
+  void ProcessModuleSummaryData(const ProfilerDataSpan &span);
+
+  const size_t step() const { return step_; }
   void set_step_time(uint64_t step_time) { step_time_ = step_time; }
   void set_profiler_enable(bool profiler_enable) { profiler_enable_ = profiler_enable; }
-  const std::vector<ProfilerDataPtr> &data() const { return data_; }
+  const ProfilerDataSpan &data() const { return data_; }
+  const std::list<std::pair<StepInfoPtr, ProfilerDataSpan>> data_line() const { return data_line_; }
+  const nlohmann::json &json_infos() const { return json_infos_; }
   const std::map<ProfilerModule, ProfilerModuleInfoPtr> &module_infos() const { return module_infos_; }
   const std::map<ProfilerStage, ProfilerStatisticsInfoPtr> &stage_infos() const { return stage_infos_; }
 
  private:
   ProfilerAnalyzer() = default;
-  ~ProfilerAnalyzer() = default;
+  ~ProfilerAnalyzer() { Clear(); }
   DISABLE_COPY_AND_ASSIGN(ProfilerAnalyzer);
 
   void Initialize();
+  void ProcessData();
 
-  void ProcessModuleSummaryData();
   // Process data.
   void SaveJsonData(const ProfilerDataPtr &data);
   void AnalyzeSummaryData(const ProfilerDataPtr &data);
@@ -284,12 +300,12 @@ class COMMON_EXPORT ProfilerAnalyzer {
   void AnalyzeEventSummaryData(const ProfilerDataPtr &data);
   void AnalyzeOpSummaryData(mindspore::HashMap<std::string, ProfilerStatisticsInfoPtr> *const op_infos,
                             const ProfilerDataPtr &data);
-  void AddPythonSummaryData();
+  void AddPythonSummaryData(const uint64_t span_time);
 
   // Dump data.
   void DumpJsonData() const;
-  void DumpDetailData() const;
-  void DumpSummaryData() const;
+  void DumpDetailData(const size_t step, const ProfilerDataSpan &span) const;
+  void DumpSummaryData(const size_t step) const;
   void DumpStageSummaryData(std::stringstream &string_stream) const;
   void DumpModuleSummaryData(std::stringstream &string_stream) const;
   void DumpEventSummaryData(const std::map<ProfilerEvent, ProfilerEventInfoPtr> &event_infos,
@@ -302,10 +318,12 @@ class COMMON_EXPORT ProfilerAnalyzer {
   uint64_t step_time_{0};
   uint64_t step_start_time_{0};
   uint64_t module_total_time_{0};
-  std::vector<ProfilerDataPtr> data_;
+  ProfilerDataSpan data_;
+  // Container list for all data_ points.
+  std::list<std::pair<StepInfoPtr, ProfilerDataSpan>> data_line_;
   std::mutex data_mutex_;
   nlohmann::json json_infos_;
-  // The data analyzed level is module-->event-->op.
+  // The data analyzed level is module-->event-->op, these data would not be cleared in unit test.
   std::map<ProfilerModule, ProfilerModuleInfoPtr> module_infos_;
   std::map<ProfilerStage, ProfilerStatisticsInfoPtr> stage_infos_;
 
