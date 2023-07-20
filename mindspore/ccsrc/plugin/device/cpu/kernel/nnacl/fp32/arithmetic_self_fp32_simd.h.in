@@ -83,6 +83,17 @@ static inline int ElementRsqrt@SIMD_INSTRUCTION@(int index, const float *input, 
   return index;
 }
 
+static inline int ElementMish@SIMD_INSTRUCTION@(int index, const float *input, float *output, const int element_size) {
+  SIMD_F32 one = SIMD_MOV_F32(1.0f);
+  for (int block_max_size = element_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 exp_add_one = SIMD_ADD_F32(SIMD_EXP_F32(SIMD_LD_F32(input + index)), one);
+    SIMD_F32 exp_pow = SIMD_MUL_F32(exp_add_one, exp_add_one);
+    SIMD_ST_F32(output + index, SIMD_MUL_F32(SIMD_LD_F32(input + index),
+                                             SIMD_DIV_F32(SIMD_SUB_F32(exp_pow, one), SIMD_ADD_F32(exp_pow, one))));
+  }
+  return index;
+}
+
 #if defined(MS_SIMD_AVX) || defined(MS_SIMD_SSE)
 // avx512 dont support round fp32 instruction
 static inline int ElementRound@SIMD_INSTRUCTION@(int index, const float *input, float *output, const int element_size) {

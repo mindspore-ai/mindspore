@@ -306,32 +306,44 @@ static inline float simd_exp32_f32(float data) {
     return 1.6516363e+38;  // e^88 = 1.6516363e+38
   }
 #else
-  data = MS_MAX32_F32(-88.0f, MS_MIN32_F32(88.0f, data));  // clamp(-88, 88)
+  data =
+    MS_MAX32_F32(-87.3365478515625f, MS_MIN32_F32(88.72283935546875f, data));  // clamp(logf(FLT_MIN), logf(FLT_MAX))
 #endif
   int integer = floor(data * 1.44269504088896341f + 0.5f);
   float decimal = data - integer * param[0];
   fi int_exp;
-  int_exp.i = (integer + 127) << 23;  // Approximate calculation : (integer + 127) << 23
+  const int shift = 23;
+  const int bias = 126;
+  const float factor = 2;
+  // 2^n * exp(r) should be counted 2 * 2^(n - 1) * exp(r),
+  // because n may be 128, and it is not representable by fp32.
+  int_exp.i = (integer + bias) << shift;  // integer num 2^(n - 1) approximate calculation : ((x - 1) + 127) << 23
   // Approximate calculation
   const float decimal_exp =
     1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  return int_exp.f * decimal_exp;
+  return factor * int_exp.f * decimal_exp;
 }
 
+// exp(x) = exp(n * ln(2) + r) = 2^n * exp(r) = 2 * 2^(n - 1) * exp(r)
 static inline void simd_exp32(float src, float *dst) {
   typedef union {
     float f;
     int i;
   } fi;
   static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};  // log(2.0f)
-  src = MS_MAX32_F32(-88.0f, MS_MIN32_F32(88.0f, src));                                 // clamp(-88.0f, 88.0f)
+  src = MS_MAX32_F32(-87.3365478515625f, MS_MIN32_F32(88.72283935546875f, src));  // clamp(logf(FLT_MIN), logf(FLT_MAX))
   int integer = floor(src * 1.44269504088896341f + 0.5f);
   float decimal = src - integer * param[0];
   fi int_exp;
-  int_exp.i = (integer + 127) << 23;  // integer num approximate calculation : (x + 127) << 23
+  const int shift = 23;
+  const int bias = 126;
+  const float factor = 2;
+  // 2^n * exp(r) should be counted 2 * 2^(n - 1) * exp(r),
+  // because n may be 128, and it is not representable by fp32.
+  int_exp.i = (integer + bias) << shift;  // integer num 2^(n - 1) approximate calculation : ((x - 1) + 127) << 23
   const float decimal_exp =
     1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  *dst = int_exp.f * decimal_exp;
+  *dst = factor * int_exp.f * decimal_exp;
 }
 
 // define (float/int) data

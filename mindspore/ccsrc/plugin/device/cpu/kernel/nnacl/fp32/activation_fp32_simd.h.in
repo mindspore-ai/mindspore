@@ -87,6 +87,14 @@ static inline int Sigmoid@SIMD_INSTRUCTION@(int index, const float *src, int len
     return index;
 }
 
+static inline int Softplus@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_EXP_ST_F32(SIMD_LD_F32(src + index), dst + index);
+        SIMD_ST_F32(dst + index, SIMD_LOG_F32(SIMD_ADD_F32(SIMD_MOV_F32(1.0f), SIMD_LD_F32(dst + index))));
+    }
+    return index;
+}
+
 static inline int Tanh@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
         SIMD_F32 input = SIMD_LD_F32(src + index);

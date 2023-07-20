@@ -20,8 +20,10 @@
 
 #if defined(ENABLE_NEON)
 static inline void simd_exp_fp16(float16x8_t input, float16_t *dst) {
-  static float16x8_t maxv = {88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
-  static float16x8_t minv = {-88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f};
+  static float16x8_t maxv = {88.72283935546875f, 88.72283935546875f, 88.72283935546875f, 88.72283935546875f,
+                             88.72283935546875f, 88.72283935546875f, 88.72283935546875f, 88.72283935546875f};
+  static float16x8_t minv = {-87.3365478515625f, -87.3365478515625f, -87.3365478515625f, -87.3365478515625f,
+                             -87.3365478515625f, -87.3365478515625f, -87.3365478515625f, -87.3365478515625f};
   input = vmaxq_f16(minv, vminq_f16(input, maxv));
   vst1q_f16(dst, VexpFp16(input));
 }
