@@ -157,12 +157,6 @@ Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
     return Buffer();
   }
 
-  if (SaveModel(model) != kSuccess) {
-    MS_LOG(ERROR) << "Save model failed.";
-    ge::aclgrphBuildFinalize();
-    return Buffer();
-  }
-
   ge::aclgrphBuildFinalize();
   return Buffer(model.data.get(), model.length);
 }
