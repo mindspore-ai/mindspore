@@ -348,11 +348,9 @@ class Parameter(Tensor_):
             init_in_server (bool): Whether trainable parameter updated by parameter server is
                 initialized on server. Default: ``False``.
 
-        Examples:
-            >>> from mindspore import Tensor, Parameter
-            >>> import numpy as np
-            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
-            >>> x.set_param_ps(True)
+        Tutorial Examples:
+            - `Parameter Server Mode
+              <https://www.mindspore.cn/tutorials/experts/en/master/parallel/parameter_server_training.html>`_
         """
         if not _is_ps_mode() or not (_is_role_worker() or _is_role_pserver() or _is_role_sched()):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \n"
@@ -404,7 +402,7 @@ class Parameter(Tensor_):
             >>> from mindspore import Tensor, Parameter
             >>> import numpy as np
             >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
-            >>> x.inited_param()
+            >>> x.inited_param
         """
         return self._inited_param
 
@@ -828,7 +826,7 @@ class Parameter(Tensor_):
             >>> import numpy as np
             >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
             >>> x.set_data(Tensor(np.array([[6, 6], [6, 6]], dtype=np.float32)))
-            Parameter (name=Parameter, shape=(2, 2), dtype=float32, requires=True)
+            Parameter (name=param, shape=(2, 2), dtype=float32, requires=True)
         """
         if not isinstance(data, (Tensor, int, float)):
             raise TypeError(f"Parameter data must be [`Tensor`, `int`, `float`] or a kind of `Tensor` "

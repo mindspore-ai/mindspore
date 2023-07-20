@@ -149,6 +149,10 @@
         参数：
             - **init_in_server** (bool) - 表示参数服务器更新的可训练参数是否在服务器上初始化。默认值： ``False`` 。
 
+        教程样例：
+            - `Parameter Server模式
+              <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/parameter_server_training.html>`_
+
     .. py:method:: sliced
         :property:
 
