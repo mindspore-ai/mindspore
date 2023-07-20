@@ -434,7 +434,7 @@ class SparseToDense(Primitive):
         ValueError: If `sparse_shape`, shape of `indices` and shape of `values` don't meet the parameter description.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> import mindspore
