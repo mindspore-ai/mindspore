@@ -19,11 +19,11 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include "c_api/include/context.h"
-#include "c_api/base/macros.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/base/types.h"
+#include "include/context.h"
+#include "include/base/macros.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
+#include "include/base/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,12 +36,12 @@ typedef struct CustomOpInfo {
   const char *func_name;
   const char *func_type;
   const char *target;
-  const char **input_name;
+  const char **input_names;
   size_t input_num;
-  const char **output_name;
+  const char **output_names;
   size_t output_num;
-  const char **attr_name;
-  AttrHandle *attr_value;
+  const char **attr_names;
+  ValueHandle *attr_values;
   size_t attr_num;
   DTypeFormat **dtype_formats;
   size_t dtype_formats_num;
@@ -55,6 +55,16 @@ typedef struct CustomOpInfo {
    size_t output_num);
 } CustomOpInfo;
 
+/// \brief The struct to describe the extra information for single op execution.
+typedef struct DynamicOpInfo {
+  const char **attr_names;   // An array of of attribute names.
+  ValueHandle *attr_values;  // An array of of attributes which has same length as [attr_names].
+  size_t attr_num;           // The number of attributes.
+  int64_t **output_shapes;   // An array of each output's shapes. Auto infer will be denied if specified.
+  size_t *output_dims;       // An array of each output's dimension. Must be specified if [output_shapes] is not NULL.
+  DataTypeC *output_dtypes;  // An array of each output's dtypes. Must be specified if [output_shapes] is not NULL.
+} DynamicOpInfo;
+
 /// \brief Create a new Operator node.
 ///
 /// \param[in] res_mgr Resource manager that saves allocated instance resources.
@@ -63,12 +73,151 @@ typedef struct CustomOpInfo {
 /// \param[in] inputs An array of operator's input nodes.
 /// \param[in] input_num The number of nodes in the array.
 /// \param[in] attr_names An array of of attribute names.
-/// \param[in] attrs An array of of attributes which has same shape as [attr_names].
+/// \param[in] attrs An array of of attributes which has same length as [attr_names].
 /// \param[in] attr_num The number of attributes.
 ///
 /// \return The created Operator node handle
 MIND_C_API NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type, Handle const inputs[],
-                              size_t input_num, const char *const *attr_names, AttrHandle attrs[], size_t attr_num);
+                              size_t input_num, const char *const *attr_names, ValueHandle attrs[], size_t attr_num);
+
+/// \brief Create a tensor with input data buffer.
+///
+/// \param[in] op The Operator node handle.
+/// \param[in] attr_name The attribute name.
+/// \param[in] value The Value.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpSetAttrScalarFloat32(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, float value);
+
+/// \brief Set the attribute of the target node with the given name and value.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target node.
+/// \param[in] attr_name  The attribute name associates with the node.
+/// \param[in] value The input value of the attribute.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpSetAttrScalarBool(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, bool value);
+
+/// \brief Set the attribute of the target node with the given name and value.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target node.
+/// \param[in] attr_name  The attribute name associates with the node.
+/// \param[in] value The input value of the attribute.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpSetAttrScalarInt32(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int32_t value);
+
+/// \brief Set the attribute of the target node with the given name and value.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target node.
+/// \param[in] attr_name  The attribute name associates with the node.
+/// \param[in] value The input value of the attribute.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpSetAttrScalarInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int64_t value);
+
+/// \brief Set the attribute of the target node with the given name and value.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target node.
+/// \param[in] attr_name  The attribute name associates with the node.
+/// \param[in] value The input value of the attribute.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpSetAttrType(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, DataTypeC value);
+
+/// \brief Set the attribute of the target node with the given name and value.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target node.
+/// \param[in] attr_name  The attribute name associates with the node.
+/// \param[in] value The input value array of the attribute.
+/// \param[in] vec_size number of elements in the array.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpSetAttrTypeArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, DataTypeC value[],
+                                       size_t vec_size);
+
+/// \brief Set the attribute of the target node with the given name and value.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target node.
+/// \param[in] attr_name  The attribute name associates with the node.
+/// \param[in] value The input value array of the attribute.
+/// \param[in] vec_size number of elements in the array.
+/// \param[in] data_type Data type id. Currently support kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat32,
+/// kNumberTypeBool.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpSetAttrArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, void *value,
+                                   size_t vec_size, DataTypeC data_type);
+
+/// \brief Set the attribute of the target node with the given name and value as ValueList.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target node.
+/// \param[in] attr_name  The attribute name associates with the node.
+/// \param[in] value The input value array of the attribute.
+/// \param[in] vec_size Number of elements in the array.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpSetAttrStringArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name,
+                                         const char *value[], size_t vec_size);
+
+/// \brief Set the attribute of the target node with the given name and string value.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target node.
+/// \param[in] attr_name  The attribute name associates with the node.
+/// \param[in] value The input value array of the attribute.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpSetAttrString(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, const char *value);
+
+/// \brief Get the attribute of the target node with the given attribute name.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target Node.
+/// \param[in] attr_name The attribute name associates with the node.
+/// \param[in] error  Error code indicates whether the function executed successfully.
+///
+/// \return Value
+MIND_C_API int64_t MSOpGetAttrScalarInt64(ResMgrHandle res_mgr, ConstNodeHandle op, const char *attr_name,
+                                          STATUS *error);
+
+/// \brief Get the attribute of the target node with the given attribute name.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] op Target Node.
+/// \param[in] attr_name The attribute name associates with the node.
+/// \param[in] values Array for storing the Atrrubute value.
+/// \param[in] value_num Size of the given array.
+///
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSOpGetAttrArrayInt64(ResMgrHandle res_mgr, ConstNodeHandle op, const char *attr_name,
+                                        int64_t values[], size_t value_num);
+
+/// \brief Set Operator node name.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] node The target node.
+/// \param[in] name The op node name to be set.
+///
+/// \return The error code that indicate whether the functions executed successfully.
+MIND_C_API STATUS MSOpSetName(ResMgrHandle res_mgr, NodeHandle node, const char *name);
+
+/// \brief Get the name of node.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] node The target node.
+/// \param[in] str_buf The char array to contain the name string.
+/// \param[in] str_len The size of the char array.
+///
+/// \return The error code that indicate whether the functions executed successfully.
+MIND_C_API STATUS MSNodeGetName(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len);
 
 /// \brief Pack nodes into a Tuple node.
 ///
@@ -205,7 +354,7 @@ MIND_C_API NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, 
 /// \param[in] value The float scalar number.
 ///
 /// \return The created Variable node handle.
-MIND_C_API NodeHandle MSNewScalarVariableFloat32(ResMgrHandle res_mgr, GraphHandle graph, float value);
+MIND_C_API NodeHandle MSNewVariableScalarFloat32(ResMgrHandle res_mgr, GraphHandle graph, float value);
 
 /// \brief Create a Variable node of tensor without shape, which contains variable scalar data.
 ///
@@ -214,7 +363,7 @@ MIND_C_API NodeHandle MSNewScalarVariableFloat32(ResMgrHandle res_mgr, GraphHand
 /// \param[in] value The int scalar number.
 ///
 /// \return The created Variable node handle.
-MIND_C_API NodeHandle MSNewScalarVariableInt32(ResMgrHandle res_mgr, GraphHandle graph, int value);
+MIND_C_API NodeHandle MSNewVariableScalarInt32(ResMgrHandle res_mgr, GraphHandle graph, int value);
 
 /// \brief Create a Variable node of tensor, which contains variable array data.
 ///
@@ -227,8 +376,8 @@ MIND_C_API NodeHandle MSNewScalarVariableInt32(ResMgrHandle res_mgr, GraphHandle
 /// \param[in] data_len The length of data.
 ///
 /// \return The created Variable node handle.
-MIND_C_API NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle graph, void *data, DataTypeC type,
-                                          const int64_t shape[], size_t shape_size, size_t data_len);
+MIND_C_API NodeHandle MSNewVariableArray(ResMgrHandle res_mgr, GraphHandle graph, void *data, DataTypeC type,
+                                         const int64_t shape[], size_t shape_size, size_t data_len);
 
 /// \brief Create a Variable node from a Tensor instance with data.
 ///
@@ -237,7 +386,7 @@ MIND_C_API NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle grap
 /// \param[in] tensor The given Tensor instance.
 ///
 /// \return The created Variable node handle.
-MIND_C_API NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph, ConstTensorHandle tensor);
+MIND_C_API NodeHandle MSNewVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph, ConstTensorHandle tensor);
 
 /// \brief Get data size of a Tensor Variable.
 ///
@@ -246,7 +395,7 @@ MIND_C_API NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphH
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The data byte size.
-MIND_C_API size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
+MIND_C_API size_t MSVariableArrayGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get data from a Tensor Variable.
 ///
@@ -254,7 +403,7 @@ MIND_C_API size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, ConstNodeHan
 /// \param[in] node The tensor variable node
 ///
 /// \return The data.
-MIND_C_API void *MSTensorVariableGetData(ResMgrHandle res_mgr, ConstNodeHandle node);
+MIND_C_API void *MSVariableArrayGetData(ResMgrHandle res_mgr, ConstNodeHandle node);
 
 /// \brief Create a Constant node of tensor, which contains constant tensor data.
 ///
@@ -266,8 +415,8 @@ MIND_C_API void *MSTensorVariableGetData(ResMgrHandle res_mgr, ConstNodeHandle n
 /// \param[in] data_len The length of data.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewTensorConstant(ResMgrHandle res_mgr, void *data, DataTypeC type, const int64_t shape[],
-                                          size_t shape_size, size_t data_len);
+MIND_C_API NodeHandle MSNewConstantArray(ResMgrHandle res_mgr, void *data, DataTypeC type, const int64_t shape[],
+                                         size_t shape_size, size_t data_len);
 
 /// \brief Create a Constant node from a Tensor instance with data.
 ///
@@ -275,7 +424,7 @@ MIND_C_API NodeHandle MSNewTensorConstant(ResMgrHandle res_mgr, void *data, Data
 /// \param[in] tensor The given Tensor instance.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewTensorConstantFromTensor(ResMgrHandle res_mgr, TensorHandle tensor);
+MIND_C_API NodeHandle MSNewConstantFromTensor(ResMgrHandle res_mgr, TensorHandle tensor);
 
 /// \brief Get data size of a Tensor Constant.
 ///
@@ -284,7 +433,7 @@ MIND_C_API NodeHandle MSNewTensorConstantFromTensor(ResMgrHandle res_mgr, Tensor
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The data byte size.
-MIND_C_API size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
+MIND_C_API size_t MSConstantArrayGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get data from a Tensor Constant.
 ///
@@ -292,7 +441,7 @@ MIND_C_API size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, ConstNodeHan
 /// \param[in] node The tensor constant node
 ///
 /// \return The data.
-MIND_C_API void *MSTensorConstantGetData(ResMgrHandle res_mgr, ConstNodeHandle node);
+MIND_C_API void *MSConstantArrayGetData(ResMgrHandle res_mgr, ConstNodeHandle node);
 
 /// \brief Create Constant node of a float scalar.
 ///
@@ -300,7 +449,7 @@ MIND_C_API void *MSTensorConstantGetData(ResMgrHandle res_mgr, ConstNodeHandle n
 /// \param[in] value The float32 scalar value.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewScalarConstantFloat32(ResMgrHandle res_mgr, float value);
+MIND_C_API NodeHandle MSNewConstantScalarFloat32(ResMgrHandle res_mgr, float value);
 
 /// \brief Create Constant node of a bool scalar.
 ///
@@ -308,7 +457,7 @@ MIND_C_API NodeHandle MSNewScalarConstantFloat32(ResMgrHandle res_mgr, float val
 /// \param[in] value The bool scalar value.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewScalarConstantBool(ResMgrHandle res_mgr, bool value);
+MIND_C_API NodeHandle MSNewConstantScalarBool(ResMgrHandle res_mgr, bool value);
 
 /// \brief Create Constant node of a int32 scalar.
 ///
@@ -316,7 +465,7 @@ MIND_C_API NodeHandle MSNewScalarConstantBool(ResMgrHandle res_mgr, bool value);
 /// \param[in] value The int32 scalar value.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewScalarConstantInt32(ResMgrHandle res_mgr, int value);
+MIND_C_API NodeHandle MSNewConstantScalarInt32(ResMgrHandle res_mgr, int value);
 
 /// \brief Create Constant node of a int64 scalar.
 ///
@@ -324,7 +473,7 @@ MIND_C_API NodeHandle MSNewScalarConstantInt32(ResMgrHandle res_mgr, int value);
 /// \param[in] value The int64 scalar value.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewScalarConstantInt64(ResMgrHandle res_mgr, int64_t value);
+MIND_C_API NodeHandle MSNewConstantScalarInt64(ResMgrHandle res_mgr, int64_t value);
 
 /// \brief Create Constant node of a int64 tuple.
 ///
@@ -333,7 +482,7 @@ MIND_C_API NodeHandle MSNewScalarConstantInt64(ResMgrHandle res_mgr, int64_t val
 /// \param[in] vec The size of the value.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewTupleConstantInt64(ResMgrHandle res_mgr, const int64_t vec[], size_t size);
+MIND_C_API NodeHandle MSNewConstantTupleInt64(ResMgrHandle res_mgr, const int64_t vec[], size_t size);
 
 /// \brief Create Constant node of a string.
 ///
@@ -341,7 +490,7 @@ MIND_C_API NodeHandle MSNewTupleConstantInt64(ResMgrHandle res_mgr, const int64_
 /// \param[in] str The string.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewStringConstant(ResMgrHandle res_mgr, const char *str);
+MIND_C_API NodeHandle MSNewConstantString(ResMgrHandle res_mgr, const char *str);
 
 /// \brief Create Constant node of a type.
 ///
@@ -349,7 +498,7 @@ MIND_C_API NodeHandle MSNewStringConstant(ResMgrHandle res_mgr, const char *str)
 /// \param[in] str The type.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, DataTypeC type);
+MIND_C_API NodeHandle MSNewConstantType(ResMgrHandle res_mgr, DataTypeC type);
 
 /// \brief Get value from the int32 scalar Constant node.
 ///
@@ -358,7 +507,7 @@ MIND_C_API NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, DataTypeC type);
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained int32 value.
-MIND_C_API int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
+MIND_C_API int MSConstantScalarGetValueInt32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the float32 scalar Constant node.
 ///
@@ -367,7 +516,7 @@ MIND_C_API int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, ConstNodeHand
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained float32 value.
-MIND_C_API float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
+MIND_C_API float MSConstantScalarGetValueFloat32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the bool scalar Constant node.
 ///
@@ -376,7 +525,7 @@ MIND_C_API float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, ConstNode
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained bool value.
-MIND_C_API bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
+MIND_C_API bool MSConstantScalarGetValueBool(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the int64 scalar Constant node.
 ///
@@ -385,7 +534,7 @@ MIND_C_API bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, ConstNodeHand
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained int64 value.
-MIND_C_API int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
+MIND_C_API int64_t MSConstantScalarGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the string Constant node.
 ///
@@ -395,7 +544,7 @@ MIND_C_API int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, ConstNode
 /// \param[in] str_len The size of the char array.
 ///
 /// \return The error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len);
+MIND_C_API STATUS MSConstantStringGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len);
 
 /// \brief Get value from the tuple Constant node.
 ///
@@ -404,7 +553,7 @@ MIND_C_API STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The size of the Tuple.
-MIND_C_API size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
+MIND_C_API size_t MSConstantTupleGetSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Get value from the Tuple Constant node.
 ///
@@ -414,7 +563,7 @@ MIND_C_API size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, ConstNodeHandle n
 /// \param[in] size The size of the value vector.
 ///
 /// \return The error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, int64_t vec[], size_t size);
+MIND_C_API STATUS MSConstantTupleGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, int64_t vec[], size_t size);
 
 /// \brief Get value from the Type Constant node.
 ///
@@ -423,26 +572,33 @@ MIND_C_API STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHa
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained type value.
-MIND_C_API DataTypeC MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
+MIND_C_API DataTypeC MSConstantTypeGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
-/// \brief Set Operator node name.
+/// \brief Run single op in eager way.
 ///
-/// \param[in] res_mgr Resource manager that saves allocated instance resources.
-/// \param[in] node The target node.
-/// \param[in] name The op node name to be set.
+/// \param[in] op_type The primitive name.
+/// \param[in] inputs An array of operator's input nodes.
+/// \param[in] input_num The number of nodes in the array.
+/// \param[in] outputs An array to store outputs tensor which is allocated by used.
+/// \param[in] output_num The number of outputs.
 ///
-/// \return The error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSOpSetName(ResMgrHandle res_mgr, NodeHandle node, const char *name);
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSRunOp(ResMgrHandle res_mgr, const char *op_type, TensorHandle const inputs[], size_t input_num,
+                          TensorHandle outputs[], size_t output_num);
 
-/// \brief Get the name of node.
+/// \brief Run single op with extra information in eager way.
 ///
-/// \param[in] res_mgr Resource manager that saves allocated instance resources.
-/// \param[in] node The target node.
-/// \param[in] str_buf The char array to contain the name string.
-/// \param[in] str_len The size of the char array.
+/// \param[in] op_type The primitive name.
+/// \param[in] inputs An array of operator's input nodes.
+/// \param[in] input_num The number of nodes in the array.
+/// \param[in] outputs An array to store outputs tensor which is allocated by used.
+/// \param[in] output_num The number of outputs.
+/// \param[in] extra_info A struct that holds the extra information
 ///
-/// \return The error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSNodeGetName(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len);
+/// \return Error code indicates whether the function executed successfully.
+MIND_C_API STATUS MSRunOpWithInfo(ResMgrHandle res_mgr, const char *op_type, TensorHandle const inputs[],
+                                  size_t input_num, TensorHandle outputs[], size_t output_num,
+                                  DynamicOpInfo extra_info);
 
 #ifdef __cplusplus
 }

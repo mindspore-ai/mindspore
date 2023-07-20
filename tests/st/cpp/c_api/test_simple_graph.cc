@@ -17,13 +17,13 @@
 #include <string>
 #include <vector>
 #include "common/common_test.h"
-#include "c_api/include/graph.h"
-#include "c_api/include/node.h"
-#include "c_api/include/tensor.h"
-#include "c_api/include/context.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/include/attribute.h"
+#include "include/graph.h"
+#include "include/node.h"
+#include "include/tensor.h"
+#include "include/context.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
+#include "include/value.h"
 
 class TestSimpleGraph : public ST::Common {
  public:
@@ -46,7 +46,7 @@ TEST_F(TestSimpleGraph, TestMultiOutputs) {
   ASSERT_TRUE(fg != nullptr);
   NodeHandle x = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(x != nullptr);
-  NodeHandle y = MSNewScalarConstantInt32(res_mgr, 2);
+  NodeHandle y = MSNewConstantScalarInt32(res_mgr, 2);
   ASSERT_TRUE(y != nullptr);
   NodeHandle input_nodes[] = {x, y};
   NodeHandle op1 = MSNewOp(res_mgr, fg, "Add", input_nodes, 2, NULL, NULL, 0);
@@ -102,35 +102,35 @@ TEST_F(TestSimpleGraph, TestConvReLU) {
   float w_data[] = {1, 1, 1, 1};
   NodeHandle x_conv = MSNewPlaceholder(res_mgr, fg, MS_FLOAT32, x_shape, 4);
   ASSERT_TRUE(x_conv != nullptr);
-  NodeHandle w = MSNewTensorVariable(res_mgr, fg, w_data, MS_FLOAT32, w_shape, 4, 4 * sizeof(float));
+  NodeHandle w = MSNewVariableArray(res_mgr, fg, w_data, MS_FLOAT32, w_shape, 4, 4 * sizeof(float));
   ASSERT_TRUE(w != nullptr);
 
   // Conv Attribute Settings
-  AttrHandle out_channel = MSNewAttrInt64(res_mgr, 1);
+  ValueHandle out_channel = MSNewValueInt64(res_mgr, 1);
   ASSERT_TRUE(out_channel != nullptr);
   int64_t kernel_size_raw[] = {2, 2};
-  AttrHandle kernel_size = MSNewAttrArray(res_mgr, kernel_size_raw, 2, MS_INT64);
+  ValueHandle kernel_size = MSNewValueArray(res_mgr, kernel_size_raw, 2, MS_INT64);
   ASSERT_TRUE(kernel_size != nullptr);
-  AttrHandle mode = MSNewAttrInt64(res_mgr, 1);
+  ValueHandle mode = MSNewValueInt64(res_mgr, 1);
   ASSERT_TRUE(mode != nullptr);
-  AttrHandle pad_mode = MSNewAttrInt64(res_mgr, VALID);
+  ValueHandle pad_mode = MSNewValueInt64(res_mgr, VALID);
   ASSERT_TRUE(pad_mode != nullptr);
   int64_t pad_raw[] = {0, 0, 0, 0};
-  AttrHandle pad = MSNewAttrArray(res_mgr, pad_raw, 4, MS_INT64);
+  ValueHandle pad = MSNewValueArray(res_mgr, pad_raw, 4, MS_INT64);
   ASSERT_TRUE(pad != nullptr);
   int64_t stride_raw[] = {1, 1, 1, 1};
-  AttrHandle stride = MSNewAttrArray(res_mgr, stride_raw, 4, MS_INT64);
+  ValueHandle stride = MSNewValueArray(res_mgr, stride_raw, 4, MS_INT64);
   ASSERT_TRUE(stride != nullptr);
   int64_t dilation_raw[] = {1, 1, 1, 1};
-  AttrHandle dilation = MSNewAttrArray(res_mgr, dilation_raw, 4, MS_INT64);
+  ValueHandle dilation = MSNewValueArray(res_mgr, dilation_raw, 4, MS_INT64);
   ASSERT_TRUE(dilation != nullptr);
-  AttrHandle group = MSNewAttrInt64(res_mgr, 1);
+  ValueHandle group = MSNewValueInt64(res_mgr, 1);
   ASSERT_TRUE(group != nullptr);
-  AttrHandle format = MSNewAttrInt64(res_mgr, NCHW);
+  ValueHandle format = MSNewValueInt64(res_mgr, NCHW);
   ASSERT_TRUE(format != nullptr);
   const char *attr_names[] = {"out_channel", "kernel_size", "mode",  "pad_mode", "pad",
                               "stride",      "dilation",    "group", "format"};
-  AttrHandle attrs[] = {out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group, format};
+  ValueHandle attrs[] = {out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group, format};
   size_t attr_num = 9;
 
   NodeHandle conv_input_nodes[] = {x_conv, w};

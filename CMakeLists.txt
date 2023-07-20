@@ -141,7 +141,7 @@ endif()
 
 add_subdirectory_with_faster_option(mindspore/ccsrc)
 
-if(ENABLE_TESTCASES OR ENABLE_CPP_ST)
+if(ENABLE_TESTCASES OR ENABLE_CPP_ST OR ENABLE_C_ST)
     add_subdirectory(tests)
 endif()
 

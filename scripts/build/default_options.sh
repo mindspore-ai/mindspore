@@ -28,6 +28,7 @@ init_default_options()
   export ENABLE_COVERAGE="off"
   export RUN_TESTCASES="off"
   export RUN_CPP_ST_TESTS="off"
+  export RUN_C_ST_TESTS="off"
   export ENABLE_BACKEND=""
   export ENABLE_ASAN="off"
   export ENABLE_PROFILE="off"

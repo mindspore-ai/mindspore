@@ -18,11 +18,11 @@
 #include <sstream>
 #include <unordered_map>
 #include "common/common_test.h"
-#include "c_api/include/tensor.h"
-#include "c_api/include/graph.h"
-#include "c_api/include/context.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
+#include "include/tensor.h"
+#include "include/graph.h"
+#include "include/context.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
 
 namespace mindspore {
 class TestCApiGraph : public UT::CApiCommon {
@@ -41,7 +41,7 @@ TEST_F(TestCApiGraph, test_multi_output_graph) {
   ASSERT_TRUE(fg != nullptr);
   NodeHandle x = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(x != nullptr);
-  NodeHandle y = MSNewScalarConstantInt32(res_mgr, 2);
+  NodeHandle y = MSNewConstantScalarInt32(res_mgr, 2);
   ASSERT_TRUE(y != nullptr);
   NodeHandle input_nodes[] = {x, y};
   // test normal operator

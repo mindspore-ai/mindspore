@@ -19,10 +19,10 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include "c_api/include/node.h"
-#include "c_api/base/macros.h"
-#include "c_api/base/status.h"
-#include "c_api/include/context.h"
+#include "include/node.h"
+#include "include/base/macros.h"
+#include "include/base/status.h"
+#include "include/context.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -138,13 +138,13 @@ MIND_C_API STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph, Op
 ///
 /// \param[in] res_mgr Resource manager that saves allocated instance resources.
 /// \param[in] graph The given function graph pointer handle.
-/// \param[in] inputs The function graph (model) inputs in Tensor form.
+/// \param[in] inputs The function graph (model) inputs which can be Values or Tensors.
 /// \param[in] input_num The input size.
 /// \param[in] outputs The function graph (model) outputs in Tensor form.
 /// \param[in] outputs_num The output size.
 ///
 /// \return Error code that indicate whether the function graph executed successfully.
-MIND_C_API STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, TensorHandle const inputs[], size_t input_num,
+MIND_C_API STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, Handle const inputs[], size_t input_num,
                                  TensorHandle outputs[], size_t outputs_num);
 #ifdef __cplusplus
 }

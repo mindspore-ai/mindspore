@@ -67,18 +67,18 @@ TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, DataTypeC type, const int
   ShapeVector shape_vec(shape, shape + shape_size);
   try {
     size_t data_len;
-    switch (mindspore::TypeId(type)) {
-      case mindspore::TypeId::kNumberTypeInt32: {
+    switch (type) {
+      case MS_INT32: {
         std::vector<int32_t> data = GetDataByFile<int32_t>(path, &data_len);
         tensor = std::make_shared<TensorImpl>(mindspore::TypeId(type), shape_vec, data.data(), data_len);
         break;
       }
-      case mindspore::TypeId::kNumberTypeInt64: {
+      case MS_INT64: {
         std::vector<int64_t> data = GetDataByFile<int64_t>(path, &data_len);
         tensor = std::make_shared<TensorImpl>(mindspore::TypeId(type), shape_vec, data.data(), data_len);
         break;
       }
-      case mindspore::TypeId::kNumberTypeFloat32: {
+      case MS_FLOAT32: {
         std::vector<float> data = GetDataByFile<float>(path, &data_len);
         tensor = std::make_shared<TensorImpl>(mindspore::TypeId(type), shape_vec, data.data(), data_len);
         break;
@@ -111,14 +111,14 @@ TensorHandle MSNewTensorWithSrcType(ResMgrHandle res_mgr, void *data, const int6
   return GetRawPtr(res_mgr, tensor);
 }
 
-TensorHandle MSNewScalarTensorFloat32(ResMgrHandle res_mgr, float value) {
+TensorHandle MSNewTensorScalarFloat32(ResMgrHandle res_mgr, float value) {
   if (res_mgr == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
     return nullptr;
   }
   TensorPtr tensor = nullptr;
   try {
-    auto type_ptr = mindspore::TypeIdToType(mindspore::TypeId::kNumberTypeFloat32);
+    auto type_ptr = mindspore::TypeIdToType(mindspore::kNumberTypeFloat32);
     MS_EXCEPTION_IF_NULL(type_ptr);
     tensor = std::make_shared<TensorImpl>(value, type_ptr);
   } catch (const std::exception &e) {
@@ -128,14 +128,14 @@ TensorHandle MSNewScalarTensorFloat32(ResMgrHandle res_mgr, float value) {
   return GetRawPtr(res_mgr, tensor);
 }
 
-TensorHandle MSNewScalarTensorInt32(ResMgrHandle res_mgr, int value) {
+TensorHandle MSNewTensorScalarInt32(ResMgrHandle res_mgr, int value) {
   if (res_mgr == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
     return nullptr;
   }
   TensorPtr tensor = nullptr;
   try {
-    auto type_ptr = mindspore::TypeIdToType(mindspore::TypeId::kNumberTypeInt32);
+    auto type_ptr = mindspore::TypeIdToType(mindspore::kNumberTypeInt32);
     MS_EXCEPTION_IF_NULL(type_ptr);
     tensor = std::make_shared<TensorImpl>(value, type_ptr);
   } catch (const std::exception &e) {

@@ -15,6 +15,7 @@
  */
 
 #include "c_api/src/utils.h"
+#include "c_api/src/helper.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "backend/operator/ops_backend_infer_function.h"
 
@@ -60,6 +61,121 @@ std::vector<TensorPtr> ConvertOutputToTensor(const mindspore::BaseRef &output) {
     MS_LOG(ERROR) << "Convert output to tensor failed, unrecognized output type: " << output.ToString();
   }
   return ref_outputs;
+}
+
+STATUS OpSetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, const char *const *attr_names, ValueHandle attrs[],
+                  size_t attr_num) {
+  AttrMap attr_map{};
+  for (size_t i = 0; i < attr_num; ++i) {
+    if (attr_names[i] == nullptr) {
+      MS_LOG(ERROR) << "Input array [attr_names] has nullptr element, index: " << i;
+      return RET_NULL_PTR;
+    }
+    auto value = GetSrcPtr<ValuePtr>(res_mgr, attrs[i]);
+    if (value == nullptr) {
+      MS_LOG(ERROR) << "Get attribute's source pointer failed, attribute index: " << i;
+      return RET_NULL_PTR;
+    }
+    std::string name(attr_names[i]);
+    auto iter = kOpAttrNameAdaptMap.find(name);
+    if (iter != kOpAttrNameAdaptMap.end()) {
+      attr_map[iter->second] = value;
+    }
+    attr_map[name] = value;
+  }
+  (void)prim->SetAttrs(attr_map);
+  return RET_OK;
+}
+
+std::vector<TensorPtr> ConvertOutputToTensor(const ValuePtr &output) {
+  std::vector<TensorPtr> tensor_outputs{};
+  if (output->isa<ValueSequenceImpl>()) {
+    auto value_sequeue = output->cast<ValueSequencePtr>();
+    for (const auto &item : value_sequeue->value()) {
+      // for multiple outputs, ascend will return a tuple of ValuePtr.
+      const std::vector<TensorPtr> &item_out = ConvertOutputToTensor(item);
+      (void)tensor_outputs.insert(tensor_outputs.end(), item_out.begin(), item_out.end());
+    }
+  } else if (output->isa<TensorImpl>()) {
+    auto tensor = output->cast<TensorPtr>();
+    tensor->data_sync();
+    tensor_outputs.push_back(tensor);
+  } else if (output->isa<ScalarImpl>()) {
+    auto tensor = ScalarToTensor(output->cast<ScalarPtr>());
+    tensor_outputs.push_back(tensor);
+  } else {
+    MS_LOG(ERROR) << "Convert output to tensor failed, unrecognized output type: " << output->type_name();
+  }
+  return tensor_outputs;
+}
+
+std::vector<BaseShapePtr> BuildShape(int64_t **out_shapes, size_t *out_dims, size_t out_num) {
+  MS_EXCEPTION_IF_NULL(out_shapes);
+  MS_EXCEPTION_IF_NULL(out_dims);
+  std::vector<BaseShapePtr> shape_list;
+  if (out_num == 1) {
+    int64_t *shape = out_shapes[0];
+    ShapeVector shape_vec(shape, shape + out_dims[0]);
+    auto infer_shape = std::make_shared<Shape>(shape_vec);
+    (void)shape_list.emplace_back(infer_shape);
+  } else {
+    for (size_t i = 0; i < out_num; i++) {
+      int64_t *shape = out_shapes[i];
+      ShapeVector shape_vec(shape, shape + out_dims[i]);
+      auto each_shape = std::make_shared<Shape>(shape_vec);
+      (void)shape_list.emplace_back(each_shape);
+    }
+  }
+  return shape_list;
+}
+
+std::vector<TypePtr> BuildType(const DataTypeC *out_dtypes, size_t out_num) {
+  MS_EXCEPTION_IF_NULL(out_dtypes);
+  std::vector<TypePtr> type_list;
+  if (out_num == 1) {
+    DataTypeC dtype = out_dtypes[0];
+    auto cxx_type = mindspore::TypeId(dtype);
+    auto infer_type = mindspore::TypeIdToType(cxx_type);
+    (void)type_list.emplace_back(infer_type);
+  } else {
+    for (size_t i = 0; i < out_num; i++) {
+      DataTypeC dtype = out_dtypes[i];
+      auto cxx_type = mindspore::TypeId(dtype);
+      auto type_val = mindspore::TypeIdToType(cxx_type);
+      (void)type_list.emplace_back(type_val);
+    }
+  }
+  return type_list;
+}
+
+AbstractBasePtr BuildAbstract(std::vector<BaseShapePtr> shapes, std::vector<TypePtr> types) {
+  MS_EXCEPTION_IF_CHECK_FAIL(!shapes.empty(), "The size of shapes is empty!");
+  MS_EXCEPTION_IF_CHECK_FAIL(!types.empty(), "The size of types is empty!");
+  MS_EXCEPTION_IF_CHECK_FAIL(shapes.size() == types.size(), "The size of shapes and types must be equal!");
+  if (shapes.size() == 1) {
+    auto shape = shapes[0]->cast<ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape);
+    auto type = types[0];
+    MS_EXCEPTION_IF_NULL(type);
+    auto shape_vec = shape->shape();
+    // if the size of shape list is empty, return an scalar abstract
+    if (shape_vec.empty() && (!type->isa<mindspore::TensorType>())) {
+      AbstractScalarPtr abs_scalar = std::make_shared<AbstractScalarImpl>(mindspore::kValueAny, type);
+      return abs_scalar;
+    }
+    return MakeAbstractTensor(shape, type);
+  } else {
+    mindspore::abstract::AbstractBasePtrList ptr_list;
+    for (size_t i = 0; i < shapes.size(); ++i) {
+      auto shape = shapes[i];
+      MS_EXCEPTION_IF_NULL(shape);
+      auto type = types[i];
+      MS_EXCEPTION_IF_NULL(type);
+      auto tensor_abs = BuildAbstract({shape}, {type});
+      (void)ptr_list.emplace_back(tensor_abs);
+    }
+    return std::make_shared<AbstractTupleImpl>(ptr_list);
+  }
 }
 
 AbstractBasePtr GetAbstract(const TypePtr &type_ptr, const int64_t shape[], size_t shape_size, bool is_param) {
@@ -108,13 +224,14 @@ STATUS CheckCustomOpInfo(const CustomOpInfo &info) {
   MS_ERROR_IF_FALSE_W_RET_N_LOG(info.func_name != nullptr, RET_ERROR, "The func_name of custom op must be specified!");
   MS_ERROR_IF_FALSE_W_RET_N_LOG(info.func_type != nullptr, RET_ERROR, "The func_type of custom op must be specified!");
   MS_ERROR_IF_FALSE_W_RET_N_LOG(info.target != nullptr, RET_ERROR, "The target of custom op must be specified!");
-  MS_ERROR_IF_FALSE_W_RET_N_LOG(info.input_name != nullptr, RET_ERROR,
-                                "The input_name of custom op must be specified!");
-  MS_ERROR_IF_FALSE_W_RET_N_LOG(info.output_name != nullptr, RET_ERROR,
-                                "The output_name of custom op must be specified!");
+  MS_ERROR_IF_FALSE_W_RET_N_LOG(info.input_names != nullptr, RET_ERROR,
+                                "The input_names of custom op must be specified!");
+  MS_ERROR_IF_FALSE_W_RET_N_LOG(info.output_names != nullptr, RET_ERROR,
+                                "The output_names of custom op must be specified!");
   MS_ERROR_IF_FALSE_W_RET_N_LOG(info.input_num > 0, RET_ERROR, "The input_num of custom op must be a positive value!");
   MS_ERROR_IF_FALSE_W_RET_N_LOG(info.output_num > 0, RET_ERROR,
                                 "The output_num of custom op must be a positive value!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(info.attr_num < 0, RET_ERROR, "The attr_num of custom op must be non-negative!");
   MS_ERROR_IF_TRUE_W_RET_N_LOG(info.dtype_infer_func == nullptr && info.output_dtypes == nullptr, RET_ERROR,
                                "Either dtype infer function or output shape must be specified!");
   MS_ERROR_IF_TRUE_W_RET_N_LOG(info.dtype_infer_func != nullptr && info.output_dtypes != nullptr, RET_ERROR,
@@ -125,10 +242,10 @@ STATUS CheckCustomOpInfo(const CustomOpInfo &info) {
                                "Only one should be specified between shape infer function and output shape!");
   MS_ERROR_IF_TRUE_W_RET_N_LOG(info.output_shapes != nullptr && info.output_dims == nullptr, RET_ERROR,
                                "Output dims must be specified if output_shapes are given!");
-  MS_ERROR_IF_TRUE_W_RET_N_LOG(info.attr_name != nullptr && info.attr_num == 0, RET_ERROR,
-                               "The attr_num of custom op must be none-zero if attr_name is specified!");
-  MS_ERROR_IF_TRUE_W_RET_N_LOG(info.attr_name == nullptr && info.attr_num != 0, RET_ERROR,
-                               "The attr_num of custom op must be zero if attr_name is not specified!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(info.attr_num == 0 && (info.attr_names != nullptr || info.attr_values != nullptr),
+                               RET_ERROR, "The attr_name and attr_values must be nullptr if attr_num is 0!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(info.attr_num != 0 && (info.attr_names == nullptr || info.attr_values == nullptr),
+                               RET_ERROR, "The attr_name and attr_values must be specified if attr_num is non-zero!");
   MS_ERROR_IF_TRUE_W_RET_N_LOG(info.dtype_formats != nullptr && info.dtype_formats_num == 0, RET_ERROR,
                                "The dtype_formats_num of custom op must be none-zero if dtype_formats is specified!");
   MS_ERROR_IF_TRUE_W_RET_N_LOG(info.dtype_formats == nullptr && info.dtype_formats_num != 0, RET_ERROR,
@@ -163,7 +280,7 @@ nlohmann::json ConvertOpInfoToJson(const CustomOpInfo &info) {
   for (size_t i = 0; i < info.input_num; i++) {
     nlohmann::json js_input;
     js_input["index"] = i;
-    js_input["name"] = std::string(info.input_name[i]);
+    js_input["name"] = std::string(info.input_names[i]);
     js_input["paramType"] = "required";
     js_inputs.push_back(js_input);
   }
@@ -172,7 +289,7 @@ nlohmann::json ConvertOpInfoToJson(const CustomOpInfo &info) {
   for (size_t i = 0; i < info.output_num; i++) {
     nlohmann::json js_output;
     js_output["index"] = i;
-    js_output["name"] = std::string(info.output_name[i]);
+    js_output["name"] = std::string(info.output_names[i]);
     js_output["paramType"] = "required";
     js_outputs.push_back(js_output);
   }

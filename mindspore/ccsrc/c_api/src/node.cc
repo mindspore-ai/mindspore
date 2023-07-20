@@ -16,7 +16,6 @@
 
 #include "c_api/include/node.h"
 #include "mindspore/core/ops/sequence_ops.h"
-#include "c_api/include/attribute.h"
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"
 #include "c_api/src/utils.h"
@@ -28,39 +27,17 @@
 #include "include/backend/optimizer/helper.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/oplib/opinfo.h"
+#include "abstract/dshape.h"
+#include "pipeline/pynative/base.h"
+#include "pipeline/pynative/pynative_utils.h"
+#include "mindspore/core/ops/other_ops.h"
 
 constexpr size_t firstInIdx = 1;
 constexpr size_t secondInIdx = 2;
 constexpr size_t switchInputNum = 3;
 static const size_t maxMallocSize = GetMaxMallocSize();
-
-STATUS SetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, const char *const *attr_names, AttrHandle attrs[],
-                size_t attr_num) {
-  AttrMap attr_map{};
-  for (size_t i = 0; i < attr_num; ++i) {
-    if (attr_names[i] == nullptr) {
-      MS_LOG(ERROR) << "Input array [attr_names] has nullptr element, index: " << i;
-      return RET_NULL_PTR;
-    }
-    auto value = GetSrcPtr<ValuePtr>(res_mgr, attrs[i]);
-    if (value == nullptr) {
-      MS_LOG(ERROR) << "Get attribute's source pointer failed, attribute index: " << i;
-      return RET_NULL_PTR;
-    }
-    std::string name(attr_names[i]);
-    if (name == "data_format") {
-      attr_map["format"] = value;
-    } else if (name == "group") {
-      attr_map["groups"] = value;
-    }
-    attr_map[name] = value;
-  }
-  (void)prim->SetAttrs(attr_map);
-  return RET_OK;
-}
-
 NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type, Handle const inputs[],
-                   size_t input_num, const char *const *attr_names, AttrHandle attrs[], size_t attr_num) {
+                   size_t input_num, const char *const *attr_names, ValueHandle attrs[], size_t attr_num) {
   if (res_mgr == nullptr || graph == nullptr || op_type == nullptr || inputs == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [op_type] or [inputs] is nullptr.";
     return nullptr;
@@ -76,7 +53,7 @@ NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type,
   mindspore::AbstractBasePtrList abs_list{};
   auto prim = std::make_shared<PrimitiveImpl>(op_type);
   if (attr_names != nullptr && attrs != nullptr) {
-    auto ret = SetAttrs(res_mgr, prim, attr_names, attrs, attr_num);
+    auto ret = OpSetAttrs(res_mgr, prim, attr_names, attrs, attr_num);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Op set attributes failed.";
       return nullptr;
@@ -413,46 +390,34 @@ NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, Grap
   }
 }
 
-BaseShapePtr CustomOpInferShape(const CustomOpInfo &info, const std::vector<AbstractBasePtr> &input_args) {
-  auto build_shape_func = [](int64_t **out_shapes, size_t *out_dims, size_t out_num) -> BaseShapePtr {
-    BaseShapePtr infer_shape;
-    if (out_num == 1) {
-      int64_t *shape = out_shapes[0];
-      ShapeVector shape_vec(shape, shape + out_dims[0]);
-      infer_shape = std::make_shared<Shape>(shape_vec);
-    } else {
-      std::vector<BaseShapePtr> output_list;
-      for (size_t i = 0; i < out_num; i++) {
-        int64_t *shape = out_shapes[i];
-        ShapeVector shape_vec(shape, shape + out_dims[i]);
-        auto each_shape = std::make_shared<Shape>(shape_vec);
-        output_list.push_back(each_shape);
-      }
-      infer_shape = std::make_shared<TupleShape>(output_list);
-    }
-    return infer_shape;
+std::vector<BaseShapePtr> CustomOpInferShape(const CustomOpInfo &info, const std::vector<AbstractBasePtr> &input_args) {
+  auto dyn_arr_deleter = [](int64_t **x, size_t dims) {
+    std::for_each(x, x + dims, std::default_delete<int64_t[]>());
+    delete[] x;
   };
   if (info.output_shapes != nullptr) {
     if (info.output_dims == nullptr) {
       MS_LOG(ERROR) << "Output dims must be given if output shapes are specified!";
-      return nullptr;
+      return {};
     }
-    BaseShapePtr infer_shape = build_shape_func(info.output_shapes, info.output_dims, info.output_num);
+    auto infer_shape = BuildShape(info.output_shapes, info.output_dims, info.output_num);
     return infer_shape;
   } else if (info.shape_infer_func != nullptr) {
     size_t input_num = info.input_num;
     size_t output_num = info.output_num;
-    MS_ERROR_IF_TRUE_W_RET_N_LOG(input_num * sizeof(size_t) > maxMallocSize, nullptr,
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(input_num * sizeof(size_t) > maxMallocSize, {},
                                  "The input_num is too large for memory allocation.");
-    MS_ERROR_IF_TRUE_W_RET_N_LOG(output_num * sizeof(size_t) > maxMallocSize, nullptr,
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(output_num * sizeof(size_t) > maxMallocSize, {},
                                  "The output_num is too large for memory allocation.");
-    auto *out_dims_arr = new size_t[output_num];
-    auto **out_shapes_arr = new int64_t *[output_num];
+    auto out_dims_arr = std::make_unique<size_t[]>(output_num);
+    std::unique_ptr<int64_t *, std::function<void(int64_t **)>> out_shapes_arr(
+      new (std::nothrow) int64_t *[output_num](), std::bind(dyn_arr_deleter, std::placeholders::_1, output_num));
     for (size_t i = 0; i < output_num; i++) {
-      out_shapes_arr[i] = new int64_t[MAX_DIMS];
+      (out_shapes_arr.get())[i] = new int64_t[MAX_DIMS];
     }
-    auto *in_dims_arr = new size_t[input_num];
-    auto **in_shapes_arr = new int64_t *[input_num];
+    auto in_dims_arr = std::make_unique<size_t[]>(input_num);
+    std::unique_ptr<int64_t *, std::function<void(int64_t **)>> in_shapes_arr(
+      new (std::nothrow) int64_t *[input_num](), std::bind(dyn_arr_deleter, std::placeholders::_1, input_num));
     for (size_t i = 0; i < input_num; i++) {
       auto in_shape = input_args[i]->BuildShape();
       MS_EXCEPTION_IF_NULL(in_shape);
@@ -461,71 +426,36 @@ BaseShapePtr CustomOpInferShape(const CustomOpInfo &info, const std::vector<Abst
       auto in_shape_vec = in_shape_ptr->shape();
       auto in_shape_dim = in_shape_vec.size();
       in_dims_arr[i] = in_shape_dim;
-      in_shapes_arr[i] = new int64_t[in_shape_dim];
+      MS_ERROR_IF_TRUE_W_RET_N_LOG(in_shape_dim * sizeof(size_t) > maxMallocSize, {},
+                                   "The in_shape_dim is too large for memory allocation.");
+      (in_shapes_arr.get())[i] = new int64_t[in_shape_dim];
       for (size_t j = 0; j < in_shape_dim; j++) {
-        in_shapes_arr[i][j] = in_shape_vec[j];
+        (in_shapes_arr.get())[i][j] = in_shape_vec[j];
       }
     }
-    auto ret = info.shape_infer_func(in_shapes_arr, in_dims_arr, input_num, out_shapes_arr, out_dims_arr, output_num);
+    auto ret = info.shape_infer_func(in_shapes_arr.get(), in_dims_arr.get(), input_num, out_shapes_arr.get(),
+                                     out_dims_arr.get(), output_num);
     if (ret != RET_OK) {
-      for (size_t i = 0; i < input_num; i++) {
-        delete[] in_shapes_arr[i];
-      }
-      delete[] in_shapes_arr;
-      delete[] in_dims_arr;
-      for (size_t i = 0; i < output_num; i++) {
-        delete[] out_shapes_arr[i];
-      }
-      delete[] out_shapes_arr;
-      delete[] out_dims_arr;
       MS_LOG(ERROR) << "Failed to call the shape infer function of custom op!";
-      return nullptr;
+      return {};
     }
-    BaseShapePtr infer_shape = build_shape_func(out_shapes_arr, out_dims_arr, output_num);
-    for (size_t i = 0; i < input_num; i++) {
-      delete[] in_shapes_arr[i];
-    }
-    delete[] in_shapes_arr;
-    delete[] in_dims_arr;
-    for (size_t i = 0; i < output_num; i++) {
-      delete[] out_shapes_arr[i];
-    }
-    delete[] out_shapes_arr;
-    delete[] out_dims_arr;
+    auto infer_shape = BuildShape(out_shapes_arr.get(), out_dims_arr.get(), output_num);
     return infer_shape;
   } else {
     MS_LOG(ERROR) << "Either output shape or output shape infer function must be specified!";
-    return nullptr;
+    return {};
   }
 }
 
-TypePtr CustomOpInferType(const CustomOpInfo &info, const std::vector<AbstractBasePtr> &input_args) {
-  auto build_type_func = [](const DataTypeC *out_dtypes, size_t out_num) -> TypePtr {
-    TypePtr infer_type;
-    if (out_num == 1) {
-      DataTypeC dtype = out_dtypes[0];
-      auto cxx_type = mindspore::TypeId(dtype);
-      infer_type = mindspore::TypeIdToType(cxx_type);
-    } else {
-      std::vector<TypePtr> type_list;
-      for (size_t i = 0; i < out_num; i++) {
-        DataTypeC dtype = out_dtypes[i];
-        auto cxx_type = mindspore::TypeId(dtype);
-        auto type_val = mindspore::TypeIdToType(cxx_type);
-        type_list.push_back(type_val);
-      }
-      infer_type = std::make_shared<mindspore::Tuple>(type_list);
-    }
-    return infer_type;
-  };
+std::vector<TypePtr> CustomOpInferType(const CustomOpInfo &info, const std::vector<AbstractBasePtr> &input_args) {
   if (info.output_dtypes != nullptr) {
-    TypePtr infer_dtype = build_type_func(info.output_dtypes, info.output_num);
+    auto infer_dtype = BuildType(info.output_dtypes, info.output_num);
     return infer_dtype;
   } else if (info.shape_infer_func != nullptr) {
     size_t input_num = info.input_num;
     size_t output_num = info.output_num;
-    auto *in_dtypes_arr = new DataTypeC[input_num];
-    auto *out_dtypes_arr = new DataTypeC[output_num];
+    auto in_dtypes_arr = std::make_unique<DataTypeC[]>(input_num);
+    auto out_dtypes_arr = std::make_unique<DataTypeC[]>(output_num);
     for (size_t i = 0; i < input_num; i++) {
       auto in_type = input_args[i]->BuildType();
       MS_EXCEPTION_IF_NULL(in_type);
@@ -537,20 +467,16 @@ TypePtr CustomOpInferType(const CustomOpInfo &info, const std::vector<AbstractBa
       auto in_type_id = (enum DataTypeC)(real_type->type_id());
       in_dtypes_arr[i] = in_type_id;
     }
-    STATUS ret = info.dtype_infer_func(in_dtypes_arr, input_num, out_dtypes_arr, output_num);
+    STATUS ret = info.dtype_infer_func(in_dtypes_arr.get(), input_num, out_dtypes_arr.get(), output_num);
     if (ret != RET_OK) {
-      delete[] in_dtypes_arr;
-      delete[] out_dtypes_arr;
       MS_LOG(ERROR) << "Failed to call the dtype infer function of custom op!";
-      return nullptr;
+      return {};
     }
-    TypePtr infer_dtype = build_type_func(out_dtypes_arr, output_num);
-    delete[] in_dtypes_arr;
-    delete[] out_dtypes_arr;
+    auto infer_dtype = BuildType(out_dtypes_arr.get(), output_num);
     return infer_dtype;
   } else {
     MS_LOG(ERROR) << "Either output dtype or output dtype infer function must be specified!";
-    return nullptr;
+    return {};
   }
 }
 
@@ -569,7 +495,7 @@ NodeHandle MSNewCustomOp(ResMgrHandle res_mgr, GraphHandle graph, Handle const i
     auto org_infer = res_mgr_ptr->GetInfer();
     res_mgr_ptr->SetInfer(false);
     NodeHandle custom_op =
-      MSNewOp(res_mgr, graph, "Custom", inputs, info.input_num, info.attr_name, info.attr_value, info.attr_num);
+      MSNewOp(res_mgr, graph, "Custom", inputs, info.input_num, info.attr_names, info.attr_values, info.attr_num);
     MS_ERROR_IF_TRUE_W_RET_N_LOG(custom_op == nullptr, nullptr, "Create Custom op failed!");
     res_mgr_ptr->SetInfer(org_infer);
     // Supplement necessary attributes
@@ -607,10 +533,8 @@ NodeHandle MSNewCustomOp(ResMgrHandle res_mgr, GraphHandle graph, Handle const i
       abs_list.push_back(in_node->abstract());
     }
     auto infer_shape = CustomOpInferShape(info, abs_list);
-    MS_ERROR_IF_TRUE_W_RET_N_LOG(infer_shape == nullptr, nullptr, "Custom op infer shape failed!");
     auto infer_type = CustomOpInferType(info, abs_list);
-    MS_ERROR_IF_TRUE_W_RET_N_LOG(infer_type == nullptr, nullptr, "Custom op infer type failed!");
-    AbstractBasePtr custom_abs = mindspore::abstract::MakeAbstract(infer_shape, infer_type);
+    AbstractBasePtr custom_abs = BuildAbstract(infer_shape, infer_type);
     MS_EXCEPTION_IF_NULL(custom_abs);
     auto src_op = GetSrcPtr<CNodePtr>(res_mgr, custom_op);
     MS_EXCEPTION_IF_NULL(src_op);
@@ -783,7 +707,7 @@ NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, DataTypeC t
   return GetRawPtr(res_mgr, param);
 }
 
-NodeHandle MSNewScalarVariableFloat32(ResMgrHandle res_mgr, GraphHandle graph, float value) {
+NodeHandle MSNewVariableScalarFloat32(ResMgrHandle res_mgr, GraphHandle graph, float value) {
   if (res_mgr == nullptr || graph == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] is nullptr.";
     return nullptr;
@@ -792,13 +716,8 @@ NodeHandle MSNewScalarVariableFloat32(ResMgrHandle res_mgr, GraphHandle graph, f
   try {
     auto res_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
     MS_EXCEPTION_IF_NULL(res_fg);
-    param = res_fg->add_parameter();
-    auto type_ptr = mindspore::TypeIdToType(mindspore::TypeId::kNumberTypeFloat32);
-    MS_EXCEPTION_IF_NULL(type_ptr);
-    auto tensor = std::make_shared<TensorImpl>(value, type_ptr);
-    tensor->set_param_info(std::make_shared<mindspore::ParamInfo>());
-    param->set_abstract(tensor->ToAbstract());
-    param->set_default_param(tensor);
+    param = GetScalarParam<float>(res_fg, value, mindspore::kNumberTypeFloat32);
+    MS_EXCEPTION_IF_NULL(param);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "New Scalar Variable failed. Error info: " << e.what();
     return nullptr;
@@ -806,7 +725,7 @@ NodeHandle MSNewScalarVariableFloat32(ResMgrHandle res_mgr, GraphHandle graph, f
   return GetRawPtr(res_mgr, param);
 }
 
-NodeHandle MSNewScalarVariableInt32(ResMgrHandle res_mgr, GraphHandle graph, int value) {
+NodeHandle MSNewVariableScalarInt32(ResMgrHandle res_mgr, GraphHandle graph, int value) {
   if (res_mgr == nullptr || graph == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] is nullptr.";
     return nullptr;
@@ -815,13 +734,8 @@ NodeHandle MSNewScalarVariableInt32(ResMgrHandle res_mgr, GraphHandle graph, int
   try {
     auto res_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
     MS_EXCEPTION_IF_NULL(res_fg);
-    param = res_fg->add_parameter();
-    auto type_ptr = mindspore::TypeIdToType(mindspore::TypeId::kNumberTypeInt32);
-    MS_EXCEPTION_IF_NULL(type_ptr);
-    auto tensor = std::make_shared<TensorImpl>(value, type_ptr);
-    tensor->set_param_info(std::make_shared<mindspore::ParamInfo>());
-    param->set_abstract(tensor->ToAbstract());
-    param->set_default_param(tensor);
+    param = GetScalarParam<float>(res_fg, value, mindspore::kNumberTypeInt32);
+    MS_EXCEPTION_IF_NULL(param);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "New Scalar Variable failed. Error info: " << e.what();
     return nullptr;
@@ -829,8 +743,8 @@ NodeHandle MSNewScalarVariableInt32(ResMgrHandle res_mgr, GraphHandle graph, int
   return GetRawPtr(res_mgr, param);
 }
 
-NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle graph, void *data, DataTypeC type,
-                               const int64_t shape[], size_t shape_size, size_t data_len) {
+NodeHandle MSNewVariableArray(ResMgrHandle res_mgr, GraphHandle graph, void *data, DataTypeC type,
+                              const int64_t shape[], size_t shape_size, size_t data_len) {
   if (res_mgr == nullptr || graph == nullptr || data == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [data] or [shape] is nullptr.";
     return nullptr;
@@ -852,7 +766,7 @@ NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle graph, void *da
   return GetRawPtr(res_mgr, param);
 }
 
-NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph, ConstTensorHandle tensor) {
+NodeHandle MSNewVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph, ConstTensorHandle tensor) {
   if (res_mgr == nullptr || graph == nullptr || tensor == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [tensor] is nullptr.";
     return nullptr;
@@ -873,7 +787,7 @@ NodeHandle MSNewTensorVariableFromTensor(ResMgrHandle res_mgr, GraphHandle graph
   return GetRawPtr(res_mgr, param);
 }
 
-size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
+size_t MSVariableArrayGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -900,7 +814,7 @@ size_t MSTensorVariableGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, S
   }
 }
 
-void *MSTensorVariableGetData(ResMgrHandle res_mgr, ConstNodeHandle node) {
+void *MSVariableArrayGetData(ResMgrHandle res_mgr, ConstNodeHandle node) {
   if (res_mgr == nullptr || node == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] is nullptr.";
     return nullptr;
@@ -920,8 +834,8 @@ void *MSTensorVariableGetData(ResMgrHandle res_mgr, ConstNodeHandle node) {
   }
 }
 
-NodeHandle MSNewTensorConstant(ResMgrHandle res_mgr, void *data, DataTypeC type, const int64_t shape[],
-                               size_t shape_size, size_t data_len) {
+NodeHandle MSNewConstantArray(ResMgrHandle res_mgr, void *data, DataTypeC type, const int64_t shape[],
+                              size_t shape_size, size_t data_len) {
   if (res_mgr == nullptr || data == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [data] or [shape] is nullptr.";
     return nullptr;
@@ -940,7 +854,7 @@ NodeHandle MSNewTensorConstant(ResMgrHandle res_mgr, void *data, DataTypeC type,
   return GetRawPtr(res_mgr, value_node);
 }
 
-NodeHandle MSNewTensorConstantFromTensor(ResMgrHandle res_mgr, TensorHandle tensor) {
+NodeHandle MSNewConstantFromTensor(ResMgrHandle res_mgr, TensorHandle tensor) {
   if (res_mgr == nullptr || tensor == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [tensor] is nullptr.";
     return nullptr;
@@ -958,7 +872,7 @@ NodeHandle MSNewTensorConstantFromTensor(ResMgrHandle res_mgr, TensorHandle tens
   return GetRawPtr(res_mgr, value_node);
 }
 
-size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
+size_t MSConstantArrayGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
     return 0;
@@ -985,7 +899,7 @@ size_t MSTensorConstantGetDataSize(ResMgrHandle res_mgr, ConstNodeHandle node, S
   }
 }
 
-void *MSTensorConstantGetData(ResMgrHandle res_mgr, ConstNodeHandle node) {
+void *MSConstantArrayGetData(ResMgrHandle res_mgr, ConstNodeHandle node) {
   if (res_mgr == nullptr || node == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] is nullptr.";
     return nullptr;
@@ -1005,7 +919,7 @@ void *MSTensorConstantGetData(ResMgrHandle res_mgr, ConstNodeHandle node) {
   }
 }
 
-NodeHandle MSNewScalarConstantFloat32(ResMgrHandle res_mgr, float value) {
+NodeHandle MSNewConstantScalarFloat32(ResMgrHandle res_mgr, float value) {
   MS_LOG(INFO) << "New Float32 Scalar Value!s";
   if (res_mgr == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
@@ -1016,7 +930,7 @@ NodeHandle MSNewScalarConstantFloat32(ResMgrHandle res_mgr, float value) {
   return GetRawPtr(res_mgr, value_node);
 }
 
-NodeHandle MSNewScalarConstantBool(ResMgrHandle res_mgr, bool value) {
+NodeHandle MSNewConstantScalarBool(ResMgrHandle res_mgr, bool value) {
   MS_LOG(INFO) << "New Bool Scalar Value!";
   if (res_mgr == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
@@ -1027,7 +941,7 @@ NodeHandle MSNewScalarConstantBool(ResMgrHandle res_mgr, bool value) {
   return GetRawPtr(res_mgr, value_node);
 }
 
-NodeHandle MSNewScalarConstantInt32(ResMgrHandle res_mgr, int value) {
+NodeHandle MSNewConstantScalarInt32(ResMgrHandle res_mgr, int value) {
   MS_LOG(INFO) << "New Int32 Scalar Value!";
   if (res_mgr == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
@@ -1038,7 +952,7 @@ NodeHandle MSNewScalarConstantInt32(ResMgrHandle res_mgr, int value) {
   return GetRawPtr(res_mgr, value_node);
 }
 
-NodeHandle MSNewScalarConstantInt64(ResMgrHandle res_mgr, int64_t value) {
+NodeHandle MSNewConstantScalarInt64(ResMgrHandle res_mgr, int64_t value) {
   MS_LOG(INFO) << "New Int64 Scalar Value!";
   if (res_mgr == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
@@ -1049,7 +963,7 @@ NodeHandle MSNewScalarConstantInt64(ResMgrHandle res_mgr, int64_t value) {
   return GetRawPtr(res_mgr, value_node);
 }
 
-NodeHandle MSNewStringConstant(ResMgrHandle res_mgr, const char *str) {
+NodeHandle MSNewConstantString(ResMgrHandle res_mgr, const char *str) {
   MS_LOG(INFO) << "New String Scalar Value!";
   if (res_mgr == nullptr || str == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [str] is nullptr.";
@@ -1061,7 +975,7 @@ NodeHandle MSNewStringConstant(ResMgrHandle res_mgr, const char *str) {
   return GetRawPtr(res_mgr, value_node);
 }
 
-NodeHandle MSNewTupleConstantInt64(ResMgrHandle res_mgr, const int64_t vec[], size_t size) {
+NodeHandle MSNewConstantTupleInt64(ResMgrHandle res_mgr, const int64_t vec[], size_t size) {
   MS_LOG(INFO) << "New Vector Value!";
   if (res_mgr == nullptr || vec == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [vec] is nullptr.";
@@ -1078,7 +992,7 @@ NodeHandle MSNewTupleConstantInt64(ResMgrHandle res_mgr, const int64_t vec[], si
   return GetRawPtr(res_mgr, value_node);
 }
 
-NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, DataTypeC type) {
+NodeHandle MSNewConstantType(ResMgrHandle res_mgr, DataTypeC type) {
   MS_LOG(INFO) << "New Type Value: " << type;
   if (res_mgr == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
@@ -1091,7 +1005,7 @@ NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, DataTypeC type) {
   return GetRawPtr(res_mgr, value_node);
 }
 
-int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
+int MSConstantScalarGetValueInt32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Int32 Scalar Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -1128,7 +1042,7 @@ int MSScalarConstantGetValueInt32(ResMgrHandle res_mgr, ConstNodeHandle node, ST
   return ret_val;
 }
 
-float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
+float MSConstantScalarGetValueFloat32(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Float32 Scalar Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -1165,7 +1079,7 @@ float MSScalarConstantGetValueFloat32(ResMgrHandle res_mgr, ConstNodeHandle node
   return ret_val;
 }
 
-bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
+bool MSConstantScalarGetValueBool(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Bool Scalar Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -1202,7 +1116,7 @@ bool MSScalarConstantGetValueBool(ResMgrHandle res_mgr, ConstNodeHandle node, ST
   return ret_val;
 }
 
-int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
+int64_t MSConstantScalarGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Int64 Scalar Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -1239,7 +1153,7 @@ int64_t MSScalarConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node
   return ret_val;
 }
 
-STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len) {
+STATUS MSConstantStringGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[], size_t str_len) {
   MS_LOG(INFO) << "Get String Constant Value!";
   if (res_mgr == nullptr || node == nullptr || str_buf == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] or [str_buf] is nullptr.";
@@ -1264,7 +1178,7 @@ STATUS MSStringConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, char
   }
 }
 
-size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
+size_t MSConstantTupleGetSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Tuple Constant size!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -1291,7 +1205,7 @@ size_t MSTupleConstantGetSize(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS
   }
 }
 
-STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, int64_t vec[], size_t size) {
+STATUS MSConstantTupleGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, int64_t vec[], size_t size) {
   MS_LOG(INFO) << "Get Tuple Constant Value!";
   if (res_mgr == nullptr || node == nullptr || vec == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] or [vec] is nullptr.";
@@ -1319,7 +1233,7 @@ STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, 
   }
 }
 
-DataTypeC MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
+DataTypeC MSConstantTypeGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Type Constant Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
@@ -1343,6 +1257,256 @@ DataTypeC MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STA
     MS_LOG(ERROR) << "Get Type Constant value failed. Error info: " << e.what();
     *error = RET_ERROR;
     return MS_INVALID_TYPE;
+  }
+}
+
+PrimitivePtr GetOpPrim(ResMgrHandle res_mgr, ConstNodeHandle node) {
+  auto src_node = GetSrcPtr<CNodePtr>(res_mgr, node);
+  auto node_input = src_node->input(0);
+  if (node_input == nullptr) {
+    MS_LOG(ERROR) << "The node's input is nullptr.";
+    return nullptr;
+  }
+  auto prim_node = node_input->cast<ValueNodePtr>();
+  if (prim_node == nullptr) {
+    MS_LOG(ERROR) << "The node's input is with invalid type.";
+    return nullptr;
+  }
+  auto node_value = prim_node->value();
+  if (node_value == nullptr) {
+    MS_LOG(ERROR) << "The node's value is nullptr.";
+    return nullptr;
+  }
+  auto prim = node_value->cast<PrimitivePtr>();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "The node's value is with invalid type.";
+    return nullptr;
+  }
+  return prim;
+}
+
+STATUS MSOpSetAttrScalarFloat32(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, float value) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto prim = GetOpPrim(res_mgr, op);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get primitive node failed";
+    return RET_NULL_PTR;
+  }
+  prim->set_attr(attr_name, mindspore::MakeValue(value));
+  return RET_OK;
+}
+
+STATUS MSOpSetAttrScalarBool(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, bool value) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto prim = GetOpPrim(res_mgr, op);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get primitive node failed";
+    return RET_NULL_PTR;
+  }
+  prim->set_attr(attr_name, mindspore::MakeValue(value));
+  return RET_OK;
+}
+
+STATUS MSOpSetAttrScalarInt32(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int32_t value) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto prim = GetOpPrim(res_mgr, op);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get primitive node failed";
+    return RET_NULL_PTR;
+  }
+  prim->set_attr(attr_name, mindspore::MakeValue(value));
+  return RET_OK;
+}
+
+STATUS MSOpSetAttrScalarInt64(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, int64_t value) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto prim = GetOpPrim(res_mgr, op);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get primitive node failed";
+    return RET_NULL_PTR;
+  }
+  prim->set_attr(attr_name, mindspore::MakeValue(value));
+  return RET_OK;
+}
+
+STATUS MSOpSetAttrType(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, DataTypeC value) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto prim = GetOpPrim(res_mgr, op);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get primitive node failed";
+    return RET_NULL_PTR;
+  }
+  auto cxx_type = mindspore::TypeId(value);
+  prim->set_attr(attr_name, mindspore::TypeIdToType(cxx_type));
+  return RET_OK;
+}
+
+STATUS MSOpSetAttrTypeArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, DataTypeC value[],
+                            size_t vec_size) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto prim = GetOpPrim(res_mgr, op);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get primitive node failed";
+    return RET_NULL_PTR;
+  }
+  std::vector<mindspore::ValuePtr> vec_value;
+  mindspore::TypeId cxx_type;
+  for (size_t i = 0; i < vec_size; i++) {
+    cxx_type = mindspore::TypeId(value[i]);
+    vec_value.push_back(mindspore::TypeIdToType(cxx_type));
+  }
+  prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
+  return RET_OK;
+}
+
+STATUS MSOpSetAttrArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, void *value, size_t vec_size,
+                        DataTypeC data_type) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr || value == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] or [value_vec] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto prim = GetOpPrim(res_mgr, op);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get primitive node failed";
+    return RET_NULL_PTR;
+  }
+
+  switch (data_type) {
+    case MS_BOOL: {
+      std::vector<bool> vec_value(static_cast<bool *>(value), static_cast<bool *>(value) + vec_size);
+      prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
+      break;
+    }
+    case MS_INT32: {
+      std::vector<int32_t> vec_value(static_cast<int32_t *>(value), static_cast<int32_t *>(value) + vec_size);
+      prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
+      break;
+    }
+    case MS_INT64: {
+      std::vector<int64_t> vec_value(static_cast<int64_t *>(value), static_cast<int64_t *>(value) + vec_size);
+      prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
+      break;
+    }
+    case MS_FLOAT32: {
+      std::vector<float> vec_value(static_cast<float *>(value), static_cast<float *>(value) + vec_size);
+      prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
+      break;
+    }
+    default:
+      MS_LOG(ERROR) << "Unrecognized datatype w/ DataTypeC ID: " << data_type << " , Attribute name: " << attr_name
+                    << std::endl;
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS MSOpSetAttrStringArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, const char *value[],
+                              size_t vec_size) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr || value == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] or [value_vec] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto prim = GetOpPrim(res_mgr, op);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get primitive node failed";
+    return RET_NULL_PTR;
+  }
+
+  std::vector<mindspore::ValuePtr> vec_value;
+  for (size_t i = 0; i < vec_size; i++) {
+    vec_value.push_back(mindspore::MakeValue(value[i]));
+  }
+  prim->set_attr(attr_name, std::make_shared<mindspore::ValueList>(vec_value));
+  return RET_OK;
+}
+
+STATUS MSOpSetAttrString(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, const char *value) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr || value == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] or [value_vec] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto prim = GetOpPrim(res_mgr, op);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get primitive node failed";
+    return RET_NULL_PTR;
+  }
+  std::string value_str(value);
+  prim->set_attr(attr_name, mindspore::MakeValue(value_str));
+  return RET_OK;
+}
+
+int64_t MSOpGetAttrScalarInt64(ResMgrHandle res_mgr, ConstNodeHandle op, const char *attr_name, STATUS *error) {
+  if (error == nullptr) {
+    MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
+    return 0;
+  }
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
+    *error = RET_NULL_PTR;
+    return 0;
+  }
+  std::string attr_name_str(attr_name);
+  try {
+    auto prim = GetOpPrim(res_mgr, op);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto value = prim->GetAttr(attr_name_str);
+    auto value_int64 = value->cast<Int64ImmPtr>();
+    MS_EXCEPTION_IF_NULL(value_int64);
+    auto ret_val = value_int64->value();
+    *error = RET_OK;
+    return ret_val;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << " Get Attribute failed. Error info: " << e.what();
+    *error = RET_ERROR;
+    return 0;
+  }
+}
+
+STATUS MSOpGetAttrArrayInt64(ResMgrHandle res_mgr, ConstNodeHandle op, const char *attr_name, int64_t values[],
+                             size_t value_num) {
+  if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  std::string attr_name_str(attr_name);
+  try {
+    auto prim = GetOpPrim(res_mgr, op);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto value = prim->GetAttr(attr_name_str);
+    MS_EXCEPTION_IF_NULL(value);
+    auto value_tuple = value->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(value_tuple);
+    auto value_list = value_tuple->value();
+    if (value_list.size() != value_num) {
+      MS_LOG(ERROR) << "Invalid input vector length, it should be: " << value_list.size() << ", but got: " << value_num;
+      return RET_ERROR;
+    }
+    for (size_t i = 0; i < value_num; i++) {
+      auto val_imm = value_list[i]->cast<Int64ImmPtr>();
+      values[i] = val_imm->value();
+    }
+    return RET_OK;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Get Attribute failed. Error info: " << e.what();
+    return RET_ERROR;
   }
 }
 
@@ -1377,4 +1541,254 @@ STATUS MSNodeGetName(ResMgrHandle res_mgr, ConstNodeHandle node, char str_buf[],
   }
   str_buf[valid_size] = '\0';
   return RET_OK;
+}
+
+// dynamic op / eager mode
+std::shared_ptr<InnerOpInfo> GenerateInnerInfo(ResMgrHandle res_mgr, const char *op_type, TensorHandle const inputs[],
+                                               size_t input_num, size_t output_num, const DynamicOpInfo &extra_info) {
+  MS_EXCEPTION_IF_NULL(op_type);
+  MS_EXCEPTION_IF_NULL(inputs);
+  std::vector<ValuePtr> src_inputs{};
+  std::vector<ShapeVector> out_shapes{};
+  std::vector<DataTypeC> out_dtypes{};
+  std::vector<std::pair<std::string, ValuePtr>> attrs_pair{};
+  for (size_t i = 0; i < input_num; i++) {
+    auto input = GetSrcPtr<ValuePtr>(res_mgr, inputs[i]);
+    if (input == nullptr) {
+      MS_LOG(EXCEPTION) << "Invalid input. Index: " << i;
+    }
+    (void)src_inputs.emplace_back(input);
+  }
+  if (extra_info.output_shapes != nullptr && extra_info.output_dtypes != nullptr) {
+    for (size_t i = 0; i < output_num; i++) {
+      MS_EXCEPTION_IF_NULL(extra_info.output_dims);
+      size_t dim = extra_info.output_dims[i];
+      ShapeVector out_shape{};
+      MS_EXCEPTION_IF_NULL(extra_info.output_shapes[i]);
+      for (size_t j = 0; j < dim; j++) {
+        (void)out_shape.emplace_back(extra_info.output_shapes[i][j]);
+      }
+      (void)out_shapes.emplace_back(out_shape);
+      (void)out_dtypes.emplace_back(extra_info.output_dtypes[i]);
+    }
+  }
+  for (size_t i = 0; i < extra_info.attr_num; i++) {
+    MS_EXCEPTION_IF_NULL(extra_info.attr_names[i]);
+    auto value = GetSrcPtr<ValuePtr>(res_mgr, extra_info.attr_values[i]);
+    if (value == nullptr) {
+      MS_LOG(ERROR) << "Get attribute's source pointer failed, attribute index: " << i;
+    }
+    (void)attrs_pair.emplace_back(std::make_pair(extra_info.attr_names[i], value));
+  }
+  return std::make_shared<InnerOpInfo>(op_type, src_inputs, out_shapes, out_dtypes, attrs_pair);
+}
+
+STATUS CheckExtraInfo(const DynamicOpInfo &extra_info) {
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(extra_info.attr_num < 0, RET_ERROR, "The attr_num must be non-zero!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(
+    extra_info.attr_num == 0 && (extra_info.attr_names != nullptr || extra_info.attr_values != nullptr), RET_ERROR,
+    "The attr_name and attr_values must be nullptr if attr_num is 0!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(
+    extra_info.attr_num != 0 && (extra_info.attr_names == nullptr || extra_info.attr_values == nullptr), RET_ERROR,
+    "The attr_name and attr_values must be specified if attr_num is non-negative!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(extra_info.output_dims != 0 && extra_info.output_shapes == nullptr, RET_ERROR,
+                               "The output_shapes must be not nullptr if output_dims is non-zero!");
+  return RET_OK;
+}
+
+STATUS OpRunInfoSetInputs(ResMgrHandle res_mgr, TensorHandle const inputs[], size_t input_num,
+                          FrontendOpRunInfoPtr op_run_info) {
+  auto prim = op_run_info->op_grad_info->op_prim;
+  MS_EXCEPTION_IF_NULL(prim);
+  op_run_info->input_size = input_num;
+  op_run_info->op_grad_info->input_value.resize(input_num);
+  for (size_t i = 0; i < input_num; i++) {
+    auto in_arg = GetSrcPtr<ValuePtr>(res_mgr, inputs[i]);
+    if (in_arg == nullptr) {
+      MS_LOG(ERROR) << "Invalid input. Index: " << i;
+      return RET_ERROR;
+    }
+    op_run_info->op_grad_info->input_value[i] = in_arg;
+  }
+  return RET_OK;
+}
+
+STATUS DynamicOpInfer(size_t output_num, FrontendOpRunInfoPtr op_run_info, const DynamicOpInfo &extra_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  // get abstract
+  op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    auto input_value = op_run_info->op_grad_info->input_value[i];
+    op_run_info->op_grad_info->input_abs[i] = input_value->ToAbstract();
+  }
+  // do infer
+  AbstractBasePtr out_abs = nullptr;
+  auto prim = op_run_info->op_grad_info->op_prim;
+  if (extra_info.output_shapes != nullptr && extra_info.output_dims != nullptr && extra_info.output_dtypes != nullptr) {
+    auto shape = BuildShape(extra_info.output_shapes, extra_info.output_dims, output_num);
+    auto type = BuildType(extra_info.output_dtypes, output_num);
+    out_abs = BuildAbstract(shape, type);
+  } else {
+    MS_LOG(INFO) << "Output shapes and dtypes info is not specified completely, using inner infer.";
+    prim->BeginRecordAddAttr();
+    out_abs = OpInferShapeAndType(prim, op_run_info->op_grad_info->input_abs);
+    prim->EndRecordAddAttr();
+  }
+  MS_EXCEPTION_IF_NULL(out_abs);
+  op_run_info->base_op_run_info.abstract = out_abs;
+  return RET_OK;
+}
+
+MindRTBackendPtr DynamicOpGetMindRTBackend(ResMgrHandle res_mgr, const string &cur_device_target, uint32_t device_id) {
+  auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
+  auto cached_backend = res_mgr_ptr->GetBackendFromCache(cur_device_target);
+  if (cached_backend != nullptr) {
+    return cached_backend;
+  } else {
+    std::lock_guard<std::mutex> guard(mindspore::pipeline::Resource::GetBackendInitMutex());
+    auto backend = std::make_shared<mindspore::compile::MindRTBackend>("ms", cur_device_target, device_id);
+    MS_EXCEPTION_IF_NULL(backend);
+    res_mgr_ptr->CacheBackend(cur_device_target, backend);
+    return backend;
+  }
+}
+
+ValuePtr DynamicOpRun(ResMgrHandle res_mgr, const FrontendOpRunInfoPtr &op_run_info) {
+  MS_LOG(DEBUG) << "DynamicOpRun start";
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  auto ms_context = mindspore::MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(mindspore::MS_CTX_DEVICE_ID);
+  ms_context->set_param<bool>(mindspore::MS_CTX_ENABLE_PYNATIVE_INFER, true);
+  mindspore::pynative::PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, nullptr);
+  // get graph info for checking it whether existing in the cache
+  op_run_info->base_op_run_info.graph_info = mindspore::pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(
+    op_run_info->base_op_run_info, op_run_info->op_grad_info->op_prim);
+  auto backend_op_run_info = std::make_shared<mindspore::BackendOpRunInfo>(
+    op_run_info->base_op_run_info, std::make_shared<mindspore::Primitive>(*op_run_info->op_grad_info->op_prim), true,
+    false);
+
+  mindspore::VectorRef outputs;
+  const auto &cur_mindrt_backend =
+    DynamicOpGetMindRTBackend(res_mgr, op_run_info->base_op_run_info.device_target, device_id);
+  MS_EXCEPTION_IF_NULL(cur_mindrt_backend);
+  py::scoped_interpreter py_scope;
+  if (op_run_info->base_op_run_info.use_dynamic_shape_process) {
+    mindspore::AnfAlgo::SetDynamicAttrToPrim(backend_op_run_info->op_prim);
+    cur_mindrt_backend->RunOpDynamic(backend_op_run_info, &outputs);
+  } else {
+    cur_mindrt_backend->RunOp(backend_op_run_info, &outputs);
+  }
+
+  if (op_run_info->base_op_run_info.has_dynamic_output) {
+    op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
+  }
+  bool is_out_sequence = (op_run_info->base_op_run_info.abstract == nullptr ||
+                          op_run_info->base_op_run_info.abstract->isa<mindspore::abstract::AbstractSequence>());
+  const auto &result = mindspore::pynative::PyNativeAlgo::DataConvert::VectorRefToValue(
+    outputs, op_run_info->requires_grad, is_out_sequence);
+  ms_context->set_param<bool>(mindspore::MS_CTX_ENABLE_PYNATIVE_INFER, false);
+  MS_LOG(DEBUG) << "DynamicOpRun end";
+  return result;
+}
+
+STATUS MSRunOpWithInfo(ResMgrHandle res_mgr, const char *op_type, TensorHandle const inputs[], size_t input_num,
+                       TensorHandle outputs[], size_t output_num, DynamicOpInfo extra_info) {
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(res_mgr == nullptr, RET_NULL_PTR, "Input Handle [res_mgr] is nullptr!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(inputs == nullptr, RET_NULL_PTR, "Input Handle [inputs] is nullptr!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(outputs == nullptr, RET_NULL_PTR, "Input Handle [outputs] is nullptr!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(input_num == 0, RET_NULL_PTR, "Input [input_num] must be non-zero!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(output_num == 0, RET_NULL_PTR, "Input [output_num] must be non-zero!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(CheckExtraInfo(extra_info) != RET_OK, RET_NULL_PTR, "Input [extra_info] is invalid!");
+  try {
+    auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
+    FrontendOpRunInfoPtr op_run_info = nullptr;
+    auto op_info = GenerateInnerInfo(res_mgr, op_type, inputs, input_num, output_num, extra_info);
+    auto cached_run_info = res_mgr_ptr->GetOpRunInfoFromCache(op_info);
+    if (cached_run_info != nullptr) {
+      op_run_info = cached_run_info;
+      // set inputs
+      auto ret = OpRunInfoSetInputs(res_mgr, inputs, input_num, op_run_info);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Dynamic Op set inputs failed.";
+        return RET_ERROR;
+      }
+    } else {
+      // create op_run_info
+      op_run_info = std::make_shared<mindspore::pynative::FrontendOpRunInfo>();
+      op_run_info->base_op_run_info.op_name = op_type;
+      op_run_info->requires_grad = false;
+      auto ms_context = mindspore::MsContext::GetInstance();
+      auto cur_target = ms_context->get_param<std::string>(mindspore::MS_CTX_DEVICE_TARGET);
+      op_run_info->base_op_run_info.device_target = cur_target;
+      // create prim
+      auto prim = std::make_shared<PrimitiveImpl>(op_type);
+      op_run_info->op_grad_info->op_prim = prim;
+      // set inputs
+      bool is_dynamic_shape =
+        op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.use_dynamic_shape_process;
+      mindspore::pynative::PyNativeAlgo::Common::GetConstInputToAttr(prim, op_type, cur_target, is_dynamic_shape,
+                                                                     &op_run_info->input_to_attr);
+      auto ret = OpRunInfoSetInputs(res_mgr, inputs, input_num, op_run_info);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Dynamic Op set inputs failed.";
+        return RET_ERROR;
+      }
+      // set args
+      if (extra_info.attr_names != nullptr && extra_info.attr_values != nullptr) {
+        ret = OpSetAttrs(res_mgr, prim, extra_info.attr_names, extra_info.attr_values, extra_info.attr_num);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Dynamic Op set attributes failed.";
+          return RET_ERROR;
+        }
+      }
+      // infer and set abstract
+      ret = DynamicOpInfer(output_num, op_run_info, extra_info);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Dynamic Op infer shape and type failed.";
+        return RET_ERROR;
+      }
+      // cache op run info
+      res_mgr_ptr->CacheOpRunInfo(op_info, op_run_info);
+    }
+
+    // run op
+    op_run_info->real_out = DynamicOpRun(res_mgr, op_run_info);
+    if (op_run_info->real_out->isa<ValueSequenceImpl>()) {
+      const auto &result_v_list = op_run_info->real_out->cast<ValueSequencePtr>();
+      if (result_v_list->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
+          !op_run_info->base_op_run_info.abstract->isa<mindspore::abstract::AbstractSequence>()) {
+        op_run_info->real_out = result_v_list->value().front();
+      }
+    }
+
+    // clear used input tensor
+    op_run_info->base_op_run_info.input_tensor.clear();
+    op_run_info->base_op_run_info.input_mask.clear();
+
+    // get output tensor
+    const std::vector<TensorPtr> &ref_outputs = ConvertOutputToTensor(op_run_info->real_out);
+    if (ref_outputs.size() != output_num) {
+      MS_LOG(ERROR) << "Invalid outputs number, it should be: " << ref_outputs.size() << ", but got: " << output_num;
+      return RET_ERROR;
+    }
+    for (size_t i = 0; i < output_num; i++) {
+      outputs[i] = GetRawPtr(res_mgr, ref_outputs[i]);
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Run op failed. Error info: " << e.what();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS MSRunOp(ResMgrHandle res_mgr, const char *op_type, TensorHandle const inputs[], size_t input_num,
+               TensorHandle outputs[], size_t output_num) {
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(res_mgr == nullptr, RET_NULL_PTR, "Input Handle [res_mgr] is nullptr!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(inputs == nullptr, RET_NULL_PTR, "Input Handle [inputs] is nullptr!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(outputs == nullptr, RET_NULL_PTR, "Input Handle [outputs] is nullptr!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(input_num == 0, RET_NULL_PTR, "Input [input_num] must be non-zero!");
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(output_num == 0, RET_NULL_PTR, "Input [output_num] must be non-zero!");
+  DynamicOpInfo extra_info = {NULL, NULL, 0, NULL, NULL, NULL};
+  return MSRunOpWithInfo(res_mgr, op_type, inputs, input_num, outputs, output_num, extra_info);
 }

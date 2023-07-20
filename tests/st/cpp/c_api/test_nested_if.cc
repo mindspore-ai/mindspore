@@ -17,13 +17,13 @@
 #include <string>
 #include <vector>
 #include "common/common_test.h"
-#include "c_api/include/graph.h"
-#include "c_api/include/node.h"
-#include "c_api/include/tensor.h"
-#include "c_api/include/context.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/include/attribute.h"
+#include "include/graph.h"
+#include "include/node.h"
+#include "include/tensor.h"
+#include "include/context.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
+#include "include/value.h"
 
 class TestNestedIf : public ST::Common {
  public:
@@ -68,7 +68,7 @@ GraphHandle BuildTrueGraph(ResMgrHandle res_mgr, NodeHandle x, NodeHandle a, Nod
   GraphHandle sub_fg_true = MSFuncGraphCreate(res_mgr);
   NodeHandle input_nodes_1[] = {x, a};
   NodeHandle new_x = MSNewOp(res_mgr, sub_fg_true, "Add", input_nodes_1, 2, NULL, NULL, 0);
-  NodeHandle n = MSNewScalarConstantInt32(res_mgr, 100);
+  NodeHandle n = MSNewConstantScalarInt32(res_mgr, 100);
   NodeHandle input_nodes_2[] = {new_x, n};
   NodeHandle cond = MSNewOp(res_mgr, sub_fg_true, "Greater", input_nodes_2, 2, NULL, NULL, 0);
   GraphHandle nested_fg_true = BuildNestedTrueGraph(res_mgr, true_ret);
@@ -111,9 +111,9 @@ TEST_F(TestNestedIf, TestNestedIf) {
   ASSERT_TRUE(x != nullptr);
   NodeHandle m = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(m != nullptr);
-  NodeHandle true_ret = MSNewScalarConstantInt32(res_mgr, 1);
+  NodeHandle true_ret = MSNewConstantScalarInt32(res_mgr, 1);
   ASSERT_TRUE(true_ret != nullptr);
-  NodeHandle false_ret = MSNewScalarConstantInt32(res_mgr, 0);
+  NodeHandle false_ret = MSNewConstantScalarInt32(res_mgr, 0);
   ASSERT_TRUE(false_ret != nullptr);
   NodeHandle input_nodes_1[] = {x, m};
   NodeHandle cond = MSNewOp(res_mgr, fg, "Greater", input_nodes_1, 2, NULL, NULL, 0);

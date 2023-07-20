@@ -17,13 +17,13 @@
 #include <string>
 #include <vector>
 #include "common/common_test.h"
-#include "c_api/include/graph.h"
-#include "c_api/include/node.h"
-#include "c_api/include/tensor.h"
-#include "c_api/include/context.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/include/attribute.h"
+#include "include/graph.h"
+#include "include/node.h"
+#include "include/tensor.h"
+#include "include/context.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
+#include "include/value.h"
 
 class TestCustomOp : public ST::Common {
  public:
@@ -72,10 +72,10 @@ TEST_F(TestCustomOp, TestCPUAotCustomOp) {
   // setting custom info
   CustomOpInfo info;
   const char *input_name[] = {"x1", "x2"};
-  info.input_name = input_name;
+  info.input_names = input_name;
   info.input_num = 2;
   const char *output_name[] = {"y"};
-  info.output_name = output_name;
+  info.output_names = output_name;
   info.output_num = 1;
   DTypeFormat dtype_format_1[] = {None_None, None_None, None_None};
   DTypeFormat dtype_format_2[] = {F32_None, F32_None, F32_None};
@@ -83,12 +83,12 @@ TEST_F(TestCustomOp, TestCPUAotCustomOp) {
   info.dtype_formats = dtype_format;
   info.dtype_formats_num = 2;
   const char *attr_name[] = {"scale", "paddings"};
-  info.attr_name = attr_name;
-  AttrHandle scale = MSNewAttrFloat32(res_mgr, 0.7f);
+  info.attr_names = attr_name;
+  ValueHandle scale = MSNewValueFloat32(res_mgr, 0.7f);
   float pad[] = {2, 2};
-  AttrHandle paddings = MSNewAttrArray(res_mgr, pad, 2, MS_FLOAT32);
-  AttrHandle attrs[] = {scale, paddings};
-  info.attr_value = attrs;
+  ValueHandle paddings = MSNewValueArray(res_mgr, pad, 2, MS_FLOAT32);
+  ValueHandle attrs[] = {scale, paddings};
+  info.attr_values = attrs;
   info.attr_num = 2;
   info.target = "CPU";
   info.func_type = "aot";
@@ -103,7 +103,7 @@ TEST_F(TestCustomOp, TestCPUAotCustomOp) {
   ASSERT_TRUE(fg != nullptr);
   NodeHandle x = MSNewPlaceholder(res_mgr, fg, MS_FLOAT32, NULL, 0);
   ASSERT_TRUE(x != nullptr);
-  NodeHandle y = MSNewScalarConstantFloat32(res_mgr, 10);
+  NodeHandle y = MSNewConstantScalarFloat32(res_mgr, 10);
   ASSERT_TRUE(y != nullptr);
   NodeHandle input_nodes[] = {x, y};
   NodeHandle op = MSNewCustomOp(res_mgr, fg, input_nodes, 2, info);

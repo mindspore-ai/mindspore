@@ -16,6 +16,7 @@
 
 #include "c_api/include/context.h"
 #include "c_api/src/common.h"
+#include "c_api/src/utils.h"
 #include "c_api/src/resource_manager.h"
 #include "utils/ms_context.h"
 
@@ -89,13 +90,13 @@ void MSSetDeviceId(uint32_t deviceId) {
   context->set_param<std::uint32_t>(mindspore::MS_CTX_DEVICE_ID, deviceId);
 }
 
-void MSSetGraphsSaveMode(int save_mode) {
+void MSSetIRGraphsSaveMode(int save_mode) {
   MS_LOG(DEBUG) << "Set Graphs Save Mode: " << save_mode;
   auto context = mindspore::MsContext::GetInstance();
   context->set_param<int>(mindspore::MS_CTX_SAVE_GRAPHS_FLAG, save_mode);
 }
 
-void MSSetGraphsSavePath(const char *save_path) {
+void MSSetIRGraphsSavePath(const char *save_path) {
   MS_LOG(DEBUG) << "Set Graphs Save Path: " << save_path;
   auto context = mindspore::MsContext::GetInstance();
   context->set_param<std::string>(mindspore::MS_CTX_SAVE_GRAPHS_PATH, save_path);
@@ -108,6 +109,7 @@ void MSSetInfer(ResMgrHandle res_mgr, bool infer) {
 }
 
 bool MSGetInfer(ResMgrHandle res_mgr) {
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(res_mgr == nullptr, false, "Input Handle [res_mgr] is nullptr!");
   auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
   return res_mgr_ptr->GetInfer();
 }
