@@ -186,6 +186,22 @@ CNodePtr GetAddedNode(const FuncGraphPtr &jit_forward_graph) {
   constexpr size_t added_output_index = 2;
   return merge_make_tuple->input(added_output_index)->cast<CNodePtr>();
 }
+
+bool IsGraphDynamic(const FuncGraphPtr &func_graph) {
+  for (const auto &param : func_graph->parameters()) {
+    if (param->isa<Parameter>() && !param->cast<ParameterPtr>()->has_default()) {
+      const auto &abs = param->abstract();
+      if (abs != nullptr && abs->BuildShape()->IsDynamic()) {
+        return true;
+      }
+    }
+  }
+  MS_EXCEPTION_IF_NULL(func_graph->output());
+  if (auto abs = func_graph->output()->abstract(); abs != nullptr && abs->BuildShape()->IsDynamic()) {
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 void Jit::RunReplace(const CNodePtr &added_node, const ValuePtrList &total_output_tensors) const {
@@ -496,7 +512,7 @@ FuncGraphPtr Jit::GetJitForwardGraphCNodeInfo(const FuncGraphPtr &jit_forward_gr
     jit_compile_info_[graph_phase_].is_control_flow_ = true;
     return nullptr;
   }
-  if (auto abs = jit_forward_graph->output()->abstract(); abs != nullptr && abs->BuildShape()->IsDynamic()) {
+  if (IsGraphDynamic(jit_forward_graph)) {
     MS_LOG(DEBUG) << "Get dynamic shape";
     jit_compile_info_[graph_phase_].is_dynamic_shape_ = true;
     return nullptr;
