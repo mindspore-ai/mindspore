@@ -485,15 +485,7 @@
         为Cell设置编译时所使用的JitConfig配置项。
 
         参数：
-            - **jit_config** (JitConfig) - Cell的Jit配置信息。目前支持下面两个配置项。
-
-              - **jit_level** (str) - 用于设置优化图的'level'参数。取值范围[ ``'O0'``、 ``'O1'`` 、 ``'O2'`` ]。默认值： ``'O1'`` 。
-
-                - ``'O0'``：基本优化。
-                - ``'O1'``：手动优化。
-                - ``'O2'``：手动优化和图算融合。
-
-              - **task_sink** (bool) - 是否通过数据集方式传递数据。默认值： ``True`` 。
+            - **jit_config** (JitConfig) - Cell的Jit配置信息。详情请参考 :class:`mindspore.JitConfig` 。
 
     .. py:method:: set_param_ps(recurse=True, init_in_server=False)
 

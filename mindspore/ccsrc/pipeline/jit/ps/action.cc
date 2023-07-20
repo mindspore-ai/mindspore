@@ -56,6 +56,7 @@
 #include "frontend/expander/pack/packfunc.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
+#include "utils/phase.h"
 #include "backend/graph_compiler/transform.h"
 #include "load_mindir/infer_mindir.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -1126,7 +1127,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
 
   auto jit_level = pipeline::GetJitLevel();
   func_graph->set_attr(kAttrJitLevel, MakeValue<std::string>(jit_level));
-  graphkernel::GraphKernelFlags::SaveJitConfig(pipeline::GraphExecutorPy::GetInstance()->jit_config());
+  graphkernel::GraphKernelFlags::SaveJitConfig(PhaseManager::GetInstance().jit_config());
 
   const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
 

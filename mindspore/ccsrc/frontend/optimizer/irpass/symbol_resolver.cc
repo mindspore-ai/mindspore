@@ -18,6 +18,7 @@
 
 #include <string>
 #include <memory>
+#include "include/common/fallback.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "pipeline/jit/ps/fallback.h"
@@ -74,7 +75,7 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     // {prim::kPrimSetAttr, {prim::kPrimResolve, namespace, symbol}, attr, assigned}
     if (IsPrimitiveCNode(target_node, prim::kPrimResolve)) {
       // 'node' is setattr node.
-      const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+      const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
       if (!allow_fallback_runtime) {
         MS_LOG(EXCEPTION) << "Not support setattr during JIT Fallback disabled.";
       }

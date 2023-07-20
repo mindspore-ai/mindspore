@@ -3286,7 +3286,7 @@ bool Parser::HandleAssignClassParameterMember(const FunctionBlockPtr &block, con
   MS_EXCEPTION_IF_NULL(target_node);
 
   if (!IsClassParameterMember(target, target_node)) {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
     if (!allow_fallback_runtime) {
       auto attr_name = target.attr("attr").cast<std::string>();
       std::string var_name = "self." + attr_name;

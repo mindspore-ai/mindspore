@@ -28,6 +28,7 @@ namespace fallback {
 COMMON_EXPORT bool HasPyExecuteOutput();
 COMMON_EXPORT py::object PopPyExecuteOutput();
 COMMON_EXPORT void PushPyExecuteOutput(const py::object &output);
+COMMON_EXPORT int GetJitSyntaxLevel();
 COMMON_EXPORT bool CheckListValid(const py::list &obj, bool to_raw_memory);
 COMMON_EXPORT bool CheckListToMemory(const py::list &obj);
 COMMON_EXPORT abstract::AbstractListPtr GenerateAbstractList(const BaseShapePtr &base_shape, const TypePtr &type,

@@ -26,6 +26,7 @@
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 #include "abstract/dshape.h"
+#include "include/common/fallback.h"
 #include "include/common/pybind_api/api_register.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "frontend/operator/ops.h"
@@ -282,7 +283,7 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
 }
 
 FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_abs_list) {
-  const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   bool has_any =
     std::any_of(args_abs_list.begin(), args_abs_list.end(), [](const TypePtr &type) { return type->isa<AnyType>(); });
   if (allow_fallback_runtime && has_any) {

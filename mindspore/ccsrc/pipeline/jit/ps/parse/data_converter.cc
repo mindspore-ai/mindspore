@@ -27,6 +27,7 @@
 #include "ir/cell.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
+#include "include/common/fallback.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils_py.h"
 
@@ -475,7 +476,7 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
     if (obj_type == RESOLVE_TYPE_FUNCTION || obj_type == RESOLVE_TYPE_METHOD) {
       // Check JIT forbidden API
       CheckJITForbiddenAPI(obj);
-      const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+      const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
       if (allow_fallback_runtime) {
         // Check if the function is from a third-party library.
         py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);

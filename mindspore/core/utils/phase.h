@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <map>
 #include "mindapi/base/macros.h"
 
 namespace mindspore {
@@ -49,9 +50,20 @@ class MS_CORE_API PhaseManager {
   /// \brief Clear the phase by set an empty string.
   void ClearPhase() { phase_ = ""; }
 
+  /// \brief Set jit config.
+  ///
+  /// \param[in] The current jit config.
+  void set_jit_config(const std::map<std::string, std::string> &jit_config) { jit_config_ = jit_config; }
+
+  /// \brief Get the current jit config.
+  ///
+  /// \return The current jit config.
+  const std::map<std::string, std::string> &jit_config() const { return jit_config_; }
+
  private:
   PhaseManager() = default;
   std::string phase_ = "";
+  std::map<std::string, std::string> jit_config_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_PHASE_H_

@@ -37,6 +37,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/symbol_resolver.h"
+#include "include/common/fallback.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "utils/log_adapter.h"
 
@@ -298,7 +299,7 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
   bool interpret_without_internal =
     (IsPrimitiveCNode(origin_node, prim::kPrimPyInterpret) && !origin_node->interpret_internal_type()) ||
     origin_node->interpret();
-  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
   MS_EXCEPTION_IF_NULL(convert_result);
   if (allow_fallback_runtime) {
     AnfNodePtr interpreted_output = ConvertInterpretedObjForResolve(origin_node, convert_result, func_graph);

@@ -1585,7 +1585,7 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
     data_id_str = class_val->name();
   }
   if (!data_value->isa<parse::NameSpace>()) {
-    static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
     if (!allow_fallback_runtime) {
       MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << data_value->ToString()
                               << "\nThe first argument should be a NameSpace, but got " << data->ToString();
@@ -1739,7 +1739,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
       constexpr auto max_args_len = 3;
       bool has_default = (args_abs_list.size() == max_args_len);
       if (!has_default) {
-        static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+        const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
         if (!allow_fallback_runtime) {
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
         }
@@ -1875,7 +1875,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     MS_LOG(INTERNAL_EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 
-  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
   if (!allow_fallback_runtime && data_args->isa<abstract::AbstractScalar>()) {
     ValuePtr data_value = data_args->BuildValue();
     MS_EXCEPTION_IF_NULL(data_value);
@@ -2420,7 +2420,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION_IF_NULL(name);
       auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
       if (local_abs_val == kValueAny) {
-        static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+        const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
         if (allow_fallback_runtime) {
           MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script
                        << "', the inputs should be constant, but found variable '" << py_data_name

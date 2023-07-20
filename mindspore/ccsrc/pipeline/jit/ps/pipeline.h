@@ -79,7 +79,6 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   py::object Run(const py::tuple &args, const py::object &phase);
 
   const std::string &phase() const { return phase_; }
-  const std::map<std::string, std::string> &jit_config() const { return jit_config_; }
   void SaveCompiledGraph(const std::string &phase);
   void ConvertArgs(const py::tuple &args, const py::dict &kwargs, bool is_auto_parallel,
                    abstract::AbstractBasePtrList *args_abs, std::vector<ValuePtr> *arguments);
@@ -167,7 +166,6 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   std::string phase_{""};
   std::string source_{""};
   std::string obj_desc_{""};
-  std::map<std::string, std::string> jit_config_;
   std::map<std::string, size_t> phase_to_num_op_info_;
   std::string queue_name_;
   bool enable_tuple_broaden_{false};

@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ class JitConfig:
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        jit_level (str): Option for argument `level` for Optimization of lift graph.
+        jit_level (str, optional): Option for argument `level` for Optimization of lift graph.
             Supports ["O0", "O1", "O2", "O3"]. Default: ``"O1"`` .
 
             - "O0": Basic optimization.
@@ -31,11 +31,20 @@ class JitConfig:
             - "O2": Manual optimization and graph computation fusion.
             - "O3": Performance optimization, no generalization guaranteed.
 
-        exc_mode (str): Mode for execute the network. Supports ["auto", "sink", "no_sink"]. Default: ``"auto"`` .
+        exc_mode (str, optional): Mode for execute the network.
+            Supports ["auto", "sink", "no_sink"]. Default: ``"auto"`` .
 
             - "auto": Automatic Policies.
             - "sink": Build computational graphs with the sink mode.
             - "no_sink": Build computational graphs with no sink mode.
+
+        jit_syntax_level (str, optional): JIT syntax level for graph compiling.
+            Supports ["STRICT", "LAX"]. Default to an empty string, which means ignore this option.
+            Default: ``""`` .
+
+            - "STRICT": Only basic syntax is supported, and execution performance is optimal.
+            - "LAX": Compatible with all Python syntax as much as possible. However, execution performance may be
+              affected and not optimal.
 
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
 
@@ -50,11 +59,14 @@ class JitConfig:
         >>>
         >>> net.set_jit_config(jitconfig)
     """
-    def __init__(self, jit_level="O1", exc_mode="auto", **kwargs):
+    def __init__(self, jit_level="O1", exc_mode="auto", jit_syntax_level="", **kwargs):
         if jit_level not in ["O0", "O1", "O2", "O3"]:
             raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2', 'O3'].")
         if exc_mode not in ['auto', 'sink', 'no_sink']:
             raise ValueError("For 'exc_mode' must be one of '['auto', 'sink', 'no_sink']'.")
+        if jit_syntax_level != "" and jit_syntax_level not in ['STRICT', 'COMPATIBLE', 'LAX']:
+            raise ValueError("For 'jit_syntax_level' must be one of '['STRICT', 'LAX']'.")
         self.jit_config_dict = kwargs
         self.jit_config_dict["jit_level"] = jit_level
         self.jit_config_dict["exc_mode"] = exc_mode
+        self.jit_config_dict["jit_syntax_level"] = jit_syntax_level

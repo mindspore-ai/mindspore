@@ -33,6 +33,7 @@ import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
+from mindspore.common.jit_config import JitConfig
 from mindspore.common.tensor import Tensor as PythonTensor
 from mindspore.common.sparse_tensor import CSRTensor as PythonCSRTensor
 from mindspore.common.sparse_tensor import COOTensor as PythonCOOTensor
@@ -594,6 +595,12 @@ class _MindsporeFunctionExecutor:
         self._set_compile_cache_dep_files()
         if self.jit_config_dict:
             self._graph_executor.set_jit_config(self.jit_config_dict)
+        else:
+            jit_config_dict = JitConfig().jit_config_dict
+            enable_ge = os.getenv("MS_ENABLE_GE") == "1"
+            if enable_ge:
+                jit_config_dict["jit_level"] = "O3"
+            self._graph_executor.set_jit_config(jit_config_dict)
 
         if self.obj is None:
             is_compile = self._graph_executor.compile(self.fn, compile_args, kwargs, phase, True)
@@ -1616,6 +1623,11 @@ class _CellGraphExecutor:
             obj.add_flags(ge_init=True)
         self._graph_executor.set_weights_values(obj.parameters_dict())
         if jit_config_dict:
+            self._graph_executor.set_jit_config(jit_config_dict)
+        else:
+            jit_config_dict = JitConfig().jit_config_dict
+            if enable_ge:
+                jit_config_dict["jit_level"] = "O3"
             self._graph_executor.set_jit_config(jit_config_dict)
         result = self._graph_executor.compile(obj, args, kwargs, phase, self._use_vm_mode())
         obj.compile_cache.add(phase)
