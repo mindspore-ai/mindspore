@@ -552,8 +552,9 @@ int MatmulBasePrepare(struct KernelBase *self) {
   NNACL_CHECK_FALSE(matmul->base_.in_[SECOND_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_INPUT_TENSOR_ERROR);
 
   if (matmul->base_.in_size_ == THREE_TENSOR) {
-    NNACL_CHECK_FALSE(matmul->base_.in_[THIRD_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_MATMUL_BIAS_INVALID);
-    NNACL_CHECK_FALSE(self->in_[THIRD_INPUT]->data_ == NULL, NNACL_MATMUL_BIAS_INVALID);
+    NNACL_CHECK_TRUE_RET(matmul->base_.in_[THIRD_INPUT]->data_type_ == kNumberTypeFloat32, NNACL_MATMUL_BIAS_INVALID);
+    NNACL_CHECK_TRUE_RET(IsConst(self->in_[THIRD_INPUT]) || matmul->matrix_c_.origin_ptr_ != NULL,
+                         NNACL_MATMUL_BIAS_INVALID);
   }
 
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);

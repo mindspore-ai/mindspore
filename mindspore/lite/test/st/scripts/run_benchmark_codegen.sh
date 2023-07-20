@@ -1,5 +1,6 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
+echo "Running mslite test script : run_benchmark_codegen.sh"
 
 function Run_x86_codegen() {
     # $1:buildPath $2:modelPath $3:models_list $4:logFile $5:resultFile $6:micro_cofig $7:parallel_flag
