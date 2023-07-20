@@ -1,0 +1,10 @@
+pytest_path: XXX ${HOME}/miniconda3/envs/py3.7/bin/pytest
+python_path: XXX ${HOME}/miniconda3/envs/py3.7/bin/python3
+extend_envs: XXX export PATH=${HOME}/miniconda3/envs/py3.7/bin:${PATH}; export PYTHONPATH=${HOME}/workspace/mindspore/:${PYTHONPATH}
+run_path: /tmp/ms-run-st/run
+log_path: /tmp/ms-run-st/log
+virtualenv:
+  device_env_var_name: DEVICE_ID
+  device_ids:
+    - 0
+  overall_networks: true

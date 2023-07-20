@@ -1,0 +1,17 @@
+all_case_type:
+  platform_x86_ascend_training: ASCEND_X86_EULEROS, ASCEND_X86_UBUNTU
+  platform_arm_ascend_training: ASCEND_ARM_EULEROS
+  platform_x86_ascend_inference: ASCEND_X86_EULEROS, ASCEND_X86_UBUNTU
+  platform_arm_ascend_inference: ASCEND_ARM_EULEROS
+  platform_x86_gpu_training: GPU_X86_UBUNTU_CUDA10,GPU_X86_UBUNTU_CUDA11
+  platform_x86_gpu_inference: GPU_X86_UBUNTU_CUDA10,GPU_X86_UBUNTU_CUDA11
+  platform_x86_cpu: CPU_X86_UBUNTU
+
+case_type:
+  platform_x86_ascend_training: ASCEND_X86_EULEROS, ASCEND_X86_UBUNTU
+  platform_arm_ascend_training: ASCEND_ARM_EULEROS
+  platform_x86_ascend_inference: ASCEND_X86_EULEROS, ASCEND_X86_UBUNTU
+  platform_arm_ascend_inference: ASCEND_ARM_EULEROS
+  platform_x86_gpu_training: GPU_X86_UBUNTU_CUDA10,GPU_X86_UBUNTU_CUDA11
+  platform_x86_gpu_inference: GPU_X86_UBUNTU_CUDA10,GPU_X86_UBUNTU_CUDA11
+  platform_x86_cpu: CPU_X86_UBUNTU
