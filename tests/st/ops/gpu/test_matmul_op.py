@@ -175,3 +175,33 @@ def test_matmul_tensor_core(mode):
     out_ms_tf32 = P.MatMul()(x_ms, y_ms).asnumpy()
 
     assert np.abs(out_ms_fp32 - out_ms_tf32).mean() < 0.005
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_matmul_dtypes():
+    """
+    Feature: Test matmul dtypes.
+    Description: Test matmul dtypes for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    m = 3
+    n = 3
+    k = 4
+    x_np = np.random.randn(m * k).astype(np.float32)
+    y_np = np.random.randn(k * n).astype(np.float32)
+    x_np.shape = m, k
+    y_np.shape = k, n
+    matmul = P.MatMul()
+    valid_dtypes = (mstype.float16, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128)
+    all_dtypes = mstype.all_types
+    for dtype in all_dtypes:
+        x_ms = Tensor(x_np).astype(dtype)
+        y_ms = Tensor(y_np).astype(dtype)
+        if dtype in valid_dtypes:
+            matmul(x_ms, y_ms)
+        else:
+            with pytest.raises(TypeError):
+                matmul(x_ms, y_ms)
