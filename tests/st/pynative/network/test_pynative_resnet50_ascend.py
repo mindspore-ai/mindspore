@@ -48,9 +48,11 @@ os.environ['GLOG_v'] = str(2)
 os.environ['ASCEND_GLOBAL_LOG_LEVEL'] = str(3)
 os.environ['ASCEND_GLOBAL_EVENT_ENABLE'] = str(0)
 
+
 class MyTimeMonitor(Callback):
     def __init__(self, data_size):
         super(MyTimeMonitor, self).__init__()
+        self.step_time = time.time()
         self.data_size = data_size
         self.total = 0
 
@@ -199,7 +201,7 @@ class ResidualBlockWithDown(nn.Cell):
         self.bn3 = bn_with_initialize_last(out_channels)
 
         self.relu = P.ReLU()
-        self.downSample = down_sample
+        self.downsample = down_sample
 
         self.conv_down_sample = conv1x1(in_channels, out_channels, stride=stride, padding=0)
         self.bn_down_sample = bn_with_initialize(out_channels)

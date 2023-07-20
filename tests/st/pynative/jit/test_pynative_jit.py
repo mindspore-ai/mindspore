@@ -27,7 +27,7 @@ context.set_context(mode=context.PYNATIVE_MODE)
 
 
 @jit
-def ConvBnReLU(x):
+def conv_bn_relu(x):
     conv = nn.Conv2d(1, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
     bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
     relu = nn.ReLU()
@@ -45,12 +45,17 @@ def ConvBnReLU(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_call_single_func():
+    """
+    Feature: Jit
+    Description: Jit call single func
+    Expectation: The calculation result is correct.
+    """
     inputs = Tensor(np.ones([1, 1, 2, 2]).astype(np.float32))
-    out = ConvBnReLU(inputs)
+    out = conv_bn_relu(inputs)
     assert np.allclose(out[0][0][0][0].asnumpy(), 3.9999797, 0.0001, 0.0001)
     assert np.allclose(out[0][1][0][0].asnumpy(), 3.9999797, 0.0001, 0.0001)
     grad = P.GradOperation(get_all=True, get_by_list=True, sens_param=False)
-    out_grad = grad(ConvBnReLU)(inputs)
+    out_grad = grad(conv_bn_relu)(inputs)
     assert np.allclose(out_grad[0][0][0][0][0][0].asnumpy(), 1.99998, 0.0001, 0.0001)
 
 
@@ -75,6 +80,11 @@ class CellConvBnReLU(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_call_single_cell():
+    """
+    Feature: Jit
+    Description: Jit call single cell
+    Expectation: The calculation result is correct.
+    """
     inputs = Tensor(np.ones([1, 1, 2, 2]).astype(np.float32))
     # run forward
     net = CellConvBnReLU()
@@ -132,6 +142,11 @@ class CellCallSingleCell(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cell_call_cell():
+    """
+    Feature: Jit
+    Description: Jit cell call cell
+    Expectation: The calculation result is correct.
+    """
     inputs = Tensor(np.ones([1, 1, 2, 2]).astype(np.float32))
     # run forward
     net = CellCallSingleCell()
@@ -187,6 +202,11 @@ class CallSameFunc(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_call_same_func():
+    """
+    Feature: Jit
+    Description: Jit cell call same cell
+    Expectation: The calculation result is correct.
+    """
     inputs = Tensor(np.ones([1, 1, 2, 2]).astype(np.float32))
     # run forward
     net = CallSameFunc()
@@ -217,8 +237,13 @@ def test_call_same_func():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function():
-    class MsFunctionCell(nn.Cell):
+def test_pynative_jit():
+    """
+    Feature: Jit
+    Description: Jit call
+    Expectation: The calculation result is correct.
+    """
+    class JitCell(nn.Cell):
         def __init__(self):
             super().__init__()
             self.param = Parameter(Tensor(1, ms.float32))
@@ -241,10 +266,10 @@ def test_pynative_ms_function():
     class NetB(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.ms_function_net = MsFunctionCell()
+            self.jit_net = JitCell()
 
         def construct(self, x):
-            x = self.ms_function_net(x)
+            x = self.jit_net(x)
             x = x + x
             return x
 
@@ -272,21 +297,21 @@ def test_pynative_ms_function():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function_mix_execute():
+def test_pynative_jit_mix_execute():
     """
-    Feature: PyNative ms_function.
-    Description: Mixed execution of PyNative and ms_function.
+    Feature: PyNative jit.
+    Description: Mixed execution of PyNative and jit.
     Expectation: The calculation result is correct.
     """
 
     class Net(nn.Cell):
         @jit
-        def test_ms_function(self, x, y):
+        def test_jit(self, x, y):
             return x * y
 
         def construct(self, x, y):
             z = x * y
-            return self.test_ms_function(z, x)
+            return self.test_jit(z, x)
 
     net = Net()
     a = Tensor(2)
@@ -301,10 +326,10 @@ def test_pynative_ms_function_mix_execute():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function_empty_graph():
+def test_pynative_jit_empty_graph():
     """
-    Feature: PyNative ms_function.
-    Description: Empty ms_function graph.
+    Feature: PyNative jit.
+    Description: Empty jit graph.
     Expectation: The calculation result is correct.
     """
 
@@ -335,10 +360,10 @@ def test_pynative_ms_function_empty_graph():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function_control_flow_if_break():
+def test_pynative_jit_control_flow_if_break():
     """
-    Feature: PyNative ms_function.
-    Description: PyNative ms_function with control flow.
+    Feature: PyNative jit.
+    Description: PyNative jit with control flow.
     Expectation: The calculation result is correct.
     """
 
@@ -376,10 +401,10 @@ def test_pynative_ms_function_control_flow_if_break():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function_with_dynamic_shape():
+def test_pynative_jit_with_dynamic_shape():
     """
-    Feature: PyNative ms_function.
-    Description: PyNative ms_function with dynamic shape.
+    Feature: PyNative jit.
+    Description: PyNative jit with dynamic shape.
     Expectation: The calculation result is correct.
     """
 
@@ -398,10 +423,10 @@ def test_pynative_ms_function_with_dynamic_shape():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function_with_tuple_inputs():
+def test_pynative_jit_with_tuple_inputs():
     """
-    Feature: PyNative ms_function.
-    Description: PyNative ms_function with tuple inputs.
+    Feature: PyNative jit.
+    Description: PyNative jit with tuple inputs.
     Expectation: The calculation result is correct.
     """
 
@@ -430,10 +455,10 @@ def test_pynative_ms_function_with_tuple_inputs():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function_with_optional_inputs():
+def test_pynative_jit_with_optional_inputs():
     """
-    Feature: PyNative ms_function.
-    Description: PyNative ms_function with optional inputs.
+    Feature: PyNative jit.
+    Description: PyNative jit with optional inputs.
     Expectation: The calculation result is correct.
     """
 
@@ -454,10 +479,10 @@ def test_pynative_ms_function_with_optional_inputs():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function_with_args_inputs():
+def test_pynative_jit_with_args_inputs():
     """
-    Feature: PyNative ms_function.
-    Description: PyNative ms_function with *args.
+    Feature: PyNative jit.
+    Description: PyNative jit with *args.
     Expectation: The calculation result is correct.
     """
 
@@ -475,10 +500,10 @@ def test_pynative_ms_function_with_args_inputs():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_ms_function_with_kwargs_inputs():
+def test_pynative_jit_with_kwargs_inputs():
     """
-    Feature: PyNative ms_function.
-    Description: PyNative ms_function with **kwargs.
+    Feature: PyNative jit.
+    Description: PyNative jit with **kwargs.
     Expectation: Raise expected exception
     """
 

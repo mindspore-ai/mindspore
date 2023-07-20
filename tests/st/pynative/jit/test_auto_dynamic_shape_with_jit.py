@@ -17,11 +17,12 @@ import platform
 import numpy as np
 import pytest
 
-import mindspore as ms
 from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor
 from mindspore import jit
+
+context.set_context(mode=context.PYNATIVE_MODE)
 
 
 class NetInner(nn.Cell):
@@ -32,6 +33,7 @@ class NetInner(nn.Cell):
         self.addn = ops.AddN()
         self.relu = nn.ReLU()
 
+    @jit
     def construct(self, x, y):
         x = self.addn((x, y))
         x = self.log(x)
@@ -59,6 +61,25 @@ class Net(nn.Cell):
         return x
 
 
+class NetOuter(nn.Cell):
+    def __init__(self):
+        super(NetOuter, self).__init__()
+        self.log = ops.Log()
+        self.exp = ops.Exp()
+        self.addn = ops.AddN()
+        self.relu = nn.ReLU()
+        self.inner = NetInner()
+
+    @jit
+    def construct(self, x, y):
+        x = self.addn((x, y))
+        x = self.inner(x, y)
+        x = self.log(x)
+        x = self.exp(x)
+        x = self.relu(x)
+        return x
+
+
 class CmpNetInner(nn.Cell):
     def __init__(self):
         super(CmpNetInner, self).__init__()
@@ -75,16 +96,6 @@ class CmpNetInner(nn.Cell):
         x = self.relu(x)
         x = self.addn((x, y))
         return x
-
-
-@jit
-def cmp_func_inner(x, y):
-    x = ops.AddN()((x, y))
-    x = ops.Log()(x)
-    x = ops.Exp()(x)
-    x = nn.ReLU()(x)
-    x = ops.AddN()((x, y))
-    return x
 
 
 class CmpNet(nn.Cell):
@@ -105,21 +116,47 @@ class CmpNet(nn.Cell):
         return x
 
 
-class CmpFunc(nn.Cell):
-    def __init__(self):
-        super(CmpFunc, self).__init__()
-        self.log = ops.Log()
-        self.exp = ops.Exp()
-        self.addn = ops.AddN()
-        self.relu = nn.ReLU()
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_auto_dynamic_shape_with_inner_jit():
+    """
+    Feature: PyNative auto dynamic shape.
+    Description: The static shape is automatically converted to a dynamic shape.
+    Expectation: The calculation result is correct.
+    """
+    if platform.system() == 'Windows':
+        return
 
-    def construct(self, x, y):
-        x = self.addn((x, y))
-        x = cmp_func_inner(x, y)
-        x = self.log(x)
-        x = self.exp(x)
-        x = self.relu(x)
-        return x
+    net = Net()
+    grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=True)
+
+    # run first shape
+    input_x = Tensor(np.random.rand(2, 3, 6, 8).astype(np.float32) * 2)
+    input_y = Tensor(np.random.rand(2, 3, 6, 8).astype(np.float32) * 5)
+    out = net(input_x, input_y)
+    _ = grad_op(net)(input_x, input_y, out)
+
+    # run second shape
+    input_x2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 2)
+    input_y2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 5)
+    out = net(input_x2, input_y2)
+    _ = grad_op(net)(input_x2, input_y2, out)
+
+    # run third shape
+    input_x3 = Tensor(np.random.rand(2, 3, 6, 34).astype(np.float32) * 2)
+    input_y3 = Tensor(np.random.rand(2, 3, 6, 34).astype(np.float32) * 5)
+    out = net(input_x3, input_y3)
+    grad = grad_op(net)(input_x3, input_y3, out)
+
+    cmp_net = CmpNet()
+    cmp_out = cmp_net(input_x3, input_y3)
+    cmp_grad = grad_op(cmp_net)(input_x3, input_y3, cmp_out)
+    assert np.allclose(grad[0].asnumpy(), cmp_grad[0].asnumpy(), 0.00001, 0.00001)
+    assert np.allclose(grad[1].asnumpy(), cmp_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level0
@@ -128,45 +165,38 @@ class CmpFunc(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_dyn_shape_inner_ms_function():
+def test_pynative_auto_dynamic_shape_with_outer_jit():
     """
-    Feature: PyNative ms_function dynamic shape function.
-    Description: Test PyNative ms_function dynamic shape function. ms_function decorates inner cell/function.
+    Feature: PyNative auto dynamic shape.
+    Description: The static shape is automatically converted to a dynamic shape.
     Expectation: The calculation result is correct.
     """
     if platform.system() == 'Windows':
         return
 
-    context.set_context(mode=context.PYNATIVE_MODE)
-    net = Net()
-    cmp_net = CmpNet()
-    cmp_func = CmpFunc()
-    cmp_net.set_inputs(Tensor(shape=[2, 3, 6, None], dtype=ms.float32),
-                       Tensor(shape=[2, 3, None, None], dtype=ms.float32))
-    cmp_func.set_inputs(Tensor(shape=[2, 3, 6, None], dtype=ms.float32),
-                        Tensor(shape=[2, 3, None, None], dtype=ms.float32))
+    net = NetOuter()
+    grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=True)
+
+    # run first shape
     input_x = Tensor(np.random.rand(2, 3, 6, 8).astype(np.float32) * 2)
     input_y = Tensor(np.random.rand(2, 3, 6, 8).astype(np.float32) * 5)
-    input_x2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 2)
-    input_y2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 5)
-    grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=True)
-    # run first shape
     out = net(input_x, input_y)
-    net_cmp_out = cmp_net(input_x, input_y)
-    assert np.allclose(out.asnumpy(), net_cmp_out.asnumpy(), 0.00001, 0.00001)
-    func_cmp_out = cmp_func(input_x, input_y)
-    assert np.allclose(out.asnumpy(), func_cmp_out.asnumpy(), 0.00001, 0.00001)
-    grad = grad_op(net)(input_x, input_y, out)
-    net_cmp_grad = grad_op(cmp_net)(input_x, input_y, net_cmp_out)
-    assert np.allclose(grad[0].asnumpy(), net_cmp_grad[0].asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[1].asnumpy(), net_cmp_grad[1].asnumpy(), 0.00001, 0.00001)
-    func_cmp_grad = grad_op(cmp_func)(input_x, input_y, func_cmp_out)
-    assert np.allclose(grad[0].asnumpy(), func_cmp_grad[0].asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[1].asnumpy(), func_cmp_grad[1].asnumpy(), 0.00001, 0.00001)
+    _ = grad_op(net)(input_x, input_y, out)
 
     # run second shape
+    input_x2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 2)
+    input_y2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 5)
     out = net(input_x2, input_y2)
-    net_cmp_out = cmp_net(input_x2, input_y2)
-    assert np.allclose(out.asnumpy(), net_cmp_out.asnumpy(), 0.00001, 0.00001)
-    func_cmp_out = cmp_func(input_x2, input_y2)
-    assert np.allclose(out.asnumpy(), func_cmp_out.asnumpy(), 0.00001, 0.00001)
+    _ = grad_op(net)(input_x2, input_y2, out)
+
+    # run third shape
+    input_x3 = Tensor(np.random.rand(2, 3, 6, 34).astype(np.float32) * 2)
+    input_y3 = Tensor(np.random.rand(2, 3, 6, 34).astype(np.float32) * 5)
+    out = net(input_x3, input_y3)
+    grad = grad_op(net)(input_x3, input_y3, out)
+
+    cmp_net = CmpNet()
+    cmp_out = cmp_net(input_x3, input_y3)
+    cmp_grad = grad_op(cmp_net)(input_x3, input_y3, cmp_out)
+    assert np.allclose(grad[0].asnumpy(), cmp_grad[0].asnumpy(), 0.00001, 0.00001)
+    assert np.allclose(grad[1].asnumpy(), cmp_grad[1].asnumpy(), 0.00001, 0.00001)

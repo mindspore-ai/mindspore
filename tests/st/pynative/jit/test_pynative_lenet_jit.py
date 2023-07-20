@@ -36,9 +36,9 @@ def weight_variable():
     return TruncatedNormal(0.02)
 
 
-class conv_relu_maxpool2d_1(nn.Cell):
+class ConvReluMaxpool2d1(nn.Cell):
     def __init__(self):
-        super(conv_relu_maxpool2d_1, self).__init__()
+        super(ConvReluMaxpool2d1, self).__init__()
         self.weight_variable = weight_variable()
         self.conv = nn.Conv2d(1, 6, kernel_size=5, stride=1, padding=0,
                               weight_init=self.weight_variable, pad_mode="valid")
@@ -53,9 +53,9 @@ class conv_relu_maxpool2d_1(nn.Cell):
         return x
 
 
-class conv_relu_maxpool2d_2(nn.Cell):
+class ConvReluMaxpool2d2(nn.Cell):
     def __init__(self):
-        super(conv_relu_maxpool2d_2, self).__init__()
+        super(ConvReluMaxpool2d2, self).__init__()
         self.weight_variable = weight_variable()
         self.conv = nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0,
                               weight_init=self.weight_variable, pad_mode="valid")
@@ -70,9 +70,9 @@ class conv_relu_maxpool2d_2(nn.Cell):
         return x
 
 
-class fc(nn.Cell):
+class Fc(nn.Cell):
     def __init__(self):
-        super(fc, self).__init__()
+        super(Fc, self).__init__()
         self.weight_variable = weight_variable()
         self.dense = nn.Dense(16 * 5 * 5, 120, self.weight_variable, self.weight_variable)
 
@@ -104,9 +104,9 @@ class LeNet(nn.Cell):
         super(LeNet, self).__init__()
         self.num_class = num_class
         self.batch_size = 32
-        self.conv_relu_maxpool2d_1 = conv_relu_maxpool2d_1()
-        self.conv_relu_maxpool2d_2 = conv_relu_maxpool2d_2()
-        self.fc1 = fc()
+        self.conv_relu_maxpool2d_1 = ConvReluMaxpool2d1()
+        self.conv_relu_maxpool2d_2 = ConvReluMaxpool2d2()
+        self.fc1 = Fc()
         self.fc2 = fc_with_initialize(120, 84)
         self.fc3 = fc_with_initialize(84, self.num_class)
         self.relu = nn.ReLU()
@@ -168,6 +168,11 @@ class GradWrap(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_lenet_ms_func():
+    """
+    Feature: Jit
+    Description: Jit in lenet
+    Expectation: The calculation result is correct.
+    """
     context.set_context(mode=context.PYNATIVE_MODE)
 
     epoch_size = 20

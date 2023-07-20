@@ -28,11 +28,17 @@ from mindspore.ops import composite as C
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_pynative_staging_together():
+    """
+    Feature: Pynative stage
+    Description: Stage call
+    Expectation: No exception.
+    """
     class NetPynative(Cell):
         def __init__(self):
             super().__init__()
@@ -90,7 +96,7 @@ grad_by_list = C.GradOperation(get_by_list=True)
 @pytest.mark.env_onecard
 def test_ms_func_decorate_forward():
     """
-    Feature: Auto diff for ms_function.
+    Feature: Auto diff for jit.
     Description: Check the result for GradOperation.
     Expectation: No exception.
     """

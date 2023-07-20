@@ -161,7 +161,7 @@ class ResidualBlockWithDown(nn.Cell):
         self.bn3 = bn_with_initialize_last(out_channels)
 
         self.relu = P.ReLU()
-        self.downSample = down_sample
+        self.downsample = down_sample
 
         self.conv_down_sample = conv1x1(in_channels, out_channels, stride=stride, padding=0)
         self.bn_down_sample = bn_with_initialize(out_channels)

@@ -75,10 +75,10 @@ def cmp_func(x, y):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pynative_dyn_shape_outermost_ms_function():
+def test_pynative_dyn_shape_outermost_jit():
     """
-    Feature: PyNative ms_function dynamic shape function.
-    Description: Test PyNative ms_function dynamic shape function. ms_function decorates outermost cell/function.
+    Feature: PyNative jit dynamic shape function.
+    Description: Test PyNative jit dynamic shape function. jit decorates outermost cell/function.
     Expectation: The calculation result is correct.
     """
     if platform.system() == 'Windows':

@@ -35,7 +35,12 @@ ret_output_2 = Tensor(np.full((1, 1, 120, 640), 3.125), dtype=mstype.float32)
 @pytest.mark.env_Gpu_1p
 @pytest.mark.env_CPU
 @pytest.mark.Function
-def test_ms_function_nested_local():
+def test_jit_nested_local():
+    """
+    Feature: Jit graph
+    Description: jit nested call
+    Expectation: No exception.
+    """
     @jit
     def function1(x, y):
         x = x ** y
@@ -71,11 +76,13 @@ def function1_g(x, y):
     x %= 2
     return x
 
+
 @jit
 def function11_g(x, y):
     r = function1_g(x, y)
     out = r + r
     return out
+
 
 @pytest.mark.level1
 @pytest.mark.timeout(60)
@@ -83,7 +90,12 @@ def function11_g(x, y):
 @pytest.mark.env_Gpu_1p
 @pytest.mark.env_CPU
 @pytest.mark.Function
-def test_ms_function_nested_global():
+def test_jit_nested_global():
+    """
+    Feature: Jit graph
+    Description: jit top call
+    Expectation: No exception.
+    """
     @jit
     def function2_g(x, y):
         r1 = function1_g(x, y)
@@ -101,10 +113,10 @@ def test_ms_function_nested_global():
 @pytest.mark.env_Gpu_1p
 @pytest.mark.env_CPU
 @pytest.mark.Function
-def test_ms_function_nested_grad():
+def test_jit_nested_grad():
     """
-    Feature: Nested call of ms_function
-    Description: test nested call of ms_function
+    Feature: Nested call of jit
+    Description: test nested call of jit
     Expectation: First derivative 75, Second derivative 30
     """
     x = Tensor([5], dtype=mstype.float32)

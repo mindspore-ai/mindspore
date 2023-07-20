@@ -23,12 +23,14 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
 
+
 class MetaFactory:
     def __init__(self):
         self.device_target = context.get_context('device_target')
         self.rank_size = None
         self.device_id = None
         self.global_rank_id = None
+
 
 class HookBase(MetaFactory):
     def __init__(self):
@@ -50,6 +52,7 @@ class HookBase(MetaFactory):
         output = mul(grad, y)
         return (output,)
 
+
 class FinalNet(nn.Cell, HookBase):
     def __init__(self):
         super().__init__()
@@ -63,6 +66,7 @@ class FinalNet(nn.Cell, HookBase):
         else:
             x = self.relu(x)
         return self.relu(x)
+
 
 class _Grad(Cell):
     def __init__(self, grad, network, wrt_params=False, real_inputs_count=None):
@@ -88,15 +92,18 @@ class _Grad(Cell):
         sense_param_inputs = inputs[self.real_inputs_count:]
         return self.grad(self.network)(*real_inputs, sense_param_inputs)
 
+
 class GradOfAllInputs(_Grad):
     def __init__(self, network, sens_param=True, real_inputs_count=None):
         super().__init__(grad=GradOperation(get_all=True, sens_param=sens_param),
                          network=network, real_inputs_count=real_inputs_count)
 
+
 class MsMul4(nn.Cell):
     def construct(self, input_mul):
         out = input_mul * 2
         return out
+
 
 class MsMul(nn.Cell):
     def __init__(self):
@@ -107,10 +114,12 @@ class MsMul(nn.Cell):
         x = self.mul(x, y)
         return x
 
+
 class MsAdd4(nn.Cell):
     def construct(self, input_add):
         out = input_add + 4
         return out
+
 
 class MsOneInputNet(nn.Cell, HookBase):
     def __init__(self):
@@ -126,17 +135,20 @@ class MsOneInputNet(nn.Cell, HookBase):
         out = self.relu(x)
         return out
 
+
 class MsMultiInputNet(nn.Cell, HookBase):
     def __init__(self):
         super().__init__()
         HookBase.__init__(self)
         self.mul1 = MsMul()
         self.mul2 = MsMul4()
+
     def construct(self, x, y):
         a = self.mul1(x, y)
         b = self.mul2(x)
         output = self.mul1(a, b)
         return output
+
 
 class MsNetWithParameter(nn.Cell, HookBase):
     def __init__(self):
@@ -154,6 +166,7 @@ class MsNetWithParameter(nn.Cell, HookBase):
         output = self.conv2(x)
         return output
 
+
 class MsNetWithCellinCell(nn.Cell, HookBase):
     def __init__(self):
         super().__init__()
@@ -165,6 +178,7 @@ class MsNetWithCellinCell(nn.Cell, HookBase):
         x = self.net1(x)
         output = self.mul(x)
         return output
+
 
 class MsSingleOpNetWithBprop(nn.Cell, HookBase):
     def __init__(self):
@@ -180,6 +194,7 @@ class MsSingleOpNetWithBprop(nn.Cell, HookBase):
         mul = P.Mul()
         return mul(x, y)
 
+
 class MsNetHasBpropInChild(nn.Cell, HookBase):
     def __init__(self):
         super().__init__()
@@ -190,6 +205,7 @@ class MsNetHasBpropInChild(nn.Cell, HookBase):
     def construct(self, x):
         x = self.add(x)
         return self.bprop_net(x)
+
 
 class MsMultiOpNetWithBprop(nn.Cell, HookBase):
     def __init__(self):
@@ -207,6 +223,7 @@ class MsMultiOpNetWithBprop(nn.Cell, HookBase):
         mul = P.Mul()
         return mul(x, y)
 
+
 def _count_unequal_element(data_expected, data_me, rtol, atol):
     assert data_expected.shape == data_me.shape
     total_count = len(data_expected.flatten())
@@ -217,6 +234,7 @@ def _count_unequal_element(data_expected, data_me, rtol, atol):
         "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}".\
         format(data_expected[greater], data_me[greater], error[greater])
 
+
 def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
     if np.any(np.isnan(data_expected)):
         assert np.allclose(data_expected, data_me, rtol, atol, equal_nan=equal_nan)
@@ -224,6 +242,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         _count_unequal_element(data_expected, data_me, rtol, atol)
     else:
         assert True
+
 
 def pynative_hook_diff_hook():
     input_np = np.ones([1, 1, 224, 224]).astype(np.float32)
@@ -236,6 +255,7 @@ def pynative_hook_diff_hook():
     grad_net = GradOfAllInputs(ms_net)
     grad_net.set_train()
     grad_net(input_ms, Tensor(1), out_ms)
+
 
 def pynative_hook_outermost_cell_not_change_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
@@ -257,6 +277,7 @@ def pynative_hook_outermost_cell_not_change_grad():
     torch_net_grad_input = np.array([[20, 20], [20, 20]])
     allclose_nparray(torch_net_grad_output, ms_net.grad_input_list[0].asnumpy(), 0.001, 0.001)
     allclose_nparray(torch_net_grad_input, ms_net.grad_output_list[0].asnumpy(), 0.001, 0.001)
+
 
 def pynative_hook_all_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
@@ -286,6 +307,7 @@ def pynative_hook_all_cell_record_grad():
     allclose_nparray(torch_net_grad_input3, ms_net.grad_output_list[2].asnumpy(), 0.001, 0.001)
     allclose_nparray(torch_net_grad_output2, ms_net.grad_input_list[2].asnumpy(), 0.001, 0.001)
 
+
 def pynative_hook_mul_change_input_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
@@ -301,6 +323,7 @@ def pynative_hook_mul_change_input_grad():
     #input grad
     input_torch_grad = np.array([[40, 40], [40, 40]])
     allclose_nparray(input_torch_grad, input_ms_grad[0].asnumpy(), 0.001, 0.001)
+
 
 def pynative_hook_mul2_change_input_grad():
     input1_np = np.array([2.0, 3.0, 4.0]).astype(np.float32)
@@ -322,6 +345,7 @@ def pynative_hook_mul2_change_input_grad():
     allclose_nparray(input1_torch_grad, input_ms_grad[0].asnumpy(), 0.001, 0.001)
     allclose_nparray(input2_torch_grad, input_ms_grad[1].asnumpy(), 0.001, 0.001)
 
+
 def pynative_hook_outermost_cell_change_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
@@ -339,6 +363,7 @@ def pynative_hook_outermost_cell_change_grad():
     input_torch_grad = np.array([[160, 160], [160, 160]])
     allclose_nparray(out_torch, out_ms.asnumpy(), 0.001, 0.001)
     allclose_nparray(input_torch_grad, input_ms_grad[0].asnumpy(), 0.001, 0.001)
+
 
 def pynative_hook_outermost_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
@@ -361,6 +386,7 @@ def pynative_hook_outermost_cell_record_grad():
     input_torch_grad = np.array([[5, 5], [5, 5]])
     allclose_nparray(out_torch, out_ms.asnumpy(), 0.001, 0.001)
     allclose_nparray(input_torch_grad, input_ms_grad[0].asnumpy(), 0.001, 0.001)
+
 
 def pynative_hook_bprop_outermost_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
@@ -389,6 +415,7 @@ def pynative_hook_bprop_outermost_cell_record_grad():
     allclose_nparray(torch_net_grad_output, ms_net.grad_input_list[0].asnumpy(), 0.001, 0.001)
     allclose_nparray(torch_net_grad_input, ms_net.grad_output_list[0].asnumpy(), 0.001, 0.001)
 
+
 def pynative_hook_child_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
@@ -406,6 +433,7 @@ def pynative_hook_child_cell_record_grad():
     if ms_net.grad_output_list or ms_net.grad_input_list:
         assert False
 
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -414,12 +442,14 @@ def test_pynative_hook_diff_hook_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_diff_hook()
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_hook_diff_hook_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_diff_hook()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -429,12 +459,14 @@ def test_pynative_hook_outermost_cell_not_change_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_outermost_cell_not_change_grad()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_hook_outermost_cell_not_change_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_outermost_cell_not_change_grad()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -444,12 +476,14 @@ def test_pynative_hook_all_cell_record_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_all_cell_record_grad()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_hook_all_cell_record_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_all_cell_record_grad()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -459,12 +493,14 @@ def test_pynative_hook_mul_change_input_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_mul_change_input_grad()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_hook_mul_change_input_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_mul_change_input_grad()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -474,12 +510,14 @@ def test_pynative_hook_mul2_change_input_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_mul2_change_input_grad()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_hook_mul2_change_input_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_mul2_change_input_grad()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -489,12 +527,14 @@ def test_pynative_hook_outermost_cell_change_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_outermost_cell_change_grad()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_hook_outermost_cell_change_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_outermost_cell_change_grad()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -504,12 +544,14 @@ def test_pynative_hook_outermost_cell_record_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_outermost_cell_record_grad()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_hook_outermost_cell_record_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_outermost_cell_record_grad()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -519,12 +561,14 @@ def test_pynative_hook_bprop_outermost_cell_record_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_bprop_outermost_cell_record_grad()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_hook_bprop_outermost_cell_record_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_bprop_outermost_cell_record_grad()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -533,6 +577,7 @@ def test_pynative_hook_bprop_outermost_cell_record_grad_gpu():
 def test_pynative_hook_child_cell_record_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_child_cell_record_grad()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
