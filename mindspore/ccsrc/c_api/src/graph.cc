@@ -26,8 +26,8 @@
 #include "ir/func_graph_cloner.h"
 #include "utils/ms_context.h"
 #include "backend/graph_compiler/backend.h"
-#include "pipeline/jit/pass.h"
-#include "pipeline/jit/static_analysis/auto_monad.h"
+#include "pipeline/jit/ps/pass.h"
+#include "pipeline/jit/ps/static_analysis/auto_monad.h"
 
 GraphHandle MSFuncGraphCreate(ResMgrHandle res_mgr) {
   if (res_mgr == nullptr) {

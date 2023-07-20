@@ -23,7 +23,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "frontend/parallel/graph_util/node_info.h"
-#include "mindspore/ccsrc/pipeline/jit/parse/parse_base.h"
+#include "mindspore/ccsrc/pipeline/jit/ps/parse/parse_base.h"
 
 using mindspore::tensor::Tensor;
 

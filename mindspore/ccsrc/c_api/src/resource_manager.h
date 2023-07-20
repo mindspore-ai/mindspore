@@ -24,7 +24,7 @@
 #include "base/base.h"
 #include "c_api/base/handle_types.h"
 #include "c_api/src/common.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 #include "utils/ms_context.h"
 #include "backend/graph_compiler/backend_base.h"
 

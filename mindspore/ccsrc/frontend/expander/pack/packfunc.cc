@@ -28,7 +28,7 @@
 #include "ir/func_graph_cloner.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/core/ops/packfunc.h"
-#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/ps/parse/parse.h"
 
 namespace mindspore {
 namespace expander {

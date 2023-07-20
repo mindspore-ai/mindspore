@@ -62,7 +62,7 @@
 #include "tools/converter/quantizer/quant_helper/ascend_distribute_fake_quant_transform.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "src/common/common.h"
-#include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/ps/parse/resolve.h"
 
 namespace mindspore {
 namespace opt {

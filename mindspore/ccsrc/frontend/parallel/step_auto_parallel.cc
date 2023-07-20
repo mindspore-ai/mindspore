@@ -51,7 +51,7 @@
 #include "ops/math_ops.h"
 #include "ops/other_ops.h"
 #include "ops/sequence_ops.h"
-#include "pipeline/jit/pipeline_split.h"
+#include "pipeline/jit/ps/pipeline_split.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #if defined(__linux__) && defined(WITH_BACKEND)

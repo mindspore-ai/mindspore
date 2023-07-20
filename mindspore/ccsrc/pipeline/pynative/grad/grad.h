@@ -30,7 +30,7 @@
 #include "runtime/pynative/async/async_queue.h"
 #include "runtime/pynative/async/async_hqueue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 namespace mindspore {
 namespace pynative {
 namespace py = pybind11;

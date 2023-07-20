@@ -25,8 +25,8 @@
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/grad/bprop_tensor_replace.h"
-#include "pipeline/jit/pipeline.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/pipeline.h"
+#include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {
 namespace pynative {

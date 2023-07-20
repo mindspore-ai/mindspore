@@ -25,7 +25,7 @@
 #include "utils/hash_map.h"
 #include "frontend/optimizer/irpass.h"
 #include "ir/func_graph.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {
 namespace ad {

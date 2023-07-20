@@ -30,7 +30,7 @@
 #include "ops/nn_optimizer_ops.h"
 #include "ops/sequence_ops.h"
 #include "ops/structure_ops.h"
-#include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/ps/parse/parse_base.h"
 #include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore {

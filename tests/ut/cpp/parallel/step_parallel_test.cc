@@ -22,7 +22,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"
-#include "pipeline/jit/static_analysis/static_analysis.h"
+#include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/ms_context.h"
 
@@ -315,7 +315,7 @@ TEST_F(TestStepParallel, CreateOpInstance) {
   OperatorParams operator_param;
   py::object context = py::module::import("mindspore.context");
   py::object set_context = context.attr("set_context");
-  set_context("mode"_a=kGraphMode);
+  set_context("mode"_a = kGraphMode);
   OperatorArgs args = std::make_pair(attrs, operator_param);
   auto op_instance = CreateOpInstance(args.first, op_name, "test");
   ASSERT_TRUE(op_instance);
@@ -327,8 +327,8 @@ TEST_F(TestStepParallel, CreateOpInstance) {
     std::vector<py::object> arglist;
     (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(arglist),
                          [](Attr attr) { return ValueToPyData(attr.second); });
-    py::object allreduce_pyobj = python_adapter::CallPyFn(
-      "mindspore.parallel._utils", "_get_python_op", "AllReduce", "mindspore.ops.operations", "test", arglist);
+    py::object allreduce_pyobj = python_adapter::CallPyFn("mindspore.parallel._utils", "_get_python_op", "AllReduce",
+                                                          "mindspore.ops.operations", "test", arglist);
     py::dict opAttr = py::getattr(allreduce_pyobj, "attrs");
     mindspore::HashMap<std::string, ValuePtr> attributes{};
     for (auto item : opAttr) {
@@ -456,7 +456,7 @@ TEST_F(TestStepParallel, ForwardCommunication1) {
   OperatorVector op_list = {op, op};
   py::object context = py::module::import("mindspore.context");
   py::object set_context = context.attr("set_context");
-  set_context("mode"_a=kGraphMode);
+  set_context("mode"_a = kGraphMode);
   FuncGraphManagerPtr manager = Make_Manager();
   FuncGraphSet graphs = manager->func_graphs();
   FuncGraphPtr graph = *graphs.begin();

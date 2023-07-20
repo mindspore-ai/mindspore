@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/action.h"
 namespace mindspore {
 namespace pipeline {
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource) { return {}; }

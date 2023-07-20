@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_ENVIRON_CONVERSION_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_ENVIRON_CONVERSION_H_
 
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {
 /* namespace to support opt */

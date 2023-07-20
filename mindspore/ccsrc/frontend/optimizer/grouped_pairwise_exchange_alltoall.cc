@@ -35,7 +35,7 @@
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
 #include "frontend/parallel/device_matrix.h"
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/action.h"
 
 namespace mindspore {
 namespace opt {

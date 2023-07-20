@@ -34,7 +34,7 @@
 #include "ir/anf.h"
 #include "pipeline/pynative/grad/auto_grad.h"
 #include "frontend/operator/composite/composite.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/bprop_tensor_replace.h"
 #include "utils/ms_context.h"

@@ -29,7 +29,7 @@
 #include "ir/func_graph_cloner.h"
 #include "runtime/pynative/async/async_queue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
-#include "pipeline/jit/pass.h"
+#include "pipeline/jit/ps/pass.h"
 #include "frontend/expander/bprop/bprop.h"
 
 namespace mindspore {

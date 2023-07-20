@@ -18,8 +18,8 @@
 
 #include "common/common_test.h"
 #include "utils/log_adapter.h"
-#include "pipeline/jit/action.h"
-#include "pipeline/jit/pipeline.h"
+#include "pipeline/jit/ps/action.h"
+#include "pipeline/jit/ps/pipeline.h"
 
 namespace mindspore {
 namespace pipeline {

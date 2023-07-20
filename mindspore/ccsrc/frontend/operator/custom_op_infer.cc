@@ -20,7 +20,7 @@
 #include "include/common/utils/utils.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "pybind_api/ir/primitive_py.h"
-#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/ps/static_analysis/prim.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
 #include "utils/file_utils.h"

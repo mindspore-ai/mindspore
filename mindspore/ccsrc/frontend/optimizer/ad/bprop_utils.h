@@ -19,7 +19,7 @@
 
 #include "pybind11/pybind11.h"
 #include "include/common/utils/primitive_utils.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {
 namespace ad {

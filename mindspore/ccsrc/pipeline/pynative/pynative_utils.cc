@@ -27,8 +27,8 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "pipeline/jit/parse/resolve.h"
-#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/ps/parse/resolve.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/stub_tensor.h"
 #include "frontend/expander/bprop/bprop.h"
 

@@ -29,11 +29,11 @@
 
 #include "include/common/debug/draw.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "pipeline/jit/debug/anf_ir_utils.h"
-#include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/ps/debug/anf_ir_utils.h"
+#include "pipeline/jit/ps/debug/trace.h"
 #include "frontend/optimizer/opt.h"
-#include "pipeline/jit/resource.h"
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/resource.h"
+#include "pipeline/jit/ps/action.h"
 #include "utils/ms_context.h"
 #include "include/backend/debug/profiler/profiling.h"
 

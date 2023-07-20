@@ -35,7 +35,7 @@
 #include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "kernel/kernel.h"
 #include "mindspore/core/ops/sequence_ops.h"
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/action.h"
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel {

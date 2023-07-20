@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "ir/value.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/node_info.h"

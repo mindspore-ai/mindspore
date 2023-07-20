@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PY_INTERPRET_TO_EXECUTE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PY_INTERPRET_TO_EXECUTE_H_
 
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {
 /* namespace to support opt */

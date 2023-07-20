@@ -29,8 +29,8 @@
 #include "ir/func_graph_cloner.h"
 #include "utils/log_adapter.h"
 #include "ir/graph_utils.h"
-#include "pipeline/jit/resource.h"
-#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/ps/resource.h"
+#include "pipeline/jit/ps/parse/parse.h"
 #include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
@@ -47,7 +47,7 @@ class TestAD : public UT::Common {
   pipeline::ResourcePtr resourcePtr = std::make_shared<pipeline::Resource>();
 
  protected:
-  void AssertExpect(const std::string& testCase) {
+  void AssertExpect(const std::string &testCase) {
     auto ms_context = MsContext::GetInstance();
     ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
     FuncGraphPtr g = getPyFun(testCase);
@@ -57,7 +57,7 @@ class TestAD : public UT::Common {
     AssertExpect(testCase, dg);
   }
 
-  void AssertExpect(const std::string& testCase, const FuncGraphPtr& dg) { ASSERT_TRUE(dg != nullptr); }
+  void AssertExpect(const std::string &testCase, const FuncGraphPtr &dg) { ASSERT_TRUE(dg != nullptr); }
 };
 
 TEST_F(TestAD, test_null) { AssertExpect("test_null"); }

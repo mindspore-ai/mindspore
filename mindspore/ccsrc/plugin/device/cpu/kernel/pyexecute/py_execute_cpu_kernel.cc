@@ -28,7 +28,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/python_fallback_running.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/ccsrc/pipeline/jit/parse/resolve.h"
+#include "mindspore/ccsrc/pipeline/jit/ps/parse/resolve.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {

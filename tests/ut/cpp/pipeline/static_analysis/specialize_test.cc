@@ -21,8 +21,8 @@
 #include "common/py_func_graph_fetcher.h"
 
 #include "ir/manager.h"
-#include "pipeline/jit/static_analysis/prim.h"
-#include "pipeline/jit/static_analysis/program_specialize.h"
+#include "pipeline/jit/ps/static_analysis/prim.h"
+#include "pipeline/jit/ps/static_analysis/program_specialize.h"
 #include "pipeline/static_analysis/helper.h"
 #include "utils/log_adapter.h"
 #include "ir/graph_utils.h"
@@ -159,7 +159,7 @@ class MetaScalarAdd : public MetaFuncGraph {
   /*
    * Generate a Graph for the given abstract arguments.
    */
-  FuncGraphPtr GenerateFromTypes(const TypePtrList& types) override {
+  FuncGraphPtr GenerateFromTypes(const TypePtrList &types) override {
     FuncGraphPtr graph_g = std::make_shared<FuncGraph>();
     ParameterPtr x = graph_g->add_parameter();
     ParameterPtr y = graph_g->add_parameter();

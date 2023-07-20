@@ -19,7 +19,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "utils/log_adapter.h"
 #include "utils/profile.h"
-#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/ps/parse/parse.h"
 #include "include/common/debug/draw.h"
 
 namespace mindspore {

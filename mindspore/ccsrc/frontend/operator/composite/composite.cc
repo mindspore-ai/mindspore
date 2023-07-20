@@ -34,11 +34,11 @@
 #include "utils/symbolic.h"
 #include "include/common/pybind_api/api_register.h"
 #include "ir/signature.h"
-#include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/ps/debug/trace.h"
 #include "utils/interpret_node_recorder.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
-#include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/ps/parse/resolve.h"
 
 namespace mindspore {
 // namespace to support composite operators definition

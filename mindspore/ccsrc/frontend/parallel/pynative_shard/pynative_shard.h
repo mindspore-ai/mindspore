@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PYNATIVE_SHARD_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PYNATIVE_SHARD_H_
 
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 #include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {

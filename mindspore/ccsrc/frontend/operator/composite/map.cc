@@ -27,10 +27,10 @@
 #include "abstract/abstract_function.h"
 #include "abstract/dshape.h"
 #include "include/common/pybind_api/api_register.h"
-#include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/ps/debug/trace.h"
 #include "frontend/operator/ops.h"
 #include "mindspore/core/utils/ms_context.h"
-#include "pipeline/jit/fallback.h"
+#include "pipeline/jit/ps/fallback.h"
 
 namespace mindspore {
 // namespace to support composite operators definition

@@ -19,7 +19,7 @@
 
 #include "pybind11/stl.h"
 #include "ir/anf.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 
 namespace py = pybind11;
 namespace mindspore {

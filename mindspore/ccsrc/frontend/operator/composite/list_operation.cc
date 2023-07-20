@@ -23,7 +23,7 @@
 #include "frontend/optimizer/opt.h"
 #include "include/common/pybind_api/api_register.h"
 #include "mindspore/core/ops/sequence_ops.h"
-#include "pipeline/jit/fallback.h"
+#include "pipeline/jit/ps/fallback.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

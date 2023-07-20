@@ -17,7 +17,7 @@
 #include "pybind11/pybind11.h"
 #include "ir/param_info.h"
 #include "include/transform/graph_ir/utils.h"
-#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/python_adapter.h"
 #include "utils/shape_utils.h"
 

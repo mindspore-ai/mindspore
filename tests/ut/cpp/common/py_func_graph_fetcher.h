@@ -22,9 +22,9 @@
 #include "ir/primitive.h"
 #include "ir/manager.h"
 #include "ir/func_graph.h"
-#include "pipeline/jit/parse/parse_base.h"
-#include "pipeline/jit/parse/parse.h"
-#include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/ps/parse/parse_base.h"
+#include "pipeline/jit/ps/parse/parse.h"
+#include "pipeline/jit/ps/parse/resolve.h"
 
 namespace UT {
 
@@ -52,7 +52,7 @@ class PyFuncGraphFetcher {
         mindspore::parse::ResolveAll(manager);
       }
       return func_graph;
-    } catch (py::error_already_set& e) {
+    } catch (py::error_already_set &e) {
       MS_LOG(ERROR) << "Call and parse fn failed!!! error:" << e.what();
       return nullptr;
     } catch (...) {
@@ -76,7 +76,7 @@ class PyFuncGraphFetcher {
         mindspore::parse::ResolveAll(manager);
       }
       return func_graph;
-    } catch (py::error_already_set& e) {
+    } catch (py::error_already_set &e) {
       MS_LOG(ERROR) << "get fn failed!!! error:" << e.what();
       return nullptr;
     } catch (...) {

@@ -18,7 +18,7 @@
 #include "pybind11/pybind11.h"
 #include "include/common/utils/callbacks.h"
 #include "common/common_test.h"
-#include "pipeline/jit/pipeline.h"
+#include "pipeline/jit/ps/pipeline.h"
 #include "include/common/utils/python_adapter.h"
 #include "mindspore/ccsrc/transform/graph_ir/df_graph_manager.h"
 #include "include/common/debug/draw.h"

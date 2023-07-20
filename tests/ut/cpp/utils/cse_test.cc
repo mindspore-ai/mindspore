@@ -10,7 +10,7 @@
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/action.h"
 
 #include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"
