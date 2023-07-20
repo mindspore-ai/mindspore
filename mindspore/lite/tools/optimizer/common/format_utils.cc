@@ -73,6 +73,7 @@
 #include "ops/strided_slice.h"
 #include "ops/grid_sampler_2d.h"
 #include "ops/deformable_conv2d.h"
+#include "ops/roi_align.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "nnacl/op_base.h"
 #include "tools/common/graph_util.h"
@@ -105,6 +106,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
   {ops::kNamePReLUFusion, {1}},
   {ops::kNameResize, {1}},
   {ops::kNameResizeGrad, {}},
+  {ops::kNameROIAlign, {1}},
   {ops::kNameROIPooling, {1}},
   {ops::kNameSGD, {2}},
   {ops::kNameSpaceToBatch, {1}},
@@ -139,6 +141,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> ToNCHWOpMap = 
   {ops::kNamePReLUFusion, {1}},
   {ops::kNameResize, {1}},
   {ops::kNameResizeGrad, {}},
+  {ops::kNameROIAlign, {1}},
   {ops::kNameROIPooling, {1}},
   {ops::kNameSGD, {2}},
   {ops::kNameSpaceToBatch, {1}},

@@ -24,6 +24,7 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/random_ops.h"
 #include "src/common/primitive_t_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
@@ -46,29 +47,47 @@ namespace opt {
 static const std::unordered_set<PrimitivePtr> kNNACLToOpsInfer = {
   // arithmetic_self
   prim::kPrimAbs,
+  prim::kPrimAsin,
+  prim::kPrimAsinh,
+  prim::kPrimACos,
+  prim::kPrimAcosh,
+  prim::kPrimAtanh,
   prim::kPrimCos,
+  prim::kPrimCosh,
+  prim::kPrimCeLU,
+  prim::kPrimSeLU,
+  prim::kPrimHSwish,
+  prim::kPrimMatrixDeterminant,
   prim::kPrimLog,
   prim::kPrimLog1p,
   prim::kPrimSquare,
   prim::kPrimSqrt,
   prim::kPrimRsqrt,
   prim::kPrimSin,
-  prim::kPrimLogicalNot,
+  prim::kPrimSinh,
   prim::kPrimFloor,
   prim::kPrimCeil,
   prim::kPrimRound,
   prim::kPrimNeg,
   prim::kPrimReciprocal,
   prim::kPrimErf,
+  prim::kPrimSign,
+  prim::kPrimSoftsign,
+  prim::kPrimMultinomial,
   // arithmetic
   prim::kPrimFloorDiv,
   prim::kPrimFloorMod,
   prim::kPrimLogicalAnd,
+  prim::kPrimLogicalNot,
   prim::kPrimLogicalOr,
+  prim::kPrimLogicalXor,
   prim::kPrimMaximum,
   prim::kPrimMinimum,
   prim::kPrimMod,
   prim::kPrimSquaredDifference,
+  prim::kPrimLeftShift,
+  prim::kPrimRightShift,
+  prim::kPrimROIAlign,
   // tuple op
   prim::kPrimTupleGetItem,
   prim::kPrimMakeTuple,
