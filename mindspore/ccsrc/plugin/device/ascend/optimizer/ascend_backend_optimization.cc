@@ -197,6 +197,7 @@
 #include "plugin/device/ascend/optimizer/ge/reduce_axis_update.h"
 #include "plugin/device/ascend/optimizer/ge/clip_by_norm_fission.h"
 #include "plugin/device/ascend/optimizer/ge/lamb_fission.h"
+#include "plugin/device/ascend/optimizer/ge/squeeze_axis_ge.h"
 #include "plugin/device/ascend/optimizer/ge/convert_resize_nearest_neighbor_x_dtype.h"
 #include "plugin/device/ascend/optimizer/ge/convert_attr_to_input.h"
 #include "plugin/device/ascend/optimizer/ge/batchnorm_transform.h"
@@ -600,6 +601,7 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
   opt_acl_pm->AddPass(std::make_shared<opt::LambFissionGe>());
+  opt_acl_pm->AddPass(std::make_shared<opt::SqueezeAxisGe>());
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
@@ -831,6 +833,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
 
 PassManagerPtr GetAscendUnifyMindIRPassManager() {
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
+  unify_mindir_pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<HistogramFixedWidthFusion>());
   unify_mindir_pm->AddPass(std::make_shared<opt::ClipByNormFissionGe>());
   unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayAddFlowCond1>());
@@ -839,7 +842,6 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayPrepare>());
   unify_mindir_pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicGRUV2>());
   unify_mindir_pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
@@ -890,11 +892,11 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   unify_mindir_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
   unify_mindir_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
   unify_mindir_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::TensorShapeForGE>());
   unify_mindir_pm->AddPass(std::make_shared<TensorScatterAddFission>());
   unify_mindir_pm->AddPass(std::make_shared<TensorScatterSubFission>());
   unify_mindir_pm->AddPass(std::make_shared<TensorScatterMaxFission>());
   unify_mindir_pm->AddPass(std::make_shared<TensorScatterMinFission>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::TensorShapeForGE>());
   // just rename primitive name
   unify_mindir_pm->AddPass(std::make_shared<opt::AscendMindIROpAdapter>());
 

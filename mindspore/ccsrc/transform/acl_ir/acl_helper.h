@@ -32,6 +32,7 @@ class AclHelper {
  public:
   // Check is data layout unchanged format.
   static bool CheckDefaultSupportFormat(const string &format);
+  static bool IsPrintDebugString();
 
   // Kernel select by ge_ir.
   static KernelType GetKernelInfoByInputs(const CNodePtr &cnode, const std::shared_ptr<GeAdapterInfo> &info);

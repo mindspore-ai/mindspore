@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_GE_SPECIALIZED_PREPARE_H_
 
 #include <unordered_map>
+#include <string>
+#include <vector>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
@@ -33,6 +35,7 @@ class GeTensorArrayPrepare : public PatternProcessPass {
   // Add a const input with value `size` to TensorArray node
   static void TransformTASizeFromAttrToInput(const AnfNodePtr &node);
   static void InsertFlowOutputToTA(const AnfNodePtr &node);
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

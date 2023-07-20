@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.h"
 #include <vector>
+#include <string>
 #include "ops/sequence_ops.h"
 #include "ops/nn_ops.h"
 #include "include/backend/optimizer/helper.h"
@@ -144,6 +145,12 @@ AnfNodePtr BatchNormGradInferFission::CreateBNTrainingUpdateGrad(const FuncGraph
   common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_training_update_grad);
   bn_training_update_grad->set_scope(bn_grad->scope());
   return bn_training_update_grad;
+}
+
+std::vector<std::string> BatchNormGradInferFission::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimBatchNormGrad->name());
+  return ret;
 }
 
 const BaseRef BatchNormGradInferFission::DefinePattern() const {

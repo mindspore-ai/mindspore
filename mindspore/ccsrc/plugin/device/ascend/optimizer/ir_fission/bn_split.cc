@@ -275,6 +275,12 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   return InsertCast(graph, mul, common::AnfAlgo::GetOutputInferDataType(allreduce_input, 0));
 }
 
+std::vector<std::string> BnSplit::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimBatchNorm->name());
+  return ret;
+}
+
 const BaseRef BnSplit::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   MS_EXCEPTION_IF_NULL(Xs);

@@ -24,7 +24,7 @@ namespace mindspore {
 namespace opt {
 class ReduceAxisUpdate : public PatternToPatternPass {
  public:
-  ReduceAxisUpdate() : PatternToPatternPass("reduce_axis_update") {}
+  ReduceAxisUpdate() : PatternToPatternPass("reduce_axis_update", true) {}
   ~ReduceAxisUpdate() override = default;
 
   void DefineSrcPattern(SrcPattern *src_pattern) override;

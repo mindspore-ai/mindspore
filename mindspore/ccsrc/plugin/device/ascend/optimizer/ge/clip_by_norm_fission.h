@@ -56,6 +56,7 @@ class ClipByNormFissionGe : public PatternProcessPass {
                            const TypeId &type_id) const;
   AnfNodePtr CreateDivNode(const FuncGraphPtr &func_graph, const AnfNodePtr &dividend, const AnfNodePtr &divisor,
                            const ShapeVector &shape_vec, const TypeId &type_id) const;
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

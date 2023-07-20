@@ -39,6 +39,7 @@ class BnSplit : public PatternProcessPass {
 
  private:
   AnfNodePtr SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class SyncBnSplit : public BnSplit {

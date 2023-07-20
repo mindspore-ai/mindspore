@@ -298,6 +298,12 @@ AnfNodePtr ClipByNormFissionGe::CreateCastNode(const FuncGraphPtr &func_graph, c
   return cast;
 }
 
+std::vector<std::string> ClipByNormFissionGe::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimClipByNorm->name());
+  return ret;
+}
+
 const BaseRef ClipByNormFissionGe::DefinePattern() const {
   VarPtr seq_xs = std::make_shared<SeqVar>();
   return VectorRef({prim::kPrimClipByNorm, seq_xs});

@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.h"
+
 #include <memory>
 #include <vector>
+#include <string>
 #include "ops/sequence_ops.h"
 #include "ops/nn_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -84,6 +86,12 @@ CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNode
   common::AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnorm, new_node);
   common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnorm, new_node);
   return new_node;
+}
+
+std::vector<std::string> BatchNorm2BNInfer::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimBatchNorm->name());
+  return ret;
 }
 
 const BaseRef BatchNorm2BNInfer::DefinePattern() const {

@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include "include/backend/optimizer/optimizer.h"
 namespace mindspore {
 namespace opt {
@@ -39,6 +40,9 @@ class GeTensorArrayAddFlowCond1 : public GeTensorArrayAddFlow {
   ~GeTensorArrayAddFlowCond1() override = default;
 
   const BaseRef DefinePattern() const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class GeTensorArrayAddFlowCond2 : public GeTensorArrayAddFlow {
@@ -48,6 +52,9 @@ class GeTensorArrayAddFlowCond2 : public GeTensorArrayAddFlow {
   ~GeTensorArrayAddFlowCond2() override = default;
 
   const BaseRef DefinePattern() const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class GeTensorArrayCastIndex : public PatternProcessPass {
@@ -58,6 +65,9 @@ class GeTensorArrayCastIndex : public PatternProcessPass {
 
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

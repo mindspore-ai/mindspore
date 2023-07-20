@@ -40,6 +40,7 @@ class BnGradSplit : public PatternProcessPass {
 
  private:
   CNodePtr BNGradSplitForTBE(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class SyncBnGradSplit : public BnGradSplit {

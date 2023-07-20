@@ -18,18 +18,31 @@
 
 #include <memory>
 #include <utility>
+#include <vector>
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
+std::vector<std::string> GeTensorArrayAddFlowCond1::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimTensorArrayWrite->name());
+  return ret;
+}
+
 const BaseRef GeTensorArrayAddFlowCond1::DefinePattern() const {
   VarPtr x1 = std::make_shared<Var>();
   VarPtr x2 = std::make_shared<Var>();
   VarPtr x3 = std::make_shared<Var>();
   VarPtr x4 = std::make_shared<Var>();
   return VectorRef({prim::kPrimTensorArrayWrite, x1, x2, x3, x4});
+}
+
+std::vector<std::string> GeTensorArrayAddFlowCond2::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimTensorArrayGather->name());
+  return ret;
 }
 
 const BaseRef GeTensorArrayAddFlowCond2::DefinePattern() const {
@@ -64,6 +77,12 @@ const AnfNodePtr GeTensorArrayAddFlow::Process(const FuncGraphPtr &graph, const 
     ta_node->add_input(flow_node);
   }
   return node;
+}
+
+std::vector<std::string> GeTensorArrayCastIndex::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimTensorArrayWrite->name());
+  return ret;
 }
 
 const BaseRef GeTensorArrayCastIndex::DefinePattern() const {

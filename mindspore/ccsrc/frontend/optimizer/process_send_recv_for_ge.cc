@@ -96,7 +96,7 @@ void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node, AnfNodePtr *la
   call_params.push_back(NewValueNode(fg));
   for (size_t i = 1; i < node->inputs().size(); i++) {
     if (*last_need_depend != nullptr) {
-      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), *last_need_depend});
+      auto new_depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), *last_need_depend});
       new_depend->set_abstract(node->input(i)->abstract());
       call_params.push_back(new_depend);
     } else {
@@ -123,7 +123,7 @@ void ProcessRecv(const FuncGraphPtr &graph, const CNodePtr &node, AnfNodePtr *la
   call_params.push_back(NewValueNode(fg));
   for (size_t i = 1; i < node->inputs().size(); i++) {
     if (*last_need_depend != nullptr) {
-      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), *last_need_depend});
+      auto new_depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), *last_need_depend});
       new_depend->set_abstract(node->input(i)->abstract());
       call_params.push_back(new_depend);
     } else {
