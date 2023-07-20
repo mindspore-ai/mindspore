@@ -28,7 +28,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
-#include "plugin/device/gpu/kernel/nn/conv_gpu_common.h"
+#include "plugin/device/gpu/kernel/nn/convolution/conv_gpu_common.h"
 
 namespace mindspore {
 namespace kernel {

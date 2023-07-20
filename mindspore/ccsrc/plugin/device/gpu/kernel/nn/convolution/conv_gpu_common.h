@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,69 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_CONV_GPU_COMMON_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_CONV_GPU_COMMON_H_
 
-#include <cuda.h>
-#include <cudnn.h>
-#include <unordered_map>
+#include <algorithm>
 #include <string>
-#include "utils/ms_context.h"
+#include <vector>
+#include <utility>
+#include <map>
+#include <unordered_map>
 
 namespace mindspore {
 namespace kernel {
+enum class ConvType { kForward = 0, kInputGrad = 1, kFilterGrad = 2 };
+enum class ConvKernelType { kCudnn = 0, kDepthWise = 1 };
+constexpr size_t kShapeIndex = 2;
+constexpr size_t kConv2dDimSize = 2;
+constexpr size_t kConv2dInputDimSize = 4;
+constexpr size_t kTop2DPadIndex = 0;
+constexpr size_t kBottom2DPadIndex = 1;
+constexpr size_t kLeft2DPadIndex = 2;
+constexpr size_t kRight2DPadIndex = 3;
+constexpr size_t kConv2dSymmetricCoef = 2;
+constexpr size_t kHeight2DStrideIndex = 2;
+constexpr size_t kWidth2DStrideIndex = 3;
+constexpr size_t kHeight2DDilationIndex = 2;
+constexpr size_t kWidth2DDilationIndex = 3;
+constexpr size_t k2DHeightIndexNCHW = 2;
+constexpr size_t k2DHeightIndexNHWC = 1;
+
+struct ConvolutionArgs {
+  std::string kernel_name{""};
+  size_t output_size{0};
+  size_t type_id_size{0};
+  int batch_size{0};
+  int in_height{0};
+  int in_width{0};
+  int in_channel{0};
+  int out_channel{0};
+  int filter_height{0};
+  int filter_width{0};
+  int pad_height{0};
+  int pad_width{0};
+  int pad_top{0};
+  int pad_left{0};
+  int out_height{0};
+  int out_width{0};
+  int group{0};
+  std::vector<int64_t> tensor0_shape;
+  std::vector<int64_t> tensor1_shape;
+  std::vector<int64_t> tensor2_shape;
+  std::vector<int> stride;
+  std::vector<int> dilation;
+  std::vector<int> pad_list;
+  std::string data_type{""};
+  std::string data_format{""};
+  std::string data_format_attr{""};
+  std::string pad_mode{""};
+  bool use_pad{false};
+  float alpha{1};
+  float beta{0};
+};
+
+static const std::unordered_map<std::string, size_t> kFormatIndexMap = {{"NCHW", 2}, {"HWCN", 0}, {"NHWC", 1}};
+static const std::vector<int64_t> to_nhwc_axis = {0, 2, 3, 1};
+static const std::vector<int64_t> to_nchw_axis = {0, 3, 1, 2};
+
 constexpr auto kConvNormalAlgoName = "normal";
 constexpr auto kConvPerformanceAlgoName = "performance";
 
@@ -177,6 +232,7 @@ static void SetConvolutionMathType(const cudnnConvolutionDescriptor_t &conv_desc
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc, math_type),
                                       "cudnnSetConvolutionMathType failed.")
 }
+
 static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(const cudnnHandle_t &handle,
                                                         const cudnnDataType_t &cudnn_data_type,
                                                         const cudnnTensorDescriptor_t &x_desc,
