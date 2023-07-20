@@ -4740,7 +4740,7 @@ class MirrorPad(Primitive):
 
             - ``'REFLECT'``: Reflect the value on the edge while omitting the last one.
               For example, pad [1, 2, 3, 4] with 2 elements on both sides will result in [3, 2, 1, 2, 3, 4, 3, 2].
-            - ``'SYMMETRIC'```: Reflect the value on the edge while repeating the last one.
+            - ``'SYMMETRIC'``: Reflect the value on the edge while repeating the last one.
               For example, pad [1, 2, 3, 4] with 2 elements on both sides will result in [2, 1, 1, 2, 3, 4, 4, 3].
 
     Inputs:
@@ -4757,11 +4757,11 @@ class MirrorPad(Primitive):
     Outputs:
         Tensor, the tensor after padding.
 
-        - If `mode` is "REFLECT", it uses a way of symmetrical copying through the axis of symmetry to fill in.
+        - If `mode` is ``'REFLECT'``, it uses a way of symmetrical copying through the axis of symmetry to fill in.
           If the `input_x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
           `Outputs` is [[6,5,4,5,6,5,4], [3,2,1,2,3,2,1], [6,5,4,5,6,5,4], [9,8,7,8,9,8,7], [6,5,4,5,6,5,4]].
           For a more intuitive understanding, please see the example below.
-        - If `mode` is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
+        - If `mode` is ``'SYMMETRIC'``, the filling method is similar to the ``'REFLECT'``. It is also copied
           according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
           is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the `Outputs` is
           [[2,1,1,2,3,3,2], [2,1,1,2,3,3,2], [5,4,4,5,6,6,5], [8,7,7,8,9,9,8], [8,7,7,8,9,9,8]].
@@ -8695,7 +8695,7 @@ class Conv3DTranspose(Primitive):
             Single int means the value is for the depth, height and width of the kernel.
             A tuple of 3 ints means the first value is for the depth, the second value is for the height and the
             other is for the width of the kernel.
-        mode (int): Modes for different convolutions. Default is ``1`` . It is currently not used.
+        mode (int, optional): Modes for different convolutions. Default is ``1`` . It is currently not used.
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
             ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
@@ -8712,18 +8712,20 @@ class Conv3DTranspose(Primitive):
               in the depth, height and width dimension is determined by the `pad` parameter.
               If this mode is set, `pad` must be greater than or equal to 0.
 
-        pad (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the paddings
-             of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six integers,
-             the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4]
-             and pad[5] correspondingly.
-        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+        pad (Union(int, tuple[int]), optional): The pad value to be filled. Default: ``0`` . If `pad` is an integer,
+            the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
+            If `pad` is a tuple of six integers, the padding of head, tail, top, bottom, left and right equal
+            to pad[0], pad[1], pad[2], pad[3], pad[4] and pad[5] correspondingly.
+        stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: ``1`` .
-        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: ``1`` .
-        group (int): The number of groups into which the filter is divided. `in_channels`
+        dilation (Union(int, tuple[int]), optional): Specifies the space to use between kernel elements.
+            Default: ``1`` .
+        group (int, optional): The number of groups into which the filter is divided. `in_channels`
             and `out_channels` must be divisible by `group`. Default: ``1`` .
-        output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: ``0`` .
-        data_format (str): The optional value for data format. Currently only ``'NCDHW'`` is supported.
+        output_padding (Union(int, tuple[int]), optional): Add extra size to each dimension of the output.
+            Default: ``0`` .
+        data_format (str, optional): The optional value for data format. Currently only ``'NCDHW'`` is supported.
             Default: ``'NCDHW'``.
 
     Inputs:
