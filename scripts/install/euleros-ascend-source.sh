@@ -41,7 +41,7 @@ if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
     exit 1
 fi
 
-if ! (ls ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl 1> /dev/null 2>&1); then
+if ! (ls ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-any.whl 1> /dev/null 2>&1); then
     echo "can not find whl packages in LOCAL_ASCEND=${LOCAL_ASCEND}, please check whether it is a valid path."
     exit 1
 fi
@@ -129,7 +129,6 @@ pip install wheel
 pip install -U setuptools
 
 pip install sympy
-pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-any.whl
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/hccl-*-py3-none-any.whl
 
