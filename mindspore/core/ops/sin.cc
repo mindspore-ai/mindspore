@@ -30,6 +30,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/primitive_c.h"
+#include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 
@@ -48,9 +49,15 @@ abstract::ShapePtr SinInferShape(const PrimitivePtr &primitive, const std::vecto
 }
 
 TypePtr SinInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   auto x_dtype = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim->name());
+  auto prim_attrs = prim->attrs();
+  if (prim_attrs.find(kLiteQuantAttrName) != prim_attrs.end()) {
+    const std::set<TypePtr> valid_types_lite = {kInt8, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types_lite, prim->name());
+  } else {
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim->name());
+  }
   return x_dtype;
 }
 }  // namespace
