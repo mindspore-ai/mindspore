@@ -15,12 +15,45 @@
 """adamw"""
 from __future__ import absolute_import
 
-from mindspore.ops import functional as F, operations as P
-from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.ops import functional as F, composite as C, operations as P
+from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.nn.optim_ex.optimizer import Optimizer
 from mindspore import ops
+
+_adamw_opt = C.MultitypeFuncGraph("adamw_opt")
+
+
+@_adamw_opt.register("Float", "Tensor", "Bool", "Float", "Tensor", "Float", "Float", "Tensor", "Tensor",
+                     "Tensor", "Tensor", "Tensor")
+def _run_adamw_opt(weight_decay, lr, amsgrad, eps, state_step, beta1, beta2, param, grad,
+                   exp_avg, exp_avg_sq, max_exp_avg_sq):
+    op_mul = P.Mul()
+    op_pow = P.Pow()
+    op_sqrt = P.Sqrt()
+    op_maximum = P.Maximum()
+
+    success = True
+
+    next_param = op_mul(param, 1 - lr * weight_decay)
+    F.assign(exp_avg, op_mul(exp_avg, beta1) + op_mul(grad, 1 - beta1))
+    F.assign(exp_avg_sq, ops.addcmul(op_mul(exp_avg_sq, beta2), grad, grad, 1 - beta2))
+    bias_correction1 = 1 - op_pow(beta1, state_step)
+    bias_correction2 = 1 - op_pow(beta2, state_step)
+    step_size = lr / bias_correction1
+    bias_correction2_sqrt = op_sqrt(bias_correction2)
+
+    if amsgrad:
+        next_max_exp_avg = op_maximum(max_exp_avg_sq, exp_avg_sq)
+        denom = op_sqrt(next_max_exp_avg) / bias_correction2_sqrt + eps
+        F.assign(max_exp_avg_sq, next_max_exp_avg)
+    else:
+        denom = op_sqrt(exp_avg_sq) / bias_correction2_sqrt + eps
+
+    return_param = next_param - op_mul(exp_avg / denom, step_size)
+    F.assign(param, return_param)
+    return success
 
 
 class AdamW(Optimizer):
@@ -127,75 +160,18 @@ class AdamW(Optimizer):
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
         self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')
         self.max_exp_avg_sq = self.parameters.clone(prefix="max_exp_avg_sq", init='zeros')
-        self.state_step = ParameterTuple(Parameter(Tensor(0, mstype.int32), "step_"+str(i))
-                                         for i in range(len(self.parameters)))
+        self.state_step = Parameter(Tensor(0, mstype.int32), "state_step")
         self.increase_tensor = Tensor(1, mstype.int32)
-
-        self.op_mul = P.Mul()
         self.assignadd = P.AssignAdd()
-        self.op_pow = P.Pow()
-        self.op_sqrt = P.Sqrt()
-        self.op_maximum = P.Maximum()
-        self.op_cast = P.Cast()
 
     def construct(self, gradients):
+        self.assignadd(self.state_step, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
-            params = []
-            grads = []
-            exp_avgs = []
-            exp_avg_sqs = []
-            max_exp_avg_sqs = []
-            state_steps = []
-            amsgrad = group["amsgrad"]
             beta1, beta2 = group['betas']
-            params, grads, exp_avgs, exp_avg_sqs, max_exp_avg_sqs, state_steps = \
-                self._init_group(group, gradients, params, grads, amsgrad, exp_avgs,
-                                 exp_avg_sqs, max_exp_avg_sqs, state_steps, group_id)
-
-            self.apply_adamw(params, grads, exp_avgs, exp_avg_sqs, max_exp_avg_sqs, state_steps,
-                             amsgrad, beta1, beta2, group['lr'], group['weight_decay'], group['eps'],
-                             group["maximize"], group["grad_centralization"])
-
-    def apply_adamw(self, params, grads, exp_avgs, exp_avg_sqs, max_exp_avg_sqs, state_steps,
-                    amsgrad, beta1, beta2, lr, weight_decay, eps, maximize, grad_centralization):
-        grads = self._gradients_centralization(grad_centralization, grads)
-        for i, param in enumerate(params):
-            grad = grads[i] if not maximize else -grads[i]
-            exp_avg = exp_avgs[i]
-            exp_avg_sq = exp_avg_sqs[i]
-            step_t = state_steps[i]
-
-            next_param = self.op_mul(param, F.tuple_to_array((1.0,)) - lr * weight_decay)
-            F.assign(exp_avg, self.op_mul(exp_avg, beta1) + self.op_mul(grad, 1-beta1))
-            F.assign(exp_avg_sq, ops.addcmul(self.op_mul(exp_avg_sq, beta2), grad, grad, 1-beta2))
-            step_t = F.depend(step_t, self.assignadd(step_t, self.increase_tensor))
-
-            bias_correction1 = F.tuple_to_array((1.0,)) - self.op_pow(beta1, step_t)
-            bias_correction2 = F.tuple_to_array((1.0,)) - self.op_pow(beta2, step_t)
-            step_size = lr / bias_correction1
-            bias_correction2_sqrt = self.op_sqrt(bias_correction2)
-
-            if amsgrad:
-                next_max_exp_avg = self.op_maximum(max_exp_avg_sqs[i], exp_avg_sq)
-                denom = self.op_sqrt(next_max_exp_avg) / bias_correction2_sqrt + eps
-                F.assign(max_exp_avg_sqs[i], next_max_exp_avg)
-            else:
-                denom = self.op_sqrt(exp_avg_sq) / bias_correction2_sqrt + eps
-
-            return_param = next_param - self.op_mul(exp_avg / denom, step_size)
-            F.assign(param, return_param)
-
-    def _init_group(self, group, gradients, params, grads, amsgrad, exp_avgs, exp_avg_sqs,
-                    max_exp_avg_sqs, state_steps, group_id):
-        """ Initialize group params. """
-        p_id = self.group_start_id[group_id]
-        for i, param in enumerate(group["params"]):
-            grad = gradients[p_id+i]
-            grads.append(grad)
-            params.append(param)
-            exp_avgs.append(self.exp_avg[p_id+i])
-            exp_avg_sqs.append(self.exp_avg_sq[p_id+i])
-            if amsgrad:
-                max_exp_avg_sqs.append(self.max_exp_avg_sq[p_id+i])
-            state_steps.append(self.state_step[p_id+i])
-        return params, grads, exp_avgs, exp_avg_sqs, max_exp_avg_sqs, state_steps
+            start_id = self.group_start_id[group_id]
+            end_id = self.group_start_id[group_id + 1]
+            grads = gradients[start_id: end_id] if not group.get("maximize") else -gradients[start_id: end_id]
+            self.hyper_map(F.partial(_adamw_opt, group.get("weight_decay"), group.get("lr"), group.get("amsgrad"),
+                                     group.get("eps"), self.state_step, beta1, beta2),
+                           self.parameters[start_id: end_id], grads, self.exp_avg[start_id: end_id],
+                           self.exp_avg_sq[start_id: end_id], self.max_exp_avg_sq[start_id: end_id])

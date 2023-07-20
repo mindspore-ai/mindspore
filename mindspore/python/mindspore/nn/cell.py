@@ -346,7 +346,7 @@ class Cell(Cell_):
         if '_params_list' in self.__dict__:
             params_list = self.__dict__['_params_list']
             if name in params_list:
-                return ParameterTuple(params_list[name])
+                return params_list[name]
         raise AttributeError("The '{}' object has no attribute '{}'.".format(type(self).__name__, name))
 
     def __del__(self):

@@ -17,11 +17,10 @@ from __future__ import absolute_import
 from collections import defaultdict
 from typing import Iterable
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore.ops.operations import _inner_ops as inner
+
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common import Tensor
-from mindspore.common.sparse_tensor import RowTensorInner
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
 from mindspore import log as logger
@@ -69,8 +68,10 @@ class Optimizer(Cell):
 
         for i, param_group in enumerate(param_groups):
             self.add_param_group(i, param_group)
-            self.group_start_id.append(self.group_start_id[-1] + len(param_group["params"]))
+            self.group_start_id.append(self.group_start_id[-1] + len(param_group.get("params")))
         self.parameters = ParameterTuple(self.parameters)
+        self.hyper_map = C.HyperMap()
+        self.enable_tuple_broaden = True
 
     def __repr__(self):
         format_string = self.__class__.__name__ + ' ('
@@ -95,7 +96,7 @@ class Optimizer(Cell):
                 specific optimization options.
         """
         param_group = self._preprocess_param_group(param_group)
-        self.parameters += param_group["params"]
+        self.parameters += param_group.get("params")
 
         for name, default in self.defaults.items():
             if name not in param_group:
@@ -105,8 +106,6 @@ class Optimizer(Cell):
         weight_decay = self._preprocess_weight_decay(param_group.get("weight_decay", 0.0))
         param_group["lr"] = lr
         param_group["weight_decay"] = weight_decay
-        param_group["grad_centralization"] = self._preprocess_grad_centralization(
-            param_group.get('grad_centralization', False))
         self.param_groups.append(param_group)
 
     @staticmethod
@@ -128,12 +127,6 @@ class Optimizer(Cell):
         if weight_decay != 0.:
             weight_decay = Tensor(weight_decay, mstype.float32)
             gradients = self.map_(F.partial(_apply_decay, weight_decay), params, gradients)
-        return gradients
-
-    def _gradients_centralization(self, grad_centralization, gradients):
-        """Apply gradients centralization."""
-        if grad_centralization:
-            return self.map_(_apply_grad_centralization, gradients)
         return gradients
 
     def _preprocess_param_group(self, param_group):
@@ -191,25 +184,14 @@ class Optimizer(Cell):
                             "float.but got {}".format(type(weight_decay)))
         return weight_decay
 
-    @staticmethod
-    def _preprocess_grad_centralization(grad_centralization):
-        """ Preprocess gradient centralization. """
-        if not isinstance(grad_centralization, bool):
-            raise TypeError("For 'Optimizer', the 'gradients_centralization' must be bool type, "
-                            "but got {}.".format(type(grad_centralization)))
-        return grad_centralization
-
     def construct(self, *hyper_params):
         raise NotImplementedError
-
 
 op_add = P.AddN()
 op_gather = P.Gather()
 op_mul = P.Mul()
-op_gc = inner.Centralization()
 
 _apply_decay = C.MultitypeFuncGraph("apply_decay")
-_apply_grad_centralization = C.MultitypeFuncGraph("apply_grad_centralization")
 
 
 @_apply_decay.register("Tensor", "Tensor", "RowTensor")
@@ -225,34 +207,3 @@ def _tensor_apply_decay_with_sparse(weight_decay, weight, gradient):
 def _tensor_apply_decay(weight_decay, weight, gradient):
     """Get grad with weight_decay."""
     return op_add((op_mul(weight, F.cast(weight_decay, F.dtype(weight))), gradient))
-
-
-@_apply_grad_centralization.register("RowTensor")
-def _tensor_apply_grad_centralization_with_sparse(gradient):
-    """Get grad with grad_centralization."""
-    indices = gradient.indices
-    shape = gradient.dense_shape
-    grad_shape = F.shape(gradient)
-    axis = []
-    for i in range(1, len(grad_shape)):
-        axis.append(i)
-    if len(axis) >= 1:
-        if grad_shape[1] % 16 != 0:
-            return gradient
-        values = op_gc(gradient.values, axis)
-        return RowTensorInner(indices, values, shape)
-    return gradient
-
-
-@_apply_grad_centralization.register("Tensor")
-def _tensor_apply_grad_centralization(gradient):
-    """Get grad with grad_centralization."""
-    axis = []
-    grad_shape = F.shape(gradient)
-    for i in range(1, len(grad_shape)):
-        axis.append(i)
-    if len(axis) >= 1:
-        if grad_shape[1] % 16 != 0:
-            return gradient
-        return op_gc(gradient, axis)
-    return gradient
