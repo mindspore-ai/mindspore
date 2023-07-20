@@ -40,6 +40,7 @@
 #include "tools/optimizer/fusion/kv_cache_mgr_one_branch_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_concat_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_assign_fusion.h"
+#include "tools/optimizer/graph/scalar_op_pass.h"
 
 namespace mindspore::lite {
 AnfTransformForGe::AnfTransformForGe() = default;
@@ -52,11 +53,15 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
   CHECK_NULL_RETURN(fusion_pm);
 
-  std::vector<opt::PassPtr> fusions{
-    std::make_shared<opt::KVCacheMgrOneBranchFusion>(),
-    std::make_shared<opt::KVCacheMgrConcatFusion>(),
-    std::make_shared<opt::KVCacheMgrAssignFusion>(),
-  };
+  std::vector<opt::PassPtr> fusions{std::make_shared<opt::ScalarOpPass>()};
+  if (param->ascendGeOptionCfg.plugin_custom_ops == "All") {
+    fusions.push_back(std::make_shared<opt::KVCacheMgrOneBranchFusion>());
+    fusions.push_back(std::make_shared<opt::KVCacheMgrConcatFusion>());
+    fusions.push_back(std::make_shared<opt::KVCacheMgrAssignFusion>());
+  } else {
+    MS_LOG(INFO) << "custom op fusion not used.";
+  }
+
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);
     MS_CHECK_TRUE_RET(pass_ptr != nullptr, RET_ERROR);
