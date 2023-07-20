@@ -315,7 +315,11 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
 
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
     for (size_t i = 0; i < input_num; ++i) {
-      auto input_format = AnfAlgo::GetPrevNodeOutputFormat(node, i);
+      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
+      auto input_cnode = kernel_with_index.first->cast<CNodePtr>();
+      auto input_format = (input_cnode != nullptr && common::AnfAlgo::HasNodeAttr(kAttrAclSpecialFormat, input_cnode))
+                            ? kOpFormat_DEFAULT
+                            : AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
       if (!CheckDefaultSupportFormat(input_format)) {
         MS_LOG(EXCEPTION) << "Acl kernel input not support this format: " << input_format
                           << ", kernel: " << node->fullname_with_scope() << ", input idx: " << i;

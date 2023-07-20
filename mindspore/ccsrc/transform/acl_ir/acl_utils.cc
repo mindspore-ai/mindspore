@@ -129,7 +129,7 @@ void AclRunner::Reset() {
 }
 
 void AclRunner::SetStaticMode() {
-  auto set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_DEFAULT);
+  auto set_compile_flag = aclSetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "enable");
   if (set_compile_flag != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
@@ -138,7 +138,7 @@ void AclRunner::SetStaticMode() {
 }
 
 void AclRunner::SetDynamicMode() {
-  auto set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_FUZZ);
+  auto set_compile_flag = aclSetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "disable");
   if (set_compile_flag != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
