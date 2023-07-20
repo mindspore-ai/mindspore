@@ -52,7 +52,7 @@ if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
     exit 1
 fi
 
-if ! (ls ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl 1> /dev/null 2>&1); then
+if ! (ls ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-any.whl 1> /dev/null 2>&1); then
     echo "can not find whl packages in LOCAL_ASCEND=${LOCAL_ASCEND}, please check whether it is a valid path."
     exit 1
 fi
@@ -115,7 +115,6 @@ conda create -n $env_name python=${PYTHON_VERSION} -c conda-forge -y
 conda activate $env_name
 
 pip install sympy
-pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-any.whl
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/hccl-*-py3-none-any.whl
 
@@ -136,4 +135,4 @@ if [[ X"$OPENMPI" == "Xon" ]]; then
 fi
 
 ARCH=`uname -m`
-pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_VERSION}/MindSpore/ascend/${ARCH}/mindspore_ascend-${version_map["$PYTHON_VERSION"]}-linux_${ARCH}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_VERSION}/MindSpore/unified/${ARCH}/mindspore-${version_map["$PYTHON_VERSION"]}-linux_${ARCH}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple

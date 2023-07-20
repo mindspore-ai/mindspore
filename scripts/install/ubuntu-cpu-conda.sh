@@ -103,7 +103,7 @@ set -e
 env_name=mindspore_py3${PYTHON_VERSION##*.}
 conda create -n $env_name python=${PYTHON_VERSION} -c conda-forge -y
 conda activate $env_name
-install_name="mindspore-cpu"
+install_name="mindspore"
 if [[ $MINDSPORE_VERSION != "EMPTY" ]]; then
     install_name="${install_name}=${MINDSPORE_VERSION}"
 fi
