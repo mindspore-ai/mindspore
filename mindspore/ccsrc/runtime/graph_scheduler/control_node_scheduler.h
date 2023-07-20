@@ -103,7 +103,7 @@ class ControlNodeScheduler {
   // Add time summary info for counting the execution time between two actors.
   void SetTimeSummaryForControlActor(const GraphCompilerInfo &graph_compiler_info) const;
   bool IsNoInputActor(const ControlActor *control_actor) const;
-
+  void CollectDynamicLenIndexForArgment(const GraphCompilerInfo &graph_compiler_info) const;
   // The id of memory manager actor.
   AID memory_manager_aid_;
 };

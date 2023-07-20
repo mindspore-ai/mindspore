@@ -52,18 +52,23 @@ void ExitActor::FetchInput(OpContext<DeviceTensor> *const context) {
 
   ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   CopyDeviceAddress(context);
-
-  auto data_iter = output_branch_data_.find(output_branch_id_);
-  if (data_iter != output_branch_data_.end()) {
-    for (auto &output_data : data_iter->second) {
-      MS_EXCEPTION_IF_NULL(output_data.second);
-      if (output_data.first >= input_device_tensors_.size()) {
-        MS_LOG(EXCEPTION) << "Invalid from index:" << output_data.first << " for actor:" << GetAID()
-                          << " to actor:" << output_data.second->op_id_ << " to index:" << output_data.second->index_;
+  if (output_branch_dynamic_len_index_.find(output_branch_id_) == output_branch_dynamic_len_index_.end()) {
+    auto data_iter = output_branch_data_.find(output_branch_id_);
+    if (data_iter != output_branch_data_.end()) {
+      for (auto &output_data : data_iter->second) {
+        MS_EXCEPTION_IF_NULL(output_data.second);
+        if (output_data.first >= input_device_tensors_.size()) {
+          MS_LOG(EXCEPTION) << "Invalid from index:" << output_data.first << " for actor:" << GetAID()
+                            << " to actor:" << output_data.second->op_id_ << " to index:" << output_data.second->index_;
+        }
+        MS_EXCEPTION_IF_NULL(input_device_tensors_[output_data.first]);
+        output_data.second->data_ = input_device_tensors_[output_data.first];
       }
-      MS_EXCEPTION_IF_NULL(input_device_tensors_[output_data.first]);
-      output_data.second->data_ = input_device_tensors_[output_data.first];
     }
+  } else {
+    // The branch id need merge device address.
+    MS_LOG(DEBUG) << "Exit actor:" << GetAID() << " merge output";
+    MergeDynamiclenDeviceAddress(context);
   }
 }
 
@@ -176,6 +181,69 @@ void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context)
         MS_LOG(INFO) << "Update device context type to:" << device_contexts_[i]->GetDeviceType();
       }
       device_contexts_[i]->device_res_manager_->FreeMemory(input_device_tensors_[i]);
+    }
+  }
+}
+
+void ExitActor::MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const context) {
+  if (output_branch_dynamic_len_index_.find(output_branch_id_) == output_branch_dynamic_len_index_.end()) {
+    return;
+  }
+  auto real_indexes = output_branch_dynamic_len_index_[output_branch_id_];
+  std::vector<OpPartialPtr> new_partials;
+  std::vector<DeviceTensor *> new_device_tensors;
+  // Collect the new output of actor, merge the device address for dynamic len.
+  for (size_t i = 0; i < real_indexes.size(); ++i) {
+    const auto &indexes = real_indexes[i].first;
+    if (real_indexes[i].second) {
+      std::vector<DeviceTensor *> addr_list;
+      for (size_t index : indexes) {
+        if (index > input_device_tensors_.size()) {
+          std::string error_info = "Invalid real index:" + std::to_string(index) + " for index:" + std::to_string(i) +
+                                   " total size:" + std::to_string(input_device_tensors_.size()) +
+                                   " for actor:" + GetAID().Name();
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+        }
+        if (input_device_tensors_[i] == nullptr) {
+          std::string error_info =
+            "Invalid input device address index:" + std::to_string(index) + " for index:" + std::to_string(i) +
+            " total size:" + std::to_string(input_device_tensors_.size()) + " for actor:" + GetAID().Name();
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+        }
+        addr_list.emplace_back(input_device_tensors_[index]);
+      }
+      DeviceTensor *new_device_tensor = nullptr;
+      MergeDeviceAddress(context, addr_list, &new_device_tensor);
+      new_device_tensors.emplace_back(new_device_tensor);
+      new_partials.emplace_back(nullptr);
+    } else if (indexes.empty() || indexes[0] >= input_partials_.size()) {
+      std::string error_info = "Invalid index num:" + std::to_string(indexes.size()) +
+                               " for index:" + std::to_string(i) + " for actor:" + GetAID().Name();
+      MS_LOG(WARNING) << error_info;
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    } else if (input_partials_[indexes[0]] != nullptr) {
+      new_device_tensors.emplace_back(nullptr);
+      new_partials.emplace_back(input_partials_[indexes[0]]);
+    } else if (input_device_tensors_[indexes[0]] != nullptr) {
+      new_device_tensors.emplace_back(input_device_tensors_[indexes[0]]);
+      new_partials.emplace_back(nullptr);
+    } else {
+      std::string error_info = "Failed to get input for real index:" + std::to_string(indexes[0]) +
+                               " for index:" + std::to_string(i) + " for actor:" + GetAID().Name();
+      MS_LOG(WARNING) << error_info;
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+  }
+  auto data_iter = output_branch_data_.find(output_branch_id_);
+  if (data_iter != output_branch_data_.end()) {
+    for (auto &output_data : data_iter->second) {
+      MS_EXCEPTION_IF_NULL(output_data.second);
+      if (output_data.first >= new_device_tensors.size()) {
+        MS_LOG(EXCEPTION) << "Invalid from index:" << output_data.first << " for actor:" << GetAID()
+                          << " to actor:" << output_data.second->op_id_ << " to index:" << output_data.second->index_;
+      }
+      MS_EXCEPTION_IF_NULL(new_device_tensors[output_data.first]);
+      output_data.second->data_ = new_device_tensors[output_data.first];
     }
   }
 }

@@ -553,6 +553,101 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
   }
 }
 
+namespace {
+void ParseRealIndex(const mindspore::HashMap<size_t, size_t> &dynamic_len_index, size_t formal_input_num,
+                    std::vector<std::pair<std::vector<size_t>, bool>> *real_indexes, AbstractActor *actor) {
+  MS_EXCEPTION_IF_NULL(real_indexes);
+  MS_EXCEPTION_IF_NULL(actor);
+  auto tmp_dynamic_len_index = dynamic_len_index;
+  size_t real_output_num = formal_input_num + tmp_dynamic_len_index.size();
+  for (const auto &index_pair : tmp_dynamic_len_index) {
+    if (real_output_num < index_pair.second) {
+      MS_LOG(EXCEPTION) << "Invalid dynamic len:" << std::to_string(index_pair.second)
+                        << " start index:" << std::to_string(index_pair.first)
+                        << " real input num:" << std::to_string(real_output_num)
+                        << " for actor:" << actor->GetAID().Name();
+    }
+    real_output_num -= index_pair.second;
+  }
+  MS_LOG(DEBUG) << "for actor:" << actor->GetAID() << " real output num:" << real_output_num;
+  size_t start_index = 0;
+  for (const auto &pair : tmp_dynamic_len_index) {
+    MS_LOG(DEBUG) << "start index:" << pair.first << " len:" << pair.second;
+  }
+  for (size_t i = 0; i < real_output_num; ++i) {
+    MS_LOG(DEBUG) << "for actor:" << actor->GetAID() << " real output index:" << i;
+    if (tmp_dynamic_len_index.find(start_index) != tmp_dynamic_len_index.end()) {
+      std::vector<size_t> indexes;
+      for (size_t j = 0; j < tmp_dynamic_len_index[start_index]; ++j) {
+        indexes.emplace_back(j + start_index);
+      }
+      real_indexes->emplace_back(indexes, true);
+      start_index += tmp_dynamic_len_index[start_index];
+      tmp_dynamic_len_index.erase(start_index);
+    } else {
+      std::vector<size_t> indexes{start_index};
+      real_indexes->emplace_back(indexes, false);
+      start_index++;
+    }
+  }
+  for (size_t i = 0; i < real_indexes->size(); ++i) {
+    std::string index_str = "index_";
+    for (const auto &index : (*real_indexes)[i].first) {
+      index_str = index_str + std::to_string(index) + "_";
+    }
+    MS_LOG(DEBUG) << "for actor:" << actor->GetAID() << " real input " << i << " " << index_str;
+  }
+  if (real_indexes->size() != real_output_num) {
+    MS_LOG(EXCEPTION) << "Invalid real index size:" << std::to_string(real_indexes->size())
+                      << " start need:" << std::to_string(real_output_num) << " for actor:" << actor->GetAID().Name();
+  }
+}
+}  // namespace
+
+void ControlNodeScheduler::CollectDynamicLenIndexForArgment(const GraphCompilerInfo &graph_compiler_info) const {
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+  for (const auto &node_to_func_with_index : parser->control_node_to_funcgraph_with_dynamic_sequence_index_) {
+    const auto &node = node_to_func_with_index.first;
+    MS_EXCEPTION_IF_NULL(node);
+    const auto &actor_name = GetActorName(node);
+    const auto &actor = FetchActor(actor_name);
+    MS_EXCEPTION_IF_NULL(actor);
+    const auto &gather_actor = dynamic_cast<GatherActor *>(actor);
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    for (const auto &func_with_index : node_to_func_with_index.second) {
+      const auto &func_graph = func_with_index.first;
+      MS_EXCEPTION_IF_NULL(func_graph);
+      auto dynamic_len_index = func_with_index.second;
+      std::vector<std::pair<std::vector<size_t>, bool>> real_indexes;
+      ParseRealIndex(dynamic_len_index, gather_actor->formal_parameters_.size(), &real_indexes, gather_actor);
+      MS_LOG(INFO) << "add dynamic len index for funcgraph:" << func_graph->ToString()
+                   << " actor:" << gather_actor->GetAID();
+      gather_actor->dynamic_len_index_[func_graph] = real_indexes;
+    }
+  }
+
+  for (const auto &node_to_call_with_index : parser->return_to_call_with_dynamic_sequence_index_) {
+    const auto &node = node_to_call_with_index.first;
+    MS_EXCEPTION_IF_NULL(node);
+    MS_EXCEPTION_IF_NULL(node->func_graph());
+    MS_LOG(DEBUG) << "for node:" << node->DebugString();
+    const auto &actor_name = node->func_graph()->ToString() + kExitActorNameSuffix;
+    auto actor = FetchActor(actor_name);
+    MS_EXCEPTION_IF_NULL(actor);
+    const auto &exit_actor = dynamic_cast<ExitActor *>(actor);
+    MS_EXCEPTION_IF_NULL(exit_actor);
+    for (const auto &call_with_index : node_to_call_with_index.second) {
+      const auto &call = call_with_index.first;
+      MS_EXCEPTION_IF_NULL(call);
+      int branch_id = parser->FetchBranchIDByCallNode(call);
+      std::vector<std::pair<std::vector<size_t>, bool>> real_indexes;
+      ParseRealIndex(call_with_index.second, exit_actor->formal_parameters_.size(), &real_indexes, exit_actor);
+      exit_actor->output_branch_dynamic_len_index_[branch_id] = real_indexes;
+    }
+  }
+}
+
 void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->control_actors_);
@@ -585,6 +680,8 @@ void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerIn
   LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
 
   SetTimeSummaryForControlActor(graph_compiler_info);
+
+  CollectDynamicLenIndexForArgment(graph_compiler_info);
   MS_LOG(DEBUG) << "Control node scheduler link end.";
 }
 
@@ -679,6 +776,8 @@ void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_s
   for (auto &gather_actor : control_actor_set->gather_actors_) {
     MS_EXCEPTION_IF_NULL(gather_actor);
     gather_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
+    gather_actor->created_device_tensors_.clear();
+    gather_actor->created_new_nodes_.clear();
   }
 
   for (auto &entrance_actor : control_actor_set->entrance_actors_) {
@@ -695,6 +794,7 @@ void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_s
     MS_EXCEPTION_IF_NULL(exit_actor);
     exit_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
     exit_actor->created_device_tensors_.clear();
+    exit_actor->created_new_nodes_.clear();
   }
 }
 
