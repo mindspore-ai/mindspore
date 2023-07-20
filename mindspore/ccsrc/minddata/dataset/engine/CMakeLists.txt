@@ -1,6 +1,5 @@
 add_subdirectory(datasetops)
 add_subdirectory(opt)
-add_subdirectory(gnn)
 add_subdirectory(ir)
 
 message("ENABLE_SECURITY = ${ENABLE_SECURITY}")
@@ -43,7 +42,6 @@ add_dependencies(engine
     engine-datasetops
     engine-datasetops-source
     engine-opt
-    engine-gnn
     engine-cache-client
     engine-datasetops-mapop
     )

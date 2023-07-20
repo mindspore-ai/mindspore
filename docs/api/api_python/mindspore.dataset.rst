@@ -167,17 +167,6 @@ mindspore.dataset
     mindspore.dataset.PaddedDataset
     mindspore.dataset.RandomDataset
 
-图
----
-
-.. mscnautosummary::
-    :toctree: dataset
-
-    mindspore.dataset.ArgoverseDataset
-    mindspore.dataset.Graph
-    mindspore.dataset.GraphData
-    mindspore.dataset.InMemoryGraphDataset
-
 采样器
 -------
 

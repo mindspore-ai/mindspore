@@ -8,7 +8,6 @@ if(ENABLE_PYTHON)
             python/bindings/dataset/core/bindings.cc
             python/bindings/dataset/engine/cache/bindings.cc
             python/bindings/dataset/engine/datasetops/bindings.cc
-            python/bindings/dataset/engine/gnn/bindings.cc
             python/bindings/dataset/engine/ir/consumer/bindings.cc
             python/bindings/dataset/engine/ir/datasetops/bindings.cc
             python/bindings/dataset/engine/ir/datasetops/source/bindings.cc
