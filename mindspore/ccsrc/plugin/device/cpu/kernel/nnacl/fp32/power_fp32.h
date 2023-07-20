@@ -19,7 +19,7 @@
 
 #include <math.h>
 #include "nnacl/op_base.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 
 typedef void (*PowerFun)(const float *, const float *, float *, int, float, float);
 typedef float (*PowerScalarFun)(float x, const float *exponent);

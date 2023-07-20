@@ -29,7 +29,7 @@ int PowerInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   TensorC *exp_tensor = NULL;
   if (inputs_size == 2) {
     exp_tensor = (TensorC *)inputs[1];
-    PowerParameter *param = (PowerParameter *)parameter;
+    PowParameter *param = (PowParameter *)parameter;
     float *exp_data = (float *)(exp_tensor->data_);
     if (exp_data == NULL) {
       return NNACL_INFER_INVALID;

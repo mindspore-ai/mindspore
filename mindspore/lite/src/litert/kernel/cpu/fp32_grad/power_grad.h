@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 #include "nnacl/fp32/power_fp32.h"
 
 namespace mindspore::kernel {
@@ -28,7 +28,7 @@ class PowerGradCPUKernel : public LiteKernel {
   PowerGradCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(param, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
-    PowerParameter *power_param = reinterpret_cast<PowerParameter *>(param);
+    PowParameter *power_param = reinterpret_cast<PowParameter *>(param);
     power_ = power_param->power_;
     scale_ = power_param->scale_;
     shift_ = power_param->shift_;

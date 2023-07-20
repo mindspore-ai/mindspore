@@ -21,12 +21,12 @@
 
 namespace mindspore {
 
-class BatchToSpaceTestFp32 : public mindspore::CommonTest {
+class TestBatchToSpaceFp32 : public mindspore::CommonTest {
  public:
-  BatchToSpaceTestFp32() = default;
+  TestBatchToSpaceFp32() = default;
 };
 
-TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest1) {
+TEST_F(TestBatchToSpaceFp32, BatchToSpaceTest1) {
   float input[12] = {10, 30, 90, 2, 20, 120, 5, 50, 150, 6, 16, 160};
   constexpr int kOutSize = 12;
   float expect_out[kOutSize] = {10, 30, 90, 2, 20, 120, 5, 50, 150, 6, 16, 160};
@@ -43,7 +43,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest1) {
   ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
-TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_1) {
+TEST_F(TestBatchToSpaceFp32, BatchToSpaceTest_crop_1) {
   float input[12] = {10, 30, 90, 2, 20, 120, 5, 50, 150, 6, 16, 160};
   constexpr int kOutSize = 3;
   float expect_out[kOutSize] = {5, 50, 150};
@@ -61,7 +61,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_1) {
   ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
-TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest2) {
+TEST_F(TestBatchToSpaceFp32, BatchToSpaceTest2) {
   float input[32] = {1, 10, 3, 30, 9,  90,  11, 110, 2, 20, 4, 40, 10, 100, 12, 120,
                      5, 50, 7, 70, 13, 130, 15, 150, 6, 60, 8, 80, 14, 140, 16, 160};
   constexpr int kOutSize = 32;
@@ -80,7 +80,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest2) {
   ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
-TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_2) {
+TEST_F(TestBatchToSpaceFp32, BatchToSpaceTest_crop_2) {
   float input[32] = {1, 10, 3, 30, 9,  90,  11, 110, 2, 20, 4, 40, 10, 100, 12, 120,
                      5, 50, 7, 70, 13, 130, 15, 150, 6, 60, 8, 80, 14, 140, 16, 160};
   constexpr int kOutSize = 12;
@@ -99,7 +99,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_2) {
   ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
-TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest3) {
+TEST_F(TestBatchToSpaceFp32, BatchToSpaceTest3) {
   float input[64] = {1,  10, 3,  30, 9,   90,  11,  110, 2,  20, 4,  40, 10,  100, 12,  120,
                      5,  50, 7,  70, 13,  130, 15,  150, 6,  60, 8,  80, 14,  140, 16,  160,
                      21, 10, 23, 30, 29,  90,  211, 110, 22, 20, 24, 40, 210, 100, 212, 120,
@@ -122,7 +122,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest3) {
   ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
-TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_3) {
+TEST_F(TestBatchToSpaceFp32, BatchToSpaceTest_crop_3) {
   float input[64] = {1,  10, 3,  30, 9,   90,  11,  110, 2,  20, 4,  40, 10,  100, 12,  120,
                      5,  50, 7,  70, 13,  130, 15,  150, 6,  60, 8,  80, 14,  140, 16,  160,
                      21, 10, 23, 30, 29,  90,  211, 110, 22, 20, 24, 40, 210, 100, 212, 120,
@@ -143,7 +143,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_3) {
   ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
-TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest4) {
+TEST_F(TestBatchToSpaceFp32, BatchToSpaceTest4) {
   float input[96] = {1,   10,  3,   30,  9,   90,  11,  110, 2,  20,  4,   40,  10,  100, 12,  120, 5,   50,  7,   70,
                      13,  130, 15,  150, 6,   60,  8,   80,  14, 140, 16,  160, 21,  10,  23,  30,  29,  90,  211, 110,
                      22,  20,  24,  40,  210, 100, 212, 120, 25, 50,  27,  70,  213, 130, 215, 150, 26,  60,  28,  80,
@@ -168,7 +168,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest4) {
   ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
-TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_4) {
+TEST_F(TestBatchToSpaceFp32, BatchToSpaceTest_crop_4) {
   float input[96] = {1,   10,  3,   30,  9,   90,  11,  110, 2,  20,  4,   40,  10,  100, 12,  120, 5,   50,  7,   70,
                      13,  130, 15,  150, 6,   60,  8,   80,  14, 140, 16,  160, 21,  10,  23,  30,  29,  90,  211, 110,
                      22,  20,  24,  40,  210, 100, 212, 120, 25, 50,  27,  70,  213, 130, 215, 150, 26,  60,  28,  80,

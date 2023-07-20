@@ -18,25 +18,28 @@
 
 #include <vector>
 #include "include/errorcode.h"
+#include "src/litert/lite_kernel.h"
 #include "nnacl/base/depth_to_space_base.h"
 #include "nnacl/int8/depth_to_space_int8.h"
 #include "nnacl/int8/quantize.h"
-#include "src/litert/kernel/cpu/fp32/depth_to_space_fp32.h"
+#include "nnacl/kernel/depth_to_space.h"
 
 namespace mindspore::kernel {
-class DepthToSpaceInt8CPUKernel : public DepthToSpaceCPUKernel {
+class DepthToSpaceInt8CPUKernel : public LiteKernel {
  public:
   DepthToSpaceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : DepthToSpaceCPUKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~DepthToSpaceInt8CPUKernel() override;
 
   int Prepare() override;
+  int ReSize() override;
   int Run() override;
 
  private:
   QuantArg *in_quant_arg_ = nullptr;
   QuantArg *out_quant_arg_ = nullptr;
+  DepthToSpaceArgs args_;
 };
 }  // namespace mindspore::kernel
 

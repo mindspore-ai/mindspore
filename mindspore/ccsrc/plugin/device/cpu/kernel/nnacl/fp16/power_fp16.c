@@ -57,7 +57,7 @@ void PowerBroadCastFp16(const float16_t *input, const float16_t *exponent, float
   PowerSimdFunFp16 PowerSimdFunFp16_ = NULL;
 #endif
 
-  if (CheckInteger(*exponent)) {
+  if (CheckIntegerFp16(*exponent)) {
 #if defined(ENABLE_NEON)
     PowerSimdFunFp16_ = OptimizedPowerSimdFp16;
 #endif
@@ -94,13 +94,13 @@ void PowerSingleFp16(const float16_t *input, const float16_t *exponent, float16_
   for (; i < len_c8; i += C8NUM) {
     float16x8_t tmp_8 = scale_8 * vld1q_f16(input + i) + shift_8;
     for (int j = 0; j < 8; ++j) {
-      PowerScalarFunFp16_ = CheckInteger(exponent[i + j]) ? OptimizedPowerScalarFp16 : StdPowerScalarFp16;
+      PowerScalarFunFp16_ = CheckIntegerFp16(exponent[i + j]) ? OptimizedPowerScalarFp16 : StdPowerScalarFp16;
       output[i + j] = PowerScalarFunFp16_(tmp_8[j], exponent + i + j);
     }
   }
 #endif
   for (; i < len; ++i) {
-    PowerScalarFunFp16_ = CheckInteger(exponent[i]) ? OptimizedPowerScalarFp16 : StdPowerScalarFp16;
+    PowerScalarFunFp16_ = CheckIntegerFp16(exponent[i]) ? OptimizedPowerScalarFp16 : StdPowerScalarFp16;
     output[i] = PowerScalarFunFp16_(scale * input[i] + shift, exponent + i);
   }
 }

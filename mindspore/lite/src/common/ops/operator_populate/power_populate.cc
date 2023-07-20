@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 #include "ops/fusion/pow_fusion.h"
 using mindspore::ops::kNamePowFusion;
 using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulatePowerOpParameter(const BaseOperatorPtr &base_operator) {
-  auto param = reinterpret_cast<PowerParameter *>(PopulateOpParameter<PowerParameter>());
+OpParameter *PopulatePowOpParameter(const BaseOperatorPtr &base_operator) {
+  auto param = reinterpret_cast<PowParameter *>(PopulateOpParameter<PowParameter>());
   if (param == nullptr) {
-    MS_LOG(ERROR) << "new PowerParameter failed.";
+    MS_LOG(ERROR) << "new PowParameter failed.";
     return nullptr;
   }
   auto op = dynamic_cast<ops::PowFusion *>(base_operator.get());
@@ -38,6 +38,6 @@ OpParameter *PopulatePowerOpParameter(const BaseOperatorPtr &base_operator) {
   return reinterpret_cast<OpParameter *>(param);
 }
 
-REG_OPERATOR_POPULATE(kNamePowFusion, PrimitiveType_PowFusion, PopulatePowerOpParameter)
+REG_OPERATOR_POPULATE(kNamePowFusion, PrimitiveType_PowFusion, PopulatePowOpParameter)
 }  // namespace lite
 }  // namespace mindspore

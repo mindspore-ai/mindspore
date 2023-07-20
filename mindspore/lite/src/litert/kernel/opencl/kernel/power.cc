@@ -132,7 +132,7 @@ int PowerOpenCLKernel::Prepare() {
     broadcast_ = true;
   }
   use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
-  auto param = reinterpret_cast<PowerParameter *>(this->op_parameter_);
+  auto param = reinterpret_cast<PowParameter *>(this->op_parameter_);
   std::string kernel_name = "power";
   std::string source = power_source;
   const std::string program_name = "power";

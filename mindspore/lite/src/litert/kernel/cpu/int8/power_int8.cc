@@ -43,16 +43,16 @@ int PowerInt8CPUKernel::Prepare() {
 
   auto in_quant_args = input->quant_params();
   CHECK_LESS_RETURN(in_quant_args.size(), 1);
-  param_->quant_arg_.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
-  param_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
+  quant_arg_.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
+  quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto out_quant_args = output->quant_params();
   CHECK_LESS_RETURN(out_quant_args.size(), 1);
-  param_->quant_arg_.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
-  param_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
+  quant_arg_.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
+  quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
-  param_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
-  param_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -68,12 +68,13 @@ int PowerInt8CPUKernel::DoPower(int task_id) {
   int stride = UP_DIV(size, op_parameter_->thread_num_);
   int count = MSMIN(stride, size - stride * task_id);
   int8_t *cur_exp = nullptr;
-  if (param_->broadcast_) {
+  if (broadcast_) {
     cur_exp = exp_ptr_;
   } else {
     cur_exp = exp_ptr_ + stride * task_id;
   }
-  auto ret = PowerInt8(input_data_ + stride * task_id, cur_exp, output_data_ + stride * task_id, count, param_);
+  auto ret = PowerInt8(input_data_ + stride * task_id, cur_exp, output_data_ + stride * task_id, count, &quant_arg_,
+                       broadcast_, param_->scale_, param_->shift_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerInt8 error ,task_id[" << task_id << "] error_code[" << ret << "]";
   }
@@ -104,9 +105,9 @@ int PowerInt8CPUKernel::Run() {
     return RET_ERROR;
   }
   MSLITE_CHECK_PTR(param_);
-  param_->quant_arg_.exp_args_.scale_ = static_cast<float>(exp_quant_args.front().scale);
-  param_->quant_arg_.exp_args_.zp_ = exp_quant_args.front().zeroPoint;
-  param_->broadcast_ = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
+  quant_arg_.exp_args_.scale_ = static_cast<float>(exp_quant_args.front().scale);
+  quant_arg_.exp_args_.zp_ = exp_quant_args.front().zeroPoint;
+  broadcast_ = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
   exp_ptr_ = reinterpret_cast<int8_t *>(exp_tensor->MutableData());
   auto ret = ParallelLaunch(this->ms_context_, PowerInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {

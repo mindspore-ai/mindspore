@@ -56,6 +56,9 @@ echo 'run common ut tests'
 # test cases of framework
 
 # test cases of FP32 OP
+./lite-test --gtest_filter=TestBatchToSpaceFp32*
+./lite-test --gtest_filter=DepthToSpaceTestFp32*
+./lite-test --gtest_filter=TestPowerFp32*
 ./lite-test --gtest_filter=TestScaleFp32*
 ./lite-test --gtest_filter=TestReduceFp32*
 ./lite-test --gtest_filter=TestFcFp32*

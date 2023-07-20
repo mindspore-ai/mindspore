@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/litert/lite_kernel.h"
 #include "nnacl/int8/quantize.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 
 namespace mindspore::kernel {
 class PowerInt8CPUKernel : public LiteKernel {
@@ -28,7 +28,7 @@ class PowerInt8CPUKernel : public LiteKernel {
   PowerInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {
-    param_ = reinterpret_cast<PowerParameter *>(op_parameter_);
+    param_ = reinterpret_cast<PowParameter *>(op_parameter_);
   }
   ~PowerInt8CPUKernel() {}
 
@@ -38,10 +38,12 @@ class PowerInt8CPUKernel : public LiteKernel {
   int DoPower(int task_id);
 
  private:
-  PowerParameter *param_;
+  PowParameter *param_;
   int8_t *input_data_ = nullptr;
   int8_t *output_data_ = nullptr;
   int8_t *exp_ptr_ = nullptr;
+  PowQuantArg quant_arg_;
+  bool broadcast_;
 };
 }  // namespace mindspore::kernel
 

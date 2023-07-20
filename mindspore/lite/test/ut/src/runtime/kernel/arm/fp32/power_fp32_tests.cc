@@ -15,10 +15,11 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/litert/kernel/cpu/fp32/power_fp32.h"
 #include "src/litert/kernel_registry.h"
 #include "src/executor/kernel_exec.h"
 #include "src/litert/tensor_category.h"
+#include "nnacl/nnacl_manager.h"
+#include "nnacl/pow_parameter.h"
 
 namespace mindspore {
 class TestPowerFp32 : public mindspore::CommonTest {
@@ -26,88 +27,78 @@ class TestPowerFp32 : public mindspore::CommonTest {
   TestPowerFp32() {}
 };
 
-int PowerTestInit(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_, float *a_ptr,
-                  float *b_ptr, const std::vector<int> &a_shape, const std::vector<int> &b_shape,
-                  const std::vector<int> &c_shape) {
-  auto in_t = new lite::Tensor(kNumberTypeFloat, a_shape, mindspore::NHWC, lite::Category::CONST_TENSOR);
-  in_t->MallocData();
-  memcpy(in_t->MutableData(), a_ptr, sizeof(float) * in_t->ElementsNum());
-  inputs_->push_back(in_t);
-
-  auto weight_t = new lite::Tensor(kNumberTypeFloat, b_shape, mindspore::NHWC, lite::Category::CONST_TENSOR);
-  weight_t->MallocData();
-  memcpy(weight_t->MutableData(), b_ptr, sizeof(float) * weight_t->ElementsNum());
-  inputs_->push_back(weight_t);
-
-  auto out_t = new lite::Tensor(kNumberTypeFloat, c_shape, mindspore::NHWC, lite::Category::CONST_TENSOR);
-  out_t->MallocData();
-  outputs_->push_back(out_t);
-
-  return out_t->ElementsNum();
-}
-
-int PowerTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_, float *a_ptr,
-                   const std::vector<int> &a_shape, const std::vector<int> &c_shape) {
-  auto in_t = new lite::Tensor(kNumberTypeFloat, a_shape, mindspore::NHWC, lite::Category::CONST_TENSOR);
-  in_t->MallocData();
-  memcpy(in_t->MutableData(), a_ptr, sizeof(float) * in_t->ElementsNum());
-  inputs_->push_back(in_t);
-
-  auto out_t = new lite::Tensor(kNumberTypeFloat, c_shape, mindspore::NHWC, lite::Category::CONST_TENSOR);
-  out_t->MallocData();
-  outputs_->push_back(out_t);
-
-  return out_t->ElementsNum();
-}
-
 TEST_F(TestPowerFp32, Simple) {
-  std::vector<lite::Tensor *> inputs_;
-  std::vector<lite::Tensor *> outputs_;
-  auto param = new PowerParameter();
+  float in0_data[] = {1, 2, 3, 4};
+  float in1_data[] = {5, 6, 7, 8};
+  lite::Tensor input0(kNumberTypeFloat32, {2, 2});
+  lite::Tensor input1(kNumberTypeFloat32, {2, 2});
+  memcpy(input0.MutableData(), in0_data, input0.Size());
+  memcpy(input1.MutableData(), in1_data, input1.Size());
+  std::vector<lite::Tensor *> inputs = {&input0, &input1};
+
+  lite::Tensor output(kNumberTypeFloat32, {2, 2});
+  output.MallocData();
+  std::vector<lite::Tensor *> outputs = {&output};
+
+  auto param = new PowParameter();
   param->scale_ = 1;
   param->shift_ = 0;
-  float a[] = {1, 2, 3, 4};
-  float b[] = {5, 6, 7, 8};
-  std::vector<int> a_shape = {2, 2};
-  std::vector<int> b_shape = {2, 2};
-  std::vector<int> c_shape = {2, 2};
-  int total_size = PowerTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
+  param->op_parameter_.type_ = schema::PrimitiveType_PowFusion;
+  param->op_parameter_.thread_num_ = 1;
+
   auto ctx = new lite::InnerContext;
-  ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto *op = new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx);
-  op->Prepare();
-  op->Run();
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, param->op_parameter_.type_};
+  auto kernel = nnacl::NNACLKernelRegistry(&param->op_parameter_, inputs, outputs, ctx, desc);
+  ASSERT_NE(kernel, nullptr);
+
+  EXPECT_EQ(0, kernel->Prepare());
+  EXPECT_EQ(0, kernel->Run());
+
   float correct[] = {1, 64, 2187, 65536};
-  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
-  delete op;
+  float *output_data = reinterpret_cast<float *>(output.data());
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, output.ElementsNum(), 0.0001));
+
+  delete kernel;
   delete ctx;
-  for (auto t : inputs_) delete t;
-  for (auto t : outputs_) delete t;
 }
 
 TEST_F(TestPowerFp32, Broadcast) {
-  std::vector<lite::Tensor *> inputs_;
-  std::vector<lite::Tensor *> outputs_;
-  auto param = new PowerParameter();
+  float in0_data[] = {1, 2, 3, 4};
+  float in1_data[] = {2};
+  lite::Tensor input0(kNumberTypeFloat32, {2, 2});
+  lite::Tensor input1(kNumberTypeFloat32, {1});
+  memcpy(input0.MutableData(), in0_data, input0.Size());
+  memcpy(input1.MutableData(), in1_data, input1.Size());
+  std::vector<lite::Tensor *> inputs = {&input0, &input1};
+
+  lite::Tensor output(kNumberTypeFloat32, {2, 2});
+  output.MallocData();
+  std::vector<lite::Tensor *> outputs = {&output};
+
+  auto param = new PowParameter();
   param->power_ = 2;
   param->scale_ = 1;
   param->shift_ = 0;
-  float a[] = {1, 2, 3, 4};
-  std::vector<int> a_shape = {2, 2};
-  std::vector<int> c_shape = {2, 2};
-  int total_size = PowerTestInit2(&inputs_, &outputs_, a, a_shape, c_shape);
+  param->op_parameter_.type_ = schema::PrimitiveType_PowFusion;
+  param->op_parameter_.thread_num_ = 2;
+
   auto ctx = new lite::InnerContext;
-  ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto *op = new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx);
-  op->Prepare();
-  op->Run();
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, param->op_parameter_.type_};
+  auto kernel = nnacl::NNACLKernelRegistry(&param->op_parameter_, inputs, outputs, ctx, desc);
+  ASSERT_NE(kernel, nullptr);
+
+  EXPECT_EQ(0, kernel->Prepare());
+  EXPECT_EQ(0, kernel->Run());
+
   float correct[] = {1, 4, 9, 16};
-  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
-  delete op;
+  float *output_data = reinterpret_cast<float *>(output.data());
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, output.ElementsNum(), 0.0001));
+
+  delete kernel;
   delete ctx;
-  for (auto t : inputs_) delete t;
-  for (auto t : outputs_) delete t;
 }
 }  // namespace mindspore

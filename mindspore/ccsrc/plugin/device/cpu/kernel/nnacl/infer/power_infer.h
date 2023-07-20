@@ -17,7 +17,7 @@
 #define MINDSPORE_NNACL_POWER_INFER_H
 
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

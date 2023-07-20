@@ -20,7 +20,7 @@
 #include <math.h>
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 
 #if defined(ENABLE_NEON)
 typedef float16x8_t (*PowerSimdFunFp16)(float16x8_t x, const void *exponent);
@@ -31,7 +31,7 @@ typedef void (*PowerFunFp16)(const float16_t *, const float16_t *, float16_t *, 
 #ifdef __cplusplus
 extern "C" {
 #endif
-static inline bool CheckInteger(float16_t f) { return floorf(f) == f; }
+static inline bool CheckIntegerFp16(float16_t f) { return floorf(f) == f; }
 
 static inline float16_t StdPowerScalarFp16(float16_t x, const void *exponent) {
   return powf(x, *(float16_t *)exponent);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NNACL_INT8_DEPTH_TO_SPACE_INT8_H_
-#define NNACL_INT8_DEPTH_TO_SPACE_INT8_H_
 
-#include "nnacl/depth_to_space_parameter.h"
-#include "nnacl/int8/quantize.h"
-#include "nnacl/kernel/depth_to_space.h"
+#ifndef NNACL_KERNEL_POW_H_
+#define NNACL_KERNEL_POW_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void DepthToSpaceForNHWCInt8(const int8_t *input, int8_t *output, const int32_t *in_shape, DepthToSpaceArgs *param,
-                             QuantArg *in_quant_arg, QuantArg *out_quant_arg);
-#ifdef __cplusplus
-}
-#endif
+#include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-#endif  // NNACL_INT8_DEPTH_TO_SPACE_INT8_H_
+typedef struct PowStruct {
+  KernelBase base_;
+  int data_type_;
+} PowStruct;
+
+KernelBase *CreatePow(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_POW_H_

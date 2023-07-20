@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_POWER_PARAMETER_H_
-#define NNACL_POWER_PARAMETER_H_
+#ifndef NNACL_POW_PARAMETER_H_
+#define NNACL_POW_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
-typedef struct PowerQuantArg {
+typedef struct PowQuantArg {
   QuantArg in_args_;
   QuantArg exp_args_;
   QuantArg out_args_;
   int output_activation_min_;
   int output_activation_max_;
-} PowerQuantArg;
+} PowQuantArg;
 
-typedef struct PowerParameter {
-  // Primitive parameter
+typedef struct PowParameter {
   OpParameter op_parameter_;
   float power_;
   float scale_;
   float shift_;
-  // other parameter
-  PowerQuantArg quant_arg_;
-  bool broadcast_;
-} PowerParameter;
+} PowParameter;
 
-#endif  // NNACL_POWER_PARAMETER_H_
+#endif  // NNACL_POW_PARAMETER_H_

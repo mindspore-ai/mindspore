@@ -20,7 +20,7 @@
 #include "nnacl/arithmetic_parameter.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/pooling_parameter.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 #include "nnacl/activation_parameter.h"
 #include "nnacl/fp32_grad/softmax_crossentropy_parameter.h"
 #include "nnacl/fp32_grad/optimizer.h"
@@ -385,12 +385,12 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *prim) {
 }
 
 OpParameter *PopulatePowerGradParameter(const void *prim) {
-  PowerParameter *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
+  PowParameter *power_param = reinterpret_cast<PowParameter *>(malloc(sizeof(PowParameter)));
   if (power_param == nullptr) {
-    MS_LOG(ERROR) << "malloc PowerParameter failed.";
+    MS_LOG(ERROR) << "malloc PowParameter failed.";
     return nullptr;
   }
-  memset(power_param, 0, sizeof(PowerParameter));
+  memset(power_param, 0, sizeof(PowParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_PowerGrad();
   MS_ASSERT(value != nullptr);
