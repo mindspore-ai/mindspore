@@ -21,7 +21,10 @@ from mindspore import Tensor
 from mindspore.nn.optim import Momentum
 from mindspore.common.api import jit
 from mindspore.common import Parameter, ParameterTuple
+from mindspore import dtype as mstype
 import mindspore.context as context
+import mindspore.ops.functional as F
+from tests.st.pynative.utils import GradOfDefault
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -514,3 +517,98 @@ def test_pynative_jit_with_kwargs_inputs():
     x = Tensor(3, dtype=ms.int32)
     data = {"y": 1}
     assert foo(x, **data).asnumpy() == [4]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_ms_vmap_cell_list():
+    """
+    Feature: PyNative jit.
+    Description: PyNative vmap.
+    Expectation: Success.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.split = P.Split()
+            self.reducesum = P.ReduceSum()
+            self.a = Parameter(Tensor([1, 1, 1], mstype.float32), name='a')
+
+        def construct(self, tensor1, tensor2):
+            out = self.reducesum(self.split(tensor1) +
+                                 self.split(tensor2) + self.a, 0)
+            return out
+
+    class VmapNet(nn.Cell):
+        def __init__(self, m1, m2, m3):
+            super().__init__()
+            self.net = nn.CellList([m1, m2, m3])
+            self.a = Parameter(
+                Tensor([[1, 2, 0], [3, 2, 0], [3, 4, 0]], mstype.float32))
+
+        def construct(self, x):
+            """
+            结构函数
+            """
+            output = F.vmap(self.net, (None, None), 0)(self.a, x)
+            return output
+
+    input_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
+
+    expect = Tensor([[[4, 6, 5], [9, 9, 8], [12, 14, 11]],
+                     [[4, 6, 5], [9, 9, 8], [12, 14, 11]],
+                     [[4, 6, 5], [9, 9, 8], [12, 14, 11]]], mstype.float32)
+    expect_grad = Tensor([[3, 3, 3], [3, 3, 3], [3, 3, 3]], mstype.float32)
+    m1 = Net()
+    m2 = Net()
+    m3 = Net()
+    vmap = VmapNet(m1, m2, m3)
+    output = vmap(input_tensor)
+    assert np.all(output.asnumpy() == expect)
+    # 反向
+    grad = GradOfDefault(vmap)
+    output_grad = grad(input_tensor)
+    assert np.all(output_grad.asnumpy() == expect_grad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_control_flow_for_in_while_return_in_for_param():
+    """
+    Feature: PyNative jit.
+    Description: PyNative jit control.
+    Expectation: Success.
+    """
+
+    class CtrlForReturnInWhileP(nn.Cell):
+        def __init__(self, t):
+            super().__init__()
+            self.add = P.Add()
+            self.param = Parameter(t, name='p')
+
+        @jit
+        def construct(self, x):
+            while x < 5:
+                self.param += 1
+                x += 1
+                for _ in range(3):
+                    self.param += 2
+                    if self.param > 2:
+                        return x
+                x = self.add(x, self.param)
+            return x
+    x = 1
+    t = -4
+    net = CtrlForReturnInWhileP(t)
+    grad = GradOfDefault(net)
+    ms_fwd = net(Tensor(x))
+    ms_grad = grad(Tensor(x))
+    expect_out = 2
+    expect_grad = 1
+    assert expect_out == ms_fwd
+    assert expect_grad == ms_grad
