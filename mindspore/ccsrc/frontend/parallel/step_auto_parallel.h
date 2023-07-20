@@ -24,7 +24,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/status.h"
 #include "ir/anf.h"
-#include "pipeline/jit/pipeline.h"
+#include "pipeline/jit/ps/pipeline.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_parse_graph.h"
 
 namespace mindspore {

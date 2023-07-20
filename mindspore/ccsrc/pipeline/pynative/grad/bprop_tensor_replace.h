@@ -25,7 +25,7 @@
 #include "ir/anf.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {
 namespace pynative {

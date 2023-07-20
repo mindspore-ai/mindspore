@@ -21,7 +21,7 @@
 #include "ops/nn_op_name.h"
 #include "backend/graph_compiler/vmimpl.h"
 #include "backend/graph_compiler/backend.h"
-#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "pybind_api/ir/primitive_py.h"
 

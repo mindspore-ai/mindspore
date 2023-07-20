@@ -29,8 +29,8 @@
 #include "utils/anf_utils.h"
 #include "utils/interpret_node_recorder.h"
 #include "utils/symbolic.h"
-#include "pipeline/jit/parse/resolve.h"
-#include "pipeline/jit/fallback.h"
+#include "pipeline/jit/ps/parse/resolve.h"
+#include "pipeline/jit/ps/fallback.h"
 
 namespace mindspore {
 /* namespace to support opt */

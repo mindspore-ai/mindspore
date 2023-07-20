@@ -29,7 +29,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#include "pipeline/jit/pipeline.h"
+#include "pipeline/jit/ps/pipeline.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"

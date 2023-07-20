@@ -26,9 +26,9 @@
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "ir/pattern_matcher.h"
-#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/python_adapter.h"
-#include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/ps/parse/parse_base.h"
 
 namespace mindspore {
 namespace opt {

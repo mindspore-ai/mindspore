@@ -31,7 +31,7 @@
 #include "ir/graph_utils.h"
 #include "ir/manager.h"
 #include "ir/meta_tensor.h"
-#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/python_adapter.h"
 #include "include/backend/kernel_info.h"
 #include "include/common/utils/convert_utils.h"

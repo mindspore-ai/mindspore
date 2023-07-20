@@ -28,7 +28,7 @@
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "ir/manager.h"
-#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/ps/static_analysis/prim.h"
 #include "pipeline/static_analysis/helper.h"
 #include "frontend/operator/ops.h"
 #include "include/common/debug/draw.h"

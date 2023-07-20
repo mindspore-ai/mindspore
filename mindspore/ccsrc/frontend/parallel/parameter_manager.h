@@ -25,7 +25,7 @@
 #include "base/base.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 #include "pybind11/pybind11.h"
 
 namespace py = pybind11;

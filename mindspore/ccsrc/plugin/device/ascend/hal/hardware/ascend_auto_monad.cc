@@ -34,7 +34,7 @@
 #include "utils/ms_context.h"
 #include "utils/ordered_map.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "pipeline/jit/base.h"
+#include "pipeline/jit/ps/base.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"

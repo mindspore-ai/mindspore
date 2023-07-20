@@ -22,7 +22,7 @@
 #include "ir/dtype.h"
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
-#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/ps/parse/parse.h"
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
 #include "include/common/debug/draw.h"

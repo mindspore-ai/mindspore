@@ -24,7 +24,7 @@
 #include "ir/anf.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {
 namespace opt {

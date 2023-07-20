@@ -23,7 +23,7 @@
 #include "include/common/pybind_api/api_register.h"
 #include "include/common/utils/python_adapter.h"
 #include "mindspore/ccsrc/include/backend/distributed/embedding_cache/embedding_cache_utils.h"
-#include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/ps/parse/parse_base.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
 

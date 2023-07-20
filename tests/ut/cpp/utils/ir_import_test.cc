@@ -18,10 +18,10 @@
 #include "common/common_test.h"
 
 #include "utils/log_adapter.h"
-#include "pipeline/jit/debug/anf_ir_utils.h"
-#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/ps/debug/anf_ir_utils.h"
+#include "pipeline/jit/ps/parse/parse.h"
 #include "ir/manager.h"
-#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/ps/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore {

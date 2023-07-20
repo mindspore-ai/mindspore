@@ -31,7 +31,7 @@
 #include "frontend/operator/composite/do_signature.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
-#include "pipeline/jit/static_analysis/static_analysis.h"
+#include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "utils/misc.h"
 #include "utils/any.h"
 #include "ir/dtype.h"

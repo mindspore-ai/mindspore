@@ -18,7 +18,7 @@
 
 #include <map>
 #include "ir/signature.h"
-#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/python_adapter.h"
 #include "pybind11/pytypes.h"
 #include "include/common/pybind_api/api_register.h"

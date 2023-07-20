@@ -23,7 +23,7 @@
 #include <string>
 
 #include "ir/tensor.h"
-#include "pipeline/jit/resource_base.h"
+#include "pipeline/jit/ps/resource_base.h"
 #include "utils/ms_context.h"
 namespace mindspore {
 namespace session {

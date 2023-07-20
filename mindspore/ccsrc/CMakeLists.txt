@@ -339,7 +339,7 @@ set(SUB_COMP
         frontend/parallel
         frontend/operator
         frontend/expander
-        pipeline/jit
+        pipeline/jit/ps
         pipeline/pynative
         pybind_api
 )
@@ -520,9 +520,9 @@ endif()
 
 # set c_expression building
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set_property(SOURCE "pipeline/jit/init.cc" PROPERTY
+set_property(SOURCE "pipeline/jit/ps/init.cc" PROPERTY
             COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PIPELINE)
-pybind11_add_module(_c_expression NO_EXTRAS "pipeline/jit/init.cc" NO_EXTRAS)
+pybind11_add_module(_c_expression NO_EXTRAS "pipeline/jit/ps/init.cc" NO_EXTRAS)
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")

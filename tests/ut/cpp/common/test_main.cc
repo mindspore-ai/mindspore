@@ -16,14 +16,14 @@
 #include <iostream>
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "pipeline/jit/pipeline.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/pipeline.h"
+#include "pipeline/jit/ps/resource.h"
 
 extern "C" {
 void common_log_init(void);
 }
 
-GTEST_API_ int main(int argc, char** argv) {
+GTEST_API_ int main(int argc, char **argv) {
   common_log_init();
   testing::InitGoogleTest(&argc, argv);
   int ret = RUN_ALL_TESTS();

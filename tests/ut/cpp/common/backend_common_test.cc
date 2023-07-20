@@ -29,8 +29,8 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
-#include "pipeline/jit/resource.h"
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/resource.h"
+#include "pipeline/jit/ps/action.h"
 #include "ir/anf.h"
 #include "ir/manager.h"
 
@@ -150,8 +150,7 @@ std::shared_ptr<session::KernelGraph> BackendCommon::Compile(const FuncGraphPtr 
   auto device_context = std::make_shared<runtime::test::TestDeviceContext>(device_context_key);
 
   auto compiler = std::make_shared<compile::GraphCompiler>();
-  auto graph_id =
-    compiler->CompileGraph(segment, outputs, device_context.get(), device::RunMode::kKernelMode, false);
+  auto graph_id = compiler->CompileGraph(segment, outputs, device_context.get(), device::RunMode::kKernelMode, false);
   return compiler->Fetch(graph_id);
 }
 }  // namespace mindspore

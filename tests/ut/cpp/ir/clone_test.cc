@@ -23,7 +23,7 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/graph_utils.h"
 #include "ir/manager.h"
-#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/ps/parse/parse.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

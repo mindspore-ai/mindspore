@@ -18,7 +18,7 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
-#include "pipeline/jit/pass.h"
+#include "pipeline/jit/ps/pass.h"
 
 namespace mindspore {
 namespace ad {

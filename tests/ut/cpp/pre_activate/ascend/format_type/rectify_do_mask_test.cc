@@ -20,7 +20,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "utils/log_adapter.h"
 #include "ir/graph_utils.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 #include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
@@ -49,7 +49,7 @@ class TestHWRectifyDoMask : public BackendCommon {
     for (auto &node : node_list) {
       if (IsPrimitiveCNode(node, prim::kPrimDropoutDoMask)) {
         auto cnode = node->cast<CNodePtr>();
-        cnt ++;
+        cnt++;
         KernelBuildInfoBuilder builder;
         if (cnt == 1) {
           builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT, kOpFormat_DEFAULT});
@@ -98,7 +98,6 @@ class TestHWRectifyDoMask : public BackendCommon {
     ASSERT_FALSE(format.empty());
   }
 };
-
 
 /// Feature: Test RectifyDoMaskKernelInfo pass
 /// Description: Test RectifyDoMaskKernelInfo pass

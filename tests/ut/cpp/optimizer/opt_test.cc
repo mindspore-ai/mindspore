@@ -32,7 +32,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 #include "frontend/optimizer/irpass/pynative_no_grad_eliminate.h"
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/action.h"
 
 #include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"

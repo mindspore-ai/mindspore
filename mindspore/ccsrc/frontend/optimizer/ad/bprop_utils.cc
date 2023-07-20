@@ -27,7 +27,7 @@
 #include "utils/file_utils.h"
 #include "utils/system/sha256.h"
 #include "mindspore/core/load_mindir/load_model.h"
-#include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/ps/parse/resolve.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/utils.h"

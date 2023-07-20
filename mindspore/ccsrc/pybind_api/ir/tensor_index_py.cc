@@ -23,7 +23,7 @@
 #include <vector>
 #include <functional>
 #include "pybind11/pytypes.h"
-#include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/ps/parse/parse_base.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
 

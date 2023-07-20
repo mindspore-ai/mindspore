@@ -20,13 +20,13 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "common/py_func_graph_fetcher.h"
 #include "utils/log_adapter.h"
-#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/ps/parse/parse.h"
 #include "include/common/debug/draw.h"
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass.h"
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/action.h"
 #include "ir/func_graph_cloner.h"
 
 namespace mindspore {
@@ -696,9 +696,7 @@ TEST_F(TestParallelIf, CountFuncCallIfByIfBreakInIfInWhile) {
 // Feature: Parallel if transformation
 // Description: Check parallel if transformatin for if(if(raise))/else
 // Expectation: The count of parallel if transformation should be equal to the expected count.
-TEST_F(TestParallelIf, CountFuncCallIfRaiseRaise) {
-  CheckParallelIfTransformationCount("test_if_raise_raise", 1);
-}
+TEST_F(TestParallelIf, CountFuncCallIfRaiseRaise) { CheckParallelIfTransformationCount("test_if_raise_raise", 1); }
 
 // Feature: Parallel if transformation
 // Description: Check parallel if transformatin for if(if(assert)/else)

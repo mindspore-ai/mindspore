@@ -16,7 +16,7 @@
 
 #include "pipeline/static_analysis/helper.h"
 
-#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/ps/static_analysis/prim.h"
 
 namespace mindspore {
 namespace abstract {
@@ -29,4 +29,3 @@ AnalysisEnginePtr SetupAnalysisEngine() {
 }
 }  // namespace abstract
 }  // namespace mindspore
-

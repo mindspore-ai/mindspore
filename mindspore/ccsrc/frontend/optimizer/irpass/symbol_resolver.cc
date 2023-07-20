@@ -20,7 +20,7 @@
 #include <memory>
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
-#include "pipeline/jit/fallback.h"
+#include "pipeline/jit/ps/fallback.h"
 
 namespace mindspore {
 namespace opt {

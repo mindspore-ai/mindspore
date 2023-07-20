@@ -38,7 +38,7 @@
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/ps/parse/resolve.h"
 #include "frontend/parallel/step_parallel.h"
 #include "utils/tensor_construct_utils.h"
 

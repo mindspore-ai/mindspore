@@ -21,7 +21,7 @@
 #include "mindspore/core/ops/structure_ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
-#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/ps/static_analysis/prim.h"
 
 namespace mindspore {
 namespace opt {

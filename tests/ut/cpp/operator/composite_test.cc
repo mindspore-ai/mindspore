@@ -24,8 +24,8 @@
 #include "frontend/operator/ops.h"
 #include "ir/anf.h"
 #include "ir/value.h"
-#include "pipeline/jit/debug/trace.h"
-#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/ps/debug/trace.h"
+#include "pipeline/jit/ps/static_analysis/prim.h"
 
 namespace mindspore {
 using Shape = abstract::Shape;

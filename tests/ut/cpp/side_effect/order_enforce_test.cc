@@ -16,7 +16,7 @@
 #include <iostream>
 #include <memory>
 
-#include "pipeline/jit/static_analysis/order_enforce.h"
+#include "pipeline/jit/ps/static_analysis/order_enforce.h"
 
 #include "mindspore/core/ops/framework_ops.h"
 #include "common/common_test.h"
@@ -24,7 +24,7 @@
 
 #include "ir/anf.h"
 #include "ir/visitor.h"
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/action.h"
 #include "ir/func_graph.h"
 #include "include/common/debug/anf_ir_dump.h"
 

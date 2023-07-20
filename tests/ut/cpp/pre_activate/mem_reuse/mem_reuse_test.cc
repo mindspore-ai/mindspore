@@ -28,7 +28,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 #include "backend/common/mem_reuse/mem_reuse.h"
 
 #include "common/common_test.h"
@@ -39,7 +39,7 @@ namespace memreuse {
 namespace {
 constexpr auto kPatternElemWise = "ElemWise";
 constexpr auto kPatternConvolution = "Convolution";
-}
+}  // namespace
 
 using session::KernelGraph;
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;

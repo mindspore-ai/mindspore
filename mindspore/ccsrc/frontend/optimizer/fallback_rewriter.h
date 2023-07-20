@@ -23,7 +23,7 @@
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
 #include "abstract/dshape.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {
 /* namespace to support opt */

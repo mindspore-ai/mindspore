@@ -17,7 +17,7 @@
 #ifndef TESTS_UT_PIPELINE_STATIC_ANALYSIS_HELPER_H_
 #define TESTS_UT_PIPELINE_STATIC_ANALYSIS_HELPER_H_
 
-#include "pipeline/jit/static_analysis/evaluator.h"
+#include "pipeline/jit/ps/static_analysis/evaluator.h"
 
 namespace mindspore {
 namespace abstract {

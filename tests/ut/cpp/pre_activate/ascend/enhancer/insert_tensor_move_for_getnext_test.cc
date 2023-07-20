@@ -17,7 +17,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "pipeline/jit/resource.h"
+#include "pipeline/jit/ps/resource.h"
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -40,7 +40,8 @@ class TestHWInsertTensorMoveForGetNext : public BackendCommon {
 };
 
 TEST_F(TestHWInsertTensorMoveForGetNext, test_insert_tensor_move_for_getnext_multi_output) {
-  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_getnext", "getnext_multi_output_before");
+  FuncGraphPtr g_before =
+    get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_getnext", "getnext_multi_output_before");
 
   AbstractBasePtrList args_spec_list{};
   auto kernel_graph = GetKernelGraph(g_before, args_spec_list);
@@ -61,7 +62,8 @@ TEST_F(TestHWInsertTensorMoveForGetNext, test_insert_tensor_move_for_getnext_mul
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(kernel_graph);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_getnext", "getnext_multi_output_after");
+  FuncGraphPtr g_after =
+    get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_getnext", "getnext_multi_output_after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 }  // namespace opt

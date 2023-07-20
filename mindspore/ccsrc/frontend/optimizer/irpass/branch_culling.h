@@ -29,7 +29,7 @@
 #include "ir/pattern_matcher.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
-#include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/ps/parse/resolve.h"
 
 namespace mindspore {
 namespace opt {

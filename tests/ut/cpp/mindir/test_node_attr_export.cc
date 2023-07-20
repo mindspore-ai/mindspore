@@ -16,8 +16,8 @@
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 
-#include "pipeline/jit/resource.h"
-#include "pipeline/jit/action.h"
+#include "pipeline/jit/ps/resource.h"
+#include "pipeline/jit/ps/action.h"
 #include "include/common/debug/dump_proto.h"
 #include "load_mindir/load_model.h"
 #include "ir/anf.h"
