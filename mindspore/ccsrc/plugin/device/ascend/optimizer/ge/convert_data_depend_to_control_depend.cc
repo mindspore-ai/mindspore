@@ -16,9 +16,8 @@
 
 #include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
 
-#include <memory>
-#include <vector>
-#include "mindspore/core/ops/framework_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/other_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -27,8 +26,7 @@ namespace opt {
 const BaseRef ConvertDataDependToControlDepend::DefinePattern() const {
   VarPtr x1 = std::make_shared<Var>();
   VarPtr x2 = std::make_shared<Var>();
-  VectorRef send_node({prim::kPrimSend, x1});
-  return VectorRef({prim::kPrimDepend, send_node, x2});
+  return VectorRef({prim::kPrimDepend, x1, x2});
 }
 
 const AnfNodePtr ConvertDataDependToControlDepend::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -39,7 +37,11 @@ const AnfNodePtr ConvertDataDependToControlDepend::Process(const FuncGraphPtr &f
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "Process node: " << node->fullname_with_scope()
-               << ", input node: " << cnode->input(1)->fullname_with_scope();
+               << ", input node: " << cnode->input(kIndex1)->fullname_with_scope();
+  auto input1 = cnode->input(kIndex1);
+  if (!IsPrimitiveCNode(input1, prim::kPrimSend) && !IsPrimitiveCNode(input1, prim::kPrimNPUClearFloatStatusV2)) {
+    return nullptr;
+  }
   auto manager = func_graph->manager();
   if (func_graph->manager() == nullptr) {
     std::vector<FuncGraphPtr> graphs{func_graph};
@@ -51,7 +53,6 @@ const AnfNodePtr ConvertDataDependToControlDepend::Process(const FuncGraphPtr &f
     if (AnfUtils::IsRealCNodeKernel(node_user.first)) {
       MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << " is used by real kernel "
                     << node_user.first->fullname_with_scope();
-      return nullptr;
     }
   }
 
@@ -61,7 +62,7 @@ const AnfNodePtr ConvertDataDependToControlDepend::Process(const FuncGraphPtr &f
   kernel_graph->AddValueNodeToGraph(value_node);
 
   std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(kDependOpName)), value_node,
-                                          cnode->input(1)};
+                                          cnode->input(kIndex1), cnode->input(kIndex2)};
   auto depend_node = NewCNode(depend_input, func_graph);
   MS_EXCEPTION_IF_NULL(depend_node);
   MS_LOG(INFO) << "Replace depend: " << node->fullname_with_scope()
