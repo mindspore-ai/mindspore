@@ -14,6 +14,7 @@
 # ============================================================================
 """LRScheduler."""
 from mindspore import ops
+from mindspore import log as logger
 from mindspore.nn.optim_ex.optimizer import Optimizer
 from mindspore.common.api import jit_class
 from mindspore.common.parameter import Parameter
@@ -22,12 +23,11 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from mindspore import _checkparam as Validator
 
-
-__all__ = ['StepLR', 'LinearLR', 'LRScheduler']
+__all__ = ['StepLR', 'LinearLR', 'LRScheduler', 'ExponentialLR', 'PolynomialLR', 'ChainedScheduler']
 
 
 @jit_class
-class LRScheduler():
+class LRScheduler:
     r"""
     Basic class of learning rate schedule.
 
@@ -59,6 +59,15 @@ class LRScheduler():
             raise ValueError("Invalid last_epoch: {}".format(last_epoch))
         Validator.check_value_type("verbose", verbose, [bool])
 
+        if last_epoch == -1:
+            for group in optimizer.param_groups:
+                group['initial_lr'] = group['lr'].value()
+        else:
+            for i, group in enumerate(optimizer.param_groups):
+                if 'initial_lr' not in group:
+                    raise KeyError(f"param 'initial_lr' is not specified "
+                                   f"in param_groups[{i}] when resuming an optimizer")
+        self.base_lrs = [group['initial_lr'] for group in optimizer.param_groups]
         self.optimizer = optimizer
         self._last_lr = []
         self.groups_num = len(optimizer.param_groups)
@@ -84,13 +93,13 @@ class LRScheduler():
         Display the current learning rate.
         """
         if is_verbose:
-            print('Adjusting learning rate of group %s to %s.' % (group, lr.value()))
+            logger.info(f"Adjusting learning rate of group {group} to {lr.value()}.")
 
     def get_last_lr(self):
         """
         Return last computed learning rate by current scheduler.
         """
-        return [group["lr"].value() for group in self.optimizer.param_groups]
+        return self._last_lr
 
     def step(self):
         """
@@ -102,6 +111,13 @@ class LRScheduler():
             lr = values[i]
             lr = F.depend(lr, F.assign(self.optimizer.param_groups[i]["lr"], lr))
             self._print_lr(self.verbose, i, lr)
+        self._last_lr = self._count_lr()
+
+    def _count_lr(self, factor=1.0):
+        """
+        Returns the learning rate multiplied by the scaling factor.
+        """
+        return [group['lr'] * factor for group in self.optimizer.param_groups]
 
 
 @jit_class
@@ -157,6 +173,7 @@ class StepLR(LRScheduler):
         ...     scheduler.step()
         ...     current_lr = scheduler.get_last_lr()
     """
+
     def __init__(self, optimizer, step_size, gamma=0.5, last_epoch=-1, verbose=False):
         self.step_size = step_size
         self.gamma = gamma
@@ -165,9 +182,8 @@ class StepLR(LRScheduler):
     def _get_lr(self):
         if (self.last_epoch == Tensor(0, mstype.float32)) or (
                 self.last_epoch % self.step_size != Tensor(0, mstype.float32)):
-            return [group['lr'] * 1. for group in self.optimizer.param_groups]
-        return [group['lr'] * self.gamma
-                for group in self.optimizer.param_groups]
+            return self._count_lr()
+        return self._count_lr(self.gamma)
 
 
 @jit_class
@@ -252,11 +268,190 @@ class LinearLR(LRScheduler):
 
     def _get_lr(self):
         if self.last_epoch == Tensor(0, mstype.float32):
-            return [group['lr'] * self.start_factor for group in self.optimizer.param_groups]
+            return self._count_lr(self.start_factor)
 
         if self.last_epoch > self.total_iters:
-            return [group['lr'] * 1. for group in self.optimizer.param_groups]
+            return self._count_lr()
 
-        return [group['lr'] * (1. + (self.end_factor - self.start_factor) /
-                               (self.total_iters * self.start_factor + (self.last_epoch - 1) *
-                                (self.end_factor - self.start_factor))) for group in self.optimizer.param_groups]
+        factor = 1. + (self.end_factor - self.start_factor) / (
+            self.total_iters * self.start_factor + (self.last_epoch - 1) * (self.end_factor - self.start_factor))
+        return self._count_lr(factor)
+
+
+@jit_class
+class ExponentialLR(LRScheduler):
+    r"""
+    For each epoch, the learning rate decays exponentially, multiplied by gamma.
+    Notice that such decay can happen simultaneously with other changes to the learning rate
+    from outside this scheduler.
+
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+
+    Args:
+        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        gamma (float): Learning rate scaling factor.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
+        verbose (bool, optional): If ``True``, prints a message to stdout for each update. Default: ``False``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import nn
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.fc = nn.Dense(16 * 5 * 5, 120)
+        >>>     def construct(self, x):
+        >>>         return self.fc(x)
+        >>> net = Net()
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
+        >>> scheduler = nn.ExponentialLR(optimizer, gamma=0.5)
+        >>> for i in range(3):
+        >>>     scheduler.step()
+        >>>     current_lr = scheduler.get_last_lr()
+        >>>     print(current_lr)
+        [Tensor(shape=[], dtype=Float32, value= 0.005)]
+        [Tensor(shape=[], dtype=Float32, value= 0.0025)]
+        [Tensor(shape=[], dtype=Float32, value= 0.00125)]
+    """
+
+    def __init__(self, optimizer, gamma, last_epoch=-1, verbose=False):
+        self.gamma = gamma
+        super(ExponentialLR, self).__init__(optimizer, last_epoch, verbose)
+
+    def _get_lr(self):
+        if self.last_epoch == Tensor(0, mstype.float32):
+            return self._count_lr()
+        return self._count_lr(self.gamma)
+
+
+@jit_class
+class PolynomialLR(LRScheduler):
+    r"""
+    For each epoch, the learning rate is adjusted by polynomial fitting.
+    When the epoch is greater than or equal to `total_iters` , the learning rate is ``0`` .
+    Notice that such decay can happen simultaneously with other changes to the learning rate
+    from outside this scheduler.
+
+    The polynomial formula for learning rate calculation is as follows:
+
+    .. math::
+        factor = (\frac{1.0 - \frac{last\_epoch}{total\_iters}}{1.0 - \frac{last\_epoch - 1.0}{total_iters}})^{power}
+        lr = lr \times factor
+
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+
+    Args:
+        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        total_iters (int, optional): The number of iterations adjusting learning rate by polynomial fitting.
+            Default: ``5``.
+        power (float, optional): Power of polynomial. Default: ``1.0``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
+        verbose (bool, optional): If ``True``, prints a message to stdout for each update. Default: ``False``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import nn
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.fc = nn.Dense(16 * 5 * 5, 120)
+        >>>     def construct(self, x):
+        >>>         return self.fc(x)
+        >>> net = Net()
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
+        >>> scheduler = nn.PolynomialLR(optimizer)
+        >>> for i in range(6):
+        >>>     scheduler.step()
+        >>>     current_lr = scheduler.get_last_lr()
+        >>>     print(current_lr)
+        [Tensor(shape=[], dtype=Float32, value= 0.008)]
+        [Tensor(shape=[], dtype=Float32, value= 0.006)]
+        [Tensor(shape=[], dtype=Float32, value= 0.004)]
+        [Tensor(shape=[], dtype=Float32, value= 0.002)]
+        [Tensor(shape=[], dtype=Float32, value= 0)]
+        [Tensor(shape=[], dtype=Float32, value= 0)]
+    """
+
+    def __init__(self, optimizer, total_iters=5, power=1.0, last_epoch=-1, verbose=False):
+        self.total_iters = total_iters
+        self.power = power
+        super(PolynomialLR, self).__init__(optimizer, last_epoch, verbose)
+
+    def _get_lr(self):
+        if self.last_epoch == Tensor(0, mstype.float32) or self.last_epoch > self.total_iters:
+            return self._count_lr()
+        factor = ((1.0 - self.last_epoch / self.total_iters) / (
+            1.0 - (self.last_epoch - 1) / self.total_iters)) ** self.power
+        return self._count_lr(factor)
+
+
+@jit_class
+class ChainedScheduler:
+    r"""
+    Save the learning rate scheduler chain list of multiple learning rate schedulers,
+    and call the step() function to execute the step() function of each learning rate scheduler.
+
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+
+    Args:
+        schedulers (list[:class:`mindspore.nn.optim_ex.Optimizer`]): List of learning rate schedulers.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import nn
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.fc = nn.Dense(16 * 5 * 5, 120)
+        >>>     def construct(self, x):
+        >>>         return self.fc(x)
+        >>> net = Net()
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
+        >>> scheduler1 = nn.PolynomialLR(optimizer)
+        >>> scheduler2 = nn.ExponentialLR(optimizer, gamma=0.5)
+        >>> scheduler = nn.ChainedScheduler([scheduler1, scheduler2])
+        >>> for i in range(6):
+        >>>     scheduler.step()
+        >>>     current_lr = scheduler.get_last_lr()
+        >>>     print(current_lr)
+        [Tensor(shape=[], dtype=Float32, value= 0.004)]
+        [Tensor(shape=[], dtype=Float32, value= 0.0015)]
+        [Tensor(shape=[], dtype=Float32, value= 0.0005)]
+        [Tensor(shape=[], dtype=Float32, value= 0.000125)]
+        [Tensor(shape=[], dtype=Float32, value= 0)]
+        [Tensor(shape=[], dtype=Float32, value= 0)]
+    """
+
+    def __init__(self, schedulers):
+        self._schedulers = list(schedulers)
+        self.optimizer = schedulers[0].optimizer
+        self._last_lr = [group['lr'] * 1.0 for group in self._schedulers[-1].optimizer.param_groups]
+
+    def step(self):
+        """
+        Sequential execution of the saved learning rate scheduler's step() function.
+        """
+        for scheduler in self._schedulers:
+            scheduler.step()
+        self._last_lr = [group['lr'] * 1.0 for group in self._schedulers[-1].optimizer.param_groups]
+
+    def get_last_lr(self):
+        """
+        Return last computed learning rate by current scheduler.
+        """
+        return self._last_lr
