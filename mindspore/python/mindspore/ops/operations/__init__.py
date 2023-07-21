@@ -115,7 +115,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      ApplyAdamWithAmsgrad, ApplyAdamWithAmsgradV2, AdaptiveAvgPool3D, AdaptiveMaxPool2D,
                      AdaptiveMaxPool3D,
                      GridSampler3D, MaxPool3DWithArgmax, MaxUnpool2D, NuclearNorm, NthElement, MultilabelMarginLoss,
-                     Dilation2D, DataFormatVecPermute, DeformableOffsets, FractionalAvgPool,
+                     Dilation2D, DataFormatVecPermute, DeformableOffsets, Dense, FractionalAvgPool,
                      FractionalMaxPool, FractionalMaxPool3DWithFixedKsize, FractionalMaxPoolWithFixedKsize,
                      GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D, PadV3, ChannelShuffle,
                      GLU, MaxUnpool3D, Pdist)
@@ -616,6 +616,7 @@ __all__ = [
     "CumulativeLogsumexp",
     "DataFormatVecPermute",
     "DeformableOffsets",
+    "Dense",
     "ExtractImagePatches",
     "FillDiagonal",
     "Fills",

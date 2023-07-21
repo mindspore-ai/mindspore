@@ -296,12 +296,23 @@ REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) 
   return {dout, ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue(format)}})};
 });
 
-REG_BPROP_BUILDER("Dense").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex4);
-  auto out_grad = ib->Emit(kDenseGradOpName, {x, w, dout}, {{"has_bias", ib->GetAttr("has_bias")}});
-  return {ib->TupleGetItem(out_grad, 0), ib->TupleGetItem(out_grad, 1), ib->TupleGetItem(out_grad, 2)};
+  NodePtr dx, dw, db;
+  ShapeVector dout_2d_shape = {-1, dout->shape().back()};
+  dout = ib->Reshape(dout, dout_2d_shape);
+  dx = ib->MatMul(dout, w, false, false);
+  auto x_shape = x->shape();
+  if (x_shape.size() != 2) {
+    dx = ib->Reshape(dx, x_shape);
+    ShapeVector x_2d_shape = {-1, x_shape.back()};
+    x = ib->Reshape(x, x_2d_shape);
+  }
+  dw = ib->MatMul(dout, x, true, false);
+  db = ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue("NCHW")}});
+  return {dx, dw, db};
 });
 
 REG_BPROP_BUILDER("ReLU").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
