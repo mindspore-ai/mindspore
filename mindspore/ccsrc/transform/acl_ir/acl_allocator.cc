@@ -92,8 +92,9 @@ AclAllocatorRegister &AclAllocatorRegister::Instance() {
 }
 
 void AclAllocatorRegister::RegisterAllocator(void *stream) {
-  (void)aclrtAllocatorRegister(stream, allocator_desc_);
-  (void)streams_.insert(stream);
+  if (streams_.insert(stream).second) {
+    (void)aclrtAllocatorRegister(stream, allocator_desc_);
+  }
 }
 }  // namespace transform
 }  // namespace mindspore
