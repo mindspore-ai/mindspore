@@ -763,7 +763,7 @@ void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr 
     auto int_val = LongToSize(dyn_cast<Int64Imm>(val)->value());
     ++int_val;  // Ignore the env position.
     if (int_val >= tuple_arg->size()) {
-      MS_EXCEPTION(IndexError) << "The index " << (int_val - 1) << " is out of range [0, " << tuple_arg->size() << ").";
+      MS_EXCEPTION(IndexError) << "Position index " << (int_val - 1) << " is exceed input size.";
     }
     if (!CanGradArgument(tuple_arg, int_val)) {
       continue;
