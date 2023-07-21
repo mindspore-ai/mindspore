@@ -18,12 +18,12 @@
 #include <sstream>
 #include <unordered_map>
 #include "common/common_test.h"
-#include "c_api/include/attribute.h"
-#include "c_api/include/context.h"
-#include "c_api/include/graph.h"
-#include "c_api/include/node.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
+#include "include/value.h"
+#include "include/context.h"
+#include "include/graph.h"
+#include "include/node.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
 
 namespace mindspore {
 class TestCApiAttr : public UT::CApiCommon {
@@ -41,26 +41,26 @@ TEST_F(TestCApiAttr, test_attr) {
   GraphHandle fg = MSFuncGraphCreate(res_mgr);
   ASSERT_TRUE(fg != nullptr);
 
-  AttrHandle attr1 = MSNewAttrInt64(res_mgr, 1);
+  ValueHandle attr1 = MSNewValueInt64(res_mgr, 1);
   ASSERT_TRUE(attr1 != nullptr);
   int64_t attr2_raw[] = {2, 2};
-  AttrHandle attr2 = MSNewAttrArray(res_mgr, attr2_raw, 2, MS_INT64);
+  ValueHandle attr2 = MSNewValueArray(res_mgr, attr2_raw, 2, MS_INT64);
   ASSERT_TRUE(attr2 != nullptr);
   char name1[] = "attr1";
   char name2[] = "attr2";
   char *attr_names[] = {name1, name2};
-  AttrHandle attrs[] = {attr1, attr2};
+  ValueHandle attrs[] = {attr1, attr2};
   size_t attr_num = 2;
 
   NodeHandle x = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(x != nullptr);
-  NodeHandle y = MSNewScalarConstantInt32(res_mgr, 2);
+  NodeHandle y = MSNewConstantScalarInt32(res_mgr, 2);
   ASSERT_TRUE(y != nullptr);
   NodeHandle input_nodes[] = {x, y};
   size_t input_num = 2;
   NodeHandle op_add = MSNewOp(res_mgr, fg, "Add", input_nodes, input_num, attr_names, attrs, attr_num);
   ASSERT_TRUE(op_add != nullptr);
-  int64_t attr1_retrived = MSOpGetScalarAttrInt64(res_mgr, op_add, "attr1", &ret);
+  int64_t attr1_retrived = MSOpGetAttrScalarInt64(res_mgr, op_add, "attr1", &ret);
   ASSERT_EQ(ret, RET_OK);
   ASSERT_EQ(attr1_retrived, 1);
   int64_t values[2];
@@ -69,9 +69,9 @@ TEST_F(TestCApiAttr, test_attr) {
   ASSERT_EQ(values[0], 2);
   ASSERT_EQ(values[1], 2);
 
-  ret = MSOpSetScalarAttrInt64(res_mgr, op_add, "attr1", 2);
+  ret = MSOpSetAttrScalarInt64(res_mgr, op_add, "attr1", 2);
   ASSERT_EQ(ret, RET_OK);
-  attr1_retrived = MSOpGetScalarAttrInt64(res_mgr, op_add, "attr1", &ret);
+  attr1_retrived = MSOpGetAttrScalarInt64(res_mgr, op_add, "attr1", &ret);
   ASSERT_EQ(ret, RET_OK);
   ASSERT_EQ(attr1_retrived, 2);
   values[0] = 1;

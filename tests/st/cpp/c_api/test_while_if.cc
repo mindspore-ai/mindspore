@@ -17,13 +17,13 @@
 #include <string>
 #include <vector>
 #include "common/common_test.h"
-#include "c_api/include/graph.h"
-#include "c_api/include/node.h"
-#include "c_api/include/tensor.h"
-#include "c_api/include/context.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/include/attribute.h"
+#include "include/graph.h"
+#include "include/node.h"
+#include "include/tensor.h"
+#include "include/context.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
+#include "include/value.h"
 
 class TestWhileIf : public ST::Common {
  public:
@@ -45,7 +45,7 @@ class TestWhileIf : public ST::Common {
 namespace {
 GraphHandle BuildNestedTrueGraph(ResMgrHandle res_mgr, NodeHandle x) {
   GraphHandle sub_fg_true = MSFuncGraphCreate(res_mgr);
-  NodeHandle y_true = MSNewScalarConstantInt32(res_mgr, 2);
+  NodeHandle y_true = MSNewConstantScalarInt32(res_mgr, 2);
   NodeHandle input_nodes_true[] = {x, y_true};
   NodeHandle true_br = MSNewOp(res_mgr, sub_fg_true, "Add", input_nodes_true, 2, NULL, NULL, 0);
   STATUS ret = MSFuncGraphSetOutput(res_mgr, sub_fg_true, true_br, false);
@@ -58,7 +58,7 @@ GraphHandle BuildNestedTrueGraph(ResMgrHandle res_mgr, NodeHandle x) {
 
 GraphHandle BuildNestedFalseGraph(ResMgrHandle res_mgr, NodeHandle x) {
   GraphHandle sub_fg_false = MSFuncGraphCreate(res_mgr);
-  NodeHandle y_false = MSNewScalarConstantInt32(res_mgr, 1);
+  NodeHandle y_false = MSNewConstantScalarInt32(res_mgr, 1);
   NodeHandle input_nodes_false[] = {x, y_false};
   NodeHandle false_br = MSNewOp(res_mgr, sub_fg_false, "Add", input_nodes_false, 2, NULL, NULL, 0);
   STATUS ret = MSFuncGraphSetOutput(res_mgr, sub_fg_false, false_br, false);
@@ -71,7 +71,7 @@ GraphHandle BuildNestedFalseGraph(ResMgrHandle res_mgr, NodeHandle x) {
 
 GraphHandle BuildCondGraph(ResMgrHandle res_mgr, NodeHandle i) {
   GraphHandle sub_fg_cond = MSFuncGraphCreate(res_mgr);
-  NodeHandle n = MSNewScalarConstantInt32(res_mgr, 10);
+  NodeHandle n = MSNewConstantScalarInt32(res_mgr, 10);
   NodeHandle input_nodes[] = {i, n};
   NodeHandle cond = MSNewOp(res_mgr, sub_fg_cond, "Less", input_nodes, 2, NULL, NULL, 0);
   STATUS ret = MSFuncGraphSetOutput(res_mgr, sub_fg_cond, cond, false);
@@ -84,8 +84,8 @@ GraphHandle BuildCondGraph(ResMgrHandle res_mgr, NodeHandle i) {
 
 GraphHandle BuildBodyGraph(ResMgrHandle res_mgr, NodeHandle x, NodeHandle i) {
   GraphHandle sub_fg_body = MSFuncGraphCreate(res_mgr);
-  NodeHandle step = MSNewScalarConstantInt32(res_mgr, 1);
-  NodeHandle n = MSNewScalarConstantInt32(res_mgr, 10);
+  NodeHandle step = MSNewConstantScalarInt32(res_mgr, 1);
+  NodeHandle n = MSNewConstantScalarInt32(res_mgr, 10);
   NodeHandle input_nodes[] = {x, n};
   NodeHandle cond = MSNewOp(res_mgr, sub_fg_body, "Less", input_nodes, 2, NULL, NULL, 0);
   GraphHandle nested_fg_true = BuildNestedTrueGraph(res_mgr, x);
@@ -131,7 +131,7 @@ TEST_F(TestWhileIf, TestWhileIf) {
   ASSERT_TRUE(fg != nullptr);
   NodeHandle x = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(x != nullptr);
-  NodeHandle i = MSNewTensorVariable(res_mgr, fg, data_i, MS_INT32, shape_i, 1, 1 * sizeof(int));
+  NodeHandle i = MSNewVariableArray(res_mgr, fg, data_i, MS_INT32, shape_i, 1, 1 * sizeof(int));
   ASSERT_TRUE(i != nullptr);
   // cond branch
   GraphHandle sub_fg_cond = BuildCondGraph(res_mgr, i);

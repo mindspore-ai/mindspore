@@ -25,6 +25,8 @@ extern "C" {
 
 typedef enum DataTypeC {
   MS_NONE = 0,
+  MS_TYPE = 1,
+  MS_STRING = 12,
   MS_BOOL = 30,
   MS_INT8 = 32,
   MS_INT16 = 33,
@@ -241,7 +243,7 @@ typedef enum DTypeFormat {
 } DTypeFormat;
 
 typedef enum OptPassID {
-  MS_AUTO_MONAD_ELIM_PASS,
+  MS_AUTO_MONAD_ELIM_PASS,  // eliminate extra monad nodes
 } OptPassID;
 
 typedef enum PadMode {

@@ -18,11 +18,11 @@
 #define MINDSPORE_CCSRC_C_API_INCLUDE_ABSTRACT_H_
 
 #include <stdlib.h>
-#include "c_api/base/macros.h"
-#include "c_api/base/types.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/base/status.h"
-#include "c_api/include/context.h"
+#include "include/base/macros.h"
+#include "include/base/types.h"
+#include "include/base/handle_types.h"
+#include "include/base/status.h"
+#include "include/context.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -20,35 +20,37 @@
 #include <utility>
 #include <unordered_map>
 #include <string>
+#include <vector>
 #include <memory>
 #include "base/base.h"
-#include "c_api/base/handle_types.h"
+#include "c_api/include/base/handle_types.h"
 #include "c_api/src/common.h"
 #include "pipeline/jit/ps/resource.h"
 #include "utils/ms_context.h"
 #include "backend/graph_compiler/backend_base.h"
+#include "c_api/src/dynamic_op_info.h"
 
+static const size_t maxOpPoolSize = 500;
 class ResourceManager {
  public:
   ResourceManager() {
     context_ = mindspore::MsContext::GetInstance();
     (void)context_->set_backend_policy("ms");
     context_->set_param<int>(mindspore::MS_CTX_EXECUTION_MODE, mindspore::kGraphMode);
-    if (Py_IsInitialized() == 0) {
-      PyEval_InitThreads();
-      Py_Initialize();
-    }
   }
 
   ~ResourceManager() {
-    if (Py_IsInitialized() != 0) {
-      Py_Finalize();
+    for (auto iter : backends_) {
+      const auto &backend = iter.second;
+      if (backend != nullptr) {
+        backend->ClearOpExecutorResource();
+      }
     }
+    backends_.clear();
+    ptr_res_pool_.clear();
+    dynamic_op_pool_.clear();
+    results_.clear();
   }
-
-  void SetBackend(std::shared_ptr<mindspore::compile::Backend> backend) { backend_ = std::move(backend); }
-
-  std::shared_ptr<mindspore::compile::Backend> GetBackend() { return backend_; }
 
   void SetResult(const std::string &key, const mindspore::Any &value) { results_[key] = value; }
 
@@ -60,6 +62,37 @@ class ResourceManager {
     return iter->second;
   }
 
+  void CacheBackend(const std::string &device_target, const MindRTBackendPtr &backend) {
+    backends_[device_target] = backend;
+  }
+
+  MindRTBackendPtr GetBackendFromCache(const std::string &device_target) {
+    auto iter = backends_.find(device_target);
+    if (iter == backends_.end()) {
+      MS_LOG(INFO) << "Current backend has not been cached in backends pool.";
+      return nullptr;
+    }
+    return iter->second;
+  }
+
+  void CacheOpRunInfo(std::shared_ptr<InnerOpInfo> inner_info, FrontendOpRunInfoPtr run_info) {
+    if (dynamic_op_pool_.size() > maxOpPoolSize) {
+      dynamic_op_pool_.erase(dynamic_op_pool_.begin());
+    }
+    dynamic_op_pool_[*inner_info] = run_info;
+  }
+
+  FrontendOpRunInfoPtr GetOpRunInfoFromCache(std::shared_ptr<InnerOpInfo> inner_info) {
+    auto iter = dynamic_op_pool_.find(*inner_info);
+    if (iter == dynamic_op_pool_.end()) {
+      MS_LOG(INFO) << "The OpInfo has not been cached in dynamic operator pool.";
+      return nullptr;
+    }
+    return iter->second;
+  }
+
+  size_t GetCachedOpNum() const { return dynamic_op_pool_.size(); }
+
   void SetInfer(bool infer) { auto_infer_ = infer; }
 
   bool GetInfer() const { return auto_infer_; }
@@ -70,12 +103,11 @@ class ResourceManager {
 
   BasePtr GetSrcPtr(ConstHandle ptr) {
     auto iter = ptr_res_pool_.find(ptr);
-    if (iter != ptr_res_pool_.end()) {
-      return iter->second;
-    } else {
+    if (iter == ptr_res_pool_.end()) {
       MS_LOG(ERROR) << "The key handle " << ptr << " is not exist in resource pool.";
       return nullptr;
     }
+    return iter->second;
   }
 
   void ReleaseSrcPtr(ConstHandle ptr) {
@@ -87,10 +119,10 @@ class ResourceManager {
 
  private:
   std::unordered_map<ConstHandle, BasePtr> ptr_res_pool_{};
+  std::unordered_map<InnerOpInfo, FrontendOpRunInfoPtr> dynamic_op_pool_{};
+  std::unordered_map<std::string, MindRTBackendPtr> backends_{};
   mindspore::HashMap<std::string, mindspore::Any> results_{};
-  std::shared_ptr<mindspore::compile::Backend> backend_ = nullptr;
   std::shared_ptr<mindspore::MsContext> context_ = nullptr;
   bool auto_infer_ = true;
 };
-
 #endif  // MINDSPORE_CCSRC_C_API_SRC_RESOURCE_MANAGER_H_

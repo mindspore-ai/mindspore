@@ -17,13 +17,13 @@
 #include <string>
 #include <vector>
 #include "common/common_test.h"
-#include "c_api/include/graph.h"
-#include "c_api/include/node.h"
-#include "c_api/include/tensor.h"
-#include "c_api/include/context.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/include/attribute.h"
+#include "include/graph.h"
+#include "include/node.h"
+#include "include/tensor.h"
+#include "include/context.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
+#include "include/value.h"
 
 class TestNestedWhile : public ST::Common {
  public:
@@ -43,7 +43,7 @@ class TestNestedWhile : public ST::Common {
 namespace {
 GraphHandle BuildNestedCondGraph(ResMgrHandle res_mgr, NodeHandle j) {
   GraphHandle sub_fg_cond = MSFuncGraphCreate(res_mgr);
-  NodeHandle n = MSNewScalarConstantInt32(res_mgr, 3);
+  NodeHandle n = MSNewConstantScalarInt32(res_mgr, 3);
   NodeHandle input_nodes[] = {j, n};
   NodeHandle cond = MSNewOp(res_mgr, sub_fg_cond, "Less", input_nodes, 2, NULL, NULL, 0);
   STATUS ret = MSFuncGraphSetOutput(res_mgr, sub_fg_cond, cond, false);
@@ -56,8 +56,8 @@ GraphHandle BuildNestedCondGraph(ResMgrHandle res_mgr, NodeHandle j) {
 
 GraphHandle BuildNestedBodyGraph(ResMgrHandle res_mgr, NodeHandle x, NodeHandle j) {
   GraphHandle sub_fg_body = MSFuncGraphCreate(res_mgr);
-  NodeHandle step1 = MSNewScalarConstantInt32(res_mgr, 2);
-  NodeHandle step2 = MSNewScalarConstantInt32(res_mgr, 1);
+  NodeHandle step1 = MSNewConstantScalarInt32(res_mgr, 2);
+  NodeHandle step2 = MSNewConstantScalarInt32(res_mgr, 1);
   NodeHandle input_nodes_body[] = {x, step1};
   NodeHandle new_x = MSNewOp(res_mgr, sub_fg_body, "Add", input_nodes_body, 2, NULL, NULL, 0);
   NodeHandle input_nodes_j[] = {j, step2};
@@ -73,7 +73,7 @@ GraphHandle BuildNestedBodyGraph(ResMgrHandle res_mgr, NodeHandle x, NodeHandle 
 
 GraphHandle BuildNestedAfterGraph(ResMgrHandle res_mgr, NodeHandle x) {
   GraphHandle sub_fg_after = MSFuncGraphCreate(res_mgr);
-  NodeHandle step = MSNewScalarConstantInt32(res_mgr, 1);
+  NodeHandle step = MSNewConstantScalarInt32(res_mgr, 1);
   NodeHandle input_nodes_after[] = {x, step};
   NodeHandle new_x = MSNewOp(res_mgr, sub_fg_after, "Add", input_nodes_after, 2, NULL, NULL, 0);
   STATUS ret = MSFuncGraphSetOutput(res_mgr, sub_fg_after, new_x, false);
@@ -86,7 +86,7 @@ GraphHandle BuildNestedAfterGraph(ResMgrHandle res_mgr, NodeHandle x) {
 
 GraphHandle BuildCondGraph(ResMgrHandle res_mgr, NodeHandle i) {
   GraphHandle sub_fg_cond = MSFuncGraphCreate(res_mgr);
-  NodeHandle n = MSNewScalarConstantInt32(res_mgr, 8);
+  NodeHandle n = MSNewConstantScalarInt32(res_mgr, 8);
   NodeHandle input_nodes[] = {i, n};
   NodeHandle cond = MSNewOp(res_mgr, sub_fg_cond, "Less", input_nodes, 2, NULL, NULL, 0);
   STATUS ret = MSFuncGraphSetOutput(res_mgr, sub_fg_cond, cond, false);
@@ -99,10 +99,10 @@ GraphHandle BuildCondGraph(ResMgrHandle res_mgr, NodeHandle i) {
 
 GraphHandle BuildBodyGraph(ResMgrHandle res_mgr, NodeHandle x, NodeHandle i) {
   GraphHandle sub_fg_body = MSFuncGraphCreate(res_mgr);
-  NodeHandle step = MSNewScalarConstantInt32(res_mgr, 1);
+  NodeHandle step = MSNewConstantScalarInt32(res_mgr, 1);
   int data_j[] = {0};
   int64_t shape_j[] = {1};
-  NodeHandle j = MSNewTensorVariable(res_mgr, sub_fg_body, data_j, MS_INT32, shape_j, 1, 1 * sizeof(int));
+  NodeHandle j = MSNewVariableArray(res_mgr, sub_fg_body, data_j, MS_INT32, shape_j, 1, 1 * sizeof(int));
   GraphHandle nested_fg_cond = BuildNestedCondGraph(res_mgr, j);
   GraphHandle nested_fg_body = BuildNestedBodyGraph(res_mgr, x, j);
   GraphHandle nested_fg_after = BuildNestedAfterGraph(res_mgr, x);
@@ -147,7 +147,7 @@ TEST_F(TestNestedWhile, TestNestedWhile) {
   ASSERT_TRUE(fg != nullptr);
   NodeHandle x = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(x != nullptr);
-  NodeHandle i = MSNewTensorVariable(res_mgr, fg, data_i, MS_INT32, shape_i, 1, 1 * sizeof(int));
+  NodeHandle i = MSNewVariableArray(res_mgr, fg, data_i, MS_INT32, shape_i, 1, 1 * sizeof(int));
   ASSERT_TRUE(i != nullptr);
   // cond branch
   GraphHandle sub_fg_cond = BuildCondGraph(res_mgr, i);

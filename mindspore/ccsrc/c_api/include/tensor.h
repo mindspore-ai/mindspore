@@ -19,11 +19,11 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include "c_api/base/macros.h"
-#include "c_api/base/status.h"
-#include "c_api/base/types.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/include/context.h"
+#include "include/base/macros.h"
+#include "include/base/status.h"
+#include "include/base/types.h"
+#include "include/base/handle_types.h"
+#include "include/context.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,7 +73,7 @@ MIND_C_API TensorHandle MSNewTensorWithSrcType(ResMgrHandle res_mgr, void *data,
 /// \param[in] value The input scalar value.
 ///
 /// \return The pointer of the created tensor instance.
-MIND_C_API TensorHandle MSNewScalarTensorFloat32(ResMgrHandle res_mgr, float value);
+MIND_C_API TensorHandle MSNewTensorScalarFloat32(ResMgrHandle res_mgr, float value);
 
 /// \brief Create a tensor with int32 scalar value.
 ///
@@ -81,7 +81,7 @@ MIND_C_API TensorHandle MSNewScalarTensorFloat32(ResMgrHandle res_mgr, float val
 /// \param[in] value The input scalar value.
 ///
 /// \return The pointer of the created tensor instance.
-MIND_C_API TensorHandle MSNewScalarTensorInt32(ResMgrHandle res_mgr, int value);
+MIND_C_API TensorHandle MSNewTensorScalarInt32(ResMgrHandle res_mgr, int value);
 
 /// \brief Get the raw pointer of tensor data.
 ///

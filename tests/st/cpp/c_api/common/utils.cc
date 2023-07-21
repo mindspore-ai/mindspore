@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_C_API_SRC_PASS_H_
-#define MINDSPORE_CCSRC_C_API_SRC_PASS_H_
+#include "common/utils.h"
 
-#include <memory>
-#include <map>
-#include "base/base.h"
-#include "c_api/src/common.h"
-#include "c_api/include/base/types.h"
-
-bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
-
-typedef bool (*pass_func)(const FuncGraphPtr &func_graph);
-const std::map<OptPassID, pass_func> kPassEnumToFuncMap = {{MS_AUTO_MONAD_ELIM_PASS, AutoMonadElimOptPass}};
-#endif  // MINDSPORE_CCSRC_C_API_SRC_PASS_H_
+size_t GetCachedOpNum(ResMgrHandle res_mgr) {
+  if (res_mgr == nullptr) {
+    std::cout << "[ERROR] Input Handle [res_mgr] is nullptr!" << std::endl;
+  }
+  auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
+  return res_mgr_ptr->GetCachedOpNum();
+}

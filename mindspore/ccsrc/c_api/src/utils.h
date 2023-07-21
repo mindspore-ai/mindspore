@@ -214,9 +214,25 @@ const std::map<DTypeFormat, std::vector<std::string>> kDTypeFmtEnumToStrMap = {
   {C128_Default, {"complex128", "DefaultFormat"}},
 };
 
+const std::map<std::string, std::string> kOpAttrNameAdaptMap = {
+  {"data_format", "format"},
+  {"group", "groups"},
+  {"transpose_a", "transpose_x1"},
+  {"transpose_b", "transpose_x2"},
+};
+
 void ConvertConstScalarInputToTensor(const AnfNodePtr &input_node);
 
 std::vector<TensorPtr> ConvertOutputToTensor(const mindspore::BaseRef &output);
+
+STATUS OpSetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, const char *const *attr_names, ValueHandle attrs[],
+                  size_t attr_num);
+
+std::vector<BaseShapePtr> BuildShape(int64_t **out_shapes, size_t *out_dims, size_t out_num);
+
+std::vector<TypePtr> BuildType(const DataTypeC *out_dtypes, size_t out_num);
+
+AbstractBasePtr BuildAbstract(std::vector<BaseShapePtr> shapes, std::vector<TypePtr> types);
 
 AbstractBasePtr GetAbstract(const TypePtr &type, const int64_t shape[], size_t shape_size, bool is_param = false);
 
@@ -227,6 +243,19 @@ STATUS CheckCustomOpInfo(const CustomOpInfo &info);
 nlohmann::json ConvertOpInfoToJson(const CustomOpInfo &info);
 
 size_t GetMaxMallocSize();
+
+template <typename T>
+ParameterPtr GetScalarParam(const FuncGraphPtr &fg, T value, mindspore::TypeId type) {
+  MS_EXCEPTION_IF_NULL(fg);
+  auto param = fg->add_parameter();
+  auto type_ptr = mindspore::TypeIdToType(type);
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  auto tensor = std::make_shared<TensorImpl>(value, type_ptr);
+  tensor->set_param_info(std::make_shared<mindspore::ParamInfo>());
+  param->set_abstract(tensor->ToAbstract());
+  param->set_default_param(tensor);
+  return param;
+}
 
 #define MS_ERROR_IF_FALSE_W_RET_N_LOG(condition, val, message) \
   do {                                                         \

@@ -17,13 +17,13 @@
 #include <string>
 #include <vector>
 #include "common/common_test.h"
-#include "c_api/include/graph.h"
-#include "c_api/include/node.h"
-#include "c_api/include/tensor.h"
-#include "c_api/include/context.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/include/attribute.h"
+#include "include/graph.h"
+#include "include/node.h"
+#include "include/tensor.h"
+#include "include/context.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
+#include "include/value.h"
 
 class TestIRPass : public ST::Common {
  public:
@@ -47,19 +47,19 @@ TEST_F(TestIRPass, TestAutoMonadElimPass) {
   ASSERT_TRUE(x != nullptr);
   NodeHandle y = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(y != nullptr);
-  NodeHandle para_1 = MSNewScalarVariableInt32(res_mgr, fg, 1);
+  NodeHandle para_1 = MSNewVariableScalarInt32(res_mgr, fg, 1);
   ASSERT_TRUE(para_1 != nullptr);
-  NodeHandle para_2 = MSNewScalarVariableInt32(res_mgr, fg, 3);
+  NodeHandle para_2 = MSNewVariableScalarInt32(res_mgr, fg, 3);
   ASSERT_TRUE(para_2 != nullptr);
 
   const char *assign_attr_name[] = {"side_effect_mem"};
-  AttrHandle side_effect_mem = MSNewAttrBool(res_mgr, true);
+  ValueHandle side_effect_mem = MSNewValueBool(res_mgr, true);
   ASSERT_TRUE(side_effect_mem != nullptr);
-  AttrHandle assign_attrs[] = {side_effect_mem};
+  ValueHandle assign_attrs[] = {side_effect_mem};
   const char *depend_attr_name[] = {"side_effect_propagate"};
-  AttrHandle side_effect_propagate = MSNewAttrInt64(res_mgr, 1);
+  ValueHandle side_effect_propagate = MSNewValueInt64(res_mgr, 1);
   ASSERT_TRUE(side_effect_propagate != nullptr);
-  AttrHandle depend_attrs[] = {side_effect_propagate};
+  ValueHandle depend_attrs[] = {side_effect_propagate};
 
   NodeHandle input_nodes_1[] = {para_1, x};
   NodeHandle assign_1 = MSNewOp(res_mgr, fg, "Assign", input_nodes_1, 2, assign_attr_name, assign_attrs, 1);
@@ -84,9 +84,9 @@ TEST_F(TestIRPass, TestAutoMonadElimPass) {
   OptPassID passes[] = {MS_AUTO_MONAD_ELIM_PASS};
   ret = MSFuncGraphCompile(res_mgr, fg, passes, 1);
   ASSERT_TRUE(ret == RET_OK);
-  TensorHandle a = MSNewScalarTensorInt32(res_mgr, 10);
+  TensorHandle a = MSNewTensorScalarInt32(res_mgr, 10);
   ASSERT_TRUE(a != nullptr);
-  TensorHandle b = MSNewScalarTensorInt32(res_mgr, 30);
+  TensorHandle b = MSNewTensorScalarInt32(res_mgr, 30);
   ASSERT_TRUE(b != nullptr);
   TensorHandle inputs[2] = {a, b};
   TensorHandle outputs[1];

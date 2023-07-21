@@ -19,9 +19,9 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include "c_api/base/macros.h"
-#include "c_api/base/status.h"
-#include "c_api/base/handle_types.h"
+#include "include/base/macros.h"
+#include "include/base/status.h"
+#include "include/base/handle_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +31,7 @@ MIND_C_API ResMgrHandle MSResourceManagerCreate();
 
 /// \brief Release a resource manager and the enclosed objects.
 ///
-/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] res_mgr Manager Handle that manages the resource of the funcGraph.
 MIND_C_API void MSResourceManagerDestroy(ResMgrHandle res_mgr);
 
 /// \brief Set context to Graph or pynative mood.
@@ -78,19 +78,22 @@ MIND_C_API void MSSetDeviceId(uint32_t deviceId);
 /// 1: Basic level. Only save frontend IR graph and some common backend IR graphs.
 /// 2: Advanced level. Save all graphs except for verbose IR graphs and dot files.
 /// 3: Full level. Save all IR graphs.
-MIND_C_API void MSSetGraphsSaveMode(int save_mode);
+MIND_C_API void MSSetIRGraphsSaveMode(int save_mode);
 
-MIND_C_API void MSSetGraphsSavePath(const char *save_path);
-
-/// \brief Set flag for auto shape and type infer
+/// \brief Set save path of IRGraphs.
 ///
-/// \param res_mgr Resource Handle that manages the nodes of the funcGraph.
-/// \param infer True: Use inner auto infer, False: Not use auto infer.
+/// \param[in] save_path The save path.
+MIND_C_API void MSSetIRGraphsSavePath(const char *save_path);
+
+/// \brief Set flag for auto shape and type infer.
+///
+/// \param[in] res_mgr Manager Handle that manages the resource of the funcGraph.
+/// \param[in] infer True: Use inner auto infer, False: Not use auto infer.
 MIND_C_API void MSSetInfer(ResMgrHandle res_mgr, bool infer);
 
-/// \brief Get flag for auto shape and type infer
+/// \brief Get flag for auto shape and type infer.
 ///
-/// \param res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] res_mgr Manager Handle that manages the resource of the funcGraph.
 MIND_C_API bool MSGetInfer(ResMgrHandle res_mgr);
 
 #ifdef __cplusplus

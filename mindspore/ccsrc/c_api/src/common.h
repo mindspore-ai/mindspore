@@ -23,6 +23,9 @@
 #include "ops/primitive_c.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass.h"
+#include "pipeline/pynative/base.h"
+#include "pipeline/pynative/forward/forward.h"
+#include "backend/graph_compiler/backend.h"
 
 using FuncGraphImpl = mindspore::FuncGraph;
 using FuncGraphManagerImpl = mindspore::FuncGraphManager;
@@ -39,6 +42,7 @@ using AbstractBaseImpl = mindspore::abstract::AbstractBase;
 using AbstractTensorImpl = mindspore::abstract::AbstractTensor;
 using AbstractScalarImpl = mindspore::abstract::AbstractScalar;
 using AbstractTupleImpl = mindspore::abstract::AbstractTuple;
+using ValueSequenceImpl = mindspore::ValueSequence;
 using AbstractTypeImpl = mindspore::abstract::AbstractType;
 using ValueImpl = mindspore::Value;
 using ValueTupleImpl = mindspore::ValueTuple;
@@ -62,6 +66,7 @@ using Float32ImmPtr = mindspore::FP32ImmPtr;
 using BoolImmPtr = mindspore::BoolImmPtr;
 using StringImmPtr = mindspore::StringImmPtr;
 using ValueTuplePtr = mindspore::ValueTuplePtr;
+using ValueSequencePtr = mindspore::ValueSequencePtr;
 using TensorPtr = mindspore::tensor::TensorPtr;
 using PrimitivePtr = mindspore::PrimitivePtr;
 using AnfNodePtr = mindspore::AnfNodePtr;
@@ -69,6 +74,8 @@ using ValueNodePtr = mindspore::ValueNodePtr;
 using CNodePtr = mindspore::CNodePtr;
 using ParameterPtr = mindspore::ParameterPtr;
 using AbstractBasePtr = mindspore::abstract::AbstractBasePtr;
+using AbstractTensorPtr = mindspore::abstract::AbstractTensorPtr;
+using AbstractScalarPtr = mindspore::abstract::AbstractScalarPtr;
 using FuncGraphPtr = mindspore::FuncGraphPtr;
 using FuncGraphManagerPtr = std::shared_ptr<mindspore::FuncGraphManager>;
 using BaseShapePtr = mindspore::abstract::BaseShapePtr;
@@ -81,4 +88,7 @@ using SubstitutionPtr = mindspore::opt::SubstitutionPtr;
 using OptPassGroupMap = mindspore::opt::OptPassGroupMap;
 
 using AttrMap = mindspore::HashMap<std::string, ValuePtr>;
+using FrontendOpRunInfoPtr = mindspore::pynative::FrontendOpRunInfoPtr;
+using ForwardExecutorPtr = std::shared_ptr<mindspore::pynative::ForwardExecutor>;
+using MindRTBackendPtr = mindspore::compile::MindRTBackendPtr;
 #endif  // MINDSPORE_CCSRC_C_API_SRC_COMMON_H_

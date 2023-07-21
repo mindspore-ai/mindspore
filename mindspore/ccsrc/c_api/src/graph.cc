@@ -277,8 +277,8 @@ STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph, OptPassID *op
     auto func_graph = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
     MS_EXCEPTION_IF_NULL(func_graph);
     auto fg_mgr = mindspore::MakeManager();
-    fg_mgr->AddFuncGraph(func_graph, true);
     MS_EXCEPTION_IF_NULL(fg_mgr);
+    fg_mgr->AddFuncGraph(func_graph, true);
     func_graph->set_manager(fg_mgr);
     (void)mindspore::pipeline::AutoMonad(func_graph);
     (void)mindspore::LiftingClone(func_graph);
@@ -286,8 +286,11 @@ STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph, OptPassID *op
     std::string backend_name = context_ptr->backend_policy();
     std::string target = context_ptr->get_param<std::string>(mindspore::MS_CTX_DEVICE_TARGET);
     uint32_t device_id = context_ptr->get_param<uint32_t>(mindspore::MS_CTX_DEVICE_ID);
-    auto backend = std::make_shared<mindspore::compile::MindRTBackend>(backend_name, target, device_id);
-    res_mgr_ptr->SetBackend(backend);
+    auto backend = res_mgr_ptr->GetBackendFromCache(target);
+    if (backend == nullptr) {
+      backend = std::make_shared<mindspore::compile::MindRTBackend>(backend_name, target, device_id);
+      res_mgr_ptr->CacheBackend(target, backend);
+    }
     if (target == mindspore::kAscendDevice &&
         context_ptr->get_param<int>(mindspore::MS_CTX_EXECUTION_MODE) == mindspore::kPynativeMode) {
       backend->set_is_multi_graph_sink(false);
@@ -313,7 +316,7 @@ STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph, OptPassID *op
   return RET_OK;
 }
 
-STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, TensorHandle const inputs[], size_t input_num,
+STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, Handle const inputs[], size_t input_num,
                       TensorHandle outputs[], size_t outputs_num) {
   if (res_mgr == nullptr || inputs == nullptr || outputs == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [inputs] or [outputs] is nullptr.";
@@ -321,19 +324,21 @@ STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, TensorHandle cons
   }
   mindspore::VectorRef args;
   for (size_t i = 0; i < input_num; i++) {
-    auto in_tensor = GetSrcPtr<TensorPtr>(res_mgr, inputs[i]);
-    if (in_tensor == nullptr) {
+    auto in_arg = GetSrcPtr<ValuePtr>(res_mgr, inputs[i]);
+    if (in_arg == nullptr) {
       MS_LOG(ERROR) << "Invalid input. Index: " << i;
       return RET_NULL_PTR;
     }
-    args.push_back(in_tensor);
+    args.push_back(in_arg);
   }
   auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
   auto raw_info = res_mgr_ptr->GetResult(mindspore::pipeline::kOutput);
-  auto bc_ptr = res_mgr_ptr->GetBackend();
-  auto mindrt_bc_ptr = std::dynamic_pointer_cast<mindspore::compile::MindRTBackend>(bc_ptr);
   mindspore::VectorRef out_vec;
   try {
+    auto context_ptr = mindspore::MsContext::GetInstance();
+    std::string target = context_ptr->get_param<std::string>(mindspore::MS_CTX_DEVICE_TARGET);
+    auto mindrt_bc_ptr = res_mgr_ptr->GetBackendFromCache(target);
+    MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
     auto func_graph = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
     MS_EXCEPTION_IF_NULL(func_graph);
     auto params_anf = func_graph->parameters();
