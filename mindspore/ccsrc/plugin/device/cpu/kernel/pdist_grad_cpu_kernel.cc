@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/pdist_grad_cpu_kernel.h"
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <algorithm>
@@ -123,7 +124,6 @@ int PdistGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   x_dim_ = static_cast<int64_t>(x_shape.size());
   col_ = x_shape[x_dim_ - 1];
   temp_ = x_shape[x_dim_ - 1] * x_shape[x_dim_ - THIRD_ELEMENT_INDEX];
-  x_size_ = SizeOf(x_shape);
   return 0;
 }
 
@@ -134,7 +134,18 @@ bool PdistGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   T *x = static_cast<T *>(inputs[1]->addr);
   T *dist = static_cast<T *>(inputs[2]->addr);
   T *y = static_cast<T *>(outputs[0]->addr);
-  memset(y, 0, x_size_ * sizeof(T));
+  auto output_addr = reinterpret_cast<char *>(outputs[0]->addr);
+  auto output_size = outputs[0]->size;
+  while (output_size > 0) {
+    auto copy_size = std::min(output_size, static_cast<size_t>(INT32_MAX));
+    auto ret = memset_s(output_addr, output_size, 0, copy_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+    }
+    output_size -= copy_size;
+    output_addr += copy_size;
+  }
+
   std::function<T(T diff, T grad, T dist, float p)> dist_func_ = PdistNormalcompute<T>;
   if (common::IsFloatEqual(p_, 0.0f)) {
     return true;

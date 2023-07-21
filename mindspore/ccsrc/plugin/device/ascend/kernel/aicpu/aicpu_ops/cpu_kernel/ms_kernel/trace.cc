@@ -17,6 +17,7 @@
 
 #include "cpu_kernel_utils.h"
 #include "cstring"
+#include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -86,8 +87,12 @@ uint32_t TraceCpuKernel::TraceCompute(Tensor *input, Tensor *output, CpuKernelCo
   auto input_shape = ctx.Input(0)->GetTensorShape();
   int64_t inputLine = input_shape->GetDimSize(0), inputCol = input_shape->GetDimSize(1);
   auto min_shape = std::min(inputLine, inputCol);
-
-  memset(outputDataAddr, 0, sizeof(T));
+  auto output_size = output->GetDataSize();
+  auto ret = memset_s(outputDataAddr, output_size, 0, sizeof(T));
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("For 'Trace', memset_s failed, ret=%d.", ret);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
   for (int64_t i = 0; i < min_shape; i++) {
     *(outputDataAddr) += *(inputDataAddr + i * inputCol + i);
   }

@@ -23,16 +23,6 @@
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
-namespace swap {
-#define STATIC_INLINE static inline
-#define BSWAP_8(x) ((x)&0xff)
-#define BSWAP_16(x) ((BSWAP_8(x) << 8) | BSWAP_8((x) >> 8))
-#define BSWAP_32(x) ((BSWAP_16(x) << 16) | BSWAP_16((x) >> 16))
-#define BSWAP_64(x) ((BSWAP_32(x) << 32) | BSWAP_32((x) >> 32))
-#define uint32_in_expected_order(x) (x)
-#define uint64_in_expected_order(x) (BSWAP_64(x))
-}  // namespace swap
-
 namespace aicpu {
 class SparseCrossCpuKernel : public CpuKernel {
  public:

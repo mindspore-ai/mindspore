@@ -23,8 +23,6 @@ __global__ void SparseAddGrad(const S *dout, const T *x1_indices, size_t x1_size
   size_t stride = gridDim.x * blockDim.x;
   size_t threadId = blockIdx.x * blockDim.x + threadIdx.x;
   size_t x1_idx = threadId;
-  memset(dx1, 0, sizeof(T) * x1_size);
-  memset(dx2, 0, sizeof(T) * x2_size);
   while (x1_idx < x1_size) {
     size_t idx = x1_idx * dim;
     for (size_t i = 0; i < dim; i++) {
@@ -78,6 +76,8 @@ cudaError_t CalSparseAddGrad(const S *dout, const T *x1_indices, size_t x1_size,
                              const uint32_t &device_id, cudaStream_t cuda_stream) {
   dim3 blockSize(1);
   dim3 gridSize(1);
+  cudaMemset(dx1, 0, x1_size * sizeof(T));
+  cudaMemset(dx2, 0, x2_size * sizeof(T));
   SparseAddGrad<<<gridSize, blockSize, 0, cuda_stream>>>(dout, x1_indices, x1_size, x2_indices, x2_size, out_indices,
                                                          out_size, temp_save_ptr, dx1, dx2, dim, S(0));
   return GetCudaStatus();
@@ -89,6 +89,8 @@ cudaError_t CalSparseAddGrad(const cuComplex *dout, const T *x1_indices, size_t 
                              cuComplex *dx2, size_t dim, const uint32_t &device_id, cudaStream_t cuda_stream) {
   dim3 blockSize(1);
   dim3 gridSize(1);
+  cudaMemset(dx1, 0, x1_size * sizeof(T));
+  cudaMemset(dx2, 0, x2_size * sizeof(T));
   SparseAddGrad<<<gridSize, blockSize, 0, cuda_stream>>>(dout, x1_indices, x1_size, x2_indices, x2_size, out_indices,
                                                          out_size, temp_save_ptr, dx1, dx2, dim, {0, 0});
   return GetCudaStatus();
@@ -101,6 +103,8 @@ cudaError_t CalSparseAddGrad(const cuDoubleComplex *dout, const T *x1_indices, s
                              cudaStream_t cuda_stream) {
   dim3 blockSize(1);
   dim3 gridSize(1);
+  cudaMemset(dx1, 0, x1_size * sizeof(T));
+  cudaMemset(dx2, 0, x2_size * sizeof(T));
   SparseAddGrad<<<gridSize, blockSize, 0, cuda_stream>>>(dout, x1_indices, x1_size, x2_indices, x2_size, out_indices,
                                                          out_size, temp_save_ptr, dx1, dx2, dim, {0, 0});
   return GetCudaStatus();

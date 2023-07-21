@@ -17,6 +17,7 @@
 #include <string>
 #include "sparse_cross.h"
 #include <iostream>
+#include "securec.h"
 
 namespace {
 static const uint64_t k0 = 0xc3a5c85c97cb3127ULL;
@@ -26,52 +27,14 @@ const char *kSparseCross = "SparseCross";
 }  // namespace
 
 namespace aicpu {
-typedef std::pair<uint64_t, uint64_t> uint128_t;
-inline uint64_t Uint128Low64(const uint128_t x) { return x.first; }
-inline uint64_t Uint128High64(const uint128_t x) { return x.second; }
-inline uint128_t Uint128(uint64_t lo, uint64_t hi) { return uint128_t(lo, hi); }
-#define STATIC_INLINE static inline
-
 using namespace std;
 
-using ui = unsigned int;
-using ul = unsigned long;
-using uc = unsigned char;
-using ull = unsigned long long;
-
-static const uint64_t k0 = 0xc3a5c85c97cb3127ULL;
-static const uint64_t k1 = 0xb492b66fbe98f273ULL;
-static const uint64_t k2 = 0x9ae16a3b2f90404fULL;
-
-STATIC_INLINE uint64_t Fetch64(const char *p) {
-  uint64_t result;
-  memcpy(&result, p, sizeof(result));
-  return uint64_in_expected_order(result);
-}
-
-STATIC_INLINE uint32_t Fetch32(const char *p) {
-  uint32_t result;
-  memcpy(&result, p, sizeof(result));
-  return uint32_in_expected_order(result);
-}
-
-STATIC_INLINE uint64_t Hash128to64(uint128_t x) {
-  const uint64_t kMul = 0x9ddfea08eb382d69ULL;
-  uint64_t a = (Uint128Low64(x) ^ Uint128High64(x)) * kMul;
-  uint64_t value = 47;
-  a ^= (a >> value);
-  uint64_t b = (Uint128High64(x) ^ a) * kMul;
-  b ^= (b >> value);
-  b *= kMul;
-  return b;
-}
-
-STATIC_INLINE uint64_t ShiftMix(uint64_t val) {
+static inline uint64_t ShiftMix(uint64_t val) {
   uint64_t value = 47;
   return val ^ (val >> value);
 }
 
-STATIC_INLINE uint64_t HashLen16(uint64_t u, uint64_t v, uint64_t mul) {
+static inline uint64_t HashLen16(uint64_t u, uint64_t v, uint64_t mul) {
   uint64_t a = (u ^ v) * mul;
   uint64_t value = 47;
   a ^= (a >> value);
@@ -81,7 +44,7 @@ STATIC_INLINE uint64_t HashLen16(uint64_t u, uint64_t v, uint64_t mul) {
   return b;
 }
 
-STATIC_INLINE uint64_t HashLen0to16(const char *s, size_t len) {
+static inline uint64_t HashLen0to16(const char *s, size_t len) {
   if (len > 0) {
     uint8_t a = s[0];
     uint8_t b = s[len >> 1];
