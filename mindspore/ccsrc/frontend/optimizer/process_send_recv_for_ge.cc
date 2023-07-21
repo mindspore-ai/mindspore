@@ -85,10 +85,15 @@ void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node, AnfNodePtr *la
   MS_EXCEPTION_IF_NULL(manager);
   auto [fg, new_send] = CreateNewCNode(manager, node, true);
 
-  auto value_node = NewValueNode(MakeValue<int32_t>(1));
-  value_node->set_abstract(value_node->value()->ToAbstract());
-  auto value_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(1));
+  auto value_node = NewValueNode(MakeValue(std::make_shared<tensor::Tensor>(1)));
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(value_node->value());
+  auto value_abs = value_node->value()->ToAbstract();
+  MS_EXCEPTION_IF_NULL(value_abs);
+  value_node->set_abstract(value_abs);
+  MS_EXCEPTION_IF_NULL(fg);
   auto depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), value_node, new_send});
+  MS_EXCEPTION_IF_NULL(depend);
   depend->set_abstract(value_abs);
   fg->set_output(depend);
 
@@ -104,6 +109,7 @@ void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node, AnfNodePtr *la
     }
   }
   auto call = graph->NewCNode(call_params);
+  MS_EXCEPTION_IF_NULL(call);
   call->set_abstract(value_abs);
   *last_need_depend = call;
 
@@ -142,12 +148,12 @@ void ProcessClearFloatStatus(const FuncGraphPtr &graph, const CNodePtr &node) {
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
 
-  auto value_node = NewValueNode(MakeValue<int32_t>(1));
+  auto value_node = NewValueNode(MakeValue(std::make_shared<tensor::Tensor>(1)));
   MS_EXCEPTION_IF_NULL(value_node);
   MS_EXCEPTION_IF_NULL(value_node->value());
-  value_node->set_abstract(value_node->value()->ToAbstract());
-  auto value_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(1));
+  auto value_abs = value_node->value()->ToAbstract();
   MS_EXCEPTION_IF_NULL(value_abs);
+  value_node->set_abstract(value_abs);
   auto depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), value_node, node});
   MS_EXCEPTION_IF_NULL(depend);
   depend->set_abstract(value_abs);
