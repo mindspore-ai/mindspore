@@ -64,6 +64,7 @@
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "src/common/common.h"
 #include "pipeline/jit/ps/parse/resolve.h"
+#include "tools/optimizer/graph/scalar_op_pass.h"
 
 namespace mindspore {
 namespace opt {
@@ -81,6 +82,7 @@ constexpr auto kConstFoldPass = "ConstFoldPass";
 constexpr auto kRemoveRedundantOpPass = "RemoveRedundantOpPass";
 constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr auto kRemoveUnusedAddNodePass = "RemoveUnusedAddNodePass";
+constexpr auto kScalarOpPass = "ScalarOpPass";
 constexpr auto kFuncType = "func_type";
 constexpr auto kUniqueName = "uniq_name";
 constexpr size_t kDependInputNum = 3;
@@ -218,7 +220,7 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Convert make_list to MakeTuple failed.";
     return lite::RET_ERROR;
   }
-  if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass, kRemoveUnusedAddNodePass})) {
+  if (!lite::RunOptimizerPass(func_graph, {kScalarOpPass, kRemoveRedundantOpPass, kRemoveUnusedAddNodePass})) {
     MS_LOG(ERROR) << "Remove redundant op pass failed.";
     return lite::RET_ERROR;
   }

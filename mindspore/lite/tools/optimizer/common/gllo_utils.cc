@@ -1043,7 +1043,10 @@ CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, co
     return nullptr;
   }
 
-  auto param_node = opt::BuildIntValueParameterNode(graph, static_cast<int32_t>(dst_type), cnode_name + "_type");
+  auto dtype_value = MakeValue(dst_type_ptr);
+  auto dtype_value_node = NewValueNode(dtype_value);
+  dtype_value_node->set_abstract(dtype_value->ToAbstract());
+  graph->AddValueNode(dtype_value_node);
 
   auto cast_cnode = graph->NewCNode({value_node});
   if (cast_cnode == nullptr) {
@@ -1055,7 +1058,7 @@ CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, co
   auto manager = Manage(graph);
   (void)manager->Replace(input_node, cast_cnode);
   manager->AddEdge(cast_cnode, input_node);
-  manager->AddEdge(cast_cnode, param_node);
+  manager->AddEdge(cast_cnode, dtype_value_node);
   return cast_cnode;
 }
 
