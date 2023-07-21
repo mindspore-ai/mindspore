@@ -784,8 +784,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> x = mindspore.Tensor(np.array([[1, 2], [3, 4]]), dtype=mindspore.float32)
             >>> output = x.log_normal()
             >>> print(output)
-            [[1.2788825 2,3305743]
-            [14.944194 0,16303174]]
+            [[1.2788825 2.3305743]
+            [14.944194 0.16303174]]
         """
         self._init_check()
         return tensor_operator_registry.get('log_normal')(mean, std)(self)
