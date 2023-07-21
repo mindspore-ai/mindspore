@@ -197,6 +197,25 @@ if [[ $backend == "all" || $backend == "x86_cloud_onnx" || $backend == "x86_clou
     fi
 fi
 
+if [[ $backend == "all_" || $backend == "x86_cloud_onnx_" ]]; then
+    # Run on x86 cloud
+    echo "start Run x86 renew-cloud $backend..."
+    # Unzip x86 runtime and converter
+    cd ${x86_path} || exit 1
+    tar -zxf mindspore-lite-${version}-linux-*.tar.gz || exit 1
+
+    rm -rf ${ms_models_path}
+    mkdir -p ${ms_models_path}
+    python ${basepath}/scripts/experimental/test_models.py --fmk onnx --model_dir ${models_path} --input_dir ${models_path}/input_output/input --output_dir ${models_path}/input_output/output --pkg_dir ${x86_path}/mindspore-lite-${version}-linux-x64/ --work_dir ${ms_models_path} --config_file ${basepath}/scripts/experimental/config/models_onnx.yaml --test_mode cp
+    ret=$?
+    # Check benchmark result and return value
+    if [[ ${ret} != 0 ]];then
+        echo "Run renew-cloud onnx test failed"
+        isFailed=1
+        exit ${isFailed}
+    fi
+fi
+
 echo "Run_x86_cloud is ended"
 Print_Benchmark_Result $run_benchmark_result_file
 
