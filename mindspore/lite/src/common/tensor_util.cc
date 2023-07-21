@@ -346,15 +346,15 @@ int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
     Float16ToFloat32_fp16_handler(src_data, dst_data, src_nums_size, support_fp16);
 #else
-    MS_LOG(ERROR) << "not enable fp16.";
-    return RET_NOT_SUPPORT;
+    // mix kernel support fp16 on GPU/Ascend
+    Float16ToFloat32_fp16_handler(src_data, dst_data, src_nums_size, support_fp16);
 #endif
   } else if (dst_data_type == kNumberTypeFloat16 && src_data_type == kNumberTypeFloat32) {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
     Float32ToFloat16_fp16_handler(src_data, dst_data, src_nums_size, support_fp16);
 #else
-    MS_LOG(ERROR) << "not enable fp16.";
-    return RET_NOT_SUPPORT;
+    // mix kernel support fp16 on GPU/Ascend
+    Float16ToFloat32_fp16_handler(src_data, dst_data, src_nums_size, support_fp16);
 #endif
   } else if (dst_data_type == kNumberTypeFloat32 && src_data_type == kNumberTypeInt32) {
     Int32ToFloat32(static_cast<const int32_t *>(src_data), static_cast<float *>(dst_data),
