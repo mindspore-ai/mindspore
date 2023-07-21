@@ -36,12 +36,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/inc)
 add_subdirectory(op_proto)
 
 # =========================install pkg============================
-set(INSTALL_LIBRARY_DIR ${BUILD_PATH}/package/mindspore/lib/plugin/ascend)
+set(INSTALL_LIBRARY_DIR lib/plugin/ascend)
 install(DIRECTORY ${OUTPUT_DIR} DESTINATION ${INSTALL_LIBRARY_DIR})
-# copy libmindspore_cpu_kernels.so to ${OP_IMPL_PATH} and rename to libcust_aicpu_kernels.so
 set(CPU_KERNELS ${CMAKE_CURRENT_BINARY_DIR}/../cpu_kernel/libmindspore_cpu_kernels.so)
 set(AICPU_KERNELS ${CMAKE_CURRENT_BINARY_DIR}/../libmindspore_aicpu_kernels.so)
-set(INPL_FILE_DIR ${INSTALL_LIBRARY_DIR}/custom_aicpu_ops/op_impl/cpu/aicpu_kernel/impl)
+set(IMPL_FILE_DIR ${INSTALL_LIBRARY_DIR}/custom_aicpu_ops/op_impl/cpu/aicpu_kernel/impl)
 set(ENV{CMAKE_INSTALL_MODE} REL_SYMLINK)
-install(FILES ${CPU_KERNELS} RENAME "libcust_cpu_kernels.so" DESTINATION ${INPL_FILE_DIR})
-install(FILES ${AICPU_KERNELS} RENAME "libcust_aicpu_kernels.so" DESTINATION ${INPL_FILE_DIR})
+# copy libmindspore_cpu_kernels.so to ${IMPL_FILE_DIR} and rename to "libcust_cpu_kernels.so"
+# copy libmindspore_aicpu_kernels.so to ${IMPL_FILE_DIR} and rename to "libcust_aicpu_kernels.so"
+install(FILES ${CPU_KERNELS} RENAME "libcust_cpu_kernels.so" DESTINATION ${IMPL_FILE_DIR})
+install(FILES ${AICPU_KERNELS} RENAME "libcust_aicpu_kernels.so" DESTINATION ${IMPL_FILE_DIR})
