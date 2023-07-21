@@ -179,7 +179,7 @@ class TikOpsUtils:
     def broadcast(self, vec_ub, shape):
         """ broadcast a vector to a matrix
         :param vec_ub: a tensor in UB with shape of (M,), and dtype is float16
-        :param shape: the target shape, a tuple with value (M, N)，M and N are integer multiples of 16
+        :param shape: the target shape, a tuple with value (M, N), M and N are integer multiples of 16
         :return: a tensor in UB with shape of (M, N)
         """
         M, N = shape
@@ -409,7 +409,7 @@ class TikOpsUtils:
             offset = vec_len - a_burst_num
             last_blk_ub = self.tik_instance.Tensor(FP16, (a_burst_num,), name="last_blk_ub", scope=UB)
             self.cont_data_mv_1_bust(dst=last_blk_ub, src=src_tensor[gm_offset + offset], burst=1)
-            with self.tik_instance.for_range(0, a_burst_num) as idx:  # offset非32bytes对齐，无法用datamove
+            with self.tik_instance.for_range(0, a_burst_num) as idx:  # offset非32bytes对齐, 无法用datamove
                 dst_tensor[offset + idx].set_as(last_blk_ub[idx])
 
     def move_vector_from_ub_to_gm(self, dst_tensor, src_tensor, gm_offset, block_h):

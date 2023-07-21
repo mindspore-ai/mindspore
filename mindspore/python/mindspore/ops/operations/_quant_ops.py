@@ -269,7 +269,7 @@ class FakeLearnedScaleQuantPerLayer(PrimitiveWithInfer):
         - **quant_max** (Tensor) : Value of the quantization range.
 
     Outputs:
-        - Tensor: Simulates quantize tensor of `input_x`，with the same type and shape as the `input_x`.
+        - Tensor: Simulates quantize tensor of `input_x`, with the same type and shape as the `input_x`.
 
     Examples:
         >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
@@ -419,7 +419,7 @@ class FakeLearnedScaleQuantPerChannel(PrimitiveWithInfer):
         - **quant_max** (Tensor) : Value of the quantization range.
 
     Outputs:
-        - Tensor: Simulates quantize tensor of `input_x`，with the same type and shape as the `input_x`.
+        - Tensor: Simulates quantize tensor of `input_x`, with the same type and shape as the `input_x`.
 
     Examples:
         >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)

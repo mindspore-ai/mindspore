@@ -390,7 +390,7 @@ class Conv2DBackpropFilter(Primitive):
         stride (tuple): The stride to be applied to the convolution filter. Default: (1, 1).
         dilation (tuple): Specifies the dilation rate to be used for the dilated convolution. Default: (1, 1, 1, 1).
         group (int): Splits input into groups. Default: 1.
-        data_format (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
+        data_format (str) - The format of input and output data. It should be 'NHWC' or 'NCHW', \
             default is 'NCHW'.
 
     Returns:

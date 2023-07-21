@@ -299,7 +299,7 @@ def dsdbpropimpl(w1_gm, w2_gm, v_gm, a_gm, d_a_gm, d_w1_gm={}, d_w2_gm={}, d_v_g
                                                            global_size // 16, 16, 16),
                                                name='v_global_l0b', scope=tik.scope_cb)
 
-                # d_w_global，小z大n
+                # d_w_global, 小z大n
                 d_w_global_l0c = tik_inst.Tensor('float32', (global_size // 16, head_size // (16 * ub_time), 16, 16),
                                                  name='d_w_global_l0c', scope=tik.scope_cc)
                 d_w_global_ub = tik_inst.Tensor('float16', (global_size // 16,

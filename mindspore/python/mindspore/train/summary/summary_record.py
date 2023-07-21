@@ -231,8 +231,8 @@ class SummaryRecord:
             mode (str): The mode to be set, which should be 'train' or 'eval'. When the mode is 'eval',
                 summary_record will not record the data of summary operators.
 
-                - train：the model running phase is train mode.
-                - eval：the model running phase is eval mode，When the mode is 'eval',
+                - train: the model running phase is train mode.
+                - eval: the model running phase is eval mode, When the mode is 'eval',
                   summary_record will not record the data of summary operators.
 
         Raises:
@@ -354,7 +354,7 @@ class SummaryRecord:
 
         Raises:
             TypeError: `step` is not int, or `train_network` is not `mindspore.nn.Cell
-                <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
+                <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ .
 
         Examples:
             >>> import mindspore as ms

@@ -10516,7 +10516,7 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
     Args:
         anchor_boxes (Tensor): Anchor boxes, tensor of shape :math:`(N, 4)` . "N" indicates the number of anchor boxes,
             and the value "4" refers to "x0", "y0", "x1", and "y1".
-            Data type must be either float16， float32 or float64.
+            Data type must be either float16,  float32 or float64.
         gt_boxes (Tensor): Ground truth boxes, tensor of shape :math:`(M, 4)` . "M" indicates the number of ground
             truth boxes, and the value "4" refers to "x0", "y0", "x1", and "y1".
             Data type must be either float16, float32 or float64.
@@ -10990,7 +10990,7 @@ def _einsum_convert_num_to_char(num):
     # pylint: disable=chained-comparison
     if num >= 26 and num < 52:
         return chr(num - 26 + ord('a'))
-    raise ValueError(f"For Einsum, the number in sublist should be in range [0， 52), but got {num}")
+    raise ValueError(f"For Einsum, the number in sublist should be in range [0,  52), but got {num}")
 
 
 def einsum(equation, *operands):
