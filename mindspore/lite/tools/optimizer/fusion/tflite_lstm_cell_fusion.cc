@@ -624,7 +624,7 @@ CNodePtr TfliteLstmCellFusion::CreateOutputGetItem(const FuncGraphPtr &func_grap
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
   auto tuple_get_item_prim = std::make_shared<ops::TupleGetItem>();
-  auto get_item_value = NewValueNode(MakeValue<int>(item_index));
+  auto get_item_value = NewValueNode(MakeValue<int64_t>(item_index));
   if (tuple_get_item_prim == nullptr || get_item_value == nullptr) {
     MS_LOG(ERROR) << "NewValueNode is nullptr";
     return nullptr;
@@ -683,8 +683,8 @@ STATUS TfliteLstmCellFusion::AdjustOtherGetItems(const FuncGraphPtr &func_graph,
     auto origin_index = value_node->value()->type()->number_type() == kNumberTypeInt64
                           ? GetValue<int64_t>(value_node->value())
                           : GetValue<int>(value_node->value());
-    int new_index = origin_index == 4 ? 2 : 1;
-    auto new_index_vnode = NewValueNode(MakeValue<int>(new_index));
+    int64_t new_index = origin_index == 4 ? 2 : 1;
+    auto new_index_vnode = NewValueNode(MakeValue<int64_t>(new_index));
     MS_CHECK_TRUE_RET(new_index_vnode != nullptr, RET_ERROR);
     new_inputs[2] = new_index_vnode;
     get_item->set_inputs(new_inputs);

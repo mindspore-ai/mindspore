@@ -41,11 +41,10 @@
 
 namespace mindspore {
 namespace opt {
-static const std::unordered_set<schema::PrimitiveType> kNNACLToOpsInfer = {
-  schema::PrimitiveType_Abs,          schema::PrimitiveType_Activation,   schema::PrimitiveType_ActivationGrad,
-  schema::PrimitiveType_ArgMaxFusion, schema::PrimitiveType_ArgMinFusion, schema::PrimitiveType_Resize,
-  schema::PrimitiveType_Square,       schema::PrimitiveType_Sqrt,         schema::PrimitiveType_Rsqrt,
-  schema::PrimitiveType_Log,          schema::PrimitiveType_Sin,          schema::PrimitiveType_Cos,
+static const std::unordered_set<PrimitivePtr> kNNACLToOpsInfer = {
+  prim::kPrimAbs,    prim::kPrimActivation, prim::kPrimActivationGrad, prim::kPrimArgMaxFusion, prim::kPrimArgMinFusion,
+  prim::kPrimResize, prim::kPrimSquare,     prim::kPrimSqrt,           prim::kPrimRsqrt,        prim::kPrimLog,
+  prim::kPrimSin,    prim::kPrimCos,        prim::kPrimTupleGetItem,   prim::kPrimMakeTuple,    prim::kPrimMakeTupleV2,
 };
 
 namespace {
@@ -84,7 +83,7 @@ STATUS ConvertAbstract(const AbstractBasePtr &src_abs, AbstractBasePtr *dst_abs,
   *dst_abs = src_abs;
   if (change) {
     if (ConvertAbstractFormatShape(*dst_abs, perm) != RET_OK) {
-      MS_LOG(ERROR) << "ConvertAbstract failed";
+      MS_LOG(ERROR) << "ConvertAbstractFormatShape failed";
       return lite::RET_ERROR;
     }
   }
@@ -103,17 +102,13 @@ STATUS ConvertAbstract(const AbstractBasePtr &src_abs, AbstractBasePtr *dst_abs,
 }
 }  // namespace
 
-bool NodeInferShape::JudgeOpSupportInfer(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
+bool JudgeOpSupportNNACLInfer(const CNodePtr &cnode) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr, false, "cnode is nullptr.");
   if (CheckPrimitiveType(cnode, prim::kPrimCustom)) {
     return true;
   }
   auto prim_t = lite::GetPrimitiveT(cnode->input(0));
   if (prim_t == nullptr) {
-    return false;
-  }
-
-  if (kNNACLToOpsInfer.find(prim_t->value.type) != kNNACLToOpsInfer.end()) {
     return false;
   }
   auto parameter_gen =
@@ -125,33 +120,47 @@ bool NodeInferShape::JudgeOpSupportInfer(const CNodePtr &cnode) {
   return true;
 }
 
+bool JudgeOpSupportOpsInfer(const CNodePtr &cnode) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr, false, "cnode is nullptr.");
+  for (const auto &type : kNNACLToOpsInfer) {
+    if (CheckPrimitiveType(cnode, type)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool NodeInferShape::JudgeOpSupportInfer(const CNodePtr &cnode) {
+  return JudgeOpSupportOpsInfer(cnode) || JudgeOpSupportNNACLInfer(cnode);
+}
+
 STATUS NodeInferShape::InferShapeByNNACL(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (anf_prim == nullptr) {
-    MS_LOG(DEBUG) << "primitive is nullptr";
+    MS_LOG(DEBUG) << cnode->fullname_with_scope() << "'s cnode primitive is nullptr";
     return lite::RET_ERROR;
   }
   (void)anf_prim->AddAttr(kInferDone, MakeValue<bool>(false));
   std::vector<TensorPtr> inputs_ptr;
   if (LiteTensorExtractor::GetCNodeInputTensors(cnode, &inputs_ptr, fmk_type_, train_flag_, false) != lite::RET_OK) {
-    MS_LOG(ERROR) << "get inputs failed.";
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " get inputs failed.";
     return lite::RET_ERROR;
   }
   std::vector<TensorPtr> outputs_ptr;
   if (LiteTensorExtractor::GetCNodeOutputTensors(cnode, &outputs_ptr, train_flag_) != lite::RET_OK) {
-    MS_LOG(ERROR) << "get outputs failed.";
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " get outputs failed.";
     return lite::RET_ERROR;
   }
   auto prim_t = lite::GetPrimitiveT(cnode->input(0));
   if (prim_t == nullptr) {
-    MS_LOG(DEBUG) << "prim_t is nullptr";
+    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " get lite prim_t is nullptr";
     return lite::RET_ERROR;
   }
   flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
   auto prim = lite::ConvertToPrimitive(prim_t.get(), &fbb);
   if (prim == nullptr) {
-    MS_LOG(ERROR) << "get primitive failed.";
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " get primitive failed.";
     fbb.Clear();
     return lite::RET_ERROR;
   }
@@ -172,7 +181,7 @@ STATUS NodeInferShape::InferShapeByNNACL(const CNodePtr &cnode) {
     }
     auto parameter = parameter_gen(prim);
     if (parameter == nullptr) {
-      MS_LOG(ERROR) << "parameter is nullptr.";
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " generate nullptr lite op parameter.";
       fbb.Clear();
       return lite::RET_ERROR;
     }
@@ -192,11 +201,11 @@ STATUS NodeInferShape::InferShapeByNNACL(const CNodePtr &cnode) {
     auto set_status = SetCNodeAbstract(cnode, outputs, ret);
     (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(inputs[0]->format()));
     if (set_status != lite::RET_OK) {
-      MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " set CNode abstract failed.";
       return set_status;
     }
   } else {
-    MS_LOG(WARNING) << "infer shape failed.";
+    MS_LOG(WARNING) << "InferShapeByNNACL for op: " << cnode->fullname_with_scope() << " failed.";
   }
   std::vector<int64_t> outputs_format;
   (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_format),
@@ -207,12 +216,14 @@ STATUS NodeInferShape::InferShapeByNNACL(const CNodePtr &cnode) {
 
 STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
-  auto cur_op_can_infer = JudgeOpSupportInfer(cnode);
   STATUS status;
-  if (cur_op_can_infer) {
+  if (JudgeOpSupportOpsInfer(cnode)) {
+    status = InferShapeByOps(cnode, true);
+  } else if (JudgeOpSupportNNACLInfer(cnode)) {
     status = InferShapeByNNACL(cnode);
   } else {
-    status = InferShapeByOps(cnode, true);
+    MS_LOG(ERROR) << "Unsupported node: " << cnode->fullname_with_scope() << " for infershape.";
+    return RET_ERROR;
   }
   return status;
 }
@@ -355,19 +366,19 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
   STATUS infer_ret = RET_OK;
   AbstractBasePtrList abs_list;
   if (LiteTensorExtractor::GetCNodeInputAbstractLists(cnode, &abs_list) != RET_OK) {
-    MS_LOG(ERROR) << "GetCNodeInputAbstractLists for ops: " << cnode->fullname_with_scope() << " failed.";
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " GetCNodeInputAbstractLists failed.";
     return lite::RET_ERROR;
   }
 
   auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (anf_prim == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " primitive is nullptr";
     return lite::RET_ERROR;
   }
   (void)anf_prim->AddAttr(kInferDone, MakeValue<bool>(false));
 
   if (LiteTensorExtractor::GetCNodeConstInputToAbstract(cnode, abs_list, fmk_type_, train_flag_) != RET_OK) {
-    MS_LOG(ERROR) << "GetCNodeConstInputToAbstract for ops: " << cnode->fullname_with_scope() << " failed.";
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " GetCNodeConstInputToAbstract failed.";
     return RET_ERROR;
   }
   Format ori_format = Format::NHWC;
@@ -377,7 +388,7 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
   bool changed = false;
   if (ori_format == Format::NHWC) {
     if (ConvertAbstractListToNCOrNH(cnode, abs_list, kNHWC2NCHW, &changed) != RET_OK) {
-      MS_LOG(ERROR) << "ConvertAbstractToNCOrNH failed.";
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " ConvertAbstractToNCOrNH failed.";
       return RET_ERROR;
     }
   }
@@ -397,7 +408,7 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
     (void)opt::DetermineCertainVarInputFormat(cnode, 1, &input_format);
     auto set_status = SetCNodeAbstractByConvert(cnode, result, infer_ret, changed, kNCHW2NHWC, input_format);
     if (set_status != lite::RET_OK) {
-      MS_LOG(ERROR) << "SetCNodeAbstractByConvert failed: " << cnode->fullname_with_scope();
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " SetCNodeAbstractByConvert failed.";
       return set_status;
     }
   }
@@ -415,7 +426,7 @@ std::vector<int> NodeInferShape::GetInputShape(const CNodePtr &cnode, size_t ind
   CNodePtr base_node = cnode;
   size_t position = index;
   if (CheckPrimitiveType(cnode->input(index), prim::kPrimMakeTuple) ||
-      CheckPrimitiveType(cnode->input(index), kPrimMakeTupleV2)) {
+      CheckPrimitiveType(cnode->input(index), prim::kPrimMakeTupleV2)) {
     base_node = cnode->input(index)->cast<CNodePtr>();
     position = 1;
   }

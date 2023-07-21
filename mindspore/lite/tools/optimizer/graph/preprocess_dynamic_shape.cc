@@ -48,10 +48,6 @@ int DoStack(const CNodePtr &cnode, const ShapeVector &out_shape, ShapeVector *ou
     cnode->set_inputs(origin_inputs);
     return lite::RET_NOT_SUPPORT;
   }
-  if (lite::RemoveIfMakeTuple(cnode) != RET_OK) {
-    cnode->set_inputs(origin_inputs);
-    return lite::RET_NOT_SUPPORT;
-  }
   RemoveIfMonad(cnode);
   auto current_inputs = cnode->inputs();
   for (size_t i = 1; i < current_inputs.size(); ++i) {
@@ -791,10 +787,6 @@ int DynamicShapePreprocessor::ProcessOps(const FuncGraphPtr &func_graph) {
     }
     auto origin_inputs = cnode->inputs();
     if (lite::RemoveIfDepend(cnode) != RET_OK) {
-      cnode->set_inputs(origin_inputs);
-      continue;
-    }
-    if (lite::RemoveIfMakeTuple(cnode) != RET_OK) {
       cnode->set_inputs(origin_inputs);
       continue;
     }

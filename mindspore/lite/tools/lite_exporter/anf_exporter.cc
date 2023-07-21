@@ -37,6 +37,7 @@
 #include "ops/make_tuple.h"
 #include "ops/return.h"
 #include "ops/tuple_get_item.h"
+#include "ops/fusion/make_tuple_v2.h"
 #include "src/common/log_util.h"
 #include "src/common/ops/anf_utils.h"
 #include "src/common/utils.h"
@@ -595,7 +596,7 @@ mindspore::schema::TensorT *AnfExporter::GetTensorFromAllTensor(const std::uniqu
 
 bool AnfExporter::CaseToContinue(const string &prim_name) {
   return prim_name == mindspore::ops::kNameDepend || prim_name == mindspore::ops::kNameTupleGetItem ||
-         prim_name == mindspore::ops::kNameMakeTuple || prim_name == "make_tuple";
+         prim_name == mindspore::ops::kNameMakeTuple || prim_name == mindspore::ops::kNameMakeTupleV2;
 }
 
 struct Anf2FbItem {

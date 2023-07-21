@@ -26,7 +26,7 @@ namespace opt {
 class ConstFoldAlongInferShape : public InferShapePass {
  public:
   explicit ConstFoldAlongInferShape(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false)
-      : InferShapePass(fmk_type, train_flag, false, "ConstFoldAlongInferShape") {}
+      : InferShapePass(fmk_type, train_flag, "ConstFoldAlongInferShape") {}
   ~ConstFoldAlongInferShape() override = default;
 
  private:

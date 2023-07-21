@@ -459,6 +459,45 @@ int FetchConstData(const CNodePtr &cnode, size_t index, converter::FmkType fmk_t
   return RET_OK;
 }
 
+int FetchDataFromAbstract(const AbstractBasePtr &abstract, DataInfo *data_info) {
+  MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr");
+  if (!utils::isa<abstract::AbstractTensor>(abstract)) {
+    MS_LOG(ERROR) << "Abstract should be AbstractTensor.";
+    return RET_ERROR;
+  }
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "cast ptr failed");
+  auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+  MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
+  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
+    MS_LOG(ERROR) << "Shape of Abstract should be ShapePtr.";
+    return RET_ERROR;
+  }
+  auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
+  std::vector<int32_t> dims(shape_vector.begin(), shape_vector.end());
+  data_info->data_type_ = type_ptr->type_id();
+  data_info->shape_ = dims;
+  data_info->node_type_ = NodeType_CNode;
+  if (type_ptr->type_id() == kObjectTypeTensorType) {
+    auto tensor_info = abstract_tensor->GetValueTrack();
+    if (tensor_info == nullptr || !utils::isa<tensor::TensorPtr>(tensor_info)) {
+      MS_LOG(ERROR) << "tensor info is invalid.";
+      return RET_ERROR;
+    }
+    auto tensor_value = tensor_info->cast<tensor::TensorPtr>();
+    MS_CHECK_TRUE_MSG(tensor_value != nullptr, RET_ERROR, "cast ptr failed");
+    if (tensor_value->Size() >= kTensorListMinSize) {
+      data_info->data_.resize(tensor_value->Size());
+      if (memcpy_s(data_info->data_.data(), tensor_value->Size(), tensor_value->data_c(), tensor_value->Size()) !=
+          EOK) {
+        MS_LOG(ERROR) << "memcpy data failed.";
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 int RemoveIfDepend(const CNodePtr &cnode) {
   MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr");
   bool has_depend = false;
@@ -505,7 +544,7 @@ int GetFlattenInputsIfMakeTuple(const CNodePtr &cnode, std::vector<AnfNodePtr> *
     MS_CHECK_TRUE_MSG(input_node != nullptr, RET_NULL_PTR, "Input_node is nullptr");
     auto input_cnode = utils::cast<CNodePtr>(input_node);
     if (input_cnode && (opt::CheckPrimitiveType(input_cnode, prim::kPrimMakeTuple) ||
-                        opt::CheckPrimitiveType(input_cnode, opt::kPrimMakeTupleV2))) {
+                        opt::CheckPrimitiveType(input_cnode, prim::kPrimMakeTupleV2))) {
       *has_make_tuple = true;
       GetFlattenInputsIfMakeTuple(input_cnode, inputs, has_make_tuple);
     } else {

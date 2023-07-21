@@ -550,26 +550,7 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
     abstract = value_node->abstract();
   } else if (utils::isa<CNodePtr>(input)) {
     auto input_cnode = input->cast<CNodePtr>();
-    if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
-      auto tuple_inputs = input_cnode->inputs();
-      MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
-      auto get_item_input_cnode = tuple_inputs.at(1);
-      MS_ASSERT(get_item_input_cnode != nullptr);
-      auto idx = GetTupleGetItemOutIndex(input_cnode);
-      if (!utils::isa<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
-        MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple";
-        return nullptr;
-      }
-      auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract());
-      auto abstract_list = abstract_tuple->elements();
-      if (abstract_list.size() <= idx) {
-        MS_LOG(ERROR) << "AbstractTuple's size is smaller than expect";
-        return nullptr;
-      }
-      abstract = abstract_list[idx];
-    } else {
-      abstract = input_cnode->abstract();
-    }
+    abstract = input_cnode->abstract();
   } else {
     MS_LOG(ERROR) << "unsupported input node type";
     return nullptr;
@@ -643,7 +624,7 @@ bool IsParamOrValueNodeWithData(const BaseRef &n) {
 bool IsParallelSplitConvNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
-    PrimitivePtr prim;
+    PrimitivePtr prim = nullptr;
     if (utils::isa<CNodePtr>(anf_node)) {
       prim = GetValueNode<PrimitivePtr>(anf_node->cast<CNodePtr>()->input(kAnfPrimitiveIndex));
     }
@@ -651,7 +632,6 @@ bool IsParallelSplitConvNode(const BaseRef &n) {
       prim = GetValueNode<PrimitivePtr>(anf_node);
     }
     if (prim == nullptr) {
-      MS_LOG(ERROR) << "prim is nullptr";
       return false;
     }
     int device_type =
@@ -667,7 +647,7 @@ bool IsParallelSplitConvNode(const BaseRef &n) {
 bool IsConvNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
-    PrimitivePtr prim;
+    PrimitivePtr prim = nullptr;
     if (utils::isa<CNodePtr>(anf_node)) {
       prim = GetValueNode<PrimitivePtr>(anf_node->cast<CNodePtr>()->input(kAnfPrimitiveIndex));
     }
@@ -675,7 +655,6 @@ bool IsConvNode(const BaseRef &n) {
       prim = GetValueNode<PrimitivePtr>(anf_node);
     }
     if (prim == nullptr) {
-      MS_LOG(ERROR) << "prim is nullptr";
       return false;
     }
 
@@ -1145,7 +1124,7 @@ CNodePtr GenTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &inp
   }
   auto tuple_get_item_prim = std::make_shared<ops::TupleGetItem>();
   MS_CHECK_TRUE_RET(tuple_get_item_prim != nullptr, nullptr);
-  auto second_input = NewValueNode(MakeValue<int>(index));
+  auto second_input = NewValueNode(MakeValue<int64_t>(index));
   MS_CHECK_TRUE_RET(second_input != nullptr, nullptr);
   auto tuple_get_item_prim_c = tuple_get_item_prim->GetPrim();
   MS_CHECK_TRUE_RET(tuple_get_item_prim_c != nullptr, nullptr);
@@ -1520,7 +1499,7 @@ std::vector<KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node) {
     const auto &pre_node_output = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
     auto pre_node = pre_node_output.first;
     if (opt::CheckPrimitiveType(pre_node, prim::kPrimMakeTuple) ||
-        opt::CheckPrimitiveType(pre_node, opt::kPrimMakeTupleV2)) {
+        opt::CheckPrimitiveType(pre_node, prim::kPrimMakeTupleV2)) {
       auto tuple_inputs = GetNodeInputs(pre_node);
       std::copy(tuple_inputs.begin(), tuple_inputs.end(), std::back_inserter(inputs));
     } else {

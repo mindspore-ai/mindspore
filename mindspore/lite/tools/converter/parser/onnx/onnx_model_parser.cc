@@ -297,7 +297,7 @@ STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_
       MS_CHECK_TRUE_MSG(tuple_get_item_prim_c != nullptr, RET_NULL_PTR, "create tuple_get_item_prim_c return nullptr");
       auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_c);
       MS_CHECK_TRUE_MSG(tuple_get_item_prim != nullptr, RET_NULL_PTR, "create ValueNode return nullptr");
-      auto get_item_value = NewValueNode(MakeValue<int>(op_idx));
+      auto get_item_value = NewValueNode(MakeValue<int64_t>(op_idx));
       MS_CHECK_TRUE_MSG(get_item_value != nullptr, RET_NULL_PTR, "create ValueNode return nullptr");
       std::vector<AnfNodePtr> inputs{tuple_get_item_prim, cnode, get_item_value};
       CNodePtr get_item_cnode = anf_graph->NewCNode(inputs);
@@ -1322,7 +1322,7 @@ STATUS OnnxModelParser::AddTensorListStackNode(const AnfNodePtr &root_while_node
     tensorlist_stack_cnode->set_abstract(stack_elem_node->abstract());
 
     // update getitem value output index
-    auto new_get_item_value = NewValueNode(MakeValue<int>(body_output_size - act_outputs_num + j));
+    auto new_get_item_value = NewValueNode(MakeValue<int64_t>(body_output_size - act_outputs_num + j));
     MS_CHECK_TRUE_MSG(new_get_item_value != nullptr, RET_NULL_PTR, "create new_get_item_value return nullptr");
     MS_ASSERT(while_output_node->cast<CNodePtr>() != nullptr);
     while_output_node->cast<CNodePtr>()->set_input(2, new_get_item_value);

@@ -969,7 +969,7 @@ STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const C
       CHECK_NULL_RETURN(prim_c);
       auto tuple_get_item_prim = NewValueNode(prim_c);
       CHECK_NULL_RETURN(tuple_get_item_prim);
-      auto get_item_value = NewValueNode(MakeValue<int>(output_idx));
+      auto get_item_value = NewValueNode(MakeValue<int64_t>(output_idx));
       CHECK_NULL_RETURN(get_item_value);
       std::vector<AnfNodePtr> inputs{tuple_get_item_prim, anf_node, get_item_value};
       CNodePtr get_item_cnode = anf_graph->NewCNode(inputs);

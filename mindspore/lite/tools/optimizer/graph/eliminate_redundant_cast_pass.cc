@@ -47,7 +47,7 @@ int EliminateRedundantCastPass::RemoveCastOp(const AnfNodePtr &anf_node, const F
 
 bool EliminateRedundantCastPass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
-  auto infer_shape_pass = std::make_shared<InferShapePass>(this->fmk_type_, this->train_flag_, true);
+  auto infer_shape_pass = std::make_shared<InferShapePass>(this->fmk_type_, this->train_flag_);
   if (!infer_shape_pass->Run(func_graph)) {
     return true;
   }

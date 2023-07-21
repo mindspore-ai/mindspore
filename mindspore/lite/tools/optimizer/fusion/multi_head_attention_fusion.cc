@@ -808,7 +808,7 @@ CNodePtr MultiHeadAttentionFusion::CreateOutputGetItem(const FuncGraphPtr &func_
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
   auto tuple_get_item_prim = std::make_shared<ops::TupleGetItem>();
-  auto get_item_value = NewValueNode(MakeValue<int>(item_index));
+  auto get_item_value = NewValueNode(MakeValue<int64_t>(item_index));
   if (tuple_get_item_prim == nullptr || get_item_value == nullptr) {
     MS_LOG(ERROR) << "NewValueNode is nullptr";
     return nullptr;

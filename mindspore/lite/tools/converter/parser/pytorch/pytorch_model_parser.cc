@@ -436,7 +436,7 @@ STATUS BuildOpOutputs(const torch::jit::Node *torch_node, const FuncGraphPtr &an
       MS_CHECK_TRUE_MSG(tuple_get_item_prim != nullptr, RET_NULL_PTR, "get prim return nullptr");
       auto tuple_get_item = NewValueNode(tuple_get_item_prim);
       MS_CHECK_TRUE_MSG(tuple_get_item != nullptr, RET_NULL_PTR, "create ValueNode return nullptr");
-      auto get_item_value = NewValueNode(MakeValue<int>(op_idx));
+      auto get_item_value = NewValueNode(MakeValue<int64_t>(op_idx));
       MS_CHECK_TRUE_MSG(get_item_value != nullptr, RET_NULL_PTR, "create ValueNode return nullptr");
       std::vector<AnfNodePtr> inputs{tuple_get_item, cnode, get_item_value};
       CNodePtr get_item_cnode = anf_graph->NewCNode(inputs);

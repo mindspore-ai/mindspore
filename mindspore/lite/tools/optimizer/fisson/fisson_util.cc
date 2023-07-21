@@ -23,6 +23,7 @@
 #include "ops/split_with_overlap.h"
 #include "tools/common/node_util.h"
 #include "ops/concat.h"
+#include "ops/make_tuple.h"
 #include "tools/optimizer/parallel/spliter.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "nnacl/op_base.h"
@@ -310,11 +311,11 @@ bool GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePt
   auto cnode = node->cast<CNodePtr>();
   MS_CHECK_TRUE_MSG(cnode != nullptr, false, "create CNode return nullptr");
   for (size_t i = 0; i < output_num; i++) {
-    auto index = NewValueNode(SizeToInt(i));
+    auto index = NewValueNode(SizeToLong(i));
     MS_CHECK_TRUE_MSG(index != nullptr, false, "create ValueNode return nullptr");
-    auto temp = SizeToInt(i);
-    auto imm = std::make_shared<Int32Imm>(temp);
-    MS_CHECK_TRUE_MSG(imm != nullptr, false, "create Int32Imm return nullptr");
+    auto temp = SizeToLong(i);
+    auto imm = std::make_shared<Int64Imm>(temp);
+    MS_CHECK_TRUE_MSG(imm != nullptr, false, "create Int64Imm return nullptr");
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
     MS_CHECK_TRUE_MSG(abstract_scalar != nullptr, false, "create AbstractScalar return nullptr");
     index->set_abstract(abstract_scalar);
@@ -340,31 +341,45 @@ AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePt
     return nullptr;
   }
 
+  auto make_tuple_prim = std::make_shared<ops::MakeTuple>();
+  MS_CHECK_TRUE_MSG(make_tuple_prim != nullptr, nullptr, "create ops::MakeTuple return nullptr");
+  auto make_tuple_prim_c = make_tuple_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(make_tuple_prim_c != nullptr, nullptr, "create ops::make_tuple_prim_c return nullptr");
+
+  // the inputs of make_tuple are from the outputs of conv
+  auto make_tuple_primitive = NewValueNode(make_tuple_prim_c);
+  MS_CHECK_TRUE_MSG(make_tuple_primitive != nullptr, nullptr, "create make_tuple_primitive return nullptr");
+  std::vector<AnfNodePtr> make_tuple_inputs = {make_tuple_primitive};
+  for (size_t i = 0; i < static_cast<size_t>(nodes_num); i++) {
+    make_tuple_inputs.push_back(conv_outputs[i]);
+  }
+
+  auto make_tuple_cnode = func_graph->NewCNode(make_tuple_inputs);
+  MS_CHECK_TRUE_MSG(make_tuple_cnode != nullptr, nullptr, "create make_tuple_cnode return nullptr");
+  make_tuple_cnode->set_fullname_with_scope(node_name + "_MakeTuple");
+  make_tuple_cnode->set_scope(conv_cnode->scope());
+
   auto concat_prim = std::make_shared<ops::Concat>();
   MS_CHECK_TRUE_MSG(concat_prim != nullptr, nullptr, "create ops::Concat return nullptr");
   auto concat_prim_c = concat_prim->GetPrim();
   MS_CHECK_TRUE_MSG(concat_prim_c != nullptr, nullptr, "create ops::concat_prim_c return nullptr");
   concat_prim->set_axis(split_info.axis);
 
-  // the inputs of concate are from the outputs of conv
-  auto concate_primitive = NewValueNode(concat_prim_c);
-  MS_CHECK_TRUE_MSG(concate_primitive != nullptr, nullptr, "create concate_primitive return nullptr");
-  std::vector<AnfNodePtr> concate_inputs = {concate_primitive};
-  for (size_t i = 0; i < static_cast<size_t>(nodes_num); i++) {
-    concate_inputs.push_back(conv_outputs[i]);
-  }
+  // the inputs of concat are from the outputs of conv
+  auto concat_primitive = NewValueNode(concat_prim_c);
+  MS_CHECK_TRUE_MSG(concat_primitive != nullptr, nullptr, "create concat_primitive return nullptr");
+  std::vector<AnfNodePtr> concat_inputs = {concat_primitive, make_tuple_cnode};
 
-  auto concate_cnode = func_graph->NewCNode(concate_inputs);
-  MS_CHECK_TRUE_MSG(concate_cnode != nullptr, nullptr, "create concate_cnode return nullptr");
-
-  concate_cnode->set_fullname_with_scope(node_name + "_Concat");
-  concate_cnode->set_scope(conv_cnode->scope());
+  auto concat_cnode = func_graph->NewCNode(concat_inputs);
+  MS_CHECK_TRUE_MSG(concat_cnode != nullptr, nullptr, "create concat_cnode return nullptr");
+  concat_cnode->set_fullname_with_scope(node_name + "_Concat");
+  concat_cnode->set_scope(conv_cnode->scope());
   std::vector<AnfNodePtr> outputs;
-  if (!GetMultipleOutputsOfAnfNode(func_graph, concate_cnode, 1, &outputs)) {
+  if (!GetMultipleOutputsOfAnfNode(func_graph, concat_cnode, 1, &outputs)) {
     MS_LOG(ERROR) << "GetMultipleOutputsOfAnfNode failed";
     return nullptr;
   }
-  return concate_cnode;
+  return concat_cnode;
 }
 
 bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_node,

@@ -27,12 +27,14 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "ops/primitive_c.h"
 #include "ops/real_maketuple.h"
+#include "ops/fusion/make_tuple_v2.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MakeTuple, BaseOperator);
 MIND_API_OPERATOR_IMPL(RealMakeTuple, BaseOperator);
+MIND_API_OPERATOR_IMPL(MakeTupleV2, BaseOperator);
 AbstractBasePtr MakeTupleInnerInfer(const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTuple>(input_args);
 }
@@ -54,5 +56,6 @@ class MakeTupleInfer : public abstract::OpInferBase {
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MakeTuple, prim::kPrimMakeTuple, MakeTupleInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(RealMakeTuple, prim::kPrimRealMakeTuple, MakeTupleInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MakeTupleV2, prim::kPrimMakeTupleV2, MakeTupleInfer, false);
 }  // namespace ops
 }  // namespace mindspore

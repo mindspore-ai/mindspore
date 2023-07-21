@@ -60,20 +60,6 @@ void CloneGraphInputs(const FuncGraphPtr &origin, const FuncGraphPtr &mirror, No
   }
 }
 
-bool CheckTupleGetItemSharedWeight(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
-                                   const DataInfo &data_info) {
-  if (!utils::isa<ValueNode>(node)) {
-    return false;
-  }
-  for (auto &node_user : manager->node_users()[node]) {
-    auto user = node_user.first;
-    if (opt::CheckPrimitiveType(user, prim::kPrimTupleGetItem) && data_info.data_.size() >= sizeof(int)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const FuncGraphPtr &mirror_graph,
                                       const FuncGraphManagerPtr &manager, const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(cnode != nullptr && mirror_graph != nullptr);
@@ -115,8 +101,8 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
     MS_LOG(ERROR) << "fetch data failed.";
     return nullptr;
   }
-  if (CheckTupleGetItemSharedWeight(node, manager, data_info)) {
-    return NewValueNode(MakeValue<int>(*reinterpret_cast<int *>(data_info.data_.data())));
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) && data_info.data_.size() >= sizeof(int)) {
+    return NewValueNode(MakeValue<int64_t>(*reinterpret_cast<int *>(data_info.data_.data())));
   }
   ShapeVector shape_vec(data_info.shape_.begin(), data_info.shape_.end());
   if (data_info.data_type_ == kObjectTypeTensorType) {
