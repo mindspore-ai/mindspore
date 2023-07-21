@@ -24,6 +24,7 @@
 #include <map>
 
 #include "eigen_tensor.h"
+#include "securec.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -143,13 +144,20 @@ uint32_t GatherNdCpuKernel::GatherNdComputeRealKernel(CpuKernelContext &ctx) {
   auto indices_data = reinterpret_cast<indices_type *>(ctx.Input(1)->GetData());
   auto x_data = reinterpret_cast<data_type *>(ctx.Input(0)->GetData());
   auto output_data = reinterpret_cast<data_type *>(ctx.Output(0)->GetData());
+  auto output_size = ctx.Output(0)->GetDataSize();
 
   for (int64_t i = 0; i < n_slices; ++i) {
     int64_t from_pos = 0;
     for (int64_t j = 0; j < indices_nd; ++j) {
       from_pos += indices_data[i * indices_nd + j] * dims_to_count[j];
     }
-    std::memcpy(output_data + i * slice_size, x_data + from_pos, sizeof(data_type) * slice_size);
+    auto offset = i * slice_size;
+    auto ret = memcpy_s(output_data + offset, output_size - offset * sizeof(data_type), x_data + from_pos,
+                        slice_size * sizeof(data_type));
+    if (ret != EOK) {
+      KERNEL_LOG_ERROR("For 'GatherNd', memcpy_s failed, ret=%d.", ret);
+      return KERNEL_STATUS_INNER_ERROR;
+    }
   }
 
   return KERNEL_STATUS_OK;

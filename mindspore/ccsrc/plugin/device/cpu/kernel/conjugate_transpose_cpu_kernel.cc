@@ -259,7 +259,10 @@ int ConjugateTransposeCpuKernelMod::DoTranspose(const T *in_data, T *out_data, c
     }
   }
   if (!needTranspose) {
-    (void)memcpy(out_data, in_data, data_size);
+    auto ret = memcpy_s(out_data, data_size, in_data, data_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed, ret=" << ret;
+    }
     return NNACL_OK;
   }
   for (size_t i = 0; i < static_cast<uint32_t>(num_axes); ++i) {

@@ -400,7 +400,11 @@ bool RaggedTensorToTensorCpuKernelMod::SetOutput(const std::vector<kernel::Addre
       if (output_index[i] >= 0) {
         TYPE2 *dst = base_output + output_index[i];
         const TYPE2 *src = values_base + value_index;
-        memcpy(dst, src, value_element_bytesize);
+        auto data_size_max = (output_element_sum - output_index[i]) * sizeof(TYPE2);
+        auto ret = memcpy_s(dst, data_size_max, src, value_element_bytesize);
+        if (ret != EOK) {
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed, ret=" << ret;
+        }
       }
     }
   }

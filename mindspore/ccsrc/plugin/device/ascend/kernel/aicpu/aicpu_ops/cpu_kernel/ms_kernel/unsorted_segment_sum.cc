@@ -16,11 +16,13 @@
 
 #include "unsorted_segment_sum.h"
 
+#include <cstdint>
 #include <string>
 #include <functional>
 #include <atomic>
 #include "cpu_kernel_utils.h"
 #include "cpu_types.h"
+#include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -59,7 +61,19 @@ uint32_t UnsortedSegmentSumCpuKernel::UnsortedSegmentSumComputeTemplate(CpuKerne
   }
   int64_t reshapesize = data_size / id_size;
   // Initialized to 0
-  memset(output_y, 0, ctx.Output(0)->GetDataSize());
+  auto output_size = ctx.Output(0)->GetDataSize();
+  auto output_addr = reinterpret_cast<char *>(ctx.Output(0)->GetData());
+  while (output_size > 0) {
+    auto copy_size = std::min(output_size, static_cast<uint64_t>(INT32_MAX));
+    auto ret = memset_s(output_addr, output_size, 0, copy_size);
+    if (ret != EOK) {
+      KERNEL_LOG_ERROR("For 'UnsortedSegmentSum', memset_s failed, ret=%d.", ret);
+      return KERNEL_STATUS_INNER_ERROR;
+    }
+    output_size -= copy_size;
+    output_addr += copy_size;
+  }
+
   std::atomic<bool> multi_task_success(true);
   std::function<uint32_t(int64_t, int64_t)> shard_unsorted_segment_sum = [&](int64_t start, int64_t end) -> uint32_t {
     for (int64_t i = 0; i < id_size; i++) {
