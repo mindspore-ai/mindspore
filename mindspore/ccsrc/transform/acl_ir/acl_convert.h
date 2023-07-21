@@ -41,6 +41,9 @@ struct TensorParams {
   ShapeVector dev_shape{};
   std::string ori_format{kOpFormat_DEFAULT};
   std::string dev_format{kOpFormat_DEFAULT};
+  size_t type_size;
+  bool is_default;
+  bool all_fp32;
 };
 
 struct AclDumpString {
@@ -61,17 +64,18 @@ class AclConverter {
  public:
   void ConvertToAclOpType(const std::string &prim_name);
   void ResizeAclOpInputs(const PrimitivePtr &prim);
-  void ConvertToAclInput(const PrimitivePtr &prim, const std::map<uint32_t, tensor::TensorPtr> &host_inputs,
+  void ConvertToAclInput(const PrimitivePtr &prim, const AclInputToHost &host_inputs,
                          const std::vector<AddressPtr> &inputs, const std::vector<TensorParams> &input_params);
   void ConvertToAclOutput(const std::string &kernel_name, const std::vector<AddressPtr> &outputs,
                           const std::vector<TensorParams> &output_params);
 
   void ConvertAttrToAclInput(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &kernel_name,
-                             std::map<uint32_t, tensor::TensorPtr> *inputs_on_host);
-  void ConvertInputToAclAttr(const std::map<uint32_t, tensor::TensorPtr> &inputs, const std::string &kernel_name);
+                             AclInputToHost *inputs_on_host);
+  void ConvertInputToAclAttr(const AclInputToHost &inputs, const std::string &kernel_name);
   void ConvertToAclAttr(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &prim_name,
                         std::vector<std::string> *ms_attr_str);
-  void SetRunnerSpecialInfo(const std::string &prim_name, const std::vector<TensorParams> &output_params);
+  void ProcessRunnerSpecialInfo(const std::string &prim_name, const std::vector<TensorParams> &output_params);
+  void SetRunnerSpecialInfo();
 
   bool is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
 
@@ -107,7 +111,8 @@ class AclConverter {
   std::vector<std::string> attr_map_str_;
   // number of folded inputs of dynamic input
   size_t num_folded_inputs_ = 0;
-
+  bool is_dynamic_ = false;
+  AclPrecisionMode precision_mode_ = FORCE_FP32;
   bool is_need_retrieve_output_shape_ = false;
 };
 

@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include <vector>
 #include <memory>
+#include <string>
 #include "ops/array_op_name.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -27,6 +28,12 @@
 namespace mindspore {
 namespace opt {
 constexpr size_t kInsertIdx = 3;
+std::vector<std::string> InsertPlaceholderForDynamicRNN::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(kDynamicRNNOpName);
+  return ret;
+}
+
 const BaseRef InsertPlaceholderForDynamicRNN::DefinePattern() const {
   std::shared_ptr<Var> V = std::make_shared<CondVar>(UnVisited);
   std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();

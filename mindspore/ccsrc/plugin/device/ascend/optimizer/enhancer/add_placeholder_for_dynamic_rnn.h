@@ -17,6 +17,8 @@
 #define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_PLACEHOLDER_FOR_DYNAMIC_RNN_H
 
 #include <memory>
+#include <string>
+#include <vector>
 #include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
@@ -29,6 +31,9 @@ class InsertPlaceholderForDynamicRNN : public PatternProcessPass {
   ~InsertPlaceholderForDynamicRNN() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

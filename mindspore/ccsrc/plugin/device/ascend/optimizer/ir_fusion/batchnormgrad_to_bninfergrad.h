@@ -17,6 +17,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_BATCHNORMGRAD_TO_BNINFERGRAD_H_
 
 #include <memory>
+#include <string>
+#include <vector>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
@@ -28,6 +30,9 @@ class BatchNormGrad2BNInferGrad : public PatternProcessPass {
   ~BatchNormGrad2BNInferGrad() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "utils/hash_map.h"
@@ -32,6 +33,14 @@
 
 namespace mindspore::transform {
 using TensorPtr = mindspore::tensor::TensorPtr;
+
+struct ValuePairHasher {
+  template <typename T>
+  size_t operator()(const std::pair<T, ValuePtr> &p) const {
+    auto hash_value = hash_combine(std::hash<T>()(p.first), PointerHash<ValuePtr>{}(p.second));
+    return hash_value;
+  }
+};
 
 struct Ms2GeParamInfo {
   enum ParamType : uint8_t { REQUIRED, OPTIONAL, DYNAMIC };
@@ -46,8 +55,8 @@ struct GeTensorInfo {
   std::string op_type;
 
   // Attr
-  std::map<std::string, std::string> attr_map;
-  std::map<uint32_t, std::string> input_attr_map;
+  mindspore::HashMap<std::string, std::string> attr_map;
+  mindspore::HashMap<uint32_t, std::string> input_attr_map;
   mindspore::HashMap<size_t, std::string> attr_input_map;
 
   // Input/Output
@@ -58,19 +67,19 @@ struct GeTensorInfo {
 
   // map input/output indices of operator from MindSpore frontend to GraphEngine backend
   // K: MindSpore operator input index, V: GE operator input index and type info
-  std::map<int, Ms2GeParamInfo> input_idx_ms2ge;
-  std::map<int, Ms2GeParamInfo> output_idx_ms2ge;
+  mindspore::HashMap<int, Ms2GeParamInfo> input_idx_ms2ge;
+  mindspore::HashMap<int, Ms2GeParamInfo> output_idx_ms2ge;
   // fields for recording the mapping flags of input/output
   unsigned int input_mapping_flags = 0;
   unsigned int output_mapping_flags = 0;
   // map input/output indices of operator from GraphEngine backend to MindSpore frontend
   // K: GE operator input index, V: MindSpore operator input index
-  std::map<size_t, int> input_idx_ge2ms;
-  std::map<size_t, int> output_idx_ge2ms;
+  mindspore::HashMap<size_t, int> input_idx_ge2ms;
+  mindspore::HashMap<size_t, int> output_idx_ge2ms;
 
   // DataType
-  std::map<int, std::vector<enum ::ge::DataType>> input_supported_dtypes;
-  std::map<int, std::vector<enum ::ge::DataType>> output_supported_dtypes;
+  mindspore::HashMap<int, std::vector<enum ::ge::DataType>> input_supported_dtypes;
+  mindspore::HashMap<int, std::vector<enum ::ge::DataType>> output_supported_dtypes;
 };
 
 class GeAdapterInfo {
@@ -81,8 +90,8 @@ class GeAdapterInfo {
   void InitInfo();
 
   const std::string &op_type() const { return info_.op_type; }
-  const std::map<std::string, std::string> &attr_map() const { return info_.attr_map; }
-  const std::map<uint32_t, std::string> &input_attr_map() const { return info_.input_attr_map; }
+  const mindspore::HashMap<std::string, std::string> &attr_map() const { return info_.attr_map; }
+  const mindspore::HashMap<uint32_t, std::string> &input_attr_map() const { return info_.input_attr_map; }
   const mindspore::HashMap<size_t, std::string> &attr_input_map() const { return info_.attr_input_map; }
 
   // Get number of inputs in mindspore operator prototype, not the real number of inputs
@@ -135,10 +144,10 @@ class GeAdapterInfo {
 
   unsigned int GetOutputMappingFlags() const { return info_.output_mapping_flags; }
 
-  const std::map<int, std::vector<enum ::ge::DataType>> &input_supported_dtypes() const {
+  const mindspore::HashMap<int, std::vector<enum ::ge::DataType>> &input_supported_dtypes() const {
     return info_.input_supported_dtypes;
   }
-  const std::map<int, std::vector<enum ::ge::DataType>> &output_supported_dtypes() const {
+  const mindspore::HashMap<int, std::vector<enum ::ge::DataType>> &output_supported_dtypes() const {
     return info_.output_supported_dtypes;
   }
   void GetGeAttrValueByMsAttrValue(const std::string &attr_name, const ValuePtr &ms_value, ValuePtr *ge_value);
@@ -161,6 +170,8 @@ class GeAdapterInfo {
 
   OpAdapterPtr adapter_{nullptr};
   GeTensorInfo info_;
+  std::unordered_map<std::pair<std::string, ValuePtr>, ValuePtr, ValuePairHasher> get_attr_cache_;
+  std::unordered_map<std::pair<uint32_t, ValuePtr>, ValuePtr, ValuePairHasher> get_input_attr_cache_;
 };
 
 using GeAdapterInfoPtr = std::shared_ptr<GeAdapterInfo>;

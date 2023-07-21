@@ -34,6 +34,7 @@ using GeTensor = ::ge::Tensor;
 namespace mindspore {
 namespace transform {
 enum Status : int { SUCCESS = 0, FAILED, INVALID_ARGUMENT, ALREADY_EXISTS, NOT_FOUND };
+typedef enum { ALLOW_FP32_TO_FP16, FORCE_FP32 } AclPrecisionMode;
 
 using MeTensor = mindspore::tensor::Tensor;
 using MeTensorPtr = std::shared_ptr<MeTensor>;

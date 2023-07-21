@@ -19,10 +19,13 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <map>
 #include "acl/acl_op_compiler.h"
 #include "acl/acl_base.h"
 #include "include/transform/graph_ir/types.h"
 #include "transform/acl_ir/ge_adapter_info.h"
+
+#define MAX_INPUT_TO_HOST 12
 
 namespace mindspore {
 namespace transform {
@@ -32,6 +35,47 @@ struct AclExecParam {
   std::vector<const aclTensorDesc *> output_desc;
   std::vector<aclDataBuffer *> output_buffer;
   aclopAttr *attr = nullptr;
+};
+
+class AclInputToHost {
+ public:
+  AclInputToHost() { clear(); }
+
+  void clear() {
+    for (auto &item : input_to_host_) {
+      item = nullptr;
+    }
+    size_ = 0;
+  }
+
+  tensor::TensorPtr get(size_t index) const {
+    if (index >= MAX_INPUT_TO_HOST) {
+      MS_LOG(EXCEPTION) << "Index is bigger than max input to host size, index: " << index
+                        << ", max_input_to_host: " << MAX_INPUT_TO_HOST;
+    }
+    return input_to_host_[index];
+  }
+
+  void emplace(size_t index, const tensor::TensorPtr &tensor_ptr) {
+    auto origin_tensor = get(index);
+    if (origin_tensor == nullptr && tensor_ptr != nullptr) {
+      size_++;
+    }
+    input_to_host_[index] = tensor_ptr;
+  }
+
+  void build(const std::map<uint32_t, tensor::TensorPtr> &inputs_on_host) {
+    clear();
+    for (auto &kv : inputs_on_host) {
+      emplace(kv.first, kv.second);
+    }
+  }
+
+  bool empty() const { return size_ == 0; }
+
+ private:
+  tensor::TensorPtr input_to_host_[MAX_INPUT_TO_HOST];
+  size_t size_{};
 };
 
 class AclAttrMaker {
@@ -148,7 +192,7 @@ class AclRunner {
 
   void SetDynamicMode();
 
-  void SetRunMode(const std::string &mode);
+  void SetPrecisionMode(const AclPrecisionMode mode);
 
   void ResizeOpInputs(size_t size) {
     acl_param_.input_desc.clear();

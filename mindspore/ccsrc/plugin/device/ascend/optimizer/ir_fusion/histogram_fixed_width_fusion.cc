@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "mindspore/core/ops/structure_ops.h"
 #include "include/common/utils/anfalgo.h"
@@ -24,6 +26,12 @@
 
 namespace mindspore {
 namespace opt {
+std::vector<std::string> HistogramFixedWidthFusion::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimHistogramFixedWidth->name());
+  return ret;
+}
+
 const BaseRef HistogramFixedWidthFusion::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   return VectorRef({prim::kPrimHistogramFixedWidth, Xs});

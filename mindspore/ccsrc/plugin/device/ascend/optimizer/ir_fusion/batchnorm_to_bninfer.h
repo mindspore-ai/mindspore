@@ -17,6 +17,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_BATCHNORM_TO_BNINFER_H_
 
 #include <memory>
+#include <string>
+#include <vector>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
@@ -30,6 +32,7 @@ class BatchNorm2BNInfer : public PatternProcessPass {
 
  private:
   CNodePtr CreateBNInfer(const FuncGraphPtr &graph, const CNodePtr &batchnorm) const;
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

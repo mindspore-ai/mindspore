@@ -125,6 +125,7 @@ void AclRunner::Reset() {
   acl_param_.output_buffer.clear();
 
   op_type_ = "";
+  is_dynamic_ = true;
 }
 
 void AclRunner::SetStaticMode() {
@@ -145,12 +146,17 @@ void AclRunner::SetDynamicMode() {
   is_dynamic_ = true;
 }
 
-void AclRunner::SetRunMode(const std::string &mode) {
-  static std::set<std::string> kCurrentValidMode = {"allow_fp32_to_fp16", "force_fp32"};
-  if (kCurrentValidMode.find(mode) == kCurrentValidMode.end()) {
+void AclRunner::SetPrecisionMode(const AclPrecisionMode mode) {
+  int ret = -1;
+  if (mode == ALLOW_FP32_TO_FP16) {
+    static const std::string allow_fp32_to_fp16 = "allow_fp32_to_fp16";
+    ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, allow_fp32_to_fp16.c_str());
+  } else if (mode == FORCE_FP32) {
+    static const std::string force_fp32 = "force_fp32";
+    ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, force_fp32.c_str());
+  } else {
     MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << mode;
   }
-  auto ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, mode.c_str());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set precision mode failed! op_name is " << op_type_ << " and error flag is " << ret;
   }

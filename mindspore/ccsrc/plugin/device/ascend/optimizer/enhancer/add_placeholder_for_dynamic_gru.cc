@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
 #include <vector>
+#include <string>
 #include "ops/array_op_name.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -25,6 +26,12 @@
 
 namespace mindspore {
 namespace opt {
+std::vector<std::string> InsertPlaceholderForDynamicGRUV2::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(kDynamicGRUV2OpName);
+  return ret;
+}
+
 const BaseRef InsertPlaceholderForDynamicGRUV2::DefinePattern() const {
   std::shared_ptr<Var> V = std::make_shared<CondVar>(UnVisited);
   std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();

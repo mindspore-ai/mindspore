@@ -61,6 +61,12 @@ ValueNodePtr TensorScatterAddFission::GetScatterNdPrimNode() const {
   return NewValueNode(std::make_shared<Primitive>(prim::kPrimScatterNdAdd->name()));
 }
 
+std::vector<std::string> TensorScatterAddFission::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimTensorScatterAdd->name());
+  return ret;
+}
+
 const BaseRef TensorScatterAddFission::DefinePattern() const {
   VarPtr input = std::make_shared<Var>();
   VarPtr indices = std::make_shared<Var>();
@@ -70,6 +76,12 @@ const BaseRef TensorScatterAddFission::DefinePattern() const {
 
 ValueNodePtr TensorScatterSubFission::GetScatterNdPrimNode() const {
   return NewValueNode(std::make_shared<Primitive>(prim::kPrimScatterNdSub->name()));
+}
+
+std::vector<std::string> TensorScatterSubFission::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimTensorScatterSub->name());
+  return ret;
 }
 
 const BaseRef TensorScatterSubFission::DefinePattern() const {
@@ -83,6 +95,12 @@ ValueNodePtr TensorScatterMaxFission::GetScatterNdPrimNode() const {
   return NewValueNode(std::make_shared<Primitive>(prim::kPrimScatterNdMax->name()));
 }
 
+std::vector<std::string> TensorScatterMaxFission::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimTensorScatterMax->name());
+  return ret;
+}
+
 const BaseRef TensorScatterMaxFission::DefinePattern() const {
   VarPtr input = std::make_shared<Var>();
   VarPtr indices = std::make_shared<Var>();
@@ -92,6 +110,12 @@ const BaseRef TensorScatterMaxFission::DefinePattern() const {
 
 ValueNodePtr TensorScatterMinFission::GetScatterNdPrimNode() const {
   return NewValueNode(std::make_shared<Primitive>(prim::kPrimScatterNdMin->name()));
+}
+
+std::vector<std::string> TensorScatterMinFission::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimTensorScatterMin->name());
+  return ret;
 }
 
 const BaseRef TensorScatterMinFission::DefinePattern() const {

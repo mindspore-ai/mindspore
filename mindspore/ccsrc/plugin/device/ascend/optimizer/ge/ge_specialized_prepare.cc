@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/ge/ge_specialized_prepare.h"
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -85,6 +86,12 @@ void GeTensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node
   // modify TensorArray node output's abstract from Tensor to Tuple
   auto new_ta_abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
   ta_node->set_abstract(new_ta_abstract);
+}
+
+std::vector<std::string> GeTensorArrayPrepare::MustExistPrimitiveName() const {
+  std::vector<std::string> ret;
+  ret.emplace_back(prim::kPrimTensorArray->name());
+  return ret;
 }
 
 const BaseRef GeTensorArrayPrepare::DefinePattern() const {

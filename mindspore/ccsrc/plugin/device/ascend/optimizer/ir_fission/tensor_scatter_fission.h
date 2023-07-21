@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_IR_FUSION_TENSOR_SCATTER_FISSION_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_IR_FUSION_TENSOR_SCATTER_FISSION_H_
 #include <string>
+#include <vector>
 
 #include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
@@ -55,6 +56,9 @@ class TensorScatterAddFission : public TensorScatterFission {
 
  protected:
   ValueNodePtr GetScatterNdPrimNode() const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class TensorScatterSubFission : public TensorScatterFission {
@@ -66,6 +70,9 @@ class TensorScatterSubFission : public TensorScatterFission {
 
  protected:
   ValueNodePtr GetScatterNdPrimNode() const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class TensorScatterMaxFission : public TensorScatterFission {
@@ -77,6 +84,9 @@ class TensorScatterMaxFission : public TensorScatterFission {
 
  protected:
   ValueNodePtr GetScatterNdPrimNode() const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
 class TensorScatterMinFission : public TensorScatterFission {
@@ -88,6 +98,9 @@ class TensorScatterMinFission : public TensorScatterFission {
 
  protected:
   ValueNodePtr GetScatterNdPrimNode() const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

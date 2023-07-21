@@ -60,24 +60,21 @@ class AclKernelMod : public AscendKernelMod {
   void PackageOutput(const size_t idx, const ShapeVector &shape);
   void SetPrimitive(const PrimitivePtr &primitive);
   void SetNeedConvertHostTensor(const bool convert_flag) { need_convert_host_tensor_ = convert_flag; }
+  void CreateAclConverter();
 
  protected:
   std::string DebugString() const;
   void SyncOutputShape() override;
   void GetInputInfo(const std::vector<KernelTensorPtr> &inputs);
-  int GetOutputInfo(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &outputs);
+  int GetOutputInfo(const std::vector<KernelTensorPtr> &outputs);
 
  private:
   std::vector<TensorParams> input_params_;
   std::vector<TensorParams> output_params_;
-  std::map<uint32_t, tensor::TensorPtr> inputs_on_host_;
+  transform::AclInputToHost input_to_host_array_;
 
   PrimitivePtr primitive_ptr_;
   std::string kernel_name_;
-  std::vector<std::string> input_device_formats_;
-  std::vector<std::string> output_device_formats_;
-  std::vector<TypeId> input_device_types_;
-  std::vector<TypeId> output_device_types_;
 
   std::vector<std::string> ms_attr_str_;
   transform::AclConverterPtr converter_;

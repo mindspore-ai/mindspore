@@ -58,7 +58,17 @@ TypeId ConvertGeType(GeDataType type) {
   }
   return kTypeUnknown;
 }
+
+bool GLogIsDebug() {
+  const std::string &glog = common::GetEnv("GLOG_v");
+  return !glog.empty() && glog[0] == '0';
+}
 }  // namespace
+
+bool AclHelper::IsPrintDebugString() {
+  static bool is_debug = GLogIsDebug();
+  return is_debug;
+}
 
 bool AclHelper::CheckDefaultSupportFormat(const string &format) {
   static std::set<std::string> default_support = {kOpFormat_DEFAULT, kOpFormat_ND,    kOpFormat_NCHW,
@@ -374,7 +384,7 @@ bool AclHelper::NeedCheckAttrToInput(const CNodePtr &node,
 
 std::string AclHelper::GetFormatFromAttr(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto attrs = primitive->attrs();
+  auto &attrs = primitive->attrs();
   std::string format;
   if (attrs.count("format") != 0) {
     auto attr_value = attrs.at("format");

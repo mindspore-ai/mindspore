@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace transform {
-typedef enum { ALLOW_FP32_TO_FP16, FORCE_FP32 } AclPrecisionMode;
 using AclFormatSelector = std::function<std::string(TypeId, const std::vector<ShapeVector> &shape)>;
 
 struct AclSpecialInfo {
