@@ -1192,12 +1192,12 @@ class Profiler:
         self._minddata_analyse(source_path)
         if self._op_time:
             op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path)
+            self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status)
+            self._ascend_timeline_analyse(source_path, op_summary, steptrace)
             graph_ids = np.unique(op_summary['Model ID']).tolist()
             points = self._ascend_fpbp_analyse(op_summary, steptrace)
-            self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status)
             if len(graph_ids) == 1:
                 self._ascend_step_trace_analyse(steptrace)
-            self._ascend_timeline_analyse(source_path, op_summary, steptrace)
             if self._dynamic_status:
                 self._ascend_dynamic_net_analyse(op_summary)
             self._ascend_flops_analyse(op_summary)
