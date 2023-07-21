@@ -59,15 +59,6 @@ class LRScheduler:
             raise ValueError("Invalid last_epoch: {}".format(last_epoch))
         Validator.check_value_type("verbose", verbose, [bool])
 
-        if last_epoch == -1:
-            for group in optimizer.param_groups:
-                group['initial_lr'] = group['lr'].value()
-        else:
-            for i, group in enumerate(optimizer.param_groups):
-                if 'initial_lr' not in group:
-                    raise KeyError(f"param 'initial_lr' is not specified "
-                                   f"in param_groups[{i}] when resuming an optimizer")
-        self.base_lrs = [group['initial_lr'] for group in optimizer.param_groups]
         self.optimizer = optimizer
         self._last_lr = []
         self.groups_num = len(optimizer.param_groups)
@@ -407,7 +398,7 @@ class ChainedScheduler:
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        schedulers (list[:class:`mindspore.nn.optim_ex.Optimizer`]): List of learning rate schedulers.
+        schedulers (list[:class:`mindspore.nn.LRScheduler`]): List of learning rate schedulers.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

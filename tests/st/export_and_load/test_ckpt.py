@@ -127,7 +127,7 @@ class ErrorCallback(Callback):
             raise RuntimeError("Exec runtime error.")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ckpt_append_info():
@@ -143,14 +143,15 @@ def test_ckpt_append_info():
     model = Model(network, net_loss, net_opt)
     ds_train = create_dataset(os.path.join('/home/workspace/mindspore_dataset/mnist', "train"), 32, 1)
     cb_config = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(),
-                                 append_info=["epoch_num", "step_num"])
+                                 append_info=["epoch_num", "step_num", "cur_step"])
     ckpoint_cb = ModelCheckpoint(prefix='append_info', directory="./", config=cb_config)
     model.train(3, ds_train, callbacks=ckpoint_cb, dataset_sink_mode=True)
     file_list = os.listdir(os.getcwd())
     ckpt_list = [k for k in file_list if k.startswith("append_info")]
     ckpt_1 = [k for k in ckpt_list if k.startswith("append_info-2")]
     dict_1 = load_checkpoint(ckpt_1[0])
-    assert dict_1["epoch_num"].data.asnumpy() == 2
+    assert dict_1.get("epoch_num").data.asnumpy() == 2
+    assert dict_1.get("cur_step").data.asnumpy() == 1875
     for file_name in ckpt_list:
         if os.path.exists(file_name):
             os.chmod(file_name, stat.S_IWRITE)

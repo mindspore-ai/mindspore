@@ -36,7 +36,7 @@ from mindspore._c_expression import _collect_host_info
 
 _cur_dir = os.getcwd()
 SAVE_DIR = _cur_dir
-_info_list = ["epoch_num", "step_num"]
+_info_list = ["epoch_num", "step_num", "cur_step"]
 
 
 def _chg_ckpt_file_name_if_same_exist(directory, prefix, exception=False):
@@ -94,8 +94,8 @@ class CheckpointConfig:
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: ``False`` .
         saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
             with the network in training, the initial value of saved_network will be saved. Default: ``None`` .
-        append_info (list): The information save to checkpoint file. Support "epoch_num", "step_num" and dict. The key
-            of dict must be str, the value of dict must be one of int, float, bool, Parameter or Tensor.
+        append_info (list): The information save to checkpoint file. Support "epoch_num", "step_num", "cur_step" and
+            dict. The key of dict must be str, the value of dict must be one of int, float, bool, Parameter or Tensor.
             Default: ``None`` .
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: ``None`` .
@@ -340,6 +340,8 @@ class CheckpointConfig:
             handle_append_info["step_num"] = 0
         if "random_op" in append_info:
             handle_append_info["random_op"] = 0
+        if "cur_step" in append_info:
+            handle_append_info["cur_step"] = 0
         dict_num = 0
         for element in append_info:
             if not isinstance(element, str) and not isinstance(element, dict):
@@ -427,6 +429,7 @@ class ModelCheckpoint(Callback):
         self._append_dict = self._config.append_dict or {}
         self._append_epoch_num = self._append_dict.get("epoch_num") if "epoch_num" in self._append_dict else 0
         self._append_step_num = self._append_dict.get("step_num") if "step_num" in self._append_dict else 0
+        self._append_batch_num = self._append_dict.get("cur_step") if "cur_step" in self._append_dict else 0
         self._graph_saved = False
         self._need_flush_from_cache = True
         self._map_param_inc = self._config.map_param_inc
@@ -535,6 +538,8 @@ class ModelCheckpoint(Callback):
                 self._append_dict["epoch_num"] = self._append_epoch_num + cb_params.cur_epoch_num
             if "step_num" in self._append_dict:
                 self._append_dict["step_num"] = self._append_step_num + cb_params.cur_step_num
+            if "cur_step" in self._append_dict:
+                self._append_dict["cur_step"] = cb_params.batch_num
             network = self._config.saved_network if self._config.saved_network is not None else cb_params.train_network
             save_checkpoint(network, cur_file, self._config.integrated_save, self._config.async_save,
                             self._append_dict, self._config.enc_key, self._config.enc_mode,

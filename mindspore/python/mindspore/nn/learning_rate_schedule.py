@@ -26,6 +26,7 @@ from mindspore import _checkparam as validator
 
 class LearningRateSchedule(Cell):
     """Basic class of learning rate schedule."""
+
     def __init__(self):
         super(LearningRateSchedule, self).__init__()
 
@@ -109,6 +110,7 @@ class ExponentialDecayLR(LearningRateSchedule):
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
+
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
         super(ExponentialDecayLR, self).__init__()
         _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, self.cls_name)
@@ -179,6 +181,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
+
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
         super(NaturalExpDecayLR, self).__init__()
         _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, self.cls_name)
@@ -250,6 +253,7 @@ class InverseDecayLR(LearningRateSchedule):
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
+
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
         super(InverseDecayLR, self).__init__()
         _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, self.cls_name)
@@ -309,6 +313,7 @@ class CosineDecayLR(LearningRateSchedule):
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
+
     def __init__(self, min_lr, max_lr, decay_steps):
         super(CosineDecayLR, self).__init__()
         if not isinstance(min_lr, float):
@@ -393,6 +398,7 @@ class PolynomialDecayLR(LearningRateSchedule):
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
+
     def __init__(self, learning_rate, end_learning_rate, decay_steps, power, update_decay_steps=False):
         super(PolynomialDecayLR, self).__init__()
         validator.check_positive_float(learning_rate, 'learning_rate')
@@ -476,6 +482,7 @@ class WarmUpLR(LearningRateSchedule):
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
+
     def __init__(self, learning_rate, warmup_steps):
         super(WarmUpLR, self).__init__()
         if not isinstance(learning_rate, float):
