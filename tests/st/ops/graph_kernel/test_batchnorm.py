@@ -72,6 +72,7 @@ def test_bn_infer():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bn_train_gpu():
+    # BatchNorm in train mode has monad in inputs
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_bn_train()
 
@@ -79,5 +80,6 @@ def test_bn_train_gpu():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bn_infer_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU",
+                        graph_kernel_flags='--enable_expand_ops=BatchNorm')
     test_bn_infer()
