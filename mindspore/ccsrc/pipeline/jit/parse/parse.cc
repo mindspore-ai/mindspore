@@ -823,11 +823,11 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
     }
     sub_block = next_block;
 
-    static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
-    if (boost_parse != "0" && sub_block->is_dead_block()) {
+    const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+    if (boost_parse == "1" && sub_block->is_dead_block()) {
       break;
     }
-    if (boost_parse == "0") {
+    if (boost_parse != "1") {
       // Insert appropriate depended items for the function block if it has a return node
       if (sub_block->func_graph()->get_return() != nullptr || sub_block->is_dead_block()) {
         // If break is not the last expr.
@@ -2422,8 +2422,8 @@ bool Parser::CheckBoolOpConstantCond(const FunctionBlockPtr &block, const py::ob
 // Return true if it's constant condition and the condition value returned by is_true_cond, otherwise return false.
 bool Parser::CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node,
                                     bool *is_true_cond) const {
-  static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
-  if (boost_parse == "0") {
+  const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+  if (boost_parse != "1") {
     return false;
   }
   MS_EXCEPTION_IF_NULL(block);
