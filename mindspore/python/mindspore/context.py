@@ -208,8 +208,8 @@ class _Context:
     def set_jit_syntax_level(self, level):
         """"Set the JIT syntax level for graph compiling"""
         if level != STRICT and level != COMPATIBLE and level != LAX:
-            raise ValueError(f"For 'context.set_jit_syntax_level', the argument 'level' should be context.STRICT (0), "
-                             f"context.COMPATIBLE (1) or context.LAX (2), but got {level}.")
+            raise ValueError(f"For 'context.set_jit_syntax_level', the argument 'level' should be context.STRICT "
+                             f"or context.LAX, but got {level}.")
         self.set_param(ms_ctx_param.jit_syntax_level, level)
 
     def set_memory_optimize_level(self, memory_optimize_level):
@@ -1305,13 +1305,11 @@ def set_context(**kwargs):
               - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
                 Default: False.
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
-            The value must be in [STRICT(``0``), COMPATIBLE(``1``), LAX(``2``)]. Default: LAX(``2``). All levels
+            The value must be in [STRICT, LAX]. Default: LAX. All levels
             support all backends.
 
-            - STRICT(``0``): Only basic syntax is supported, and execution performance is optimal.
-            - COMPATIBLE(``1``): Besides basic syntax, supports more syntax, such as operations of dict, list, and
-              scalar.
-            - LAX(``2``): Compatible with all Python syntax as much as possible. However, execution performance may be
+            - STRICT: Only basic syntax is supported, and execution performance is optimal.
+            - LAX: Compatible with all Python syntax as much as possible. However, execution performance may be
               affected and not optimal.
         gpu_config (dict): Set the parameters specific to gpu hardware platform. It is not set by default.
             Currently, only setting `conv_fprop_algo` and `conv_dgrad_algo` and `conv_wgrad_algo` and `conv_allow_tf32`
@@ -1447,8 +1445,8 @@ def set_context(**kwargs):
             if value > 3:
                 raise ValueError(f"value for save_graphs should be 0-3 but got '{value}'")
         if key == 'jit_syntax_level' and value != STRICT and value != COMPATIBLE and value != LAX:
-            raise ValueError(f"For 'jit_syntax_level', the value should be context.STRICT (0), context.COMPATIBLE (1)"
-                             f" or context.LAX (1), but got {value}.")
+            raise ValueError(f"For 'jit_syntax_level', the value should be context.STRICT"
+                             f" or context.LAX, but got {value}.")
         if not _check_target_specific_cfgs(device, key):
             continue
         if hasattr(ctx, key):
