@@ -38,7 +38,6 @@ class Profiling {
   uint32_t device_id_;
   uint64_t profiling_mask_;
   aclprofConfig *acl_config_{nullptr};
-  aclprofStepInfo *step_info_{nullptr};
   aclprofAicoreMetrics aic_metrics_{ACL_AICORE_PIPE_UTILIZATION};
   nlohmann::json profiling_json_;
 };
