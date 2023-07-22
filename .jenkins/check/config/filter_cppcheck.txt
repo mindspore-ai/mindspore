@@ -92,6 +92,8 @@
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/op_proto/matmul_tik.cc"            "syntaxError"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/op_proto/"                                    "syntaxError"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/conv_sw_avx_fp32.c"                  "unknownMacro"          
+"mindspore/mindspore/lite/src/litert/delegate/nnapi/op/gather_nnapi.cc"                  "nullPointerRedundantCheck"
+"mindspore/mindspore/lite/src/litert/delegate/nnapi/op/instance_norm_nnapi.cc"                  "nullPointerRedundantCheck"
 
 # AICPU migration
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/" "constVariable"

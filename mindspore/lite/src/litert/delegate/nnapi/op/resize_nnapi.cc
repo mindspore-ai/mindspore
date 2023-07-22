@@ -45,6 +45,7 @@ int NNAPIResize::InitParams() {
     }
     data_type_ = static_cast<int>(new_size_tensor.DataType());
     auto new_size = new_size_tensor.MutableData();
+    MS_CHECK_TRUE_RET(new_size != nullptr, RET_ERROR);
     int height_idx = new_size_tensor.ElementNum() == DIMENSION_2D ? 0 : 1;
     int width_idx = new_size_tensor.ElementNum() == DIMENSION_2D ? 1 : 2;
     switch (static_cast<DataType>(data_type_)) {
