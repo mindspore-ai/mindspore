@@ -45,4 +45,3 @@ from .bn_infer_grad import _bn_infer_grad_tbe
 from .avg_pool import _avg_pool_tbe
 from .gather_nd import _gather_nd_tbe
 from .bn_infer_ds import _bn_infer_ds_tbe
-from .matmul import _matmul_tbe
