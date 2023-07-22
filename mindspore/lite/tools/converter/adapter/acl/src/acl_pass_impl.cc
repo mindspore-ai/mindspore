@@ -1270,11 +1270,6 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   auto manager = Manage(func_graph, true);
   MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
 
-  if (!user_options_cfg_.custom_opp_path.empty()) {
-    // if set custom_opp_path config, first install custom ops to cann
-    AclCustomOppInstaller::InstallCustomOpp(user_options_cfg_.custom_opp_path, "");
-  }
-
   if (PreProcGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Pre proc graph failed.";
     return false;
