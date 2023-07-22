@@ -27,7 +27,7 @@ std::map<FmkType, ModelParserCreator> model_parser_room;
 
 ModelParserRegistry::ModelParserRegistry(FmkType fmk, ModelParserCreator creator) {
   if (fmk < converter::kFmkTypeTf || fmk > converter::kFmkTypePytorch) {
-    MS_LOG(ERROR) << "ILLEGAL FMK: fmk must be in FmkType.";
+    MS_LOG(ERROR) << "FMK must be in FmkType!Illegal FMK: " << fmk;
     return;
   }
   if (creator == nullptr) {

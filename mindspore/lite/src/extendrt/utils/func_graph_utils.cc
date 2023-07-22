@@ -137,7 +137,7 @@ bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_ty
 }
 
 std::vector<common::KernelWithIndex> FuncGraphUtils::GetNodeInputs(const AnfNodePtr &anf_node) {
-  if (!anf_node) {
+  if (anf_node == nullptr) {
     return {};
   }
   if (!anf_node->isa<CNode>()) {
@@ -204,10 +204,16 @@ bool FuncGraphUtils::GetFuncGraphInputs(const FuncGraphPtr &func_graph, std::vec
 }
 
 bool FuncGraphUtils::GetFuncGraphOutputs(const FuncGraphPtr &func_graph, std::vector<AnfWithOutIndex> *outputs) {
-  if (!func_graph || !outputs) {
-    MS_LOG(ERROR) << "Input func_graph or outputs cannot be nullptr";
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Input func_graph cannot be nullptr!";
     return false;
   }
+
+  if (outputs == nullptr) {
+    MS_LOG(ERROR) << "Outputs cannot be nullptr!";
+    return false;
+  }
+
   *outputs = GetNodeInputs(func_graph->get_return());
   return true;
 }
