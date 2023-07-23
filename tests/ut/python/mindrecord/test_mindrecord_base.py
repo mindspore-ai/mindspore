@@ -453,7 +453,7 @@ def test_nlp_page_reader_tutorial():
     assert len(row[0]) == 6
     logger.info("row[0]: {}".format(row[0]))
 
-    row1 = reader.read_at_page_by_name("7", 0, 1)
+    row1 = reader.read_at_page_by_name("7.0", 0, 1)
     assert len(row1) == 1
     assert len(row1[0]) == 6
     logger.info("row1[0]: {}".format(row1[0]))

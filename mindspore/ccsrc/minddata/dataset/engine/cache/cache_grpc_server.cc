@@ -55,13 +55,11 @@ Status CacheServerGreeterImpl::Run() {
   grpc::ServerBuilder builder;
   // Default message size for gRPC is 4MB. Increase it to 2g-1
   builder.SetMaxReceiveMessageSize(std::numeric_limits<int32_t>::max());
-  int port_tcpip = 0;
 #ifdef CACHE_LOCAL_CLIENT
   int port_local = 0;
   // We also optimize on local clients on the same machine using unix socket
   builder.AddListeningPort("unix://" + unix_socket_, grpc::InsecureServerCredentials(), &port_local);
 #endif
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials(), &port_tcpip);
   builder.RegisterService(&svc_);
   cq_ = builder.AddCompletionQueue();
   server_ = builder.BuildAndStart();
@@ -69,9 +67,6 @@ Status CacheServerGreeterImpl::Run() {
     MS_LOG(INFO) << "Server listening on " << server_address;
   } else {
     std::string errMsg = "Fail to start server. ";
-    if (port_tcpip != port_) {
-      errMsg += "Unable to bind to tcpip port " + std::to_string(port_) + ".";
-    }
 #ifdef CACHE_LOCAL_CLIENT
     if (port_local == 0) {
       errMsg += " Unable to create unix socket " + unix_socket_ + ".";

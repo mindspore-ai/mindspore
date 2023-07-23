@@ -935,6 +935,89 @@ def get_data(dir_name, sampler=False):
     return data_list
 
 
+def check_pksampler(file_name, col_type):
+    """check the PKSampler with type string, int, float"""
+    if os.path.exists("{}".format(file_name)):
+        os.remove("{}".format(file_name))
+    if os.path.exists("{}.db".format(file_name)):
+        os.remove("{}.db".format(file_name))
+
+    if col_type == "string":
+        schema_json = {"file_name": {"type": "string"}, "label": {"type": "string"}, "data": {"type": "bytes"}}
+    elif col_type == "int32":
+        schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
+    elif col_type == "int64":
+        schema_json = {"file_name": {"type": "string"}, "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    elif col_type == "float32":
+        schema_json = {"file_name": {"type": "string"}, "label": {"type": "float32"}, "data": {"type": "bytes"}}
+    elif col_type == "float64":
+        schema_json = {"file_name": {"type": "string"}, "label": {"type": "float64"}, "data": {"type": "bytes"}}
+    else:
+        raise RuntimeError("Parameter {} error".format(col_type))
+
+
+    writer = FileWriter(file_name=file_name, shard_num=1, overwrite=True)
+    _ = writer.add_schema(schema_json, "test_schema")
+    indexes = ["file_name", "label"]
+    _ = writer.add_index(indexes)
+    for i in range(1000):
+        if col_type == "string":
+            data = [{"file_name": str(i) + ".jpg", "label": str(int(i / 100)),
+                     "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
+        elif col_type == "int32" or col_type == "int64":
+            data = [{"file_name": str(i) + ".jpg", "label": int(i / 100),
+                     "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
+        elif col_type == "float32" or col_type == "float64":
+            data = [{"file_name": str(i) + ".jpg", "label": float(int(i / 100) + 0.5),
+                     "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
+        else:
+            raise RuntimeError("Parameter {} error".format(col_type))
+        _ = writer.write_raw_data(data)
+    _ = writer.commit()
+
+    sampler = ds.PKSampler(5, class_column='label')
+    data_set = ds.MindDataset(dataset_files=file_name, sampler=sampler)
+    assert data_set.get_dataset_size() == 50
+
+    count = 0
+    for item in data_set.create_dict_iterator(output_numpy=True):
+        print("item name:", item["label"].dtype, item["label"])
+        if col_type == "string":
+            assert item["label"].dtype == np.array("9").dtype
+        elif col_type == "int32":
+            assert item["label"].dtype == np.int32
+        elif col_type == "int64":
+            assert item["label"].dtype == np.int64
+        elif col_type == "float32":
+            assert item["label"].dtype == np.float32
+        elif col_type == "float64":
+            assert item["label"].dtype == np.float64
+        else:
+            raise RuntimeError("Parameter {} error".format(col_type))
+        count += 1
+    assert count == 50
+
+    if os.path.exists("{}".format(file_name)):
+        os.remove("{}".format(file_name))
+    if os.path.exists("{}.db".format(file_name)):
+        os.remove("{}.db".format(file_name))
+
+
+def test_cv_minddataset_pksampler_with_diff_type():
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler and use string, int, float type
+    Expectation: Output is equal to the expected output
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    check_pksampler(file_name, "string")
+    check_pksampler(file_name, "int32")
+    check_pksampler(file_name, "int64")
+    check_pksampler(file_name, "float32")
+    check_pksampler(file_name, "float64")
+
+
 if __name__ == '__main__':
     test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file)
     test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file)
@@ -955,3 +1038,4 @@ if __name__ == '__main__':
     test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file)
     test_cv_minddataset_split_deterministic(add_and_remove_cv_file)
     test_cv_minddataset_split_sharding(add_and_remove_cv_file)
+    test_cv_minddataset_pksampler_with_diff_type()
