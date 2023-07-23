@@ -702,13 +702,14 @@ class GpuFrameWorkParser:
                 "grid_dim": args.get('grid_dim')
             }
         else:
+            op_step_shape = self.op_step_shape_info.get(op_info.get('name'))
             item = {
                 "step": step,
                 "op_side": self.op_step_shape_info.get(op_info.get('name'))[0],
                 "op_type": op_info.get('name').split('-')[0],
                 "op_name": op_info.get('name'),
                 "dur": op_info.get('dur'),
-                "shape_info": self.op_step_shape_info.get(op_info.get('name'))[step],
+                "shape_info": op_step_shape[step] if len(op_step_shape) > step else [],
             }
         return item
 

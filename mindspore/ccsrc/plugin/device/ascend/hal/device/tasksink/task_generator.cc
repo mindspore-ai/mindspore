@@ -338,13 +338,6 @@ bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
     current_op_index++;
   }
 
-#ifndef ENABLE_SECURITY
-  ProfilingUtils::SetGraphKernelName(graph_id, kernel_name_list);
-  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
-    ProfilingUtils::SetGraphProfilingCNode(graph_id, profiling_cnode_list);
-  }
-#endif
-
   return true;
 }
 

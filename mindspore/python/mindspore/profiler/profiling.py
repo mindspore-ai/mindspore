@@ -25,7 +25,7 @@ import numpy as np
 
 from mindspore import log as logger, context
 from mindspore.context import get_auto_parallel_context
-from mindspore.communication.management import GlobalComm, get_rank, get_group_size
+from mindspore.communication.management import GlobalComm, get_rank, get_group_size, get_local_rank
 import mindspore._c_expression as c_expression
 import mindspore._c_dataengine as cde
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
@@ -1494,7 +1494,8 @@ class Profiler:
             logger.error("Profiling: fail to get context, %s", err)
 
         if not dev_id or not dev_id.isdigit():
-            dev_id = os.getenv('DEVICE_ID')
+            dev_id = str(get_local_rank()) if GlobalComm.INITED and device_target == DeviceTarget.ASCEND.value \
+                else os.getenv('DEVICE_ID')
         if not dev_id or not dev_id.isdigit():
             dev_id = "0"
             logger.warning("Fail to get DEVICE_ID, use 0 instead.")
@@ -1504,7 +1505,8 @@ class Profiler:
             msg = "Profiling: unsupported backend: %s" % device_target
             raise RuntimeError(msg)
 
-        rank_id = os.getenv("RANK_ID")
+        rank_id = str(get_rank()) if GlobalComm.INITED and device_target == DeviceTarget.ASCEND.value \
+            else os.getenv("RANK_ID")
         if not rank_id or not rank_id.isdigit():
             rank_id = "0"
             logger.warning(f"For '{self.__class__.__name__}', fail to get RANK_ID from environment, "

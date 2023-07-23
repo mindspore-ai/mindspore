@@ -438,6 +438,8 @@ class BaseTimelineGenerator:
         """Write cluster metric."""
         # Note that the feature of cluster bottleneck analyse is not supported in offline parse mode,
         # due to that parallel context is not set.
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            return
         parallel_mode, stage_num = BaseTimelineGenerator.get_parallel_context()
 
         unit = 1 if device_target == "Ascend" else 1e3
