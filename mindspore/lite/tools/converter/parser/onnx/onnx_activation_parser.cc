@@ -45,7 +45,7 @@ PrimitiveCPtr OnnxLeakyReluParser::Parse(const onnx::GraphProto &onnx_graph, con
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "alpha") {
+    if (attribute_name == kAttrAlpha) {
       prim->set_alpha(onnx_node_attr.f());
     }
   }
@@ -118,7 +118,7 @@ PrimitiveCPtr OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph, const onn
   prim->set_activation_type(mindspore::ActivationType::ELU);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "alpha") {
+    if (attribute_name == kAttrAlpha) {
       prim->set_alpha(onnx_node_attr.f());
     }
   }
@@ -155,6 +155,11 @@ PrimitiveCPtr OnnxHardSigmoidParser::Parse(const onnx::GraphProto &onnx_graph, c
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::HSIGMOID);
 
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    if (onnx_node_attr.name() == kAttrAlpha) {
+      prim->set_alpha(onnx_node_attr.f());
+    }
+  }
   return prim->GetPrim();
 }
 
