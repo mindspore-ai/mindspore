@@ -22,6 +22,7 @@
 #include <unordered_set>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
 #include "src/common/primitive_t_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
@@ -42,9 +43,22 @@
 namespace mindspore {
 namespace opt {
 static const std::unordered_set<PrimitivePtr> kNNACLToOpsInfer = {
-  prim::kPrimAbs,    prim::kPrimActivation, prim::kPrimActivationGrad, prim::kPrimArgMaxFusion, prim::kPrimArgMinFusion,
-  prim::kPrimResize, prim::kPrimSquare,     prim::kPrimSqrt,           prim::kPrimRsqrt,        prim::kPrimLog,
-  prim::kPrimSin,    prim::kPrimCos,        prim::kPrimTupleGetItem,   prim::kPrimMakeTuple,    prim::kPrimMakeTupleV2,
+  // arithmetic_self
+  prim::kPrimAbs,          prim::kPrimCos,
+  prim::kPrimLog,          prim::kPrimLog1p,
+  prim::kPrimSquare,       prim::kPrimSqrt,
+  prim::kPrimRsqrt,        prim::kPrimSin,
+  prim::kPrimLogicalNot,   prim::kPrimFloor,
+  prim::kPrimCeil,         prim::kPrimRound,
+  prim::kPrimNeg,          prim::kPrimReciprocal,
+  prim::kPrimErf,
+
+  prim::kPrimActivation,   prim::kPrimActivationGrad,
+  prim::kPrimArgMaxFusion, prim::kPrimArgMinFusion,
+  prim::kPrimResize,
+
+  prim::kPrimTupleGetItem, prim::kPrimMakeTuple,
+  prim::kPrimMakeTupleV2,
 };
 
 namespace {
