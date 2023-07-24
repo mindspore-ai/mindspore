@@ -206,6 +206,7 @@ CNodePtr ScalarOpPass::GenerateTensorShape(const FuncGraphPtr &func_graph, const
   }
 
   // set abstract
+  tensor_shape_node->set_fullname_with_scope(anf_node->fullname_with_scope() + "_tensorshape");
   tensor_shape_node->set_abstract(tmp_abstract);
   return tensor_shape_node;
 }
@@ -251,6 +252,7 @@ CNodePtr ScalarOpPass::GenerateStridedSlice(const FuncGraphPtr &func_graph, cons
   AnfNodePtrList inputs = {prim, shape_node, begin_node, end_node, strides_node};
   CNodePtr strided_slice = func_graph->NewCNode(inputs);
   MS_CHECK_TRUE_RET(strided_slice != nullptr, nullptr);
+  strided_slice->set_fullname_with_scope(tuple_get_node->fullname_with_scope() + "_strided_slice");
   strided_slice->set_abstract(tmp_abstract);
 
   // set attrs, all defaults to zero
