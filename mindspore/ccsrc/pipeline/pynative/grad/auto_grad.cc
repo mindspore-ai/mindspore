@@ -244,7 +244,9 @@ FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph, const Gr
       g->set_flag(kFlagJitCallGraph, true);
     }
   }
-  auto abs_seq = after_opt_bg->parameters().back()->abstract()->cast<abstract::AbstractSequencePtr>();
+  auto abs_seq = after_opt_bg->parameters().empty()
+                   ? nullptr
+                   : after_opt_bg->parameters().back()->abstract()->cast<abstract::AbstractSequencePtr>();
   if (abs_seq != nullptr && !abs_seq->dynamic_len() && grad_param->is_jit_graph &&
       grad_param->use_dynamic_shape_process) {
     PyNativeAlgo::Common::ProcessTupleParam(after_opt_bg, after_opt_bg->parameters().size() - kIndex1);
@@ -440,7 +442,7 @@ void SetGradMetaData(const ValuePtr &value, const VariableAdjointPtr &variable, 
     }
   } else if (value->isa<ValueSequence>()) {
     auto value_sequence = value->cast<ValueSequencePtr>();
-    for (auto val : value_sequence->value()) {
+    for (const auto &val : value_sequence->value()) {
       SetGradMetaData(val, variable);
     }
   }
@@ -452,7 +454,7 @@ void ClearGradMetaData(const ValuePtr &value) {
     tensor->set_auto_grad_meta_data(nullptr);
   } else if (value->isa<ValueSequence>()) {
     auto value_sequence = value->cast<ValueSequencePtr>();
-    for (auto val : value_sequence->value()) {
+    for (const auto &val : value_sequence->value()) {
       ClearGradMetaData(val);
     }
   }
@@ -570,7 +572,7 @@ void FunctionNode::AddNextEdge(const VariableAdjointPtr &next_variable, const An
   MS_EXCEPTION_IF_NULL(next_variable);
   MS_EXCEPTION_IF_NULL(din);
   // next_node and its corresponding din
-  (void)next_edges_.emplace_back(std::make_pair(next_variable, din));
+  (void)next_edges_.emplace_back(next_variable, din);
   if (din == fake_dout_) {
     (void)need_replace_edges_.emplace_back(next_edges_.size() - 1);
   }
@@ -646,7 +648,7 @@ AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_valu
     } else {
       input_adjoint->set_is_need_grad(false);
     }
-    (void)cell_inputs_.emplace_back(std::make_pair(input_parameter, input_adjoint));
+    (void)cell_inputs_.emplace_back(input_parameter, input_adjoint);
     (void)ad_param()->variable_adjoint_set_.insert(input_adjoint);
   }
   device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -918,7 +920,9 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
   ad_graph_out->set_abstract(std::make_shared<abstract::AbstractTuple>(out_abs_list));
   ad_param()->tape_->set_output(ad_graph_out);
   auto ad_graph = ad_param()->tape_;
-  auto abs_seq = ad_graph->parameters().back()->abstract()->cast<abstract::AbstractSequencePtr>();
+  auto abs_seq = ad_graph->parameters().empty()
+                   ? nullptr
+                   : ad_graph->parameters().back()->abstract()->cast<abstract::AbstractSequencePtr>();
   if (abs_seq != nullptr && !abs_seq->dynamic_len() && grad_param->is_jit_graph &&
       grad_param->use_dynamic_shape_process) {
     auto manager = MakeManager();
@@ -1556,6 +1560,7 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
   // Change to attr
   const auto &input_names_vec = GetValue<std::vector<std::string>>(input_names);
   AnfNodePtrList new_inputs{NewValueNode(prim)};
+  size_t convert_size = 0;
   for (size_t i = 0; i < cnode->size() - 1; ++i) {
     auto input_node = cnode->input(i + 1);
     MS_EXCEPTION_IF_NULL(input_node);
@@ -1572,15 +1577,18 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
           return cnode;
         }
       }
-      cnode->AddAttr(kAttrConvertAttrNode, MakeValue(true));
+      ++convert_size;
       if (!grad_by_value) {
         auto &pair = node_attr_value_[cnode->ToString()];
-        (void)pair.emplace_back(std::make_pair(i, value));
+        (void)pair.emplace_back(i, value);
       }
       prim->set_attr(input_names_vec[i], value);
     } else {
       (void)new_inputs.emplace_back(input_node);
     }
+  }
+  if (convert_size > 0) {
+    cnode->AddAttr(kAttrConvertAttrNode, MakeValue(convert_size));
   }
   cnode->set_inputs(new_inputs);
   // If cast input is a cast
@@ -1713,9 +1721,9 @@ ParameterPtr AutoGradCellImpl::AddParameterNode(const tensor::TensorPtr &tensor,
   return param;
 }
 
-AnfNodePtrList AutoGradCellImpl::ExtractParamters(const tensor::TensorPtrList weights) const {
+AnfNodePtrList AutoGradCellImpl::ExtractParamters(const tensor::TensorPtrList &weights) const {
   AnfNodePtrList params;
-  for (auto weight : weights) {
+  for (const auto &weight : weights) {
     auto parameter = ExtractParameter(weight);
     MS_EXCEPTION_IF_NULL(parameter);
     (void)params.emplace_back(std::move(parameter));
@@ -1734,8 +1742,8 @@ void AutoGradCellImpl::UpdateSensParameter(const ValuePtr &value) {
     }
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>()->value();
-    for (size_t i = 0; i < value_seq.size(); ++i) {
-      UpdateSensParameter(value_seq[i]);
+    for (const auto &v : value_seq) {
+      UpdateSensParameter(v);
     }
   }
 }
@@ -2079,8 +2087,8 @@ AnfNodePtr AutoGradCellImpl::GetWeightGrad(bool grad_weights, const tensor::Tens
   if (weight_param_is_tuple) {
     AnfNodePtrList weights_grad_list{NewValueNode(prim::kPrimMakeTuple)};
     AbstractBasePtrList weights_grad_spec;
-    for (size_t index = 0; index < weights.size(); ++index) {
-      auto grad_node = GetGradNodeByIndex(weights[index]);
+    for (const auto &weight : weights) {
+      auto grad_node = GetGradNodeByIndex(weight);
       MS_EXCEPTION_IF_NULL(grad_node);
       (void)weights_grad_list.emplace_back(grad_node);
       (void)weights_grad_spec.emplace_back(grad_node->abstract());
@@ -2173,8 +2181,8 @@ void AutoGradCellImpl::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new
     size_t index = pair_node.second;
     if (index >= cnode->size()) {
       // After convert attr cnode input will less
-      if (cnode->HasAttr(kAttrConvertAttrNode)) {
-        index -= node_attr_value_[cnode->ToString()].size();
+      if (auto v = cnode->GetAttr(kAttrConvertAttrNode); v != nullptr) {
+        index -= GetValue<size_t>(v);
       } else {
         MS_LOG(EXCEPTION) << "exception for index: " << index << "greater than cnode size: " << cnode->size();
       }
