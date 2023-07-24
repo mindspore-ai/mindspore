@@ -27,7 +27,9 @@ int NNAPIGather::InitParams() {
   MS_CHECK_TRUE_RET(in_tensors_.size() == kInputSize2, RET_ERROR);
   auto axis_tensor = in_tensors_.at(2);
   MS_CHECK_TRUE_RET(axis_tensor.IsConst() && axis_tensor.DataType() == DataType::kNumberTypeInt32, RET_ERROR);
-  axis_ = *(reinterpret_cast<int *>(axis_tensor.MutableData()));
+  auto axis_data = axis_tensor.MutableData();
+  MS_CHECK_TRUE_RET(axis_data != nullptr, RET_ERROR);
+  axis_ = *(reinterpret_cast<int *>(axis_data));
   return RET_OK;
 }
 

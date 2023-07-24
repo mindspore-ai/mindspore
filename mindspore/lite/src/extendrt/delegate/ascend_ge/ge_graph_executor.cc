@@ -115,7 +115,7 @@ transform::DfGraphPtr GetDataFlowGraph(const FuncGraphPtr &anf_graph,
   MS_EXCEPTION_IF_NULL(return_node);
   auto nodes = anf_graph->TopoSort(return_node);
   auto itr = std::find_if(nodes.begin(), nodes.end(), [&](const AnfNodePtr &node) {
-    return node->isa<CNode>() && opt::CheckPrimitiveType(node, prim::kPrimCustom);
+    return node != nullptr && node->isa<CNode>() && opt::CheckPrimitiveType(node, prim::kPrimCustom);
   });
   if (itr == nodes.end()) {
     MS_LOG(ERROR) << "The dataflow graph is invalid.";
@@ -333,6 +333,7 @@ transform::TensorOrderMap GeGraphExecutor::GetParams(const FuncGraphPtr &anf_gra
       auto value = para->default_param();
       MS_EXCEPTION_IF_NULL(value);
       auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
+      MS_EXCEPTION_IF_NULL(tensor);
       res.emplace(para->name(), tensor);
     }
   }
@@ -366,6 +367,7 @@ bool GeGraphExecutor::UpdateGraphInputs(const FuncGraphPtr &graph) {
   }
   for (size_t i = 0; i < input_shapes.size(); i++) {
     auto node = inputs[i];
+    MS_CHECK_TRUE_RET(node != nullptr, false);
     auto input_shape = input_shapes[i];
     auto para = node->cast<ParameterPtr>();
     if (para == nullptr) {
@@ -521,6 +523,7 @@ transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &an
 
 bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map<string, string> &compile_options,
                                    uint32_t *graph_id) {
+  MS_CHECK_TRUE_RET(graph_id != nullptr, false);
   std::map<std::string, std::string> ge_options;
   auto df_graph = CompileGraphCommon(anf_graph, compile_options, &ge_options);
   if (anf_graph == nullptr) {
@@ -733,6 +736,7 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor
 
 bool GeGraphExecutor::GeMoveOutputData(::ge::Tensor *ge_tensor_ptr, lite::Tensor *output, uint32_t graph_id,
                                        size_t idx) {
+  MS_CHECK_TRUE_RET(ge_tensor_ptr != nullptr && output != nullptr, false);
   auto &ge_tensor = *ge_tensor_ptr;
   auto ge_tensor_desc = ge_tensor.GetTensorDesc();
   auto me_shape = transform::TransformUtil::ConvertGeShape(ge_tensor_desc.GetShape());
@@ -902,7 +906,7 @@ void GeSessionManager::TryReleaseGeSessionContext(int64_t session_id) {
 static std::shared_ptr<LiteGraphExecutor> GeGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
                                                                  const ConfigInfos &config_infos) {
   auto ge_executor = std::make_shared<GeGraphExecutor>(ctx, config_infos);
-  if (!ge_executor->Init()) {
+  if (ge_executor == nullptr || !ge_executor->Init()) {
     MS_LOG(ERROR) << "Failed to init GeGraphExecutor";
     return nullptr;
   }

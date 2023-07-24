@@ -32,8 +32,11 @@ int NNAPIInstanceNorm::InitParams() {
   MS_CHECK_TRUE_RET(
     scale_tensor.DataType() == DataType::kNumberTypeFloat32 && bias_tensor.DataType() == DataType::kNumberTypeFloat32,
     RET_ERROR);
-  scale_ = *(reinterpret_cast<float *>(scale_tensor.MutableData()));
-  bias_ = *(reinterpret_cast<float *>(bias_tensor.MutableData()));
+  auto scale_data = scale_tensor.MutableData();
+  auto bias_data = bias_tensor.MutableData();
+  MS_CHECK_TRUE_RET(scale_data != nullptr && bias_data != nullptr, RET_ERROR);
+  scale_ = *(reinterpret_cast<float *>(scale_data));
+  bias_ = *(reinterpret_cast<float *>(bias_data));
   auto instance_norm = op_primitive_->value_as_InstanceNorm();
   MS_CHECK_TRUE_RET(instance_norm != nullptr, RET_ERROR);
   epsilon_ = instance_norm->epsilon();
