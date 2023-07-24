@@ -88,19 +88,21 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         # Generate step time.
         self._set_step_start_and_end_op_name(timeline_list)
 
-        step_time_list = np.empty((len(steptrace),), dtype=self.step_time_list_df)
-
-        step_time_list['Iteration ID'] = np.char.add("Model ID: ", np.char.add(steptrace['Model ID'].astype(str),
-                                                                               np.char.add(" Iteration ID: ", steptrace[
-                                                                                   'Iteration ID'].astype(str))))
-        step_time_list['Steps'] = 'Steps'
-        step_time_list['Iteration Start'] = steptrace['Iteration End'] - steptrace['Iteration Time']
-        step_time_list['Iteration Time'] = steptrace['Iteration Time']
-        step_time_list = step_time_list.tolist()
-        if not step_time_list:
+        if not isinstance(steptrace, np.ndarray) or steptrace.shape[0] == 0 or not steptrace.tolist():
             iteration_time = op_summary[-1]['Task Start Time'] - op_summary[0]['Task Start Time'] + op_summary[-1][
                 'Task Duration'] + op_summary[-1]['Task Wait Time']
             step_time_list = [['1', 'Steps', op_summary[0]['Task Start Time'], iteration_time]]
+        else:
+            step_time_list = np.empty((len(steptrace),), dtype=self.step_time_list_df)
+            step_time_list['Iteration ID'] = \
+                np.char.add("Model ID: ",
+                            np.char.add(steptrace['Model ID'].astype(str),
+                                        np.char.add(" Iteration ID: ",
+                                                    steptrace['Iteration ID'].astype(str))))
+            step_time_list['Steps'] = 'Steps'
+            step_time_list['Iteration Start'] = steptrace['Iteration End'] - steptrace['Iteration Time']
+            step_time_list['Iteration Time'] = steptrace['Iteration Time']
+            step_time_list = step_time_list.tolist()
 
         # Add Scope Name.
         default_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "Default")

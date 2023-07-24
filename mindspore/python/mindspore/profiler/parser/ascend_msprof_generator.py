@@ -27,7 +27,7 @@ class AscendMsprofDataGenerator:
         self.source_path = source_path
         self.op_summary = None
         self.op_statistic = None
-        self.steptrace = None
+        self.steptrace = []
 
         self.invalid_index = 1000
         self.op_summary_basis_name = {
@@ -150,6 +150,7 @@ class AscendMsprofDataGenerator:
     def _read_steptrace(self):
         """read steptrace to memory"""
         steptrace = []
+        header = []
         for file in self.find_files(self.source_path, "step_trace*.csv"):
             with open(file, newline='') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -158,9 +159,9 @@ class AscendMsprofDataGenerator:
                 for row in reader:
                     rows = [row[index.get('index')] for index in self.steptrace_name.values()]
                     if row[9:]:
-                        rows.extend(row[9:])
-                    else:
-                        rows.extend([0 for _ in range(len(header) - 9)])
+                        rows.extend(row[9:len(header)])
+                    if len(rows) < len(header):
+                        rows.extend([0 for _ in range(len(header) - len(rows))])
                     rows = ['0' if i == 'N/A' else i for i in rows]
                     steptrace.append(tuple(rows))
             break
@@ -175,6 +176,13 @@ class AscendMsprofDataGenerator:
             index += 1
             self.steptrace_name[f'{name} duration'] = {'index': index, 'dtype': (f'{name} duration', float)}
             index += 1
+            if index >= len(header)-1:
+                break
+
+        for i in range(index, len(header), 2):
+            name = f'hccl_{i}'
+            self.steptrace_name[name] = {'index': i, 'dtype': (name, float)}
+            self.steptrace_name[f'{name} duration'] = {'index': i+1, 'dtype': (f'{name} duration', float)}
 
         steptrace_dt = np.dtype([value['dtype'] for value in self.steptrace_name.values()])
 
