@@ -126,23 +126,12 @@ bool Profiling::StartProfiling(const aclrtStream &stream) {
     MS_LOG(ERROR) << "aclprofStart start failed, ret = " << ret;
     return false;
   }
-  step_info_ = aclprofCreateStepInfo();
-  ret = aclprofGetStepTimestamp(step_info_, ACL_STEP_START, stream);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "aclProfGetStepTimestamp failed, ret = " << ret;
-    return false;
-  }
   return true;
 }
 
 bool Profiling::StopProfiling(const aclrtStream &stream) {
   MS_LOG(INFO) << "End to profile";
-  aclError ret = aclprofGetStepTimestamp(step_info_, ACL_STEP_END, stream);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "aclProfGetStepTimestamp failed, ret = " << ret;
-    return false;
-  }
-  ret = aclprofStop(acl_config_);
+  aclError ret = aclprofStop(acl_config_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclprofDestroyConfig failed, ret = " << ret;
     return false;
