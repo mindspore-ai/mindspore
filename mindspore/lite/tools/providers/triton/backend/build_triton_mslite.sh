@@ -15,7 +15,7 @@ function Run_Build() {
 
   export MINDSPORE_LITE_PKG_ROOT_PATH=${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}
   # compile triton mslite backend
-  cd ${open_source_ms_path}/mindspore/lite/tools/providers/triton_mslite_backend
+  cd ${open_source_ms_path}/mindspore/lite/tools/providers/triton/backend
   rm -rf build; mkdir build; cd build;
   cmake -DCMAKE_INSTALL_PREFIX:PATH=../install .. || exit 1
   make install -j ${thread_num} || exit 1
@@ -23,9 +23,10 @@ function Run_Build() {
   echo "build for triton backend success"
 
   # cp to release package folder
-  mkdir ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/providers/
-  mkdir ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/providers/triton_mslite_backend/
-  cp -r install/backends/mslite ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/providers/triton_mslite_backend/ || exit 1
+  mkdir ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/tools/providers/
+  mkdir ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/tools/providers/triton/
+  mkdir ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/tools/providers/triton/backend/
+  cp -r install/backends/mslite ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/tools/providers/triton/backend/ || exit 1
   echo "cp triton backend so to release pkg success"
 
   cd ${open_source_ms_path}/output

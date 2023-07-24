@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_MSLITE_BACKEND_SRC_MSLITE_MODEL_STATE_H_
-#define MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_MSLITE_BACKEND_SRC_MSLITE_MODEL_STATE_H_
+#ifndef MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_BACKEND_SRC_MSLITE_MODEL_STATE_H_
+#define MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_BACKEND_SRC_MSLITE_MODEL_STATE_H_
 
 #include <memory>
 #include <string>
@@ -107,4 +107,4 @@ class ModelInstanceState : public BackendModelInstance {
 }  // namespace mslite
 }  // namespace backend
 }  // namespace triton
-#endif  // MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_MSLITE_BACKEND_SRC_MSLITE_MODEL_STATE_H_
+#endif  // MINDSPORE_LITE_TOOLS_PROVIDERS_TRITON_BACKEND_SRC_MSLITE_MODEL_STATE_H_

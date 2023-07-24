@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,8 +172,9 @@ TRITONSERVER_Error *ModelInstanceState::ProcessInputs(TRITONBACKEND_Request **re
                                                     &input_dims_count, nullptr, nullptr));
       batched_size_ += *input_shape;
     }
-    RETURN_ERROR_IF_FALSE(batched_size_ <= model_state_->MaxBatchSize(), TRITONSERVER_ERROR_INVALID_ARG,
-                          std::string("The input batch size is larger than the max batch size."));
+    RETURN_ERROR_IF_TRUE(model_state_->MaxBatchSize() > 0 && batched_size_ > model_state_->MaxBatchSize(),
+                         TRITONSERVER_ERROR_INVALID_ARG,
+                         std::string("The input batch size is larger than the max batch size."));
     auto data_type = GetMSDataTypeFromTritonServerDataType(input_datatype);
     RETURN_ERROR_IF_FALSE(data_type == model_inputs.at(idx).DataType(), TRITONSERVER_ERROR_INVALID_ARG,
                           std::string("The input data type is not equal to model input."));

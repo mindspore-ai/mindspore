@@ -146,35 +146,35 @@ void ModelPyBind(const py::module &m) {
 }
 
 #ifdef PARALLEL_INFERENCE
-std::vector<MSTensorPtr> PyModelParallelRunnerPredict(ModelParallelRunner *model,
+std::vector<MSTensorPtr> PyModelParallelRunnerPredict(ModelParallelRunner *runner,
                                                       const std::vector<MSTensorPtr> &inputs_ptr,
                                                       const MSKernelCallBack &before = nullptr,
                                                       const MSKernelCallBack &after = nullptr) {
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Model object cannot be nullptr";
+  if (runner == nullptr) {
+    MS_LOG(ERROR) << "ModelParallelRunner object cannot be nullptr";
     return {};
   }
   std::vector<MSTensor> inputs = MSTensorPtrToMSTensor(inputs_ptr);
   std::vector<MSTensor> outputs;
-  if (!model->Predict(inputs, &outputs, before, after).IsOk()) {
+  if (!runner->Predict(inputs, &outputs, before, after).IsOk()) {
     return {};
   }
   return MSTensorToMSTensorPtr(outputs);
 }
-std::vector<MSTensorPtr> PyModelParallelRunnerGetInputs(ModelParallelRunner *model) {
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Model object cannot be nullptr";
+std::vector<MSTensorPtr> PyModelParallelRunnerGetInputs(ModelParallelRunner *runner) {
+  if (runner == nullptr) {
+    MS_LOG(ERROR) << "ModelParallelRunner object cannot be nullptr";
     return {};
   }
-  return MSTensorToMSTensorPtr(model->GetInputs());
+  return MSTensorToMSTensorPtr(runner->GetInputs());
 }
 
-std::vector<MSTensorPtr> PyModelParallelRunnerGetOutputs(ModelParallelRunner *model) {
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Model object cannot be nullptr";
+std::vector<MSTensorPtr> PyModelParallelRunnerGetOutputs(ModelParallelRunner *runner) {
+  if (runner == nullptr) {
+    MS_LOG(ERROR) << "ModelParallelRunner object cannot be nullptr";
     return {};
   }
-  return MSTensorToMSTensorPtr(model->GetOutputs());
+  return MSTensorToMSTensorPtr(runner->GetOutputs());
 }
 #endif
 
