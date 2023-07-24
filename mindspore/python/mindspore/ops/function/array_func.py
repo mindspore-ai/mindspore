@@ -2485,7 +2485,6 @@ def scatter_mul(input_x, indices, updates):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32 or int64.
         ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
@@ -3985,7 +3984,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         >>> reduction = "none"
         >>> output = ops.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
         >>> print(output)
-        [[ 1, 2, 8, 4, 8]]
+        [[1 2 8 4 8]]
         >>> input_x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.int32), name="x")
         >>> indices = Tensor(np.array([[1, -1, 2], [0, 2, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[1, 2, 2], [4, 5, 8]]), mindspore.int32)
@@ -3993,7 +3992,9 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         >>> reduction = "add"
         >>> output = ops.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
         >>> print(output)
-        [[5, 2, 3], [5, 5, 14], [7, 15, 11]]
+        [[ 5  2  3]
+         [ 5  5 14]
+         [ 7 15 11]]
     """
     _tensor_scatter_elements = _get_cache_prim(TensorScatterElements)(axis, reduction)
     return _tensor_scatter_elements(input_x, indices, updates)
