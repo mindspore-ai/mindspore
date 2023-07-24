@@ -1032,7 +1032,12 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   int output_size;
   std::vector<std::string> input_names;
   if (node_parser != nullptr) {
-    primitive_c = node_parser->Parse(node_def, tf_node_map, &input_names, &output_size)->GetPrim();
+    auto parser_result = node_parser->Parse(node_def, tf_node_map, &input_names, &output_size);
+    if (parser_result == nullptr) {
+      MS_LOG(ERROR) << "Node parse result nullptr!Please check system memory.";
+      return RET_ERROR;
+    }
+    primitive_c = parser_result->GetPrim();
   } else {
     auto node_parser_builtin = TFNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
     if (node_parser_builtin == nullptr) {
@@ -1044,7 +1049,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
     primitive_c = node_parser_builtin->Parse(node_def, tf_node_map, &input_names, &output_size);
   }
   if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "node " << op_type << " parser failed";
+    MS_LOG(ERROR) << "node " << op_type << " parser failed!";
     return RET_ERROR;
   }
   node_output_num_[node_def.name()] = output_size;

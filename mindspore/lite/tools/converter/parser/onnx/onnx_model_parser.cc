@@ -328,7 +328,7 @@ STATUS ConvertConstTensors(const onnx::GraphProto &onnx_graph, const FuncGraphPt
   MS_ASSERT(func_graph_ptr != nullptr && anf_nodes_map != nullptr);
   std::map<std::string, std::pair<size_t, uint8_t *>> external_datas;
   auto free_external_data = [&external_datas]() {
-    for (auto &item : external_datas) {
+    for (auto &&item : external_datas) {
       if (item.second.second) {
         delete[] item.second.second;
       }
