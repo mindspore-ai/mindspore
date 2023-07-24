@@ -35,8 +35,8 @@ TensorInfo::TensorInfo(const std::string &name, mindspore::DataType type, const 
   } else {
     impl_->SetFormat(format);
     if (impl_->DataSize() != data_len) {
-      MS_LOG_WARNING << "Tensor expect data size " << impl_->DataSize() << " != data len " << data_len
-                     << ", shape: " << impl_->Shape() << ", dtype: " << impl_->DataType();
+      MS_LOG_INFO << "Tensor expect data size " << impl_->DataSize() << " != data len " << data_len
+                  << ", shape: " << impl_->Shape() << ", dtype: " << impl_->DataType();
     }
     impl_->SetData(const_cast<void *>(data), false);
     if (data != nullptr) {
