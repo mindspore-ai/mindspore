@@ -55,7 +55,9 @@ class Net(nn.Cell):
         super().__init__()
         self.gatherv2 = P.Gather(batch_dims=batch_dims).shard(strategy1)
         self.mul = P.Mul().shard(strategy2)
-        self.relu = P.ReLU().shard((strategy2[0],))
+        self.relu = P.ReLU()
+        if strategy2:
+            self.relu.shard((strategy2[0],))
         self.index = None
         if shape:
             self.index = Tensor(np.ones(shape), dtype=ms.int32)
@@ -156,6 +158,20 @@ def test_gather_2x2_batch_dims_1():
     """
     strategy1 = ((2, 1), (2, 4))
     strategy2 = ((2, 4), (2, 4))
+    net = GradWrap(NetWithLoss(Net(shape=(8, 16), axis=1, strategy1=strategy1, strategy2=strategy2, batch_dims=1)))
+    x = Tensor(np.ones([8, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([8, 16]), dtype=ms.float32)
+    compile_graph(net, 8, "semi_auto_parallel", x, y)
+
+
+def test_gather_2x2_batch_dims_1_gen_batch_strategy():
+    """
+    Feature: distribute operator gather
+    Description: gather net without strategy in semi auto parallel, gather axis is 1, batch dims is 1.
+    Expectation: compile done without error.
+    """
+    strategy1 = None
+    strategy2 = None
     net = GradWrap(NetWithLoss(Net(shape=(8, 16), axis=1, strategy1=strategy1, strategy2=strategy2, batch_dims=1)))
     x = Tensor(np.ones([8, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 16]), dtype=ms.float32)
