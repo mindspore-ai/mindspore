@@ -31,9 +31,9 @@ PrimitiveCPtr OnnxSplitParser::Parse(const onnx::GraphProto &onnx_graph, const o
   int64_t split_num = 0;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "axis") {
+    if (attribute_name == kAttrAxis) {
       prim->set_axis(onnx_node_attr.i());
-    } else if (attribute_name == "split") {
+    } else if (attribute_name == kAttrSplit) {
       size_splits.resize(onnx_node_attr.ints_size());
       std::copy(onnx_node_attr.ints().begin(), onnx_node_attr.ints().end(), size_splits.begin());
       prim->set_size_splits(size_splits);
