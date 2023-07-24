@@ -27,6 +27,18 @@ struct CastFunctor {
 };
 
 template <>
+struct CastFunctor<Complex<float>, bool> {
+  CastFunctor() {}
+  __device__ __forceinline__ bool operator()(Complex<float> x) const { return static_cast<bool>(x.real()); }
+};
+
+template <>
+struct CastFunctor<Complex<double>, bool> {
+  CastFunctor() {}
+  __device__ __forceinline__ bool operator()(Complex<double> x) const { return static_cast<bool>(x.real()); }
+};
+
+template <>
 struct CastFunctor<half, uint64_t> {
   CastFunctor() {}
   __device__ __forceinline__ uint64_t operator()(half x) const { return __half2ull_rz(x); }
