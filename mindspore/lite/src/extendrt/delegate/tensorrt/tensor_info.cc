@@ -41,8 +41,8 @@ class TensorInfoImpl {
   void SetData(const void *data, size_t data_len) {
     if (data != nullptr && data_len != 0) {
       if (tensor_impl_.DataSize() != data_len) {
-        MS_LOG_WARNING << "Tensor expect data size " << tensor_impl_.DataSize() << " != data len " << data_len
-                       << ", shape: " << tensor_impl_.Shape() << ", dtype: " << tensor_impl_.DataType();
+        MS_LOG_INFO << "Tensor expect data size " << tensor_impl_.DataSize() << " != data len " << data_len
+                    << ", shape: " << tensor_impl_.Shape() << ", dtype: " << tensor_impl_.DataType();
       }
       tensor_impl_.SetData(const_cast<void *>(data), false);
     }
