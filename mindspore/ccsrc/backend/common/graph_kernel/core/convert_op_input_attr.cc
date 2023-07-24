@@ -131,22 +131,25 @@ bool ConvertOpUtils::AddConstInputToAttr(const CNodePtr &cnode, const HashSet<si
         auto parameter_node = input_node->cast<ParameterPtr>();
         value = parameter_node->abstract()->BuildValue();
       }
-      if (value != nullptr) {
-        if (!value->isa<tensor::Tensor>()) {
-          primitive->set_attr(input_names_vec[i], value);
-          continue;
-        }
-        auto value_vector = CheckAndConvertUtils::CheckTensorIntValue(input_names_vec[i], value, primitive->name());
-        auto tensor = value->cast<tensor::TensorPtr>();
-        auto tensor_shape = tensor->shape_c();
-        if (tensor_shape.empty()) {
-          primitive->set_attr(input_names_vec[i], MakeValue(value_vector[0]));
-        } else {
-          primitive->set_attr(input_names_vec[i], MakeValue(value_vector));
-        }
-      } else {
-        MS_LOG(DEBUG) << input_names_vec[i] << "'s Value is null!";
+      if (value == nullptr) {
+        MS_LOG(DEBUG) << input_names_vec[i] << "'s Value is null.";
         return false;
+      }
+      if (value->isa<ValueAny>()) {
+        MS_LOG(DEBUG) << input_names_vec[i] << "'s Value is ValueAny.";
+        return false;
+      }
+      if (!value->isa<tensor::Tensor>()) {
+        primitive->set_attr(input_names_vec[i], value);
+        continue;
+      }
+      auto value_vector = CheckAndConvertUtils::CheckTensorIntValue(input_names_vec[i], value, primitive->name());
+      auto tensor = value->cast<tensor::TensorPtr>();
+      auto tensor_shape = tensor->shape_c();
+      if (tensor_shape.empty()) {
+        primitive->set_attr(input_names_vec[i], MakeValue(value_vector[0]));
+      } else {
+        primitive->set_attr(input_names_vec[i], MakeValue(value_vector));
       }
     }
   }
