@@ -21,6 +21,9 @@
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -43,6 +46,26 @@ float Clip::get_min() const {
   auto value_ptr = this->GetAttr(kMin);
   return GetValue<float>(value_ptr);
 }
-REGISTER_PRIMITIVE_C(kNameClip, Clip);
+
+class ClipInferBase : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1,
+                                             prim->name());
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    return input_args[0]->BuildShape();
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1,
+                                             prim->name());
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    return input_args[0]->BuildType();
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Clip, prim::kPrimClip, ClipInferBase, false);
 }  // namespace ops
 }  // namespace mindspore

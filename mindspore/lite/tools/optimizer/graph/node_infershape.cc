@@ -73,6 +73,16 @@ static const std::unordered_set<PrimitivePtr> kNNACLToOpsInfer = {
   prim::kPrimTupleGetItem,
   prim::kPrimMakeTuple,
   prim::kPrimMakeTupleV2,
+  // nnacl/infer/common_infer.c
+  prim::kPrimClip,
+  prim::kPrimElu,
+  prim::kPrimLeakyRelu,
+  prim::kPrimLrn,
+  prim::kPrimOnesLike,
+  prim::kPrimReverseSequence,
+  prim::kPrimReverseV2,
+  prim::kPrimSmoothL1Loss,
+  prim::kPrimZerosLike,
   // format op
   prim::kPrimResize,
 
