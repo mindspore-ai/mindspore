@@ -1380,11 +1380,10 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   getattr_node->set_debug_info(cnode->debug_info());
   MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString(debug_recursive_level);
 
-  fg->ReplaceInOrder(cnode, getattr_node);
   auto eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
-  return eng->ForwardConfig(out_conf, fn_conf, false);
+  return eng->ForwardConfig(out_conf, fn_conf);
 }
 
 EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf, const AnfNodeConfigPtr &old_conf,
@@ -1458,7 +1457,6 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
     MS_EXCEPTION_IF_NULL(out_cnode);
     constexpr auto default_index = 3;
     auto default_node = out_cnode->inputs()[default_index];
-    func_graph->ReplaceInOrder(out_node, default_node);
     auto eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
@@ -1467,9 +1465,6 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
   if (pipeline::GetJitLevel() == "O0" && IsValueNode<FuncGraph>(new_node)) {
     UpdateDebugInfo(GetValueNode<FuncGraphPtr>(new_node), out_node->scope(), out_node->debug_info());
   }
-
-  // Replace old node with the resolved new node in order list.
-  func_graph->ReplaceInOrder(out_node, new_node);
 
   AnalysisEnginePtr eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
@@ -1570,8 +1565,6 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AbstractBasePtrList 
     MS_EXCEPTION_IF_NULL(out_cnode);
     new_node = out_cnode->inputs()[default_index];
   }
-
-  func_graph->ReplaceInOrder(out_node, new_node);
   AnalysisEnginePtr eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
@@ -1623,7 +1616,6 @@ EvalResultPtr GetEvaluatedValueForFuncGraphAttrOrMethod(const AbstractBasePtrLis
       constexpr auto default_index = 3;
       new_node = out_cnode->inputs()[default_index];
     }
-    fg->ReplaceInOrder(out_node, new_node);
     AnalysisEnginePtr eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
@@ -1782,10 +1774,8 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
       auto out_node = out_conf->node();
       auto out_cnode = out_node->cast_ptr<CNode>();
       MS_EXCEPTION_IF_NULL(out_cnode);
-      auto fg = out_cnode->func_graph();
       constexpr auto default_index = 3;
       auto default_node = out_cnode->inputs()[default_index];
-      fg->ReplaceInOrder(out_node, default_node);
       auto eng = out_conf->engine();
       MS_EXCEPTION_IF_NULL(eng);
       auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
@@ -1966,7 +1956,6 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
     const auto &out_cnode_inputs = out_cnode->inputs();
     (void)std::copy(out_cnode_inputs.begin() + 1, out_cnode_inputs.end(), std::back_inserter(new_cnode_inputs));
     auto new_node = func_graph->NewCNodeInOrder(new_cnode_inputs);
-    func_graph->ReplaceInOrder(out_node, new_node);
     AnalysisEnginePtr eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
@@ -2872,7 +2861,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     cur_graph->set_has_side_effect_node(true);
     MS_LOG(DEBUG) << "Found Side Effect Primitive CNode: " << raise_error_node->DebugString();
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(raise_error_node, out_conf->context(), out_conf->func_graph());
-    return eng->ForwardConfig(out_conf, fn_conf, false);
+    return eng->ForwardConfig(out_conf, fn_conf);
   }
 
  private:
@@ -3220,7 +3209,6 @@ class JoinedStrEvaluator : public TransitionPrimEvaluator {
       new_node = NewValueNode(res);
     }
 
-    cur_graph->ReplaceInOrder(node, new_node);
     AnalysisEnginePtr eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
