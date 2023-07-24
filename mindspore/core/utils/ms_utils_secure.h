@@ -21,6 +21,8 @@
 
 namespace mindspore {
 namespace common {
+// Used to copy huge memory. It is necessary to apply for a large memory length and use the memcpy_s security function
+// together to ensure the security of data copying.
 static inline errno_t huge_memcpy(uint8_t *destAddr, size_t destMaxLen, const uint8_t *srcAddr, size_t srcLen) {
   while (destMaxLen > SECUREC_MEM_MAX_LEN && srcLen > SECUREC_MEM_MAX_LEN) {
     errno_t ret = memcpy_s(destAddr, SECUREC_MEM_MAX_LEN, srcAddr, SECUREC_MEM_MAX_LEN);
