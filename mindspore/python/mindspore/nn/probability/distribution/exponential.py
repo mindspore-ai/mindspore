@@ -161,6 +161,7 @@ class Exponential(Distribution):
         self.cast = P.Cast()
         self.const = P.ScalarToTensor()
         self.dtypeop = P.DType()
+        self.fillv2 = P.FillV2()
         self.less = P.Less()
         self.select = P.Select()
         self.shape = P.Shape()
@@ -208,7 +209,7 @@ class Exponential(Distribution):
             MODE(EXP) = 0.
         """
         rate = self._check_param_type(rate)
-        return F.fill(self.dtype, self.shape(rate), 0.)
+        return self.fillv2(self.shape(rate), Tensor(0., self.dtype))
 
     def _sd(self, rate=None):
         r"""
@@ -257,8 +258,9 @@ class Exponential(Distribution):
         value = self.cast(value, self.dtype)
         rate = self._check_param_type(rate)
         prob = self.log(rate) - rate * value
-        zeros = F.fill(self.dtypeop(prob), self.shape(prob), 0.0)
-        neginf = F.fill(self.dtypeop(prob), self.shape(prob), -np.inf)
+        zeros = self.fillv2(self.shape(prob), Tensor(0.0, self.dtypeop(prob)))
+        neginf = self.fillv2(self.shape(prob),
+                             Tensor(-np.inf, self.dtypeop(prob)))
         comp = self.less(value, zeros)
         return self.select(comp, neginf, prob)
 
@@ -280,7 +282,7 @@ class Exponential(Distribution):
         value = self.cast(value, self.dtype)
         rate = self._check_param_type(rate)
         cdf = 1.0 - self.exp(-1. * rate * value)
-        zeros = F.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
+        zeros = self.fillv2(self.shape(cdf), Tensor(0.0, self.dtypeop(cdf)))
         comp = self.less(value, zeros)
         return self.select(comp, zeros, cdf)
 
@@ -302,7 +304,7 @@ class Exponential(Distribution):
         value = self.cast(value, self.dtype)
         rate = self._check_param_type(rate)
         sf = -1. * rate * value
-        zeros = F.fill(self.dtypeop(sf), self.shape(sf), 0.0)
+        zeros = self.fillv2(self.shape(sf), Tensor(0.0, self.dtypeop(sf)))
         comp = self.less(value, zeros)
         return self.select(comp, zeros, sf)
 
