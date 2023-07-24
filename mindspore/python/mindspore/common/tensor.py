@@ -4824,6 +4824,12 @@ def _vm_compare(*args):
     if obj_str == "shape":
         fn = getattr(args[0].asnumpy(), obj_str)
         return fn
+    if obj_str == "__setitem__":
+        fn = getattr(args[0].asnumpy(), obj_str)
+        index = args[1].asnumpy() if isinstance(args[1], Tensor) else args[1]
+        value = args[2].asnumpy() if isinstance(args[2], Tensor) else args[2]
+        fn(index, value)
+        return args[0]
     if len(args) == 2:
         fn = getattr(args[0].asnumpy(), obj_str)
         return Tensor(fn())

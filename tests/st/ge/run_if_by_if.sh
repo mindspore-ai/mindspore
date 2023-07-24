@@ -19,6 +19,7 @@ rm -rf ${BASE_PATH}/if_by_if
 mkdir ${BASE_PATH}/if_by_if
 export MS_ENABLE_GE=1
 export MS_GE_TRAIN=1
+export MS_DEV_FORCE_ACL=1
 unset SLOG_PRINT_TO_STDOUT
 cd ${BASE_PATH}/if_by_if
 echo "start test if_by_if with ge backend"
@@ -28,6 +29,7 @@ process_pid=`echo $!`
 wait ${process_pid}
 unset MS_GE_TRAIN
 unset MS_ENABLE_GE
+unset MS_DEV_FORCE_ACL
 status=`echo $?`
 if [ "${status}" != "0" ]; then
     echo "[ERROR] test if_by_if with ge backend failed. status: ${status}"
