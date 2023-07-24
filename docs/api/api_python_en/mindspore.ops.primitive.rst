@@ -37,10 +37,6 @@ Decorators
     :template: classtemplate.rst
 
     mindspore.ops.constexpr
-    mindspore.ops.custom_info_register
-    mindspore.ops.kernel
-    mindspore.ops.op_info_register
-    mindspore.ops.prim_attr_register
 
 Neural Network Layer Operators
 ------------------------------
@@ -708,6 +704,8 @@ Customizing Operator
     :template: classtemplate.rst
 
     mindspore.ops.Custom
+    mindspore.ops.custom_info_register
+    mindspore.ops.kernel
 
 Spectral Operator
 -----------------
