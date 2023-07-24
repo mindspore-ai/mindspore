@@ -20,6 +20,7 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_set>
+#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/comparison_ops.h"
@@ -44,21 +45,41 @@ namespace mindspore {
 namespace opt {
 static const std::unordered_set<PrimitivePtr> kNNACLToOpsInfer = {
   // arithmetic_self
-  prim::kPrimAbs,          prim::kPrimCos,
-  prim::kPrimLog,          prim::kPrimLog1p,
-  prim::kPrimSquare,       prim::kPrimSqrt,
-  prim::kPrimRsqrt,        prim::kPrimSin,
-  prim::kPrimLogicalNot,   prim::kPrimFloor,
-  prim::kPrimCeil,         prim::kPrimRound,
-  prim::kPrimNeg,          prim::kPrimReciprocal,
+  prim::kPrimAbs,
+  prim::kPrimCos,
+  prim::kPrimLog,
+  prim::kPrimLog1p,
+  prim::kPrimSquare,
+  prim::kPrimSqrt,
+  prim::kPrimRsqrt,
+  prim::kPrimSin,
+  prim::kPrimLogicalNot,
+  prim::kPrimFloor,
+  prim::kPrimCeil,
+  prim::kPrimRound,
+  prim::kPrimNeg,
+  prim::kPrimReciprocal,
   prim::kPrimErf,
-
-  prim::kPrimActivation,   prim::kPrimActivationGrad,
-  prim::kPrimArgMaxFusion, prim::kPrimArgMinFusion,
+  // arithmetic
+  prim::kPrimFloorDiv,
+  prim::kPrimFloorMod,
+  prim::kPrimLogicalAnd,
+  prim::kPrimLogicalOr,
+  prim::kPrimMaximum,
+  prim::kPrimMinimum,
+  prim::kPrimMod,
+  prim::kPrimSquaredDifference,
+  // tuple op
+  prim::kPrimTupleGetItem,
+  prim::kPrimMakeTuple,
+  prim::kPrimMakeTupleV2,
+  // format op
   prim::kPrimResize,
 
-  prim::kPrimTupleGetItem, prim::kPrimMakeTuple,
-  prim::kPrimMakeTupleV2,
+  prim::kPrimActivation,
+  prim::kPrimActivationGrad,
+  prim::kPrimArgMaxFusion,
+  prim::kPrimArgMinFusion,
 };
 
 namespace {
