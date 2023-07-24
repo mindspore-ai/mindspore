@@ -212,7 +212,7 @@ def data_sink(fn, dataset, sink_size=1, jit_config=None, input_signature=None):
         real_sink_fun = _get_sink_fun(sink_fun, key_info, is_info_queue, dataset, jit_config)
 
         loop = sink_size
-        if jit_config is not None:
+        if jit_config is not None and context.get_context('mode') == context.GRAPH_MODE:
             loop = 1
 
         out = None
