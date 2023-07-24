@@ -410,6 +410,9 @@ Status ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::string
       uint64_t group_id = std::stoull(labels[i][0]);
       uint64_t offset_start = std::stoull(labels[i][1]) + kInt64Len;
       uint64_t offset_end = std::stoull(labels[i][2]);
+      CHECK_FAIL_RETURN_UNEXPECTED_MR(offset_end >= offset_start,
+                                      "The sample's end offset: " + std::to_string(offset_end) +
+                                        " should >= start offset: " + std::to_string(offset_start) + ", check fail.");
       (*offset_ptr)[shard_id].emplace_back(
         std::vector<uint64_t>{static_cast<uint64_t>(shard_id), group_id, offset_start, offset_end});
       if (!all_in_index_) {
@@ -710,6 +713,10 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
     const auto &image_offset = image_offsets[i];
     res[i][0] = std::stoull(image_offset[0]) + kInt64Len;
     res[i][1] = std::stoull(image_offset[1]);
+    if (res[i][1] < res[i][0]) {
+      MS_LOG(EXCEPTION) << "The sample's end offset: " << std::to_string(res[i][1])
+                        << " should >= start offset: " << std::to_string(res[i][0]) << ", check fail.";
+    }
   }
   sqlite3_free(errmsg);
   return res;
@@ -826,6 +833,9 @@ Status ShardReader::GetLabelsFromBinaryFile(int shard_id, const std::vector<std:
     }
     uint64_t label_start = std::stoull(labelOffset[1]) + kInt64Len;
     uint64_t label_end = std::stoull(labelOffset[2]);
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(label_end >= label_start,
+                                    "The sample's end offset: " + std::to_string(label_end) +
+                                      " should >= start offset: " + std::to_string(label_start) + ", check fail.");
     int raw_page_id = std::stoi(labelOffset[0]);
     auto len = label_end - label_start;
     auto label_raw = std::vector<uint8_t>(len);
