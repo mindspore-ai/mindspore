@@ -1,0 +1,75 @@
+01-face_det_400_400:
+    fmk: onnx
+    input_number: 1
+    input_suffix: .onnx.bin
+    output_suffix: .onnx.out
+    benchmark_shapes: 1,400,400,3
+    acc_threshold: 4.5
+
+gts_version-RFB-320_simplified:
+    fmk: onnx
+    input_number: 1
+
+ml_edu_kit_hand_detection:
+    fmk: onnx
+    input_number: 1
+
+ml_ei_facedetection:
+    fmk: onnx
+    input_number: 1
+
+ml_facedetector:
+    fmk: onnx
+    input_number: 1
+
+ml_motion_capture_nanodet_m_0.5x_people_0928_sim:
+    fmk: onnx
+    input_number: 1
+
+ml_video_edit_judge:
+    fmk: onnx
+    input_number: 1
+
+ml_video_edit_shot_selection_yolox_nano_coco_reduced:
+    fmk: onnx
+    input_number: 1
+
+ml_video_edit_style_transfer_autoportrait:
+    fmk: onnx
+    input_number: 1
+
+ml_video_edit_style_transfer_candy:
+    fmk: onnx
+    input_number: 1
+
+ml_video_edit_style_transfer_gongnongbing:
+    fmk: onnx
+    input_number: 1
+
+ml_video_edit_style_transfer_starry:
+    fmk: onnx
+    input_number: 1
+
+ml_video_edit_vignet:
+    fmk: onnx
+    input_number: 1
+
+mtk_detect-deeper-halfdeeper-mbv1-lastearlySSD-shortcut-400-400_nopostprocess_simplified_onnx:
+    fmk: onnx
+    input_number: 1
+
+mtk_detect-deeper-halfdeeper-mbv1-shortcut-400-400_nopostprocess_simplified_onnx:
+    fmk: onnx
+    input_number: 1
+
+mtk_detect-mbv1-shortcut-400-400_nopostprocess_simplified_onnx:
+    fmk: onnx
+    input_number: 1
+
+mtk_detect-mbv2-shortcut-400-400-simplified:
+    fmk: onnx
+    input_number: 1
+
+yolov5s:
+    fmk: onnx
+    input_number: 1
