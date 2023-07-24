@@ -248,6 +248,12 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const AclInputToH
     return;
   }
 
+  // Special const input.
+  bool set_const = false;
+  if (AclAdapterManager::GetInstance().CheckAclAdapter(info->op_type())) {
+    set_const = AclAdapterManager::GetInstance().GetOpInfo(info->op_type()).is_const_input();
+  }
+
   // NOTE: Key of `input_params` is input index of mindspore operator prototype in MS->GE op adapter
   // this lambda function is used to process operator not containing dynamic input
   auto get_input_param = [&inputs, &host_inputs, &prim](
@@ -301,6 +307,9 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const AclInputToH
         (host_tensor != nullptr)
           ? ConvertTensorToAclDesc(host_tensor, input_params[ms_real_idx], arg_name, dump_str_pointer)
           : ConvertTensorToAclDesc(dev_address, input_params[ms_real_idx], arg_name, dump_str_pointer);
+      if (set_const && (host_tensor != nullptr)) {
+        (void)aclSetTensorConst(acl_desc, host_tensor->data_c(), host_tensor->Size());
+      }
       runner_.SetInput(acl_real_input_idx, acl_desc, acl_data);
       if (transform::AclHelper::IsPrintDebugString()) {
         input_str_[acl_real_input_idx] = dump_str;
@@ -406,6 +415,18 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
     AclDumpString dump_str;
     AclDumpString *dump_str_pointer = transform::AclHelper::IsPrintDebugString() ? &dump_str : nullptr;
     auto [acl_desc, acl_data] = ConvertTensorToAclDesc(input_tensor, new_params, ge_input_info.name, dump_str_pointer);
+
+    if (AclAdapterManager::GetInstance().CheckAclAdapter(info->op_type())) {
+      auto set_const = AclAdapterManager::GetInstance().GetOpInfo(info->op_type()).is_const_input();
+      if (set_const && (input_tensor != nullptr)) {
+        auto const_ret = aclSetTensorConst(acl_desc, input_tensor->data_c(), input_tensor->Size());
+        if (const_ret != ACL_SUCCESS) {
+          MS_LOG(EXCEPTION) << "AclSetTensorConst failed! error op is " << info->op_type()
+                            << " with error code:" << const_ret;
+        }
+      }
+    }
+
     runner_.SetInput(acl_real_input_idx, acl_desc, acl_data);
     if (transform::AclHelper::IsPrintDebugString()) {
       input_str_[acl_real_input_idx] = dump_str;

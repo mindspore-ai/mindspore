@@ -23,7 +23,7 @@
 /* clang-format off */
 
 namespace ge {
-REG_OP(WKV)
+REG_OP(Wkv)
   .INPUT(w, ge::TensorType::ALL())
   .INPUT(u, ge::TensorType::ALL())
   .INPUT(k, ge::TensorType::ALL())
@@ -35,9 +35,9 @@ REG_OP(WKV)
   .OUTPUT(mo, ge::TensorType::ALL())
   .OUTPUT(po, ge::TensorType::ALL())
   .OUTPUT(qo, ge::TensorType::ALL())
-  .OP_END_FACTORY_REG(WKV);
+  .OP_END_FACTORY_REG(Wkv);
 
-REG_OP(WKVGrad)
+REG_OP(WkvGrad)
   .INPUT(w, ge::TensorType::ALL())
   .INPUT(u, ge::TensorType::ALL())
   .INPUT(k, ge::TensorType::ALL())
@@ -47,6 +47,6 @@ REG_OP(WKVGrad)
   .OUTPUT(gu, ge::TensorType::ALL())
   .OUTPUT(gk, ge::TensorType::ALL())
   .OUTPUT(gv, ge::TensorType::ALL())
-  .OP_END_FACTORY_REG(WKVGrad);
+  .OP_END_FACTORY_REG(WkvGrad);
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_WKV_OPS_H_
