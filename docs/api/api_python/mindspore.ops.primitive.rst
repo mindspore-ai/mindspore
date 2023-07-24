@@ -36,10 +36,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     :template: classtemplate.rst
 
     mindspore.ops.constexpr
-    mindspore.ops.custom_info_register
-    mindspore.ops.kernel
-    mindspore.ops.op_info_register
-    mindspore.ops.prim_attr_register
 
 神经网络层算子
 ----------------
@@ -710,6 +706,8 @@ Parameter操作算子
     :template: classtemplate.rst
 
     mindspore.ops.Custom
+    mindspore.ops.custom_info_register
+    mindspore.ops.kernel
 
 光谱算子
 ----------
