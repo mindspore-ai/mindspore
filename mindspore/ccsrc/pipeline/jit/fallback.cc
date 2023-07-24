@@ -158,8 +158,9 @@ TypePtr HandleBaseTypeForAnnotation(const std::string &dtype_str, const std::str
   return base_type;
 }
 
-TypePtr GetDTypeFromDTypeStr(const std::string &dtype_str, const FormatedVariableTypeFunc &format_type_func,
-                             const AnfNodePtr &node, const std::string &comment) {
+std::pair<bool, TypePtr> GetDTypeFromDTypeStr(const std::string &dtype_str,
+                                              const FormatedVariableTypeFunc &format_type_func, const AnfNodePtr &node,
+                                              const std::string &comment) {
   TypePtr dtype = nullptr;
   if (dtype_str.front() == '{' && dtype_str.back() == '}') {  // Handle format variable dtype.
     if (!format_type_func) {
@@ -171,13 +172,13 @@ TypePtr GetDTypeFromDTypeStr(const std::string &dtype_str, const FormatedVariabl
     if (!variable_dtype.empty()) {
       dtype = format_type_func(variable_dtype);
       if (dtype == nullptr) {  // Not throw exception if not match any variable.
-        return nullptr;
+        return std::make_pair(false, nullptr);
       }
     }
   } else {  // Handle string dtype.
     dtype = GetTypeFromString(dtype_str);
   }
-  return dtype;
+  return std::make_pair(true, dtype);
 }
 
 TypePtr HandleContainerTypeForAnnotation(const std::string &dtype_str, const std::string &container_type_str,
@@ -191,7 +192,10 @@ TypePtr HandleContainerTypeForAnnotation(const std::string &dtype_str, const std
     MS_LOG(EXCEPTION) << "JIT type annotation only support tensor/list_/tuple_, but got '" << container_type_str;
   }
 
-  TypePtr dtype = GetDTypeFromDTypeStr(dtype_str, format_type_func, node, comment);
+  auto [is_match, dtype] = GetDTypeFromDTypeStr(dtype_str, format_type_func, node, comment);
+  if (!is_match) {
+    return nullptr;
+  }
   if (dtype == nullptr) {
     MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
   }
