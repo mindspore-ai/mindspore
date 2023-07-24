@@ -17,6 +17,8 @@
 #include "common/common_test.h"
 #include "nnacl/base/depth_to_space_base.h"
 #include "nnacl/common_func.h"
+#include "nnacl/depth_to_space_parameter.h"
+#include "nnacl/kernel/depth_to_space.h"
 
 namespace mindspore {
 
@@ -33,7 +35,7 @@ TEST_F(DepthToSpaceTestFp32, DepthToSpaceTest2) {
   float output[kOutSize];
   int in_shape[4] = {1, 2, 2, 4};
   int out_shape[4] = {1, 4, 4, 1};
-  DepthToSpaceParameter param;
+  DepthToSpaceArgs param;
   param.block_size_ = 2;
   int in_strides[4];
   ComputeStrides(in_shape, in_strides, 4);
@@ -62,7 +64,7 @@ TEST_F(DepthToSpaceTestFp32, DepthToSpaceTest3) {
   float output[kOutSize];
   int in_shape[4] = {1, 1, 1, 8};
   int out_shape[4] = {1, 2, 2, 2};
-  DepthToSpaceParameter param;
+  DepthToSpaceArgs param;
   param.block_size_ = 2;
   int in_strides[4];
   ComputeStrides(in_shape, in_strides, 4);

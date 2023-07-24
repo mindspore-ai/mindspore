@@ -17,7 +17,7 @@
 #include "nnacl/base/depth_to_space_base.h"
 #include "nnacl/errorcode.h"
 
-void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceParameter *param) {
+void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceArgs *param) {
   int32_t block_size = param->block_size_;
   int32_t in_shape_dim2 = in_shape[2];
   int32_t in_shape_dim1 = in_shape[1];
@@ -41,7 +41,7 @@ void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, c
   }
 }
 
-void DepthToSpaceCRDForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceParameter *param) {
+void DepthToSpaceCRDForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceArgs *param) {
   int32_t block_size = param->block_size_;
   int32_t in_shape_dim3 = in_shape[3];
   int32_t in_shape_dim2 = in_shape[2];

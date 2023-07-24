@@ -18,7 +18,6 @@
 #define NNACL_INT8_DYNAMIC_QUANT_FP16_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/power_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

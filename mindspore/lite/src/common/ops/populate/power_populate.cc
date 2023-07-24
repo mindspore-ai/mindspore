@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/populate/populate_register.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore {
@@ -28,12 +28,12 @@ OpParameter *PopulatePowerParameter(const void *prim) {
     return nullptr;
   }
 
-  auto *param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
+  auto *param = reinterpret_cast<PowParameter *>(malloc(sizeof(PowParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc PowerParameter failed.";
+    MS_LOG(ERROR) << "malloc PowParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(PowerParameter));
+  memset(param, 0, sizeof(PowParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
   param->scale_ = value->scale();

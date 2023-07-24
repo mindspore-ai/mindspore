@@ -18,7 +18,7 @@
 #define NNACL_INT8_DYNAMIC_QUANT_INT8_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 #include "nnacl/int8/quantize.h"
 
 #ifdef __cplusplus

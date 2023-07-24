@@ -18,14 +18,14 @@
 #define NNACL_INT8_POWER_INT8_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/pow_parameter.h"
 #include "nnacl/int8/quantize.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int PowerInt8(const int8_t *input_ptr, const int8_t *exp_ptr, int8_t *output_ptr, int count,
-              const PowerParameter *parameter);
+int PowerInt8(const int8_t *input, const int8_t *exp_ptr, int8_t *output, int count, const PowQuantArg *args,
+              bool broadcast, int scale, int shift);
 #ifdef __cplusplus
 }
 #endif

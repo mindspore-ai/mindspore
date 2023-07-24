@@ -14,17 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_NON_ZERO_H_
-#define NNACL_KERNEL_NON_ZERO_H_
+#ifndef NNACL_KERNEL_DEPTH_TO_SPACE_H_
+#define NNACL_KERNEL_DEPTH_TO_SPACE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-typedef struct NonZeroStruct {
+typedef struct DepthToSpaceArgs {
+  int32_t in_stride_dim0_;
+  int32_t in_stride_dim1_;
+  int32_t in_stride_dim2_;
+  int32_t out_stride_dim0_;
+  int32_t out_stride_dim1_;
+  int32_t out_stride_dim2_;
+  uint8_t data_type_size_;
+  int32_t block_size_;
+} DepthToSpaceArgs;
+
+typedef struct DepthToSpaceStruct {
   KernelBase base_;
-} NonZeroStruct;
+  DepthToSpaceArgs args_;
+} DepthToSpaceStruct;
 
-KernelBase *CreateNonZero(OpParameter *param, int data_type);
+KernelBase *CreateDepthToSpace(OpParameter *param, int data_type);
 
-#endif  // NNACL_KERNEL_NON_ZERO_H_
+#endif  // NNACL_KERNEL_DEPTH_TO_SPACE_H_

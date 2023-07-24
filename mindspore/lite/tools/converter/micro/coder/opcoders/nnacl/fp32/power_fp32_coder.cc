@@ -25,8 +25,8 @@ using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int PowerFP32Coder::DoCode(CoderContext *const context) {
-  scale_ = reinterpret_cast<PowerParameter *>(parameter_)->scale_;
-  shift_ = reinterpret_cast<PowerParameter *>(parameter_)->shift_;
+  scale_ = reinterpret_cast<PowParameter *>(parameter_)->scale_;
+  shift_ = reinterpret_cast<PowParameter *>(parameter_)->shift_;
   int size = input_tensor_->ElementsNum();
   if (support_parallel_) {
     thread_num_ = 1;
@@ -51,7 +51,7 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
   // generate code .h .c
   Collect(context,
           {
-            "nnacl/power_parameter.h",
+            "nnacl/pow_parameter.h",
             "nnacl/fp32/power_fp32.h",
           },
           {

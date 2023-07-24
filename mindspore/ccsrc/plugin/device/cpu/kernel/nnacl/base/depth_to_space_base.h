@@ -17,13 +17,13 @@
 #define NNACL_DEPTH_TO_SPACE_H_
 
 #include <string.h>
-#include "nnacl/depth_to_space_parameter.h"
+#include "nnacl/kernel/depth_to_space.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceParameter *param);
-void DepthToSpaceCRDForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceParameter *param);
+void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceArgs *param);
+void DepthToSpaceCRDForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceArgs *param);
 #ifdef __cplusplus
 }
 #endif

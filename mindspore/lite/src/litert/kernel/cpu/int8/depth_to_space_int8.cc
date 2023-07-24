@@ -18,6 +18,7 @@
 #include <cmath>
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"
+#include "nnacl/nnacl_common.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -38,6 +39,23 @@ DepthToSpaceInt8CPUKernel::~DepthToSpaceInt8CPUKernel() {
   }
 }
 
+int DepthToSpaceInt8CPUKernel::ReSize() {
+  TensorC *input = in_tensors_[0]->ConvertToTensorC();
+  int32_t in_strides[DIMENSION_4D] = {0};
+  ComputeStrides(input->shape_, in_strides, input->shape_size_);
+  args_.in_stride_dim0_ = in_strides[Index0];
+  args_.in_stride_dim1_ = in_strides[Index1];
+  args_.in_stride_dim2_ = in_strides[Index2];
+
+  TensorC *output = out_tensors_[0]->ConvertToTensorC();
+  int32_t out_strides[DIMENSION_4D] = {0};
+  ComputeStrides(output->shape_, out_strides, output->shape_size_);
+  args_.out_stride_dim0_ = out_strides[Index0];
+  args_.out_stride_dim1_ = out_strides[Index1];
+  args_.out_stride_dim2_ = out_strides[Index2];
+  return RET_OK;
+}
+
 int DepthToSpaceInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
@@ -49,7 +67,7 @@ int DepthToSpaceInt8CPUKernel::Prepare() {
                   << out_tensors_[0]->data_type();
     return RET_ERROR;
   }
-  param_->data_type_size_ = sizeof(int8_t);
+  args_.data_type_size_ = sizeof(int8_t);
 
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (in_quant_arg_ == nullptr) {
@@ -88,9 +106,9 @@ int DepthToSpaceInt8CPUKernel::Run() {
   auto in_shape = input->shape();
   if (std::abs(in_quant_arg_->scale_ - out_quant_arg_->scale_) < FLT_EPSILON &&
       in_quant_arg_->zp_ == out_quant_arg_->zp_) {
-    DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param_);
+    DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), &args_);
   } else {
-    DepthToSpaceForNHWCInt8(input_data, output_data, in_shape.data(), param_, in_quant_arg_, out_quant_arg_);
+    DepthToSpaceForNHWCInt8(input_data, output_data, in_shape.data(), &args_, in_quant_arg_, out_quant_arg_);
   }
   return RET_OK;
 }

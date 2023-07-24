@@ -16,7 +16,7 @@
 #include "nnacl/int8/depth_to_space_int8.h"
 #include <string.h>
 
-void DepthToSpaceForNHWCInt8(const int8_t *input, int8_t *output, const int32_t *in_shape, DepthToSpaceParameter *param,
+void DepthToSpaceForNHWCInt8(const int8_t *input, int8_t *output, const int32_t *in_shape, DepthToSpaceArgs *param,
                              QuantArg *in_quant_arg, QuantArg *out_quant_arg) {
   int32_t block_size = param->block_size_;
   int32_t in_shape_dim2 = in_shape[2];

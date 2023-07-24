@@ -26,6 +26,7 @@
 #include "nnacl/kernel/concat.h"
 #include "nnacl/kernel/crop.h"
 #include "nnacl/kernel/exp.h"
+#include "nnacl/kernel/depth_to_space.h"
 #include "nnacl/kernel/fill.h"
 #include "nnacl/kernel/fullconnection.h"
 #include "nnacl/kernel/gather.h"
@@ -39,6 +40,7 @@
 #include "nnacl/kernel/nllloss.h"
 #include "nnacl/kernel/prior_box.h"
 #include "nnacl/kernel/pad.h"
+#include "nnacl/kernel/pow.h"
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/kernel/range.h"
 #include "nnacl/kernel/rank.h"
@@ -78,6 +80,7 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_Cos][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Crop][REGIST_DT(kNumberTypeFloat16)] = CreateCrop;
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_DepthToSpace][REGIST_DT(kNumberTypeFloat16)] = CreateDepthToSpace;
   creators[PrimType_Eltwise][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Erf][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Equal][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
@@ -106,6 +109,7 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_Neg][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_PadFusion][REGIST_DT(kNumberTypeFloat16)] = CreatePad;
+  creators[PrimType_PowFusion][REGIST_DT(kNumberTypeFloat16)] = CreatePow;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_RealDiv][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeFloat16)] = CreateReduceF16;
@@ -160,6 +164,7 @@ void InitVSKernelA(KernelCreator **creators) {
   creators[PrimType_Concat][REGIST_DT(kNumberTypeFloat32)] = CreateConcat;
   creators[PrimType_Crop][REGIST_DT(kNumberTypeInt32)] = CreateCrop;
   creators[PrimType_Crop][REGIST_DT(kNumberTypeFloat32)] = CreateCrop;
+  creators[PrimType_DepthToSpace][REGIST_DT(kNumberTypeFloat32)] = CreateDepthToSpace;
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_Eltwise][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
@@ -232,6 +237,7 @@ void InitVSKernelI(KernelCreator **creators) {
   creators[PrimType_PadFusion][REGIST_DT(kNumberTypeFloat32)] = CreatePad;
   creators[PrimType_PriorBox][REGIST_DT(kNumberTypeFloat32)] = CreatePriorBox;
   creators[PrimType_PriorBox][REGIST_DT(kNumberTypeInt8)] = CreatePriorBox;
+  creators[PrimType_PowFusion][REGIST_DT(kNumberTypeFloat32)] = CreatePow;
 }
 
 void InitVSKernelR(KernelCreator **creators) {
