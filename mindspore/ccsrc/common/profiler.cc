@@ -90,15 +90,10 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyNativeDeviceTask, "DeviceTask"},
   {ProfilerEvent::kPyNativeBpropTask, "BpropTask"},
   {ProfilerEvent::kPyNativeCast, "PyNativeCast"},
-  {ProfilerEvent::kPyNativeInfer, "PyNativeInfer"}};
+  {ProfilerEvent::kPyNativeInfer, "PyNativeInfer"},
+  {ProfilerEvent::kPyNativeOpCompile, "OpCompile"}};
 
 namespace {
-std::string GetTidString(const std::thread::id &tid) {
-  std::stringstream ss;
-  ss << tid;
-  return ss.str();
-}
-
 std::string GetRealPathName(const std::string &name) {
   auto path_name = GetSaveGraphsPathName(name);
   auto real_path = mindspore::Common::CreatePrefixPath(path_name);
@@ -171,6 +166,21 @@ void ProfilerAnalyzer::Initialize() {
   json_file_name_ = GetRealPathName(kJsonFileName + now_time + ".json");
   summary_info_file_name_ = GetRealPathName(kSummaryInfoFileName + now_time + ".csv");
   detail_info_file_name_ = GetRealPathName(kDetailInfoFileName + now_time + ".csv");
+}
+
+std::string ProfilerAnalyzer::GetTidString(const std::thread::id &tid) const {
+  auto iter = thread_id_to_name_.find(tid);
+  if (iter != thread_id_to_name_.end()) {
+    return iter->second;
+  }
+  std::stringstream ss;
+  ss << tid;
+  return ss.str();
+}
+
+void ProfilerAnalyzer::SetThreadIdToName(const std::thread::id &id, const std::string &name) {
+  std::unique_lock<std::mutex> lock(data_mutex_);
+  thread_id_to_name_[id] = name;
 }
 
 void ProfilerAnalyzer::ProcessData() {

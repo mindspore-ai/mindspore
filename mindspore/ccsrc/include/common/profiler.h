@@ -81,6 +81,7 @@ enum class ProfilerEvent {
   // PyNative inner Event
   kPyNativeCast,
   kPyNativeInfer,
+  kPyNativeOpCompile,
 };
 
 #define PROFILER_START(start_time)                                          \
@@ -283,6 +284,8 @@ class COMMON_EXPORT ProfilerAnalyzer {
   const nlohmann::json &json_infos() const { return json_infos_; }
   const std::map<ProfilerModule, ProfilerModuleInfoPtr> &module_infos() const { return module_infos_; }
   const std::map<ProfilerStage, ProfilerStatisticsInfoPtr> &stage_infos() const { return stage_infos_; }
+  std::string GetTidString(const std::thread::id &tid) const;
+  void SetThreadIdToName(const std::thread::id &id, const std::string &name);
 
  private:
   ProfilerAnalyzer() = default;
@@ -326,6 +329,8 @@ class COMMON_EXPORT ProfilerAnalyzer {
   // The data analyzed level is module-->event-->op, these data would not be cleared in unit test.
   std::map<ProfilerModule, ProfilerModuleInfoPtr> module_infos_;
   std::map<ProfilerStage, ProfilerStatisticsInfoPtr> stage_infos_;
+
+  std::map<std::thread::id, std::string> thread_id_to_name_;
 
   // Save file name.
   std::string json_file_name_;
