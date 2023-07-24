@@ -87,6 +87,7 @@ int MoveData(const std::vector<lite::Tensor *>::iterator &dst_begin,
     lite::STATUS ret = RET_OK;
     if (src_tensor->IsConst() || src_tensor->IsGraphInput()) {
       MS_LOG(DEBUG) << "Carry const data and graph inputs.";
+      dst_tensor->FreeData();
       dst_tensor->set_data(src_tensor->data());
       dst_tensor->set_own_data(false);
     } else {
