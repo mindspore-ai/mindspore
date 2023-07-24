@@ -247,10 +247,20 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
 }
 
 bool TbeKernelSelect::FilterUnspportedMatMul(const KernelBuildInfoPtr &kernel_build_info) {
+  if (common::AnfAlgo::GetCNodeName(cnode_ptr_) != prim::kPrimMatMul->name()) {
+    return true;
+  }
+
+  // Drop MatMul with fp16xND due to its pool performance
+  auto output_dtype = kernel_build_info->GetOutputDeviceType(0);
+  auto output_format = kernel_build_info->GetOutputFormat(0);
+  if (output_dtype == TypeId::kNumberTypeFloat16 && output_format == kOpFormat_DEFAULT) {
+    return false;
+  }
+
   // A MatMul op is unsupported if it has a bias and bias is fp32
   // we need to filter it out or it will cause compile error.
-  if (common::AnfAlgo::GetCNodeName(cnode_ptr_) != prim::kPrimMatMul->name() ||
-      !common::AnfAlgo::IsDynamicShape(cnode_ptr_)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode_ptr_)) {
     return true;
   }
   const auto &input_dtypes = kernel_build_info->GetAllInputDeviceTypes();
