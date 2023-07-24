@@ -1121,6 +1121,12 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
   CHECK_NULL_RETURN(func_graph);
   CHECK_NULL_RETURN(cnode);
   auto x_q_param_origin = quant::GetInputNodeQuantParam(cnode, input_index);
+  if (x_q_param_origin.empty()) {
+    auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
+    CHECK_NULL_RETURN(curr_quant_param_holder);
+    auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
+    x_q_param_origin = input_quant_param.at(input_index - kPrimOffset);
+  }
   if (x_q_param_origin.size() != kPerTensor) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " x quant param size " << x_q_param_origin.size() << " != 1";
     return RET_ERROR;
@@ -1164,12 +1170,21 @@ int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_gra
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " primitive is nullptr.";
     return RET_ERROR;
   }
-  auto x_q_param = quant::GetInputNodeQuantParam(cnode, Index1);
+  auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
+  CHECK_NULL_RETURN(curr_quant_param_holder);
+  auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
+  auto x_q_param = quant::GetInputNodeQuantParam(cnode, Index0 + kPrimOffset);
+  if (x_q_param.empty()) {
+    x_q_param = input_quant_param.at(Index0);
+  }
   if (x_q_param.size() != kPerTensor) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " x quant param size " << x_q_param.size() << " != 1";
     return RET_ERROR;
   }
-  auto w_q_params = quant::GetInputNodeQuantParam(cnode, Index2);
+  auto w_q_params = quant::GetInputNodeQuantParam(cnode, Index1 + kPrimOffset);
+  if (w_q_params.empty()) {
+    w_q_params = input_quant_param.at(Index1);
+  }
   if (w_q_params.empty()) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " w quant param is empty.";
     return RET_ERROR;
