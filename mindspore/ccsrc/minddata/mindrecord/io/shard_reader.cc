@@ -675,36 +675,56 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
                                                                const std::pair<std::string, std::string> &criteria) {
   auto db = database_paths_[shard_id];
 
-  std::string sql =
-    "SELECT PAGE_OFFSET_BLOB, PAGE_OFFSET_BLOB_END FROM INDEXES WHERE PAGE_ID_BLOB = " + std::to_string(page_id);
+  std::string sql = "SELECT PAGE_OFFSET_BLOB, PAGE_OFFSET_BLOB_END FROM INDEXES WHERE PAGE_ID_BLOB = :page_id_blob";
 
   // whether use index search
   if (!criteria.first.empty()) {
-    auto schema = shard_header_->GetSchemas()[0]->GetSchema();
-
-    // not number field should add '' in sql
-    if (kNumberFieldTypeSet.find(schema["schema"][criteria.first]["type"]) != kNumberFieldTypeSet.end()) {
-      sql +=
-        " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = " + criteria.second;
-    } else {
-      sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = '" +
-             criteria.second + "'";
-    }
+    sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = :criteria";
   }
   sql += ";";
   std::vector<std::vector<std::string>> image_offsets;
-  char *errmsg = nullptr;
-  int rc = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, &image_offsets, &errmsg);
-  if (rc != SQLITE_OK) {
-    MS_LOG(ERROR) << "[Internal ERROR] Failed to execute the sql [ " << common::SafeCStr(sql)
-                  << " ] while reading meta file, " << errmsg;
-    sqlite3_free(errmsg);
-    sqlite3_close(db);
-    db = nullptr;
-    return std::vector<std::vector<uint64_t>>();
-  } else {
-    MS_LOG(DEBUG) << "Succeed to get " << image_offsets.size() << " records from index.";
+
+  sqlite3_stmt *stmt = nullptr;
+  if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
+    MS_LOG(EXCEPTION) << "[Internal ERROR] Failed to prepare statement [ " << sql << " ].";
   }
+
+  // bind the PAGE_ID_BLOB
+  int index = sqlite3_bind_parameter_index(stmt, ":page_id_blob");
+  if (sqlite3_bind_int64(stmt, index, page_id) != SQLITE_OK) {
+    (void)sqlite3_finalize(stmt);
+    MS_LOG(EXCEPTION) << "[Internal ERROR] Failed to bind parameter of sql, key index: " << std::to_string(index)
+                      << ", value: " << std::to_string(page_id);
+  }
+
+  // bind the criteria
+  if (!criteria.first.empty()) {
+    index = sqlite3_bind_parameter_index(stmt, ":criteria");
+    if (sqlite3_bind_text(stmt, index, common::SafeCStr(criteria.second), -1, SQLITE_STATIC) != SQLITE_OK) {
+      (void)sqlite3_finalize(stmt);
+      MS_LOG(EXCEPTION) << "[Internal ERROR] Failed to bind parameter of sql, key index: " << std::to_string(index)
+                        << ", value: " + criteria.second;
+    }
+  }
+
+  int rc = sqlite3_step(stmt);
+  while (rc != SQLITE_DONE) {
+    vector<string> tmp;
+    int ncols = sqlite3_column_count(stmt);
+    for (int i = 0; i < ncols; i++) {
+      tmp.emplace_back(reinterpret_cast<const char *>(sqlite3_column_text(stmt, i)));
+    }
+    image_offsets.push_back(tmp);
+    rc = sqlite3_step(stmt);
+  }
+
+  auto finalize = sqlite3_finalize(stmt);
+  if (finalize != SQLITE_OK) {
+    MS_LOG(EXCEPTION) << "[Internal ERROR] Failed to finalize sql stmt, error code: " << std::to_string(finalize);
+  }
+
+  MS_LOG(DEBUG) << "Succeed to get " << image_offsets.size() << " records from index.";
+
   std::vector<std::vector<uint64_t>> res;
   for (int i = static_cast<int>(image_offsets.size()) - 1; i >= 0; i--) {
     res.emplace_back(std::vector<uint64_t>{0, 0});
@@ -718,7 +738,6 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
                         << " should >= start offset: " << std::to_string(res[i][0]) << ", check fail.";
     }
   }
-  sqlite3_free(errmsg);
   return res;
 }
 
@@ -730,33 +749,47 @@ Status ShardReader::GetPagesByCategory(int shard_id, const std::pair<std::string
   std::string sql = "SELECT DISTINCT PAGE_ID_BLOB FROM INDEXES WHERE 1 = 1 ";
 
   if (!criteria.first.empty()) {
-    auto schema = shard_header_->GetSchemas()[0]->GetSchema();
-    if (kNumberFieldTypeSet.find(schema["schema"][criteria.first]["type"]) != kNumberFieldTypeSet.end()) {
-      sql +=
-        " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = " + criteria.second;
-    } else {
-      sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = '" +
-             criteria.second + "'";
-    }
+    sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = :criteria";
   }
   sql += ";";
   std::vector<std::vector<std::string>> page_ids;
-  char *errmsg = nullptr;
-  int rc = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, &page_ids, &errmsg);
-  if (rc != SQLITE_OK) {
-    string ss(errmsg);
-    sqlite3_free(errmsg);
-    sqlite3_close(db);
-    db = nullptr;
-    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to execute the sql [ " + sql + " ] while reading meta file, " +
-                                ss);
-  } else {
-    MS_LOG(DEBUG) << "Succeed to get " << page_ids.size() << "pages from index.";
+
+  sqlite3_stmt *stmt = nullptr;
+  if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
+    (void)sqlite3_finalize(stmt);
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to prepare statement [ " + sql + " ].");
   }
+
+  if (!criteria.first.empty()) {
+    int index = sqlite3_bind_parameter_index(stmt, ":criteria");
+    if (sqlite3_bind_text(stmt, index, common::SafeCStr(criteria.second), -1, SQLITE_STATIC) != SQLITE_OK) {
+      (void)sqlite3_finalize(stmt);
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to bind parameter of sql, key index: " +
+                                  std::to_string(index) + ", value: " + criteria.second);
+    }
+  }
+
+  int rc = sqlite3_step(stmt);
+  while (rc != SQLITE_DONE) {
+    vector<string> tmp;
+    int ncols = sqlite3_column_count(stmt);
+    for (int i = 0; i < ncols; i++) {
+      tmp.emplace_back(reinterpret_cast<const char *>(sqlite3_column_text(stmt, i)));
+    }
+    page_ids.push_back(tmp);
+    rc = sqlite3_step(stmt);
+  }
+
+  auto finalize = sqlite3_finalize(stmt);
+  if (finalize != SQLITE_OK) {
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to finalize sql stmt, error code: " +
+                                std::to_string(finalize));
+  }
+
+  MS_LOG(DEBUG) << "Succeed to get " << page_ids.size() << " pages from index.";
   for (int i = 0; i < static_cast<int>(page_ids.size()); ++i) {
     (*pages_ptr)->emplace_back(std::stoull(page_ids[i][0]));
   }
-  sqlite3_free(errmsg);
   return Status::OK();
 }
 
@@ -788,14 +821,26 @@ void ShardReader::CheckIfColumnInIndex(const std::vector<std::string> &columns) 
   }
 }
 
-Status ShardReader::QueryWithCriteria(sqlite3 *db, const string &sql, const string &criteria,
-                                      std::shared_ptr<std::vector<std::vector<std::string>>> labels_ptr) {
+Status ShardReader::QueryWithPageIdBlobAndCriteria(sqlite3 *db, const string &sql, const int &page_id,
+                                                   const string &criteria,
+                                                   std::shared_ptr<std::vector<std::vector<std::string>>> labels_ptr) {
   sqlite3_stmt *stmt = nullptr;
   if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
     RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to prepare statement [ " + sql + " ].");
   }
-  int index = sqlite3_bind_parameter_index(stmt, ":criteria");
+
+  // bind the PAGE_ID_BLOB
+  int index = sqlite3_bind_parameter_index(stmt, ":page_id_blob");
+  if (sqlite3_bind_int64(stmt, index, page_id) != SQLITE_OK) {
+    (void)sqlite3_finalize(stmt);
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to bind parameter of sql, key index: " +
+                                std::to_string(index) + ", value: " + std::to_string(page_id));
+  }
+
+  // bind the criteria
+  index = sqlite3_bind_parameter_index(stmt, ":criteria");
   if (sqlite3_bind_text(stmt, index, common::SafeCStr(criteria), -1, SQLITE_STATIC) != SQLITE_OK) {
+    (void)sqlite3_finalize(stmt);
     RETURN_STATUS_UNEXPECTED_MR(
       "[Internal ERROR] Failed to bind parameter of sql, key index: " + std::to_string(index) + ", value: " + criteria);
   }
@@ -809,7 +854,12 @@ Status ShardReader::QueryWithCriteria(sqlite3 *db, const string &sql, const stri
     labels_ptr->push_back(tmp);
     rc = sqlite3_step(stmt);
   }
-  (void)sqlite3_finalize(stmt);
+
+  auto finalize = sqlite3_finalize(stmt);
+  if (finalize != SQLITE_OK) {
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to finalize sql stmt, error code: " +
+                                std::to_string(finalize));
+  }
   return Status::OK();
 }
 
@@ -862,33 +912,53 @@ Status ShardReader::GetLabelsFromBinaryFile(int shard_id, const std::vector<std:
   }
   return Status::OK();
 }
+
 Status ShardReader::GetLabelsFromPage(int page_id, int shard_id, const std::vector<std::string> &columns,
                                       const std::pair<std::string, std::string> &criteria,
                                       std::shared_ptr<std::vector<json>> *labels_ptr) {
   RETURN_UNEXPECTED_IF_NULL_MR(labels_ptr);
   // get page info from sqlite
   auto db = database_paths_[shard_id];
-  std::string sql = "SELECT PAGE_ID_RAW, PAGE_OFFSET_RAW,PAGE_OFFSET_RAW_END FROM INDEXES WHERE PAGE_ID_BLOB = " +
-                    std::to_string(page_id);
+  std::string sql =
+    "SELECT PAGE_ID_RAW, PAGE_OFFSET_RAW,PAGE_OFFSET_RAW_END FROM INDEXES WHERE PAGE_ID_BLOB = :page_id_blob";
+
   auto label_offset_ptr = std::make_shared<std::vector<std::vector<std::string>>>();
   if (!criteria.first.empty()) {
-    sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = :criteria";
-    RETURN_IF_NOT_OK_MR(QueryWithCriteria(db, sql, criteria.second, label_offset_ptr));
+    sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = :criteria;";
+    RETURN_IF_NOT_OK_MR(QueryWithPageIdBlobAndCriteria(db, sql, page_id, criteria.second, label_offset_ptr));
   } else {
     sql += ";";
-    char *errmsg = nullptr;
-    int rc = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, label_offset_ptr.get(), &errmsg);
-    if (rc != SQLITE_OK) {
-      std::ostringstream oss;
-      oss << "[Internal ERROR] Failed to execute the sql [ " << common::SafeCStr(sql) << " ] while reading meta file, "
-          << errmsg;
-      sqlite3_free(errmsg);
-      sqlite3_close(db);
-      db = nullptr;
-      RETURN_STATUS_UNEXPECTED_MR(oss.str());
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to prepare statement [ " + sql + " ].");
     }
+
+    // bind the PAGE_ID_BLOB
+    int index = sqlite3_bind_parameter_index(stmt, ":page_id_blob");
+    if (sqlite3_bind_int64(stmt, index, page_id) != SQLITE_OK) {
+      (void)sqlite3_finalize(stmt);
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to bind parameter of sql, key index: " +
+                                  std::to_string(index) + ", value: " + std::to_string(page_id));
+    }
+
+    int rc = sqlite3_step(stmt);
+    while (rc != SQLITE_DONE) {
+      vector<string> tmp;
+      int ncols = sqlite3_column_count(stmt);
+      for (int i = 0; i < ncols; i++) {
+        tmp.emplace_back(reinterpret_cast<const char *>(sqlite3_column_text(stmt, i)));
+      }
+      label_offset_ptr->push_back(tmp);
+      rc = sqlite3_step(stmt);
+    }
+
+    auto finalize = sqlite3_finalize(stmt);
+    if (finalize != SQLITE_OK) {
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to finalize sql stmt, error code: " +
+                                  std::to_string(finalize));
+    }
+
     MS_LOG(DEBUG) << "Succeed to get " << label_offset_ptr->size() << " records from index.";
-    sqlite3_free(errmsg);
   }
   // get labels from binary file
   return GetLabelsFromBinaryFile(shard_id, columns, *label_offset_ptr, labels_ptr);
@@ -912,26 +982,43 @@ Status ShardReader::GetLabels(int page_id, int shard_id, const std::vector<std::
       fields = "*";
     }
     auto labels = std::make_shared<std::vector<std::vector<std::string>>>();
-    std::string sql = "SELECT " + fields + " FROM INDEXES WHERE PAGE_ID_BLOB = " + std::to_string(page_id);
+    std::string sql = "SELECT " + fields + " FROM INDEXES WHERE PAGE_ID_BLOB = :page_id_blob";
     if (!criteria.first.empty()) {
-      sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = " + ":criteria";
-      RETURN_IF_NOT_OK_MR(QueryWithCriteria(db, sql, criteria.second, labels));
+      sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = " + ":criteria;";
+      RETURN_IF_NOT_OK_MR(QueryWithPageIdBlobAndCriteria(db, sql, page_id, criteria.second, labels));
     } else {
       sql += ";";
-      char *errmsg = nullptr;
-      int rc = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, labels.get(), &errmsg);
-      if (rc != SQLITE_OK) {
-        std::ostringstream oss;
-        oss << "[Internal ERROR] Failed to execute the sql [ " << common::SafeCStr(sql)
-            << " ] while reading meta file, " << errmsg;
-        sqlite3_free(errmsg);
-        sqlite3_close(db);
-        db = nullptr;
-        RETURN_STATUS_UNEXPECTED_MR(oss.str());
-      } else {
-        MS_LOG(DEBUG) << "Succeed to get " << labels->size() << " records from index.";
+      sqlite3_stmt *stmt = nullptr;
+      if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
+        RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to prepare statement [ " + sql + " ].");
       }
-      sqlite3_free(errmsg);
+
+      // bind the PAGE_ID_BLOB
+      int index = sqlite3_bind_parameter_index(stmt, ":page_id_blob");
+      if (sqlite3_bind_int64(stmt, index, page_id) != SQLITE_OK) {
+        (void)sqlite3_finalize(stmt);
+        RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to bind parameter of sql, key index: " +
+                                    std::to_string(index) + ", value: " + std::to_string(page_id));
+      }
+
+      int rc = sqlite3_step(stmt);
+      while (rc != SQLITE_DONE) {
+        vector<string> tmp;
+        int ncols = sqlite3_column_count(stmt);
+        for (int i = 0; i < ncols; i++) {
+          tmp.emplace_back(reinterpret_cast<const char *>(sqlite3_column_text(stmt, i)));
+        }
+        labels->push_back(tmp);
+        rc = sqlite3_step(stmt);
+      }
+
+      auto finalize = sqlite3_finalize(stmt);
+      if (finalize != SQLITE_OK) {
+        RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to finalize sql stmt, error code: " +
+                                    std::to_string(finalize));
+      }
+
+      MS_LOG(DEBUG) << "Succeed to get " << labels->size() << " records from index.";
     }
     for (unsigned int i = 0; i < labels->size(); ++i) {
       (*labels_ptr)->emplace_back(json{});

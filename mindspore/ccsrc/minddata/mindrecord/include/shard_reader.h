@@ -261,8 +261,8 @@ class MINDRECORD_API ShardReader {
   Status GetPagesByCategory(int shard_id, const std::pair<std::string, std::string> &criteria,
                             std::shared_ptr<std::vector<uint64_t>> *pages_ptr);
   /// \brief execute sqlite query with prepare statement
-  Status QueryWithCriteria(sqlite3 *db, const string &sql, const string &criteria,
-                           std::shared_ptr<std::vector<std::vector<std::string>>> labels_ptr);
+  Status QueryWithPageIdBlobAndCriteria(sqlite3 *db, const string &sql, const int &page_id, const string &criteria,
+                                        std::shared_ptr<std::vector<std::vector<std::string>>> labels_ptr);
   /// \brief verify the validity of dataset
   Status VerifyDataset(sqlite3 **db, const string &file);
 
