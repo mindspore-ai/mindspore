@@ -332,7 +332,7 @@ Status ShardIndexGenerator::BindParameterExecuteSQL(sqlite3 *db, const std::stri
           RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to bind parameter of sql, key index: " +
                                       std::to_string(index) + ", value: " + field_value);
         }
-      } else if (field_type == "NUMERIC") {
+      } else if (field_type == "REAL") {
         if (sqlite3_bind_double(stmt, index, std::stold(field_value)) != SQLITE_OK) {
           (void)sqlite3_finalize(stmt);
           sqlite3_close(db);

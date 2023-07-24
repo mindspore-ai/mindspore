@@ -129,10 +129,9 @@ const json kDummyId = R"({"id": 0})"_json;
 
 // translate type in schema to type in sqlite3(NULL, INTEGER, REAL, TEXT, BLOB)
 const std::unordered_map<std::string, std::string> kDbJsonMap = {
-  {"string", "TEXT"},     {"date", "DATE"},       {"date-time", "DATETIME"}, {"null", "NULL"},
-  {"integer", "INTEGER"}, {"boolean", "BOOLEAN"}, {"array", "BLOB"},         {"number", "NUMERIC"},
-  {"int32", "INTEGER"},   {"int64", "INTEGER"},   {"float32", "NUMERIC"},    {"float64", "NUMERIC"},
-  {"bytes", "BLOB"}};
+  {"string", "TEXT"},     {"date", "DATE"},    {"date-time", "DATETIME"}, {"null", "NULL"},     {"integer", "INTEGER"},
+  {"boolean", "BOOLEAN"}, {"array", "BLOB"},   {"number", "NUMERIC"},     {"int32", "INTEGER"}, {"int64", "INTEGER"},
+  {"float32", "REAL"},    {"float64", "REAL"}, {"bytes", "BLOB"}};
 
 const char kPoint = '.';
 
