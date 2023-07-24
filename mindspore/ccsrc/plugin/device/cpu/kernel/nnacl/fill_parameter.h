@@ -19,10 +19,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct FillParameter {
-  // Primitive parameter
   OpParameter op_parameter_;
-  int dims_[COMM_SHAPE_SIZE];
-  int num_dims_;
 } FillParameter;
 
 #endif  // NNACL_FILL_PARAMETER_H_

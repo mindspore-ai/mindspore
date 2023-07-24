@@ -56,26 +56,27 @@ echo 'run common ut tests'
 # test cases of framework
 
 # test cases of FP32 OP
-./lite-test --gtest_filter=TestBatchToSpaceFp32*
-./lite-test --gtest_filter=DepthToSpaceTestFp32*
-./lite-test --gtest_filter=TestPowerFp32*
-./lite-test --gtest_filter=TestScaleFp32*
-./lite-test --gtest_filter=TestReduceFp32*
-./lite-test --gtest_filter=TestFcFp32*
 ./lite-test --gtest_filter=TestBatchnormFp32*
+./lite-test --gtest_filter=TestBatchToSpaceFp32*
 ./lite-test --gtest_filter=TestConv1x1Fp32*
 ./lite-test --gtest_filter=TestConvolutionFp32*
+./lite-test --gtest_filter=CropTestFp32*
 ./lite-test --gtest_filter=TestDeConvolutionFp32*
+./lite-test --gtest_filter=DepthToSpaceTestFp32*
+./lite-test --gtest_filter=TestFcFp32*
 ./lite-test --gtest_filter=TestLogicalOrFp32*
-./lite-test --gtest_filter=TestTileFp32*
 ./lite-test --gtest_filter=TestNLLLossFp32*
-./lite-test --gtest_filter=TestRaggedRangeFp32*
 ./lite-test --gtest_filter=TestOneHotFp32*
+./lite-test --gtest_filter=TestPowerFp32*
+./lite-test --gtest_filter=TestReduceFp32*
+./lite-test --gtest_filter=TestRaggedRangeFp32*
+./lite-test --gtest_filter=TestScaleFp32*
+./lite-test --gtest_filter=TestTileFp32*
 
 # test cases of INT8 OP
-./lite-test --gtest_filter=TestPadInt8.*
-./lite-test --gtest_filter=TestDeconvInt8.*
 ./lite-test --gtest_filter=TestBatchnormInt8.*
+./lite-test --gtest_filter=TestDeconvInt8.*
+./lite-test --gtest_filter=TestPadInt8.*
 
 # test cases of generic api
 ./lite-test --gtest_filter="GenericApiTest*"

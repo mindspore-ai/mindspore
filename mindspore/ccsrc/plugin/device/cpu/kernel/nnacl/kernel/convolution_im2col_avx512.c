@@ -95,8 +95,6 @@ int ConvIm2ColAVX512RunImpl(struct ConvolutionBaseStruct *conv, int task_id) {
 
 int ConvolutionIm2colAvx512Compute(KernelBase *self) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)self;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_im2col);
-
   int ret = conv_im2col->init_tmp_buffer_(conv_im2col);
   if (ret != NNACL_OK) {
     ConvIm2ColBaseFreeTmpBuffer(conv_im2col);
@@ -104,7 +102,6 @@ int ConvolutionIm2colAvx512Compute(KernelBase *self) {
   }
 
   float *output_addr = (float *)self->out_[OUTPUT_INDEX]->data_;
-  NNACL_CHECK_NULL_RETURN_ERR(output_addr);
   if (!conv_im2col->output_need_align_) {
     conv_im2col->tmp_output_ = output_addr;
   }

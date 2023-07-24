@@ -29,9 +29,6 @@ using mindspore::schema::PrimitiveType_Shape;
 namespace mindspore::kernel {
 int FillOpenCLKernel::RunFill() {
   auto allocator_ = ocl_runtime_->GetAllocator();
-  auto param = reinterpret_cast<FillParameter *>(this->op_parameter_);
-  CHECK_NULL_RETURN(param);
-  default_ = param->num_dims_;
   ImageSize img_size;
   cl_int4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
