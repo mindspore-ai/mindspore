@@ -193,8 +193,8 @@ __global__ void NmsBitonicSortByKeyKernel(const int outer, const int inner, cons
 }
 
 template <typename T>
-void CalPreprocess(const int num, int *sel_idx, bool *sel_boxes, const T *input, T *output, int *index_buff,
-                   int box_size, bool *row_mask, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalPreprocess(const int num, int *sel_idx, bool *sel_boxes, const T *input, T *output, int *index_buff,
+                          int box_size, bool *row_mask, const uint32_t &device_id, cudaStream_t cuda_stream) {
   int total_val = num * num;
   MaskInit<<<CUDA_BLOCKS(device_id, total_val), CUDA_THREADS(device_id), 0, cuda_stream>>>(total_val, row_mask);
   // default for flipping boxes -> false (provision available to flip if API updated)
@@ -202,11 +202,12 @@ void CalPreprocess(const int num, int *sel_idx, bool *sel_boxes, const T *input,
                                                                                            num, box_size, false);
   Preprocess<<<CUDA_BLOCKS(device_id, num), CUDA_THREADS(device_id), 0, cuda_stream>>>(num, sel_idx, sel_boxes, output,
                                                                                        box_size);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalPreprocess(const int num, int *sel_idx, int *sel_boxes, const T *input, T *output, int *index_buff,
-                   int box_size, bool *row_mask, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalPreprocess(const int num, int *sel_idx, int *sel_boxes, const T *input, T *output, int *index_buff,
+                          int box_size, bool *row_mask, const uint32_t &device_id, cudaStream_t cuda_stream) {
   int total_val = num * num;
   MaskInit<<<CUDA_BLOCKS(device_id, total_val), CUDA_THREADS(device_id), 0, cuda_stream>>>(total_val, row_mask);
   // default for flipping boxes -> false (provision available to flip if API updated)
@@ -214,51 +215,57 @@ void CalPreprocess(const int num, int *sel_idx, int *sel_boxes, const T *input, 
                                                                                            num, box_size, false);
   Preprocess<<<CUDA_BLOCKS(device_id, num), CUDA_THREADS(device_id), 0, cuda_stream>>>(num, sel_idx, sel_boxes, output,
                                                                                        box_size);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalSort(const int &num, const T *data_in, T *data_out, int *index_buff, T *data_buff, int box_size,
-             const uint32_t &device_id, cudaStream_t stream) {
+cudaError_t CalSort(const int &num, const T *data_in, T *data_out, int *index_buff, T *data_buff, int box_size,
+                    const uint32_t &device_id, cudaStream_t stream) {
   int ceil_p_2 = NmsRoundUpPower2(num);
   int thread = std::min(ceil_p_2, CUDA_THREADS(device_id));
   NmsBitonicSortByKeyKernel<<<1, thread, 0, stream>>>(1, num, ceil_p_2, data_in, data_buff, index_buff, box_size);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalNms(const int num, const float IOU_value, T *output, bool *sel_boxes, int box_size, bool *row_mask,
-            const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalNms(const int num, const float IOU_value, T *output, bool *sel_boxes, int box_size, bool *row_mask,
+                   const uint32_t &device_id, cudaStream_t cuda_stream) {
   // run kernel for every position in row_mask array = (num * num) size
   int row_mask_size = num * num;
   NmsPass<<<CUDA_BLOCKS(device_id, row_mask_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(num, IOU_value, output,
                                                                                               box_size, row_mask);
   ReducePass<<<1, CUDA_THREADS(device_id), 0, cuda_stream>>>(num, sel_boxes, row_mask);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalNms(const int num, const float IOU_value, T *output, int *sel_boxes, int box_size, bool *row_mask,
-            const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalNms(const int num, const float IOU_value, T *output, int *sel_boxes, int box_size, bool *row_mask,
+                   const uint32_t &device_id, cudaStream_t cuda_stream) {
   // run kernel for every position in row_mask array = (num * num) size
   int row_mask_size = num * num;
   NmsPass<<<CUDA_BLOCKS(device_id, row_mask_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(num, IOU_value, output,
                                                                                               box_size, row_mask);
   ReducePass<<<1, CUDA_THREADS(device_id), 0, cuda_stream>>>(num, sel_boxes, row_mask);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalSort<float>(const int &inner, const float *data_in, float *data_out, int *index_buff,
-                                             float *data_buff, int box_size, const uint32_t &device_id,
-                                             cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalSort<float>(const int &inner, const float *data_in, float *data_out,
+                                                    int *index_buff, float *data_buff, int box_size,
+                                                    const uint32_t &device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void CalPreprocess<float>(const int num, int *sel_idx, bool *sel_boxes, const float *input,
-                                                   float *output, int *index_buff, int box_size, bool *row_mask,
-                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPreprocess<float>(const int num, int *sel_idx, bool *sel_boxes,
+                                                          const float *input, float *output, int *index_buff,
+                                                          int box_size, bool *row_mask, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalPreprocess<float>(const int num, int *sel_idx, int *sel_boxes, const float *input,
-                                                   float *output, int *index_buff, int box_size, bool *row_mask,
-                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPreprocess<float>(const int num, int *sel_idx, int *sel_boxes,
+                                                          const float *input, float *output, int *index_buff,
+                                                          int box_size, bool *row_mask, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalNms<float>(const int num, const float IOU_value, float *output, bool *sel_boxes,
-                                            int box_size, bool *row_mask, const uint32_t &device_id,
-                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNms<float>(const int num, const float IOU_value, float *output, int *sel_boxes,
-                                            int box_size, bool *row_mask, const uint32_t &device_id,
-                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNms<float>(const int num, const float IOU_value, float *output, bool *sel_boxes,
+                                                   int box_size, bool *row_mask, const uint32_t &device_id,
+                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNms<float>(const int num, const float IOU_value, float *output, int *sel_boxes,
+                                                   int box_size, bool *row_mask, const uint32_t &device_id,
+                                                   cudaStream_t cuda_stream);

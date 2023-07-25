@@ -85,9 +85,11 @@ class MirrorPadGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
     size_t size = output_size_ / sizeof(T);
     int dim_offset = output_shape_.size() - kMaxIndexOffset;
 
-    CalMirrorPad(size, input, input_shape_[0], input_shape_[kInputIndex1st], input_shape_[kInputIndex2nd],
-                 input_shape_[kInputIndex3rd], output_shape_[dim_offset + 0], output_shape_[dim_offset + 1],
-                 num_paddings_, paddings, mode_, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    auto status =
+      CalMirrorPad(size, input, input_shape_[0], input_shape_[kInputIndex1st], input_shape_[kInputIndex2nd],
+                   input_shape_[kInputIndex3rd], output_shape_[dim_offset + 0], output_shape_[dim_offset + 1],
+                   num_paddings_, paddings, mode_, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

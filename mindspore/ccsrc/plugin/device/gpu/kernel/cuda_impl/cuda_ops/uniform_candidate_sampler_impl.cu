@@ -24,14 +24,16 @@ __global__ void AssignToOutput(const int64_t size, const S prob_val, S *output_a
 }
 
 template <typename S>
-void CalUniformCandidateSampler(const int64_t true_size, const int64_t num_sampled, const S prob_val,
-                                S *true_expected_count, S *sampled_expected_count, cudaStream_t cuda_stream) {
+cudaError_t CalUniformCandidateSampler(const int64_t true_size, const int64_t num_sampled, const S prob_val,
+                                       S *true_expected_count, S *sampled_expected_count, cudaStream_t cuda_stream) {
   AssignToOutput<<<GET_BLOCKS(true_size), GET_THREADS, 0, cuda_stream>>>(true_size, prob_val, true_expected_count);
   AssignToOutput<<<GET_BLOCKS(num_sampled), GET_THREADS, 0, cuda_stream>>>(num_sampled, prob_val,
                                                                            sampled_expected_count);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalUniformCandidateSampler<float>(const int64_t true_size, const int64_t num_sampled,
-                                                                const float prob_val, float *true_expected_count,
-                                                                float *sampled_expected_count,
-                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUniformCandidateSampler<float>(const int64_t true_size,
+                                                                       const int64_t num_sampled, const float prob_val,
+                                                                       float *true_expected_count,
+                                                                       float *sampled_expected_count,
+                                                                       cudaStream_t cuda_stream);

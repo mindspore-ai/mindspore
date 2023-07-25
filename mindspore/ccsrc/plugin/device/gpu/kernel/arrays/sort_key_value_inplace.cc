@@ -50,10 +50,10 @@ bool SegSort(const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices
              bool descending, cudaStream_t stream) {
   int64_t ceil_power_of2 = NextHighestPowerOf2(key_slice_size);
 
-#define HANDLE_CASE(SIZE, ITEMS_PER_THREAD)                                                                           \
-  return SortFixedSize<A, SIZE, ITEMS_PER_THREAD, K, V>(key_info, key_data, key_slices, key_slice_size,               \
-                                                        key_slice_stride, value_info, value_data, value_slice_stride, \
-                                                        descending, stream)
+#define HANDLE_CASE(SIZE, ITEMS_PER_THREAD, STATUS)                                                                  \
+  STATUS =                                                                                                           \
+    SortFixedSize<A, SIZE, ITEMS_PER_THREAD, K, V>(key_info, key_data, key_slices, key_slice_size, key_slice_stride, \
+                                                   value_info, value_data, value_slice_stride, descending, stream);
   constexpr int kFixedSizeLevel3SubThreshold1 = 512;
   constexpr int kFixedSizeLevel3SubThreshold2 = 256;
   constexpr int kFixedSizeLevel4SubThreshold = 64;
@@ -61,24 +61,30 @@ bool SegSort(const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices
   constexpr int kFixedSizeLevel5SubThreshold2 = 8;
   constexpr int kFixedSizeLevel5SubThreshold3 = 4;
   constexpr int kFixedSizeLevel5SubThreshold4 = 2;
+  cudaError_t status = cudaErrorNotReady;
   switch (ceil_power_of2) {
     case kFixedSizeLevel1:
-      HANDLE_CASE(kFixedSizeLevel1, kFixedSizeLevel1ItemPreThread);
+      HANDLE_CASE(kFixedSizeLevel1, kFixedSizeLevel1ItemPreThread, status);
+      break;
     case kFixedSizeLevel2:
-      HANDLE_CASE(kFixedSizeLevel2, kFixedSizeLevel2ItemPreThread);
+      HANDLE_CASE(kFixedSizeLevel2, kFixedSizeLevel2ItemPreThread, status);
+      break;
     case kFixedSizeLevel3:
     case kFixedSizeLevel3SubThreshold1:
     case kFixedSizeLevel3SubThreshold2:
-      HANDLE_CASE(kFixedSizeLevel3, kFixedSizeLevel3ItemPreThread);
+      HANDLE_CASE(kFixedSizeLevel3, kFixedSizeLevel3ItemPreThread, status);
+      break;
     case kFixedSizeLevel4:
     case kFixedSizeLevel4SubThreshold:
-      HANDLE_CASE(kFixedSizeLevel4, kFixedSizeLevel4ItemPreThread);
+      HANDLE_CASE(kFixedSizeLevel4, kFixedSizeLevel4ItemPreThread, status);
+      break;
     case kFixedSizeLevel5:
     case kFixedSizeLevel5SubThreshold1:
     case kFixedSizeLevel5SubThreshold2:
     case kFixedSizeLevel5SubThreshold3:
     case kFixedSizeLevel5SubThreshold4:
-      HANDLE_CASE(kFixedSizeLevel5, kFixedSizeLevel5ItemPreThread);
+      HANDLE_CASE(kFixedSizeLevel5, kFixedSizeLevel5ItemPreThread, status);
+      break;
     case 1:
       return true;
     default:
@@ -86,6 +92,8 @@ bool SegSort(const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices
                     << key_slice_size;
       return false;
   }
+  CHECK_CUDA_STATUS(status, "FastSort_SegSort");
+  return true;
 #undef HANDLE_CASE
 }
 
@@ -130,7 +138,9 @@ bool InitIndexBySlice(const TensorLayoutHelper &t, int64_t axis, K *data, cudaSt
   std::vector<int64_t> simplified_inp_shape;
   std::vector<int64_t> simplified_out_shape;
   SimplifyBroadcastToShape(in_size, out_size, &simplified_inp_shape, &simplified_out_shape);
-  BroadcastTo<K>(simplified_inp_shape, simplified_out_shape, slice_data_device, data, GET_CTX_DEVICE_ID, cuda_stream);
+  auto status =
+    BroadcastTo<K>(simplified_inp_shape, simplified_out_shape, slice_data_device, data, GET_CTX_DEVICE_ID, cuda_stream);
+  CHECK_CUDA_STATUS(status, "FastSort_InitIndexBySlice");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(slice_data_device), "Free slice data failed.");
   return true;
 }

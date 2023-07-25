@@ -88,8 +88,9 @@ bool NoRepeatNGramGpuKernelMode::LaunchKernel(const std::vector<AddressPtr> &inp
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'no_repeat_ngram', it launch memcopy failed.");
 
-  CalculateNoRepeatNGram(input_state, log_probs, output, seq_len_, ngram_, device_id_, vocab_size_, blocks, mem_size,
-                         reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalculateNoRepeatNGram(input_state, log_probs, output, seq_len_, ngram_, device_id_, vocab_size_,
+                                       blocks, mem_size, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

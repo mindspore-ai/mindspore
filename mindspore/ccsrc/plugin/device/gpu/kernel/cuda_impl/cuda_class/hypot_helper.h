@@ -117,15 +117,16 @@ class HypotHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
+    cudaError_t status = cudaErrorNotReady;
     // call cuda kernel
     if (need_broadcast_) {
-      BroadcastHypot(lhs_shape_, rhs_shape_, output_shape_, inputx_ptr, inputy_ptr, output_ptr, device_id_,
-                     reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = BroadcastHypot(lhs_shape_, rhs_shape_, output_shape_, inputx_ptr, inputy_ptr, output_ptr, device_id_,
+                              reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      CalHypot(output_num_, inputx_ptr, inputy_ptr, output_ptr, device_id_,
-               reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalHypot(output_num_, inputx_ptr, inputy_ptr, output_ptr, device_id_,
+                        reinterpret_cast<cudaStream_t>(cuda_stream));
     }
-
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

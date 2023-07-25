@@ -150,8 +150,9 @@ bool InstanceNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     auto ith_save_mean_addr = save_mean_addr + updated_para_offset_ * i;
     auto ith_save_variance_addr = save_variance_addr + updated_para_offset_ * i;
 
-    CopyMemDevice2Device(batch_, channel_, ith_gamma_addr, ith_beta_addr, ith_runing_mean_addr,
-                         ith_runnig_variance_addr, ws_gamma, ws_beta, ws_mean, ws_var, stream_ptr_);
+    auto status = CopyMemDevice2Device(batch_, channel_, ith_gamma_addr, ith_beta_addr, ith_runing_mean_addr,
+                                       ith_runnig_variance_addr, ws_gamma, ws_beta, ws_mean, ws_var, stream_ptr_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
 
     float *reserve_addr = nullptr;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(

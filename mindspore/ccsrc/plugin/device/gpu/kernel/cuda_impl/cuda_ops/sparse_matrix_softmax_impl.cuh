@@ -19,9 +19,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void SparseMatrixSoftmax(
-  int shape_size, int batch_pointers_size, int row_pointers_size, int col_indices_size,
-  IndexType *x_dense_shape, IndexType *x_batch_pointers, IndexType *x_row_pointers,
-  IndexType *x_col_indices, DataType *x_values, IndexType *y_dense_shape, IndexType *y_batch_pointers,
-  IndexType *y_row_pointers, IndexType *y_col_indices, DataType *softmax, uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t SparseMatrixSoftmax(int shape_size, int batch_pointers_size, int row_pointers_size,
+                                                int col_indices_size, IndexType *x_dense_shape,
+                                                IndexType *x_batch_pointers, IndexType *x_row_pointers,
+                                                IndexType *x_col_indices, DataType *x_values, IndexType *y_dense_shape,
+                                                IndexType *y_batch_pointers, IndexType *y_row_pointers,
+                                                IndexType *y_col_indices, DataType *softmax, uint32_t device_id,
+                                                cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_MATRIX_SOFTMAX_IMPL_CUH_

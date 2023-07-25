@@ -206,8 +206,8 @@ __global__ void PDist_Other(const T *x, T *y, const float p, const int64_t n, co
 }
 
 template <typename T>
-void CalPDist(const size_t x_size, const size_t y_size, const T *x, T *y, const float p, const int64_t n,
-              const int64_t m, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalPDist(const size_t x_size, const size_t y_size, const T *x, T *y, const float p, const int64_t n,
+                     const int64_t m, const uint32_t &device_id, cudaStream_t cuda_stream) {
   const dim3 grid(y_size);
   const dim3 block(threads);
   const float n1 = n - .5;
@@ -221,12 +221,12 @@ void CalPDist(const size_t x_size, const size_t y_size, const T *x, T *y, const 
   } else {
     PDist_Other<T><<<grid, block, 0, cuda_stream>>>(x, y, p, n, m, n1, n2);
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalPDist<float>(const size_t x_size, const size_t y_size, const float *x, float *y,
-                                              const float p, const int64_t n, const int64_t m,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPDist<double>(const size_t x_size, const size_t y_size, const double *x, double *y,
-                                               const float p, const int64_t n, const int64_t m,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPDist<float>(const size_t x_size, const size_t y_size, const float *x, float *y,
+                                                     const float p, const int64_t n, const int64_t m,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPDist<double>(const size_t x_size, const size_t y_size, const double *x,
+                                                      double *y, const float p, const int64_t n, const int64_t m,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);

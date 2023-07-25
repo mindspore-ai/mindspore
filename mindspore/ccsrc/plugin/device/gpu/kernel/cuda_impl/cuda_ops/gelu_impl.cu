@@ -52,12 +52,14 @@ __global__ void GeluKernel(size_t size, const half2 *input_addr, half2 *output_a
 }
 
 template <typename T>
-void Gelu(size_t size, const T *input_addr, T *output_addr, cudaStream_t cuda_stream, const uint32_t device_id) {
+cudaError_t Gelu(size_t size, const T *input_addr, T *output_addr, cudaStream_t cuda_stream, const uint32_t device_id) {
   GeluKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input_addr, output_addr);
+  return GetCudaStatus();
 }
 
 template <>
-void Gelu(size_t size, const half *input_addr, half *output_addr, cudaStream_t cuda_stream, const uint32_t device_id) {
+cudaError_t Gelu(size_t size, const half *input_addr, half *output_addr, cudaStream_t cuda_stream,
+                 const uint32_t device_id) {
   if (size % 2 == 0) {
     GeluKernel<half2><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       size / 2, reinterpret_cast<const half2 *>(input_addr), reinterpret_cast<half2 *>(output_addr));
@@ -65,6 +67,7 @@ void Gelu(size_t size, const half *input_addr, half *output_addr, cudaStream_t c
     GeluKernel<half>
       <<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input_addr, output_addr);
   }
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -113,15 +116,16 @@ __global__ void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *d
 }
 
 template <typename T>
-void GeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr, cudaStream_t cuda_stream,
-                    const uint32_t device_id) {
+cudaError_t GeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr, cudaStream_t cuda_stream,
+                           const uint32_t device_id) {
   GeluGradKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, dy_addr, x_addr,
                                                                                             dx_addr);
+  return GetCudaStatus();
 }
 
 template <>
-void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr, cudaStream_t cuda_stream,
-                    const uint32_t device_id) {
+cudaError_t GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr, cudaStream_t cuda_stream,
+                           const uint32_t device_id) {
   if (size % 2 == 0) {
     GeluGradKernel<half2><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       size / 2, reinterpret_cast<half2 *>(dy_addr), reinterpret_cast<half2 *>(x_addr),
@@ -130,17 +134,18 @@ void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr, cud
     GeluGradKernel<half>
       <<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, dy_addr, x_addr, dx_addr);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Gelu(size_t size, const double *input_addr, double *output_addr, cudaStream_t cuda_stream,
-                                   uint32_t device_id);
-template CUDA_LIB_EXPORT void Gelu(size_t size, const float *input_addr, float *output_addr, cudaStream_t cuda_stream,
-                                   const uint32_t device_id);
-template CUDA_LIB_EXPORT void Gelu(size_t size, const half *input_addr, half *output_addr, cudaStream_t cuda_stream,
-                                   const uint32_t device_id);
-template CUDA_LIB_EXPORT void GeluGradKernel(size_t size, double *dy_addr, double *x_addr, double *dx_addr,
-                                             cudaStream_t cuda_stream, const uint32_t device_id);
-template CUDA_LIB_EXPORT void GeluGradKernel(size_t size, float *dy_addr, float *x_addr, float *dx_addr,
-                                             cudaStream_t cuda_stream, const uint32_t device_id);
-template CUDA_LIB_EXPORT void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr,
-                                             cudaStream_t cuda_stream, const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t Gelu(size_t size, const double *input_addr, double *output_addr,
+                                          cudaStream_t cuda_stream, uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t Gelu(size_t size, const float *input_addr, float *output_addr,
+                                          cudaStream_t cuda_stream, const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t Gelu(size_t size, const half *input_addr, half *output_addr,
+                                          cudaStream_t cuda_stream, const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t GeluGradKernel(size_t size, double *dy_addr, double *x_addr, double *dx_addr,
+                                                    cudaStream_t cuda_stream, const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t GeluGradKernel(size_t size, float *dy_addr, float *x_addr, float *dx_addr,
+                                                    cudaStream_t cuda_stream, const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr,
+                                                    cudaStream_t cuda_stream, const uint32_t device_id);

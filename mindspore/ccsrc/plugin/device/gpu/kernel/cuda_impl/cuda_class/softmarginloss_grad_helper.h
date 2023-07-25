@@ -126,8 +126,9 @@ class SoftMarginLossGradHelperGpuKernel : public GpuKernelHelperBase {
     }
 
     // call cuda kernel
-    SoftMarginLossGrad(prediction, target, dout, input_size_, norm_, reduction_, gradient, device_id_,
-                       reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = SoftMarginLossGrad(prediction, target, dout, input_size_, norm_, reduction_, gradient, device_id_,
+                                     reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

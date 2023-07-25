@@ -38,8 +38,8 @@ __global__ void CheckValidKernel(const size_t size, const T *box, const T *img_m
 }
 
 template <typename S>
-__global__ void CheckValidKernel(const size_t size, const unsigned char *box,
-                                 const unsigned char *img_metas, S *valid) {
+__global__ void CheckValidKernel(const size_t size, const unsigned char *box, const unsigned char *img_metas,
+                                 S *valid) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     const size_t right_x = i * 4 + 2;
     const size_t right_y = i * 4 + 3;
@@ -55,15 +55,16 @@ __global__ void CheckValidKernel(const size_t size, const unsigned char *box,
 }
 
 template <typename T, typename S>
-void CheckValid(const size_t &size, const T *box, const T *img_metas, S *valid, cudaStream_t cuda_stream) {
+cudaError_t CheckValid(const size_t &size, const T *box, const T *img_metas, S *valid, cudaStream_t cuda_stream) {
   CheckValidKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, box, img_metas, valid);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CheckValid(const size_t &size, const float *box, const float *img_metas, bool *valid,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CheckValid(const size_t &size, const half *box, const half *img_metas, bool *valid,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CheckValid(const size_t &size, const short *box, const short *img_metas, bool *valid,  // NOLINT
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CheckValid(const size_t &size, const unsigned char *box, const unsigned char *img_metas,
-                                         bool *valid, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CheckValid(const size_t &size, const float *box, const float *img_metas,
+                                                bool *valid, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CheckValid(const size_t &size, const half *box, const half *img_metas, bool *valid,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CheckValid(const size_t &size, const int16_t *box, const int16_t *img_metas,
+                                                bool *valid, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CheckValid(const size_t &size, const unsigned char *box,
+                                                const unsigned char *img_metas, bool *valid, cudaStream_t cuda_stream);

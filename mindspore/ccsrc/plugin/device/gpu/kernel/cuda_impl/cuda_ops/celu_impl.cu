@@ -37,18 +37,21 @@ __global__ void CalculateCeluKernel(const half *input, const size_t input_elemen
 }
 
 template <typename T>
-void CalculateCelu(const T *input, size_t input_elements, double alpha, T *output, const uint32_t &device_id,
+cudaError_t CalculateCelu(const T *input, size_t input_elements, double alpha, T *output, const uint32_t &device_id,
                    cudaStream_t cuda_stream) {
   CalculateCeluKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_elements, alpha, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalculateCelu<double>(const double *input, size_t input_elements, double alpha,
-                                                    double *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateCelu<double>(const double *input, size_t input_elements, double alpha,
+                                                           double *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateCelu<float>(const float *input, size_t input_elements, double alpha,
-                                                   float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateCelu<float>(const float *input, size_t input_elements, double alpha,
+                                                          float *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateCelu<half>(const half *input, size_t input_elements, double alpha, half *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateCelu<half>(const half *input, size_t input_elements, double alpha,
+                                                         half *output, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);

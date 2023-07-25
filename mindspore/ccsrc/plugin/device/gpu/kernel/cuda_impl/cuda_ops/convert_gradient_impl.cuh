@@ -18,18 +18,19 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CONVERT_GRADIENT_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void ConvertGradient(const size_t size, const size_t height_h, const size_t height_w,
-                                     const size_t batchwidth, const size_t width, T *input_addr, T *outt_addr,
-                                     cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ConvertGradient(const size_t size, const size_t height_h, const size_t height_w,
+                                            const size_t batchwidth, const size_t width, T *input_addr, T *outt_addr,
+                                            cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void ConvertGradientBack(const size_t size, const size_t height_h, const size_t height_w,
-                                         const size_t batchwidth, const size_t width, T *input_addr, T *output_addr,
-                                         cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ConvertGradientBack(const size_t size, const size_t height_h, const size_t height_w,
+                                                const size_t batchwidth, const size_t width, T *input_addr,
+                                                T *output_addr, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void ConvertGradientBack(const size_t size, const size_t height_h, const size_t height_w,
-                                         const size_t ori_h, const size_t ori_w, const size_t batchwidth,
-                                         const size_t width, T *input_addr, T *output_addr, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ConvertGradientBack(const size_t size, const size_t height_h, const size_t height_w,
+                                                const size_t ori_h, const size_t ori_w, const size_t batchwidth,
+                                                const size_t width, T *input_addr, T *output_addr,
+                                                cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CONVERT_GRADIENT_IMPL_CUH_

@@ -41,8 +41,9 @@ class CorrectionMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto *running_std = GetDeviceAddress<T>(inputs, kIndex2);
     auto *output = GetDeviceAddress<T>(outputs, kIndex0);
 
-    CalCorrectionMul(weight, gamma, running_std, batch_size_, channel_, height_, width_, output,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalCorrectionMul(weight, gamma, running_std, batch_size_, channel_, height_, width_, output,
+                                   reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {

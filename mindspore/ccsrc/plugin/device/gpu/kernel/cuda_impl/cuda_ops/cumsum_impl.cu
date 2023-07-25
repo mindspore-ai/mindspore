@@ -114,8 +114,8 @@ __global__ void CumSumKernel(const T *input, T *output, size_t dim0, size_t dim1
   }
 }
 template <typename T>
-void CumSum(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, size_t dim2, size_t stride,
-            size_t stride2, bool exclusive_, bool reverse_, const uint32_t &device_id, cudaStream_t stream) {
+cudaError_t CumSum(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                   size_t stride2, bool exclusive_, bool reverse_, const uint32_t &device_id, cudaStream_t stream) {
   int size = dim0 * dim2;
   int block_num = size > 256 ? 256 : size;
   if (exclusive_) {
@@ -141,50 +141,60 @@ void CumSum(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, s
                                                                                           dim2, stride, stride2);
     }
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CumSum<int8_t>(const int8_t *input, int8_t *output, int8_t *workspace, size_t dim0,
-                                             size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                             bool reverse_, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<int16_t>(const int16_t *input, int16_t *output, int16_t *workspace, size_t dim0,
-                                              size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                              bool reverse_, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<int32_t>(const int32_t *input, int32_t *output, int32_t *workspace, size_t dim0,
-                                              size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                              bool reverse_, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<int64_t>(const int64_t *input, int64_t *output, int64_t *workspace, size_t dim0,
-                                              size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                              bool reverse_, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<uint8_t>(const uint8_t *input, uint8_t *output, uint8_t *workspace, size_t dim0,
-                                              size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                              bool reverse_, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<uint16_t>(const uint16_t *input, uint16_t *output, uint16_t *workspace,
-                                               size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                                               bool exclusive_, bool reverse_, const uint32_t &device_id,
-                                               cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<uint32_t>(const uint32_t *input, uint32_t *output, uint32_t *workspace,
-                                               size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                                               bool exclusive_, bool reverse_, const uint32_t &device_id,
-                                               cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<uint64_t>(const uint64_t *input, uint64_t *output, uint64_t *workspace,
-                                               size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                                               bool exclusive_, bool reverse_, const uint32_t &device_id,
-                                               cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<double>(const double *input, double *output, double *workspace, size_t dim0,
-                                             size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                             bool reverse_, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<float>(const float *input, float *output, float *workspace, size_t dim0,
-                                            size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                            bool reverse_, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<half>(const half *input, half *output, half *workspace, size_t dim0, size_t dim1,
-                                           size_t dim2, size_t stride, size_t stride2, bool exclusive_, bool reverse_,
-                                           const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<Complex<float>>(const Complex<float> *input, Complex<float> *output,
-                                                     Complex<float> *workspace, size_t dim0, size_t dim1, size_t dim2,
-                                                     size_t stride, size_t stride2, bool exclusive_, bool reverse_,
+template CUDA_LIB_EXPORT cudaError_t CumSum<int8_t>(const int8_t *input, int8_t *output, int8_t *workspace, size_t dim0,
+                                                    size_t dim1, size_t dim2, size_t stride, size_t stride2,
+                                                    bool exclusive_, bool reverse_, const uint32_t &device_id,
+                                                    cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<int16_t>(const int16_t *input, int16_t *output, int16_t *workspace,
+                                                     size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                     size_t stride2, bool exclusive_, bool reverse_,
                                                      const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumSum<Complex<double>>(const Complex<double> *input, Complex<double> *output,
-                                                      Complex<double> *workspace, size_t dim0, size_t dim1, size_t dim2,
-                                                      size_t stride, size_t stride2, bool exclusive_, bool reverse_,
+template CUDA_LIB_EXPORT cudaError_t CumSum<int32_t>(const int32_t *input, int32_t *output, int32_t *workspace,
+                                                     size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                     size_t stride2, bool exclusive_, bool reverse_,
+                                                     const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<int64_t>(const int64_t *input, int64_t *output, int64_t *workspace,
+                                                     size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                     size_t stride2, bool exclusive_, bool reverse_,
+                                                     const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<uint8_t>(const uint8_t *input, uint8_t *output, uint8_t *workspace,
+                                                     size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                     size_t stride2, bool exclusive_, bool reverse_,
+                                                     const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<uint16_t>(const uint16_t *input, uint16_t *output, uint16_t *workspace,
+                                                      size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                      size_t stride2, bool exclusive_, bool reverse_,
                                                       const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<uint32_t>(const uint32_t *input, uint32_t *output, uint32_t *workspace,
+                                                      size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                      size_t stride2, bool exclusive_, bool reverse_,
+                                                      const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<uint64_t>(const uint64_t *input, uint64_t *output, uint64_t *workspace,
+                                                      size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                      size_t stride2, bool exclusive_, bool reverse_,
+                                                      const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<double>(const double *input, double *output, double *workspace, size_t dim0,
+                                                    size_t dim1, size_t dim2, size_t stride, size_t stride2,
+                                                    bool exclusive_, bool reverse_, const uint32_t &device_id,
+                                                    cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<float>(const float *input, float *output, float *workspace, size_t dim0,
+                                                   size_t dim1, size_t dim2, size_t stride, size_t stride2,
+                                                   bool exclusive_, bool reverse_, const uint32_t &device_id,
+                                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<half>(const half *input, half *output, half *workspace, size_t dim0,
+                                                  size_t dim1, size_t dim2, size_t stride, size_t stride2,
+                                                  bool exclusive_, bool reverse_, const uint32_t &device_id,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                            Complex<float> *workspace, size_t dim0, size_t dim1,
+                                                            size_t dim2, size_t stride, size_t stride2, bool exclusive_,
+                                                            bool reverse_, const uint32_t &device_id,
+                                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumSum<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                             Complex<double> *workspace, size_t dim0, size_t dim1,
+                                                             size_t dim2, size_t stride, size_t stride2,
+                                                             bool exclusive_, bool reverse_, const uint32_t &device_id,
+                                                             cudaStream_t stream);

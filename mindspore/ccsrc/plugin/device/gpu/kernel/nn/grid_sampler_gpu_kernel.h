@@ -46,9 +46,10 @@ class GridSampler2DGpuKernelMod : public NativeGpuKernelMod {
     T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
     T *grid_addr = GetDeviceAddress<T>(inputs, kIndex1);
     T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-    GridSampler2D(size_, input_addr, grid_addr, output_addr, input_shape_, grid_shape_, output_shape_, input_stride_,
-                  grid_stride_, output_stride_, interpolation_mode_, padding_mode_, align_corners_,
-                  reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = GridSampler2D(size_, input_addr, grid_addr, output_addr, input_shape_, grid_shape_, output_shape_,
+                                input_stride_, grid_stride_, output_stride_, interpolation_mode_, padding_mode_,
+                                align_corners_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

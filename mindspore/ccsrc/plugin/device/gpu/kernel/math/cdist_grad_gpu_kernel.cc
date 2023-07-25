@@ -104,8 +104,9 @@ bool CdistGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *t2_start_ = GetDeviceAddress<T>(inputs, 2);
   T *res_start_ = GetDeviceAddress<T>(outputs, 0);
 
-  CalCdistGrad(out_size_, l1_size_, l2_size_, grad_start_, dist_start_, t1_start_, t2_start_, res_start_, m_, p_, r0_,
-               r1_, batch_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalCdistGrad(out_size_, l1_size_, l2_size_, grad_start_, dist_start_, t1_start_, t2_start_, res_start_,
+                             m_, p_, r0_, r1_, batch_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   return true;
 }

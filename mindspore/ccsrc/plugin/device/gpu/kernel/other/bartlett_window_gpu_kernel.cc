@@ -76,8 +76,9 @@ bool BartlettWindowGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
                                               const std::vector<AddressPtr> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   S *output = GetDeviceAddress<S>(outputs, 0);
-  CalBartlettWindow(output_elements_, input, periodic_, output, device_id_,
-                    reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalBartlettWindow(output_elements_, input, periodic_, output, device_id_,
+                                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

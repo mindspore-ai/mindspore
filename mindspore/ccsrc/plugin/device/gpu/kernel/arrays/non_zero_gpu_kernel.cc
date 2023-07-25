@@ -89,8 +89,8 @@ bool NonZeroGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     return false;
   }
 
-  NonZero(input_ptr, output_ptr, output_size_ptr, input_shape_, input_size_, device_id_, cuda_stream_);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaGetLastError(), "NonZero kernel failed.");
+  auto status = NonZero(input_ptr, output_ptr, output_size_ptr, input_shape_, input_size_, device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   // Update the final output size of NonZero.
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

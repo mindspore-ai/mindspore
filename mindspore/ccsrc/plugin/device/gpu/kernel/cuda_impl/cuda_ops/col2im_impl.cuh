@@ -19,10 +19,10 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT void Col2Im(const T *input, const uint32_t batch_size, const uint32_t channels,
-                            const uint32_t out_height, const uint32_t out_width, const uint32_t in_height,
-                            const uint32_t in_width, const uint32_t kernel_height, const uint32_t kernel_width,
-                            const uint32_t pad_height, const uint32_t pad_width, const uint32_t stride_height,
-                            const uint32_t stride_width, const uint32_t dilation_height, const uint32_t dilation_width,
-                            T *output, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t Col2Im(const T *input, const uint32_t batch_size, const uint32_t channels,
+                                   const uint32_t out_height, const uint32_t out_width, const uint32_t in_height,
+                                   const uint32_t in_width, const uint32_t kernel_height, const uint32_t kernel_width,
+                                   const uint32_t pad_height, const uint32_t pad_width, const uint32_t stride_height,
+                                   const uint32_t stride_width, const uint32_t dilation_height,
+                                   const uint32_t dilation_width, T *output, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_COL2IM_IMPL_CUH_

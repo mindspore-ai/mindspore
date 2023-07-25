@@ -19,11 +19,12 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalCorrectionMul(const T* weight, const T* gamma, const T* running_std, int batch_size,
-                                      int channel_size, int height, int width, T* output, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCorrectionMul(const T *weight, const T *gamma, const T *running_std, int batch_size,
+                                             int channel_size, int height, int width, T *output,
+                                             cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalCorrectionMulGrad(const T* d_out, const T* weight, const T* running_std, int batch_size,
-                                          int channel_size, int height, int width, T* d_gamma, T* tmp,
-                                          cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCorrectionMulGrad(const T *d_out, const T *weight, const T *running_std, int batch_size,
+                                                 int channel_size, int height, int width, T *d_gamma, T *tmp,
+                                                 cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CORRECTION_MUL_IMPL_CUH_

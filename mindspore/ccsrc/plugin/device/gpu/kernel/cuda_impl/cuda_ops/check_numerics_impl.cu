@@ -20,9 +20,9 @@ template <typename T>
 __global__ void CheckNumerics(const size_t size, const T *input, int32_t *flag_device) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     if (isnan(input[pos])) {
-       flag_device[0] = 1;
+      flag_device[0] = 1;
     } else if (isinf(input[pos])) {
-       flag_device[1] = 1;
+      flag_device[1] = 1;
     }
   }
   return;
@@ -32,27 +32,26 @@ template <>
 __global__ void CheckNumerics(const size_t size, const half *input, int32_t *flag_device) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     if (isnan(__half2float(input[pos]))) {
-       flag_device[0] = 1;
+      flag_device[0] = 1;
     } else if (isinf(__half2float(input[pos]))) {
-       flag_device[1] = 1;
+      flag_device[1] = 1;
     }
   }
   return;
 }
 
 template <typename T>
-void CalCheckNumerics(const size_t size, const T *input, int32_t *flag_device, const uint32_t &device_id,
-                      cudaStream_t cuda_stream) {
+cudaError_t CalCheckNumerics(const size_t size, const T *input, int32_t *flag_device, const uint32_t &device_id,
+                             cudaStream_t cuda_stream) {
   CheckNumerics<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, flag_device);
-  return;
+  return GetCudaStatus();
 }
 
-template
-CUDA_LIB_EXPORT void CalCheckNumerics<half>(const size_t size, const half *input, int32_t *flag_device,
-                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalCheckNumerics<float>(const size_t size, const float *input, int32_t *flag_device,
-                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalCheckNumerics<double>(const size_t size, const double *input, int32_t *flag_device,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCheckNumerics<half>(const size_t size, const half *input, int32_t *flag_device,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCheckNumerics<float>(const size_t size, const float *input,
+                                                             int32_t *flag_device, const uint32_t &device_id,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCheckNumerics<double>(const size_t size, const double *input,
+                                                              int32_t *flag_device, const uint32_t &device_id,
+                                                              cudaStream_t cuda_stream);

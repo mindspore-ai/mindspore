@@ -94,11 +94,10 @@ __global__ void SparseSegmentMeanKernel(const DataType *x_ptr, const IndexType *
 }
 
 template <typename DataType, typename IndexType>
-void SparseSegmentMean(const DataType *x_ptr, const IndexType *indices_ptr,
-                       const IndexType *segment_ids_ptr, size_t *segment_pos_ptr, DataType *y_ptr,
-                       size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size,
-                       size_t x_size, size_t y_size, size_t batch_size, uint32_t device_id,
-                       cudaStream_t cuda_stream) {
+cudaError_t SparseSegmentMean(const DataType *x_ptr, const IndexType *indices_ptr, const IndexType *segment_ids_ptr,
+                              size_t *segment_pos_ptr, DataType *y_ptr, size_t outer_size, size_t inner_size,
+                              size_t indices_size, size_t segment_size, size_t x_size, size_t y_size, size_t batch_size,
+                              uint32_t device_id, cudaStream_t cuda_stream) {
   // Get start position of each segment and set to segment_pos_ptr.
   // The last element of segment_pos_ptr must equal to indices_size.
   SparseSegmentPosKernel<<<CUDA_BLOCKS(device_id, indices_size + 1), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -126,37 +125,30 @@ void SparseSegmentMean(const DataType *x_ptr, const IndexType *indices_ptr,
     SparseSegmentMeanKernel<<<grid, block, shared_memory_size, cuda_stream>>>(
       batch_x_ptr, batch_indices_ptr, segment_pos_ptr, batch_y_ptr, outer_size, inner_size, segment_size);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SparseSegmentMean<half, int32_t>(const half *x_ptr, const int32_t *indices_ptr,
-                                                               const int32_t *segment_ids_ptr, size_t *segment_pos_ptr,
-                                                               half *y_ptr, size_t outer_size, size_t inner_size,
-                                                               size_t indices_size, size_t segment_size, size_t x_size,
-                                                               size_t y_size, size_t batch_size, uint32_t device_id,
-                                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSegmentMean<float, int32_t>(const float *x_ptr, const int32_t *indices_ptr,
-                                                                const int32_t *segment_ids_ptr, size_t *segment_pos_ptr,
-                                                                float *y_ptr, size_t outer_size, size_t inner_size,
-                                                                size_t indices_size, size_t segment_size, size_t x_size,
-                                                                size_t y_size, size_t batch_size, uint32_t device_id,
-                                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSegmentMean<double, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t SparseSegmentMean<half, int32_t>(
+  const half *x_ptr, const int32_t *indices_ptr, const int32_t *segment_ids_ptr, size_t *segment_pos_ptr, half *y_ptr,
+  size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size, size_t x_size, size_t y_size,
+  size_t batch_size, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSegmentMean<float, int32_t>(
+  const float *x_ptr, const int32_t *indices_ptr, const int32_t *segment_ids_ptr, size_t *segment_pos_ptr, float *y_ptr,
+  size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size, size_t x_size, size_t y_size,
+  size_t batch_size, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSegmentMean<double, int32_t>(
   const double *x_ptr, const int32_t *indices_ptr, const int32_t *segment_ids_ptr, size_t *segment_pos_ptr,
   double *y_ptr, size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size, size_t x_size,
   size_t y_size, size_t batch_size, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSegmentMean<half, int64_t>(const half *x_ptr, const int64_t *indices_ptr,
-                                                               const int64_t *segment_ids_ptr, size_t *segment_pos_ptr,
-                                                               half *y_ptr, size_t outer_size, size_t inner_size,
-                                                               size_t indices_size, size_t segment_size, size_t x_size,
-                                                               size_t y_size, size_t batch_size, uint32_t device_id,
-                                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSegmentMean<float, int64_t>(const float *x_ptr, const int64_t *indices_ptr,
-                                                                const int64_t *segment_ids_ptr, size_t *segment_pos_ptr,
-                                                                float *y_ptr, size_t outer_size, size_t inner_size,
-                                                                size_t indices_size, size_t segment_size, size_t x_size,
-                                                                size_t y_size, size_t batch_size, uint32_t device_id,
-                                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSegmentMean<double, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t SparseSegmentMean<half, int64_t>(
+  const half *x_ptr, const int64_t *indices_ptr, const int64_t *segment_ids_ptr, size_t *segment_pos_ptr, half *y_ptr,
+  size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size, size_t x_size, size_t y_size,
+  size_t batch_size, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSegmentMean<float, int64_t>(
+  const float *x_ptr, const int64_t *indices_ptr, const int64_t *segment_ids_ptr, size_t *segment_pos_ptr, float *y_ptr,
+  size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size, size_t x_size, size_t y_size,
+  size_t batch_size, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSegmentMean<double, int64_t>(
   const double *x_ptr, const int64_t *indices_ptr, const int64_t *segment_ids_ptr, size_t *segment_pos_ptr,
   double *y_ptr, size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size, size_t x_size,
   size_t y_size, size_t batch_size, uint32_t device_id, cudaStream_t cuda_stream);

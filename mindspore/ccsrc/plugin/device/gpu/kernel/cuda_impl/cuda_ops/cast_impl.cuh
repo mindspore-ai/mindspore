@@ -21,5 +21,5 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename S, typename T>
-CUDA_LIB_EXPORT void Cast(const int input_size, const S *input_addr, T *output_addr, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const S *input_addr, T *output_addr, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CAST_IMPL_CUH_

@@ -61,8 +61,8 @@ __global__ void Broadcast(const size_t l0, const size_t l1, const size_t l2, con
 
 template <typename T>
 cudaError_t CalAddV2(const size_t size, const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-              const std::vector<size_t> &y_dims, const T *x0, const T *x1, T *y, const uint32_t &device_id,
-              cudaStream_t cuda_stream) {
+                     const std::vector<size_t> &y_dims, const T *x0, const T *x1, T *y, const uint32_t &device_id,
+                     cudaStream_t cuda_stream) {
   size_t size1 = 1;
   for (auto d : y_dims) {
     size1 *= d;
@@ -72,7 +72,7 @@ cudaError_t CalAddV2(const size_t size, const std::vector<size_t> &x0_dims, cons
     x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
     x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
     y_dims[5], y_dims[6], x0, x1, y);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -154,7 +154,7 @@ __global__ void ElewiseAddV2Kernel(const int nums, const T *x0, const T *x1, T *
 template <typename T>
 cudaError_t ElewiseAddV2(const int &nums, const T *x0, const T *x1, T *y, cudaStream_t stream) {
   ElewiseAddV2Kernel<T, AddFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const double *x0, const double *x1, double *y,

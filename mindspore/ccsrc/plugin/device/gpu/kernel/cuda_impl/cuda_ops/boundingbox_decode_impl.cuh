@@ -19,10 +19,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void BoundingBoxDecode(const size_t size, const T *rois, const T *deltas, T *bboxes, const float &m1,
-                                       const float &m2, const float &m3, const float &m4, const float &s1,
-                                       const float &s2, const float &s3, const float &s4, const int &max_height,
-                                       const int &max_width, const float &ratio_clip, const uint32_t &device_id,
-                                       cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t BoundingBoxDecode(const size_t size, const T *rois, const T *deltas, T *bboxes,
+                                              const float &m1, const float &m2, const float &m3, const float &m4,
+                                              const float &s1, const float &s2, const float &s3, const float &s4,
+                                              const int &max_height, const int &max_width, const float &ratio_clip,
+                                              const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BOUNDINGBOX_DECODE_IMPL_CUH_

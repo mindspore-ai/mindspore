@@ -19,7 +19,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CheckValid(const size_t &size, const T *box, const T *img_metas, S *valid,
-                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CheckValid(const size_t &size, const T *box, const T *img_metas, S *valid,
+                                       cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CHECK_VALID_IMPL_CUH_

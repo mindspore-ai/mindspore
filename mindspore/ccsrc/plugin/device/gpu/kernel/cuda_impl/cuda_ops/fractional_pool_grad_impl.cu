@@ -19,20 +19,20 @@
 
 template <typename T>
 __global__ void InitOutput(T *output, const int64_t outer_size) {
-    T zero = 0;
-    for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < outer_size; id += blockDim.x * gridDim.x) {
-        output[id] = zero;
-    }
-    return;
+  T zero = 0;
+  for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < outer_size; id += blockDim.x * gridDim.x) {
+    output[id] = zero;
+  }
+  return;
 }
 
 template <typename T>
 __global__ void Fractionalmaxpoolgrad(const T *orig_input, const T *orig_output, const T *out_backprop,
-                                  const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence, T *output,
-                                  const bool overlapping, const int64_t outputHeight, const int64_t outputWidth,
-                                  const int64_t outputChannel, const int64_t backpropHeight,
-                                  const int64_t backpropWidth, const int64_t backpropChannel,
-                                  const int64_t backprop_size) {
+                                      const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence,
+                                      T *output, const bool overlapping, const int64_t outputHeight,
+                                      const int64_t outputWidth, const int64_t outputChannel,
+                                      const int64_t backpropHeight, const int64_t backpropWidth,
+                                      const int64_t backpropChannel, const int64_t backprop_size) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < backprop_size; pos += blockDim.x * gridDim.x) {
     const int posn = pos / (backpropHeight * backpropWidth * backpropChannel);
     const int posh = pos / (backpropWidth * backpropChannel) % backpropHeight;
@@ -66,11 +66,11 @@ __global__ void Fractionalmaxpoolgrad(const T *orig_input, const T *orig_output,
 
 template <typename T>
 __global__ void Fractionalavgpoolgrad(const int64_t *orig_input, const T *out_backprop,
-                                  const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence, T *output,
-                                  const bool overlapping, const int64_t outputHeight, const int64_t outputWidth,
-                                  const int64_t outputChannel, const int64_t backpropHeight,
-                                  const int64_t backpropWidth, const int64_t backpropChannel,
-                                  const int64_t backprop_size) {
+                                      const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence,
+                                      T *output, const bool overlapping, const int64_t outputHeight,
+                                      const int64_t outputWidth, const int64_t outputChannel,
+                                      const int64_t backpropHeight, const int64_t backpropWidth,
+                                      const int64_t backpropChannel, const int64_t backprop_size) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < backprop_size; pos += blockDim.x * gridDim.x) {
     const int posn = pos / (backpropHeight * backpropWidth * backpropChannel);
     const int posh = pos / (backpropWidth * backpropChannel) % backpropHeight;
@@ -98,102 +98,72 @@ __global__ void Fractionalavgpoolgrad(const int64_t *orig_input, const T *out_ba
 }
 
 template <typename T>
-void CalFractionalmaxpoolgrad(const T *orig_input, const T *orig_output, const T *out_backprop,
-                              const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence, T *output,
-                              const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
-                              const bool overlapping, const int64_t backprop_size, const int64_t outer_size,
-                              const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalFractionalmaxpoolgrad(const T *orig_input, const T *orig_output, const T *out_backprop,
+                                     const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence,
+                                     T *output, const std::vector<int64_t> &out_backprop_shape,
+                                     const std::vector<int64_t> &output_shape, const bool overlapping,
+                                     const int64_t backprop_size, const int64_t outer_size, const uint32_t &device_id,
+                                     cudaStream_t cuda_stream) {
   InitOutput<<<CUDA_BLOCKS(device_id, outer_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(output, outer_size);
   Fractionalmaxpoolgrad<<<CUDA_BLOCKS(device_id, backprop_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     orig_input, orig_output, out_backprop, row_pooling_sequence, col_pooling_sequence, output, overlapping,
     output_shape[1], output_shape[2], output_shape[3], out_backprop_shape[1], out_backprop_shape[2],
     out_backprop_shape[3], backprop_size);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalFractionalavgpoolgrad(const int64_t *orig_input, const T *out_backprop,
-                              const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence, T *output,
-                              const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
-                              const bool overlapping, const int64_t backprop_size, const int64_t outer_size,
-                              const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalFractionalavgpoolgrad(const int64_t *orig_input, const T *out_backprop,
+                                     const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence,
+                                     T *output, const std::vector<int64_t> &out_backprop_shape,
+                                     const std::vector<int64_t> &output_shape, const bool overlapping,
+                                     const int64_t backprop_size, const int64_t outer_size, const uint32_t &device_id,
+                                     cudaStream_t cuda_stream) {
   InitOutput<<<CUDA_BLOCKS(device_id, outer_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(output, outer_size);
   Fractionalavgpoolgrad<<<CUDA_BLOCKS(device_id, backprop_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    orig_input, out_backprop, row_pooling_sequence, col_pooling_sequence, output, overlapping,
-    output_shape[1], output_shape[2], output_shape[3], out_backprop_shape[1], out_backprop_shape[2],
-    out_backprop_shape[3], backprop_size);
-  return;
+    orig_input, out_backprop, row_pooling_sequence, col_pooling_sequence, output, overlapping, output_shape[1],
+    output_shape[2], output_shape[3], out_backprop_shape[1], out_backprop_shape[2], out_backprop_shape[3],
+    backprop_size);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalFractionalmaxpoolgrad<float>(const float *orig_input, const float *orig_output,
-                                                              const float *out_backprop,
-                                                              const int64_t *row_pooling_sequence,
-                                                              const int64_t *col_pooling_sequence, float *output,
-                                                              const std::vector<int64_t> &out_backprop_shape,
-                                                              const std::vector<int64_t> &output_shape,
-                                                              const bool overlapping, const int64_t backprop_size,
-                                                              const int64_t outer_size, const uint32_t &device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpoolgrad<double>(const double *orig_input, const double *orig_output,
-                                                              const double *out_backprop,
-                                                              const int64_t *row_pooling_sequence,
-                                                              const int64_t *col_pooling_sequence, double *output,
-                                                              const std::vector<int64_t> &out_backprop_shape,
-                                                              const std::vector<int64_t> &output_shape,
-                                                              const bool overlapping, const int64_t backprop_size,
-                                                              const int64_t outer_size, const uint32_t &device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpoolgrad<int32_t>(const int32_t *orig_input, const int32_t *orig_output,
-                                                              const int32_t *out_backprop,
-                                                              const int64_t *row_pooling_sequence,
-                                                              const int64_t *col_pooling_sequence, int32_t *output,
-                                                              const std::vector<int64_t> &out_backprop_shape,
-                                                              const std::vector<int64_t> &output_shape,
-                                                              const bool overlapping, const int64_t backprop_size,
-                                                              const int64_t outer_size, const uint32_t &device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpoolgrad<int64_t>(const int64_t *orig_input, const int64_t *orig_output,
-                                                              const int64_t *out_backprop,
-                                                              const int64_t *row_pooling_sequence,
-                                                              const int64_t *col_pooling_sequence, int64_t *output,
-                                                              const std::vector<int64_t> &out_backprop_shape,
-                                                              const std::vector<int64_t> &output_shape,
-                                                              const bool overlapping, const int64_t backprop_size,
-                                                              const int64_t outer_size, const uint32_t &device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalavgpoolgrad<float>(const int64_t *orig_input,
-                                                              const float *out_backprop,
-                                                              const int64_t *row_pooling_sequence,
-                                                              const int64_t *col_pooling_sequence, float *output,
-                                                              const std::vector<int64_t> &out_backprop_shape,
-                                                              const std::vector<int64_t> &output_shape,
-                                                              const bool overlapping, const int64_t backprop_size,
-                                                              const int64_t outer_size, const uint32_t &device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalavgpoolgrad<double>(const int64_t *orig_input,
-                                                              const double *out_backprop,
-                                                              const int64_t *row_pooling_sequence,
-                                                              const int64_t *col_pooling_sequence, double *output,
-                                                              const std::vector<int64_t> &out_backprop_shape,
-                                                              const std::vector<int64_t> &output_shape,
-                                                              const bool overlapping, const int64_t backprop_size,
-                                                              const int64_t outer_size, const uint32_t &device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalavgpoolgrad<int32_t>(const int64_t *orig_input,
-                                                              const int32_t *out_backprop,
-                                                              const int64_t *row_pooling_sequence,
-                                                              const int64_t *col_pooling_sequence, int32_t *output,
-                                                              const std::vector<int64_t> &out_backprop_shape,
-                                                              const std::vector<int64_t> &output_shape,
-                                                              const bool overlapping, const int64_t backprop_size,
-                                                              const int64_t outer_size, const uint32_t &device_id,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalavgpoolgrad<int64_t>(const int64_t *orig_input,
-                                                              const int64_t *out_backprop,
-                                                              const int64_t *row_pooling_sequence,
-                                                              const int64_t *col_pooling_sequence, int64_t *output,
-                                                              const std::vector<int64_t> &out_backprop_shape,
-                                                              const std::vector<int64_t> &output_shape,
-                                                              const bool overlapping, const int64_t backprop_size,
-                                                              const int64_t outer_size, const uint32_t &device_id,
-                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpoolgrad<float>(
+  const float *orig_input, const float *orig_output, const float *out_backprop, const int64_t *row_pooling_sequence,
+  const int64_t *col_pooling_sequence, float *output, const std::vector<int64_t> &out_backprop_shape,
+  const std::vector<int64_t> &output_shape, const bool overlapping, const int64_t backprop_size,
+  const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpoolgrad<double>(
+  const double *orig_input, const double *orig_output, const double *out_backprop, const int64_t *row_pooling_sequence,
+  const int64_t *col_pooling_sequence, double *output, const std::vector<int64_t> &out_backprop_shape,
+  const std::vector<int64_t> &output_shape, const bool overlapping, const int64_t backprop_size,
+  const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpoolgrad<int32_t>(
+  const int32_t *orig_input, const int32_t *orig_output, const int32_t *out_backprop,
+  const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence, int32_t *output,
+  const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape, const bool overlapping,
+  const int64_t backprop_size, const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpoolgrad<int64_t>(
+  const int64_t *orig_input, const int64_t *orig_output, const int64_t *out_backprop,
+  const int64_t *row_pooling_sequence, const int64_t *col_pooling_sequence, int64_t *output,
+  const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape, const bool overlapping,
+  const int64_t backprop_size, const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFractionalavgpoolgrad<float>(
+  const int64_t *orig_input, const float *out_backprop, const int64_t *row_pooling_sequence,
+  const int64_t *col_pooling_sequence, float *output, const std::vector<int64_t> &out_backprop_shape,
+  const std::vector<int64_t> &output_shape, const bool overlapping, const int64_t backprop_size,
+  const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFractionalavgpoolgrad<double>(
+  const int64_t *orig_input, const double *out_backprop, const int64_t *row_pooling_sequence,
+  const int64_t *col_pooling_sequence, double *output, const std::vector<int64_t> &out_backprop_shape,
+  const std::vector<int64_t> &output_shape, const bool overlapping, const int64_t backprop_size,
+  const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFractionalavgpoolgrad<int32_t>(
+  const int64_t *orig_input, const int32_t *out_backprop, const int64_t *row_pooling_sequence,
+  const int64_t *col_pooling_sequence, int32_t *output, const std::vector<int64_t> &out_backprop_shape,
+  const std::vector<int64_t> &output_shape, const bool overlapping, const int64_t backprop_size,
+  const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFractionalavgpoolgrad<int64_t>(
+  const int64_t *orig_input, const int64_t *out_backprop, const int64_t *row_pooling_sequence,
+  const int64_t *col_pooling_sequence, int64_t *output, const std::vector<int64_t> &out_backprop_shape,
+  const std::vector<int64_t> &output_shape, const bool overlapping, const int64_t backprop_size,
+  const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);

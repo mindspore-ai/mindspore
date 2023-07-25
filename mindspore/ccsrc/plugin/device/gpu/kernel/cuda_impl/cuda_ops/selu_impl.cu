@@ -50,28 +50,29 @@ struct SeLUFunctor<half> {
 };
 
 template <typename T>
-void CalculateSeLU(const T *input, size_t input_elements, float scale_dot_alpha, float scale, T *output,
-                   const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateSeLU(const T *input, size_t input_elements, float scale_dot_alpha, float scale, T *output,
+                          const uint32_t &device_id, cudaStream_t cuda_stream) {
   SeLUFunctor<T> functor{scale, scale_dot_alpha};
   cuda::elementwise::Unary(functor, (uint)(input_elements), output, input, cuda_stream);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalculateSeLU<double>(const double *input, size_t input_elements, float scale_dot_alpha,
-                                                    float scale, double *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateSeLU<double>(const double *input, size_t input_elements,
+                                                           float scale_dot_alpha, float scale, double *output,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateSeLU<float>(const float *input, size_t input_elements, float scale_dot_alpha,
-                                                   float scale, float *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateSeLU<float>(const float *input, size_t input_elements,
+                                                          float scale_dot_alpha, float scale, float *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateSeLU<half>(const half *input, size_t input_elements, float scale_dot_alpha,
-                                                  float scale, half *output, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateSeLU<half>(const half *input, size_t input_elements,
+                                                         float scale_dot_alpha, float scale, half *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateSeLU<int8_t>(const int8_t *input, size_t input_elements, float scale_dot_alpha,
-                                                    float scale, int8_t *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateSeLU<int8_t>(const int8_t *input, size_t input_elements,
+                                                           float scale_dot_alpha, float scale, int8_t *output,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateSeLU<int32_t>(const int32_t *input, size_t input_elements, float scale_dot_alpha,
-                                                     float scale, int32_t *output, const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateSeLU<int32_t>(const int32_t *input, size_t input_elements,
+                                                            float scale_dot_alpha, float scale, int32_t *output,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);

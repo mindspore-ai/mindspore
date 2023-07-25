@@ -21,10 +21,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void MaskedSelectGrad(T *input_grad_ptr, bool *mask_ptr, size_t *index_ptr,
-                                      const std::vector<int64_t> input_shape, const std::vector<int64_t> mask_shape,
-                                      const std::vector<int64_t> broadcast_shape, T *input_grad_broadcast_ptr,
-                                      bool *mask_broadcast_ptr, T *output_ptr, size_t device_id,
-                                      cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t MaskedSelectGrad(T *input_grad_ptr, bool *mask_ptr, size_t *index_ptr,
+                                             const std::vector<int64_t> input_shape,
+                                             const std::vector<int64_t> mask_shape,
+                                             const std::vector<int64_t> broadcast_shape, T *input_grad_broadcast_ptr,
+                                             bool *mask_broadcast_ptr, T *output_ptr, size_t device_id,
+                                             cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MASKED_SELECT_GRAD_IMPL_CUH_

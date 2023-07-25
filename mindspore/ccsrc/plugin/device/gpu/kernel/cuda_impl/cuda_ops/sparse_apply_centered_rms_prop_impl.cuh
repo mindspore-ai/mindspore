@@ -19,10 +19,10 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalSparseApplyCenteredRMSProp(const size_t size, const size_t indices_size,
-                                           const bool use_locking, T *learning_rate, T *decay_rate, T *epsilon,
-                                           T *momentum, const T *gradient, const S *indices, T *variable,
-                                           T *mean_grad, T *mean_square, T *mom, T *variable_out,
-                                           cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseApplyCenteredRMSProp(const size_t size, const size_t indices_size,
+                                                          const bool use_locking, T *learning_rate, T *decay_rate,
+                                                          T *epsilon, T *momentum, const T *gradient, const S *indices,
+                                                          T *variable, T *mean_grad, T *mean_square, T *mom,
+                                                          T *variable_out, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_APPLY_CENTERED_RMS_PROP_IMPL_CUH_

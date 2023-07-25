@@ -305,12 +305,12 @@ cudaError_t CalGeneralReduction(bool small, const T *input, const size_t bound, 
                                 const size_t innerSize, S *output_index, T *output, cudaStream_t stream) {
   T init_K = small ? std::numeric_limits<T>::max() : std::numeric_limits<T>::lowest();
   GeneralReductionImpl(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template <typename S>
 __global__ void ThreadReduction1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
-                                half *output, S *output_index, half init_K) {
+                                 half *output, S *output_index, half init_K) {
   init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
   const S init_V = static_cast<S>(-1);
 
@@ -338,7 +338,7 @@ __global__ void ThreadReduction1(bool small, size_t outer_size, size_t bound, si
 
 template <typename S>
 __global__ void WarpReduction1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
-                              half *output, S *output_index, half init_K) {
+                               half *output, S *output_index, half init_K) {
   init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
   const S init_V = static_cast<S>(-1);
 
@@ -384,7 +384,7 @@ __global__ void WarpReduction1(bool small, size_t outer_size, size_t bound, size
 
 template <typename S>
 __global__ void Warp4Reduction1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
-                               half *output, S *output_index, half init_K) {
+                                half *output, S *output_index, half init_K) {
   __shared__ half shared_K[kNumWarps];
   __shared__ S shared_V[kNumWarps];
   init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
@@ -471,7 +471,7 @@ __global__ void Warp4Reduction1(bool small, size_t outer_size, size_t bound, siz
 
 template <typename S>
 __global__ void BlockReduction1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
-                               half *output, S *output_index, half init_K) {
+                                half *output, S *output_index, half init_K) {
   __shared__ half shared_K[kNumWarps];
   __shared__ S shared_V[kNumWarps];
   init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
@@ -553,11 +553,11 @@ __global__ void BlockReduction1(bool small, size_t outer_size, size_t bound, siz
 
 template <typename S>
 void GeneralReductionImpl1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
-                          half *output, S *output_index, half init_K, cudaStream_t stream) {
+                           half *output, S *output_index, half init_K, cudaStream_t stream) {
   int block_num_limit = outer_size * inner_size;
   if (bound <= kMaxThreadLoop) {
     ThreadReduction1<S><<<GET_BLOCKS(block_num_limit), kBlockSize, 0, stream>>>(small, outer_size, bound, inner_size,
-                                                                                  input, output, output_index, init_K);
+                                                                                input, output, output_index, init_K);
   } else if (bound <= kMaxWarpLoop) {
     WarpReduction1<S><<<GET_BLOCKS(block_num_limit * kWarpSize), kBlockSize, 0, stream>>>(
       small, outer_size, bound, inner_size, input, output, output_index, init_K);
@@ -575,7 +575,7 @@ cudaError_t CalGeneralReduction(bool small, const half *input, const size_t boun
                                 const size_t innerSize, S *output_index, half *output, cudaStream_t stream) {
   half init_K = small ? std::numeric_limits<half>::max() : std::numeric_limits<half>::lowest();
   GeneralReductionImpl1(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const int8_t *input, const size_t bound_,

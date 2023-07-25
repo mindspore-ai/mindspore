@@ -23,7 +23,6 @@
 #include "include/cuda_runtime.h"
 #include "include/cuda_fp16.h"
 
-
 __device__ float ComputeLanczosKernel(float input, float radius) {
   const float PI = 3.14159265359;
   input = abs(input);
@@ -463,7 +462,7 @@ __global__ void ComputeGradSpan(const int64_t *input_shape, const int32_t *size,
                                 float *grad_weights, int32_t *weight_size) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < input_shape[1] + input_shape[2];
        pos += blockDim.x * gridDim.x) {
-    const size_t mode = min(size_t(1), pos/input_shape[1]);
+    const size_t mode = min(size_t(1), pos / input_shape[1]);
     const int64_t output_size = size[mode];
     const int32_t span_size = spans_size[mode];
     const size_t target_input_index = pos - mode * input_shape[1];
@@ -579,12 +578,13 @@ __global__ void GatherColumnsGrad(const size_t thread_num, const int32_t *grad_s
 }
 
 template <typename T>
-void CalScaleAndTranslate(const size_t *thread_num, const T *image, const float *scale, const float *translation,
-                          int64_t batch, int64_t image_height, int64_t image_width, int64_t channels,
-                          int64_t output_height, int64_t output_width, std::string kernel_type, bool antialias,
-                          const float radius, const int64_t *input_shape, const int32_t *size, int32_t *spans_size,
-                          int32_t *forward_starts, float *forward_weights, float *intermediate, float *output,
-                          const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalScaleAndTranslate(const size_t *thread_num, const T *image, const float *scale, const float *translation,
+                                 int64_t batch, int64_t image_height, int64_t image_width, int64_t channels,
+                                 int64_t output_height, int64_t output_width, std::string kernel_type, bool antialias,
+                                 const float radius, const int64_t *input_shape, const int32_t *size,
+                                 int32_t *spans_size, int32_t *forward_starts, float *forward_weights,
+                                 float *intermediate, float *output, const uint32_t &device_id,
+                                 cudaStream_t cuda_stream) {
   // Compute span;
   float numeric_limits_min = std::numeric_limits<float>::min();
   SetZero<<<CUDA_BLOCKS(device_id, thread_num[0]), CUDA_THREADS(device_id), 0, cuda_stream>>>(forward_weights,
@@ -635,108 +635,110 @@ void CalScaleAndTranslate(const size_t *thread_num, const T *image, const float 
   GatherColumns<<<CUDA_BLOCKS(device_id, size_gather_columns), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size_gather_columns, spans_size, col_starts, forward_weights, intermediate, batch, output_height, image_width,
     output_height, output_width, channels, intermediate_pix_per_batch, output_pix_per_batch, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CallScaleAndTranslateGrad(const std::string kernel_type, const T *grads, const T *original_image,
-                               const float radius, const int64_t *input_shape, const int32_t *size, const float *scale,
-                               const float *translate, const bool antialias, int32_t *spans_size,
-                               int32_t *forward_starts, int32_t *grad_starts, float *forward_weights,
-                               float *grad_weights, const size_t *thread_num, float *intermediate,
-                               const int64_t input_pix_per_batch, const int64_t intermediate_pix_per_batch,
-                               const int64_t output_pix_per_batch, float *output, int32_t *weight_size,
-                               const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CallScaleAndTranslateGrad(const std::string kernel_type, const T *grads, const T *original_image,
+                                      const float radius, const int64_t *input_shape, const int32_t *size,
+                                      const float *scale, const float *translate, const bool antialias,
+                                      int32_t *spans_size, int32_t *forward_starts, int32_t *grad_starts,
+                                      float *forward_weights, float *grad_weights, const size_t *thread_num,
+                                      float *intermediate, const int64_t input_pix_per_batch,
+                                      const int64_t intermediate_pix_per_batch, const int64_t output_pix_per_batch,
+                                      float *output, int32_t *weight_size, const uint32_t &device_id,
+                                      cudaStream_t cuda_stream) {
   float numeric_limits_min = std::numeric_limits<float>::min();
-  SetZero<<<CUDA_BLOCKS(device_id, thread_num[0]), CUDA_THREADS(device_id), 0, cuda_stream>>>
-    (forward_weights, thread_num[0]);
+  SetZero<<<CUDA_BLOCKS(device_id, thread_num[0]), CUDA_THREADS(device_id), 0, cuda_stream>>>(forward_weights,
+                                                                                              thread_num[0]);
   ComputeSpanSize<<<CUDA_BLOCKS(device_id, 2), CUDA_THREADS(device_id), 0, cuda_stream>>>(radius, scale, antialias,
-    input_shape, spans_size);
+                                                                                          input_shape, spans_size);
   if (kernel_type == "lanczos1" || kernel_type == "lanczos3" || kernel_type == "lanczos5") {
-    ComputeLanczosSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>
-      (radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
-       numeric_limits_min);
+    ComputeLanczosSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
+      numeric_limits_min);
   } else if (kernel_type == "gaussian") {
-    ComputeGaussianSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>
-      (radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
-       numeric_limits_min);
+    ComputeGaussianSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
+      numeric_limits_min);
   } else if (kernel_type == "box") {
-    ComputeBoxSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>
-      (radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
-       numeric_limits_min);
+    ComputeBoxSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
+      numeric_limits_min);
   } else if (kernel_type == "triangle") {
-    ComputeTriangleSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>
-      (radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
-       numeric_limits_min);
+    ComputeTriangleSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
+      numeric_limits_min);
   } else if (kernel_type == "keyscubic") {
-    ComputeKeysCubicSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>
-      (radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
-       numeric_limits_min);
+    ComputeKeysCubicSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
+      numeric_limits_min);
   } else if (kernel_type == "mitchellcubic") {
-    ComputeMitchellCubicSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>
-      (radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
-       numeric_limits_min);
+    ComputeMitchellCubicSpan<<<CUDA_BLOCKS(device_id, thread_num[1]), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      radius, input_shape, size, scale, translate, antialias, spans_size, forward_starts, forward_weights,
+      numeric_limits_min);
   }
 
-  ComputeGradSpan<<<CUDA_BLOCKS(device_id, thread_num[2]), CUDA_THREADS(device_id), 0, cuda_stream>>>(input_shape,
-    size, spans_size, forward_starts,  forward_weights,  grad_starts, grad_weights, weight_size);
-  SetZero<<<CUDA_BLOCKS(device_id, thread_num[3]), CUDA_THREADS(device_id), 0, cuda_stream>>>
-    (intermediate, thread_num[3]);
-  SetZero<<<CUDA_BLOCKS(device_id, thread_num[4]), CUDA_THREADS(device_id), 0, cuda_stream>>>
-    (output, thread_num[4]);
+  ComputeGradSpan<<<CUDA_BLOCKS(device_id, thread_num[2]), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input_shape, size, spans_size, forward_starts, forward_weights, grad_starts, grad_weights, weight_size);
+  SetZero<<<CUDA_BLOCKS(device_id, thread_num[3]), CUDA_THREADS(device_id), 0, cuda_stream>>>(intermediate,
+                                                                                              thread_num[3]);
+  SetZero<<<CUDA_BLOCKS(device_id, thread_num[4]), CUDA_THREADS(device_id), 0, cuda_stream>>>(output, thread_num[4]);
   GatherRowsGrad<<<CUDA_BLOCKS(device_id, thread_num[5]), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     thread_num[5], grad_starts, grad_weights, grads, input_shape, size, input_pix_per_batch, intermediate_pix_per_batch,
     intermediate, weight_size);
   GatherColumnsGrad<<<CUDA_BLOCKS(device_id, thread_num[6]), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     thread_num[6], grad_starts, grad_weights, intermediate, input_shape, size, intermediate_pix_per_batch,
     output_pix_per_batch, output, weight_size);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalScaleAndTranslate<int8_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScaleAndTranslate<int8_t>(
   const size_t *thread_num, const int8_t *image, const float *scale, const float *translation, int64_t batch,
   int64_t image_height, int64_t image_width, int64_t channels, int64_t output_height, int64_t output_width,
   std::string kernel_type, bool antialias, const float radius, const int64_t *input_shape, const int32_t *size,
   int32_t *spans_size, int32_t *forward_starts, float *forward_weights, float *intermediate, float *output,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScaleAndTranslate<int16_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScaleAndTranslate<int16_t>(
   const size_t *thread_num, const int16_t *image, const float *scale, const float *translation, int64_t batch,
   int64_t image_height, int64_t image_width, int64_t channels, int64_t output_height, int64_t output_width,
   std::string kernel_type, bool antialias, const float radius, const int64_t *input_shape, const int32_t *size,
   int32_t *spans_size, int32_t *forward_starts, float *forward_weights, float *intermediate, float *output,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScaleAndTranslate<int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScaleAndTranslate<int32_t>(
   const size_t *thread_num, const int32_t *image, const float *scale, const float *translation, int64_t batch,
   int64_t image_height, int64_t image_width, int64_t channels, int64_t output_height, int64_t output_width,
   std::string kernel_type, bool antialias, const float radius, const int64_t *input_shape, const int32_t *size,
   int32_t *spans_size, int32_t *forward_starts, float *forward_weights, float *intermediate, float *output,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScaleAndTranslate<int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScaleAndTranslate<int64_t>(
   const size_t *thread_num, const int64_t *image, const float *scale, const float *translation, int64_t batch,
   int64_t image_height, int64_t image_width, int64_t channels, int64_t output_height, int64_t output_width,
   std::string kernel_type, bool antialias, const float radius, const int64_t *input_shape, const int32_t *size,
   int32_t *spans_size, int32_t *forward_starts, float *forward_weights, float *intermediate, float *output,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScaleAndTranslate<half>(
+template CUDA_LIB_EXPORT cudaError_t CalScaleAndTranslate<half>(
   const size_t *thread_num, const half *image, const float *scale, const float *translation, int64_t batch,
   int64_t image_height, int64_t image_width, int64_t channels, int64_t output_height, int64_t output_width,
   std::string kernel_type, bool antialias, const float radius, const int64_t *input_shape, const int32_t *size,
   int32_t *spans_size, int32_t *forward_starts, float *forward_weights, float *intermediate, float *output,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScaleAndTranslate<float>(
+template CUDA_LIB_EXPORT cudaError_t CalScaleAndTranslate<float>(
   const size_t *thread_num, const float *image, const float *scale, const float *translation, int64_t batch,
   int64_t image_height, int64_t image_width, int64_t channels, int64_t output_height, int64_t output_width,
   std::string kernel_type, bool antialias, const float radius, const int64_t *input_shape, const int32_t *size,
   int32_t *spans_size, int32_t *forward_starts, float *forward_weights, float *intermediate, float *output,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScaleAndTranslate<double>(
+template CUDA_LIB_EXPORT cudaError_t CalScaleAndTranslate<double>(
   const size_t *thread_num, const double *image, const float *scale, const float *translation, int64_t batch,
   int64_t image_height, int64_t image_width, int64_t channels, int64_t output_height, int64_t output_width,
   std::string kernel_type, bool antialias, const float radius, const int64_t *input_shape, const int32_t *size,
   int32_t *spans_size, int32_t *forward_starts, float *forward_weights, float *intermediate, float *output,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CallScaleAndTranslateGrad<float>(const std::string kernel_type, const float *grads,
-  const float *original_image, const float radius, const int64_t *input_shape, const int32_t *size, const float *scale,
-  const float *translate, const bool antialias, int32_t *spans_size, int32_t *forward_starts, int32_t *grad_starts,
-  float *forward_weights, float *grad_weights, const size_t *thread_num, float *intermediate,
-  const int64_t input_pix_per_batch, const int64_t intermediate_pix_per_batch, const int64_t output_pix_per_batch,
-  float *output, int32_t *weight_size, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CallScaleAndTranslateGrad<float>(
+  const std::string kernel_type, const float *grads, const float *original_image, const float radius,
+  const int64_t *input_shape, const int32_t *size, const float *scale, const float *translate, const bool antialias,
+  int32_t *spans_size, int32_t *forward_starts, int32_t *grad_starts, float *forward_weights, float *grad_weights,
+  const size_t *thread_num, float *intermediate, const int64_t input_pix_per_batch,
+  const int64_t intermediate_pix_per_batch, const int64_t output_pix_per_batch, float *output, int32_t *weight_size,
+  const uint32_t &device_id, cudaStream_t cuda_stream);

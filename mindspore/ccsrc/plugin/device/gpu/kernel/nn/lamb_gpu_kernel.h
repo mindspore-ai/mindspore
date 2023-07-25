@@ -83,9 +83,10 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     float *grad_float = GetDeviceAddress<float>(workspaces, kGradFloatIndex);
     float *g_hat_var = GetDeviceAddress<float>(workspaces, kGHatValIndex);
 
-    ApplyLambEraly(inputs[0]->size / sizeof(T), variable, m, v, beta1, beta2, epsilon, decay, global_step, gradient,
-                   update, var_float, grad_float, g_hat_var, reinterpret_cast<cudaStream_t>(stream_ptr));
-
+    auto status =
+      ApplyLambEraly(inputs[0]->size / sizeof(T), variable, m, v, beta1, beta2, epsilon, decay, global_step, gradient,
+                     update, var_float, grad_float, g_hat_var, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     float trust_ratio{0};
     CalcTrustRatio(workspaces, var_float, grad_float, g_hat_var, stream_ptr, &trust_ratio);
 
@@ -95,9 +96,9 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "For " + kernel_name_ + " cudaMemcpyAsync trust_ratio failed.");
 
-    ApplyLambLater(inputs[0]->size / sizeof(T), variable, learning_rate, update, trust_ratio_ptr,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
-
+    status = ApplyLambLater(inputs[0]->size / sizeof(T), variable, learning_rate, update, trust_ratio_ptr,
+                            reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

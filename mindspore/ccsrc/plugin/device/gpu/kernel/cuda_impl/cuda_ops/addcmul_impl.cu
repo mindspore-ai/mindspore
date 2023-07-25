@@ -650,7 +650,7 @@ cudaError_t CalAddcmul(const std::vector<int64_t> &input_data_dims, const std::v
       value_broadcast_used[1], value_broadcast_used[2], value_broadcast_used[3], value_broadcast_used[4], input_data,
       x1, x2, value, output, size);
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalAddcmul<half, half>(

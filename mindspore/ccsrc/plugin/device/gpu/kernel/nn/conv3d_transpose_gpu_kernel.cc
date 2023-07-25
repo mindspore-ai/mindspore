@@ -36,21 +36,24 @@ bool Conv3dTransposeFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
     T *input_padded = GetDeviceAddress<T>(workspace, 1);
     const size_t kWsOutPadIdx = 2;
     T *output_padded = GetDeviceAddress<T>(workspace, kWsOutPadIdx);
-    CalPad3d(input_padded_size_ / sizeof(T), input_addr, input_n_, input_c_, input_old_depth_, input_old_height_,
-             input_old_width_, input_old_depth_ + pad_depth_, input_old_height_ + pad_height_,
-             input_old_width_ + pad_width_, input_pad_head_, input_pad_top_, input_pad_left_, pad_value_, input_padded,
-             reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status =
+      CalPad3d(input_padded_size_ / sizeof(T), input_addr, input_n_, input_c_, input_old_depth_, input_old_height_,
+               input_old_width_, input_old_depth_ + pad_depth_, input_old_height_ + pad_height_,
+               input_old_width_ + pad_width_, input_pad_head_, input_pad_top_, input_pad_left_, pad_value_,
+               input_padded, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnConvolutionBackwardData(cudnn_handle_, &alpha, filter_desc_, filter_addr, input_padded_descriptor_,
                                    input_padded, conv_desc_, algo_, work_space, workspace_size_, &beta_,
                                    padded_descriptor_, output_padded),
       "ConvolutionBackwardData failed");
     if (data_format_ == kOpFormat_NCDHW || data_format_ == kOpFormat_DEFAULT) {
-      CalPadGrad3d(output_size_ / sizeof(T), output_padded, n_, c_, old_depth_, old_height_, old_width_,
-                   old_depth_ + (1 + stride_[kDepth3DStrideIdx]) * pad_depth_,
-                   old_height_ + (1 + stride_[kHeight3DStrideIdx]) * pad_height_,
-                   old_width_ + (1 + stride_[kWidth3DStrideIdx]) * pad_width_, pad_head_, pad_top_, pad_left_,
-                   output_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      status = CalPadGrad3d(output_size_ / sizeof(T), output_padded, n_, c_, old_depth_, old_height_, old_width_,
+                            old_depth_ + (1 + stride_[kDepth3DStrideIdx]) * pad_depth_,
+                            old_height_ + (1 + stride_[kHeight3DStrideIdx]) * pad_height_,
+                            old_width_ + (1 + stride_[kWidth3DStrideIdx]) * pad_width_, pad_head_, pad_top_, pad_left_,
+                            output_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'data_format' only support 'NCDHW' right now "
                         << ", but got " << data_format_;
@@ -63,9 +66,11 @@ bool Conv3dTransposeFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
                                      conv_desc_, algo_, work_space, workspace_size_, &beta_, stride_padded_descriptor_,
                                      stride_padded),
         "ConvolutionBackwardData failed");
-      CalPad3d(output_size_ / sizeof(T), stride_padded, input_n_, input_c_, stride_pad_depth_, stride_pad_height_,
-               stride_pad_width_, old_depth_, old_height_, old_width_, stride_pad_head_, stride_pad_top_,
-               stride_pad_left_, pad_value_, output_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      auto status =
+        CalPad3d(output_size_ / sizeof(T), stride_padded, input_n_, input_c_, stride_pad_depth_, stride_pad_height_,
+                 stride_pad_width_, old_depth_, old_height_, old_width_, stride_pad_head_, stride_pad_top_,
+                 stride_pad_left_, pad_value_, output_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnConvolutionBackwardData(cudnn_handle_, &alpha, filter_desc_, filter_addr, input_desc_, input_addr,

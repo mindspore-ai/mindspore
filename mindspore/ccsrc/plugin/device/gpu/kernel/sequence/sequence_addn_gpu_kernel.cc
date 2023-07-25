@@ -62,15 +62,20 @@ bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   if (output_addr == GetDeviceAddress<T>(inputs, 0)) {
     work_addr = GetDeviceAddress<T>(workspace, 0);
   }
+  cudaError_t status = cudaErrorNotReady;
   size_t element_num = outputs[0]->size / sizeof(T);
-  FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
-  FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  status =
+    FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  status = FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   std::vector<int64_t> ele_shape = {static_cast<int64_t>(element_num)};
   for (int64_t i = 0; i < tuple_shape_[0]; i++) {
     T *input_addr = element_num * i + input_0;
-    BinaryOpWithBroadcastCudaFunc<BinaryOpType::kAdd, T, T, T>(false, ele_shape, ele_shape, ele_shape, input_addr,
-                                                               work_addr, work_addr, device_id_,
-                                                               reinterpret_cast<cudaStream_t>(stream_ptr_));
+    status = BinaryOpWithBroadcastCudaFunc<BinaryOpType::kAdd, T, T, T>(false, ele_shape, ele_shape, ele_shape,
+                                                                        input_addr, work_addr, work_addr, device_id_,
+                                                                        reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 
   if (work_addr != output_addr) {

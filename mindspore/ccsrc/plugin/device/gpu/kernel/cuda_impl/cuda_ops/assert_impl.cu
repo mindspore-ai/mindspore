@@ -157,8 +157,8 @@ __global__ void CalculateAssertKernel(const bool *cond, void **inputs, int *summ
   return;
 }
 
-void AssertKernel(const bool *cond, void **inputs, int *summarizes, int *types, const size_t input_num,
+cudaError_t AssertKernel(const bool *cond, void **inputs, int *summarizes, int *types, const size_t input_num,
                   const uint32_t device_id, cudaStream_t cuda_stream) {
   CalculateAssertKernel<<<1, 1, 0, cuda_stream>>>(cond, inputs, summarizes, types, input_num);
-  return;
+  return GetCudaStatus();
 }

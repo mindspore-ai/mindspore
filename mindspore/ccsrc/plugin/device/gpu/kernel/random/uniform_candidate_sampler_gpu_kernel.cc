@@ -102,8 +102,9 @@ bool UniformCandidateSamplerGpuKernelMod::LaunchKernel(const std::vector<Address
     cudaMemcpyAsync(sampled_candidates, &sampled_candidates_device[0], sampled_candidates_size, cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr)),
     "UniformCandidateSampler cudaMemcpyAsync sampled_candidates failed");
-  CalUniformCandidateSampler(static_cast<int64_t>(input_size_), num_sampled_, value, true_expected_count,
-                             sampled_expected_count, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalUniformCandidateSampler(static_cast<int64_t>(input_size_), num_sampled_, value, true_expected_count,
+                                           sampled_expected_count, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -106,7 +106,7 @@ cudaError_t BroadcastTo(const std::vector<int64_t> &inp_shape, const std::vector
   size_t thread_num = output_num > 1024 ? 1024 : output_num;
   BroadcastToCpyCuda<T><<<CUDA_BLOCKS_CAL(device_id, output_num, thread_num), thread_num, 0, cuda_stream>>>(
     dim_size, output_num, strides, input, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t BroadcastTo<bool>(const std::vector<int64_t> &inp_shape,

@@ -53,7 +53,7 @@ cudaError_t CalRealKernelSize(const std::vector<int64_t> &input_shape, const std
   RealKernelSize<<<CUDA_BLOCKS(device_id, nc_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     nc_size, kernel, kernel_prod, input_shape[2], input_shape[3], input_shape[4], kernel_size[0], kernel_size[1],
     kernel_size[2], edge_kernel_size[0], edge_kernel_size[1], edge_kernel_size[2]);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalRealKernelSize<double>(const std::vector<int64_t> &input_shape,

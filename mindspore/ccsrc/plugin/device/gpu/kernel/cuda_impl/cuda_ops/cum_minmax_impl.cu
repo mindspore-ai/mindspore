@@ -316,7 +316,7 @@ cudaError_t CumMinMax(CumOpType cum_op_type, const DataType *input_ptr, DataType
     default:
       break;
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CumMinMax<int8_t, int32_t>(CumOpType cum_op_type, const int8_t *input_ptr,

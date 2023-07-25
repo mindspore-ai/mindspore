@@ -460,19 +460,19 @@ template <typename T>
 __global__ void Igamma(size_t size, const int64_t type, const T *a, const T *x, T *output) {
   switch (type) {
     case (kLgammaSameShape):
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-      output[i] = IgammaSingle(a[i], x[i]);
-    }
-    break;
+      for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+        output[i] = IgammaSingle(a[i], x[i]);
+      }
+      break;
     case (kLgammaAOneElement):
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-      output[i] = IgammaSingle(*a, x[i]);
-    }
-    break;
+      for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+        output[i] = IgammaSingle(*a, x[i]);
+      }
+      break;
     case (kLgammaXOneElement):
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-      output[i] = IgammaSingle(a[i], *x);
-    }
+      for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+        output[i] = IgammaSingle(a[i], *x);
+      }
   }
 }
 
@@ -480,19 +480,19 @@ template <typename T>
 __global__ void Igammac(size_t size, const int64_t type, const T *a, const T *x, T *output) {
   switch (type) {
     case (kLgammaSameShape):
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-      output[i] = IgammacSingle(a[i], x[i]);
-    }
-    break;
+      for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+        output[i] = IgammacSingle(a[i], x[i]);
+      }
+      break;
     case (kLgammaAOneElement):
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-      output[i] = IgammacSingle(*a, x[i]);
-    }
-    break;
+      for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+        output[i] = IgammacSingle(*a, x[i]);
+      }
+      break;
     case (kLgammaXOneElement):
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-      output[i] = IgammacSingle(a[i], *x);
-    }
+      for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+        output[i] = IgammacSingle(a[i], *x);
+      }
   }
 }
 
@@ -500,19 +500,19 @@ template <typename T>
 __global__ void IgammaGradA(size_t size, const int64_t type, const T *a, const T *x, T *output) {
   switch (type) {
     case (kLgammaSameShape):
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-      output[i] = IgammaGradASingle(a[i], x[i]);
-    }
-    break;
+      for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+        output[i] = IgammaGradASingle(a[i], x[i]);
+      }
+      break;
     case (kLgammaAOneElement):
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-      output[i] = IgammaGradASingle(*a, x[i]);
-    }
-    break;
+      for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+        output[i] = IgammaGradASingle(*a, x[i]);
+      }
+      break;
     case (kLgammaXOneElement):
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-      output[i] = IgammaGradASingle(a[i], *x);
-    }
+      for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+        output[i] = IgammaGradASingle(a[i], *x);
+      }
   }
 }
 
@@ -621,35 +621,35 @@ __global__ void BroadcastIgammaGradA(const size_t l0, const size_t l1, const siz
 }
 
 template <typename T>
-void CalIgamma(const size_t size, const int64_t type, const T *a, const T *x, T *output, const uint32_t &device_id,
-               cudaStream_t cuda_stream) {
+cudaError_t CalIgamma(const size_t size, const int64_t type, const T *a, const T *x, T *output,
+                      const uint32_t &device_id, cudaStream_t cuda_stream) {
   Igamma<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, type, a, x, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalIgammac(const size_t size, const int64_t type, const T *a, const T *x, T *output,
-                const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalIgammac(const size_t size, const int64_t type, const T *a, const T *x, T *output,
+                       const uint32_t &device_id, cudaStream_t cuda_stream) {
   Igammac<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, type, a, x, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalIgammaGradA(const size_t size, const int64_t type, const T *a, const T *x, T *output,
-                    const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalIgammaGradA(const size_t size, const int64_t type, const T *a, const T *x, T *output,
+                           const uint32_t &device_id, cudaStream_t cuda_stream) {
   int thread_num = 768 < size ? 768 : size;
   cudaDeviceProp prop;
   (void)cudaGetDeviceProperties(&prop, device_id);
   int max_blocks = prop.multiProcessorCount;
   int block_num = std::min(static_cast<int>(((size - 1) / thread_num) + 1), max_blocks);
   IgammaGradA<<<block_num, thread_num, 0, cuda_stream>>>(size, type, a, x, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBroadcastIgammac(const std::vector<size_t> &inputa_shape, const std::vector<size_t> &inputx_shape,
-                         const std::vector<size_t> &output_shape, const T *inputa, const T *inputx, T *output,
-                         const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBroadcastIgammac(const std::vector<size_t> &inputa_shape, const std::vector<size_t> &inputx_shape,
+                                const std::vector<size_t> &output_shape, const T *inputa, const T *inputx, T *output,
+                                const uint32_t &device_id, cudaStream_t cuda_stream) {
   size_t size = 1;
   for (auto d : output_shape) {
     size *= d;
@@ -659,12 +659,13 @@ void CalBroadcastIgammac(const std::vector<size_t> &inputa_shape, const std::vec
     inputa_shape[6], inputx_shape[0], inputx_shape[1], inputx_shape[2], inputx_shape[3], inputx_shape[4],
     inputx_shape[5], inputx_shape[6], output_shape[0], output_shape[1], output_shape[2], output_shape[3],
     output_shape[4], output_shape[5], output_shape[6], inputa, inputx, output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBroadcastIgamma(const std::vector<size_t> &inputa_shape, const std::vector<size_t> &inputx_shape,
-                        const std::vector<size_t> &output_shape, const T *inputa, const T *inputx, T *output,
-                        const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBroadcastIgamma(const std::vector<size_t> &inputa_shape, const std::vector<size_t> &inputx_shape,
+                               const std::vector<size_t> &output_shape, const T *inputa, const T *inputx, T *output,
+                               const uint32_t &device_id, cudaStream_t cuda_stream) {
   size_t size = 1;
   for (auto d : output_shape) {
     size *= d;
@@ -674,12 +675,13 @@ void CalBroadcastIgamma(const std::vector<size_t> &inputa_shape, const std::vect
     inputa_shape[6], inputx_shape[0], inputx_shape[1], inputx_shape[2], inputx_shape[3], inputx_shape[4],
     inputx_shape[5], inputx_shape[6], output_shape[0], output_shape[1], output_shape[2], output_shape[3],
     output_shape[4], output_shape[5], output_shape[6], inputa, inputx, output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBroadcastIgammaGradA(const std::vector<size_t> &inputa_shape, const std::vector<size_t> &inputx_shape,
-                             const std::vector<size_t> &output_shape, const T *inputa, const T *inputx, T *output,
-                             const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBroadcastIgammaGradA(const std::vector<size_t> &inputa_shape, const std::vector<size_t> &inputx_shape,
+                                    const std::vector<size_t> &output_shape, const T *inputa, const T *inputx,
+                                    T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   size_t size = 1;
   for (auto d : output_shape) {
     size *= d;
@@ -694,46 +696,60 @@ void CalBroadcastIgammaGradA(const std::vector<size_t> &inputa_shape, const std:
     inputa_shape[6], inputx_shape[0], inputx_shape[1], inputx_shape[2], inputx_shape[3], inputx_shape[4],
     inputx_shape[5], inputx_shape[6], output_shape[0], output_shape[1], output_shape[2], output_shape[3],
     output_shape[4], output_shape[5], output_shape[6], inputa, inputx, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalIgamma<float>(const size_t size, const int64_t type, const float *a, const float *x,
-                                               float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIgamma<float>(const size_t size, const int64_t type, const float *a,
+                                                      const float *x, float *output, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalIgamma<double>(const size_t size, const int64_t type, const double *a, const double *x,
-                                                double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIgamma<double>(const size_t size, const int64_t type, const double *a,
+                                                       const double *x, double *output, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalBroadcastIgamma<float>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                        const std::vector<size_t> &, const float *, const float *,
-                                                        float *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBroadcastIgamma<double>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                         const std::vector<size_t> &, const double *, const double *,
-                                                         double *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalIgammac<float>(const size_t size, const int64_t type, const float *a, const float *x,
-                                                float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBroadcastIgamma<float>(const std::vector<size_t> &, const std::vector<size_t> &,
+                                                               const std::vector<size_t> &, const float *,
+                                                               const float *, float *, const uint32_t &,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBroadcastIgamma<double>(const std::vector<size_t> &,
+                                                                const std::vector<size_t> &,
+                                                                const std::vector<size_t> &, const double *,
+                                                                const double *, double *, const uint32_t &,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIgammac<float>(const size_t size, const int64_t type, const float *a,
+                                                       const float *x, float *output, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalIgammac<double>(const size_t size, const int64_t type, const double *a,
-                                                 const double *x, double *output, const uint32_t &device_id,
-                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIgammac<double>(const size_t size, const int64_t type, const double *a,
+                                                        const double *x, double *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalBroadcastIgammac<float>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                         const std::vector<size_t> &, const float *, const float *,
-                                                         float *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBroadcastIgammac<double>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                          const std::vector<size_t> &, const double *, const double *,
-                                                          double *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBroadcastIgammac<float>(const std::vector<size_t> &,
+                                                                const std::vector<size_t> &,
+                                                                const std::vector<size_t> &, const float *,
+                                                                const float *, float *, const uint32_t &,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBroadcastIgammac<double>(const std::vector<size_t> &,
+                                                                 const std::vector<size_t> &,
+                                                                 const std::vector<size_t> &, const double *,
+                                                                 const double *, double *, const uint32_t &,
+                                                                 cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalIgammaGradA<float>(const size_t size, const int64_t type, const float *inputa,
-                                                    const float *inputx, float *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIgammaGradA<float>(const size_t size, const int64_t type, const float *inputa,
+                                                           const float *inputx, float *output,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalIgammaGradA<double>(const size_t size, const int64_t type, const double *inputa,
-                                                     const double *inputx, double *output, const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIgammaGradA<double>(const size_t size, const int64_t type, const double *inputa,
+                                                            const double *inputx, double *output,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalBroadcastIgammaGradA<float>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                             const std::vector<size_t> &, const float *, const float *,
-                                                             float *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBroadcastIgammaGradA<double>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                              const std::vector<size_t> &, const double *,
-                                                              const double *, double *, const uint32_t &,
-                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBroadcastIgammaGradA<float>(const std::vector<size_t> &,
+                                                                    const std::vector<size_t> &,
+                                                                    const std::vector<size_t> &, const float *,
+                                                                    const float *, float *, const uint32_t &,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBroadcastIgammaGradA<double>(const std::vector<size_t> &,
+                                                                     const std::vector<size_t> &,
+                                                                     const std::vector<size_t> &, const double *,
+                                                                     const double *, double *, const uint32_t &,
+                                                                     cudaStream_t cuda_stream);

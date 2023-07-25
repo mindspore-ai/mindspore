@@ -103,15 +103,16 @@ class IgammaHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
     size_t size = output_size_list_[0] / sizeof(T);
+    cudaError_t status = cudaErrorNotReady;
     // call cuda kernel
     if (need_broadcast_) {
-      CalBroadcastIgamma(lhs_shape_, rhs_shape_, output_shape_, inputa_ptr, inputx_ptr, output_ptr, device_id_,
-                         reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalBroadcastIgamma(lhs_shape_, rhs_shape_, output_shape_, inputa_ptr, inputx_ptr, output_ptr, device_id_,
+                                  reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      CalIgamma(size, nobroadcast_type_, inputa_ptr, inputx_ptr, output_ptr, device_id_,
-                reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalIgamma(size, nobroadcast_type_, inputa_ptr, inputx_ptr, output_ptr, device_id_,
+                         reinterpret_cast<cudaStream_t>(cuda_stream));
     }
-
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

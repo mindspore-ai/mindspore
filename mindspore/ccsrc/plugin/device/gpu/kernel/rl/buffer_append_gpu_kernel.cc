@@ -64,12 +64,15 @@ bool BufferAppendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   int *head_addr = GetDeviceAddress<int>(inputs, kDouble * element_nums_ + 1);
   int *index_addr = GetDeviceAddress<int>(workspace, 0);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  IncreaseCount(capacity_, LongToInt(exp_batch_), count_addr, head_addr, index_addr, cuda_stream);
+  auto status = IncreaseCount(capacity_, LongToInt(exp_batch_), count_addr, head_addr, index_addr, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   for (size_t i = 0; i < element_nums_; i++) {
     auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
     auto exp_addr = GetDeviceAddress<unsigned char>(inputs, i + element_nums_);
     size_t one_exp_len = input_size_list_[i + element_nums_];
-    BufferAppend(capacity_, one_exp_len, index_addr, LongToInt(exp_batch_), buffer_addr, exp_addr, cuda_stream);
+    status =
+      BufferAppend(capacity_, one_exp_len, index_addr, LongToInt(exp_batch_), buffer_addr, exp_addr, cuda_stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

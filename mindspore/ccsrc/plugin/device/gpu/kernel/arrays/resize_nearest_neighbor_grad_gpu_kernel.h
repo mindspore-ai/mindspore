@@ -50,10 +50,11 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       "For ResizeNearestNeighborGrad, output cudaMemsetAsync failed.");
     float h_scale = Scaling(output_shape_[kIndex2], input_shape_[kIndex2], align_corners_);
     float w_scale = Scaling(output_shape_[kIndex3], input_shape_[kIndex3], align_corners_);
-    CalResizeNearestNeighborGrad<T>(work, input_size_, input, input_shape_[kIndex0], input_shape_[kIndex1],
-                                    input_shape_[kIndex2], input_shape_[kIndex3], output, output_shape_[kIndex0],
-                                    output_shape_[kIndex1], output_shape_[kIndex2], output_shape_[kIndex3],
-                                    align_corners_, h_scale, w_scale, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalResizeNearestNeighborGrad<T>(
+      work, input_size_, input, input_shape_[kIndex0], input_shape_[kIndex1], input_shape_[kIndex2],
+      input_shape_[kIndex3], output, output_shape_[kIndex0], output_shape_[kIndex1], output_shape_[kIndex2],
+      output_shape_[kIndex3], align_corners_, h_scale, w_scale, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

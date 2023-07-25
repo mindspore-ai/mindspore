@@ -19,6 +19,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void SGD(const int size, const T dampening, const T weight_decay, const bool nesterov, const T *lr,
-                         const T *momentum, const T *grad, T *param, T *accum, T *stat, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t SGD(const int size, const T dampening, const T weight_decay, const bool nesterov,
+                                const T *lr, const T *momentum, const T *grad, T *param, T *accum, T *stat,
+                                cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SGD_IMPL_CUH_

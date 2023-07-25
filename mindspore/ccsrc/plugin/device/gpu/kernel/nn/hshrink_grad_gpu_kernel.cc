@@ -78,7 +78,9 @@ bool HShrinkGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *dy = GetDeviceAddress<T>(inputs, kIndex0);
   T *x = GetDeviceAddress<T>(inputs, kIndex1);
   T *dx = GetDeviceAddress<T>(outputs, kIndex0);
-  CalHShrinkGrad(input_elements_, dy, x, lambd_, dx, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    CalHShrinkGrad(input_elements_, dy, x, lambd_, dx, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

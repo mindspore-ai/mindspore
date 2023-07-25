@@ -21,12 +21,12 @@
 
 // Calling this function require additional topk calculation first.
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalInTopK(const T *predictions, const S *targets, bool *output, const T *top_k_output,
-                               size_t batch_size, size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalInTopK(const T *predictions, const S *targets, bool *output, const T *top_k_output,
+                                      size_t batch_size, size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
 
 // Calling this function does not require additional topk calculation.
 template <typename T, typename S>
-CUDA_LIB_EXPORT void ApplyInTopK(const T *predictions, const S *targets, bool *output, size_t batch_size,
-                                 size_t class_id_count, int64_t k, uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ApplyInTopK(const T *predictions, const S *targets, bool *output, size_t batch_size,
+                                        size_t class_id_count, int64_t k, uint32_t device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_IN_TOP_K_IMPL_CUH_

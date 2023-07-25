@@ -168,13 +168,15 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     auto middle_output_size = output_elements_ * sizeof(float);
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(middle_output, 0, middle_output_size),
                                       "LpNormGpuKernelMod failed  to set middle output cuda memory to zeros.");
-    CalLpNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axis_output, device_output_stride,
-              output_axis_.size(), output_elements_, p_, epsilon_, middle_output, output, device_id_,
-              reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = CalLpNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axis_output,
+                            device_output_stride, output_axis_.size(), output_elements_, p_, epsilon_, middle_output,
+                            output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
-    CalLpNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axis_output, device_output_stride,
-              output_axis_.size(), output_elements_, p_, epsilon_, nullptr, output, device_id_,
-              reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = CalLpNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axis_output,
+                            device_output_stride, output_axis_.size(), output_elements_, p_, epsilon_, nullptr, output,
+                            device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

@@ -220,14 +220,18 @@ bool SparseMatrixTransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPt
                                                     reinterpret_cast<cudaStream_t>(stream_ptr));
 
   if constexpr (std::is_same<T, std::complex<float>>::value) {
-    if (conjugate)
-      Conj(output_values_size_, reinterpret_cast<cuComplex *>(csc_values_addr),
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (conjugate) {
+      auto status = Conj(output_values_size_, reinterpret_cast<cuComplex *>(csc_values_addr),
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
+    }
   }
   if constexpr (std::is_same<T, std::complex<double>>::value) {
-    if (conjugate)
-      Conj(output_values_size_, reinterpret_cast<cuDoubleComplex *>(csc_values_addr),
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (conjugate) {
+      auto status = Conj(output_values_size_, reinterpret_cast<cuDoubleComplex *>(csc_values_addr),
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
+    }
   }
   return true;
 }

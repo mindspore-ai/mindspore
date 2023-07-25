@@ -118,8 +118,9 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
           curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size / sizeof(float), 0.0, 1.0),
           "Failed to generate normal");
       } else {
-        StandardNormal(seed_, seed2_, seed_offset_, devStates, output_addr, outputs[0]->size / sizeof(T),
-                       reinterpret_cast<cudaStream_t>(cuda_stream_));
+        auto status = StandardNormal(seed_, seed2_, seed_offset_, devStates, output_addr, outputs[0]->size / sizeof(T),
+                                     reinterpret_cast<cudaStream_t>(cuda_stream_));
+        CHECK_CUDA_STATUS(status, kernel_name_);
         seed_offset_ += 1;
       }
       break;
@@ -127,9 +128,11 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
     case RANDOM_OP_UNIFORM_INT: {
       T *input_addr_1 = GetDeviceAddress<T>(inputs, 1);
       T *input_addr_2 = GetDeviceAddress<T>(inputs, 2);
-      bool ret = UniformInt(seed_, seed2_, devStates, input_addr_1, inputs[1]->size / sizeof(T), input_addr_2,
-                            inputs[2]->size / sizeof(T), output_addr, outputs[0]->size / sizeof(T),
-                            reinterpret_cast<cudaStream_t>(cuda_stream_));
+      bool ret = false;
+      auto status = UniformInt(seed_, seed2_, devStates, input_addr_1, inputs[1]->size / sizeof(T), input_addr_2,
+                               inputs[2]->size / sizeof(T), output_addr, outputs[0]->size / sizeof(T),
+                               reinterpret_cast<cudaStream_t>(cuda_stream_), &ret);
+      CHECK_CUDA_STATUS(status, kernel_name_);
       if (!ret) {
         MS_LOG(ERROR) << "For '" << kernel_type_ << "', `minval` should be strictly less than `maxval`";
         return false;
@@ -137,8 +140,9 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
       break;
     }
     case RANDOM_OP_UNIFORM_REAL: {
-      UniformReal(seed_, seed2_, devStates, output_addr, outputs[0]->size / sizeof(T),
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+      auto status = UniformReal(seed_, seed2_, devStates, output_addr, outputs[0]->size / sizeof(T),
+                                reinterpret_cast<cudaStream_t>(cuda_stream_));
+      CHECK_CUDA_STATUS(status, kernel_name_);
       break;
     }
     case RANDOM_OP_CUDNN_UNIFORM_REAL: {

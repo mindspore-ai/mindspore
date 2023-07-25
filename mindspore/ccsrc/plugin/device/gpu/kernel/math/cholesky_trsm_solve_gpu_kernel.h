@@ -163,6 +163,7 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                          d_array_addr, lda_, d_identity_addr, ldb_, batch_),
       "cublas trsm batched Fail");
   }
+
   void LaunchSplitMatrix(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     auto input1_addr = GetDeviceAddress<T>(inputs, 0);
@@ -175,9 +176,16 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       h_array_[i] = d_batch_input_addr + i * lda_ * m_;
       h_identity_[i] = output_addr + i * ldb_ * m_;
     }
-    BatchEye(batch_ * split_dim_ * split_dim_, split_dim_, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    MatrixSplit(batch_ * split_dim_ * split_dim_, split_dim_, width_, input1_addr, d_batch_input_addr,
-                reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status =
+      BatchEye(batch_ * split_dim_ * split_dim_, split_dim_, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch BatchEye in GPU kernel SplitMatrix failed.";
+    }
+    status = MatrixSplit(batch_ * split_dim_ * split_dim_, split_dim_, width_, input1_addr, d_batch_input_addr,
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch MatrixSplit in GPU kernel SplitMatrix failed.";
+    }
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(T *) * batch_,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -196,6 +204,7 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                          d_array_addr, lda_, d_identity_addr, ldb_, batch_),
       "cublas trsm batched Fail");
   }
+
   bool InitDim0(const CNodePtr &kernel_node, const std::vector<size_t> &in_shape) {
     use_split_matrix_ = false;
     if (in_shape.size() == 2) {

@@ -50,56 +50,67 @@ __global__ void Concat(const size_t size, const int input_num, const int all_siz
 }
 
 template <typename T>
-void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis, const int all_size_axis,
-                  int *len_axis, T **inputs, T *output, cudaStream_t cuda_stream) {
+cudaError_t ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                         const int all_size_axis, int *len_axis, T **inputs, T *output, cudaStream_t cuda_stream) {
   Concat<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_num, all_size_before_axis, all_size_axis,
                                                             len_axis, inputs, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, Complex<double> **inputs,
-                                           Complex<double> *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, Complex<float> **inputs,
-                                           Complex<float> *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, double **inputs, double *output,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, float **inputs, float *output,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, half **inputs, half *output,
-                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, Complex<double> **inputs, Complex<double> *output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, Complex<float> **inputs, Complex<float> *output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, double **inputs, double *output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, float **inputs, float *output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, half **inputs, half *output, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, int64_t **inputs, int64_t *output,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, int **inputs, int *output,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, short **inputs,
-                                           short *output,  // NOLINT
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, int8_t **inputs, int8_t *output,
-                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, int64_t **inputs, int64_t *output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, int **inputs, int *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, short **inputs,
+                                                  short *output,  // NOLINT
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, int8_t **inputs, int8_t *output,
+                                                  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, uint64_t **inputs, uint64_t *output,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, uint32_t **inputs, uint32_t *output,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, uint16_t **inputs, uint16_t *output,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, uint8_t **inputs, uint8_t *output,
-                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, uint64_t **inputs, uint64_t *output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, uint32_t **inputs, uint32_t *output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, uint16_t **inputs, uint16_t *output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, uint8_t **inputs, uint8_t *output,
+                                                  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                           const int all_size_axis, int *len_axis, bool **inputs, bool *output,
-                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
+                                                  const int all_size_before_axis, const int all_size_axis,
+                                                  int *len_axis, bool **inputs, bool *output, cudaStream_t cuda_stream);

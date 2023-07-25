@@ -135,410 +135,410 @@ struct CastFunctor<int8_t, half> {
 };
 
 template <typename S, typename T>
-void Cast(const int input_size, const S *input, T *output, cudaStream_t cuda_stream) {
+cudaError_t Cast(const int input_size, const S *input, T *output, cudaStream_t cuda_stream) {
   CastFunctor<S, T> functor;
   cuda::elementwise::Unary(functor, (uint)(input_size), output, input, cuda_stream);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int8_t *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int8_t *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int16_t *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int16_t *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int32_t *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int32_t *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const int64_t *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const int64_t *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint8_t *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint8_t *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint16_t *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint16_t *input_addr,
+                                          Complex<double> *output_addr, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint32_t *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint32_t *input_addr,
+                                          Complex<double> *output_addr, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const uint64_t *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const uint64_t *input_addr,
+                                          Complex<double> *output_addr, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const half *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const half *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const float *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const float *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const double *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const double *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const bool *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const bool *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<float> *input_addr, Complex<double> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, uint16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, uint32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, uint64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<float> *input_addr,
+                                          Complex<double> *output_addr, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, int8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, int16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, int32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, int64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, uint8_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, uint16_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, uint32_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, uint64_t *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, float *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, double *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, half *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, bool *output_addr,
-                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void Cast(const int input_size, const Complex<double> *input_addr, Complex<float> *output_addr,
-                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr, int8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr, int16_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr, int32_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr, int64_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr, uint8_t *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr,
+                                          uint16_t *output_addr, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr,
+                                          uint32_t *output_addr, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr,
+                                          uint64_t *output_addr, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr, float *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr, double *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr, half *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr, bool *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Cast(const int input_size, const Complex<double> *input_addr,
+                                          Complex<float> *output_addr, cudaStream_t stream);

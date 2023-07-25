@@ -20,11 +20,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2(const T *input, const int n, const int c, const int h, const int w,
-                                            const int ksize_h, const int ksize_w, const int strides_h,
-                                            const int strides_w, const int pads_h, const int pads_w,
-                                            const int dilation_h, const int dilation_w, const int out_h,
-                                            const int out_w, T *output, S *index, const uint32_t &device_id,
-                                            cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2(const T *input, const int n, const int c, const int h, const int w,
+                                                   const int ksize_h, const int ksize_w, const int strides_h,
+                                                   const int strides_w, const int pads_h, const int pads_w,
+                                                   const int dilation_h, const int dilation_w, const int out_h,
+                                                   const int out_w, T *output, S *index, const uint32_t &device_id,
+                                                   cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MAXPOOL_WITH_ARGMAX_V2_IMPL_CUH

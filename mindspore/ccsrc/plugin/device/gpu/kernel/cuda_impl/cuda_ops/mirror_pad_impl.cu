@@ -234,28 +234,30 @@ __global__ void MirrorPadGrad_Width_Height(const size_t size, const T *dy, T *in
 }
 
 template <typename T>
-void CalMirrorPad(const size_t size, const T *input, const int old_batch, const int old_channel, const int old_height,
-                  const int old_width, const int padded_height, const int padded_width, int padd_num,
-                  const int64_t *paddings, const int mode, T *output, cudaStream_t cuda_stream) {
+cudaError_t CalMirrorPad(const size_t size, const T *input, const int old_batch, const int old_channel,
+                         const int old_height, const int old_width, const int padded_height, const int padded_width,
+                         int padd_num, const int64_t *paddings, const int mode, T *output, cudaStream_t cuda_stream) {
   MirrorPad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, old_batch, old_channel, old_height,
                                                                old_width, padded_height, padded_width, padd_num,
                                                                paddings, mode, output);
+  return GetCudaStatus();
 }
 template <typename T>
-void CalMirrorPadGrad(const size_t dx_size, const size_t interim_dy_size, T *dy, T *interim_dy, const int dx_batches,
-                      const int dx_channels, const int dx_height, const int dx_width, const int dy_height,
-                      const int dy_width, const int padd_dim, const int64_t *paddings, int mode, T *dx,
-                      cudaStream_t cuda_stream) {
+cudaError_t CalMirrorPadGrad(const size_t dx_size, const size_t interim_dy_size, T *dy, T *interim_dy,
+                             const int dx_batches, const int dx_channels, const int dx_height, const int dx_width,
+                             const int dy_height, const int dy_width, const int padd_dim, const int64_t *paddings,
+                             int mode, T *dx, cudaStream_t cuda_stream) {
   MirrorPadGradBatchChannel<<<GET_BLOCKS(interim_dy_size), GET_THREADS, 0, cuda_stream>>>(
     interim_dy_size, dy, interim_dy, dx_batches, dx_channels, dx_height, dx_width, dy_height, dy_width, padd_dim,
     paddings, mode, dx);
   MirrorPadGrad_Width_Height<<<GET_BLOCKS(dx_size), GET_THREADS, 0, cuda_stream>>>(
     dx_size, dy, interim_dy, dx_batches, dx_channels, dx_height, dx_width, dy_height, dy_width, padd_dim, paddings,
     mode, dx);
+  return GetCudaStatus();
 }
 
 #define REG_MIRROR_PAD_CUDA(type)                                                                                \
-  template CUDA_LIB_EXPORT void CalMirrorPad<type>(                                                              \
+  template CUDA_LIB_EXPORT cudaError_t CalMirrorPad<type>(                                                       \
     const size_t size, const type *input, const int old_batch, const int old_channel, const int old_height,      \
     const int old_width, const int padded_height, const int padded_width, int padd_num, const int64_t *paddings, \
     int mode, type *output, cudaStream_t cuda_stream)
@@ -276,7 +278,7 @@ REG_MIRROR_PAD_CUDA(Complex<float>);
 REG_MIRROR_PAD_CUDA(Complex<double>);
 
 #define REG_MIRROR_PAD_GRAD_CUDA(type)                                                                       \
-  template CUDA_LIB_EXPORT void CalMirrorPadGrad<type>(                                                      \
+  template CUDA_LIB_EXPORT cudaError_t CalMirrorPadGrad<type>(                                               \
     const size_t dx_size, const size_t dy_size, type *dy, type *interim_dy, const int dx_batches,            \
     const int dx_channels, const int dx_height, const int dx_width, const int dy_height, const int dy_width, \
     const int padd_dim, const int64_t *paddings, int mode, type *dx, cudaStream_t cuda_stream);

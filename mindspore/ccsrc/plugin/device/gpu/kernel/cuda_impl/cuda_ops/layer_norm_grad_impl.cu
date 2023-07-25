@@ -353,9 +353,9 @@ __global__ void TiledInputPropKernel(const int row_dim, const int col_dim, const
 }
 
 template <typename T>
-void LayerNormGrad(const int row_dim, const int col_dim, const int param_dim, const float epsilon, const T *dy,
-                   const T *x, const float *mean, const float *var, const T *gamma, T *dx, T *dg, T *db,
-                   cudaStream_t stream) {
+cudaError_t LayerNormGrad(const int row_dim, const int col_dim, const int param_dim, const float epsilon, const T *dy,
+                          const T *x, const float *mean, const float *var, const T *gamma, T *dx, T *dg, T *db,
+                          cudaStream_t stream) {
   const int thread_per_block = 256;
   int share_mem_size = thread_per_block / WARP_SIZE * 3 * sizeof(float);
 
@@ -375,17 +375,18 @@ void LayerNormGrad(const int row_dim, const int col_dim, const int param_dim, co
     GammaAndBetaPropKernel<<<grid_size, thread_per_block, share_mem_size, stream>>>(
       param_reduce_dim, param_dim, col_dim, epsilon, dy, x, mean, var, dg, db);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void LayerNormGrad(const int row_dim, const int col_dim, const int param_dim,
-                                            const float epsilon, const float *dy, const float *x, const float *mean,
-                                            const float *var, const float *gamma, float *dx, float *dg, float *db,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void LayerNormGrad(const int row_dim, const int col_dim, const int param_dim,
-                                            const float epsilon, const half *dy, const half *x, const float *mean,
-                                            const float *var, const half *gamma, half *dx, half *dg, half *db,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void LayerNormGrad(const int row_dim, const int col_dim, const int param_dim,
-                                            const float epsilon, const double *dy, const double *x, const float *mean,
-                                            const float *var, const double *gamma, double *dx, double *dg, double *db,
-                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t LayerNormGrad(const int row_dim, const int col_dim, const int param_dim,
+                                                   const float epsilon, const float *dy, const float *x,
+                                                   const float *mean, const float *var, const float *gamma, float *dx,
+                                                   float *dg, float *db, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t LayerNormGrad(const int row_dim, const int col_dim, const int param_dim,
+                                                   const float epsilon, const half *dy, const half *x,
+                                                   const float *mean, const float *var, const half *gamma, half *dx,
+                                                   half *dg, half *db, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t LayerNormGrad(const int row_dim, const int col_dim, const int param_dim,
+                                                   const float epsilon, const double *dy, const double *x,
+                                                   const float *mean, const float *var, const double *gamma, double *dx,
+                                                   double *dg, double *db, cudaStream_t stream);

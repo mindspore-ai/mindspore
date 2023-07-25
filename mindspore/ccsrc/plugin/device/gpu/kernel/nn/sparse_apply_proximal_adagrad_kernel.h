@@ -49,9 +49,10 @@ class SparseApplyProximalAdagradKernelMod : public NativeGpuKernelMod {
     T *variable_out = GetDeviceAddress<T>(outputs, 0);
     T *accumulation_out = GetDeviceAddress<T>(outputs, 1);
 
-    CalSparseApplyProximalAdagrad(inputs[0]->size / sizeof(T), indices_size_, learning_rate, l1_regularization,
-                                  l2_regularization, gradient, indices, variable, accumulation, variable_out,
-                                  accumulation_out, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalSparseApplyProximalAdagrad(
+      inputs[0]->size / sizeof(T), indices_size_, learning_rate, l1_regularization, l2_regularization, gradient,
+      indices, variable, accumulation, variable_out, accumulation_out, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

@@ -78,7 +78,7 @@ cudaError_t CalApplyProximalAdagrad(const size_t input_elements, const int64_t b
                                     cudaStream_t cuda_stream) {
   CalApplyProximalAdagradKernel<<<CUDA_BLOCKS(device_id, input_elements * batch_size), CUDA_THREADS(device_id), 0,
                                   cuda_stream>>>(input_elements, batch_size, lr, l1, l2, grad, var, accum);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalApplyProximalAdagrad<float>(const size_t size, const int64_t batch_size,

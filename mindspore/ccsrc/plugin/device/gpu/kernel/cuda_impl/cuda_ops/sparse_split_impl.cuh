@@ -21,9 +21,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void SparseSplit(IndexType *split_dim_ptr, IndexType *indices_ptr, DataType *values_ptr,
-                                 IndexType *shape_ptr, IndexType num_split, IndexType **y_indices_ptr,
-                                 DataType **y_values_ptr, IndexType *out_shape_ptr, int *sum_count_ptr,
-                                 size_t input_nnz_, size_t num_dim_, IndexType *d_block_ptr, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t SparseSplit(IndexType *split_dim_ptr, IndexType *indices_ptr, DataType *values_ptr,
+                                        IndexType *shape_ptr, IndexType num_split, IndexType **y_indices_ptr,
+                                        DataType **y_values_ptr, IndexType *out_shape_ptr, int *sum_count_ptr,
+                                        size_t input_nnz_, size_t num_dim_, IndexType *d_block_ptr,
+                                        cudaStream_t cuda_stream);
 
 #endif

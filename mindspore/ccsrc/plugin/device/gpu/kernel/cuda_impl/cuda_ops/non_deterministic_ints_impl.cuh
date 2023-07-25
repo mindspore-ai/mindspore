@@ -20,8 +20,7 @@
 #include <random>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-template<typename T>
-CUDA_LIB_EXPORT void LaunchNonDeterministicInts(curandStatePhilox4_32_10_t *globalState, T *output, size_t count,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template <typename T>
+CUDA_LIB_EXPORT cudaError_t LaunchNonDeterministicInts(curandStatePhilox4_32_10_t *globalState, T *output, size_t count,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_NON_DETERMINISTIC_INTS_IMPL_CUH
-

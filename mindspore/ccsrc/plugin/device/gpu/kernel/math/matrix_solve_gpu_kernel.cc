@@ -153,16 +153,19 @@ bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   // 1. Convert matrix and rhs to column major
   // Transpose matrix if complex adjoint
+  cudaError_t status = cudaErrorNotReady;
   if (trans_) {
-    MatrixTranspose(matrix, LongToSize(batch_num_ * m_ * m_), SizeToInt(m_), SizeToInt(m_), matrix_col_major,
-                    device_id_, cuda_stream_);
+    status = MatrixTranspose(matrix, LongToSize(batch_num_ * m_ * m_), SizeToInt(m_), SizeToInt(m_), matrix_col_major,
+                             device_id_, cuda_stream_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(matrix_col_major, matrix, inputs[kIndex0]->size, cudaMemcpyDeviceToDevice, cuda_stream_),
       "cudaMemcpyAsync dst failed");
   }
-  MatrixTranspose(rhs, LongToSize(batch_num_ * m_ * k_), SizeToInt(m_), SizeToInt(k_), rhs_col_major, device_id_,
-                  cuda_stream_);
+  status = MatrixTranspose(rhs, LongToSize(batch_num_ * m_ * k_), SizeToInt(m_), SizeToInt(k_), rhs_col_major,
+                           device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   // 2. LU factorization
   // Prepare matrix_array
@@ -211,8 +214,9 @@ bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   // 4. Convert matrix and rhs to row major
   const std::vector<size_t> rhs_col_shape = {LongToSize(batch_num_), LongToSize(k_), LongToSize(m_)};
-  MatrixTranspose(rhs_col_major, LongToSize(batch_num_ * m_ * k_), SizeToInt(k_), SizeToInt(m_), output, device_id_,
-                  cuda_stream_);
+  status = MatrixTranspose(rhs_col_major, LongToSize(batch_num_ * m_ * k_), SizeToInt(k_), SizeToInt(m_), output,
+                           device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   return true;
 }

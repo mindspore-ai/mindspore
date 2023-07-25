@@ -134,9 +134,9 @@ bool SparseApplyAdagradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
   auto accum_out = reinterpret_cast<T *>(outputs[kAccIndex]->addr);
 
-  CalSparseApplyAdagrad(input_elements_, sizeof(S) / sizeof(int), lr_, update_slots_, grad, indices, var, accum,
-                        var_out, accum_out, reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto status = CalSparseApplyAdagrad(input_elements_, sizeof(S) / sizeof(int), lr_, update_slots_, grad, indices, var,
+                                      accum, var_out, accum_out, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

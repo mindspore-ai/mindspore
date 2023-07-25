@@ -81,7 +81,7 @@ bool AssignSubFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   auto status =
     CalAssignSub(input_size_ / sizeof(T), ref, value, output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

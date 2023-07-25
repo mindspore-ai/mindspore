@@ -33,7 +33,7 @@ cudaError_t CalApproximateEqual(const size_t size, const T *input_x1, const T *i
                                 bool *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   ApproximateEqual<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input_x1, input_x2,
                                                                                               tolerance, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalApproximateEqual<half>(const size_t size, const half *input_x1,

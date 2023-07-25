@@ -86,199 +86,216 @@ __global__ void TriuUpper(const int64_t size, T *u_grad_input, const int64_t mat
 }
 
 template <typename T>
-void CalTrilExpendWidth(const int64_t size, T *l_grad_input, const int64_t matrix_L_height,
-                        const int64_t matrix_L_width, T *l_grad_output, const int64_t lu_data_height,
-                        const int64_t lu_data_width, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalTrilExpendWidth(const int64_t size, T *l_grad_input, const int64_t matrix_L_height,
+                               const int64_t matrix_L_width, T *l_grad_output, const int64_t lu_data_height,
+                               const int64_t lu_data_width, const uint32_t &device_id, cudaStream_t cuda_stream) {
   TrilExpendWidth<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, l_grad_input, matrix_L_height, matrix_L_width, l_grad_output, lu_data_height, lu_data_width);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalTrilLower(const int64_t size, T *l_grad_input, const int64_t matrix_L_height, const int64_t matrix_L_width,
-                  T *l_grad_output, const int64_t lu_data_height, const int64_t lu_data_width,
-                  const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalTrilLower(const int64_t size, T *l_grad_input, const int64_t matrix_L_height,
+                         const int64_t matrix_L_width, T *l_grad_output, const int64_t lu_data_height,
+                         const int64_t lu_data_width, const uint32_t &device_id, cudaStream_t cuda_stream) {
   TrilLower<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, l_grad_input, matrix_L_height, matrix_L_width, l_grad_output, lu_data_height, lu_data_width);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalTriuExpendHeight(const int64_t size, T *u_grad_input, const int64_t matrix_U_height,
-                         const int64_t matrix_U_width, T *u_grad_output, const int64_t lu_data_height,
-                         const int64_t lu_data_width, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalTriuExpendHeight(const int64_t size, T *u_grad_input, const int64_t matrix_U_height,
+                                const int64_t matrix_U_width, T *u_grad_output, const int64_t lu_data_height,
+                                const int64_t lu_data_width, const uint32_t &device_id, cudaStream_t cuda_stream) {
   TriuExpendHeight<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, u_grad_input, matrix_U_height, matrix_U_width, u_grad_output, lu_data_height, lu_data_width);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalTriuUpper(const int64_t size, T *u_grad_input, const int64_t matrix_U_height, const int64_t matrix_U_width,
-                  T *u_grad_output, const int64_t lu_data_height, const int64_t lu_data_width,
-                  const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalTriuUpper(const int64_t size, T *u_grad_input, const int64_t matrix_U_height,
+                         const int64_t matrix_U_width, T *u_grad_output, const int64_t lu_data_height,
+                         const int64_t lu_data_width, const uint32_t &device_id, cudaStream_t cuda_stream) {
   TriuUpper<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, u_grad_input, matrix_U_height, matrix_U_width, u_grad_output, lu_data_height, lu_data_width);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalTrilExpendWidth<double>(const int64_t size, double *l_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTrilExpendWidth<double>(const int64_t size, double *l_grad_input,
+                                                                const int64_t matrix_L_height,
+                                                                const int64_t matrix_L_width, double *l_grad_output,
+                                                                const int64_t lu_data_height,
+                                                                const int64_t lu_data_width, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilExpendWidth<float>(const int64_t size, float *l_grad_input,
+                                                               const int64_t matrix_L_height,
+                                                               const int64_t matrix_L_width, float *l_grad_output,
+                                                               const int64_t lu_data_height,
+                                                               const int64_t lu_data_width, const uint32_t &device_id,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilExpendWidth<half>(const int64_t size, half *l_grad_input,
+                                                              const int64_t matrix_L_height,
+                                                              const int64_t matrix_L_width, half *l_grad_output,
+                                                              const int64_t lu_data_height, const int64_t lu_data_width,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilExpendWidth<int64_t>(const int64_t size, int64_t *l_grad_input,
+                                                                 const int64_t matrix_L_height,
+                                                                 const int64_t matrix_L_width, int64_t *l_grad_output,
+                                                                 const int64_t lu_data_height,
+                                                                 const int64_t lu_data_width, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilExpendWidth<int32_t>(const int64_t size, int32_t *l_grad_input,
+                                                                 const int64_t matrix_L_height,
+                                                                 const int64_t matrix_L_width, int32_t *l_grad_output,
+                                                                 const int64_t lu_data_height,
+                                                                 const int64_t lu_data_width, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilExpendWidth<int16_t>(const int64_t size, int16_t *l_grad_input,
+                                                                 const int64_t matrix_L_height,
+                                                                 const int64_t matrix_L_width, int16_t *l_grad_output,
+                                                                 const int64_t lu_data_height,
+                                                                 const int64_t lu_data_width, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilExpendWidth<int8_t>(const int64_t size, int8_t *l_grad_input,
+                                                                const int64_t matrix_L_height,
+                                                                const int64_t matrix_L_width, int8_t *l_grad_output,
+                                                                const int64_t lu_data_height,
+                                                                const int64_t lu_data_width, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilExpendWidth<uint8_t>(const int64_t size, uint8_t *l_grad_input,
+                                                                 const int64_t matrix_L_height,
+                                                                 const int64_t matrix_L_width, uint8_t *l_grad_output,
+                                                                 const int64_t lu_data_height,
+                                                                 const int64_t lu_data_width, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalTrilLower<double>(const int64_t size, double *l_grad_input,
+                                                          const int64_t matrix_L_height, const int64_t matrix_L_width,
+                                                          double *l_grad_output, const int64_t lu_data_height,
+                                                          const int64_t lu_data_width, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilLower<float>(const int64_t size, float *l_grad_input,
                                                          const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                         double *l_grad_output, const int64_t lu_data_height,
+                                                         float *l_grad_output, const int64_t lu_data_height,
                                                          const int64_t lu_data_width, const uint32_t &device_id,
                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilExpendWidth<float>(const int64_t size, float *l_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTrilLower<half>(const int64_t size, half *l_grad_input,
                                                         const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                        float *l_grad_output, const int64_t lu_data_height,
+                                                        half *l_grad_output, const int64_t lu_data_height,
                                                         const int64_t lu_data_width, const uint32_t &device_id,
                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilExpendWidth<half>(const int64_t size, half *l_grad_input,
-                                                       const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                       half *l_grad_output, const int64_t lu_data_height,
-                                                       const int64_t lu_data_width, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilExpendWidth<int64_t>(const int64_t size, int64_t *l_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTrilLower<int64_t>(const int64_t size, int64_t *l_grad_input,
+                                                           const int64_t matrix_L_height, const int64_t matrix_L_width,
+                                                           int64_t *l_grad_output, const int64_t lu_data_height,
+                                                           const int64_t lu_data_width, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilLower<int32_t>(const int64_t size, int32_t *l_grad_input,
+                                                           const int64_t matrix_L_height, const int64_t matrix_L_width,
+                                                           int32_t *l_grad_output, const int64_t lu_data_height,
+                                                           const int64_t lu_data_width, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilLower<int16_t>(const int64_t size, int16_t *l_grad_input,
+                                                           const int64_t matrix_L_height, const int64_t matrix_L_width,
+                                                           int16_t *l_grad_output, const int64_t lu_data_height,
+                                                           const int64_t lu_data_width, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilLower<int8_t>(const int64_t size, int8_t *l_grad_input,
                                                           const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                          int64_t *l_grad_output, const int64_t lu_data_height,
+                                                          int8_t *l_grad_output, const int64_t lu_data_height,
                                                           const int64_t lu_data_width, const uint32_t &device_id,
                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilExpendWidth<int32_t>(const int64_t size, int32_t *l_grad_input,
-                                                          const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                          int32_t *l_grad_output, const int64_t lu_data_height,
-                                                          const int64_t lu_data_width, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilExpendWidth<int16_t>(const int64_t size, int16_t *l_grad_input,
-                                                          const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                          int16_t *l_grad_output, const int64_t lu_data_height,
-                                                          const int64_t lu_data_width, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilExpendWidth<int8_t>(const int64_t size, int8_t *l_grad_input,
-                                                         const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                         int8_t *l_grad_output, const int64_t lu_data_height,
-                                                         const int64_t lu_data_width, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilExpendWidth<uint8_t>(const int64_t size, uint8_t *l_grad_input,
-                                                          const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                          uint8_t *l_grad_output, const int64_t lu_data_height,
-                                                          const int64_t lu_data_width, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilLower<uint8_t>(const int64_t size, uint8_t *l_grad_input,
+                                                           const int64_t matrix_L_height, const int64_t matrix_L_width,
+                                                           uint8_t *l_grad_output, const int64_t lu_data_height,
+                                                           const int64_t lu_data_width, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalTrilLower<double>(const int64_t size, double *l_grad_input,
-                                                   const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                   double *l_grad_output, const int64_t lu_data_height,
-                                                   const int64_t lu_data_width, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilLower<float>(const int64_t size, float *l_grad_input,
-                                                  const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                  float *l_grad_output, const int64_t lu_data_height,
-                                                  const int64_t lu_data_width, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilLower<half>(const int64_t size, half *l_grad_input, const int64_t matrix_L_height,
-                                                 const int64_t matrix_L_width, half *l_grad_output,
-                                                 const int64_t lu_data_height, const int64_t lu_data_width,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilLower<int64_t>(const int64_t size, int64_t *l_grad_input,
-                                                    const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                    int64_t *l_grad_output, const int64_t lu_data_height,
-                                                    const int64_t lu_data_width, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilLower<int32_t>(const int64_t size, int32_t *l_grad_input,
-                                                    const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                    int32_t *l_grad_output, const int64_t lu_data_height,
-                                                    const int64_t lu_data_width, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilLower<int16_t>(const int64_t size, int16_t *l_grad_input,
-                                                    const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                    int16_t *l_grad_output, const int64_t lu_data_height,
-                                                    const int64_t lu_data_width, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilLower<int8_t>(const int64_t size, int8_t *l_grad_input,
-                                                   const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                   int8_t *l_grad_output, const int64_t lu_data_height,
-                                                   const int64_t lu_data_width, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilLower<uint8_t>(const int64_t size, uint8_t *l_grad_input,
-                                                    const int64_t matrix_L_height, const int64_t matrix_L_width,
-                                                    uint8_t *l_grad_output, const int64_t lu_data_height,
-                                                    const int64_t lu_data_width, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuExpendHeight<double>(const int64_t size, double *u_grad_input,
+                                                                 const int64_t matrix_U_height,
+                                                                 const int64_t matrix_U_width, double *u_grad_output,
+                                                                 const int64_t lu_data_height,
+                                                                 const int64_t lu_data_width, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuExpendHeight<float>(const int64_t size, float *u_grad_input,
+                                                                const int64_t matrix_U_height,
+                                                                const int64_t matrix_U_width, float *u_grad_output,
+                                                                const int64_t lu_data_height,
+                                                                const int64_t lu_data_width, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuExpendHeight<half>(const int64_t size, half *u_grad_input,
+                                                               const int64_t matrix_U_height,
+                                                               const int64_t matrix_U_width, half *u_grad_output,
+                                                               const int64_t lu_data_height,
+                                                               const int64_t lu_data_width, const uint32_t &device_id,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuExpendHeight<int64_t>(const int64_t size, int64_t *u_grad_input,
+                                                                  const int64_t matrix_U_height,
+                                                                  const int64_t matrix_U_width, int64_t *u_grad_output,
+                                                                  const int64_t lu_data_height,
+                                                                  const int64_t lu_data_width,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuExpendHeight<int32_t>(const int64_t size, int32_t *u_grad_input,
+                                                                  const int64_t matrix_U_height,
+                                                                  const int64_t matrix_U_width, int32_t *u_grad_output,
+                                                                  const int64_t lu_data_height,
+                                                                  const int64_t lu_data_width,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuExpendHeight<int16_t>(const int64_t size, int16_t *u_grad_input,
+                                                                  const int64_t matrix_U_height,
+                                                                  const int64_t matrix_U_width, int16_t *u_grad_output,
+                                                                  const int64_t lu_data_height,
+                                                                  const int64_t lu_data_width,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuExpendHeight<int8_t>(const int64_t size, int8_t *u_grad_input,
+                                                                 const int64_t matrix_U_height,
+                                                                 const int64_t matrix_U_width, int8_t *u_grad_output,
+                                                                 const int64_t lu_data_height,
+                                                                 const int64_t lu_data_width, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuExpendHeight<uint8_t>(const int64_t size, uint8_t *u_grad_input,
+                                                                  const int64_t matrix_U_height,
+                                                                  const int64_t matrix_U_width, uint8_t *u_grad_output,
+                                                                  const int64_t lu_data_height,
+                                                                  const int64_t lu_data_width,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalTriuExpendHeight<double>(const int64_t size, double *u_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTriuUpper<double>(const int64_t size, double *u_grad_input,
                                                           const int64_t matrix_U_height, const int64_t matrix_U_width,
                                                           double *u_grad_output, const int64_t lu_data_height,
                                                           const int64_t lu_data_width, const uint32_t &device_id,
                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuExpendHeight<float>(const int64_t size, float *u_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTriuUpper<float>(const int64_t size, float *u_grad_input,
                                                          const int64_t matrix_U_height, const int64_t matrix_U_width,
                                                          float *u_grad_output, const int64_t lu_data_height,
                                                          const int64_t lu_data_width, const uint32_t &device_id,
                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuExpendHeight<half>(const int64_t size, half *u_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTriuUpper<half>(const int64_t size, half *u_grad_input,
                                                         const int64_t matrix_U_height, const int64_t matrix_U_width,
                                                         half *u_grad_output, const int64_t lu_data_height,
                                                         const int64_t lu_data_width, const uint32_t &device_id,
                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuExpendHeight<int64_t>(const int64_t size, int64_t *u_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTriuUpper<int64_t>(const int64_t size, int64_t *u_grad_input,
                                                            const int64_t matrix_U_height, const int64_t matrix_U_width,
                                                            int64_t *u_grad_output, const int64_t lu_data_height,
                                                            const int64_t lu_data_width, const uint32_t &device_id,
                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuExpendHeight<int32_t>(const int64_t size, int32_t *u_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTriuUpper<int32_t>(const int64_t size, int32_t *u_grad_input,
                                                            const int64_t matrix_U_height, const int64_t matrix_U_width,
                                                            int32_t *u_grad_output, const int64_t lu_data_height,
                                                            const int64_t lu_data_width, const uint32_t &device_id,
                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuExpendHeight<int16_t>(const int64_t size, int16_t *u_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTriuUpper<int16_t>(const int64_t size, int16_t *u_grad_input,
                                                            const int64_t matrix_U_height, const int64_t matrix_U_width,
                                                            int16_t *u_grad_output, const int64_t lu_data_height,
                                                            const int64_t lu_data_width, const uint32_t &device_id,
                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuExpendHeight<int8_t>(const int64_t size, int8_t *u_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTriuUpper<int8_t>(const int64_t size, int8_t *u_grad_input,
                                                           const int64_t matrix_U_height, const int64_t matrix_U_width,
                                                           int8_t *u_grad_output, const int64_t lu_data_height,
                                                           const int64_t lu_data_width, const uint32_t &device_id,
                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuExpendHeight<uint8_t>(const int64_t size, uint8_t *u_grad_input,
+template CUDA_LIB_EXPORT cudaError_t CalTriuUpper<uint8_t>(const int64_t size, uint8_t *u_grad_input,
                                                            const int64_t matrix_U_height, const int64_t matrix_U_width,
                                                            uint8_t *u_grad_output, const int64_t lu_data_height,
                                                            const int64_t lu_data_width, const uint32_t &device_id,
                                                            cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalTriuUpper<double>(const int64_t size, double *u_grad_input,
-                                                   const int64_t matrix_U_height, const int64_t matrix_U_width,
-                                                   double *u_grad_output, const int64_t lu_data_height,
-                                                   const int64_t lu_data_width, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuUpper<float>(const int64_t size, float *u_grad_input,
-                                                  const int64_t matrix_U_height, const int64_t matrix_U_width,
-                                                  float *u_grad_output, const int64_t lu_data_height,
-                                                  const int64_t lu_data_width, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuUpper<half>(const int64_t size, half *u_grad_input, const int64_t matrix_U_height,
-                                                 const int64_t matrix_U_width, half *u_grad_output,
-                                                 const int64_t lu_data_height, const int64_t lu_data_width,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuUpper<int64_t>(const int64_t size, int64_t *u_grad_input,
-                                                    const int64_t matrix_U_height, const int64_t matrix_U_width,
-                                                    int64_t *u_grad_output, const int64_t lu_data_height,
-                                                    const int64_t lu_data_width, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuUpper<int32_t>(const int64_t size, int32_t *u_grad_input,
-                                                    const int64_t matrix_U_height, const int64_t matrix_U_width,
-                                                    int32_t *u_grad_output, const int64_t lu_data_height,
-                                                    const int64_t lu_data_width, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuUpper<int16_t>(const int64_t size, int16_t *u_grad_input,
-                                                    const int64_t matrix_U_height, const int64_t matrix_U_width,
-                                                    int16_t *u_grad_output, const int64_t lu_data_height,
-                                                    const int64_t lu_data_width, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuUpper<int8_t>(const int64_t size, int8_t *u_grad_input,
-                                                   const int64_t matrix_U_height, const int64_t matrix_U_width,
-                                                   int8_t *u_grad_output, const int64_t lu_data_height,
-                                                   const int64_t lu_data_width, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuUpper<uint8_t>(const int64_t size, uint8_t *u_grad_input,
-                                                    const int64_t matrix_U_height, const int64_t matrix_U_width,
-                                                    uint8_t *u_grad_output, const int64_t lu_data_height,
-                                                    const int64_t lu_data_width, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);

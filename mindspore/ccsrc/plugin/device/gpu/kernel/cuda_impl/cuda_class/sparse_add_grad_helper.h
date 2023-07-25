@@ -136,9 +136,10 @@ class SparseAddGradHelperGpuKernel : public GpuKernelHelperBase {
     // call cuda kernel
     MS_LOG(INFO) << "For SparseAddGrad, x1_index_num_, x2_index_num_, sum_index_num_, dim_ " << x1_index_num_ << ", "
                  << x2_index_num_ << ", " << sum_index_num_ << ", " << dim_;
-    CalSparseAddGrad(dout_ptr, x1_indices_ptr, x1_index_num_, x2_indices_ptr, x2_index_num_, out_indices_ptr,
-                     sum_index_num_, temp_save_ptr, dx1_ptr, dx2_ptr, dim_, device_id_,
-                     reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalSparseAddGrad(dout_ptr, x1_indices_ptr, x1_index_num_, x2_indices_ptr, x2_index_num_,
+                                   out_indices_ptr, sum_index_num_, temp_save_ptr, dx1_ptr, dx2_ptr, dim_, device_id_,
+                                   reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream)),
                                        "For SparseAddGrad, cudaStreamSynchronize failed.");
     return 0;

@@ -113,8 +113,9 @@ bool InplaceOpV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(output, input_x, input_elements_x * unit_size_, cudaMemcpyDeviceToDevice, cuda_stream),
     "cudaMemcpyAsync output 'output' from 'input_x' failed.");
-  CalInplaceOp(input_elements_v, input_v, output, input_indices, indices_key_ptr, first_dimension_, band_size_,
-               device_id_, kernel_type_, cuda_stream);
+  auto status = CalInplaceOp(input_elements_v, input_v, output, input_indices, indices_key_ptr, first_dimension_,
+                             band_size_, device_id_, kernel_type_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

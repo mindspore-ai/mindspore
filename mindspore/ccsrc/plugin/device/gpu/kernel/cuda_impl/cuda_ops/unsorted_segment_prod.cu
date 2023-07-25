@@ -43,8 +43,9 @@ __global__ void UnsortedSegmentProdInit(size_t size, T *output_addr) {
 }
 
 template <typename T, typename S>
-void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1, T *input_addr,
-                         S *ids_addr, T *output_addr, cudaStream_t stream, const uint32_t &device_id) {
+cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
+                                T *input_addr, S *ids_addr, T *output_addr, cudaStream_t stream,
+                                const uint32_t &device_id) {
   size_t out_size = output_dim0 * output_dim1;
   UnsortedSegmentProdInit<<<CUDA_BLOCKS(device_id, out_size), CUDA_THREADS(device_id), 0, stream>>>(out_size,
                                                                                                     output_addr);
@@ -52,88 +53,104 @@ void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim
   size_t in_size = input_dim0 * input_dim1;
   UnsortedSegmentProdCal<<<CUDA_BLOCKS(device_id, in_size), CUDA_THREADS(device_id), 0, stream>>>(
     input_dim0, input_dim1, output_dim0, output_dim1, input_addr, ids_addr, output_addr);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, double *input_addr, int *ids_addr,
-                                                  double *output_addr, cudaStream_t stream, const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, double *input_addr, int64_t *ids_addr,
-                                                  double *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, double *input_addr, int *ids_addr,
+                                                         double *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, double *input_addr, int64_t *ids_addr,
+                                                         double *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, float *input_addr, int *ids_addr,
-                                                  float *output_addr, cudaStream_t stream, const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, float *input_addr, int64_t *ids_addr,
-                                                  float *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, float *input_addr, int *ids_addr,
+                                                         float *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, float *input_addr, int64_t *ids_addr,
+                                                         float *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, half *input_addr, int *ids_addr,
-                                                  half *output_addr, cudaStream_t stream, const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, half *input_addr, int64_t *ids_addr,
-                                                  half *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, half *input_addr, int *ids_addr,
+                                                         half *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, half *input_addr, int64_t *ids_addr,
+                                                         half *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, int *input_addr, int *ids_addr, int *output_addr,
-                                                  cudaStream_t stream, const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, int *input_addr, int64_t *ids_addr,
-                                                  int *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, int *input_addr, int *ids_addr,
+                                                         int *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, int *input_addr, int64_t *ids_addr,
+                                                         int *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, uint32_t *input_addr, int *ids_addr,
-                                                  uint32_t *output_addr, cudaStream_t stream,
-                                                  const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, uint32_t *input_addr, int64_t *ids_addr,
-                                                  uint32_t *output_addr, cudaStream_t stream,
-                                                  const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, uint32_t *input_addr, int *ids_addr,
+                                                         uint32_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, uint32_t *input_addr, int64_t *ids_addr,
+                                                         uint32_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, uint8_t *input_addr, int *ids_addr,
-                                                  uint8_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, uint8_t *input_addr, int64_t *ids_addr,
-                                                  uint8_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, uint8_t *input_addr, int *ids_addr,
+                                                         uint8_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, uint8_t *input_addr, int64_t *ids_addr,
+                                                         uint8_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, int16_t *input_addr, int *ids_addr,
-                                                  int16_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, int16_t *input_addr, int64_t *ids_addr,
-                                                  int16_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, int16_t *input_addr, int *ids_addr,
+                                                         int16_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, int16_t *input_addr, int64_t *ids_addr,
+                                                         int16_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, uint64_t *input_addr, int *ids_addr,
-                                                  uint64_t *output_addr, cudaStream_t stream,
-                                                  const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, uint64_t *input_addr, int64_t *ids_addr,
-                                                  uint64_t *output_addr, cudaStream_t stream,
-                                                  const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, uint64_t *input_addr, int *ids_addr,
+                                                         uint64_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, uint64_t *input_addr, int64_t *ids_addr,
+                                                         uint64_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, int8_t *input_addr, int *ids_addr,
-                                                  int8_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, int8_t *input_addr, int64_t *ids_addr,
-                                                  int8_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, int8_t *input_addr, int *ids_addr,
+                                                         int8_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, int8_t *input_addr, int64_t *ids_addr,
+                                                         int8_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, uint16_t *input_addr, int *ids_addr,
-                                                  uint16_t *output_addr, cudaStream_t stream,
-                                                  const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, uint16_t *input_addr, int64_t *ids_addr,
-                                                  uint16_t *output_addr, cudaStream_t stream,
-                                                  const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, uint16_t *input_addr, int *ids_addr,
+                                                         uint16_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, uint16_t *input_addr, int64_t *ids_addr,
+                                                         uint16_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, int64_t *input_addr, int *ids_addr,
-                                                  int64_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
-template CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
-                                                  size_t output_dim1, int64_t *input_addr, int64_t *ids_addr,
-                                                  int64_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, int64_t *input_addr, int *ids_addr,
+                                                         int64_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);
+template CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                         size_t output_dim1, int64_t *input_addr, int64_t *ids_addr,
+                                                         int64_t *output_addr, cudaStream_t stream,
+                                                         const uint32_t &device_id);

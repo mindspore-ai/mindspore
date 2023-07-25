@@ -144,8 +144,10 @@ class AddcmulHelperGpuKernel : public GpuKernelHelperBase {
         continue;
       }
     }
-    CalAddcmul(input_data_shape_, x1_shape_, x2_shape_, value_shape_, output_shape_, input_data_ptr, x1_ptr, x2_ptr,
-               value_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status =
+      CalAddcmul(input_data_shape_, x1_shape_, x2_shape_, value_shape_, output_shape_, input_data_ptr, x1_ptr, x2_ptr,
+                 value_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

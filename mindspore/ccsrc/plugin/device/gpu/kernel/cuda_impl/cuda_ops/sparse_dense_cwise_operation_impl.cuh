@@ -29,12 +29,12 @@ enum SparseDenseCwiseOperationFunctionType {
 };
 
 template <typename T>
-CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationNoBcastCompute(
+CUDA_LIB_EXPORT cudaError_t CalSparseDenseCwiseOperationNoBcastCompute(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const T *x1_values,
   const int64_t *x1_shape, const T *x2, T *y, const int64_t dimension, const int64_t value_nums,
   const int64_t dense_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute(
+CUDA_LIB_EXPORT cudaError_t CalSparseDenseCwiseOperationBcastCompute(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const T *x1_values,
   const int64_t *x1_shape, const T *x2, T *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
   const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);

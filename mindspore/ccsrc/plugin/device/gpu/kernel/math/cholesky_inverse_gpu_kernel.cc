@@ -121,11 +121,15 @@ bool CholeskyInverseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the data type entered must be float or double.";
   }
+  cudaError_t status = cudaErrorNotReady;
   if (upper_) {
-    CalCopyUpToLow(output_elements_, input, rank_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status =
+      CalCopyUpToLow(output_elements_, input, rank_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
-    CalCopyLowToUp(output_elements_, input, rank_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status =
+      CalCopyLowToUp(output_elements_, input, rank_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return True;
 }
 std::vector<std::pair<KernelAttr, CholeskyInverseGpuKernelMod::CIfunc>> CholeskyInverseGpuKernelMod::func_list_ = {

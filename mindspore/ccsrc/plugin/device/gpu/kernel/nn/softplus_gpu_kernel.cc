@@ -56,7 +56,9 @@ template <typename T>
 bool SoftplusGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  Softplus(input_size_list_.at(0) / sizeof(T), input_addr, output_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    Softplus(input_size_list_.at(0) / sizeof(T), input_addr, output_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/helper_base.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/logit_impl.cuh"
 
@@ -81,8 +81,9 @@ class LogitHelperGpuKernel : public GpuKernelHelperBase {
     }
 
     // call cuda kernel
-    CalLogit(input_ptr, static_cast<T>(static_cast<T>(1.0) - static_cast<T>(eps_)), eps_, output_ptr,
-             input_size_list_[0] / sizeof(T), device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalLogit(input_ptr, static_cast<T>(static_cast<T>(1.0) - static_cast<T>(eps_)), eps_, output_ptr,
+                           input_size_list_[0] / sizeof(T), device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

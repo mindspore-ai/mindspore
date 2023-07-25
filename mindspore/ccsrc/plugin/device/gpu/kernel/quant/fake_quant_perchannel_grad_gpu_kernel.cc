@@ -113,10 +113,12 @@ bool FakeQuantPerChannelGradGpuKernelMod::Launch(const std::vector<AddressPtr> &
 
   int total_size = input_size_ / sizeof(float);
   if (global_step_ >= quant_delay_) {
-    CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, num_channels_,
-                       symmetric_, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalFakeQuantPerChannelGrad(input, gradient, output, total_size, num_channels_, nudge_min, nudge_max,
-                               reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale,
+                                     num_channels_, symmetric_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalFakeQuantPerChannelGrad(input, gradient, output, total_size, num_channels_, nudge_min, nudge_max,
+                                        reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(output, gradient, input_size_, cudaMemcpyDeviceToDevice,

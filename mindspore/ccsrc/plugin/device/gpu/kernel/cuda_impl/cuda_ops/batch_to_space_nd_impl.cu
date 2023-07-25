@@ -59,10 +59,10 @@ __global__ void BatchToSpaceND(const T *__restrict__ input, const int64_t *crops
 }
 
 template <typename T>
-void CalBatchToSpaceND(const T *input, const int64_t *crops_start, const int64_t *block_shape,
-                       const int64_t *output_shape, const size_t output_shape_size, const int64_t *stride_,
-                       const int64_t *on_stride_, const size_t off_set_, const size_t output_size_, T *output,
-                       const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBatchToSpaceND(const T *input, const int64_t *crops_start, const int64_t *block_shape,
+                              const int64_t *output_shape, const size_t output_shape_size, const int64_t *stride_,
+                              const int64_t *on_stride_, const size_t off_set_, const size_t output_size_, T *output,
+                              const uint32_t &device_id, cudaStream_t cuda_stream) {
   cudaMemcpyToSymbol(con_output_shape, output_shape, sizeof(int64_t) * output_shape_size);
   cudaMemcpyToSymbol(con_block_shape, block_shape, sizeof(int64_t) * (output_shape_size - off_set_));
   cudaMemcpyToSymbol(con_crop_start, crops_start, sizeof(int64_t) * (output_shape_size - off_set_));
@@ -70,72 +70,66 @@ void CalBatchToSpaceND(const T *input, const int64_t *crops_start, const int64_t
   cudaMemcpyToSymbol(on_stride, on_stride_, sizeof(int64_t) * (output_shape_size - off_set_));
   BatchToSpaceND<<<CUDA_BLOCKS(device_id, output_size_), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, crops_start, block_shape, output_shape, output_shape_size, off_set_, output_size_, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<int8_t>(const int8_t *input, const int64_t *crops_start,
-                                                        const int64_t *block_shape, const int64_t *output_shape,
-                                                        const size_t output_shape_size, const int64_t *stride_,
-                                                        const int64_t *on_stride_, const size_t off_set_,
-                                                        const size_t output_size_, int8_t *output,
-                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<int16_t>(const int16_t *input, const int64_t *crops_start,
-                                                         const int64_t *block_shape, const int64_t *output_shape,
-                                                         const size_t output_shape_size, const int64_t *stride_,
-                                                         const int64_t *on_stride_, const size_t off_set_,
-                                                         const size_t output_size_, int16_t *output,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<int32_t>(const int32_t *input, const int64_t *crops_start,
-                                                         const int64_t *block_shape, const int64_t *output_shape,
-                                                         const size_t output_shape_size, const int64_t *stride_,
-                                                         const int64_t *on_stride_, const size_t off_set_,
-                                                         const size_t output_size_, int32_t *output,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<int64_t>(const int64_t *input, const int64_t *crops_start,
-                                                         const int64_t *block_shape, const int64_t *output_shape,
-                                                         const size_t output_shape_size, const int64_t *stride_,
-                                                         const int64_t *on_stride_, const size_t off_set_,
-                                                         const size_t output_size_, int64_t *output,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<uint8_t>(const uint8_t *input, const int64_t *crops_start,
-                                                         const int64_t *block_shape, const int64_t *output_shape,
-                                                         const size_t output_shape_size, const int64_t *stride_,
-                                                         const int64_t *on_stride_, const size_t off_set_,
-                                                         const size_t output_size_, uint8_t *output,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<uint16_t>(const uint16_t *input, const int64_t *crops_start,
-                                                          const int64_t *block_shape, const int64_t *output_shape,
-                                                          const size_t output_shape_size, const int64_t *stride_,
-                                                          const int64_t *on_stride_, const size_t off_set_,
-                                                          const size_t output_size_, uint16_t *output,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<uint32_t>(const uint32_t *input, const int64_t *crops_start,
-                                                          const int64_t *block_shape, const int64_t *output_shape,
-                                                          const size_t output_shape_size, const int64_t *stride_,
-                                                          const int64_t *on_stride_, const size_t off_set_,
-                                                          const size_t output_size_, uint32_t *output,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<uint64_t>(const uint64_t *input, const int64_t *crops_start,
-                                                          const int64_t *block_shape, const int64_t *output_shape,
-                                                          const size_t output_shape_size, const int64_t *stride_,
-                                                          const int64_t *on_stride_, const size_t off_set_,
-                                                          const size_t output_size_, uint64_t *output,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<half>(const half *input, const int64_t *crops_start,
-                                                      const int64_t *block_shape, const int64_t *output_shape,
-                                                      const size_t output_shape_size, const int64_t *stride_,
-                                                      const int64_t *on_stride_, const size_t off_set_,
-                                                      const size_t output_size_, half *output,
-                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<float>(const float *input, const int64_t *crops_start,
-                                                       const int64_t *block_shape, const int64_t *output_shape,
-                                                       const size_t output_shape_size, const int64_t *stride_,
-                                                       const int64_t *on_stride_, const size_t off_set_,
-                                                       const size_t output_size_, float *output,
-                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpaceND<double>(const double *input, const int64_t *crops_start,
-                                                        const int64_t *block_shape, const int64_t *output_shape,
-                                                        const size_t output_shape_size, const int64_t *stride_,
-                                                        const int64_t *on_stride_, const size_t off_set_,
-                                                        const size_t output_size_, double *output,
-                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<int8_t>(const int8_t *input, const int64_t *crops_start,
+                                                               const int64_t *block_shape, const int64_t *output_shape,
+                                                               const size_t output_shape_size, const int64_t *stride_,
+                                                               const int64_t *on_stride_, const size_t off_set_,
+                                                               const size_t output_size_, int8_t *output,
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<int16_t>(const int16_t *input, const int64_t *crops_start,
+                                                                const int64_t *block_shape, const int64_t *output_shape,
+                                                                const size_t output_shape_size, const int64_t *stride_,
+                                                                const int64_t *on_stride_, const size_t off_set_,
+                                                                const size_t output_size_, int16_t *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<int32_t>(const int32_t *input, const int64_t *crops_start,
+                                                                const int64_t *block_shape, const int64_t *output_shape,
+                                                                const size_t output_shape_size, const int64_t *stride_,
+                                                                const int64_t *on_stride_, const size_t off_set_,
+                                                                const size_t output_size_, int32_t *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<int64_t>(const int64_t *input, const int64_t *crops_start,
+                                                                const int64_t *block_shape, const int64_t *output_shape,
+                                                                const size_t output_shape_size, const int64_t *stride_,
+                                                                const int64_t *on_stride_, const size_t off_set_,
+                                                                const size_t output_size_, int64_t *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<uint8_t>(const uint8_t *input, const int64_t *crops_start,
+                                                                const int64_t *block_shape, const int64_t *output_shape,
+                                                                const size_t output_shape_size, const int64_t *stride_,
+                                                                const int64_t *on_stride_, const size_t off_set_,
+                                                                const size_t output_size_, uint8_t *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<uint16_t>(
+  const uint16_t *input, const int64_t *crops_start, const int64_t *block_shape, const int64_t *output_shape,
+  const size_t output_shape_size, const int64_t *stride_, const int64_t *on_stride_, const size_t off_set_,
+  const size_t output_size_, uint16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<uint32_t>(
+  const uint32_t *input, const int64_t *crops_start, const int64_t *block_shape, const int64_t *output_shape,
+  const size_t output_shape_size, const int64_t *stride_, const int64_t *on_stride_, const size_t off_set_,
+  const size_t output_size_, uint32_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<uint64_t>(
+  const uint64_t *input, const int64_t *crops_start, const int64_t *block_shape, const int64_t *output_shape,
+  const size_t output_shape_size, const int64_t *stride_, const int64_t *on_stride_, const size_t off_set_,
+  const size_t output_size_, uint64_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<half>(const half *input, const int64_t *crops_start,
+                                                             const int64_t *block_shape, const int64_t *output_shape,
+                                                             const size_t output_shape_size, const int64_t *stride_,
+                                                             const int64_t *on_stride_, const size_t off_set_,
+                                                             const size_t output_size_, half *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<float>(const float *input, const int64_t *crops_start,
+                                                              const int64_t *block_shape, const int64_t *output_shape,
+                                                              const size_t output_shape_size, const int64_t *stride_,
+                                                              const int64_t *on_stride_, const size_t off_set_,
+                                                              const size_t output_size_, float *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND<double>(const double *input, const int64_t *crops_start,
+                                                               const int64_t *block_shape, const int64_t *output_shape,
+                                                               const size_t output_shape_size, const int64_t *stride_,
+                                                               const int64_t *on_stride_, const size_t off_set_,
+                                                               const size_t output_size_, double *output,
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream);

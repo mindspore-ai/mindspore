@@ -19,7 +19,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void Normalize(const T *input, const T *gamma, const T *beta, T *output, size_t dim_at_axis,
-                               float epsilion, int element_cnt, cudaStream_t stream, const uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t Normalize(const T *input, const T *gamma, const T *beta, T *output, size_t dim_at_axis,
+                                      float epsilion, int element_cnt, cudaStream_t stream, const uint32_t device_id);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_NORMALIZE_IMPL_CUH_

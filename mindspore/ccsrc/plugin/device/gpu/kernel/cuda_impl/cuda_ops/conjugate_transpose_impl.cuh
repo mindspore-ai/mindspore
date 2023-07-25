@@ -19,15 +19,15 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #define TRANSPOSE_MAX_DIMENSION 7
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalConjugateTranspose(const size_t size, const T *input, const size_t *input_stride,
-                                  const size_t *output_stride,
-                                  const S *input_axis, const size_t shape_size, T *output, const uint32_t &device_id,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalConjugateTranspose(const size_t size, const T *input, const size_t *input_stride,
+                                                  const size_t *output_stride, const S *input_axis,
+                                                  const size_t shape_size, T *output, const uint32_t &device_id,
+                                                  cudaStream_t cuda_stream);
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalConjugateTransposeComplex(const size_t size, const T *input, const size_t *input_stride,
-                                  const size_t *output_stride,
-                                  const S *input_axis, const size_t shape_size, T *output, const uint32_t &device_id,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalConjugateTransposeComplex(const size_t size, const T *input, const size_t *input_stride,
+                                                         const size_t *output_stride, const S *input_axis,
+                                                         const size_t shape_size, T *output, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CONJUGATE_TRANSPOSE_IMPL_CUH_

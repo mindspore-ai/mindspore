@@ -143,11 +143,10 @@ __global__ void CalculateSparseBaseGrid4DKernel(T *base_grid_ptr, const size_t l
   }
 }
 
-
 template <typename T>
 __global__ void CalculateSparseWrappedGrid4DKernel(const T *theta_ptr, const T *base_grid_ptr, T *wrapped_grid_ptr,
-                                                   const size_t len_wrapped_grid, const int32_t N,
-                                                   const int32_t H, const int32_t W) {
+                                                   const size_t len_wrapped_grid, const int32_t N, const int32_t H,
+                                                   const int32_t W) {
   size_t n, ii;
   Theta2<T> theta{};
   T point{}, x_wrapped{}, y_wrapped{};
@@ -172,8 +171,8 @@ __global__ void CalculateSparseWrappedGrid4DKernel(const T *theta_ptr, const T *
 }
 
 template <typename T>
-__global__ void CalculateAffineGrid4DKernel(const T *xs_ptr, const T *ys_ptr, T *grid_ptr,
-                                            const size_t grid_elements, const int32_t H, const int32_t W) {
+__global__ void CalculateAffineGrid4DKernel(const T *xs_ptr, const T *ys_ptr, T *grid_ptr, const size_t grid_elements,
+                                            const int32_t H, const int32_t W) {
   size_t mul_H_W = H * W;
   size_t n, h, w, idx_x, idx_y;
   Point2<T> x{}, y{};
@@ -203,18 +202,19 @@ cudaError_t CalculateAffineGrid4D(const T *theta_ptr, T *workspace_ptr, T *grid_
 
   T *base_grid_ptr = workspace_ptr;
   size_t len_base_grid = W + H;
-  CalculateSparseBaseGrid4DKernel<<<CUDA_BLOCKS(device_id, len_base_grid), CUDA_THREADS(device_id), 0, cuda_stream>>>
-  (base_grid_ptr, len_base_grid, H, W, align_corners);
+  CalculateSparseBaseGrid4DKernel<<<CUDA_BLOCKS(device_id, len_base_grid), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    base_grid_ptr, len_base_grid, H, W, align_corners);
   T *wrapped_grid_ptr = workspace_ptr + len_base_grid;
   size_t len_wrapped_grid = N * W + N * H;
-  CalculateSparseWrappedGrid4DKernel<<<CUDA_BLOCKS(device_id, len_wrapped_grid), CUDA_THREADS(device_id), 0, cuda_stream
-  >>>(theta_ptr, base_grid_ptr, wrapped_grid_ptr, len_wrapped_grid, N, H, W);
+  CalculateSparseWrappedGrid4DKernel<<<CUDA_BLOCKS(device_id, len_wrapped_grid), CUDA_THREADS(device_id), 0,
+                                       cuda_stream>>>(theta_ptr, base_grid_ptr, wrapped_grid_ptr, len_wrapped_grid, N,
+                                                      H, W);
   T *xs_ptr = wrapped_grid_ptr;
   T *ys_ptr = wrapped_grid_ptr + (N * W) * 2;
   size_t grid_elements = N * H * W;
-  CalculateAffineGrid4DKernel<<<CUDA_BLOCKS(device_id, grid_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>
-  (xs_ptr, ys_ptr, grid_ptr, grid_elements, H, W);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  CalculateAffineGrid4DKernel<<<CUDA_BLOCKS(device_id, grid_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    xs_ptr, ys_ptr, grid_ptr, grid_elements, H, W);
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -325,22 +325,26 @@ cudaError_t CalculateAffineGrid5D(const T *theta_ptr, T *workspace_ptr, T *grid_
   size_t grid_elements = N * D * H * W;
   CalculateAffineGrid5DKernel<<<CUDA_BLOCKS(device_id, grid_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     xs_ptr, ys_ptr, zs_ptr, grid_ptr, grid_elements, D, H, W);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalculateAffineGrid4D<half>(const half *theta_ptr, half *workspace_ptr,
-                                                                   half *grid_ptr, const int32_t &N, const int32_t &C,
+                                                                 half *grid_ptr, const int32_t &N, const int32_t &C,
+                                                                 const int32_t &H, const int32_t &W,
+                                                                 const bool &align_corners, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalculateAffineGrid4D<float>(const float *theta_ptr, float *workspace_ptr,
+                                                                  float *grid_ptr, const int32_t &N, const int32_t &C,
+                                                                  const int32_t &H, const int32_t &W,
+                                                                  const bool &align_corners, const uint32_t &device_id,
+                                                                  cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalculateAffineGrid4D<double>(const double *theta_ptr, double *workspace_ptr,
+                                                                   double *grid_ptr, const int32_t &N, const int32_t &C,
                                                                    const int32_t &H, const int32_t &W,
                                                                    const bool &align_corners, const uint32_t &device_id,
                                                                    cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT cudaError_t CalculateAffineGrid4D<float>(
-  const float *theta_ptr, float *workspace_ptr, float *grid_ptr, const int32_t &N, const int32_t &C, const int32_t &H,
-  const int32_t &W, const bool &align_corners, const uint32_t &device_id, cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT cudaError_t CalculateAffineGrid4D<double>(
-  const double *theta_ptr, double *workspace_ptr, double *grid_ptr, const int32_t &N, const int32_t &C,
-  const int32_t &H, const int32_t &W, const bool &align_corners, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT cudaError_t CalculateAffineGrid5D<half>(const half *theta_ptr, half *workspace_ptr,
                                                                  half *grid_ptr, const int32_t &N, const int32_t &C,

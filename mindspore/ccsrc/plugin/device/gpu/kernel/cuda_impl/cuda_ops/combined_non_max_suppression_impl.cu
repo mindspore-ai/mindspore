@@ -198,9 +198,9 @@ __global__ void output(int batch_size, int per_detections, int *index, float *ne
 }
 
 template <typename T>
-void CalSort(T *scores, int *index, T *score_threshold, int num_classes, T *boxes, float *new_boxes, float *new_scores,
-             int batch_size, int num_boxes, float *boxes_result, int q, bool *sel, const uint32_t &device_id,
-             cudaStream_t cuda_stream) {
+cudaError_t CalSort(T *scores, int *index, T *score_threshold, int num_classes, T *boxes, float *new_boxes,
+                    float *new_scores, int batch_size, int num_boxes, float *boxes_result, int q, bool *sel,
+                    const uint32_t &device_id, cudaStream_t cuda_stream) {
   permute<<<CUDA_BLOCKS(device_id, q * num_boxes * batch_size * DIM4), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     q, num_boxes, batch_size, boxes, new_boxes);
   boxsort<<<CUDA_BLOCKS(device_id, batch_size * q * num_boxes), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -213,12 +213,13 @@ void CalSort(T *scores, int *index, T *score_threshold, int num_classes, T *boxe
                                thrust::device_pointer_cast(new_scores + i * num_boxes) + num_boxes,
                                thrust::device_pointer_cast(index + i * num_boxes), thrust::greater<float>());
   }
+  return GetCudaStatus();
 }
 
 template <typename T>
-void Calnms(int batch_size, int num_classes, T *iou_threshold, bool *sel, float *boxes_result, int *index, int q,
-            int num_boxes, int *max_output_size_per_class, float *new_scores, bool *mask, const uint32_t &device_id,
-            cudaStream_t cuda_stream) {
+cudaError_t Calnms(int batch_size, int num_classes, T *iou_threshold, bool *sel, float *boxes_result, int *index, int q,
+                   int num_boxes, int *max_output_size_per_class, float *new_scores, bool *mask,
+                   const uint32_t &device_id, cudaStream_t cuda_stream) {
   Init<<<CUDA_BLOCKS(device_id, batch_size * num_classes * num_boxes * num_boxes), CUDA_THREADS(device_id), 0,
          cuda_stream>>>(num_classes, num_boxes, batch_size, mask);
   nms<<<CUDA_BLOCKS(device_id, batch_size * num_classes * num_boxes * num_boxes), CUDA_THREADS(device_id), 0,
@@ -235,27 +236,29 @@ void Calnms(int batch_size, int num_classes, T *iou_threshold, bool *sel, float 
       thrust::device_pointer_cast(new_scores + i * num_boxes * num_classes) + (num_boxes * num_classes),
       thrust::device_pointer_cast(index + i * num_boxes * num_classes), thrust::greater<float>());
   }
+  return GetCudaStatus();
 }
 
 template <typename T>
-void Caloutput(int batch_size, int per_detections, int *index, float *new_scores, bool *sel, float *new_boxes,
-               T *nmsed_classes, T *nmsed_scores, T *nmsed_boxes, int *valid_detections, bool clip_boxes,
-               int num_classes, int num_boxes, int q, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t Caloutput(int batch_size, int per_detections, int *index, float *new_scores, bool *sel, float *new_boxes,
+                      T *nmsed_classes, T *nmsed_scores, T *nmsed_boxes, int *valid_detections, bool clip_boxes,
+                      int num_classes, int num_boxes, int q, const uint32_t &device_id, cudaStream_t cuda_stream) {
   output<<<CUDA_BLOCKS(device_id, batch_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     batch_size, per_detections, index, new_scores, sel, new_boxes, nmsed_classes, nmsed_scores, nmsed_boxes,
     valid_detections, clip_boxes, num_classes, num_boxes, q);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalSort<float>(float *scores, int *index, float *score_threshold, int num_classes,
-                                             float *boxes, float *new_boxes, float *new_scores, int batch_size,
-                                             int num_boxes, float *boxes_result, int q, bool *sel,
-                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Calnms<float>(int batch_size, int num_classes, float *iou_threshold, bool *sel,
-                                            float *boxes_result, int *index, int q, int num_boxes,
-                                            int *max_output_size_per_class, float *new_scores, bool *mask,
-                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Caloutput<float>(int batch_size, int per_detections, int *index, float *new_scores,
-                                               bool *sel, float *new_boxes, float *nmsed_classes, float *nmsed_scores,
-                                               float *nmsed_boxes, int *valid_detections, bool clip_boxes,
-                                               int num_classes, int num_boxes, int q, const uint32_t &device_id,
-                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSort<float>(float *scores, int *index, float *score_threshold, int num_classes,
+                                                    float *boxes, float *new_boxes, float *new_scores, int batch_size,
+                                                    int num_boxes, float *boxes_result, int q, bool *sel,
+                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Calnms<float>(int batch_size, int num_classes, float *iou_threshold, bool *sel,
+                                                   float *boxes_result, int *index, int q, int num_boxes,
+                                                   int *max_output_size_per_class, float *new_scores, bool *mask,
+                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Caloutput<float>(int batch_size, int per_detections, int *index, float *new_scores,
+                                                      bool *sel, float *new_boxes, float *nmsed_classes,
+                                                      float *nmsed_scores, float *nmsed_boxes, int *valid_detections,
+                                                      bool clip_boxes, int num_classes, int num_boxes, int q,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);

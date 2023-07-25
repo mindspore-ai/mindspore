@@ -392,8 +392,8 @@ __global__ void MedianKernel(const T *input, T *output, S *indices, S size, S nu
 }
 
 template <typename T, typename S>
-void Median(const T *input_value, T *output, S *indices, const std::vector<int64_t> input_shape, const int64_t axis,
-            bool global_median, cudaStream_t cuda_stream) {
+cudaError_t Median(const T *input_value, T *output, S *indices, const std::vector<int64_t> input_shape,
+                   const int64_t axis, bool global_median, cudaStream_t cuda_stream) {
   dim3 threads, grids;
   size_t i = 0;
   for (; i < static_cast<size_t>(axis); i++) {
@@ -410,39 +410,48 @@ void Median(const T *input_value, T *output, S *indices, const std::vector<int64
 
   MedianKernel<T, S>
     <<<grids, threads, 0, cuda_stream>>>(input_value, output, indices, size, num, stride, global_median);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Median<uint8_t, int64_t>(const uint8_t *input_value, uint8_t *output, int64_t *indices,
-                                                       const std::vector<int64_t> input_shape, const int64_t axis,
-                                                       bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<int8_t, int64_t>(const int8_t *input_value, int8_t *output, int64_t *indices,
-                                                      const std::vector<int64_t> input_shape, const int64_t axis,
-                                                      bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<uint16_t, int64_t>(const uint16_t *input_value, uint16_t *output, int64_t *indices,
-                                                        const std::vector<int64_t> input_shape, const int64_t axis,
-                                                        bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<int16_t, int64_t>(const int16_t *input_value, int16_t *output, int64_t *indices,
-                                                       const std::vector<int64_t> input_shape, const int64_t axis,
-                                                       bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<uint32_t, int64_t>(const uint32_t *input_value, uint32_t *output, int64_t *indices,
-                                                        const std::vector<int64_t> input_shape, const int64_t axis,
-                                                        bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<int32_t, int64_t>(const int32_t *input_value, int32_t *output, int64_t *indices,
-                                                       const std::vector<int64_t> input_shape, const int64_t axis,
-                                                       bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<uint64_t, int64_t>(const uint64_t *input_value, uint64_t *output, int64_t *indices,
-                                                        const std::vector<int64_t> input_shape, const int64_t axis,
-                                                        bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<int64_t, int64_t>(const int64_t *input_value, int64_t *output, int64_t *indices,
-                                                       const std::vector<int64_t> input_shape, const int64_t axis,
-                                                       bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<half, int64_t>(const half *input_value, half *output, int64_t *indices,
-                                                    const std::vector<int64_t> input_shape, const int64_t axis,
-                                                    bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<float, int64_t>(const float *input_value, float *output, int64_t *indices,
-                                                     const std::vector<int64_t> input_shape, const int64_t axis,
-                                                     bool global_median, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Median<double, int64_t>(const double *input_value, double *output, int64_t *indices,
-                                                      const std::vector<int64_t> input_shape, const int64_t axis,
-                                                      bool global_median, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<uint8_t, int64_t>(const uint8_t *input_value, uint8_t *output,
+                                                              int64_t *indices, const std::vector<int64_t> input_shape,
+                                                              const int64_t axis, bool global_median,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<int8_t, int64_t>(const int8_t *input_value, int8_t *output,
+                                                             int64_t *indices, const std::vector<int64_t> input_shape,
+                                                             const int64_t axis, bool global_median,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<uint16_t, int64_t>(const uint16_t *input_value, uint16_t *output,
+                                                               int64_t *indices, const std::vector<int64_t> input_shape,
+                                                               const int64_t axis, bool global_median,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<int16_t, int64_t>(const int16_t *input_value, int16_t *output,
+                                                              int64_t *indices, const std::vector<int64_t> input_shape,
+                                                              const int64_t axis, bool global_median,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<uint32_t, int64_t>(const uint32_t *input_value, uint32_t *output,
+                                                               int64_t *indices, const std::vector<int64_t> input_shape,
+                                                               const int64_t axis, bool global_median,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<int32_t, int64_t>(const int32_t *input_value, int32_t *output,
+                                                              int64_t *indices, const std::vector<int64_t> input_shape,
+                                                              const int64_t axis, bool global_median,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<uint64_t, int64_t>(const uint64_t *input_value, uint64_t *output,
+                                                               int64_t *indices, const std::vector<int64_t> input_shape,
+                                                               const int64_t axis, bool global_median,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<int64_t, int64_t>(const int64_t *input_value, int64_t *output,
+                                                              int64_t *indices, const std::vector<int64_t> input_shape,
+                                                              const int64_t axis, bool global_median,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<half, int64_t>(const half *input_value, half *output, int64_t *indices,
+                                                           const std::vector<int64_t> input_shape, const int64_t axis,
+                                                           bool global_median, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<float, int64_t>(const float *input_value, float *output, int64_t *indices,
+                                                            const std::vector<int64_t> input_shape, const int64_t axis,
+                                                            bool global_median, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Median<double, int64_t>(const double *input_value, double *output,
+                                                             int64_t *indices, const std::vector<int64_t> input_shape,
+                                                             const int64_t axis, bool global_median,
+                                                             cudaStream_t cuda_stream);

@@ -81,9 +81,11 @@ bool MvlgammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   int *valid_d = GetDeviceAddress<int>(workspace, 0);
-  int ret =
-    CalMvlgamma(valid_d, input_elements_, input, p_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  if (ret >= 0) {
+  int host_valid = -1;
+  auto status = CalMvlgamma(valid_d, input_elements_, input, p_, output, device_id_,
+                            reinterpret_cast<cudaStream_t>(cuda_stream_), &host_valid);
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  if (host_valid >= 0) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", all element must be greater than (p-1)/2";
     return false;
   }

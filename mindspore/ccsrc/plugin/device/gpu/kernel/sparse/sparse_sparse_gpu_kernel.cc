@@ -152,15 +152,17 @@ bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', operands' shapes do not match.";
     }
   }
+  cudaError_t status = cudaErrorNotReady;
   if (kernel_name_ == "SparseSparseMaximum") {
-    SparseSparseMaximum(a_indices_ptr, a_values_ptr, b_indices_ptr, b_values_ptr, sum_indices_ptr, sum_values_ptr,
-                        ab_status_ptr, sum_ptr, a_indices_num_, b_indices_num_, rank_, cuda_stream_, device_id_,
-                        ab_status_ptr1, ab_status_ptr2);
+    status = SparseSparseMaximum(a_indices_ptr, a_values_ptr, b_indices_ptr, b_values_ptr, sum_indices_ptr,
+                                 sum_values_ptr, ab_status_ptr, sum_ptr, a_indices_num_, b_indices_num_, rank_,
+                                 cuda_stream_, device_id_, ab_status_ptr1, ab_status_ptr2);
   } else {
-    SparseSparseMinimum(a_indices_ptr, a_values_ptr, b_indices_ptr, b_values_ptr, sum_indices_ptr, sum_values_ptr,
-                        ab_status_ptr, sum_ptr, a_indices_num_, b_indices_num_, rank_, cuda_stream_, device_id_,
-                        ab_status_ptr1, ab_status_ptr2);
+    status = SparseSparseMinimum(a_indices_ptr, a_values_ptr, b_indices_ptr, b_values_ptr, sum_indices_ptr,
+                                 sum_values_ptr, ab_status_ptr, sum_ptr, a_indices_num_, b_indices_num_, rank_,
+                                 cuda_stream_, device_id_, ab_status_ptr1, ab_status_ptr2);
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&real_output_size_, sum_ptr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream_),
     "For SparseSparseOperators, failed to cudaMemset.");

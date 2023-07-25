@@ -106,8 +106,9 @@ bool SparseSoftmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   int32_t *reorder_device = GetDeviceAddress<int32_t>(workspace, kIndex0);
   int64_t *indice_to_num_device = GetDeviceAddress<int64_t>(workspace, kIndex1);
-  CalSparseSoftmax(indices, values, output, reorder_device, indice_to_num_device, indice_dims_, values_elements_,
-                   device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalSparseSoftmax(indices, values, output, reorder_device, indice_to_num_device, indice_dims_,
+                                 values_elements_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

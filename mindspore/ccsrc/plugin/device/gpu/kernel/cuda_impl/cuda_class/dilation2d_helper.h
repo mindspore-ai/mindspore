@@ -139,8 +139,9 @@ class Dilation2DHelperGpuKernel : public GpuKernelHelperBase {
     }
 
     // call cuda kernel
-    CalDilation2D(input_ptr, filter, output_ptr, input_shape_, filter_shape_, output_shape_, stride_, dilation_, pads,
-                  outer_size, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalDilation2D(input_ptr, filter, output_ptr, input_shape_, filter_shape_, output_shape_, stride_,
+                                dilation_, pads, outer_size, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

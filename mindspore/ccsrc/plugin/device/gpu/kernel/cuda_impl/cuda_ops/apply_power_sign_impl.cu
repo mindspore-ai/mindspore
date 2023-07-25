@@ -120,7 +120,7 @@ cudaError_t ApplyPowerSign(const size_t size, T *variable, T *accumulation, cons
                            cudaStream_t cuda_stream) {
   ApplyPowerSignKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, variable, accumulation, learning_rate, logbase, sign_decay, beta, gradient);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyPowerSign<double, double, double>(

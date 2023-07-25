@@ -232,10 +232,12 @@ class ScaleAndTranslateHelperGpuKernel : public GpuKernelHelperBase {
     thread_num_[kIndex2] = image_batch_ * output_height_;
     thread_num_[kIndex3] = image_batch_ * output_height_ * output_width_;
     // call cuda kernel
-    CalScaleAndTranslate(thread_num_, images_ptr, scale_ptr, translation_ptr, image_batch_, image_height_, image_width_,
-                         depth_, output_height_, output_width_, kernel_type_, antialias, radius_, input_shape_ptr,
-                         size_ptr, spans_size_ptr, forward_starts_ptr, forward_weights_ptr, intermediate_ptr,
-                         output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status =
+      CalScaleAndTranslate(thread_num_, images_ptr, scale_ptr, translation_ptr, image_batch_, image_height_,
+                           image_width_, depth_, output_height_, output_width_, kernel_type_, antialias, radius_,
+                           input_shape_ptr, size_ptr, spans_size_ptr, forward_starts_ptr, forward_weights_ptr,
+                           intermediate_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

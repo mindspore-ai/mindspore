@@ -120,69 +120,77 @@ __global__ void BroadcastLcmKernel(const size_t l0, const size_t l1, const size_
 }
 
 template <typename T>
-void CalGcd(size_t size, const T *x1, const T *x2, T *y, const uint32_t &device_id, cudaStream_t cuda_stream) {
-  return CalGcdKernel<T, GcdFunc<T>>
+cudaError_t CalGcd(size_t size, const T *x1, const T *x2, T *y, const uint32_t &device_id, cudaStream_t cuda_stream) {
+  CalGcdKernel<T, GcdFunc<T>>
     <<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, x1, x2, y);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void BroadcastGcd(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
-                  const std::vector<size_t> &y_shape, const T *x1, const T *x2, T *y, const uint32_t &device_id,
-                  cudaStream_t cuda_stream) {
+cudaError_t BroadcastGcd(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
+                         const std::vector<size_t> &y_shape, const T *x1, const T *x2, T *y, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
   size_t size = 1;
   for (auto d : y_shape) {
     size *= d;
   }
-  return BroadcastGcdKernel<T, GcdFunc<T>><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  BroadcastGcdKernel<T, GcdFunc<T>><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     x1_shape[0], x1_shape[1], x1_shape[2], x1_shape[3], x1_shape[4], x1_shape[5], x1_shape[6], x2_shape[0], x2_shape[1],
     x2_shape[2], x2_shape[3], x2_shape[4], x2_shape[5], x2_shape[6], y_shape[0], y_shape[1], y_shape[2], y_shape[3],
     y_shape[4], y_shape[5], y_shape[6], x1, x2, y);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalLcm(size_t size, const T *x1, const T *x2, T *y, const uint32_t &device_id, cudaStream_t cuda_stream) {
-  return CalLcmKernel<T, GcdFunc<T>>
+cudaError_t CalLcm(size_t size, const T *x1, const T *x2, T *y, const uint32_t &device_id, cudaStream_t cuda_stream) {
+  CalLcmKernel<T, GcdFunc<T>>
     <<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, x1, x2, y);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void BroadcastLcm(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
-                  const std::vector<size_t> &y_shape, const T *x1, const T *x2, T *y, const uint32_t &device_id,
-                  cudaStream_t cuda_stream) {
+cudaError_t BroadcastLcm(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
+                         const std::vector<size_t> &y_shape, const T *x1, const T *x2, T *y, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
   size_t size = 1;
   for (auto d : y_shape) {
     size *= d;
   }
-  return BroadcastLcmKernel<T, GcdFunc<T>><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  BroadcastLcmKernel<T, GcdFunc<T>><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     x1_shape[0], x1_shape[1], x1_shape[2], x1_shape[3], x1_shape[4], x1_shape[5], x1_shape[6], x2_shape[0], x2_shape[1],
     x2_shape[2], x2_shape[3], x2_shape[4], x2_shape[5], x2_shape[6], y_shape[0], y_shape[1], y_shape[2], y_shape[3],
     y_shape[4], y_shape[5], y_shape[6], x1, x2, y);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalGcd<int32_t>(size_t, const int32_t *, const int32_t *, int32_t *, const uint32_t &,
-                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalGcd<int32_t>(size_t, const int32_t *, const int32_t *, int32_t *,
+                                                     const uint32_t &, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalGcd<int64_t>(size_t, const int64_t *, const int64_t *, int64_t *, const uint32_t &,
-                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalGcd<int64_t>(size_t, const int64_t *, const int64_t *, int64_t *,
+                                                     const uint32_t &, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void BroadcastGcd<int32_t>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                    const std::vector<size_t> &, const int32_t *, const int32_t *,
-                                                    int32_t *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastGcd<int32_t>(const std::vector<size_t> &, const std::vector<size_t> &,
+                                                           const std::vector<size_t> &, const int32_t *,
+                                                           const int32_t *, int32_t *, const uint32_t &,
+                                                           cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void BroadcastGcd<int64_t>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                    const std::vector<size_t> &, const int64_t *, const int64_t *,
-                                                    int64_t *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastGcd<int64_t>(const std::vector<size_t> &, const std::vector<size_t> &,
+                                                           const std::vector<size_t> &, const int64_t *,
+                                                           const int64_t *, int64_t *, const uint32_t &,
+                                                           cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalLcm<int32_t>(size_t, const int32_t *, const int32_t *, int32_t *, const uint32_t &,
-                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLcm<int32_t>(size_t, const int32_t *, const int32_t *, int32_t *,
+                                                     const uint32_t &, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalLcm<int64_t>(size_t, const int64_t *, const int64_t *, int64_t *, const uint32_t &,
-                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLcm<int64_t>(size_t, const int64_t *, const int64_t *, int64_t *,
+                                                     const uint32_t &, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void BroadcastLcm<int32_t>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                    const std::vector<size_t> &, const int32_t *, const int32_t *,
-                                                    int32_t *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastLcm<int32_t>(const std::vector<size_t> &, const std::vector<size_t> &,
+                                                           const std::vector<size_t> &, const int32_t *,
+                                                           const int32_t *, int32_t *, const uint32_t &,
+                                                           cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void BroadcastLcm<int64_t>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                    const std::vector<size_t> &, const int64_t *, const int64_t *,
-                                                    int64_t *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastLcm<int64_t>(const std::vector<size_t> &, const std::vector<size_t> &,
+                                                           const std::vector<size_t> &, const int64_t *,
+                                                           const int64_t *, int64_t *, const uint32_t &,
+                                                           cudaStream_t cuda_stream);

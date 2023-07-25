@@ -37,8 +37,8 @@ __global__ void SparseSegmentPosKernel(const S *indices_ptr, size_t *indices_pos
 
 template <typename R, typename S>
 __global__ void SparseSegmentMeanGradKernel(const R *grad_ptr, const S *indices_ptr, const S *segment_ids_ptr,
-                                             const size_t *indices_pos_ptr, size_t outer_size, size_t inner_size,
-                                             size_t output_dim0, R *y_ptr) {
+                                            const size_t *indices_pos_ptr, size_t outer_size, size_t inner_size,
+                                            size_t output_dim0, R *y_ptr) {
   size_t num_blocks = (inner_size - 1) / blockDim.x + 1;
   for (size_t bid = blockIdx.x; bid < num_blocks; bid += gridDim.x) {
     size_t inner_idx = threadIdx.x + bid * blockDim.x;
@@ -63,9 +63,9 @@ __global__ void SparseSegmentMeanGradKernel(const R *grad_ptr, const S *indices_
 }
 
 template <typename R, typename S>
-bool CalSparseSegmentMeanGrad(const R *grad_ptr, const S *indices_ptr, const S *segment_ids_ptr,
-                              size_t *indices_pos_ptr, size_t outer_size, size_t inner_size, size_t idx_seg_size,
-                              size_t output_dim0, R *y_ptr, uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseSegmentMeanGrad(const R *grad_ptr, const S *indices_ptr, const S *segment_ids_ptr,
+                                     size_t *indices_pos_ptr, size_t outer_size, size_t inner_size, size_t idx_seg_size,
+                                     size_t output_dim0, R *y_ptr, uint32_t device_id, cudaStream_t cuda_stream) {
   // Get start position of each segment and set to indices_pos_ptr.
   // The last element of indices_pos_ptr must equal to idx_seg_size.
   SparseSegmentPosKernel<<<CUDA_BLOCKS(device_id, idx_seg_size + 1), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -81,11 +81,11 @@ bool CalSparseSegmentMeanGrad(const R *grad_ptr, const S *indices_ptr, const S *
   unsigned int shared_memory_size = block_x * block_y * sizeof(R);
   SparseSegmentMeanGradKernel<<<grid, block, shared_memory_size, cuda_stream>>>(
     grad_ptr, indices_ptr, segment_ids_ptr, indices_pos_ptr, outer_size, inner_size, output_dim0, y_ptr);
-  return true;
+  return GetCudaStatus();
 }
 
 #define ADD_SPARSE_SEGMENT_MEAN_GRAD(R, S)                                                                         \
-  template CUDA_LIB_EXPORT bool CalSparseSegmentMeanGrad<R, S>(                                                    \
+  template CUDA_LIB_EXPORT cudaError_t CalSparseSegmentMeanGrad<R, S>(                                             \
     const R *grad_ptr, const S *indices_ptr, const S *segment_ids_ptr, size_t *indices_pos_ptr, size_t outer_size, \
     size_t inner_size, size_t idx_seg_size, size_t output_dim0, R *y_ptr, uint32_t device_id,                      \
     cudaStream_t cuda_stream);

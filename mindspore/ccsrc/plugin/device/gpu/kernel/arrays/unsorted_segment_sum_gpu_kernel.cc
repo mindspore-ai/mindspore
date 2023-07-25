@@ -126,8 +126,10 @@ bool UnsortedSegmentSumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     T *input_batch_addr = input_addr + i * in_stride_;
     S *ids_batch_addr = ids_addr + i * ids_stride_;
     T *output_batch_addr = output_addr + i * out_stride_;
-    UnsortedSegmentSum(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_batch_addr, ids_batch_addr,
-                       output_batch_addr, reinterpret_cast<cudaStream_t>(stream_ptr_), device_id_);
+    auto status =
+      UnsortedSegmentSum(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_batch_addr, ids_batch_addr,
+                         output_batch_addr, reinterpret_cast<cudaStream_t>(stream_ptr_), device_id_);
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
   }
 
   return true;

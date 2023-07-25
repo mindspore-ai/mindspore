@@ -85,7 +85,7 @@ cudaError_t ApplyAdaptiveMaxPool3D(const int64_t size, const int64_t channels, c
                                    const uint32_t device_id, cudaStream_t cuda_stream) {
   AdaptiveMaxPool3DKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, channels, input_depth, input_height, input_width, output_size, input_data, output_data, mask_data);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool3D<half>(const int64_t size, const int64_t channels,

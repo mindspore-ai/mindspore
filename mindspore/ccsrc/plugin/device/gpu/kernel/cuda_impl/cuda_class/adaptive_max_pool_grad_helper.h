@@ -81,6 +81,7 @@ class AdaptiveMaxPoolGradHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
+    cudaError_t status = cudaErrorNotReady;
     if (kernel_name_ == kAdaptiveMaxPool3DGradOpName) {
       const int64_t output_stride = output_shape_.cend()[-1] * output_shape_.cend()[-2] * output_shape_.cend()[-3];
       auto input_argmax_shape = input_shape_[maxIndexIdx];
@@ -88,8 +89,9 @@ class AdaptiveMaxPoolGradHelperGpuKernel : public GpuKernelHelperBase {
         input_argmax_shape.cend()[-1] * input_argmax_shape.cend()[-2] * input_argmax_shape.cend()[-3];
       const int64_t batch = std::accumulate(input_argmax_shape.begin(), input_argmax_shape.end() - 3,
                                             static_cast<int64_t>(1), [=](int64_t a, int64_t b) { return a * b; });
-      CalAdaptiveMaxPool3DGrad(dy_ptr, index_ptr, output_stride, argmax_stride, batch, dx_ptr, device_id_,
-                               reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalAdaptiveMaxPool3DGrad(dy_ptr, index_ptr, output_stride, argmax_stride, batch, dx_ptr, device_id_,
+                                        reinterpret_cast<cudaStream_t>(cuda_stream));
+      CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
       return 0;
     }
     // call cuda kernel
@@ -107,8 +109,9 @@ class AdaptiveMaxPoolGradHelperGpuKernel : public GpuKernelHelperBase {
     const int out_h = output_shape_[output_shape_.size() - hIdx];
     const int out_w = output_shape_[output_shape_.size() - 1];
 
-    CalAdaptiveMaxPool2DGrad(dy_ptr, index_ptr, n, c, in_h, in_w, out_h, out_w, dx_ptr, device_id_,
-                             reinterpret_cast<cudaStream_t>(cuda_stream));
+    status = CalAdaptiveMaxPool2DGrad(dy_ptr, index_ptr, n, c, in_h, in_w, out_h, out_w, dx_ptr, device_id_,
+                                      reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

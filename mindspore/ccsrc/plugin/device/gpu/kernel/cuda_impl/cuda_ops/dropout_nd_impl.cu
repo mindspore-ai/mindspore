@@ -138,9 +138,9 @@ __global__ void DropoutNdVectorized(Func func, const T *in, const float *rand_f,
 }
 
 template <typename T>
-void DropoutNDForward(const T *input, bool *mask, T *output, float *rand_f, const size_t num_count,
-                      const float keep_prob, const size_t num_per_chan, const uint32_t &device_id,
-                      cudaStream_t cuda_stream) {
+cudaError_t DropoutNDForward(const T *input, bool *mask, T *output, float *rand_f, const size_t num_count,
+                             const float keep_prob, const size_t num_per_chan, const uint32_t &device_id,
+                             cudaStream_t cuda_stream) {
   const float scale = 1.f / keep_prob;
   uint inner_size = (uint)(num_per_chan);
   constexpr uint vec_size = cuda::elementwise::VecSize<T>();
@@ -152,30 +152,34 @@ void DropoutNDForward(const T *input, bool *mask, T *output, float *rand_f, cons
   DropoutNdFunctor<T> functor{scale, keep_prob, inner_size};
   DropoutNdVectorized<DropoutNdFunctor<T>, vec_size, T>
     <<<grid, block, 0, cuda_stream>>>(functor, input, rand_f, output, mask, keep_prob, inner_size, num_count);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void DropoutNDForward(const float *input, bool *mask, float *output, float *rand_f,
-                                               const size_t num_count, const float keep_prob, const size_t num_per_chan,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutNDForward(const double *input, bool *mask, double *output, float *rand_f,
-                                               const size_t num_count, const float keep_prob, const size_t num_per_chan,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutNDForward(const half *input, bool *mask, half *output, float *rand_f,
-                                               const size_t num_count, const float keep_prob, const size_t num_per_chan,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutNDForward<int8_t>(const int8_t *input, bool *mask, int8_t *output, float *rand_f,
-                                                       const size_t num_count, const float keep_prob,
-                                                       const size_t num_per_chan, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutNDForward<int16_t>(const int16_t *input, bool *mask, int16_t *output,
-                                                        float *rand_f, const size_t num_count, const float keep_prob,
-                                                        const size_t num_per_chan, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutNDForward<int32_t>(const int32_t *input, bool *mask, int32_t *output,
-                                                        float *rand_f, const size_t num_count, const float keep_prob,
-                                                        const size_t num_per_chan, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutNDForward<int64_t>(const int64_t *input, bool *mask, int64_t *output,
-                                                        float *rand_f, const size_t num_count, const float keep_prob,
-                                                        const size_t num_per_chan, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutNDForward(const float *input, bool *mask, float *output, float *rand_f,
+                                                      const size_t num_count, const float keep_prob,
+                                                      const size_t num_per_chan, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutNDForward(const double *input, bool *mask, double *output, float *rand_f,
+                                                      const size_t num_count, const float keep_prob,
+                                                      const size_t num_per_chan, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutNDForward(const half *input, bool *mask, half *output, float *rand_f,
+                                                      const size_t num_count, const float keep_prob,
+                                                      const size_t num_per_chan, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutNDForward<int8_t>(const int8_t *input, bool *mask, int8_t *output,
+                                                              float *rand_f, const size_t num_count,
+                                                              const float keep_prob, const size_t num_per_chan,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutNDForward<int16_t>(const int16_t *input, bool *mask, int16_t *output,
+                                                               float *rand_f, const size_t num_count,
+                                                               const float keep_prob, const size_t num_per_chan,
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutNDForward<int32_t>(const int32_t *input, bool *mask, int32_t *output,
+                                                               float *rand_f, const size_t num_count,
+                                                               const float keep_prob, const size_t num_per_chan,
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutNDForward<int64_t>(const int64_t *input, bool *mask, int64_t *output,
+                                                               float *rand_f, const size_t num_count,
+                                                               const float keep_prob, const size_t num_per_chan,
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream);

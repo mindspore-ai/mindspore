@@ -112,11 +112,9 @@ bool SparseReorderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   int64_t *flat_indices = GetDeviceAddress<int64_t>(workspace, kIndex0);
   int64_t *permutation_data = GetDeviceAddress<int64_t>(workspace, kIndex1);
   int *check_flag = GetDeviceAddress<int32_t>(workspace, kIndex2);
-  bool res = SparseReorder(num_elems_, num_dims_, indices, values, shape, y_indices, y_values, flat_indices,
-                           permutation_data, check_flag, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  if (res == false) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' the value of indices can not be out of shape range";
-  }
+  auto status = SparseReorder(num_elems_, num_dims_, indices, values, shape, y_indices, y_values, flat_indices,
+                              permutation_data, check_flag, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

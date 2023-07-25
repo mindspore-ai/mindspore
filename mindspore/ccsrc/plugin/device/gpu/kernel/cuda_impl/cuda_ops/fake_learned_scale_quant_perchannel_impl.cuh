@@ -18,17 +18,19 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FAKE_LEARNED_SCALE_QUANT_PERCHANNEL_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
-CUDA_LIB_EXPORT void CalLSQNudgePerChannel(const float *input, const int size, float *input_alpha,
-                                           float *input_quant_max, float *input_div_alpha, float *input_quant,
-                                           const bool neg_trunc, const int channel_num, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalLSQNudgePerChannel(const float *input, const int size, float *input_alpha,
+                                                  float *input_quant_max, float *input_div_alpha, float *input_quant,
+                                                  const bool neg_trunc, const int channel_num,
+                                                  cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalFakeLearnedScaleQuantPerChannel(float *output, const int size, float *input_alpha,
-                                                        float *input_quant, const int channel_num,
-                                                        cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalFakeLearnedScaleQuantPerChannel(float *output, const int size, float *input_alpha,
+                                                               float *input_quant, const int channel_num,
+                                                               cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalFakeLearnedScaleQuantPerChannelGrad(float *grad_input, float *grad_alpha, const float *gradient,
-                                                            const int size, const float *input_div_alpha,
-                                                            const float *input_quant, const bool neg_trunc,
-                                                            const int channel_num, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalFakeLearnedScaleQuantPerChannelGrad(float *grad_input, float *grad_alpha,
+                                                                   const float *gradient, const int size,
+                                                                   const float *input_div_alpha,
+                                                                   const float *input_quant, const bool neg_trunc,
+                                                                   const int channel_num, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FAKE_LEARNED_SCALE_QUANT_PERCHANNEL_IMPL_CUH_

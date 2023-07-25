@@ -133,8 +133,10 @@ class MultilabelMarginLossHelperGpuKernel : public GpuKernelHelperBase {
 
     reduction_ = attr_ptr_->reduction;
 
-    CalMultilabelMarginLoss(input_ptr, target_ptr, is_target_ptr, batch_size_, class_num_, reduction_, output_ptr,
-                            output_tmp_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status =
+      CalMultilabelMarginLoss(input_ptr, target_ptr, is_target_ptr, batch_size_, class_num_, reduction_, output_ptr,
+                              output_tmp_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

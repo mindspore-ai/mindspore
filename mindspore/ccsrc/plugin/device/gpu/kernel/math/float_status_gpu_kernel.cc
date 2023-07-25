@@ -94,32 +94,36 @@ bool FloatStatusGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   }
   T *input = GetDeviceAddress<T>(inputs, 0);
 
+  cudaError_t status = cudaErrorNotReady;
   switch (kernel_type_) {
     case OP_STATUS: {
       float *output = GetDeviceAddress<float>(outputs, 0);
-      FillDeviceArray(outputs[0]->size / sizeof(float), output, 0.0f, reinterpret_cast<cudaStream_t>(cuda_stream_));
-      CalFloatStatus(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      status =
+        FillDeviceArray(outputs[0]->size / sizeof(float), output, 0.0f, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      status = CalFloatStatus(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
       break;
     }
     case OP_INF: {
       bool *output = GetDeviceAddress<bool>(outputs, 0);
-      CalIsInf(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      status = CalIsInf(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
       break;
     }
     case OP_NAN: {
       bool *output = GetDeviceAddress<bool>(outputs, 0);
-      CalIsNan(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      status = CalIsNan(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
       break;
     }
     case OP_FINITE: {
       bool *output = GetDeviceAddress<bool>(outputs, 0);
-      CalIsFinite(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      status = CalIsFinite(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
       break;
     }
     default: {
       MS_LOG(EXCEPTION) << "FloatStatus type " << kernel_type_ << " is not supported.";
     }
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

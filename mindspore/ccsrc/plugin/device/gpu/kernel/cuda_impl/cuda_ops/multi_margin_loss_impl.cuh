@@ -19,7 +19,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim, const T *input,
-                                     const int64_t *target, const T *weight, T *output, const uint32_t &device_id,
-                                     cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim,
+                                            const T *input, const int64_t *target, const T *weight, T *output,
+                                            const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CELU_IMPL_CUH_

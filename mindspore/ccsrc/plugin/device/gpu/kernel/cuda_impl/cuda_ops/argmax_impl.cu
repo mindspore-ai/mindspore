@@ -40,7 +40,7 @@ cudaError_t CalArgmax(const T *input, const S bound, const size_t outer_size, co
                       const uint32_t &device_id, cudaStream_t cuda_stream) {
   Argmax<<<CUDA_BLOCKS(device_id, outer_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, bound, outer_size,
                                                                                           inner_size, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalArgmax<half, int32_t>(const half *input, const int32_t bound,

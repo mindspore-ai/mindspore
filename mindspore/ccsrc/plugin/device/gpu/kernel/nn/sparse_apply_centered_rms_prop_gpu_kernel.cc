@@ -181,9 +181,10 @@ bool SparseApplyCenteredRMSPropGpuKernelMod::LaunchKernel(const std::vector<Addr
   auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
   auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
 
-  CalSparseApplyCenteredRMSProp(input_elements_, sizeof(S) / sizeof(int), use_locking_, lr, rho, epsilon, momentum,
-                                grad, indices, var, mg, ms, mom, var_out, reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto status = CalSparseApplyCenteredRMSProp(input_elements_, sizeof(S) / sizeof(int), use_locking_, lr, rho, epsilon,
+                                              momentum, grad, indices, var, mg, ms, mom, var_out,
+                                              reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

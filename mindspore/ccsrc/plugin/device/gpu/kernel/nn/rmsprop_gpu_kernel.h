@@ -139,8 +139,9 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
       T *momentum = GetDeviceAddress<T>(inputs, kNumberSix);
       T *epsilon = GetDeviceAddress<T>(inputs, kNumberSeven);
 
-      RmsProp(batch_size_, input_elements_, learning_rate, decay, momentum, epsilon, variable, mean_square, moment,
-              gradients, size_, reinterpret_cast<cudaStream_t>(stream));
+      auto status = RmsProp(batch_size_, input_elements_, learning_rate, decay, momentum, epsilon, variable,
+                            mean_square, moment, gradients, size_, reinterpret_cast<cudaStream_t>(stream));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
       T *variable = GetDeviceAddress<T>(inputs, 0);
       T *mean_gradients = GetDeviceAddress<T>(inputs, 1);
@@ -152,8 +153,10 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
       T *momentum = GetDeviceAddress<T>(inputs, 7);
       T *epsilon = GetDeviceAddress<T>(inputs, 8);
 
-      RmsPropCenter(batch_size_, input_elements_, learning_rate, decay, momentum, epsilon, variable, mean_gradients,
-                    mean_square, moment, gradients, size_, reinterpret_cast<cudaStream_t>(stream));
+      auto status =
+        RmsPropCenter(batch_size_, input_elements_, learning_rate, decay, momentum, epsilon, variable, mean_gradients,
+                      mean_square, moment, gradients, size_, reinterpret_cast<cudaStream_t>(stream));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     }
     return true;
   }

@@ -22,8 +22,7 @@
 #include "include/cuda_fp16.h"
 
 template <typename R, typename S>
-CUDA_LIB_EXPORT bool CalSparseSegmentMeanGrad(const R *grad_ptr,
-                                                     const S *indices_ptr, const S *segment_ids_ptr,
+CUDA_LIB_EXPORT cudaError_t CalSparseSegmentMeanGrad(const R *grad_ptr, const S *indices_ptr, const S *segment_ids_ptr,
                                                      size_t *indices_pos_ptr, size_t outer_size, size_t inner_size,
                                                      size_t idx_seg_size, size_t output_dim0, R *y_ptr,
                                                      uint32_t device_id, cudaStream_t cuda_stream);

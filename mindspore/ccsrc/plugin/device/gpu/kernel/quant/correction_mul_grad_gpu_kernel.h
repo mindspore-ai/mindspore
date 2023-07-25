@@ -44,10 +44,12 @@ class CorrectionMulGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto *d_gamma = GetDeviceAddress<T>(outputs, kIndex1);
     auto *tmp = GetDeviceAddress<T>(workspace, kIndex0);
 
-    CalCorrectionMul(d_out, gamma, running_std, batch_size_, channel_, height_, width_, d_weight,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalCorrectionMulGrad(d_out, weight, running_std, batch_size_, channel_, height_, width_, d_gamma, tmp,
-                         reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalCorrectionMul(d_out, gamma, running_std, batch_size_, channel_, height_, width_, d_weight,
+                                   reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalCorrectionMulGrad(d_out, weight, running_std, batch_size_, channel_, height_, width_, d_gamma, tmp,
+                                  reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

@@ -118,7 +118,8 @@ bool FillsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
                   << " without overflow: " << value;
     return false;
   }
-  FillsForward(input_elements_, value_ptr, y_ptr, device_id_, cuda_stream);
+  auto status = FillsForward(input_elements_, value_ptr, y_ptr, device_id_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

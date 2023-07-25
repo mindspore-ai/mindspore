@@ -20,10 +20,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalDataFormatVecPermute1D(const size_t size, const T *input, T *output, int32_t *index,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalDataFormatVecPermute1D(const size_t size, const T *input, T *output, int32_t *index,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalDataFormatVecPermute2D(const size_t size, const T *input, T *output, int32_t *index,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalDataFormatVecPermute2D(const size_t size, const T *input, T *output, int32_t *index,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DATEFORMATEVECPERMUTE_IMPL_CUH_

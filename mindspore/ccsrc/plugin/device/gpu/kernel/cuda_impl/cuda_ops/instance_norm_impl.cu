@@ -17,10 +17,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/instance_norm_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
-__global__ void CopyMemKernel(const size_t thread_num, const size_t N, const size_t C,
-                              float *gamma_addr, float *beta_addr,
-                              float *runing_mean_addr, float *runnig_variance_addr,
-                              float *ws_gamma, float *ws_beta, float *ws_mean, float *ws_var) {
+__global__ void CopyMemKernel(const size_t thread_num, const size_t N, const size_t C, float *gamma_addr,
+                              float *beta_addr, float *runing_mean_addr, float *runnig_variance_addr, float *ws_gamma,
+                              float *ws_beta, float *ws_mean, float *ws_var) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < thread_num; pos += gridDim.x * blockDim.x) {
     size_t cur_addr = pos / (N * C);
     size_t cur_local_index = pos % (N * C);
@@ -49,18 +48,18 @@ __global__ void CopyMemKernel(const size_t thread_num, const size_t N, const siz
   }
 }
 
-void CopyMemDevice2Device(const size_t N, const size_t C, float *gamma_addr, float *beta_addr,
-                          float *runing_mean_addr, float *runnig_variance_addr,
-                          float *ws_gamma, float *ws_beta, float *ws_mean, float *ws_var,
-                          cudaStream_t cuda_stream) {
+cudaError_t CopyMemDevice2Device(const size_t N, const size_t C, float *gamma_addr, float *beta_addr,
+                                 float *runing_mean_addr, float *runnig_variance_addr, float *ws_gamma, float *ws_beta,
+                                 float *ws_mean, float *ws_var, cudaStream_t cuda_stream) {
   size_t thread_num = N * C * 4;
-  CopyMemKernel<<<GET_BLOCKS(thread_num), GET_THREADS, 0, cuda_stream>>>(
-          thread_num, N, C, gamma_addr, beta_addr, runing_mean_addr, runnig_variance_addr,
-          ws_gamma, ws_beta, ws_mean, ws_var);
+  CopyMemKernel<<<GET_BLOCKS(thread_num), GET_THREADS, 0, cuda_stream>>>(thread_num, N, C, gamma_addr, beta_addr,
+                                                                         runing_mean_addr, runnig_variance_addr,
+                                                                         ws_gamma, ws_beta, ws_mean, ws_var);
+  return GetCudaStatus();
 }
 
-__global__ void ComputeMeanKernel(const size_t thread_num, const size_t N, const size_t C,
-                                  float *dgamma, float *dbeta, const float *ws_dgamma, const float *ws_dbeta) {
+__global__ void ComputeMeanKernel(const size_t thread_num, const size_t N, const size_t C, float *dgamma, float *dbeta,
+                                  const float *ws_dgamma, const float *ws_dbeta) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < thread_num; pos += gridDim.x * blockDim.x) {
     size_t cur_addr = pos / C;
     size_t cur_local_index = pos % C;
@@ -79,10 +78,10 @@ __global__ void ComputeMeanKernel(const size_t thread_num, const size_t N, const
   }
 }
 
-void ComputeMean(const size_t N, const size_t C,
-                 float *dgamma, float *dbeta, const float *ws_dgamma, const float *ws_dbeta,
-                 cudaStream_t cuda_stream) {
+cudaError_t ComputeMean(const size_t N, const size_t C, float *dgamma, float *dbeta, const float *ws_dgamma,
+                        const float *ws_dbeta, cudaStream_t cuda_stream) {
   size_t thread_num = C * 2;
-  ComputeMeanKernel<<<GET_BLOCKS(thread_num), GET_THREADS, 0, cuda_stream>>>(
-          thread_num, N, C, dgamma, dbeta, ws_dgamma, ws_dbeta);
+  ComputeMeanKernel<<<GET_BLOCKS(thread_num), GET_THREADS, 0, cuda_stream>>>(thread_num, N, C, dgamma, dbeta, ws_dgamma,
+                                                                             ws_dbeta);
+  return GetCudaStatus();
 }

@@ -25,6 +25,8 @@
 #include <mutex>
 #ifdef _MSC_VER
 #include <cassert>
+#else
+#include <assert.h>
 #endif
 
 #ifdef _MSC_VER
@@ -113,20 +115,19 @@ class GPUdeviceInfo {
   mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->share_memory_size()
 #define CUDA_GRIDS_MAXSIZE(device_id) mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->grids_max_size()
 
-#define CHECK_CUDA_LAUNCH_SUCCESS()          \
-  do {                                       \
-    cudaError_t status = cudaGetLastError(); \
-    if (status != cudaSuccess) {             \
-      return status;                         \
-    }                                        \
-    return cudaSuccess;                      \
-  } while (0)
-
 #define MINIUM_SM 6
 #define RECOMMEND_SM 7
 #define SUPPORTED_CAP 5.3
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
+
+inline cudaError_t GetCudaStatus() {
+  cudaError_t status = cudaGetLastError();
+  if (status != cudaSuccess) {
+    return status;
+  }
+  return cudaSuccess;
+}
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUDA_DEVICE_INFO_H_

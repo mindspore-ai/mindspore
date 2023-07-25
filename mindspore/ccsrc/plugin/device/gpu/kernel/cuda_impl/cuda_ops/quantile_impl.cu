@@ -134,10 +134,10 @@ __global__ void CheckNanInit(int x, int y, int z, int num, const T *input, int *
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void Quantile(const T *input, const T *q, T *out, T *sort, const int dim, const int x, const int y,
-                              const int z, const int each_q_elements, const int output_elements, int *flag_in,
-                              int *ret_flag_device, int *nan_flags, const bool ignorenan_, const uint32_t &device_id,
-                              cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT cudaError_t Quantile(const T *input, const T *q, T *out, T *sort, const int dim, const int x,
+                                     const int y, const int z, const int each_q_elements, const int output_elements,
+                                     int *flag_in, int *ret_flag_device, int *nan_flags, const bool ignorenan_,
+                                     const uint32_t &device_id, cudaStream_t cuda_stream) {
   (void)cudaMemset(ret_flag_device, 0, sizeof(int));
   QuantileKernelCheckQ<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     output_elements / each_q_elements, q, ret_flag_device);
@@ -160,15 +160,17 @@ CUDA_LIB_EXPORT void Quantile(const T *input, const T *q, T *out, T *sort, const
   BitonicSort<<<x * z, thread, 0, cuda_stream>>>(ceil_p_2, sort, x * z, z);
   DoQuantile<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, q, out, sort, dim, x, y, z, each_q_elements, output_elements, ceil_p_2, nan_flags, ignorenan_);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Quantile<float>(const float *input, const float *q, float *out, float *sort,
-                                              const int dim, const int x, const int y, const int z,
-                                              const int each_q_elements, const int output_elements, int *flag_in,
-                                              int *ret_flag_device, int *nan_flags, const bool ignorenan_,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Quantile<double>(const double *input, const double *q, double *out, double *sort,
-                                               const int dim, const int x, const int y, const int z,
-                                               const int each_q_elements, const int output_elements, int *flag_in,
-                                               int *ret_flag_device, int *nan_flags, const bool ignorenan_,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Quantile<float>(const float *input, const float *q, float *out, float *sort,
+                                                     const int dim, const int x, const int y, const int z,
+                                                     const int each_q_elements, const int output_elements, int *flag_in,
+                                                     int *ret_flag_device, int *nan_flags, const bool ignorenan_,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Quantile<double>(const double *input, const double *q, double *out, double *sort,
+                                                      const int dim, const int x, const int y, const int z,
+                                                      const int each_q_elements, const int output_elements,
+                                                      int *flag_in, int *ret_flag_device, int *nan_flags,
+                                                      const bool ignorenan_, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);

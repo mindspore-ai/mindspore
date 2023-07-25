@@ -25,9 +25,7 @@ __device__ __forceinline__ void NumericLimits(T *init_val) {
 }
 
 // For half, different assignment.
-__device__ __forceinline__ void NumericLimits(half *init_val) {
-  *init_val = __int2half_rd(65504);
-}
+__device__ __forceinline__ void NumericLimits(half *init_val) { *init_val = __int2half_rd(65504); }
 
 template <typename T, typename S>
 __global__ void MaxPoolWithArgmaxV2(const T *input, T *output, S *index, const int inputN, const int inputC,
@@ -72,142 +70,144 @@ __global__ void MaxPoolWithArgmaxV2(const T *input, T *output, S *index, const i
 }
 
 template <typename T, typename S>
-void CalMaxPoolWithArgmaxV2(const T *input, const int n, const int c, const int h, const int w, const int ksize_h,
-                            const int ksize_w, const int strides_h, const int strides_w, const int pads_h,
-                            const int pads_w, const int dilation_h, const int dilation_w, const int out_h,
-                            const int out_w, T *output, S *index, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalMaxPoolWithArgmaxV2(const T *input, const int n, const int c, const int h, const int w,
+                                   const int ksize_h, const int ksize_w, const int strides_h, const int strides_w,
+                                   const int pads_h, const int pads_w, const int dilation_h, const int dilation_w,
+                                   const int out_h, const int out_w, T *output, S *index, const uint32_t &device_id,
+                                   cudaStream_t cuda_stream) {
   MaxPoolWithArgmaxV2<<<CUDA_BLOCKS(device_id, n * c * out_h * out_w), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, output, index, n, c, h, w, ksize_h, ksize_w, strides_h, strides_w, pads_h, pads_w, dilation_h, dilation_w,
     out_h, out_w);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<half, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<half, int32_t>(
   const half *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, half *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<float, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<float, int32_t>(
   const float *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, float *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<double, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<double, int32_t>(
   const double *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, double *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<int8_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<int8_t, int32_t>(
   const int8_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, int8_t *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<int16_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<int16_t, int32_t>(
   const int16_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, int16_t *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<int32_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<int32_t, int32_t>(
   const int32_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, int32_t *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<int64_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<int64_t, int32_t>(
   const int64_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, int64_t *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<uint8_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<uint8_t, int32_t>(
   const uint8_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, uint8_t *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<uint16_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<uint16_t, int32_t>(
   const uint16_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, uint16_t *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<uint32_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<uint32_t, int32_t>(
   const uint32_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, uint32_t *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<uint64_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<uint64_t, int32_t>(
   const uint64_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, uint64_t *output, int32_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<half, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<half, int64_t>(
   const half *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, half *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<float, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<float, int64_t>(
   const float *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, float *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<double, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<double, int64_t>(
   const double *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, double *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<int8_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<int8_t, int64_t>(
   const int8_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, int8_t *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<int16_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<int16_t, int64_t>(
   const int16_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, int16_t *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<int32_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<int32_t, int64_t>(
   const int32_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, int32_t *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<int64_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<int64_t, int64_t>(
   const int64_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, int64_t *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<uint8_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<uint8_t, int64_t>(
   const uint8_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, uint8_t *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<uint16_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<uint16_t, int64_t>(
   const uint16_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, uint16_t *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<uint32_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<uint32_t, int64_t>(
   const uint32_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, uint32_t *output, int64_t *index, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxV2<uint64_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolWithArgmaxV2<uint64_t, int64_t>(
   const uint64_t *input, const int n, const int c, const int h, const int w, const int ksize_h, const int ksize_w,
   const int strides_h, const int strides_w, const int pads_h, const int pads_w, const int dilation_h,
   const int dilation_w, const int out_h, const int out_w, uint64_t *output, int64_t *index, const uint32_t &device_id,

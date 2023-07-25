@@ -59,14 +59,16 @@ __global__ void IOUKernel(const size_t size, const T *box1, const T *box2, T *io
 }
 
 template <typename T>
-void IOU(const size_t &size, const T *box1, const T *box2, T *iou_results, const size_t &mode,
-         const size_t &input_len_0, cudaStream_t cuda_stream) {
+cudaError_t IOU(const size_t &size, const T *box1, const T *box2, T *iou_results, const size_t &mode,
+                const size_t &input_len_0, cudaStream_t cuda_stream) {
   IOUKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, box1, box2, iou_results, mode, input_len_0);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void IOU(const size_t &size, const half *box1, const half *box2, half *iou_results,
-                                  const size_t &mode, const size_t &input_len_0, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IOU(const size_t &size, const float *box1, const float *box2, float *iou_results,
-                                  const size_t &mode, const size_t &input_len_0, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IOU(const size_t &size, const double *box1, const double *box2, double *iou_results,
-                                  const size_t &mode, const size_t &input_len_0, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t IOU(const size_t &size, const half *box1, const half *box2, half *iou_results,
+                                         const size_t &mode, const size_t &input_len_0, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t IOU(const size_t &size, const float *box1, const float *box2, float *iou_results,
+                                         const size_t &mode, const size_t &input_len_0, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t IOU(const size_t &size, const double *box1, const double *box2,
+                                         double *iou_results, const size_t &mode, const size_t &input_len_0,
+                                         cudaStream_t cuda_stream);

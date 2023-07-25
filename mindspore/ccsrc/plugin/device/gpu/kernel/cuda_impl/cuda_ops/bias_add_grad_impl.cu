@@ -31,7 +31,7 @@ const int kNumBlocks = 8;       // tuning param for BiasAddGradNHWC
 // For NHWC bias add grad, combine dy's NHW together, matrix column reduce.
 // This is a simple implementation, can be further optimized  when C is small.
 // Firstly, Each warp sums several rows, each thread's partial_sum is the sum of
-// a part of one cloumn.
+// a part of one column.
 // Secondly, in order to sum up all values in one column, which is to sum up the partial_sum
 // in different warps but with the same lane_id, each warp store their partial_sums
 // to one row of shared mem, and read partial_sums from one col of shared mem.
@@ -133,8 +133,8 @@ __global__ void FillDb(T *db, const size_t bias_size) {
 }
 
 template <typename T>
-void CalBiasAddGradNCHW(const size_t size, const size_t bias_size, const int height, const int width, const T *dy,
-                        T *db, cudaStream_t cuda_stream) {
+cudaError_t CalBiasAddGradNCHW(const size_t size, const size_t bias_size, const int height, const int width,
+                               const T *dy, T *db, cudaStream_t cuda_stream) {
   int batch_size = size / bias_size / height / width;
   int block_num = GET_BLOCKS(size);
   int thread_num = GET_THREADS;
@@ -147,11 +147,12 @@ void CalBiasAddGradNCHW(const size_t size, const size_t bias_size, const int hei
   FillDb<<<GET_BLOCKS(bias_size), GET_THREADS, 0, cuda_stream>>>(db, bias_size);
   BiasAddGradNCHW<<<block_num, thread_num, 0, cuda_stream>>>(size, batch_size, bias_size, height, width,
                                                              block_group_size, dy, db);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBiasAddGradNHWC(const size_t size, const size_t bias_size, const T *dy, T *db, cudaStream_t cuda_stream) {
+cudaError_t CalBiasAddGradNHWC(const size_t size, const size_t bias_size, const T *dy, T *db,
+                               cudaStream_t cuda_stream) {
   FillDb<<<GET_BLOCKS(bias_size), GET_THREADS, 0, cuda_stream>>>(db, bias_size);
   size_t rows = size / bias_size;
   int block_num_x = rows <= kLargeSize ? 1 : kNumBlocks;
@@ -161,76 +162,82 @@ void CalBiasAddGradNHWC(const size_t size, const size_t bias_size, const T *dy, 
   size_t rows_per_block = (rows + block_num_x - 1) / block_num_x;
   size_t rows_per_warp = (rows_per_block + kWarpSize - 1) / kWarpSize;
   BiasAddGradNHWC<<<grid_size, block_size, 0, cuda_stream>>>(dy, db, rows, bias_size, rows_per_block, rows_per_warp);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<half>(const size_t size, const size_t bias_size, const int height,
-                                                       const int width, const half *dy, half *db,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<float>(const size_t size, const size_t bias_size, const int height,
-                                                        const int width, const float *dy, float *db,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<double>(const size_t size, const size_t bias_size, const int height,
-                                                         const int width, const double *dy, double *db,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<int8_t>(const size_t size, const size_t bias_size, const int height,
-                                                         const int width, const int8_t *dy, int8_t *db,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<int16_t>(const size_t size, const size_t bias_size, const int height,
-                                                          const int width, const int16_t *dy, int16_t *db,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<int>(const size_t size, const size_t bias_size, const int height,
-                                                      const int width, const int *dy, int *db,
-                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<int64_t>(const size_t size, const size_t bias_size, const int height,
-                                                          const int width, const int64_t *dy, int64_t *db,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<uint8_t>(const size_t size, const size_t bias_size, const int height,
-                                                          const int width, const uint8_t *dy, uint8_t *db,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<uint16_t>(const size_t size, const size_t bias_size, const int height,
-                                                           const int width, const uint16_t *dy, uint16_t *db,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<uint32_t>(const size_t size, const size_t bias_size, const int height,
-                                                           const int width, const uint32_t *dy, uint32_t *db,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<uint64_t>(const size_t size, const size_t bias_size, const int height,
-                                                           const int width, const uint64_t *dy, uint64_t *db,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<Complex<float>>(const size_t size, const size_t bias_size,
-                                                                 const int height, const int width,
-                                                                 const Complex<float> *dy, Complex<float> *db,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNCHW<Complex<double>>(const size_t size, const size_t bias_size,
-                                                                  const int height, const int width,
-                                                                  const Complex<double> *dy, Complex<double> *db,
-                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<half>(const size_t size, const size_t bias_size,
+                                                              const int height, const int width, const half *dy,
+                                                              half *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<float>(const size_t size, const size_t bias_size,
+                                                               const int height, const int width, const float *dy,
+                                                               float *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<double>(const size_t size, const size_t bias_size,
+                                                                const int height, const int width, const double *dy,
+                                                                double *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<int8_t>(const size_t size, const size_t bias_size,
+                                                                const int height, const int width, const int8_t *dy,
+                                                                int8_t *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<int16_t>(const size_t size, const size_t bias_size,
+                                                                 const int height, const int width, const int16_t *dy,
+                                                                 int16_t *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<int>(const size_t size, const size_t bias_size,
+                                                             const int height, const int width, const int *dy, int *db,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<int64_t>(const size_t size, const size_t bias_size,
+                                                                 const int height, const int width, const int64_t *dy,
+                                                                 int64_t *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<uint8_t>(const size_t size, const size_t bias_size,
+                                                                 const int height, const int width, const uint8_t *dy,
+                                                                 uint8_t *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<uint16_t>(const size_t size, const size_t bias_size,
+                                                                  const int height, const int width, const uint16_t *dy,
+                                                                  uint16_t *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<uint32_t>(const size_t size, const size_t bias_size,
+                                                                  const int height, const int width, const uint32_t *dy,
+                                                                  uint32_t *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<uint64_t>(const size_t size, const size_t bias_size,
+                                                                  const int height, const int width, const uint64_t *dy,
+                                                                  uint64_t *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<Complex<float>>(const size_t size, const size_t bias_size,
+                                                                        const int height, const int width,
+                                                                        const Complex<float> *dy, Complex<float> *db,
+                                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNCHW<Complex<double>>(const size_t size, const size_t bias_size,
+                                                                         const int height, const int width,
+                                                                         const Complex<double> *dy, Complex<double> *db,
+                                                                         cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<half>(const size_t size, const size_t bias_size, const half *dy,
-                                                       half *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<float>(const size_t size, const size_t bias_size, const float *dy,
-                                                        float *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<double>(const size_t size, const size_t bias_size, const double *dy,
-                                                         double *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<int8_t>(const size_t size, const size_t bias_size, const int8_t *dy,
-                                                         int8_t *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<int16_t>(const size_t size, const size_t bias_size, const int16_t *dy,
-                                                          int16_t *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<int>(const size_t size, const size_t bias_size, const int *dy, int *db,
-                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<int64_t>(const size_t size, const size_t bias_size, const int64_t *dy,
-                                                          int64_t *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<uint8_t>(const size_t size, const size_t bias_size, const uint8_t *dy,
-                                                          uint8_t *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<uint16_t>(const size_t size, const size_t bias_size,
-                                                           const uint16_t *dy, uint16_t *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<uint32_t>(const size_t size, const size_t bias_size,
-                                                           const uint32_t *dy, uint32_t *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<uint64_t>(const size_t size, const size_t bias_size,
-                                                           const uint64_t *dy, uint64_t *db, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<Complex<float>>(const size_t size, const size_t bias_size,
-                                                                 const Complex<float> *dy, Complex<float> *db,
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<half>(const size_t size, const size_t bias_size, const half *dy,
+                                                              half *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<float>(const size_t size, const size_t bias_size,
+                                                               const float *dy, float *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<double>(const size_t size, const size_t bias_size,
+                                                                const double *dy, double *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<int8_t>(const size_t size, const size_t bias_size,
+                                                                const int8_t *dy, int8_t *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<int16_t>(const size_t size, const size_t bias_size,
+                                                                 const int16_t *dy, int16_t *db,
                                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBiasAddGradNHWC<Complex<double>>(const size_t size, const size_t bias_size,
-                                                                  const Complex<double> *dy, Complex<double> *db,
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<int>(const size_t size, const size_t bias_size, const int *dy,
+                                                             int *db, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<int64_t>(const size_t size, const size_t bias_size,
+                                                                 const int64_t *dy, int64_t *db,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<uint8_t>(const size_t size, const size_t bias_size,
+                                                                 const uint8_t *dy, uint8_t *db,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<uint16_t>(const size_t size, const size_t bias_size,
+                                                                  const uint16_t *dy, uint16_t *db,
                                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<uint32_t>(const size_t size, const size_t bias_size,
+                                                                  const uint32_t *dy, uint32_t *db,
+                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<uint64_t>(const size_t size, const size_t bias_size,
+                                                                  const uint64_t *dy, uint64_t *db,
+                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<Complex<float>>(const size_t size, const size_t bias_size,
+                                                                        const Complex<float> *dy, Complex<float> *db,
+                                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBiasAddGradNHWC<Complex<double>>(const size_t size, const size_t bias_size,
+                                                                         const Complex<double> *dy, Complex<double> *db,
+                                                                         cudaStream_t cuda_stream);

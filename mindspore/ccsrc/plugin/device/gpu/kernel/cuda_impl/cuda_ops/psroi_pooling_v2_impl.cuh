@@ -19,10 +19,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void PSROIPoolBackwardV2Launcher(T* input_diff, const int batch_size,
-    const int output_n, const T spatial_scale, const int feature_channels,
-    const int feature_height, const int feature_width, const int pooled_width,
-    const int pooled_height, const int output_channels,
-    T* output_diff, T* roi_boxes, cudaStream_t stream, int rois_num, int group_size);
+CUDA_LIB_EXPORT cudaError_t PSROIPoolBackwardV2Launcher(T *input_diff, const int batch_size, const int output_n,
+                                                        const T spatial_scale, const int feature_channels,
+                                                        const int feature_height, const int feature_width,
+                                                        const int pooled_width, const int pooled_height,
+                                                        const int output_channels, T *output_diff, T *roi_boxes,
+                                                        cudaStream_t stream, int rois_num, int group_size);
 
-#endif   // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_PSROI_POOLING_V2_IMPL_CUH_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_PSROI_POOLING_V2_IMPL_CUH_

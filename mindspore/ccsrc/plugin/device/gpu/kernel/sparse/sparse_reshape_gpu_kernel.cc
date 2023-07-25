@@ -120,8 +120,9 @@ bool SparseReshapeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' The number of elements in shape differ from that in new_shape.";
       return false;
   }
-  CalSparseReshape(indices, shape, y_indices, y_shape, indice_number_, shape_elements_, new_shape_elements_, device_id_,
-                   reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto ret = CalSparseReshape(indices, shape, y_indices, y_shape, indice_number_, shape_elements_, new_shape_elements_,
+                              device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(ret, kernel_name_);
   return true;
 }
 

@@ -55,28 +55,29 @@ __global__ void TensorScatterElementsKernel(const int input_dims, const int indi
 }
 
 template <typename T, typename S>
-void TensorScatterElements(const enum TensorScatterElementsReductionType reduction_type, const int input_dims,
-                           const int indices_size, const S *indices, const T *updates, T *output, const int64_t axis,
-                           const int64_t input_axis_size, const size_t *indices_stride, const size_t *output_stride,
-                           const uint32_t &device_id, cudaStream_t stream) {
+cudaError_t TensorScatterElements(const enum TensorScatterElementsReductionType reduction_type, const int input_dims,
+                                  const int indices_size, const S *indices, const T *updates, T *output,
+                                  const int64_t axis, const int64_t input_axis_size, const size_t *indices_stride,
+                                  const size_t *output_stride, const uint32_t &device_id, cudaStream_t stream) {
   switch (reduction_type) {
     case REDUCTION_ASSIGNMENT:
-      return TensorScatterElementsKernel<T, S>
-        <<<CUDA_BLOCKS(device_id, indices_size), CUDA_THREADS(device_id), 0, stream>>>(
-          input_dims, indices_size, indices, updates, output, axis, input_axis_size, indices_stride, output_stride,
-          ReductionAssignment<T>());
+      TensorScatterElementsKernel<T, S><<<CUDA_BLOCKS(device_id, indices_size), CUDA_THREADS(device_id), 0, stream>>>(
+        input_dims, indices_size, indices, updates, output, axis, input_axis_size, indices_stride, output_stride,
+        ReductionAssignment<T>());
+      break;
     case REDUCTION_ADD:
-      return TensorScatterElementsKernel<T, S>
-        <<<CUDA_BLOCKS(device_id, indices_size), CUDA_THREADS(device_id), 0, stream>>>(
-          input_dims, indices_size, indices, updates, output, axis, input_axis_size, indices_stride, output_stride,
-          ReductionAdd<T>());
+      TensorScatterElementsKernel<T, S><<<CUDA_BLOCKS(device_id, indices_size), CUDA_THREADS(device_id), 0, stream>>>(
+        input_dims, indices_size, indices, updates, output, axis, input_axis_size, indices_stride, output_stride,
+        ReductionAdd<T>());
+      break;
     default:
       break;
   }
+  return GetCudaStatus();
 }
 
 #define SCATTER_ELEMENTS_FUNC(T, S)                                                                             \
-  template CUDA_LIB_EXPORT void TensorScatterElements(                                                          \
+  template CUDA_LIB_EXPORT cudaError_t TensorScatterElements(                                                   \
     const enum TensorScatterElementsReductionType reduction_type, const int input_dims, const int indices_size, \
     const S *indices, const T *updates, T *output, const int64_t axis, const int64_t input_axis_size,           \
     const size_t *indices_stride, const size_t *output_stride, const uint32_t &device_id, cudaStream_t stream)

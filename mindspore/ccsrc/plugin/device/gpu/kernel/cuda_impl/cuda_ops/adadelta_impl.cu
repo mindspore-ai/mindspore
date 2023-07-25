@@ -203,7 +203,7 @@ cudaError_t ApplyAdadelta(const size_t size, const S *learning_rate, const S *rh
                           cudaStream_t cuda_stream) {
   ApplyAdadeltaKernal<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, learning_rate, rho, epsilon, gradient, variable, accumulation, accumulation_update);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdadelta<double, double, double>(

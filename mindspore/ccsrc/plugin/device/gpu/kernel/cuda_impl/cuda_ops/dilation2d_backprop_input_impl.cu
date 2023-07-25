@@ -117,12 +117,13 @@ __global__ void Dilation2DBackpropInput(const half *input, const half *filter, c
 }
 
 template <typename T>
-void CalDilation2DBackpropInput(const T *input, const T *filter, const T *out_backprop, T *output,
-                                const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
-                                const std::vector<int64_t> &out_backprop_shape,
-                                const std::vector<int64_t> &output_shape, const std::vector<int64_t> &stride,
-                                const std::vector<int64_t> &dilation, int64_t (&pads)[2], const int64_t outer_size,
-                                const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalDilation2DBackpropInput(const T *input, const T *filter, const T *out_backprop, T *output,
+                                       const std::vector<int64_t> &input_shape,
+                                       const std::vector<int64_t> &filter_shape,
+                                       const std::vector<int64_t> &out_backprop_shape,
+                                       const std::vector<int64_t> &output_shape, const std::vector<int64_t> &stride,
+                                       const std::vector<int64_t> &dilation, int64_t (&pads)[2],
+                                       const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream) {
   InitOutput<<<CUDA_BLOCKS(device_id, output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3]),
                CUDA_THREADS(device_id), 0, cuda_stream>>>(
     output, output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3]);
@@ -133,70 +134,70 @@ void CalDilation2DBackpropInput(const T *input, const T *filter, const T *out_ba
     input, filter, out_backprop, output, input_shape[2], input_shape[3], input_shape[1], filter_shape[1],
     filter_shape[2], out_backprop_shape[2], out_backprop_shape[3], stride[2], stride[3], dilation[2], dilation[3],
     pads[0], pads[1], outputPlaneSize);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<half>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<half>(
   const half *input, const half *filter, const half *out_backprop, half *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<float>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<float>(
   const float *input, const float *filter, const float *out_backprop, float *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<double>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<double>(
   const double *input, const double *filter, const double *out_backprop, double *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<int32_t>(
   const int32_t *input, const int32_t *filter, const int32_t *out_backprop, int32_t *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<int64_t>(
   const int64_t *input, const int64_t *filter, const int64_t *out_backprop, int64_t *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<int8_t>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<int8_t>(
   const int8_t *input, const int8_t *filter, const int8_t *out_backprop, int8_t *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<int16_t>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<int16_t>(
   const int16_t *input, const int16_t *filter, const int16_t *out_backprop, int16_t *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<uint8_t>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<uint8_t>(
   const uint8_t *input, const uint8_t *filter, const uint8_t *out_backprop, uint8_t *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<uint16_t>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<uint16_t>(
   const uint16_t *input, const uint16_t *filter, const uint16_t *out_backprop, uint16_t *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<uint32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<uint32_t>(
   const uint32_t *input, const uint32_t *filter, const uint32_t *out_backprop, uint32_t *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,
   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t (&pads)[2],
   const int64_t outer_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDilation2DBackpropInput<uint64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropInput<uint64_t>(
   const uint64_t *input, const uint64_t *filter, const uint64_t *out_backprop, uint64_t *output,
   const std::vector<int64_t> &input_shape, const std::vector<int64_t> &filter_shape,
   const std::vector<int64_t> &out_backprop_shape, const std::vector<int64_t> &output_shape,

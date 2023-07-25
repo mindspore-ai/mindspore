@@ -18,11 +18,11 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FLOAT_STATUS_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalFloatStatus(const size_t size, const T *input, float *output, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalFloatStatus(const size_t size, const T *input, float *output, cudaStream_t stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalIsNan(const size_t size, const T *input, bool *output, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalIsNan(const size_t size, const T *input, bool *output, cudaStream_t stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalIsInf(const size_t size, const T *input, bool *output, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalIsInf(const size_t size, const T *input, bool *output, cudaStream_t stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalIsFinite(const size_t size, const T *input, bool *output, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalIsFinite(const size_t size, const T *input, bool *output, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FLOAT_STATUS_IMPL_CUH_

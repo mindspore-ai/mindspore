@@ -71,44 +71,50 @@ __global__ void Trace(const T *input, const int64_t sum_size, const int64_t matr
 }
 
 template <typename T>
-void CalTrace(const T *input, const int64_t sum_size, const int64_t matrix_col, T *output, const uint32_t &device_id,
-              cudaStream_t cuda_stream) {
+cudaError_t CalTrace(const T *input, const int64_t sum_size, const int64_t matrix_col, T *output,
+                     const uint32_t &device_id, cudaStream_t cuda_stream) {
   constexpr size_t thread_nums = 64;
   size_t block_nums = (sum_size + thread_nums - 1) / thread_nums;
   Trace<T, thread_nums><<<block_nums, thread_nums, 0, cuda_stream>>>(input, sum_size, matrix_col, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalTrace<uint8_t>(const uint8_t *input, const int64_t sum_size, const int64_t matrix_col,
-                                                uint8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<uint16_t>(const uint16_t *input, const int64_t sum_size,
-                                                 const int64_t matrix_col, uint16_t *output, const uint32_t &device_id,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<uint32_t>(const uint32_t *input, const int64_t sum_size,
-                                                 const int64_t matrix_col, uint32_t *output, const uint32_t &device_id,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<uint64_t>(const uint64_t *input, const int64_t sum_size,
-                                                 const int64_t matrix_col, uint64_t *output, const uint32_t &device_id,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<int8_t>(const int8_t *input, const int64_t sum_size, const int64_t matrix_col,
-                                               int8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<int16_t>(const int16_t *input, const int64_t sum_size, const int64_t matrix_col,
-                                                int16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<int>(const int *input, const int64_t sum_size, const int64_t matrix_col,
-                                            int *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<int64_t>(const int64_t *input, const int64_t sum_size, const int64_t matrix_col,
-                                                int64_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<half>(const half *input, const int64_t sum_size, const int64_t matrix_col,
-                                             half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<float>(const float *input, const int64_t sum_size, const int64_t matrix_col,
-                                              float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<double>(const double *input, const int64_t sum_size, const int64_t matrix_col,
-                                               double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<bool>(const bool *input, const int64_t sum_size, const int64_t matrix_col,
-                                             bool *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<Complex<float>>(const Complex<float> *input, const int64_t sum_size,
-                                                       const int64_t matrix_col, Complex<float> *output,
+template CUDA_LIB_EXPORT cudaError_t CalTrace<uint8_t>(const uint8_t *input, const int64_t sum_size,
+                                                       const int64_t matrix_col, uint8_t *output,
                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrace<Complex<double>>(const Complex<double> *input, const int64_t sum_size,
-                                                        const int64_t matrix_col, Complex<double> *output,
+template CUDA_LIB_EXPORT cudaError_t CalTrace<uint16_t>(const uint16_t *input, const int64_t sum_size,
+                                                        const int64_t matrix_col, uint16_t *output,
                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<uint32_t>(const uint32_t *input, const int64_t sum_size,
+                                                        const int64_t matrix_col, uint32_t *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<uint64_t>(const uint64_t *input, const int64_t sum_size,
+                                                        const int64_t matrix_col, uint64_t *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<int8_t>(const int8_t *input, const int64_t sum_size,
+                                                      const int64_t matrix_col, int8_t *output,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<int16_t>(const int16_t *input, const int64_t sum_size,
+                                                       const int64_t matrix_col, int16_t *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<int>(const int *input, const int64_t sum_size, const int64_t matrix_col,
+                                                   int *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<int64_t>(const int64_t *input, const int64_t sum_size,
+                                                       const int64_t matrix_col, int64_t *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<half>(const half *input, const int64_t sum_size, const int64_t matrix_col,
+                                                    half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<float>(const float *input, const int64_t sum_size,
+                                                     const int64_t matrix_col, float *output, const uint32_t &device_id,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<double>(const double *input, const int64_t sum_size,
+                                                      const int64_t matrix_col, double *output,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<bool>(const bool *input, const int64_t sum_size, const int64_t matrix_col,
+                                                    bool *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<Complex<float>>(const Complex<float> *input, const int64_t sum_size,
+                                                              const int64_t matrix_col, Complex<float> *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrace<Complex<double>>(const Complex<double> *input, const int64_t sum_size,
+                                                               const int64_t matrix_col, Complex<double> *output,
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream);

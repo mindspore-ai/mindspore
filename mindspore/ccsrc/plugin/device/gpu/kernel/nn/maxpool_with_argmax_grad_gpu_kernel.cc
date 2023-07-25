@@ -42,8 +42,9 @@ bool MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPt
   T *dy_addr = GetDeviceAddress<T>(inputs, 1);
   S *index_addr = GetDeviceAddress<S>(inputs, Index2);
   T *dx_addr = GetDeviceAddress<T>(outputs, 0);
-  CalMaxPoolWithArgmaxGrad(dy_addr, index_addr, n_, c_, x_height_, x_width_, dy_height_, dy_width_, dx_addr,
-                           reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalMaxPoolWithArgmaxGrad(dy_addr, index_addr, n_, c_, x_height_, x_width_, dy_height_, dy_width_,
+                                         dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

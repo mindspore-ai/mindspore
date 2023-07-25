@@ -251,32 +251,38 @@ std::vector<std::vector<int>> ComputeUniqueConsecutiveByAxis(const T *input, int
 }
 
 template <typename T, typename S>
-std::vector<std::vector<int>> CalUniqueConsecutive(const T *input, int num_elements,
-                                                   const std::vector<int64_t> &input_shape, bool is_axis_none,
-                                                   int64_t axis, S *input_index, S *sorted_index, S *range_data,
-                                                   T *indices_data, size_t *dev_input_shape, size_t *dev_input_axis,
-                                                   T *output, S *index, S *counts, cudaStream_t cuda_stream) {
+cudaError_t CalUniqueConsecutive(const T *input, int num_elements, const std::vector<int64_t> &input_shape,
+                                 bool is_axis_none, int64_t axis, S *input_index, S *sorted_index, S *range_data,
+                                 T *indices_data, size_t *dev_input_shape, size_t *dev_input_axis, T *output, S *index,
+                                 S *counts, cudaStream_t cuda_stream, std::vector<std::vector<int>> *out_shape) {
   if (is_axis_none) {
-    return ComputeUniqueConsecutive(input, num_elements, input_shape, range_data, output, index, counts, cuda_stream);
+    *out_shape =
+      ComputeUniqueConsecutive(input, num_elements, input_shape, range_data, output, index, counts, cuda_stream);
+  } else {
+    *out_shape =
+      ComputeUniqueConsecutiveByAxis(input, num_elements, input_shape, axis, input_index, sorted_index, range_data,
+                                     indices_data, dev_input_shape, dev_input_axis, output, index, counts, cuda_stream);
   }
-  return ComputeUniqueConsecutiveByAxis(input, num_elements, input_shape, axis, input_index, sorted_index, range_data,
-                                        indices_data, dev_input_shape, dev_input_axis, output, index, counts,
-                                        cuda_stream);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT std::vector<std::vector<int>> CalUniqueConsecutive<float, int>(
+template CUDA_LIB_EXPORT cudaError_t CalUniqueConsecutive<float, int>(
   const float *input, int num_elements, const std::vector<int64_t> &input_shape, bool is_axis_none, int64_t axis,
   int *input_index, int *sorted_index, int *range_data, float *indices_data, size_t *dev_input_shape,
-  size_t *dev_input_axis, float *output, int *index, int *counts, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT std::vector<std::vector<int>> CalUniqueConsecutive<half, int>(
+  size_t *dev_input_axis, float *output, int *index, int *counts, cudaStream_t cuda_stream,
+  std::vector<std::vector<int>> *out_shape);
+template CUDA_LIB_EXPORT cudaError_t CalUniqueConsecutive<half, int>(
   const half *input, int num_elements, const std::vector<int64_t> &input_shape, bool is_axis_none, int64_t axis,
   int *input_index, int *sorted_index, int *range_data, half *indices_data, size_t *dev_input_shape,
-  size_t *dev_input_axis, half *output, int *index, int *counts, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT std::vector<std::vector<int>> CalUniqueConsecutive<int, int>(
+  size_t *dev_input_axis, half *output, int *index, int *counts, cudaStream_t cuda_stream,
+  std::vector<std::vector<int>> *out_shape);
+template CUDA_LIB_EXPORT cudaError_t CalUniqueConsecutive<int, int>(
   const int *input, int num_elements, const std::vector<int64_t> &input_shape, bool is_axis_none, int64_t axis,
   int *input_index, int *sorted_index, int *range_data, int *indices_data, size_t *dev_input_shape,
-  size_t *dev_input_axis, int *output, int *index, int *counts, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT std::vector<std::vector<int>> CalUniqueConsecutive<int64_t, int64_t>(
+  size_t *dev_input_axis, int *output, int *index, int *counts, cudaStream_t cuda_stream,
+  std::vector<std::vector<int>> *out_shape);
+template CUDA_LIB_EXPORT cudaError_t CalUniqueConsecutive<int64_t, int64_t>(
   const int64_t *input, int num_elements, const std::vector<int64_t> &input_shape, bool is_axis_none, int64_t axis,
   int64_t *input_index, int64_t *sorted_index, int64_t *range_data, int64_t *indices_data, size_t *dev_input_shape,
-  size_t *dev_input_axis, int64_t *output, int64_t *index, int64_t *counts, cudaStream_t cuda_stream);
+  size_t *dev_input_axis, int64_t *output, int64_t *index, int64_t *counts, cudaStream_t cuda_stream,
+  std::vector<std::vector<int>> *out_shape);

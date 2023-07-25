@@ -73,46 +73,47 @@ __global__ void SparseAddGrad(const S *dout, const T *x1_indices, size_t x1_size
 }
 
 template <typename T, typename S>
-void CalSparseAddGrad(const S *dout, const T *x1_indices, size_t x1_size, const T *x2_indices, size_t x2_size,
-                      const T *out_indices, size_t out_size, T *temp_save_ptr, S *dx1, S *dx2, size_t dim,
-                      const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseAddGrad(const S *dout, const T *x1_indices, size_t x1_size, const T *x2_indices, size_t x2_size,
+                             const T *out_indices, size_t out_size, T *temp_save_ptr, S *dx1, S *dx2, size_t dim,
+                             const uint32_t &device_id, cudaStream_t cuda_stream) {
   dim3 blockSize(1);
   dim3 gridSize(1);
   SparseAddGrad<<<gridSize, blockSize, 0, cuda_stream>>>(dout, x1_indices, x1_size, x2_indices, x2_size, out_indices,
                                                          out_size, temp_save_ptr, dx1, dx2, dim, S(0));
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalSparseAddGrad(const cuComplex *dout, const T *x1_indices, size_t x1_size, const T *x2_indices, size_t x2_size,
-                      const T *out_indices, size_t out_size, T *temp_save_ptr, cuComplex *dx1, cuComplex *dx2,
-                      size_t dim, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseAddGrad(const cuComplex *dout, const T *x1_indices, size_t x1_size, const T *x2_indices,
+                             size_t x2_size, const T *out_indices, size_t out_size, T *temp_save_ptr, cuComplex *dx1,
+                             cuComplex *dx2, size_t dim, const uint32_t &device_id, cudaStream_t cuda_stream) {
   dim3 blockSize(1);
   dim3 gridSize(1);
   SparseAddGrad<<<gridSize, blockSize, 0, cuda_stream>>>(dout, x1_indices, x1_size, x2_indices, x2_size, out_indices,
                                                          out_size, temp_save_ptr, dx1, dx2, dim, {0, 0});
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalSparseAddGrad(const cuDoubleComplex *dout, const T *x1_indices, size_t x1_size, const T *x2_indices,
-                      size_t x2_size, const T *out_indices, size_t out_size, T *temp_save_ptr, cuDoubleComplex *dx1,
-                      cuDoubleComplex *dx2, size_t dim, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseAddGrad(const cuDoubleComplex *dout, const T *x1_indices, size_t x1_size, const T *x2_indices,
+                             size_t x2_size, const T *out_indices, size_t out_size, T *temp_save_ptr,
+                             cuDoubleComplex *dx1, cuDoubleComplex *dx2, size_t dim, const uint32_t &device_id,
+                             cudaStream_t cuda_stream) {
   dim3 blockSize(1);
   dim3 gridSize(1);
   SparseAddGrad<<<gridSize, blockSize, 0, cuda_stream>>>(dout, x1_indices, x1_size, x2_indices, x2_size, out_indices,
                                                          out_size, temp_save_ptr, dx1, dx2, dim, {0, 0});
-  return;
+  return GetCudaStatus();
 }
 
 #define GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(index_type, val_type)                                                     \
-  template CUDA_LIB_EXPORT void CalSparseAddGrad<index_type, val_type>(                                               \
+  template CUDA_LIB_EXPORT cudaError_t CalSparseAddGrad<index_type, val_type>(                                        \
     const val_type *dout, const index_type *x1_indices, size_t x1_size, const index_type *x2_indices, size_t x2_size, \
     const index_type *out_indices, size_t out_size, index_type *temp_save_ptr, val_type *dx1, val_type *dx2,          \
     size_t dim, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #define GPU_SPARSE_ADD_GRAD_COMPLEX_EXPORT_REGISTER(index_type, val_type)                                             \
-  template CUDA_LIB_EXPORT void CalSparseAddGrad<index_type>(                                                         \
+  template CUDA_LIB_EXPORT cudaError_t CalSparseAddGrad<index_type>(                                                  \
     const val_type *dout, const index_type *x1_indices, size_t x1_size, const index_type *x2_indices, size_t x2_size, \
     const index_type *out_indices, size_t out_size, index_type *temp_save_ptr, val_type *dx1, val_type *dx2,          \
     size_t dim, const uint32_t &device_id, cudaStream_t cuda_stream);

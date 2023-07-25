@@ -113,8 +113,8 @@ __global__ void CumProdKernel(const T *input, T *output, size_t dim0, size_t dim
   }
 }
 template <typename T>
-void CumProd(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, size_t dim2, size_t stride,
-             size_t stride2, bool exclusive_, bool reverse_, cudaStream_t stream) {
+cudaError_t CumProd(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                    size_t stride2, bool exclusive_, bool reverse_, cudaStream_t stream) {
   int size = dim0 * dim2;
   if (exclusive_) {
     if (reverse_) {
@@ -135,47 +135,56 @@ void CumProd(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, 
       CumProdKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, output, dim0, dim1, dim2, stride, stride2);
     }
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CumProd<uint8_t>(const uint8_t *input, uint8_t *output, uint8_t *workspace, size_t dim0,
-                                               size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                               bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<uint16_t>(const uint16_t *input, uint16_t *output, uint16_t *workspace,
-                                                size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                                                bool exclusive_, bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<uint32_t>(const uint32_t *input, uint32_t *output, uint32_t *workspace,
-                                                size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                                                bool exclusive_, bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<uint64_t>(const uint64_t *input, uint64_t *output, uint64_t *workspace,
-                                                size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                                                bool exclusive_, bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<int8_t>(const int8_t *input, int8_t *output, int8_t *workspace, size_t dim0,
-                                              size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                              bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<int16_t>(const int16_t *input, int16_t *output, int16_t *workspace, size_t dim0,
-                                               size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                               bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<int32_t>(const int32_t *input, int32_t *output, int32_t *workspace, size_t dim0,
-                                               size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                               bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<int64_t>(const int64_t *input, int64_t *output, int64_t *workspace, size_t dim0,
-                                               size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                               bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<double>(const double *input, double *output, double *workspace, size_t dim0,
-                                              size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                              bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<float>(const float *input, float *output, float *workspace, size_t dim0,
-                                             size_t dim1, size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                             bool reverse_, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<half>(const half *input, half *output, half *workspace, size_t dim0, size_t dim1,
-                                            size_t dim2, size_t stride, size_t stride2, bool exclusive_, bool reverse_,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<Complex<float>>(const Complex<float> *input, Complex<float> *output,
-                                             Complex<float> *workspace, size_t dim0, size_t dim1, size_t dim2,
-                                             size_t stride, size_t stride2, bool exclusive_, bool reverse_,
-                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumProd<Complex<double>>(const Complex<double> *input, Complex<double> *output,
-                                            Complex<double> *workspace, size_t dim0, size_t dim1, size_t dim2,
-                                            size_t stride, size_t stride2, bool exclusive_, bool reverse_,
-                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<uint8_t>(const uint8_t *input, uint8_t *output, uint8_t *workspace,
+                                                      size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                      size_t stride2, bool exclusive_, bool reverse_,
+                                                      cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<uint16_t>(const uint16_t *input, uint16_t *output, uint16_t *workspace,
+                                                       size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                       size_t stride2, bool exclusive_, bool reverse_,
+                                                       cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<uint32_t>(const uint32_t *input, uint32_t *output, uint32_t *workspace,
+                                                       size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                       size_t stride2, bool exclusive_, bool reverse_,
+                                                       cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<uint64_t>(const uint64_t *input, uint64_t *output, uint64_t *workspace,
+                                                       size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                       size_t stride2, bool exclusive_, bool reverse_,
+                                                       cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<int8_t>(const int8_t *input, int8_t *output, int8_t *workspace,
+                                                     size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                     size_t stride2, bool exclusive_, bool reverse_,
+                                                     cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<int16_t>(const int16_t *input, int16_t *output, int16_t *workspace,
+                                                      size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                      size_t stride2, bool exclusive_, bool reverse_,
+                                                      cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<int32_t>(const int32_t *input, int32_t *output, int32_t *workspace,
+                                                      size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                      size_t stride2, bool exclusive_, bool reverse_,
+                                                      cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<int64_t>(const int64_t *input, int64_t *output, int64_t *workspace,
+                                                      size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                      size_t stride2, bool exclusive_, bool reverse_,
+                                                      cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<double>(const double *input, double *output, double *workspace,
+                                                     size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                                     size_t stride2, bool exclusive_, bool reverse_,
+                                                     cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<float>(const float *input, float *output, float *workspace, size_t dim0,
+                                                    size_t dim1, size_t dim2, size_t stride, size_t stride2,
+                                                    bool exclusive_, bool reverse_, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<half>(const half *input, half *output, half *workspace, size_t dim0,
+                                                   size_t dim1, size_t dim2, size_t stride, size_t stride2,
+                                                   bool exclusive_, bool reverse_, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                             Complex<float> *workspace, size_t dim0, size_t dim1,
+                                                             size_t dim2, size_t stride, size_t stride2,
+                                                             bool exclusive_, bool reverse_, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumProd<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                              Complex<double> *workspace, size_t dim0, size_t dim1,
+                                                              size_t dim2, size_t stride, size_t stride2,
+                                                              bool exclusive_, bool reverse_, cudaStream_t stream);

@@ -19,6 +19,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void HammingWindow(const size_t size,  T N, const float alpha, const float beta,
-const bool periodic, S *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t HammingWindow(const size_t size, T N, const float alpha, const float beta,
+                                          const bool periodic, S *output, const uint32_t &device_id,
+                                          cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_HAMMING_WINDOW_IMPL_CUH_

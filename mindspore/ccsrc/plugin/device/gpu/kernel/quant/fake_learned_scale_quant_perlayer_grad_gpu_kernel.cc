@@ -86,16 +86,17 @@ bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Launch(const std::vector<Add
   MS_EXCEPTION_IF_NULL(input_quant);
 
   const float alpha_no_grad[1] = {0.f};
-
   if (global_step_ >= quant_delay_) {
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float), cudaMemcpyHostToDevice,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memory failed");
-    CalLSQNudgePerLayer(input, quant_num_, input_alpha, input_quant_max, input_div_alpha, input_quant, neg_trunc_,
-                        reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalFakeLearnedScaleQuantPerLayerGrad(grad_input, grad_alpha, gradient, quant_num_, input_div_alpha, input_quant,
-                                         neg_trunc_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalLSQNudgePerLayer(input, quant_num_, input_alpha, input_quant_max, input_div_alpha, input_quant,
+                                      neg_trunc_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalFakeLearnedScaleQuantPerLayerGrad(grad_input, grad_alpha, gradient, quant_num_, input_div_alpha,
+                                                  input_quant, neg_trunc_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float), cudaMemcpyHostToDevice,

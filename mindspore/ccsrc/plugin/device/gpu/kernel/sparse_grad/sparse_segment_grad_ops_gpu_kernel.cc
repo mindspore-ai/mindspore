@@ -128,8 +128,10 @@ bool SparseSegmentGradOpsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
     }
   }
   cudaMemset(y_ptr, 0, output_elements_ * unit_grad_size_);
-  CalSparseSegmentGradCombination(kernel_type_, grad_ptr, segment_ids_ptr, indices_ptr, segment_pos_ptr, outer_size_,
-                                  inner_size_, idx_seg_elements_, output_dim0_, y_ptr, device_id_, stream);
+  auto status =
+    CalSparseSegmentGradCombination(kernel_type_, grad_ptr, segment_ids_ptr, indices_ptr, segment_pos_ptr, outer_size_,
+                                    inner_size_, idx_seg_elements_, output_dim0_, y_ptr, device_id_, stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

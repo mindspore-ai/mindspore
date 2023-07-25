@@ -109,8 +109,9 @@ bool FillDiagonalGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     cudaMemcpyAsync(output, input, input_elements_ * unit_size_, cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "cudaMemcpyAsync output 'output' from 'input' failed.");
-  CalFillDiagonal(num_diagonal_elements_, fill_value_, step_, output, device_id_,
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalFillDiagonal(num_diagonal_elements_, fill_value_, step_, output, device_id_,
+                                reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

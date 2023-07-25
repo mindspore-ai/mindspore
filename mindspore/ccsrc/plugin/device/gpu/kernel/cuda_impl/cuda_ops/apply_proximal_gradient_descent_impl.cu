@@ -85,7 +85,7 @@ cudaError_t CalApplyProximalGradientDescent(const size_t input_elements, T *var,
                                             cudaStream_t cuda_stream) {
   CalApplyProximalGradientDescentKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0,
                                           cuda_stream>>>(input_elements, var, alpha, l1, l2, delta, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalApplyProximalGradientDescent<float>(const size_t size, float *var,

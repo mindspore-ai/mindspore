@@ -120,9 +120,9 @@ bool ReverseV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                     reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemcpyAsync for axis_ failed");
 
-  CalReverseV2(input_device, output_device, input_shape_device, strides_device, axis_device, input_size_, axis_.size(),
-               reinterpret_cast<cudaStream_t>(stream_ptr));
-
+  auto status = CalReverseV2(input_device, output_device, input_shape_device, strides_device, axis_device, input_size_,
+                             axis_.size(), reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

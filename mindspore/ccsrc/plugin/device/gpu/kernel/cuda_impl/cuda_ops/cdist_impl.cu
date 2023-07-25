@@ -214,8 +214,8 @@ bool checkinf(const double p) { return (p >= INT_MAX || p <= -INT_MAX); }
 
 // CAL
 template <typename T>
-void CalCdist(size_t out_size, T *input_x, T *input_y, T *output, int64_t x_row, int64_t y_row, int64_t col, double p,
-              int64_t batch, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalCdist(size_t out_size, T *input_x, T *input_y, T *output, int64_t x_row, int64_t y_row, int64_t col,
+                     double p, int64_t batch, const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int64_t r_size = x_row * y_row;
   const int64_t l1_size = x_row * col;
   const int64_t l2_size = y_row * col;
@@ -230,12 +230,13 @@ void CalCdist(size_t out_size, T *input_x, T *input_y, T *output, int64_t x_row,
   } else {
     CdistP<T><<<grid, block, 0, cuda_stream>>>(input_x, input_y, output, p, y_row, col, r_size, l1_size, l2_size);
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalCdist<float>(size_t out_size, float *input_x, float *input_y, float *output,
-                                              int64_t x_row, int64_t y_row, int64_t col, double p, int64_t batch,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCdist<double>(size_t out_size, double *input_x, double *input_y, double *output,
-                                               int64_t x_row, int64_t y_row, int64_t col, double p, int64_t batch,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCdist<float>(size_t out_size, float *input_x, float *input_y, float *output,
+                                                     int64_t x_row, int64_t y_row, int64_t col, double p, int64_t batch,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCdist<double>(size_t out_size, double *input_x, double *input_y, double *output,
+                                                      int64_t x_row, int64_t y_row, int64_t col, double p,
+                                                      int64_t batch, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);

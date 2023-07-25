@@ -186,8 +186,9 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     }
     size_t output_elements = outputs.at(kDim0)->size / unit_size_;
     // copy results from original input's matrix to output's matrix by up or lower flag.
-    TriangleMatrixCopy(input1_addr, output_addr, clean_, uplo_, output_elements, ldb_, m_,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = TriangleMatrixCopy(input1_addr, output_addr, clean_, uplo_, output_elements, ldb_, m_,
+                                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

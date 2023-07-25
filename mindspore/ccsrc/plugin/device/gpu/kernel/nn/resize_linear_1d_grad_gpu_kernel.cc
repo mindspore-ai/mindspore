@@ -111,8 +111,9 @@ bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(grad_work, 0, workspace.at(kIndex0)->size),
                                     "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset grad_work.");
 
-  ResizeLinear1DGrad(mode_, batch_, channel_, in_width_, out_width_, grad_output, grad_input, grad_work, device_id_,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = ResizeLinear1DGrad(mode_, batch_, channel_, in_width_, out_width_, grad_output, grad_input, grad_work,
+                                   device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }

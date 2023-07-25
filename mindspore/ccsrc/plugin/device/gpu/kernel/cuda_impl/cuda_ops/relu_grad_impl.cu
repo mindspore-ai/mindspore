@@ -25,19 +25,26 @@ __global__ void CalReLUGradKernel(int size, T *dy, T *y, T *dx) {
 }
 
 template <typename T>
-void CalReLUGrad(int size, T *dy, T *y, T *dx, cudaStream_t cuda_stream) {
+cudaError_t CalReLUGrad(int size, T *dy, T *y, T *dx, cudaStream_t cuda_stream) {
   CalReLUGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy, y, dx);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, double *dy, double *y, double *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, float *dy, float *y, float *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, half *dy, half *y, half *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, int8_t *dy, int8_t *y, int8_t *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, int16_t *dy, int16_t *y, int16_t *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, int32_t *dy, int32_t *y, int32_t *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, int64_t *dy, int64_t *y, int64_t *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, uint8_t *dy, uint8_t *y, uint8_t *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, uint16_t *dy, uint16_t *y, uint16_t *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, uint32_t *dy, uint32_t *y, uint32_t *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLUGrad(int size, uint64_t *dy, uint64_t *y, uint64_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, double *dy, double *y, double *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, float *dy, float *y, float *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, half *dy, half *y, half *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, int8_t *dy, int8_t *y, int8_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, int16_t *dy, int16_t *y, int16_t *dx,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, int32_t *dy, int32_t *y, int32_t *dx,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, int64_t *dy, int64_t *y, int64_t *dx,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, uint8_t *dy, uint8_t *y, uint8_t *dx,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, uint16_t *dy, uint16_t *y, uint16_t *dx,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, uint32_t *dy, uint32_t *y, uint32_t *dx,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReLUGrad(int size, uint64_t *dy, uint64_t *y, uint64_t *dx,
+                                                 cudaStream_t cuda_stream);

@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CONCATV2_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                                  const int all_size_axis, int *len_axis, T **inputs, T *output,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                                         const int all_size_axis, int *len_axis, T **inputs, T *output,
+                                         cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CONCATV2_IMPL_CUH_

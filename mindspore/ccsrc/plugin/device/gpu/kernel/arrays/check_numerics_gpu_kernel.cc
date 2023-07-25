@@ -74,7 +74,8 @@ bool CheckNumericsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   int32_t flag_host[2];
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(flag_device, 0, kNumber2 * sizeof(int32_t), stream),
                                      "flag_check cudaMemsetAsync failed.");
-  CalCheckNumerics(output_elements_, input, flag_device, device_id_, stream);
+  auto status = CalCheckNumerics(output_elements_, input, flag_device, device_id_, stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(flag_host, flag_device, kNumber2 * sizeof(int32_t), cudaMemcpyDeviceToHost, stream),
     "flag_host cudaMemcpy failed.");

@@ -19,10 +19,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalCdistGrad(size_t out_size, int64_t l1_size, int64_t l2_size,
-                                  T *grad_start, T *dist_start, T *t1_start, T *t2_start,
-                                  T *res_start, int64_t m, double p, int64_t r1, int64_t r2,
-                                  int64_t batch, const uint32_t &device_id,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCdistGrad(size_t out_size, int64_t l1_size, int64_t l2_size, T *grad_start,
+                                         T *dist_start, T *t1_start, T *t2_start, T *res_start, int64_t m, double p,
+                                         int64_t r1, int64_t r2, int64_t batch, const uint32_t &device_id,
+                                         cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CDIST_GRAD_IMPL_CUH_

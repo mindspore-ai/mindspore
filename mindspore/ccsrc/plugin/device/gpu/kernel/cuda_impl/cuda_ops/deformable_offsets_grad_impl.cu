@@ -264,13 +264,14 @@ __global__ void DeformableOffsetGradNCHWKernel(const uint num_kernels, const uin
 }
 
 template <typename T>
-void ApplyDeformableOffsetGrad(const uint dim_x_n, const uint dim_x_h, const uint dim_x_w, const uint dim_offset_h,
-                               const uint dim_offset_w, const uint dim_kernel_h, const uint dim_kernel_w,
-                               const uint dim_pad_top, const uint dim_pad_left, const uint dim_stride_h,
-                               const uint dim_stride_w, const uint dim_dilation_h, const uint dim_dilation_w,
-                               const uint dim_deformable_group, const uint dim_deformable_group_channel, bool nchw,
-                               T *input_grad, T *input_x, T *input_offset, T *output_grad_x, T *output_grad_offset,
-                               const uint device_id, cudaStream_t cuda_stream) {
+cudaError_t ApplyDeformableOffsetGrad(const uint dim_x_n, const uint dim_x_h, const uint dim_x_w,
+                                      const uint dim_offset_h, const uint dim_offset_w, const uint dim_kernel_h,
+                                      const uint dim_kernel_w, const uint dim_pad_top, const uint dim_pad_left,
+                                      const uint dim_stride_h, const uint dim_stride_w, const uint dim_dilation_h,
+                                      const uint dim_dilation_w, const uint dim_deformable_group,
+                                      const uint dim_deformable_group_channel, bool nchw, T *input_grad, T *input_x,
+                                      T *input_offset, T *output_grad_x, T *output_grad_offset, const uint device_id,
+                                      cudaStream_t cuda_stream) {
   const uint num_kernels = dim_x_n * dim_offset_h * dim_offset_w * dim_kernel_h * dim_kernel_w * dim_deformable_group;
   if (nchw) {
     DeformableOffsetGradNCHWKernel<<<CUDA_BLOCKS(device_id, num_kernels), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -283,9 +284,10 @@ void ApplyDeformableOffsetGrad(const uint dim_x_n, const uint dim_x_h, const uin
       dim_pad_left, dim_stride_h, dim_stride_w, dim_dilation_h, dim_dilation_w, dim_deformable_group,
       dim_deformable_group_channel, input_grad, input_x, input_offset, output_grad_x, output_grad_offset);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void ApplyDeformableOffsetGrad<float>(
+template CUDA_LIB_EXPORT cudaError_t ApplyDeformableOffsetGrad<float>(
   const uint dim_x_n, const uint dim_x_h, const uint dim_x_w, const uint dim_offset_h, const uint dim_offset_w,
   const uint dim_kernel_h, const uint dim_kernel_w, const uint dim_pad_top, const uint dim_pad_left,
   const uint dim_stride_h, const uint dim_stride_w, const uint dim_dilation_h, const uint dim_dilation_w,
@@ -293,7 +295,7 @@ template CUDA_LIB_EXPORT void ApplyDeformableOffsetGrad<float>(
   float *input_x, float *input_offset, float *output_grad_x, float *output_grad_offset, const uint device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyDeformableOffsetGrad<half>(
+template CUDA_LIB_EXPORT cudaError_t ApplyDeformableOffsetGrad<half>(
   const uint dim_x_n, const uint dim_x_h, const uint dim_x_w, const uint dim_offset_h, const uint dim_offset_w,
   const uint dim_kernel_h, const uint dim_kernel_w, const uint dim_pad_top, const uint dim_pad_left,
   const uint dim_stride_h, const uint dim_stride_w, const uint dim_dilation_h, const uint dim_dilation_w,

@@ -52,78 +52,68 @@ __global__ void SparseSplitKernel(IndexType *split_dim_ptr, IndexType *indices_p
 }
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void SparseSplit(IndexType *split_dim_ptr, IndexType *indices_ptr, DataType *values_ptr,
-                                 IndexType *shape_ptr, IndexType num_split, IndexType **y_indices_ptr,
-                                 DataType **y_values_ptr, IndexType *out_shape_ptr, int *sum_count_ptr,
-                                 size_t input_nnz_, size_t num_dim_, IndexType *d_block_ptr, cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT cudaError_t SparseSplit(IndexType *split_dim_ptr, IndexType *indices_ptr, DataType *values_ptr,
+                                        IndexType *shape_ptr, IndexType num_split, IndexType **y_indices_ptr,
+                                        DataType **y_values_ptr, IndexType *out_shape_ptr, int *sum_count_ptr,
+                                        size_t input_nnz_, size_t num_dim_, IndexType *d_block_ptr,
+                                        cudaStream_t cuda_stream) {
   SparseSplitKernel<<<GET_BLOCKS(input_nnz_), GET_THREADS, 0, cuda_stream>>>(
     split_dim_ptr, indices_ptr, values_ptr, shape_ptr, num_split, y_indices_ptr, y_values_ptr, out_shape_ptr,
     sum_count_ptr, input_nnz_, num_dim_, d_block_ptr);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SparseSplit<uint8_t, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
-                                                            uint8_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
-                                                            int64_t **y_indices_ptr, uint8_t **y_values_ptr,
-                                                            int64_t *out_shape_ptr, int *sum_count_ptr,
-                                                            size_t input_nnz_, size_t num_dim_, int64_t *d_block_ptr,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<uint16_t, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
-                                                             uint16_t *values_ptr, int64_t *shape_ptr,
-                                                             int64_t num_split, int64_t **y_indices_ptr,
-                                                             uint16_t **y_values_ptr, int64_t *out_shape_ptr,
-                                                             int *sum_count_ptr, size_t input_nnz_, size_t num_dim_,
-                                                             int64_t *d_block_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<int64_t, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
-                                                            int64_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
-                                                            int64_t **y_indices_ptr, int64_t **y_values_ptr,
-                                                            int64_t *out_shape_ptr, int *sum_count_ptr,
-                                                            size_t input_nnz_, size_t num_dim_, int64_t *d_block_ptr,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<int32_t, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
-                                                            int32_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
-                                                            int64_t **y_indices_ptr, int32_t **y_values_ptr,
-                                                            int64_t *out_shape_ptr, int *sum_count_ptr,
-                                                            size_t input_nnz_, size_t num_dim_, int64_t *d_block_ptr,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<int16_t, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
-                                                            int16_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
-                                                            int64_t **y_indices_ptr, int16_t **y_values_ptr,
-                                                            int64_t *out_shape_ptr, int *sum_count_ptr,
-                                                            size_t input_nnz_, size_t num_dim_, int64_t *d_block_ptr,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<int8_t, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
-                                                           int8_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
-                                                           int64_t **y_indices_ptr, int8_t **y_values_ptr,
-                                                           int64_t *out_shape_ptr, int *sum_count_ptr,
-                                                           size_t input_nnz_, size_t num_dim_, int64_t *d_block_ptr,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<double, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
-                                                           double *values_ptr, int64_t *shape_ptr, int64_t num_split,
-                                                           int64_t **y_indices_ptr, double **y_values_ptr,
-                                                           int64_t *out_shape_ptr, int *sum_count_ptr,
-                                                           size_t input_nnz_, size_t num_dim_, int64_t *d_block_ptr,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<float, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
-                                                          float *values_ptr, int64_t *shape_ptr, int64_t num_split,
-                                                          int64_t **y_indices_ptr, float **y_values_ptr,
-                                                          int64_t *out_shape_ptr, int *sum_count_ptr, size_t input_nnz_,
-                                                          size_t num_dim_, int64_t *d_block_ptr,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<half, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr, half *values_ptr,
-                                                         int64_t *shape_ptr, int64_t num_split, int64_t **y_indices_ptr,
-                                                         half **y_values_ptr, int64_t *out_shape_ptr,
-                                                         int *sum_count_ptr, size_t input_nnz_, size_t num_dim_,
-                                                         int64_t *d_block_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<bool, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr, bool *values_ptr,
-                                                         int64_t *shape_ptr, int64_t num_split, int64_t **y_indices_ptr,
-                                                         bool **y_values_ptr, int64_t *out_shape_ptr,
-                                                         int *sum_count_ptr, size_t input_nnz_, size_t num_dim_,
-                                                         int64_t *d_block_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<Complex<float>, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<uint8_t, int64_t>(
+  int64_t *split_dim_ptr, int64_t *indices_ptr, uint8_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
+  int64_t **y_indices_ptr, uint8_t **y_values_ptr, int64_t *out_shape_ptr, int *sum_count_ptr, size_t input_nnz_,
+  size_t num_dim_, int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<uint16_t, int64_t>(
+  int64_t *split_dim_ptr, int64_t *indices_ptr, uint16_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
+  int64_t **y_indices_ptr, uint16_t **y_values_ptr, int64_t *out_shape_ptr, int *sum_count_ptr, size_t input_nnz_,
+  size_t num_dim_, int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<int64_t, int64_t>(
+  int64_t *split_dim_ptr, int64_t *indices_ptr, int64_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
+  int64_t **y_indices_ptr, int64_t **y_values_ptr, int64_t *out_shape_ptr, int *sum_count_ptr, size_t input_nnz_,
+  size_t num_dim_, int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<int32_t, int64_t>(
+  int64_t *split_dim_ptr, int64_t *indices_ptr, int32_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
+  int64_t **y_indices_ptr, int32_t **y_values_ptr, int64_t *out_shape_ptr, int *sum_count_ptr, size_t input_nnz_,
+  size_t num_dim_, int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<int16_t, int64_t>(
+  int64_t *split_dim_ptr, int64_t *indices_ptr, int16_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
+  int64_t **y_indices_ptr, int16_t **y_values_ptr, int64_t *out_shape_ptr, int *sum_count_ptr, size_t input_nnz_,
+  size_t num_dim_, int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<int8_t, int64_t>(
+  int64_t *split_dim_ptr, int64_t *indices_ptr, int8_t *values_ptr, int64_t *shape_ptr, int64_t num_split,
+  int64_t **y_indices_ptr, int8_t **y_values_ptr, int64_t *out_shape_ptr, int *sum_count_ptr, size_t input_nnz_,
+  size_t num_dim_, int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<double, int64_t>(
+  int64_t *split_dim_ptr, int64_t *indices_ptr, double *values_ptr, int64_t *shape_ptr, int64_t num_split,
+  int64_t **y_indices_ptr, double **y_values_ptr, int64_t *out_shape_ptr, int *sum_count_ptr, size_t input_nnz_,
+  size_t num_dim_, int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<float, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
+                                                                 float *values_ptr, int64_t *shape_ptr,
+                                                                 int64_t num_split, int64_t **y_indices_ptr,
+                                                                 float **y_values_ptr, int64_t *out_shape_ptr,
+                                                                 int *sum_count_ptr, size_t input_nnz_, size_t num_dim_,
+                                                                 int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<half, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
+                                                                half *values_ptr, int64_t *shape_ptr, int64_t num_split,
+                                                                int64_t **y_indices_ptr, half **y_values_ptr,
+                                                                int64_t *out_shape_ptr, int *sum_count_ptr,
+                                                                size_t input_nnz_, size_t num_dim_,
+                                                                int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<bool, int64_t>(int64_t *split_dim_ptr, int64_t *indices_ptr,
+                                                                bool *values_ptr, int64_t *shape_ptr, int64_t num_split,
+                                                                int64_t **y_indices_ptr, bool **y_values_ptr,
+                                                                int64_t *out_shape_ptr, int *sum_count_ptr,
+                                                                size_t input_nnz_, size_t num_dim_,
+                                                                int64_t *d_block_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<Complex<float>, int64_t>(
   int64_t *split_dim_ptr, int64_t *indices_ptr, Complex<float> *values_ptr, int64_t *shape_ptr, int64_t num_split,
   int64_t **y_indices_ptr, Complex<float> **y_values_ptr, int64_t *out_shape_ptr, int *sum_count_ptr, size_t input_nnz_,
   size_t num_dim_, int64_t *d_block_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseSplit<Complex<double>, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t SparseSplit<Complex<double>, int64_t>(
   int64_t *split_dim_ptr, int64_t *indices_ptr, Complex<double> *values_ptr, int64_t *shape_ptr, int64_t num_split,
   int64_t **y_indices_ptr, Complex<double> **y_values_ptr, int64_t *out_shape_ptr, int *sum_count_ptr,
   size_t input_nnz_, size_t num_dim_, int64_t *d_block_ptr, cudaStream_t cuda_stream);

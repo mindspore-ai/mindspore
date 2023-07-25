@@ -76,7 +76,7 @@ class ConvolutionDepthWiseGpuKernel : public AbstractConvolutionGpuKernel {
     status = ConvolutionOpCudaFunc<op, T>(cuda_args, static_cast<T *>(const_cast<void *>(input0_addr)),
                                           static_cast<T *>(const_cast<void *>(input1_addr)),
                                           static_cast<T *>(output_addr), cuda_stream);
-    CHECK_CUDA_LAUNCH_STATUS(status, "CallDepthWiseKernel");
+    CHECK_CUDA_STATUS(status, "CallDepthWiseKernel");
     return true;
   }
 

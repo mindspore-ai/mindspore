@@ -19,9 +19,9 @@
 #include <cuda_runtime.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalReverseSequence(const size_t size, const T *input, const S *seq_len, const int64_t batch_dim,
-                                        const int64_t seq_dim, size_t *cur_pos_arr, const size_t *input_shape_ptr,
-                                        size_t *intput_shape_cum_ptr, size_t shape_size, T *output,
-                                        cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalReverseSequence(const size_t size, const T *input, const S *seq_len,
+                                               const int64_t batch_dim, const int64_t seq_dim, size_t *cur_pos_arr,
+                                               const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr,
+                                               size_t shape_size, T *output, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_REVERSE_SEQUENCE_IMPL_CUH_

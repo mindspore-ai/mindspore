@@ -97,47 +97,50 @@ class SliceHelperGpuKernel : public GpuKernelHelperBase {
     constexpr auto kIdx5 = 5;
     constexpr auto kIdx6 = 6;
     size_t input_rank = input_shape_.size();
+    cudaError_t status = cudaErrorNotReady;
     switch (input_rank) {
       case kRank1:
-        Slice1DKernel(begin_[0], size_[0], input_shape_[0], input, output, device_id_,
-                      reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = Slice1DKernel(begin_[0], size_[0], input_shape_[0], input, output, device_id_,
+                               reinterpret_cast<cudaStream_t>(cuda_stream));
         break;
       case kRank2:
-        Slice2DKernel(begin_[0], begin_[1], size_[0], size_[1], input_shape_[0], input_shape_[1], input, output,
-                      device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = Slice2DKernel(begin_[0], begin_[1], size_[0], size_[1], input_shape_[0], input_shape_[1], input,
+                               output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
         break;
       case kRank3:
-        Slice3DKernel(begin_[0], begin_[1], begin_[kIdx2], size_[0], size_[1], size_[kIdx2], input_shape_[0],
-                      input_shape_[1], input_shape_[kIdx2], input, output, device_id_,
-                      reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = Slice3DKernel(begin_[0], begin_[1], begin_[kIdx2], size_[0], size_[1], size_[kIdx2], input_shape_[0],
+                               input_shape_[1], input_shape_[kIdx2], input, output, device_id_,
+                               reinterpret_cast<cudaStream_t>(cuda_stream));
         break;
       case kRank4:
-        Slice4DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], size_[0], size_[1], size_[kIdx2],
-                      size_[kIdx3], input_shape_[0], input_shape_[1], input_shape_[kIdx2], input_shape_[kIdx3], input,
-                      output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = Slice4DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], size_[0], size_[1], size_[kIdx2],
+                               size_[kIdx3], input_shape_[0], input_shape_[1], input_shape_[kIdx2], input_shape_[kIdx3],
+                               input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
         break;
       case kRank5:
-        Slice5DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], begin_[kIdx4], size_[0], size_[1],
-                      size_[kIdx2], size_[kIdx3], size_[kIdx4], input_shape_[0], input_shape_[1], input_shape_[kIdx2],
-                      input_shape_[kIdx3], input_shape_[kIdx4], input, output, device_id_,
-                      reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = Slice5DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], begin_[kIdx4], size_[0], size_[1],
+                               size_[kIdx2], size_[kIdx3], size_[kIdx4], input_shape_[0], input_shape_[1],
+                               input_shape_[kIdx2], input_shape_[kIdx3], input_shape_[kIdx4], input, output, device_id_,
+                               reinterpret_cast<cudaStream_t>(cuda_stream));
         break;
       case kRank6:
-        Slice6DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], begin_[kIdx4], begin_[kIdx5], size_[0],
-                      size_[1], size_[kIdx2], size_[kIdx3], size_[kIdx4], size_[kIdx5], input_shape_[0],
-                      input_shape_[1], input_shape_[kIdx2], input_shape_[kIdx3], input_shape_[kIdx4],
-                      input_shape_[kIdx5], input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+        status =
+          Slice6DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], begin_[kIdx4], begin_[kIdx5], size_[0],
+                        size_[1], size_[kIdx2], size_[kIdx3], size_[kIdx4], size_[kIdx5], input_shape_[0],
+                        input_shape_[1], input_shape_[kIdx2], input_shape_[kIdx3], input_shape_[kIdx4],
+                        input_shape_[kIdx5], input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
         break;
       case kRank7:
-        Slice7DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], begin_[kIdx4], begin_[kIdx5], begin_[kIdx6],
-                      size_[0], size_[1], size_[kIdx2], size_[kIdx3], size_[kIdx4], size_[kIdx5], size_[kIdx6],
-                      input_shape_[0], input_shape_[1], input_shape_[kIdx2], input_shape_[kIdx3], input_shape_[kIdx4],
-                      input_shape_[kIdx5], input_shape_[kIdx6], input, output, device_id_,
-                      reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = Slice7DKernel(begin_[0], begin_[1], begin_[kIdx2], begin_[kIdx3], begin_[kIdx4], begin_[kIdx5],
+                               begin_[kIdx6], size_[0], size_[1], size_[kIdx2], size_[kIdx3], size_[kIdx4],
+                               size_[kIdx5], size_[kIdx6], input_shape_[0], input_shape_[1], input_shape_[kIdx2],
+                               input_shape_[kIdx3], input_shape_[kIdx4], input_shape_[kIdx5], input_shape_[kIdx6],
+                               input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
         break;
       default:
         MS_LOG(EXCEPTION) << "gpu Slice operator does not support inputs with rank >= " << input_rank << ".";
     }
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

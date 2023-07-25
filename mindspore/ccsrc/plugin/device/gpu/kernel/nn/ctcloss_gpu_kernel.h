@@ -194,7 +194,11 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
   void LaunchFirstHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-    CalculateMaxSequence(sequence_length, max_labels_length, batch, stream);
+    cudaError_t status = cudaErrorNotReady;
+    status = CalculateMaxSequence(sequence_length, max_labels_length, batch, stream);
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch CalculateMaxSequence in GPU kernel CTCLoss failed.";
+    }
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(&max_sequence, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
@@ -203,11 +207,16 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x[0] must be equal to or greater than max_sequence, "
                         << "but got x[0]: " << max_time << ", max_sequence: " << max_sequence;
     }
-    InnerSoftMax(probs, softmax_probs, sequence_length, max_time, batch, numclass, stream);
+    status = InnerSoftMax(probs, softmax_probs, sequence_length, max_time, batch, numclass, stream);
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch InnerSoftMax in GPU kernel CTCLoss failed.";
+    }
     MemsetForWS(label_value_pcr, cum_labels_length, label_squence_length, costs, grads, stream);
-
-    CalculatePreLength(label_squence_length, precum_labels_length, cum_labels_length, max_labels_length, label_indices,
-                       batch, label_size_ / sizeof(int), stream);
+    status = CalculatePreLength(label_squence_length, precum_labels_length, cum_labels_length, max_labels_length,
+                                label_indices, batch, label_size_ / sizeof(int), stream);
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch CalculatePreLength in GPU kernel CTCLoss failed.";
+    }
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(&batch_label, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
@@ -216,11 +225,17 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the batch size of input must be equal to "
                         << (batch_label + 1) << ", but got " << batch;
     }
-    GenLabelValue(label_value_sp, label_indices, label_values, label_squence_length, cum_labels_length,
-                  max_labels_length, label_size_ / sizeof(int), numclass - 1, batch, stream);
+    status = GenLabelValue(label_value_sp, label_indices, label_values, label_squence_length, cum_labels_length,
+                           max_labels_length, label_size_ / sizeof(int), numclass - 1, batch, stream);
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch GenLabelValue in GPU kernel CTCLoss failed.";
+    }
     if (preprocess_collapse_repeated_) {
-      GenLabelValuePCR(label_value_sp, label_value_pcr, label_squence_length, cum_labels_length, max_labels_length,
-                       batch, stream);
+      status = GenLabelValuePCR(label_value_sp, label_value_pcr, label_squence_length, cum_labels_length,
+                                max_labels_length, batch, stream);
+      if (status != cudaSuccess) {
+        MS_LOG(EXCEPTION) << "Launch GenLabelValuePCR in GPU kernel CTCLoss failed.";
+      }
     }
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(&max_labels_length_host, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
@@ -233,6 +248,7 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     const int SOffSet = 2 * max_labels_length_host + 1;
     int log_prob_size = batch * SOffSet * max_time;
+    cudaError_t status = cudaErrorNotReady;
 
     if (!ignore_longer_outputs_than_inputs_ && max_labels_length_host > max_time) {
       MS_LOG(EXCEPTION) << "output size is greater than input size.";
@@ -241,22 +257,34 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
                     stream);
 
     if (preprocess_collapse_repeated_) {
-      GenLabelWithBlank(label_value_pcr, label_value_with_blank, label_squence_length, precum_labels_length,
-                        cum_labels_length, batch, numclass - 1, stream);
+      status = GenLabelWithBlank(label_value_pcr, label_value_with_blank, label_squence_length, precum_labels_length,
+                                 cum_labels_length, batch, numclass - 1, stream);
     } else {
-      GenLabelWithBlank(label_value_sp, label_value_with_blank, label_squence_length, precum_labels_length,
-                        cum_labels_length, batch, numclass - 1, stream);
+      status = GenLabelWithBlank(label_value_sp, label_value_with_blank, label_squence_length, precum_labels_length,
+                                 cum_labels_length, batch, numclass - 1, stream);
+    }
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch GenLabelWithBlank in GPU kernel CTCLoss failed.";
     }
 
-    CalculateFwdVar(log_alpha_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_, batch,
-                    SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
-                    ignore_longer_outputs_than_inputs_, stream);
-    CalculateBwdVar(log_beta_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_, batch,
-                    SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
-                    ignore_longer_outputs_than_inputs_, stream);
-    CTCLoss(log_alpha_b, log_beta_b, softmax_probs, label_value_with_blank, batch, SOffSet, max_time, numclass,
-            sequence_length, label_squence_length, cum_labels_length, costs, grads, prob_num,
-            ignore_longer_outputs_than_inputs_, stream);
+    status = CalculateFwdVar(log_alpha_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_,
+                             batch, SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
+                             ignore_longer_outputs_than_inputs_, stream);
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch CalculateFwdVar in GPU kernel CTCLoss failed.";
+    }
+    status = CalculateBwdVar(log_beta_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_,
+                             batch, SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
+                             ignore_longer_outputs_than_inputs_, stream);
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch CalculateBwdVar in GPU kernel CTCLoss failed.";
+    }
+    status = CTCLoss(log_alpha_b, log_beta_b, softmax_probs, label_value_with_blank, batch, SOffSet, max_time, numclass,
+                     sequence_length, label_squence_length, cum_labels_length, costs, grads, prob_num,
+                     ignore_longer_outputs_than_inputs_, stream);
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch CTCLoss in GPU kernel CTCLoss failed.";
+    }
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     FreeMem(label_value_with_blank, log_alpha_b, log_beta_b);
   }

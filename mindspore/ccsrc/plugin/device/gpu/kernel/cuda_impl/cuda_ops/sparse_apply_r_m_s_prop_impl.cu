@@ -45,25 +45,26 @@ __global__ void SparseApplyRMSPropUpdate(const size_t size, const size_t indices
       msf = msf * decay_rate + grad_t * grad_t * (1.0f - decay_rate);
       ms[cur_pos] = static_cast<T>(msf);
     }
-    mom[cur_pos] = static_cast<T>(GetFloat(mom[cur_pos]) * momentum  + RsqrtFunc(msf + epsilon) *
-                                  GetFloat(learning_rate[0]) * grad_t);
+    mom[cur_pos] = static_cast<T>(GetFloat(mom[cur_pos]) * momentum +
+                                  RsqrtFunc(msf + epsilon) * GetFloat(learning_rate[0]) * grad_t);
     variable[cur_pos] -= mom[cur_pos];
   }
 }
 
 template <typename T, typename S>
-void CalSparseApplyRMSProp(const size_t size, const size_t indices_size, const float decay_rate, const float momentum,
-                           const float epsilon, const T *learning_rate, const T *gradient, const S *indices,
-                           T *variable, T *ms, T *mom, cudaStream_t cuda_stream) {
+cudaError_t CalSparseApplyRMSProp(const size_t size, const size_t indices_size, const float decay_rate,
+                                  const float momentum, const float epsilon, const T *learning_rate, const T *gradient,
+                                  const S *indices, T *variable, T *ms, T *mom, cudaStream_t cuda_stream) {
   SparseApplyRMSPropUpdate<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, indices_size, decay_rate, momentum, epsilon, learning_rate, gradient, indices, variable, ms, mom);
+  return GetCudaStatus();
 }
 
-#define SPARSE_RMS_PROP_CAL_TEMPLATE(var_type, indices_type)                                                   \
-  template CUDA_LIB_EXPORT void CalSparseApplyRMSProp<var_type, indices_type>(                                 \
-    const size_t size, const size_t indices_size, const float decay_rate, const float momentum,                \
-    const float epsilon, const var_type *learning_rate, const var_type *gradient, const indices_type *indices, \
-    var_type *variable, var_type *ms, var_type *mom, cudaStream_t cuda_stream);
+#define SPARSE_RMS_PROP_CAL_TEMPLATE(var_type, indices_type)                                                         \
+  template CUDA_LIB_EXPORT cudaError_t CalSparseApplyRMSProp<var_type, indices_type>(                                \
+    const size_t size, const size_t indices_size, const float decay_rate, const float momentum, const float epsilon, \
+    const var_type *learning_rate, const var_type *gradient, const indices_type *indices, var_type *variable,        \
+    var_type *ms, var_type *mom, cudaStream_t cuda_stream);
 
 SPARSE_RMS_PROP_CAL_TEMPLATE(float, int);
 SPARSE_RMS_PROP_CAL_TEMPLATE(float, int64_t);

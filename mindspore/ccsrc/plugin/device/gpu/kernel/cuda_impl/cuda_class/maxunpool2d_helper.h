@@ -111,8 +111,9 @@ class MaxUnpool2DHelperGpuKernel : public GpuKernelHelperBase {
     for (int64_t i = dims - 1; i >= 0; i--) {
       thread_size *= input_shape_[i];
     }
-    CalMaxUnpool2D(input_ptr, indices, input_shape_, output_shape_, output_ptr, outer_size, thread_size, data_format_,
-                   device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalMaxUnpool2D(input_ptr, indices, input_shape_, output_shape_, output_ptr, outer_size, thread_size,
+                                 data_format_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 
@@ -234,8 +235,9 @@ class MaxUnpool2DGradHelperGpuKernel : public GpuKernelHelperBase {
     for (int64_t i = dims - 1; i >= 0; i--) {
       outer_size *= backprop_output_shape_[i];
     }
-    CalMaxUnpool2DGrad(grad, indices, backprop_input_shape_, grad_shape_, output_ptr, outer_size, data_format_,
-                       device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalMaxUnpool2DGrad(grad, indices, backprop_input_shape_, grad_shape_, output_ptr, outer_size,
+                                     data_format_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

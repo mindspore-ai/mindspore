@@ -67,7 +67,8 @@ bool HSwishGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
   auto *output = GetDeviceAddress<T>(outputs, 0);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
-  CalHSwishGrad(input_size_, input, x, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalHSwishGrad(input_size_, input, x, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

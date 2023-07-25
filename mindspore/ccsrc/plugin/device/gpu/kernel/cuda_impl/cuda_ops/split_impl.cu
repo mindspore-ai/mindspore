@@ -38,57 +38,63 @@ __global__ void Split(const size_t size, const int axis_step, const int all_size
 }
 
 template <typename T>
-void SplitKernel(const size_t size, const int axis_step, const int all_size_before_axis, const int all_size_axis,
-                 const T *input, T **outputs, cudaStream_t cuda_stream) {
+cudaError_t SplitKernel(const size_t size, const int axis_step, const int all_size_before_axis, const int all_size_axis,
+                        const T *input, T **outputs, cudaStream_t cuda_stream) {
   Split<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, axis_step, all_size_before_axis, all_size_axis, input,
                                                            outputs);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SplitKernel<half>(const size_t size, const int axis_step, const int all_size_before_axis,
-                                                const int all_size_axis, const half *input, half **outputs,
-                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<float>(const size_t size, const int axis_step, const int all_size_before_axis,
-                                                 const int all_size_axis, const float *input, float **outputs,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<double>(const size_t size, const int axis_step,
-                                                  const int all_size_before_axis, const int all_size_axis,
-                                                  const double *input, double **outputs, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<int8_t>(const size_t size, const int axis_step,
-                                                  const int all_size_before_axis, const int all_size_axis,
-                                                  const int8_t *input, int8_t **outputs, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<int16_t>(const size_t size, const int axis_step,
-                                                   const int all_size_before_axis, const int all_size_axis,
-                                                   const int16_t *input, int16_t **outputs, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<int32_t>(const size_t size, const int axis_step,
-                                                   const int all_size_before_axis, const int all_size_axis,
-                                                   const int32_t *input, int32_t **outputs, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<int64_t>(const size_t size, const int axis_step,
-                                                   const int all_size_before_axis, const int all_size_axis,
-                                                   const int64_t *input, int64_t **outputs, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<uint8_t>(const size_t size, const int axis_step,
-                                                   const int all_size_before_axis, const int all_size_axis,
-                                                   const uint8_t *input, uint8_t **outputs, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<uint16_t>(const size_t size, const int axis_step,
-                                                    const int all_size_before_axis, const int all_size_axis,
-                                                    const uint16_t *input, uint16_t **outputs,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<uint32_t>(const size_t size, const int axis_step,
-                                                    const int all_size_before_axis, const int all_size_axis,
-                                                    const uint32_t *input, uint32_t **outputs,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<uint64_t>(const size_t size, const int axis_step,
-                                                    const int all_size_before_axis, const int all_size_axis,
-                                                    const uint64_t *input, uint64_t **outputs,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<Complex<float>>(const size_t size, const int axis_step,
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<half>(const size_t size, const int axis_step,
+                                                       const int all_size_before_axis, const int all_size_axis,
+                                                       const half *input, half **outputs, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<float>(const size_t size, const int axis_step,
+                                                        const int all_size_before_axis, const int all_size_axis,
+                                                        const float *input, float **outputs, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<double>(const size_t size, const int axis_step,
+                                                         const int all_size_before_axis, const int all_size_axis,
+                                                         const double *input, double **outputs,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<int8_t>(const size_t size, const int axis_step,
+                                                         const int all_size_before_axis, const int all_size_axis,
+                                                         const int8_t *input, int8_t **outputs,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<int16_t>(const size_t size, const int axis_step,
                                                           const int all_size_before_axis, const int all_size_axis,
-                                                          const Complex<float> *input, Complex<float> **outputs,
+                                                          const int16_t *input, int16_t **outputs,
                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<Complex<double>>(const size_t size, const int axis_step,
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<int32_t>(const size_t size, const int axis_step,
+                                                          const int all_size_before_axis, const int all_size_axis,
+                                                          const int32_t *input, int32_t **outputs,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<int64_t>(const size_t size, const int axis_step,
+                                                          const int all_size_before_axis, const int all_size_axis,
+                                                          const int64_t *input, int64_t **outputs,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<uint8_t>(const size_t size, const int axis_step,
+                                                          const int all_size_before_axis, const int all_size_axis,
+                                                          const uint8_t *input, uint8_t **outputs,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<uint16_t>(const size_t size, const int axis_step,
                                                            const int all_size_before_axis, const int all_size_axis,
-                                                           const Complex<double> *input, Complex<double> **outputs,
+                                                           const uint16_t *input, uint16_t **outputs,
                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SplitKernel<bool>(const size_t size, const int axis_step, const int all_size_before_axis,
-                                                const int all_size_axis, const bool *input, bool **outputs,
-                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<uint32_t>(const size_t size, const int axis_step,
+                                                           const int all_size_before_axis, const int all_size_axis,
+                                                           const uint32_t *input, uint32_t **outputs,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<uint64_t>(const size_t size, const int axis_step,
+                                                           const int all_size_before_axis, const int all_size_axis,
+                                                           const uint64_t *input, uint64_t **outputs,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<Complex<float>>(const size_t size, const int axis_step,
+                                                                 const int all_size_before_axis,
+                                                                 const int all_size_axis, const Complex<float> *input,
+                                                                 Complex<float> **outputs, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<Complex<double>>(const size_t size, const int axis_step,
+                                                                  const int all_size_before_axis,
+                                                                  const int all_size_axis, const Complex<double> *input,
+                                                                  Complex<double> **outputs, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SplitKernel<bool>(const size_t size, const int axis_step,
+                                                       const int all_size_before_axis, const int all_size_axis,
+                                                       const bool *input, bool **outputs, cudaStream_t cuda_stream);

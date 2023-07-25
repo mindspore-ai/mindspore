@@ -19,11 +19,12 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void DoHashSwapOut(const T *hash_table, T *swap_out_value, const int *swap_out_index,
-                                   const int index_size, const int hash_dim, cudaStream_t cuda_stream,
-                                   const uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t DoHashSwapOut(const T *hash_table, T *swap_out_value, const int *swap_out_index,
+                                          const int index_size, const int hash_dim, cudaStream_t cuda_stream,
+                                          const uint32_t device_id);
 
 template <typename T>
-CUDA_LIB_EXPORT void DoHashSwapIn(T *hash_table, const T *swap_in_value, const int *swap_in_index, const int index_size,
-                                  const int hash_dim, cudaStream_t cuda_stream, const uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t DoHashSwapIn(T *hash_table, const T *swap_in_value, const int *swap_in_index,
+                                         const int index_size, const int hash_dim, cudaStream_t cuda_stream,
+                                         const uint32_t device_id);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_HASH_IMPL_CUH_

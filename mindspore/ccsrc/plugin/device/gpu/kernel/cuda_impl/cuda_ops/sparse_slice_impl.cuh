@@ -20,10 +20,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void SparseSlice(const IndexType *indices_ptr, const DataType *values_ptr,
-                                 const IndexType *x_ptr, IndexType *start_ptr, IndexType *size_ptr,
-                                 IndexType *y_indices_ptr, DataType *y_values_ptr, IndexType *out_shape_ptr,
-                                 int64_t *sum_count_ptr, size_t input_nnz_, size_t num_dim_, size_t out_size_,
-                                 uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t SparseSlice(const IndexType *indices_ptr, const DataType *values_ptr,
+                                        const IndexType *x_ptr, IndexType *start_ptr, IndexType *size_ptr,
+                                        IndexType *y_indices_ptr, DataType *y_values_ptr, IndexType *out_shape_ptr,
+                                        int64_t *sum_count_ptr, size_t input_nnz_, size_t num_dim_, size_t out_size_,
+                                        uint32_t device_id, cudaStream_t cuda_stream);
 
 #endif

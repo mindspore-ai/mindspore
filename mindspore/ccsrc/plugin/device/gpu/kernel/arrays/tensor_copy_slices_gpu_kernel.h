@@ -54,8 +54,9 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
       cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "TensorCopySlices cudaMemcpyAsync outputs failed");
-    CopySlices(update_shape_, begin_, strides_, output_shape_, update_addr, output_addr,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CopySlices(update_shape_, begin_, strides_, output_shape_, update_addr, output_addr,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

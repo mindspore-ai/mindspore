@@ -63,7 +63,8 @@ bool HSwishGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
   auto output = GetDeviceAddress<T>(outputs, 0);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
-  CalHSwish(input_size_, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalHSwish(input_size_, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

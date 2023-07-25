@@ -124,8 +124,9 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
       cudaMemcpyAsync(d_c_array_addr, h_c_array.data(), sizeof(pointer) * batch_num_, cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(cuda_stream_)),
       "cuda memcopy Fail");
-    MatrixTranspose(input_a_addr, SizeToInt(batch_num_ * lda_ * nrhs_), SizeToInt(lda_), SizeToInt(nrhs_),
-                    wrokspace_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = MatrixTranspose(input_a_addr, SizeToInt(batch_num_ * lda_ * nrhs_), SizeToInt(lda_), SizeToInt(nrhs_),
+                                  wrokspace_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;
     if (upper_) {
       uplo_ = CUBLAS_FILL_MODE_LOWER;
@@ -151,8 +152,9 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
                            d_b_array_addr, ldb_, d_c_array_addr, lda_, batch_num_),
         "cholesky solve cublasXgetrsBatched failed!");
     }
-    MatrixTranspose(wrokspace_addr, SizeToInt(batch_num_ * lda_ * nrhs_), SizeToInt(nrhs_), SizeToInt(lda_),
-                    output_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = MatrixTranspose(wrokspace_addr, SizeToInt(batch_num_ * lda_ * nrhs_), SizeToInt(nrhs_), SizeToInt(lda_),
+                             output_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

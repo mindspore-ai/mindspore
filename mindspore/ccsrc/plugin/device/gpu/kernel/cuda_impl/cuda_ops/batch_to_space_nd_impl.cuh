@@ -20,10 +20,10 @@
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalBatchToSpaceND(const T *input, const int64_t *crops_start, const int64_t *block_shape,
-                                       const int64_t *output_shape, const size_t output_shape_size,
-                                       const int64_t *stride_, const int64_t *on_stride_, const size_t off_set_,
-                                       const size_t output_size_, T *output, const uint32_t &device_id,
-                                       cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBatchToSpaceND(const T *input, const int64_t *crops_start, const int64_t *block_shape,
+                                              const int64_t *output_shape, const size_t output_shape_size,
+                                              const int64_t *stride_, const int64_t *on_stride_, const size_t off_set_,
+                                              const size_t output_size_, T *output, const uint32_t &device_id,
+                                              cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BATCH_TO_SPACE_ND_IMPL_CUH_

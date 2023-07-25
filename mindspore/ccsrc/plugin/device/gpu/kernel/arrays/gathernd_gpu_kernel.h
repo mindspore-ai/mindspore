@@ -49,7 +49,7 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
 
     auto status = GatherNd(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], info,
                            reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

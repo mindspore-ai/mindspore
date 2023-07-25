@@ -83,30 +83,35 @@ bool BufferSampleKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   int *count_addr = GetDeviceAddress<int>(inputs, element_nums_);
   int *head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  CheckBatchSize(count_addr, head_addr, batch_size_, capacity_, cuda_stream);
+  auto status = CheckBatchSize(count_addr, head_addr, batch_size_, capacity_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   int k_num = 0;
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                              cudaMemcpyAsync(&k_num, count_addr, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
                              "sync dev to host failed");
   // 1 Init curandState for the first time
   if (!states_init_) {
-    RandInit(unique_ ? capacity_ : batch_size_, seed_, devStates_, cuda_stream);
+    status = RandInit(unique_ ? capacity_ : batch_size_, seed_, devStates_, cuda_stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     states_init_ = true;
   }
   // 2 Generate random indexes by kernel
   auto indexes = GetDeviceAddress<unsigned int>(workspaces, 0);
   if (unique_) {
     auto key = GetDeviceAddress<unsigned int>(workspaces, 1);
-    RandomGen(k_num, devStates_, indexes, key, cuda_stream);
+    status = RandomGen(k_num, devStates_, indexes, key, cuda_stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
-    RandomGenUniform(batch_size_, devStates_, k_num, indexes, cuda_stream);
+    status = RandomGenUniform(batch_size_, devStates_, k_num, indexes, cuda_stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   // 3 Sample data by indexes
   for (size_t i = 0; i < element_nums_; i++) {
     auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
     auto out_addr = GetDeviceAddress<unsigned char>(outputs, i);
     size_t size = batch_size_ * exp_element_list[i];
-    BufferSample(size, exp_element_list[i], indexes, buffer_addr, out_addr, cuda_stream);
+    status = BufferSample(size, exp_element_list[i], indexes, buffer_addr, out_addr, cuda_stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

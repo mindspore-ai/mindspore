@@ -26,16 +26,17 @@ __global__ void ToComplex(const size_t size, const T *input, T *output, cudaStre
 }
 
 template <typename T>
-void RealToComplex(const size_t size, const T *input, T *output, cudaStream_t cuda_stream) {
+cudaError_t RealToComplex(const size_t size, const T *input, T *output, cudaStream_t cuda_stream) {
   cudaMemsetAsync(output, 0, 2 * size * sizeof(T), cuda_stream);
   ToComplex<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, output, cuda_stream);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void RealToComplex<double>(const size_t size, const double *input, double *output,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void RealToComplex<float>(const size_t size, const float *input, float *output,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void RealToComplex<int>(const size_t size, const int *input, int *output,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void RealToComplex<int64_t>(const size_t size, const int64_t *input, int64_t *output,
-                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t RealToComplex<double>(const size_t size, const double *input, double *output,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t RealToComplex<float>(const size_t size, const float *input, float *output,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t RealToComplex<int>(const size_t size, const int *input, int *output,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t RealToComplex<int64_t>(const size_t size, const int64_t *input, int64_t *output,
+                                                            cudaStream_t cuda_stream);

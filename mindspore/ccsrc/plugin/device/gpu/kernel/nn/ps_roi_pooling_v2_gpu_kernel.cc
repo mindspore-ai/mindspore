@@ -159,9 +159,10 @@ bool PSROIPoolingV2GpuKernelMod::PSROIPoolingLauncher(const std::vector<AddressP
   auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_data);
 
-  PSROIPoolForwardV2Launcher(input_data, static_cast<T>(spatial_scale_), output_n_, height_, width_, feature_channels_,
-                             pooled_height_, pooled_width_, rois, group_size_, output_channels_, output_data,
-                             reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = PSROIPoolForwardV2Launcher(input_data, static_cast<T>(spatial_scale_), output_n_, height_, width_,
+                                           feature_channels_, pooled_height_, pooled_width_, rois, group_size_,
+                                           output_channels_, output_data, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

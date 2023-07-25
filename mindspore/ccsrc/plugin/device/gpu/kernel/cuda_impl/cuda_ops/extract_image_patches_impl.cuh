@@ -20,13 +20,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalExtractImagePatchesNHWC(size_t output_size, int64_t stride_row, int64_t stride_col,
-                                                int64_t rate_row, int64_t rate_col, int64_t output_cols,
-                                                bool need_batch, int64_t row_stride, int64_t patch_stride,
-                                                int64_t other_stride, int64_t input_row_size, int64_t input_col_size,
-                                                int64_t row_padding_top, int64_t col_padding_left,
-                                                int64_t col_input_stride, int64_t row_input_stride,
-                                                int64_t patch_input_stride, int64_t output_depth, const T *input,
-                                                T *output, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalExtractImagePatchesNHWC(
+  size_t output_size, int64_t stride_row, int64_t stride_col, int64_t rate_row, int64_t rate_col, int64_t output_cols,
+  bool need_batch, int64_t row_stride, int64_t patch_stride, int64_t other_stride, int64_t input_row_size,
+  int64_t input_col_size, int64_t row_padding_top, int64_t col_padding_left, int64_t col_input_stride,
+  int64_t row_input_stride, int64_t patch_input_stride, int64_t output_depth, const T *input, T *output,
+  cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_EXTRACT_IMAGE_PATCHES_IMPL_CUH_

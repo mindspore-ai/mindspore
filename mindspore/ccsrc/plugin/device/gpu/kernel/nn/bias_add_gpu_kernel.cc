@@ -90,7 +90,7 @@ bool BiasAddGpuKernelMod::ComputeNHWC(const T *src_addr, const T *bias_addr, T *
                                       const size_t num_bias) {
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   auto status = CalBiasAddNHWC<T>(num_value, num_bias, src_addr, bias_addr, output_addr, device_id_, stream);
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

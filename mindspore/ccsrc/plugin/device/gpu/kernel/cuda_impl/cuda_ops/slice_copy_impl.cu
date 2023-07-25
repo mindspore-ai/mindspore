@@ -32,7 +32,7 @@ class VectorWrapper {
  public:
   explicit VectorWrapper(const std::vector<T> &v) { std::copy(v.begin(), v.end(), data); }
   ~VectorWrapper() {}
-  __device__ T& operator[](size_t index) { return data[index]; }
+  __device__ T &operator[](size_t index) { return data[index]; }
 
  private:
   T data[N];
@@ -76,9 +76,9 @@ std::vector<size_t> CalculateOffset(const std::vector<size_t> &shape) {
 }
 
 template <typename T>
-void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape, const T *update, T *output,
-                cudaStream_t cuda_stream) {
+cudaError_t CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
+                       const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape, const T *update,
+                       T *output, cudaStream_t cuda_stream) {
   size_t size = std::accumulate(update_shape.begin(), update_shape.end(), size_t(1), std::multiplies<size_t>());
 
   VectorWrapper<size_t, kMaxDim> o_offset(CalculateOffset(output_shape));
@@ -90,44 +90,58 @@ void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64
 
   CopySlicesKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(begins, strides, update_shapes, u_offset,
                                                                       o_offset, update, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const bool *update, bool *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const double *update, double *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const float *update, float *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const half *update, half *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const int64_t *update, int64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const int *update, int *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const short *update, short *output, cudaStream_t cuda_stream);  // NOLINT
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const int8_t *update, int8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const uint64_t *update, uint64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const uint32_t *update, uint32_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const uint16_t *update, uint16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const unsigned char *update, unsigned char *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                         const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                         const char *update, char *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const bool *update,
+                                                bool *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const double *update,
+                                                double *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const float *update,
+                                                float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const half *update,
+                                                half *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const int64_t *update,
+                                                int64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const int *update, int *output,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const int16_t *update,
+                                                short *output, cudaStream_t cuda_stream);  // NOLINT
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const int8_t *update,
+                                                int8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const uint64_t *update,
+                                                uint64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const uint32_t *update,
+                                                uint32_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const uint16_t *update,
+                                                uint16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const unsigned char *update,
+                                                unsigned char *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape,
+                                                const std::vector<int64_t> &begin, const std::vector<int64_t> &stride,
+                                                const std::vector<size_t> &output_shape, const char *update,
+                                                char *output, cudaStream_t cuda_stream);

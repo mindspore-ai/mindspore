@@ -83,7 +83,7 @@ void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   if (distributions_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', divide by zero. the distributions_ is 0.";
   }
-
+  cudaError_t status = cudaErrorNotReady;
   auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   if (!rand_state_init_) {
     int rng_seed = 0;
@@ -95,11 +95,17 @@ void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     } else {
       rng_seed = static_cast<int>(rd());
     }
-    InitRandState(rng_seed, distributions_, rand_state_, stream);
+    status = InitRandState(rng_seed, distributions_, rand_state_, stream);
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch GPU kernel InitRandState failed.";
+    }
     rand_state_init_ = true;
   }
 
-  Multinomial(distributions_, categories_, probs_addr, rand_state_, num_sample_addr, output_addr, stream);
+  status = Multinomial(distributions_, categories_, probs_addr, rand_state_, num_sample_addr, output_addr, stream);
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch GPU kernel Multinomial failed.";
+  }
 }
 
 std::vector<std::pair<KernelAttr, MultinomialGpuKernelMod::LaunchFunc>> MultinomialGpuKernelMod::func_list_ = {

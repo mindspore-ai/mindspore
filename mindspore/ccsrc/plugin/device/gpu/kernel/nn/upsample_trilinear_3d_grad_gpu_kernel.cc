@@ -105,7 +105,7 @@ bool UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel(const std::vector<Address
   auto status = CalUpsampleTrilinear3DGrad(grad, n_, c_, grad_d_, grad_h_, grad_w_, dinput_d_, dinput_h_, dinput_w_,
                                            depth_scale, height_scale, width_scale, align_corners_, dinput, device_id_,
                                            reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

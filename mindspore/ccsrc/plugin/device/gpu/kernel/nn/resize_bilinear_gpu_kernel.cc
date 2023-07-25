@@ -101,8 +101,9 @@ bool ResizeBilinearGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   T *output = GetDeviceAddress<T>(outputs, kZero);
   float h_scale = Scaling(input_h_, output_h_, align_corners_);
   float w_scale = Scaling(input_w_, output_w_, align_corners_);
-  CalResizeBilinear(input, n_, c_, input_h_, input_w_, output_h_, output_w_, h_scale, w_scale, half_pixel_centers_,
-                    output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalResizeBilinear(input, n_, c_, input_h_, input_w_, output_h_, output_w_, h_scale, w_scale,
+                                  half_pixel_centers_, output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

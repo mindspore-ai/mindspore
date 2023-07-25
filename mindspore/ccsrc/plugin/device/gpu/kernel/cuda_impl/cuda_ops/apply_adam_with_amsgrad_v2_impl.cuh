@@ -20,9 +20,9 @@
 
 template <typename T>
 CUDA_LIB_EXPORT cudaError_t CalApplyAdamWithAmsgradV2(const size_t size, const int64_t batch_size, T *var, T *m, T *v,
-                                                    T *vhat, T *beta1_power, T *beta2_power, const T *lr, const T *grad,
-                                                    const T *beta1, const T *beta2, const T *epsilon, T *output_var,
-                                                    T *output_m, T *output_v, T *output_vhat, const uint32_t &device_id,
-                                                    cudaStream_t stream_ptr);
+                                                      T *vhat, T *beta1_power, T *beta2_power, const T *lr,
+                                                      const T *grad, const T *beta1, const T *beta2, const T *epsilon,
+                                                      T *output_var, T *output_m, T *output_v, T *output_vhat,
+                                                      const uint32_t &device_id, cudaStream_t stream_ptr);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_APPLY_ADAM_WITH_AMSGRAD_V2_IMPL_CUH_

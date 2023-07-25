@@ -81,8 +81,8 @@ bool DiagPartGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
 
-  CalDiagPart(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto status = CalDiagPart(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

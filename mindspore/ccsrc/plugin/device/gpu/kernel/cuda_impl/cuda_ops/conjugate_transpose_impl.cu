@@ -24,9 +24,9 @@ template <typename U>
 using Complex = mindspore::utils::Complex<U>;
 
 template <typename T, typename S>
-__global__ void ConjugateTranspose(const size_t size, const T *input,
-                          const size_t *input_stride, const size_t *output_stride, const S *input_axis,
-                          const size_t shape_size, T *output) {
+__global__ void ConjugateTranspose(const size_t size, const T *input, const size_t *input_stride,
+                                   const size_t *output_stride, const S *input_axis, const size_t shape_size,
+                                   T *output) {
   size_t pos_size;
   size_t temp_pos;
   size_t ratio;
@@ -49,9 +49,9 @@ __global__ void ConjugateTranspose(const size_t size, const T *input,
 }
 
 template <typename T, typename S>
-__global__ void ConjugateTransposeComplex(const size_t size, const T *input,
-                          const size_t *input_stride, const size_t *output_stride, const S *input_axis,
-                          const size_t shape_size, T *output) {
+__global__ void ConjugateTransposeComplex(const size_t size, const T *input, const size_t *input_stride,
+                                          const size_t *output_stride, const S *input_axis, const size_t shape_size,
+                                          T *output) {
   size_t pos_size;
   size_t temp_pos;
   size_t ratio;
@@ -74,98 +74,75 @@ __global__ void ConjugateTransposeComplex(const size_t size, const T *input,
 }
 
 template <typename T, typename S>
-void CalConjugateTranspose(const size_t size, const T *input, const size_t *input_stride,
-                  const size_t *output_stride, const S *input_axis,
-                  const size_t shape_size, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
-  ConjugateTranspose<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input,
-                                                                input_stride, output_stride, input_axis, shape_size,
-                                                                output);
+cudaError_t CalConjugateTranspose(const size_t size, const T *input, const size_t *input_stride,
+                                  const size_t *output_stride, const S *input_axis, const size_t shape_size, T *output,
+                                  const uint32_t &device_id, cudaStream_t cuda_stream) {
+  ConjugateTranspose<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, input, input_stride, output_stride, input_axis, shape_size, output);
+  return GetCudaStatus();
 }
 
 template <typename T, typename S>
-void CalConjugateTransposeComplex(const size_t size, const T *input, const size_t *input_stride,
-                  const size_t * output_stride, const S *input_axis,
-                  const size_t shape_size, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
-  ConjugateTransposeComplex<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input,
-                                                                input_stride, output_stride, input_axis, shape_size,
-                                                                output);
+cudaError_t CalConjugateTransposeComplex(const size_t size, const T *input, const size_t *input_stride,
+                                         const size_t *output_stride, const S *input_axis, const size_t shape_size,
+                                         T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+  ConjugateTransposeComplex<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, input, input_stride, output_stride, input_axis, shape_size, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalConjugateTranspose<bool, int64_t>(const size_t size, const bool *input,
-                                                 const size_t *input_stride, const size_t *output_stride,
-                                                 const int64_t *input_axis, const size_t shape_size,
-                                                 bool *output, const uint32_t &device_id,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<double, int64_t>(const size_t size, const double *input,
-                                                   const size_t *input_stride, const size_t *output_stride,
-                                                   const int64_t *input_axis, const size_t shape_size,
-                                                   double *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<float, int64_t>(const size_t size, const float *input,
-                                                  const size_t *input_stride, const size_t *output_stride,
-                                                  const int64_t *input_axis, const size_t shape_size,
-                                                  float *output, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<half, int64_t>(const size_t size,
-                                                 const half *input, const size_t *input_stride,
-                                                 const size_t *output_stride,
-                                                 const int64_t *input_axis, const size_t shape_size,
-                                                 half *output, const uint32_t &device_id,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<int64_t, int64_t>(const size_t size, const int64_t *input,
-                                                    const size_t *input_stride, const size_t *output_stride,
-                                                    const int64_t *input_axis, const size_t shape_size,
-                                                    int64_t *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<int, int64_t>(const size_t size, const int *input,
-                                                const size_t *input_stride, const size_t *output_stride,
-                                                const int64_t *input_axis, const size_t shape_size,
-                                                int *output, const uint32_t &device_id,
-                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<int16_t, int64_t>(const size_t size, const int16_t *input,
-                                                    const size_t *input_stride, const size_t *output_stride,
-                                                    const int64_t *input_axis, const size_t shape_size,
-                                                    int16_t *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<int8_t, int64_t>(const size_t size, const int8_t *input,
-                                                   const size_t *input_stride, const size_t *output_stride,
-                                                   const int64_t *input_axis, const size_t shape_size,
-                                                   int8_t *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<uint64_t, int64_t>(const size_t size, const uint64_t *input,
-                                                     const size_t *input_stride, const size_t *output_stride,
-                                                     const int64_t *input_axis,
-                                                     const size_t shape_size, uint64_t *output,
-                                                     const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<uint32_t, int64_t>(const size_t size, const uint32_t *input,
-                                                     const size_t *input_stride, const size_t *output_stride,
-                                                     const int64_t *input_axis,
-                                                     const size_t shape_size, uint32_t *output,
-                                                     const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<uint16_t, int64_t>(const size_t size, const uint16_t *input,
-                                                     const size_t *input_stride, const size_t *output_stride,
-                                                     const int64_t *input_axis,
-                                                     const size_t shape_size, uint16_t *output,
-                                                     const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTranspose<uint8_t, int64_t>(const size_t size, const uint8_t *input,
-                                                    const size_t *input_stride, const size_t *output_stride,
-                                                    const int64_t *input_axis, const size_t shape_size,
-                                                    uint8_t *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTransposeComplex<Complex<float>, int64_t>(const size_t size,
-                                                           const Complex<float> *input,
-                                                           const size_t *input_stride, const size_t *output_stride,
-                                                           const int64_t *input_axis,
-                                                           const size_t shape_size, Complex<float> *output,
-                                                           const uint32_t &device_id,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalConjugateTransposeComplex<Complex<double>, int64_t>(const size_t size,
-                                                            const Complex<double> *input,
-                                                            const size_t *input_stride, const size_t *output_stride,
-                                                            const int64_t *input_axis,
-                                                            const size_t shape_size, Complex<double> *output,
-                                                            const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalConjugateTranspose<bool, int64_t>(const size_t size, const bool *input, const size_t *input_stride,
+                                     const size_t *output_stride, const int64_t *input_axis, const size_t shape_size,
+                                     bool *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalConjugateTranspose<double, int64_t>(const size_t size, const double *input, const size_t *input_stride,
+                                       const size_t *output_stride, const int64_t *input_axis, const size_t shape_size,
+                                       double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalConjugateTranspose<float, int64_t>(const size_t size, const float *input, const size_t *input_stride,
+                                      const size_t *output_stride, const int64_t *input_axis, const size_t shape_size,
+                                      float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalConjugateTranspose<half, int64_t>(const size_t size, const half *input, const size_t *input_stride,
+                                     const size_t *output_stride, const int64_t *input_axis, const size_t shape_size,
+                                     half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalConjugateTranspose<int64_t, int64_t>(const size_t size, const int64_t *input, const size_t *input_stride,
+                                        const size_t *output_stride, const int64_t *input_axis, const size_t shape_size,
+                                        int64_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalConjugateTranspose<int, int64_t>(
+  const size_t size, const int *input, const size_t *input_stride, const size_t *output_stride,
+  const int64_t *input_axis, const size_t shape_size, int *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalConjugateTranspose<int16_t, int64_t>(const size_t size, const int16_t *input, const size_t *input_stride,
+                                        const size_t *output_stride, const int64_t *input_axis, const size_t shape_size,
+                                        int16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalConjugateTranspose<int8_t, int64_t>(const size_t size, const int8_t *input, const size_t *input_stride,
+                                       const size_t *output_stride, const int64_t *input_axis, const size_t shape_size,
+                                       int8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalConjugateTranspose<uint64_t, int64_t>(
+  const size_t size, const uint64_t *input, const size_t *input_stride, const size_t *output_stride,
+  const int64_t *input_axis, const size_t shape_size, uint64_t *output, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalConjugateTranspose<uint32_t, int64_t>(
+  const size_t size, const uint32_t *input, const size_t *input_stride, const size_t *output_stride,
+  const int64_t *input_axis, const size_t shape_size, uint32_t *output, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalConjugateTranspose<uint16_t, int64_t>(
+  const size_t size, const uint16_t *input, const size_t *input_stride, const size_t *output_stride,
+  const int64_t *input_axis, const size_t shape_size, uint16_t *output, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalConjugateTranspose<uint8_t, int64_t>(const size_t size, const uint8_t *input, const size_t *input_stride,
+                                        const size_t *output_stride, const int64_t *input_axis, const size_t shape_size,
+                                        uint8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalConjugateTransposeComplex<Complex<float>, int64_t>(
+  const size_t size, const Complex<float> *input, const size_t *input_stride, const size_t *output_stride,
+  const int64_t *input_axis, const size_t shape_size, Complex<float> *output, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalConjugateTransposeComplex<Complex<double>, int64_t>(
+  const size_t size, const Complex<double> *input, const size_t *input_stride, const size_t *output_stride,
+  const int64_t *input_axis, const size_t shape_size, Complex<double> *output, const uint32_t &device_id,
+  cudaStream_t cuda_stream);

@@ -21,21 +21,21 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalGcd(size_t size, const T *x1, const T *x2, T *y, const uint32_t &device_id,
-                            cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalGcd(size_t size, const T *x1, const T *x2, T *y, const uint32_t &device_id,
+                                   cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void BroadcastGcd(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
-                                  const std::vector<size_t> &y_shape, const T *x1, const T *x2, T *y,
-                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t BroadcastGcd(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
+                                         const std::vector<size_t> &y_shape, const T *x1, const T *x2, T *y,
+                                         const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalLcm(size_t size, const T *x1, const T *x2, T *y, const uint32_t &device_id,
-                            cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalLcm(size_t size, const T *x1, const T *x2, T *y, const uint32_t &device_id,
+                                   cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void BroadcastLcm(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
-                                  const std::vector<size_t> &y_shape, const T *x1, const T *x2, T *y,
-                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t BroadcastLcm(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
+                                         const std::vector<size_t> &y_shape, const T *x1, const T *x2, T *y,
+                                         const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GCD_LCM_IMPL_CUH_

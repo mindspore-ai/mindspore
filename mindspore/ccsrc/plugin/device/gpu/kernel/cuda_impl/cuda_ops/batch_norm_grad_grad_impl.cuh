@@ -25,24 +25,22 @@ typedef struct {
   size_t w;
 } ShapeInfo;
 
-enum DataFormat {
-  NCHW = 0,
-  NHWC = 1
-};
+enum DataFormat { NCHW = 0, NHWC = 1 };
 
 template <typename T>
-CUDA_LIB_EXPORT void BatchNormGradGradTraining(const T *dy, const T *x, const float *scale, const float *mean,
-                                               const float *variance, const T *dout_dx, const float *dout_dscale,
-                                               const float *dout_dbias, T *dx, T *ddy, float *dscale, float *inv_std,
-                                               float *x_hat, float *mean_dy, float *mean_dout_dx,
-                                               float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat,
-                                               float *mean_dy_mul_dout_dx, const ShapeInfo &shape_info,
-                                               DataFormat format, float epsilon, uint32_t device_id,
-                                               cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t BatchNormGradGradTraining(const T *dy, const T *x, const float *scale, const float *mean,
+                                                      const float *variance, const T *dout_dx, const float *dout_dscale,
+                                                      const float *dout_dbias, T *dx, T *ddy, float *dscale,
+                                                      float *inv_std, float *x_hat, float *mean_dy, float *mean_dout_dx,
+                                                      float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat,
+                                                      float *mean_dy_mul_dout_dx, const ShapeInfo &shape_info,
+                                                      DataFormat format, float epsilon, uint32_t device_id,
+                                                      cudaStream_t stream);
 template <typename T>
-CUDA_LIB_EXPORT void BatchNormGradGradInference(const T *dy, const T *x, const float *scale, const float *mean,
-                                                const float *variance, const T *dout_dx, const float *dout_dscale,
-                                                const float *dout_dbias, T *dx, T *ddy, float *dscale, float *inv_std,
-                                                float *tmp, const ShapeInfo &shape_info, DataFormat format,
-                                                float epsilon, uint32_t device_id, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t BatchNormGradGradInference(const T *dy, const T *x, const float *scale, const float *mean,
+                                                       const float *variance, const T *dout_dx,
+                                                       const float *dout_dscale, const float *dout_dbias, T *dx, T *ddy,
+                                                       float *dscale, float *inv_std, float *tmp,
+                                                       const ShapeInfo &shape_info, DataFormat format, float epsilon,
+                                                       uint32_t device_id, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BATCH_NORM_GRAD_GRAD_IMPL_CUH_

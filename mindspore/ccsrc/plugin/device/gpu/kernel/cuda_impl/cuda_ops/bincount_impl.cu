@@ -83,13 +83,13 @@ __global__ void BincountMem(const int32_t *array, const int32_t *size, const T *
 }
 
 template <typename T>
-void CalBincount(const int32_t *array, const int32_t *size, const T *weight, T *bins, const bool has_weights,
-                 const int64_t threads_size, const int64_t outer_size, const uint32_t &device_id,
-                 cudaStream_t cuda_stream) {
+cudaError_t CalBincount(const int32_t *array, const int32_t *size, const T *weight, T *bins, const bool has_weights,
+                        const int64_t threads_size, const int64_t outer_size, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   cudaMemsetAsync(bins, 0, sizeof(T) * outer_size);
   if (!has_weights) {
     BincountNoWeight(array, size, bins, threads_size, outer_size);
-    return;
+    return GetCudaStatus();
   }
   if (outer_size <= 6 * 1024) {
     BincountMem<<<CUDA_BLOCKS(device_id, threads_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -98,13 +98,13 @@ void CalBincount(const int32_t *array, const int32_t *size, const T *weight, T *
     Bincount<<<CUDA_BLOCKS(device_id, threads_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       array, size, weight, bins, threads_size, has_weights);
   }
-  return;
+  return GetCudaStatus();
 }
 
 template <>
-void CalBincount(const int32_t *array, const int32_t *size, const double *weight, double *bins, const bool has_weights,
-                 const int64_t threads_size, const int64_t outer_size, const uint32_t &device_id,
-                 cudaStream_t cuda_stream) {
+cudaError_t CalBincount(const int32_t *array, const int32_t *size, const double *weight, double *bins,
+                        const bool has_weights, const int64_t threads_size, const int64_t outer_size,
+                        const uint32_t &device_id, cudaStream_t cuda_stream) {
   cudaMemsetAsync(bins, 0, sizeof(double) * outer_size);
   if (outer_size <= 6 * 1024) {
     BincountMem<<<CUDA_BLOCKS(device_id, threads_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -113,13 +113,13 @@ void CalBincount(const int32_t *array, const int32_t *size, const double *weight
     Bincount<<<CUDA_BLOCKS(device_id, threads_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       array, size, weight, bins, threads_size, has_weights);
   }
-  return;
+  return GetCudaStatus();
 }
 
 template <>
-void CalBincount(const int32_t *array, const int32_t *size, const int64_t *weight, int64_t *bins,
-                 const bool has_weights, const int64_t threads_size, const int64_t outer_size,
-                 const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBincount(const int32_t *array, const int32_t *size, const int64_t *weight, int64_t *bins,
+                        const bool has_weights, const int64_t threads_size, const int64_t outer_size,
+                        const uint32_t &device_id, cudaStream_t cuda_stream) {
   cudaMemsetAsync(bins, 0, sizeof(int64_t) * outer_size);
   if (outer_size <= 6 * 1024) {
     BincountMem<<<CUDA_BLOCKS(device_id, threads_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -128,22 +128,22 @@ void CalBincount(const int32_t *array, const int32_t *size, const int64_t *weigh
     Bincount<<<CUDA_BLOCKS(device_id, threads_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       array, size, weight, bins, threads_size, has_weights);
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBincount<float>(const int32_t *array, const int32_t *size, const float *weight,
-                                                 float *bins, const bool has_weights, const int64_t threads_size,
-                                                 const int64_t outer_size, const uint32_t &device_id,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBincount<double>(const int32_t *array, const int32_t *size, const double *weight,
-                                                  double *bins, const bool has_weights, const int64_t threads_size,
-                                                  const int64_t outer_size, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBincount<int32_t>(const int32_t *array, const int32_t *size, const int32_t *weight,
-                                                   int32_t *bins, const bool has_weights, const int64_t threads_size,
-                                                   const int64_t outer_size, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBincount<int64_t>(const int32_t *array, const int32_t *size, const int64_t *weight,
-                                                   int64_t *bins, const bool has_weights, const int64_t threads_size,
-                                                   const int64_t outer_size, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBincount<float>(const int32_t *array, const int32_t *size, const float *weight,
+                                                        float *bins, const bool has_weights, const int64_t threads_size,
+                                                        const int64_t outer_size, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBincount<double>(const int32_t *array, const int32_t *size,
+                                                         const double *weight, double *bins, const bool has_weights,
+                                                         const int64_t threads_size, const int64_t outer_size,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBincount<int32_t>(const int32_t *array, const int32_t *size,
+                                                          const int32_t *weight, int32_t *bins, const bool has_weights,
+                                                          const int64_t threads_size, const int64_t outer_size,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBincount<int64_t>(const int32_t *array, const int32_t *size,
+                                                          const int64_t *weight, int64_t *bins, const bool has_weights,
+                                                          const int64_t threads_size, const int64_t outer_size,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);

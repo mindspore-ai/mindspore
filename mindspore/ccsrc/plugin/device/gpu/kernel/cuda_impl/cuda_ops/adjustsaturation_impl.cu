@@ -121,7 +121,7 @@ cudaError_t CalAdjustSaturation(const int input_elements, const T *input, T *out
   int tuple_element = input_elements / channel_num;
   CalAdjustSaturationKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     tuple_element, channel_num, input, output, saturation_scale);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalAdjustSaturation<float>(const int input_elements, const float *input,

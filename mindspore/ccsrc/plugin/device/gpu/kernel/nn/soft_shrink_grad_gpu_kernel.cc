@@ -30,7 +30,9 @@ bool SoftShrinkGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   T *dy_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *x_addr = GetDeviceAddress<T>(inputs, kIndex1);
   T *dx_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  SoftShrinkGrad(size_, dy_addr, x_addr, lambd_, dx_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    SoftShrinkGrad(size_, dy_addr, x_addr, lambd_, dx_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

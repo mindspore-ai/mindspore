@@ -18,6 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_WHERE_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T>
-void Where(const int *cond, const T *input_x, const T *input_y, T *output, int element_cnt, const uint32_t &device_id,
-           cudaStream_t stream);
+cudaError_t Where(const int *cond, const T *input_x, const T *input_y, T *output, int element_cnt,
+                  const uint32_t &device_id, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_WHERE_IMPL_CUH_

@@ -58,36 +58,35 @@ __global__ void ResizeNearestNeighbor(const int size, const T *input, const int 
 }
 
 template <typename T>
-void CalResizeNearestNeighbor(const int size, const T *input, const int s1, const int s2, const int s3, const int s4,
-                              T *output, const int d1, const int d2, const int d3, const int d4, bool align_corners,
-                              float h_scale, float w_scale, cudaStream_t cuda_stream) {
+cudaError_t CalResizeNearestNeighbor(const int size, const T *input, const int s1, const int s2, const int s3,
+                                     const int s4, T *output, const int d1, const int d2, const int d3, const int d4,
+                                     bool align_corners, float h_scale, float w_scale, cudaStream_t cuda_stream) {
   ResizeNearestNeighbor<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, s1, s2, s3, s4, output, d1, d2,
                                                                            d3, d4, align_corners, h_scale, w_scale);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<double>(const int size, const double *input, const int s1,
-                                                               const int s2, const int s3, const int s4, double *output,
-                                                               const int d1, const int d2, const int d3, const int d4,
-                                                               bool align_corners, float h_scale, float w_scale,
-                                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<float>(const int size, const float *input, const int s1,
-                                                              const int s2, const int s3, const int s4, float *output,
-                                                              const int d1, const int d2, const int d3, const int d4,
-                                                              bool align_corners, float h_scale, float w_scale,
-                                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<half>(const int size, const half *input, const int s1,
-                                                             const int s2, const int s3, const int s4, half *output,
-                                                             const int d1, const int d2, const int d3, const int d4,
-                                                             bool align_corners, float h_scale, float w_scale,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<uint8_t>(const int size, const uint8_t *input, const int s1,
-                                                                const int s2, const int s3, const int s4,
-                                                                uint8_t *output, const int d1, const int d2,
-                                                                const int d3, const int d4, bool align_corners,
-                                                                float h_scale, float w_scale, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<int>(const int size, const int *input, const int s1,
-                                                            const int s2, const int s3, const int s4, int *output,
-                                                            const int d1, const int d2, const int d3, const int d4,
-                                                            bool align_corners, float h_scale, float w_scale,
-                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalResizeNearestNeighbor<double>(const int size, const double *input, const int s1,
+                                                                      const int s2, const int s3, const int s4,
+                                                                      double *output, const int d1, const int d2,
+                                                                      const int d3, const int d4, bool align_corners,
+                                                                      float h_scale, float w_scale,
+                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalResizeNearestNeighbor<float>(const int size, const float *input, const int s1,
+                                                                     const int s2, const int s3, const int s4,
+                                                                     float *output, const int d1, const int d2,
+                                                                     const int d3, const int d4, bool align_corners,
+                                                                     float h_scale, float w_scale,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalResizeNearestNeighbor<half>(
+  const int size, const half *input, const int s1, const int s2, const int s3, const int s4, half *output, const int d1,
+  const int d2, const int d3, const int d4, bool align_corners, float h_scale, float w_scale, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalResizeNearestNeighbor<uint8_t>(const int size, const uint8_t *input,
+                                                                       const int s1, const int s2, const int s3,
+                                                                       const int s4, uint8_t *output, const int d1,
+                                                                       const int d2, const int d3, const int d4,
+                                                                       bool align_corners, float h_scale, float w_scale,
+                                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalResizeNearestNeighbor<int>(
+  const int size, const int *input, const int s1, const int s2, const int s3, const int s4, int *output, const int d1,
+  const int d2, const int d3, const int d4, bool align_corners, float h_scale, float w_scale, cudaStream_t cuda_stream);

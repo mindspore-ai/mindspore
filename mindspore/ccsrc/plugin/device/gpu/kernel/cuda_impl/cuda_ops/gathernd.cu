@@ -49,7 +49,7 @@ cudaError_t GatherNd(T *input, S *indices, T *output, const size_t &output_dim0,
   int size = output_dim0 * output_dim1;
   GatherNdKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0, output_dim1,
                                                                indices_dim1, info);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t GatherNd<double, int>(double *input, int *indices, double *output,

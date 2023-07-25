@@ -23,7 +23,7 @@
 template <typename T>
 struct DynamicSharedMem;
 
-template<>
+template <>
 struct DynamicSharedMem<float> {
   __device__ float *addr() {
     extern __shared__ float addr_float[];
@@ -43,24 +43,21 @@ __global__ void ComputeXHatKernel(const T *x, const float *mean, ShapeInfo shape
                                   float *inv_std, float *x_hat) {
   size_t size = shape_info.n * shape_info.c * shape_info.h * shape_info.w;
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-    size_t c =  format == DataFormat::NCHW ? i / (shape_info.h * shape_info.w) % shape_info.c
-                                           : i  % shape_info.c;
+    size_t c = format == DataFormat::NCHW ? i / (shape_info.h * shape_info.w) % shape_info.c : i % shape_info.c;
     x_hat[i] = inv_std[c] * (static_cast<float>(x[i]) - mean[c]);
   }
 }
 
-
 template <typename T>
-__device__ void BatchReduce(const T *dy, const T *dout_dx, const float * x_hat, float *mean_dy_tmp,
+__device__ void BatchReduce(const T *dy, const T *dout_dx, const float *x_hat, float *mean_dy_tmp,
                             float *mean_dout_dx_tmp, float *mean_dy_mul_x_hat_tmp, float *mean_dout_dx_mul_x_hat_tmp,
                             float *mean_dy_mul_dout_dx_tmp, float *mean_dy, float *mean_dout_dx,
                             float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat, float *mean_dy_mul_dout_dx,
                             size_t c, const ShapeInfo &shape_info, DataFormat format) {
   bool is_nchw = format == DataFormat::NCHW;
   for (size_t n = threadIdx.x; n < shape_info.n; n += blockDim.x) {
-    size_t offset =
-      is_nchw ? n * shape_info.c * shape_info.h * shape_info.w + c * shape_info.h * shape_info.w
-              : n * shape_info.c * shape_info.h * shape_info.w + c;
+    size_t offset = is_nchw ? n * shape_info.c * shape_info.h * shape_info.w + c * shape_info.h * shape_info.w
+                            : n * shape_info.c * shape_info.h * shape_info.w + c;
     const auto *dy_offset = dy + offset;
     const auto *dout_dx_offset = dout_dx + offset;
     const auto *x_hat_offset = x_hat + offset;
@@ -104,8 +101,8 @@ __device__ void BatchReduce(const T *dy, const T *dout_dx, const float * x_hat, 
 
 template <typename T>
 __global__ void ReduceMeanKernel(const T *dy, const T *dout_dx, const float *x_hat, ShapeInfo shape_info,
-                                  DataFormat format, float *mean_dy, float *mean_dout_dx, float *mean_dy_mul_x_hat,
-                                  float *mean_dout_dx_mul_x_hat, float *mean_dy_mul_dout_dx) {
+                                 DataFormat format, float *mean_dy, float *mean_dout_dx, float *mean_dy_mul_x_hat,
+                                 float *mean_dout_dx_mul_x_hat, float *mean_dy_mul_dout_dx) {
   DynamicSharedMem<float> share_mem;
   float *mean_dy_tmp = share_mem.addr();
   float *mean_dout_dx_tmp = share_mem.addr() + shape_info.n;
@@ -134,20 +131,21 @@ __global__ void ComputeTrainingGradsKernel(const T *dy, const float *scale, cons
   float scale_term = 0.0;
   size_t size = shape_info.n * shape_info.c * shape_info.h * shape_info.w;
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-    size_t c = format == DataFormat::NCHW ? i / (shape_info.h * shape_info.w) % shape_info.c : i  % shape_info.c;
-    ddy[i] = static_cast<T>(scale[c] * inv_std[c] * (static_cast<float>(dout_dx[i]) - mean_dout_dx[c] -
-                                                     static_cast<float>(x_hat[i]) * mean_dout_dx_mul_x_hat[c]) +
-                            dout_dscale[c] * static_cast<float>(x_hat[i]) + dout_dbias[c]);
+    size_t c = format == DataFormat::NCHW ? i / (shape_info.h * shape_info.w) % shape_info.c : i % shape_info.c;
+    ddy[i] = static_cast<T>(
+      scale[c] * inv_std[c] *
+        (static_cast<float>(dout_dx[i]) - mean_dout_dx[c] - static_cast<float>(x_hat[i]) * mean_dout_dx_mul_x_hat[c]) +
+      dout_dscale[c] * static_cast<float>(x_hat[i]) + dout_dbias[c]);
     dx_term_0 = static_cast<float>(x_hat[i]) * (mean_dout_dx[c] * mean_dy[c] - mean_dy_mul_dout_dx[c] +
-                            a * mean_dy_mul_x_hat[c] * mean_dout_dx_mul_x_hat[c]);
+                                                a * mean_dy_mul_x_hat[c] * mean_dout_dx_mul_x_hat[c]);
     dx_term_1 = mean_dout_dx_mul_x_hat[c] * (mean_dy[c] - static_cast<float>(dy[i]));
     dx_term_2 = mean_dy_mul_x_hat[c] * (mean_dout_dx[c] - static_cast<float>(dout_dx[i]));
-    dx_term = scale[c] * inv_std[c] * inv_std[c]* (dx_term_0 + dx_term_1 + dx_term_2);
+    dx_term = scale[c] * inv_std[c] * inv_std[c] * (dx_term_0 + dx_term_1 + dx_term_2);
     scale_term = dout_dscale[c] * inv_std[c] *
                  (static_cast<float>(dy[i]) - mean_dy[c] - mean_dy_mul_x_hat[c] * static_cast<float>(x_hat[i]));
     dx[i] = static_cast<T>(dx_term + scale_term);
     x_hat[i] = static_cast<float>(dout_dx[i]) * inv_std[c] *
-               (static_cast<float>(dy[i]) - mean_dy[c] -mean_dy_mul_x_hat[c] * static_cast<float>(x_hat[i]));
+               (static_cast<float>(dy[i]) - mean_dy[c] - mean_dy_mul_x_hat[c] * static_cast<float>(x_hat[i]));
   }
 }
 
@@ -187,26 +185,24 @@ __global__ void ComputeInferenceGradsKernel(const T *dy, const T *x, const float
     size_t c = format == DataFormat::NCHW ? i / (shape_info.h * shape_info.w) % shape_info.c : i % shape_info.c;
     dx[i] = static_cast<T>(dout_dscale[c] * inv_std[c] * static_cast<float>(dy[i]));
     ddy[i] = static_cast<T>(static_cast<float>(dout_dx[i]) * inv_std[c] * scale[c] +
-                            dout_dscale[c] * inv_std[c] * (static_cast<float>(x[i]) - mean[c]) +
-                            dout_dbias[c]);
+                            dout_dscale[c] * inv_std[c] * (static_cast<float>(x[i]) - mean[c]) + dout_dbias[c]);
     tmp[i] = static_cast<float>(dout_dx[i]) * static_cast<float>(dy[i]) * inv_std[c];
   }
 }
 
 template <typename T>
-void BatchNormGradGradTraining(const T *dy, const T *x, const float *scale, const float *mean,
-                               const float *variance, const T *dout_dx, const float *dout_dscale,
-                               const float *dout_dbias, T *ddy, T *dx, float *dscale, float *inv_std,
-                               float *x_hat, float *mean_dy, float *mean_dout_dx,
-                               float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat,
-                               float *mean_dy_mul_dout_dx, const ShapeInfo &shape_info,
-                               DataFormat format, float epsilon, uint32_t device_id,
-                               cudaStream_t stream) {
+cudaError_t BatchNormGradGradTraining(const T *dy, const T *x, const float *scale, const float *mean,
+                                      const float *variance, const T *dout_dx, const float *dout_dscale,
+                                      const float *dout_dbias, T *ddy, T *dx, float *dscale, float *inv_std,
+                                      float *x_hat, float *mean_dy, float *mean_dout_dx, float *mean_dy_mul_x_hat,
+                                      float *mean_dout_dx_mul_x_hat, float *mean_dy_mul_dout_dx,
+                                      const ShapeInfo &shape_info, DataFormat format, float epsilon, uint32_t device_id,
+                                      cudaStream_t stream) {
   size_t size = shape_info.n * shape_info.c * shape_info.h * shape_info.w;
   ComputeInvStdKernel<<<CUDA_BLOCKS(device_id, shape_info.c), CUDA_THREADS(device_id), 0, stream>>>(
     variance, shape_info, epsilon, inv_std);
-  ComputeXHatKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream>>>(
-    x, mean, shape_info, format, inv_std, x_hat);
+  ComputeXHatKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream>>>(x, mean, shape_info, format,
+                                                                                          inv_std, x_hat);
   ReduceMeanKernel<<<CUDA_BLOCKS_MAXSIZE(device_id, shape_info.c), CUDA_THREADS_MAXSIZE(device_id, shape_info.n),
                      shape_info.n * sizeof(float), stream>>>(dy, dout_dx, x_hat, shape_info, format, mean_dy,
                                                              mean_dout_dx, mean_dy_mul_x_hat, mean_dout_dx_mul_x_hat,
@@ -217,14 +213,15 @@ void BatchNormGradGradTraining(const T *dy, const T *x, const float *scale, cons
     mean_dout_dx_mul_x_hat, mean_dy_mul_dout_dx, shape_info, format);
   ComputeBpropScaleKernel<<<CUDA_BLOCKS_MAXSIZE(device_id, shape_info.c), CUDA_THREADS_MAXSIZE(device_id, shape_info.n),
                             shape_info.n * sizeof(float), stream>>>(x_hat, dscale, shape_info, format);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void BatchNormGradGradInference(const T *dy, const T *x, const float *scale, const float *mean,
-                                const float *variance, const T *dout_dx, const float *dout_dscale,
-                                const float *dout_dbias, T *ddy, T *dx, float *dscale, float *inv_std,
-                                float *tmp, const ShapeInfo &shape_info, DataFormat format,
-                                float epsilon, uint32_t device_id, cudaStream_t stream) {
+cudaError_t BatchNormGradGradInference(const T *dy, const T *x, const float *scale, const float *mean,
+                                       const float *variance, const T *dout_dx, const float *dout_dscale,
+                                       const float *dout_dbias, T *ddy, T *dx, float *dscale, float *inv_std,
+                                       float *tmp, const ShapeInfo &shape_info, DataFormat format, float epsilon,
+                                       uint32_t device_id, cudaStream_t stream) {
   size_t size = shape_info.n * shape_info.c * shape_info.h * shape_info.w;
   ComputeInvStdKernel<<<CUDA_BLOCKS(device_id, shape_info.c), CUDA_THREADS(device_id), 0, stream>>>(
     variance, shape_info, epsilon, inv_std);
@@ -233,42 +230,29 @@ void BatchNormGradGradInference(const T *dy, const T *x, const float *scale, con
     dy, x, scale, mean, dout_dx, dout_dscale, dout_dbias, inv_std, ddy, dx, tmp, shape_info, format);
   ComputeBpropScaleKernel<<<CUDA_BLOCKS_MAXSIZE(device_id, shape_info.c), CUDA_THREADS_MAXSIZE(device_id, shape_info.n),
                             shape_info.n * sizeof(float), stream>>>(tmp, dscale, shape_info, format);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void BatchNormGradGradTraining<float>(const float *dy, const float *x, const float *scale,
-                                                               const float *mean, const float *variance,
-                                                               const float *dout_dx, const float *dout_dscale,
-                                                               const float *dout_dbias, float *dx, float *ddy,
-                                                               float *dscale, float *inv_std, float *x_hat,
-                                                               float *mean_dy, float *mean_dout_dx,
-                                                               float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat,
-                                                               float *mean_dy_mul_dout_dx, const ShapeInfo &shape_info,
-                                                               DataFormat format, float epsilon, uint32_t device_id,
-                                                               cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BatchNormGradGradTraining<float>(
+  const float *dy, const float *x, const float *scale, const float *mean, const float *variance, const float *dout_dx,
+  const float *dout_dscale, const float *dout_dbias, float *dx, float *ddy, float *dscale, float *inv_std, float *x_hat,
+  float *mean_dy, float *mean_dout_dx, float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat,
+  float *mean_dy_mul_dout_dx, const ShapeInfo &shape_info, DataFormat format, float epsilon, uint32_t device_id,
+  cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void BatchNormGradGradTraining<half>(const half *dy, const half *x, const float *scale,
-                                                              const float *mean, const float *variance,
-                                                              const half *dout_dx, const float *dout_dscale,
-                                                              const float *dout_dbias, half *dx, half *ddy,
-                                                              float *dscale, float *inv_std, float *x_hat,
-                                                              float *mean_dy, float *mean_dout_dx,
-                                                              float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat,
-                                                              float *mean_dy_mul_dout_dx, const ShapeInfo &shape_info,
-                                                              DataFormat format, float epsilon, uint32_t device_id,
-                                                              cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BatchNormGradGradTraining<half>(
+  const half *dy, const half *x, const float *scale, const float *mean, const float *variance, const half *dout_dx,
+  const float *dout_dscale, const float *dout_dbias, half *dx, half *ddy, float *dscale, float *inv_std, float *x_hat,
+  float *mean_dy, float *mean_dout_dx, float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat,
+  float *mean_dy_mul_dout_dx, const ShapeInfo &shape_info, DataFormat format, float epsilon, uint32_t device_id,
+  cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void BatchNormGradGradInference<float>(const float *dy, const float *x, const float *scale,
-                                                                const float *mean, const float *variance,
-                                                                const float *dout_dx, const float *dout_dscale,
-                                                                const float *dout_dbias, float *dx, float *ddy,
-                                                                float *dscale, float *inv_std, float *tmp,
-                                                                const ShapeInfo &shape_info, DataFormat format,
-                                                                float epsilon, uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BatchNormGradGradInference<float>(
+  const float *dy, const float *x, const float *scale, const float *mean, const float *variance, const float *dout_dx,
+  const float *dout_dscale, const float *dout_dbias, float *dx, float *ddy, float *dscale, float *inv_std, float *tmp,
+  const ShapeInfo &shape_info, DataFormat format, float epsilon, uint32_t device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void BatchNormGradGradInference<half>(const half *dy, const half *x, const float *scale,
-                                                               const float *mean, const float *variance,
-                                                               const half *dout_dx, const float *dout_dscale,
-                                                               const float *dout_dbias, half *dx, half *ddy,
-                                                               float *dscale, float *inv_std, float *tmp,
-                                                               const ShapeInfo &shape_info, DataFormat format,
-                                                               float epsilon, uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BatchNormGradGradInference<half>(
+  const half *dy, const half *x, const float *scale, const float *mean, const float *variance, const half *dout_dx,
+  const float *dout_dscale, const float *dout_dbias, half *dx, half *ddy, float *dscale, float *inv_std, float *tmp,
+  const ShapeInfo &shape_info, DataFormat format, float epsilon, uint32_t device_id, cudaStream_t stream);

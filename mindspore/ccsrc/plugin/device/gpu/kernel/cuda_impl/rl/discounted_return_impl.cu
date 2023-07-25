@@ -39,9 +39,9 @@ __global__ void DiscountedReturnKernel(const int timestep, const int num_env, co
 }
 
 template <typename T>
-void DiscountedReturn(const int &timestep, const int &num_env, const int &num_element,
-                      const float &gamma, const T *reward, const bool *done, const T *last_value,
-                      T *discouted_return, cudaStream_t stream) {
+cudaError_t DiscountedReturn(const int &timestep, const int &num_env, const int &num_element, const float &gamma,
+                             const T *reward, const bool *done, const T *last_value, T *discouted_return,
+                             cudaStream_t stream) {
   // Every block process M element, 256 is a common tile size.
   const int element_per_step = num_env * num_element;
   const int element_per_block = std::min(256, element_per_step);
@@ -49,11 +49,14 @@ void DiscountedReturn(const int &timestep, const int &num_env, const int &num_el
 
   DiscountedReturnKernel<<<grid_dim, element_per_block, 0, stream>>>(timestep, num_env, num_element, gamma, reward,
                                                                      done, last_value, discouted_return);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void DiscountedReturn(const int &timestep, const int &num_env, const int &num_element,
-                                               const float &gamma, const float *reward, const bool *done,
-                                               const float *last_value, float *discouted_return, cudaStream_t stream);
-template CUDA_LIB_EXPORT void DiscountedReturn(const int &timestep, const int &num_env, const int &num_element,
-                                               const float &gamma, const half *reward, const bool *done,
-                                               const half *last_value, half *discouted_return, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t DiscountedReturn(const int &timestep, const int &num_env, const int &num_element,
+                                                      const float &gamma, const float *reward, const bool *done,
+                                                      const float *last_value, float *discouted_return,
+                                                      cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t DiscountedReturn(const int &timestep, const int &num_env, const int &num_element,
+                                                      const float &gamma, const half *reward, const bool *done,
+                                                      const half *last_value, half *discouted_return,
+                                                      cudaStream_t stream);

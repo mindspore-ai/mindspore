@@ -92,7 +92,7 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
       int *piv_output_addr = batch_piv_output_addr + batch * k_;
       auto s1 = CalTranspose(m_ * n_, output_addr, info, shape_2d, dev_transpose_work,
                              reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_LAUNCH_STATUS(s1, "Transpose called by " + kernel_name_);
+      CHECK_CUDA_STATUS(s1, "Transpose called by " + kernel_name_);
 
       // 6.lu factorization according to cuSolver api, outputs have been written to input's matrix.
       if constexpr (std::is_same_v<T, float>) {
@@ -110,7 +110,7 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
       }
       auto s2 = CalTranspose(m_ * n_, dev_transpose_work, work_info, shape_2d, output_addr,
                              reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_LAUNCH_STATUS(s2, "Transpose called by " + kernel_name_);
+      CHECK_CUDA_STATUS(s2, "Transpose called by " + kernel_name_);
       std::vector<int> host_permuted(k_, 0);
       std::vector<int> host_pivots(k_, 0);
       std::vector<int> host_permutation(k_ * k_, 0);

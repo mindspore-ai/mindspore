@@ -77,7 +77,9 @@ bool MvlgammaGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   T *y_grad = GetDeviceAddress<T>(inputs, 0);
   T *x = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
-  CalMvlgammaGrad(input_elements_, y_grad, x, p_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    CalMvlgammaGrad(input_elements_, y_grad, x, p_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

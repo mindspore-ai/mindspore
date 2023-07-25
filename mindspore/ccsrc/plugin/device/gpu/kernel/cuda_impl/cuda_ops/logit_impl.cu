@@ -17,7 +17,6 @@
 #include "logit_impl.cuh"
 #include "include/cuda_fp16.h"
 
-
 template <typename T>
 __global__ void LogitGreaterZero(const T *input, const T up_bound, const T eps, T *output, const size_t count) {
   T one = T(1);
@@ -63,27 +62,26 @@ __global__ void LogitLessZero(const half *input, const half up_bound, const half
 }
 
 template <typename T>
-void CalLogit(const T *input, const T up_bound, const float eps, T *output, const size_t count,
-              const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalLogit(const T *input, const T up_bound, const float eps, T *output, const size_t count,
+                     const uint32_t &device_id, cudaStream_t cuda_stream) {
   T eps_value;
   eps_value = T(eps);
   if (eps < 0) {
     LogitLessZero<<<CUDA_BLOCKS(device_id, count), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, up_bound,
-                                                                                              eps_value, output,
-                                                                                              count);
+                                                                                              eps_value, output, count);
   } else {
-    LogitGreaterZero<<<CUDA_BLOCKS(device_id, count), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, up_bound,
-                                                                                                 eps_value, output,
-                                                                                                 count);
+    LogitGreaterZero<<<CUDA_BLOCKS(device_id, count), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      input, up_bound, eps_value, output, count);
   }
-
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalLogit<half>(const half *input, const half up_bound, const float eps, half *output,
-                                             const size_t count, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLogit<float>(const float *input, const float up_bound, const float eps, float *output,
-                                              const size_t count, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLogit<double>(const double *input, const double up_bound, const float eps,
-                                               double *output, const size_t count, const uint32_t &device_id,
-                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLogit<half>(const half *input, const half up_bound, const float eps,
+                                                    half *output, const size_t count, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLogit<float>(const float *input, const float up_bound, const float eps,
+                                                     float *output, const size_t count, const uint32_t &device_id,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLogit<double>(const double *input, const double up_bound, const float eps,
+                                                      double *output, const size_t count, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);

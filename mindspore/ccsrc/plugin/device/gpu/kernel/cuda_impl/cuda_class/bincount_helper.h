@@ -123,8 +123,9 @@ class BincountHelperGpuKernel : public GpuKernelHelperBase {
       threads_size *= array_shape_[i];
     }
 
-    CalBincount(array_ptr, size_ptr, weight_ptr, bins_ptr, has_weights_, threads_size, bins_shape_[0], device_id_,
-                reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalBincount(array_ptr, size_ptr, weight_ptr, bins_ptr, has_weights_, threads_size, bins_shape_[0],
+                              device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

@@ -18,29 +18,30 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T>
-__global__ void L2LossKernel(const size_t input_size, const T *input , T *output) {
+__global__ void L2LossKernel(const size_t input_size, const T *input, T *output) {
   T ret = 0;
   for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < input_size; id += blockDim.x * gridDim.x) {
-      ret = input[id] * input[id];
-      ret /= static_cast<T>(2);
-      MsAtomicAdd(output, ret);
+    ret = input[id] * input[id];
+    ret /= static_cast<T>(2);
+    MsAtomicAdd(output, ret);
   }
 }
 
 template <typename T>
 __global__ void ClearOutputMem(T *output) {
-    output[0] = static_cast<T>(0);
+  output[0] = static_cast<T>(0);
 }
 
 template <typename T>
-void L2Loss(const size_t input_size, const T *input , T *output, cudaStream_t stream) {
+cudaError_t L2Loss(const size_t input_size, const T *input, T *output, cudaStream_t stream) {
   ClearOutputMem<<<GET_BLOCKS(1), GET_THREADS, 0, stream>>>(output);
   L2LossKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, input, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void L2Loss<float>(const size_t input_size, const float *input , float *output,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void L2Loss<half>(const size_t input_size, const half *input , half *output,
-                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT void L2Loss<double>(const size_t input_size, const double *input , double *output,
-                                           cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t L2Loss<float>(const size_t input_size, const float *input, float *output,
+                                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t L2Loss<half>(const size_t input_size, const half *input, half *output,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t L2Loss<double>(const size_t input_size, const double *input, double *output,
+                                                    cudaStream_t stream);

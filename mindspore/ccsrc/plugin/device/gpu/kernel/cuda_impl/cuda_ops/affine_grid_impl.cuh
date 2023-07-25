@@ -21,9 +21,9 @@
 
 template <typename T>
 CUDA_LIB_EXPORT cudaError_t CalculateAffineGrid4D(const T *theta_ptr, T *workspace_ptr, T *grid_ptr, const int32_t &N,
-                                                    const int32_t &C, const int32_t &H, const int32_t &W,
-                                                    const bool &align_corners, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+                                                  const int32_t &C, const int32_t &H, const int32_t &W,
+                                                  const bool &align_corners, const uint32_t &device_id,
+                                                  cudaStream_t cuda_stream);
 
 template <typename T>
 CUDA_LIB_EXPORT cudaError_t CalculateAffineGrid5D(const T *theta_ptr, T *workspace_ptr, T *grid_ptr, const int32_t &N,

@@ -108,12 +108,14 @@ bool BroadcastOpGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
                                     "BroadcastOpGradGpuKernelMod cudaMemSet Failed");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(dx2, 0, outputs[kIndex1]->size, cuda_stream_),
                                     "BroadcastOpGradGpuKernelMod cudaMemSet Failed");
+  cudaError_t status = cudaErrorNotReady;
   if (need_broadcast_) {
-    BroadcastGrad(x1_shape_, x2_shape_, dy_shape_, output_num_, grad_x_, grad_y_, op_type_, x1, x2, dy, dx1, dx2,
-                  device_id_, cuda_stream_);
+    status = BroadcastGrad(x1_shape_, x2_shape_, dy_shape_, output_num_, grad_x_, grad_y_, op_type_, x1, x2, dy, dx1,
+                           dx2, device_id_, cuda_stream_);
   } else {
-    NoBroadcastGrad(output_num_, grad_x_, grad_y_, op_type_, x1, x2, dy, dx1, dx2, device_id_, cuda_stream_);
+    status = NoBroadcastGrad(output_num_, grad_x_, grad_y_, op_type_, x1, x2, dy, dx1, dx2, device_id_, cuda_stream_);
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

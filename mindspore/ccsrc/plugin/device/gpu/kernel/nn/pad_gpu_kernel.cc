@@ -119,7 +119,8 @@ bool PadFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   T *output_device = GetDeviceAddress<T>(outputs, 0);
 
   float pad_value = 0.0;
-  FillDeviceArray(output_size_, output_device, pad_value, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = FillDeviceArray(output_size_, output_device, pad_value, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   // input_shape, strides, paddings
   PadInfo info;
@@ -131,9 +132,9 @@ bool PadFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     info.paddings[kValue2 * i + 1] = flattened_paddings_[kValue2 * i + 1];
   }
 
-  CalPadGeneral(input_device, output_device, info, input_size_, input_rank_,
-                reinterpret_cast<cudaStream_t>(stream_ptr));
-
+  status = CalPadGeneral(input_device, output_device, info, input_size_, input_rank_,
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

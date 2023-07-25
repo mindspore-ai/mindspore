@@ -40,9 +40,10 @@ __global__ void SoftplusKernel(const size_t size, const half threshold, const ha
 }
 
 template <typename T>
-void Softplus(const size_t size, const T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
+cudaError_t Softplus(const size_t size, const T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
   const T threshold = log(Epsilon<T>::value) + 2.0;
   SoftplusKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, threshold, input_addr, output_addr);
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -68,19 +69,20 @@ __global__ void SoftplusGradKernel(const size_t size, const half threshold, cons
 }
 
 template <typename T>
-void SoftplusGrad(const size_t size, const T *dy_addr, const T *x_addr, T *dx_addr, cudaStream_t cuda_stream) {
+cudaError_t SoftplusGrad(const size_t size, const T *dy_addr, const T *x_addr, T *dx_addr, cudaStream_t cuda_stream) {
   const T threshold = log(Epsilon<T>::value) + 2.0f;
   SoftplusGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, threshold, dy_addr, x_addr, dx_addr);
+  return GetCudaStatus();
 }
-template CUDA_LIB_EXPORT void Softplus(const size_t size, const double *input_addr, double *output_addr,
-                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Softplus(const size_t size, const float *input_addr, float *output_addr,
-                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Softplus(const size_t size, const half *input_addr, half *output_addr,
-                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SoftplusGrad(const size_t size, const double *dy_addr, const double *x_addr,
-                                           double *dx_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SoftplusGrad(const size_t size, const float *dy_addr, const float *x_addr, float *dx_addr,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SoftplusGrad(const size_t size, const half *dy_addr, const half *x_addr, half *dx_addr,
-                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softplus(const size_t size, const double *input_addr, double *output_addr,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softplus(const size_t size, const float *input_addr, float *output_addr,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softplus(const size_t size, const half *input_addr, half *output_addr,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftplusGrad(const size_t size, const double *dy_addr, const double *x_addr,
+                                                  double *dx_addr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftplusGrad(const size_t size, const float *dy_addr, const float *x_addr,
+                                                  float *dx_addr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftplusGrad(const size_t size, const half *dy_addr, const half *x_addr,
+                                                  half *dx_addr, cudaStream_t cuda_stream);

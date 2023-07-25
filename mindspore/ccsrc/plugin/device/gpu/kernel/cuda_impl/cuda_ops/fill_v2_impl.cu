@@ -33,7 +33,7 @@ template <typename T>
 cudaError_t FillV2(const int64_t output_size, const T *input, T *output, const uint32_t device_id,
                    cudaStream_t stream) {
   FillV2Kernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(output_size, input, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t FillV2(const int64_t output_size, const bool *input, bool *output,

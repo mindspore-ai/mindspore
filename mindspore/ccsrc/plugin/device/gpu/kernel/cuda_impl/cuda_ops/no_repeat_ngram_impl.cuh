@@ -19,14 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename StateType, typename LogProbType>
-CUDA_LIB_EXPORT void CalculateNoRepeatNGram(const StateType *tokens,
-                                            LogProbType *lprobs,
-                                            LogProbType *output,
-                                            int step,
-                                            int no_repeat_ngram_size,
-                                            const uint32_t &device_id,
-                                            int vocab_size_,
-                                            int blocks,
-                                            int shared_mem_size,
-                                            cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalculateNoRepeatNGram(const StateType *tokens, LogProbType *lprobs, LogProbType *output,
+                                                   int step, int no_repeat_ngram_size, const uint32_t &device_id,
+                                                   int vocab_size_, int blocks, int shared_mem_size,
+                                                   cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_NO_REPEAT_NGRAM_IMPL_CUH

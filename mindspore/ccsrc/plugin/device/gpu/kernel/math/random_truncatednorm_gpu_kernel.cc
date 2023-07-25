@@ -85,7 +85,9 @@ bool TruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   curandState *devStates = nullptr;
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
   devStates = reinterpret_cast<curandState *>(workspace_addr);
-  TruncatedNormal(seed_, seed2_, devStates, output, output_num_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    TruncatedNormal(seed_, seed2_, devStates, output, output_num_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -22,14 +22,15 @@
 constexpr int kLargeBatchLowLimit = 32768;
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CrossEntropyWithSparse(const T *logits, const S *labels, const size_t batch_size,
-                                            const size_t class_num, T *loss, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CrossEntropyWithSparse(const T *logits, const S *labels, const size_t batch_size,
+                                                   const size_t class_num, T *loss, cudaStream_t cuda_stream);
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CrossEntropyGradWithSparse(const T *logits, const S *labels, const size_t batch_size,
-                                                const size_t class_num, T *grad, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CrossEntropyGradWithSparse(const T *logits, const S *labels, const size_t batch_size,
+                                                       const size_t class_num, T *grad, cudaStream_t cuda_stream);
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CrossEntropy(const T *logits, const S *labels, const size_t batch_size, const size_t class_num,
-                                  T *losses, T *dlogits, T *workspace, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CrossEntropy(const T *logits, const S *labels, const size_t batch_size,
+                                         const size_t class_num, T *losses, T *dlogits, T *workspace,
+                                         cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CROSS_ENTROPY_IMPL_CUH_

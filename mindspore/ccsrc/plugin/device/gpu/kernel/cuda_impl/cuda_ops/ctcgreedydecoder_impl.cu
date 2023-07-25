@@ -19,11 +19,9 @@
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 template <typename T>
-__global__ void CTCGreedyDecoder(const T *input, const int bound, const size_t outer_size,
-                                 const size_t batch_size, int64_t *decoded_values_temp,
-                                 T *log_probability) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < outer_size;
-       pos += gridDim.x * blockDim.x) {
+__global__ void CTCGreedyDecoder(const T *input, const int bound, const size_t outer_size, const size_t batch_size,
+                                 int64_t *decoded_values_temp, T *log_probability) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < outer_size; pos += gridDim.x * blockDim.x) {
     int idx = 0;
     size_t input_offset = pos * bound;
     T max_data = input[input_offset];
@@ -42,12 +40,10 @@ __global__ void CTCGreedyDecoder(const T *input, const int bound, const size_t o
 }
 
 template <typename T>
-__global__ void values_merge(int64_t *decoded_values_temp, const int32_t *sequence_length,
-                             const size_t batch_size, const int bound, const bool merge_ok,
-                             T *log_probability, int64_t *nums_count) {
+__global__ void values_merge(int64_t *decoded_values_temp, const int32_t *sequence_length, const size_t batch_size,
+                             const int bound, const bool merge_ok, T *log_probability, int64_t *nums_count) {
   const int blank_idx = bound - 1;
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < batch_size;
-       pos += gridDim.x * blockDim.x) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < batch_size; pos += gridDim.x * blockDim.x) {
     if (sequence_length[pos] <= 0) {
       nums_count[pos] = 0;
       log_probability[pos] = 0;
@@ -59,8 +55,8 @@ __global__ void values_merge(int64_t *decoded_values_temp, const int32_t *sequen
       if (idx != pos) {
         log_probability[pos] += log_probability[idx];
       }
-      if (decoded_values_temp[idx] == blank_idx || merge_ok && idx != pos
-          && decoded_values_temp[idx] == decoded_values_temp[idx - batch_size]) {
+      if (decoded_values_temp[idx] == blank_idx ||
+          merge_ok && idx != pos && decoded_values_temp[idx] == decoded_values_temp[idx - batch_size]) {
         continue;
       }
       decoded_values_temp[cnt * batch_size + pos] = decoded_values_temp[idx];
@@ -76,42 +72,40 @@ __global__ void indicesCompute(const int64_t *decoded_values_temp, const int64_t
                                int64_t *nums_count_pre_sum) {
   for (size_t batch_pos = blockIdx.y * blockDim.y + threadIdx.y; batch_pos < batch_size;
        batch_pos += gridDim.y * blockDim.y) {
-        for (size_t nums_count_pos = threadIdx.x; nums_count_pos < nums_count[batch_pos];
-             nums_count_pos += blockDim.x) {
-          decoded_indices[(nums_count_pre_sum[batch_pos] + nums_count_pos) * 2] = batch_pos;
-          decoded_indices[(nums_count_pre_sum[batch_pos] + nums_count_pos) * 2 + 1] = nums_count_pos;
-          decoded_values[nums_count_pre_sum[batch_pos] + nums_count_pos]
-          = decoded_values_temp[nums_count_pos * batch_size + batch_pos];
-        }
-        if (threadIdx.x == 0) {
-          MsAtomicMax(decoded_shape + 1, nums_count[batch_pos]);
-        }
-      }
+    for (size_t nums_count_pos = threadIdx.x; nums_count_pos < nums_count[batch_pos]; nums_count_pos += blockDim.x) {
+      decoded_indices[(nums_count_pre_sum[batch_pos] + nums_count_pos) * 2] = batch_pos;
+      decoded_indices[(nums_count_pre_sum[batch_pos] + nums_count_pos) * 2 + 1] = nums_count_pos;
+      decoded_values[nums_count_pre_sum[batch_pos] + nums_count_pos] =
+        decoded_values_temp[nums_count_pos * batch_size + batch_pos];
+    }
+    if (threadIdx.x == 0) {
+      MsAtomicMax(decoded_shape + 1, nums_count[batch_pos]);
+    }
+  }
   decoded_shape[0] = batch_size;
 }
 
 template <typename T>
-void CalCTCGreedyDecoder(const T *input, const int bound, const size_t outer_size, const size_t batch_size,
-                         int64_t *decoded_values_temp, T *log_probability, const uint32_t &device_id,
-                         cudaStream_t cuda_stream) {
+cudaError_t CalCTCGreedyDecoder(const T *input, const int bound, const size_t outer_size, const size_t batch_size,
+                                int64_t *decoded_values_temp, T *log_probability, const uint32_t &device_id,
+                                cudaStream_t cuda_stream) {
   CTCGreedyDecoder<<<CUDA_BLOCKS(device_id, outer_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, bound, outer_size, batch_size, decoded_values_temp, log_probability);
-
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void Calmerge(int64_t *decoded_values_temp, const int32_t *sequence_length, const size_t batch_size, const int bound,
-              const bool merge_ok, T *log_probability, int64_t *nums_count, const uint32_t &device_id,
-              cudaStream_t cuda_stream) {
+cudaError_t Calmerge(int64_t *decoded_values_temp, const int32_t *sequence_length, const size_t batch_size,
+                     const int bound, const bool merge_ok, T *log_probability, int64_t *nums_count,
+                     const uint32_t &device_id, cudaStream_t cuda_stream) {
   values_merge<<<CUDA_BLOCKS(device_id, batch_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     decoded_values_temp, sequence_length, batch_size, bound, merge_ok, log_probability, nums_count);
-  return;
+  return GetCudaStatus();
 }
 
-int64_t Calindices(const int64_t *decoded_values_temp, const int64_t *nums_count, const size_t batch_size,
-                   int64_t *decoded_indices, int64_t *decoded_values, int64_t *decoded_shape,
-                   const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t Calindices(const int64_t *decoded_values_temp, const int64_t *nums_count, const size_t batch_size,
+                   int64_t *decoded_indices, int64_t *decoded_values, int64_t *decoded_shape, const uint32_t &device_id,
+                   cudaStream_t cuda_stream, int64_t *count) {
   size_t temp_storage_bytes = 0;
   int64_t *nums_count_pre_sum = nullptr;
   cudaMalloc(&nums_count_pre_sum, sizeof(int64_t) * (batch_size + 1));
@@ -140,28 +134,29 @@ int64_t Calindices(const int64_t *decoded_values_temp, const int64_t *nums_count
   int block_num =
     min(static_cast<int>(((avg_num_count * batch_size - 1) / (thread_x_num * thread_y_num)) + 1), max_blocks);
 
-  indicesCompute<<<block_num, thread_num, 0, cuda_stream>>>(decoded_values_temp, nums_count, batch_size,
-                   decoded_indices, decoded_values, decoded_shape, nums_count_pre_sum);
+  indicesCompute<<<block_num, thread_num, 0, cuda_stream>>>(
+    decoded_values_temp, nums_count, batch_size, decoded_indices, decoded_values, decoded_shape, nums_count_pre_sum);
   cudaFree(nums_count_pre_sum);
-  return sum_num_count;
+  *count = sum_num_count;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalCTCGreedyDecoder<float>(const float *input, const int bound, const size_t outer_size,
-                                                         const size_t batch_size, int64_t *decoded_values_temp,
-                                                         float *log_probability, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCTCGreedyDecoder<float>(const float *input, const int bound,
+                                                                const size_t outer_size, const size_t batch_size,
+                                                                int64_t *decoded_values_temp, float *log_probability,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCTCGreedyDecoder<double>(const double *input, const int bound, const size_t outer_size,
-                                                          const size_t batch_size, int64_t *decoded_values_temp,
-                                                          double *log_probability, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCTCGreedyDecoder<double>(const double *input, const int bound,
+                                                                 const size_t outer_size, const size_t batch_size,
+                                                                 int64_t *decoded_values_temp, double *log_probability,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void Calmerge<float>(int64_t *decoded_values_temp, const int32_t *sequence_length,
-                                              const size_t batch_size, const int bound, const bool merge_ok,
-                                              float *log_probability, int64_t *nums_count, const uint32_t &device_id,
-                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Calmerge<float>(int64_t *decoded_values_temp, const int32_t *sequence_length,
+                                                     const size_t batch_size, const int bound, const bool merge_ok,
+                                                     float *log_probability, int64_t *nums_count,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void Calmerge<double>(int64_t *decoded_values_temp, const int32_t *sequence_length,
-                                               const size_t batch_size, const int bound, const bool merge_ok,
-                                               double *log_probability, int64_t *nums_count, const uint32_t &device_id,
-                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Calmerge<double>(int64_t *decoded_values_temp, const int32_t *sequence_length,
+                                                      const size_t batch_size, const int bound, const bool merge_ok,
+                                                      double *log_probability, int64_t *nums_count,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);

@@ -144,7 +144,8 @@ bool DenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 
   if (has_bias_) {
     auto input3_addr = GetDeviceAddress<T>(inputs, 2);
-    Fill(m_, n_, input3_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = Fill(m_, n_, input3_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     beta = static_cast<S>(1.0f);
   }
 

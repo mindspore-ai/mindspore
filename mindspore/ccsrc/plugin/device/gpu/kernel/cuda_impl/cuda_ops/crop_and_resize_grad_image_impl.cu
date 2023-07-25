@@ -234,45 +234,45 @@ __global__ void Reset_zero(const int size, G *list) {
 }
 
 template <typename T, typename G>
-void CalCropAndResizeGradImage(const int32_t size, const T *grads, const T *boxes, const int *box_ind,
-                               int32_t num_boxes, int32_t batch, int32_t image_height, int32_t image_width,
-                               int32_t crop_height, int32_t crop_width, int32_t depth, int method, G *grad_image,
-                               const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalCropAndResizeGradImage(const int32_t size, const T *grads, const T *boxes, const int *box_ind,
+                                      int32_t num_boxes, int32_t batch, int32_t image_height, int32_t image_width,
+                                      int32_t crop_height, int32_t crop_width, int32_t depth, int method, G *grad_image,
+                                      const uint32_t &device_id, cudaStream_t cuda_stream) {
   int zero_threads_num = static_cast<int>(batch * image_height * image_width * depth);
   Reset_zero<<<CUDA_BLOCKS(device_id, zero_threads_num), CUDA_THREADS(device_id), 0, cuda_stream>>>(zero_threads_num,
                                                                                                     grad_image);
   CropAndResizeGradImageForwardKernel<<<CUDA_BLOCKS(device_id, static_cast<int>(size)), CUDA_THREADS(device_id), 0,
                                         cuda_stream>>>(size, grads, boxes, box_ind, num_boxes, batch, image_height,
                                                        image_width, crop_height, crop_width, depth, method, grad_image);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalCropAndResizeGradImage<float, half>(
+template CUDA_LIB_EXPORT cudaError_t CalCropAndResizeGradImage<float, half>(
   const int32_t size, const float *grads, const float *boxes, const int32_t *box_ind, int32_t num_boxes, int32_t batch,
   int32_t image_height, int32_t image_width, int32_t crop_height, int32_t crop_width, int32_t depth, int method,
   half *grad_image, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCropAndResizeGradImage<float, float>(
+template CUDA_LIB_EXPORT cudaError_t CalCropAndResizeGradImage<float, float>(
   const int32_t size, const float *grads, const float *boxes, const int32_t *box_ind, int32_t num_boxes, int32_t batch,
   int32_t image_height, int32_t image_width, int32_t crop_height, int32_t crop_width, int32_t depth, int method,
   float *grad_image, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCropAndResizeGradImage<float, double>(
+template CUDA_LIB_EXPORT cudaError_t CalCropAndResizeGradImage<float, double>(
   const int32_t size, const float *grads, const float *boxes, const int32_t *box_ind, int32_t num_boxes, int32_t batch,
   int32_t image_height, int32_t image_width, int32_t crop_height, int32_t crop_width, int32_t depth, int method,
   double *grad_image, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCropAndResizeGradImage<double, half>(
+template CUDA_LIB_EXPORT cudaError_t CalCropAndResizeGradImage<double, half>(
   const int32_t size, const double *grads, const double *boxes, const int32_t *box_ind, int32_t num_boxes,
   int32_t batch, int32_t image_height, int32_t image_width, int32_t crop_height, int32_t crop_width, int32_t depth,
   int method, half *grad_image, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCropAndResizeGradImage<double, float>(
+template CUDA_LIB_EXPORT cudaError_t CalCropAndResizeGradImage<double, float>(
   const int32_t size, const double *grads, const double *boxes, const int32_t *box_ind, int32_t num_boxes,
   int32_t batch, int32_t image_height, int32_t image_width, int32_t crop_height, int32_t crop_width, int32_t depth,
   int method, float *grad_image, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCropAndResizeGradImage<double, double>(
+template CUDA_LIB_EXPORT cudaError_t CalCropAndResizeGradImage<double, double>(
   const int32_t size, const double *grads, const double *boxes, const int32_t *box_ind, int32_t num_boxes,
   int32_t batch, int32_t image_height, int32_t image_width, int32_t crop_height, int32_t crop_width, int32_t depth,
   int method, double *grad_image, const uint32_t &device_id, cudaStream_t cuda_stream);

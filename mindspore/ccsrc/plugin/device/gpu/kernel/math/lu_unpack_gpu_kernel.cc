@@ -42,21 +42,27 @@ bool LuUnpackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   S *final_order = GetDeviceAddress<S>(workspace, kIndex0);
 
   // triu and tril
+  cudaError_t status = cudaErrorNotReady;
   if (lu_data_dim1_ > lu_data_dim2_) {
-    CalTriuAux(batch_num_ * u_stride_, lu_data_ptr, lu_data_dim2_, lu_data_dim2_, lu_data_dim1_, lu_data_dim2_, u_ptr,
-               device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-    CalTrilAux(batch_num_ * l_stride_, lu_data_ptr, lu_data_dim1_, lu_data_dim2_, lu_data_dim1_, lu_data_dim2_, l_ptr,
-               device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = CalTriuAux(batch_num_ * u_stride_, lu_data_ptr, lu_data_dim2_, lu_data_dim2_, lu_data_dim1_, lu_data_dim2_,
+                        u_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalTrilAux(batch_num_ * l_stride_, lu_data_ptr, lu_data_dim1_, lu_data_dim2_, lu_data_dim1_, lu_data_dim2_,
+                        l_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
-    CalTriuAux(batch_num_ * u_stride_, lu_data_ptr, lu_data_dim1_, lu_data_dim2_, lu_data_dim1_, lu_data_dim2_, u_ptr,
-               device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-    CalTrilAux(batch_num_ * l_stride_, lu_data_ptr, lu_data_dim1_, lu_data_dim1_, lu_data_dim1_, lu_data_dim2_, l_ptr,
-               device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = CalTriuAux(batch_num_ * u_stride_, lu_data_ptr, lu_data_dim1_, lu_data_dim2_, lu_data_dim1_, lu_data_dim2_,
+                        u_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalTrilAux(batch_num_ * l_stride_, lu_data_ptr, lu_data_dim1_, lu_data_dim1_, lu_data_dim1_, lu_data_dim2_,
+                        l_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 
   // swap and index_select
-  TransposeEyeMatrix(lu_pivots_ptr, pivots_ptr, final_order, batch_num_, lu_data_dim1_, lu_pivots_dim_, device_id_,
-                     reinterpret_cast<cudaStream_t>(cuda_stream_));
+  status = TransposeEyeMatrix(lu_pivots_ptr, pivots_ptr, final_order, batch_num_, lu_data_dim1_, lu_pivots_dim_,
+                              device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

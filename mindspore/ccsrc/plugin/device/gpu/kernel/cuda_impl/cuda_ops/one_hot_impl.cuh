@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ONE_HOT_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT void OneHot(const S *indices, size_t depth_, const T *on_value, const T *off_value,
-                            size_t left_dim_size, size_t right_dim_size, T *output, const uint32_t &device_id,
-                            cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t OneHot(const S *indices, size_t depth_, const T *on_value, const T *off_value,
+                                   size_t left_dim_size, size_t right_dim_size, T *output, const uint32_t &device_id,
+                                   cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ONE_HOT_IMPL_CUH_

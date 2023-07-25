@@ -154,11 +154,13 @@ bool FillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(y_ptr, &value, sizeof(T), cudaMemcpyHostToDevice, cuda_stream),
                                      "cudaMemcpy value variable failed.");
+  cudaError_t status = cudaErrorNotReady;
   if (std::is_same<T, float16>::value) {
-    Fill(input_elements_, 1, reinterpret_cast<half *>(y_ptr), reinterpret_cast<half *>(y_ptr), cuda_stream);
+    status = Fill(input_elements_, 1, reinterpret_cast<half *>(y_ptr), reinterpret_cast<half *>(y_ptr), cuda_stream);
   } else {
-    Fill(input_elements_, 1, y_ptr, y_ptr, cuda_stream);
+    status = Fill(input_elements_, 1, y_ptr, y_ptr, cuda_stream);
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

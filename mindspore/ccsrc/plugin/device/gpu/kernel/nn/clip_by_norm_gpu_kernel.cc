@@ -130,10 +130,12 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
   float *clip_norm_mul_output_addr = GetPossiblyNullDeviceAddress<float>(workspace, kIndex5);
   float *output_addr = GetDeviceAddress<float>(outputs, 0);
   // Running `cast(x)` to float32 data type
-  Cast(x_size_ / sizeof(T), x_addr, x_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = Cast(x_size_ / sizeof(T), x_addr, x_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   // Launch `cudnnReduceTensorNorm2` operator to achieve `L2_norm` calculation, keep_dims = true.
   if (all_match_) {
-    AbsOp(x_size_ / sizeof(T), x_float_addr, l2norm_output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = AbsOp(x_size_ / sizeof(T), x_float_addr, l2norm_output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     constexpr float alpha = 1.0;
     constexpr float beta = 0.0;
@@ -151,14 +153,18 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
   bool is_broadcast = IsBinaryBroadcast(simplified_in0_shape, simplified_in1_shape);
 
   // Calculation std::max(l2_norm, epsilon) to keep numerical stability.
-  GetMaxWithEpsAndValue(l2_norm_output_size_ / sizeof(float), epsilon_, l2norm_output_addr,
-                        reinterpret_cast<cudaStream_t>(stream_ptr));
+  status = GetMaxWithEpsAndValue(l2_norm_output_size_ / sizeof(float), epsilon_, l2norm_output_addr,
+                                 reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   // Running `x/l2_norm(x)` and broadcast output shape to `input_x` shape
-  BinaryOpWithBroadcastCudaFunc<BinaryOpType::kRealDiv, float, float, float>(
+  status = BinaryOpWithBroadcastCudaFunc<BinaryOpType::kRealDiv, float, float, float>(
     is_broadcast, simplified_in0_shape, simplified_in1_shape, simplified_out_shape, x_float_addr, l2norm_output_addr,
     div_output_addr, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   // Running `cast(clip_norm)` to the data type of `input_x`
-  Cast(clip_norm_size_ / sizeof(S), clip_norm_addr, clip_norm_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  status =
+    Cast(clip_norm_size_ / sizeof(S), clip_norm_addr, clip_norm_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   // Running '(x/l2_norm(x)) * clip_norm' and broadcast output shape to `input_x` shape
   if (clip_norm_need_broadcast_) {
     SimplifyBinaryBroadcastShape(l2_norm_ouths_shape_, clip_norm_rhs_shape_, l2_norm_ouths_shape_,
@@ -175,8 +181,9 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
   }
 
   // Running compare between `input_x` and `upper output` and cast final output to float type.
-  CompOp(output_size_ / sizeof(float), x_float_addr, clip_norm_mul_output_addr, output_addr,
-         reinterpret_cast<cudaStream_t>(stream_ptr));
+  status = CompOp(output_size_ / sizeof(float), x_float_addr, clip_norm_mul_output_addr, output_addr,
+                  reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

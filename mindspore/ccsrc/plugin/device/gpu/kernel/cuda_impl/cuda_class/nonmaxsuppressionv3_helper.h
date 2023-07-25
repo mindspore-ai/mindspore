@@ -172,9 +172,10 @@ class NonMaxSuppressionV3HelperGpuKernel : public GpuKernelHelperBase {
     M score_host = 0.0;
     cudaMemcpy(&score_host, score_threshold_, sizeof(M), cudaMemcpyDeviceToHost);
     const int b_size = 4;
-    post_output_size_ =
+    auto status =
       DoNms(num_input, count, num_keep, scores, input_ptr, iou_host, score_host, index_buff, max_host, b_size, sel_mask,
-            sel_boxes, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+            sel_boxes, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream), &post_output_size_);
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

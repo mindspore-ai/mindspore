@@ -35,9 +35,10 @@ __global__ void CalSparseReshapeKernel(const int64_t *indices, const int64_t *sh
   }
 }
 
-void CalSparseReshape(const int64_t *indices, const int64_t *shape, int64_t *y_indices, int64_t *y_shape,
-                      const size_t indice_number_, const size_t shape_elements_, const size_t new_shape_elements_,
-                      const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseReshape(const int64_t *indices, const int64_t *shape, int64_t *y_indices, int64_t *y_shape,
+                             const size_t indice_number_, const size_t shape_elements_,
+                             const size_t new_shape_elements_, const uint32_t &device_id, cudaStream_t cuda_stream) {
   CalSparseReshapeKernel<<<CUDA_BLOCKS(device_id, indice_number_), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     indices, shape, y_indices, y_shape, indice_number_, shape_elements_, new_shape_elements_);
+  return GetCudaStatus();
 }

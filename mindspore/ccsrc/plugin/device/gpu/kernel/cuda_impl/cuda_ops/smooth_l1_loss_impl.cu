@@ -119,27 +119,31 @@ __global__ void CastLoss(const double *tmp_loss, half *loss) {
 }
 
 template <typename T>
-void SmoothL1Loss(const SmoothL1LossReductionMode mode, const int64_t input_size, const float beta, const T *prediction,
-                  const T *target, T *loss, double *tmp_loss, const uint32_t device_id, cudaStream_t stream) {
+cudaError_t SmoothL1Loss(const SmoothL1LossReductionMode mode, const int64_t input_size, const float beta,
+                         const T *prediction, const T *target, T *loss, double *tmp_loss, const uint32_t device_id,
+                         cudaStream_t stream) {
   switch (mode) {
     case NONE: {
-      return SmoothL1LossNoReduce<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
+      SmoothL1LossNoReduce<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
         input_size, beta, prediction, target, loss);
+      break;
     }
     case SUM: {
       SmoothL1LossSum<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
         input_size, beta, prediction, target, loss, tmp_loss);
-      return CastLoss<<<CUDA_BLOCKS(device_id, 1), CUDA_THREADS(device_id), 0, stream>>>(tmp_loss, loss);
+      CastLoss<<<CUDA_BLOCKS(device_id, 1), CUDA_THREADS(device_id), 0, stream>>>(tmp_loss, loss);
+      break;
     }
-
     case MEAN: {
       SmoothL1LossMean<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
         input_size, beta, prediction, target, loss, tmp_loss);
-      return CastLoss<<<CUDA_BLOCKS(device_id, 1), CUDA_THREADS(device_id), 0, stream>>>(tmp_loss, loss);
+      CastLoss<<<CUDA_BLOCKS(device_id, 1), CUDA_THREADS(device_id), 0, stream>>>(tmp_loss, loss);
+      break;
     }
     default:
       break;
   }
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -238,47 +242,55 @@ __global__ void SmoothL1LossGradMean(const int64_t input_size, const float beta,
 }
 
 template <typename T>
-void SmoothL1LossGrad(const SmoothL1LossReductionMode mode, const int64_t input_size, const float beta,
-                      const T *prediction, const T *target, const T *dloss, T *dx, const uint32_t device_id,
-                      cudaStream_t stream) {
+cudaError_t SmoothL1LossGrad(const SmoothL1LossReductionMode mode, const int64_t input_size, const float beta,
+                             const T *prediction, const T *target, const T *dloss, T *dx, const uint32_t device_id,
+                             cudaStream_t stream) {
   switch (mode) {
     case NONE:
-      return SmoothL1LossGradNoReduce<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
+      SmoothL1LossGradNoReduce<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
         input_size, beta, prediction, target, dloss, dx);
+      break;
     case SUM:
-      return SmoothL1LossGradSum<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
+      SmoothL1LossGradSum<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
         input_size, beta, prediction, target, dloss, dx);
+      break;
     case MEAN:
-      return SmoothL1LossGradMean<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
+      SmoothL1LossGradMean<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
         input_size, beta, prediction, target, dloss, dx);
+      break;
     default:
       break;
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SmoothL1Loss<double>(const SmoothL1LossReductionMode mode, const int64_t input_size,
-                                                   const float beta, const double *prediction, const double *target,
-                                                   double *loss, double *tmp_loss, const uint32_t device_id,
-                                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void SmoothL1LossGrad<double>(const SmoothL1LossReductionMode mode, const int64_t input_size,
-                                                       const float beta, const double *prediction, const double *target,
-                                                       const double *dloss, double *dx, const uint32_t device_id,
-                                                       cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SmoothL1Loss<double>(const SmoothL1LossReductionMode mode,
+                                                          const int64_t input_size, const float beta,
+                                                          const double *prediction, const double *target, double *loss,
+                                                          double *tmp_loss, const uint32_t device_id,
+                                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SmoothL1LossGrad<double>(const SmoothL1LossReductionMode mode,
+                                                              const int64_t input_size, const float beta,
+                                                              const double *prediction, const double *target,
+                                                              const double *dloss, double *dx, const uint32_t device_id,
+                                                              cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void SmoothL1Loss<float>(const SmoothL1LossReductionMode mode, const int64_t input_size,
-                                                  const float beta, const float *prediction, const float *target,
-                                                  float *loss, double *tmp_loss, const uint32_t device_id,
-                                                  cudaStream_t stream);
-template CUDA_LIB_EXPORT void SmoothL1LossGrad<float>(const SmoothL1LossReductionMode mode, const int64_t input_size,
-                                                      const float beta, const float *prediction, const float *target,
-                                                      const float *dloss, float *dx, const uint32_t device_id,
-                                                      cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SmoothL1Loss<float>(const SmoothL1LossReductionMode mode, const int64_t input_size,
+                                                         const float beta, const float *prediction, const float *target,
+                                                         float *loss, double *tmp_loss, const uint32_t device_id,
+                                                         cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SmoothL1LossGrad<float>(const SmoothL1LossReductionMode mode,
+                                                             const int64_t input_size, const float beta,
+                                                             const float *prediction, const float *target,
+                                                             const float *dloss, float *dx, const uint32_t device_id,
+                                                             cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void SmoothL1Loss<half>(const SmoothL1LossReductionMode mode, const int64_t input_size,
-                                                 const float beta, const half *prediction, const half *target,
-                                                 half *loss, double *tmp_loss, const uint32_t device_id,
-                                                 cudaStream_t stream);
-template CUDA_LIB_EXPORT void SmoothL1LossGrad<half>(const SmoothL1LossReductionMode mode, const int64_t input_size,
-                                                     const float beta, const half *prediction, const half *target,
-                                                     const half *dloss, half *dx, const uint32_t device_id,
-                                                     cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SmoothL1Loss<half>(const SmoothL1LossReductionMode mode, const int64_t input_size,
+                                                        const float beta, const half *prediction, const half *target,
+                                                        half *loss, double *tmp_loss, const uint32_t device_id,
+                                                        cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SmoothL1LossGrad<half>(const SmoothL1LossReductionMode mode,
+                                                            const int64_t input_size, const float beta,
+                                                            const half *prediction, const half *target,
+                                                            const half *dloss, half *dx, const uint32_t device_id,
+                                                            cudaStream_t stream);

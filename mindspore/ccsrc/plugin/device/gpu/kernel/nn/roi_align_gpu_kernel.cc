@@ -95,8 +95,10 @@ bool ROIAlignGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   const T *rois = GetDeviceAddress<T>(inputs, kIndex1);
   T *out_data = GetDeviceAddress<T>(outputs, kIndex0);
   T spatial_scale = static_cast<T>(spatial_scale_);
-  ROIAlign(x, rois, roi_rows_, roi_cols_, out_data, spatial_scale, sample_num_, roi_end_mode_, channel_, height_,
-           width_, pooled_height_, pooled_width_, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status =
+    ROIAlign(x, rois, roi_rows_, roi_cols_, out_data, spatial_scale, sample_num_, roi_end_mode_, channel_, height_,
+             width_, pooled_height_, pooled_width_, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

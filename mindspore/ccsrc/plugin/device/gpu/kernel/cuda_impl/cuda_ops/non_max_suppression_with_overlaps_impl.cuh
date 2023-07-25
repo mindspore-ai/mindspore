@@ -19,20 +19,22 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT int CalSort(const int &inner, int *index_buff, T *score_buff, T *up_score_buff, int *valid_score_num,
-                            T *score_threshold, const uint32_t &device_id, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalSort(const int &inner, int *index_buff, T *score_buff, T *up_score_buff,
+                                    int *valid_score_num, T *score_threshold, const uint32_t &device_id,
+                                    cudaStream_t stream, int *valid_num_host);
 
-CUDA_LIB_EXPORT void CalPreprocess(const int num, bool *sel_boxes, bool *row_mask, const uint32_t &device_id,
+CUDA_LIB_EXPORT cudaError_t CalPreprocess(const int num, bool *sel_boxes, bool *row_mask, const uint32_t &device_id,
+                                          cudaStream_t cuda_stream);
+
+template <typename T>
+CUDA_LIB_EXPORT cudaError_t CalNms(const int num, const int total_num, const T *IOU_value, T *overlaps, bool *sel_boxes,
+                                   bool *row_mask, int *index_buff, const uint32_t &device_id,
                                    cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalNms(const int num, const int total_num, const T *IOU_value, T *overlaps, bool *sel_boxes,
-                            bool *row_mask, int *index_buff, const uint32_t &device_id, cudaStream_t cuda_stream);
-
-template <typename T>
-CUDA_LIB_EXPORT int CalPostprocess(const int inputsize, int *maxoutput_size, int *valid_score_num, T *score_threshold,
-                                   int *index_buff, int *sel_idx, bool *sel_boxes, const uint32_t &device_id,
-                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalPostprocess(const int inputsize, int *maxoutput_size, int *valid_score_num,
+                                           T *score_threshold, int *index_buff, int *sel_idx, bool *sel_boxes,
+                                           const uint32_t &device_id, cudaStream_t cuda_stream, int *num_output_host);
 
 CUDA_LIB_EXPORT int NumRoundUpPower2(int v);
 

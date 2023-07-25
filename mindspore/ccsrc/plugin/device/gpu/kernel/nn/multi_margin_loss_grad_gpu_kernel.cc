@@ -114,8 +114,9 @@ bool MultiMarginLossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     weight = GetDeviceAddress<T>(inputs, kIndex3);
   }
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  MultiMarginLossGrad(p_, margin_, reduction_, nframe_, dim_, output_grad, input, target, weight, output, device_id_,
-                      reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = MultiMarginLossGrad(p_, margin_, reduction_, nframe_, dim_, output_grad, input, target, weight, output,
+                                    device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

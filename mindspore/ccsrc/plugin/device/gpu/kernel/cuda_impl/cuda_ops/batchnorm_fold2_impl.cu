@@ -23,7 +23,6 @@
 #include "batchnorm_fold_impl.cuh"
 #include "include/cuda_runtime.h"
 
-
 template <typename T>
 __global__ void BatchNormFold2Kernel(const T *x, const T *beta, const T *gamma, const T *batch_std, const T *batch_mean,
                                      const T *running_std, const T *running_mean, const int *global_step, T *y,
@@ -101,74 +100,76 @@ __global__ void DxMul(size_t N, size_t C, size_t HW, const T *batch_std, const T
 }
 
 template <typename T>
-void BatchNormFold2Forward(const T *x, const T *beta, const T *gamma, const T *batch_std, const T *batch_mean,
-                           const T *running_std, const T *running_mean, const int *global_step, T *y, int freeze_bn,
-                           size_t N, size_t C, size_t H, size_t W, cudaStream_t cuda_stream) {
+cudaError_t BatchNormFold2Forward(const T *x, const T *beta, const T *gamma, const T *batch_std, const T *batch_mean,
+                                  const T *running_std, const T *running_mean, const int *global_step, T *y,
+                                  int freeze_bn, size_t N, size_t C, size_t H, size_t W, cudaStream_t cuda_stream) {
   auto num_count = N * C * H * W;
   BatchNormFold2Kernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(
     x, beta, gamma, batch_std, batch_mean, running_std, running_mean, global_step, y, freeze_bn, N, C, H, W);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void BatchNormFold2Forward<float>(const float *x, const float *beta, const float *gamma,
-                                                           const float *batch_std, const float *batch_mean,
-                                                           const float *running_std, const float *running_mean,
-                                                           const int *global_step, float *y, int freeze_bn, size_t N,
-                                                           size_t C, size_t H, size_t W, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BatchNormFold2Forward<float>(const float *x, const float *beta, const float *gamma,
+                                                                  const float *batch_std, const float *batch_mean,
+                                                                  const float *running_std, const float *running_mean,
+                                                                  const int *global_step, float *y, int freeze_bn,
+                                                                  size_t N, size_t C, size_t H, size_t W,
+                                                                  cudaStream_t cuda_stream);
 
 template <typename T>
-void BatchNormFold2GradReduce(const T *dout, const T *x, T *d_beta, T *tmp, T *reduce_x, T *tmp2, T *tmp_x, size_t N,
-                              size_t C, size_t H, size_t W, cudaStream_t cuda_stream) {
+cudaError_t BatchNormFold2GradReduce(const T *dout, const T *x, T *d_beta, T *tmp, T *reduce_x, T *tmp2, T *tmp_x,
+                                     size_t N, size_t C, size_t H, size_t W, cudaStream_t cuda_stream) {
   auto hw = H * W;
   auto num_count = N * C * H * W;
   BatchNormFold2GradMul<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(dout, x, tmp_x, num_count);
   BatchNormFold2GradReduce1<<<GET_BLOCKS(N * C), GET_THREADS, 0, cuda_stream>>>(dout, tmp, tmp_x, tmp2, N, C, hw);
   BatchNormFold2GradReduce2<<<GET_BLOCKS(C), GET_THREADS, 0, cuda_stream>>>(tmp, d_beta, tmp2, reduce_x, N, C);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void BatchNormFold2GradReduce<float>(const float *dout, const float *x, float *d_beta,
-                                                              float *tmp, float *reduce_x, float *tmp2, float *tmp_x,
-                                                              size_t N, size_t C, size_t H, size_t W,
-                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BatchNormFold2GradReduce<float>(const float *dout, const float *x, float *d_beta,
+                                                                     float *tmp, float *reduce_x, float *tmp2,
+                                                                     float *tmp_x, size_t N, size_t C, size_t H,
+                                                                     size_t W, cudaStream_t cuda_stream);
 
 template <typename T>
-void CalBatchNormFold2GradNotFreeze(const T *d_beta, const T *reduce_x, const T *batch_mean, const T *batch_std,
-                                    const T *running_mean, const T *running_std, const T *gamma, T *d_gamma,
-                                    T *d_batch_mean, T *d_batch_std, size_t C, cudaStream_t cuda_stream) {
+cudaError_t CalBatchNormFold2GradNotFreeze(const T *d_beta, const T *reduce_x, const T *batch_mean, const T *batch_std,
+                                           const T *running_mean, const T *running_std, const T *gamma, T *d_gamma,
+                                           T *d_batch_mean, T *d_batch_std, size_t C, cudaStream_t cuda_stream) {
   BatchNormFold2GradNotFreeze<<<GET_BLOCKS(C), GET_THREADS, 0, cuda_stream>>>(
     d_beta, reduce_x, batch_mean, batch_std, running_mean, running_std, gamma, d_gamma, d_batch_mean, d_batch_std, C);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBatchNormFold2GradNotFreeze<float>(const float *d_beta, const float *reduce_x,
-                                                                    const float *batch_mean, const float *batch_std,
-                                                                    const float *running_mean, const float *running_std,
-                                                                    const float *gamma, float *d_gamma,
-                                                                    float *d_batch_mean, float *d_batch_std, size_t C,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchNormFold2GradNotFreeze<float>(
+  const float *d_beta, const float *reduce_x, const float *batch_mean, const float *batch_std,
+  const float *running_mean, const float *running_std, const float *gamma, float *d_gamma, float *d_batch_mean,
+  float *d_batch_std, size_t C, cudaStream_t cuda_stream);
 
 template <typename T>
-void CalBatchNormFold2GradFreeze(const T *d_beta, const T *reduce_x, const T *batch_mean, const T *batch_std,
-                                 const T *running_mean, const T *running_std, const T *gamma, T *d_gamma,
-                                 T *d_batch_mean, T *d_batch_std, size_t C, cudaStream_t cuda_stream) {
+cudaError_t CalBatchNormFold2GradFreeze(const T *d_beta, const T *reduce_x, const T *batch_mean, const T *batch_std,
+                                        const T *running_mean, const T *running_std, const T *gamma, T *d_gamma,
+                                        T *d_batch_mean, T *d_batch_std, size_t C, cudaStream_t cuda_stream) {
   BatchNormFold2GradFreeze<<<GET_BLOCKS(C), GET_THREADS, 0, cuda_stream>>>(d_beta, running_mean, running_std, d_gamma,
                                                                            C);
   ThrustFillWith(d_batch_mean, C, (T)0.f, cuda_stream);
   ThrustFillWith(d_batch_std, C, (T)0.f, cuda_stream);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBatchNormFold2GradFreeze<float>(const float *d_beta, const float *reduce_x,
-                                                                 const float *batch_mean, const float *batch_std,
-                                                                 const float *running_mean, const float *running_std,
-                                                                 const float *gamma, float *d_gamma,
-                                                                 float *d_batch_mean, float *d_batch_std, size_t C,
-                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchNormFold2GradFreeze<float>(
+  const float *d_beta, const float *reduce_x, const float *batch_mean, const float *batch_std,
+  const float *running_mean, const float *running_std, const float *gamma, float *d_gamma, float *d_batch_mean,
+  float *d_batch_std, size_t C, cudaStream_t cuda_stream);
 
 template <typename T>
-void CalBatchNormFold2GradNotFreezeDxMul(const T *batch_std, const T *running_std, T *d_x, size_t N, size_t C, size_t H,
-                                         size_t W, cudaStream_t cuda_stream) {
+cudaError_t CalBatchNormFold2GradNotFreezeDxMul(const T *batch_std, const T *running_std, T *d_x, size_t N, size_t C,
+                                                size_t H, size_t W, cudaStream_t cuda_stream) {
   DxMul<<<GET_BLOCKS(N * C * H * W), GET_THREADS, 0, cuda_stream>>>(N, C, H * W, batch_std, running_std, d_x);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBatchNormFold2GradNotFreezeDxMul<float>(const float *batch_std,
-                                                                         const float *running_std, float *d_x,
-                                                                         size_t N, size_t C, size_t H, size_t W,
-                                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchNormFold2GradNotFreezeDxMul<float>(const float *batch_std,
+                                                                                const float *running_std, float *d_x,
+                                                                                size_t N, size_t C, size_t H, size_t W,
+                                                                                cudaStream_t cuda_stream);

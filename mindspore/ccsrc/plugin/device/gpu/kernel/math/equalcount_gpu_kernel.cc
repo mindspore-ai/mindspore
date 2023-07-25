@@ -62,7 +62,8 @@ bool EqualCountGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *input2 = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
   int size = SizeToInt(input_shape_size_);
-  CalEqualCount(size, input1, input2, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalEqualCount(size, input1, input2, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

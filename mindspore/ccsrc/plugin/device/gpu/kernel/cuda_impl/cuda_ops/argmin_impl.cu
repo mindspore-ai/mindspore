@@ -40,7 +40,7 @@ cudaError_t CalArgmin(const T *input, const S bound, const size_t outer_size, co
                       const uint32_t &device_id, cudaStream_t cuda_stream) {
   Argmin<<<CUDA_BLOCKS(device_id, outer_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, bound, outer_size,
                                                                                           inner_size, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalArgmin<double, int>(const double *input, const int bound,

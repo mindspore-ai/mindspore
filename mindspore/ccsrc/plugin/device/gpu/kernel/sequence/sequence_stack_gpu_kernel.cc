@@ -99,8 +99,9 @@ bool SequenceStackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
     cudaMemcpyAsync(inputs_array, inputs_host_.data(), sizeof(T *) * input_num_, cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "SequenceStack opt cudaMemcpyAsync inputs failed");
-  PackKernel(output_size_, input_num_, dims_behind_axis_, inputs_array, output,
-             reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status = PackKernel(output_size_, input_num_, dims_behind_axis_, inputs_array, output,
+                           reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

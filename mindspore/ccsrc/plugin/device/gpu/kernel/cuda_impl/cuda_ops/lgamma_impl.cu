@@ -83,7 +83,8 @@ __global__ void CalLgammaKernel(const T *input, T *output, uint num_of_elements)
 }
 
 template <typename T>
-void CalLgamma(size_t num_count, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalLgamma(size_t num_count, const T *input, T *output, const uint32_t &device_id,
+                      cudaStream_t cuda_stream) {
   constexpr uint vec_size = cuda::elementwise::VecSize<T>();
   const auto block_x = uint(kThreadsPerBlock);
   const uint elements_per_block = kThreadsPerBlock * vec_size;
@@ -91,11 +92,12 @@ void CalLgamma(size_t num_count, const T *input, T *output, const uint32_t &devi
   dim3 block{block_x};
   dim3 grid{grid_x};
   CalLgammaKernel<vec_size, T><<<grid, block, 0, cuda_stream>>>(input, output, num_count);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalLgamma(size_t num_count, const double *input, double *output,
-                                        const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLgamma(size_t num_count, const float *input, float *output, const uint32_t &device_id,
-                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLgamma(size_t num_count, const half *input, half *output, const uint32_t &device_id,
-                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLgamma(size_t num_count, const double *input, double *output,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLgamma(size_t num_count, const float *input, float *output,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLgamma(size_t num_count, const half *input, half *output,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);

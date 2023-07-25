@@ -21,6 +21,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalSelect(const bool *cond, const T *input_x, const T *input_y, T *output, const size_t count,
-                               cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSelect(const bool *cond, const T *input_x, const T *input_y, T *output,
+                                      const size_t count, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ELEMENTWISE_OP_IMPL_CUH_

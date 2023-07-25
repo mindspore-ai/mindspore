@@ -25,11 +25,12 @@ __global__ void DataFormatDimMapKernel(size_t size, T *input_addr, T *output_add
 }
 
 template <typename T>
-void DataFormatDimMap(size_t size, T *input_addr, T *output_addr, int32_t *dim_map, cudaStream_t cuda_stream) {
+cudaError_t DataFormatDimMap(size_t size, T *input_addr, T *output_addr, int32_t *dim_map, cudaStream_t cuda_stream) {
   DataFormatDimMapKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr, dim_map);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void DataFormatDimMap(size_t size, int32_t *input_addr, int32_t *output_addr, int32_t *dim_map,
-                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DataFormatDimMap(size_t size, int64_t *input_addr, int64_t *output_addr, int32_t *dim_map,
-                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DataFormatDimMap(size_t size, int32_t *input_addr, int32_t *output_addr,
+                                                      int32_t *dim_map, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DataFormatDimMap(size_t size, int64_t *input_addr, int64_t *output_addr,
+                                                      int32_t *dim_map, cudaStream_t cuda_stream);

@@ -17,7 +17,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/compare_and_bitpack_impl.cuh"
 #include <limits>
 
-
 template <typename T>
 __global__ void CompareAndBitpack(const T *x, const T *threshold, uint8_t *output, const size_t output_num) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_num; pos += blockDim.x * gridDim.x) {
@@ -36,8 +35,8 @@ __global__ void CompareAndBitpack(const T *x, const T *threshold, uint8_t *outpu
 }
 
 template <>
-__global__ void CompareAndBitpack<bool>(const bool *x, const bool *threshold,
-                                        uint8_t *output, const size_t output_num) {
+__global__ void CompareAndBitpack<bool>(const bool *x, const bool *threshold, uint8_t *output,
+                                        const size_t output_num) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_num; pos += blockDim.x * gridDim.x) {
     uint8_t res;
     res = x[8 * pos] << 7;
@@ -54,34 +53,34 @@ __global__ void CompareAndBitpack<bool>(const bool *x, const bool *threshold,
 }
 
 template <typename T>
-void CalCompareAndBitpack(const T *x, const T *threshold, uint8_t *output, const size_t output_num,
-                          const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalCompareAndBitpack(const T *x, const T *threshold, uint8_t *output, const size_t output_num,
+                                 const uint32_t &device_id, cudaStream_t cuda_stream) {
   CompareAndBitpack<<<CUDA_BLOCKS(device_id, output_num), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     x, threshold, output, output_num);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalCompareAndBitpack<half>(
-  const half *x, const half *threshold, uint8_t *output, const size_t output_num,
-  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCompareAndBitpack<float>(
-  const float *x, const float *threshold, uint8_t *output, const size_t output_num,
-  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCompareAndBitpack<double>(
-  const double *x, const double *threshold, uint8_t *output, const size_t output_num,
-  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCompareAndBitpack<int8_t>(
-  const int8_t *x, const int8_t *threshold, uint8_t *output, const size_t output_num,
-  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCompareAndBitpack<int16_t>(
-  const int16_t *x, const int16_t *threshold, uint8_t *output, const size_t output_num,
-  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCompareAndBitpack<int32_t>(
-  const int32_t *x, const int32_t *threshold, uint8_t *output, const size_t output_num,
-  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCompareAndBitpack<int64_t>(
-  const int64_t *x, const int64_t *threshold, uint8_t *output, const size_t output_num,
-  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCompareAndBitpack<bool>(
-  const bool *x, const bool *threshold, uint8_t *output, const size_t output_num,
-  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCompareAndBitpack<half>(const half *x, const half *threshold, uint8_t *output,
+                                                                const size_t output_num, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCompareAndBitpack<float>(const float *x, const float *threshold,
+                                                                 uint8_t *output, const size_t output_num,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCompareAndBitpack<double>(const double *x, const double *threshold,
+                                                                  uint8_t *output, const size_t output_num,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCompareAndBitpack<int8_t>(const int8_t *x, const int8_t *threshold,
+                                                                  uint8_t *output, const size_t output_num,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCompareAndBitpack<int16_t>(const int16_t *x, const int16_t *threshold,
+                                                                   uint8_t *output, const size_t output_num,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCompareAndBitpack<int32_t>(const int32_t *x, const int32_t *threshold,
+                                                                   uint8_t *output, const size_t output_num,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCompareAndBitpack<int64_t>(const int64_t *x, const int64_t *threshold,
+                                                                   uint8_t *output, const size_t output_num,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCompareAndBitpack<bool>(const bool *x, const bool *threshold, uint8_t *output,
+                                                                const size_t output_num, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);

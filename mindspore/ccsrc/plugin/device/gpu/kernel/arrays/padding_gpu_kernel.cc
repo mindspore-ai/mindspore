@@ -87,8 +87,9 @@ bool PaddingGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemsetAsync(output_ptr, 0, output_element_num_ * sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'Padding', it's cudaMemsetAsync failed.");
-  CalculatePadding(input_ptr, output_outer_size_, pad_dim_size_, output_ptr, device_id_,
-                   reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalculatePadding(input_ptr, output_outer_size_, pad_dim_size_, output_ptr, device_id_,
+                                 reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

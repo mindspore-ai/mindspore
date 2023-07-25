@@ -75,7 +75,9 @@ bool CheckValidGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     return false;
   }
   const size_t size = block_size / coordinate;
-  CheckValid(size, anchor_boxes_addr, img_metas_addr, valid_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    CheckValid(size, anchor_boxes_addr, img_metas_addr, valid_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

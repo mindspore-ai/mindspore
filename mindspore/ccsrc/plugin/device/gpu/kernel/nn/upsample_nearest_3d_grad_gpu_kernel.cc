@@ -95,7 +95,7 @@ bool UpsampleNearest3DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPt
 
   auto status = CalUpsampleNearest3DGrad(dy, n_, c_, dy_d_, dy_h_, dy_w_, dx_d_, dx_h_, dx_w_, d_scale, h_scale,
                                          w_scale, dx, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

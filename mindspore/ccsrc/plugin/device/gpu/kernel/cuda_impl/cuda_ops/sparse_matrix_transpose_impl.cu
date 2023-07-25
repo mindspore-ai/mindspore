@@ -33,13 +33,15 @@ __global__ void ConjKernel(const size_t input_size, cuDoubleComplex *input_addr)
   }
 }
 
-void Conj(const size_t input_size, cuComplex *input_addr, cudaStream_t stream) {
+cudaError_t Conj(const size_t input_size, cuComplex *input_addr, cudaStream_t stream) {
   ConjKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, input_addr);
+  return GetCudaStatus();
 }
 
-void Conj(const size_t input_size, cuDoubleComplex *input_addr, cudaStream_t stream) {
+cudaError_t Conj(const size_t input_size, cuDoubleComplex *input_addr, cudaStream_t stream) {
   ConjKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, input_addr);
+  return GetCudaStatus();
 }
 
-CUDA_LIB_EXPORT void Conj(const size_t input_size, cuComplex *input_addr, cudaStream_t stream);
-CUDA_LIB_EXPORT void Conj(const size_t input_size, cuDoubleComplex *input_addr, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t Conj(const size_t input_size, cuComplex *input_addr, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t Conj(const size_t input_size, cuDoubleComplex *input_addr, cudaStream_t stream);

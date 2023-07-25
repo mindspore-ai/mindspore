@@ -56,41 +56,43 @@ __global__ void HSwishGradKernel(size_t size, const T *dout, const T *x, T *outp
 }
 
 template <typename T>
-void CalHSwish(const size_t &size, const T *input, T *output, cudaStream_t cuda_stream) {
+cudaError_t CalHSwish(const size_t &size, const T *input, T *output, cudaStream_t cuda_stream) {
   HSwishKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalHSwishGrad(const size_t &size, const T *dout, const T *x, T *output, cudaStream_t cuda_stream) {
+cudaError_t CalHSwishGrad(const size_t &size, const T *dout, const T *x, T *output, cudaStream_t cuda_stream) {
   HSwishGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dout, x, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalHSwish<int8_t>(const size_t &size, const int8_t *input, int8_t *output,
-                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwish<int16_t>(const size_t &size, const int16_t *input, int16_t *output,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwish<int32_t>(const size_t &size, const int32_t *input, int32_t *output,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwish<int64_t>(const size_t &size, const int64_t *input, int64_t *output,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwish<half>(const size_t &size, const half *input, half *output,
-                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwish<float>(const size_t &size, const float *input, float *output,
-                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwish<double>(const size_t &size, const double *input, double *output,
-                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwish<int8_t>(const size_t &size, const int8_t *input, int8_t *output,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwish<int16_t>(const size_t &size, const int16_t *input, int16_t *output,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwish<int32_t>(const size_t &size, const int32_t *input, int32_t *output,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwish<int64_t>(const size_t &size, const int64_t *input, int64_t *output,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwish<half>(const size_t &size, const half *input, half *output,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwish<float>(const size_t &size, const float *input, float *output,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwish<double>(const size_t &size, const double *input, double *output,
+                                                       cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalHSwishGrad<int8_t>(const size_t &size, const int8_t *dout, const int8_t *x,
-                                                    int8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwishGrad<int16_t>(const size_t &size, const int16_t *dout, const int16_t *x,
-                                                     int16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwishGrad<int32_t>(const size_t &size, const int32_t *dout, const int32_t *x,
-                                                     int32_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwishGrad<int64_t>(const size_t &size, const int64_t *dout, const int64_t *x,
-                                                     int64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwishGrad<half>(const size_t &size, const half *dout, const half *x, half *output,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwishGrad<float>(const size_t &size, const float *dout, const float *x, float *output,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSwishGrad<double>(const size_t &size, const double *dout, const double *x,
-                                                    double *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwishGrad<int8_t>(const size_t &size, const int8_t *dout, const int8_t *x,
+                                                           int8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwishGrad<int16_t>(const size_t &size, const int16_t *dout, const int16_t *x,
+                                                            int16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwishGrad<int32_t>(const size_t &size, const int32_t *dout, const int32_t *x,
+                                                            int32_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwishGrad<int64_t>(const size_t &size, const int64_t *dout, const int64_t *x,
+                                                            int64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwishGrad<half>(const size_t &size, const half *dout, const half *x,
+                                                         half *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwishGrad<float>(const size_t &size, const float *dout, const float *x,
+                                                          float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSwishGrad<double>(const size_t &size, const double *dout, const double *x,
+                                                           double *output, cudaStream_t cuda_stream);

@@ -69,7 +69,9 @@ bool TraceGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     "cudaMemcpyAsync input_shape failed");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - TraceGrad");
   S threads_num = input_shape_ptr[0] * input_shape_ptr[1];
-  CalTraceGrad(threads_num, y_grad, input_shape, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    CalTraceGrad(threads_num, y_grad, input_shape, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

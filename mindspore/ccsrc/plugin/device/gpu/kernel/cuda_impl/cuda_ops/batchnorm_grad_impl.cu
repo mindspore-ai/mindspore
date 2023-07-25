@@ -106,18 +106,19 @@ __global__ void BatchNormGradKernel(T *x_input, T *dy, float *scale, float *save
 }
 
 template <typename T>
-void CalBatchNormGrad(T *x, T *dy, float *scale, float *save_mean, float *save_variance, T *dx, float *bn_scale,
-                      float *bn_bias, double epsilon, int N, int C, int H, int W, cudaStream_t cuda_stream) {
+cudaError_t CalBatchNormGrad(T *x, T *dy, float *scale, float *save_mean, float *save_variance, T *dx, float *bn_scale,
+                             float *bn_bias, double epsilon, int N, int C, int H, int W, cudaStream_t cuda_stream) {
   BatchNormGradKernel<<<C, kBlockSize, 0, cuda_stream>>>(x, dy, scale, save_mean, save_variance, dx, bn_scale, bn_bias,
                                                          epsilon, N, C, H, W);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBatchNormGrad<float>(float *x, float *dy, float *scale, float *save_mean,
-                                                      float *save_variance, float *dx, float *bn_scale, float *bn_bias,
-                                                      double epsilon, int N, int C, int H, int W,
-                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchNormGrad<float>(float *x, float *dy, float *scale, float *save_mean,
+                                                             float *save_variance, float *dx, float *bn_scale,
+                                                             float *bn_bias, double epsilon, int N, int C, int H, int W,
+                                                             cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalBatchNormGrad<half>(half *x, half *dy, float *scale, float *save_mean,
-                                                     float *save_variance, half *dx, float *bn_scale, float *bn_bias,
-                                                     double epsilon, int N, int C, int H, int W,
-                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchNormGrad<half>(half *x, half *dy, float *scale, float *save_mean,
+                                                            float *save_variance, half *dx, float *bn_scale,
+                                                            float *bn_bias, double epsilon, int N, int C, int H, int W,
+                                                            cudaStream_t cuda_stream);

@@ -51,8 +51,7 @@ cudaError_t Gather(const T *input, const S *index, T *output, const size_t dim_b
   size_t size = dim_before_axis * dim_at_axis_output * dim_after_axis;
   GatherKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream>>>(
     input, index, output, dim_before_axis, dim_at_axis_input, dim_at_axis_output, dim_after_axis);
-  CHECK_CUDA_LAUNCH_SUCCESS();
-  return cudaSuccess;
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t Gather<Complex<double>, int>(const Complex<double> *input, const int *index,

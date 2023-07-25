@@ -78,9 +78,9 @@ bool MinMaxUpdatePerLayerGpuKernelMod::Launch(const std::vector<AddressPtr> &inp
   float *input_min = GetDeviceAddress<float>(inputs, kIndex1);
   float *input_max = GetDeviceAddress<float>(inputs, kIndex2);
 
-  CalMinMaxPerLayer(input, input_min, input_max, output_min, output_max, quant_num_, ema_decay_, ema_,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
-
+  auto status = CalMinMaxPerLayer(input, input_min, input_max, output_min, output_max, quant_num_, ema_decay_, ema_,
+                                  reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

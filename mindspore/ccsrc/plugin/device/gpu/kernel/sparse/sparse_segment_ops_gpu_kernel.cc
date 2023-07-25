@@ -157,8 +157,10 @@ bool SparseSegmentOpsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices out of range of x's first shape.";
     }
   }
-  CalSparseSegmentCombination(kernel_type_, x_ptr, indices_ptr, segment_ids_ptr, segment_pos_ptr, outer_size_,
-                              inner_size_, idx_seg_elements_, output_dim0_, y_ptr, device_id_, stream);
+  auto status =
+    CalSparseSegmentCombination(kernel_type_, x_ptr, indices_ptr, segment_ids_ptr, segment_pos_ptr, outer_size_,
+                                inner_size_, idx_seg_elements_, output_dim0_, y_ptr, device_id_, stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

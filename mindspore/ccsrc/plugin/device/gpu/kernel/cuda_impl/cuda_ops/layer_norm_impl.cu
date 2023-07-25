@@ -209,8 +209,8 @@ __global__ void TiledLayerNormKernel(const int row_dim, const int col_dim, const
 }
 
 template <typename T>
-void LayerNorm(const int row_dim, const int col_dim, const int param_dim, const float epsilon, const T *x,
-               const T *gamma, const T *beta, T *y, float *mean, float *var, cudaStream_t stream) {
+cudaError_t LayerNorm(const int row_dim, const int col_dim, const int param_dim, const float epsilon, const T *x,
+                      const T *gamma, const T *beta, T *y, float *mean, float *var, cudaStream_t stream) {
   const int thread_per_block = 256;
   // keep the mean/var/num after warp reduce
   int share_mem_size = thread_per_block / WARP_SIZE * 3 * sizeof(float);
@@ -221,14 +221,17 @@ void LayerNorm(const int row_dim, const int col_dim, const int param_dim, const 
     LayerNormKernel<<<row_dim, thread_per_block, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, x,
                                                                            gamma, beta, y, mean, var);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void LayerNorm(const int row_dim, const int col_dim, const int param_dim, const float epsilon,
-                                        const float *x, const float *gamma, const float *beta, float *y, float *mean,
-                                        float *var, cudaStream_t stream);
-template CUDA_LIB_EXPORT void LayerNorm(const int row_dim, const int col_dim, const int param_dim, const float epsilon,
-                                        const half *x, const half *gamma, const half *beta, half *y, float *mean,
-                                        float *var, cudaStream_t stream);
-template CUDA_LIB_EXPORT void LayerNorm(const int row_dim, const int col_dim, const int param_dim, const float epsilon,
-                                        const double *x, const double *gamma, const double *beta, double *y,
-                                        float *mean, float *var, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t LayerNorm(const int row_dim, const int col_dim, const int param_dim,
+                                               const float epsilon, const float *x, const float *gamma,
+                                               const float *beta, float *y, float *mean, float *var,
+                                               cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t LayerNorm(const int row_dim, const int col_dim, const int param_dim,
+                                               const float epsilon, const half *x, const half *gamma, const half *beta,
+                                               half *y, float *mean, float *var, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t LayerNorm(const int row_dim, const int col_dim, const int param_dim,
+                                               const float epsilon, const double *x, const double *gamma,
+                                               const double *beta, double *y, float *mean, float *var,
+                                               cudaStream_t stream);

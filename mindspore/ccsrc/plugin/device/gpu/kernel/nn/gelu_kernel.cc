@@ -35,8 +35,9 @@ bool GeLUGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  Gelu(static_cast<size_t>(input_elements_), input_addr, output_addr, reinterpret_cast<cudaStream_t>(cuda_stream_),
-       GET_CTX_DEVICE_ID);
+  auto status = Gelu(static_cast<size_t>(input_elements_), input_addr, output_addr,
+                     reinterpret_cast<cudaStream_t>(cuda_stream_), GET_CTX_DEVICE_ID);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

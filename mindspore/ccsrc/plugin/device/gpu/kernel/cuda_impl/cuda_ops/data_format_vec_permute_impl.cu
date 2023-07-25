@@ -31,36 +31,38 @@ __global__ void DataFormatVecPermuteKernel2D(const size_t size, const T *input, 
     int32_t dim = static_cast<int32_t>(2);
     int32_t i = static_cast<int32_t>(pos) / dim;
     output[dim * i] = input[dim * index[i]];
-    output[dim * i + 1] = input[dim * index[i]+1];
+    output[dim * i + 1] = input[dim * index[i] + 1];
   }
   return;
 }
 
 template <typename T>
-void CalDataFormatVecPermute1D(const size_t size, const T *input, T *output, int32_t *index, const uint32_t &device_id,
-                               cudaStream_t cuda_stream) {
-  DataFormatVecPermuteKernel1D<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input,
-                                                                                                          output,
-                                                                                                          index);
+cudaError_t CalDataFormatVecPermute1D(const size_t size, const T *input, T *output, int32_t *index,
+                                      const uint32_t &device_id, cudaStream_t cuda_stream) {
+  DataFormatVecPermuteKernel1D<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, input, output, index);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalDataFormatVecPermute2D(const size_t size, const T *input, T *output, int32_t *index, const uint32_t &device_id,
-                               cudaStream_t cuda_stream) {
-  DataFormatVecPermuteKernel2D<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input,
-                                                                                                          output,
-                                                                                                          index);
+cudaError_t CalDataFormatVecPermute2D(const size_t size, const T *input, T *output, int32_t *index,
+                                      const uint32_t &device_id, cudaStream_t cuda_stream) {
+  DataFormatVecPermuteKernel2D<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, input, output, index);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalDataFormatVecPermute1D<int>(const size_t size, const int *input, int *output,
-                                                             int32_t *index, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDataFormatVecPermute1D<int64_t>(const size_t size, const int64_t *input,
-                                                                 int64_t *output, int32_t *index,
-                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDataFormatVecPermute2D<int>(const size_t size, const int *input, int *output,
-                                                             int32_t *index, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDataFormatVecPermute2D<int64_t>(const size_t size, const int64_t *input,
-                                                                 int64_t *output, int32_t *index,
-                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDataFormatVecPermute1D<int>(const size_t size, const int *input, int *output,
+                                                                    int32_t *index, const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDataFormatVecPermute1D<int64_t>(const size_t size, const int64_t *input,
+                                                                        int64_t *output, int32_t *index,
+                                                                        const uint32_t &device_id,
+                                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDataFormatVecPermute2D<int>(const size_t size, const int *input, int *output,
+                                                                    int32_t *index, const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDataFormatVecPermute2D<int64_t>(const size_t size, const int64_t *input,
+                                                                        int64_t *output, int32_t *index,
+                                                                        const uint32_t &device_id,
+                                                                        cudaStream_t cuda_stream);

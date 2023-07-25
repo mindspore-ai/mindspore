@@ -52,7 +52,7 @@ __global__ void ValidateInputAndInferShape(const T *range_start, const T *range_
     }
 
     if (real_output_shape > max_output_size) {
-        *error_code = DynamicRangeErrorCode::kMaxSizeExceeded;
+      *error_code = DynamicRangeErrorCode::kMaxSizeExceeded;
     }
     *output_shape = real_output_shape;
   }
@@ -71,54 +71,50 @@ __global__ void Range(const T *range_start, const T *range_end, const T *range_d
 }
 
 template <typename T>
-void CudaValidateInputAndInferShape(const T *range_start, const T *range_end, const T *range_delta,
-                                    int64_t *output_shape, DynamicRangeErrorCode *error_code,
-                                    const int64_t max_output_size, cudaStream_t cuda_stream) {
+cudaError_t CudaValidateInputAndInferShape(const T *range_start, const T *range_end, const T *range_delta,
+                                           int64_t *output_shape, DynamicRangeErrorCode *error_code,
+                                           const int64_t max_output_size, cudaStream_t cuda_stream) {
   ValidateInputAndInferShape<<<1, 1, 0, cuda_stream>>>(range_start, range_end, range_delta, output_shape, error_code,
                                                        max_output_size);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalRange(const T *range_start, const T *range_end, const T *range_delta, T *output, int64_t *output_shape,
-              DynamicRangeErrorCode *error_code, const int64_t max_output_size, cudaStream_t cuda_stream) {
-  Range<<<GET_BLOCKS(max_output_size), GET_THREADS, 0, cuda_stream>>>(range_start, range_end, range_delta,
-                                                                             output, output_shape, max_output_size);
+cudaError_t CalRange(const T *range_start, const T *range_end, const T *range_delta, T *output, int64_t *output_shape,
+                     DynamicRangeErrorCode *error_code, const int64_t max_output_size, cudaStream_t cuda_stream) {
+  Range<<<GET_BLOCKS(max_output_size), GET_THREADS, 0, cuda_stream>>>(range_start, range_end, range_delta, output,
+                                                                      output_shape, max_output_size);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CudaValidateInputAndInferShape<int>(const int *range_start, const int *range_end,
-                                                                  const int *range_delta, int64_t *output_shape,
-                                                                  DynamicRangeErrorCode *error_code,
-                                                                  const int64_t max_output_size,
-                                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaValidateInputAndInferShape<int64_t>(const int64_t *range_start,
-                                                                      const int64_t *range_end,
-                                                                      const int64_t *range_delta, int64_t *output_shape,
-                                                                      DynamicRangeErrorCode *error_code,
-                                                                      const int64_t max_output_size,
-                                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaValidateInputAndInferShape<float>(const float *range_start, const float *range_end,
-                                                                    const float *range_delta, int64_t *output_shape,
-                                                                    DynamicRangeErrorCode *error_code,
-                                                                    const int64_t max_output_size,
-                                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaValidateInputAndInferShape<double>(const double *range_start, const double *range_end,
-                                                                     const double *range_delta, int64_t *output_shape,
-                                                                     DynamicRangeErrorCode *error_code,
-                                                                     const int64_t max_output_size,
-                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaValidateInputAndInferShape<int>(const int *range_start, const int *range_end,
+                                                                         const int *range_delta, int64_t *output_shape,
+                                                                         DynamicRangeErrorCode *error_code,
+                                                                         const int64_t max_output_size,
+                                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaValidateInputAndInferShape<int64_t>(
+  const int64_t *range_start, const int64_t *range_end, const int64_t *range_delta, int64_t *output_shape,
+  DynamicRangeErrorCode *error_code, const int64_t max_output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaValidateInputAndInferShape<float>(
+  const float *range_start, const float *range_end, const float *range_delta, int64_t *output_shape,
+  DynamicRangeErrorCode *error_code, const int64_t max_output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaValidateInputAndInferShape<double>(
+  const double *range_start, const double *range_end, const double *range_delta, int64_t *output_shape,
+  DynamicRangeErrorCode *error_code, const int64_t max_output_size, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalRange<int>(const int *range_start, const int *range_end, const int *range_delta,
-                                            int *output, int64_t *output_shape, DynamicRangeErrorCode *error_code,
-                                            const int64_t max_output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalRange<int64_t>(const int64_t *range_start, const int64_t *range_end,
-                                                const int64_t *range_delta, int64_t *output, int64_t *output_shape,
-                                                DynamicRangeErrorCode *error_code, const int64_t max_output_size,
-                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalRange<float>(const float *range_start, const float *range_end,
-                                              const float *range_delta, float *output, int64_t *output_shape,
-                                              DynamicRangeErrorCode *error_code, const int64_t max_output_size,
-                                              cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalRange<double>(const double *range_start, const double *range_end,
-                                               const double *range_delta, double *output, int64_t *output_shape,
-                                               DynamicRangeErrorCode *error_code, const int64_t max_output_size,
-                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRange<int>(const int *range_start, const int *range_end, const int *range_delta,
+                                                   int *output, int64_t *output_shape,
+                                                   DynamicRangeErrorCode *error_code, const int64_t max_output_size,
+                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRange<int64_t>(const int64_t *range_start, const int64_t *range_end,
+                                                       const int64_t *range_delta, int64_t *output,
+                                                       int64_t *output_shape, DynamicRangeErrorCode *error_code,
+                                                       const int64_t max_output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRange<float>(const float *range_start, const float *range_end,
+                                                     const float *range_delta, float *output, int64_t *output_shape,
+                                                     DynamicRangeErrorCode *error_code, const int64_t max_output_size,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRange<double>(const double *range_start, const double *range_end,
+                                                      const double *range_delta, double *output, int64_t *output_shape,
+                                                      DynamicRangeErrorCode *error_code, const int64_t max_output_size,
+                                                      cudaStream_t cuda_stream);

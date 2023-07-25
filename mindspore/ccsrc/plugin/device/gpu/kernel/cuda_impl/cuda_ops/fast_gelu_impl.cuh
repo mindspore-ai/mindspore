@@ -18,9 +18,10 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FAST_GELU_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void FastGelu(size_t input_size, T *input_addr, T *output_addr, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t FastGelu(size_t input_size, T *input_addr, T *output_addr, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void FastGeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t FastGeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr,
+                                               cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FAST_GELU_IMPL_CUH_

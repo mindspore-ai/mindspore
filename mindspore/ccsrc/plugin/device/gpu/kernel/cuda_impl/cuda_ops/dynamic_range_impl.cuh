@@ -28,13 +28,14 @@ enum class DynamicRangeErrorCode {
 };
 
 template <typename T>
-CUDA_LIB_EXPORT void CudaValidateInputAndInferShape(const T *range_start, const T *range_end, const T *range_delta,
-                                                    int64_t *output_shape, DynamicRangeErrorCode *error_code,
-                                                    const int64_t max_output_size, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CudaValidateInputAndInferShape(const T *range_start, const T *range_end,
+                                                           const T *range_delta, int64_t *output_shape,
+                                                           DynamicRangeErrorCode *error_code,
+                                                           const int64_t max_output_size, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalRange(const T *range_start, const T *range_end, const T *range_delta, T *output,
-                              int64_t *output_shape, DynamicRangeErrorCode *error_code, const int64_t max_output_size,
-                              cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalRange(const T *range_start, const T *range_end, const T *range_delta, T *output,
+                                     int64_t *output_shape, DynamicRangeErrorCode *error_code,
+                                     const int64_t max_output_size, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DYNAMIC_RANGE_IMPL_CUH_

@@ -93,10 +93,11 @@ __global__ void PSROIPoolBackwardV2(const int nthreads, T *input_diff, const T s
 }
 
 template <typename T>
-void PSROIPoolBackwardV2Launcher(T *input_diff, const int batch_size, const int output_n, const T spatial_scale,
-                                 const int feature_channels, const int feature_height, const int feature_width,
-                                 const int pooled_width, const int pooled_height, const int output_channels,
-                                 T *output_diff, T *roi_boxes, cudaStream_t stream, int rois_num, int group_size) {
+cudaError_t PSROIPoolBackwardV2Launcher(T *input_diff, const int batch_size, const int output_n, const T spatial_scale,
+                                        const int feature_channels, const int feature_height, const int feature_width,
+                                        const int pooled_width, const int pooled_height, const int output_channels,
+                                        T *output_diff, T *roi_boxes, cudaStream_t stream, int rois_num,
+                                        int group_size) {
   size_t size_init = batch_size * feature_channels * feature_height * feature_width;
   PSROIPoolInitKernel<<<GET_BLOCKS(size_init), GET_THREADS, 0, stream>>>(size_init, output_diff);
 
@@ -113,14 +114,15 @@ void PSROIPoolBackwardV2Launcher(T *input_diff, const int batch_size, const int 
     fprintf(stderr, "cudaCheckError() failed : %s\n", cudaGetErrorString(err));
     exit(-1);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void PSROIPoolBackwardV2Launcher<float>(
+template CUDA_LIB_EXPORT cudaError_t PSROIPoolBackwardV2Launcher<float>(
   float *input_diff, const int batch_size, const int output_n, const float spatial_scale, const int feature_channels,
   const int feature_height, const int feature_width, const int pooled_width, const int pooled_height,
   const int output_channels, float *output_diff, float *roi_boxes, cudaStream_t stream, int rois_num, int group_size);
 
-template CUDA_LIB_EXPORT void PSROIPoolBackwardV2Launcher<half>(
+template CUDA_LIB_EXPORT cudaError_t PSROIPoolBackwardV2Launcher<half>(
   half *input_diff, const int batch_size, const int output_n, const half spatial_scale, const int feature_channels,
   const int feature_height, const int feature_width, const int pooled_width, const int pooled_height,
   const int output_channels, half *output_diff, half *roi_boxes, cudaStream_t stream, int rois_num, int group_size);

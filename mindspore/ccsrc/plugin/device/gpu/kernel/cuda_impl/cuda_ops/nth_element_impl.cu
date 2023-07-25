@@ -166,8 +166,8 @@ __global__ void NthElement(const size_t slices_number, const size_t slice_size, 
 }
 
 template <typename T>
-void CalNthElement(const size_t slices_number, const size_t slice_size, T *input, int32_t input_n, T *output,
-                   bool reverse, const uint32_t &device_id, cudaStream_t stream) {
+cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, T *input, int32_t input_n, T *output,
+                          bool reverse, const uint32_t &device_id, cudaStream_t stream) {
   dim3 grid = getGrid(slices_number);
   dim3 block(std::min(RoundUp((int64_t)slice_size, (int64_t)kWarpSize), (int64_t)1024));
   if (std::is_same<T, double>::value || std::is_same<T, int64_t>::value || std::is_same<T, uint64_t>::value) {
@@ -175,36 +175,36 @@ void CalNthElement(const size_t slices_number, const size_t slice_size, T *input
   } else {
     NthElement<T, uint32_t><<<grid, block, 0, stream>>>(slices_number, slice_size, input, output, input_n, reverse);
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, half *input,
-                                            int32_t input_n, half *output, bool reverse, const uint32_t &device_id,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, float *input,
-                                            int32_t input_n, float *output, bool reverse, const uint32_t &device_id,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, int8_t *input,
-                                            int32_t input_n, int8_t *output, bool reverse, const uint32_t &device_id,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, uint16_t *input,
-                                            int32_t input_n, uint16_t *output, bool reverse, const uint32_t &device_id,
-                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, half *input,
+                                                   int32_t input_n, half *output, bool reverse,
+                                                   const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, float *input,
+                                                   int32_t input_n, float *output, bool reverse,
+                                                   const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, int8_t *input,
+                                                   int32_t input_n, int8_t *output, bool reverse,
+                                                   const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, uint16_t *input,
+                                                   int32_t input_n, uint16_t *output, bool reverse,
+                                                   const uint32_t &device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, int16_t *input,
-                                            int32_t input_n, int16_t *output, bool reverse, const uint32_t &device_id,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, uint8_t *input,
-                                            int32_t input_n, uint8_t *output, bool reverse, const uint32_t &device_id,
-                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, int16_t *input,
+                                                   int32_t input_n, int16_t *output, bool reverse,
+                                                   const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, uint8_t *input,
+                                                   int32_t input_n, uint8_t *output, bool reverse,
+                                                   const uint32_t &device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, int32_t *input,
-                                            int32_t input_n, int32_t *output, bool reverse, const uint32_t &device_id,
-                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, int32_t *input,
+                                                   int32_t input_n, int32_t *output, bool reverse,
+                                                   const uint32_t &device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, int64_t *input,
-                                            int32_t input_n, int64_t *output, bool reverse, const uint32_t &device_id,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, double *input,
-                                            int32_t input_n, double *output, bool reverse, const uint32_t &device_id,
-                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, int64_t *input,
+                                                   int32_t input_n, int64_t *output, bool reverse,
+                                                   const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, double *input,
+                                                   int32_t input_n, double *output, bool reverse,
+                                                   const uint32_t &device_id, cudaStream_t stream);

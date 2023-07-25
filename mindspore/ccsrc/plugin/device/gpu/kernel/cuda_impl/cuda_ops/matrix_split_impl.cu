@@ -52,8 +52,8 @@ __global__ void MatrixSplitKernel(const size_t size, const size_t split_dim, con
 }
 
 template <typename T>
-void MatrixSplit(const size_t size, const size_t split_dim, const size_t dim, T *input_addr, T *output_addr,
-                 cudaStream_t cuda_stream) {
+cudaError_t MatrixSplit(const size_t size, const size_t split_dim, const size_t dim, T *input_addr, T *output_addr,
+                        cudaStream_t cuda_stream) {
   size_t batch = dim / split_dim;
   size_t res_dim = dim - batch * split_dim;
   if (res_dim == 0) {
@@ -62,11 +62,13 @@ void MatrixSplit(const size_t size, const size_t split_dim, const size_t dim, T 
     MatrixSplitKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, split_dim, dim, res_dim, input_addr,
                                                                          output_addr);
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void MatrixSplit<float>(const size_t size, const size_t split_dim, const size_t dim,
-                                                 float *input_addr, float *output_addr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixSplit<float>(const size_t size, const size_t split_dim, const size_t dim,
+                                                        float *input_addr, float *output_addr,
+                                                        cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixSplit<double>(const size_t size, const size_t split_dim, const size_t dim,
-                                                  double *input_addr, double *output_addr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixSplit<double>(const size_t size, const size_t split_dim, const size_t dim,
+                                                         double *input_addr, double *output_addr,
+                                                         cudaStream_t cuda_stream);

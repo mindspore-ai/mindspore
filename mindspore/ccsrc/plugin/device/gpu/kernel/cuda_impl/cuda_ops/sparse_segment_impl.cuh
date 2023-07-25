@@ -21,9 +21,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename R, typename S>
-CUDA_LIB_EXPORT bool CalSparseSegmentCombination(const std::string kernel_type, const R *x_ptr, const S *indices_ptr,
-                                                 const S *segment_ids_ptr, size_t *segment_pos_ptr, size_t outer_size,
-                                                 size_t inner_size, size_t indices_size, size_t output_dim0, R *y_ptr,
-                                                 uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseSegmentCombination(const std::string kernel_type, const R *x_ptr,
+                                                        const S *indices_ptr, const S *segment_ids_ptr,
+                                                        size_t *segment_pos_ptr, size_t outer_size, size_t inner_size,
+                                                        size_t indices_size, size_t output_dim0, R *y_ptr,
+                                                        uint32_t device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_SEGMENT_IMPL_CUH_

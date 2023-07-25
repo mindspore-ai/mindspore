@@ -21,6 +21,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-void CalHistogramFixedWidth(int num_samples, const T *d_samples, const double *d_levels, int32_t *d_histogram,
-                            int64_t num_levels, cudaStream_t cuda_stream);
+cudaError_t CalHistogramFixedWidth(int num_samples, const T *d_samples, const double *d_levels, int32_t *d_histogram,
+                                   int64_t num_levels, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_HISTOGRAM_FIXED_WIDTH_IMPL_CUH_

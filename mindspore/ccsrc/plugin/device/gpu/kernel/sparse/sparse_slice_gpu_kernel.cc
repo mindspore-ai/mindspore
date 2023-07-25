@@ -90,8 +90,9 @@ bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     return false;
   }
 
-  SparseSlice(indices_ptr, values_ptr, x_ptr, start_ptr, size_ptr, y_indices_ptr, y_values_ptr, out_shape_ptr,
-              sum_count_ptr, input_nnz_, num_dim_, out_size_, device_id_, cuda_stream);
+  auto status = SparseSlice(indices_ptr, values_ptr, x_ptr, start_ptr, size_ptr, y_indices_ptr, y_values_ptr,
+                            out_shape_ptr, sum_count_ptr, input_nnz_, num_dim_, out_size_, device_id_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   // Get dynamic shape
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

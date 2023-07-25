@@ -60,16 +60,14 @@ bool BufferGetKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
   int *origin_index_addr = GetDeviceAddress<int>(inputs, element_nums_ + kSecondInputIndex);
   int *index_addr = GetDeviceAddress<int>(workspace, 0);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  ReMappingIndex(count_addr, head_addr, origin_index_addr, index_addr, cuda_stream);
-  cudaError_t error = cudaGetLastError();
-  if (error != cudaSuccess) {
-    return false;
-  }
+  auto status = ReMappingIndex(count_addr, head_addr, origin_index_addr, index_addr, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   for (size_t i = 0; i < element_nums_; i++) {
     auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
     auto item_addr = GetDeviceAddress<unsigned char>(outputs, i);
     size_t one_exp_len = output_size_list_[i];
-    BufferGetItem(one_exp_len, index_addr, one_exp_len, buffer_addr, item_addr, cuda_stream);
+    status = BufferGetItem(one_exp_len, index_addr, one_exp_len, buffer_addr, item_addr, cuda_stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

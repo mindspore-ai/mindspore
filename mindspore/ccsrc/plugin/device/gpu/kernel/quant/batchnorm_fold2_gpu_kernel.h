@@ -56,9 +56,10 @@ class BatchNormFold2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto *global_step = GetDeviceAddress<int32_t>(inputs, kIndex7);
     auto *output = GetDeviceAddress<T>(outputs, kIndex0);
 
-    BatchNormFold2Forward(input, beta, gamma, batch_std, batch_mean, running_std, running_mean, global_step, output,
-                          freeze_bn_, batch_size_, channel_, height_, width_,
-                          reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = BatchNormFold2Forward(input, beta, gamma, batch_std, batch_mean, running_std, running_mean,
+                                        global_step, output, freeze_bn_, batch_size_, channel_, height_, width_,
+                                        reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

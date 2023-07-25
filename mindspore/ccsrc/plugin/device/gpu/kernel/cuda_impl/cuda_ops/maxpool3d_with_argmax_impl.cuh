@@ -19,12 +19,12 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalMaxPool3DWithArgmax(const T *input, const int n, const int c, const int d, const int h,
-                                            const int w, const int ksize_d, const int ksize_h, const int ksize_w,
-                                            const int stride_d, const int stride_h, const int stride_w,
-                                            const int pad_front, const int pad_top, const int pad_left,
-                                            const int dilation_d, const int dilation_h, const int dilation_w,
-                                            const int out_d, const int out_h, const int out_w, T *output, S *index,
-                                            const uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMaxPool3DWithArgmax(const T *input, const int n, const int c, const int d, const int h,
+                                                   const int w, const int ksize_d, const int ksize_h, const int ksize_w,
+                                                   const int stride_d, const int stride_h, const int stride_w,
+                                                   const int pad_front, const int pad_top, const int pad_left,
+                                                   const int dilation_d, const int dilation_h, const int dilation_w,
+                                                   const int out_d, const int out_h, const int out_w, T *output,
+                                                   S *index, const uint32_t device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MAXPOOL3D_WITH_ARGMAX_IMPL_CUH_

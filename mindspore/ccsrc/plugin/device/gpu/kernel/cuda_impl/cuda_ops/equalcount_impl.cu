@@ -17,7 +17,7 @@
 #include "equalcount_impl.cuh"
 #include "include/cuda_fp16.h"
 template <typename T>
-__global__ void EqualCount(const int size, const T* input1, const T* input2, T* output) {
+__global__ void EqualCount(const int size, const T *input1, const T *input2, T *output) {
   T equal_count = 0;
 
   for (int i = 0; i < size; i++) {
@@ -30,14 +30,14 @@ __global__ void EqualCount(const int size, const T* input1, const T* input2, T* 
   return;
 }
 template <typename T>
-void CalEqualCount(const int size, const T* input1, const T* input2, T* output, cudaStream_t cuda_stream) {
+cudaError_t CalEqualCount(const int size, const T *input1, const T *input2, T *output, cudaStream_t cuda_stream) {
   EqualCount<<<1, 1, 0, cuda_stream>>>(size, input1, input2, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalEqualCount<int>(const int size, const int* input1, const int* input2, int* output,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalEqualCount<float>(const int size, const float* input1, const float* input2,
-                                                   float* output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalEqualCount<half>(const int size, const half* input1, const half* input2, half* output,
-                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalEqualCount<int>(const int size, const int *input1, const int *input2,
+                                                        int *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalEqualCount<float>(const int size, const float *input1, const float *input2,
+                                                          float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalEqualCount<half>(const int size, const half *input1, const half *input2,
+                                                         half *output, cudaStream_t cuda_stream);

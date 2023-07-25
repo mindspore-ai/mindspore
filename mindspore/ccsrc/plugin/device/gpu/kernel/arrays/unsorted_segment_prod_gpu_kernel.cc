@@ -110,8 +110,10 @@ bool UnsortedSegmentProdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     S *ids_batch_addr = ids_addr + i * ids_stride_;
     T *output_batch_addr = output_addr + i * out_stride_;
 
-    UnsortedSegmentProd(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_batch_addr, ids_batch_addr,
-                        output_batch_addr, reinterpret_cast<cudaStream_t>(stream_ptr_), device_id_);
+    auto status =
+      UnsortedSegmentProd(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_batch_addr, ids_batch_addr,
+                          output_batch_addr, reinterpret_cast<cudaStream_t>(stream_ptr_), device_id_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 
   return true;

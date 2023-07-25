@@ -26,9 +26,10 @@ __global__ void SwishKernel(size_t size, const T *input, T *output) {
 }
 
 template <typename T>
-void Swish(size_t size, const T *input, T *output, cudaStream_t cuda_stream, const uint32_t device_id) {
+cudaError_t Swish(size_t size, const T *input, T *output, cudaStream_t cuda_stream, const uint32_t device_id) {
   SwishKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Swish<float>(size_t size, const float *input, float *output, cudaStream_t cuda_stream,
-                                           const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t Swish<float>(size_t size, const float *input, float *output,
+                                                  cudaStream_t cuda_stream, const uint32_t device_id);

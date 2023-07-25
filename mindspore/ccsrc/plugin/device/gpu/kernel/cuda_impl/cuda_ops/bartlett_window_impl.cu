@@ -50,7 +50,7 @@ cudaError_t CalBartlettWindow(const size_t size, const T *input, const bool peri
     double M = (N - 1) / 2;
     BartlettWindow<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, N, M, output);
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalBartlettWindow<int, half>(const size_t size, const int *input,

@@ -19,8 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void CalSegmentCombination(DataType *inp_ptr, DataType *out_ptr, IndexType *seg_id_addr,
-                                           size_t *seg_pos_ptr, size_t op, const size_t inner_size,
-                                           const size_t outer_size, const size_t outer_class,
-                                           uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSegmentCombination(DataType *inp_ptr, DataType *out_ptr, IndexType *seg_id_addr,
+                                                  size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+                                                  const size_t outer_size, const size_t outer_class, uint32_t device_id,
+                                                  cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SEGMENT_IMPL_CUH_

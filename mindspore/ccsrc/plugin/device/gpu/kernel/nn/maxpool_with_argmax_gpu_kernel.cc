@@ -135,9 +135,10 @@ bool MaxPoolWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   S *index_addr = GetDeviceAddress<S>(outputs, 1);
-  CalMaxPoolWithArgmax(input_addr, n_, c_, input_height_, input_width_, window_height_, window_width_, stride_height_,
-                       stride_width_, pad_top_, pad_left_, output_height_, output_width_, output_addr, index_addr,
-                       device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalMaxPoolWithArgmax(input_addr, n_, c_, input_height_, input_width_, window_height_, window_width_,
+                                     stride_height_, stride_width_, pad_top_, pad_left_, output_height_, output_width_,
+                                     output_addr, index_addr, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 bool MaxPoolWithArgmaxGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,

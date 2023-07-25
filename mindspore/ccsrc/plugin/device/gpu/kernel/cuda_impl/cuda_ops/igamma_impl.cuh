@@ -24,31 +24,34 @@ constexpr int64_t kLgammaAOneElement = 1;
 constexpr int64_t kLgammaXOneElement = 2;
 
 template <typename T>
-CUDA_LIB_EXPORT void CalIgamma(const size_t size, const int64_t type, const T *a, const T *x, T *output,
-                               const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalIgamma(const size_t size, const int64_t type, const T *a, const T *x, T *output,
+                                      const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalIgammac(const size_t size, const int64_t type, const T *a, const T *x, T *output,
-                                const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalIgammac(const size_t size, const int64_t type, const T *a, const T *x, T *output,
+                                       const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalIgammaGradA(const size_t size, const int64_t type, const T *a, const T *x, T *output,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalIgammaGradA(const size_t size, const int64_t type, const T *a, const T *x, T *output,
+                                           const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalBroadcastIgamma(const std::vector<size_t> &inputa_shape,
-                                        const std::vector<size_t> &inputx_shape,
-                                        const std::vector<size_t> &output_shape, const T *inputa, const T *inputx,
-                                        T *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBroadcastIgamma(const std::vector<size_t> &inputa_shape,
+                                               const std::vector<size_t> &inputx_shape,
+                                               const std::vector<size_t> &output_shape, const T *inputa,
+                                               const T *inputx, T *output, const uint32_t &device_id,
+                                               cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalBroadcastIgammac(const std::vector<size_t> &inputa_shape,
-                                         const std::vector<size_t> &inputx_shape,
-                                         const std::vector<size_t> &output_shape, const T *inputa, const T *inputx,
-                                         T *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBroadcastIgammac(const std::vector<size_t> &inputa_shape,
+                                                const std::vector<size_t> &inputx_shape,
+                                                const std::vector<size_t> &output_shape, const T *inputa,
+                                                const T *inputx, T *output, const uint32_t &device_id,
+                                                cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalBroadcastIgammaGradA(const std::vector<size_t> &inputa_shape,
-                                             const std::vector<size_t> &inputx_shape,
-                                             const std::vector<size_t> &output_shape, const T *inputa, const T *inputx,
-                                             T *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBroadcastIgammaGradA(const std::vector<size_t> &inputa_shape,
+                                                    const std::vector<size_t> &inputx_shape,
+                                                    const std::vector<size_t> &output_shape, const T *inputa,
+                                                    const T *inputx, T *output, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_IGAMMA_IMPL_CUH_

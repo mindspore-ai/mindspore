@@ -76,7 +76,7 @@ __global__ void PSROIPoolForwardV2(const int nthreads, const T *input, const T s
     }
     T bin_area = static_cast<T>((pooling_end_x - pooling_start_x) * (pooling_end_y - pooling_start_y));
     output_data[index] = is_empty ? T(zero) : out_sum / bin_area;
-    }
+  }
 }
 template <>
 __global__ void PSROIPoolForwardV2(const int nthreads, const double *input, const double spatial_scale,
@@ -108,12 +108,12 @@ __global__ void PSROIPoolForwardV2(const int nthreads, const double *input, cons
     double bin_width = roi_width / static_cast<double>(pooled_width);
 
     int pooling_start_x =
-                       static_cast<int>(floor(static_cast<double>(static_cast<double>(height_offset_n) * bin_height)));
+      static_cast<int>(floor(static_cast<double>(static_cast<double>(height_offset_n) * bin_height)));
     int pooling_start_y = static_cast<int>(floor(static_cast<double>(static_cast<double>(width_offset_n) * bin_width)));
     int pooling_end_x =
-                     static_cast<int>(ceil(static_cast<double>(static_cast<double>(height_offset_n + 1) * bin_height)));
+      static_cast<int>(ceil(static_cast<double>(static_cast<double>(height_offset_n + 1) * bin_height)));
     int pooling_end_y =
-                     static_cast<int>(ceil(static_cast<double>(static_cast<double>(width_offset_n + 1) * bin_width)));
+      static_cast<int>(ceil(static_cast<double>(static_cast<double>(width_offset_n + 1) * bin_width)));
 
     // Add roi offsets and clip to input boundaries
     pooling_start_x = min(max(pooling_start_x + static_cast<int>(roi_start_height), 0), feature_height - 1);
@@ -136,7 +136,7 @@ __global__ void PSROIPoolForwardV2(const int nthreads, const double *input, cons
     }
     double bin_area = static_cast<double>((pooling_end_x - pooling_start_x) * (pooling_end_y - pooling_start_y));
     output_data[index] = is_empty ? static_cast<double>(zero) : out_sum / bin_area;
-    }
+  }
 }
 
 template <>
@@ -171,7 +171,7 @@ __global__ void PSROIPoolForwardV2(const int nthreads, const float *input, const
     int pooling_start_x = static_cast<int>(floor(static_cast<float>(static_cast<float>(height_offset_n) * bin_height)));
     int pooling_start_y = static_cast<int>(floor(static_cast<float>(static_cast<float>(width_offset_n) * bin_width)));
     int pooling_end_x =
-                     static_cast<int>(ceil(static_cast<float>(static_cast<float>(height_offset_n + 1) * bin_height)));
+      static_cast<int>(ceil(static_cast<float>(static_cast<float>(height_offset_n + 1) * bin_height)));
     int pooling_end_y = static_cast<int>(ceil(static_cast<float>(static_cast<float>(width_offset_n + 1) * bin_width)));
 
     // Add roi offsets and clip to input boundaries
@@ -195,14 +195,14 @@ __global__ void PSROIPoolForwardV2(const int nthreads, const float *input, const
     }
     float bin_area = static_cast<float>((pooling_end_x - pooling_start_x) * (pooling_end_y - pooling_start_y));
     output_data[index] = is_empty ? static_cast<float>(zero) : out_sum / bin_area;
-    }
+  }
 }
 
 template <>
 __global__ void PSROIPoolForwardV2(const int nthreads, const half *input, const half spatial_scale,
                                    const int feature_height, const int feature_width, const int feature_channels,
                                    const int pooled_height, const int pooled_width, const int group_size,
-                                   const int output_channels,  const half *roi_boxes, half *output_data) {
+                                   const int output_channels, const half *roi_boxes, half *output_data) {
   const int elements_per_roi_box = 5;
   constexpr float zero = 0;
   // Loop over the outputs of forward operator.
@@ -253,49 +253,42 @@ __global__ void PSROIPoolForwardV2(const int nthreads, const half *input, const 
     }
     float bin_area = static_cast<float>((pooling_end_x - pooling_start_x) * (pooling_end_y - pooling_start_y));
     output_data[index] = is_empty ? half(zero) : static_cast<half>(out_sum / bin_area);
-    }
+  }
 }
 
 template <typename T>
-void PSROIPoolForwardV2Launcher(const T *input, const T spatial_scale, const int output_n, const int feature_height,
-                                const int feature_width, const int feature_channels, const int pooled_height,
-                                const int pooled_width, const T *roi_boxes, const int group_size,
-                                const int output_channels, T *output_data, cudaStream_t stream) {
+cudaError_t PSROIPoolForwardV2Launcher(const T *input, const T spatial_scale, const int output_n,
+                                       const int feature_height, const int feature_width, const int feature_channels,
+                                       const int pooled_height, const int pooled_width, const T *roi_boxes,
+                                       const int group_size, const int output_channels, T *output_data,
+                                       cudaStream_t stream) {
   const int kThreadsPerBlock_ = 1024;
   const int output_size = output_channels * pooled_height * pooled_width * output_n;
   cudaError_t err;
 
   PSROIPoolForwardV2<<<(output_size + kThreadsPerBlock_ - 1) / kThreadsPerBlock_, kThreadsPerBlock_, 0, stream>>>(
-  output_size, input, spatial_scale, feature_height, feature_width, feature_channels, pooled_height, pooled_width,
-  group_size, output_channels, roi_boxes, output_data);
+    output_size, input, spatial_scale, feature_height, feature_width, feature_channels, pooled_height, pooled_width,
+    group_size, output_channels, roi_boxes, output_data);
 
   err = cudaGetLastError();
   if (cudaSuccess != err) {
     fprintf(stderr, "cudaCheckError() failed : %s\n", cudaGetErrorString(err));
     exit(-1);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void PSROIPoolForwardV2Launcher<double>(const double *input, const double spatial_scale,
-                                                                const int output_n, const int feature_height,
-                                                                const int feature_width, const int feature_channels,
-                                                                const int pooled_height, const int pooled_width,
-                                                                const double *roi_boxes, const int group_size,
-                                                                const int output_channels, double *output_data,
-                                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t PSROIPoolForwardV2Launcher<double>(
+  const double *input, const double spatial_scale, const int output_n, const int feature_height,
+  const int feature_width, const int feature_channels, const int pooled_height, const int pooled_width,
+  const double *roi_boxes, const int group_size, const int output_channels, double *output_data, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void PSROIPoolForwardV2Launcher<float>(const float *input, const float spatial_scale,
-                                                                const int output_n, const int feature_height,
-                                                                const int feature_width, const int feature_channels,
-                                                                const int pooled_height, const int pooled_width,
-                                                                const float *roi_boxes, const int group_size,
-                                                                const int output_channels, float *output_data,
-                                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t PSROIPoolForwardV2Launcher<float>(
+  const float *input, const float spatial_scale, const int output_n, const int feature_height, const int feature_width,
+  const int feature_channels, const int pooled_height, const int pooled_width, const float *roi_boxes,
+  const int group_size, const int output_channels, float *output_data, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void PSROIPoolForwardV2Launcher<half>(const half *input, const half spatial_scale,
-                                                               const int output_n, const int feature_height,
-                                                               const int feature_width, const int feature_channels,
-                                                               const int pooled_height, const int pooled_width,
-                                                               const half *roi_boxes, const int group_size,
-                                                               const int output_channels, half *output_data,
-                                                               cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t PSROIPoolForwardV2Launcher<half>(
+  const half *input, const half spatial_scale, const int output_n, const int feature_height, const int feature_width,
+  const int feature_channels, const int pooled_height, const int pooled_width, const half *roi_boxes,
+  const int group_size, const int output_channels, half *output_data, cudaStream_t stream);

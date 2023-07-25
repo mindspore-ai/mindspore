@@ -55,12 +55,12 @@ __global__ void PermuteIndicesAndValuesKernel(const int num_elems, const int num
 
 // namespace str
 template <typename T>
-CUDA_LIB_EXPORT bool SparseReorder(const int num_elems, const int num_dims, const int64_t *indices, const T *values,
-                                   const int64_t *shape, int64_t *y_indices, T *y_values, int64_t *flat_indices,
-                                   int64_t *permutation_data, int32_t *check_flag, const uint32_t &device_id,
-                                   cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT cudaError_t SparseReorder(const int num_elems, const int num_dims, const int64_t *indices,
+                                          const T *values, const int64_t *shape, int64_t *y_indices, T *y_values,
+                                          int64_t *flat_indices, int64_t *permutation_data, int32_t *check_flag,
+                                          const uint32_t &device_id, cudaStream_t cuda_stream) {
   if (num_dims < 1) {
-    return true;
+    return cudaErrorNotReady;
   }
   int thread_num = num_elems > 128 ? 128 : num_elems;
   cudaMemset(check_flag, 0, sizeof(int32_t));
@@ -70,7 +70,7 @@ CUDA_LIB_EXPORT bool SparseReorder(const int num_elems, const int num_dims, cons
   int32_t check_flag_host = 0;
   cudaMemcpy(&check_flag_host, check_flag, sizeof(int32_t), cudaMemcpyDeviceToHost);
   if (check_flag_host == 1) {
-    return false;
+    return cudaErrorNotReady;
   }
   auto policy = thrust::cuda::par.on(cuda_stream);
   thrust::sequence(policy, thrust::device_pointer_cast(permutation_data),
@@ -82,64 +82,76 @@ CUDA_LIB_EXPORT bool SparseReorder(const int num_elems, const int num_dims, cons
   PermuteIndicesAndValuesKernel<<<CUDA_BLOCKS_CAL(device_id, num_elems * num_dims, thread_num), thread_num, 0,
                                   cuda_stream>>>(num_elems, num_dims, indices, values, shape, permutation_data,
                                                  y_indices, y_values);
-  return true;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT bool SparseReorder<bool>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                  const bool *values, const int64_t *shape, int64_t *y_indices,
-                                                  bool *y_values, int64_t *flat_indices, int64_t *permutation_data,
-                                                  int32_t *check_flag, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<int8_t>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                    const int8_t *values, const int64_t *shape, int64_t *y_indices,
-                                                    int8_t *y_values, int64_t *flat_indices, int64_t *permutation_data,
-                                                    int32_t *check_flag, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<int16_t>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                     const int16_t *values, const int64_t *shape, int64_t *y_indices,
-                                                     int16_t *y_values, int64_t *flat_indices,
-                                                     int64_t *permutation_data, int32_t *check_flag,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<int32_t>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                     const int32_t *values, const int64_t *shape, int64_t *y_indices,
-                                                     int32_t *y_values, int64_t *flat_indices,
-                                                     int64_t *permutation_data, int32_t *check_flag,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<int64_t>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                     const int64_t *values, const int64_t *shape, int64_t *y_indices,
-                                                     int64_t *y_values, int64_t *flat_indices,
-                                                     int64_t *permutation_data, int32_t *check_flag,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<uint8_t>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                     const uint8_t *values, const int64_t *shape, int64_t *y_indices,
-                                                     uint8_t *y_values, int64_t *flat_indices,
-                                                     int64_t *permutation_data, int32_t *check_flag,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<uint16_t>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                      const uint16_t *values, const int64_t *shape, int64_t *y_indices,
-                                                      uint16_t *y_values, int64_t *flat_indices,
-                                                      int64_t *permutation_data, int32_t *check_flag,
-                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<half>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                  const half *values, const int64_t *shape, int64_t *y_indices,
-                                                  half *y_values, int64_t *flat_indices, int64_t *permutation_data,
-                                                  int32_t *check_flag, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<float>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                   const float *values, const int64_t *shape, int64_t *y_indices,
-                                                   float *y_values, int64_t *flat_indices, int64_t *permutation_data,
-                                                   int32_t *check_flag, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<double>(const int num_elems, const int num_dims, const int64_t *indices,
-                                                    const double *values, const int64_t *shape, int64_t *y_indices,
-                                                    double *y_values, int64_t *flat_indices, int64_t *permutation_data,
-                                                    int32_t *check_flag, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<cuFloatComplex>(
-  const int num_elems, const int num_dims, const int64_t *indices, const cuFloatComplex *values, const int64_t *shape,
-  int64_t *y_indices, cuFloatComplex *y_values, int64_t *flat_indices, int64_t *permutation_data, int32_t *check_flag,
-  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool SparseReorder<cuDoubleComplex>(
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<bool>(const int num_elems, const int num_dims,
+                                                         const int64_t *indices, const bool *values,
+                                                         const int64_t *shape, int64_t *y_indices, bool *y_values,
+                                                         int64_t *flat_indices, int64_t *permutation_data,
+                                                         int32_t *check_flag, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<int8_t>(const int num_elems, const int num_dims,
+                                                           const int64_t *indices, const int8_t *values,
+                                                           const int64_t *shape, int64_t *y_indices, int8_t *y_values,
+                                                           int64_t *flat_indices, int64_t *permutation_data,
+                                                           int32_t *check_flag, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<int16_t>(const int num_elems, const int num_dims,
+                                                            const int64_t *indices, const int16_t *values,
+                                                            const int64_t *shape, int64_t *y_indices, int16_t *y_values,
+                                                            int64_t *flat_indices, int64_t *permutation_data,
+                                                            int32_t *check_flag, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<int32_t>(const int num_elems, const int num_dims,
+                                                            const int64_t *indices, const int32_t *values,
+                                                            const int64_t *shape, int64_t *y_indices, int32_t *y_values,
+                                                            int64_t *flat_indices, int64_t *permutation_data,
+                                                            int32_t *check_flag, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<int64_t>(const int num_elems, const int num_dims,
+                                                            const int64_t *indices, const int64_t *values,
+                                                            const int64_t *shape, int64_t *y_indices, int64_t *y_values,
+                                                            int64_t *flat_indices, int64_t *permutation_data,
+                                                            int32_t *check_flag, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<uint8_t>(const int num_elems, const int num_dims,
+                                                            const int64_t *indices, const uint8_t *values,
+                                                            const int64_t *shape, int64_t *y_indices, uint8_t *y_values,
+                                                            int64_t *flat_indices, int64_t *permutation_data,
+                                                            int32_t *check_flag, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<uint16_t>(const int num_elems, const int num_dims,
+                                                             const int64_t *indices, const uint16_t *values,
+                                                             const int64_t *shape, int64_t *y_indices,
+                                                             uint16_t *y_values, int64_t *flat_indices,
+                                                             int64_t *permutation_data, int32_t *check_flag,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<half>(const int num_elems, const int num_dims,
+                                                         const int64_t *indices, const half *values,
+                                                         const int64_t *shape, int64_t *y_indices, half *y_values,
+                                                         int64_t *flat_indices, int64_t *permutation_data,
+                                                         int32_t *check_flag, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<float>(const int num_elems, const int num_dims,
+                                                          const int64_t *indices, const float *values,
+                                                          const int64_t *shape, int64_t *y_indices, float *y_values,
+                                                          int64_t *flat_indices, int64_t *permutation_data,
+                                                          int32_t *check_flag, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<double>(const int num_elems, const int num_dims,
+                                                           const int64_t *indices, const double *values,
+                                                           const int64_t *shape, int64_t *y_indices, double *y_values,
+                                                           int64_t *flat_indices, int64_t *permutation_data,
+                                                           int32_t *check_flag, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<cuFloatComplex>(const int num_elems, const int num_dims,
+                                                                   const int64_t *indices, const cuFloatComplex *values,
+                                                                   const int64_t *shape, int64_t *y_indices,
+                                                                   cuFloatComplex *y_values, int64_t *flat_indices,
+                                                                   int64_t *permutation_data, int32_t *check_flag,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseReorder<cuDoubleComplex>(
   const int num_elems, const int num_dims, const int64_t *indices, const cuDoubleComplex *values, const int64_t *shape,
   int64_t *y_indices, cuDoubleComplex *y_values, int64_t *flat_indices, int64_t *permutation_data, int32_t *check_flag,
   const uint32_t &device_id, cudaStream_t cuda_stream);

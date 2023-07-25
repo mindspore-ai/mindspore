@@ -57,66 +57,67 @@ __global__ void BatchToSpace(const size_t size, const T *input, const size_t in,
 }
 
 template <typename T>
-void CalBatchToSpace(const size_t size, const T *input, const size_t in, const size_t ih, const size_t iw,
-                     const size_t ic, const size_t on, const size_t oh, const size_t ow, const size_t oc,
-                     const size_t crop_up, const size_t crop_dn, const size_t crop_lft, const size_t crop_rht,
-                     const size_t block_num, T *output, const uint32_t& device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBatchToSpace(const size_t size, const T *input, const size_t in, const size_t ih, const size_t iw,
+                            const size_t ic, const size_t on, const size_t oh, const size_t ow, const size_t oc,
+                            const size_t crop_up, const size_t crop_dn, const size_t crop_lft, const size_t crop_rht,
+                            const size_t block_num, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   BatchToSpace<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, input, in, ih, iw, ic, on, oh, ow, oc, crop_up, crop_dn, crop_lft, crop_rht, block_num, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBatchToSpace<float>(const size_t size, const float *input, const size_t in,
-                                                     const size_t ih, const size_t iw, const size_t ic, const size_t on,
-                                                     const size_t oh, const size_t ow, const size_t oc,
-                                                     const size_t crop_up, const size_t crop_dn, const size_t crop_lft,
-                                                     const size_t crop_rht, const size_t block_num, float *output,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpace<half>(const size_t size, const half *input, const size_t in,
-                                                    const size_t ih, const size_t iw, const size_t ic, const size_t on,
-                                                    const size_t oh, const size_t ow, const size_t oc,
-                                                    const size_t crop_up, const size_t crop_dn, const size_t crop_lft,
-                                                    const size_t crop_rht, const size_t block_num, half *output,
-                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpace<int>(const size_t size, const int *input, const size_t in,
-                                                   const size_t ih, const size_t iw, const size_t ic, const size_t on,
-                                                   const size_t oh, const size_t ow, const size_t oc,
-                                                   const size_t crop_up, const size_t crop_dn, const size_t crop_lft,
-                                                   const size_t crop_rht, const size_t block_num, int *output,
-                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpace<int64_t>(
-  const size_t size, const int64_t *input, const size_t in, const size_t ih, const size_t iw, const size_t ic,
-  const size_t on, const size_t oh, const size_t ow, const size_t oc, const size_t crop_up, const size_t crop_dn,
-  const size_t crop_lft, const size_t crop_rht, const size_t block_num, int64_t *output, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpace<int16_t>(
-  const size_t size, const int16_t *input, const size_t in, const size_t ih, const size_t iw, const size_t ic,
-  const size_t on, const size_t oh, const size_t ow, const size_t oc, const size_t crop_up, const size_t crop_dn,
-  const size_t crop_lft, const size_t crop_rht, const size_t block_num, int16_t *output, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpace<int8_t>(const size_t size, const int8_t *input, const size_t in,
-                                                      const size_t ih, const size_t iw, const size_t ic,
-                                                      const size_t on, const size_t oh, const size_t ow,
-                                                      const size_t oc, const size_t crop_up, const size_t crop_dn,
-                                                      const size_t crop_lft, const size_t crop_rht,
-                                                      const size_t block_num, int8_t *output, const uint32_t &device_id,
-                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpace<uint8_t>(
-  const size_t size, const uint8_t *input, const size_t in, const size_t ih, const size_t iw, const size_t ic,
-  const size_t on, const size_t oh, const size_t ow, const size_t oc, const size_t crop_up, const size_t crop_dn,
-  const size_t crop_lft, const size_t crop_rht, const size_t block_num, uint8_t *output, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpace<uint16_t>(
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpace<float>(const size_t size, const float *input, const size_t in,
+                                                            const size_t ih, const size_t iw, const size_t ic,
+                                                            const size_t on, const size_t oh, const size_t ow,
+                                                            const size_t oc, const size_t crop_up, const size_t crop_dn,
+                                                            const size_t crop_lft, const size_t crop_rht,
+                                                            const size_t block_num, float *output,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpace<half>(const size_t size, const half *input, const size_t in,
+                                                           const size_t ih, const size_t iw, const size_t ic,
+                                                           const size_t on, const size_t oh, const size_t ow,
+                                                           const size_t oc, const size_t crop_up, const size_t crop_dn,
+                                                           const size_t crop_lft, const size_t crop_rht,
+                                                           const size_t block_num, half *output,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpace<int>(const size_t size, const int *input, const size_t in,
+                                                          const size_t ih, const size_t iw, const size_t ic,
+                                                          const size_t on, const size_t oh, const size_t ow,
+                                                          const size_t oc, const size_t crop_up, const size_t crop_dn,
+                                                          const size_t crop_lft, const size_t crop_rht,
+                                                          const size_t block_num, int *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalBatchToSpace<int64_t>(const size_t size, const int64_t *input, const size_t in, const size_t ih, const size_t iw,
+                         const size_t ic, const size_t on, const size_t oh, const size_t ow, const size_t oc,
+                         const size_t crop_up, const size_t crop_dn, const size_t crop_lft, const size_t crop_rht,
+                         const size_t block_num, int64_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalBatchToSpace<int16_t>(const size_t size, const int16_t *input, const size_t in, const size_t ih, const size_t iw,
+                         const size_t ic, const size_t on, const size_t oh, const size_t ow, const size_t oc,
+                         const size_t crop_up, const size_t crop_dn, const size_t crop_lft, const size_t crop_rht,
+                         const size_t block_num, int16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalBatchToSpace<int8_t>(const size_t size, const int8_t *input, const size_t in, const size_t ih, const size_t iw,
+                        const size_t ic, const size_t on, const size_t oh, const size_t ow, const size_t oc,
+                        const size_t crop_up, const size_t crop_dn, const size_t crop_lft, const size_t crop_rht,
+                        const size_t block_num, int8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalBatchToSpace<uint8_t>(const size_t size, const uint8_t *input, const size_t in, const size_t ih, const size_t iw,
+                         const size_t ic, const size_t on, const size_t oh, const size_t ow, const size_t oc,
+                         const size_t crop_up, const size_t crop_dn, const size_t crop_lft, const size_t crop_rht,
+                         const size_t block_num, uint8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpace<uint16_t>(
   const size_t size, const uint16_t *input, const size_t in, const size_t ih, const size_t iw, const size_t ic,
   const size_t on, const size_t oh, const size_t ow, const size_t oc, const size_t crop_up, const size_t crop_dn,
   const size_t crop_lft, const size_t crop_rht, const size_t block_num, uint16_t *output, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpace<uint32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpace<uint32_t>(
   const size_t size, const uint32_t *input, const size_t in, const size_t ih, const size_t iw, const size_t ic,
   const size_t on, const size_t oh, const size_t ow, const size_t oc, const size_t crop_up, const size_t crop_dn,
   const size_t crop_lft, const size_t crop_rht, const size_t block_num, uint32_t *output, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBatchToSpace<uint64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalBatchToSpace<uint64_t>(
   const size_t size, const uint64_t *input, const size_t in, const size_t ih, const size_t iw, const size_t ic,
   const size_t on, const size_t oh, const size_t ow, const size_t oc, const size_t crop_up, const size_t crop_dn,
   const size_t crop_lft, const size_t crop_rht, const size_t block_num, uint64_t *output, const uint32_t &device_id,

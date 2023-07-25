@@ -18,19 +18,19 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MAXPOOL_GRAD_GRAD_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalMaxPoolGradGrad(const T *input, const T *grad, const int n, const int c, const int h,
-                                        const int w, const int windowHeight, const int windowWidth,
-                                        const int strideHeight, const int strideWidth, const int padTop,
-                                        const int padLeft, const int outputHeight, const int outputWidth,
-                                        T *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMaxPoolGradGrad(const T *input, const T *grad, const int n, const int c, const int h,
+                                               const int w, const int windowHeight, const int windowWidth,
+                                               const int strideHeight, const int strideWidth, const int padTop,
+                                               const int padLeft, const int outputHeight, const int outputWidth,
+                                               T *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalMaxPool3DGradGrad(const T *input, const T *grad, const int n, const int c, const int d,
-                                          const int h, const int w, const int windowDepth, const int windowHeight,
-                                          const int windowWidth, const int strideDepth, const int strideHeight,
-                                          const int strideWidth, const int padFront, const int padTop,
-                                          const int padLeft, const int outputDepth, const int outputHeight,
-                                          const int outputWidth, T *output, const uint32_t &device_id,
-                                          cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMaxPool3DGradGrad(const T *input, const T *grad, const int n, const int c, const int d,
+                                                 const int h, const int w, const int windowDepth,
+                                                 const int windowHeight, const int windowWidth, const int strideDepth,
+                                                 const int strideHeight, const int strideWidth, const int padFront,
+                                                 const int padTop, const int padLeft, const int outputDepth,
+                                                 const int outputHeight, const int outputWidth, T *output,
+                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MAXPOOL_GRAD_GRAD_IMPL_CUH_

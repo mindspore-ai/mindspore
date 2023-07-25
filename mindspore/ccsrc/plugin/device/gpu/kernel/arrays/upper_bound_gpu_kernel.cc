@@ -100,8 +100,9 @@ bool UpperBoundGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *sorted_x = GetDeviceAddress<T>(inputs, 0);
   T *values = GetDeviceAddress<T>(inputs, 1);
   S *output = GetDeviceAddress<S>(outputs, 0);
-  CalUpperBound(values_elements_, sorted_x_col_, values_col_, sorted_x, values, output, device_id_,
-                reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalUpperBound(values_elements_, sorted_x_col_, values_col_, sorted_x, values, output, device_id_,
+                              reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -24,7 +24,6 @@ constexpr uint elements_per_thread = 4;
 constexpr uint threads_per_block = 256;
 constexpr uint elements_per_block = elements_per_thread * threads_per_block;
 
-
 template <typename T, typename S>
 struct VectorizedTrait {
   static const uint VecSizeT = 4;
@@ -99,21 +98,21 @@ struct ComplexAbsFunctor {
 };
 
 template <typename T, typename S>
-void ComplexAbs(const size_t input_elements, const T *x0, S *y, const uint32_t &device_id, cudaStream_t stream) {
+cudaError_t ComplexAbs(const size_t input_elements, const T *x0, S *y, const uint32_t &device_id, cudaStream_t stream) {
   ComplexAbsFunctor<T, S> functor{};
   auto block_x = threads_per_block;
   auto grid_x = UP_DIV(static_cast<uint>(input_elements), elements_per_block);
   dim3 block{block_x};
   dim3 grid{grid_x};
   VectorizedFor<<<grid, block, 0, stream>>>(functor, x0, y, static_cast<uint>(input_elements));
+  return GetCudaStatus();
 }
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-template CUDA_LIB_EXPORT void ComplexAbs<Complex<float>, float>(const size_t nums, const Complex<float> *x0,
-                                                                float *y, const uint32_t &device_id,
-                                                                cudaStream_t stream);
-template CUDA_LIB_EXPORT void ComplexAbs<Complex<double>, double>(const size_t nums, const Complex<double> *x0,
-                                                                  double *y, const uint32_t &device_id,
-                                                                  cudaStream_t stream);
-
+template CUDA_LIB_EXPORT cudaError_t ComplexAbs<Complex<float>, float>(const size_t nums, const Complex<float> *x0,
+                                                                       float *y, const uint32_t &device_id,
+                                                                       cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ComplexAbs<Complex<double>, double>(const size_t nums, const Complex<double> *x0,
+                                                                         double *y, const uint32_t &device_id,
+                                                                         cudaStream_t stream);

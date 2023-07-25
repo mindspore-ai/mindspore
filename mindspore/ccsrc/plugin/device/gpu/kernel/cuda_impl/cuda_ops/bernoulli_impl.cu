@@ -69,7 +69,7 @@ cudaError_t BernoulliForward(const T *input, S *output, uint64_t seed, const siz
   int block_num = 256 > num_count ? num_count : 256;
   BernoulliForwardKernel<<<CUDA_BLOCKS_CAL(device_id, num_count, block_num), block_num, 0, cuda_stream>>>(
     input, output, seed, num_count);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template <typename T, typename S>
@@ -80,7 +80,7 @@ cudaError_t BroadcastBernoulliForward(const std::vector<size_t> &x_dims, const s
   BroadcastBernoulliForwardKernel<<<CUDA_BLOCKS_CAL(device_id, num_count, block_num), block_num, 0, cuda_stream>>>(
     x_dims[0], x_dims[1], x_dims[2], x_dims[3], x_dims[4], x_dims[5], x_dims[6], p_dims[0], p_dims[1], p_dims[2],
     p_dims[3], p_dims[4], p_dims[5], p_dims[6], input, output, seed, num_count);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t BernoulliForward<float, float>(const float *input, float *output, uint64_t seed,

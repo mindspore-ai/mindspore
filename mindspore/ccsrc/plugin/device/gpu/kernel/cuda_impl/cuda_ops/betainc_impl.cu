@@ -22,8 +22,8 @@
 #include "unsupported/Eigen/CXX11/Tensor"
 
 template <typename T>
-void CalBetainc(const size_t size, T *input_a, T *input_b, T *input_x, T *output, const uint32_t &device_id,
-                cudaStream_t cuda_stream) {
+cudaError_t CalBetainc(const size_t size, T *input_a, T *input_b, T *input_x, T *output, const uint32_t &device_id,
+                       cudaStream_t cuda_stream) {
   int num = static_cast<int>(size);
   T *agpu = input_a, *bgpu = input_b, *xgpu = input_x;
   int gpudevice = device_id;
@@ -34,11 +34,13 @@ void CalBetainc(const size_t size, T *input_a, T *input_b, T *input_x, T *output
   Eigen::TensorMap<Eigen::Tensor<T, 1>> Eigen_x(xgpu, num);
   Eigen::TensorMap<Eigen::Tensor<T, 1>> Eigen_z(output, num);
   Eigen_z.device(gpu_device) = Eigen::betainc(Eigen_a, Eigen_b, Eigen_x);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBetainc<float>(const size_t size, float *input_a, float *input_b, float *input_x,
-                                                float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBetainc<float>(const size_t size, float *input_a, float *input_b,
+                                                       float *input_x, float *output, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalBetainc<double>(const size_t size, double *input_a, double *input_b, double *input_x,
-                                                 double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBetainc<double>(const size_t size, double *input_a, double *input_b,
+                                                        double *input_x, double *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);

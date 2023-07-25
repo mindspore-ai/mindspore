@@ -220,9 +220,11 @@ bool PSROIPoolingBackV2GpuKernelMod::Launch(const std::vector<AddressPtr> &input
     MS_EXCEPTION_IF_NULL(rois);
     auto output_diff = static_cast<float *>(outputs[0]->addr);
     MS_EXCEPTION_IF_NULL(output_diff);
-    PSROIPoolBackwardV2Launcher(top_diff, batch_size_, output_n_, static_cast<float>(spatial_scale_), feature_channels_,
-                                height_, width_, pooled_width_, pooled_height_, output_channels_, output_diff, rois,
-                                static_cast<cudaStream_t>(stream_ptr), rois_num_, group_size_);
+    auto status =
+      PSROIPoolBackwardV2Launcher(top_diff, batch_size_, output_n_, static_cast<float>(spatial_scale_),
+                                  feature_channels_, height_, width_, pooled_width_, pooled_height_, output_channels_,
+                                  output_diff, rois, static_cast<cudaStream_t>(stream_ptr), rois_num_, group_size_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 
@@ -233,9 +235,11 @@ bool PSROIPoolingBackV2GpuKernelMod::Launch(const std::vector<AddressPtr> &input
     MS_EXCEPTION_IF_NULL(rois);
     auto output_diff = static_cast<half *>(outputs[0]->addr);
     MS_EXCEPTION_IF_NULL(output_diff);
-    PSROIPoolBackwardV2Launcher(top_diff, batch_size_, output_n_, static_cast<half>(spatial_scale_), feature_channels_,
-                                height_, width_, pooled_width_, pooled_height_, output_channels_, output_diff, rois,
-                                static_cast<cudaStream_t>(stream_ptr), rois_num_, group_size_);
+    auto status =
+      PSROIPoolBackwardV2Launcher(top_diff, batch_size_, output_n_, static_cast<half>(spatial_scale_),
+                                  feature_channels_, height_, width_, pooled_width_, pooled_height_, output_channels_,
+                                  output_diff, rois, static_cast<cudaStream_t>(stream_ptr), rois_num_, group_size_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

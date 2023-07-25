@@ -206,6 +206,7 @@ bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr>
     cudaMemsetAsync(row_pointers_addr, 0, outputs[kIndex2]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemset failed in DenseToCSRSparseMatrixKernelMod::Launch.");
 
+  cudaError_t status = cudaErrorNotReady;
   if (!is_batch_csr_) {
     std::vector<S> batch_ptr_host{};
     batch_ptr_host.emplace_back(0);
@@ -214,11 +215,12 @@ bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr>
       cudaMemcpyAsync(batch_pointers_addr, &batch_ptr_host[kIndex0], sizeof(S) * (num_batches + 1),
                       cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpyAsync failed in DenseToCSRSparseMatrixKernelMod::Launch.");
-    auto status = GatherNd(input_addr, indices_addr, values_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], info,
-                           reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
-    CallSplitIndices2D(indices_addr, dev_row_indices_, col_indices_addr, nnz_,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = GatherNd(input_addr, indices_addr, values_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], info,
+                      reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CallSplitIndices2D(indices_addr, dev_row_indices_, col_indices_addr, nnz_,
+                                reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     cusparseXcoo2csr(handle_, dev_row_indices_, nnz_, m_, row_pointers_addr, CUSPARSE_INDEX_BASE_ZERO);
   } else {
     S *dev_batch_indices_ = GetDeviceAddress<S>(workspace, kIndex1);
@@ -226,13 +228,15 @@ bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr>
       cudaMemsetAsync(batch_pointers_addr, 0, outputs[kIndex1]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemset failed in DenseToCSRSparseMatrixKernelMod::Launch.");
 
-    auto status = GatherNd(input_addr, indices_addr, values_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], info,
-                           reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
-    CallSplitIndices3D(indices_addr, dev_batch_indices_, dev_row_indices_, col_indices_addr, nnz_,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
-    CallNNZPerBatch(dev_batch_indices_, batch_pointers_addr, nnz_, num_batches + 1,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = GatherNd(input_addr, indices_addr, values_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], info,
+                      reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CallSplitIndices3D(indices_addr, dev_batch_indices_, dev_row_indices_, col_indices_addr, nnz_,
+                                reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CallNNZPerBatch(dev_batch_indices_, batch_pointers_addr, nnz_, num_batches + 1,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     std::vector<S> host_batch_pointers(batch_pointers_shapes_[kIndex0], 0);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(host_batch_pointers.data(), batch_pointers_addr, sizeof(S) * (num_batches + 1),

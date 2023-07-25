@@ -90,35 +90,41 @@ __global__ void ResizeLinear1DKernel(const int64_t output_size, const int64_t in
 }
 
 template <typename T>
-void ResizeLinear1D(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t output_size,
-                    const int64_t in_width, const int64_t out_width, const T *input, T *output,
-                    const uint32_t device_id, cudaStream_t stream) {
+cudaError_t ResizeLinear1D(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t output_size,
+                           const int64_t in_width, const int64_t out_width, const T *input, T *output,
+                           const uint32_t device_id, cudaStream_t stream) {
   switch (mode) {
     case ALIGN_CORNERS:
-      return ResizeLinear1DKernel<T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
+      ResizeLinear1DKernel<T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
         output_size, in_width, out_width, input, output, AlignCornersFunc());
+      break;
     case HALF_PIXEL:
-      return ResizeLinear1DKernel<T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
+      ResizeLinear1DKernel<T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
         output_size, in_width, out_width, input, output, HalfPixelFunc());
+      break;
     default:
       break;
   }
+  return GetCudaStatus();
 }
 
 template <>
-void ResizeLinear1D(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t output_size,
-                    const int64_t in_width, const int64_t out_width, const half *input, half *output,
-                    const uint32_t device_id, cudaStream_t stream) {
+cudaError_t ResizeLinear1D(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t output_size,
+                           const int64_t in_width, const int64_t out_width, const half *input, half *output,
+                           const uint32_t device_id, cudaStream_t stream) {
   switch (mode) {
     case ALIGN_CORNERS:
-      return ResizeLinear1DKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
+      ResizeLinear1DKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
         output_size, in_width, out_width, input, output, AlignCornersFunc());
+      break;
     case HALF_PIXEL:
-      return ResizeLinear1DKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
+      ResizeLinear1DKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
         output_size, in_width, out_width, input, output, HalfPixelFunc());
+      break;
     default:
       break;
   }
+  return GetCudaStatus();
 }
 
 __global__ void AssignToOutput(const int64_t output_size, float *grad_work, half *grad_input) {
@@ -175,28 +181,31 @@ __global__ void ResizeLinear1DGradKernel(const int64_t batch, const int64_t chan
 }
 
 template <typename T>
-void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t batch,
-                        const int64_t channel, const int64_t in_width, const int64_t out_width, const T *grad_output,
-                        T *grad_input, float *grad_work, const uint32_t device_id, cudaStream_t stream) {
+cudaError_t ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t batch,
+                               const int64_t channel, const int64_t in_width, const int64_t out_width,
+                               const T *grad_output, T *grad_input, float *grad_work, const uint32_t device_id,
+                               cudaStream_t stream) {
   int64_t output_size = batch * channel * out_width;
   switch (mode) {
     case ALIGN_CORNERS:
-      return ResizeLinear1DGradKernel<T, T>
-        <<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
-          batch, channel, in_width, out_width, grad_output, grad_input, AlignCornersFunc());
+      ResizeLinear1DGradKernel<T, T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
+        batch, channel, in_width, out_width, grad_output, grad_input, AlignCornersFunc());
+      break;
     case HALF_PIXEL:
-      return ResizeLinear1DGradKernel<T, T>
-        <<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
-          batch, channel, in_width, out_width, grad_output, grad_input, HalfPixelFunc());
+      ResizeLinear1DGradKernel<T, T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
+        batch, channel, in_width, out_width, grad_output, grad_input, HalfPixelFunc());
+      break;
     default:
       break;
   }
+  return GetCudaStatus();
 }
 
 template <>
-void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t batch,
-                        const int64_t channel, const int64_t in_width, const int64_t out_width, const half *grad_output,
-                        half *grad_input, float *grad_work, const uint32_t device_id, cudaStream_t stream) {
+cudaError_t ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t batch,
+                               const int64_t channel, const int64_t in_width, const int64_t out_width,
+                               const half *grad_output, half *grad_input, float *grad_work, const uint32_t device_id,
+                               cudaStream_t stream) {
   switch (mode) {
     case ALIGN_CORNERS:
       ResizeLinear1DGradKernel<<<CUDA_BLOCKS(device_id, out_width), CUDA_THREADS(device_id), 0, stream>>>(
@@ -212,10 +221,11 @@ void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode
   int64_t output_size = batch * channel * in_width;
   AssignToOutput<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(output_size, grad_work,
                                                                                               grad_input);
+  return GetCudaStatus();
 }
 
 #define RESIZE_LINEAR_1D_FUNC(T)                                                                                 \
-  template CUDA_LIB_EXPORT void ResizeLinear1D(                                                                  \
+  template CUDA_LIB_EXPORT cudaError_t ResizeLinear1D(                                                           \
     const enum ResizeLinearCoordinateTransformationMode mode, const int64_t output_size, const int64_t in_width, \
     const int64_t out_width, const T *input, T *output, const uint32_t device_id, cudaStream_t stream);
 
@@ -223,17 +233,20 @@ RESIZE_LINEAR_1D_FUNC(half)
 RESIZE_LINEAR_1D_FUNC(float)
 RESIZE_LINEAR_1D_FUNC(double)
 
-template CUDA_LIB_EXPORT void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode,
-                                                 const int64_t batch, const int64_t channel, const int64_t in_width,
-                                                 const int64_t out_width, const half *grad_output, half *grad_input,
-                                                 float *grad_work, const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode,
+                                                        const int64_t batch, const int64_t channel,
+                                                        const int64_t in_width, const int64_t out_width,
+                                                        const half *grad_output, half *grad_input, float *grad_work,
+                                                        const uint32_t device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode,
-                                                 const int64_t batch, const int64_t channel, const int64_t in_width,
-                                                 const int64_t out_width, const float *grad_output, float *grad_input,
-                                                 float *grad_work, const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode,
+                                                        const int64_t batch, const int64_t channel,
+                                                        const int64_t in_width, const int64_t out_width,
+                                                        const float *grad_output, float *grad_input, float *grad_work,
+                                                        const uint32_t device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode,
-                                                 const int64_t batch, const int64_t channel, const int64_t in_width,
-                                                 const int64_t out_width, const double *grad_output, double *grad_input,
-                                                 float *grad_work, const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode,
+                                                        const int64_t batch, const int64_t channel,
+                                                        const int64_t in_width, const int64_t out_width,
+                                                        const double *grad_output, double *grad_input, float *grad_work,
+                                                        const uint32_t device_id, cudaStream_t stream);

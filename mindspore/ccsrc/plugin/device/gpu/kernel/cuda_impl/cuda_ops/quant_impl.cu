@@ -71,23 +71,27 @@ __global__ void FSEDeCompressed(BitStreamState *bs, const uint64_t *chunks, floa
   }
 }
 
-void FSEDeCompressed(BitStreamState *bs, const uint64_t *chunks, float *buff, int buff_count,
-                     const uint16_t *states_table, const uint8_t *bit_count_table, const uint16_t *symbol_table,
-                     const float *centroids, size_t table_log, cudaStream_t stream, uint32_t device_id) {
+cudaError_t FSEDeCompressed(BitStreamState *bs, const uint64_t *chunks, float *buff, int buff_count,
+                            const uint16_t *states_table, const uint8_t *bit_count_table, const uint16_t *symbol_table,
+                            const float *centroids, size_t table_log, cudaStream_t stream, uint32_t device_id) {
   FSEDeCompressed<<<1, 1, 0, stream>>>(bs, chunks, buff, buff_count, states_table, bit_count_table, symbol_table,
                                        centroids, table_log);
+  return GetCudaStatus();
 }
 
-void DeQuantWithPerLayer(const int8_t *input, float *output, int element_cnt, float scale, int zp, cudaStream_t stream,
-                         uint32_t device_id) {
+cudaError_t DeQuantWithPerLayer(const int8_t *input, float *output, int element_cnt, float scale, int zp,
+                                cudaStream_t stream, uint32_t device_id) {
   auto grid = CUDA_BLOCKS(device_id, element_cnt);
   auto block = CUDA_THREADS(device_id);
   DeQuantWithPerLayer<<<grid, block, 0, stream>>>(input, output, element_cnt, scale, zp);
+  return GetCudaStatus();
 }
 
-void DeQuantWithPerChannel(const int8_t *input, float *output, int element_cnt, const float *scale, const int *zp,
-                           size_t stride, size_t bucket_count, cudaStream_t stream, uint32_t device_id) {
+cudaError_t DeQuantWithPerChannel(const int8_t *input, float *output, int element_cnt, const float *scale,
+                                  const int *zp, size_t stride, size_t bucket_count, cudaStream_t stream,
+                                  uint32_t device_id) {
   auto grid = CUDA_BLOCKS(device_id, element_cnt);
   auto block = CUDA_THREADS(device_id);
   DeQuantWithPerChannel<<<grid, block, 0, stream>>>(input, output, element_cnt, scale, zp, stride, bucket_count);
+  return GetCudaStatus();
 }

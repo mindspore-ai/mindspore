@@ -204,13 +204,14 @@ __global__ void AssignValueKernel(S *values_ptr, int64_t *indice_ptr, int64_t *s
   return;
 }
 template <typename S>
-CUDA_LIB_EXPORT void SparseFillEmptyRows(int64_t *indices_ptr, Complex<S> *values_ptr, Complex<S> *default_value,
-                                         int64_t *dense_shape_ptr, int device_id, int indice_num, size_t dense_row,
-                                         int64_t *elements_per_rows, int *empty_row_count_sum, int64_t *row_indices,
-                                         int64_t *input_row_ends, int64_t *sorted_indices, size_t *final_shape,
-                                         int64_t *origin_index, int64_t *sorted_key, cudaStream_t cuda_stream,
-                                         int64_t *output_indices_ptr, Complex<S> *output_values_ptr,
-                                         bool *output_empty_row_indicator_ptr, int64_t *output_reverse_index_map_ptr) {
+CUDA_LIB_EXPORT cudaError_t SparseFillEmptyRows(int64_t *indices_ptr, Complex<S> *values_ptr, Complex<S> *default_value,
+                                                int64_t *dense_shape_ptr, int device_id, int indice_num,
+                                                size_t dense_row, int64_t *elements_per_rows, int *empty_row_count_sum,
+                                                int64_t *row_indices, int64_t *input_row_ends, int64_t *sorted_indices,
+                                                size_t *final_shape, int64_t *origin_index, int64_t *sorted_key,
+                                                cudaStream_t cuda_stream, int64_t *output_indices_ptr,
+                                                Complex<S> *output_values_ptr, bool *output_empty_row_indicator_ptr,
+                                                int64_t *output_reverse_index_map_ptr) {
   int thread_num_dense_row = 256 < dense_row ? 256 : dense_row;
   cudaDeviceProp prop;
   (void)cudaGetDeviceProperties(&prop, device_id);
@@ -231,17 +232,18 @@ CUDA_LIB_EXPORT void SparseFillEmptyRows(int64_t *indices_ptr, Complex<S> *value
   AssignValueKernel<<<block_num, thread_num_dense_row, 0, cuda_stream>>>(
     values_ptr, indices_ptr, sorted_indices, dense_row, default_value, empty_row_count_sum, input_row_ends,
     output_values_ptr, output_indices_ptr, indice_num, final_shape, output_reverse_index_map_ptr);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename S>
-CUDA_LIB_EXPORT void SparseFillEmptyRows(int64_t *indices_ptr, S *values_ptr, S *default_value,
-                                         int64_t *dense_shape_ptr, int device_id, int indice_num, size_t dense_row,
-                                         int64_t *elements_per_rows, int *empty_row_count_sum, int64_t *row_indices,
-                                         int64_t *input_row_ends, int64_t *sorted_indices, size_t *final_shape,
-                                         int64_t *origin_index, int64_t *sorted_key, cudaStream_t cuda_stream,
-                                         int64_t *output_indices_ptr, S *output_values_ptr,
-                                         bool *output_empty_row_indicator_ptr, int64_t *output_reverse_index_map_ptr) {
+CUDA_LIB_EXPORT cudaError_t SparseFillEmptyRows(int64_t *indices_ptr, S *values_ptr, S *default_value,
+                                                int64_t *dense_shape_ptr, int device_id, int indice_num,
+                                                size_t dense_row, int64_t *elements_per_rows, int *empty_row_count_sum,
+                                                int64_t *row_indices, int64_t *input_row_ends, int64_t *sorted_indices,
+                                                size_t *final_shape, int64_t *origin_index, int64_t *sorted_key,
+                                                cudaStream_t cuda_stream, int64_t *output_indices_ptr,
+                                                S *output_values_ptr, bool *output_empty_row_indicator_ptr,
+                                                int64_t *output_reverse_index_map_ptr) {
   int thread_num_dense_row = 256 < dense_row ? 256 : dense_row;
   cudaDeviceProp prop;
   (void)cudaGetDeviceProperties(&prop, device_id);
@@ -262,11 +264,11 @@ CUDA_LIB_EXPORT void SparseFillEmptyRows(int64_t *indices_ptr, S *values_ptr, S 
   AssignValueKernel<<<block_num, thread_num_dense_row, 0, cuda_stream>>>(
     values_ptr, indices_ptr, sorted_indices, dense_row, default_value, empty_row_count_sum, input_row_ends,
     output_values_ptr, output_indices_ptr, indice_num, final_shape, output_reverse_index_map_ptr);
-  return;
+  return GetCudaStatus();
 }
 
 #define TEMPLATE_INSTANCE(DTYPE)                                                                                       \
-  template CUDA_LIB_EXPORT void SparseFillEmptyRows<DTYPE>(                                                            \
+  template CUDA_LIB_EXPORT cudaError_t SparseFillEmptyRows<DTYPE>(                                                     \
     int64_t * indices_ptr, DTYPE * values_ptr, DTYPE * default_value, int64_t * dense_shape_ptr, int device_id,        \
     int indice_num, size_t dense_row, int64_t *elements_per_rows, int *rows_are_not_ordered, int64_t *row_indices,     \
     int64_t *input_row_ends, int64_t *sorted_indices, size_t *final_shape, int64_t *origin_index, int64_t *sorted_key, \

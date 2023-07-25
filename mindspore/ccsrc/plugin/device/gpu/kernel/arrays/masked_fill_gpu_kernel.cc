@@ -37,14 +37,15 @@ bool MaskedFillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   bool *mask_addr = GetDeviceAddress<bool>(inputs, kIndex1);
   T *value = GetDeviceAddress<T>(inputs, kIndex2);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-
+  cudaError_t status = cudaErrorNotReady;
   if (need_broadcast_) {
-    BroadcastMaskedFill(inner_size_, lhs_shape_, rhs_shape_, output_shape_, input_addr, mask_addr, value, output_addr,
-                        device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = BroadcastMaskedFill(inner_size_, lhs_shape_, rhs_shape_, output_shape_, input_addr, mask_addr, value,
+                                 output_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
-    ElewiseMaskedFill(inner_size_, output_num_, input_addr, mask_addr, value, output_addr, device_id_,
-                      reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = ElewiseMaskedFill(inner_size_, output_num_, input_addr, mask_addr, value, output_addr, device_id_,
+                               reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

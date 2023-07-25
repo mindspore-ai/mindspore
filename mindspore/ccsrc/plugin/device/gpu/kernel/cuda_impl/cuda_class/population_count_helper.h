@@ -67,8 +67,9 @@ class PopulationCountHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
     // call cuda kernel
-    CalPopulationCount(input_size_list_[0] / sizeof(T), input_ptr, output_ptr, device_id_,
-                       reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalPopulationCount(input_size_list_[0] / sizeof(T), input_ptr, output_ptr, device_id_,
+                                     reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

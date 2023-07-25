@@ -149,7 +149,8 @@ bool LogNormalReverseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
 
     CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateLogNormal(mask_generator_, mask_h, elem_num, input_mean_, input_std_),
                                  "Failed to generate lognormal");
-    CalLogNormalReverseHalf(input, output, elem_num, mask_h, cuda_stream_);
+    auto status = CalLogNormalReverseHalf(input, output, elem_num, mask_h, cuda_stream_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

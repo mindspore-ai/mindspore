@@ -407,14 +407,14 @@ bool ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> 
       auto dims = origin_shape_.size();
       auto transpose_status = CalTranspose(input_num_, input_addr, transpose_info_, dims, input_transposed,
                                            reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_LAUNCH_STATUS(transpose_status, "Transpose called by " + kernel_name_);
+      CHECK_CUDA_STATUS(transpose_status, "Transpose called by " + kernel_name_);
       input = input_transposed;
     }
     input = need_transpose_ ? input : input_addr;
 
     auto status = ArrayReduceComplex(input, input_reshape_, reduce_first_axis_, reduce_op_type_, temp, output_addr,
                                      reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 }
@@ -444,14 +444,14 @@ bool ArrayReduceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
       auto dims = origin_shape_.size();
       auto transpose_status = CalTranspose(input_num_, input_addr, transpose_info_, dims, input_transposed,
                                            reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_LAUNCH_STATUS(transpose_status, "Transpose called by " + kernel_name_);
+      CHECK_CUDA_STATUS(transpose_status, "Transpose called by " + kernel_name_);
       input = input_transposed;
     }
     input = need_transpose_ ? input : input_addr;
 
     auto status = ArrayReduce(input, input_reshape_, reduce_first_axis_, reduce_op_type_, temp, output_addr,
                               reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 }

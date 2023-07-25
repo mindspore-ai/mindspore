@@ -21,12 +21,14 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void IsClose(size_t size, const T* inputx, const T* inputy, const float rtol, const float atol,
-                             const bool equal_nan, bool* output, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t IsClose(size_t size, const T *inputx, const T *inputy, const float rtol, const float atol,
+                                    const bool equal_nan, bool *output, const uint32_t &device_id,
+                                    cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void BroadcastIsClose(const std::vector<size_t> &inputx_shape, const std::vector<size_t> &inputy_shape,
-                                     const std::vector<size_t> &output_shape, const T* inputx, const T* inputy,
-                                     const float rtol, const float atol, const bool equal_nan, bool* output,
-                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t BroadcastIsClose(const std::vector<size_t> &inputx_shape,
+                                             const std::vector<size_t> &inputy_shape,
+                                             const std::vector<size_t> &output_shape, const T *inputx, const T *inputy,
+                                             const float rtol, const float atol, const bool equal_nan, bool *output,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif

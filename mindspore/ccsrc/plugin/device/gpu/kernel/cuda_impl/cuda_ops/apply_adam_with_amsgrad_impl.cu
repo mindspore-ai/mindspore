@@ -67,7 +67,7 @@ cudaError_t CalApplyAdamWithAmsgrad(const size_t size, const int64_t batch_size,
   CalApplyAdamWithAmsgradKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream_ptr>>>(
     size, batch_size, var, m, v, vhat, beta1_power, beta2_power, lr, grad, beta1, beta2, epsilon, output_var, output_m,
     output_v, output_vhat);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalApplyAdamWithAmsgrad<double>(

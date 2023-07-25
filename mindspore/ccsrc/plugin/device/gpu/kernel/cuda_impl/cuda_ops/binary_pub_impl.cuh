@@ -96,7 +96,7 @@ cudaError_t BinaryWithBroadcast(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t
   BinaryWithBroadcastKernel<OP, In0_t, In1_t, Out_t>
     <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, dim_size, out_num, strides,
                                                                                       in0, in1, out);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>
@@ -117,7 +117,7 @@ cudaError_t BinaryWithoutBroadcast(BinaryFunc<OP, In0_t, In1_t, Out_t> func, Sca
       cuda::elementwise::Binary(func, out_num, out, in0, in1, cuda_stream);
     }
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template <enum BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>

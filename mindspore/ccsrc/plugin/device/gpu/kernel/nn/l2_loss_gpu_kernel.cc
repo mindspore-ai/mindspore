@@ -52,7 +52,8 @@ bool L2LossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                                       const std::vector<AddressPtr> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
-  L2Loss(input_size_, input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = L2Loss(input_size_, input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

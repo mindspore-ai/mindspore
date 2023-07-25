@@ -90,7 +90,7 @@ bool UpsampleNearest3dGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
                                         input_shape_[kIndex3], input_shape_[kIndex4], output_shape_[kIndex2],
                                         output_shape_[kIndex3], output_shape_[kIndex4], scale_d, scale_h, scale_w,
                                         output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

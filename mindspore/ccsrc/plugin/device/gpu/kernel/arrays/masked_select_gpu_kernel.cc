@@ -190,8 +190,9 @@ bool MaskedSelectGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   MS_EXCEPTION_IF_NULL(output_ptr);
 
   // kernel
-  MaskedSelect(input_ptr, mask_ptr, index_ptr, input_shape_, mask_shape_, broadcast_shape_, input_broadcast_ptr,
-               mask_broadcast_ptr, output_ptr, device_id_, cuda_stream_);
+  auto status = MaskedSelect(input_ptr, mask_ptr, index_ptr, input_shape_, mask_shape_, broadcast_shape_,
+                             input_broadcast_ptr, mask_broadcast_ptr, output_ptr, device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   // The last element of index_ptr is the final output size of MaskedSelect.
   // e.g., the index(prefix sum) is [0, 0, 1, 2, 2], so the real_output_size_ is 2

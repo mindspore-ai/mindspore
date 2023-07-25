@@ -60,8 +60,10 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
 
     size_t size = output_size_list_[0] / sizeof(T);
 
-    CalBatchToSpace<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_, crops_[0][0], crops_[0][1], crops_[1][0],
-                       crops_[1][1], block_size_, output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status =
+      CalBatchToSpace<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_, crops_[0][0], crops_[0][1], crops_[1][0],
+                         crops_[1][1], block_size_, output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

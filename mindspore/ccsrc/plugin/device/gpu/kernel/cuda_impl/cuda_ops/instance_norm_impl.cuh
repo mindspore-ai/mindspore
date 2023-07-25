@@ -17,9 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INSTANCE_NORM_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INSTANCE_NORM_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-CUDA_LIB_EXPORT void CopyMemDevice2Device(const size_t N, const size_t C, float *gamma_addr, float *beta_addr,
-                                          float *runing_mean_addr, float *runnig_variance_addr, float *ws_gamma,
-                                          float *ws_beta, float *ws_mean, float *ws_var, cudaStream_t cuda_stream);
-CUDA_LIB_EXPORT void ComputeMean(const size_t N, const size_t C, float *dgamma, float *dbeta, const float *ws_dgamma,
-                                 const float *ws_dbeta, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CopyMemDevice2Device(const size_t N, const size_t C, float *gamma_addr, float *beta_addr,
+                                                 float *runing_mean_addr, float *runnig_variance_addr, float *ws_gamma,
+                                                 float *ws_beta, float *ws_mean, float *ws_var,
+                                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ComputeMean(const size_t N, const size_t C, float *dgamma, float *dbeta,
+                                        const float *ws_dgamma, const float *ws_dbeta, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INSTANCE_NORM_IMPL_CUH_

@@ -69,13 +69,15 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMo
                           softmax_output_descriptor_, softmax_output_logits),
       "cudnnSoftmaxForward failed.");
 
+    cudaError_t status = cudaErrorNotReady;
     if (is_grad_) {
-      CrossEntropyGradWithSparse(softmax_output_logits, labels_addr, batch_size_, channel_size_, output_addr,
-                                 reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = CrossEntropyGradWithSparse(softmax_output_logits, labels_addr, batch_size_, channel_size_, output_addr,
+                                          reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
-      CrossEntropyWithSparse(softmax_output_logits, labels_addr, batch_size_, channel_size_, output_addr,
-                             reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = CrossEntropyWithSparse(softmax_output_logits, labels_addr, batch_size_, channel_size_, output_addr,
+                                      reinterpret_cast<cudaStream_t>(stream_ptr));
     }
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

@@ -21,9 +21,10 @@
 enum TensorScatterElementsReductionType { REDUCTION_ASSIGNMENT = 0, REDUCTION_ADD, REDCUTION_INVALID_TYPE = 255 };
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void TensorScatterElements(const enum TensorScatterElementsReductionType reduction_type,
-                                           const int input_dims, const int indices_size, const S *indices,
-                                           const T *updates, T *output, const int64_t axis,
-                                           const int64_t input_axis_size, const size_t *indices_stride,
-                                           const size_t *output_stride, const uint32_t &device_id, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t TensorScatterElements(const enum TensorScatterElementsReductionType reduction_type,
+                                                  const int input_dims, const int indices_size, const S *indices,
+                                                  const T *updates, T *output, const int64_t axis,
+                                                  const int64_t input_axis_size, const size_t *indices_stride,
+                                                  const size_t *output_stride, const uint32_t &device_id,
+                                                  cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TENSOR_SCATTER_ELEMETNS_CUH_

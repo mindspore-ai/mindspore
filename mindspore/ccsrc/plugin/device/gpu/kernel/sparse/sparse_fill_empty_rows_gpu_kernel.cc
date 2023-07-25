@@ -192,12 +192,14 @@ bool SparseFillEmptyRowsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   MS_EXCEPTION_IF_NULL(output_empty_row_indicator_addr);
   MS_EXCEPTION_IF_NULL(output_reverse_index_map_addr);
 
-  SparseFillEmptyRows(input_indice_addr, input_values_addr, input_default_values_addr, input_dense_shape_addr, 0,
-                      input_indices_shapes_[0], dense_row, workspace_elements_per_rows_addr,
-                      workspace_empty_rows_count_addr, workspace_row_indices_addr, workspace_input_row_ends_addr,
-                      workspace_sorted_indices_addr, workspace_final_shape_addr, workspace_origin_index_addr,
-                      workspace_sorted_key_addr, reinterpret_cast<cudaStream_t>(cuda_stream_), output_indices_addr,
-                      output_values_addr, output_empty_row_indicator_addr, output_reverse_index_map_addr);
+  auto status =
+    SparseFillEmptyRows(input_indice_addr, input_values_addr, input_default_values_addr, input_dense_shape_addr, 0,
+                        input_indices_shapes_[0], dense_row, workspace_elements_per_rows_addr,
+                        workspace_empty_rows_count_addr, workspace_row_indices_addr, workspace_input_row_ends_addr,
+                        workspace_sorted_indices_addr, workspace_final_shape_addr, workspace_origin_index_addr,
+                        workspace_sorted_key_addr, reinterpret_cast<cudaStream_t>(cuda_stream_), output_indices_addr,
+                        output_values_addr, output_empty_row_indicator_addr, output_reverse_index_map_addr);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&real_output_size_, workspace_final_shape_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),

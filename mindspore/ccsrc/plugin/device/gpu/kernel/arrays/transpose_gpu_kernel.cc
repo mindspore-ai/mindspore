@@ -94,22 +94,23 @@ bool TransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   size_t size = SizeOf(input_shape_);
   int64_t *h_input_shape = &input_shape_[0];
   int64_t *h_input_axis = &input_perm_[0];
+  cudaError_t status = cudaErrorNotReady;
   if (shape_size_ == kDimSize4 && h_input_axis[kAxisIndexZero] == kAxisZero &&
       h_input_axis[kAxisIndex1st] == kAxis3rd && h_input_axis[kAxisIndex2nd] == kAxis1st &&
       h_input_axis[kAxisIndex3rd] == kAxis2nd) {
     // nhwc->nchw: 0,3,1,2
-    CalNHWC2NCHWInterface(size, shape_size_, input, h_input_shape, h_input_axis, info, output,
-                          reinterpret_cast<cudaStream_t>(stream_ptr_));
+    status = CalNHWC2NCHWInterface(size, shape_size_, input, h_input_shape, h_input_axis, info, output,
+                                   reinterpret_cast<cudaStream_t>(stream_ptr_));
   } else if (shape_size_ == kDimSize4 && h_input_axis[kAxisIndexZero] == kAxisZero &&
              h_input_axis[kAxisIndex1st] == kAxis2nd && h_input_axis[kAxisIndex2nd] == kAxis3rd &&
              h_input_axis[kAxisIndex3rd] == kAxis1st) {
     // nchw->nhwc: 0,2,3,1
-    CalNCHW2NHWCInterface(size, shape_size_, input, h_input_shape, h_input_axis, info, output,
-                          reinterpret_cast<cudaStream_t>(stream_ptr_));
+    status = CalNCHW2NHWCInterface(size, shape_size_, input, h_input_shape, h_input_axis, info, output,
+                                   reinterpret_cast<cudaStream_t>(stream_ptr_));
   } else {
-    auto status = CalTranspose(size, input, info, shape_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
-    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+    status = CalTranspose(size, input, info, shape_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

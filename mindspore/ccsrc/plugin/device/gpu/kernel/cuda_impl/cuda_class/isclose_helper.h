@@ -143,15 +143,15 @@ class IsCloseHelperGpuKernel : public GpuKernelHelperBase {
     if (flag != 0) {
       return flag;
     }
-
+    cudaError_t status = cudaErrorNotReady;
     if (need_broadcast_) {
-      BroadcastIsClose(lhs_shape_, rhs_shape_, output_shape_, inputx, inputy, rtol, atol, equal_nan, output, device_id_,
-                       reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = BroadcastIsClose(lhs_shape_, rhs_shape_, output_shape_, inputx, inputy, rtol, atol, equal_nan, output,
+                                device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      IsClose(output_num_, inputx, inputy, rtol, atol, equal_nan, output, device_id_,
-              reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = IsClose(output_num_, inputx, inputy, rtol, atol, equal_nan, output, device_id_,
+                       reinterpret_cast<cudaStream_t>(cuda_stream));
     }
-
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
   TensorInfo GetOutputTensorInfo() override {

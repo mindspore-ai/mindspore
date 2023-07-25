@@ -54,7 +54,8 @@ bool UniformGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
                                        const std::vector<AddressPtr> &outputs) {
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   T *y = GetDeviceAddress<T>(outputs, kIndex0);
-  CalUniform(x, y, from_, to_, input_size_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalUniform(x, y, from_, to_, input_size_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

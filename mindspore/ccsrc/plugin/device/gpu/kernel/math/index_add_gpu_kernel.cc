@@ -155,7 +155,9 @@ bool IndexAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   cudaMemsetAsync(device_flag, 0, sizeof(int), cuda_stream);
   int host_index_mismatch = 0;
 
-  CalIndexAdd(x, index, y, outer_size_, y_axis_size_, x_axis_size_, inner_size_, use_lock_, device_flag, cuda_stream);
+  auto status =
+    CalIndexAdd(x, index, y, outer_size_, y_axis_size_, x_axis_size_, inner_size_, use_lock_, device_flag, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&host_index_mismatch, device_flag, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
     "cudaMemcpyAsync output failed");

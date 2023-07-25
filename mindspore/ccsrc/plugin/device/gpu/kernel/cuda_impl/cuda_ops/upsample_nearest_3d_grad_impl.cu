@@ -88,7 +88,7 @@ cudaError_t CalUpsampleNearest3DGrad(const T *dy, const int n, const int c, cons
   UpsampleNearest3DGradKernel<T, T>
     <<<gridSize, blockSize, 0, cuda_stream>>>(dy, n, c, dy_d, dy_h, dy_w, dy_cdhw, dy_dhw, dy_hw, dx_d, dx_h, dx_w,
                                               dx_cdhw, dx_dhw, dx_hw, d_scale, h_scale, w_scale, dx);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template <>
@@ -107,7 +107,7 @@ cudaError_t CalUpsampleNearest3DGrad(const half *dy, const int n, const int c, c
   UpsampleNearest3DGradKernel<half, float>
     <<<gridSize, blockSize, 0, cuda_stream>>>(dy, n, c, dy_d, dy_h, dy_w, dy_cdhw, dy_dhw, dy_hw, dx_d, dx_h, dx_w,
                                               dx_cdhw, dx_dhw, dx_hw, d_scale, h_scale, w_scale, dx);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalUpsampleNearest3DGrad(const half *dy, const int n, const int c, const int dy_d,

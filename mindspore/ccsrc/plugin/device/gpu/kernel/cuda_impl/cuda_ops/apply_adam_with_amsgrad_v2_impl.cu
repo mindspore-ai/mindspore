@@ -40,9 +40,9 @@ __device__ __forceinline__ half maxFunc(half x, half y) {
 
 template <typename T>
 __global__ void CalApplyAdamWithAmsgradV2Kernel(const size_t size, const int64_t batch_size, T *var, T *m, T *v,
-                                              T *vhat, T *beta1_power, T *beta2_power, const T *lr, const T *grad,
-                                              const T *beta1, const T *beta2, const T *epsilon, T *output_var,
-                                              T *output_m, T *output_v, T *output_vhat) {
+                                                T *vhat, T *beta1_power, T *beta2_power, const T *lr, const T *grad,
+                                                const T *beta1, const T *beta2, const T *epsilon, T *output_var,
+                                                T *output_m, T *output_v, T *output_vhat) {
   auto all_elements = size * batch_size;
   const T one = static_cast<T>(1.0);
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < all_elements; pos += gridDim.x * blockDim.x) {
@@ -61,14 +61,14 @@ __global__ void CalApplyAdamWithAmsgradV2Kernel(const size_t size, const int64_t
 
 template <typename T>
 cudaError_t CalApplyAdamWithAmsgradV2(const size_t size, const int64_t batch_size, T *var, T *m, T *v, T *vhat,
-                                    T *beta1_power, T *beta2_power, const T *lr, const T *grad, const T *beta1,
-                                    const T *beta2, const T *epsilon, T *output_var, T *output_m, T *output_v,
-                                    T *output_vhat, const uint32_t &device_id, cudaStream_t stream_ptr) {
+                                      T *beta1_power, T *beta2_power, const T *lr, const T *grad, const T *beta1,
+                                      const T *beta2, const T *epsilon, T *output_var, T *output_m, T *output_v,
+                                      T *output_vhat, const uint32_t &device_id, cudaStream_t stream_ptr) {
   int thread_num = size > 512 ? 512 : size;
   CalApplyAdamWithAmsgradV2Kernel<<<CUDA_BLOCKS(device_id, size), thread_num, 0, stream_ptr>>>(
     size, batch_size, var, m, v, vhat, beta1_power, beta2_power, lr, grad, beta1, beta2, epsilon, output_var, output_m,
     output_v, output_vhat);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalApplyAdamWithAmsgradV2<double>(
@@ -83,11 +83,8 @@ template CUDA_LIB_EXPORT cudaError_t CalApplyAdamWithAmsgradV2<float>(
   float *output_var, float *output_m, float *output_v, float *output_vhat, const uint32_t &device_id,
   cudaStream_t stream_ptr);
 
-template CUDA_LIB_EXPORT cudaError_t CalApplyAdamWithAmsgradV2<half>(const size_t size, const int64_t batch_size,
-                                                                   half *var, half *m, half *v, half *vhat,
-                                                                   half *beta1_power, half *beta2_power, const half *lr,
-                                                                   const half *grad, const half *beta1,
-                                                                   const half *beta2, const half *epsilon,
-                                                                   half *output_var, half *output_m, half *output_v,
-                                                                   half *output_vhat, const uint32_t &device_id,
-                                                                   cudaStream_t stream_ptr);
+template CUDA_LIB_EXPORT cudaError_t CalApplyAdamWithAmsgradV2<half>(
+  const size_t size, const int64_t batch_size, half *var, half *m, half *v, half *vhat, half *beta1_power,
+  half *beta2_power, const half *lr, const half *grad, const half *beta1, const half *beta2, const half *epsilon,
+  half *output_var, half *output_m, half *output_v, half *output_vhat, const uint32_t &device_id,
+  cudaStream_t stream_ptr);

@@ -20,7 +20,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalNthElement(const size_t slices_number, const size_t slice_size, T *input, int32_t input_n,
-                                   T *output, bool reverse, const uint32_t &device_id, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalNthElement(const size_t slices_number, const size_t slice_size, T *input,
+                                          int32_t input_n, T *output, bool reverse, const uint32_t &device_id,
+                                          cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS__NTH_ELEMENT_IMPL_CUH_

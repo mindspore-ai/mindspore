@@ -29,7 +29,9 @@ bool SoftShrinkGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
                                           const std::vector<kernel::AddressPtr> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  SoftShrink(size_, input_addr, lambd_, output_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    SoftShrink(size_, input_addr, lambd_, output_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

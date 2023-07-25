@@ -19,11 +19,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalCrossEntropy(const float *logits, T *labels, const int batch_size, const int class_num,
-                                     float *loss, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCrossEntropy(const float *logits, T *labels, const int batch_size, const int class_num,
+                                            float *loss, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalCrossEntropyGrad(const float *logits, T *labels, const int batch_size, const int class_num,
-                                         float *grad, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCrossEntropyGrad(const float *logits, T *labels, const int batch_size,
+                                                const int class_num, float *grad, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_CROSS_ENTROPY_CUDA_IMPL_CUH_

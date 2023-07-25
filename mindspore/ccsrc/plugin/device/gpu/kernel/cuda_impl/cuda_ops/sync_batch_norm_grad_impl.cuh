@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SYNC_BATCH_NORM_GRAD_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename G>
-CUDA_LIB_EXPORT void CalSyncBatchNormGradPre(size_t N, size_t C, size_t H, size_t W, const T *x_input, const T *dy,
-                                             G *saved_mean, G *invstd_saved, float *dy_sum_local, float *dot_p_local,
-                                             cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPre(size_t N, size_t C, size_t H, size_t W, const T *x_input,
+                                                    const T *dy, G *saved_mean, G *invstd_saved, float *dy_sum_local,
+                                                    float *dot_p_local, cudaStream_t cuda_stream);
 template <typename T, typename S, typename G>
-CUDA_LIB_EXPORT void CalSyncBatchNormGradPost(size_t N, size_t C, size_t H, size_t W, const T *x_input, const T *dy,
-                                              T *dx, G *saved_mean, G *invstd_saved, float *dy_sum_red,
-                                              float *dot_p_red, S *scale, S *dscale, S *dbias, float epsilon,
-                                              cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPost(size_t N, size_t C, size_t H, size_t W, const T *x_input,
+                                                     const T *dy, T *dx, G *saved_mean, G *invstd_saved,
+                                                     float *dy_sum_red, float *dot_p_red, S *scale, S *dscale, S *dbias,
+                                                     float epsilon, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SYNC_BATCH_NORM_GRAD_IMPL_CUH_

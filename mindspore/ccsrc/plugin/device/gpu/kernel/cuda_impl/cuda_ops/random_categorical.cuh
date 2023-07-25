@@ -18,11 +18,11 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RANDOM_CATEGORICAL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void GetCdfKernel(const T *logits_addr, double** dev_cdf, const size_t batch_size,
-                                  const size_t num_classes, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t GetCdfKernel(const T *logits_addr, double **dev_cdf, const size_t batch_size,
+                                         const size_t num_classes, cudaStream_t cuda_stream);
 template <typename S>
-CUDA_LIB_EXPORT void RandomCategoricalKernel(const size_t num_samples, double** dev_rand, double** dev_cdf,
-                                             const size_t batch_size, const size_t num_classes, S *output_addr,
-                                             cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t RandomCategoricalKernel(const size_t num_samples, double **dev_rand, double **dev_cdf,
+                                                    const size_t batch_size, const size_t num_classes, S *output_addr,
+                                                    cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RANDOM_CATEGORICAL_CUH_

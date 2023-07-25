@@ -131,17 +131,19 @@ bool DropoutFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *output = GetDeviceAddress<T>(outputs, 0);
   T *mask = GetDeviceAddress<T>(outputs, 1);
 
+  cudaError_t status = cudaErrorNotReady;
   if (use_fused_dropout_) {
     if (only_use_first_output_) {
-      FusedDropoutForwardOnlyOutput(input, output, num_count_, keep_prob_, seed_, seed_offset_,
-                                    reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = FusedDropoutForwardOnlyOutput(input, output, num_count_, keep_prob_, seed_, seed_offset_,
+                                             reinterpret_cast<cudaStream_t>(stream_ptr));
     } else if (only_use_second_output_) {
-      FusedDropoutForwardOnlyMask(mask, num_count_, keep_prob_, seed_, seed_offset_,
-                                  reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = FusedDropoutForwardOnlyMask(mask, num_count_, keep_prob_, seed_, seed_offset_,
+                                           reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
-      FusedDropoutForward(input, mask, output, num_count_, keep_prob_, seed_, seed_offset_,
-                          reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = FusedDropoutForward(input, mask, output, num_count_, keep_prob_, seed_, seed_offset_,
+                                   reinterpret_cast<cudaStream_t>(stream_ptr));
     }
+    CHECK_CUDA_STATUS(status, kernel_name_);
     seed_offset_ += num_count_;
     return true;
   }
@@ -153,8 +155,9 @@ bool DropoutFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   // curandGen only support float or double for mask.
   CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(mask_generator_, mask_f, num_count_),
                                "Failed to generate uniform");
-  DropoutForward(input, mask, output, mask_f, num_count_, keep_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
-
+  status =
+    DropoutForward(input, mask, output, mask_f, num_count_, keep_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

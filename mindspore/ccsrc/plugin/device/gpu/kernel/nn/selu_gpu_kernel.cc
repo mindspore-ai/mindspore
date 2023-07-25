@@ -65,8 +65,9 @@ bool SeluGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   float scale_dot_alpha = alpha * scale;
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  CalculateSeLU(input, input_elements_, scale_dot_alpha, scale, output, device_id_,
-                reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalculateSeLU(input, input_elements_, scale_dot_alpha, scale, output, device_id_,
+                              reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

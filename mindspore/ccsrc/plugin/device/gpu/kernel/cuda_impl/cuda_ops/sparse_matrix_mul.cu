@@ -22,11 +22,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T, typename S>
-__global__ void
-CSRSparseMatrixMulKernel(const T *a_shape_addr, T *a_indptr_addr,
-                         T *a_indices_addr, S *a_values_addr, S *b_dense_addr,
-                         T *c_shape_addr, T *c_indptr_addr, T *c_indices_addr,
-                         S *c_values_addr, int row_, int col_) {
+__global__ void CSRSparseMatrixMulKernel(const T *a_shape_addr, T *a_indptr_addr, T *a_indices_addr, S *a_values_addr,
+                                         S *b_dense_addr, T *c_shape_addr, T *c_indptr_addr, T *c_indices_addr,
+                                         S *c_values_addr, int row_, int col_) {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i < col_) {
     int32_t col = a_indices_addr[i];
@@ -43,85 +41,65 @@ CSRSparseMatrixMulKernel(const T *a_shape_addr, T *a_indptr_addr,
 }
 
 template <typename T, typename S>
-void CalSparseMatrixMul(const T *a_shape_addr, T *a_batch_pointers_addr,
-                        T *a_indptr_addr, T *a_indices_addr, S *a_values_addr,
-                        S *b_dense_addr, T *c_shape_addr,
-                        T *c_batch_pointers_addr, T *c_indptr_addr,
-                        T *c_indices_addr, S *c_values_addr, int row_, int col_,
-                        uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseMatrixMul(const T *a_shape_addr, T *a_batch_pointers_addr, T *a_indptr_addr, T *a_indices_addr,
+                               S *a_values_addr, S *b_dense_addr, T *c_shape_addr, T *c_batch_pointers_addr,
+                               T *c_indptr_addr, T *c_indices_addr, S *c_values_addr, int row_, int col_,
+                               uint32_t device_id, cudaStream_t cuda_stream) {
   CSRSparseMatrixMulKernel<<<1, CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      a_shape_addr, a_indptr_addr, a_indices_addr, a_values_addr, b_dense_addr,
-      c_shape_addr, c_indptr_addr, c_indices_addr, c_values_addr, row_, col_);
-  return;
+    a_shape_addr, a_indptr_addr, a_indices_addr, a_values_addr, b_dense_addr, c_shape_addr, c_indptr_addr,
+    c_indices_addr, c_values_addr, row_, col_);
+  return GetCudaStatus();
 }
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int, float>(
-    const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr,
-    int *a_indices_addr, float *a_values_addr, float *b_dense_addr,
-    int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr,
-    int *c_indices_addr, float *c_values_addr, int row_, int col_,
-    uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int, float>(
+  const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr, int *a_indices_addr, float *a_values_addr,
+  float *b_dense_addr, int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr, int *c_indices_addr,
+  float *c_values_addr, int row_, int col_, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int, double>(
-    const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr,
-    int *a_indices_addr, double *a_values_addr, double *b_dense_addr,
-    int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr,
-    int *c_indices_addr, double *c_values_addr, int row_, int col_,
-    uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int, double>(
+  const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr, int *a_indices_addr, double *a_values_addr,
+  double *b_dense_addr, int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr, int *c_indices_addr,
+  double *c_values_addr, int row_, int col_, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int64_t, float>(
-    const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr,
-    int64_t *a_indptr_addr, int64_t *a_indices_addr, float *a_values_addr,
-    float *b_dense_addr, int64_t *c_shape_addr, int64_t *c_batch_pointers_addr,
-    int64_t *c_indptr_addr, int64_t *c_indices_addr, float *c_values_addr,
-    int row_, int col_, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int64_t, float>(
+  const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr, int64_t *a_indptr_addr, int64_t *a_indices_addr,
+  float *a_values_addr, float *b_dense_addr, int64_t *c_shape_addr, int64_t *c_batch_pointers_addr,
+  int64_t *c_indptr_addr, int64_t *c_indices_addr, float *c_values_addr, int row_, int col_, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int64_t, double>(
-    const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr,
-    int64_t *a_indptr_addr, int64_t *a_indices_addr, double *a_values_addr,
-    double *b_dense_addr, int64_t *c_shape_addr, int64_t *c_batch_pointers_addr,
-    int64_t *c_indptr_addr, int64_t *c_indices_addr, double *c_values_addr,
-    int row_, int col_, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int64_t, double>(
+  const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr, int64_t *a_indptr_addr, int64_t *a_indices_addr,
+  double *a_values_addr, double *b_dense_addr, int64_t *c_shape_addr, int64_t *c_batch_pointers_addr,
+  int64_t *c_indptr_addr, int64_t *c_indices_addr, double *c_values_addr, int row_, int col_, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int64_t, int>(
-    const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr,
-    int64_t *a_indptr_addr, int64_t *a_indices_addr, int *a_values_addr,
-    int *b_dense_addr, int64_t *c_shape_addr, int64_t *c_batch_pointers_addr,
-    int64_t *c_indptr_addr, int64_t *c_indices_addr, int *c_values_addr,
-    int row_, int col_, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int64_t, int>(
+  const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr, int64_t *a_indptr_addr, int64_t *a_indices_addr,
+  int *a_values_addr, int *b_dense_addr, int64_t *c_shape_addr, int64_t *c_batch_pointers_addr, int64_t *c_indptr_addr,
+  int64_t *c_indices_addr, int *c_values_addr, int row_, int col_, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int64_t, int64_t>(
-    const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr,
-    int64_t *a_indptr_addr, int64_t *a_indices_addr, int64_t *a_values_addr,
-    int64_t *b_dense_addr, int64_t *c_shape_addr,
-    int64_t *c_batch_pointers_addr, int64_t *c_indptr_addr,
-    int64_t *c_indices_addr, int64_t *c_values_addr, int row_, int col_,
-    uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int64_t, int64_t>(
+  const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr, int64_t *a_indptr_addr, int64_t *a_indices_addr,
+  int64_t *a_values_addr, int64_t *b_dense_addr, int64_t *c_shape_addr, int64_t *c_batch_pointers_addr,
+  int64_t *c_indptr_addr, int64_t *c_indices_addr, int64_t *c_values_addr, int row_, int col_, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int, int>(
-    const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr,
-    int *a_indices_addr, int *a_values_addr, int *b_dense_addr,
-    int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr,
-    int *c_indices_addr, int *c_values_addr, int row_, int col_,
-    uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int, int>(
+  const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr, int *a_indices_addr, int *a_values_addr,
+  int *b_dense_addr, int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr, int *c_indices_addr,
+  int *c_values_addr, int row_, int col_, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int, int64_t>(
-    const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr,
-    int *a_indices_addr, int64_t *a_values_addr, int64_t *b_dense_addr,
-    int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr,
-    int *c_indices_addr, int64_t *c_values_addr, int row_, int col_,
-    uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int, int64_t>(
+  const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr, int *a_indices_addr, int64_t *a_values_addr,
+  int64_t *b_dense_addr, int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr, int *c_indices_addr,
+  int64_t *c_values_addr, int row_, int col_, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int, int16_t>(
-    const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr,
-    int *a_indices_addr, int16_t *a_values_addr, int16_t *b_dense_addr,
-    int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr,
-    int *c_indices_addr, int16_t *c_values_addr, int row_, int col_,
-    uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int, int16_t>(
+  const int *a_shape_addr, int *a_batch_pointers_addr, int *a_indptr_addr, int *a_indices_addr, int16_t *a_values_addr,
+  int16_t *b_dense_addr, int *c_shape_addr, int *c_batch_pointers_addr, int *c_indptr_addr, int *c_indices_addr,
+  int16_t *c_values_addr, int row_, int col_, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseMatrixMul<int64_t, int16_t>(
-    const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr,
-    int64_t *a_indptr_addr, int64_t *a_indices_addr, int16_t *a_values_addr,
-    int16_t *b_dense_addr, int64_t *c_shape_addr,
-    int64_t *c_batch_pointers_addr, int64_t *c_indptr_addr,
-    int64_t *c_indices_addr, int16_t *c_values_addr, int row_, int col_,
-    uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixMul<int64_t, int16_t>(
+  const int64_t *a_shape_addr, int64_t *a_batch_pointers_addr, int64_t *a_indptr_addr, int64_t *a_indices_addr,
+  int16_t *a_values_addr, int16_t *b_dense_addr, int64_t *c_shape_addr, int64_t *c_batch_pointers_addr,
+  int64_t *c_indptr_addr, int64_t *c_indices_addr, int16_t *c_values_addr, int row_, int col_, uint32_t device_id,
+  cudaStream_t cuda_stream);

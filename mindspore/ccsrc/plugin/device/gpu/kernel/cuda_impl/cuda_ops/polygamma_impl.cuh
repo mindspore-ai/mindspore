@@ -21,7 +21,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T1, typename T2>
-CUDA_LIB_EXPORT void CalPolygamma(const size_t size, const T1 *a, const T2 *input, T2 *output,
-                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalPolygamma(const size_t size, const T1 *a, const T2 *input, T2 *output,
+                                         const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_POLYGAMMA_IMPL_CUH_

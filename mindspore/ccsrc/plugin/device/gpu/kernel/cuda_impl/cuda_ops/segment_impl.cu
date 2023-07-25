@@ -36,12 +36,11 @@ struct MinFunc<Complex<float>> {
 
 template <>
 struct MinFunc<Complex<double>> {
-  __device__ __host__ __forceinline__
-    Complex<double> operator()(const Complex<double> &lhs, const Complex<double> &rhs) {
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
+                                                                 const Complex<double> &rhs) {
     return 0;
   }
 };
-
 
 template <typename DataType>
 struct MaxFunc {
@@ -59,12 +58,11 @@ struct MaxFunc<Complex<float>> {
 
 template <>
 struct MaxFunc<Complex<double>> {
-  __device__ __host__ __forceinline__
-    Complex<double> operator()(const Complex<double> &lhs, const Complex<double> &rhs) {
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
+                                                                 const Complex<double> &rhs) {
     return 0;
   }
 };
-
 
 template <typename T>
 struct AddFunc {
@@ -228,10 +226,9 @@ inline int Log2Ceil64(uint64_t n) {
 }
 
 template <typename DataType, typename IndexType>
-void CalSegmentCombination(DataType *inp_ptr, DataType *out_ptr, IndexType *seg_id_ptr,
-                           size_t *seg_pos_ptr, size_t op, const size_t inner_size,
-                           const size_t outer_size, const size_t outer_class, uint32_t device_id,
-                           cudaStream_t cuda_stream) {
+cudaError_t CalSegmentCombination(DataType *inp_ptr, DataType *out_ptr, IndexType *seg_id_ptr, size_t *seg_pos_ptr,
+                                  size_t op, const size_t inner_size, const size_t outer_size, const size_t outer_class,
+                                  uint32_t device_id, cudaStream_t cuda_stream) {
   // Get start position of each segment and set to segment_pos_ptr.
   // The last element of segment_pos_ptr must equal to indices_size.
   const unsigned int segment_size = outer_size + 1;
@@ -257,140 +254,114 @@ void CalSegmentCombination(DataType *inp_ptr, DataType *out_ptr, IndexType *seg_
   switch (op) {
     case 0:
       init_K = min_val_init<DataType>();
-      return SegmentProcess<DataType, MaxFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
+      SegmentProcess<DataType, MaxFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
         inp_ptr, out_ptr, seg_pos_ptr, inner_size, outer_size, outer_class, op, init_K, default_value, seg_id_ptr);
+      break;
     case 1:
       init_K = max_val_init<DataType>();
-      return SegmentProcess<DataType, MinFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
+      SegmentProcess<DataType, MinFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
         inp_ptr, out_ptr, seg_pos_ptr, inner_size, outer_size, outer_class, op, init_K, default_value, seg_id_ptr);
+      break;
     case 2:
       init_K = 0.0;
-      return SegmentProcess<DataType, AddFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
+      SegmentProcess<DataType, AddFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
         inp_ptr, out_ptr, seg_pos_ptr, inner_size, outer_size, outer_class, op, init_K, default_value, seg_id_ptr);
+      break;
     case 3:
       init_K = 0.0;
-      return SegmentProcess<DataType, AddFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
+      SegmentProcess<DataType, AddFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
         inp_ptr, out_ptr, seg_pos_ptr, inner_size, outer_size, outer_class, op, init_K, default_value, seg_id_ptr);
+      break;
     case 4:
       init_K = 1.0;
-      return SegmentProcess<DataType, MulFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
+      SegmentProcess<DataType, MulFunc<DataType>><<<grid, block, shared_memory_size, cuda_stream>>>(
         inp_ptr, out_ptr, seg_pos_ptr, inner_size, outer_size, outer_class, op, init_K, default_value, seg_id_ptr);
+      break;
     default:
       break;
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalSegmentCombination<float, int32_t>(float *inp_ptr, float *out_ptr,
-                                                                    int32_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                    size_t op, const size_t inner_size,
-                                                                    const size_t outer_size, const size_t outer_class,
-                                                                    uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<double, int32_t>(double *inp_ptr, double *out_ptr,
-                                                                     int32_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                     size_t op, const size_t inner_size,
-                                                                     const size_t outer_size, const size_t outer_class,
-                                                                     uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<half, int32_t>(half *inp_ptr, half *out_ptr, int32_t *seg_id_addr,
-                                                                   size_t *seg_pos_ptr, size_t op,
-                                                                   const size_t inner_size, const size_t outer_size,
-                                                                   const size_t outer_class, uint32_t device_id,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<Complex<float>, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<float, int32_t>(
+  float *inp_ptr, float *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<double, int32_t>(
+  double *inp_ptr, double *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<half, int32_t>(
+  half *inp_ptr, half *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<Complex<float>, int32_t>(
   Complex<float> *inp_ptr, Complex<float> *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op,
   const size_t inner_size, const size_t outer_size, const size_t outer_class, uint32_t device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<Complex<double>, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<Complex<double>, int32_t>(
   Complex<double> *inp_ptr, Complex<double> *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op,
   const size_t inner_size, const size_t outer_size, const size_t outer_class, uint32_t device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<int8_t, int32_t>(int8_t *inp_ptr, int8_t *out_ptr,
-                                                                     int32_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                     size_t op, const size_t inner_size,
-                                                                     const size_t outer_size, const size_t outer_class,
-                                                                     uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<int16_t, int32_t>(int16_t *inp_ptr, int16_t *out_ptr,
-                                                                      int32_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                      size_t op, const size_t inner_size,
-                                                                      const size_t outer_size, const size_t outer_class,
-                                                                      uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<int32_t, int32_t>(int32_t *inp_ptr, int32_t *out_ptr,
-                                                                      int32_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                      size_t op, const size_t inner_size,
-                                                                      const size_t outer_size, const size_t outer_class,
-                                                                      uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<int64_t, int32_t>(int64_t *inp_ptr, int64_t *out_ptr,
-                                                                      int32_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                      size_t op, const size_t inner_size,
-                                                                      const size_t outer_size, const size_t outer_class,
-                                                                      uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<uint8_t, int32_t>(uint8_t *inp_ptr, uint8_t *out_ptr,
-                                                                      int32_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                      size_t op, const size_t inner_size,
-                                                                      const size_t outer_size, const size_t outer_class,
-                                                                      uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<uint16_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<int8_t, int32_t>(
+  int8_t *inp_ptr, int8_t *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<int16_t, int32_t>(
+  int16_t *inp_ptr, int16_t *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<int32_t, int32_t>(
+  int32_t *inp_ptr, int32_t *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<int64_t, int32_t>(
+  int64_t *inp_ptr, int64_t *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<uint8_t, int32_t>(
+  uint8_t *inp_ptr, uint8_t *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<uint16_t, int32_t>(
   uint16_t *inp_ptr, uint16_t *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
   const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<uint32_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<uint32_t, int32_t>(
   uint32_t *inp_ptr, uint32_t *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
   const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<uint64_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<uint64_t, int32_t>(
   uint64_t *inp_ptr, uint64_t *out_ptr, int32_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
   const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<float, int64_t>(float *inp_ptr, float *out_ptr,
-                                                                    int64_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                    size_t op, const size_t inner_size,
-                                                                    const size_t outer_size, const size_t outer_class,
-                                                                    uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<double, int64_t>(double *inp_ptr, double *out_ptr,
-                                                                     int64_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                     size_t op, const size_t inner_size,
-                                                                     const size_t outer_size, const size_t outer_class,
-                                                                     uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<half, int64_t>(half *inp_ptr, half *out_ptr, int64_t *seg_id_addr,
-                                                                   size_t *seg_pos_ptr, size_t op,
-                                                                   const size_t inner_size, const size_t outer_size,
-                                                                   const size_t outer_class, uint32_t device_id,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<Complex<float>, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<float, int64_t>(
+  float *inp_ptr, float *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<double, int64_t>(
+  double *inp_ptr, double *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<half, int64_t>(
+  half *inp_ptr, half *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<Complex<float>, int64_t>(
   Complex<float> *inp_ptr, Complex<float> *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op,
   const size_t inner_size, const size_t outer_size, const size_t outer_class, uint32_t device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<Complex<double>, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<Complex<double>, int64_t>(
   Complex<double> *inp_ptr, Complex<double> *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op,
   const size_t inner_size, const size_t outer_size, const size_t outer_class, uint32_t device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<int8_t, int64_t>(int8_t *inp_ptr, int8_t *out_ptr,
-                                                                     int64_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                     size_t op, const size_t inner_size,
-                                                                     const size_t outer_size, const size_t outer_class,
-                                                                     uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<int16_t, int64_t>(int16_t *inp_ptr, int16_t *out_ptr,
-                                                                      int64_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                      size_t op, const size_t inner_size,
-                                                                      const size_t outer_size, const size_t outer_class,
-                                                                      uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<int32_t, int64_t>(int32_t *inp_ptr, int32_t *out_ptr,
-                                                                      int64_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                      size_t op, const size_t inner_size,
-                                                                      const size_t outer_size, const size_t outer_class,
-                                                                      uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<int64_t, int64_t>(int64_t *inp_ptr, int64_t *out_ptr,
-                                                                      int64_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                      size_t op, const size_t inner_size,
-                                                                      const size_t outer_size, const size_t outer_class,
-                                                                      uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<uint8_t, int64_t>(uint8_t *inp_ptr, uint8_t *out_ptr,
-                                                                      int64_t *seg_id_addr, size_t *seg_pos_ptr,
-                                                                      size_t op, const size_t inner_size,
-                                                                      const size_t outer_size, const size_t outer_class,
-                                                                      uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<uint16_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<int8_t, int64_t>(
+  int8_t *inp_ptr, int8_t *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<int16_t, int64_t>(
+  int16_t *inp_ptr, int16_t *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<int32_t, int64_t>(
+  int32_t *inp_ptr, int32_t *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<int64_t, int64_t>(
+  int64_t *inp_ptr, int64_t *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<uint8_t, int64_t>(
+  uint8_t *inp_ptr, uint8_t *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+  const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<uint16_t, int64_t>(
   uint16_t *inp_ptr, uint16_t *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
   const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<uint32_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<uint32_t, int64_t>(
   uint32_t *inp_ptr, uint32_t *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
   const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSegmentCombination<uint64_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSegmentCombination<uint64_t, int64_t>(
   uint64_t *inp_ptr, uint64_t *out_ptr, int64_t *seg_id_addr, size_t *seg_pos_ptr, size_t op, const size_t inner_size,
   const size_t outer_size, const size_t outer_class, uint32_t device_id, cudaStream_t cuda_stream);

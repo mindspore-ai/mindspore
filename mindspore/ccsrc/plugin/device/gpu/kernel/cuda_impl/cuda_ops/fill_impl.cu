@@ -31,35 +31,37 @@ __global__ void FillKernel(const size_t m, const size_t n, const T *input, T *ou
 }
 
 template <typename T>
-void Fill(const size_t &m, const size_t &n, const T *input, T *output, cudaStream_t stream) {
+cudaError_t Fill(const size_t &m, const size_t &n, const T *input, T *output, cudaStream_t stream) {
   FillKernel<<<(m * n + 255) / 256, 256, 0, stream>>>(m, n, input, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Fill<float>(const size_t &m, const size_t &n, const float *input, float *output,
-                                          cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<half>(const size_t &m, const size_t &n, const half *input, half *output,
-                                         cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<double>(const size_t &m, const size_t &n, const double *input, double *output,
-                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<int8_t>(const size_t &m, const size_t &n, const int8_t *input, int8_t *output,
-                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<Complex<float>>(const size_t &m, const size_t &n, const Complex<float> *input,
-                                                   Complex<float> *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<Complex<double>>(const size_t &m, const size_t &n, const Complex<double> *input,
-                                                    Complex<double> *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<int16_t>(const size_t &m, const size_t &n, const int16_t *input, int16_t *output,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<int32_t>(const size_t &m, const size_t &n, const int32_t *input, int32_t *output,
-                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<int64_t>(const size_t &m, const size_t &n, const int64_t *input, int64_t *output,
-                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<uint16_t>(const size_t &m, const size_t &n, const uint16_t *input, uint16_t *output,
-                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<uint32_t>(const size_t &m, const size_t &n, const uint32_t *input, uint32_t *output,
-                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<uint8_t>(const size_t &m, const size_t &n, const uint8_t *input, uint8_t *output,
-                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<uint64_t>(const size_t &m, const size_t &n, const uint64_t *input, uint64_t *output,
-                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<bool>(const size_t &m, const size_t &n, const bool *input, bool *output,
-                                         cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<float>(const size_t &m, const size_t &n, const float *input, float *output,
+                                                 cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<half>(const size_t &m, const size_t &n, const half *input, half *output,
+                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<double>(const size_t &m, const size_t &n, const double *input, double *output,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<int8_t>(const size_t &m, const size_t &n, const int8_t *input, int8_t *output,
+                                                  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<Complex<float>>(const size_t &m, const size_t &n, const Complex<float> *input,
+                                                          Complex<float> *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<Complex<double>>(const size_t &m, const size_t &n,
+                                                           const Complex<double> *input, Complex<double> *output,
+                                                           cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<int16_t>(const size_t &m, const size_t &n, const int16_t *input,
+                                                   int16_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<int32_t>(const size_t &m, const size_t &n, const int32_t *input,
+                                                   int32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<int64_t>(const size_t &m, const size_t &n, const int64_t *input,
+                                                   int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<uint16_t>(const size_t &m, const size_t &n, const uint16_t *input,
+                                                    uint16_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<uint32_t>(const size_t &m, const size_t &n, const uint32_t *input,
+                                                    uint32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<uint8_t>(const size_t &m, const size_t &n, const uint8_t *input,
+                                                   uint8_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<uint64_t>(const size_t &m, const size_t &n, const uint64_t *input,
+                                                    uint64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t Fill<bool>(const size_t &m, const size_t &n, const bool *input, bool *output,
+                                                cudaStream_t stream);

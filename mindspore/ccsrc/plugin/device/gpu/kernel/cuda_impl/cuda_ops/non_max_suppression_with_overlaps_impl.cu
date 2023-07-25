@@ -65,8 +65,8 @@ __global__ void NmsWithOverlapPass(const int valid_num, const int num, const T *
     if (box_j > box_i) {             // skip when box_j index lower/equal to box_i - will
                                      // remain true
       row_mask[mask_index] =
-          overlaps[index_buff[valid_num - box_i - 1] + index_buff[valid_num - box_j - 1] * num] > IOU_value[0] ? false
-                                                                                                               : true;
+        overlaps[index_buff[valid_num - box_i - 1] + index_buff[valid_num - box_j - 1] * num] > IOU_value[0] ? false
+                                                                                                             : true;
     }
   }
 }
@@ -144,82 +144,88 @@ __global__ void NmsSortByKeyKernel(const int ceil_power2, T *up_score_buff, int 
   }
 }
 
-void CalPreprocess(const int num, bool *sel_boxes, bool *row_mask, const uint32_t &device_id,
-                   cudaStream_t cuda_stream) {
+cudaError_t CalPreprocess(const int num, bool *sel_boxes, bool *row_mask, const uint32_t &device_id,
+                          cudaStream_t cuda_stream) {
   int total_val = num * num;
   RowMaskInit<<<CUDA_BLOCKS(device_id, total_val), CUDA_THREADS(device_id), 0, cuda_stream>>>(total_val, row_mask);
   NmsPreProcess<<<CUDA_BLOCKS(device_id, num), CUDA_THREADS(device_id), 0, cuda_stream>>>(num, sel_boxes);
+  return GetCudaStatus();
 }
 
 template <typename T>
-int CalSort(const int &num, int *index_buff, T *score_buff, T *up_score_buff, int *valid_score_num, T *score_threshold,
-            const uint32_t &device_id, cudaStream_t stream) {
+cudaError_t CalSort(const int &num, int *index_buff, T *score_buff, T *up_score_buff, int *valid_score_num,
+                    T *score_threshold, const uint32_t &device_id, cudaStream_t stream, int *valid_num_host) {
   cudaMemset(valid_score_num, 0, sizeof(int));
   CountValidNum<<<1, 1, 0, stream>>>(num, score_buff, up_score_buff, index_buff, valid_score_num, score_threshold);
-  int valid_num_host = 0;
   cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream));
-  cudaMemcpy(&valid_num_host, valid_score_num, sizeof(int), cudaMemcpyDeviceToHost);
-  int ceil_p_2 = NumRoundUpPower2(valid_num_host);
+  cudaMemcpy(valid_num_host, valid_score_num, sizeof(int), cudaMemcpyDeviceToHost);
+  int ceil_p_2 = NumRoundUpPower2(*valid_num_host);
   int thread = std::min(ceil_p_2, CUDA_THREADS(device_id));
   NmsSortByKeyKernel<<<1, thread, 0, stream>>>(ceil_p_2, up_score_buff, index_buff);
-  return valid_num_host;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalNms(const int num, const int total_num, const T *IOU_value, T *overlaps, bool *sel_boxes, bool *row_mask,
-            int *index_buff, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalNms(const int num, const int total_num, const T *IOU_value, T *overlaps, bool *sel_boxes, bool *row_mask,
+                   int *index_buff, const uint32_t &device_id, cudaStream_t cuda_stream) {
   // run kernel for every position in row_mask array = (num * num) size
   int row_mask_size = num * num;
   NmsWithOverlapPass<<<CUDA_BLOCKS(device_id, row_mask_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      num, total_num, IOU_value, overlaps, row_mask, index_buff);
+    num, total_num, IOU_value, overlaps, row_mask, index_buff);
   FillSelBoxes<<<1, CUDA_THREADS(device_id), 0, cuda_stream>>>(num, sel_boxes, row_mask);
+  return GetCudaStatus();
 }
 
 template <typename T>
-int CalPostprocess(const int inputsize, int *maxoutput_size, int *valid_score_num, T *score_threshold, int *index_buff,
-                   int *sel_idx, bool *sel_boxes, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalPostprocess(const int inputsize, int *maxoutput_size, int *valid_score_num, T *score_threshold,
+                           int *index_buff, int *sel_idx, bool *sel_boxes, const uint32_t &device_id,
+                           cudaStream_t cuda_stream, int *num_output_host) {
   cudaMemset(valid_score_num, 0, sizeof(int));
   MaskToIndex<<<1, 1, 0, cuda_stream>>>(inputsize, maxoutput_size, valid_score_num, index_buff, sel_idx, sel_boxes);
-  int num_output_host = 0;
   cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream));
-  cudaMemcpy(&num_output_host, valid_score_num, sizeof(int), cudaMemcpyDeviceToHost);
-  return num_output_host;
+  cudaMemcpy(num_output_host, valid_score_num, sizeof(int), cudaMemcpyDeviceToHost);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT int CalSort<half>(const int &inner, int *index_buff, half *score_buff, half *up_score_buff,
-                                           int *valid_score_num, half *score_threshold, const uint32_t &device_id,
-                                           cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalSort<half>(const int &inner, int *index_buff, half *score_buff,
+                                                   half *up_score_buff, int *valid_score_num, half *score_threshold,
+                                                   const uint32_t &device_id, cudaStream_t stream, int *valid_num_host);
 
-template CUDA_LIB_EXPORT void CalNms<half>(const int num, const int total_num, const half *IOU_value, half *overlaps,
-                                           bool *sel_boxes, bool *row_mask, int *index_buff, const uint32_t &device_id,
-                                           cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT int CalPostprocess<half>(const int inputsize, int *maxoutput_size, int *valid_score_num,
-                                                  half *score_threshold, int *index_buff, int *sel_idx, bool *sel_boxes,
+template CUDA_LIB_EXPORT cudaError_t CalNms<half>(const int num, const int total_num, const half *IOU_value,
+                                                  half *overlaps, bool *sel_boxes, bool *row_mask, int *index_buff,
                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT int CalSort<float>(const int &inner, int *index_buff, float *score_buff, float *up_score_buff,
-                                            int *valid_score_num, float *score_threshold, const uint32_t &device_id,
-                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalPostprocess<half>(const int inputsize, int *maxoutput_size,
+                                                          int *valid_score_num, half *score_threshold, int *index_buff,
+                                                          int *sel_idx, bool *sel_boxes, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream, int *num_output_host);
 
-template CUDA_LIB_EXPORT void CalNms<float>(const int num, const int total_num, const float *IOU_value, float *overlaps,
-                                            bool *sel_boxes, bool *row_mask, int *index_buff, const uint32_t &device_id,
-                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSort<float>(const int &inner, int *index_buff, float *score_buff,
+                                                    float *up_score_buff, int *valid_score_num, float *score_threshold,
+                                                    const uint32_t &device_id, cudaStream_t stream,
+                                                    int *valid_num_host);
 
-template CUDA_LIB_EXPORT int CalPostprocess<float>(const int inputsize, int *maxoutput_size, int *valid_score_num,
-                                                   float *score_threshold, int *index_buff, int *sel_idx,
-                                                   bool *sel_boxes, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNms<float>(const int num, const int total_num, const float *IOU_value,
+                                                   float *overlaps, bool *sel_boxes, bool *row_mask, int *index_buff,
+                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT int CalSort<double>(const int &inner, int *index_buff, double *score_buff,
-                                             double *up_score_buff, int *valid_score_num, double *score_threshold,
-                                             const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalPostprocess<float>(const int inputsize, int *maxoutput_size,
+                                                           int *valid_score_num, float *score_threshold,
+                                                           int *index_buff, int *sel_idx, bool *sel_boxes,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream,
+                                                           int *num_output_host);
 
-template CUDA_LIB_EXPORT void CalNms<double>(const int num, const int total_num, const double *IOU_value,
-                                             double *overlaps, bool *sel_boxes, bool *row_mask, int *index_buff,
-                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSort<double>(const int &inner, int *index_buff, double *score_buff,
+                                                     double *up_score_buff, int *valid_score_num,
+                                                     double *score_threshold, const uint32_t &device_id,
+                                                     cudaStream_t stream, int *valid_num_host);
 
-template CUDA_LIB_EXPORT int CalPostprocess<double>(const int inputsize, int *maxoutput_size, int *valid_score_num,
-                                                    double *score_threshold, int *index_buff, int *sel_idx,
-                                                    bool *sel_boxes, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNms<double>(const int num, const int total_num, const double *IOU_value,
+                                                    double *overlaps, bool *sel_boxes, bool *row_mask, int *index_buff,
+                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalPostprocess<double>(const int inputsize, int *maxoutput_size,
+                                                            int *valid_score_num, double *score_threshold,
+                                                            int *index_buff, int *sel_idx, bool *sel_boxes,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream,
+                                                            int *num_output_host);

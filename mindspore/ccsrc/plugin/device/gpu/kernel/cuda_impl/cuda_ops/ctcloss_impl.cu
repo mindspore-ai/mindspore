@@ -274,32 +274,37 @@ __global__ void UpdateLengthKernel(int *label_squence_length, int *cum_labels_le
 }
 
 template <typename T>
-void CalculateBwdVar(T *log_beta_b, int *label_value_with_blank, T *softmax_probs, const int *sequence_length,
-                     bool ctc_merge_repeated, int batch, int SOffSet, int maxtime, int blank, int *label_squence_length,
-                     int *cum_labels_length, bool ignore_longer_outputs_than_inputs, cudaStream_t stream) {
+cudaError_t CalculateBwdVar(T *log_beta_b, int *label_value_with_blank, T *softmax_probs, const int *sequence_length,
+                            bool ctc_merge_repeated, int batch, int SOffSet, int maxtime, int blank,
+                            int *label_squence_length, int *cum_labels_length, bool ignore_longer_outputs_than_inputs,
+                            cudaStream_t stream) {
   int log_prob_size = SOffSet * batch * maxtime;
   LogBInitKernel<<<GET_BLOCKS(log_prob_size), GET_THREADS, 0, stream>>>(log_beta_b, log_prob_size);
   CalculateBwdVarKernel<<<GET_BLOCKS(batch), GET_THREADS, 0, stream>>>(
     log_beta_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated, batch, SOffSet, maxtime,
     blank, label_squence_length, cum_labels_length, ignore_longer_outputs_than_inputs);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalculateFwdVar(T *log_alpha_b, int *label_value_with_blank, T *softmax_probs, const int *sequence_length,
-                     bool ctc_merge_repeated, int batch, int SOffSet, int maxtime, int blank, int *label_squence_length,
-                     int *cum_labels_length, bool ignore_longer_outputs_than_inputs, cudaStream_t stream) {
+cudaError_t CalculateFwdVar(T *log_alpha_b, int *label_value_with_blank, T *softmax_probs, const int *sequence_length,
+                            bool ctc_merge_repeated, int batch, int SOffSet, int maxtime, int blank,
+                            int *label_squence_length, int *cum_labels_length, bool ignore_longer_outputs_than_inputs,
+                            cudaStream_t stream) {
   int log_prob_size = SOffSet * batch * maxtime;
   LogBInitKernel<<<GET_BLOCKS(log_prob_size), GET_THREADS, 0, stream>>>(log_alpha_b, log_prob_size);
   CalculateFwdVarKernel<<<GET_BLOCKS(batch), GET_THREADS, 0, stream>>>(
     log_alpha_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated, batch, SOffSet, maxtime,
     blank, label_squence_length, cum_labels_length, ignore_longer_outputs_than_inputs);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void InnerSoftMax(const T *probs, T *softmax_probs, const int *sequence_length, int max_time, int batch, int numclass,
-                  cudaStream_t stream) {
+cudaError_t InnerSoftMax(const T *probs, T *softmax_probs, const int *sequence_length, int max_time, int batch,
+                         int numclass, cudaStream_t stream) {
   InnerSoftMaxKernel<<<GET_BLOCKS(batch * max_time), GET_THREADS, 0, stream>>>(probs, softmax_probs, sequence_length,
                                                                                max_time, batch, numclass);
+  return GetCudaStatus();
 }
 
 __global__ void GenLabelWithBlankKernel(int *label_value, int *label_value_with_blank, int *label_squence_length,
@@ -319,17 +324,20 @@ __global__ void GenLabelWithBlankKernel(int *label_value, int *label_value_with_
   }
 }
 
-void GenLabelWithBlank(int *label_value, int *label_value_with_blank, int *label_squence_length,
-                       int *precum_labels_length, int *cum_labels_length, int batch, int blank, cudaStream_t stream) {
+cudaError_t GenLabelWithBlank(int *label_value, int *label_value_with_blank, int *label_squence_length,
+                              int *precum_labels_length, int *cum_labels_length, int batch, int blank,
+                              cudaStream_t stream) {
   GenLabelWithBlankKernel<<<GET_BLOCKS(batch), GET_THREADS, 0, stream>>>(
     label_value, label_value_with_blank, label_squence_length, precum_labels_length, cum_labels_length, batch, blank);
+  return GetCudaStatus();
 }
 
-void GenLabelValuePCR(int *label_value_sp, int *label_value_pcr, int *label_squence_length, int *cum_labels_length,
-                      int *max_labels_length, int batch, cudaStream_t stream) {
+cudaError_t GenLabelValuePCR(int *label_value_sp, int *label_value_pcr, int *label_squence_length,
+                             int *cum_labels_length, int *max_labels_length, int batch, cudaStream_t stream) {
   GenLabelValuePCRKernel<<<GET_BLOCKS(batch), GET_THREADS, 0, stream>>>(label_value_sp, label_value_pcr,
                                                                         label_squence_length, cum_labels_length, batch);
   UpdateLengthKernel<<<1, 1, 0, stream>>>(label_squence_length, cum_labels_length, max_labels_length, batch);
+  return GetCudaStatus();
 }
 
 __global__ void GenLabelValueKernel(int *label_value_sp, const int64_t *label_indices, const int *label_values,
@@ -367,15 +375,16 @@ __global__ void RecalculateLengthKernel(int *label_value_sp, int *label_squence_
     }
   }
 }
-void GenLabelValue(int *label_value_sp, const int64_t *label_indices, const int *label_values,
-                   int *label_squence_length, int *cum_labels_length, int *max_labels_length, int size, int blank,
-                   int batch, cudaStream_t stream) {
+cudaError_t GenLabelValue(int *label_value_sp, const int64_t *label_indices, const int *label_values,
+                          int *label_squence_length, int *cum_labels_length, int *max_labels_length, int size,
+                          int blank, int batch, cudaStream_t stream) {
   LabelValueInitKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(label_value_sp, size, blank);
   GenLabelValueKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(label_value_sp, label_indices, label_values,
                                                                     label_squence_length, cum_labels_length, size);
   RecalculateLengthKernel<<<GET_BLOCKS(batch), GET_THREADS, 0, stream>>>(label_value_sp, label_squence_length,
                                                                          cum_labels_length, batch, blank);
   UpdateLengthKernel<<<1, 1, 0, stream>>>(label_squence_length, cum_labels_length, max_labels_length, batch);
+  return GetCudaStatus();
 }
 
 __global__ void CalculatePreLengthKernel(int *label_squence_length, int *precum_labels_length, int *cum_labels_length,
@@ -404,45 +413,48 @@ __global__ void CalculateMaxSequenceKernel(const int *sequence_length, int *max_
   }
 }
 
-void CalculateMaxSequence(const int *sequence_length, int *max_labels_length, int batch, cudaStream_t stream) {
+cudaError_t CalculateMaxSequence(const int *sequence_length, int *max_labels_length, int batch, cudaStream_t stream) {
   CalculateMaxSequenceKernel<<<1, 1, 0, stream>>>(sequence_length, max_labels_length, batch);
+  return GetCudaStatus();
 }
 
-void CalculatePreLength(int *label_squence_length, int *precum_labels_length, int *cum_labels_length,
-                        int *max_labels_length, const int64_t *label_indices, int batch, int size,
-                        cudaStream_t stream) {
+cudaError_t CalculatePreLength(int *label_squence_length, int *precum_labels_length, int *cum_labels_length,
+                               int *max_labels_length, const int64_t *label_indices, int batch, int size,
+                               cudaStream_t stream) {
   CalculatePreLengthKernel<<<1, 1, 0, stream>>>(label_squence_length, precum_labels_length, cum_labels_length,
                                                 max_labels_length, label_indices, batch, size);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CTCLoss(T *log_alpha_b, T *log_beta_b, T *softmax_probs, int *label_value_with_blank, int batch, int SOffSet,
-             int maxtime, int numclass, const int *sequence_length, int *label_squence_length, int *cum_labels_length,
-             T *cost, T *grads, T *prob_num, bool ignore_longer_outputs_than_inputs, cudaStream_t stream) {
+cudaError_t CTCLoss(T *log_alpha_b, T *log_beta_b, T *softmax_probs, int *label_value_with_blank, int batch,
+                    int SOffSet, int maxtime, int numclass, const int *sequence_length, int *label_squence_length,
+                    int *cum_labels_length, T *cost, T *grads, T *prob_num, bool ignore_longer_outputs_than_inputs,
+                    cudaStream_t stream) {
   ProbInitKernel<<<GET_BLOCKS(maxtime * batch * numclass), GET_THREADS, 0, stream>>>(prob_num,
                                                                                      maxtime * batch * numclass);
   CTCLossKernel<<<GET_BLOCKS(batch), GET_THREADS, 0, stream>>>(
     log_alpha_b, log_beta_b, softmax_probs, label_value_with_blank, batch, SOffSet, maxtime, numclass, sequence_length,
     label_squence_length, cum_labels_length, cost, grads, prob_num, ignore_longer_outputs_than_inputs);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalculateFwdVar<float>(float *log_alpha_b, int *label_value_with_blank,
-                                                     float *softmax_probs, const int *sequence_length,
-                                                     bool ctc_merge_repeated, int batch, int SOffSet, int maxtime,
-                                                     int blank, int *label_squence_length, int *cum_labels_length,
-                                                     bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateFwdVar<float>(
+  float *log_alpha_b, int *label_value_with_blank, float *softmax_probs, const int *sequence_length,
+  bool ctc_merge_repeated, int batch, int SOffSet, int maxtime, int blank, int *label_squence_length,
+  int *cum_labels_length, bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void CalculateBwdVar<float>(float *log_beta_b, int *label_value_with_blank,
-                                                     float *softmax_probs, const int *sequence_length,
-                                                     bool ctc_merge_repeated, int batch, int SOffSet, int maxtime,
-                                                     int blank, int *label_squence_length, int *cum_labels_length,
-                                                     bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateBwdVar<float>(
+  float *log_beta_b, int *label_value_with_blank, float *softmax_probs, const int *sequence_length,
+  bool ctc_merge_repeated, int batch, int SOffSet, int maxtime, int blank, int *label_squence_length,
+  int *cum_labels_length, bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void InnerSoftMax<float>(const float *probs, float *softmax_probs, const int *sequence_length,
-                                                  int max_time, int batch, int numclass, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t InnerSoftMax<float>(const float *probs, float *softmax_probs,
+                                                         const int *sequence_length, int max_time, int batch,
+                                                         int numclass, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void CTCLoss<float>(float *log_alpha_b, float *log_beta_b, float *softmax_probs,
-                                             int *label_value_with_blank, int batch, int SOffSet, int maxtime,
-                                             int numclass, const int *sequence_length, int *label_squence_length,
-                                             int *cum_labels_length, float *cost, float *grads, float *prob_num,
-                                             bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CTCLoss<float>(float *log_alpha_b, float *log_beta_b, float *softmax_probs,
+                                                    int *label_value_with_blank, int batch, int SOffSet, int maxtime,
+                                                    int numclass, const int *sequence_length, int *label_squence_length,
+                                                    int *cum_labels_length, float *cost, float *grads, float *prob_num,
+                                                    bool ignore_longer_outputs_than_inputs, cudaStream_t stream);

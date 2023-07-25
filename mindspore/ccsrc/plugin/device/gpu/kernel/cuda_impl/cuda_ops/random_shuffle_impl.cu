@@ -23,11 +23,12 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 #define SHUFFLE_DECLARE(type)                                                                                          \
-  template CUDA_LIB_EXPORT void ScalarShuffle<type>(const int64_t size, const int *perm, const type *input,            \
-                                                    type *output, const uint32_t device_id, cudaStream_t cuda_stream); \
-  template CUDA_LIB_EXPORT void TensorShuffle<type>(const int64_t shuffle_size, const int64_t inner_size,              \
-                                                    const int *perm, const type *input, type *output,                  \
-                                                    const uint32_t device_id, cudaStream_t cuda_stream);
+  template CUDA_LIB_EXPORT cudaError_t ScalarShuffle<type>(const int64_t size, const int *perm, const type *input,     \
+                                                           type *output, const uint32_t device_id,                     \
+                                                           cudaStream_t cuda_stream);                                  \
+  template CUDA_LIB_EXPORT cudaError_t TensorShuffle<type>(const int64_t shuffle_size, const int64_t inner_size,       \
+                                                           const int *perm, const type *input, type *output,           \
+                                                           const uint32_t device_id, cudaStream_t cuda_stream);
 
 template <typename T>
 __global__ void ScalarShuffleKernel(const int64_t size, const int *perm, const T *input, T *output) {
@@ -49,18 +50,20 @@ __global__ void TensorShuffleKernel(const int64_t shuffle_size, const int64_t in
 }
 
 template <typename T>
-void ScalarShuffle(const int64_t size, const int *perm, const T *input, T *output, const uint32_t device_id,
-                   cudaStream_t cuda_stream) {
+cudaError_t ScalarShuffle(const int64_t size, const int *perm, const T *input, T *output, const uint32_t device_id,
+                          cudaStream_t cuda_stream) {
   ScalarShuffleKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, perm, input,
                                                                                                  output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void TensorShuffle(const int64_t shuffle_size, const int64_t inner_size, const int *perm, const T *input, T *output,
-                   const uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t TensorShuffle(const int64_t shuffle_size, const int64_t inner_size, const int *perm, const T *input,
+                          T *output, const uint32_t device_id, cudaStream_t cuda_stream) {
   int64_t total_size = shuffle_size * inner_size;
   TensorShuffleKernel<<<CUDA_BLOCKS(device_id, total_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     shuffle_size, inner_size, perm, input, output);
+  return GetCudaStatus();
 }
 
 SHUFFLE_DECLARE(half);

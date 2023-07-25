@@ -68,12 +68,12 @@ class BatchToSpaceNDHelperGpuKernel : public GpuKernelHelperBase {
       return 0;
     }
     input_size_ = 1;
-    for (size_t i = 0; i < (size_t) static_cast<int64_t>(input_shape_.size()); ++i) {
+    for (size_t i = 0; i < input_shape_.size(); ++i) {
       input_size_ = input_shape_[i] * input_size_;
     }
 
     output_size_ = 1;
-    for (size_t i = 0; i < (size_t) static_cast<int64_t>(output_shape_.size()); ++i) {
+    for (size_t i = 0; i < output_shape_.size(); ++i) {
       output_size_ = output_shape_[i] * output_size_;
     }
 
@@ -102,9 +102,10 @@ class BatchToSpaceNDHelperGpuKernel : public GpuKernelHelperBase {
         on_stride_[i] = on_stride_[i + 1] * block_shape_[i + 1];
     }
     // call cuda kernel
-    CalBatchToSpaceND(input_ptr, crops_start_.data(), block_shape_.data(), output_shape_.data(), output_shape_size,
-                      stride_.data(), on_stride_.data(), off_set_, output_size_, output_ptr, device_id_,
-                      reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalBatchToSpaceND(input_ptr, crops_start_.data(), block_shape_.data(), output_shape_.data(),
+                                    output_shape_size, stride_.data(), on_stride_.data(), off_set_, output_size_,
+                                    output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

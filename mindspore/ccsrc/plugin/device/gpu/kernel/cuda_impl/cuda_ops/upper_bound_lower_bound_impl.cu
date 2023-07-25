@@ -57,145 +57,159 @@ __global__ void CalLowerBoundKernel(const size_t size, const size_t sorted_x_col
 }
 
 template <typename T, typename S>
-void CalUpperBound(const size_t size, const size_t sorted_x_col_, const size_t values_col_, const T *sorted_x,
-                   const T *values, S *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalUpperBound(const size_t size, const size_t sorted_x_col_, const size_t values_col_, const T *sorted_x,
+                          const T *values, S *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   CalUpperBoundKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, sorted_x_col_, values_col_, sorted_x, values, output);
+  return GetCudaStatus();
 }
 
 template <typename T, typename S>
-void CalLowerBound(const size_t size, const size_t sorted_x_col_, const size_t values_col_, const T *sorted_x,
-                   const T *values, S *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalLowerBound(const size_t size, const size_t sorted_x_col_, const size_t values_col_, const T *sorted_x,
+                          const T *values, S *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   CalLowerBoundKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, sorted_x_col_, values_col_, sorted_x, values, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalUpperBound<int8_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                         const size_t values_col_, const int8_t *sorted_x,
-                                                         const int8_t *values, int *output, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<int16_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                          const size_t values_col_, const int16_t *sorted_x,
-                                                          const int16_t *values, int *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<int32_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                          const size_t values_col_, const int32_t *sorted_x,
-                                                          const int32_t *values, int *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<int64_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                          const size_t values_col_, const int64_t *sorted_x,
-                                                          const int64_t *values, int *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<uint16_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                           const size_t values_col_, const uint16_t *sorted_x,
-                                                           const uint16_t *values, int *output,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<half, int>(const size_t size, const size_t sorted_x_col_,
-                                                       const size_t values_col_, const half *sorted_x,
-                                                       const half *values, int *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<float, int>(const size_t size, const size_t sorted_x_col_,
-                                                        const size_t values_col_, const float *sorted_x,
-                                                        const float *values, int *output, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<double, int>(const size_t size, const size_t sorted_x_col_,
-                                                         const size_t values_col_, const double *sorted_x,
-                                                         const double *values, int *output, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<int8_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                             const size_t values_col_, const int8_t *sorted_x,
-                                                             const int8_t *values, int64_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<int16_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                              const size_t values_col_, const int16_t *sorted_x,
-                                                              const int16_t *values, int64_t *output,
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<int8_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                const size_t values_col_, const int8_t *sorted_x,
+                                                                const int8_t *values, int *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<int16_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                 const size_t values_col_, const int16_t *sorted_x,
+                                                                 const int16_t *values, int *output,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<int32_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                 const size_t values_col_, const int32_t *sorted_x,
+                                                                 const int32_t *values, int *output,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<int64_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                 const size_t values_col_, const int64_t *sorted_x,
+                                                                 const int64_t *values, int *output,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<uint16_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                  const size_t values_col_, const uint16_t *sorted_x,
+                                                                  const uint16_t *values, int *output,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<half, int>(const size_t size, const size_t sorted_x_col_,
+                                                              const size_t values_col_, const half *sorted_x,
+                                                              const half *values, int *output,
                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<int32_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                              const size_t values_col_, const int32_t *sorted_x,
-                                                              const int32_t *values, int64_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<int64_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                              const size_t values_col_, const int64_t *sorted_x,
-                                                              const int64_t *values, int64_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<uint16_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                               const size_t values_col_, const uint16_t *sorted_x,
-                                                               const uint16_t *values, int64_t *output,
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<float, int>(const size_t size, const size_t sorted_x_col_,
+                                                               const size_t values_col_, const float *sorted_x,
+                                                               const float *values, int *output,
                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<half, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                           const size_t values_col_, const half *sorted_x,
-                                                           const half *values, int64_t *output,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<float, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                            const size_t values_col_, const float *sorted_x,
-                                                            const float *values, int64_t *output,
-                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpperBound<double, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                             const size_t values_col_, const double *sorted_x,
-                                                             const double *values, int64_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<double, int>(const size_t size, const size_t sorted_x_col_,
+                                                                const size_t values_col_, const double *sorted_x,
+                                                                const double *values, int *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<int8_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                    const size_t values_col_, const int8_t *sorted_x,
+                                                                    const int8_t *values, int64_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<int16_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                     const size_t values_col_, const int16_t *sorted_x,
+                                                                     const int16_t *values, int64_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<int32_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                     const size_t values_col_, const int32_t *sorted_x,
+                                                                     const int32_t *values, int64_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<int64_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                     const size_t values_col_, const int64_t *sorted_x,
+                                                                     const int64_t *values, int64_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<uint16_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                      const size_t values_col_,
+                                                                      const uint16_t *sorted_x, const uint16_t *values,
+                                                                      int64_t *output, const uint32_t &device_id,
+                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<half, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                  const size_t values_col_, const half *sorted_x,
+                                                                  const half *values, int64_t *output,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<float, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                   const size_t values_col_, const float *sorted_x,
+                                                                   const float *values, int64_t *output,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpperBound<double, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                    const size_t values_col_, const double *sorted_x,
+                                                                    const double *values, int64_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalLowerBound<int8_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                         const size_t values_col_, const int8_t *sorted_x,
-                                                         const int8_t *values, int *output, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<int16_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                          const size_t values_col_, const int16_t *sorted_x,
-                                                          const int16_t *values, int *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<int32_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                          const size_t values_col_, const int32_t *sorted_x,
-                                                          const int32_t *values, int *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<int64_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                          const size_t values_col_, const int64_t *sorted_x,
-                                                          const int64_t *values, int *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<uint16_t, int>(const size_t size, const size_t sorted_x_col_,
-                                                           const size_t values_col_, const uint16_t *sorted_x,
-                                                           const uint16_t *values, int *output,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<half, int>(const size_t size, const size_t sorted_x_col_,
-                                                       const size_t values_col_, const half *sorted_x,
-                                                       const half *values, int *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<float, int>(const size_t size, const size_t sorted_x_col_,
-                                                        const size_t values_col_, const float *sorted_x,
-                                                        const float *values, int *output, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<double, int>(const size_t size, const size_t sorted_x_col_,
-                                                         const size_t values_col_, const double *sorted_x,
-                                                         const double *values, int *output, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<int8_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                             const size_t values_col_, const int8_t *sorted_x,
-                                                             const int8_t *values, int64_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<int16_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                              const size_t values_col_, const int16_t *sorted_x,
-                                                              const int16_t *values, int64_t *output,
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<int8_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                const size_t values_col_, const int8_t *sorted_x,
+                                                                const int8_t *values, int *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<int16_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                 const size_t values_col_, const int16_t *sorted_x,
+                                                                 const int16_t *values, int *output,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<int32_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                 const size_t values_col_, const int32_t *sorted_x,
+                                                                 const int32_t *values, int *output,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<int64_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                 const size_t values_col_, const int64_t *sorted_x,
+                                                                 const int64_t *values, int *output,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<uint16_t, int>(const size_t size, const size_t sorted_x_col_,
+                                                                  const size_t values_col_, const uint16_t *sorted_x,
+                                                                  const uint16_t *values, int *output,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<half, int>(const size_t size, const size_t sorted_x_col_,
+                                                              const size_t values_col_, const half *sorted_x,
+                                                              const half *values, int *output,
                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<int32_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                              const size_t values_col_, const int32_t *sorted_x,
-                                                              const int32_t *values, int64_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<int64_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                              const size_t values_col_, const int64_t *sorted_x,
-                                                              const int64_t *values, int64_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<uint16_t, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                               const size_t values_col_, const uint16_t *sorted_x,
-                                                               const uint16_t *values, int64_t *output,
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<float, int>(const size_t size, const size_t sorted_x_col_,
+                                                               const size_t values_col_, const float *sorted_x,
+                                                               const float *values, int *output,
                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<half, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                           const size_t values_col_, const half *sorted_x,
-                                                           const half *values, int64_t *output,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<float, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                            const size_t values_col_, const float *sorted_x,
-                                                            const float *values, int64_t *output,
-                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLowerBound<double, int64_t>(const size_t size, const size_t sorted_x_col_,
-                                                             const size_t values_col_, const double *sorted_x,
-                                                             const double *values, int64_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<double, int>(const size_t size, const size_t sorted_x_col_,
+                                                                const size_t values_col_, const double *sorted_x,
+                                                                const double *values, int *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<int8_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                    const size_t values_col_, const int8_t *sorted_x,
+                                                                    const int8_t *values, int64_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<int16_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                     const size_t values_col_, const int16_t *sorted_x,
+                                                                     const int16_t *values, int64_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<int32_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                     const size_t values_col_, const int32_t *sorted_x,
+                                                                     const int32_t *values, int64_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<int64_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                     const size_t values_col_, const int64_t *sorted_x,
+                                                                     const int64_t *values, int64_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<uint16_t, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                      const size_t values_col_,
+                                                                      const uint16_t *sorted_x, const uint16_t *values,
+                                                                      int64_t *output, const uint32_t &device_id,
+                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<half, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                  const size_t values_col_, const half *sorted_x,
+                                                                  const half *values, int64_t *output,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<float, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                   const size_t values_col_, const float *sorted_x,
+                                                                   const float *values, int64_t *output,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLowerBound<double, int64_t>(const size_t size, const size_t sorted_x_col_,
+                                                                    const size_t values_col_, const double *sorted_x,
+                                                                    const double *values, int64_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);

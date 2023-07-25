@@ -48,6 +48,7 @@ class TopKGpuKernelMod : public NativeGpuKernelMod {
 
     S k_cut = static_cast<S>(k_);
 
+    cudaError_t status = cudaErrorNotReady;
     if (std::is_same<T, half>::value) {
       // remove later! urgent fix for bug: topk has incorrect output for float16
       float init_k = std::numeric_limits<float>::lowest();
@@ -55,18 +56,23 @@ class TopKGpuKernelMod : public NativeGpuKernelMod {
       // cast to float32
       float *casted_float32_input = GetDeviceAddress<float>(workspaces, 0);
       float *casted_float32_top_k_output = GetDeviceAddress<float>(workspaces, 1);
-      Cast(outer_size_ * inner_size_, input_addr, casted_float32_input, reinterpret_cast<cudaStream_t>(stream_ptr));
+      status =
+        Cast(outer_size_ * inner_size_, input_addr, casted_float32_input, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
 
       // call FastTopK with workspace[n], workspace[n+1] as input, output
-      FastTopK(outer_size_, inner_size_, casted_float32_input, k_cut, casted_float32_top_k_output, indices, init_k,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = FastTopK(outer_size_, inner_size_, casted_float32_input, k_cut, casted_float32_top_k_output, indices,
+                        init_k, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
 
       // cast workspace[n+1] back to float16
-      Cast(outer_size_ * k_, casted_float32_top_k_output, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      status =
+        Cast(outer_size_ * k_, casted_float32_top_k_output, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       T init_k = std::numeric_limits<T>::lowest();
-      FastTopK(outer_size_, inner_size_, input_addr, k_cut, output_addr, indices, init_k,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = FastTopK(outer_size_, inner_size_, input_addr, k_cut, output_addr, indices, init_k,
+                        reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     }
     return true;
   }

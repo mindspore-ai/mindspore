@@ -28,8 +28,8 @@ enum ScatterFunctorType {
 };
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void ScatterFunc(enum ScatterFunctorType func_type, S size_limit, const size_t &inner_size,
-                                 const size_t &indices_size, const S *indices, const T *updates, T *input,
-                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ScatterFunc(enum ScatterFunctorType func_type, S size_limit, const size_t &inner_size,
+                                        const size_t &indices_size, const S *indices, const T *updates, T *input,
+                                        cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SCATTER_FUNCTOR_IMPL_CUH_

@@ -168,94 +168,75 @@ __global__ void SyncBatchNormPostBiasScale(size_t C, S *scale, S *bias, S *outpu
 }
 
 template <typename T>
-void CalSyncBatchNormPre(size_t N, size_t C, size_t H, size_t W, const T *input, int *output_n, float *output_mean,
-                         float *output_var, float epsilon, cudaStream_t cuda_stream) {
+cudaError_t CalSyncBatchNormPre(size_t N, size_t C, size_t H, size_t W, const T *input, int *output_n,
+                                float *output_mean, float *output_var, float epsilon, cudaStream_t cuda_stream) {
   SyncBatchNormPre<<<C, GET_THREADS, 0, cuda_stream>>>(N, C, H, W, input, output_n, output_mean, output_var, epsilon);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T, typename G>
-void CalSyncBatchNormGather(size_t N, size_t C, size_t H, size_t W, int *counts_global, float *means_global,
-                            float *invstds_global, int *counts_local, float *means_local, float *invstds_local,
-                            T *running_mean_output, T *running_var_output, G *running_mean_input, G *running_var_input,
-                            float epsilon, float momentum, size_t group_rank, size_t group_size,
-                            cudaStream_t cuda_stream) {
+cudaError_t CalSyncBatchNormGather(size_t N, size_t C, size_t H, size_t W, int *counts_global, float *means_global,
+                                   float *invstds_global, int *counts_local, float *means_local, float *invstds_local,
+                                   T *running_mean_output, T *running_var_output, G *running_mean_input,
+                                   G *running_var_input, float epsilon, float momentum, size_t group_rank,
+                                   size_t group_size, cudaStream_t cuda_stream) {
   SyncBatchNormGather<<<GET_BLOCKS(C), GET_THREADS, 0, cuda_stream>>>(
     N, C, H, W, counts_global, means_global, invstds_global, counts_local, means_local, invstds_local,
     running_mean_output, running_var_output, running_mean_input, running_var_input, epsilon, momentum, group_rank,
     group_size);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T, typename S>
-void CalSyncBatchNormPost(size_t N, size_t C, size_t H, size_t W, const T *input, T *output, float *means_local,
-                          float *invstds_local, S *scale, S *bias, S *output_scale, S *output_bias, float epsilon,
-                          cudaStream_t cuda_stream) {
+cudaError_t CalSyncBatchNormPost(size_t N, size_t C, size_t H, size_t W, const T *input, T *output, float *means_local,
+                                 float *invstds_local, S *scale, S *bias, S *output_scale, S *output_bias,
+                                 float epsilon, cudaStream_t cuda_stream) {
   SyncBatchNormPost<<<GET_BLOCKS(N * C * H * W), GET_THREADS, 0, cuda_stream>>>(N, C, H, W, input, output, means_local,
                                                                                 invstds_local, scale, bias, epsilon);
   SyncBatchNormPostBiasScale<<<1, std::min(C, static_cast<size_t>(GET_THREADS)), 0, cuda_stream>>>(
     C, scale, bias, output_scale, output_bias);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalSyncBatchNormPre<float>(size_t N, size_t C, size_t H, size_t W, const float *input,
-                                                         int *output_n, float *output_mean, float *output_var,
-                                                         float epsilon, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormPre<half>(size_t N, size_t C, size_t H, size_t W, const half *input,
-                                                        int *output_n, float *output_mean, float *output_var,
-                                                        float epsilon, cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalSyncBatchNormGather<float, float>(size_t N_, size_t C_, size_t H_, size_t W_,
-                                                                   int *counts_global, float *means_global,
-                                                                   float *invstds_global, int *counts_local,
-                                                                   float *means_local, float *invstds_local,
-                                                                   float *running_mean_output,
-                                                                   float *running_var_output, float *running_mean_input,
-                                                                   float *running_var_input, float epsilon,
-                                                                   float momentum, size_t group_rank, size_t group_size,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGather<float, half>(size_t N_, size_t C_, size_t H_, size_t W_,
-                                                                  int *counts_global, float *means_global,
-                                                                  float *invstds_global, int *counts_local,
-                                                                  float *means_local, float *invstds_local,
-                                                                  float *running_mean_output, float *running_var_output,
-                                                                  half *running_mean_input, half *running_var_input,
-                                                                  float epsilon, float momentum, size_t group_rank,
-                                                                  size_t group_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGather<half, float>(size_t N_, size_t C_, size_t H_, size_t W_,
-                                                                  int *counts_global, float *means_global,
-                                                                  float *invstds_global, int *counts_local,
-                                                                  float *means_local, float *invstds_local,
-                                                                  half *running_mean_output, half *running_var_output,
-                                                                  float *running_mean_input, float *running_var_input,
-                                                                  float epsilon, float momentum, size_t group_rank,
-                                                                  size_t group_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGather<half, half>(size_t N_, size_t C_, size_t H_, size_t W_,
-                                                                 int *counts_global, float *means_global,
-                                                                 float *invstds_global, int *counts_local,
-                                                                 float *means_local, float *invstds_local,
-                                                                 half *running_mean_output, half *running_var_output,
-                                                                 half *running_mean_input, half *running_var_input,
-                                                                 float epsilon, float momentum, size_t group_rank,
-                                                                 size_t group_size, cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalSyncBatchNormPost<float, float>(size_t N, size_t C, size_t H, size_t W,
-                                                                 const float *input, float *output, float *means_local,
-                                                                 float *invstds_local, float *scale, float *bias,
-                                                                 float *output_scale, float *output_bias, float epsilon,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormPost<float, half>(size_t N, size_t C, size_t H, size_t W,
-                                                                const float *input, float *output, float *means_local,
-                                                                float *invstds_local, half *scale, half *bias,
-                                                                half *output_scale, half *output_bias, float epsilon,
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormPre<float>(size_t N, size_t C, size_t H, size_t W,
+                                                                const float *input, int *output_n, float *output_mean,
+                                                                float *output_var, float epsilon,
                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormPost<half, float>(size_t N, size_t C, size_t H, size_t W,
-                                                                const half *input, half *output, float *means_local,
-                                                                float *invstds_local, float *scale, float *bias,
-                                                                float *output_scale, float *output_bias, float epsilon,
-                                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormPost<half, half>(size_t N, size_t C, size_t H, size_t W,
-                                                               const half *input, half *output, float *means_local,
-                                                               float *invstds_local, half *scale, half *bias,
-                                                               half *output_scale, half *output_bias, float epsilon,
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormPre<half>(size_t N, size_t C, size_t H, size_t W,
+                                                               const half *input, int *output_n, float *output_mean,
+                                                               float *output_var, float epsilon,
                                                                cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGather<float, float>(
+  size_t N_, size_t C_, size_t H_, size_t W_, int *counts_global, float *means_global, float *invstds_global,
+  int *counts_local, float *means_local, float *invstds_local, float *running_mean_output, float *running_var_output,
+  float *running_mean_input, float *running_var_input, float epsilon, float momentum, size_t group_rank,
+  size_t group_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGather<float, half>(
+  size_t N_, size_t C_, size_t H_, size_t W_, int *counts_global, float *means_global, float *invstds_global,
+  int *counts_local, float *means_local, float *invstds_local, float *running_mean_output, float *running_var_output,
+  half *running_mean_input, half *running_var_input, float epsilon, float momentum, size_t group_rank,
+  size_t group_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGather<half, float>(
+  size_t N_, size_t C_, size_t H_, size_t W_, int *counts_global, float *means_global, float *invstds_global,
+  int *counts_local, float *means_local, float *invstds_local, half *running_mean_output, half *running_var_output,
+  float *running_mean_input, float *running_var_input, float epsilon, float momentum, size_t group_rank,
+  size_t group_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGather<half, half>(
+  size_t N_, size_t C_, size_t H_, size_t W_, int *counts_global, float *means_global, float *invstds_global,
+  int *counts_local, float *means_local, float *invstds_local, half *running_mean_output, half *running_var_output,
+  half *running_mean_input, half *running_var_input, float epsilon, float momentum, size_t group_rank,
+  size_t group_size, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormPost<float, float>(
+  size_t N, size_t C, size_t H, size_t W, const float *input, float *output, float *means_local, float *invstds_local,
+  float *scale, float *bias, float *output_scale, float *output_bias, float epsilon, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormPost<float, half>(
+  size_t N, size_t C, size_t H, size_t W, const float *input, float *output, float *means_local, float *invstds_local,
+  half *scale, half *bias, half *output_scale, half *output_bias, float epsilon, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormPost<half, float>(
+  size_t N, size_t C, size_t H, size_t W, const half *input, half *output, float *means_local, float *invstds_local,
+  float *scale, float *bias, float *output_scale, float *output_bias, float epsilon, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormPost<half, half>(
+  size_t N, size_t C, size_t H, size_t W, const half *input, half *output, float *means_local, float *invstds_local,
+  half *scale, half *bias, half *output_scale, half *output_bias, float epsilon, cudaStream_t cuda_stream);

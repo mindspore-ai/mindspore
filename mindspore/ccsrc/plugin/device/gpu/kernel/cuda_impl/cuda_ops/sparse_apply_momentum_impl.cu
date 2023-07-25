@@ -30,9 +30,9 @@ template <typename S>
 __global__ void SumOfRows(S *indices_sort, size_t indices_num, int32_t *thready_pos) {
   for (size_t idx = blockIdx.x * blockDim.x + threadIdx.x; idx < indices_num; idx += blockDim.x * gridDim.x) {
     if (idx == 0 || idx == indices_num - 1 || indices_sort[idx] != indices_sort[idx - 1]) {
-        thready_pos[idx] = static_cast<S>(idx);
+      thready_pos[idx] = static_cast<S>(idx);
     } else {
-        thready_pos[idx] = static_cast<int32_t>(-1);
+      thready_pos[idx] = static_cast<int32_t>(-1);
     }
   }
 }
@@ -59,8 +59,8 @@ __global__ void SparseApplyMomentumKernel(const size_t inner_size, T *var, T *ac
 
 template <typename T, typename S>
 __global__ void SparseApplyMomentumKernel_(const size_t inner_size, T *var, T *accum, const T *lr, const T *grad,
-                                          int32_t *rows_index, S *indices_sort, int32_t *thready_pos_shrink,
-                                          int32_t shrink_num, const T *momentum) {
+                                           int32_t *rows_index, S *indices_sort, int32_t *thready_pos_shrink,
+                                           int32_t shrink_num, const T *momentum) {
   for (size_t pos_x = blockIdx.x * blockDim.x + threadIdx.x; pos_x < inner_size; pos_x += gridDim.x * blockDim.x) {
     for (size_t pos_y = blockIdx.y * blockDim.y + threadIdx.y; pos_y < shrink_num - 1;
          pos_y += gridDim.y * blockDim.y) {
@@ -81,19 +81,17 @@ struct GreaterThan {
 };
 
 template <typename T, typename S>
-void CalSparseApplyMomentum(const size_t size, const size_t indices_size, T *var, T *accum, const T *lr, const T *grad,
-                            const S *indices, const T *momentum, const bool use_nesterov, S *indices_sort,
-                            int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num,
-                            T *var_out, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseApplyMomentum(const size_t size, const size_t indices_size, T *var, T *accum, const T *lr,
+                                   const T *grad, const S *indices, const T *momentum, const bool use_nesterov,
+                                   S *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+                                   int32_t *thready_pos_shrink, int32_t *shrink_num, T *var_out,
+                                   const uint32_t &device_id, cudaStream_t cuda_stream) {
   auto policy = thrust::cuda::par.on(cuda_stream);
-  thrust::sequence(policy,
-                   thrust::device_pointer_cast(rows_index),
+  thrust::sequence(policy, thrust::device_pointer_cast(rows_index),
                    thrust::device_pointer_cast(rows_index) + indices_size);
-  thrust::copy(thrust::device_pointer_cast(indices),
-               thrust::device_pointer_cast(indices) + indices_size,
+  thrust::copy(thrust::device_pointer_cast(indices), thrust::device_pointer_cast(indices) + indices_size,
                thrust::device_pointer_cast(indices_sort));
-  thrust::stable_sort_by_key(policy,
-                             thrust::device_pointer_cast(indices_sort),
+  thrust::stable_sort_by_key(policy, thrust::device_pointer_cast(indices_sort),
                              thrust::device_pointer_cast(indices_sort) + indices_size,
                              thrust::device_pointer_cast(rows_index));
 
@@ -133,275 +131,144 @@ void CalSparseApplyMomentum(const size_t size, const size_t indices_size, T *var
   dim3 grid_dim(block_x, block_y);
   if (use_nesterov) {
     SparseApplyMomentumKernel<<<grid_dim, block_dim, 0, cuda_stream>>>(
-    inner_size, var, accum, lr, grad, rows_index, indices_sort, thready_pos_shrink, h_shrink_num, momentum);
+      inner_size, var, accum, lr, grad, rows_index, indices_sort, thready_pos_shrink, h_shrink_num, momentum);
   } else {
     SparseApplyMomentumKernel_<<<grid_dim, block_dim, 0, cuda_stream>>>(
-    inner_size, var, accum, lr, grad, rows_index, indices_sort, thready_pos_shrink, h_shrink_num, momentum);
+      inner_size, var, accum, lr, grad, rows_index, indices_sort, thready_pos_shrink, h_shrink_num, momentum);
   }
   cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream));
   cudaMemcpy(var_out, var, size * sizeof(T), cudaMemcpyDeviceToDevice);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<int8_t, int32_t>(const size_t size, const size_t indices_size,
-                                                                    int8_t *var, int8_t *accum,
-                                                                    const int8_t *lr, const int8_t *grad,
-                                                                    const int32_t *indices, const int8_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int32_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    int8_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<int8_t, int32_t>(
+  const size_t size, const size_t indices_size, int8_t *var, int8_t *accum, const int8_t *lr, const int8_t *grad,
+  const int32_t *indices, const int8_t *momentum, const bool use_nesterov, int32_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, int8_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<int16_t, int32_t>(const size_t size, const size_t indices_size,
-                                                                    int16_t *var, int16_t *accum,
-                                                                    const int16_t *lr, const int16_t *grad,
-                                                                    const int32_t *indices, const int16_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int32_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    int16_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<int16_t, int32_t>(
+  const size_t size, const size_t indices_size, int16_t *var, int16_t *accum, const int16_t *lr, const int16_t *grad,
+  const int32_t *indices, const int16_t *momentum, const bool use_nesterov, int32_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, int16_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<int32_t, int32_t>(const size_t size, const size_t indices_size,
-                                                                    int32_t *var, int32_t *accum,
-                                                                    const int32_t *lr, const int32_t *grad,
-                                                                    const int32_t *indices, const int32_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int32_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    int32_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<int32_t, int32_t>(
+  const size_t size, const size_t indices_size, int32_t *var, int32_t *accum, const int32_t *lr, const int32_t *grad,
+  const int32_t *indices, const int32_t *momentum, const bool use_nesterov, int32_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, int32_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<int64_t, int32_t>(const size_t size, const size_t indices_size,
-                                                                    int64_t *var, int64_t *accum,
-                                                                    const int64_t *lr, const int64_t *grad,
-                                                                    const int32_t *indices, const int64_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int32_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    int64_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<int64_t, int32_t>(
+  const size_t size, const size_t indices_size, int64_t *var, int64_t *accum, const int64_t *lr, const int64_t *grad,
+  const int32_t *indices, const int64_t *momentum, const bool use_nesterov, int32_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, int64_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<uint8_t, int32_t>(const size_t size, const size_t indices_size,
-                                                                    uint8_t *var, uint8_t *accum,
-                                                                    const uint8_t *lr, const uint8_t *grad,
-                                                                    const int32_t *indices, const uint8_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int32_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    uint8_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<uint8_t, int32_t>(
+  const size_t size, const size_t indices_size, uint8_t *var, uint8_t *accum, const uint8_t *lr, const uint8_t *grad,
+  const int32_t *indices, const uint8_t *momentum, const bool use_nesterov, int32_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, uint8_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<uint16_t, int32_t>(const size_t size, const size_t indices_size,
-                                                                    uint16_t *var, uint16_t *accum,
-                                                                    const uint16_t *lr, const uint16_t *grad,
-                                                                    const int32_t *indices, const uint16_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int32_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    uint16_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<uint16_t, int32_t>(
+  const size_t size, const size_t indices_size, uint16_t *var, uint16_t *accum, const uint16_t *lr,
+  const uint16_t *grad, const int32_t *indices, const uint16_t *momentum, const bool use_nesterov,
+  int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num,
+  uint16_t *var_out, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<uint32_t, int32_t>(const size_t size, const size_t indices_size,
-                                                                    uint32_t *var, uint32_t *accum,
-                                                                    const uint32_t *lr, const uint32_t *grad,
-                                                                    const int32_t *indices, const uint32_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int32_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    uint32_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<uint32_t, int32_t>(
+  const size_t size, const size_t indices_size, uint32_t *var, uint32_t *accum, const uint32_t *lr,
+  const uint32_t *grad, const int32_t *indices, const uint32_t *momentum, const bool use_nesterov,
+  int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num,
+  uint32_t *var_out, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<uint64_t, int32_t>(const size_t size, const size_t indices_size,
-                                                                    uint64_t *var, uint64_t *accum,
-                                                                    const uint64_t *lr, const uint64_t *grad,
-                                                                    const int32_t *indices, const uint64_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int32_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    uint64_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<uint64_t, int32_t>(
+  const size_t size, const size_t indices_size, uint64_t *var, uint64_t *accum, const uint64_t *lr,
+  const uint64_t *grad, const int32_t *indices, const uint64_t *momentum, const bool use_nesterov,
+  int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num,
+  uint64_t *var_out, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<int8_t, int64_t>(const size_t size, const size_t indices_size,
-                                                                    int8_t *var, int8_t *accum,
-                                                                    const int8_t *lr, const int8_t *grad,
-                                                                    const int64_t *indices, const int8_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int64_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    int8_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<int8_t, int64_t>(
+  const size_t size, const size_t indices_size, int8_t *var, int8_t *accum, const int8_t *lr, const int8_t *grad,
+  const int64_t *indices, const int8_t *momentum, const bool use_nesterov, int64_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, int8_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<int16_t, int64_t>(const size_t size, const size_t indices_size,
-                                                                    int16_t *var, int16_t *accum,
-                                                                    const int16_t *lr, const int16_t *grad,
-                                                                    const int64_t *indices, const int16_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int64_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    int16_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<int16_t, int64_t>(
+  const size_t size, const size_t indices_size, int16_t *var, int16_t *accum, const int16_t *lr, const int16_t *grad,
+  const int64_t *indices, const int16_t *momentum, const bool use_nesterov, int64_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, int16_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<int32_t, int64_t>(const size_t size, const size_t indices_size,
-                                                                    int32_t *var, int32_t *accum,
-                                                                    const int32_t *lr, const int32_t *grad,
-                                                                    const int64_t *indices, const int32_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int64_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    int32_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<int32_t, int64_t>(
+  const size_t size, const size_t indices_size, int32_t *var, int32_t *accum, const int32_t *lr, const int32_t *grad,
+  const int64_t *indices, const int32_t *momentum, const bool use_nesterov, int64_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, int32_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<int64_t, int64_t>(const size_t size, const size_t indices_size,
-                                                                    int64_t *var, int64_t *accum,
-                                                                    const int64_t *lr, const int64_t *grad,
-                                                                    const int64_t *indices, const int64_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int64_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    int64_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<int64_t, int64_t>(
+  const size_t size, const size_t indices_size, int64_t *var, int64_t *accum, const int64_t *lr, const int64_t *grad,
+  const int64_t *indices, const int64_t *momentum, const bool use_nesterov, int64_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, int64_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<uint8_t, int64_t>(const size_t size, const size_t indices_size,
-                                                                    uint8_t *var, uint8_t *accum,
-                                                                    const uint8_t *lr, const uint8_t *grad,
-                                                                    const int64_t *indices, const uint8_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int64_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    uint8_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<uint8_t, int64_t>(
+  const size_t size, const size_t indices_size, uint8_t *var, uint8_t *accum, const uint8_t *lr, const uint8_t *grad,
+  const int64_t *indices, const uint8_t *momentum, const bool use_nesterov, int64_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, uint8_t *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<uint16_t, int64_t>(const size_t size, const size_t indices_size,
-                                                                    uint16_t *var, uint16_t *accum,
-                                                                    const uint16_t *lr, const uint16_t *grad,
-                                                                    const int64_t *indices, const uint16_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int64_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    uint16_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<uint16_t, int64_t>(
+  const size_t size, const size_t indices_size, uint16_t *var, uint16_t *accum, const uint16_t *lr,
+  const uint16_t *grad, const int64_t *indices, const uint16_t *momentum, const bool use_nesterov,
+  int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num,
+  uint16_t *var_out, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<uint32_t, int64_t>(const size_t size, const size_t indices_size,
-                                                                    uint32_t *var, uint32_t *accum,
-                                                                    const uint32_t *lr, const uint32_t *grad,
-                                                                    const int64_t *indices, const uint32_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int64_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    uint32_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<uint32_t, int64_t>(
+  const size_t size, const size_t indices_size, uint32_t *var, uint32_t *accum, const uint32_t *lr,
+  const uint32_t *grad, const int64_t *indices, const uint32_t *momentum, const bool use_nesterov,
+  int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num,
+  uint32_t *var_out, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<uint64_t, int64_t>(const size_t size, const size_t indices_size,
-                                                                    uint64_t *var, uint64_t *accum,
-                                                                    const uint64_t *lr, const uint64_t *grad,
-                                                                    const int64_t *indices, const uint64_t *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int64_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    uint64_t *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<uint64_t, int64_t>(
+  const size_t size, const size_t indices_size, uint64_t *var, uint64_t *accum, const uint64_t *lr,
+  const uint64_t *grad, const int64_t *indices, const uint64_t *momentum, const bool use_nesterov,
+  int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num,
+  uint64_t *var_out, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<half, int32_t>(const size_t size, const size_t indices_size,
-                                                                    half *var, half *accum,
-                                                                    const half *lr, const half *grad,
-                                                                    const int32_t *indices, const half *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int32_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    half *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<half, int32_t>(
+  const size_t size, const size_t indices_size, half *var, half *accum, const half *lr, const half *grad,
+  const int32_t *indices, const half *momentum, const bool use_nesterov, int32_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, half *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<float, int32_t>(const size_t size, const size_t indices_size,
-                                                                     float *var, float *accum,
-                                                                     const float *lr, const float *grad,
-                                                                     const int32_t *indices, const float *momentum,
-                                                                     const bool use_nesterov,
-                                                                     int32_t *indices_sort, int32_t *rows_index,
-                                                                     int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                     int32_t *shrink_num,
-                                                                     float *var_out,
-                                                                     const uint32_t &device_id,
-                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<float, int32_t>(
+  const size_t size, const size_t indices_size, float *var, float *accum, const float *lr, const float *grad,
+  const int32_t *indices, const float *momentum, const bool use_nesterov, int32_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, float *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<double, int32_t>(const size_t size, const size_t indices_size,
-                                                                      double *var, double *accum,
-                                                                      const double *lr, const double *grad,
-                                                                      const int32_t *indices, const double *momentum,
-                                                                      const bool use_nesterov,
-                                                                      int32_t *indices_sort, int32_t *rows_index,
-                                                                      int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                      int32_t *shrink_num,
-                                                                      double *var_out,
-                                                                      const uint32_t &device_id,
-                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<double, int32_t>(
+  const size_t size, const size_t indices_size, double *var, double *accum, const double *lr, const double *grad,
+  const int32_t *indices, const double *momentum, const bool use_nesterov, int32_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, double *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<half, int64_t>(const size_t size, const size_t indices_size,
-                                                                    half *var, half *accum,
-                                                                    const half *lr, const half *grad,
-                                                                    const int64_t *indices, const half *momentum,
-                                                                    const bool use_nesterov,
-                                                                    int64_t *indices_sort, int32_t *rows_index,
-                                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                    int32_t *shrink_num,
-                                                                    half *var_out,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<half, int64_t>(
+  const size_t size, const size_t indices_size, half *var, half *accum, const half *lr, const half *grad,
+  const int64_t *indices, const half *momentum, const bool use_nesterov, int64_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, half *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<float, int64_t>(const size_t size, const size_t indices_size,
-                                                                     float *var, float *accum,
-                                                                     const float *lr, const float *grad,
-                                                                     const int64_t *indices, const float *momentum,
-                                                                     const bool use_nesterov,
-                                                                     int64_t *indices_sort, int32_t *rows_index,
-                                                                     int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                     int32_t *shrink_num,
-                                                                     float *var_out,
-                                                                     const uint32_t &device_id,
-                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<float, int64_t>(
+  const size_t size, const size_t indices_size, float *var, float *accum, const float *lr, const float *grad,
+  const int64_t *indices, const float *momentum, const bool use_nesterov, int64_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, float *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyMomentum<double, int64_t>(const size_t size, const size_t indices_size,
-                                                                      double *var, double *accum,
-                                                                      const double *lr, const double *grad,
-                                                                      const int64_t *indices, const double *momentum,
-                                                                      const bool use_nesterov,
-                                                                      int64_t *indices_sort, int32_t *rows_index,
-                                                                      int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                                      int32_t *shrink_num,
-                                                                      double *var_out,
-                                                                      const uint32_t &device_id,
-                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum<double, int64_t>(
+  const size_t size, const size_t indices_size, double *var, double *accum, const double *lr, const double *grad,
+  const int64_t *indices, const double *momentum, const bool use_nesterov, int64_t *indices_sort, int32_t *rows_index,
+  int32_t *thready_pos, int32_t *thready_pos_shrink, int32_t *shrink_num, double *var_out, const uint32_t &device_id,
+  cudaStream_t cuda_stream);

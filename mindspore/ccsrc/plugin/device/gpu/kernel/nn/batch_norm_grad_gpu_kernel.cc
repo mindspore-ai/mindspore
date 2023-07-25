@@ -234,8 +234,9 @@ bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
                                         reserve_size_),
       "Kernel launch failed");
   } else {
-    CalBatchNormGrad(x, dy, scale, save_mean, save_variance, dx, dscale, dbias, epsilon_, batch_, channel_, height_,
-                     width_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalBatchNormGrad(x, dy, scale, save_mean, save_variance, dx, dscale, dbias, epsilon_, batch_,
+                                   channel_, height_, width_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

@@ -28,8 +28,9 @@ __global__ void StitchKernel(const int *index_addr, const unsigned char *data_ad
   }
 }
 
-void CallStitch(const int *index_addr, const unsigned char *data_addr, unsigned char *output_addr,
-                const size_t index_num, const size_t data_size, int *max_index_dev, cudaStream_t cuda_stream) {
+cudaError_t CallStitch(const int *index_addr, const unsigned char *data_addr, unsigned char *output_addr,
+                       const size_t index_num, const size_t data_size, int *max_index_dev, cudaStream_t cuda_stream) {
   StitchKernel<<<GET_BLOCKS(data_size), GET_THREADS, 0, cuda_stream>>>(index_addr, data_addr, output_addr, index_num,
                                                                        data_size, max_index_dev);
+  return GetCudaStatus();
 }

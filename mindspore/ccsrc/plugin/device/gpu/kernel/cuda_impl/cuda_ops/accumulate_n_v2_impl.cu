@@ -35,7 +35,7 @@ template <typename T>
 cudaError_t CalAccumulateNV2(const size_t size, const size_t n, T **inputs, T *output, const uint32_t &device_id,
                              cudaStream_t cuda_stream) {
   AccumulateNV2<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, n, inputs, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalAccumulateNV2<uint8_t>(const size_t size, const size_t n, uint8_t **inputs,

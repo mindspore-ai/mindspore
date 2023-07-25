@@ -75,20 +75,23 @@ bool BatchNormGradGradGpuKernelMod::Execute(const std::vector<AddressPtr> &input
 
   auto inv_std = GetDeviceAddress<float>(workspace, kIndex0);
   auto tmp = GetDeviceAddress<float>(workspace, kIndex1);
+  cudaError_t status = cudaErrorNotReady;
   if (is_training_) {
     auto mean_dy = GetDeviceAddress<float>(workspace, kIndex2);
     auto mean_dout_dx = GetDeviceAddress<float>(workspace, kIndex3);
     auto mean_dy_mul_x_hat = GetDeviceAddress<float>(workspace, kIndex4);
     auto mean_dout_dx_mul_x_hat = GetDeviceAddress<float>(workspace, kIndex5);
     auto mean_dy_mul_dout_dx = GetDeviceAddress<float>(workspace, kIndex6);
-    BatchNormGradGradTraining(dy, x, scale, mean, variance, dout_dx, dout_dscale, dout_dbias, ddy, dx, dscale, inv_std,
-                              tmp, mean_dy, mean_dout_dx, mean_dy_mul_x_hat, mean_dout_dx_mul_x_hat,
-                              mean_dy_mul_dout_dx, shape_info_, format_, epsilon_, device_id_,
-                              reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = BatchNormGradGradTraining(dy, x, scale, mean, variance, dout_dx, dout_dscale, dout_dbias, ddy, dx, dscale,
+                                       inv_std, tmp, mean_dy, mean_dout_dx, mean_dy_mul_x_hat, mean_dout_dx_mul_x_hat,
+                                       mean_dy_mul_dout_dx, shape_info_, format_, epsilon_, device_id_,
+                                       reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
-    BatchNormGradGradInference(dy, x, scale, mean, variance, dout_dx, dout_dscale, dout_dbias, ddy, dx, dscale, inv_std,
-                               tmp, shape_info_, format_, epsilon_, device_id_,
-                               reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = BatchNormGradGradInference(dy, x, scale, mean, variance, dout_dx, dout_dscale, dout_dbias, ddy, dx, dscale,
+                                        inv_std, tmp, shape_info_, format_, epsilon_, device_id_,
+                                        reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

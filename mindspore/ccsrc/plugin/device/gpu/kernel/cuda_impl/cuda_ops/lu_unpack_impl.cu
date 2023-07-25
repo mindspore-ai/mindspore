@@ -47,9 +47,9 @@ __global__ void AssignEyeValue(const size_t p_size, const size_t lu_data_dim1, S
 }
 
 template <typename T, typename S>
-void TransposeEyeMatrix(S *lu_pivots_ptr, T *pivots_ptr, S *final_order, const int64_t batch_num,
-                        const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id,
-                        cudaStream_t cuda_stream) {
+cudaError_t TransposeEyeMatrix(S *lu_pivots_ptr, T *pivots_ptr, S *final_order, const int64_t batch_num,
+                               const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id,
+                               cudaStream_t cuda_stream) {
   cudaMemset(pivots_ptr, 0, batch_num * lu_data_dim1 * lu_data_dim1 * sizeof(T));
   InitOrder<<<CUDA_BLOCKS(device_id, batch_num * lu_data_dim1), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     batch_num, lu_data_dim1, final_order);
@@ -57,7 +57,7 @@ void TransposeEyeMatrix(S *lu_pivots_ptr, T *pivots_ptr, S *final_order, const i
     batch_num, lu_data_dim1, lu_pivots_dim, lu_pivots_ptr, final_order);
   AssignEyeValue<<<CUDA_BLOCKS(device_id, batch_num * lu_data_dim1), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     batch_num, lu_data_dim1, final_order, pivots_ptr);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -81,11 +81,12 @@ __global__ void TriuAux(const size_t size, const T *input, const int64_t out_row
 }
 
 template <typename T>
-void CalTriuAux(const size_t size, const T *input, const int64_t out_row, const int64_t out_col, const int64_t lu_row,
-                const int64_t lu_col, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalTriuAux(const size_t size, const T *input, const int64_t out_row, const int64_t out_col,
+                       const int64_t lu_row, const int64_t lu_col, T *output, const uint32_t &device_id,
+                       cudaStream_t cuda_stream) {
   TriuAux<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, out_row, out_col,
                                                                                      lu_row, lu_col, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -111,259 +112,212 @@ __global__ void TrilAux(const size_t size, const T *input, const int64_t out_row
 }
 
 template <typename T>
-void CalTrilAux(const size_t size, const T *input, const int64_t out_row, const int64_t out_col, const int64_t lu_row,
-                const int64_t lu_col, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalTrilAux(const size_t size, const T *input, const int64_t out_row, const int64_t out_col,
+                       const int64_t lu_row, const int64_t lu_col, T *output, const uint32_t &device_id,
+                       cudaStream_t cuda_stream) {
   TrilAux<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, out_row, out_col,
                                                                                      lu_row, lu_col, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<double, int64_t>(int64_t *lu_pivots_ptr, double *pivots_ptr,
-                                                                  int64_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<double, int32_t>(int32_t *lu_pivots_ptr, double *pivots_ptr,
-                                                                  int32_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<double, int16_t>(int16_t *lu_pivots_ptr, double *pivots_ptr,
-                                                                  int16_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<double, int8_t>(int8_t *lu_pivots_ptr, double *pivots_ptr,
-                                                                 int8_t *final_order, const int64_t batch_num,
-                                                                 const int64_t lu_data_dim1,
-                                                                 const int64_t lu_pivots_dim, const uint32_t &device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<double, uint8_t>(uint8_t *lu_pivots_ptr, double *pivots_ptr,
-                                                                  uint8_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<float, int64_t>(int64_t *lu_pivots_ptr, float *pivots_ptr,
-                                                                 int64_t *final_order, const int64_t batch_num,
-                                                                 const int64_t lu_data_dim1,
-                                                                 const int64_t lu_pivots_dim, const uint32_t &device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<float, int32_t>(int32_t *lu_pivots_ptr, float *pivots_ptr,
-                                                                 int32_t *final_order, const int64_t batch_num,
-                                                                 const int64_t lu_data_dim1,
-                                                                 const int64_t lu_pivots_dim, const uint32_t &device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<float, int16_t>(int16_t *lu_pivots_ptr, float *pivots_ptr,
-                                                                 int16_t *final_order, const int64_t batch_num,
-                                                                 const int64_t lu_data_dim1,
-                                                                 const int64_t lu_pivots_dim, const uint32_t &device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<float, int8_t>(int8_t *lu_pivots_ptr, float *pivots_ptr,
-                                                                int8_t *final_order, const int64_t batch_num,
-                                                                const int64_t lu_data_dim1, const int64_t lu_pivots_dim,
-                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<float, uint8_t>(uint8_t *lu_pivots_ptr, float *pivots_ptr,
-                                                                 uint8_t *final_order, const int64_t batch_num,
-                                                                 const int64_t lu_data_dim1,
-                                                                 const int64_t lu_pivots_dim, const uint32_t &device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<half, int64_t>(int64_t *lu_pivots_ptr, half *pivots_ptr,
-                                                                int64_t *final_order, const int64_t batch_num,
-                                                                const int64_t lu_data_dim1, const int64_t lu_pivots_dim,
-                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<half, int32_t>(int32_t *lu_pivots_ptr, half *pivots_ptr,
-                                                                int32_t *final_order, const int64_t batch_num,
-                                                                const int64_t lu_data_dim1, const int64_t lu_pivots_dim,
-                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<half, int16_t>(int16_t *lu_pivots_ptr, half *pivots_ptr,
-                                                                int16_t *final_order, const int64_t batch_num,
-                                                                const int64_t lu_data_dim1, const int64_t lu_pivots_dim,
-                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<half, int8_t>(int8_t *lu_pivots_ptr, half *pivots_ptr,
-                                                               int8_t *final_order, const int64_t batch_num,
-                                                               const int64_t lu_data_dim1, const int64_t lu_pivots_dim,
-                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<half, uint8_t>(uint8_t *lu_pivots_ptr, half *pivots_ptr,
-                                                                uint8_t *final_order, const int64_t batch_num,
-                                                                const int64_t lu_data_dim1, const int64_t lu_pivots_dim,
-                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int64_t, int64_t>(int64_t *lu_pivots_ptr, int64_t *pivots_ptr,
-                                                                   int64_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int64_t, int32_t>(int32_t *lu_pivots_ptr, int64_t *pivots_ptr,
-                                                                   int32_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int64_t, int16_t>(int16_t *lu_pivots_ptr, int64_t *pivots_ptr,
-                                                                   int16_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int64_t, int8_t>(int8_t *lu_pivots_ptr, int64_t *pivots_ptr,
-                                                                  int8_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int64_t, uint8_t>(uint8_t *lu_pivots_ptr, int64_t *pivots_ptr,
-                                                                   uint8_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int32_t, int64_t>(int64_t *lu_pivots_ptr, int32_t *pivots_ptr,
-                                                                   int64_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int32_t, int32_t>(int32_t *lu_pivots_ptr, int32_t *pivots_ptr,
-                                                                   int32_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int32_t, int16_t>(int16_t *lu_pivots_ptr, int32_t *pivots_ptr,
-                                                                   int16_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int32_t, int8_t>(int8_t *lu_pivots_ptr, int32_t *pivots_ptr,
-                                                                  int8_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int32_t, uint8_t>(uint8_t *lu_pivots_ptr, int32_t *pivots_ptr,
-                                                                   uint8_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int16_t, int64_t>(int64_t *lu_pivots_ptr, int16_t *pivots_ptr,
-                                                                   int64_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int16_t, int32_t>(int32_t *lu_pivots_ptr, int16_t *pivots_ptr,
-                                                                   int32_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int16_t, int16_t>(int16_t *lu_pivots_ptr, int16_t *pivots_ptr,
-                                                                   int16_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int16_t, int8_t>(int8_t *lu_pivots_ptr, int16_t *pivots_ptr,
-                                                                  int8_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int16_t, uint8_t>(uint8_t *lu_pivots_ptr, int16_t *pivots_ptr,
-                                                                   uint8_t *final_order, const int64_t batch_num,
-                                                                   const int64_t lu_data_dim1,
-                                                                   const int64_t lu_pivots_dim,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int8_t, int64_t>(int64_t *lu_pivots_ptr, int8_t *pivots_ptr,
-                                                                  int64_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int8_t, int32_t>(int32_t *lu_pivots_ptr, int8_t *pivots_ptr,
-                                                                  int32_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int8_t, int16_t>(int16_t *lu_pivots_ptr, int8_t *pivots_ptr,
-                                                                  int16_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int8_t, int8_t>(int8_t *lu_pivots_ptr, int8_t *pivots_ptr,
-                                                                 int8_t *final_order, const int64_t batch_num,
-                                                                 const int64_t lu_data_dim1,
-                                                                 const int64_t lu_pivots_dim, const uint32_t &device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TransposeEyeMatrix<int8_t, uint8_t>(uint8_t *lu_pivots_ptr, int8_t *pivots_ptr,
-                                                                  uint8_t *final_order, const int64_t batch_num,
-                                                                  const int64_t lu_data_dim1,
-                                                                  const int64_t lu_pivots_dim,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<double, int64_t>(
+  int64_t *lu_pivots_ptr, double *pivots_ptr, int64_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<double, int32_t>(
+  int32_t *lu_pivots_ptr, double *pivots_ptr, int32_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<double, int16_t>(
+  int16_t *lu_pivots_ptr, double *pivots_ptr, int16_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<double, int8_t>(
+  int8_t *lu_pivots_ptr, double *pivots_ptr, int8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<double, uint8_t>(
+  uint8_t *lu_pivots_ptr, double *pivots_ptr, uint8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<float, int64_t>(
+  int64_t *lu_pivots_ptr, float *pivots_ptr, int64_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<float, int32_t>(
+  int32_t *lu_pivots_ptr, float *pivots_ptr, int32_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<float, int16_t>(
+  int16_t *lu_pivots_ptr, float *pivots_ptr, int16_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<float, int8_t>(
+  int8_t *lu_pivots_ptr, float *pivots_ptr, int8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<float, uint8_t>(
+  uint8_t *lu_pivots_ptr, float *pivots_ptr, uint8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<half, int64_t>(
+  int64_t *lu_pivots_ptr, half *pivots_ptr, int64_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<half, int32_t>(
+  int32_t *lu_pivots_ptr, half *pivots_ptr, int32_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<half, int16_t>(
+  int16_t *lu_pivots_ptr, half *pivots_ptr, int16_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<half, int8_t>(
+  int8_t *lu_pivots_ptr, half *pivots_ptr, int8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<half, uint8_t>(
+  uint8_t *lu_pivots_ptr, half *pivots_ptr, uint8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int64_t, int64_t>(
+  int64_t *lu_pivots_ptr, int64_t *pivots_ptr, int64_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int64_t, int32_t>(
+  int32_t *lu_pivots_ptr, int64_t *pivots_ptr, int32_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int64_t, int16_t>(
+  int16_t *lu_pivots_ptr, int64_t *pivots_ptr, int16_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int64_t, int8_t>(
+  int8_t *lu_pivots_ptr, int64_t *pivots_ptr, int8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int64_t, uint8_t>(
+  uint8_t *lu_pivots_ptr, int64_t *pivots_ptr, uint8_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int32_t, int64_t>(
+  int64_t *lu_pivots_ptr, int32_t *pivots_ptr, int64_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int32_t, int32_t>(
+  int32_t *lu_pivots_ptr, int32_t *pivots_ptr, int32_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int32_t, int16_t>(
+  int16_t *lu_pivots_ptr, int32_t *pivots_ptr, int16_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int32_t, int8_t>(
+  int8_t *lu_pivots_ptr, int32_t *pivots_ptr, int8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int32_t, uint8_t>(
+  uint8_t *lu_pivots_ptr, int32_t *pivots_ptr, uint8_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int16_t, int64_t>(
+  int64_t *lu_pivots_ptr, int16_t *pivots_ptr, int64_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int16_t, int32_t>(
+  int32_t *lu_pivots_ptr, int16_t *pivots_ptr, int32_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int16_t, int16_t>(
+  int16_t *lu_pivots_ptr, int16_t *pivots_ptr, int16_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int16_t, int8_t>(
+  int8_t *lu_pivots_ptr, int16_t *pivots_ptr, int8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int16_t, uint8_t>(
+  uint8_t *lu_pivots_ptr, int16_t *pivots_ptr, uint8_t *final_order, const int64_t batch_num,
+  const int64_t lu_data_dim1, const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int8_t, int64_t>(
+  int64_t *lu_pivots_ptr, int8_t *pivots_ptr, int64_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int8_t, int32_t>(
+  int32_t *lu_pivots_ptr, int8_t *pivots_ptr, int32_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int8_t, int16_t>(
+  int16_t *lu_pivots_ptr, int8_t *pivots_ptr, int16_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int8_t, int8_t>(
+  int8_t *lu_pivots_ptr, int8_t *pivots_ptr, int8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix<int8_t, uint8_t>(
+  uint8_t *lu_pivots_ptr, int8_t *pivots_ptr, uint8_t *final_order, const int64_t batch_num, const int64_t lu_data_dim1,
+  const int64_t lu_pivots_dim, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalTriuAux<uint8_t>(const size_t size, const uint8_t *input, const int64_t out_row,
-                                                  const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                  uint8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<uint16_t>(const size_t size, const uint16_t *input, const int64_t out_row,
-                                                   const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                   uint16_t *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<uint32_t>(const size_t size, const uint32_t *input, const int64_t out_row,
-                                                   const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                   uint32_t *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<uint64_t>(const size_t size, const uint64_t *input, const int64_t out_row,
-                                                   const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                   uint64_t *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<int8_t>(const size_t size, const int8_t *input, const int64_t out_row,
-                                                 const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                 int8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<int16_t>(const size_t size, const int16_t *input, const int64_t out_row,
-                                                  const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                  int16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<int>(const size_t size, const int *input, const int64_t out_row,
-                                              const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                              int *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<int64_t>(const size_t size, const int64_t *input, const int64_t out_row,
-                                                  const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                  int64_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<half>(const size_t size, const half *input, const int64_t out_row,
-                                               const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                               half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<float>(const size_t size, const float *input, const int64_t out_row,
-                                                const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<double>(const size_t size, const double *input, const int64_t out_row,
-                                                 const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                 double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTriuAux<bool>(const size_t size, const bool *input, const int64_t out_row,
-                                               const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                               bool *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<uint8_t>(const size_t size, const uint8_t *input, const int64_t out_row,
+                                                         const int64_t out_col, const int64_t lu_row,
+                                                         const int64_t lu_col, uint8_t *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<uint16_t>(const size_t size, const uint16_t *input,
+                                                          const int64_t out_row, const int64_t out_col,
+                                                          const int64_t lu_row, const int64_t lu_col, uint16_t *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<uint32_t>(const size_t size, const uint32_t *input,
+                                                          const int64_t out_row, const int64_t out_col,
+                                                          const int64_t lu_row, const int64_t lu_col, uint32_t *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<uint64_t>(const size_t size, const uint64_t *input,
+                                                          const int64_t out_row, const int64_t out_col,
+                                                          const int64_t lu_row, const int64_t lu_col, uint64_t *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<int8_t>(const size_t size, const int8_t *input, const int64_t out_row,
+                                                        const int64_t out_col, const int64_t lu_row,
+                                                        const int64_t lu_col, int8_t *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<int16_t>(const size_t size, const int16_t *input, const int64_t out_row,
+                                                         const int64_t out_col, const int64_t lu_row,
+                                                         const int64_t lu_col, int16_t *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<int>(const size_t size, const int *input, const int64_t out_row,
+                                                     const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
+                                                     int *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<int64_t>(const size_t size, const int64_t *input, const int64_t out_row,
+                                                         const int64_t out_col, const int64_t lu_row,
+                                                         const int64_t lu_col, int64_t *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<half>(const size_t size, const half *input, const int64_t out_row,
+                                                      const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
+                                                      half *output, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<float>(const size_t size, const float *input, const int64_t out_row,
+                                                       const int64_t out_col, const int64_t lu_row,
+                                                       const int64_t lu_col, float *output, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<double>(const size_t size, const double *input, const int64_t out_row,
+                                                        const int64_t out_col, const int64_t lu_row,
+                                                        const int64_t lu_col, double *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuAux<bool>(const size_t size, const bool *input, const int64_t out_row,
+                                                      const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
+                                                      bool *output, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalTrilAux<uint8_t>(const size_t size, const uint8_t *input, const int64_t out_row,
-                                                  const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                  uint8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<uint16_t>(const size_t size, const uint16_t *input, const int64_t out_row,
-                                                   const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                   uint16_t *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<uint32_t>(const size_t size, const uint32_t *input, const int64_t out_row,
-                                                   const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                   uint32_t *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<uint64_t>(const size_t size, const uint64_t *input, const int64_t out_row,
-                                                   const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                   uint64_t *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<int8_t>(const size_t size, const int8_t *input, const int64_t out_row,
-                                                 const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                 int8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<int16_t>(const size_t size, const int16_t *input, const int64_t out_row,
-                                                  const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                  int16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<int>(const size_t size, const int *input, const int64_t out_row,
-                                              const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                              int *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<int64_t>(const size_t size, const int64_t *input, const int64_t out_row,
-                                                  const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                  int64_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<half>(const size_t size, const half *input, const int64_t out_row,
-                                               const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                               half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<float>(const size_t size, const float *input, const int64_t out_row,
-                                                const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<double>(const size_t size, const double *input, const int64_t out_row,
-                                                 const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                                 double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTrilAux<bool>(const size_t size, const bool *input, const int64_t out_row,
-                                               const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
-                                               bool *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<uint8_t>(const size_t size, const uint8_t *input, const int64_t out_row,
+                                                         const int64_t out_col, const int64_t lu_row,
+                                                         const int64_t lu_col, uint8_t *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<uint16_t>(const size_t size, const uint16_t *input,
+                                                          const int64_t out_row, const int64_t out_col,
+                                                          const int64_t lu_row, const int64_t lu_col, uint16_t *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<uint32_t>(const size_t size, const uint32_t *input,
+                                                          const int64_t out_row, const int64_t out_col,
+                                                          const int64_t lu_row, const int64_t lu_col, uint32_t *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<uint64_t>(const size_t size, const uint64_t *input,
+                                                          const int64_t out_row, const int64_t out_col,
+                                                          const int64_t lu_row, const int64_t lu_col, uint64_t *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<int8_t>(const size_t size, const int8_t *input, const int64_t out_row,
+                                                        const int64_t out_col, const int64_t lu_row,
+                                                        const int64_t lu_col, int8_t *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<int16_t>(const size_t size, const int16_t *input, const int64_t out_row,
+                                                         const int64_t out_col, const int64_t lu_row,
+                                                         const int64_t lu_col, int16_t *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<int>(const size_t size, const int *input, const int64_t out_row,
+                                                     const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
+                                                     int *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<int64_t>(const size_t size, const int64_t *input, const int64_t out_row,
+                                                         const int64_t out_col, const int64_t lu_row,
+                                                         const int64_t lu_col, int64_t *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<half>(const size_t size, const half *input, const int64_t out_row,
+                                                      const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
+                                                      half *output, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<float>(const size_t size, const float *input, const int64_t out_row,
+                                                       const int64_t out_col, const int64_t lu_row,
+                                                       const int64_t lu_col, float *output, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<double>(const size_t size, const double *input, const int64_t out_row,
+                                                        const int64_t out_col, const int64_t lu_row,
+                                                        const int64_t lu_col, double *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTrilAux<bool>(const size_t size, const bool *input, const int64_t out_row,
+                                                      const int64_t out_col, const int64_t lu_row, const int64_t lu_col,
+                                                      bool *output, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);

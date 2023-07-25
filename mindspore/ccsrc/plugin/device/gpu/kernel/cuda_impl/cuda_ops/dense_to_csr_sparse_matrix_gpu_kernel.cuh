@@ -18,13 +18,13 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DENSE_TO_CSR_SPARSE_MATRIX_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename S>
-CUDA_LIB_EXPORT void CallSplitIndices2D(const S *indices, S *row_indices, S *col_indices, int size,
-                                        cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CallSplitIndices2D(const S *indices, S *row_indices, S *col_indices, int size,
+                                               cudaStream_t cuda_stream);
 template <typename S>
-CUDA_LIB_EXPORT void CallSplitIndices3D(const S *indices, S *batch_indices, S *row_indices, S *col_indices, int size,
-                                        cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CallSplitIndices3D(const S *indices, S *batch_indices, S *row_indices, S *col_indices,
+                                               int size, cudaStream_t cuda_stream);
 template <typename S>
-CUDA_LIB_EXPORT void CallNNZPerBatch(const S *batch_indices, S *nnz_per_batch, int nnz, int batch_ptr_size,
-                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CallNNZPerBatch(const S *batch_indices, S *nnz_per_batch, int nnz, int batch_ptr_size,
+                                            cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DENSE_TO_CSR_SPARSE_MATRIX_CUH_

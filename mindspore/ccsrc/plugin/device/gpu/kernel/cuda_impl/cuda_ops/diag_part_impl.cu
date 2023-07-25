@@ -17,7 +17,6 @@
 #include <complex>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/diag_part_impl.cuh"
 
-
 template <typename T>
 __global__ void DiagPart(const size_t size, const T *input, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
@@ -26,32 +25,29 @@ __global__ void DiagPart(const size_t size, const T *input, T *output) {
 }
 
 template <typename T>
-void CalDiagPart(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                 cudaStream_t cuda_stream) {
+cudaError_t CalDiagPart(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   DiagPart<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
-template
-CUDA_LIB_EXPORT void CalDiagPart<int32_t>(const size_t size, const int32_t *input, int32_t *output,
-                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalDiagPart<int64_t>(const size_t size, const int64_t *input, int64_t *output,
-                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalDiagPart<half>(const size_t size, const half *input, half *output,
-                                       const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalDiagPart<double>(const size_t size, const double *input, double *output,
-                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalDiagPart<float>(const size_t size, const float *input, float *output,
-                                        const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalDiagPart<std::complex<float>>(const size_t size, const std::complex<float> *input,
-                                                      std::complex<float> *output, const uint32_t &device_id,
-                                                      cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalDiagPart<std::complex<double>>(const size_t size, const std::complex<double> *input,
-                                                       std::complex<double> *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagPart<int32_t>(const size_t size, const int32_t *input, int32_t *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagPart<int64_t>(const size_t size, const int64_t *input, int64_t *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagPart<half>(const size_t size, const half *input, half *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagPart<double>(const size_t size, const double *input, double *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagPart<float>(const size_t size, const float *input, float *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagPart<std::complex<float>>(const size_t size,
+                                                                      const std::complex<float> *input,
+                                                                      std::complex<float> *output,
+                                                                      const uint32_t &device_id,
+                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagPart<std::complex<double>>(const size_t size,
+                                                                       const std::complex<double> *input,
+                                                                       std::complex<double> *output,
+                                                                       const uint32_t &device_id,
+                                                                       cudaStream_t cuda_stream);

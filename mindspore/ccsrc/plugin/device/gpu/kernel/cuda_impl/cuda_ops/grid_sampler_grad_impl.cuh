@@ -22,47 +22,29 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/grid_sampler_impl.cuh"
 
 template <typename T>
-CUDA_LIB_EXPORT void GridSampler2DGrad(const size_t size, const size_t dinput_size,
-                                       const size_t dgrid_size, T *grad_addr, T *input_addr,
-                                       T *grid_addr, T *dinput_addr, T *dgrid_addr,
-                                       const std::vector<size_t> &grad_shape,
-                                       const std::vector<size_t> &input_shape,
-                                       const std::vector<size_t> &grid_shape,
-                                       const std::vector<size_t> &dinput_shape,
-                                       const std::vector<size_t> &dgrid_shape,
-                                       const std::vector<size_t> &grad_stride,
-                                       const std::vector<size_t> &input_stride,
-                                       const std::vector<size_t> &grid_stride,
-                                       const std::vector<size_t> &dinput_stride,
-                                       const std::vector<size_t> &dgrid_stride,
-                                       const GridSamplerInterpolationMode interpolation_mode,
-                                       const GridSamplerPaddingMode padding_mode,
-                                       const bool align_corners,
-                                       cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t
+GridSampler2DGrad(const size_t size, const size_t dinput_size, const size_t dgrid_size, T *grad_addr, T *input_addr,
+                  T *grid_addr, T *dinput_addr, T *dgrid_addr, const std::vector<size_t> &grad_shape,
+                  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+                  const std::vector<size_t> &dinput_shape, const std::vector<size_t> &dgrid_shape,
+                  const std::vector<size_t> &grad_stride, const std::vector<size_t> &input_stride,
+                  const std::vector<size_t> &grid_stride, const std::vector<size_t> &dinput_stride,
+                  const std::vector<size_t> &dgrid_stride, const GridSamplerInterpolationMode interpolation_mode,
+                  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void GridSampler3DGrad(const size_t size, const size_t dinput_size,
-                                       const size_t dgrid_size, T *grad_addr, T *input_addr,
-                                       T *grid_addr, T *dinput_addr, T *dgrid_addr,
-                                       const std::vector<size_t> &grad_shape,
-                                       const std::vector<size_t> &input_shape,
-                                       const std::vector<size_t> &grid_shape,
-                                       const std::vector<size_t> &dinput_shape,
-                                       const std::vector<size_t> &dgrid_shape,
-                                       const std::vector<size_t> &grad_stride,
-                                       const std::vector<size_t> &input_stride,
-                                       const std::vector<size_t> &grid_stride,
-                                       const std::vector<size_t> &dinput_stride,
-                                       const std::vector<size_t> &dgrid_stride,
-                                       const GridSamplerInterpolationMode interpolation_mode,
-                                       const GridSamplerPaddingMode padding_mode,
-                                       const bool align_corners,
-                                       cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t
+GridSampler3DGrad(const size_t size, const size_t dinput_size, const size_t dgrid_size, T *grad_addr, T *input_addr,
+                  T *grid_addr, T *dinput_addr, T *dgrid_addr, const std::vector<size_t> &grad_shape,
+                  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+                  const std::vector<size_t> &dinput_shape, const std::vector<size_t> &dgrid_shape,
+                  const std::vector<size_t> &grad_stride, const std::vector<size_t> &input_stride,
+                  const std::vector<size_t> &grid_stride, const std::vector<size_t> &dinput_stride,
+                  const std::vector<size_t> &dgrid_stride, const GridSamplerInterpolationMode interpolation_mode,
+                  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t cuda_stream);
 
 template <typename T>
-static __forceinline__ __device__
-T grid_sampler_unnormalize_set_grad(T coord, int size,
-                                    bool align_corners, T *din) {
+static __forceinline__ __device__ T grid_sampler_unnormalize_set_grad(T coord, int size, bool align_corners, T *din) {
   if (!align_corners) {
     // unnormalize coord from [-1, 1] to [-0.5, size - 0.5]
     *din = static_cast<T>(size) / 2;
@@ -75,8 +57,7 @@ T grid_sampler_unnormalize_set_grad(T coord, int size,
 }
 
 template <typename T>
-static __forceinline__ __device__
-T clip_coordinates_set_grad(T in, int clip_limit, T *din) {
+static __forceinline__ __device__ T clip_coordinates_set_grad(T in, int clip_limit, T *din) {
   if (in > static_cast<T>(0)) {
     T max = static_cast<T>(clip_limit - 1);
     if (in >= max) {
@@ -93,9 +74,7 @@ T clip_coordinates_set_grad(T in, int clip_limit, T *din) {
 }
 
 template <typename T>
-static __forceinline__ __device__
-T reflect_coordinates_set_grad(T in, int twice_low, int twice_high,
-                               T *din) {
+static __forceinline__ __device__ T reflect_coordinates_set_grad(T in, int twice_low, int twice_high, T *din) {
   if (twice_low != twice_high) {
     int din_mult_;
     T min = static_cast<T>(twice_low) / 2;
@@ -124,9 +103,7 @@ T reflect_coordinates_set_grad(T in, int twice_low, int twice_high,
 }
 
 template <typename T>
-static __forceinline__ __device__
-T reflect_coordinates_set_grad(half in, int twice_low, int twice_high,
-                               half *din) {
+static __forceinline__ __device__ T reflect_coordinates_set_grad(half in, int twice_low, int twice_high, half *din) {
   if (twice_low != twice_high) {
     int din_mult_;
     float min = static_cast<float>(twice_low) / 2;
@@ -155,17 +132,14 @@ T reflect_coordinates_set_grad(half in, int twice_low, int twice_high,
 }
 
 // Calculate the differential of the cubic convolution, i.e. `d coeff / d x`
-template<typename T>
-static __forceinline__ __device__
-void get_cubic_coefficients_grad(
-    T coeffs[4],
-    T t) {
+template <typename T>
+static __forceinline__ __device__ void get_cubic_coefficients_grad(T coeffs[4], T t) {
   const T A = -0.75;
 
   T x;
   x = -1 - t;  // 1 < x = |-1 - tx| < 2
   coeffs[0] = (-3 * A * x - 10 * A) * x - 8 * A;
-  x = -t;     // x = |0 - tx| <= 1
+  x = -t;  // x = |0 - tx| <= 1
   coeffs[1] = (-3 * (A + 2) * x - 2 * (A + 3)) * x;
   x = 1 - t;  // x = |1 - tx| <= 1
   coeffs[2] = (3 * (A + 2) * x - 2 * (A + 3)) * x;
@@ -174,21 +148,17 @@ void get_cubic_coefficients_grad(
 }
 
 template <typename T>
-static __forceinline__ __device__
-T grid_sampler_compute_source_index_set_grad(
-    T coord,
-    int size,
-    GridSamplerPaddingMode padding_mode,
-    bool align_corners,
-    T *din) {
+static __forceinline__ __device__ T grid_sampler_compute_source_index_set_grad(T coord, int size,
+                                                                               GridSamplerPaddingMode padding_mode,
+                                                                               bool align_corners, T *din) {
   T dclip, drefl;
   coord = grid_sampler_unnormalize_set_grad(coord, size, align_corners, din);
   if (padding_mode == GridSamplerPaddingMode::REFLECTION) {
     // reflect coordinates by image borders
     if (!align_corners) {
-      coord = reflect_coordinates_set_grad<T>(coord, -1, 2*size - 1, &drefl);
+      coord = reflect_coordinates_set_grad<T>(coord, -1, 2 * size - 1, &drefl);
     } else {
-      coord = reflect_coordinates_set_grad<T>(coord, 0, 2*(size - 1), &drefl);
+      coord = reflect_coordinates_set_grad<T>(coord, 0, 2 * (size - 1), &drefl);
     }
     // clip coordinates to image borders
     coord = clip_coordinates_set_grad(coord, size, &dclip);

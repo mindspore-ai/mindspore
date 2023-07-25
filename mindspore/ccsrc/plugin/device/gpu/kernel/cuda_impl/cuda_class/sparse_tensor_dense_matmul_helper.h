@@ -118,9 +118,9 @@ class SparseTensorDenseMatmulHelperGpuKernel : public GpuKernelHelperBase {
                     << "tensor shape of 'sparse': " << host_shape << ",and the tensor shape of 'dense':" << b_shape;
       return -1;
     }
-    CalSparseTensorDenseMatmul(values_size_, out_dim_1, b_rows, b_cols, indices, values, dense, output, adj_st_,
-                               adj_dt_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-
+    auto status = CalSparseTensorDenseMatmul(values_size_, out_dim_1, b_rows, b_cols, indices, values, dense, output,
+                                             adj_st_, adj_dt_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
   void SetKernelParam(const GpuKernelAttrBasePtr &kernel_attr) override {

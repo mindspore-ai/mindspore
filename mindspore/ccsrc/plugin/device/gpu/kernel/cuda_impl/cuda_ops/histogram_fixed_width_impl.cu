@@ -22,8 +22,8 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 
 template <typename T>
-void HistogramFixedWidthKernel(int num_samples, const T *d_samples, const double *d_levels,
-                               int32_t *d_histogram, int64_t num_levels, cudaStream_t cuda_stream) {
+cudaError_t HistogramFixedWidthKernel(int num_samples, const T *d_samples, const double *d_levels, int32_t *d_histogram,
+                                      int64_t num_levels, cudaStream_t cuda_stream) {
   void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
   (void)cub::DeviceHistogram::HistogramRange(nullptr, temp_storage_bytes, d_samples, d_histogram, num_levels, d_levels,
@@ -32,28 +32,28 @@ void HistogramFixedWidthKernel(int num_samples, const T *d_samples, const double
   (void)cub::DeviceHistogram::HistogramRange(d_temp_storage, temp_storage_bytes, d_samples, d_histogram, num_levels,
                                              d_levels, num_samples, cuda_stream);
   (void)cudaFree(d_temp_storage);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalHistogramFixedWidth(int num_samples, const T *d_samples, const double *d_levels, int32_t *d_histogram,
-                            int64_t num_levels, cudaStream_t cuda_stream) {
+cudaError_t CalHistogramFixedWidth(int num_samples, const T *d_samples, const double *d_levels, int32_t *d_histogram,
+                                   int64_t num_levels, cudaStream_t cuda_stream) {
   HistogramFixedWidthKernel(num_samples, d_samples, d_levels, d_histogram, num_levels, cuda_stream);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalHistogramFixedWidth<int32_t>(int num_samples, const int32_t *d_samples,
-                                                              const double *d_levels, int32_t *d_histogram,
-                                                              int64_t num_levels, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHistogramFixedWidth<int32_t>(int num_samples, const int32_t *d_samples,
+                                                                     const double *d_levels, int32_t *d_histogram,
+                                                                     int64_t num_levels, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalHistogramFixedWidth<double>(int num_samples, const double *d_samples,
-                                                             const double *d_levels, int32_t *d_histogram,
-                                                             int64_t num_levels, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHistogramFixedWidth<double>(int num_samples, const double *d_samples,
+                                                                    const double *d_levels, int32_t *d_histogram,
+                                                                    int64_t num_levels, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalHistogramFixedWidth<float>(int num_samples, const float *d_samples,
-                                                            const double *d_levels, int32_t *d_histogram,
-                                                            int64_t num_levels, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHistogramFixedWidth<float>(int num_samples, const float *d_samples,
+                                                                   const double *d_levels, int32_t *d_histogram,
+                                                                   int64_t num_levels, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalHistogramFixedWidth<half>(int num_samples, const half *d_samples,
-                                                           const double *d_levels, int32_t *d_histogram,
-                                                           int64_t num_levels, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHistogramFixedWidth<half>(int num_samples, const half *d_samples,
+                                                                  const double *d_levels, int32_t *d_histogram,
+                                                                  int64_t num_levels, cudaStream_t cuda_stream);

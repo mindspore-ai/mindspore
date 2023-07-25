@@ -106,8 +106,10 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetStream(cublas_handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                        "For MatrixDeterminantGpuKernelMod cublasSetStream Fail");
   // Transpose input data from rowMajor to colMajor.
-  MatrixTranspose(input, SizeToInt(input_elements_), SizeToInt(m_), SizeToInt(m_), middle_lu_output, device_id_,
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  cudaError_t status = cudaErrorNotReady;
+  status = MatrixTranspose(input, SizeToInt(input_elements_), SizeToInt(m_), SizeToInt(m_), middle_lu_output,
+                           device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   // Compute the partial pivoted lu factorization.
   // If m_ / batch_size_ <= 128 :
   //  We use batched cublas api is faster by empiricism, for small matrices or large batch.
@@ -157,16 +159,18 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   if (is_sign_log_determinant_) {
     // For LogMatrixDeterminant, two output -->(sign determinant, log_abs_determinant)
     auto log_determinant_output = GetDeviceAddress<T>(outputs, kIndex1);
-    CalculateDeterminantByLu(middle_lu_output, pivot, SizeToInt(m_), SizeToInt(batch_size_), is_sign_log_determinant_,
-                             log_determinant_output, sign_output, device_id_,
-                             reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = CalculateDeterminantByLu(middle_lu_output, pivot, SizeToInt(m_), SizeToInt(batch_size_),
+                                      is_sign_log_determinant_, log_determinant_output, sign_output, device_id_,
+                                      reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
     // For MatrixDeterminant, only one output -->(determinant)
     auto determinant_output = sign_output;
     sign_output = nullptr;
-    CalculateDeterminantByLu(middle_lu_output, pivot, SizeToInt(m_), SizeToInt(batch_size_), is_sign_log_determinant_,
-                             determinant_output, sign_output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = CalculateDeterminantByLu(middle_lu_output, pivot, SizeToInt(m_), SizeToInt(batch_size_),
+                                      is_sign_log_determinant_, determinant_output, sign_output, device_id_,
+                                      reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

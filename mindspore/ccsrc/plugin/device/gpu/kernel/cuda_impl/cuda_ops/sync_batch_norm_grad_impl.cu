@@ -128,92 +128,74 @@ __global__ void SyncBatchNormGradPostScaleBias(size_t C, G *saved_invstd, float 
 }
 
 template <typename T, typename G>
-void CalSyncBatchNormGradPre(size_t N, size_t C, size_t H, size_t W, const T *x_input, const T *dy, G *saved_mean,
-                             G *saved_invstd, float *dy_sum_local, float *dot_p_local, cudaStream_t cuda_stream) {
+cudaError_t CalSyncBatchNormGradPre(size_t N, size_t C, size_t H, size_t W, const T *x_input, const T *dy,
+                                    G *saved_mean, G *saved_invstd, float *dy_sum_local, float *dot_p_local,
+                                    cudaStream_t cuda_stream) {
   SyncBatchNormGradPre<<<C, GET_THREADS, 0, cuda_stream>>>(N, C, H, W, x_input, dy, saved_mean, saved_invstd,
-                                                          dy_sum_local, dot_p_local);
-  return;
+                                                           dy_sum_local, dot_p_local);
+  return GetCudaStatus();
 }
 template <typename T, typename S, typename G>
-void CalSyncBatchNormGradPost(size_t N, size_t C, size_t H, size_t W, const T *x_input, const T *dy, T *dx,
-                              G *saved_mean, G *saved_invstd, float *dy_sum_red, float *dot_p_red, S *scale, S *dscale,
-                              S *dbias, float epsilon, cudaStream_t cuda_stream) {
+cudaError_t CalSyncBatchNormGradPost(size_t N, size_t C, size_t H, size_t W, const T *x_input, const T *dy, T *dx,
+                                     G *saved_mean, G *saved_invstd, float *dy_sum_red, float *dot_p_red, S *scale,
+                                     S *dscale, S *dbias, float epsilon, cudaStream_t cuda_stream) {
   SyncBatchNormGradPost<<<C, GET_THREADS, 0, cuda_stream>>>(N, C, H, W, x_input, dy, dx, saved_mean, saved_invstd,
                                                             dy_sum_red, dot_p_red, scale, dscale, dbias, epsilon);
   SyncBatchNormGradPostScaleBias<<<GET_BLOCKS(C), std::min(C, static_cast<size_t>(GET_THREADS)), 0, cuda_stream>>>(
     C, saved_invstd, dy_sum_red, dot_p_red, dscale, dbias);
+  return GetCudaStatus();
 }
 // PRE FUNCTION
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPre<float, float>(size_t N, size_t C, size_t H, size_t W,
-                                                                    const float *x_input, const float *dy,
-                                                                    float *saved_mean, float *saved_invstd,
-                                                                    float *dy_sum_local, float *dot_p_local,
-                                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPre<float, half>(size_t N, size_t C, size_t H, size_t W,
-                                                                   const float *x_input, const float *dy,
-                                                                   half *saved_mean, half *saved_invstd,
-                                                                   float *dy_sum_local, float *dot_p_local,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPre<half, float>(size_t N, size_t C, size_t H, size_t W,
-                                                                   const half *x_input, const half *dy,
-                                                                   float *saved_mean, float *saved_invstd,
-                                                                   float *dy_sum_local, float *dot_p_local,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPre<half, half>(size_t N, size_t C, size_t H, size_t W,
-                                                                  const half *x_input, const half *dy, half *saved_mean,
-                                                                  half *saved_invstd, float *dy_sum_local,
-                                                                  float *dot_p_local, cudaStream_t cuda_stream);
-// POST FUNCTION
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPost<float, float, float>(size_t N, size_t C, size_t H, size_t W,
-                                                                            const float *x_input, const float *dy,
-                                                                            float *dx, float *saved_mean,
-                                                                            float *saved_invstd, float *dy_sum_red,
-                                                                            float *dot_p_red, float *scale,
-                                                                            float *dscale, float *dbias, float epsilon,
-                                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPost<half, float, float>(size_t N, size_t C, size_t H, size_t W,
-                                                                           const half *x_input, const half *dy,
-                                                                           half *dx, float *saved_mean,
-                                                                           float *saved_invstd, float *dy_sum_red,
-                                                                           float *dot_p_red, float *scale,
-                                                                           float *dscale, float *dbias, float epsilon,
-                                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPost<float, half, float>(size_t N, size_t C, size_t H, size_t W,
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPre<float, float>(size_t N, size_t C, size_t H, size_t W,
                                                                            const float *x_input, const float *dy,
-                                                                           float *dx, float *saved_mean,
-                                                                           float *saved_invstd, float *dy_sum_red,
-                                                                           float *dot_p_red, half *scale, half *dscale,
-                                                                           half *dbias, float epsilon,
+                                                                           float *saved_mean, float *saved_invstd,
+                                                                           float *dy_sum_local, float *dot_p_local,
                                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPost<half, half, float>(size_t N, size_t C, size_t H, size_t W,
-                                                                          const half *x_input, const half *dy, half *dx,
-                                                                          float *saved_mean, float *saved_invstd,
-                                                                          float *dy_sum_red, float *dot_p_red,
-                                                                          half *scale, half *dscale, half *dbias,
-                                                                          float epsilon, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPost<float, float, half>(size_t N, size_t C, size_t H, size_t W,
-                                                                           const float *x_input, const float *dy,
-                                                                           float *dx, half *saved_mean,
-                                                                           half *saved_invstd, float *dy_sum_red,
-                                                                           float *dot_p_red, float *scale,
-                                                                           float *dscale, float *dbias, float epsilon,
-                                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPost<half, float, half>(size_t N, size_t C, size_t H, size_t W,
-                                                                          const half *x_input, const half *dy, half *dx,
-                                                                          half *saved_mean, half *saved_invstd,
-                                                                          float *dy_sum_red, float *dot_p_red,
-                                                                          float *scale, float *dscale, float *dbias,
-                                                                          float epsilon, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPost<float, half, half>(size_t N, size_t C, size_t H, size_t W,
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPre<float, half>(size_t N, size_t C, size_t H, size_t W,
                                                                           const float *x_input, const float *dy,
-                                                                          float *dx, half *saved_mean,
-                                                                          half *saved_invstd, float *dy_sum_red,
-                                                                          float *dot_p_red, half *scale, half *dscale,
-                                                                          half *dbias, float epsilon,
+                                                                          half *saved_mean, half *saved_invstd,
+                                                                          float *dy_sum_local, float *dot_p_local,
                                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSyncBatchNormGradPost<half, half, half>(size_t N, size_t C, size_t H, size_t W,
-                                                                         const half *x_input, const half *dy, half *dx,
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPre<half, float>(size_t N, size_t C, size_t H, size_t W,
+                                                                          const half *x_input, const half *dy,
+                                                                          float *saved_mean, float *saved_invstd,
+                                                                          float *dy_sum_local, float *dot_p_local,
+                                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPre<half, half>(size_t N, size_t C, size_t H, size_t W,
+                                                                         const half *x_input, const half *dy,
                                                                          half *saved_mean, half *saved_invstd,
-                                                                         float *dy_sum_red, float *dot_p_red,
-                                                                         half *scale, half *dscale, half *dbias,
-                                                                         float epsilon, cudaStream_t cuda_stream);
+                                                                         float *dy_sum_local, float *dot_p_local,
+                                                                         cudaStream_t cuda_stream);
+// POST FUNCTION
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPost<float, float, float>(
+  size_t N, size_t C, size_t H, size_t W, const float *x_input, const float *dy, float *dx, float *saved_mean,
+  float *saved_invstd, float *dy_sum_red, float *dot_p_red, float *scale, float *dscale, float *dbias, float epsilon,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPost<half, float, float>(
+  size_t N, size_t C, size_t H, size_t W, const half *x_input, const half *dy, half *dx, float *saved_mean,
+  float *saved_invstd, float *dy_sum_red, float *dot_p_red, float *scale, float *dscale, float *dbias, float epsilon,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPost<float, half, float>(
+  size_t N, size_t C, size_t H, size_t W, const float *x_input, const float *dy, float *dx, float *saved_mean,
+  float *saved_invstd, float *dy_sum_red, float *dot_p_red, half *scale, half *dscale, half *dbias, float epsilon,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPost<half, half, float>(
+  size_t N, size_t C, size_t H, size_t W, const half *x_input, const half *dy, half *dx, float *saved_mean,
+  float *saved_invstd, float *dy_sum_red, float *dot_p_red, half *scale, half *dscale, half *dbias, float epsilon,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPost<float, float, half>(
+  size_t N, size_t C, size_t H, size_t W, const float *x_input, const float *dy, float *dx, half *saved_mean,
+  half *saved_invstd, float *dy_sum_red, float *dot_p_red, float *scale, float *dscale, float *dbias, float epsilon,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPost<half, float, half>(
+  size_t N, size_t C, size_t H, size_t W, const half *x_input, const half *dy, half *dx, half *saved_mean,
+  half *saved_invstd, float *dy_sum_red, float *dot_p_red, float *scale, float *dscale, float *dbias, float epsilon,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPost<float, half, half>(
+  size_t N, size_t C, size_t H, size_t W, const float *x_input, const float *dy, float *dx, half *saved_mean,
+  half *saved_invstd, float *dy_sum_red, float *dot_p_red, half *scale, half *dscale, half *dbias, float epsilon,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGradPost<half, half, half>(
+  size_t N, size_t C, size_t H, size_t W, const half *x_input, const half *dy, half *dx, half *saved_mean,
+  half *saved_invstd, float *dy_sum_red, float *dot_p_red, half *scale, half *dscale, half *dbias, float epsilon,
+  cudaStream_t cuda_stream);

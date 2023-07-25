@@ -103,16 +103,16 @@ __global__ void NormalizeKernel(const T *input, const T *gamma, const T *beta, T
 }
 
 template <typename T>
-void Normalize(const T *input, const T *gamma, const T *beta, T *output, size_t dim_at_axis, float epsilion,
-               int element_cnt, cudaStream_t stream, const uint32_t device_id) {
+cudaError_t Normalize(const T *input, const T *gamma, const T *beta, T *output, size_t dim_at_axis, float epsilion,
+                      int element_cnt, cudaStream_t stream, const uint32_t device_id) {
   int threads_num = CUDA_THREADS_MAXSIZE(device_id, ((dim_at_axis - 1) / 32 + 1) * 32);
   int blocks_num = CUDA_BLOCKS_CAL(device_id, element_cnt, threads_num);
   int dim_before_axis = element_cnt / dim_at_axis;
   NormalizeKernel<<<blocks_num, threads_num, 0, stream>>>(input, gamma, beta, output, dim_at_axis, epsilion,
                                                           dim_before_axis);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Normalize(const float *input, const float *gamma, const float *beta, float *output,
-                                        size_t dim_at_axis, float epsilion, int element_cnt, cudaStream_t stream,
-                                        const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t Normalize(const float *input, const float *gamma, const float *beta, float *output,
+                                               size_t dim_at_axis, float epsilion, int element_cnt, cudaStream_t stream,
+                                               const uint32_t device_id);

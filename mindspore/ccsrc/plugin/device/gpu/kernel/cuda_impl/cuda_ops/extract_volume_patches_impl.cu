@@ -76,93 +76,94 @@ __global__ void ExtractVolumePatches(size_t output_size, int64_t stride_dep, int
 }
 
 template <typename T>
-void CalExtractVolumePatches(size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col,
-                             int64_t output_depth, int64_t output_height, int64_t output_width, bool need_batch,
-                             int64_t d_stride, int64_t h_stride, int64_t w_stride, int64_t patch_stride,
-                             int64_t other_stride, int64_t input_channel, int64_t input_dep_size,
-                             int64_t input_row_size, int64_t input_col_size, int64_t pad_head, int64_t pad_top,
-                             int64_t pad_left, int64_t chan_input_stride, int64_t dep_input_stride,
-                             int64_t row_input_stride, int64_t patch_input_stride, const T *input, T *output,
-                             cudaStream_t stream) {
+cudaError_t CalExtractVolumePatches(size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col,
+                                    int64_t output_depth, int64_t output_height, int64_t output_width, bool need_batch,
+                                    int64_t d_stride, int64_t h_stride, int64_t w_stride, int64_t patch_stride,
+                                    int64_t other_stride, int64_t input_channel, int64_t input_dep_size,
+                                    int64_t input_row_size, int64_t input_col_size, int64_t pad_head, int64_t pad_top,
+                                    int64_t pad_left, int64_t chan_input_stride, int64_t dep_input_stride,
+                                    int64_t row_input_stride, int64_t patch_input_stride, const T *input, T *output,
+                                    cudaStream_t stream) {
   cudaMemsetAsync(output, 0, sizeof(T) * output_size, stream);
   ExtractVolumePatches<<<GET_BLOCKS(output_size / (w_stride * input_channel)), GET_THREADS, 0, stream>>>(
     output_size, stride_dep, stride_row, stride_col, output_depth, output_height, output_width, need_batch, d_stride,
     h_stride, w_stride, patch_stride, other_stride, input_channel, input_dep_size, input_row_size, input_col_size,
     pad_head, pad_top, pad_left, chan_input_stride, dep_input_stride, row_input_stride, patch_input_stride, input,
     output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<double>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<double>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const double *input, double *output,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<float>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<float>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const float *input, float *output,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<half>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<half>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const half *input, half *output,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<int64_t>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const int64_t *input, int64_t *output,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<int32_t>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const int32_t *input, int32_t *output,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<int16_t>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<int16_t>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const int16_t *input, int16_t *output,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<int8_t>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<int8_t>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const int8_t *input, int8_t *output,
   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<uint64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<uint64_t>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const uint64_t *input,
   uint64_t *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<uint32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<uint32_t>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const uint32_t *input,
   uint32_t *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<uint16_t>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<uint16_t>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,
   int64_t input_col_size, int64_t pad_head, int64_t pad_top, int64_t pad_left, int64_t chan_input_stride,
   int64_t dep_input_stride, int64_t row_input_stride, int64_t patch_input_stride, const uint16_t *input,
   uint16_t *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalExtractVolumePatches<uint8_t>(
+template CUDA_LIB_EXPORT cudaError_t CalExtractVolumePatches<uint8_t>(
   size_t output_size, int64_t stride_dep, int64_t stride_row, int64_t stride_col, int64_t output_depth,
   int64_t output_height, int64_t output_width, bool need_batch, int64_t d_stride, int64_t h_stride, int64_t w_stride,
   int64_t patch_stride, int64_t other_stride, int64_t input_channel, int64_t input_dep_size, int64_t input_row_size,

@@ -116,7 +116,8 @@ class AdaptiveAvgPool3DHelperGpuKernel : public GpuKernelHelperBase {
       ApplyAdaptiveAvgPool3D((uint)out_size_, (uint)input_channel_, (uint)input_height_, (uint)input_width_,
                              (uint)input_depth_, (uint)output_channel_, (uint)output_height_, (uint)output_width_,
                              (uint)output_depth_, input_ptr, output_ptr, reinterpret_cast<cudaStream_t>(cuda_stream));
-    return status;
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    return 0;
   }
 
   void SetKernelParam(const GpuKernelAttrBasePtr &kernel_attr) override {

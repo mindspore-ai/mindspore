@@ -18,5 +18,5 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FILL_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void Fill(const size_t &m, const size_t &n, const T *input, T *output, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t Fill(const size_t &m, const size_t &n, const T *input, T *output, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FILL_IMPL_CUH_

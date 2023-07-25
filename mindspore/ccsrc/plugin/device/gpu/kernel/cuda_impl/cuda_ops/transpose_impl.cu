@@ -67,7 +67,7 @@ template <typename T>
 cudaError_t CalTranspose(const size_t size, const T *input, const TransposeInfo &info, const size_t shape_size,
                          T *output, cudaStream_t cuda_stream) {
   TransposeKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, info, shape_size, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalTranspose<bool>(const size_t size, const bool *input, const TransposeInfo &info,
@@ -222,7 +222,7 @@ __global__ void Swap3DTensorLast2DimKernel_shared(const T *input, int NumThreads
           input[input_idx];       // each thread load one input data into shared mem
         input_idx += input_step;  // calculate the next input idx this thread should load
       }
-    } else {                      // boundary process: thread blocks responses for edge tiles
+    } else {  // boundary process: thread blocks responses for edge tiles
       if (shm_col_id < tile_width) {
         for (int row_id = shm_row_id; row_id < (tile_height); row_id += NumRowsPerLoadLoop) {
           // shm_tile[row_id][shm_col_id]
@@ -315,9 +315,9 @@ void Swap3DTensorLast2Dim(const size_t size, const size_t shape_size, int *combi
 }
 // specific for NHWC -> NCHW
 template <typename T>
-void CalNHWC2NCHWInterface(const size_t size, const size_t shape_size, const T *d_input, const int64_t *input_shape,
-                           const int64_t *input_axis, const TransposeInfo &info, T *d_output,
-                           cudaStream_t cuda_stream) {
+cudaError_t CalNHWC2NCHWInterface(const size_t size, const size_t shape_size, const T *d_input,
+                                  const int64_t *input_shape, const int64_t *input_axis, const TransposeInfo &info,
+                                  T *d_output, cudaStream_t cuda_stream) {
   int combined_dims[3];
   combined_dims[0] = static_cast<int>(input_shape[0]);  // N
   combined_dims[1] = static_cast<int>(input_shape[1]);  // HW
@@ -326,12 +326,13 @@ void CalNHWC2NCHWInterface(const size_t size, const size_t shape_size, const T *
   }
   combined_dims[2] = static_cast<int>(input_shape[shape_size - 1]);  // C
   Swap3DTensorLast2Dim(size, shape_size, combined_dims, d_input, info, d_output, cuda_stream);
+  return GetCudaStatus();
 }
 // specific for NCHW -> NHWC
 template <typename T>
-void CalNCHW2NHWCInterface(const size_t size, const size_t shape_size, const T *d_input, const int64_t *input_shape,
-                           const int64_t *input_axis, const TransposeInfo &info, T *d_output,
-                           cudaStream_t cuda_stream) {
+cudaError_t CalNCHW2NHWCInterface(const size_t size, const size_t shape_size, const T *d_input,
+                                  const int64_t *input_shape, const int64_t *input_axis, const TransposeInfo &info,
+                                  T *d_output, cudaStream_t cuda_stream) {
   int combined_dims[3];
   combined_dims[0] = static_cast<int>(input_shape[0]);  // N
   combined_dims[1] = static_cast<int>(input_shape[1]);  // C
@@ -340,118 +341,116 @@ void CalNCHW2NHWCInterface(const size_t size, const size_t shape_size, const T *
     combined_dims[2] *= static_cast<int>(input_shape[i]);
   }
   Swap3DTensorLast2Dim(size, shape_size, combined_dims, d_input, info, d_output, cuda_stream);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<Complex<float>>(
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<Complex<float>>(
   const size_t size, const size_t shape_size, const Complex<float> *d_input, const int64_t *input_shape,
   const int64_t *input_axis, const TransposeInfo &info, Complex<float> *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<Complex<double>>(
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<Complex<double>>(
   const size_t size, const size_t shape_size, const Complex<double> *d_input, const int64_t *input_shape,
   const int64_t *input_axis, const TransposeInfo &info, Complex<double> *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<bool>(const size_t size, const size_t shape_size,
-                                                          const bool *d_input, const int64_t *input_shape,
-                                                          const int64_t *input_axis, const TransposeInfo &info,
-                                                          bool *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<double>(const size_t size, const size_t shape_size,
-                                                            const double *d_input, const int64_t *input_shape,
-                                                            const int64_t *input_axis, const TransposeInfo &info,
-                                                            double *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<float>(const size_t size, const size_t shape_size,
-                                                           const float *d_input, const int64_t *input_shape,
-                                                           const int64_t *input_axis, const TransposeInfo &info,
-                                                           float *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<half>(const size_t size, const size_t shape_size,
-                                                          const half *d_input, const int64_t *input_shape,
-                                                          const int64_t *input_axis, const TransposeInfo &info,
-                                                          half *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int64_t>(const size_t size, const size_t shape_size,
-                                                             const int64_t *d_input, const int64_t *input_shape,
-                                                             const int64_t *input_axis, const TransposeInfo &info,
-                                                             int64_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int>(const size_t size, const size_t shape_size, const int *d_input,
-                                                         const int64_t *input_shape, const int64_t *input_axis,
-                                                         const TransposeInfo &info, int *d_output,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int16_t>(const size_t size, const size_t shape_size,
-                                                             const int16_t *d_input, const int64_t *input_shape,
-                                                             const int64_t *input_axis, const TransposeInfo &info,
-                                                             int16_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int8_t>(const size_t size, const size_t shape_size,
-                                                            const int8_t *d_input, const int64_t *input_shape,
-                                                            const int64_t *input_axis, const TransposeInfo &info,
-                                                            int8_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<uint64_t>(const size_t size, const size_t shape_size,
-                                                              const uint64_t *d_input, const int64_t *input_shape,
-                                                              const int64_t *input_axis, const TransposeInfo &info,
-                                                              uint64_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<uint32_t>(const size_t size, const size_t shape_size,
-                                                              const uint32_t *d_input, const int64_t *input_shape,
-                                                              const int64_t *input_axis, const TransposeInfo &info,
-                                                              uint32_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<uint16_t>(const size_t size, const size_t shape_size,
-                                                              const uint16_t *d_input, const int64_t *input_shape,
-                                                              const int64_t *input_axis, const TransposeInfo &info,
-                                                              uint16_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<uint8_t>(const size_t size, const size_t shape_size,
-                                                             const uint8_t *d_input, const int64_t *input_shape,
-                                                             const int64_t *input_axis, const TransposeInfo &info,
-                                                             uint8_t *d_output, cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<Complex<float>>(const size_t size, const size_t shape_size,
-                                                                    const Complex<float> *d_input,
-                                                                    const int64_t *input_shape,
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<bool>(const size_t size, const size_t shape_size,
+                                                                 const bool *d_input, const int64_t *input_shape,
+                                                                 const int64_t *input_axis, const TransposeInfo &info,
+                                                                 bool *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<double>(const size_t size, const size_t shape_size,
+                                                                   const double *d_input, const int64_t *input_shape,
+                                                                   const int64_t *input_axis, const TransposeInfo &info,
+                                                                   double *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<float>(const size_t size, const size_t shape_size,
+                                                                  const float *d_input, const int64_t *input_shape,
+                                                                  const int64_t *input_axis, const TransposeInfo &info,
+                                                                  float *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<half>(const size_t size, const size_t shape_size,
+                                                                 const half *d_input, const int64_t *input_shape,
+                                                                 const int64_t *input_axis, const TransposeInfo &info,
+                                                                 half *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<int64_t>(const size_t size, const size_t shape_size,
+                                                                    const int64_t *d_input, const int64_t *input_shape,
                                                                     const int64_t *input_axis,
-                                                                    const TransposeInfo &info,
+                                                                    const TransposeInfo &info, int64_t *d_output,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<int>(const size_t size, const size_t shape_size,
+                                                                const int *d_input, const int64_t *input_shape,
+                                                                const int64_t *input_axis, const TransposeInfo &info,
+                                                                int *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<int16_t>(const size_t size, const size_t shape_size,
+                                                                    const int16_t *d_input, const int64_t *input_shape,
+                                                                    const int64_t *input_axis,
+                                                                    const TransposeInfo &info, int16_t *d_output,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<int8_t>(const size_t size, const size_t shape_size,
+                                                                   const int8_t *d_input, const int64_t *input_shape,
+                                                                   const int64_t *input_axis, const TransposeInfo &info,
+                                                                   int8_t *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<uint64_t>(
+  const size_t size, const size_t shape_size, const uint64_t *d_input, const int64_t *input_shape,
+  const int64_t *input_axis, const TransposeInfo &info, uint64_t *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<uint32_t>(
+  const size_t size, const size_t shape_size, const uint32_t *d_input, const int64_t *input_shape,
+  const int64_t *input_axis, const TransposeInfo &info, uint32_t *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<uint16_t>(
+  const size_t size, const size_t shape_size, const uint16_t *d_input, const int64_t *input_shape,
+  const int64_t *input_axis, const TransposeInfo &info, uint16_t *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<uint8_t>(const size_t size, const size_t shape_size,
+                                                                    const uint8_t *d_input, const int64_t *input_shape,
+                                                                    const int64_t *input_axis,
+                                                                    const TransposeInfo &info, uint8_t *d_output,
+                                                                    cudaStream_t cuda_stream);
 
-                                                                    Complex<float> *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<Complex<double>>(
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<Complex<float>>(
+  const size_t size, const size_t shape_size, const Complex<float> *d_input, const int64_t *input_shape,
+  const int64_t *input_axis, const TransposeInfo &info, Complex<float> *d_output, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<Complex<double>>(
   const size_t size, const size_t shape_size, const Complex<double> *d_input, const int64_t *input_shape,
   const int64_t *input_axis, const TransposeInfo &info, Complex<double> *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<bool>(const size_t size, const size_t shape_size,
-                                                          const bool *d_input, const int64_t *input_shape,
-                                                          const int64_t *input_axis, const TransposeInfo &info,
-                                                          bool *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<double>(const size_t size, const size_t shape_size,
-                                                            const double *d_input, const int64_t *input_shape,
-                                                            const int64_t *input_axis, const TransposeInfo &info,
-                                                            double *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<float>(const size_t size, const size_t shape_size,
-                                                           const float *d_input, const int64_t *input_shape,
-                                                           const int64_t *input_axis, const TransposeInfo &info,
-                                                           float *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<half>(const size_t size, const size_t shape_size,
-                                                          const half *d_input, const int64_t *input_shape,
-                                                          const int64_t *input_axis, const TransposeInfo &info,
-                                                          half *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<int64_t>(const size_t size, const size_t shape_size,
-                                                             const int64_t *d_input, const int64_t *input_shape,
-                                                             const int64_t *input_axis, const TransposeInfo &info,
-                                                             int64_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<int>(const size_t size, const size_t shape_size, const int *d_input,
-                                                         const int64_t *input_shape, const int64_t *input_axis,
-                                                         const TransposeInfo &info, int *d_output,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<int16_t>(const size_t size, const size_t shape_size,
-                                                             const int16_t *d_input, const int64_t *input_shape,
-                                                             const int64_t *input_axis, const TransposeInfo &info,
-                                                             int16_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<int8_t>(const size_t size, const size_t shape_size,
-                                                            const int8_t *d_input, const int64_t *input_shape,
-                                                            const int64_t *input_axis, const TransposeInfo &info,
-                                                            int8_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<uint64_t>(const size_t size, const size_t shape_size,
-                                                              const uint64_t *d_input, const int64_t *input_shape,
-                                                              const int64_t *input_axis, const TransposeInfo &info,
-                                                              uint64_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<uint32_t>(const size_t size, const size_t shape_size,
-                                                              const uint32_t *d_input, const int64_t *input_shape,
-                                                              const int64_t *input_axis, const TransposeInfo &info,
-                                                              uint32_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<uint16_t>(const size_t size, const size_t shape_size,
-                                                              const uint16_t *d_input, const int64_t *input_shape,
-                                                              const int64_t *input_axis, const TransposeInfo &info,
-                                                              uint16_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<uint8_t>(const size_t size, const size_t shape_size,
-                                                             const uint8_t *d_input, const int64_t *input_shape,
-                                                             const int64_t *input_axis, const TransposeInfo &info,
-                                                             uint8_t *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<bool>(const size_t size, const size_t shape_size,
+                                                                 const bool *d_input, const int64_t *input_shape,
+                                                                 const int64_t *input_axis, const TransposeInfo &info,
+                                                                 bool *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<double>(const size_t size, const size_t shape_size,
+                                                                   const double *d_input, const int64_t *input_shape,
+                                                                   const int64_t *input_axis, const TransposeInfo &info,
+                                                                   double *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<float>(const size_t size, const size_t shape_size,
+                                                                  const float *d_input, const int64_t *input_shape,
+                                                                  const int64_t *input_axis, const TransposeInfo &info,
+                                                                  float *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<half>(const size_t size, const size_t shape_size,
+                                                                 const half *d_input, const int64_t *input_shape,
+                                                                 const int64_t *input_axis, const TransposeInfo &info,
+                                                                 half *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<int64_t>(const size_t size, const size_t shape_size,
+                                                                    const int64_t *d_input, const int64_t *input_shape,
+                                                                    const int64_t *input_axis,
+                                                                    const TransposeInfo &info, int64_t *d_output,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<int>(const size_t size, const size_t shape_size,
+                                                                const int *d_input, const int64_t *input_shape,
+                                                                const int64_t *input_axis, const TransposeInfo &info,
+                                                                int *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<int16_t>(const size_t size, const size_t shape_size,
+                                                                    const int16_t *d_input, const int64_t *input_shape,
+                                                                    const int64_t *input_axis,
+                                                                    const TransposeInfo &info, int16_t *d_output,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<int8_t>(const size_t size, const size_t shape_size,
+                                                                   const int8_t *d_input, const int64_t *input_shape,
+                                                                   const int64_t *input_axis, const TransposeInfo &info,
+                                                                   int8_t *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<uint64_t>(
+  const size_t size, const size_t shape_size, const uint64_t *d_input, const int64_t *input_shape,
+  const int64_t *input_axis, const TransposeInfo &info, uint64_t *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<uint32_t>(
+  const size_t size, const size_t shape_size, const uint32_t *d_input, const int64_t *input_shape,
+  const int64_t *input_axis, const TransposeInfo &info, uint32_t *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<uint16_t>(
+  const size_t size, const size_t shape_size, const uint16_t *d_input, const int64_t *input_shape,
+  const int64_t *input_axis, const TransposeInfo &info, uint16_t *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<uint8_t>(const size_t size, const size_t shape_size,
+                                                                    const uint8_t *d_input, const int64_t *input_shape,
+                                                                    const int64_t *input_axis,
+                                                                    const TransposeInfo &info, uint8_t *d_output,
+                                                                    cudaStream_t cuda_stream);

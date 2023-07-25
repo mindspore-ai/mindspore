@@ -104,14 +104,15 @@ class IgammacHelperGpuKernel : public GpuKernelHelperBase {
     }
     size_t size = output_size_list_[0] / sizeof(T);
     // call cuda kernel
+    cudaError_t status = cudaErrorNotReady;
     if (need_broadcast_) {
-      CalBroadcastIgammac(lhs_shape_, rhs_shape_, output_shape_, inputa_ptr, inputx_ptr, output_ptr, device_id_,
-                          reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalBroadcastIgammac(lhs_shape_, rhs_shape_, output_shape_, inputa_ptr, inputx_ptr, output_ptr,
+                                   device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      CalIgammac(size, nobroadcast_type_, inputa_ptr, inputx_ptr, output_ptr, device_id_,
-                 reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalIgammac(size, nobroadcast_type_, inputa_ptr, inputx_ptr, output_ptr, device_id_,
+                          reinterpret_cast<cudaStream_t>(cuda_stream));
     }
-
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

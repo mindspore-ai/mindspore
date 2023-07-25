@@ -36,7 +36,7 @@ cudaError_t CalAdaptiveMaxPool3DGrad(const T *input_grad, const S *input_argmax,
                                      const uint32_t &device_id, cudaStream_t cuda_stream) {
   AdaptiveMaxPool3DGradKernel<<<CUDA_BLOCKS(device_id, batch), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input_grad, input_argmax, output_stride, argmax_stride, batch, output_data);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 #define REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(type1, type2)                                                   \

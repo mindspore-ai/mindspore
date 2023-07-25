@@ -39,9 +39,10 @@ bool MaxPoolWithArgmaxV2FwdGpuKernelMod::LaunchKernel(const std::vector<kernel::
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   S *index_addr = GetDeviceAddress<S>(outputs, kIndex1);
 
-  CalMaxPoolWithArgmaxV2(input_addr, in_n_, in_c_, in_h_, in_w_, ksize_h_, ksize_w_, strides_h_, strides_w_, pads_h_,
-                         pads_w_, dilation_h_, dilation_w_, out_h_, out_w_, output_addr, index_addr, device_id_,
-                         reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalMaxPoolWithArgmaxV2(
+    input_addr, in_n_, in_c_, in_h_, in_w_, ksize_h_, ksize_w_, strides_h_, strides_w_, pads_h_, pads_w_, dilation_h_,
+    dilation_w_, out_h_, out_w_, output_addr, index_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

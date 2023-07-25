@@ -41,6 +41,7 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
+    cudaError_t status = cudaErrorNotReady;
     auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     for (size_t i = 0; i < combine_num_; i++) {
       if (input_num_ == kCombineMomentumInputsNum) {
@@ -49,7 +50,7 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         S *lr = GetDeviceAddress<S>(inputs, i * input_num_ + 2);
         G *grad = GetDeviceAddress<G>(inputs, i * input_num_ + 3);
         S *mom = GetDeviceAddress<S>(inputs, i * input_num_ + 4);
-        MomentumUpdateVariable(elements_[i], variable, acc, lr, grad, mom, false, stream);
+        status = MomentumUpdateVariable(elements_[i], variable, acc, lr, grad, mom, false, stream);
       } else if (input_num_ == kCombineScaleMomentumInputsNum) {
         S *scale = GetDeviceAddress<S>(inputs, i * input_num_);
         T *variable = GetDeviceAddress<T>(inputs, i * input_num_ + 1);
@@ -57,7 +58,7 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         S *lr = GetDeviceAddress<S>(inputs, i * input_num_ + 3);
         G *grad = GetDeviceAddress<G>(inputs, i * input_num_ + 4);
         S *mom = GetDeviceAddress<S>(inputs, i * input_num_ + 5);
-        FusedScaleMomentum(elements_[i], scale, variable, acc, lr, grad, mom, stream);
+        status = FusedScaleMomentum(elements_[i], scale, variable, acc, lr, grad, mom, stream);
       } else if (input_num_ == kCombineWeightDecayMomentumInputsNum) {
         S *weight_decay = GetDeviceAddress<S>(inputs, i * input_num_);
         S *scale = GetDeviceAddress<S>(inputs, i * input_num_ + 1);
@@ -66,10 +67,11 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         S *lr = GetDeviceAddress<S>(inputs, i * input_num_ + 4);
         G *grad = GetDeviceAddress<G>(inputs, i * input_num_ + 5);
         S *mom = GetDeviceAddress<S>(inputs, i * input_num_ + 6);
-        FusedWeightDecayScaleMomentum(elements_[i], weight_decay, scale, variable, acc, lr, grad, mom, stream);
+        status = FusedWeightDecayScaleMomentum(elements_[i], weight_decay, scale, variable, acc, lr, grad, mom, stream);
       } else {
         MS_LOG(EXCEPTION) << "Combine kernel input num is invalid.";
       }
+      CHECK_CUDA_STATUS(status, kernel_name_);
     }
     return true;
   }

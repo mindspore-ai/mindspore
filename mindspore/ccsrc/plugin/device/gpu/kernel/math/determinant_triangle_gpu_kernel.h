@@ -41,14 +41,18 @@ class DetTriangleGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    if (!CheckTriangle(input_addr, fill_mode_, matrix_n_, outputs[0]->size / sizeof(T),
-                       reinterpret_cast<cudaStream_t>(stream_ptr))) {
+    bool host_error_res = false;
+    auto status = CheckTriangle(input_addr, fill_mode_, matrix_n_, outputs[0]->size / sizeof(T),
+                                reinterpret_cast<cudaStream_t>(stream_ptr), &host_error_res);
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    if (!host_error_res) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the elements in the upper half of the matrix should be all 0, fill mode is: " << fill_mode_;
       return false;
     }
     DetTriangle(input_addr, output_addr, matrix_n_, outputs[0]->size / sizeof(T),
                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

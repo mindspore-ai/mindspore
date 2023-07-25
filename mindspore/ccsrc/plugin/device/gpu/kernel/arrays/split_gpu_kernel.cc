@@ -41,8 +41,9 @@ bool SplitFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     cudaMemcpyAsync(outputs_device, outputs_host_.get(), sizeof(T *) * output_num_, cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "Split opt cudaMemcpyAsync outputs failed");
-  SplitKernel(input_size_, axis_step_, all_size_before_axis_, all_size_axis_, input, outputs_device,
-              reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = SplitKernel(input_size_, axis_step_, all_size_before_axis_, all_size_axis_, input, outputs_device,
+                            reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

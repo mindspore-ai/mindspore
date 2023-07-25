@@ -173,13 +173,15 @@ bool SparseApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vec
                   reinterpret_cast<cudaStream_t>(cuda_stream_));
 
   if (l1host[0] > 0) {
-    CalSparseApplyProximalGradientDescent(input_elements_, indices_size_, var, alpha, l1, l2, grad, indices, var_out,
-                                          indices_sort, rows_index, thready_pos, thready_pos_shrink, shrink_num,
-                                          device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = CalSparseApplyProximalGradientDescent(
+      input_elements_, indices_size_, var, alpha, l1, l2, grad, indices, var_out, indices_sort, rows_index, thready_pos,
+      thready_pos_shrink, shrink_num, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
-    CalSparseApplyProximalGradientDescent_2(input_elements_, indices_size_, var, alpha, l1, l2, grad, indices, var_out,
-                                            indices_sort, rows_index, thready_pos, thready_pos_shrink, shrink_num,
-                                            device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = CalSparseApplyProximalGradientDescent_2(
+      input_elements_, indices_size_, var, alpha, l1, l2, grad, indices, var_out, indices_sort, rows_index, thready_pos,
+      thready_pos_shrink, shrink_num, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

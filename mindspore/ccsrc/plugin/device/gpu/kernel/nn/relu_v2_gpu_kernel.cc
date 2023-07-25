@@ -59,7 +59,8 @@ bool ReluV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   MS_ERROR_IF_NULL_W_RET_VAL(y, false);
   auto mask = GetDeviceAddress<uint32_t>(outputs, 1);
   MS_ERROR_IF_NULL_W_RET_VAL(mask, false);
-  ReluV2(element_num_, x, y, mask, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = ReluV2(element_num_, x, y, mask, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -20,9 +20,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename TSPLITS>
-CUDA_LIB_EXPORT void CalRaggedRange(T *starts_addr, T *limits_addr, T *deltas_addr, TSPLITS *rt_nested_splits_addr,
-                                    T *rt_dense_values_addr, TSPLITS *range_sizes_addr, const size_t nrows,
-                                    bool broadcast_starts, bool broadcast_limits, bool broadcast_deltas,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalRaggedRange(T *starts_addr, T *limits_addr, T *deltas_addr,
+                                           TSPLITS *rt_nested_splits_addr, T *rt_dense_values_addr,
+                                           TSPLITS *range_sizes_addr, const size_t nrows, bool broadcast_starts,
+                                           bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id,
+                                           cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RAGGED_RANGE_IMPL_CUH_

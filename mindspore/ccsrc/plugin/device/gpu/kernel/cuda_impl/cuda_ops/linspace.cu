@@ -31,7 +31,7 @@ __global__ void LinSpaceCountEqualOneKernel(const T *start, const T *stop, const
   }
 }
 template <typename T>
-void calLinSpace(const T *start, const T *stop, const size_t value_count, T *output, cudaStream_t cuda_stream) {
+cudaError_t calLinSpace(const T *start, const T *stop, const size_t value_count, T *output, cudaStream_t cuda_stream) {
   if (value_count != 1) {
     LinSpaceCountNotEqualOneKernel<<<GET_BLOCKS(value_count), GET_THREADS, 0, cuda_stream>>>(start, stop, value_count,
                                                                                              output);
@@ -39,8 +39,10 @@ void calLinSpace(const T *start, const T *stop, const size_t value_count, T *out
     LinSpaceCountEqualOneKernel<<<GET_BLOCKS(value_count), GET_THREADS, 0, cuda_stream>>>(start, stop, value_count,
                                                                                           output);
   }
+  return GetCudaStatus();
 }
-template CUDA_LIB_EXPORT void calLinSpace<float>(const float *start, const float *stop, const size_t value_count,
-                                                 float *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void calLinSpace<double>(const double *start, const double *stop, const size_t value_count,
-                                                  double *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t calLinSpace<float>(const float *start, const float *stop, const size_t value_count,
+                                                        float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t calLinSpace<double>(const double *start, const double *stop,
+                                                         const size_t value_count, double *output,
+                                                         cudaStream_t cuda_stream);

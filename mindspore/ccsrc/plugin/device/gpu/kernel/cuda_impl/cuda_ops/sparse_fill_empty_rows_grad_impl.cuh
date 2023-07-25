@@ -18,7 +18,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalFillRowsGrad(const size_t map_num, const size_t values_num, const int64_t *reverse_map,
-                                     const T *grad_values, T *d_values, T *d_default_value, bool *workspace_flag,
-                                     void *workspace_sum_val, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalFillRowsGrad(const size_t map_num, const size_t values_num, const int64_t *reverse_map,
+                                            const T *grad_values, T *d_values, T *d_default_value, bool *workspace_flag,
+                                            void *workspace_sum_val, const uint32_t &device_id,
+                                            cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_FILL_EMPTY_ROWS_GRAD_CUH_

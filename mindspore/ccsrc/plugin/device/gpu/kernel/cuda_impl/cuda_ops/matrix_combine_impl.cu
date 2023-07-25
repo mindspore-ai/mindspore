@@ -53,9 +53,9 @@ __global__ void MatrixCombineKernel(const size_t size, const size_t src_height, 
 }
 
 template <typename T>
-void MatrixCombine(const size_t size, const size_t src_height, const size_t src_width, const size_t dst_width,
-                   const size_t residual, const size_t res_width, const size_t batch, T *input_addr, T *output_addr,
-                   cudaStream_t cuda_stream) {
+cudaError_t MatrixCombine(const size_t size, const size_t src_height, const size_t src_width, const size_t dst_width,
+                          const size_t residual, const size_t res_width, const size_t batch, T *input_addr,
+                          T *output_addr, cudaStream_t cuda_stream) {
   if (residual == 0) {
     MatrixCombineKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, src_height, src_width, dst_width,
                                                                            input_addr, output_addr);
@@ -63,11 +63,11 @@ void MatrixCombine(const size_t size, const size_t src_height, const size_t src_
     MatrixCombineKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, src_height, src_width, dst_width,
                                                                            res_width, batch, input_addr, output_addr);
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void MatrixCombine<float>(const size_t size, const size_t src_height, const size_t src_width,
-                                                   const size_t dst_width, const size_t residual,
-                                                   const size_t res_width, const size_t batch, float *input_addr,
-                                                   float *output_addr, cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT cudaError_t MatrixCombine<float>(const size_t size, const size_t src_height,
+                                                          const size_t src_width, const size_t dst_width,
+                                                          const size_t residual, const size_t res_width,
+                                                          const size_t batch, float *input_addr, float *output_addr,
+                                                          cudaStream_t cuda_stream);

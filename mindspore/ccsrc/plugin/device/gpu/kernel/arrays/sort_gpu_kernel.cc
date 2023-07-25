@@ -59,42 +59,47 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   half *intermediate_input_device = input_device;
   half *intermediate_output_device = output_device;
 
+  cudaError_t status = cudaErrorNotReady;
   // if sort not in descending order, negate input and negate back after sorting
   if (!descending_) {
-    UnaryOpsCudaFunc<ElwiseOpType::kNeg, half, half>(input_size_, intermediate_input_device, intermediate_output_device,
-                                                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = UnaryOpsCudaFunc<ElwiseOpType::kNeg, half, half>(
+      input_size_, intermediate_input_device, intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     intermediate_input_device = output_device;
     intermediate_output_device = temp_output_device;
   }
 
   // transpose so that desired dimension to sort along becomes the last one
-  auto s1 = CalTranspose<half>(input_size_, intermediate_input_device, InInfo, input_rank_, intermediate_output_device,
-                               reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(s1, "Transpose called by " + kernel_name_);
+  status = CalTranspose<half>(input_size_, intermediate_input_device, InInfo, input_rank_, intermediate_output_device,
+                              reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
   intermediate_input_device = intermediate_output_device;
   intermediate_output_device = intermediate_input_device == output_device ? temp_output_device : output_device;
 
   // topk sorts the input along the last dimension
   half topk_init_ = static_cast<half>(kMinValue);
-  FastTopK(outer_size_, inner_size_, intermediate_input_device, static_cast<int32_t>(input_shape_[axis_]),
-           intermediate_output_device, temp_indices_device, topk_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  status =
+    FastTopK(outer_size_, inner_size_, intermediate_input_device, static_cast<int32_t>(input_shape_[axis_]),
+             intermediate_output_device, temp_indices_device, topk_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   std::swap(intermediate_input_device, intermediate_output_device);
 
   // transpose the sorted output back to the original input shape
-  auto s2 = CalTranspose<half>(input_size_, intermediate_input_device, TrInfo, input_rank_, intermediate_output_device,
-                               reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(s2, "Transpose called by " + kernel_name_);
+  status = CalTranspose<half>(input_size_, intermediate_input_device, TrInfo, input_rank_, intermediate_output_device,
+                              reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
 
   // transpose the indices back to the original input shape
-  auto s3 = CalTranspose(input_size_, temp_indices_device, TrInfo, input_rank_, indices_device,
-                         reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(s3, "Transpose called by " + kernel_name_);
+  status = CalTranspose(input_size_, temp_indices_device, TrInfo, input_rank_, indices_device,
+                        reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
 
   // negate back the sorted values if we negated prior to sorting
   if (!descending_) {
     std::swap(intermediate_input_device, intermediate_output_device);
-    UnaryOpsCudaFunc<ElwiseOpType::kNeg, half, half>(input_size_, intermediate_input_device, intermediate_output_device,
-                                                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = UnaryOpsCudaFunc<ElwiseOpType::kNeg, half, half>(
+      input_size_, intermediate_input_device, intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }
@@ -130,41 +135,46 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
   float *intermediate_output_device = output_device;
 
   // if sort not in descending order, negate input and negate back after sorting
+  cudaError_t status = cudaErrorNotReady;
   if (!descending_) {
-    UnaryOpsCudaFunc<ElwiseOpType::kNeg, float, float>(
+    status = UnaryOpsCudaFunc<ElwiseOpType::kNeg, float, float>(
       input_size_, intermediate_input_device, intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     intermediate_input_device = output_device;
     intermediate_output_device = temp_output_device;
   }
 
   // transpose so that desired dimension to sort along becomes the last one
-  auto s4 = CalTranspose<float>(input_size_, intermediate_input_device, InInfo, input_rank_, intermediate_output_device,
-                                reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(s4, "Transpose called by " + kernel_name_);
+  status = CalTranspose<float>(input_size_, intermediate_input_device, InInfo, input_rank_, intermediate_output_device,
+                               reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
   intermediate_input_device = intermediate_output_device;
   intermediate_output_device = intermediate_input_device == output_device ? temp_output_device : output_device;
 
   // topk sorts the input along the last dimension
   float topk_init_ = std::numeric_limits<float>::lowest();
-  FastTopK(outer_size_, inner_size_, intermediate_input_device, static_cast<int32_t>(input_shape_[axis_]),
-           intermediate_output_device, temp_indices_device, topk_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  status =
+    FastTopK(outer_size_, inner_size_, intermediate_input_device, static_cast<int32_t>(input_shape_[axis_]),
+             intermediate_output_device, temp_indices_device, topk_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   std::swap(intermediate_input_device, intermediate_output_device);
 
   // transpose the sorted output back to the original input shape
-  auto s5 = CalTranspose<float>(input_size_, intermediate_input_device, TrInfo, input_rank_, intermediate_output_device,
-                                reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(s5, "Transpose called by " + kernel_name_);
+  status = CalTranspose<float>(input_size_, intermediate_input_device, TrInfo, input_rank_, intermediate_output_device,
+                               reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
 
   // transpose the indices back to the original input shape
-  auto s6 = CalTranspose(input_size_, temp_indices_device, TrInfo, input_rank_, indices_device,
-                         reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(s6, "Transpose called by " + kernel_name_);
+  status = CalTranspose(input_size_, temp_indices_device, TrInfo, input_rank_, indices_device,
+                        reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
 
   // negate back the sorted values if we negated prior to sorting
   if (!descending_) {
     std::swap(intermediate_input_device, intermediate_output_device);
-    UnaryOpsCudaFunc<ElwiseOpType::kNeg, float, float>(
+    status = UnaryOpsCudaFunc<ElwiseOpType::kNeg, float, float>(
       input_size_, intermediate_input_device, intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 
   return true;

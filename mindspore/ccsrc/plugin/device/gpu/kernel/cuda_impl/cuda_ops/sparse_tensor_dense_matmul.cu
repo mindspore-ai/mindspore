@@ -36,71 +36,72 @@ __global__ void SparseTensorDenseMatmul(const size_t values_size_, const size_t 
 }
 
 template <typename T, typename S>
-void CalSparseTensorDenseMatmul(const size_t values_size_, const size_t out_dim_1, const size_t b_rows,
-                                const size_t b_cols, const T *a_indices, const S *a_values, const S *b, S *output,
-                                bool adj_st, bool adj_dt, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseTensorDenseMatmul(const size_t values_size_, const size_t out_dim_1, const size_t b_rows,
+                                       const size_t b_cols, const T *a_indices, const S *a_values, const S *b,
+                                       S *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
+                                       cudaStream_t cuda_stream) {
   cudaMemset(output, 0, sizeof(S) * b_rows * out_dim_1);
   SparseTensorDenseMatmul<<<CUDA_BLOCKS(device_id, values_size_ * out_dim_1), CUDA_THREADS(device_id), 0,
                             cuda_stream>>>(values_size_, out_dim_1, b_rows, b_cols, a_indices, a_values, b, output,
                                            adj_st, adj_dt);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int32_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int32_t, int32_t>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int32_t *a_indices,
   const int32_t *a_values, const int32_t *b, int32_t *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int32_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int32_t, int64_t>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int32_t *a_indices,
   const int64_t *a_values, const int64_t *b, int64_t *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int32_t, half>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int32_t, half>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int32_t *a_indices,
   const half *a_values, const half *b, half *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int32_t, float>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int32_t, float>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int32_t *a_indices,
   const float *a_values, const float *b, float *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int32_t, double>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int32_t, double>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int32_t *a_indices,
   const double *a_values, const double *b, double *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int32_t, Complex<float>>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int32_t, Complex<float>>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int32_t *a_indices,
   const Complex<float> *a_values, const Complex<float> *b, Complex<float> *output, bool adj_st, bool adj_dt,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int32_t, Complex<double>>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int32_t, Complex<double>>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int32_t *a_indices,
   const Complex<double> *a_values, const Complex<double> *b, Complex<double> *output, bool adj_st, bool adj_dt,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int64_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int64_t, int32_t>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int64_t *a_indices,
   const int32_t *a_values, const int32_t *b, int32_t *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int64_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int64_t, int64_t>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int64_t *a_indices,
   const int64_t *a_values, const int64_t *b, int64_t *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int64_t, half>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int64_t, half>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int64_t *a_indices,
   const half *a_values, const half *b, half *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int64_t, float>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int64_t, float>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int64_t *a_indices,
   const float *a_values, const float *b, float *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int64_t, double>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int64_t, double>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int64_t *a_indices,
   const double *a_values, const double *b, double *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int64_t, Complex<float>>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int64_t, Complex<float>>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int64_t *a_indices,
   const Complex<float> *a_values, const Complex<float> *b, Complex<float> *output, bool adj_st, bool adj_dt,
   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul<int64_t, Complex<double>>(
+template CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul<int64_t, Complex<double>>(
   const size_t values_size_, const size_t out_dim_1, const size_t b_rows, const size_t b_cols, const int64_t *a_indices,
   const Complex<double> *a_values, const Complex<double> *b, Complex<double> *output, bool adj_st, bool adj_dt,
   const uint32_t &device_id, cudaStream_t cuda_stream);

@@ -20,7 +20,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalculateDeterminantByLu(const T *lu_input, const int *pivot, int m, int batch_size,
-                                              bool is_sign_log_determinant, T *determinant_output, T *sign_output,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalculateDeterminantByLu(const T *lu_input, const int *pivot, int m, int batch_size,
+                                                     bool is_sign_log_determinant, T *determinant_output,
+                                                     T *sign_output, const uint32_t &device_id,
+                                                     cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DETERMINANT_BY_LU_IMPL_CUH_

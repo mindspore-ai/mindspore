@@ -18,9 +18,10 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RANDOM_SHUFFLE_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void ScalarShuffle(const int64_t size, const int *perm, const T *input, T *output,
-                                   const uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ScalarShuffle(const int64_t size, const int *perm, const T *input, T *output,
+                                          const uint32_t device_id, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void TensorShuffle(const int64_t shuffle_size, const int64_t inner_size, const int *perm,
-                                   const T *input, T *output, const uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t TensorShuffle(const int64_t shuffle_size, const int64_t inner_size, const int *perm,
+                                          const T *input, T *output, const uint32_t device_id,
+                                          cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RANDOM_SHUFFLE_IMPL_CUH_

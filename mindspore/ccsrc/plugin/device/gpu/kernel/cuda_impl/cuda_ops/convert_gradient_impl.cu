@@ -64,39 +64,43 @@ __global__ void ConvertGradientBackKernel(const size_t size, const size_t height
 }
 
 template <typename T>
-void ConvertGradient(const size_t size, const size_t height_h, const size_t height_w, const size_t batchwidth,
-                     const size_t width, T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
+cudaError_t ConvertGradient(const size_t size, const size_t height_h, const size_t height_w, const size_t batchwidth,
+                            const size_t width, T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
   ConvertGradientKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, height_h, height_w, batchwidth, width,
                                                                            input_addr, output_addr);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void ConvertGradientBack(const size_t size, const size_t height_h, const size_t height_w, const size_t batchwidth,
-                         const size_t width, T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
+cudaError_t ConvertGradientBack(const size_t size, const size_t height_h, const size_t height_w,
+                                const size_t batchwidth, const size_t width, T *input_addr, T *output_addr,
+                                cudaStream_t cuda_stream) {
   ConvertGradientBackKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, height_h, height_w, batchwidth,
                                                                                width, input_addr, output_addr);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void ConvertGradientBack(const size_t size, const size_t height_h, const size_t height_w, const size_t ori_h,
-                         const size_t ori_w, const size_t batchwidth, const size_t width, T *input_addr, T *output_addr,
-                         cudaStream_t cuda_stream) {
+cudaError_t ConvertGradientBack(const size_t size, const size_t height_h, const size_t height_w, const size_t ori_h,
+                                const size_t ori_w, const size_t batchwidth, const size_t width, T *input_addr,
+                                T *output_addr, cudaStream_t cuda_stream) {
   ConvertGradientBackKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, height_h, height_w, ori_h, ori_w, batchwidth, width, input_addr, output_addr);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void ConvertGradient<float>(const size_t size, const size_t height_h, const size_t height_w,
-                                                     const size_t batchwidth, const size_t width, float *input_addr,
-                                                     float *output_addr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConvertGradient<float>(const size_t size, const size_t height_h,
+                                                            const size_t height_w, const size_t batchwidth,
+                                                            const size_t width, float *input_addr, float *output_addr,
+                                                            cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ConvertGradientBack<float>(const size_t size, const size_t height_h,
-                                                         const size_t height_w, const size_t batchwidth,
-                                                         const size_t width, float *input_addr,
-                                                         float *output_addr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ConvertGradientBack<float>(const size_t size, const size_t height_h,
+                                                                const size_t height_w, const size_t batchwidth,
+                                                                const size_t width, float *input_addr,
+                                                                float *output_addr, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ConvertGradientBack<float>(const size_t size, const size_t height_h,
-                                                         const size_t height_w, const size_t ori_h,
-                                                         const size_t ori_w, const size_t batchwidth,
-                                                         const size_t width, float *input_addr, float *output_addr,
-                                                         cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT cudaError_t ConvertGradientBack<float>(const size_t size, const size_t height_h,
+                                                                const size_t height_w, const size_t ori_h,
+                                                                const size_t ori_w, const size_t batchwidth,
+                                                                const size_t width, float *input_addr,
+                                                                float *output_addr, cudaStream_t cuda_stream);

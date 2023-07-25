@@ -157,11 +157,13 @@ bool SspaddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     "For SspaddmmGpuKernelMod cudaMemcpyAsync x1_shape failed.");
 
   // x1 + x2 @ x3_dense
-  CalSparseAddSparse(x1_indices, x1_values, x1_values_num_, y_indices, y_values, y_values_num_, beta, device_id_,
-                     stream);
+  auto status = CalSparseAddSparse(x1_indices, x1_values, x1_values_num_, y_indices, y_values, y_values_num_, beta,
+                                   device_id_, stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   // the result of x2 @ x3_dense will write to output directly
-  CalSparseMulDense(x2_indices, x2_values, x2_values_num_, x3_dense, y_indices, y_values, y_values_num_, x3_dense_col_,
-                    x1_values_num_, alpha, index, device_id_, stream);
+  status = CalSparseMulDense(x2_indices, x2_values, x2_values_num_, x3_dense, y_indices, y_values, y_values_num_,
+                             x3_dense_col_, x1_values_num_, alpha, index, device_id_, stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

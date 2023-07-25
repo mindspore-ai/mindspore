@@ -195,8 +195,10 @@ bool SparseApplyRMSPropGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   const float epsilon = this->epsilon_;
   size_t var_first_dim_size = this->var_first_dim_size_;
   size_t var_outer_dim_size = this->var_outer_dim_size_;
-  CalSparseApplyRMSProp(var_first_dim_size * var_outer_dim_size, var_outer_dim_size, rho, momentum, epsilon, lr, grad,
-                        indices, var, ms, mom, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    CalSparseApplyRMSProp(var_first_dim_size * var_outer_dim_size, var_outer_dim_size, rho, momentum, epsilon, lr, grad,
+                          indices, var, ms, mom, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

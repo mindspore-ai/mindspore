@@ -58,7 +58,7 @@ bool AdjustSaturationGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   int input_element = inputs[0]->size / sizeof(T);
   auto status = CalAdjustSaturation(input_element, input_image, output_image, saturation_scale, device_id_,
                                     reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

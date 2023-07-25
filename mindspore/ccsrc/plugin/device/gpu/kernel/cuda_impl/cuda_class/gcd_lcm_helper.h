@@ -130,19 +130,20 @@ class GcdLcmHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
     // call cuda kernel
+    cudaError_t status = cudaErrorNotReady;
     if (kernel_name_.find("Gcd") != std::string::npos) {
       if (need_broadcast_) {
-        BroadcastGcd(lhs_shape_, rhs_shape_, output_shape_, x1_ptr, x2_ptr, y_ptr, device_id_,
-                     reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = BroadcastGcd(lhs_shape_, rhs_shape_, output_shape_, x1_ptr, x2_ptr, y_ptr, device_id_,
+                              reinterpret_cast<cudaStream_t>(cuda_stream));
       } else {
-        CalGcd(output_num_, x1_ptr, x2_ptr, y_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = CalGcd(output_num_, x1_ptr, x2_ptr, y_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
       }
     } else if (kernel_name_.find("Lcm") != std::string::npos) {
       if (need_broadcast_) {
-        BroadcastLcm(lhs_shape_, rhs_shape_, output_shape_, x1_ptr, x2_ptr, y_ptr, device_id_,
-                     reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = BroadcastLcm(lhs_shape_, rhs_shape_, output_shape_, x1_ptr, x2_ptr, y_ptr, device_id_,
+                              reinterpret_cast<cudaStream_t>(cuda_stream));
       } else {
-        CalLcm(output_num_, x1_ptr, x2_ptr, y_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = CalLcm(output_num_, x1_ptr, x2_ptr, y_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
       }
     } else {
       MS_LOG(ERROR) << "For 'GcdLcmOp', only support these types: "
@@ -150,7 +151,7 @@ class GcdLcmHelperGpuKernel : public GpuKernelHelperBase {
                     << kernel_name_;
       return -1;
     }
-
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

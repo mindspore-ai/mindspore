@@ -130,11 +130,11 @@ bool AddV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   if (need_broadcast_) {
     auto status = CalAddV2(input_elements_, input1_shape_, input2_shape_, output_shape_, input_addr1, input_addr2,
                            output_addr, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
-    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     auto status =
       ElewiseAddV2(output_num_, input_addr1, input_addr2, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr_));
-    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

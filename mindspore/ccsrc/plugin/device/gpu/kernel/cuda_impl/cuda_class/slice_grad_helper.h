@@ -77,19 +77,23 @@ class SliceGradHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
-    FillDeviceArray(input_size_ / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = FillDeviceArray(input_size_ / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     auto &input_shape = attr_ptr_->input_shape;
     auto &begin = attr_ptr_->begin;
     auto &size = attr_ptr_->size;
     if (input_shape.size() <= kSliceGradDefaultInputShapeSize) {
-      CalSlice4DGrad(begin[0], begin[1], begin[kDim2], begin[kDim3], size[0], size[1], size[kDim2], size[kDim3],
-                     input_shape[0], input_shape[1], input_shape[kDim2], input_shape[kDim3], dy, dx,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = CalSlice4DGrad(begin[0], begin[1], begin[kDim2], begin[kDim3], size[0], size[1], size[kDim2],
+                              size[kDim3], input_shape[0], input_shape[1], input_shape[kDim2], input_shape[kDim3], dy,
+                              dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
-      CalSlice7DGrad(begin[0], begin[1], begin[kDim2], begin[kDim3], begin[kDim4], begin[kDim5], begin[kDim6], size[0],
-                     size[1], size[kDim2], size[kDim3], size[kDim4], size[kDim5], size[kDim6], input_shape[0],
-                     input_shape[1], input_shape[kDim2], input_shape[kDim3], input_shape[kDim4], input_shape[kDim5],
-                     input_shape[kDim6], dy, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+      status =
+        CalSlice7DGrad(begin[0], begin[1], begin[kDim2], begin[kDim3], begin[kDim4], begin[kDim5], begin[kDim6],
+                       size[0], size[1], size[kDim2], size[kDim3], size[kDim4], size[kDim5], size[kDim6],
+                       input_shape[0], input_shape[1], input_shape[kDim2], input_shape[kDim3], input_shape[kDim4],
+                       input_shape[kDim5], input_shape[kDim6], dy, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     }
     return 0;
   }

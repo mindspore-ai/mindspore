@@ -86,11 +86,13 @@ bool PolygammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
             << "cudaMemcpy input 'a' to host failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "For '" << kernel_name_ << "', "
                                                                       << "cudaDeviceSyncFailed");
+  cudaError_t status = cudaErrorNotReady;
   if (a_val == static_cast<T1>(0)) {
-    CalDigamma(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = CalDigamma(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
-    CalPolygamma(output_elements_, a, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = CalPolygamma(output_elements_, a, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

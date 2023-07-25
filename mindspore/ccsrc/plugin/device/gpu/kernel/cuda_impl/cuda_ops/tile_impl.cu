@@ -75,7 +75,7 @@ cudaError_t CalTile(const std::vector<size_t> inp_shape, const std::vector<size_
   size_t thread_num = output_size > 512 ? 512 : output_size;
   Tile<<<CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, output_size, thread_num), thread_num, 0, cuda_stream>>>(
     output_size, out_shape.size(), strides, input, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalTile<Complex<float>>(const std::vector<size_t> inp_shape,

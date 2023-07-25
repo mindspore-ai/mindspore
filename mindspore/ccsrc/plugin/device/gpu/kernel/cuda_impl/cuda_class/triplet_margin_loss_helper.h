@@ -230,11 +230,12 @@ class TripletMarginLossHelperGpuKernel : public GpuKernelHelperBase {
       positive_broadcast_ptr = anchor_broadcast_ptr + bound_ * outer_size * inner_size;
       negative_broadcast_ptr = positive_broadcast_ptr + bound_ * outer_size * inner_size;
     }
-    CalTripletMarginLoss(anchor_ptr, positive_ptr, negative_ptr, anchor_broadcast_ptr, positive_broadcast_ptr,
-                         negative_broadcast_ptr, output_ptr, tem_output_ptr, anchor_shape_ptr, dst_shape_ptr,
-                         outer_size, inner_size, bound_list_ptr, bound_, shape_size_, margin_ptr, attr_ptr_->p,
-                         attr_ptr_->eps, reduction_, swap_, need_broadcast_, device_id_,
-                         reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalTripletMarginLoss(anchor_ptr, positive_ptr, negative_ptr, anchor_broadcast_ptr,
+                                       positive_broadcast_ptr, negative_broadcast_ptr, output_ptr, tem_output_ptr,
+                                       anchor_shape_ptr, dst_shape_ptr, outer_size, inner_size, bound_list_ptr, bound_,
+                                       shape_size_, margin_ptr, attr_ptr_->p, attr_ptr_->eps, reduction_, swap_,
+                                       need_broadcast_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 
