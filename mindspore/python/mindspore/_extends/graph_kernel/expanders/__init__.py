@@ -15,15 +15,11 @@
 """expanders init. Deprecated, please add the new operators in the c++ file"""
 
 
-from .addn import AddN
-from .batchnorm import BatchNorm
-from .batchnorm_grad import BatchNormGrad
 from .clip_by_norm_no_div_sum import ClipByNormNoDivSum
 from .conv2d import Conv2D
 from .complex import CAbs, CAdd, CDiv, CMul, CSub, CRealDiv
 from .dropout_grad import DropoutGrad
 from .equal_count import EqualCount
-from .erfc import Erfc
 from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
 from .fused_mul_add import FusedMulAdd
@@ -43,7 +39,6 @@ from .relu_grad import ReluGrad
 from .sigmoid_cross_entropy_with_logits import SigmoidCrossEntropyWithLogits
 from .sigmoid_cross_entropy_with_logits_grad import SigmoidCrossEntropyWithLogitsGrad
 from .sigmoid_grad import SigmoidGrad
-from .slice import Slice
 from .softmax_cross_entropy_with_logits import SoftmaxCrossEntropyWithLogits
 from .softmax_grad_ext import SoftmaxGradExt
 from .sqrt_grad import SqrtGrad

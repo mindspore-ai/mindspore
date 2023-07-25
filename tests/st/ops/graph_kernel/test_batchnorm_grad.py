@@ -75,12 +75,14 @@ def test_bn_grad_infer():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bn_grad_train_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU",
+                        graph_kernel_flags='--enable_expand_ops=BatchNormGrad')
     test_bn_grad_train()
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bn_grad_infer_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU",
+                        graph_kernel_flags='--enable_expand_ops=BatchNormGrad')
     test_bn_grad_train()
