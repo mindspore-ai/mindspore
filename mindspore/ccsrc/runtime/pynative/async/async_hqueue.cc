@@ -22,6 +22,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
 #include "mindrt/include/fork_utils.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace pynative {
@@ -71,6 +72,7 @@ void AsyncHqueue::WorkerLoop() {
 #endif
 
   SetThreadName();
+  runtime::ProfilerAnalyzer::GetInstance().SetThreadIdToName(std::this_thread::get_id(), name_);
 
   while (alive_) {
     // cppcheck-suppress unreadVariable

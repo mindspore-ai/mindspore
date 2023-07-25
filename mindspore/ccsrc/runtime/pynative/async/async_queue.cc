@@ -23,6 +23,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
 #include "mindrt/include/fork_utils.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace pynative {
@@ -67,6 +68,7 @@ void AsyncQueue::WorkerLoop() {
 
   // Thread init.
   SetThreadName();
+  runtime::ProfilerAnalyzer::GetInstance().SetThreadIdToName(std::this_thread::get_id(), name_);
   {
     // cppcheck-suppress unreadVariable
     std::unique_lock<std::mutex> lock(level_mutex_);

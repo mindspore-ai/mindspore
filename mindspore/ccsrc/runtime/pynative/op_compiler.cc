@@ -269,6 +269,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   }
 
   MS_LOG(INFO) << "Run Op cache miss " << op_run_info->base_op_run_info.graph_info;
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeOpCompile,
+                                     graph_info, true);
 
   *single_op_cache_hit = false;
   // Generate kernel graph.

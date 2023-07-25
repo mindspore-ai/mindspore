@@ -186,6 +186,7 @@ void PyNativeExecutor::Init() {
   grad_executor_ = std::make_shared<GradExecutor>(forward_executor_);
   grad_executor_->Init();
   forward_executor_->set_grad_executor(grad_executor_);
+  runtime::ProfilerAnalyzer::GetInstance().SetThreadIdToName(std::this_thread::get_id(), "Python");
 }
 
 void PyNativeExecutor::Sync() const {
