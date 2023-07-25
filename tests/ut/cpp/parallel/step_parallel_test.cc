@@ -15,6 +15,7 @@
  */
 #include "common/common_test.h"
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
@@ -586,5 +587,25 @@ TEST_F(TestStepParallel, GetTensorInLayout) {
   ASSERT_EQ(array, tensor_shape_test);
 }
 
+/// Feature: test update micro batch interleaved status
+/// Description:
+/// Expectation: the status is correct
+TEST_F(TestStepParallel, UpdateMicroBatchInterleavedStatus) {
+  std::vector<AnfNodePtr> inputs;
+  FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
+
+  ValueNodePtr stridedSlicePtr = NewValueNode(prim::kPrimStridedSlice);
+  PrimitivePtr prim = stridedSlicePtr->value()->cast<PrimitivePtr>();
+  prim->AddAttr(FUNC_GRAPH_FLAG_STRIDED_SLICE, MakeValue(true));
+  prim->AddAttr(INTERLEAVED_NUM, MakeValue((int64_t(2))));
+
+  inputs.push_back(stridedSlicePtr);
+  CNodePtr node1 = func_graph->NewCNode(inputs);
+
+  inputs.push_back(node1);
+  UpdateMicroBatchInterleavedStatus(inputs);
+  EXPECT_EQ(inputs.back()->cast<CNodePtr>()->HasAttr(INTERLEAVED_NUM), true);
+  EXPECT_EQ(GetValue<int64_t>(inputs.back()->cast<CNodePtr>()->GetAttr(INTERLEAVED_NUM)), 2);
+}
 }  // namespace parallel
 }  // namespace mindspore
