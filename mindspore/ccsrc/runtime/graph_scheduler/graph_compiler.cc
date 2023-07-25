@@ -150,6 +150,7 @@ void EliminateNodesFromGraph(CNode *cnode, const std::set<AnfNodePtr> &eliminate
   std::list<CNode *> todo_list = {cnode};
   while (!todo_list.empty()) {
     auto cur_node = todo_list.back();
+    MS_EXCEPTION_IF_NULL(cur_node);
     todo_list.pop_back();
     if (checked_nodes->find(cur_node) != checked_nodes->end()) {
       continue;
@@ -292,7 +293,9 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
 }
 
 void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   for (auto &node : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->input(0));
     bool enable = false;
     if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
@@ -313,6 +316,9 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
 }
 
 void UseCacheToCompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
+
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 0);
   compile_cache_context.SetFusionOpBuildInfoFlag(true);

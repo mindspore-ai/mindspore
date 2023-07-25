@@ -166,6 +166,8 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
                      size_t index, std::map<size_t, ValuePtrList> *flatten_values,
                      std::vector<tensor::TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(input_tensors);
+  MS_EXCEPTION_IF_NULL(flatten_values);
+
   const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
   const size_t position = iter - parameters.begin();
   // If the parameter is not found in the parameters of the root graph, it means that it is the input of the subgraph,
@@ -269,6 +271,7 @@ MindRTBackendBase::MindRTBackendBase(const std::string &backend_name, const std:
 
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
+  MS_EXCEPTION_IF_NULL(device_context);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventDeviceInit, kStageDeviceInit, 1, 0, 0);
   device_context->Initialize();
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventDeviceInit, kStageDeviceInit, 1, 0, 1);
@@ -284,6 +287,7 @@ void MindRTBackendBase::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
                                                const mindspore::device::DeviceType &new_target) const {
   const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
   for (const auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
     }
@@ -319,6 +323,7 @@ int64_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
 }
 
 KernelWithIndex VisitRealNodeWithNestLevel(const AnfNodePtr &anf_node, size_t index, size_t *nest_level) {
+  MS_EXCEPTION_IF_NULL(anf_node);
   if (!anf_node->isa<CNode>()) {
     return {anf_node, index};
   }
@@ -329,6 +334,7 @@ KernelWithIndex VisitRealNodeWithNestLevel(const AnfNodePtr &anf_node, size_t in
                                                            common::AnfAlgo::GetTupleGetItemOutIndex(cnode), nest_level);
     auto real_node = real_node_with_index.first;
     auto real_index = real_node_with_index.second;
+    MS_EXCEPTION_IF_NULL(real_node);
     if (real_node->isa<CNode>() && common::AnfAlgo::GetCNodeName(real_node) == mindspore::kMakeTupleOpName) {
       (*nest_level)--;
       auto make_tuple = real_node->cast<CNodePtr>();
@@ -341,6 +347,7 @@ KernelWithIndex VisitRealNodeWithNestLevel(const AnfNodePtr &anf_node, size_t in
 }
 
 bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
   if (common::AnfAlgo::GetCNodeName(cnode) != mindspore::kTupleGetItemOpName ||
       cnode->inputs().size() != kTupleGetItemInputSize) {
     return false;
@@ -396,6 +403,7 @@ void GetInputs(const AnfNodePtr &anf_node, size_t input_idx, std::vector<KernelW
 #endif
 
 void SetPyExecuteSyncAttr(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
   if (!AnfUtils::IsRealKernel(cnode)) {
     return;
   }
@@ -1123,6 +1131,7 @@ void MindRTBackendBase::SetDebuggerInit() const {
   auto debugger_ = Debugger::GetInstance();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  MS_EXCEPTION_IF_NULL(debugger_);
   debugger_->Init(device_id_, ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET));
 }
 #endif
@@ -1166,6 +1175,9 @@ std::shared_ptr<GraphCompilerInfo> MindRTBackendBase::ConstructGraphCompilerInfo
 }
 
 void MindRTBackendBase::ParseControlNodes(const GraphCompilerInfo &graph_compile_info) {
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
+  MS_EXCEPTION_IF_NULL(graph_compile_info.control_node_parser_);
+
   FuncGraphToKernelGraphGroup func_graph_to_kernel_graphs;
   for (const auto &func_graph_to_kernel_graph_ids : func_graph_to_kernel_graph_ids_) {
     const auto &func_graph = func_graph_to_kernel_graph_ids.first;
@@ -1191,6 +1203,7 @@ void MindRTBackendBase::UpdateGraphCompilerInfo(const ActorInfo &actor_info) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph_iter->second);
+  MS_EXCEPTION_IF_NULL(root_graph_);
   graph_iter->second->origin_outputs_order_ = FetchOriginOutputOrder(root_graph_->output());
 }
 }  // namespace compile
