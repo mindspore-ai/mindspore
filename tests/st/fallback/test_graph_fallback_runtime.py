@@ -20,7 +20,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import nn
-from mindspore import Tensor
+from mindspore import Tensor, tensor
 from mindspore import ops
 from mindspore import mutable, jit
 
@@ -684,3 +684,45 @@ def test_parse_subscript():
     net = Network()
     out = net()
     assert out.asnumpy() == 66
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_func():
+    """
+    Feature: JIT Fallback
+    Description: Test tensor function in graph mode.
+    Expectation: No exception.
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+
+    @jit
+    def func(x):
+        x = tensor(x.asnumpy(), x.dtype)
+        return ops.Abs()(x)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.abs = ops.Abs()
+
+        def construct(self, x, y):
+            y1 = tensor(x.asnumpy() + y.asnumpy(), dtype=ms.float32)
+            return self.abs(y1)
+
+    x = Tensor([-1, 1, 2, -2], dtype=ms.float32)
+    x_np = np.array([1, 1, 2, 2], dtype=np.float32)
+    x = func(x)
+    ms_x_np = x.asnumpy()
+    assert ms_x_np.dtype == x_np.dtype
+    assert np.allclose(ms_x_np, x_np)
+
+    net = Net()
+    x = ms.Tensor(-1, dtype=ms.int32)
+    y = ms.Tensor(-1, dtype=ms.float32)
+    result = net(x, y)
+    result_ms_np = result.asnumpy()
+    exp_np = np.array(2, dtype=np.float32)
+    assert np.allclose(result_ms_np, exp_np)
+    assert result_ms_np.dtype == exp_np.dtype
