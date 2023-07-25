@@ -38,6 +38,7 @@ void GPUPinMemPool::PinnedMemAlloc(DeviceMemPtr *addr, size_t alloc_size) {
     MS_LOG(ERROR) << "The PinMemPool posix_memalign failed, error code is " << status << ".";
     return;
   }
+  MS_EXCEPTION_IF_NULL(addr);
   CudaDriver::CudaHostRegister(*addr, alloc_size);
   MS_LOG(INFO) << "Enable pinned memory success addr:" << *addr << " size:" << alloc_size;
 #endif

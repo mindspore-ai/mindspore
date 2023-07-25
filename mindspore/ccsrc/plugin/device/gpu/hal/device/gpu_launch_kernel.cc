@@ -47,6 +47,7 @@ uint8_t *GPULaunchkernel::AllocDeviceMem(size_t size) {
 }
 
 void GPULaunchkernel::KernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto node_list = kernel_graph->execution_order();
   auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
   for (size_t i = 0; i < node_list.size(); ++i) {
@@ -55,6 +56,7 @@ void GPULaunchkernel::KernelSelect(const std::shared_ptr<session::KernelGraph> &
 }
 
 void GPULaunchkernel::KernelBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto kernels = kernel_graph->execution_order();
   device::gpu::CreateGPUKernel(kernels);
 }

@@ -318,6 +318,7 @@ size_t UpdateGraphInputAbstract(const AnfNodePtr input_node, const tensor::Tenso
 bool CheckIfNeedSync(const tensor::TensorPtr &tensor, const DeviceAddressPtr &device_address,
                      const ParameterPtr &pk_node) {
   MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_address);
   MS_EXCEPTION_IF_NULL(pk_node);
   auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   bool need_sync = false;
@@ -541,6 +542,7 @@ void GPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_gra
 }
 
 void GPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   int kernel_num = kernel_graph->execution_order().size();
   int64_t loopsize = (kernel_num > 1) ? ConfigManager::GetInstance().gpu_loopsink_size() : 1;
   for (int64_t i = 0; i < loopsize; i++) {
@@ -552,6 +554,7 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
                                      const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                                      std::map<DeviceAddressPtr, DeviceAddressPtr> *new_to_old_device_address) {
   MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(new_to_old_device_address);
   for (const auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       const auto &vector_ref = utils::cast<VectorRef>(item);
@@ -639,6 +642,7 @@ KernelGraphPtr GPUSession::BuildOpImpl(const BackendOpRunInfoPtr &op_run_info, c
                                        const std::vector<int64_t> &tensors_mask) {
   // Check if the graph cache exists.
   auto it = run_op_graphs_.find(graph_info);
+  MS_EXCEPTION_IF_NULL(op_run_info);
   if (it != run_op_graphs_.end() && !IsOneOfCacheBlackList(op_run_info->base_op_run_info.op_name)) {
     return it->second;
   }

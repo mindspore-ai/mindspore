@@ -169,6 +169,7 @@ bool GpuInferenceSession::CompareInput(const tensor::TensorPtr &input, const Par
 
   // compare data type
   auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
+  MS_EXCEPTION_IF_NULL(kernel_build_info);
   if (input->data_type() != kernel_build_info->GetOutputDeviceType(0)) {
     MS_LOG(ERROR) << "Input data type is inconsistent. The actual data type is " << input->data_type()
                   << ", but the parameter data type is " << kernel_build_info->GetOutputDeviceType(0)
@@ -216,6 +217,7 @@ std::string GpuInferenceSession::InputsInfo(const std::vector<ParameterPtr> &par
 
   std::string actual = "given inputs:{ ";
   for (size_t i = 0; i < inputs.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
     actual += std::to_string(i) + ": dims " + std::to_string(inputs[i]->shape().size()) + ", shape " +
               PrintInputShape(inputs[i]->shape()) + ", data type " + data_type_to_string(inputs[i]->data_type()) + " }";
   }
