@@ -33,6 +33,7 @@ class MatMulFusionMapper : public PrimitiveMapper {
 
  private:
   STATUS QuantMapper(const CNodePtr &cnode);
+  void SetMatMulTransposeAttr(const PrimitivePtr &src_prim, const PrimitivePtr &dst_prim);
 };
 }  // namespace lite
 }  // namespace mindspore

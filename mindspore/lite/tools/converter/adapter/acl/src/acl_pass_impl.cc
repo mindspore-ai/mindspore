@@ -32,6 +32,7 @@
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/converter/converter_context.h"
 #include "include/registry/pass_registry.h"
+#include "ops/batch_matmul.h"
 #include "ops/custom.h"
 #include "ops/op_utils.h"
 #include "ops/transpose.h"
@@ -658,7 +659,7 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graph, &all_func_graphs);
 
-  std::set<std::string> mindir_mapper = {ops::kNameTranspose, ops::kNameStandardNormal};
+  std::set<std::string> mindir_mapper = {ops::kNameTranspose, ops::kNameStandardNormal, ops::kNameBatchMatMul};
   for (auto graph : all_func_graphs) {
     auto node_list = TopoSort(graph->get_return());
     for (auto &node : node_list) {

@@ -38,6 +38,17 @@ constexpr size_t kInputX1Idx = 1;
 constexpr size_t kInputX2Idx = 2;
 constexpr size_t kInputBiasIdx = 3;
 }  // namespace
+void MatMulFusionMapper::SetMatMulTransposeAttr(const PrimitivePtr &src_prim, const PrimitivePtr &dst_prim) {
+  auto transpose_a = src_prim->GetAttr(mindspore::ops::kTransposeA);
+  auto transpose_b = src_prim->GetAttr(mindspore::ops::kTransposeB);
+  if (transpose_a != nullptr) {
+    dst_prim->AddAttr("transpose_x1", transpose_a);
+  }
+  if (transpose_b != nullptr) {
+    dst_prim->AddAttr("transpose_x2", transpose_b);
+  }
+}
+
 STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
   auto quant_holder = GetCNodeQuantHolder(cnode);
   auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -51,6 +62,13 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
       return QuantMapper(cnode);
     }
   } else if (opt::CheckPrimitiveType(cnode, prim::kPrimBatchMatMul)) {
+    ValueNodePtr value_node = nullptr;
+    PrimitivePtr src_prim = nullptr;
+    if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Get primitive from cnode failed.";
+      return lite::RET_ERROR;
+    }
+    SetMatMulTransposeAttr(src_prim, src_prim);
     return RET_OK;
   }
   if (cnode->size() < kInputSizeWithoutBias) {
@@ -111,14 +129,7 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
       return RET_ERROR;
     }
   }
-  auto transpose_a = src_prim->GetAttr(mindspore::ops::kTransposeA);
-  auto transpose_b = src_prim->GetAttr(mindspore::ops::kTransposeB);
-  if (transpose_a != nullptr) {
-    dst_prim->AddAttr("transpose_x1", transpose_a);
-  }
-  if (transpose_b != nullptr) {
-    dst_prim->AddAttr("transpose_x2", transpose_b);
-  }
+  SetMatMulTransposeAttr(src_prim, dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
   return RET_OK;
 }
