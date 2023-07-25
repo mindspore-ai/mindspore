@@ -53,7 +53,5 @@ PrimitiveCPtr PytorchLstmParser::Parse(const torch::jit::Node *torch_node, std::
 
   return prim->GetPrim();
 }
-
-PytorchNodeRegistrar g_pytorchLstmParser("lstm", new PytorchLstmParser());
 }  // namespace lite
 }  // namespace mindspore
