@@ -29,7 +29,6 @@ constexpr size_t kMaskedSelectGradOutputsNum = 1;
 constexpr size_t kIndexInput = 0;
 constexpr size_t kIndexMask = 1;
 constexpr size_t kIndexGrad = 2;
-constexpr size_t kIndexOutput = 0;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace

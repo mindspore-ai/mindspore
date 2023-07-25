@@ -32,7 +32,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kMaskedSelectInputMinDim = 1;
 constexpr int64_t kMaskedSelectInputNum = 2;
 
 abstract::ShapePtr MaskedSelectInferShape(const PrimitivePtr &primitive,

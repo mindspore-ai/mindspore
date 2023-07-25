@@ -120,8 +120,7 @@ abstract::TupleShapePtr SyncBatchNormInferShape(const PrimitivePtr &primitive,
   const int64_t input_num1 = 1;
   (void)CheckAndConvertUtils::CheckInteger("scale rank", SizeToLong(scale_shape.size()), kEqual, input_num1, prim_name);
   // scale first dimension must be equal to x second dimension
-  (void)CheckAndConvertUtils::CheckInteger("scale_shape shape[0]", SizeToLong(scale_shape[0]), kEqual,
-                                           SizeToLong(x_shape[1]), prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("scale_shape shape[0]", scale_shape[0], kEqual, x_shape[1], prim_name);
   // Shape of scale、bias、mean and variance must be same
   std::map<std::string, ShapeVector> same_shape_args_map;
   (void)same_shape_args_map.insert(std::make_pair("shape of bias ", bias_shape));
