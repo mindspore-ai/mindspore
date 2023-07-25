@@ -55,7 +55,8 @@ int RsqrtTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "context or network is invalid for " << op_name_;
     return RET_ERROR;
   }
-  auto const_one = ctx->ConvertTo1DTensor(std::vector<float>(input(ctx, 0).trt_tensor_->getDimensions().nbDims, 1.f));
+  auto const_one = ctx->ConvertTo1DTensor(std::vector<float>(1, 1.f));
+  const_one = Reshape(ctx, const_one, std::vector<int64_t>(input(ctx, 0).trt_tensor_->getDimensions().nbDims, 1));
   CHECK_NULL_RETURN(const_one);
   auto sqrt_tensor =
     ctx->network()->addUnary(*input(ctx, 0).trt_tensor_, nvinfer1::UnaryOperation::kSQRT)->getOutput(0);
