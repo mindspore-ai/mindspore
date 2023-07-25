@@ -168,9 +168,11 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   }
   (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
 
-  transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
-  if (ret == transform::Status::SUCCESS) {
-    transform::SetAnfGraph(checkpoint_name, anf_graph);
+  if (!common::IsEnableRefMode()) {
+    transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
+    if (ret == transform::Status::SUCCESS) {
+      transform::SetAnfGraph(checkpoint_name, anf_graph);
+    }
   }
 
   transform::AddOptimizeGraph(graph_name);

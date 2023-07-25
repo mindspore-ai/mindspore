@@ -21,6 +21,7 @@
 #include <string>
 #include <tuple>
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "ops/other_ops.h"
 #include "ops/framework_ops.h"
@@ -162,6 +163,12 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
   static const bool is_cell_reuse =
     (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
   if (!is_enable_ge || !is_cell_reuse) {
+    return;
+  }
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto stages = parallel_context->pipeline_stage_split_num();
+  if (stages <= 1) {
     return;
   }
   AnfNodePtr last_need_depend = nullptr;
