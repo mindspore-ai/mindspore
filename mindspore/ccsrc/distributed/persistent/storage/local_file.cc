@@ -277,6 +277,7 @@ void LocalFile<KeyType, ValueType>::Write(const ConstDataWithLen &keys, const Co
     (void)keys_to_locations_.emplace(keys_data[i],
                                      std::pair<size_t, size_t>(block_files_.size() - 1, current_offset_in_block_));
     // Write the values into latest created block file.
+    MS_EXCEPTION_IF_NULL(block_files_.back());
     MS_EXCEPTION_IF_CHECK_FAIL(
       block_files_.back()->PWrite(values_data + i * element_size_, element_len, current_offset_in_block_),
       "PWrite file failed.");

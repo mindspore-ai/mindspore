@@ -43,6 +43,7 @@ void CPUSomas::CommunicationTensorProcess(const std::vector<somas::SomasTensorPt
   if (tensors.size() != ALONE) {
     size_t all_communication_size = 0;
     for (auto &tensor : tensors) {
+      MS_EXCEPTION_IF_NULL(tensor);
       tensor->aligned_size_ = tensor->GetOriginalSize();
       MS_EXCEPTION_IF_CHECK_FAIL(tensor->aligned_size_ != 0, "The size of communication tensor is zero, tensor id: " +
                                                                std::to_string(tensor->GetId()));
@@ -50,6 +51,7 @@ void CPUSomas::CommunicationTensorProcess(const std::vector<somas::SomasTensorPt
     }
     auto aligned_communication_size = GetAlignSize(all_communication_size);
     auto need_aligned = aligned_communication_size - all_communication_size;
+    MS_EXCEPTION_IF_NULL(tensors[tensors.size() - 1]);
     tensors[tensors.size() - 1]->aligned_size_ += need_aligned;
   }
 }

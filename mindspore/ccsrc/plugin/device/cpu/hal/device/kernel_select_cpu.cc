@@ -93,6 +93,7 @@ void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_ty
 // Real tuple isn't expanded.
 void GetOutputDtypesForRealTuple(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
   TypeId dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, 0);
+  MS_EXCEPTION_IF_NULL(output_types);
   (void)output_types->emplace_back(dtype);
 }
 
@@ -295,6 +296,7 @@ void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kerne
   SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
   if (selected_kernel_attr.GetSkipCheck()) {
     auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+    MS_EXCEPTION_IF_NULL(kernel_build_info);
     kernel_build_info->SetOpType(kernel::OpType::SKIP);
   }
   kernel::SetKernelObjectTypeWithSelectedAttr(kernel_node, selected_kernel_attr);
