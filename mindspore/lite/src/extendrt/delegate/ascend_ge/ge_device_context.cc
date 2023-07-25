@@ -362,12 +362,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     MS_LOG(INFO) << "Use AICPU, make sure aicpu lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
   }
 
-  auto env_op_precision = common::GetEnv("MS_GE_OP_PRECISION");
-  if (!env_op_precision.empty()) {
-    (*ge_options)["ge.exec.op_precision_mode"] = env_op_precision;
-    MS_LOG(INFO) << "Use MS_GE_OP_PRECISION, op precision mode path:" << env_op_precision;
-  }
-
   auto proto_lib_path = common::GetEnv("OPTION_PROTO_LIB_PATH");
   if (!proto_lib_path.empty()) {
     char real_path[PATH_MAX] = {0};
