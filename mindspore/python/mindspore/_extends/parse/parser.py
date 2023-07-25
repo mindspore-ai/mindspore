@@ -190,6 +190,7 @@ def get_attr_from_object(obj, attr_name=None):
     Returns:
         Object, obj's attr.
     """
+
     if obj is not None and attr_name is not None and hasattr(obj, attr_name):
         return getattr(obj, attr_name)
     return None
@@ -206,6 +207,7 @@ def get_parse_method_of_class(obj, parse_method=None):
     Returns:
         Function, obj's method.
     """
+
     method_name = None
     if parse_method is not None:
         method_name = parse_method
@@ -229,6 +231,7 @@ def get_bprop_method_of_class(obj, parse_method=None):
     Returns:
         Function, obj's method.
     """
+
     if isinstance(obj, nn.Cell):
         method_name = "bprop"
         return get_attr_from_object(obj, method_name)
@@ -475,10 +478,10 @@ def create_instance(cls_type, params=None):
 def convert_class_to_function(cls_str, cls_obj):
     """Convert class to function."""
     if issubclass(cls_obj, (Parameter, ops.MultitypeFuncGraph)):
-        raise ValueError(f"Failed to compile in GRAPH_MODE because creating {cls_str} instances is not " \
-                         f"supported in 'construct' or @jit decorated function. Try to create {cls_str} " \
-                         f"instances external such as initialized in the method '__init__' before assigning. " \
-                         f"For more details, please refer to " \
+        raise ValueError(f"Failed to compile in GRAPH_MODE because creating {cls_str} instances is not "
+                         f"supported in 'construct' or @jit decorated function. Try to create {cls_str} "
+                         f"instances external such as initialized in the method '__init__' before assigning. "
+                         f"For more details, please refer to "
                          f"https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n")
     return convert_class_to_function_map.get(cls_str)
 
@@ -1234,7 +1237,6 @@ class Parser:
                 start_lineno += 1
         return comments
 
-
     def get_source_code(self, start_lineno, start_colno, end_lineno, end_colno):
         """
         Get the script source at the location.
@@ -1248,6 +1250,7 @@ class Parser:
         Returns:
             str, the source string.
         """
+
         if start_lineno == 0:
             logger.critical('start_lineno should not be 0')
 

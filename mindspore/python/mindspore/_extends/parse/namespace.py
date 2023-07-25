@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ class Namespace:
         name (str): The namespace's name.
         dicts (dict): A list of dict containing the namespace's variable.
     """
+
     def __init__(self, name, *dicts):
         self.name = name
         self.dicts = dicts
@@ -57,6 +58,7 @@ class CellNamespace(Namespace):
     Args:
         name (str): Valid module name, it can be imported.
     """
+
     def __init__(self, name):
         mod_dict = vars(__import__(name, fromlist=['_']))
         builtins_dict = vars(builtins)
@@ -79,6 +81,7 @@ class ClosureNamespace(Namespace):
     Args:
         fn (Function): A python function.
     """
+
     def __init__(self, fn):
         name = f'{fn.__module__}..<{fn.__name__}>'
         names = fn.__code__.co_freevars
@@ -101,6 +104,7 @@ class ClassMemberNamespace(Namespace):
     Args:
         obj (Object): A python class object.
     """
+
     def __init__(self, obj):
         self.__class_member_namespace__ = True
         label = f'{obj.__module__}..<{obj.__class__.__name__}::{id(obj)}>'
@@ -127,7 +131,7 @@ class ClassMemberNamespace(Namespace):
                     logger.warning(f"The private attribute or method '{name}' is used in '{cls.__name__}'. " + \
                                    f"In graph mode, '{name}' will be adjusted to '{private_member}' for parsing.")
                     return getattr(d, private_member)
-            logger.info(f"'{cls.__name__ }' object has no attribute or method: '{name}', so will return None.")
+            logger.info(f"'{cls.__name__}' object has no attribute or method: '{name}', so will return None.")
             raise AttributeError(name)
 
 
@@ -138,6 +142,7 @@ class ClassAttrNamespace(Namespace):
     Args:
         obj (Object): A python class object.
     """
+
     def __init__(self, obj):
         name = f'{obj.__module__}..<{obj.__class__.__name__}::{id(obj)}>'
         super().__init__(name, obj)
@@ -159,4 +164,4 @@ class ClassAttrNamespace(Namespace):
                     logger.warning(f"The private attribute or method '{name}' is used in '{cls.__name__}'. " + \
                                    f"In graph mode, '{name}' will be adjusted to '{private_attr}' for parsing.")
                     return getattr(d, private_attr)
-            raise AttributeError(f"'{cls.__name__ }' object has no attribute or method: '{name}'.")
+            raise AttributeError(f"'{cls.__name__}' object has no attribute or method: '{name}'.")

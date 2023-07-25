@@ -81,6 +81,8 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
                    std::string thread_id, AsyncAbstractPtr async_result_branch, AsyncAbstractPtr async_result_main,
                    AsyncInferTaskPtr async_task, trace::TraceGraphEvalStack graph_evals,
                    trace::TraceCNodeEvalStack trace_c_node_evals) {
+  MS_EXCEPTION_IF_NULL(eval);
+  MS_EXCEPTION_IF_NULL(async_task);
   AnalysisSchedule::set_thread_id(thread_id);
   // Restore trace stack for dump stack when there is exception.
   trace::TraceEvalCNodeStackPrepare(trace_c_node_evals);
@@ -110,13 +112,20 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
     // Broaden the result of switch(c,t,f)()
     auto broaden_abstract = result->abstract()->Broaden();
 
+    MS_EXCEPTION_IF_NULL(async_result_branch);
+    MS_EXCEPTION_IF_NULL(async_result_main);
     // Notify the thread of waiting for branch value and the main thread to continue.
     async_result_branch->set_result(broaden_abstract);
     async_result_main->set_result(broaden_abstract);
     MS_LOG(DEBUG) << GetInferThread() << " async :" << eval->ToString()
-                  << " asyncResult address = " << async_result_branch.get()
-                  << " value = " << async_result_branch->TryGetResult()->ToString();
+                  << " asyncResult address = " << async_result_branch.get();
+    if (async_result_branch->TryGetResult()) {
+      MS_LOG(DEBUG) << "value = " << (async_result_branch->TryGetResult())->ToString();
+    } else {
+      MS_LOG(DEBUG) << "value = null.";
+    }
   } catch (const std::exception &ex) {
+    MS_EXCEPTION_IF_NULL(out_conf->node());
     MS_LOG(INFO) << GetInferThread() << "Eval node: " << out_conf->node()->ToString() << "  " << eval->ToString()
                  << " threw exception: " << ex.what();
     AnalysisSchedule::GetInstance().HandleException(ex);
@@ -131,11 +140,13 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
 AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
                                               const std::vector<AsyncAbstractPtr> &pending_async_abstract_list,
                                               const std::vector<std::size_t> &index) {
+  MS_EXCEPTION_IF_NULL(orig_abs);
   auto sequence_abs = dyn_cast_ptr<AbstractSequence>(orig_abs);
   if (sequence_abs != nullptr) {
     const auto &orig_elements = sequence_abs->elements();
     AbstractBasePtrList new_elements;
     for (size_t i = 0; i < orig_elements.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(orig_elements[i]);
       if (orig_elements[i]->isa<AbstractFuncAtom>()) {
         AbstractFuncAtomPtrList abs_func_list{orig_elements[i]->cast<AbstractFuncAtomPtr>()};
         for (size_t j = 0; j < pending_async_abstract_list.size(); ++j) {
@@ -179,6 +190,7 @@ void BuildPossibleSpecs(const AbstractBasePtr &first_result,
 
   for (size_t i = 0; i < len; ++i) {
     AbstractBasePtr result;
+    MS_EXCEPTION_IF_NULL(branch_async_abstract_list[i]);
     if (enable_waiting_branch_eval()) {
       result = branch_async_abstract_list[i]->GetResult();
     } else {
@@ -246,6 +258,7 @@ EvalResultPtr ConvertToPyExecuteCall(const CNodePtr &cnode, const AnfNodeConfigP
   std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
   (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(value_list));
   auto fg = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
   const auto value_tuple_node = fg->NewCNode(value_list);
 
   const auto obj_call_node =
@@ -342,10 +355,12 @@ bool CheckFuncSideEffect(const AbstractFunctionPtr &func) {
   // Check if func graph contains isolated side-effect, and sync.
   auto func_graph_abs = dyn_cast_ptr<FuncGraphAbstractClosure>(func);
   if (func_graph_abs != nullptr) {
+    MS_EXCEPTION_IF_NULL(func_graph_abs->func_graph());
     return func_graph_abs->func_graph()->has_side_effect_node();
   } else {
     auto meta_func_graph_abs = dyn_cast_ptr<MetaFuncGraphAbstractClosure>(func);
     if (meta_func_graph_abs != nullptr) {
+      MS_EXCEPTION_IF_NULL(meta_func_graph_abs->meta_func_graph());
       return meta_func_graph_abs->meta_func_graph()->has_side_effect_node();
     }
   }
@@ -417,7 +432,6 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
     auto root_context_fg = root_context->func_graph();
     MS_EXCEPTION_IF_NULL(root_context_fg);
     AnfNodeConfigPtr output_conf = MakeConfig(root_context_fg->get_return(), root_context, root_context_fg);
-    MS_EXCEPTION_IF_NULL(func_graph);
     MS_LOG(DEBUG) << func_graph->ToString() << ": Run finished.";
 
     MS_EXCEPTION_IF_NULL(output_conf);
@@ -449,6 +463,8 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
   static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
   auto iter = cache_mgr.GetCache().find(conf);
   if (iter != cache_mgr.GetCache().end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    MS_EXCEPTION_IF_NULL(iter->second->abstract());
     MS_LOG(DEBUG) << "Found previous result for NodeConfig: " << conf->ToString()
                   << ", result: " << iter->second->abstract().get() << "/" << iter->second->abstract()->ToString();
     // Update sequence nodes info, if matched in cache.
@@ -467,6 +483,7 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
       }
     }
   }
+  MS_EXCEPTION_IF_NULL(result->abstract());
   MS_LOG(DEBUG) << "Save result for NodeConfig: " << conf->ToString() << ", result: " << result->abstract().get() << "/"
                 << result->abstract()->ToString();
   cache_mgr.SetValue(conf, result);
@@ -491,9 +508,11 @@ void SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(const AnalysisEnginePtr
   }
 
   // Check if already evaluated before.
+  MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
   auto &cache = evaluator->evaluator_cache_mgr()->GetCache();
   auto iter = cache.find(args_abs_list);
   if (iter != cache.end()) {
+    MS_EXCEPTION_IF_NULL(fg_context);
     MS_LOG(DEBUG) << "Eval before, current_node: " << cnode->DebugString() << ", context: " << fg_context->ToString()
                   << ", args: " << args_abs_list;
     // Update inputs sequence nodes info, if matched in cache.
@@ -516,6 +535,7 @@ EvalResultPtr ObtainEvalResultFromCache(const AnfNodeConfigPtr &conf) {
   static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
   auto result = cache_mgr.GetValue(conf);
   if (result != nullptr) {
+    MS_EXCEPTION_IF_NULL(result->abstract());
     MS_LOG(DEBUG) << "Evaluate cache found for NodeConfig: " << conf->ToString()
                   << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
     return result;
@@ -541,6 +561,7 @@ EvalResultPtr AnalysisEngine::ObtainEvalResultWithoutCache(const AnfNodeConfigPt
   if (result == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
   }
+  MS_EXCEPTION_IF_NULL(result->abstract());
   MS_LOG(DEBUG) << "Always Evaluate node for NodeConfig: " << conf->ToString()
                 << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
   SaveEvalResultInCache(conf, result);
@@ -588,6 +609,7 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
                                << " NodeInfo: " << trace::GetDebugInfo(node->debug_info());
   }
 #endif
+  MS_EXCEPTION_IF_NULL(eval_result->abstract());
   MS_LOG(DEBUG) << "End Eval NodeConfig " << conf->ToString() << ", res: " << eval_result->abstract()->ToString();
   return eval_result;
 }
@@ -683,6 +705,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   }
 
   AbstractBasePtr possible_func = GetCNodeOperatorAbstract(cnode, conf->context(), conf->func_graph());
+  MS_EXCEPTION_IF_NULL(possible_func->BuildType());
   if (possible_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
     MS_LOG(DEBUG) << "EvalCNode eval Undetermined";
     return std::make_shared<EvalResult>(possible_func->Clone(), std::make_shared<AttrValueMap>());
@@ -751,6 +774,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
       }
     });
     if (contains_side_effect) {
+      MS_EXCEPTION_IF_NULL(conf->func_graph());
       MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
                     << ", func_graph: " << conf->func_graph()->ToString();
       cnode->set_has_side_effect_node(true);
@@ -783,6 +807,7 @@ void AnalysisEngine::ClearEvaluatorCache() {
     if (evaluator == nullptr || evaluator->evaluator_cache_mgr() == nullptr) {
       continue;
     }
+    MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
     evaluator->evaluator_cache_mgr()->Clear();
   }
   for (auto &element : prim_constructors_) {
@@ -790,6 +815,7 @@ void AnalysisEngine::ClearEvaluatorCache() {
     if (evaluator == nullptr || evaluator->evaluator_cache_mgr() == nullptr) {
       continue;
     }
+    MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
     evaluator->evaluator_cache_mgr()->Clear();
   }
   for (auto &element : prim_py_evaluators_) {
@@ -797,6 +823,7 @@ void AnalysisEngine::ClearEvaluatorCache() {
     if (evaluator == nullptr || evaluator->evaluator_cache_mgr() == nullptr) {
       continue;
     }
+    MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
     evaluator->evaluator_cache_mgr()->Clear();
   }
   // Release exception to avoid hup at exit.
@@ -1034,6 +1061,8 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
   // again, so update the config_map with new_conf;
   anfnode_config_map_[orig_conf] = new_conf;
   MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->ToString() << ", to new_conf: " << new_conf->ToString();
+  MS_EXCEPTION_IF_NULL(orig_conf->node());
+  MS_EXCEPTION_IF_NULL(new_conf->node());
   auto old_cnode = orig_conf->node()->cast_ptr<CNode>();
   auto new_cnode = new_conf->node()->cast<CNodePtr>();
   if (old_cnode != nullptr && new_cnode != nullptr) {
@@ -1074,6 +1103,7 @@ void AnalysisEngine::SetUndeterminedFlag(const std::string &thread_id, const Fun
 }
 
 void AnalysisEngine::SetIgnoreValueFlag(const std::string &thread_id, FuncGraph *fg) {
+  MS_EXCEPTION_IF_NULL(fg);
   auto it = func_graph_undetermined_flags_.find(fg);
   if (it == func_graph_undetermined_flags_.cend()) {
     return;
@@ -1120,9 +1150,12 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
   MS_LOG(DEBUG) << "undetermined_evals size(): " << undetermined_evals.size();
 
   for (const auto &u_eval : undetermined_evals) {
+    MS_EXCEPTION_IF_NULL(u_eval.evaluator_);
     MS_LOG(DEBUG) << u_eval.evaluator_->ToString() << "check undetermined.";
     auto &alternate_evaluator = multi_poss_[u_eval.evaluator_];
+    MS_EXCEPTION_IF_NULL(alternate_evaluator);
     auto eval_cache = alternate_evaluator->evaluator_cache_mgr();
+    MS_EXCEPTION_IF_NULL(eval_cache);
     const auto &alt_eval_args = EvaluatorArgs(alternate_evaluator, args_abs_list);
     auto is_not_undetermined_eval = (undetermined_evals.find(alt_eval_args) == undetermined_evals.cend());
     auto is_not_continued_eval = (continued_evals_.find(u_eval) == continued_evals_.cend());
@@ -1186,6 +1219,7 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
         const auto &tuple_inputs = tuple_node->cast_ptr<CNode>()->inputs();
         for (size_t i = 1; i < tuple_inputs.size(); i++) {
           auto out_node = GetValueNode<FuncGraphPtr>(tuple_inputs.at(i))->get_return();
+          MS_EXCEPTION_IF_NULL(out_node);
           buffer << ", branch" << i << ": " << tuple_inputs.at(i)->ToString() << "\n"
                  << trace::GetDebugInfo(out_node->debug_info());
         }
@@ -1218,6 +1252,7 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
 
   // Return Any if some branch returns Any.
   if (std::any_of(out_abs_list.cbegin(), out_abs_list.cend(), [](const AbstractBasePtr &abs) {
+        MS_EXCEPTION_IF_NULL(abs);
         return abs->isa<AbstractAny>() && !abs->isa<AbstractNegligible>();
       })) {
     MS_LOG(INFO) << "The branches outputs contain Any output.\nJoin them to Any output.";
@@ -1225,6 +1260,7 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
   }
 
   AbstractBasePtr last_out_abs = out_abs_list[0];
+  MS_EXCEPTION_IF_NULL(last_out_abs);
   AbstractBasePtr joined_abs = out_abs_list[0];
   for (size_t i = 1; i < out_abs_list.size(); ++i) {
     const auto &abs = out_abs_list[i];
@@ -1275,6 +1311,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
                                                                    const ConfigPtrList &args_conf_list) {
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
+  MS_EXCEPTION_IF_NULL(out_conf->func_graph());
   // Release GIL for C++
   MS_LOG(DEBUG) << out_conf->func_graph()->ToString() << "_" << std::this_thread::get_id() << " begin.";
   py::gil_scoped_release infer_gil_release;
@@ -1323,6 +1360,12 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     (void)async_result_branches.emplace_back(std::move(async_result_branch));
   }
 
+  size_t len = evaluators.size();
+  size_t min_size = 2;
+  if (len < min_size) {
+    MS_LOG(EXCEPTION) << "There are at least 2 evaluators in multi thread, but got " << len << " evaluator.";
+  }
+
   MS_LOG(DEBUG) << GetInferThread() << "async : wait for one of async to finish.  " << evaluators[0]->ToString()
                 << " or  " << evaluators[1]->ToString() << "...";
 
@@ -1332,13 +1375,13 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
                 << first_result->ToString();
 
   AbstractBasePtrList out_abs_list;
-  size_t len = evaluators.size();
   if (NeedWaitForBranches(first_result)) {
     MS_LOG(DEBUG) << GetInferThread() << " BuildPossibleSpecs.";
     BuildPossibleSpecs(first_result, async_result_branches, &out_abs_list);
   } else {
     for (size_t i = 0; i < len; ++i) {
       AbstractBasePtr result;
+      MS_EXCEPTION_IF_NULL(async_result_branches[i]);
       if (enable_waiting_branch_eval()) {
         // wait to get the result of branch.
         result = async_result_branches[i]->GetResult();
@@ -1348,6 +1391,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
       }
 
       if (result) {
+        MS_EXCEPTION_IF_NULL(evaluators[i]);
+        MS_EXCEPTION_IF_NULL(result);
         MS_LOG(DEBUG) << "#" << i << ": " << GetInferThread() << " async get " << evaluators[i]->ToString()
                       << ", result: " << result->ToString() << ", args: " << args_conf_list;
         out_abs_list.push_back(result);
@@ -1378,6 +1423,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
   auto possible_parent_fg = out_conf->node()->func_graph();
+  MS_EXCEPTION_IF_NULL(possible_parent_fg);
   possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
   MS_LOG(DEBUG) << "Set graph undetermined flag for " << possible_parent_fg->ToString();
   for (const auto &eval : evaluators) {
@@ -1389,6 +1435,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
     if (it == eval_trace_.crend()) {
       eval_trace_.push_back(current_inf);
       auto eval_result = eval->Run(shared_from_this(), args_conf_list, out_conf);
+      MS_EXCEPTION_IF_NULL(eval_result);
       auto eval_abstract = eval_result->abstract();
       MS_EXCEPTION_IF_NULL(eval_abstract);
 
@@ -1401,6 +1448,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
       bool continue_flag = false;
       auto latest_entry = HandleNestedRecursion(evaluators, eval, args_abs_list, it, &continue_flag);
       if (continue_flag) {
+        MS_EXCEPTION_IF_NULL(current_inf.evaluator_);
         MS_LOG(DEBUG) << "The continued_evals_ insert " << current_inf.evaluator_.get() << "/"
                       << current_inf.evaluator_->ToString();
         continued_evals_.insert(current_inf);
@@ -1411,6 +1459,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
       if (latest_entry != eval_trace_.rbegin()->evaluator_) {
         MS_LOG(DEBUG) << "Direct run evaluator " << eval.get() << "/" << eval->ToString();
         auto eval_result = latest_entry->Run(shared_from_this(), args_conf_list, out_conf);
+        MS_EXCEPTION_IF_NULL(eval_result);
         MS_EXCEPTION_IF_NULL(eval_result->abstract());
         MS_LOG(DEBUG) << "End direct evaluator " << latest_entry->ToString()
                       << ", return out_abs: " << eval_result->abstract()->ToString();
@@ -1472,6 +1521,7 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
   }
   if (value->isa<ValueSequence>() && anf_node != nullptr) {
     auto abs = value->ToAbstract();
+    MS_EXCEPTION_IF_NULL(abs);
     auto sequence_abs = abs->cast<AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(sequence_abs);
     // Attach corresponding python sequence object to AbstractSequence.

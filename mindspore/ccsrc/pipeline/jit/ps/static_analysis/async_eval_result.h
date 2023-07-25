@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,6 +146,8 @@ class MultiThreadCache {
   std::string dump() {
     std::ostringstream buf;
     for (auto &item : cache_) {
+      MS_EXCEPTION_IF_NULL(item.first);
+      MS_EXCEPTION_IF_NULL(item.second);
       buf << "{" << item.first->ToString() << ": " << item.second->ToString() << "}" << std::endl;
     }
     return buf.str();
@@ -192,6 +194,8 @@ class NormalCache {
   std::string dump() const {
     std::ostringstream buf;
     for (auto &item : cache_) {
+      MS_EXCEPTION_IF_NULL(item.first);
+      MS_EXCEPTION_IF_NULL(item.second);
       buf << "{" << item.first->ToString() << ": " << item.second->ToString() << "}" << std::endl;
     }
     return buf.str();
@@ -279,6 +283,7 @@ class AsyncAbstractFuncAtom : public AbstractFuncAtom {
     if (async_abstract_ == other_async->async_abstract_) {
       return true;
     }
+    MS_EXCEPTION_IF_NULL(async_abstract_);
     auto abs = async_abstract_->TryGetResult();
     auto other_abs = other_async->async_abstract_->TryGetResult();
     if (abs != nullptr && other_abs != nullptr) {
@@ -328,8 +333,14 @@ class AsyncInferTask {
     return ret;
   }
 
-  bool HasResult() { return abstract_ptr_->HasResult(); }
-  bool SetPossibleResult(bool first) { return abstract_ptr_->SetPossibleResult(first); }
+  bool HasResult() {
+    MS_EXCEPTION_IF_NULL(abstract_ptr_);
+    return abstract_ptr_->HasResult();
+  }
+  bool SetPossibleResult(bool first) {
+    MS_EXCEPTION_IF_NULL(abstract_ptr_);
+    return abstract_ptr_->SetPossibleResult(first);
+  }
   int ready() {
     std::lock_guard<std::mutex> lock(lock_);
     return SizeToInt(ready_);
@@ -344,6 +355,7 @@ class AsyncInferTask {
     condition_var_.wait(lock, [this] { return ready_; });
     MS_LOG(DEBUG) << this << " received notify and wake up: " << ready_ << " thread id:" << thread_id_;
     ProcessResult();
+    MS_EXCEPTION_IF_NULL(abstract_ptr_);
     auto ans = abstract_ptr_->TryGetResult();
     MS_EXCEPTION_IF_NULL(ans);
     MS_LOG(DEBUG) << AnalysisSchedule::thread_id() << " active.";
@@ -354,6 +366,7 @@ class AsyncInferTask {
     {
       std::lock_guard<std::mutex> lock(lock_);
       ready_ = ready_ | 0b001;  // Set the first bit = 1
+      MS_EXCEPTION_IF_NULL(abstract_ptr_);
       MS_LOG(DEBUG) << this << " notify ready: " << ready_ << " result: " << abstract_ptr_->TryGetResult().get()
                     << " thread_id: " << thread_id_;
     }
@@ -391,6 +404,7 @@ class AsyncInferTask {
   void ProcessResult() {
     HandleEndLessLoopException();
     StaticAnalysisException::Instance().CheckException();
+    MS_EXCEPTION_IF_NULL(abstract_ptr_);
     MS_LOG(DEBUG) << this << " Success to GetResult. ready: " << ready_ << " thread_id: " << thread_id_
                   << " result: " << abstract_ptr_->TryGetResult().get();
   }
