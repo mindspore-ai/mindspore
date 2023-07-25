@@ -28,19 +28,18 @@ namespace mindspore::lite::micro::nnacl {
 int BatchNormInt8Coder::Prepare(CoderContext *const context) {
   std::vector<int> input_shapes = input_tensor_->shape();
   size_t n_dim = input_shapes.size();
-  batchnorm_param_->channel_ = input_shapes[n_dim - 1];
-  batchnorm_param_->units_ = 1;
+  channel_ = input_shapes[n_dim - 1];
+  units_ = 1;
   for (size_t i = 0; i < n_dim - 1; i++) {
-    batchnorm_param_->units_ *= input_shapes[i];
+    units_ *= input_shapes[i];
   }
-  batchnorm_param_->op_parameter_.thread_num_ =
-    MSMIN(batchnorm_param_->op_parameter_.thread_num_, batchnorm_param_->channel_);
+  batchnorm_param_->op_parameter_.thread_num_ = MSMIN(batchnorm_param_->op_parameter_.thread_num_, channel_);
   if (target_ == kCortex_M) {
-    batchnorm_param_->unit_ = batchnorm_param_->units_;
+    unit_ = units_;
   } else {
-    batchnorm_param_->unit_ = UP_DIV(batchnorm_param_->units_, kMaxThreadNumSupported);
+    unit_ = UP_DIV(units_, kMaxThreadNumSupported);
   }
-  if (batchnorm_param_->fused_) {
+  if (parameter_->type_ == PrimType_FusedBatchNorm) {
     MS_CHECK_RET_CODE(InitFusedConstTensor(), "InitFusedConstTensor failed");
   } else {
     MS_CHECK_RET_CODE(InitConstTensor(), "InitConstTensor failed");
@@ -51,12 +50,13 @@ int BatchNormInt8Coder::Prepare(CoderContext *const context) {
 int BatchNormInt8Coder::DoCode(CoderContext *context) {
   NNaclInt8Serializer code;
 
-  code.CodeStruct("param", *batchnorm_param_);
-  code.CodeFunction("BatchNormInt8", output_tensor_, input_tensor_, alpha_addr_, beta_addr_, kDefaultTaskId, "&param");
+  code.CodeFunction("BatchNormInt8", output_tensor_, input_tensor_, alpha_addr_, beta_addr_, kDefaultTaskId,
+                    kDefaultThreadNum, unit_, units_, channel_);
 
   Collect(context,
           {
             "nnacl/slice_parameter.h",
+            "nnacl/kernel/batch_norm.h",
           },
           {
             "batchnorm_int8.c",
@@ -95,7 +95,7 @@ int BatchNormInt8Coder::InitConstTensor() {
   auto s_var = static_cast<float>(variance->quant_params().at(0).scale);
   auto s_out = static_cast<float>(output->quant_params().at(0).scale);
 
-  for (int i = 0; i < batchnorm_param_->channel_; ++i) {
+  for (int i = 0; i < channel_; ++i) {
     float tmp = s_out * sqrt(eps + s_var * (var_ptr[i] - zp_var));
     float tmp_a = s_in / tmp;
     float tmp_b = zp_out - tmp_a * zp_in - (s_mean * (mean_ptr[i] - zp_mean)) / tmp;
@@ -148,7 +148,7 @@ int BatchNormInt8Coder::InitFusedConstTensor() {
   float mul_12 = s_in * s_scale;
   float mul_24 = s_scale * s_mean;
   float div_36 = s_offset / s_out;
-  for (int i = 0; i < batchnorm_param_->channel_; ++i) {
+  for (int i = 0; i < channel_; ++i) {
     float tmp = s_out * sqrt(eps + s_var * (var_ptr[i] - zp_var));
     float tmp_a = (mul_12 * (scale_ptr[i] - zp_scale)) / tmp;
     float tmp_b = zp_out + div_36 * (offset_ptr[i] - zp_offset) - tmp_a * zp_in -

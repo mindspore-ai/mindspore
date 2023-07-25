@@ -24,7 +24,9 @@ typedef struct BatchNormArgs {
   int8_t *out_addr_;
   float *alpha_addr_;
   float *beta_addr_;
-  BatchNormParameter *batchnorm_param_;
+  int channel_;
+  int unit_;
+  int units_;
 } BatchNormArgs;
 
 int BatchNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);

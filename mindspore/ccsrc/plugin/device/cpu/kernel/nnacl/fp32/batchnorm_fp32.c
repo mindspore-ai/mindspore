@@ -16,16 +16,41 @@
 
 #include "nnacl/fp32/batchnorm_fp32.h"
 #include <math.h>
-#include "nnacl/batchnorm_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/batchnorm_fp32_simd.h"
+#include "nnacl/kernel/fused_batch_norm.h"
+#include "nnacl/tensor_c_utils.h"
 
-void BatchNormFp32(const float *input, const float *mean, const float *variance, const BatchNormParameter *param,
-                   int task_id, float *output) {
-  if (param->op_parameter_.thread_num_ == 0) {
-    return;
+int FusedBatchNormEval(KernelBase *self) {
+  FusedBatchNormStruct *fused_batch_norm = (FusedBatchNormStruct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(fused_batch_norm);
+
+  if (fused_batch_norm->trained_) {
+    TensorC *scale_tensor = fused_batch_norm->bn_.base_.in_[SECOND_INPUT];
+    TensorC *offset_tensor = fused_batch_norm->bn_.base_.in_[THIRD_INPUT];
+    TensorC *mean_tensor = fused_batch_norm->bn_.base_.in_[FOURTH_INPUT];
+    TensorC *var_tensor = fused_batch_norm->bn_.base_.in_[FIFTH_INPUT];
+    (void)memcpy(fused_batch_norm->scale_, scale_tensor->data_, GetSize(scale_tensor));
+    (void)memcpy(fused_batch_norm->offset_, offset_tensor->data_, GetSize(offset_tensor));
+    (void)memcpy(fused_batch_norm->bn_.mean_, mean_tensor->data_, GetSize(mean_tensor));
+    (void)memcpy(fused_batch_norm->bn_.variance_, var_tensor->data_, GetSize(var_tensor));
   }
-  int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
+  return NNACL_OK;
+}
+
+void BatchNormSetupVirtualBatch(KernelBase *self, int virtual_batch_multiplier, int momentum) {
+  BatchNormStruct *bn = (BatchNormStruct *)self;
+  NNACL_CHECK_NULL_RETURN_VOID(bn);
+  if (virtual_batch_multiplier > 0) {
+    float new_momentum = (momentum < 0.0f) ? (bn->momentum_ / virtual_batch_multiplier) : momentum;
+    bn->momentum_ = new_momentum;
+  }
+  return;
+}
+
+void BatchNormFp32(const float *input, const float *mean, const float *variance, const BatchNormStruct *param,
+                   int task_id, int thread_num, float *output) {
+  int units_per_thread = UP_DIV(param->unit_, thread_num);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
   int channel = param->channel_;
@@ -48,11 +73,9 @@ void BatchNormFp32(const float *input, const float *mean, const float *variance,
 }
 
 void FusedBatchNormFp32(const float *input, const float *scale, const float *offset, const float *mean,
-                        const float *variance, const BatchNormParameter *param, int task_id, float *output) {
-  if (param->op_parameter_.thread_num_ == 0) {
-    return;
-  }
-  int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
+                        const float *variance, const BatchNormStruct *param, int task_id, int thread_num,
+                        float *output) {
+  int units_per_thread = UP_DIV(param->unit_, thread_num);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
   int channel = param->channel_;
@@ -75,7 +98,7 @@ void FusedBatchNormFp32(const float *input, const float *scale, const float *off
   }
 }
 
-void FusedBatchNormFp32MeanVar(const float *input, float *run_mean, float *run_var, const BatchNormParameter *param,
+void FusedBatchNormFp32MeanVar(const float *input, float *run_mean, float *run_var, const BatchNormStruct *param,
                                float *save_mean, float *save_var, bool isBatchNorm2d) {
   const float N = (float)param->unit_;
   const float VN = N;

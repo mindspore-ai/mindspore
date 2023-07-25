@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef NNACL_BATCHNORM_PARAMETER_H_
-#define NNACL_BATCHNORM_PARAMETER_H_
+#ifndef NNACL_KERNEL_FUSED_BATCH_NORM_H_
+#define NNACL_KERNEL_FUSED_BATCH_NORM_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
+#include "nnacl/kernel/batch_norm.h"
+#include "nnacl/kernel/scale.h"
 
-typedef struct BatchNormParameter {
-  OpParameter op_parameter_;
-  float epsilon_;
-  bool is_training_;
-  float momentum_;
-} BatchNormParameter;
+typedef struct FusedBatchNormStruct {
+  BatchNormStruct bn_;
+  ScaleStruct scale_param_;
+  void *scale_;
+  void *offset_;
+  bool is_scale_;
+  bool trained_;
+  bool train_mode_;
+} FusedBatchNormStruct;
 
-#endif  // NNACL_BATCHNORM_PARAMETER_H_
+KernelBase *CreateFusedBatchNorm(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_FUSED_BATCH_NORM_H_

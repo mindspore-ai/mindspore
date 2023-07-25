@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef NNACL_BATCHNORM_PARAMETER_H_
-#define NNACL_BATCHNORM_PARAMETER_H_
+#ifndef NNACL_KERNEL_BATCH_NORM_H_
+#define NNACL_KERNEL_BATCH_NORM_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-typedef struct BatchNormParameter {
-  OpParameter op_parameter_;
-  float epsilon_;
-  bool is_training_;
+typedef struct BatchNormStruct {
+  KernelBase base_;
+  int data_type_;
+  void *mean_;
+  void *variance_;
   float momentum_;
-} BatchNormParameter;
+  int unit_;
+  int channel_;
+  float epsilon_;
+} BatchNormStruct;
 
-#endif  // NNACL_BATCHNORM_PARAMETER_H_
+KernelBase *CreateBatchNorm(OpParameter *param, int data_type);
+int BatchNormRelease(KernelBase *self);
+int BatchNormFillParam(BatchNormStruct *batch_norm);
+
+#endif  // NNACL_KERNEL_BATCH_NORM_H_

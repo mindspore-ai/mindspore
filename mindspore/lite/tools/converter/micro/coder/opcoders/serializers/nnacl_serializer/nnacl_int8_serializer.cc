@@ -138,10 +138,9 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const int *list, i
   code << list[size - 1] << "};\n";
 }
 
-void NNaclInt8Serializer::CodeStruct(const std::string &name, const BatchNormParameter &batchnorm_parameter) {
-  CodeBaseStruct("BatchNormParameter", name, batchnorm_parameter.op_parameter_, batchnorm_parameter.epsilon_,
-                 batchnorm_parameter.momentum_, batchnorm_parameter.unit_, batchnorm_parameter.units_,
-                 batchnorm_parameter.channel_, batchnorm_parameter.fused_);
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const BatchNormStruct &bn_struct) {
+  CodeBaseStruct<false>("BatchNormStruct", name, "{}", "{}", "{}", "{}", bn_struct.momentum_, bn_struct.unit_,
+                        bn_struct.channel_, bn_struct.epsilon_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SoftmaxQuantArg &softmax_quant_parameter) {

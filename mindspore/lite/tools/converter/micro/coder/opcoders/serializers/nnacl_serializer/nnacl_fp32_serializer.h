@@ -53,6 +53,7 @@
 #include "nnacl/kernel/pooling.h"
 #include "nnacl/kernel/layer_norm.h"
 #include "nnacl/kernel/fill.h"
+#include "nnacl/kernel/batch_norm.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -62,7 +63,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter);
   void CodeStruct(const std::string &name, const PoolingComputeParam &pooling_args);
   void CodeStruct(const std::string &name, const SoftmaxParameter &softmax_parameter);
-  void CodeStruct(const std::string &name, const BatchNormParameter &batch_norm_parameter);
+  void CodeStruct(const std::string &name, const BatchNormStruct &bn_struct);
   void CodeStruct(const std::string &name, const InstanceNormParameter &param);
   void CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter);
   void CodeStruct(const std::string &name, const ConvParameter &conv_parameter);

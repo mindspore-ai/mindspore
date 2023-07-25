@@ -40,6 +40,7 @@
 #include "src/train/static_allocator.h"
 #include "src/train/train_populate_parameter.h"
 #include "src/train/train_populate_parameter_v0.h"
+#include "src/litert/kernel/cpu/nnacl/nnacl_batchnorm.h"
 
 namespace mindspore {
 namespace lite {

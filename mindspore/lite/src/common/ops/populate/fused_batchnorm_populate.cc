@@ -38,7 +38,6 @@ OpParameter *PopulateFusedBatchNorm(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   param->epsilon_ = value->epsilon();
   param->momentum_ = value->momentum();
-  param->fused_ = true;
   param->is_training_ = static_cast<bool>(value->mode());
 
   if (param->momentum_ < static_cast<float>(C0NUM) || param->momentum_ > static_cast<float>(C1NUM)) {

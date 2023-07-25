@@ -34,7 +34,6 @@ OpParameter *PopulateBatchNormOpParameter(const BaseOperatorPtr &base_operator) 
   }
   param->epsilon_ = op->get_epsilon();
   param->is_training_ = op->get_is_training();
-  param->fused_ = false;
   return reinterpret_cast<OpParameter *>(param);
 }
 

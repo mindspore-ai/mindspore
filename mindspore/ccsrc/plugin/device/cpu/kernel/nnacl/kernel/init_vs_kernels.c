@@ -22,12 +22,14 @@
 #include "nnacl/kernel/arg_min_max.h"
 #include "nnacl/kernel/addn.h"
 #include "nnacl/kernel/biasadd.h"
+#include "nnacl/kernel/batch_norm.h"
 #include "nnacl/kernel/clip.h"
 #include "nnacl/kernel/concat.h"
 #include "nnacl/kernel/crop.h"
 #include "nnacl/kernel/exp.h"
 #include "nnacl/kernel/depth_to_space.h"
 #include "nnacl/kernel/fill.h"
+#include "nnacl/kernel/fused_batch_norm.h"
 #include "nnacl/kernel/fullconnection.h"
 #include "nnacl/kernel/gather.h"
 #include "nnacl/kernel/gather_d.h"
@@ -75,6 +77,7 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_AddN][REGIST_DT(kNumberTypeFloat16)] = CreateAddN;
   creators[PrimType_ArgMinFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArgMinMax;
   creators[PrimType_ArgMaxFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArgMinMax;
+  creators[PrimType_BatchNorm][REGIST_DT(kNumberTypeFloat16)] = CreateBatchNorm;
   creators[PrimType_Ceil][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Concat][REGIST_DT(kNumberTypeFloat16)] = CreateConcatF16;
   creators[PrimType_Cos][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
@@ -91,6 +94,7 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_Floor][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_FloorMod][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_FloorDiv][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_FusedBatchNorm][REGIST_DT(kNumberTypeFloat16)] = CreateFusedBatchNorm;
   creators[PrimType_Gather][REGIST_DT(kNumberTypeFloat16)] = CreateGather;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeFloat16)] = CreateGatherD;
   creators[PrimType_Greater][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
@@ -153,6 +157,7 @@ void InitVSKernelA(KernelCreator **creators) {
   creators[PrimType_ArgMaxFusion][REGIST_DT(kNumberTypeInt32)] = CreateArgMinMax;
   creators[PrimType_ArgMaxFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArgMinMax;
   creators[PrimType_BiasAdd][REGIST_DT(kNumberTypeFloat32)] = CreateBiasAdd;
+  creators[PrimType_BatchNorm][REGIST_DT(kNumberTypeFloat32)] = CreateBatchNorm;
   creators[PrimType_Ceil][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Cos][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Clip][REGIST_DT(kNumberTypeFloat)] = CreateClip;
@@ -188,6 +193,7 @@ void InitVSKernelA(KernelCreator **creators) {
   creators[PrimType_FloorMod][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_FloorMod][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_FullConnection][REGIST_DT(kNumberTypeFloat32)] = CreateFullconnection;
+  creators[PrimType_FusedBatchNorm][REGIST_DT(kNumberTypeFloat32)] = CreateFusedBatchNorm;
   creators[PrimType_Gather][REGIST_DT(kNumberTypeFloat32)] = CreateGather;
   creators[PrimType_Gather][REGIST_DT(kNumberTypeInt32)] = CreateGather;
   creators[PrimType_Gather][REGIST_DT(kNumberTypeBool)] = CreateGather;

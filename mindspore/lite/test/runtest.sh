@@ -62,6 +62,7 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter=TestScaleFp32*
 ./lite-test --gtest_filter=TestReduceFp32*
 ./lite-test --gtest_filter=TestFcFp32*
+./lite-test --gtest_filter=TestBatchnormFp32*
 ./lite-test --gtest_filter=TestConv1x1Fp32*
 ./lite-test --gtest_filter=TestConvolutionFp32*
 ./lite-test --gtest_filter=TestDeConvolutionFp32*
@@ -71,12 +72,14 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter=TestRaggedRangeFp32*
 ./lite-test --gtest_filter=TestOneHotFp32*
 
+# test cases of INT8 OP
+./lite-test --gtest_filter=TestPadInt8.*
+./lite-test --gtest_filter=TestDeconvInt8.*
+./lite-test --gtest_filter=TestBatchnormInt8.*
+
 # test cases of generic api
 ./lite-test --gtest_filter="GenericApiTest*"
 
-# test cases of INT8 OP
-## ./lite-test --gtest_filter=TestPadInt8.*
-./lite-test --gtest_filter=TestDeconvInt8.*
 if [ "$ENABLE_CONVERTER_TEST" = true ]; then
   ./lite-test-converter --gtest_filter="ModelParserRegistryTest.TestRegistry"
   ./lite-test-converter --gtest_filter="NodeParserRegistryTest.TestRegistry"

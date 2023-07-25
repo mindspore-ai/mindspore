@@ -73,7 +73,7 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
     return RET_ERROR;
   }
   // compute alpha, beta;
-  auto eps = batchnorm_param_->epsilon_;
+  auto eps = reinterpret_cast<BatchNormParameter *>(op_parameter_)->epsilon_;
   CHECK_LESS_RETURN(input->quant_params().size(), 1);
   CHECK_LESS_RETURN(mean->quant_params().size(), 1);
   CHECK_LESS_RETURN(variance->quant_params().size(), 1);
@@ -87,11 +87,11 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
   auto s_var = variance->quant_params().front().scale;
   auto s_out = output->quant_params().front().scale;
 
-  if (batchnorm_param_->channel_ > variance->ElementsNum()) {
+  if (channel_ > variance->ElementsNum()) {
     MS_LOG(ERROR) << "Buffer overflow error.";
     return RET_ERROR;
   }
-  for (int i = 0; i < batchnorm_param_->channel_; ++i) {
+  for (int i = 0; i < channel_; ++i) {
     float tmp = s_out * sqrt(eps + s_var * (var_ptr[i] - zp_var));
     float tmp_a = s_in / tmp;
     float tmp_b = zp_out - tmp_a * zp_in - (s_mean * (mean_ptr[i] - zp_mean)) / tmp;
@@ -136,7 +136,7 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
     return RET_ERROR;
   }
   // compute alpha, beta;
-  auto eps = batchnorm_param_->epsilon_;
+  auto eps = reinterpret_cast<BatchNormParameter *>(op_parameter_)->epsilon_;
   CHECK_LESS_RETURN(input->quant_params().size(), 1);
   CHECK_LESS_RETURN(scale->quant_params().size(), 1);
   CHECK_LESS_RETURN(offset->quant_params().size(), 1);
@@ -159,7 +159,7 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
   float mul_12 = s_in * s_scale;
   float mul_24 = s_scale * s_mean;
   float div_36 = s_offset / s_out;
-  for (int i = 0; i < batchnorm_param_->channel_; ++i) {
+  for (int i = 0; i < channel_; ++i) {
     float tmp = s_out * sqrt(eps + s_var * (var_ptr[i] - zp_var));
     float tmp_a = (mul_12 * (scale_ptr[i] - zp_scale)) / tmp;
     float tmp_b = zp_out + div_36 * (offset_ptr[i] - zp_offset) - tmp_a * zp_in -
@@ -186,23 +186,23 @@ int BatchnormInt8CPUKernel::Prepare() {
                   << in_tensors_[kNumInput2]->data_type() << ", output data_type is " << out_tensors_[0]->data_type();
     return RET_ERROR;
   }
-  CHECK_NULL_RETURN(batchnorm_param_);
+
   auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
   CHECK_LESS_RETURN(n_dim, 1);
-  batchnorm_param_->channel_ = input_shapes[n_dim - 1];
-  batchnorm_param_->units_ = 1;
+  channel_ = input_shapes[n_dim - 1];
+  units_ = 1;
   for (size_t i = 0; i < n_dim - 1; i++) {
-    batchnorm_param_->units_ *= input_shapes[i];
+    units_ *= input_shapes[i];
   }
-  batchnorm_param_->op_parameter_.thread_num_ =
-    MSMIN(batchnorm_param_->op_parameter_.thread_num_, batchnorm_param_->channel_);
-  if (batchnorm_param_->op_parameter_.thread_num_ == 0) {
+
+  op_parameter_->thread_num_ = MSMIN(op_parameter_->thread_num_, channel_);
+  if (op_parameter_->thread_num_ == 0) {
     MS_LOG(ERROR) << "div zero";
     return RET_ERROR;
   }
-  batchnorm_param_->unit_ = UP_DIV(batchnorm_param_->units_, batchnorm_param_->op_parameter_.thread_num_);
-  if (batchnorm_param_->fused_) {
+  unit_ = UP_DIV(units_, op_parameter_->thread_num_);
+  if (op_parameter_->type_ == PrimitiveType_FusedBatchNorm) {
     auto ret = InitFusedConstTensor();
     if (ret != 0) {
       MS_LOG(ERROR) << "FusedBatchnorm int8 InitFusedConstTensor failed.";
@@ -221,15 +221,15 @@ int BatchnormInt8CPUKernel::Prepare() {
 
 int BatchnormInt8CPUKernel::ReSize() {
   auto input_shapes = in_tensors_.at(0)->shape();
-  batchnorm_param_->unit_ = 1;
+  unit_ = 1;
   for (size_t i = 0; i < input_shapes.size() - 1; i++) {
-    batchnorm_param_->unit_ *= input_shapes[i];
+    unit_ *= input_shapes[i];
   }
   return RET_OK;
 }
 
 int BatchnormInt8CPUKernel::DoExecute(int task_id) {
-  BatchNormInt8(out_addr_, in_addr_, alpha_addr_, beta_addr_, task_id, batchnorm_param_);
+  BatchNormInt8(out_addr_, in_addr_, alpha_addr_, beta_addr_, task_id, unit_, units_, channel_);
   return RET_OK;
 }
 
@@ -250,7 +250,7 @@ int BatchnormInt8CPUKernel::Run() {
   out_addr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(out_addr_);
 
-  auto ret = ParallelLaunch(this->ms_context_, BatchNormInt8Run, this, batchnorm_param_->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, BatchNormInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
     return ret;

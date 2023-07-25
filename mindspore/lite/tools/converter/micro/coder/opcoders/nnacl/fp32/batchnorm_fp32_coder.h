@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "coder/opcoders/op_coder.h"
+#include "nnacl/kernel/batch_norm.h"
 
 namespace mindspore::lite::micro::nnacl {
 class BatchnormFP32Coder final : public OperatorCoder {
@@ -35,12 +36,12 @@ class BatchnormFP32Coder final : public OperatorCoder {
 
  private:
   int Init();
-
   float default_momentum_{-1.0f};
-
   float *mean_{nullptr};
-
   float *variance_{nullptr};
+
+ private:
+  BatchNormStruct batchnorm_struct_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_CODER_H_

@@ -21,6 +21,7 @@
 #include "src/litert/kernel/opencl/kernel/batchnorm.h"
 #include "src/litert/kernel/opencl/utils.h"
 #include "src/litert/kernel/opencl/cl/batchnorm.cl.inc"
+#include "nnacl/batchnorm_parameter.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
