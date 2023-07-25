@@ -12,16 +12,11 @@ mindspore.ops.CTCLossV2
 
     参数：
         - **blank** (int，可选) - 空白标签。默认值： ``0`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
-
-          - ``"none"``：不应用规约方法。
-          - ``"mean"``：计算输出元素的平均值。
-          - ``"sum"``：计算输出元素的总和。
-
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式。目前仅支持 ``'none'`` ，默认值： ``'none'`` 。
         - **zero_infinity** (bool，可选) - 在损失无限大的时候，是否将无限损失和相关梯度置为零。默认值： ``False`` 。
 
     输入：
-        - **log_probs** (Tensor) - 输入Tensor，其shape为 :math:`(T, C, N)` 的三维Tensor。 :math:`T` 表示输入长度， :math:`N` 表示批大小， :math:`C` 表示类别数，包含空白标签。支持的数据类型：float32、float64。
+        - **log_probs** (Tensor) - 输入Tensor，其shape为 :math:`(T, N, C)` 的三维Tensor。 :math:`T` 表示输入长度， :math:`N` 表示批大小， :math:`C` 表示类别数，包含空白标签。支持的数据类型：float32、float64。
         - **targets** (Tensor) - 标签序列。其shape为 :math:`(N, S)` 的三维Tensor。 :math:`S` 表示最大标签长度。支持的数据类型：int32、int64。
         - **input_lengths** (Union(Tuple, Tensor)) - 输入的长度。其shape为 :math:`(N)` 。支持的数据类型：int32、int64。
         - **target_lengths** (Union(Tuple, Tensor)) - 标签的长度。其shape为 :math:`(N)` 。支持的数据类型：int32、int64。

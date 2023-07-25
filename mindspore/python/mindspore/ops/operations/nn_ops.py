@@ -8532,18 +8532,14 @@ class CTCLossV2(Primitive):
 
     Args:
         blank (int, optional): The blank label. Default: ``0`` .
-        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'mean'`` .
-
-            - ``'none'``: no reduction will be applied.
-            - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+        reduction (str, optional): Apply specific reduction method to the output. Currently only support ``'none'``.
+            Default: ``'none'`` .
 
         zero_infinity (bool, optional): If loss is infinite, this parameter determines whether to set that loss
             and its correlated gradient to zero. Default: ``False`` .
 
     Inputs:
-        - **log_probs** (Tensor) - A tensor of shape :math:`(T, C, N)`, where :math:`T` is input length, :math:`N` is
+        - **log_probs** (Tensor) - A tensor of shape :math:`(T, N, C)`, where :math:`T` is input length, :math:`N` is
           batch size and :math:`C` is number of classes (including blank). Supported dtypes: float32, float64.
         - **targets** (Tensor) - A tensor of shape :math:`(N, S)`, where :math:`S` is max target length,
           means the target sequences. Supported dtypes: int32, int64.
