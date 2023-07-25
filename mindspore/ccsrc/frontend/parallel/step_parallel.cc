@@ -553,6 +553,11 @@ static void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int64
     return;
   }
 
+  if (op_info->name().find(STAND_ALONE) != std::string::npos) {
+    MS_LOG(INFO) << "Stand alone operator info no need to split tensor";
+    return;
+  }
+
   // If the shape of tensor is [] or [1], no need to split it.
   Shapes shapes = GetNodeShape(node);
   if (shapes.size() != 1) {

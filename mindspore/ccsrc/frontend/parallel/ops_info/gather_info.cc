@@ -1294,6 +1294,10 @@ std::shared_ptr<Strategies> GatherInfo::GenerateBatchStrategies() {
   for (size_t i = 1; i < inputs_shape_[1].size(); i++) {
     index_strategy.push_back(1);
   }
+
+  if (batch_dims_ > 0 && !param_strategy.empty()) {
+    param_strategy[0] = stage_device_size_;
+  }
   Strategies strategy_v = {param_strategy, index_strategy};
   return std::make_shared<Strategies>(strategy_v);
 }

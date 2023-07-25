@@ -1023,12 +1023,15 @@ OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs 
     MS_LOG(INFO) << "Operator " << prim->name() << " is not supported yet in auto parallel mode. Use Stand Alone";
     return operator_;
   }
-  auto input_shape = shape_list.at(0);
+  auto input_shape = shape_list[0];
+  auto output_shape = shape_list[1];
   MS_EXCEPTION_IF_NULL(g_device_manager);
   auto device_num = g_device_manager->stage_device_num();
   MS_EXCEPTION_IF_ZERO("device_num", device_num);
-  if (input_shape[0].empty() || input_shape[0][0] % device_num != 0) {
-    MS_LOG(INFO) << "Operator " << prim->name() << " use Stand Alone";
+  if (input_shape[0].empty() || input_shape[0][0] % device_num != 0 || output_shape[0].empty() ||
+      output_shape[0][0] % device_num != 0) {
+    MS_LOG(INFO) << "Operator " << prim->name() << " use Stand Alone, the input shape is " << input_shape
+                 << ", the output shape is " << output_shape;
     operator_ = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
     prim->AddAttr(STAND_ALONE, MakeValue<bool>(true));
     return operator_;
