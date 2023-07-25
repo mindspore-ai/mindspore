@@ -225,6 +225,12 @@ class Parser {
   AnfNodePtr ParseDictByKeysAndValues(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &key_nodes,
                                       const std::vector<AnfNodePtr> &value_nodes);
   AnfNodePtr ParseDict(const FunctionBlockPtr &block, const py::object &node);
+  // Process DictComp expression.
+  AnfNodePtr ParseDictComp(const FunctionBlockPtr &block, const py::object &node);
+  FunctionBlockPtr ParseDictCompIter(const FunctionBlockPtr &block, const py::object &node,
+                                     const py::object &generator_node);
+  AnfNodePtr ParseDictCompIfs(const FunctionBlockPtr &dict_body_block, const ParameterPtr &dict_param,
+                              const py::object &node, const py::object &generator_node);
   // Process ListComp expression.
   AnfNodePtr ParseListComp(const FunctionBlockPtr &block, const py::object &node);
   FunctionBlockPtr ParseListCompIter(const FunctionBlockPtr &block, const py::object &node,

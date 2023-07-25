@@ -60,6 +60,26 @@ _tuple_add = _TupleAdd('tuple_add')
 """`_tuple_add` is an metafuncgraph object which will concatenate two tuples to form a tuple."""
 
 
+class _DictUpdate(base.DictUpdate_):
+    """
+    A metafuncgraph class that append another dict to the end of the dict.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _DictUpdate."""
+        base.DictUpdate_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_dict_update = _DictUpdate('dict_update')
+"""`_dict_update` is an metafuncgraph object which will concatenate two dict to form a dict."""
+
+
 class _ListAdd(base.ListAdd_):
     """
     Adding two lists.
@@ -315,7 +335,8 @@ def _add_csrtensor(x, y):
     Returns:
         CSRTensor, consists of elements of x and elements of y.
     """
-    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    check_equal(x.shape, y.shape,
+                "input1 (shape={}) and input2(shape={}) should be the same shape.")
     return F.csr_add(x, y, make_tensor(1, x.values.dtype), make_tensor(1, x.values.dtype))
 
 
@@ -331,7 +352,8 @@ def _add_cootensor(x, y):
     Returns:
         COOTensor, consists of elements of x and elements of y.
     """
-    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    check_equal(x.shape, y.shape,
+                "input1 (shape={}) and input2(shape={}) should be the same shape.")
     return F.coo_add(x, y, make_tensor(0, x.values.dtype))
 
 
@@ -347,7 +369,8 @@ def _add_cootensor_tensor(x, y):
     Returns:
         Tensor, consists of elements of x and elements of y.
     """
-    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    check_equal(x.shape, y.shape,
+                "input1 (shape={}) and input2(shape={}) should be the same shape.")
     return F.tensor_scatter_add(y, x.indices, x.values)
 
 
@@ -363,7 +386,8 @@ def _add_tensor_cootensor(x, y):
     Returns:
         Tensor, consists of elements of x and elements of y.
     """
-    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    check_equal(x.shape, y.shape,
+                "input1 (shape={}) and input2(shape={}) should be the same shape.")
     return F.tensor_scatter_add(x, y.indices, y.values)
 
 
@@ -556,6 +580,21 @@ def _map_tensor_add_backward(x, y):
        MapTensor.
    """
     return x
+
+
+@add.register("Dictionary", "Dictionary")
+def _dict_add_dict(x, y):
+    """
+        dictionary is added to dictionary.
+
+        Args:
+            x (dictionary): x
+            y (dictionary): y.
+
+        Returns:
+            dictionary, has the same dtype as x.
+    """
+    return _dict_update(x, y)
 
 
 hyper_add = base.HyperMap(_add_backward)

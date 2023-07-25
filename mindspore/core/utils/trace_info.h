@@ -444,6 +444,14 @@ class TraceListComp : public TraceInfo {
   TraceInfoPtr clone() override { return std::make_shared<TraceListComp>(*this); }
 };
 
+class TraceDictComp : public TraceInfo {
+ public:
+  explicit TraceDictComp(const DebugInfoPtr &info) : TraceInfo(info) {}
+  ~TraceDictComp() override = default;
+  MS_DECLARE_TRACE_NAME_SYMBOL("DictComp", "GD-");
+  TraceInfoPtr clone() override { return std::make_shared<TraceDictComp>(*this); }
+};
+
 class TraceMixedPrecision : public TraceInfo {
  public:
   explicit TraceMixedPrecision(const DebugInfoPtr &info) : TraceInfo(info) {}

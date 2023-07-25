@@ -116,6 +116,7 @@ void Parser::BuildMethodMap() {
   expr_method_map_["UnaryOp"] = &Parser::ParseUnaryOp;
   expr_method_map_["Dict"] = &Parser::ParseDict;
   expr_method_map_["Ellipsis"] = &Parser::ParseEllipsis;
+  expr_method_map_["DictComp"] = &Parser::ParseDictComp;
   expr_method_map_["ListComp"] = &Parser::ParseListComp;
   expr_method_map_["GeneratorExp"] = &Parser::ParseListComp;  // We treat 'GeneratorExp' the same as 'ListComp'.
   expr_method_map_["JoinedStr"] = &Parser::ParseJoinedStr;
@@ -3258,6 +3259,189 @@ AnfNodePtr Parser::ParseListComp(const FunctionBlockPtr &block, const py::object
   auto top_block = ParseListCompIter(block, node, generator_node);
 
   // Call the top graph and return the list.
+  auto call_function_node = NewValueNode(top_block->func_graph());
+  std::vector<AnfNodePtr> func_call_nodes;
+  func_call_nodes.push_back(call_function_node);
+  MS_EXCEPTION_IF_NULL(block->func_graph());
+  AnfNodePtr output = block->func_graph()->NewCNodeInOrder(std::move(func_call_nodes));
+  return output;
+}
+
+FunctionBlockPtr Parser::ParseDictCompIter(const FunctionBlockPtr &block, const py::object &node,
+                                           const py::object &generator_node) {
+  // Create a header block.
+  MS_EXCEPTION_IF_NULL(block->func_graph());
+  FunctionBlockPtr top_block = GenerateBlock(std::make_shared<TraceDictComp>(block->func_graph()->debug_info()));
+  top_block->AddPrevBlock(block);
+  // Handle iter attribute.
+  py::object iter_node = python_adapter::GetPyObjAttr(generator_node, "iter");
+  AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
+  MS_EXCEPTION_IF_NULL(iter_anf_node);
+  bool interpret_without_internal =
+    IsPrimitiveCNode(iter_anf_node, prim::kPrimPyInterpret) && !iter_anf_node->interpret_internal_type();
+  if (iter_anf_node->interpret() || interpret_without_internal) {
+    iter_anf_node = ConvertInterpretIterNodeToList(block, iter_anf_node, iter_node);
+  }
+
+  // Create header graph.
+  FunctionBlockPtr dict_header_block =
+    GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
+  AnfNodePtr op_hasnext = top_block->MakeResolveOperation(NAMED_PRIMITIVE_HASNEXT);
+  MS_EXCEPTION_IF_NULL(dict_header_block->func_graph());
+  ParameterPtr iter_param = dict_header_block->func_graph()->add_parameter();
+  constexpr auto iter_param_name = "iter";
+  iter_param->set_name(iter_param_name);
+  MS_EXCEPTION_IF_NULL(iter_param->debug_info());
+  iter_param->debug_info()->set_name(iter_param_name);
+  CNodePtr cond_apply = dict_header_block->func_graph()->NewCNodeInOrder({op_hasnext, iter_param});
+
+  // Call the header graph with iter.
+  ParameterPtr dict_param = dict_header_block->func_graph()->add_parameter();
+  constexpr auto dict_param_name = "dict";
+  dict_param->set_name(dict_param_name);
+  MS_EXCEPTION_IF_NULL(dict_param->debug_info());
+  dict_param->debug_info()->set_name(dict_param_name);
+  auto empty_key = std::vector<ValuePtr>();
+  AnfNodePtr empty_key_node = NewValueNode(std::make_shared<ValueTuple>(empty_key));
+  auto empty_value = std::vector<ValuePtr>();
+  AnfNodePtr empty_value_node = NewValueNode(std::make_shared<ValueTuple>(empty_value));
+  auto make_dict_op = top_block->MakeResolveOperation(NAMED_PRIMITIVE_MAKEDICT);
+  auto empty_dict_node = top_block->func_graph()->NewCNodeInOrder({make_dict_op, empty_key_node, empty_value_node});
+  top_block->Jump(dict_header_block, {iter_anf_node, empty_dict_node});
+
+  // Create body graph.
+  FunctionBlockPtr dict_body_block = GenerateBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
+  dict_body_block->AddPrevBlock(dict_header_block);
+  AnfNodePtr op_next = top_block->MakeResolveOperation(NAMED_PRIMITIVE_NEXT);
+  MS_EXCEPTION_IF_NULL(dict_body_block->func_graph());
+  CNodePtr next_apply = dict_body_block->func_graph()->NewCNodeInOrder({op_next, iter_param});
+  AnfNodePtr op_getitem = top_block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
+  CNodePtr item_apply =
+    dict_body_block->func_graph()->NewCNodeInOrder({op_getitem, next_apply, NewValueNode(static_cast<int64_t>(0))});
+  CNodePtr new_iter =
+    dict_body_block->func_graph()->NewCNodeInOrder({op_getitem, next_apply, NewValueNode(static_cast<int64_t>(1))});
+
+  // Save the `target` in a variable.
+  py::object gen_target_node = python_adapter::GetPyObjAttr(generator_node, "target");
+  WriteAssignVars(dict_body_block, gen_target_node, item_apply);
+
+  auto ifs_new_dic = ParseDictCompIfs(dict_body_block, dict_param, node, generator_node);
+  dict_body_block->Jump(dict_header_block, {new_iter, ifs_new_dic});
+
+  // Create after graph.
+  FunctionBlockPtr dict_after_block = GenerateBlock(std::make_shared<TraceForAfter>(block->func_graph()->debug_info()));
+  dict_after_block->AddPrevBlock(dict_header_block);
+  // Return the dict in after graph.
+  MS_EXCEPTION_IF_NULL(dict_after_block->func_graph());
+  dict_after_block->func_graph()->set_output(dict_param);
+
+  // Run the branches.
+  (void)dict_header_block->ConditionalJump(cond_apply, dict_body_block, dict_after_block);
+
+  top_block->Mature();
+  dict_header_block->Mature();
+  dict_body_block->Mature();
+  dict_after_block->Mature();
+  return top_block;
+}
+
+AnfNodePtr Parser::ParseDictCompIfs(const FunctionBlockPtr &dict_body_block, const ParameterPtr &dict_param,
+                                    const py::object &node, const py::object &generator_node) {
+  // Handle ifs attribute.
+  py::list ifs_node = python_adapter::GetPyObjAttr(generator_node, "ifs");
+  AnfNodePtr ifs_bool_node;
+  if (ifs_node.empty()) {
+    ifs_bool_node = NewValueNode(true);
+  } else {
+    ifs_bool_node = ProcessBoolOpValueList(dict_body_block, ifs_node, AST_SUB_TYPE_AND);
+  }
+
+  // Create if-true graph.
+  FunctionBlockPtr if_true_block =
+    GenerateBlock(std::make_shared<TraceIfStmtTrueBranch>(dict_body_block->func_graph()->debug_info()));
+  if_true_block->AddPrevBlock(dict_body_block);
+  // Handle key, value attribute in body block.
+  py::object key_obj = python_adapter::GetPyObjAttr(node, "key");
+  AnfNodePtr key_node = ParseExprNode(dict_body_block, key_obj);
+  py::object value_obj = python_adapter::GetPyObjAttr(node, "value");
+  AnfNodePtr value_node = ParseExprNode(dict_body_block, value_obj);
+  // update dict.
+  MS_EXCEPTION_IF_NULL(dict_body_block->func_graph());
+  std::vector<AnfNodePtr> key_vec;
+  std::vector<AnfNodePtr> value_vec;
+  std::vector<AnfNodePtr> dict_vec;
+  AnfNodePtr make_dict_op = dict_body_block->MakeResolveOperation(NAMED_PRIMITIVE_MAKEDICT);
+  AnfNodePtr make_tuple_op = dict_body_block->MakeResolveOperation(NAMED_PRIMITIVE_MAKETUPLE);
+  (void)key_vec.emplace_back(make_tuple_op);
+  (void)key_vec.emplace_back(key_node);
+  CNodePtr key_app = dict_body_block->func_graph()->NewCNodeInOrder(std::move(key_vec));
+  (void)value_vec.emplace_back(make_tuple_op);
+  (void)value_vec.emplace_back(value_node);
+  CNodePtr value_app = dict_body_block->func_graph()->NewCNodeInOrder(std::move(value_vec));
+  (void)dict_vec.emplace_back(make_dict_op);
+  (void)dict_vec.emplace_back(key_app);
+  (void)dict_vec.emplace_back(value_app);
+  CNodePtr dict_app = dict_body_block->func_graph()->NewCNodeInOrder(std::move(dict_vec));
+  std::string add_module_name = "mindspore.ops.composite.multitype_ops.add_impl";
+  ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
+  CNodePtr new_dict = dict_body_block->func_graph()->NewCNodeInOrder({NewValueNode(add_op), dict_param, dict_app});
+  // Return new dict in true branch graph.
+  if_true_block->func_graph()->set_output(new_dict);
+
+  // Create if-false graph.
+  FunctionBlockPtr if_false_block =
+    GenerateBlock(std::make_shared<TraceIfStmtFalseBranch>(dict_body_block->func_graph()->debug_info()));
+  if_false_block->AddPrevBlock(dict_body_block);
+  // Return original dict in false branch graph.
+  MS_EXCEPTION_IF_NULL(if_false_block->func_graph());
+  if_false_block->func_graph()->set_output(dict_param);
+
+  // We don't want to create a header graph, where to get and wrap the result of Switch().
+  // So just call ConditionalJump() to set Switch() as output, and reset it later, as tricky.
+  (void)dict_body_block->ConditionalJump(ifs_bool_node, if_true_block, if_false_block);
+  // Output is Switch() result, i.e. updated dict.
+  auto switch_apply_node = dict_body_block->func_graph()->output();
+  auto ifs_new_dict = switch_apply_node;
+  // Since we call ConditionalJump() above, to reset the Return as null before call Jump().
+  dict_body_block->func_graph()->set_return(nullptr);
+  if_true_block->Mature();
+  if_false_block->Mature();
+  return ifs_new_dict;
+}
+
+// A ListComp contains: `elt` and `generators`.
+// `generators` contains: `target`, `iter` and `ifs`.
+// For example:
+// {x: y for y, x in some_dict.items() if x > 1}
+// It is compiled to be following statement:
+// dict = {}
+// for y, x in some_dict.items():
+//    if x > 1:
+//        dict[x] = y
+// return dict
+AnfNodePtr Parser::ParseDictComp(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast DictComp";
+  MS_EXCEPTION_IF_NULL(block);
+
+  // Handle generators attribute.
+  py::list generators_node = python_adapter::GetPyObjAttr(node, "generators");
+  if (generators_node.size() != 1) {
+    MS_EXCEPTION(TypeError) << "The 'generators' supports 1 'comprehension' in DictComp/GeneratorExp, but got "
+                            << generators_node.size() << " comprehensions.";
+  }
+  py::object generator_node = generators_node[0];
+  auto generator_node_type = ast_->GetNodeType(generator_node);
+  auto generator_node_name = generator_node_type->node_name();
+  constexpr auto comprehension_name = "comprehension";
+  if (generator_node_name != comprehension_name) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Generator node name should be " << comprehension_name << ", but got "
+                               << generator_node_name;
+  }
+
+  // Parse DictComp's `iter` and add `key`, `value` in it.
+  auto top_block = ParseDictCompIter(block, node, generator_node);
+
+  // Call the top graph and return the dict.
   auto call_function_node = NewValueNode(top_block->func_graph());
   std::vector<AnfNodePtr> func_call_nodes;
   func_call_nodes.push_back(call_function_node);
