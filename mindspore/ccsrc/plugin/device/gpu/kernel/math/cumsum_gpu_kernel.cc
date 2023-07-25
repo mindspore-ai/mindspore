@@ -100,6 +100,7 @@ bool CumSumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   }
   const auto &axis_addr = inputs.at(kIndex1);
   MS_EXCEPTION_IF_NULL(axis_addr);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "CumSum cudaStreamSynchronize failed");
   if (axis_addr->size == sizeof(int)) {
     int axis_tmp;
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),

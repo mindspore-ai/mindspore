@@ -110,6 +110,9 @@ class GridSampler2DGpuKernelMod : public NativeGpuKernelMod {
       }
       stride_tmp = 1;
     };
+    input_stride_.clear();
+    grid_stride_.clear();
+    output_stride_.clear();
     stride_compute(input_stride_, input_shape_);
     stride_compute(grid_stride_, grid_shape_);
     stride_compute(output_stride_, output_shape_);
@@ -226,6 +229,9 @@ class GridSampler3DGpuKernelMod : public NativeGpuKernelMod {
       }
       stride_tmp = 1;
     };
+    input_stride_.clear();
+    grid_stride_.clear();
+    output_stride_.clear();
     stride_compute(input_stride_, input_shape_);
     stride_compute(grid_stride_, grid_shape_);
     stride_compute(output_stride_, output_shape_);
