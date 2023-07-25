@@ -17,11 +17,10 @@ import numpy as np
 import pytest
 import mindspore.nn as nn
 import mindspore.ops.operations as P
-from mindspore.nn import Cell
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import GradOperation
-from mindspore.common import ParameterTuple
+from tests.st.pynative.utils import GradOfAllInputs
 
 
 class MetaFactory:
@@ -66,37 +65,6 @@ class FinalNet(nn.Cell, HookBase):
         else:
             x = self.relu(x)
         return self.relu(x)
-
-
-class _Grad(Cell):
-    def __init__(self, grad, network, wrt_params=False, real_inputs_count=None):
-        super().__init__()
-        self.network = network
-        self.grad = grad
-        self.sens_param = self.grad.sens_param
-        self.wrt_params = wrt_params
-        self.real_inputs_count = real_inputs_count
-        if self.wrt_params:
-            self.params = ParameterTuple(self.network.trainable_params())
-
-    def construct(self, *inputs):
-        if self.wrt_params:
-            if self.real_inputs_count is None or self.sens_param is False:
-                return self.grad(self.network, self.params)(*inputs)
-            real_inputs = inputs[:self.real_inputs_count]
-            sense_param_inputs = inputs[self.real_inputs_count:]
-            return self.grad(self.network, self.params)(*real_inputs, sense_param_inputs)
-        if self.real_inputs_count is None or self.sens_param is False:
-            return self.grad(self.network)(*inputs)
-        real_inputs = inputs[:self.real_inputs_count]
-        sense_param_inputs = inputs[self.real_inputs_count:]
-        return self.grad(self.network)(*real_inputs, sense_param_inputs)
-
-
-class GradOfAllInputs(_Grad):
-    def __init__(self, network, sens_param=True, real_inputs_count=None):
-        super().__init__(grad=GradOperation(get_all=True, sens_param=sens_param),
-                         network=network, real_inputs_count=real_inputs_count)
 
 
 class MsMul4(nn.Cell):
@@ -585,3 +553,47 @@ def test_pynative_hook_child_cell_record_grad_ascend():
 def test_pynative_hook_child_cell_record_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_child_cell_record_grad()
+
+
+def backward_hook(cell_id, grad_input, grad_output):
+    """
+    print backward hook
+    """
+    print("input: ", grad_input)
+    print("outpt: ", grad_output)
+    return Tensor(np.array([2, 3, 4, 5])).astype(np.float32), Tensor(np.array([5, 6, 7, 8]).astype(np.float32))
+
+
+class HookNet(nn.Cell):
+    def __init__(self):
+        super(HookNet, self).__init__()
+        self.mul = nn.MatMul()
+        self.relu = nn.ReLU()
+        self.handle = self.mul.register_backward_hook(backward_hook)
+
+    def construct(self, x, y):
+        x = self.mul(x, y)
+        x = self.relu(x)
+        x = x + y
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_backward_hook_normal():
+    """
+    Feature: Test hook grad feature
+    Description: test backward hook normal
+    Expectation: Success
+    """
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    input_x = Tensor(np.array([1, 2, 3, 4]).astype(np.float32))
+    input_y = Tensor(np.array([5, 6, 7, 8]).astype(np.float32))
+    net = HookNet()
+    for _ in range(5):
+        grad_op = GradOperation(get_all=True, get_by_list=False, sens_param=False)
+        grad = grad_op(net)(input_x, input_y)
+    assert np.allclose(grad[0].asnumpy(), Tensor(np.array([2, 3, 4, 5])).astype(np.float32).asnumpy(), 0.001, 0.001)
+    assert np.allclose(grad[1].asnumpy(), Tensor(np.array([6, 7, 8, 9])).astype(np.float32).asnumpy(), 0.001, 0.001)
