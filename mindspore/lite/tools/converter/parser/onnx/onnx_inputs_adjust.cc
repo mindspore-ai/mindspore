@@ -576,10 +576,12 @@ STATUS AdjustOneHot(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     }
     auto data1 = reinterpret_cast<float *>(data_info.data_.data())[FIRST_INPUT];
     auto data2 = reinterpret_cast<float *>(data_info.data_.data())[SECOND_INPUT];
-    auto off_value_parameter = mindspore::opt::BuildFloatValueParameterNode(func_graph, data1, "off_value", true);
+    auto off_value_parameter = mindspore::opt::BuildFloatValueParameterNode(
+      func_graph, data1, cnode->fullname_with_scope() + "_off_value", true);
     MS_CHECK_TRUE_RET(off_value_parameter != nullptr, RET_ERROR);
 
-    auto on_value_parameter = mindspore::opt::BuildFloatValueParameterNode(func_graph, data2, "on_value", true);
+    auto on_value_parameter =
+      mindspore::opt::BuildFloatValueParameterNode(func_graph, data2, cnode->fullname_with_scope() + "_on_value", true);
     MS_CHECK_TRUE_RET(on_value_parameter != nullptr, RET_ERROR);
 
     std::vector<AnfNodePtr> new_inputs;

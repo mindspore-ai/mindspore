@@ -44,8 +44,8 @@ PrimitiveCPtr OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_grap
           const auto &tensor = onnx_node_attr.t();
           auto ret = GetTensorDataFromOnnx(tensor, &values, &data_type);
           if (ret != RET_OK) {
-            MS_LOG(ERROR) << "get data from tensor failed";
-            return nullptr;
+            MS_LOG(WARNING) << "get data from tensor failed, so set value to default 0";
+            data_type = kNumberTypeFloat32;
           }
         } break;
         default:

@@ -24,11 +24,17 @@ namespace lite {
 PrimitiveCPtr OnnxOneHotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::OneHot>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  bool axis_flag = False;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
       prim->set_axis(onnx_node_attr.i());
+      axis_flag = True;
     }
+  }
+
+  if (!axis_flag) {
+    prim->set_axis(-1);
   }
 
   return prim->GetPrim();
