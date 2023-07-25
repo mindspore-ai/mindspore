@@ -84,8 +84,8 @@ __global__ void SparseSegmentSumKernel(const float *x_ptr, const S *indices_ptr,
         }
       }
       if (threadIdx.y == 0 && inner_valid) {
-        y_ptr[sid * inner_size + inner_idx] = beg_pos == end_pos ? static_cast<float>(0) :
-                                                                   static_cast<float>(segment_sum);
+        y_ptr[sid * inner_size + inner_idx] =
+          beg_pos == end_pos ? static_cast<float>(0) : static_cast<float>(segment_sum);
       }
     }
   }
@@ -121,7 +121,7 @@ __global__ void SparseSegmentSumKernel(const half *x_ptr, const S *indices_ptr, 
 
 template <typename R, typename S>
 __global__ void SparseSegmentSqrtNKernel(const R *x_ptr, const S *indices_ptr, const size_t *segment_pos_ptr,
-                                        size_t outer_size, size_t inner_size, size_t output_dim0, R *y_ptr) {
+                                         size_t outer_size, size_t inner_size, size_t output_dim0, R *y_ptr) {
   size_t num_blocks = (inner_size - 1) / blockDim.x + 1;
   for (size_t bid = blockIdx.x; bid < num_blocks; bid += gridDim.x) {
     size_t inner_idx = threadIdx.x + bid * blockDim.x;
@@ -150,7 +150,7 @@ __global__ void SparseSegmentSqrtNKernel(const R *x_ptr, const S *indices_ptr, c
 
 template <typename S>
 __global__ void SparseSegmentSqrtNKernel(const float *x_ptr, const S *indices_ptr, const size_t *segment_pos_ptr,
-                                        size_t outer_size, size_t inner_size, size_t output_dim0, float *y_ptr) {
+                                         size_t outer_size, size_t inner_size, size_t output_dim0, float *y_ptr) {
   size_t num_blocks = (inner_size - 1) / blockDim.x + 1;
   for (size_t bid = blockIdx.x; bid < num_blocks; bid += gridDim.x) {
     size_t inner_idx = threadIdx.x + bid * blockDim.x;
@@ -171,8 +171,8 @@ __global__ void SparseSegmentSqrtNKernel(const float *x_ptr, const S *indices_pt
         }
       }
       if (threadIdx.y == 0 && inner_valid) {
-        y_ptr[sid * inner_size + inner_idx] = beg_pos == end_pos ? static_cast<float>(0) :
-                                                                   static_cast<float>(segment_sum / sqrt_segment_len);
+        y_ptr[sid * inner_size + inner_idx] =
+          beg_pos == end_pos ? static_cast<float>(0) : static_cast<float>(segment_sum / sqrt_segment_len);
       }
     }
   }
@@ -180,7 +180,7 @@ __global__ void SparseSegmentSqrtNKernel(const float *x_ptr, const S *indices_pt
 
 template <typename S>
 __global__ void SparseSegmentSqrtNKernel(const half *x_ptr, const S *indices_ptr, const size_t *segment_pos_ptr,
-                                        size_t outer_size, size_t inner_size, size_t output_dim0, half *y_ptr) {
+                                         size_t outer_size, size_t inner_size, size_t output_dim0, half *y_ptr) {
   size_t num_blocks = (inner_size - 1) / blockDim.x + 1;
   for (size_t bid = blockIdx.x; bid < num_blocks; bid += gridDim.x) {
     size_t inner_idx = threadIdx.x + bid * blockDim.x;
@@ -201,8 +201,8 @@ __global__ void SparseSegmentSqrtNKernel(const half *x_ptr, const S *indices_ptr
         }
       }
       if (threadIdx.y == 0 && inner_valid) {
-        y_ptr[sid * inner_size + inner_idx] = beg_pos == end_pos ? half(0) :
-                                                                   __float2half(segment_sum / sqrt_segment_len);
+        y_ptr[sid * inner_size + inner_idx] =
+          beg_pos == end_pos ? half(0) : __float2half(segment_sum / sqrt_segment_len);
       }
     }
   }
@@ -241,10 +241,10 @@ inline int Log2Ceil64(uint64_t n) {
 }
 
 template <typename R, typename S>
-bool CalSparseSegmentCombination(const std::string kernel_type, const R *x_ptr, const S *indices_ptr,
-                                 const S *segment_ids_ptr, size_t *segment_pos_ptr, size_t outer_size,
-                                 size_t inner_size, size_t idx_seg_size, size_t output_dim0, R *y_ptr,
-                                 uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseSegmentCombination(const std::string kernel_type, const R *x_ptr, const S *indices_ptr,
+                                        const S *segment_ids_ptr, size_t *segment_pos_ptr, size_t outer_size,
+                                        size_t inner_size, size_t idx_seg_size, size_t output_dim0, R *y_ptr,
+                                        uint32_t device_id, cudaStream_t cuda_stream) {
   // Get start position of each segment and set to segment_pos_ptr.
   // The last element of segment_pos_ptr must equal to idx_seg_size.
   SparseSegmentPosKernel<<<CUDA_BLOCKS(device_id, idx_seg_size + 1), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -260,24 +260,20 @@ bool CalSparseSegmentCombination(const std::string kernel_type, const R *x_ptr, 
   dim3 grid(grid_x, grid_y);
   unsigned int shared_memory_size = block_x * block_y * sizeof(R);
   if (kernel_type == "SparseSegmentSum" || kernel_type == "SparseSegmentSumWithNumSegments") {
-    SparseSegmentSumKernel<<<grid, block, shared_memory_size, cuda_stream>>>(x_ptr, indices_ptr, segment_pos_ptr,
-                                                                             outer_size, inner_size, output_dim0,
-                                                                             y_ptr);
+    SparseSegmentSumKernel<<<grid, block, shared_memory_size, cuda_stream>>>(
+      x_ptr, indices_ptr, segment_pos_ptr, outer_size, inner_size, output_dim0, y_ptr);
   } else if (kernel_type == "SparseSegmentSqrtN" || kernel_type == "SparseSegmentSqrtNWithNumSegments") {
-    SparseSegmentSqrtNKernel<<<grid, block, shared_memory_size, cuda_stream>>>(x_ptr, indices_ptr, segment_pos_ptr,
-                                                                               outer_size, inner_size, output_dim0,
-                                                                               y_ptr);
+    SparseSegmentSqrtNKernel<<<grid, block, shared_memory_size, cuda_stream>>>(
+      x_ptr, indices_ptr, segment_pos_ptr, outer_size, inner_size, output_dim0, y_ptr);
   }
-  return true;
+  return GetCudaStatus();
 }
 
-#define ADD_SPARSE_SEGMENT(R, S) \
-  template CUDA_LIB_EXPORT bool CalSparseSegmentCombination<R, S>(const std::string kernel_type, const R *x_ptr, \
-                                                                  const S *indices_ptr, const S *segment_ids_ptr, \
-                                                                  size_t *segment_pos_ptr, size_t outer_size, \
-                                                                  size_t inner_size, size_t idx_seg_size, \
-                                                                  size_t output_dim0, R *y_ptr, uint32_t device_id, \
-                                                                  cudaStream_t cuda_stream);
+#define ADD_SPARSE_SEGMENT(R, S)                                                                                      \
+  template CUDA_LIB_EXPORT cudaError_t CalSparseSegmentCombination<R, S>(                                             \
+    const std::string kernel_type, const R *x_ptr, const S *indices_ptr, const S *segment_ids_ptr,                    \
+    size_t *segment_pos_ptr, size_t outer_size, size_t inner_size, size_t idx_seg_size, size_t output_dim0, R *y_ptr, \
+    uint32_t device_id, cudaStream_t cuda_stream);
 
 ADD_SPARSE_SEGMENT(uint8_t, int32_t)
 ADD_SPARSE_SEGMENT(uint8_t, int64_t)

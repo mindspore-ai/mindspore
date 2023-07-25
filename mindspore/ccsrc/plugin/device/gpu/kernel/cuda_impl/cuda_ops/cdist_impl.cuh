@@ -20,8 +20,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalCdist(size_t out_size, T *input_x, T *input_y, T *output, int64_t x_row,
-                              int64_t y_row, int64_t col, double p, int64_t batch,
-                              const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCdist(size_t out_size, T *input_x, T *input_y, T *output, int64_t x_row, int64_t y_row,
+                                     int64_t col, double p, int64_t batch, const uint32_t &device_id,
+                                     cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CDIST_IMPL_CUH_

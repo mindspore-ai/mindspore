@@ -41,25 +41,27 @@ __global__ void HashSwapIn(T *hash_table, const T *swap_in_value, const int *swa
 }
 
 template <typename T>
-void DoHashSwapOut(const T *hash_table, T *swap_out_value, const int *swap_out_index, const int index_size,
-                   const int hash_dim, cudaStream_t cuda_stream, const uint32_t device_id) {
+cudaError_t DoHashSwapOut(const T *hash_table, T *swap_out_value, const int *swap_out_index, const int index_size,
+                          const int hash_dim, cudaStream_t cuda_stream, const uint32_t device_id) {
   HashSwapOut<<<CUDA_BLOCKS(device_id, index_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     hash_table, swap_out_value, swap_out_index, index_size, hash_dim);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void DoHashSwapIn(T *hash_table, const T *swap_in_value, const int *swap_in_index, const int index_size,
-                  const int hash_dim, cudaStream_t cuda_stream, const uint32_t device_id) {
+cudaError_t DoHashSwapIn(T *hash_table, const T *swap_in_value, const int *swap_in_index, const int index_size,
+                         const int hash_dim, cudaStream_t cuda_stream, const uint32_t device_id) {
   HashSwapIn<<<CUDA_BLOCKS(device_id, index_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     hash_table, swap_in_value, swap_in_index, index_size, hash_dim);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void DoHashSwapOut<float>(const float *hash_table, float *swap_out_value,
-                                                   const int *swap_out_index, const int index_size, const int hash_dim,
-                                                   cudaStream_t cuda_stream, const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t DoHashSwapOut<float>(const float *hash_table, float *swap_out_value,
+                                                          const int *swap_out_index, const int index_size,
+                                                          const int hash_dim, cudaStream_t cuda_stream,
+                                                          const uint32_t device_id);
 
-template CUDA_LIB_EXPORT void DoHashSwapIn<float>(float *hash_table, const float *swap_in_value,
-                                                  const int *swap_in_index, const int index_size, const int hash_dim,
-                                                  cudaStream_t cuda_stream, const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t DoHashSwapIn<float>(float *hash_table, const float *swap_in_value,
+                                                         const int *swap_in_index, const int index_size,
+                                                         const int hash_dim, cudaStream_t cuda_stream,
+                                                         const uint32_t device_id);

@@ -53,121 +53,123 @@ __global__ void SparseTensorDenseAddKernelFunc(size_t input_elements, size_t ran
 }
 
 template <typename T, typename I>
-void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape, I *x1_indices_addr,
-                                T *x1_values_addr, I *x1_shape_addr, T *x2_values_addr, T *y_addr,
-                                const uint32_t &device_id, cudaStream_t cuda_stream) {
-  SparseTensorDenseAddKernelFunc<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0,
-   cuda_stream>>>(input_elements, rank, x2_shape, x1_indices_addr, x1_values_addr, x1_shape_addr, x2_values_addr,
-                  y_addr);
+cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape, I *x1_indices_addr,
+                                       T *x1_values_addr, I *x1_shape_addr, T *x2_values_addr, T *y_addr,
+                                       const uint32_t &device_id, cudaStream_t cuda_stream) {
+  SparseTensorDenseAddKernelFunc<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input_elements, rank, x2_shape, x1_indices_addr, x1_values_addr, x1_shape_addr, x2_values_addr, y_addr);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, uint8_t *x1_values_addr,
-                                                         int64_t *x1_shape_addr, uint8_t *x2_values_addr,
-                                                         uint8_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, uint8_t *x1_values_addr,
-                                                         int32_t *x1_shape_addr, uint8_t *x2_values_addr,
-                                                         uint8_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, int8_t *x1_values_addr,
-                                                         int64_t *x1_shape_addr, int8_t *x2_values_addr,
-                                                         int8_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, int8_t *x1_values_addr,
-                                                         int32_t *x1_shape_addr, int8_t *x2_values_addr,
-                                                         int8_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, uint16_t *x1_values_addr,
-                                                         int64_t *x1_shape_addr, uint16_t *x2_values_addr,
-                                                         uint16_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, uint16_t *x1_values_addr,
-                                                         int32_t *x1_shape_addr, uint16_t *x2_values_addr,
-                                                         uint16_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, int16_t *x1_values_addr,
-                                                         int64_t *x1_shape_addr, int16_t *x2_values_addr,
-                                                         int16_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, int16_t *x1_values_addr,
-                                                         int32_t *x1_shape_addr, int16_t *x2_values_addr,
-                                                         int16_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, int32_t *x1_values_addr,
-                                                         int64_t *x1_shape_addr, int32_t *x2_values_addr,
-                                                         int32_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, int32_t *x1_values_addr,
-                                                         int32_t *x1_shape_addr, int32_t *x2_values_addr,
-                                                         int32_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, int64_t *x1_values_addr,
-                                                         int64_t *x1_shape_addr, int64_t *x2_values_addr,
-                                                         int64_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, int64_t *x1_values_addr,
-                                                         int32_t *x1_shape_addr, int64_t *x2_values_addr,
-                                                         int64_t *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, double *x1_values_addr,
-                                                         int64_t *x1_shape_addr, double *x2_values_addr,
-                                                         double *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, double *x1_values_addr,
-                                                         int32_t *x1_shape_addr, double *x2_values_addr,
-                                                         double *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, Complex<float> *x1_values_addr,
-                                                         int64_t *x1_shape_addr, Complex<float> *x2_values_addr,
-                                                         Complex<float> *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, Complex<float> *x1_values_addr,
-                                                         int32_t *x1_shape_addr, Complex<float> *x2_values_addr,
-                                                         Complex<float> *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, Complex<double> *x1_values_addr,
-                                                         int64_t *x1_shape_addr, Complex<double> *x2_values_addr,
-                                                         Complex<double> *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, Complex<double> *x1_values_addr,
-                                                         int32_t *x1_shape_addr, Complex<double> *x2_values_addr,
-                                                         Complex<double> *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, float *x1_values_addr,
-                                                         int32_t *x1_shape_addr, float *x2_values_addr,
-                                                         float *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int32_t *x1_indices_addr, half *x1_values_addr,
-                                                         int32_t *x1_shape_addr, half *x2_values_addr,
-                                                         half *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, float *x1_values_addr,
-                                                         int64_t *x1_shape_addr, float *x2_values_addr,
-                                                         float *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                         int64_t *x1_indices_addr, half *x1_values_addr,
-                                                         int64_t *x1_shape_addr, half *x2_values_addr,
-                                                         half *y_addr, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr, uint8_t *x1_values_addr,
+                                                                int64_t *x1_shape_addr, uint8_t *x2_values_addr,
+                                                                uint8_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr, uint8_t *x1_values_addr,
+                                                                int32_t *x1_shape_addr, uint8_t *x2_values_addr,
+                                                                uint8_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr, int8_t *x1_values_addr,
+                                                                int64_t *x1_shape_addr, int8_t *x2_values_addr,
+                                                                int8_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr, int8_t *x1_values_addr,
+                                                                int32_t *x1_shape_addr, int8_t *x2_values_addr,
+                                                                int8_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr, uint16_t *x1_values_addr,
+                                                                int64_t *x1_shape_addr, uint16_t *x2_values_addr,
+                                                                uint16_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr, uint16_t *x1_values_addr,
+                                                                int32_t *x1_shape_addr, uint16_t *x2_values_addr,
+                                                                uint16_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr, int16_t *x1_values_addr,
+                                                                int64_t *x1_shape_addr, int16_t *x2_values_addr,
+                                                                int16_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr, int16_t *x1_values_addr,
+                                                                int32_t *x1_shape_addr, int16_t *x2_values_addr,
+                                                                int16_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr, int32_t *x1_values_addr,
+                                                                int64_t *x1_shape_addr, int32_t *x2_values_addr,
+                                                                int32_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr, int32_t *x1_values_addr,
+                                                                int32_t *x1_shape_addr, int32_t *x2_values_addr,
+                                                                int32_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr, int64_t *x1_values_addr,
+                                                                int64_t *x1_shape_addr, int64_t *x2_values_addr,
+                                                                int64_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr, int64_t *x1_values_addr,
+                                                                int32_t *x1_shape_addr, int64_t *x2_values_addr,
+                                                                int64_t *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr, double *x1_values_addr,
+                                                                int64_t *x1_shape_addr, double *x2_values_addr,
+                                                                double *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr, double *x1_values_addr,
+                                                                int32_t *x1_shape_addr, double *x2_values_addr,
+                                                                double *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr,
+                                                                Complex<float> *x1_values_addr, int64_t *x1_shape_addr,
+                                                                Complex<float> *x2_values_addr, Complex<float> *y_addr,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr,
+                                                                Complex<float> *x1_values_addr, int32_t *x1_shape_addr,
+                                                                Complex<float> *x2_values_addr, Complex<float> *y_addr,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr,
+                                                                Complex<double> *x1_values_addr, int64_t *x1_shape_addr,
+                                                                Complex<double> *x2_values_addr,
+                                                                Complex<double> *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr,
+                                                                Complex<double> *x1_values_addr, int32_t *x1_shape_addr,
+                                                                Complex<double> *x2_values_addr,
+                                                                Complex<double> *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr, float *x1_values_addr,
+                                                                int32_t *x1_shape_addr, float *x2_values_addr,
+                                                                float *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int32_t *x1_indices_addr, half *x1_values_addr,
+                                                                int32_t *x1_shape_addr, half *x2_values_addr,
+                                                                half *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr, float *x1_values_addr,
+                                                                int64_t *x1_shape_addr, float *x2_values_addr,
+                                                                float *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                                int64_t *x1_indices_addr, half *x1_values_addr,
+                                                                int64_t *x1_shape_addr, half *x2_values_addr,
+                                                                half *y_addr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);

@@ -196,11 +196,12 @@ class ScaleAndTranslateGradHelperGpuKernel : public GpuKernelHelperBase {
     thread_num_[kIndex4] = output_pix_per_batch * batch_;
     thread_num_[kIndex5] = batch_ * origin_height_;
     thread_num_[kIndex6] = batch_ * origin_height_ * origin_width_;
-    CallScaleAndTranslateGrad(kernel_type_, input_grad_ptr, input_origin_image_ptr, radius_, input_shape_ptr, size_ptr,
-                              input_scale_ptr, input_translate_ptr, antialias_, spans_size_ptr, forward_starts_ptr,
-                              grad_starts_ptr, forward_weights_ptr, grad_weights_ptr, thread_num_, intermediate_ptr,
-                              input_pix_per_batch, intermediate_pix_per_batch, output_pix_per_batch, output_ptr,
-                              weight_size_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CallScaleAndTranslateGrad(
+      kernel_type_, input_grad_ptr, input_origin_image_ptr, radius_, input_shape_ptr, size_ptr, input_scale_ptr,
+      input_translate_ptr, antialias_, spans_size_ptr, forward_starts_ptr, grad_starts_ptr, forward_weights_ptr,
+      grad_weights_ptr, thread_num_, intermediate_ptr, input_pix_per_batch, intermediate_pix_per_batch,
+      output_pix_per_batch, output_ptr, weight_size_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

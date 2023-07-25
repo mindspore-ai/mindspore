@@ -41,7 +41,7 @@ cudaError_t CalAdaptiveMaxPool2DGrad(const T *input_data, const S *max_index, co
 
   AdaptiveMaxPool2DGradKernel<<<CUDA_BLOCKS(device_id, input_nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input_data, max_index, input_nchw, input_hw, output_hw, output_data);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 #define REG_ADAPTIVE_MAX_POOL2D_GRAD_CUDA(type1, type2)                                                 \

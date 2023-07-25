@@ -67,9 +67,10 @@ __global__ void RaggedRange(T *starts_addr, T *deltas_addr, T *output, TSPLITS *
 }
 
 template <typename T, typename TSPLITS>
-void CalRaggedRange(T *starts_addr, T *limits_addr, T *deltas_addr, TSPLITS *rt_nested_splits_addr,
-                    T *rt_dense_values_addr, TSPLITS *range_sizes_addr, const size_t nrows, bool broadcast_starts,
-                    bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalRaggedRange(T *starts_addr, T *limits_addr, T *deltas_addr, TSPLITS *rt_nested_splits_addr,
+                           T *rt_dense_values_addr, TSPLITS *range_sizes_addr, const size_t nrows,
+                           bool broadcast_starts, bool broadcast_limits, bool broadcast_deltas,
+                           const uint32_t &device_id, cudaStream_t cuda_stream) {
   cudaDeviceProp prop;
   (void)cudaGetDeviceProperties(&prop, device_id);
   int max_blocks = prop.multiProcessorCount;
@@ -79,7 +80,7 @@ void CalRaggedRange(T *starts_addr, T *limits_addr, T *deltas_addr, TSPLITS *rt_
 
   SetNestedSplitsStartingZero<<<1, 1, 0, cuda_stream>>>(rt_nested_splits_addr);
   if (nrows == 0) {
-    return;
+    return cudaSuccess;
   }
   size_t temp_storage_bytes = 0;
   (void)cub::DeviceScan::InclusiveSum(nullptr, temp_storage_bytes, range_sizes_addr, rt_nested_splits_addr + 1, nrows,
@@ -110,60 +111,45 @@ void CalRaggedRange(T *starts_addr, T *limits_addr, T *deltas_addr, TSPLITS *rt_
   dim3 block(1, block_num);
   RaggedRange<<<block, thread_num, 0, cuda_stream>>>(starts_addr, deltas_addr, rt_dense_values_addr,
                                                      rt_nested_splits_addr, broadcast_starts, broadcast_deltas, nrows);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalRaggedRange<int32_t, int32_t>(int32_t *starts_addr, int32_t *limits_addr,
-                                                               int32_t *deltas_addr, int32_t *rt_nested_splits_addr,
-                                                               int32_t *rt_dense_values_addr, int32_t *range_sizes_addr,
-                                                               const size_t nrows, bool broadcast_starts,
-                                                               bool broadcast_limits, bool broadcast_deltas,
-                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRaggedRange<int32_t, int32_t>(
+  int32_t *starts_addr, int32_t *limits_addr, int32_t *deltas_addr, int32_t *rt_nested_splits_addr,
+  int32_t *rt_dense_values_addr, int32_t *range_sizes_addr, const size_t nrows, bool broadcast_starts,
+  bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalRaggedRange<int32_t, int64_t>(int32_t *starts_addr, int32_t *limits_addr,
-                                                               int32_t *deltas_addr, int64_t *rt_nested_splits_addr,
-                                                               int32_t *rt_dense_values_addr, int64_t *range_sizes_addr,
-                                                               const size_t nrows, bool broadcast_starts,
-                                                               bool broadcast_limits, bool broadcast_deltas,
-                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRaggedRange<int32_t, int64_t>(
+  int32_t *starts_addr, int32_t *limits_addr, int32_t *deltas_addr, int64_t *rt_nested_splits_addr,
+  int32_t *rt_dense_values_addr, int64_t *range_sizes_addr, const size_t nrows, bool broadcast_starts,
+  bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalRaggedRange<int64_t, int32_t>(int64_t *starts_addr, int64_t *limits_addr,
-                                                               int64_t *deltas_addr, int32_t *rt_nested_splits_addr,
-                                                               int64_t *rt_dense_values_addr, int32_t *range_sizes_addr,
-                                                               const size_t nrows, bool broadcast_starts,
-                                                               bool broadcast_limits, bool broadcast_deltas,
-                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRaggedRange<int64_t, int32_t>(
+  int64_t *starts_addr, int64_t *limits_addr, int64_t *deltas_addr, int32_t *rt_nested_splits_addr,
+  int64_t *rt_dense_values_addr, int32_t *range_sizes_addr, const size_t nrows, bool broadcast_starts,
+  bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalRaggedRange<int64_t, int64_t>(int64_t *starts_addr, int64_t *limits_addr,
-                                                               int64_t *deltas_addr, int64_t *rt_nested_splits_addr,
-                                                               int64_t *rt_dense_values_addr, int64_t *range_sizes_addr,
-                                                               const size_t nrows, bool broadcast_starts,
-                                                               bool broadcast_limits, bool broadcast_deltas,
-                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRaggedRange<int64_t, int64_t>(
+  int64_t *starts_addr, int64_t *limits_addr, int64_t *deltas_addr, int64_t *rt_nested_splits_addr,
+  int64_t *rt_dense_values_addr, int64_t *range_sizes_addr, const size_t nrows, bool broadcast_starts,
+  bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalRaggedRange<float, int32_t>(float *starts_addr, float *limits_addr, float *deltas_addr,
-                                                             int32_t *rt_nested_splits_addr,
-                                                             float *rt_dense_values_addr, int32_t *range_sizes_addr,
-                                                             const size_t nrows, bool broadcast_starts,
-                                                             bool broadcast_limits, bool broadcast_deltas,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRaggedRange<float, int32_t>(
+  float *starts_addr, float *limits_addr, float *deltas_addr, int32_t *rt_nested_splits_addr,
+  float *rt_dense_values_addr, int32_t *range_sizes_addr, const size_t nrows, bool broadcast_starts,
+  bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalRaggedRange<float, int64_t>(float *starts_addr, float *limits_addr, float *deltas_addr,
-                                                             int64_t *rt_nested_splits_addr,
-                                                             float *rt_dense_values_addr, int64_t *range_sizes_addr,
-                                                             const size_t nrows, bool broadcast_starts,
-                                                             bool broadcast_limits, bool broadcast_deltas,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRaggedRange<float, int64_t>(
+  float *starts_addr, float *limits_addr, float *deltas_addr, int64_t *rt_nested_splits_addr,
+  float *rt_dense_values_addr, int64_t *range_sizes_addr, const size_t nrows, bool broadcast_starts,
+  bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalRaggedRange<double, int32_t>(double *starts_addr, double *limits_addr,
-                                                              double *deltas_addr, int32_t *rt_nested_splits_addr,
-                                                              double *rt_dense_values_addr, int32_t *range_sizes_addr,
-                                                              const size_t nrows, bool broadcast_starts,
-                                                              bool broadcast_limits, bool broadcast_deltas,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRaggedRange<double, int32_t>(
+  double *starts_addr, double *limits_addr, double *deltas_addr, int32_t *rt_nested_splits_addr,
+  double *rt_dense_values_addr, int32_t *range_sizes_addr, const size_t nrows, bool broadcast_starts,
+  bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalRaggedRange<double, int64_t>(double *starts_addr, double *limits_addr,
-                                                              double *deltas_addr, int64_t *rt_nested_splits_addr,
-                                                              double *rt_dense_values_addr, int64_t *range_sizes_addr,
-                                                              const size_t nrows, bool broadcast_starts,
-                                                              bool broadcast_limits, bool broadcast_deltas,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRaggedRange<double, int64_t>(
+  double *starts_addr, double *limits_addr, double *deltas_addr, int64_t *rt_nested_splits_addr,
+  double *rt_dense_values_addr, int64_t *range_sizes_addr, const size_t nrows, bool broadcast_starts,
+  bool broadcast_limits, bool broadcast_deltas, const uint32_t &device_id, cudaStream_t cuda_stream);

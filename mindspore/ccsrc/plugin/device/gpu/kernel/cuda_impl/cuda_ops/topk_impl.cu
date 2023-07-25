@@ -82,8 +82,8 @@ inline __device__ void TopKInBuffer(T *shared_K, S *shared_V, int *watermark, T 
   int R = kWarpQueuePerLane;
   while (L < R) {
     int m = (L + R) / 2;
-    CmpKV<T, S>::gt(shared_K[laneId * kWarpQueuePerLane + m],
-                    shared_V[laneId * kWarpQueuePerLane + m], (*ceil_K), (*ceil_V))
+    CmpKV<T, S>::gt(shared_K[laneId * kWarpQueuePerLane + m], shared_V[laneId * kWarpQueuePerLane + m], (*ceil_K),
+                    (*ceil_V))
       ? L = m + 1
       : R = m;
   }
@@ -211,8 +211,8 @@ __global__ void TopKBlock(int outer_size, int inner_size, const T *input, T *out
 }
 
 template <typename T, typename S>
-void FastTopK(const int outer_size, const int inner_size, const T *input, S k_cut, T *output, S *output_index,
-              const T init_K, cudaStream_t stream) {
+cudaError_t FastTopK(const int outer_size, const int inner_size, const T *input, S k_cut, T *output, S *output_index,
+                     const T init_K, cudaStream_t stream) {
   int block_num_limit = outer_size < 128 ? outer_size : 128;
   if (k_cut > inner_size) k_cut = inner_size;
 
@@ -227,9 +227,11 @@ void FastTopK(const int outer_size, const int inner_size, const T *input, S k_cu
     // cuda 11.6 has lower # threads.  Set lower number for all platforms for consistency
     TOPK_HELPER(512, 256, 3, true);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void FastTopK(const int outer_size, const int inner_size, const half *input, int k_cut,
-                                       half *output, int *output_index, const half init_K, cudaStream_t stream);
-template CUDA_LIB_EXPORT void FastTopK(const int outer_size, const int inner_size, const float *input, int k_cut,
-                                       float *output, int *output_index, const float init_K, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t FastTopK(const int outer_size, const int inner_size, const half *input, int k_cut,
+                                              half *output, int *output_index, const half init_K, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t FastTopK(const int outer_size, const int inner_size, const float *input, int k_cut,
+                                              float *output, int *output_index, const float init_K,
+                                              cudaStream_t stream);

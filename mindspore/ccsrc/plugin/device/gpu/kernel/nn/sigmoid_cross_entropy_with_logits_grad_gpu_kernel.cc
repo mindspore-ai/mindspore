@@ -47,8 +47,9 @@ bool SigmoidCrossEntropyWithLogitsGradGpuKernelMod::LaunchKernel(const std::vect
   T *dout_addr = GetDeviceAddress<T>(inputs, 2);
   T *outputs_addr = GetDeviceAddress<T>(outputs, 0);
 
-  SigmoidCrossEntropyWithLogitsGrad(inputs[0]->size / sizeof(T), logits_addr, labels_addr, dout_addr, outputs_addr,
-                                    reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = SigmoidCrossEntropyWithLogitsGrad(inputs[0]->size / sizeof(T), logits_addr, labels_addr, dout_addr,
+                                                  outputs_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

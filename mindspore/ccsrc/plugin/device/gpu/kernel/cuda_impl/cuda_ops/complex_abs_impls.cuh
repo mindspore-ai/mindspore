@@ -21,7 +21,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void ComplexAbs(const size_t nums, const T *x, S *y, const uint32_t &device_id,
-                                cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t ComplexAbs(const size_t nums, const T *x, S *y, const uint32_t &device_id,
+                                       cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_COMPLEX_ABS_IMPL_CUH_

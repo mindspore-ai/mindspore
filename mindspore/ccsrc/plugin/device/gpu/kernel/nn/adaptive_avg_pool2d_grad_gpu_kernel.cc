@@ -73,7 +73,7 @@ bool AdaptiveAvgPool2DGradKernelMod::LaunchKernel(const std::vector<AddressPtr> 
 
   auto status = ApplyAdaptiveAvgPool2DGrad(size_, input_height_, input_width_, output_height_, output_width_, dy_addr,
                                            dx_addr, wk_addr, reinterpret_cast<cudaStream_t>(stream_ptr_));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

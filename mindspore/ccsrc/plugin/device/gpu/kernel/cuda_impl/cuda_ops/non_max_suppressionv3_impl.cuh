@@ -20,8 +20,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename M, typename S>
-CUDA_LIB_EXPORT int DoNms(const int num_input, int *count, int *num_keep, T *scores, T *boxes_in, M iou_threshold_,
-                          M score_threshold_, int *index_buff, S max_output_size_, int box_size, unsigned int *sel_mask,
-                          bool *sel_boxes, int *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t DoNms(const int num_input, int *count, int *num_keep, T *scores, T *boxes_in,
+                                  M iou_threshold_, M score_threshold_, int *index_buff, S max_output_size_,
+                                  int box_size, unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
+                                  const uint32_t &device_id, cudaStream_t cuda_stream, int *output_size);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_MATH_NONMAXSUPPRESSIONV3_IMPL_CUH_

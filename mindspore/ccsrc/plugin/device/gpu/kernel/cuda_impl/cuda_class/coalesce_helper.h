@@ -98,10 +98,11 @@ class CoalesceHelperGpuKernel : public GpuKernelHelperBase {
     (void)GetDeviceAddress<int64_t>(output_ptrs, DIM2, kernel_name_, &output_shape);
     int ret_flag_host = 0;
 
-    output_shape_num_ =
+    auto status =
       Coalesce(origin_indices, unique_indices, shape_elements_, indices_num_, values_num_, &ret_flag_host,
                flatten_input_indices, input_indices, input_values, input_shape, output_indices, output_value,
-               output_shape, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+               output_shape, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream), &output_shape_num_);
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return ret_flag_host;
   }
   TensorInfo GetOutputTensorInfo() override {

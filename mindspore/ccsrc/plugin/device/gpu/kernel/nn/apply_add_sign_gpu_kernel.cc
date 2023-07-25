@@ -107,7 +107,7 @@ bool ApplyAddSignGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   T *accumulation_out = GetDeviceAddress<T>(outputs, 1);
   auto status = ApplyAddSign(t_elements_, variable, accumulation, learning_rate, alpha, sign_decay, beta, gradient,
                              device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(variable_out, variable, outputs.at(kIndex0)->size, cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),

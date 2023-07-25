@@ -47,8 +47,9 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
     T *stat = GetDeviceAddress<T>(inputs, 5);
     T *output_param = GetDeviceAddress<T>(outputs, 0);
 
-    SGD(size_, dampening_, weight_decay_, nesterov_, lr, momentum, grad, param, accum, stat,
-        reinterpret_cast<cudaStream_t>(stream));
+    auto status = SGD(size_, dampening_, weight_decay_, nesterov_, lr, momentum, grad, param, accum, stat,
+                      reinterpret_cast<cudaStream_t>(stream));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output_param, param, sizeof(T) * size_, cudaMemcpyDeviceToDevice,
                                                        reinterpret_cast<cudaStream_t>(stream)),
                                        kernel_name_ + " SGD cudaMemcpyAsync params to outputs failed");

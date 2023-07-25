@@ -306,9 +306,11 @@ bool SparseApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   auto *thready_pos_shrink = reinterpret_cast<int32_t *>(workspace[kIndex3]->addr);
   auto *shrink_num = reinterpret_cast<int32_t *>(workspace[kIndex4]->addr);
 
-  CalSparseApplyAdagradDA(batch_size_, indices_size_, input_elements_, var, accum, squared_accum, grad, indices, lr, l1,
-                          l2, global_step, output_var, indices_sort, rows_index, thready_pos, thready_pos_shrink,
-                          shrink_num, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status =
+    CalSparseApplyAdagradDA(batch_size_, indices_size_, input_elements_, var, accum, squared_accum, grad, indices, lr,
+                            l1, l2, global_step, output_var, indices_sort, rows_index, thready_pos, thready_pos_shrink,
+                            shrink_num, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -79,12 +79,15 @@ bool StridedSliceGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
                                                 const std::vector<AddressPtr> &outputs) {
   T *dy = GetDeviceAddress<T>(inputs, 0);
   T *dx = GetDeviceAddress<T>(outputs, 0);
-  FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   if (null_output_) {
     return true;
   }
 
-  StridedSliceGrad(output_shape_, begin_, strides_, input_shape_, dy, dx, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  status = StridedSliceGrad(output_shape_, begin_, strides_, input_shape_, dy, dx,
+                            reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

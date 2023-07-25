@@ -159,9 +159,10 @@ class FractionalMaxPoolWithFixedKsizeHelperGpuKernel : public GpuKernelHelperBas
       outer_size *= output_shape_[i];
     }
 
-    CalFractionalmaxpoolwithfixedksize(input_ptr, random_samples_ptr, output_ptr, argmax_ptr, outputH_, outputW_,
-                                       inputN_, inputC_, inputH_, inputW_, kernelsizeH_, kernelsizeW_, outer_size,
-                                       device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalFractionalmaxpoolwithfixedksize(
+      input_ptr, random_samples_ptr, output_ptr, argmax_ptr, outputH_, outputW_, inputN_, inputC_, inputH_, inputW_,
+      kernelsizeH_, kernelsizeW_, outer_size, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

@@ -48,22 +48,22 @@ __global__ void SparseApplyAdagradUpdate(const size_t size, const size_t indices
 }
 
 template <typename T, typename S>
-void CalSparseApplyAdagrad(const size_t size, const size_t indices_size, const float learning_rate,
-                           const bool update_slots, const T *gradient, const S *indices, T *variable, T *accumulation,
-                           T *variable_out, T *accumulation_out, cudaStream_t cuda_stream) {
+cudaError_t CalSparseApplyAdagrad(const size_t size, const size_t indices_size, const float learning_rate,
+                                  const bool update_slots, const T *gradient, const S *indices, T *variable,
+                                  T *accumulation, T *variable_out, T *accumulation_out, cudaStream_t cuda_stream) {
   SparseApplyAdagradUpdate<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, indices_size, learning_rate, update_slots, gradient, indices, variable, accumulation, variable_out,
     accumulation_out);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalSparseApplyAdagrad<float, int>(const size_t size, const size_t indices_size,
-                                                                const float learning_rate, const bool update_slots,
-                                                                const float *gradient, const int *indices,
-                                                                float *variable, float *accumulation,
-                                                                float *variable_out, float *accumulation_out,
-                                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagrad<half, int>(const size_t size, const size_t indices_size,
-                                                               const float learning_rate, const bool update_slots,
-                                                               const half *gradient, const int *indices, half *variable,
-                                                               half *accumulation, half *variable_out,
-                                                               half *accumulation_out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagrad<float, int>(
+  const size_t size, const size_t indices_size, const float learning_rate, const bool update_slots,
+  const float *gradient, const int *indices, float *variable, float *accumulation, float *variable_out,
+  float *accumulation_out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagrad<half, int>(const size_t size, const size_t indices_size,
+                                                                      const float learning_rate,
+                                                                      const bool update_slots, const half *gradient,
+                                                                      const int *indices, half *variable,
+                                                                      half *accumulation, half *variable_out,
+                                                                      half *accumulation_out, cudaStream_t cuda_stream);

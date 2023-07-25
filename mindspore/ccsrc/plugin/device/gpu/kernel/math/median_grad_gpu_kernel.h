@@ -69,8 +69,10 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
       cudaMemsetAsync(repeat_val, 0, sizeof(int), reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemset failed in repeat_val.");
 
-    MedianGrad(y_grad, x, y, indices, output0_addr, axis_, global_median_, input0_size_, input1_size_, input1_dim_,
-               elem_num_each_dim_x, elem_num_each_dim_y, repeat_val, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status =
+      MedianGrad(y_grad, x, y, indices, output0_addr, axis_, global_median_, input0_size_, input1_size_, input1_dim_,
+                 elem_num_each_dim_x, elem_num_each_dim_y, repeat_val, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

@@ -187,10 +187,10 @@ bool SparseApplyMomentumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     }
   }
 
-  CalSparseApplyMomentum(input_elements_, indices_size_, var, accum, lr, grad, indices, momentum, use_nesterov_,
-                         indices_sort, rows_index, thready_pos, thready_pos_shrink, shrink_num, var_out, device_id_,
-                         reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto status = CalSparseApplyMomentum(input_elements_, indices_size_, var, accum, lr, grad, indices, momentum,
+                                       use_nesterov_, indices_sort, rows_index, thready_pos, thready_pos_shrink,
+                                       shrink_num, var_out, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

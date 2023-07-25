@@ -77,15 +77,18 @@ class ExtractImagePatchesKernelMod : public NativeGpuKernelMod, public MatchKern
       OutInfo.shape[i] = static_cast<int>(t_output_shape_[i]);
       OutInfo.perm[i] = static_cast<int>(to_nchw_axis[i]);
     }
-    CalNCHW2NHWCInterface(input_size_, kValue4, input, &input_shape_[0], &to_nhwc_axis[0], InInfo, t_input,
-                          reinterpret_cast<cudaStream_t>(stream_ptr_));
-    CalExtractImagePatchesNHWC(output_size_, stride_row_, stride_col_, rate_row_, rate_col_, output_cols_, need_batch_,
-                               row_stride_, patch_stride_, other_stride_, input_row_size_, input_col_size_,
-                               row_padding_top_, col_padding_left_, col_input_stride_, row_input_stride_,
-                               patch_input_stride_, output_depth_, t_input, t_output,
-                               reinterpret_cast<cudaStream_t>(stream_ptr_));
-    CalNHWC2NCHWInterface(output_size_, kValue4, t_output, &t_output_shape_[0], &to_nchw_axis[0], OutInfo, output,
-                          reinterpret_cast<cudaStream_t>(stream_ptr_));
+    auto status = CalNCHW2NHWCInterface(input_size_, kValue4, input, &input_shape_[0], &to_nhwc_axis[0], InInfo,
+                                        t_input, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalExtractImagePatchesNHWC(output_size_, stride_row_, stride_col_, rate_row_, rate_col_, output_cols_,
+                                        need_batch_, row_stride_, patch_stride_, other_stride_, input_row_size_,
+                                        input_col_size_, row_padding_top_, col_padding_left_, col_input_stride_,
+                                        row_input_stride_, patch_input_stride_, output_depth_, t_input, t_output,
+                                        reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalNHWC2NCHWInterface(output_size_, kValue4, t_output, &t_output_shape_[0], &to_nchw_axis[0], OutInfo,
+                                   output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

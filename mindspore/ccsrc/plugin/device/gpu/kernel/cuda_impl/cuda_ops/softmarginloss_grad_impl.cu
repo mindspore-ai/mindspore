@@ -62,9 +62,9 @@ __global__ void SoftMarginLossGradReductionOtherKernel(const half *prediction, c
 }
 
 template <typename T>
-void SoftMarginLossGrad(const T *prediction, const T *target, const T *dout, const size_t input_size, const T norm,
-                        const ReductionMode &reduction, T *gradient, const uint32_t &device_id,
-                        cudaStream_t cuda_stream) {
+cudaError_t SoftMarginLossGrad(const T *prediction, const T *target, const T *dout, const size_t input_size,
+                               const T norm, const ReductionMode &reduction, T *gradient, const uint32_t &device_id,
+                               cudaStream_t cuda_stream) {
   if (reduction == ReductionMode::kNone) {
     SoftMarginLossGradReductionNoneKernel<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0,
                                             cuda_stream>>>(prediction, target, dout, input_size, norm, gradient);
@@ -72,20 +72,20 @@ void SoftMarginLossGrad(const T *prediction, const T *target, const T *dout, con
     SoftMarginLossGradReductionOtherKernel<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0,
                                              cuda_stream>>>(prediction, target, dout, input_size, norm, gradient);
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SoftMarginLossGrad(const float *prediction, const float *target, const float *dout,
-                                                 const size_t input_size, const float norm,
-                                                 const ReductionMode &reduction, float *gradient,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftMarginLossGrad(const float *prediction, const float *target, const float *dout,
+                                                        const size_t input_size, const float norm,
+                                                        const ReductionMode &reduction, float *gradient,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void SoftMarginLossGrad(const half *prediction, const half *target, const half *dout,
-                                                 const size_t input_size, const half norm,
-                                                 const ReductionMode &reduction, half *gradient,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftMarginLossGrad(const half *prediction, const half *target, const half *dout,
+                                                        const size_t input_size, const half norm,
+                                                        const ReductionMode &reduction, half *gradient,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void SoftMarginLossGrad(const double *prediction, const double *target, const double *dout,
-                                                 const size_t input_size, const double norm,
-                                                 const ReductionMode &reduction, double *gradient,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftMarginLossGrad(const double *prediction, const double *target,
+                                                        const double *dout, const size_t input_size, const double norm,
+                                                        const ReductionMode &reduction, double *gradient,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);

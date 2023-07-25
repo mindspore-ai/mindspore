@@ -26,46 +26,50 @@ struct PadInfo {
 };
 
 template <typename T>
-CUDA_LIB_EXPORT void CalPad(const size_t size, const T *input, const int num, const int channels, const int old_height,
-                            const int old_width, const int padded_height, const int padded_width, const int pad_top,
-                            const int pad_left, float pad_value, T *output, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalPad(const size_t size, const T *input, const int num, const int channels,
+                                   const int old_height, const int old_width, const int padded_height,
+                                   const int padded_width, const int pad_top, const int pad_left, float pad_value,
+                                   T *output, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalPadGrad(const size_t size, const T *dy, const int num, const int channels, const int old_height,
-                                const int old_width, const int padded_height, const int padded_width, const int pad_top,
-                                const int pad_left, T *dx, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalPadGrad(const size_t size, const T *dy, const int num, const int channels,
+                                       const int old_height, const int old_width, const int padded_height,
+                                       const int padded_width, const int pad_top, const int pad_left, T *dx,
+                                       cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalPadNHWC(const size_t size, const T *input, const int num, const int old_height,
-                                const int old_width, const int channels, const int padded_height,
-                                const int padded_width, const int pad_top, const int pad_left, float pad_value,
-                                T *output, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalPadNHWC(const size_t size, const T *input, const int num, const int old_height,
+                                       const int old_width, const int channels, const int padded_height,
+                                       const int padded_width, const int pad_top, const int pad_left, float pad_value,
+                                       T *output, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalPadGradNHWC(const size_t size, const T *input, const int num, const int old_height,
-                                    const int old_width, const int channels, const int padded_height,
-                                    const int padded_width, const int pad_top, const int pad_left, T *output,
-                                    cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalPadGradNHWC(const size_t size, const T *input, const int num, const int old_height,
+                                           const int old_width, const int channels, const int padded_height,
+                                           const int padded_width, const int pad_top, const int pad_left, T *output,
+                                           cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalPadGeneral(const T *input, T *output, const PadInfo &info, const int input_size,
-                                   const size_t input_rank, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalPadGeneral(const T *input, T *output, const PadInfo &info, const int input_size,
+                                          const size_t input_rank, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalPad3d(const size_t size, const T *input, const int num, const int channels, const int old_depth,
-                              const int old_height, const int old_width, const int padded_depth,
-                              const int padded_height, const int padded_width, const int pad_head, const int pad_top,
-                              const int pad_left, const float pad_value, T *output, cudaStream_t cuda_stream);
-template <typename T>
-CUDA_LIB_EXPORT void CalPadGrad3d(const size_t size, const T *dy, const int num, const int channels,
-                                  const int old_depth, const int old_height, const int old_width,
-                                  const int padded_depth, const int padded_height, const int padded_width,
-                                  const int pad_head, const int pad_top, const int pad_left, T *dx,
-                                  cudaStream_t cuda_stream);
-template <typename T>
-CUDA_LIB_EXPORT void CalPadNDHWC(const size_t size, const T *input, const int num, const int old_depth,
-                                 const int old_height, const int old_width, const int channels, const int padded_depth,
-                                 const int padded_height, const int padded_width, const int pad_head, const int pad_top,
-                                 const int pad_left, const float pad_value, T *output, cudaStream_t cuda_stream);
-template <typename T>
-CUDA_LIB_EXPORT void CalPadGradNDHWC(const size_t size, const T *dy, const int num, const int old_depth,
-                                     const int old_height, const int old_width, const int channels,
+CUDA_LIB_EXPORT cudaError_t CalPad3d(const size_t size, const T *input, const int num, const int channels,
+                                     const int old_depth, const int old_height, const int old_width,
                                      const int padded_depth, const int padded_height, const int padded_width,
-                                     const int pad_head, const int pad_top, const int pad_left, T *dx,
-                                     cudaStream_t cuda_stream);
+                                     const int pad_head, const int pad_top, const int pad_left, const float pad_value,
+                                     T *output, cudaStream_t cuda_stream);
+template <typename T>
+CUDA_LIB_EXPORT cudaError_t CalPadGrad3d(const size_t size, const T *dy, const int num, const int channels,
+                                         const int old_depth, const int old_height, const int old_width,
+                                         const int padded_depth, const int padded_height, const int padded_width,
+                                         const int pad_head, const int pad_top, const int pad_left, T *dx,
+                                         cudaStream_t cuda_stream);
+template <typename T>
+CUDA_LIB_EXPORT cudaError_t CalPadNDHWC(const size_t size, const T *input, const int num, const int old_depth,
+                                        const int old_height, const int old_width, const int channels,
+                                        const int padded_depth, const int padded_height, const int padded_width,
+                                        const int pad_head, const int pad_top, const int pad_left,
+                                        const float pad_value, T *output, cudaStream_t cuda_stream);
+template <typename T>
+CUDA_LIB_EXPORT cudaError_t CalPadGradNDHWC(const size_t size, const T *dy, const int num, const int old_depth,
+                                            const int old_height, const int old_width, const int channels,
+                                            const int padded_depth, const int padded_height, const int padded_width,
+                                            const int pad_head, const int pad_top, const int pad_left, T *dx,
+                                            cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_PAD_IMPL_CUH_

@@ -18,6 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNIQUE_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT int CalUnique(const T *input, int num_elements, S *input_index, S *sorted_index, T *output, S *index,
-                              cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalUnique(const T *input, int num_elements, S *input_index, S *sorted_index, T *output,
+                                      S *index, cudaStream_t cuda_stream, int *output_size);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNIQUE_IMPL_CUH_

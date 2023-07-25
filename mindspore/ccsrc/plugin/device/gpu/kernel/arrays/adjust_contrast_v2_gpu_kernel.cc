@@ -125,7 +125,7 @@ bool AdjustContrastV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
 
   auto status = CalAdjustContrastV2GpuKernel(images, contrast_factor, images_out, total_, per_batch_elements_,
                                              device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

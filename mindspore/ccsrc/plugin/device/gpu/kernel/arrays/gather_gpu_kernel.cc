@@ -42,7 +42,7 @@ bool GatherFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   auto status = Gather(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[kIndex2], dims_[kIndex3],
                        cuda_stream, GET_CTX_DEVICE_ID);
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

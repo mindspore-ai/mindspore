@@ -20,7 +20,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void FastTopK(const int outer, const int inner, const T *input_addr, S k_cut, T *output, S *indices,
-                              const T initK, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t FastTopK(const int outer, const int inner, const T *input_addr, S k_cut, T *output,
+                                     S *indices, const T initK, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TOPK_IMPL_CUH_

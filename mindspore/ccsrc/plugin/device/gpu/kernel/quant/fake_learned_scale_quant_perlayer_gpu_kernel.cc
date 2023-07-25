@@ -85,10 +85,12 @@ bool FakeLearnedScaleQuantPerLayerGpuKernelMod::Launch(const std::vector<Address
     // control flow for quant_delay
     if (global_step_ >= quant_delay_) {
       // real launch
-      CalLSQNudgePerLayer(input, quant_num_, input_alpha, input_quant_max, input_div_alpha, input_quant, neg_trunc_,
-                          reinterpret_cast<cudaStream_t>(stream_ptr));
-      CalFakeLearnedScaleQuantPerLayer(output, quant_num_, input_alpha, input_quant,
-                                       reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto status = CalLSQNudgePerLayer(input, quant_num_, input_alpha, input_quant_max, input_div_alpha, input_quant,
+                                        neg_trunc_, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      status = CalFakeLearnedScaleQuantPerLayer(output, quant_num_, input_alpha, input_quant,
+                                                reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
       CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                                 cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
@@ -98,10 +100,12 @@ bool FakeLearnedScaleQuantPerLayerGpuKernelMod::Launch(const std::vector<Address
     global_step_++;
   } else {
     // real launch
-    CalLSQNudgePerLayer(input, quant_num_, input_alpha, input_quant_max, input_div_alpha, input_quant, neg_trunc_,
-                        reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalFakeLearnedScaleQuantPerLayer(output, quant_num_, input_alpha, input_quant,
-                                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalLSQNudgePerLayer(input, quant_num_, input_alpha, input_quant_max, input_div_alpha, input_quant,
+                                      neg_trunc_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalFakeLearnedScaleQuantPerLayer(output, quant_num_, input_alpha, input_quant,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 
   return true;

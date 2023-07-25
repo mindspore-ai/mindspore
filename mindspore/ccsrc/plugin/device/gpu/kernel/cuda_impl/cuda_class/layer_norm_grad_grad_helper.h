@@ -186,9 +186,10 @@ class LayerNormGradGradHelperGpuKernel : public GpuKernelHelperBase {
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemsetAsync(global_sum2, 0, input_size_, reinterpret_cast<cudaStream_t>(cuda_stream)),
       "Call cudaMemsetAsync global_sum2 failed");
-    CalLayerNormGradGrad(input_row_, input_col_, param_dim_, global_sum1, global_sum2, epsilon_, dy, x, mean, var,
-                         gamma, grad_dx, grad_dg, grad_db, d_dy, d_x, d_gamma,
-                         reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalLayerNormGradGrad(input_row_, input_col_, param_dim_, global_sum1, global_sum2, epsilon_, dy, x,
+                                       mean, var, gamma, grad_dx, grad_dg, grad_db, d_dy, d_x, d_gamma,
+                                       reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

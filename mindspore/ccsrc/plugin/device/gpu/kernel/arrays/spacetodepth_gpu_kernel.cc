@@ -87,8 +87,9 @@ bool SpaceToDepthGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   // get input size
   size_t size = in_ * ic_ * ih_ * iw_;
   // call cuda kernel
-  CalSpaceToDepth(size, input, in_, ic_, ih_, iw_, on_, oc_, oh_, ow_, block_size_, output,
-                  reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status = CalSpaceToDepth(size, input, in_, ic_, ih_, iw_, on_, oc_, oh_, ow_, block_size_, output,
+                                reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 #define DTYPE_REGISTER_ATTR(INPUT, OUTPUT, T) \

@@ -20,7 +20,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalDilation2DBackpropFilter(
+CUDA_LIB_EXPORT cudaError_t CalDilation2DBackpropFilter(
   const T *input, const T *filter, const T *out_backprop, T *output, const std::vector<int64_t> &input_shape,
   const std::vector<int64_t> &filter_shape, const std::vector<int64_t> &out_backprop_shape,
   const std::vector<int64_t> &output_shape, const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,

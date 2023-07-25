@@ -57,8 +57,9 @@ bool GatherGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   S *grad_addr = GetDeviceAddress<S>(inputs, grad_idx_);
   S *output_addr = GetDeviceAddress<S>(outputs, 0);
 
-  GatherGrad(index_addr, grad_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], dims_[kIndex3],
-             reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = GatherGrad(index_addr, grad_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2],
+                           dims_[kIndex3], reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

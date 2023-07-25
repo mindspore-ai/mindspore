@@ -79,9 +79,12 @@ bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::LaunchKernel(const std::vecto
     cudaMemset(y_ptr, 0, outputs[0]->size);
     return true;
   }
-  int ret_flag_host = CalSparseSegmentMeanWithNumSegments(
-    x_ptr, indices_ptr, segment_ids_ptr, num_segments_ptr, segment_pos_ptr, y_ptr, outer_size_, inner_size_,
-    indices_size_, segment_size_, x_size_, y_size_, batch_size_, ret_flag_device, device_id_, cuda_stream);
+  int ret_flag_host = 0;
+  auto status =
+    CalSparseSegmentMeanWithNumSegments(x_ptr, indices_ptr, segment_ids_ptr, num_segments_ptr, segment_pos_ptr, y_ptr,
+                                        outer_size_, inner_size_, indices_size_, segment_size_, x_size_, y_size_,
+                                        batch_size_, ret_flag_device, device_id_, cuda_stream, &ret_flag_host);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   int FALSE_1 = 1;
   int FALSE_2 = 2;
   int FALSE_3 = 3;

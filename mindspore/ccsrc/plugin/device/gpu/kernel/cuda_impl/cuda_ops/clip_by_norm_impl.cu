@@ -75,21 +75,26 @@ __global__ void CompKernel(const size_t size, const float *x, const float *temp_
 }
 
 template <typename T>
-void AbsOp(const size_t size, const T *in, T *out, cudaStream_t cuda_stream) {
+cudaError_t AbsOp(const size_t size, const T *in, T *out, cudaStream_t cuda_stream) {
   AbsKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, in, out);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void AbsOp<float>(const size_t size, const float *in, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t AbsOp<float>(const size_t size, const float *in, float *out,
+                                                  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void AbsOp<half>(const size_t size, const half *in, half *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t AbsOp<half>(const size_t size, const half *in, half *out,
+                                                 cudaStream_t cuda_stream);
 
 template <typename T>
-void CompOp(const size_t size, const T *x, const T *temp_output_addr, float *output_addr, cudaStream_t cuda_stream) {
+cudaError_t CompOp(const size_t size, const T *x, const T *temp_output_addr, float *output_addr,
+                   cudaStream_t cuda_stream) {
   CompKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, x, temp_output_addr, output_addr);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CompOp<float>(const size_t size, const float *x, const float *temp_output_addr,
-                                            float *output_addr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CompOp<float>(const size_t size, const float *x, const float *temp_output_addr,
+                                                   float *output_addr, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CompOp<half>(const size_t size, const half *x, const half *temp_output_addr,
-                                           float *output_addr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CompOp<half>(const size_t size, const half *x, const half *temp_output_addr,
+                                                  float *output_addr, cudaStream_t cuda_stream);

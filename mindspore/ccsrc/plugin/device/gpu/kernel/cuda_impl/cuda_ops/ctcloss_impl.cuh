@@ -19,41 +19,41 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalculateFwdVar(T *log_alpha_b, int *label_value_with_blank, T *softmax_probs,
-                                     const int *sequence_length, bool ctc_merge_repeated, int batch, int SOffSet,
-                                     int maxtime, int blank, int *label_squence_length, int *cum_labels_length,
-                                     bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalculateFwdVar(T *log_alpha_b, int *label_value_with_blank, T *softmax_probs,
+                                            const int *sequence_length, bool ctc_merge_repeated, int batch, int SOffSet,
+                                            int maxtime, int blank, int *label_squence_length, int *cum_labels_length,
+                                            bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalculateBwdVar(T *log_beta_b, int *label_value_with_blank, T *softmax_probs,
-                                     const int *sequence_length, bool ctc_merge_repeated, int batch, int SOffSet,
-                                     int maxtime, int blank, int *label_squence_length, int *cum_labels_length,
-                                     bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalculateBwdVar(T *log_beta_b, int *label_value_with_blank, T *softmax_probs,
+                                            const int *sequence_length, bool ctc_merge_repeated, int batch, int SOffSet,
+                                            int maxtime, int blank, int *label_squence_length, int *cum_labels_length,
+                                            bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void InnerSoftMax(const T *probs, T *softmax_cost, const int *sequence_length, int max_time, int batch,
-                                  int numclass, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t InnerSoftMax(const T *probs, T *softmax_cost, const int *sequence_length, int max_time,
+                                         int batch, int numclass, cudaStream_t stream);
 
-CUDA_LIB_EXPORT void GenLabelValuePCR(int *label_value_sp, int *label_value_pcr, int *label_squence_length,
-                                      int *cum_labels_length, int *max_labels_length, int batch, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t GenLabelValuePCR(int *label_value_sp, int *label_value_pcr, int *label_squence_length,
+                                             int *cum_labels_length, int *max_labels_length, int batch,
+                                             cudaStream_t stream);
 
-CUDA_LIB_EXPORT void GenLabelWithBlank(int *label_value, int *label_value_with_blank, int *label_squence_length,
-                                       int *precum_labels_length, int *cum_labels_length, int batch, int blank,
-                                       cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t GenLabelWithBlank(int *label_value, int *label_value_with_blank, int *label_squence_length,
+                                              int *precum_labels_length, int *cum_labels_length, int batch, int blank,
+                                              cudaStream_t stream);
 
-CUDA_LIB_EXPORT void GenLabelValue(int *label_value_sp, const int64_t *label_indices, const int *label_values,
-                                   int *label_squence_length, int *cum_labels_length, int *max_labels_length,
-                                   int size, int blank,
-                                   int batch, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t GenLabelValue(int *label_value_sp, const int64_t *label_indices, const int *label_values,
+                                          int *label_squence_length, int *cum_labels_length, int *max_labels_length,
+                                          int size, int blank, int batch, cudaStream_t stream);
 
-CUDA_LIB_EXPORT void CalculatePreLength(int *label_squence_length, int *precum_labels_length, int *cum_labels_length,
-                                        int *max_labels_length, const int64_t *label_indices, int batch, int size,
-                                        cudaStream_t stream);
-CUDA_LIB_EXPORT void CalculateMaxSequence(const int *sequence_length, int *max_labels_length, int batch,
-                                          cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalculatePreLength(int *label_squence_length, int *precum_labels_length,
+                                               int *cum_labels_length, int *max_labels_length,
+                                               const int64_t *label_indices, int batch, int size, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalculateMaxSequence(const int *sequence_length, int *max_labels_length, int batch,
+                                                 cudaStream_t stream);
 template <typename T>
-CUDA_LIB_EXPORT void CTCLoss(T *log_alpha_b, T *log_beta_b, T *softmax_probs, int *label_value_with_blank, int batch,
-                             int SOffSet, int maxtime, int numclass, const int *sequence_length,
-                             int *label_squence_length, int *cum_labels_length, T *cost, T *grads, T *prob_num,
-                             bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CTCLoss(T *log_alpha_b, T *log_beta_b, T *softmax_probs, int *label_value_with_blank,
+                                    int batch, int SOffSet, int maxtime, int numclass, const int *sequence_length,
+                                    int *label_squence_length, int *cum_labels_length, T *cost, T *grads, T *prob_num,
+                                    bool ignore_longer_outputs_than_inputs, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CTCLOSS_IMPL_CUH_

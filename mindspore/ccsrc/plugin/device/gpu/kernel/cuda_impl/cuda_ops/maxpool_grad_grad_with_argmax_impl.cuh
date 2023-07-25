@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MAXPOOL_GRAD_GRAD_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename I>
-CUDA_LIB_EXPORT void CalMaxPoolGradGradWithArgmax(const T *grad, const I *argmax, const int batch,
-                                                  const int input_stride, const int output_stride, T *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMaxPoolGradGradWithArgmax(const T *grad, const I *argmax, const int batch,
+                                                         const int input_stride, const int output_stride, T *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MAXPOOL_GRAD_GRAD_IMPL_CUH_

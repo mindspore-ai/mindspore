@@ -17,11 +17,12 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SOFTPLUS_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SOFTPLUS_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-template<typename T>
-CUDA_LIB_EXPORT void Softplus(const size_t input_size, const T* input_addr, T* output_addr, cudaStream_t cuda_stream);
+template <typename T>
+CUDA_LIB_EXPORT cudaError_t Softplus(const size_t input_size, const T *input_addr, T *output_addr,
+                                     cudaStream_t cuda_stream);
 
-template<typename T>
-CUDA_LIB_EXPORT void SoftplusGrad(const size_t size, const T* dy_addr, const T* x_addr, T* dx_addr,
-                                  cudaStream_t cuda_stream);
+template <typename T>
+CUDA_LIB_EXPORT cudaError_t SoftplusGrad(const size_t size, const T *dy_addr, const T *x_addr, T *dx_addr,
+                                         cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SOFTPLUS_IMPL_CUH_

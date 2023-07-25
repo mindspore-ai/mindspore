@@ -31,8 +31,9 @@ bool StridedSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
-  StridedSlice(input_shape_, begin_, strides_, output_shape_, input, output,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = StridedSlice(input_shape_, begin_, strides_, output_shape_, input, output,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

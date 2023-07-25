@@ -35,8 +35,9 @@ bool HSigmoidGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   T *x_addr = GetDeviceAddress<T>(inputs, 1);
   T *dx_addr = GetDeviceAddress<T>(outputs, 0);
 
-  CalHSigmoidGrad(static_cast<size_t>(input_elements_), dy_addr, x_addr, dx_addr,
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalHSigmoidGrad(static_cast<size_t>(input_elements_), dy_addr, x_addr, dx_addr,
+                                reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -25,9 +25,10 @@ __global__ void InitKernel(const int env_num, const int agent_num, const GameSet
   }
 }
 
-void InitEnv(const int env_num, const int agent_num, const GameSetting *setting, AgentState *state,
-             cudaStream_t stream) {
+cudaError_t InitEnv(const int env_num, const int agent_num, const GameSetting *setting, AgentState *state,
+                    cudaStream_t stream) {
   InitKernel<<<(env_num * agent_num + 255) / 256, 256, 0, stream>>>(env_num, agent_num, setting, state);
+  return GetCudaStatus();
 }
 
 __device__ __forceinline__ void ConstructFullyObservation(const int &x, const int &y, const int &eid, const int &aid,
@@ -114,10 +115,11 @@ __global__ void ResetKernel(const int env_num, const int agent_num, const GameSe
   }
 }
 
-void ResetEnv(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state, float *state,
-              cudaStream_t stream) {
+cudaError_t ResetEnv(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state,
+                     float *state, cudaStream_t stream) {
   size_t shm_size = agent_num * sizeof(int);
   ResetKernel<<<env_num, 256, shm_size, stream>>>(env_num, agent_num, setting, agent_state, state);
+  return GetCudaStatus();
 }
 
 __global__ void StepBindBlockKernel(const int env_num, const int agent_num, const GameSetting *setting,
@@ -237,11 +239,12 @@ __global__ void StepBindBlockKernel(const int env_num, const int agent_num, cons
   }
 }
 
-void StepBindBlock(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state,
-                   const int *action, float *state, float *reward, bool *done, cudaStream_t stream) {
+cudaError_t StepBindBlock(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state,
+                          const int *action, float *state, float *reward, bool *done, cudaStream_t stream) {
   size_t shm_size = env_num * agent_num * sizeof(float) * 2;
   StepBindBlockKernel<<<env_num, 256, shm_size, stream>>>(env_num, agent_num, setting, agent_state, action, state,
                                                           reward, done);
+  return GetCudaStatus();
 }
 
 __global__ void UpdateAgentLoc(const int env_num, const int agent_num, const GameSetting *setting,
@@ -365,9 +368,9 @@ __global__ void ConstructStepOutput(const int env_num, const int agent_num, cons
   }
 }
 
-void StepCrossBlock(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state,
-                    const int *action, float *state, float *reward, bool *done, float *team_reward, int *distance,
-                    cudaStream_t stream) {
+cudaError_t StepCrossBlock(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state,
+                           const int *action, float *state, float *reward, bool *done, float *team_reward,
+                           int *distance, cudaStream_t stream) {
   // Update agent location, construct observation, done.
   int block_dim = 256;
   int grid_dim = (env_num * agent_num + block_dim - 1) / block_dim;
@@ -380,6 +383,7 @@ void StepCrossBlock(const int env_num, const int agent_num, const GameSetting *s
   // Construct step output.
   ConstructStepOutput<<<grid_dim, block_dim, 0, stream>>>(env_num, agent_num, setting, agent_state, state, reward, done,
                                                           team_reward, distance);
+  return GetCudaStatus();
 }
 
 __global__ void AgentStateCopyKernel(const int env_num, const int agent_num, AgentState *dst, AgentState *src) {
@@ -398,8 +402,10 @@ __global__ void AgentStateCopyKernel(const int env_num, const int agent_num, Age
   }
 }
 
-void AgentStateCopy(const int env_num, const int agent_num, AgentState *dst, AgentState *src, cudaStream_t stream) {
+cudaError_t AgentStateCopy(const int env_num, const int agent_num, AgentState *dst, AgentState *src,
+                           cudaStream_t stream) {
   int block_dim = 256;
   int grid_dim = (env_num * agent_num + block_dim - 1) / block_dim;
   AgentStateCopyKernel<<<grid_dim, block_dim, 0, stream>>>(env_num, agent_num, dst, src);
+  return GetCudaStatus();
 }

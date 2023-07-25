@@ -20,13 +20,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalSparseApplyMomentum(const size_t size, const size_t indices_size, T *var, T *accum,
-                                            const T *lr, const T *grad, const S *indices,
-                                            const T *momentum, const bool use_nesterov,
-                                            S *indices_sort, int32_t *rows_index,
-                                            int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                            int32_t *shrink_num, T *var_out,
-                                            const uint32_t &device_id,
-                                            cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseApplyMomentum(const size_t size, const size_t indices_size, T *var, T *accum,
+                                                   const T *lr, const T *grad, const S *indices, const T *momentum,
+                                                   const bool use_nesterov, S *indices_sort, int32_t *rows_index,
+                                                   int32_t *thready_pos, int32_t *thready_pos_shrink,
+                                                   int32_t *shrink_num, T *var_out, const uint32_t &device_id,
+                                                   cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSEAPPLYMOMENTUM__CUH_

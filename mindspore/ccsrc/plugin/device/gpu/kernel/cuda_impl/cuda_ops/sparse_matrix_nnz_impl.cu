@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include "sparse_matrix_nnz_impl.cuh"
-
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sparse_matrix_nnz_impl.cuh"
 
 template <typename T>
 __global__ void SparseMatrixNNZ(const size_t size, const T *input, int32_t *output) {
@@ -26,15 +25,15 @@ __global__ void SparseMatrixNNZ(const size_t size, const T *input, int32_t *outp
 }
 
 template <typename T>
-void CalSparseMatrixNNZ(const size_t size, const T *input, int32_t *output, const uint32_t &device_id,
-                        cudaStream_t cuda_stream) {
+cudaError_t CalSparseMatrixNNZ(const size_t size, const T *input, int32_t *output, const uint32_t &device_id,
+                               cudaStream_t cuda_stream) {
   SparseMatrixNNZ<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
-template
-CUDA_LIB_EXPORT void CalSparseMatrixNNZ<int32_t>(const size_t size, const int32_t *input, int32_t *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSparseMatrixNNZ<int64_t>(const size_t size, const int64_t *input, int32_t *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixNNZ<int32_t>(const size_t size, const int32_t *input,
+                                                                 int32_t *output, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseMatrixNNZ<int64_t>(const size_t size, const int64_t *input,
+                                                                 int32_t *output, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);

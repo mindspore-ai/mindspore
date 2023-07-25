@@ -122,7 +122,7 @@ bool AdjustHueGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *output_image = GetDeviceAddress<T>(outputs, kIndex0);
   auto status = CalAdjusthue(input_elements, input_image, output_image, hue_delta, device_id_,
                              reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

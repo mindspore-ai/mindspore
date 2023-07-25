@@ -90,24 +90,24 @@ __global__ void NudgeMinMaxPerLayer(float *input_min, float *input_max, const fl
   return;
 }
 
-void CalFakeQuantPerLayer(const float *input, float *output, const int size, const float *nudge_min,
-                          const float *nudge_max, const float *scale, cudaStream_t cuda_stream) {
+cudaError_t CalFakeQuantPerLayer(const float *input, float *output, const int size, const float *nudge_min,
+                                 const float *nudge_max, const float *scale, cudaStream_t cuda_stream) {
   FakeQuantPerLayer<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, output, size, nudge_min, nudge_max,
                                                                        scale);
-  return;
+  return GetCudaStatus();
 }
 
-void CalFakeQuantPerLayerGrad(const float *input, const float *gradient, float *output, const int size,
-                              const float *nudge_min, const float *nudge_max, cudaStream_t cuda_stream) {
+cudaError_t CalFakeQuantPerLayerGrad(const float *input, const float *gradient, float *output, const int size,
+                                     const float *nudge_min, const float *nudge_max, cudaStream_t cuda_stream) {
   FakeQuantPerLayerGrad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, gradient, output, size, nudge_min,
                                                                            nudge_max);
-  return;
+  return GetCudaStatus();
 }
 
-void CalNudgePerLayer(float *input_min, float *input_max, const float quant_min, const float quant_max,
-                      float *nudge_min, float *nudge_max, float *scale, const bool symmetric,
-                      cudaStream_t cuda_stream) {
+cudaError_t CalNudgePerLayer(float *input_min, float *input_max, const float quant_min, const float quant_max,
+                             float *nudge_min, float *nudge_max, float *scale, const bool symmetric,
+                             cudaStream_t cuda_stream) {
   NudgeMinMaxPerLayer<<<1, 1, 0, cuda_stream>>>(input_min, input_max, quant_min, quant_max, nudge_min, nudge_max, scale,
                                                 symmetric);
-  return;
+  return GetCudaStatus();
 }

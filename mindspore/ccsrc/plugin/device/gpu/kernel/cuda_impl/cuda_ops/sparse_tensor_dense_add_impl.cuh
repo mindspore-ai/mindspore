@@ -19,8 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename I>
-CUDA_LIB_EXPORT void SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
-                                                I *x1_indices_addr, T *x1_values_addr, I *x1_shape_addr,
-                                                T *x2_values_addr, T *y_addr, const uint32_t &device_id,
-                                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t SparseTensorDenseAddKernel(size_t input_elements, size_t rank, size_t *x2_shape,
+                                                       I *x1_indices_addr, T *x1_values_addr, I *x1_shape_addr,
+                                                       T *x2_values_addr, T *y_addr, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_TENSOR_DENSE_ADD_IMPL_CUH_

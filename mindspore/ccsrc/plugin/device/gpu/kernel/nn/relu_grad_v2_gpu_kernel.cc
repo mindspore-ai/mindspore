@@ -59,7 +59,8 @@ bool ReluGradV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   MS_ERROR_IF_NULL_W_RET_VAL(mask, false);
   auto dx = GetDeviceAddress<T>(outputs, 0);
   MS_ERROR_IF_NULL_W_RET_VAL(dx, false);
-  ReluGradV2(element_num_, dy, mask, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = ReluGradV2(element_num_, dy, mask, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

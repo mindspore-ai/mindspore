@@ -38,30 +38,28 @@ __global__ void CopyLowToUp(const size_t size, const T *input, const int64_t ran
 }
 
 template <typename T>
-void CalCopyUpToLow(const size_t size, T *input, const int64_t rank, T *output, const uint32_t &device_id,
-                    cudaStream_t cuda_stream) {
-  CopyUpToLow<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, rank,
-                                                                                                output);
-  return;
+cudaError_t CalCopyUpToLow(const size_t size, T *input, const int64_t rank, T *output, const uint32_t &device_id,
+                           cudaStream_t cuda_stream) {
+  CopyUpToLow<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, rank, output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalCopyLowToUp(const size_t size, T *input, const int64_t rank, T *output, const uint32_t &device_id,
-                    cudaStream_t cuda_stream) {
-  CopyLowToUp<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, rank,
-                                                                                                output);
-  return;
+cudaError_t CalCopyLowToUp(const size_t size, T *input, const int64_t rank, T *output, const uint32_t &device_id,
+                           cudaStream_t cuda_stream) {
+  CopyLowToUp<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, rank, output);
+  return GetCudaStatus();
 }
 
-template
-CUDA_LIB_EXPORT void CalCopyUpToLow<float>(const size_t size, float *input, const int64_t rank,
-                                           float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalCopyUpToLow<double>(const size_t size, double *input, const int64_t rank,
-                                            double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalCopyLowToUp<float>(const size_t size, float *input, const int64_t rank,
-                                           float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalCopyLowToUp<double>(const size_t size, double *input, const int64_t rank,
-                                            double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyUpToLow<float>(const size_t size, float *input, const int64_t rank,
+                                                           float *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyUpToLow<double>(const size_t size, double *input, const int64_t rank,
+                                                            double *output, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyLowToUp<float>(const size_t size, float *input, const int64_t rank,
+                                                           float *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyLowToUp<double>(const size_t size, double *input, const int64_t rank,
+                                                            double *output, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);

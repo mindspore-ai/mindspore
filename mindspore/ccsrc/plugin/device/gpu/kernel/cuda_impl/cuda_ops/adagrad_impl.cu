@@ -173,7 +173,7 @@ cudaError_t ApplyAdagrad(const size_t size, const bool update_slots, const S *le
                          T *variable, T *accumulation, cudaStream_t cuda_stream) {
   ApplyAdagradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, update_slots, learning_rate, gradient,
                                                                         variable, accumulation);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdagrad<float, float, float>(const size_t size, const bool update_slots,

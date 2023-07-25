@@ -18,15 +18,15 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ROI_ALIGN_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T>
-CUDA_LIB_EXPORT void ROIAlign(const T *x, const T *roi_boxes, int roi_rows, int roi_cols, T *out_data,
-                              const T spatial_scale, const int sample_num, int roi_end_mode, const int channels,
-                              const int height, const int width, const int pooled_height, const int pooled_width,
-                              const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ROIAlign(const T *x, const T *roi_boxes, int roi_rows, int roi_cols, T *out_data,
+                                     const T spatial_scale, const int sample_num, int roi_end_mode, const int channels,
+                                     const int height, const int width, const int pooled_height, const int pooled_width,
+                                     const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void ROIAlignGrad(const T *dy, const T *roi_boxes, int batch_size, int roi_rows, int roi_cols, T *dx,
-                                  const T spatial_scale, const int sample_num, int roi_end_mode, const int channels,
-                                  const int height, const int width, const int pooled_height, const int pooled_width,
-                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ROIAlignGrad(const T *dy, const T *roi_boxes, int batch_size, int roi_rows, int roi_cols,
+                                         T *dx, const T spatial_scale, const int sample_num, int roi_end_mode,
+                                         const int channels, const int height, const int width, const int pooled_height,
+                                         const int pooled_width, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ROI_ALIGN_IMPL_CUH_

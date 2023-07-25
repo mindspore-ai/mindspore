@@ -125,8 +125,9 @@ bool OneHotGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   const T *on_value = GetDeviceAddress<T>(inputs, on_value_idx);
   const T *off_value = GetDeviceAddress<T>(inputs, off_value_idx);
   T *output = GetDeviceAddress<T>(outputs, 0);
-  OneHot(indices, depth_, on_value, off_value, left_dim_size_, right_dim_size_, output, device_id_,
-         reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = OneHot(indices, depth_, on_value, off_value, left_dim_size_, right_dim_size_, output, device_id_,
+                       reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

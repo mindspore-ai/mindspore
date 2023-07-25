@@ -161,8 +161,9 @@ bool ConjugateTransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(y, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "ConjugateTransposeGpuKernelMod cudaMemSet Failed");
-  CalConjugateTranspose(size, x, input_stride_, output_stride_, input_axis, shape_size_, y, device_id_,
-                        reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalConjugateTranspose(size, x, input_stride_, output_stride_, input_axis, shape_size_, y, device_id_,
+                                      reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 
@@ -192,8 +193,9 @@ bool ConjugateTransposeGpuKernelMod::LaunchComplexKernel(const std::vector<Addre
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(y, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "ConjugateTransposeGpuKernelMod cudaMemSet Failed");
-  CalConjugateTransposeComplex(size, x, input_stride_, output_stride_, input_axis, shape_size_, y, device_id_,
-                               reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalConjugateTransposeComplex(size, x, input_stride_, output_stride_, input_axis, shape_size_, y,
+                                             device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

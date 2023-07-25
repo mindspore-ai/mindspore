@@ -66,22 +66,23 @@ __global__ void StackIndices3D(const S *batch_pointers, const S *row_indices, co
 }
 
 template <typename S>
-void CallStackIndices2D(const S *row_indices, const S *col_indices, S *indices, int size, cudaStream_t cuda_stream) {
+cudaError_t CallStackIndices2D(const S *row_indices, const S *col_indices, S *indices, int size,
+                               cudaStream_t cuda_stream) {
   StackIndices2D<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(row_indices, col_indices, indices, size);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename S>
-void CallStackIndices3D(const S *batch_pointers, const S *row_indices, const S *col_indices, S *indices, int batch_size,
-                        int total_nnz, size_t shared_memory_size, cudaStream_t cuda_stream) {
-  StackIndices3D<<<GET_BLOCKS(total_nnz), GET_THREADS, shared_memory_size, cuda_stream>>>
-    (batch_pointers, row_indices, col_indices, indices, batch_size, total_nnz);
-  return;
+cudaError_t CallStackIndices3D(const S *batch_pointers, const S *row_indices, const S *col_indices, S *indices,
+                               int batch_size, int total_nnz, size_t shared_memory_size, cudaStream_t cuda_stream) {
+  StackIndices3D<<<GET_BLOCKS(total_nnz), GET_THREADS, shared_memory_size, cuda_stream>>>(
+    batch_pointers, row_indices, col_indices, indices, batch_size, total_nnz);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CallStackIndices2D<int>(const int *row_indices, const int *col_indices, int *indices,
-                                                      int size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CallStackIndices3D<int>(const int *batch_pointers, const int *row_indices,
-                                                      const int *col_indices, int *indices, int batch_size,
-                                                      int total_nnz, size_t shared_memory_size,
-                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CallStackIndices2D<int>(const int *row_indices, const int *col_indices,
+                                                             int *indices, int size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CallStackIndices3D<int>(const int *batch_pointers, const int *row_indices,
+                                                             const int *col_indices, int *indices, int batch_size,
+                                                             int total_nnz, size_t shared_memory_size,
+                                                             cudaStream_t cuda_stream);

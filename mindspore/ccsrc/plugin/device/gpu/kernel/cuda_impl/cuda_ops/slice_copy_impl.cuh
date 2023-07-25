@@ -21,7 +21,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
-                                const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
-                                const T *update, T *output, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
+                                       const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape,
+                                       const T *update, T *output, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SLICE_COPY_IMPL_CUH_

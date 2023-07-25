@@ -18,18 +18,18 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void TransposeEyeMatrix(S *lu_pivots_ptr, T *pivots_ptr, S *final_order, const int64_t batch_num,
-                                        const int64_t lu_data_dim1, const int64_t lu_pivots_dim,
-                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t TransposeEyeMatrix(S *lu_pivots_ptr, T *pivots_ptr, S *final_order, const int64_t batch_num,
+                                               const int64_t lu_data_dim1, const int64_t lu_pivots_dim,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalTrilAux(const size_t size, const T *input, const int64_t out_row, const int64_t out_col,
-                                const int64_t lu_row, const int64_t lu_col, T *output, const uint32_t &device_id,
-                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalTrilAux(const size_t size, const T *input, const int64_t out_row, const int64_t out_col,
+                                       const int64_t lu_row, const int64_t lu_col, T *output, const uint32_t &device_id,
+                                       cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalTriuAux(const size_t size, const T *input, const int64_t out_row, const int64_t out_col,
-                                const int64_t lu_row, const int64_t lu_col, T *output, const uint32_t &device_id,
-                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalTriuAux(const size_t size, const T *input, const int64_t out_row, const int64_t out_col,
+                                       const int64_t lu_row, const int64_t lu_col, T *output, const uint32_t &device_id,
+                                       cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LUUNPACK_IMPL_CUH_

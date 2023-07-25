@@ -99,7 +99,7 @@ bool UpsampleTrilinear3DGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   auto status = CalUpsampleTrilinear3D<T, S>(input, n_, c_, input_d_, input_h_, input_w_, output_d_, output_h_,
                                              output_w_, depth_scale, height_scale, width_scale, align_corners_, output,
                                              device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

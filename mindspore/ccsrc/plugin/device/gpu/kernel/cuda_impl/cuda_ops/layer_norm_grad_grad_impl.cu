@@ -372,10 +372,10 @@ __global__ void InputPropKernel(const int row_dim, const int col_dim, const int 
 }
 
 template <typename T>
-void CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim, T *global_sum1, T *global_sum2,
-                          const T &epsilon, const T *dy, const T *x, const float *mean, const float *var,
-                          const T *gamma, const T *grad_dx, const T *grad_dg, const T *grad_db, T *d_dy, T *d_x,
-                          T *d_gamma, cudaStream_t stream) {
+cudaError_t CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim, T *global_sum1,
+                                 T *global_sum2, const T &epsilon, const T *dy, const T *x, const float *mean,
+                                 const float *var, const T *gamma, const T *grad_dx, const T *grad_dg, const T *grad_db,
+                                 T *d_dy, T *d_x, T *d_gamma, cudaStream_t stream) {
   int share_mem_size = THREAD_PER_BLOCK / WARP_SIZE * NUM_SHARED_SUM_INPUT * sizeof(T);
   InputPropKernel<<<row_dim, THREAD_PER_BLOCK, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, dy, x,
                                                                          mean, var, gamma, grad_dx, grad_dg, grad_db,
@@ -384,17 +384,18 @@ void CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &par
   int param_reduce_dim = row_dim * col_dim / param_dim;
   GammaAndBetaPropKernel<<<param_dim, THREAD_PER_BLOCK, share_mem_size, stream>>>(
     param_reduce_dim, param_dim, col_dim, epsilon, dy, x, mean, var, grad_dx, d_gamma, global_sum1, global_sum2);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim,
-                                                   float *global_sum1, float *global_sum2, const float &epsilon,
-                                                   const float *dy, const float *x, const float *mean, const float *var,
-                                                   const float *gamma, const float *grad_dx, const float *grad_dg,
-                                                   const float *grad_db, float *d_dy, float *d_x, float *d_gamma,
-                                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim,
-                                                   half *global_sum1, half *global_sum2, const half &epsilon,
-                                                   const half *dy, const half *x, const float *mean, const float *var,
-                                                   const half *gamma, const half *grad_dx, const half *grad_dg,
-                                                   const half *grad_db, half *d_dy, half *d_x, half *d_gamma,
-                                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim,
+                                                          float *global_sum1, float *global_sum2, const float &epsilon,
+                                                          const float *dy, const float *x, const float *mean,
+                                                          const float *var, const float *gamma, const float *grad_dx,
+                                                          const float *grad_dg, const float *grad_db, float *d_dy,
+                                                          float *d_x, float *d_gamma, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim,
+                                                          half *global_sum1, half *global_sum2, const half &epsilon,
+                                                          const half *dy, const half *x, const float *mean,
+                                                          const float *var, const half *gamma, const half *grad_dx,
+                                                          const half *grad_dg, const half *grad_db, half *d_dy,
+                                                          half *d_x, half *d_gamma, cudaStream_t stream);

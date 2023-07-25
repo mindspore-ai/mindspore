@@ -115,17 +115,17 @@ bool SoftmaxGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     size_t size = input_size_ / sizeof(T);
     auto s1 =
       CalTranspose(size, y_addr, x_info, shape_size_, transpose_y_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(s1, "Transpose called by " + kernel_name_);
+    CHECK_CUDA_STATUS(s1, "Transpose called by " + kernel_name_);
     auto s2 =
       CalTranspose(size, dy_addr, x_info, shape_size_, transpose_dy_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(s2, "Transpose called by " + kernel_name_);
+    CHECK_CUDA_STATUS(s2, "Transpose called by " + kernel_name_);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSoftmaxBackward(cudnn_handle_, algo_, mode_, &alpha, y_desc_, transpose_y_addr, y_desc_, transpose_dy_addr,
                            &beta, y_desc_, transpose_dx_addr),
       kernel_name_ + "cudnnSoftmaxBackward failed");
     auto s3 =
       CalTranspose(size, transpose_dx_addr, y_info, shape_size_, dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(s3, "Transpose called by " + kernel_name_);
+    CHECK_CUDA_STATUS(s3, "Transpose called by " + kernel_name_);
   }
   return true;
 }

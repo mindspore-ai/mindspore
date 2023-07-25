@@ -40,36 +40,38 @@ __global__ void SoftShrinkGradComp(size_t size, const T *dy_addr, const T *x_add
 }
 
 template <typename T>
-void SoftShrink(const size_t &size, const T *input, const float lambd, T *output, const uint32_t &device_id,
-                cudaStream_t cuda_stream) {
+cudaError_t SoftShrink(const size_t &size, const T *input, const float lambd, T *output, const uint32_t &device_id,
+                       cudaStream_t cuda_stream) {
   SoftShrinkComp<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, lambd, output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void SoftShrinkGrad(const size_t &size, const T *dy_addr, const T *x_addr, const float lambd, T *dx_addr,
-                    const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t SoftShrinkGrad(const size_t &size, const T *dy_addr, const T *x_addr, const float lambd, T *dx_addr,
+                           const uint32_t &device_id, cudaStream_t cuda_stream) {
   SoftShrinkGradComp<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, dy_addr, x_addr,
                                                                                                 lambd, dx_addr);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SoftShrink(const size_t &size, const half *input, const float lambd, half *output,
-                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SoftShrink(const size_t &size, const float *input, const float lambd, float *output,
-                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SoftShrink(const size_t &size, const int *input, const float lambd, int *output,
-                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SoftShrink(const size_t &size, const int64_t *input, const float lambd, int64_t *output,
-                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftShrink(const size_t &size, const half *input, const float lambd, half *output,
+                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftShrink(const size_t &size, const float *input, const float lambd,
+                                                float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftShrink(const size_t &size, const int *input, const float lambd, int *output,
+                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftShrink(const size_t &size, const int64_t *input, const float lambd,
+                                                int64_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void SoftShrinkGrad(const size_t &size, const half *dy_addr, const half *x_addr,
-                                             const float lambd, half *dx_addr, const uint32_t &device_id,
-                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SoftShrinkGrad(const size_t &size, const float *dy_addr, const float *x_addr,
-                                             const float lambd, float *dx_addr, const uint32_t &device_id,
-                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SoftShrinkGrad(const size_t &size, const int *dy_addr, const int *x_addr,
-                                             const float lambd, int *dx_addr, const uint32_t &device_id,
-                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SoftShrinkGrad(const size_t &size, const int64_t *dy_addr, const int64_t *x_addr,
-                                             const float lambd, int64_t *dx_addr, const uint32_t &device_id,
-                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftShrinkGrad(const size_t &size, const half *dy_addr, const half *x_addr,
+                                                    const float lambd, half *dx_addr, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftShrinkGrad(const size_t &size, const float *dy_addr, const float *x_addr,
+                                                    const float lambd, float *dx_addr, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftShrinkGrad(const size_t &size, const int *dy_addr, const int *x_addr,
+                                                    const float lambd, int *dx_addr, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SoftShrinkGrad(const size_t &size, const int64_t *dy_addr, const int64_t *x_addr,
+                                                    const float lambd, int64_t *dx_addr, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);

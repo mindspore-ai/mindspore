@@ -39,18 +39,20 @@ __global__ void Mvlgamma(const size_t size, const T *input, const int p, T *outp
 }
 
 template <typename T>
-int CalMvlgamma(int *valid, const size_t size, const T *input, const int p, T *output, const uint32_t &device_id,
-                cudaStream_t cuda_stream) {
-  int host_valid = -1;
+cudaError_t CalMvlgamma(int *valid, const size_t size, const T *input, const int p, T *output,
+                        const uint32_t &device_id, cudaStream_t cuda_stream, int *host_valid) {
+  *host_valid = -1;
   int thread_num = size > 256 ? 256 : size;
   cudaMemsetAsync(valid, -1, sizeof(int), cuda_stream);
   Mvlgamma<<<CUDA_BLOCKS_CAL(device_id, size, thread_num), thread_num, 0, cuda_stream>>>(size, input, p, output, valid);
-  cudaMemcpyAsync(&host_valid, valid, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream);
+  cudaMemcpyAsync(host_valid, valid, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream);
   cudaStreamSynchronize(cuda_stream);
-  return host_valid;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT int CalMvlgamma<float>(int *valid, const size_t size, const float *input, const int p,
-                                                float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int CalMvlgamma<double>(int *valid, const size_t size, const double *input, const int p,
-                                                 double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMvlgamma<float>(int *valid, const size_t size, const float *input, const int p,
+                                                        float *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream, int *host_valid);
+template CUDA_LIB_EXPORT cudaError_t CalMvlgamma<double>(int *valid, const size_t size, const double *input,
+                                                         const int p, double *output, const uint32_t &device_id,
+                                                         cudaStream_t cuda_streamy, int *host_valid);

@@ -21,23 +21,23 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void StandardNormal(int seed, int seed2, int seed_offset, curandStatePhilox4_32_10_t *globalState,
-                                    T *output, size_t count, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t StandardNormal(int seed, int seed2, int seed_offset,
+                                           curandStatePhilox4_32_10_t *globalState, T *output, size_t count,
+                                           cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT bool UniformInt(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
-                                T *input1, size_t input_size_1, T *input2, size_t input_size_2,
-                                T *output, size_t count, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t UniformInt(int seed, int seed2, curandStatePhilox4_32_10_t *globalState, T *input1,
+                                       size_t input_size_1, T *input2, size_t input_size_2, T *output, size_t count,
+                                       cudaStream_t cuda_stream, bool *host_error_res);
 template <typename T>
-CUDA_LIB_EXPORT void UniformReal(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
-                                 T *output, size_t count, cudaStream_t cuda_stream);
-template<typename S>
-CUDA_LIB_EXPORT void TruncatedNormal(int seed, int seed2, curandState *globalState,
-                                     S *output, size_t count, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t UniformReal(int seed, int seed2, curandStatePhilox4_32_10_t *globalState, T *output,
+                                        size_t count, cudaStream_t cuda_stream);
+template <typename S>
+CUDA_LIB_EXPORT cudaError_t TruncatedNormal(int seed, int seed2, curandState *globalState, S *output, size_t count,
+                                            cudaStream_t cuda_stream);
 template <typename R, typename T>
-CUDA_LIB_EXPORT void RandomPoisson(int seed, int seed2, curandState *globalState,
-                                   R *rate, int64_t rate_size, T *output, size_t count,
-                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t RandomPoisson(int seed, int seed2, curandState *globalState, R *rate, int64_t rate_size,
+                                          T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void StandardLaplace(int seed, int seed2, curandState *globalState,
-                                    T *output, size_t count, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t StandardLaplace(int seed, int seed2, curandState *globalState, T *output, size_t count,
+                                            cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RANDOM_OP_IMPL_CUH_

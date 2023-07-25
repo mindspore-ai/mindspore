@@ -152,20 +152,22 @@ bool EuclideanNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(output, 0, output_elements_ * sizeof(T)),
                                     "EuclideanNormGpuKernelMod failed to set output cuda memory to zeros.");
+  cudaError_t status = cudaErrorNotReady;
   if constexpr ((std::is_same_v<T, int8_t>) || (std::is_same_v<T, int16_t>) || (std::is_same_v<T, uint8_t>) ||
                 (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, half>)) {
     auto middle_output = GetDeviceAddress<float>(workspace, kIndex3);
     auto middle_output_size = output_elements_ * sizeof(float);
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(middle_output, 0, middle_output_size),
                                       "LpNormGpuKernelMod failed  to set middle output cuda memory to zeros.");
-    CalEuclideanNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axes_output,
-                     device_output_stride, output_axes_.size(), output_elements_, middle_output, output, device_id_,
-                     reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = CalEuclideanNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axes_output,
+                              device_output_stride, output_axes_.size(), output_elements_, middle_output, output,
+                              device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
-    CalEuclideanNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axes_output,
-                     device_output_stride, output_axes_.size(), output_elements_, nullptr, output, device_id_,
-                     reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = CalEuclideanNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axes_output,
+                              device_output_stride, output_axes_.size(), output_elements_, nullptr, output, device_id_,
+                              reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

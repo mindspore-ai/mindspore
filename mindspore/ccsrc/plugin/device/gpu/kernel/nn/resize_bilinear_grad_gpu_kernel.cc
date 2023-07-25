@@ -113,8 +113,9 @@ bool ResizeBilinearGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemsetAsync(interim, 0, workspace_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemsetAsync dx_interim failed");
-  CalResizeBilinearGrad(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, half_pixel_centers_, dx, interim,
-                        device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalResizeBilinearGrad(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, half_pixel_centers_, dx,
+                                      interim, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 
@@ -132,8 +133,9 @@ bool ResizeBilinearGradGpuKernelMod::LaunchHalfKernel(const std::vector<AddressP
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemsetAsync(interim, 0, workspace_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemsetAsync dx_interim failed");
-  CalResizeBilinearGradHalf(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, half_pixel_centers_, dx, interim,
-                            device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalResizeBilinearGradHalf(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, half_pixel_centers_,
+                                          dx, interim, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

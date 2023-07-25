@@ -46,12 +46,13 @@ __global__ void SGDKernel(const int size, const T dampening, const T weight_deca
 }
 
 template <typename T>
-void SGD(const int size, const T dampening, const T weight_decay, const bool nesterov, const T *lr, const T *momentum,
-         const T *grad, T *param, T *accum, T *stat, cudaStream_t cuda_stream) {
+cudaError_t SGD(const int size, const T dampening, const T weight_decay, const bool nesterov, const T *lr,
+                const T *momentum, const T *grad, T *param, T *accum, T *stat, cudaStream_t cuda_stream) {
   SGDKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dampening, weight_decay, nesterov, grad, momentum,
                                                                lr, param, accum, stat);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SGD(const int size, const float dampening, const float weight_decay, const bool nesterov,
-                                  const float *lr, const float *momentum, const float *grad, float *param, float *accum,
-                                  float *stat, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SGD(const int size, const float dampening, const float weight_decay,
+                                         const bool nesterov, const float *lr, const float *momentum, const float *grad,
+                                         float *param, float *accum, float *stat, cudaStream_t cuda_stream);

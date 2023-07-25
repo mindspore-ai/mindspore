@@ -208,11 +208,11 @@ bool GeqrfGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 
   auto s1 = CalTranspose(batch_size_ * m_ * n_, input_x, x_info, input_x_dims_, d_input_x,
                          reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_LAUNCH_STATUS(s1, "Transpose called by " + kernel_name_);
+  CHECK_CUDA_STATUS(s1, "Transpose called by " + kernel_name_);
   LaunchGeqrf(d_input_x, d_output_y, output_tau, dev_info);
   auto s2 = CalTranspose(batch_size_ * m_ * n_, d_output_y, y_info, input_x_dims_, output_y,
                          reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_LAUNCH_STATUS(s2, "Transpose called by " + kernel_name_);
+  CHECK_CUDA_STATUS(s2, "Transpose called by " + kernel_name_);
 
   return true;
 }

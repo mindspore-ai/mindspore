@@ -71,9 +71,11 @@ bool BCEWithLogitsLossKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   T *pos_weight = GetDeviceAddress<T>(inputs, kIndex3);
   T *shape_broadcasted = GetDeviceAddress<T>(workspace, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  CalBCEWithLogitsLoss(input_size_, predict, target, input_shape_, input_shape_.size(), weight, weight_shape_,
-                       weight_need_broadcast_, pos_weight, pos_weight_shape_, pos_weight_need_broadcast_,
-                       shape_broadcasted, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status =
+    CalBCEWithLogitsLoss(input_size_, predict, target, input_shape_, input_shape_.size(), weight, weight_shape_,
+                         weight_need_broadcast_, pos_weight, pos_weight_shape_, pos_weight_need_broadcast_,
+                         shape_broadcasted, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

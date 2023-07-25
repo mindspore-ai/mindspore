@@ -29,23 +29,19 @@ __global__ void Ger(const size_t size, const T *row_input, const T *col_input, c
 }
 
 template <typename T>
-void CalGer(const size_t size, const T *row_input, const T *col_input, const size_t matrix_row, const size_t matrix_col,
-            T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalGer(const size_t size, const T *row_input, const T *col_input, const size_t matrix_row,
+                   const size_t matrix_col, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   Ger<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, row_input, col_input, matrix_row,
                                                                                  matrix_col, output);
-  return;
+  return GetCudaStatus();
 }
 
-template
-CUDA_LIB_EXPORT void CalGer<half>(const size_t size, const half *row_input, const half *col_input,
-                                  const size_t matrix_row, const size_t matrix_col, half *output,
-                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalGer<float>(const size_t size, const float *row_input, const float *col_input,
-                                   const size_t matrix_row, const size_t matrix_col, float *output,
-                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalGer<double>(const size_t size, const double *row_input, const double *col_input,
-                                    const size_t matrix_row, const size_t matrix_col, double *output,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT cudaError_t CalGer<half>(const size_t size, const half *row_input, const half *col_input,
+                                                  const size_t matrix_row, const size_t matrix_col, half *output,
+                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalGer<float>(const size_t size, const float *row_input, const float *col_input,
+                                                   const size_t matrix_row, const size_t matrix_col, float *output,
+                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalGer<double>(const size_t size, const double *row_input, const double *col_input,
+                                                    const size_t matrix_row, const size_t matrix_col, double *output,
+                                                    const uint32_t &device_id, cudaStream_t cuda_stream);

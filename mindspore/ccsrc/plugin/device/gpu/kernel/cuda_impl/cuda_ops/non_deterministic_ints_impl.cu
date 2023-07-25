@@ -15,9 +15,8 @@
  */
 
 #include "non_deterministic_ints_impl.cuh"
-template<typename T>
-__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState,
-                                           T *output, size_t count) {
+template <typename T>
+__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState, T *output, size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count / 4); i += blockDim.x * gridDim.x) {
     curand_init(seed, i, 0, &globalState[i]);
     uint4 i4 = curand4(&globalState[i]);
@@ -31,15 +30,15 @@ __global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t 
     uint4 i4 = curand4(&globalState[0]);
     size_t val = count % 4;
     for (size_t i = 0; i < val; i++) {
-      output[count-i-1] = (&i4.x)[i];
+      output[count - i - 1] = (&i4.x)[i];
     }
   }
   return;
 }
 
-template<>
-__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState,
-                                           int32_t *output, size_t count) {
+template <>
+__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState, int32_t *output,
+                                           size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count / 4); i += blockDim.x * gridDim.x) {
     curand_init(seed, i, 0, &globalState[i]);
     uint4 i4 = curand4(&globalState[i]);
@@ -53,15 +52,15 @@ __global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t 
     uint4 i4 = curand4(&globalState[0]);
     size_t val = count % 4;
     for (size_t i = 0; i < val; i++) {
-      output[count-i-1] = (&i4.x)[i];
+      output[count - i - 1] = (&i4.x)[i];
     }
   }
   return;
 }
 
-template<>
-__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState,
-                                           int64_t *output, size_t count) {
+template <>
+__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState, int64_t *output,
+                                           size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count / 2); i += blockDim.x * gridDim.x) {
     curand_init(seed, i, 0, &globalState[i]);
     uint4 i4 = curand4(&globalState[i]);
@@ -72,15 +71,15 @@ __global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t 
     curand_init(seed, 0, 0, &globalState[0]);
     uint4 i4 = curand4(&globalState[0]);
     if (count & 1) {
-      output[count-1] = ((int64_t)i4.x << 32) | i4.y;
+      output[count - 1] = ((int64_t)i4.x << 32) | i4.y;
     }
   }
   return;
 }
 
-template<>
-__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState,
-                                           uint32_t *output, size_t count) {
+template <>
+__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState, uint32_t *output,
+                                           size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count / 4); i += blockDim.x * gridDim.x) {
     curand_init(seed, i, 0, &globalState[i]);
     uint4 i4 = curand4(&globalState[i]);
@@ -94,15 +93,15 @@ __global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t 
     uint4 i4 = curand4(&globalState[0]);
     size_t val = count % 4;
     for (size_t i = 0; i < val; i++) {
-      output[count-i-1] = (&i4.x)[i];
+      output[count - i - 1] = (&i4.x)[i];
     }
   }
   return;
 }
 
-template<>
-__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState,
-                                           uint64_t *output, size_t count) {
+template <>
+__global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t *globalState, uint64_t *output,
+                                           size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count / 2); i += blockDim.x * gridDim.x) {
     curand_init(seed, i, 0, &globalState[i]);
     uint4 i4 = curand4(&globalState[i]);
@@ -113,33 +112,35 @@ __global__ void NonDeterministicIntsKernel(int seed, curandStatePhilox4_32_10_t 
     curand_init(seed, 0, 0, &globalState[0]);
     uint4 i4 = curand4(&globalState[0]);
     if (count & 1) {
-      output[count-1] = ((int64_t)i4.x << 32) | i4.y;
+      output[count - 1] = ((int64_t)i4.x << 32) | i4.y;
     }
   }
   return;
 }
 
-template<typename T>
-void LaunchNonDeterministicInts(curandStatePhilox4_32_10_t *globalState, T *output, size_t count,
-                                const uint32_t &device_id, cudaStream_t cuda_stream) {
+template <typename T>
+cudaError_t LaunchNonDeterministicInts(curandStatePhilox4_32_10_t *globalState, T *output, size_t count,
+                                       const uint32_t &device_id, cudaStream_t cuda_stream) {
   std::random_device rd;
   int seed = static_cast<int>(rd());
-  NonDeterministicIntsKernel<<<CUDA_BLOCKS(device_id, count), CUDA_THREADS(device_id), 0,
-                               cuda_stream>>>(seed, globalState, output, count);
-  return;
+  NonDeterministicIntsKernel<<<CUDA_BLOCKS(device_id, count), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    seed, globalState, output, count);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void LaunchNonDeterministicInts<int32_t>(curandStatePhilox4_32_10_t *globalState,
-                                                                  int32_t *output, size_t count,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void LaunchNonDeterministicInts<int64_t>(curandStatePhilox4_32_10_t *globalState,
-                                                                  int64_t *output, size_t count,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void LaunchNonDeterministicInts<uint32_t>(curandStatePhilox4_32_10_t *globalState,
-                                                                   uint32_t *output, size_t count,
-                                                                   const uint32_t &device_id,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void LaunchNonDeterministicInts<uint64_t>(curandStatePhilox4_32_10_t *globalState,
-                                                                   uint64_t *output, size_t count,
-                                                                   const uint32_t &device_id,
-                                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t LaunchNonDeterministicInts<int32_t>(curandStatePhilox4_32_10_t *globalState,
+                                                                         int32_t *output, size_t count,
+                                                                         const uint32_t &device_id,
+                                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t LaunchNonDeterministicInts<int64_t>(curandStatePhilox4_32_10_t *globalState,
+                                                                         int64_t *output, size_t count,
+                                                                         const uint32_t &device_id,
+                                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t LaunchNonDeterministicInts<uint32_t>(curandStatePhilox4_32_10_t *globalState,
+                                                                          uint32_t *output, size_t count,
+                                                                          const uint32_t &device_id,
+                                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t LaunchNonDeterministicInts<uint64_t>(curandStatePhilox4_32_10_t *globalState,
+                                                                          uint64_t *output, size_t count,
+                                                                          const uint32_t &device_id,
+                                                                          cudaStream_t cuda_stream);

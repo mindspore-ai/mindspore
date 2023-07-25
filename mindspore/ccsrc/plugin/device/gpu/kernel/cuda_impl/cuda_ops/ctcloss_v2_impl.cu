@@ -160,9 +160,10 @@ __global__ void LogLikelihoodKernel(const S *log_alpha_p, const T *input_length_
 }
 
 template <typename S, typename T>
-void CalCTCLossV2(const S *log_probs_p, const T *target_p, const T *input_len_p, const T *target_len_p,
-                  int64_t batch_size, int64_t max_target_length, int64_t time_series, T blank, dim3 log_probs_shape,
-                  dim3 log_alpha_shape, S *neg_log_p, S *log_alpha_p, uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalCTCLossV2(const S *log_probs_p, const T *target_p, const T *input_len_p, const T *target_len_p,
+                         int64_t batch_size, int64_t max_target_length, int64_t time_series, T blank,
+                         dim3 log_probs_shape, dim3 log_alpha_shape, S *neg_log_p, S *log_alpha_p, uint32_t device_id,
+                         cudaStream_t cuda_stream) {
   constexpr S neg_inf = -std::numeric_limits<S>::infinity();
   const size_t alpha_size = log_alpha_shape.x * log_alpha_shape.y * log_alpha_shape.z;
   thrust::device_ptr<S> dev_ptr(log_alpha_p);
@@ -185,6 +186,7 @@ void CalCTCLossV2(const S *log_probs_p, const T *target_p, const T *input_len_p,
                                                        log_alpha_shape, log_alpha_p);
   LogLikelihoodKernel<<<CUDA_BLOCKS(device_id, batch_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     log_alpha_p, input_len_p, target_len_p, batch_size, log_alpha_shape, neg_log_p);
+  return GetCudaStatus();
 }
 
 template <typename S, typename T>
@@ -357,11 +359,11 @@ __global__ void GradOutKernel(const S *grad_out, const S *log_probs, const T *in
 }
 
 template <typename S, typename T>
-void CalCTCLossGradV2(const S *grad_out, const S *log_probs, const T *targets, const T *input_lengths,
-                      const T *target_lengths, const S *neg_log_likelihood, const S *log_alpha, S *log_beta,
-                      int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length,
-                      bool zero_infinity, T blank, dim3 log_probs_shape, dim3 log_alpha_shape, S *grad,
-                      uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalCTCLossGradV2(const S *grad_out, const S *log_probs, const T *targets, const T *input_lengths,
+                             const T *target_lengths, const S *neg_log_likelihood, const S *log_alpha, S *log_beta,
+                             int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length,
+                             bool zero_infinity, T blank, dim3 log_probs_shape, dim3 log_alpha_shape, S *grad,
+                             uint32_t device_id, cudaStream_t cuda_stream) {
   constexpr S neg_inf = -std::numeric_limits<S>::infinity();
 
   const size_t grad_size = log_probs_shape.x * log_probs_shape.y * log_probs_shape.z;
@@ -398,52 +400,47 @@ void CalCTCLossGradV2(const S *grad_out, const S *log_probs, const T *targets, c
 
   GradOutKernel<<<CUDA_BLOCKS(device_id, grad_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     grad_out, log_probs, input_lengths, neg_log_likelihood, zero_infinity, log_probs_shape, grad);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalCTCLossV2<float, int>(const float *log_probs_p, const int *target_p,
-                                                       const int *input_len_p, const int *target_len_p,
-                                                       int64_t batch_size, int64_t target_stride, int64_t time_series,
-                                                       int blank, dim3 log_probs_shape, dim3 log_alpha_shape,
-                                                       float *neg_log_p, float *log_alpha_p, uint32_t device_id,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCTCLossV2<double, int>(const double *log_probs_p, const int *target_p,
-                                                        const int *input_len_p, const int *target_len_p,
-                                                        int64_t batch_size, int64_t target_stride, int64_t time_series,
-                                                        int blank, dim3 log_probs_shape, dim3 log_alpha_shape,
-                                                        double *neg_log_p, double *log_alpha_p, uint32_t device_id,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCTCLossV2<float, int>(
+  const float *log_probs_p, const int *target_p, const int *input_len_p, const int *target_len_p, int64_t batch_size,
+  int64_t target_stride, int64_t time_series, int blank, dim3 log_probs_shape, dim3 log_alpha_shape, float *neg_log_p,
+  float *log_alpha_p, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCTCLossV2<double, int>(
+  const double *log_probs_p, const int *target_p, const int *input_len_p, const int *target_len_p, int64_t batch_size,
+  int64_t target_stride, int64_t time_series, int blank, dim3 log_probs_shape, dim3 log_alpha_shape, double *neg_log_p,
+  double *log_alpha_p, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCTCLossV2<float, int64_t>(const float *log_probs_p, const int64_t *target_p,
-                                                           const int64_t *input_len_p, const int64_t *target_len_p,
-                                                           int64_t batch_size, int64_t target_stride,
-                                                           int64_t time_series, int64_t blank, dim3 log_probs_shape,
-                                                           dim3 log_alpha_shape, float *neg_log_p, float *log_alpha_p,
-                                                           uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCTCLossV2<float, int64_t>(
+  const float *log_probs_p, const int64_t *target_p, const int64_t *input_len_p, const int64_t *target_len_p,
+  int64_t batch_size, int64_t target_stride, int64_t time_series, int64_t blank, dim3 log_probs_shape,
+  dim3 log_alpha_shape, float *neg_log_p, float *log_alpha_p, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCTCLossV2<double, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalCTCLossV2<double, int64_t>(
   const double *log_probs_p, const int64_t *target_p, const int64_t *input_len_p, const int64_t *target_len_p,
   int64_t batch_size, int64_t target_stride, int64_t time_series, int64_t blank, dim3 log_probs_shape,
   dim3 log_alpha_shape, double *neg_log_p, double *log_alpha_p, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCTCLossGradV2<float, int>(
+template CUDA_LIB_EXPORT cudaError_t CalCTCLossGradV2<float, int>(
   const float *grad_out, const float *log_probs, const int *targets, const int *input_lengths,
   const int *target_lengths, const float *neg_log_likelihood, const float *log_alpha, float *log_beta,
   int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity, int blank,
   dim3 log_probs_shape, dim3 log_alpha_shape, float *grad, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCTCLossGradV2<double, int>(
+template CUDA_LIB_EXPORT cudaError_t CalCTCLossGradV2<double, int>(
   const double *grad_out, const double *log_probs, const int *targets, const int *input_lengths,
   const int *target_lengths, const double *neg_log_likelihood, const double *log_alpha, double *log_beta,
   int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity, int blank,
   dim3 log_probs_shape, dim3 log_alpha_shape, double *grad, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCTCLossGradV2<float, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalCTCLossGradV2<float, int64_t>(
   const float *grad_out, const float *log_probs, const int64_t *targets, const int64_t *input_lengths,
   const int64_t *target_lengths, const float *neg_log_likelihood, const float *log_alpha, float *log_beta,
   int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity,
   int64_t blank, dim3 log_probs_shape, dim3 log_alpha_shape, float *grad, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCTCLossGradV2<double, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalCTCLossGradV2<double, int64_t>(
   const double *grad_out, const double *log_probs, const int64_t *targets, const int64_t *input_lengths,
   const int64_t *target_lengths, const double *neg_log_likelihood, const double *log_alpha, double *log_beta,
   int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity,

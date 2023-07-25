@@ -20,11 +20,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalTril(const size_t size, const T *input, const int diagonal, const int64_t matrix_row,
-                             const int64_t matrix_col, T *output, const uint32_t &device_id,
-                             cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalTril(const size_t size, const T *input, const int diagonal, const int64_t matrix_row,
+                                    const int64_t matrix_col, T *output, const uint32_t &device_id,
+                                    cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalTriu(const size_t size, const T *input, const int diagonal, const int64_t matrix_row,
-                             const int64_t matrix_col, T *output, const uint32_t &device_id,
-                             cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalTriu(const size_t size, const T *input, const int diagonal, const int64_t matrix_row,
+                                    const int64_t matrix_col, T *output, const uint32_t &device_id,
+                                    cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TRIL_TRIU_IMPL_CUH_

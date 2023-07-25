@@ -192,9 +192,9 @@ __global__ void MultilabelMarginLossSumKernel(const half *input, const int *targ
 }
 
 template <typename T>
-void CalMultilabelMarginLoss(const T *input, const int *target, int *is_target, const int batch_size, int class_num,
-                             int64_t reduction, T *output, T *output_tmp, const uint32_t &device_id,
-                             cudaStream_t cuda_stream) {
+cudaError_t CalMultilabelMarginLoss(const T *input, const int *target, int *is_target, const int batch_size,
+                                    int class_num, int64_t reduction, T *output, T *output_tmp,
+                                    const uint32_t &device_id, cudaStream_t cuda_stream) {
   cudaMemset(is_target, 0, sizeof(int) * batch_size * class_num);
   cudaDeviceProp prop;
   (void)cudaGetDeviceProperties(&prop, device_id);
@@ -211,19 +211,20 @@ void CalMultilabelMarginLoss(const T *input, const int *target, int *is_target, 
     MultilabelMarginLossSumKernel<<<1, 1, 0, cuda_stream>>>(input, target, is_target, batch_size, class_num, reduction,
                                                             output, output_tmp);
   }
-
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalMultilabelMarginLoss<half>(const half *input, const int *target, int *is_target,
-                                                            const int batch_size, int class_num, int64_t reduction,
-                                                            half *output, half *output_tmp, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalMultilabelMarginLoss<float>(const float *input, const int *target, int *is_target,
-                                                             const int batch_size, int class_num, int64_t reduction,
-                                                             float *output, float *output_tmp,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalMultilabelMarginLoss<double>(const double *input, const int *target, int *is_target,
-                                                              const int batch_size, int class_num, int64_t reduction,
-                                                              double *output, double *output_tmp,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMultilabelMarginLoss<half>(const half *input, const int *target, int *is_target,
+                                                                   const int batch_size, int class_num,
+                                                                   int64_t reduction, half *output, half *output_tmp,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMultilabelMarginLoss<float>(const float *input, const int *target,
+                                                                    int *is_target, const int batch_size, int class_num,
+                                                                    int64_t reduction, float *output, float *output_tmp,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMultilabelMarginLoss<double>(const double *input, const int *target,
+                                                                     int *is_target, const int batch_size,
+                                                                     int class_num, int64_t reduction, double *output,
+                                                                     double *output_tmp, const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);

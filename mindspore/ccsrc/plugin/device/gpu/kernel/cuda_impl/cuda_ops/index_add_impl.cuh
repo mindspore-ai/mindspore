@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INDEX_ADD_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalIndexAdd(T *dst, const int *index, const T *src, const size_t outer_size,
-                                 const size_t src_axis_size, const size_t dst_axis_size, const size_t inner_size,
-                                 const bool use_lock, int *device_flag, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalIndexAdd(T *dst, const int *index, const T *src, const size_t outer_size,
+                                        const size_t src_axis_size, const size_t dst_axis_size, const size_t inner_size,
+                                        const bool use_lock, int *device_flag, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INDEX_ADD_IMPL_CUH_

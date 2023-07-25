@@ -20,10 +20,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void SparseSegmentMean(const DataType *x_ptr, const IndexType *indices_ptr,
-                                       const IndexType *segment_ids_ptr, size_t *segment_pos_ptr, DataType *y_ptr,
-                                       size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size,
-                                       size_t x_size, size_t y_size, size_t batch_size, uint32_t device_id,
-                                       cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t SparseSegmentMean(const DataType *x_ptr, const IndexType *indices_ptr,
+                                              const IndexType *segment_ids_ptr, size_t *segment_pos_ptr,
+                                              DataType *y_ptr, size_t outer_size, size_t inner_size,
+                                              size_t indices_size, size_t segment_size, size_t x_size, size_t y_size,
+                                              size_t batch_size, uint32_t device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_SEGMENT_MEAN_IMPL_CUH_

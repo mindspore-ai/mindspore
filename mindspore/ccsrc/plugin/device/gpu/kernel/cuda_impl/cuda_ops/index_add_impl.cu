@@ -55,9 +55,9 @@ __global__ void IndexAdd(T *dst, const int *index, const T *src, const size_t sr
 }
 
 template <typename T>
-void CalIndexAdd(T *dst, const int *index, const T *src, const size_t outer_size, const size_t src_axis_size,
-                 const size_t dst_axis_size, const size_t inner_size, const bool use_lock, int *device_flag,
-                 cudaStream_t cuda_stream) {
+cudaError_t CalIndexAdd(T *dst, const int *index, const T *src, const size_t outer_size, const size_t src_axis_size,
+                        const size_t dst_axis_size, const size_t inner_size, const bool use_lock, int *device_flag,
+                        cudaStream_t cuda_stream) {
   size_t src_size = outer_size * src_axis_size * inner_size;
   if (use_lock) {
     IndexAddAtomic<<<GET_BLOCKS(src_size), GET_THREADS, 0, cuda_stream>>>(
@@ -66,33 +66,39 @@ void CalIndexAdd(T *dst, const int *index, const T *src, const size_t outer_size
     IndexAdd<<<GET_BLOCKS(src_size), GET_THREADS, 0, cuda_stream>>>(
       dst, index, src, src_size, outer_size, src_axis_size, dst_axis_size, inner_size, device_flag);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalIndexAdd<double>(double *dst, const int *index, const double *src,
-                                                  const size_t outer_size, const size_t src_axis_size,
-                                                  const size_t dst_axis_size, const size_t inner_size,
-                                                  const bool use_lock, int *device_flag, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalIndexAdd<float>(float *dst, const int *index, const float *src,
-                                                 const size_t outer_size, const size_t src_axis_size,
-                                                 const size_t dst_axis_size, const size_t inner_size,
-                                                 const bool use_lock, int *device_flag, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalIndexAdd<half>(half *dst, const int *index, const half *src, const size_t outer_size,
-                                                const size_t src_axis_size, const size_t dst_axis_size,
-                                                const size_t inner_size, const bool use_lock, int *device_flag,
-                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalIndexAdd<int>(int *dst, const int *index, const int *src, const size_t outer_size,
-                                               const size_t src_axis_size, const size_t dst_axis_size,
-                                               const size_t inner_size, const bool use_lock, int *device_flag,
-                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalIndexAdd<int16_t>(int16_t *dst, const int *index, const int16_t *src,
-                                                   const size_t outer_size, const size_t src_axis_size,
-                                                   const size_t dst_axis_size, const size_t inner_size,
-                                                   const bool use_lock, int *device_flag, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalIndexAdd<int8_t>(int8_t *dst, const int *index, const int8_t *src,
-                                                  const size_t outer_size, const size_t src_axis_size,
-                                                  const size_t dst_axis_size, const size_t inner_size,
-                                                  const bool use_lock, int *device_flag, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalIndexAdd<uint8_t>(uint8_t *dst, const int *index, const uint8_t *src,
-                                                   const size_t outer_size, const size_t src_axis_size,
-                                                   const size_t dst_axis_size, const size_t inner_size,
-                                                   const bool use_lock, int *device_flag, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIndexAdd<double>(double *dst, const int *index, const double *src,
+                                                         const size_t outer_size, const size_t src_axis_size,
+                                                         const size_t dst_axis_size, const size_t inner_size,
+                                                         const bool use_lock, int *device_flag,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIndexAdd<float>(float *dst, const int *index, const float *src,
+                                                        const size_t outer_size, const size_t src_axis_size,
+                                                        const size_t dst_axis_size, const size_t inner_size,
+                                                        const bool use_lock, int *device_flag,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIndexAdd<half>(half *dst, const int *index, const half *src,
+                                                       const size_t outer_size, const size_t src_axis_size,
+                                                       const size_t dst_axis_size, const size_t inner_size,
+                                                       const bool use_lock, int *device_flag, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIndexAdd<int>(int *dst, const int *index, const int *src,
+                                                      const size_t outer_size, const size_t src_axis_size,
+                                                      const size_t dst_axis_size, const size_t inner_size,
+                                                      const bool use_lock, int *device_flag, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIndexAdd<int16_t>(int16_t *dst, const int *index, const int16_t *src,
+                                                          const size_t outer_size, const size_t src_axis_size,
+                                                          const size_t dst_axis_size, const size_t inner_size,
+                                                          const bool use_lock, int *device_flag,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIndexAdd<int8_t>(int8_t *dst, const int *index, const int8_t *src,
+                                                         const size_t outer_size, const size_t src_axis_size,
+                                                         const size_t dst_axis_size, const size_t inner_size,
+                                                         const bool use_lock, int *device_flag,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalIndexAdd<uint8_t>(uint8_t *dst, const int *index, const uint8_t *src,
+                                                          const size_t outer_size, const size_t src_axis_size,
+                                                          const size_t dst_axis_size, const size_t inner_size,
+                                                          const bool use_lock, int *device_flag,
+                                                          cudaStream_t cuda_stream);

@@ -154,17 +154,19 @@ bool DeformableOffsetsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   int32_t *position_addr = GetDeviceAddress<int32_t>(workspace, 0);
   const size_t num = output_h_ * output_w_;
-  GenPositionGrid(kernel_size_[kKernelSizeHIndex], kernel_size_[kKernelSizeWIndex], strides_[h_axis_],
-                  strides_[w_axis_], dilations_[h_axis_], dilations_[w_axis_], pads_[kLeftPadIndex],
-                  pads_[kTopPadIndex], output_w_, num, position_addr, device_id_,
-                  reinterpret_cast<cudaStream_t>(stream_ptr));
-
+  cudaError_t status = cudaErrorNotReady;
+  status = GenPositionGrid(kernel_size_[kKernelSizeHIndex], kernel_size_[kKernelSizeWIndex], strides_[h_axis_],
+                           strides_[w_axis_], dilations_[h_axis_], dilations_[w_axis_], pads_[kLeftPadIndex],
+                           pads_[kTopPadIndex], output_w_, num, position_addr, device_id_,
+                           reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   T *x_addr = GetDeviceAddress<T>(inputs, 0);
   T *offsets_addr = GetDeviceAddress<T>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  DeformableOffsets(x_addr, offsets_addr, position_addr, n_, c_, x_h_, x_w_, deformable_groups_,
-                    kernel_size_[kKernelSizeHIndex], kernel_size_[kKernelSizeWIndex], output_h_, output_w_, output_addr,
-                    device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  status = DeformableOffsets(x_addr, offsets_addr, position_addr, n_, c_, x_h_, x_w_, deformable_groups_,
+                             kernel_size_[kKernelSizeHIndex], kernel_size_[kKernelSizeWIndex], output_h_, output_w_,
+                             output_addr, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -24,8 +24,8 @@
 #define KWARPSIZE 32
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
-                                         T *input_addr, S *ids, T *output_addr, cudaStream_t stream,
-                                         const uint32_t &device_id);
+CUDA_LIB_EXPORT cudaError_t UnsortedSegmentProd(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                size_t output_dim1, T *input_addr, S *ids, T *output_addr,
+                                                cudaStream_t stream, const uint32_t &device_id);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNSORTED_SEGMENT_PROD_CUH_

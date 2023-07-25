@@ -20,8 +20,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalSparseSoftmax(const int64_t *indices, const T *values, T *output, int32_t *reorder,
-                                      int64_t *indice_to_num, const size_t indice_dims_, const size_t values_elements_,
-                                      const uint32_t &device_id_, cudaStream_t cuda_stream_);
+CUDA_LIB_EXPORT cudaError_t CalSparseSoftmax(const int64_t *indices, const T *values, T *output, int32_t *reorder,
+                                             int64_t *indice_to_num, const size_t indice_dims_,
+                                             const size_t values_elements_, const uint32_t &device_id_,
+                                             cudaStream_t cuda_stream_);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_SOFTMAX_IMPL_CUH_

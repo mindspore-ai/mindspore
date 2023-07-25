@@ -18,10 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_PACK_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void PackKernel(const size_t size,
-                                const size_t input_num,
-                                const size_t dims_behind_axis,
-                                T** inputs,
-                                T* output,
-                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t PackKernel(const size_t size, const size_t input_num, const size_t dims_behind_axis,
+                                       T **inputs, T *output, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_PACK_CUH_

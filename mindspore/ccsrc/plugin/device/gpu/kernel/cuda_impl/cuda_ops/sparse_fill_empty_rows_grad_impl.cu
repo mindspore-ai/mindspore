@@ -196,9 +196,9 @@ __global__ void SumAll(Complex<float> *d_default_value, void *sum_ptr, size_t le
 }
 
 template <typename T>
-void CalFillRowsGrad(const size_t map_num, const size_t values_num, const int64_t *reverse_map, const T *grad_values,
-                     T *d_values, T *d_default_value, bool *workspace_flag, void *workspace_sum_val,
-                     const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalFillRowsGrad(const size_t map_num, const size_t values_num, const int64_t *reverse_map,
+                            const T *grad_values, T *d_values, T *d_default_value, bool *workspace_flag,
+                            void *workspace_sum_val, const uint32_t &device_id, cudaStream_t cuda_stream) {
   cudaMemset(d_default_value, 0, sizeof(T));
   cudaMemset(workspace_flag, true, values_num * sizeof(bool));
   int thread_num_map_num = 256 < map_num ? 256 : map_num;
@@ -216,10 +216,10 @@ void CalFillRowsGrad(const size_t map_num, const size_t values_num, const int64_
   CmpValue<<<block_num, thread_num_values_num, 0, cuda_stream>>>(map_num, values_num, grad_values, workspace_flag,
                                                                  workspace_sum_val);
   SumAll<<<1, 1, 0, cuda_stream>>>(d_default_value, workspace_sum_val, block_num);
-  return;
+  return GetCudaStatus();
 }
 #define TEMPLATE_INSTANCE(DTYPE)                                                                                       \
-  template CUDA_LIB_EXPORT void CalFillRowsGrad<DTYPE>(                                                                \
+  template CUDA_LIB_EXPORT cudaError_t CalFillRowsGrad<DTYPE>(                                                         \
     const size_t map_num, const size_t values_num, const int64_t *reverse_map, const DTYPE *grad_values,               \
     DTYPE *d_values, DTYPE *d_default_value, bool *workspace_flag, void *workspace_sum_val, const uint32_t &device_id, \
     cudaStream_t cuda_stream);

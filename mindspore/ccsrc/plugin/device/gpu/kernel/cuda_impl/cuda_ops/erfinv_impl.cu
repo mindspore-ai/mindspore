@@ -92,38 +92,30 @@ struct ErfinvFunctor {
 
 template <>
 struct ErfinvFunctor<half> {
-  __device__ __forceinline__ half operator()(half x) const {
-    return __float2half(erfinvf(__half2float(x)));
-  }
+  __device__ __forceinline__ half operator()(half x) const { return __float2half(erfinvf(__half2float(x))); }
 };
 
 template <>
 struct ErfinvFunctor<double> {
-  __device__ __forceinline__ double operator()(double x) const {
-    return erfinvf(x);
-  }
+  __device__ __forceinline__ double operator()(double x) const { return erfinvf(x); }
 };
 
-
 template <typename T>
-void Erfinv(size_t input_size, const T *input, T *output,
-                   const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t Erfinv(size_t input_size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   ErfinvFunctor<T> functor{};
   auto block_x = threads_per_block;
   auto grid_x = UP_DIV(static_cast<uint>(input_size), elements_per_block);
   dim3 block{block_x};
   dim3 grid{grid_x};
   VectorizedFor<<<grid, block, 0, cuda_stream>>>(functor, input, output, static_cast<uint>(input_size));
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Erfinv<float>(size_t input_size, const float *input,
-                                                    float *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Erfinv<float>(size_t input_size, const float *input, float *output,
+                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void Erfinv<half>(size_t input_size, const half *input,
-                                                   half *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Erfinv<half>(size_t input_size, const half *input, half *output,
+                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void Erfinv<double>(size_t input_size, const double *input,
-                                                  double *output, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Erfinv<double>(size_t input_size, const double *input, double *output,
+                                                    const uint32_t &device_id, cudaStream_t cuda_stream);

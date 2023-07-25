@@ -65,14 +65,19 @@ bool AddNFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
       break;
     }
   }
-  FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
-  FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  cudaError_t status = cudaErrorNotReady;
+  status =
+    FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  status = FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   std::vector<int64_t> ele_shape = {static_cast<int64_t>(outputs[0]->size / sizeof(T))};
   for (size_t i = 0; i < num_input_; i++) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
-    BinaryOpWithBroadcastCudaFunc<BinaryOpType::kAdd, T, T, T>(false, ele_shape, ele_shape, ele_shape, input_addr,
-                                                               work_addr, work_addr, device_id_,
-                                                               reinterpret_cast<cudaStream_t>(stream_ptr_));
+    status = BinaryOpWithBroadcastCudaFunc<BinaryOpType::kAdd, T, T, T>(false, ele_shape, ele_shape, ele_shape,
+                                                                        input_addr, work_addr, work_addr, device_id_,
+                                                                        reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   if (work_addr != output_addr) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

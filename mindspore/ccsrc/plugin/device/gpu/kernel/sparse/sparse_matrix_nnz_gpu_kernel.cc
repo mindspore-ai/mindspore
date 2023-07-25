@@ -89,8 +89,9 @@ bool SparseMatrixNNZGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   T *batch_pointers = GetDeviceAddress<T>(inputs, kIndex1);
   int32_t *output = GetDeviceAddress<int32_t>(outputs, kIndex0);
 
-  CalSparseMatrixNNZ(output_elements_, batch_pointers, output, device_id_,
-                     reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalSparseMatrixNNZ(output_elements_, batch_pointers, output, device_id_,
+                                   reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

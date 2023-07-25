@@ -52,8 +52,10 @@ bool FtrlGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   T *l1_regularization = GetDeviceAddress<T>(inputs, 5);
   T *l2_regularization = GetDeviceAddress<T>(inputs, 6);
   T *learning_rate_power = GetDeviceAddress<T>(inputs, 7);
-  ApplyFtrl(inputs[0]->size / sizeof(T), gradient, learning_rate, l1_regularization, l2_regularization,
-            learning_rate_power, variable, accumulation, linear, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status =
+    ApplyFtrl(inputs[0]->size / sizeof(T), gradient, learning_rate, l1_regularization, l2_regularization,
+              learning_rate_power, variable, accumulation, linear, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

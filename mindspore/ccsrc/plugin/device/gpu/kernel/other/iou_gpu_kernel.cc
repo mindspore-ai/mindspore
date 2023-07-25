@@ -85,8 +85,9 @@ bool IOUGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
   auto *gt_boxes_addr = GetDeviceAddress<T>(inputs, GT_BOXES);
   auto *iou_addr = GetDeviceAddress<T>(outputs, IOU_VALUE);
 
-  IOU(anchor_boxes_len_ * gt_boxes_len_, anchor_boxes_addr, gt_boxes_addr, iou_addr, mode_, anchor_boxes_len_,
-      reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = IOU(anchor_boxes_len_ * gt_boxes_len_, anchor_boxes_addr, gt_boxes_addr, iou_addr, mode_,
+                    anchor_boxes_len_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

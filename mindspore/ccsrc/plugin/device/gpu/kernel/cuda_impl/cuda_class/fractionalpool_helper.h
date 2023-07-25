@@ -252,15 +252,17 @@ class FractionalPoolHelperGpuKernel : public GpuKernelHelperBase {
     for (int64_t i = dims - 1; i >= 0; i--) {
       outer_size *= output_shape_[i];
     }
+    cudaError_t status = cudaErrorNotReady;
     if (kernel_name_.find("FractionalMaxPool") != std::string::npos) {
-      CalFractionalmaxpool(input_ptr, output_ptr, row_pooling_sequence, col_pooling_sequence, input_shape_,
-                           output_shape_, overlapping_, outer_size, device_id_,
-                           reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalFractionalmaxpool(input_ptr, output_ptr, row_pooling_sequence, col_pooling_sequence, input_shape_,
+                                    output_shape_, overlapping_, outer_size, device_id_,
+                                    reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      CalFractionalavgpool(input_ptr, output_ptr, row_pooling_sequence, col_pooling_sequence, input_shape_,
-                           output_shape_, overlapping_, outer_size, device_id_,
-                           reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalFractionalavgpool(input_ptr, output_ptr, row_pooling_sequence, col_pooling_sequence, input_shape_,
+                                    output_shape_, overlapping_, outer_size, device_id_,
+                                    reinterpret_cast<cudaStream_t>(cuda_stream));
     }
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 
@@ -436,9 +438,11 @@ class FractionalPoolGradHelperGpuKernel : public GpuKernelHelperBase {
       for (int64_t i = dims - 1; i >= 0; i--) {
         outer_size *= output_shape_[i];
       }
-      CalFractionalmaxpoolgrad(orig_input_ptr, orig_output_ptr, out_backprop_ptr, row_pooling_sequence,
-                               col_pooling_sequence, output_ptr, out_backprop_shape_, output_shape_, overlapping_,
-                               backprop_size, outer_size, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+      auto status =
+        CalFractionalmaxpoolgrad(orig_input_ptr, orig_output_ptr, out_backprop_ptr, row_pooling_sequence,
+                                 col_pooling_sequence, output_ptr, out_backprop_shape_, output_shape_, overlapping_,
+                                 backprop_size, outer_size, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+      CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     } else {
       int64_t *orig_input_ptr = nullptr;
       T *out_backprop_ptr = nullptr;

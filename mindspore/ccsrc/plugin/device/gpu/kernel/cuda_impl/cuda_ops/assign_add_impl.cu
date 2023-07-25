@@ -32,7 +32,7 @@ cudaError_t CalAssignAdd(const size_t size, T *ref, const T *value, T *output, c
   int thread_num = size > 512 ? 512 : size;
   AssignAdd<<<CUDA_BLOCKS_CAL(device_id, size, thread_num), thread_num, 0, cuda_stream>>>(size, ref, value, output);
 
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<float>(const size_t size, float *ref, const float *value,

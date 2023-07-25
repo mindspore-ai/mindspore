@@ -28,7 +28,7 @@ template <typename T>
 cudaError_t CalAssignSub(const size_t size, T *ref, const T *value, T *output, const uint32_t device_id,
                          cudaStream_t cuda_stream) {
   AssignSub<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, ref, value, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalAssignSub<uint8_t>(const size_t size, uint8_t *ref, const uint8_t *value,

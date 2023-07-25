@@ -72,11 +72,9 @@ bool NLLLossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   S *weights = GetDeviceAddress<S>(inputs, 2);
   T *loss = GetDeviceAddress<T>(outputs, 0);
   S *total_weight = GetDeviceAddress<S>(outputs, 1);
-  cudaError_t status = NLLLoss(logits, labels, weights, loss, total_weight, label_size_, num_classes_, reduction_,
-                               ignore_index_, reinterpret_cast<cudaStream_t>(stream_ptr));
-  if (status != cudaSuccess) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the label must in scope[0, C-1]";
-  }
+  auto status = NLLLoss(logits, labels, weights, loss, total_weight, label_size_, num_classes_, reduction_,
+                        ignore_index_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

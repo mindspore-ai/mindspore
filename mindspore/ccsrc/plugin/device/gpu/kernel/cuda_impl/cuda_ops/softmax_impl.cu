@@ -26,16 +26,6 @@
 const int max_threads = 1024;
 constexpr int ALIGN_BYTES = 16;
 
-#define CUDA_CHECK()                                                   \
-  {                                                                    \
-    const cudaError_t error = cudaGetLastError();                      \
-    if (error != cudaSuccess) {                                        \
-      printf("ERROR: %s:%d,", __FILE__, __LINE__);                     \
-      printf("code:%d,reason:%s\n", error, cudaGetErrorString(error)); \
-      exit(1);                                                         \
-    }                                                                  \
-  }
-
 inline dim3 SpatialSoftMaxGetGridSize(dim3 *block, uint32_t activate_block, uint64_t outer_size, uint64_t dim_size,
                                       uint64_t inner_size) {
   uint32_t inner = (inner_size + block->y - 1) / block->y;
@@ -520,8 +510,8 @@ void dispatch_softmax_forward(output_t *dst, const input_t *src, int softmax_ele
 }
 
 template <typename T, bool is_log_softmax>
-void Softmax(T *input_, T *output_, size_t dim_size_, size_t outer_size_, size_t inner_size_, size_t device_id,
-             cudaStream_t cuda_stream) {
+cudaError_t Softmax(T *input_, T *output_, size_t dim_size_, size_t outer_size_, size_t inner_size_, size_t device_id,
+                    cudaStream_t cuda_stream) {
   using accumulate_t = acc_type<T, true>;
   if (inner_size_ == 1) {
     dim3 grid(outer_size_);
@@ -541,7 +531,6 @@ void Softmax(T *input_, T *output_, size_t dim_size_, size_t outer_size_, size_t
       dim3 block = SoftMaxGetBlockSize(InsP, dim_size_);
       cunn_SoftMaxForward<InsP, T, accumulate_t, is_log_softmax>
         <<<grid, block, block.x * sizeof(accumulate_t), cuda_stream>>>(output_, input_, dim_size_);
-      CUDA_CHECK();
     }
   } else {
     uint32_t smem_size;
@@ -550,19 +539,25 @@ void Softmax(T *input_, T *output_, size_t dim_size_, size_t outer_size_, size_t
                                     inner_size_, &grid, &block, &smem_size, device_id);
     SpatialSoftMaxForward<T, accumulate_t, T, is_log_softmax>
       <<<grid, block, smem_size, cuda_stream>>>(output_, input_, outer_size_, dim_size_, inner_size_);
-    CUDA_CHECK();
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Softmax<double, false>(double *input_, double *output_, size_t dim_, size_t outer_size_,
-                                                     size_t inner_size_, size_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Softmax<double, true>(double *input_, double *output_, size_t dim_, size_t outer_size_,
-                                                    size_t inner_size_, size_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Softmax<float, false>(float *input_, float *output_, size_t dim_, size_t outer_size_,
-                                                    size_t inner_size_, size_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Softmax<float, true>(float *input_, float *output_, size_t dim_, size_t outer_size_,
-                                                   size_t inner_size_, size_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Softmax<half, false>(half *input_, half *output_, size_t dim_, size_t outer_size_,
-                                                   size_t inner_size_, size_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Softmax<half, true>(half *input_, half *output_, size_t dim_, size_t outer_size_,
-                                                  size_t inner_size_, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softmax<double, false>(double *input_, double *output_, size_t dim_,
+                                                            size_t outer_size_, size_t inner_size_, size_t device_id,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softmax<double, true>(double *input_, double *output_, size_t dim_,
+                                                           size_t outer_size_, size_t inner_size_, size_t device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softmax<float, false>(float *input_, float *output_, size_t dim_,
+                                                           size_t outer_size_, size_t inner_size_, size_t device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softmax<float, true>(float *input_, float *output_, size_t dim_,
+                                                          size_t outer_size_, size_t inner_size_, size_t device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softmax<half, false>(half *input_, half *output_, size_t dim_, size_t outer_size_,
+                                                          size_t inner_size_, size_t device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softmax<half, true>(half *input_, half *output_, size_t dim_, size_t outer_size_,
+                                                         size_t inner_size_, size_t device_id,
+                                                         cudaStream_t cuda_stream);

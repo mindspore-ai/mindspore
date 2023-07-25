@@ -44,50 +44,50 @@ __global__ void CudaEyeKernel(const int64_t num_min, const int64_t cols, T *out)
 }
 
 template <typename T>
-void BatchEye(const size_t size, const size_t dim, T *output_addr, cudaStream_t cuda_stream) {
+cudaError_t BatchEye(const size_t size, const size_t dim, T *output_addr, cudaStream_t cuda_stream) {
   BatchEyeKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dim, output_addr);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, T *out, cudaStream_t cuda_stream) {
+cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, T *out, cudaStream_t cuda_stream) {
   const int64_t num_min = nums > cols ? cols : nums;
   cudaMemset(static_cast<void *>(out), 0, out_size);
   CudaEyeKernel<<<GET_BLOCKS(num_min), GET_THREADS, 0, cuda_stream>>>(num_min, cols, out);
   cudaStreamSynchronize(cuda_stream);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void BatchEye<float>(const size_t size, const size_t dim, float *output_addr,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void BatchEye<double>(const size_t size, const size_t dim, double *output_addr,
-                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BatchEye<float>(const size_t size, const size_t dim, float *output_addr,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BatchEye<double>(const size_t size, const size_t dim, double *output_addr,
+                                                      cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, bool *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, half *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, float *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, double *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, int8_t *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, int16_t *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, int32_t *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, int64_t *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, uint8_t *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, uint16_t *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, uint32_t *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, uint64_t *out,
-                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
-                                      Complex<float> *out, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
-                                      Complex<double> *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, bool *out,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, half *out,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, float *out,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, double *out,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, int8_t *out,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
+                                             int16_t *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
+                                             int32_t *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
+                                             int64_t *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
+                                             uint8_t *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
+                                             uint16_t *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
+                                             uint32_t *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
+                                             uint64_t *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
+                                             Complex<float> *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CudaEye(const size_t out_size, const int64_t nums, const int64_t cols,
+                                             Complex<double> *out, cudaStream_t cuda_stream);

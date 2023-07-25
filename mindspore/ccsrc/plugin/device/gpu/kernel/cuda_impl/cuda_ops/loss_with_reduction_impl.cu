@@ -230,7 +230,7 @@ __inline__ __device__ void Reduce(T *output, T *shared_data, const unsigned int 
 
 template <unsigned int BlockDimX, typename T, typename S>
 __inline__ __device__ void BinaryReduce(T *output0, S *output1, T *shared_data0, S *shared_data1,
-                                           const unsigned int tid) {
+                                        const unsigned int tid) {
   BinaryBlockReduce<BlockDimX>(shared_data0, shared_data1, tid);
 
   if (tid == 0) {
@@ -239,9 +239,9 @@ __inline__ __device__ void BinaryReduce(T *output0, S *output1, T *shared_data0,
   }
 }
 
-template<unsigned int BlockDimX, typename T, typename S, unsigned int sharedSize>
+template <unsigned int BlockDimX, typename T, typename S, unsigned int sharedSize>
 __global__ void NLLLossNativeKernel(const T *logits, const int32_t *labels, const S *weights, T *loss, S *total_weight,
-                                       unsigned int label_size, unsigned int num_classes, int32_t ignore_index) {
+                                    unsigned int label_size, unsigned int num_classes, int32_t ignore_index) {
   unsigned int tid = threadIdx.x;
   const S zero = static_cast<S>(0);
   const S one = static_cast<S>(1);
@@ -267,9 +267,9 @@ __global__ void NLLLossNativeKernel(const T *logits, const int32_t *labels, cons
   Reduce<BlockDimX>(total_weight, shared_total_weight, tid);
 }
 
-template<unsigned int BlockDimX, typename T, typename S, unsigned int sharedSize0, unsigned int sharedSize1>
+template <unsigned int BlockDimX, typename T, typename S, unsigned int sharedSize0, unsigned int sharedSize1>
 __global__ void NLLLossReduceKernel(const T *logits, const int32_t *labels, const S *weights, T *loss, S *total_weight,
-                                       unsigned int label_size, unsigned int num_classes, int32_t ignore_index) {
+                                    unsigned int label_size, unsigned int num_classes, int32_t ignore_index) {
   unsigned int tid = threadIdx.x;
   const S one = static_cast<S>(1);
   __shared__ T shared_loss[sharedSize0];
@@ -329,8 +329,8 @@ __global__ void KLDivLossKernel(const int input_size, const ReductionMode reduct
 }
 
 template <typename T>
-void KLDivLoss(const int &input_size, const ReductionMode &reduction, const T *input_x, const T *input_y, T *loss,
-               T *tmp_loss, cudaStream_t stream) {
+cudaError_t KLDivLoss(const int &input_size, const ReductionMode &reduction, const T *input_x, const T *input_y,
+                      T *loss, T *tmp_loss, cudaStream_t stream) {
   LossInitKernel<<<1, 1, 0, stream>>>(loss);
   KLDivLossKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, reduction, input_x, input_y, loss,
                                                                       tmp_loss);
@@ -346,6 +346,7 @@ void KLDivLoss(const int &input_size, const ReductionMode &reduction, const T *i
     }
     Copy<<<1, 1, 0, stream>>>(loss, tmp_loss, reduction, input_size);
   }
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -370,10 +371,11 @@ __global__ void KLDivLossGradKernel(const int input_size, const ReductionMode re
 }
 
 template <typename T>
-void KLDivLossGrad(const int &input_size, const ReductionMode &reduction, const T *input_x, const T *input_y,
-                   const T *dloss, T *dx, cudaStream_t stream) {
+cudaError_t KLDivLossGrad(const int &input_size, const ReductionMode &reduction, const T *input_x, const T *input_y,
+                          const T *dloss, T *dx, cudaStream_t stream) {
   KLDivLossGradKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, reduction, input_x, input_y,
                                                                           dloss, dx);
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -412,8 +414,8 @@ __global__ void BinaryCrossEntropyLossKernel(const int input_size, const Reducti
 }
 
 template <typename T>
-void BinaryCrossEntropyLoss(const int &input_size, const ReductionMode &reduction, const T *input_x, const T *input_y,
-                            const T *weight, T *loss, T *tmp_loss, cudaStream_t stream) {
+cudaError_t BinaryCrossEntropyLoss(const int &input_size, const ReductionMode &reduction, const T *input_x,
+                                   const T *input_y, const T *weight, T *loss, T *tmp_loss, cudaStream_t stream) {
   LossInitKernel<<<1, 1, 0, stream>>>(loss);
   BinaryCrossEntropyLossKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, reduction, input_x,
                                                                                    input_y, weight, loss, tmp_loss);
@@ -429,6 +431,7 @@ void BinaryCrossEntropyLoss(const int &input_size, const ReductionMode &reductio
     }
     Copy<<<1, 1, 0, stream>>>(loss, tmp_loss, reduction, input_size);
   }
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -472,34 +475,33 @@ __global__ void BinaryCrossEntropyLossGradKernel(const int input_size, const Red
 }
 
 template <typename T>
-void BinaryCrossEntropyLossGrad(const int &input_size, const ReductionMode &reduction, const T *input_x,
-                                const T *input_y, const T *weight, const T *dloss, T *dx, cudaStream_t stream) {
+cudaError_t BinaryCrossEntropyLossGrad(const int &input_size, const ReductionMode &reduction, const T *input_x,
+                                       const T *input_y, const T *weight, const T *dloss, T *dx, cudaStream_t stream) {
   BinaryCrossEntropyLossGradKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, reduction, input_x,
                                                                                        input_y, weight, dloss, dx);
+  return GetCudaStatus();
 }
 
 template <typename T, typename S>
-cudaError_t NLLLoss(const T *logits, const int32_t *labels,
-                const S *weights, T *loss, S *total_weight,
-                unsigned int label_size, unsigned int num_classes,
-                const ReductionMode reduction, int32_t ignore_index, cudaStream_t stream) {
+cudaError_t NLLLoss(const T *logits, const int32_t *labels, const S *weights, T *loss, S *total_weight,
+                    unsigned int label_size, unsigned int num_classes, const ReductionMode reduction,
+                    int32_t ignore_index, cudaStream_t stream) {
   const unsigned int Threads = 512;
   if (reduction == ReductionMode::kNone) {
     const unsigned int sharedSize = Threads * sizeof(S) + 1;
-    NLLLossNativeKernel<Threads, T, S, sharedSize> <<<GET_BLOCKS(label_size), Threads, 0, stream>>>
-            (logits, labels, weights, loss, total_weight, label_size, num_classes, ignore_index);
+    NLLLossNativeKernel<Threads, T, S, sharedSize><<<GET_BLOCKS(label_size), Threads, 0, stream>>>(
+      logits, labels, weights, loss, total_weight, label_size, num_classes, ignore_index);
   } else {
     const unsigned int sharedSize0 = Threads * sizeof(T) + 1;
     const unsigned int sharedSize1 = Threads * sizeof(S) + 1;
-    NLLLossReduceKernel<Threads, T, S, sharedSize0, sharedSize1> <<<GET_BLOCKS(label_size), Threads, 0, stream>>>
-            (logits, labels, weights, loss, total_weight, label_size, num_classes, ignore_index);
+    NLLLossReduceKernel<Threads, T, S, sharedSize0, sharedSize1><<<GET_BLOCKS(label_size), Threads, 0, stream>>>(
+      logits, labels, weights, loss, total_weight, label_size, num_classes, ignore_index);
     if (reduction == ReductionMode::kMean) {
       Divide<<<1, 1, 0, stream>>>(loss, total_weight, loss);
     }
   }
   cudaStreamSynchronize(stream);
-  cudaError_t status = cudaGetLastError();
-  return status;
+  return GetCudaStatus();
 }
 
 template <typename T, typename S>
@@ -547,99 +549,106 @@ __global__ void NLLLossGradKernel(const int n, const int c, const ReductionMode 
 }
 
 template <typename T, typename S>
-void NLLLossGrad(const int n, const int c, const ReductionMode reduction, const T *input, const int32_t *target,
-                 const S *weight, const S *total_weight, const T *dloss, T *dinput, int32_t ignore_index,
-                 cudaStream_t stream) {
+cudaError_t NLLLossGrad(const int n, const int c, const ReductionMode reduction, const T *input, const int32_t *target,
+                        const S *weight, const S *total_weight, const T *dloss, T *dinput, int32_t ignore_index,
+                        cudaStream_t stream) {
   int input_size = n * c;
   InitZero<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(dinput, input_size);
 
   NLLLossGradKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, reduction, input, target, weight, total_weight,
                                                                ignore_index, dloss, dinput);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT cudaError_t NLLLoss<half, half>(const half *logits, const int32_t *labels,
-                                                     const half *weights, half *loss,
-                                                     half *total_weight, const unsigned int label_size,
-                                                     const unsigned int num_classes, const ReductionMode reduction,
-                                                     int32_t ignore_index, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t NLLLoss<half, half>(const half *logits, const int32_t *labels, const half *weights,
+                                                         half *loss, half *total_weight, const unsigned int label_size,
+                                                         const unsigned int num_classes, const ReductionMode reduction,
+                                                         int32_t ignore_index, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT cudaError_t NLLLoss<half, float>(const half *logits, const int32_t *labels,
-                                                      const float *weights, half *loss,
-                                                      float *total_weight, unsigned int label_size,
-                                                      unsigned int num_classes, const ReductionMode reduction,
-                                                      int32_t ignore_index, cudaStream_t stream);
+                                                          const float *weights, half *loss, float *total_weight,
+                                                          unsigned int label_size, unsigned int num_classes,
+                                                          const ReductionMode reduction, int32_t ignore_index,
+                                                          cudaStream_t stream);
 
 template CUDA_LIB_EXPORT cudaError_t NLLLoss<float, half>(const float *logits, const int32_t *labels,
-                                                      const half *weights, float *loss,
-                                                      half *total_weight, unsigned int label_size,
-                                                      unsigned int num_classes, const ReductionMode reduction,
-                                                      int32_t ignore_index, cudaStream_t stream);
+                                                          const half *weights, float *loss, half *total_weight,
+                                                          unsigned int label_size, unsigned int num_classes,
+                                                          const ReductionMode reduction, int32_t ignore_index,
+                                                          cudaStream_t stream);
 
 template CUDA_LIB_EXPORT cudaError_t NLLLoss<float, float>(const float *logits, const int32_t *labels,
-                                                       const float *weights, float *loss,
-                                                       float *total_weight, unsigned int label_size,
-                                                       unsigned int num_classes, const ReductionMode reduction,
-                                                       int32_t ignore_index, cudaStream_t stream);
+                                                           const float *weights, float *loss, float *total_weight,
+                                                           unsigned int label_size, unsigned int num_classes,
+                                                           const ReductionMode reduction, int32_t ignore_index,
+                                                           cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void KLDivLoss<float>(const int &input_size, const ReductionMode &reduction,
-                                               const float *input_x, const float *input_y, float *loss, float *tmp_loss,
-                                               cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t KLDivLoss<float>(const int &input_size, const ReductionMode &reduction,
+                                                      const float *input_x, const float *input_y, float *loss,
+                                                      float *tmp_loss, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void KLDivLossGrad<float>(const int &input_size, const ReductionMode &reduction,
-                                                   const float *input_x, const float *input_y, const float *dloss,
-                                                   float *dx, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t KLDivLossGrad<float>(const int &input_size, const ReductionMode &reduction,
+                                                          const float *input_x, const float *input_y,
+                                                          const float *dloss, float *dx, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void KLDivLoss<double>(const int &input_size, const ReductionMode &reduction,
-                                                const double *input_x, const double *input_y, double *loss,
-                                                double *tmp_loss, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t KLDivLoss<double>(const int &input_size, const ReductionMode &reduction,
+                                                       const double *input_x, const double *input_y, double *loss,
+                                                       double *tmp_loss, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void KLDivLossGrad<double>(const int &input_size, const ReductionMode &reduction,
-                                                    const double *input_x, const double *input_y, const double *dloss,
-                                                    double *dx, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t KLDivLossGrad<double>(const int &input_size, const ReductionMode &reduction,
+                                                           const double *input_x, const double *input_y,
+                                                           const double *dloss, double *dx, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void BinaryCrossEntropyLoss<float>(const int &input_size, const ReductionMode &reduction,
-                                                            const float *input_x, const float *input_y,
-                                                            const float *weight, float *loss, float *tmp_loss,
-                                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BinaryCrossEntropyLoss<float>(const int &input_size,
+                                                                   const ReductionMode &reduction, const float *input_x,
+                                                                   const float *input_y, const float *weight,
+                                                                   float *loss, float *tmp_loss, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void BinaryCrossEntropyLossGrad<float>(const int &input_size, const ReductionMode &reduction,
-                                                                const float *input_x, const float *input_y,
-                                                                const float *weight, const float *dloss, float *dx,
-                                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BinaryCrossEntropyLossGrad<float>(const int &input_size,
+                                                                       const ReductionMode &reduction,
+                                                                       const float *input_x, const float *input_y,
+                                                                       const float *weight, const float *dloss,
+                                                                       float *dx, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void NLLLossGrad<float, float>(const int n, const int c, const ReductionMode reduction,
-                                                        const float *input, const int32_t *target, const float *weight,
-                                                        const float *total_weight, const float *dloss, float *dinput,
-                                                        int32_t ignore_index, cudaStream_t stream);
-
-template CUDA_LIB_EXPORT void NLLLossGrad<float, half>(const int n, const int c, const ReductionMode reduction,
-                                                       const float *input, const int32_t *target, const half *weight,
-                                                       const half *total_weight, const float *dloss, float *dinput,
-                                                       int32_t ignore_index, cudaStream_t stream);
-
-template CUDA_LIB_EXPORT void KLDivLoss<half>(const int &input_size, const ReductionMode &reduction,
-                                              const half *input_x, const half *input_y, half *loss, half *tmp_loss,
-                                              cudaStream_t stream);
-
-template CUDA_LIB_EXPORT void KLDivLossGrad<half>(const int &input_size, const ReductionMode &reduction,
-                                                  const half *input_x, const half *input_y, const half *dloss, half *dx,
-                                                  cudaStream_t stream);
-
-template CUDA_LIB_EXPORT void BinaryCrossEntropyLoss<half>(const int &input_size, const ReductionMode &reduction,
-                                                           const half *input_x, const half *input_y, const half *weight,
-                                                           half *loss, half *tmp_loss, cudaStream_t stream);
-
-template CUDA_LIB_EXPORT void BinaryCrossEntropyLossGrad<half>(const int &input_size, const ReductionMode &reduction,
-                                                               const half *input_x, const half *input_y,
-                                                               const half *weight, const half *dloss, half *dx,
+template CUDA_LIB_EXPORT cudaError_t NLLLossGrad<float, float>(const int n, const int c, const ReductionMode reduction,
+                                                               const float *input, const int32_t *target,
+                                                               const float *weight, const float *total_weight,
+                                                               const float *dloss, float *dinput, int32_t ignore_index,
                                                                cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void NLLLossGrad<half, half>(const int n, const int c, const ReductionMode reduction,
-                                                      const half *input, const int32_t *target, const half *weight,
-                                                      const half *total_weight, const half *dloss, half *dinput,
-                                                      int32_t ignore_index, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t NLLLossGrad<float, half>(const int n, const int c, const ReductionMode reduction,
+                                                              const float *input, const int32_t *target,
+                                                              const half *weight, const half *total_weight,
+                                                              const float *dloss, float *dinput, int32_t ignore_index,
+                                                              cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void NLLLossGrad<half, float>(const int n, const int c, const ReductionMode reduction,
-                                                       const half *input, const int32_t *target, const float *weight,
-                                                       const float *total_weight, const half *dloss, half *dinput,
-                                                       int32_t ignore_index, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t KLDivLoss<half>(const int &input_size, const ReductionMode &reduction,
+                                                     const half *input_x, const half *input_y, half *loss,
+                                                     half *tmp_loss, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t KLDivLossGrad<half>(const int &input_size, const ReductionMode &reduction,
+                                                         const half *input_x, const half *input_y, const half *dloss,
+                                                         half *dx, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t BinaryCrossEntropyLoss<half>(const int &input_size, const ReductionMode &reduction,
+                                                                  const half *input_x, const half *input_y,
+                                                                  const half *weight, half *loss, half *tmp_loss,
+                                                                  cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t BinaryCrossEntropyLossGrad<half>(const int &input_size,
+                                                                      const ReductionMode &reduction,
+                                                                      const half *input_x, const half *input_y,
+                                                                      const half *weight, const half *dloss, half *dx,
+                                                                      cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t NLLLossGrad<half, half>(const int n, const int c, const ReductionMode reduction,
+                                                             const half *input, const int32_t *target,
+                                                             const half *weight, const half *total_weight,
+                                                             const half *dloss, half *dinput, int32_t ignore_index,
+                                                             cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t NLLLossGrad<half, float>(const int n, const int c, const ReductionMode reduction,
+                                                              const half *input, const int32_t *target,
+                                                              const float *weight, const float *total_weight,
+                                                              const half *dloss, half *dinput, int32_t ignore_index,
+                                                              cudaStream_t stream);

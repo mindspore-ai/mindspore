@@ -20,7 +20,6 @@
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
-
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
@@ -36,7 +35,7 @@ __inline__ __device__ void IdxToPos(size_t idx, size_t *pos, size_t cur_thread_i
   return;
 }
 
-// Util function to convert a N-D positonal index to a 1D index
+// Util function to convert a N-D positional index to a 1D index
 __inline__ __device__ size_t PosToIdx(size_t *pos, size_t cur_thread_idx, size_t *cum_shape, size_t shape_size) {
   size_t idx = 0;
   for (int i = 0; i < shape_size; i++) {
@@ -90,187 +89,156 @@ __global__ void ReverseSequence(const size_t size, const T *input, const S *seq_
 }
 
 template <typename T, typename S>
-void CalReverseSequence(const size_t size, const T *input, const S *seq_len, const int64_t batch_dim,
-                        const int64_t seq_dim, size_t *cur_pos_arr, const size_t *input_shape_ptr,
-                        size_t *input_shape_cum_ptr, size_t shape_size, T *output,
-                        cudaStream_t cuda_stream) {
+cudaError_t CalReverseSequence(const size_t size, const T *input, const S *seq_len, const int64_t batch_dim,
+                               const int64_t seq_dim, size_t *cur_pos_arr, const size_t *input_shape_ptr,
+                               size_t *input_shape_cum_ptr, size_t shape_size, T *output, cudaStream_t cuda_stream) {
   ComputeCumShape<<<1, 1, 0, cuda_stream>>>(input_shape_ptr, input_shape_cum_ptr, shape_size);
   ReverseSequence<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, input, seq_len, batch_dim, seq_dim, cur_pos_arr, input_shape_ptr, input_shape_cum_ptr, shape_size, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalReverseSequence<int8_t, int>(const size_t size, const int8_t *input,
-                                                              const int *seq_len, const int64_t batch_dim,
-                                                              const int64_t seq_dim, size_t *cur_pos_arr,
-                                                              const size_t *input_shape_ptr,
-                                                              size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                              int8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<int8_t, int64_t>(const size_t size, const int8_t *input,
-                                                                  const int64_t *seq_len, const int64_t batch_dim,
-                                                                  const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                  const size_t *input_shape_ptr,
-                                                                  size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                  int8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<int16_t, int>(const size_t size, const int16_t *input,
-                                                               const int *seq_len, const int64_t batch_dim,
-                                                               const int64_t seq_dim, size_t *cur_pos_arr,
-                                                               const size_t *input_shape_ptr,
-                                                               size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                               int16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<int16_t, int64_t>(const size_t size, const int16_t *input,
-                                                                   const int64_t *seq_len, const int64_t batch_dim,
-                                                                   const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                   const size_t *input_shape_ptr,
-                                                                   size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                   int16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<int, int>(const size_t size, const int *input, const int *seq_len,
-                                                           const int64_t batch_dim, const int64_t seq_dim,
-                                                           size_t *cur_pos_arr, const size_t *input_shape_ptr,
-                                                           size_t *intput_shape_cum_ptr, size_t shape_size, int *output,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<int, int64_t>(const size_t size, const int *input,
-                                                               const int64_t *seq_len, const int64_t batch_dim,
-                                                               const int64_t seq_dim, size_t *cur_pos_arr,
-                                                               const size_t *input_shape_ptr,
-                                                               size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                               int *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<int64_t, int>(const size_t size, const int64_t *input,
-                                                               const int *seq_len, const int64_t batch_dim,
-                                                               const int64_t seq_dim, size_t *cur_pos_arr,
-                                                               const size_t *input_shape_ptr,
-                                                               size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                               int64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<int64_t, int64_t>(const size_t size, const int64_t *input,
-                                                                   const int64_t *seq_len, const int64_t batch_dim,
-                                                                   const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                   const size_t *input_shape_ptr,
-                                                                   size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                   int64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<half, int>(const size_t size, const half *input, const int *seq_len,
-                                                            const int64_t batch_dim, const int64_t seq_dim,
-                                                            size_t *cur_pos_arr, const size_t *input_shape_ptr,
-                                                            size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                            half *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<half, int64_t>(const size_t size, const half *input,
-                                                                const int64_t *seq_len, const int64_t batch_dim,
-                                                                const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                const size_t *input_shape_ptr,
-                                                                size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                half *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<float, int>(const size_t size, const float *input, const int *seq_len,
-                                                             const int64_t batch_dim, const int64_t seq_dim,
-                                                             size_t *cur_pos_arr, const size_t *input_shape_ptr,
-                                                             size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                             float *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<float, int64_t>(const size_t size, const float *input,
-                                                                 const int64_t *seq_len, const int64_t batch_dim,
-                                                                 const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                 const size_t *input_shape_ptr,
-                                                                 size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                 float *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<double, int>(const size_t size, const double *input,
-                                                              const int *seq_len, const int64_t batch_dim,
-                                                              const int64_t seq_dim, size_t *cur_pos_arr,
-                                                              const size_t *input_shape_ptr,
-                                                              size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                              double *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<double, int64_t>(const size_t size, const double *input,
-                                                                  const int64_t *seq_len, const int64_t batch_dim,
-                                                                  const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                  const size_t *input_shape_ptr,
-                                                                  size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                  double *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<bool, int>(const size_t size, const bool *input, const int *seq_len,
-                                                            const int64_t batch_dim, const int64_t seq_dim,
-                                                            size_t *cur_pos_arr, const size_t *input_shape_ptr,
-                                                            size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                            bool *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<bool, int64_t>(const size_t size, const bool *input,
-                                                                const int64_t *seq_len, const int64_t batch_dim,
-                                                                const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                const size_t *input_shape_ptr,
-                                                                size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                bool *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<uint8_t, int>(const size_t size, const uint8_t *input,
-                                                               const int *seq_len, const int64_t batch_dim,
-                                                               const int64_t seq_dim, size_t *cur_pos_arr,
-                                                               const size_t *input_shape_ptr,
-                                                               size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                               uint8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<uint8_t, int64_t>(const size_t size, const uint8_t *input,
-                                                                   const int64_t *seq_len, const int64_t batch_dim,
-                                                                   const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                   const size_t *input_shape_ptr,
-                                                                   size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                   uint8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<uint16_t, int>(const size_t size, const uint16_t *input,
-                                                                const int *seq_len, const int64_t batch_dim,
-                                                                const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                const size_t *input_shape_ptr,
-                                                                size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                uint16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<uint16_t, int64_t>(const size_t size, const uint16_t *input,
-                                                                    const int64_t *seq_len, const int64_t batch_dim,
-                                                                    const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                    const size_t *input_shape_ptr,
-                                                                    size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                    uint16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<uint32_t, int>(const size_t size, const uint32_t *input,
-                                                                const int *seq_len, const int64_t batch_dim,
-                                                                const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                const size_t *input_shape_ptr,
-                                                                size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                uint32_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<uint32_t, int64_t>(const size_t size, const uint32_t *input,
-                                                                    const int64_t *seq_len, const int64_t batch_dim,
-                                                                    const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                    const size_t *input_shape_ptr,
-                                                                    size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                    uint32_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<uint64_t, int>(const size_t size, const uint64_t *input,
-                                                                const int *seq_len, const int64_t batch_dim,
-                                                                const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                const size_t *input_shape_ptr,
-                                                                size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                uint64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<uint64_t, int64_t>(const size_t size, const uint64_t *input,
-                                                                    const int64_t *seq_len, const int64_t batch_dim,
-                                                                    const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                    const size_t *input_shape_ptr,
-                                                                    size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                    uint64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<Complex<float>, int>(const size_t size, const Complex<float> *input,
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<int8_t, int>(const size_t size, const int8_t *input,
+                                                                     const int *seq_len, const int64_t batch_dim,
+                                                                     const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                     const size_t *input_shape_ptr,
+                                                                     size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                     int8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<int8_t, int64_t>(
+  const size_t size, const int8_t *input, const int64_t *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size, int8_t *output,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<int16_t, int>(const size_t size, const int16_t *input,
                                                                       const int *seq_len, const int64_t batch_dim,
                                                                       const int64_t seq_dim, size_t *cur_pos_arr,
                                                                       const size_t *input_shape_ptr,
                                                                       size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                      Complex<float> *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<Complex<float>, int64_t>(const size_t size,
-                                                                          const Complex<float> *input,
-                                                                          const int64_t *seq_len,
-                                                                          const int64_t batch_dim,
-                                                                          const int64_t seq_dim,
-                                                                          size_t *cur_pos_arr,
-                                                                          const size_t *input_shape_ptr,
-                                                                          size_t *intput_shape_cum_ptr,
-                                                                          size_t shape_size,
-                                                                          Complex<float> *output,
-                                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<Complex<double>, int>(const size_t size, const Complex<double> *input,
+                                                                      int16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<int16_t, int64_t>(
+  const size_t size, const int16_t *input, const int64_t *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size, int16_t *output,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<int, int>(const size_t size, const int *input,
+                                                                  const int *seq_len, const int64_t batch_dim,
+                                                                  const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                  const size_t *input_shape_ptr,
+                                                                  size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                  int *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<int, int64_t>(const size_t size, const int *input,
+                                                                      const int64_t *seq_len, const int64_t batch_dim,
+                                                                      const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                      const size_t *input_shape_ptr,
+                                                                      size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                      int *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<int64_t, int>(const size_t size, const int64_t *input,
+                                                                      const int *seq_len, const int64_t batch_dim,
+                                                                      const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                      const size_t *input_shape_ptr,
+                                                                      size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                      int64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<int64_t, int64_t>(
+  const size_t size, const int64_t *input, const int64_t *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size, int64_t *output,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<half, int>(const size_t size, const half *input,
+                                                                   const int *seq_len, const int64_t batch_dim,
+                                                                   const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                   const size_t *input_shape_ptr,
+                                                                   size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                   half *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<half, int64_t>(const size_t size, const half *input,
+                                                                       const int64_t *seq_len, const int64_t batch_dim,
+                                                                       const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                       const size_t *input_shape_ptr,
+                                                                       size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                       half *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<float, int>(const size_t size, const float *input,
+                                                                    const int *seq_len, const int64_t batch_dim,
+                                                                    const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                    const size_t *input_shape_ptr,
+                                                                    size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                    float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<float, int64_t>(const size_t size, const float *input,
+                                                                        const int64_t *seq_len, const int64_t batch_dim,
+                                                                        const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                        const size_t *input_shape_ptr,
+                                                                        size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                        float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<double, int>(const size_t size, const double *input,
+                                                                     const int *seq_len, const int64_t batch_dim,
+                                                                     const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                     const size_t *input_shape_ptr,
+                                                                     size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                     double *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<double, int64_t>(
+  const size_t size, const double *input, const int64_t *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size, double *output,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<bool, int>(const size_t size, const bool *input,
+                                                                   const int *seq_len, const int64_t batch_dim,
+                                                                   const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                   const size_t *input_shape_ptr,
+                                                                   size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                   bool *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<bool, int64_t>(const size_t size, const bool *input,
+                                                                       const int64_t *seq_len, const int64_t batch_dim,
+                                                                       const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                       const size_t *input_shape_ptr,
+                                                                       size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                       bool *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<uint8_t, int>(const size_t size, const uint8_t *input,
+                                                                      const int *seq_len, const int64_t batch_dim,
+                                                                      const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                      const size_t *input_shape_ptr,
+                                                                      size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                      uint8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<uint8_t, int64_t>(
+  const size_t size, const uint8_t *input, const int64_t *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size, uint8_t *output,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<uint16_t, int>(const size_t size, const uint16_t *input,
                                                                        const int *seq_len, const int64_t batch_dim,
                                                                        const int64_t seq_dim, size_t *cur_pos_arr,
                                                                        const size_t *input_shape_ptr,
                                                                        size_t *intput_shape_cum_ptr, size_t shape_size,
-                                                                       Complex<double> *output,
-                                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReverseSequence<Complex<double>, int64_t>(const size_t size,
-                                                                           const Complex<double> *input,
-                                                                           const int64_t *seq_len,
-                                                                           const int64_t batch_dim,
-                                                                           const int64_t seq_dim, size_t *cur_pos_arr,
-                                                                           const size_t *input_shape_ptr,
-                                                                           size_t *intput_shape_cum_ptr,
-                                                                           size_t shape_size,
-                                                                           Complex<double> *output,
-                                                                           cudaStream_t cuda_stream);
+                                                                       uint16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<uint16_t, int64_t>(
+  const size_t size, const uint16_t *input, const int64_t *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size, uint16_t *output,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<uint32_t, int>(const size_t size, const uint32_t *input,
+                                                                       const int *seq_len, const int64_t batch_dim,
+                                                                       const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                       const size_t *input_shape_ptr,
+                                                                       size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                       uint32_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<uint32_t, int64_t>(
+  const size_t size, const uint32_t *input, const int64_t *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size, uint32_t *output,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<uint64_t, int>(const size_t size, const uint64_t *input,
+                                                                       const int *seq_len, const int64_t batch_dim,
+                                                                       const int64_t seq_dim, size_t *cur_pos_arr,
+                                                                       const size_t *input_shape_ptr,
+                                                                       size_t *intput_shape_cum_ptr, size_t shape_size,
+                                                                       uint64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<uint64_t, int64_t>(
+  const size_t size, const uint64_t *input, const int64_t *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size, uint64_t *output,
+  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<Complex<float>, int>(
+  const size_t size, const Complex<float> *input, const int *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size,
+  Complex<float> *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<Complex<float>, int64_t>(
+  const size_t size, const Complex<float> *input, const int64_t *seq_len, const int64_t batch_dim,
+  const int64_t seq_dim, size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr,
+  size_t shape_size, Complex<float> *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<Complex<double>, int>(
+  const size_t size, const Complex<double> *input, const int *seq_len, const int64_t batch_dim, const int64_t seq_dim,
+  size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr, size_t shape_size,
+  Complex<double> *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalReverseSequence<Complex<double>, int64_t>(
+  const size_t size, const Complex<double> *input, const int64_t *seq_len, const int64_t batch_dim,
+  const int64_t seq_dim, size_t *cur_pos_arr, const size_t *input_shape_ptr, size_t *intput_shape_cum_ptr,
+  size_t shape_size, Complex<double> *output, cudaStream_t cuda_stream);

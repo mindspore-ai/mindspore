@@ -79,7 +79,7 @@ __global__ void SparseSegmentSumGradKernel(const half *grad_ptr, const S *indice
           reduce_result = static_cast<double>(__half2float(grad_ptr[index * inner_size + inner_idx]));
         }
         if (threadIdx.y == 0 && inner_valid) {
-          half *out_pos = y_ptr + segment_ids_ptr[pos]* inner_size + inner_idx;
+          half *out_pos = y_ptr + segment_ids_ptr[pos] * inner_size + inner_idx;
           MsAtomicAdd(out_pos, __float2half(static_cast<float>(reduce_result)));
         }
       }
@@ -173,12 +173,11 @@ inline int Log2Ceil64_M(uint64_t n) {
     return floor + 1;
 }
 
-
 template <typename R, typename S>
-bool CalSparseSegmentGradCombination(const std::string kernel_type, const R *grad_ptr, const S *indices_ptr,
-                                     const S *segment_ids_ptr, size_t *indices_pos_ptr, size_t outer_size,
-                                     size_t inner_size, size_t idx_seg_size, size_t output_dim0, R *y_ptr,
-                                     uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalSparseSegmentGradCombination(const std::string kernel_type, const R *grad_ptr, const S *indices_ptr,
+                                            const S *segment_ids_ptr, size_t *indices_pos_ptr, size_t outer_size,
+                                            size_t inner_size, size_t idx_seg_size, size_t output_dim0, R *y_ptr,
+                                            uint32_t device_id, cudaStream_t cuda_stream) {
   // Get start position of each segment and set to indices_pos_ptr.
   // The last element of indices_pos_ptr must equal to idx_seg_size.
   SparseSegmentPosKernel<<<CUDA_BLOCKS(device_id, idx_seg_size + 1), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -193,27 +192,20 @@ bool CalSparseSegmentGradCombination(const std::string kernel_type, const R *gra
   dim3 grid(grid_x, grid_y);
   unsigned int shared_memory_size = block_x * block_y * sizeof(R);
   if (kernel_type == "SparseSegmentSumGrad") {
-    SparseSegmentSumGradKernel<<<grid, block, shared_memory_size, cuda_stream>>>(grad_ptr, indices_ptr,
-                                                                                 segment_ids_ptr, indices_pos_ptr,
-                                                                                 outer_size, inner_size, output_dim0,
-                                                                                 y_ptr);
+    SparseSegmentSumGradKernel<<<grid, block, shared_memory_size, cuda_stream>>>(
+      grad_ptr, indices_ptr, segment_ids_ptr, indices_pos_ptr, outer_size, inner_size, output_dim0, y_ptr);
   } else if (kernel_type == "SparseSegmentSqrtNGrad") {
-    SparseSegmentSqrtNGradKernel<<<grid, block, shared_memory_size, cuda_stream>>>(grad_ptr, indices_ptr,
-                                                                                   segment_ids_ptr, indices_pos_ptr,
-                                                                                   outer_size, inner_size,
-                                                                                   output_dim0, y_ptr);
+    SparseSegmentSqrtNGradKernel<<<grid, block, shared_memory_size, cuda_stream>>>(
+      grad_ptr, indices_ptr, segment_ids_ptr, indices_pos_ptr, outer_size, inner_size, output_dim0, y_ptr);
   }
-  return true;
+  return GetCudaStatus();
 }
 
-#define ADD_SPARSE_SEGMENT_GRAD(R, S) \
-  template CUDA_LIB_EXPORT bool CalSparseSegmentGradCombination<R, S>(const std::string kernel_type, \
-                                                                      const R *grad_ptr, const S *indices_ptr, \
-                                                                      const S *segment_ids_ptr, \
-                                                                      size_t *indices_pos_ptr, size_t outer_size, \
-                                                                      size_t inner_size, size_t idx_seg_size, \
-                                                                      size_t output_dim0, R *y_ptr, \
-                                                                      uint32_t device_id, cudaStream_t cuda_stream);
+#define ADD_SPARSE_SEGMENT_GRAD(R, S)                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t CalSparseSegmentGradCombination<R, S>(                                         \
+    const std::string kernel_type, const R *grad_ptr, const S *indices_ptr, const S *segment_ids_ptr,                 \
+    size_t *indices_pos_ptr, size_t outer_size, size_t inner_size, size_t idx_seg_size, size_t output_dim0, R *y_ptr, \
+    uint32_t device_id, cudaStream_t cuda_stream);
 
 ADD_SPARSE_SEGMENT_GRAD(half, int32_t)
 ADD_SPARSE_SEGMENT_GRAD(half, int64_t)

@@ -73,8 +73,9 @@ bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
       "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
   }
 
-  CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices,
-                      work_shape, updates, input, device_id_, cuda_stream);
+  auto status = CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride,
+                                    indices, work_shape, updates, input, device_id_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(output, input, inputs[0]->size, cudaMemcpyDeviceToDevice, cuda_stream),

@@ -67,7 +67,7 @@ __device__ __forceinline__ void VectorizedCall(Func func, const T *input, S *out
       cache_out.dataout[j] = func(cache_in.datain[j]);
     }
     vec_output[index] = cache_out;
-    }
+  }
 }
 
 template <typename Func, typename T, typename S>
@@ -115,7 +115,7 @@ struct SincFunctor {
 };
 
 template <>
-struct SincFunctor <half, half> {
+struct SincFunctor<half, half> {
   __device__ __forceinline__ half operator()(const half input) const {
     const float PI = acos(-1.0);
     const float zero = static_cast<float>(0);
@@ -132,7 +132,7 @@ struct SincFunctor <half, half> {
 };
 
 template <>
-struct SincFunctor <Complex<float>, Complex<float>> {
+struct SincFunctor<Complex<float>, Complex<float>> {
   __device__ __forceinline__ Complex<float> operator()(const Complex<float> input) const {
     const float PI = acos(-1.0);
     const float zero = static_cast<float>(0);
@@ -154,11 +154,11 @@ struct SincFunctor <Complex<float>, Complex<float>> {
       result.imag(rs_imag);
     }
     return result;
-}
+  }
 };
 
 template <>
-struct SincFunctor <Complex<double>, Complex<double>> {
+struct SincFunctor<Complex<double>, Complex<double>> {
   __device__ __forceinline__ Complex<double> operator()(const Complex<double> input) const {
     const double PI = acos(-1.0);
     const double zero = static_cast<double>(0);
@@ -181,61 +181,47 @@ struct SincFunctor <Complex<double>, Complex<double>> {
       result.imag(rs_imag);
     }
     return result;
-}
+  }
 };
 
 template <typename T, typename S>
-void CalSinc(const size_t size, const T *input, S *output, const uint32_t &device_id,
-             cudaStream_t cuda_stream) {
+cudaError_t CalSinc(const size_t size, const T *input, S *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   SincFunctor<T, S> functor{};
   auto block_x = threads_per_block;
   auto grid_x = UP_DIV(static_cast<uint>(size), elements_per_block);
   dim3 block{block_x};
   dim3 grid{grid_x};
   SincVectorized<<<grid, block, 0, cuda_stream>>>(functor, input, output, size);
+  return GetCudaStatus();
 }
 
-template
-CUDA_LIB_EXPORT void CalSinc<uint8_t, float>(const size_t size, const uint8_t *input, float *output,
-                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<int8_t, float>(const size_t size, const int8_t *input, float *output,
-                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<uint16_t, float>(const size_t size, const uint16_t *input, float *output,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<int16_t, float>(const size_t size, const int16_t *input, float *output,
-                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<uint32_t, float>(const size_t size, const uint32_t *input, float *output,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<int32_t, float>(const size_t size, const int32_t *input, float *output,
-                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<uint64_t, float>(const size_t size, const uint64_t *input, float *output,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<int64_t, float>(const size_t size, const int64_t *input, float *output,
-                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<bool, float>(const size_t size, const bool *input, float *output,
-                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<half>(const size_t size, const half *input, half *output,
-                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<float>(const size_t size, const float *input, float *output,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<double>(const size_t size, const double *input, double *output,
-                                     const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<Complex<float>>(const size_t size, const Complex<float> *input,
-                                             Complex<float> *output, const uint32_t &device_id,
-                                             cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalSinc<Complex<double>>(const size_t size, const Complex<double> *input,
-                                              Complex<double> *output, const uint32_t &device_id,
-                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<uint8_t, float>(const size_t size, const uint8_t *input, float *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<int8_t, float>(const size_t size, const int8_t *input, float *output,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<uint16_t, float>(const size_t size, const uint16_t *input, float *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<int16_t, float>(const size_t size, const int16_t *input, float *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<uint32_t, float>(const size_t size, const uint32_t *input, float *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<int32_t, float>(const size_t size, const int32_t *input, float *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<uint64_t, float>(const size_t size, const uint64_t *input, float *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<int64_t, float>(const size_t size, const int64_t *input, float *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<bool, float>(const size_t size, const bool *input, float *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<half>(const size_t size, const half *input, half *output,
+                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<float>(const size_t size, const float *input, float *output,
+                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<double>(const size_t size, const double *input, double *output,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<Complex<float>>(const size_t size, const Complex<float> *input,
+                                                             Complex<float> *output, const uint32_t &device_id,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSinc<Complex<double>>(const size_t size, const Complex<double> *input,
+                                                              Complex<double> *output, const uint32_t &device_id,
+                                                              cudaStream_t cuda_stream);

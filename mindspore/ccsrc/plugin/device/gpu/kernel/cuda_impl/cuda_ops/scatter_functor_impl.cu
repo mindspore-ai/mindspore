@@ -88,83 +88,91 @@ __global__ void ScatterMinKernel(S size_limit, const size_t inner_size, const si
 }
 
 template <typename T, typename S>
-void ScatterFunc(enum ScatterFunctorType func_type, S size_limit, const size_t &inner_size, const size_t &indices_size,
-                 const S *indices, const T *updates, T *input, cudaStream_t cuda_stream) {
+cudaError_t ScatterFunc(enum ScatterFunctorType func_type, S size_limit, const size_t &inner_size,
+                        const size_t &indices_size, const S *indices, const T *updates, T *input,
+                        cudaStream_t cuda_stream) {
   const size_t updates_size = inner_size * indices_size;
   switch (func_type) {
     case SCATTER_FUNC_UPDATE:
-      return ScatterUpdateKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
+      ScatterUpdateKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
         size_limit, inner_size, updates_size, indices, updates, input);
+      break;
     case SCATTER_FUNC_ADD:
-      return ScatterAddKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        size_limit, inner_size, updates_size, indices, updates, input);
+      ScatterAddKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(size_limit, inner_size, updates_size,
+                                                                                  indices, updates, input);
+      break;
     case SCATTER_FUNC_SUB:
-      return ScatterSubKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        size_limit, inner_size, updates_size, indices, updates, input);
+      ScatterSubKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(size_limit, inner_size, updates_size,
+                                                                                  indices, updates, input);
+      break;
     case SCATTER_FUNC_MAX:
-      return ScatterMaxKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        size_limit, inner_size, updates_size, indices, updates, input);
+      ScatterMaxKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(size_limit, inner_size, updates_size,
+                                                                                  indices, updates, input);
+      break;
     case SCATTER_FUNC_MIN:
-      return ScatterMinKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        size_limit, inner_size, updates_size, indices, updates, input);
+      ScatterMinKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(size_limit, inner_size, updates_size,
+                                                                                  indices, updates, input);
+      break;
     default:
       break;
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void ScatterFunc<float, int>(enum ScatterFunctorType func_type, int size_limit,
-                                                      const size_t &inner_size, const size_t &indices_size,
-                                                      const int *indices, const float *updates, float *input,
-                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<float, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
-                                                          const size_t &inner_size, const size_t &indices_size,
-                                                          const int64_t *indices, const float *updates, float *input,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<half, int>(enum ScatterFunctorType func_type, int size_limit,
-                                                     const size_t &inner_size, const size_t &indices_size,
-                                                     const int *indices, const half *updates, half *input,
-                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<half, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
-                                                         const size_t &inner_size, const size_t &indices_size,
-                                                         const int64_t *indices, const half *updates, half *input,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<double, int>(enum ScatterFunctorType func_type, int size_limit,
-                                                       const size_t &inner_size, const size_t &indices_size,
-                                                       const int *indices, const double *updates, double *input,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<double, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
-                                                           const size_t &inner_size, const size_t &indices_size,
-                                                           const int64_t *indices, const double *updates, double *input,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<int, int>(enum ScatterFunctorType func_type, int size_limit,
-                                                    const size_t &inner_size, const size_t &indices_size,
-                                                    const int *indices, const int *updates, int *input,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<int, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
-                                                        const size_t &inner_size, const size_t &indices_size,
-                                                        const int64_t *indices, const int *updates, int *input,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<int64_t, int>(enum ScatterFunctorType func_type, int size_limit,
-                                                        const size_t &inner_size, const size_t &indices_size,
-                                                        const int *indices, const int64_t *updates, int64_t *input,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<int64_t, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<float, int>(enum ScatterFunctorType func_type, int size_limit,
+                                                             const size_t &inner_size, const size_t &indices_size,
+                                                             const int *indices, const float *updates, float *input,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<float, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
+                                                                 const size_t &inner_size, const size_t &indices_size,
+                                                                 const int64_t *indices, const float *updates,
+                                                                 float *input, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<half, int>(enum ScatterFunctorType func_type, int size_limit,
                                                             const size_t &inner_size, const size_t &indices_size,
-                                                            const int64_t *indices, const int64_t *updates,
-                                                            int64_t *input, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<unsigned char, int>(enum ScatterFunctorType func_type, int size_limit,
+                                                            const int *indices, const half *updates, half *input,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<half, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
+                                                                const size_t &inner_size, const size_t &indices_size,
+                                                                const int64_t *indices, const half *updates,
+                                                                half *input, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<double, int>(enum ScatterFunctorType func_type, int size_limit,
                                                               const size_t &inner_size, const size_t &indices_size,
-                                                              const int *indices, const unsigned char *updates,
-                                                              unsigned char *input, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<unsigned char, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
+                                                              const int *indices, const double *updates, double *input,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<double, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
                                                                   const size_t &inner_size, const size_t &indices_size,
-                                                                  const int64_t *indices, const unsigned char *updates,
-                                                                  unsigned char *input, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<int8_t, int>(enum ScatterFunctorType func_type, int size_limit,
-                                                       const size_t &inner_size, const size_t &indices_size,
-                                                       const int *indices, const int8_t *updates, int8_t *input,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ScatterFunc<int8_t, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
+                                                                  const int64_t *indices, const double *updates,
+                                                                  double *input, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<int, int>(enum ScatterFunctorType func_type, int size_limit,
                                                            const size_t &inner_size, const size_t &indices_size,
-                                                           const int64_t *indices, const int8_t *updates, int8_t *input,
+                                                           const int *indices, const int *updates, int *input,
                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<int, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
+                                                               const size_t &inner_size, const size_t &indices_size,
+                                                               const int64_t *indices, const int *updates, int *input,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<int64_t, int>(enum ScatterFunctorType func_type, int size_limit,
+                                                               const size_t &inner_size, const size_t &indices_size,
+                                                               const int *indices, const int64_t *updates,
+                                                               int64_t *input, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<int64_t, int64_t>(enum ScatterFunctorType func_type,
+                                                                   int64_t size_limit, const size_t &inner_size,
+                                                                   const size_t &indices_size, const int64_t *indices,
+                                                                   const int64_t *updates, int64_t *input,
+                                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<unsigned char, int>(enum ScatterFunctorType func_type, int size_limit,
+                                                                     const size_t &inner_size,
+                                                                     const size_t &indices_size, const int *indices,
+                                                                     const unsigned char *updates, unsigned char *input,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<unsigned char, int64_t>(
+  enum ScatterFunctorType func_type, int64_t size_limit, const size_t &inner_size, const size_t &indices_size,
+  const int64_t *indices, const unsigned char *updates, unsigned char *input, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<int8_t, int>(enum ScatterFunctorType func_type, int size_limit,
+                                                              const size_t &inner_size, const size_t &indices_size,
+                                                              const int *indices, const int8_t *updates, int8_t *input,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterFunc<int8_t, int64_t>(enum ScatterFunctorType func_type, int64_t size_limit,
+                                                                  const size_t &inner_size, const size_t &indices_size,
+                                                                  const int64_t *indices, const int8_t *updates,
+                                                                  int8_t *input, cudaStream_t cuda_stream);

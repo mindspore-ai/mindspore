@@ -90,8 +90,9 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   const size_t input_size = input_size_list_[kIndex1] / sizeof(T);
   const size_t output_size = output_size_list_[kIndex0] / sizeof(T);
-  ScatterNd(indices, update, output, block_size_, input_size, output_size, indices_dim_0_, indices_dim_1_, info,
-            reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status = ScatterNd(indices, update, output, block_size_, input_size, output_size, indices_dim_0_, indices_dim_1_,
+                          info, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

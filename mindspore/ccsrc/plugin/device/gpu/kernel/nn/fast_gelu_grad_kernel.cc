@@ -36,8 +36,9 @@ bool FastGeLUGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   T *x_addr = GetDeviceAddress<T>(inputs, 1);
   T *dx_addr = GetDeviceAddress<T>(outputs, 0);
 
-  FastGeluGradKernel(static_cast<size_t>(input_elements_), dy_addr, x_addr, dx_addr,
-                     reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = FastGeluGradKernel(static_cast<size_t>(input_elements_), dy_addr, x_addr, dx_addr,
+                                   reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

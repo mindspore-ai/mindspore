@@ -49,11 +49,11 @@ __global__ void CdistGradOne(T *grad, T *dist, T *t1, T *t2, T *res, double p, i
   int64_t m = current_k / r2;
   int64_t n = current_k % r2;
 
-  const T * const start = t1 + current_l * x1_size + m * col;
-  const T * const end = start + col;
-  const T * self_m = start + current_i;
-  const T * self_n = t2 + current_l * x2_size + n * col + current_i;
-  T * res_m = res + current_l * x1_size + m * col + current_i;
+  const T *const start = t1 + current_l * x1_size + m * col;
+  const T *const end = start + col;
+  const T *self_m = start + current_i;
+  const T *self_n = t2 + current_l * x2_size + n * col + current_i;
+  T *res_m = res + current_l * x1_size + m * col + current_i;
 
   for (; self_m < end; self_m += stride, self_n += stride, res_m += stride) {
     T res = grad_k * sign(*self_m - *self_n);
@@ -63,9 +63,8 @@ __global__ void CdistGradOne(T *grad, T *dist, T *t1, T *t2, T *res, double p, i
 
 // less than 2
 template <typename T>
-__global__ void CdistGradLessthanTwo(T *grad, T *dist, T *t1, T *t2, T *res, double p, int64_t r1,
-                                     int64_t r2, int64_t col, int64_t count, size_t r_size, int64_t x1_size,
-                                     int64_t x2_size) {
+__global__ void CdistGradLessthanTwo(T *grad, T *dist, T *t1, T *t2, T *res, double p, int64_t r1, int64_t r2,
+                                     int64_t col, int64_t count, size_t r_size, int64_t x1_size, int64_t x2_size) {
   const int current = (blockIdx.y * gridDim.z + blockIdx.z) * blockDim.y + threadIdx.y;
   const int current_i = blockIdx.x * blockDim.x + threadIdx.x;
   const int stride = blockDim.x * gridDim.x;
@@ -81,11 +80,11 @@ __global__ void CdistGradLessthanTwo(T *grad, T *dist, T *t1, T *t2, T *res, dou
     int64_t m = current_k / r2;
     int64_t n = current_k % r2;
 
-    const T * const start = t1 + current_l * x1_size + m * col;
-    const T * const end = start + col;
-    const T * self_m = start + current_i;
-    const T * self_n = t2 + current_l * x2_size + n * col + current_i;
-    T * res_m = res + current_l * x1_size + m * col + current_i;
+    const T *const start = t1 + current_l * x1_size + m * col;
+    const T *const end = start + col;
+    const T *self_m = start + current_i;
+    const T *self_n = t2 + current_l * x2_size + n * col + current_i;
+    T *res_m = res + current_l * x1_size + m * col + current_i;
     double dist_k_pow = pow(static_cast<double>(dist_k), p - 1);
     for (; self_m < end; self_m += stride, self_n += stride, res_m += stride) {
       const T diff = *self_m - *self_n;
@@ -114,11 +113,11 @@ __global__ void CdistGradTwo(T *grad, T *dist, T *t1, T *t2, T *res, double p, i
     int64_t m = current_k / r2;
     int64_t n = current_k % r2;
 
-    const T * const start = t1 + current_l * x1_size + m * col;
-    const T * const end = start + col;
-    const T * self_m = start + current_i;
-    const T * self_n = t2 + current_l * x2_size + n * col + current_i;
-    T * res_m = res + current_l * x1_size + m * col + current_i;
+    const T *const start = t1 + current_l * x1_size + m * col;
+    const T *const end = start + col;
+    const T *self_m = start + current_i;
+    const T *self_n = t2 + current_l * x2_size + n * col + current_i;
+    T *res_m = res + current_l * x1_size + m * col + current_i;
 
     for (; self_m < end; self_m += stride, self_n += stride, res_m += stride) {
       T res = grad_k * (*self_m - *self_n) / dist_k;
@@ -130,7 +129,7 @@ __global__ void CdistGradTwo(T *grad, T *dist, T *t1, T *t2, T *res, double p, i
 // P
 template <typename T>
 __global__ void CdistGradP(T *grad, T *dist, T *t1, T *t2, T *res, double p, int64_t r1, int64_t r2, int64_t col,
-                             int64_t count, size_t r_size, int64_t x1_size, int64_t x2_size) {
+                           int64_t count, size_t r_size, int64_t x1_size, int64_t x2_size) {
   const int current = (blockIdx.y * gridDim.z + blockIdx.z) * blockDim.y + threadIdx.y;
   const int current_i = blockIdx.x * blockDim.x + threadIdx.x;
   const int stride = blockDim.x * gridDim.x;
@@ -146,11 +145,11 @@ __global__ void CdistGradP(T *grad, T *dist, T *t1, T *t2, T *res, double p, int
     int64_t m = current_k / r2;
     int64_t n = current_k % r2;
 
-    const T * const start = t1 + current_l * x1_size + m * col;
-    const T * const end = start + col;
-    const T * self_m = start + current_i;
-    const T * self_n = t2 + current_l * x2_size + n * col + current_i;
-    T * res_m = res + current_l * x1_size + m * col + current_i;
+    const T *const start = t1 + current_l * x1_size + m * col;
+    const T *const end = start + col;
+    const T *self_m = start + current_i;
+    const T *self_n = t2 + current_l * x2_size + n * col + current_i;
+    T *res_m = res + current_l * x1_size + m * col + current_i;
     double dist_k_pow = pow(static_cast<double>(dist_k), p - 1);
     for (; self_m < end; self_m += stride, self_n += stride, res_m += stride) {
       const T diff = *self_m - *self_n;
@@ -178,11 +177,11 @@ __global__ void CdistGradInf(T *grad, T *dist, T *t1, T *t2, T *res, double p, i
   int64_t m = current_k / r2;
   int64_t n = current_k % r2;
 
-  const T * const start = t1 + current_l * x1_size + m * col;
-  const T * const end = start + col;
-  const T * self_m = start + current_i;
-  const T * self_n = t2 + current_l * x2_size + n * col + current_i;
-  T * res_m = res + current_l * x1_size + m * col + current_i;
+  const T *const start = t1 + current_l * x1_size + m * col;
+  const T *const end = start + col;
+  const T *self_m = start + current_i;
+  const T *self_n = t2 + current_l * x2_size + n * col + current_i;
+  T *res_m = res + current_l * x1_size + m * col + current_i;
 
   for (; self_m < end; self_m += stride, self_n += stride, res_m += stride) {
     T diff = *self_m - *self_n;
@@ -191,16 +190,15 @@ __global__ void CdistGradInf(T *grad, T *dist, T *t1, T *t2, T *res, double p, i
   }
 }
 
-
 // CAL
 template <typename T>
-void CalCdistGrad(size_t out_size, int64_t l1_size, int64_t l2_size, T *grad_start, T *dist_start, T *t1_start,
-                  T *t2_start, T *res_start, int64_t m, double p, int64_t r1, int64_t r2, int64_t batch,
-                  const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalCdistGrad(size_t out_size, int64_t l1_size, int64_t l2_size, T *grad_start, T *dist_start, T *t1_start,
+                         T *t2_start, T *res_start, int64_t m, double p, int64_t r1, int64_t r2, int64_t batch,
+                         const uint32_t &device_id, cudaStream_t cuda_stream) {
   InitOutput<<<CUDA_BLOCKS(device_id, out_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(res_start, out_size);
 
   if (p == 0.0 || out_size == 0 || l1_size == 0 || l2_size == 0) {
-    return;
+    return cudaErrorNotReady;
   }
 
   const int block_x = 64;
@@ -219,35 +217,31 @@ void CalCdistGrad(size_t out_size, int64_t l1_size, int64_t l2_size, T *grad_sta
   const int64_t r_size = r1 * r2;
 
   if (std::isinf(p)) {
-    CdistGradInf<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start, res_start,
-                                                     p, r1, r2, m, count, r_size, l1_size, l2_size);
+    CdistGradInf<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start, res_start, p, r1, r2,
+                                                     m, count, r_size, l1_size, l2_size);
   } else if (p == 1.0) {
-    CdistGradOne<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start, res_start,
-                                                     p, r1, r2, m, count, r_size, l1_size, l2_size);
+    CdistGradOne<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start, res_start, p, r1, r2,
+                                                     m, count, r_size, l1_size, l2_size);
   } else if (p < 2.0) {
-    CdistGradLessthanTwo<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start,
-                                                             res_start, p, r1, r2, m, count, r_size,
-                                                             l1_size, l2_size);
+    CdistGradLessthanTwo<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start, res_start, p,
+                                                             r1, r2, m, count, r_size, l1_size, l2_size);
   } else if (p == 2.0) {
-    CdistGradTwo<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start, res_start,
-                                                     p, r1, r2, m, count, r_size, l1_size, l2_size);
+    CdistGradTwo<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start, res_start, p, r1, r2,
+                                                     m, count, r_size, l1_size, l2_size);
   } else {
-    CdistGradP<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start, res_start,
-                                                   p, r1, r2, m, count, r_size, l1_size, l2_size);
+    CdistGradP<T><<<grid, block, 0, cuda_stream>>>(grad_start, dist_start, t1_start, t2_start, res_start, p, r1, r2, m,
+                                                   count, r_size, l1_size, l2_size);
   }
-
-  return;
+  return GetCudaStatus();
 }
 
-
-
-template
-CUDA_LIB_EXPORT void CalCdistGrad<float>(size_t out_size, int64_t l1_size, int64_t l2_size, float *grad_start,
-                                         float *dist_start, float *t1_start, float *t2_start, float *res_start,
-                                         int64_t m, double p, int64_t r1, int64_t r2, int64_t batch,
-                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalCdistGrad<double>(size_t out_size, int64_t l1_size, int64_t l2_size, double *grad_start,
-                                          double *dist_start, double *t1_start, double *t2_start, double *res_start,
-                                          int64_t m, double p, int64_t r1, int64_t r2, int64_t batch,
-                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCdistGrad<float>(size_t out_size, int64_t l1_size, int64_t l2_size,
+                                                         float *grad_start, float *dist_start, float *t1_start,
+                                                         float *t2_start, float *res_start, int64_t m, double p,
+                                                         int64_t r1, int64_t r2, int64_t batch,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCdistGrad<double>(size_t out_size, int64_t l1_size, int64_t l2_size,
+                                                          double *grad_start, double *dist_start, double *t1_start,
+                                                          double *t2_start, double *res_start, int64_t m, double p,
+                                                          int64_t r1, int64_t r2, int64_t batch,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);

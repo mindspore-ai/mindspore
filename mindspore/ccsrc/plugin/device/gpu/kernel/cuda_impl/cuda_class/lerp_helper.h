@@ -170,24 +170,28 @@ class LerpHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
+    cudaError_t status = cudaErrorNotReady;
     // call cuda kernel
     if (need_broadcast_) {
       if (weight_is_float_) {
-        BroadcastLerpWeightFloat(lhs_shape_, rhs_shape_, output_shape_, inputstart_ptr, inputend_ptr, inputweight_ptr,
-                                 output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+        status =
+          BroadcastLerpWeightFloat(lhs_shape_, rhs_shape_, output_shape_, inputstart_ptr, inputend_ptr, inputweight_ptr,
+                                   output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
       } else {
-        BroadcastLerpWeightTensor(lhs_shape_, rhs_shape_, whs_shape_, output_shape_, inputstart_ptr, inputend_ptr,
-                                  inputweight_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = BroadcastLerpWeightTensor(lhs_shape_, rhs_shape_, whs_shape_, output_shape_, inputstart_ptr,
+                                           inputend_ptr, inputweight_ptr, output_ptr, device_id_,
+                                           reinterpret_cast<cudaStream_t>(cuda_stream));
       }
     } else {
       if (weight_is_float_) {
-        LerpWeightFloat(output_num_, inputstart_ptr, inputend_ptr, inputweight_ptr, output_ptr, device_id_,
-                        reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = LerpWeightFloat(output_num_, inputstart_ptr, inputend_ptr, inputweight_ptr, output_ptr, device_id_,
+                                 reinterpret_cast<cudaStream_t>(cuda_stream));
       } else {
-        LerpWeightTensor(output_num_, inputstart_ptr, inputend_ptr, inputweight_ptr, output_ptr, device_id_,
-                         reinterpret_cast<cudaStream_t>(cuda_stream));
+        status = LerpWeightTensor(output_num_, inputstart_ptr, inputend_ptr, inputweight_ptr, output_ptr, device_id_,
+                                  reinterpret_cast<cudaStream_t>(cuda_stream));
       }
     }
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

@@ -83,7 +83,7 @@ cudaError_t ApplyAdaptiveMaxPool2D(const size_t size, const size_t input_height,
   dim3 threads(32, 8);
   AdaptiveMaxPool2DKernel<<<blocks, threads, 0, cuda_stream>>>(size, input_height, input_width, output_height,
                                                                output_width, input_data, output_data, indices_data);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool2D<float>(const size_t size, const size_t input_height,

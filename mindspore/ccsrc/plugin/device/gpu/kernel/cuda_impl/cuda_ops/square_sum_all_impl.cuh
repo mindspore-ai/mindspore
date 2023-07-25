@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SQUARE_SUM_ALL_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void SquareSumAll(const size_t input_size_, const T* input_addr_0, const T* input_addr_1,
-                                  T* output_addr_0, T* output_addr_1, float* ws_addr_0, float* ws_addr_1,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t SquareSumAll(const size_t input_size_, const T *input_addr_0, const T *input_addr_1,
+                                         T *output_addr_0, T *output_addr_1, float *ws_addr_0, float *ws_addr_1,
+                                         cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SQUARE_SUM_ALL_IMPL_CUH_

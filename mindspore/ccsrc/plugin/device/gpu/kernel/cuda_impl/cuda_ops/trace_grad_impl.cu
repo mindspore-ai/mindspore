@@ -34,92 +34,110 @@ __global__ void TraceGrad(S size, const T *y_grad, const S *input_shape, T *outp
 }
 
 template <typename T, typename S>
-void CalTraceGrad(S size, const T *y_grad, const S *input_shape, T *output, const uint32_t &device_id,
-                  cudaStream_t cuda_stream) {
+cudaError_t CalTraceGrad(S size, const T *y_grad, const S *input_shape, T *output, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
   TraceGrad<T, S>
     <<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, y_grad, input_shape, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalTraceGrad<uint8_t, int32_t>(int32_t size, const uint8_t *y_grad,
-                                                             const int32_t *input_shape, uint8_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<uint16_t, int32_t>(int32_t size, const uint16_t *y_grad,
-                                                              const int32_t *input_shape, uint16_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<uint32_t, int32_t>(int32_t size, const uint32_t *y_grad,
-                                                              const int32_t *input_shape, uint32_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<uint64_t, int32_t>(int32_t size, const uint64_t *y_grad,
-                                                              const int32_t *input_shape, uint64_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<int8_t, int32_t>(int32_t size, const int8_t *y_grad,
-                                                            const int32_t *input_shape, int8_t *output,
-                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<int16_t, int32_t>(int32_t size, const int16_t *y_grad,
-                                                             const int32_t *input_shape, int16_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<int32_t, int32_t>(int32_t size, const int32_t *y_grad,
-                                                             const int32_t *input_shape, int32_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<int64_t, int32_t>(int32_t size, const int64_t *y_grad,
-                                                             const int32_t *input_shape, int64_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<half, int32_t>(int32_t size, const half *y_grad, const int32_t *input_shape,
-                                                          half *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<float, int32_t>(int32_t size, const float *y_grad,
-                                                           const int32_t *input_shape, float *output,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<double, int32_t>(int32_t size, const double *y_grad,
-                                                            const int32_t *input_shape, double *output,
-                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<Complex<float>, int32_t>(int32_t size, const Complex<float> *y_grad,
-                                                                    const int32_t *input_shape, Complex<float> *output,
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<uint8_t, int32_t>(int32_t size, const uint8_t *y_grad,
+                                                                    const int32_t *input_shape, uint8_t *output,
                                                                     const uint32_t &device_id,
                                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<Complex<double>, int32_t>(int32_t size, const Complex<double> *y_grad,
-                                                                     const int32_t *input_shape,
-                                                                     Complex<double> *output, const uint32_t &device_id,
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<uint16_t, int32_t>(int32_t size, const uint16_t *y_grad,
+                                                                     const int32_t *input_shape, uint16_t *output,
+                                                                     const uint32_t &device_id,
                                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<uint8_t, int64_t>(int64_t size, const uint8_t *y_grad,
-                                                             const int64_t *input_shape, uint8_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<uint16_t, int64_t>(int64_t size, const uint16_t *y_grad,
-                                                              const int64_t *input_shape, uint16_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<uint32_t, int64_t>(int64_t size, const uint32_t *y_grad,
-                                                              const int64_t *input_shape, uint32_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<uint64_t, int64_t>(int64_t size, const uint64_t *y_grad,
-                                                              const int64_t *input_shape, uint64_t *output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<int8_t, int64_t>(int64_t size, const int8_t *y_grad,
-                                                            const int64_t *input_shape, int8_t *output,
-                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<int16_t, int64_t>(int64_t size, const int16_t *y_grad,
-                                                             const int64_t *input_shape, int16_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<int32_t, int64_t>(int64_t size, const int32_t *y_grad,
-                                                             const int64_t *input_shape, int32_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<int64_t, int64_t>(int64_t size, const int64_t *y_grad,
-                                                             const int64_t *input_shape, int64_t *output,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<half, int64_t>(int64_t size, const half *y_grad, const int64_t *input_shape,
-                                                          half *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<float, int64_t>(int64_t size, const float *y_grad,
-                                                           const int64_t *input_shape, float *output,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<double, int64_t>(int64_t size, const double *y_grad,
-                                                            const int64_t *input_shape, double *output,
-                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<Complex<float>, int64_t>(int64_t size, const Complex<float> *y_grad,
-                                                                    const int64_t *input_shape, Complex<float> *output,
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<uint32_t, int32_t>(int32_t size, const uint32_t *y_grad,
+                                                                     const int32_t *input_shape, uint32_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<uint64_t, int32_t>(int32_t size, const uint64_t *y_grad,
+                                                                     const int32_t *input_shape, uint64_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<int8_t, int32_t>(int32_t size, const int8_t *y_grad,
+                                                                   const int32_t *input_shape, int8_t *output,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<int16_t, int32_t>(int32_t size, const int16_t *y_grad,
+                                                                    const int32_t *input_shape, int16_t *output,
                                                                     const uint32_t &device_id,
                                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTraceGrad<Complex<double>, int64_t>(int64_t size, const Complex<double> *y_grad,
-                                                                     const int64_t *input_shape,
-                                                                     Complex<double> *output, const uint32_t &device_id,
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<int32_t, int32_t>(int32_t size, const int32_t *y_grad,
+                                                                    const int32_t *input_shape, int32_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<int64_t, int32_t>(int32_t size, const int64_t *y_grad,
+                                                                    const int32_t *input_shape, int64_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<half, int32_t>(int32_t size, const half *y_grad,
+                                                                 const int32_t *input_shape, half *output,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<float, int32_t>(int32_t size, const float *y_grad,
+                                                                  const int32_t *input_shape, float *output,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<double, int32_t>(int32_t size, const double *y_grad,
+                                                                   const int32_t *input_shape, double *output,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<Complex<float>, int32_t>(int32_t size, const Complex<float> *y_grad,
+                                                                           const int32_t *input_shape,
+                                                                           Complex<float> *output,
+                                                                           const uint32_t &device_id,
+                                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<Complex<double>, int32_t>(int32_t size, const Complex<double> *y_grad,
+                                                                            const int32_t *input_shape,
+                                                                            Complex<double> *output,
+                                                                            const uint32_t &device_id,
+                                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<uint8_t, int64_t>(int64_t size, const uint8_t *y_grad,
+                                                                    const int64_t *input_shape, uint8_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<uint16_t, int64_t>(int64_t size, const uint16_t *y_grad,
+                                                                     const int64_t *input_shape, uint16_t *output,
+                                                                     const uint32_t &device_id,
                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<uint32_t, int64_t>(int64_t size, const uint32_t *y_grad,
+                                                                     const int64_t *input_shape, uint32_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<uint64_t, int64_t>(int64_t size, const uint64_t *y_grad,
+                                                                     const int64_t *input_shape, uint64_t *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<int8_t, int64_t>(int64_t size, const int8_t *y_grad,
+                                                                   const int64_t *input_shape, int8_t *output,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<int16_t, int64_t>(int64_t size, const int16_t *y_grad,
+                                                                    const int64_t *input_shape, int16_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<int32_t, int64_t>(int64_t size, const int32_t *y_grad,
+                                                                    const int64_t *input_shape, int32_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<int64_t, int64_t>(int64_t size, const int64_t *y_grad,
+                                                                    const int64_t *input_shape, int64_t *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<half, int64_t>(int64_t size, const half *y_grad,
+                                                                 const int64_t *input_shape, half *output,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<float, int64_t>(int64_t size, const float *y_grad,
+                                                                  const int64_t *input_shape, float *output,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<double, int64_t>(int64_t size, const double *y_grad,
+                                                                   const int64_t *input_shape, double *output,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<Complex<float>, int64_t>(int64_t size, const Complex<float> *y_grad,
+                                                                           const int64_t *input_shape,
+                                                                           Complex<float> *output,
+                                                                           const uint32_t &device_id,
+                                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTraceGrad<Complex<double>, int64_t>(int64_t size, const Complex<double> *y_grad,
+                                                                            const int64_t *input_shape,
+                                                                            Complex<double> *output,
+                                                                            const uint32_t &device_id,
+                                                                            cudaStream_t cuda_stream);

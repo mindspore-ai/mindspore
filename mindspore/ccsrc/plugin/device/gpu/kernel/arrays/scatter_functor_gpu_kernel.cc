@@ -83,8 +83,9 @@ bool ScatterFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   T *updates = GetDeviceAddress<T>(inputs, 2);
   T *output = GetDeviceAddress<T>(outputs, 0);
   S size_limit = static_cast<S>(first_dim_size_);
-  ScatterFunc(scatter_functor_type_, size_limit, inner_size_, indices_size_, indices, updates, input,
-              reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = ScatterFunc(scatter_functor_type_, size_limit, inner_size_, indices_size_, indices, updates, input,
+                            reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   // Scatter ops are registered as a ref type operator. The new runtime supports the ref mechanism with the same input
   // and output addresses, but the old runtime does not support the ref mechanism, and the input and output addresses

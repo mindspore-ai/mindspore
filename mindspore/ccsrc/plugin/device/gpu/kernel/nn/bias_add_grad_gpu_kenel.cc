@@ -113,11 +113,14 @@ bool BiasAddGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
                           workspace_size_list_[kIndex1], &alpha, dy_desc_, dy_addr, &beta, db_desc_, db_addr),
         "cudnnReduceTensor failed");
     } else {  // use own implementation which is more efficient but cannot process num_dim > 4
+      cudaError_t status = cudaErrorNotReady;
       if (data_format_ == kOpFormat_NHWC) {
-        CalBiasAddGradNHWC(dy_num_, bias_size_, dy_addr, db_addr, reinterpret_cast<cudaStream_t>(stream_));
+        status = CalBiasAddGradNHWC(dy_num_, bias_size_, dy_addr, db_addr, reinterpret_cast<cudaStream_t>(stream_));
+        CHECK_CUDA_STATUS(status, kernel_name_);
       } else {
-        CalBiasAddGradNCHW(dy_num_, bias_size_, SizeToInt(dy_shape_[kIndex2]), SizeToInt(dy_shape_[kIndex3]), dy_addr,
-                           db_addr, reinterpret_cast<cudaStream_t>(stream_));
+        status = CalBiasAddGradNCHW(dy_num_, bias_size_, SizeToInt(dy_shape_[kIndex2]), SizeToInt(dy_shape_[kIndex3]),
+                                    dy_addr, db_addr, reinterpret_cast<cudaStream_t>(stream_));
+        CHECK_CUDA_STATUS(status, kernel_name_);
       }
     }
   }

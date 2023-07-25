@@ -146,10 +146,10 @@ bool ParameterizedTruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<ke
   }
 
   // launch kernel function
-  ParameterizedTruncatedNormal(final_seed_, batch_size_, samples_per_batch_, mean, stdevs, min, max, output,
-                               scalar_mean_, scalar_stdevs_, scalar_min_, scalar_max_, device_id_,
-                               reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto status = ParameterizedTruncatedNormal(final_seed_, batch_size_, samples_per_batch_, mean, stdevs, min, max,
+                                             output, scalar_mean_, scalar_stdevs_, scalar_min_, scalar_max_, device_id_,
+                                             reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

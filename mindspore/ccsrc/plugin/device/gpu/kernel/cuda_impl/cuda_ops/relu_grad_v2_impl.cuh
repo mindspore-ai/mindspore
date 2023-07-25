@@ -18,5 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RELU_GRAD_V2_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T>
-CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx,
+                                       cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RELU_GRAD_V2_IMPL_CUH_

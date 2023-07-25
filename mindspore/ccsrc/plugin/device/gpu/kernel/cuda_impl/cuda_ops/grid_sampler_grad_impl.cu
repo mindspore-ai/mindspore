@@ -17,25 +17,18 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/grid_sampler_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
-template<typename T>
-static __forceinline__ __device__
-void safe_add_2d(T *data, int h, int w,
-                 int sH, int sW, int H, int W,
-                 T delta,
-                 const size_t NC_offset) {
+template <typename T>
+static __forceinline__ __device__ void safe_add_2d(T *data, int h, int w, int sH, int sW, int H, int W, T delta,
+                                                   const size_t NC_offset) {
   if (within_bounds_2d(h, w, H, W)) {
     MsAtomicAdd(data + NC_offset + h * sH + w * sW, delta);
   }
 }
 
-template<typename T>
-static __forceinline__ __device__
-void add_value_bounded(
-    T* data, T x, T y, int W, int H, int sW, int sH,
-    T delta,
-    GridSamplerPaddingMode padding_mode,
-    bool align_corners,
-    const size_t NC_offset) {
+template <typename T>
+static __forceinline__ __device__ void add_value_bounded(T *data, T x, T y, int W, int H, int sW, int sH, T delta,
+                                                         GridSamplerPaddingMode padding_mode, bool align_corners,
+                                                         const size_t NC_offset) {
   x = compute_coordinates(x, W, padding_mode, align_corners);
   y = compute_coordinates(y, H, padding_mode, align_corners);
 
@@ -45,12 +38,9 @@ void add_value_bounded(
   safe_add_2d(data, iy, ix, sH, sW, H, W, delta, NC_offset);
 }
 
-template<typename T>
-static __forceinline__ __device__
-void safe_add_3d(T *data, int d, int h, int w,
-                 int sD, int sH, int sW, int D, int H, int W,
-                 T delta,
-                 const size_t NC_offset) {
+template <typename T>
+static __forceinline__ __device__ void safe_add_3d(T *data, int d, int h, int w, int sD, int sH, int sW, int D, int H,
+                                                   int W, T delta, const size_t NC_offset) {
   if (within_bounds_3d(d, h, w, D, H, W)) {
     MsAtomicAdd(data + NC_offset + d * sD + h * sH + w * sW, delta);
   }
@@ -64,22 +54,20 @@ __global__ void GridSamplerGradInitKernel(const size_t size_init, T *dx) {
 }
 
 template <typename T>
-__inline__ __device__ T GetInput(const T *input, size_t index) { return input[index]; }
+__inline__ __device__ T GetInput(const T *input, size_t index) {
+  return input[index];
+}
 __inline__ __device__ float GetInput(const half *input, size_t index) { return __half2float(input[index]); }
 
 template <typename T>
-__global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *input_addr,
-                                        T *grid_addr, T *dinput_addr, T *dgrid_addr,
-                                        const size_t C, const size_t inp_H, const size_t inp_W,
-                                        const size_t out_H, const size_t out_W,
-                                        const size_t inp_sN, const size_t inp_sC,
-                                        const size_t inp_sH, const size_t inp_sW,
-                                        const size_t grid_sN, const size_t grid_sH,
-                                        const size_t grid_sW, const size_t grid_sCoor,
-                                        const size_t dinp_sN, const size_t dinp_sC,
-                                        const size_t dinp_sH, const size_t dinp_sW,
-                                        const size_t grad_sN, const size_t grad_sC,
-                                        const size_t grad_sH, const size_t grad_sW,
+__global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *input_addr, T *grid_addr, T *dinput_addr,
+                                        T *dgrid_addr, const size_t C, const size_t inp_H, const size_t inp_W,
+                                        const size_t out_H, const size_t out_W, const size_t inp_sN,
+                                        const size_t inp_sC, const size_t inp_sH, const size_t inp_sW,
+                                        const size_t grid_sN, const size_t grid_sH, const size_t grid_sW,
+                                        const size_t grid_sCoor, const size_t dinp_sN, const size_t dinp_sC,
+                                        const size_t dinp_sH, const size_t dinp_sW, const size_t grad_sN,
+                                        const size_t grad_sC, const size_t grad_sH, const size_t grad_sW,
                                         const size_t dgrid_sW, GridSamplerInterpolationMode interpolation_mode,
                                         GridSamplerPaddingMode padding_mode, bool align_corners) {
   for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < size; index += blockDim.x * gridDim.x) {
@@ -113,10 +101,10 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
       int64_t iy_se = iy_nw + 1;
 
       // get surfaces to each neighbor:
-      ItmType nw = (ix_se - ix)    * (iy_se - iy);
-      ItmType ne = (ix    - ix_sw) * (iy_sw - iy);
-      ItmType sw = (ix_ne - ix)    * (iy    - iy_ne);
-      ItmType se = (ix    - ix_nw) * (iy    - iy_nw);
+      ItmType nw = (ix_se - ix) * (iy_se - iy);
+      ItmType ne = (ix - ix_sw) * (iy_sw - iy);
+      ItmType sw = (ix_ne - ix) * (iy - iy_ne);
+      ItmType se = (ix - ix_nw) * (iy - iy_nw);
 
       ItmType dix = 0, diy = 0;
       size_t grad_idx_NCHW = n * grad_sN + h * grad_sH + w * grad_sW;
@@ -207,23 +195,20 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
       size_t NC_offset = n * dinp_sN;
       T *inp_ptr_NC = input_addr + n * inp_sN;
 
-      for (size_t c = 0; c < C; ++c, grad_idx_NCHW += grad_sC, NC_offset += dinp_sC, inp_ptr_NC+= inp_sC) {
+      for (size_t c = 0; c < C; ++c, grad_idx_NCHW += grad_sC, NC_offset += dinp_sC, inp_ptr_NC += inp_sC) {
         auto grad = GetInput(grad_addr, grad_idx_NCHW);
 
-        #pragma unroll 4
+#pragma unroll 4
         for (size_t i = 0; i < 4; ++i) {
-          #pragma unroll 4
+#pragma unroll 4
           for (size_t j = 0; j < 4; ++j) {
             // set input gradient. See Note [Passing pointer and offset to fastAtomicAdd].
             add_value_bounded<T>(dinput_addr, ix_nw - 1 + i, iy_nw - 1 + j, inp_W, inp_H, dinp_sW, dinp_sH,
-              grad * x_coeffs[i] * y_coeffs[j],
-              padding_mode,
-              align_corners,
-              NC_offset);
+                                 grad * x_coeffs[i] * y_coeffs[j], padding_mode, align_corners, NC_offset);
 
             // set grid gradient
-            ItmType val = get_value_bounded<T>(inp_ptr_NC, ix_nw - 1 + i, iy_nw - 1 + j,
-              inp_W, inp_H, inp_sW, inp_sH, padding_mode, align_corners);
+            ItmType val = get_value_bounded<T>(inp_ptr_NC, ix_nw - 1 + i, iy_nw - 1 + j, inp_W, inp_H, inp_sW, inp_sH,
+                                               padding_mode, align_corners);
 
             dix -= val * x_coeffs_grad[i] * y_coeffs[j] * grad;
             diy -= val * y_coeffs_grad[j] * x_coeffs[i] * grad;
@@ -239,110 +224,71 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
 }
 
 template <typename T>
-void GridSampler2DGrad(const size_t size, const size_t dinput_size,
-                       const size_t dgrid_size, T *grad_addr, T *input_addr,
-                       T *grid_addr, T *dinput_addr, T *dgrid_addr,
-                       const std::vector<size_t> &grad_shape,
-                       const std::vector<size_t> &input_shape,
-                       const std::vector<size_t> &grid_shape,
-                       const std::vector<size_t> &dinput_shape,
-                       const std::vector<size_t> &dgrid_shape,
-                       const std::vector<size_t> &grad_stride,
-                       const std::vector<size_t> &input_stride,
-                       const std::vector<size_t> &grid_stride,
-                       const std::vector<size_t> &dinput_stride,
-                       const std::vector<size_t> &dgrid_stride,
-                       const GridSamplerInterpolationMode interpolation_mode,
-                       const GridSamplerPaddingMode padding_mode,
-                       const bool align_corners,
-                       cudaStream_t cuda_stream) {
-  GridSamplerGradInitKernel<<<GET_BLOCKS(dinput_size), GET_THREADS_MAXSIZE(dinput_size), 0, cuda_stream>>>(
-    dinput_size, dinput_addr);
-  GridSamplerGradInitKernel<<<GET_BLOCKS(dgrid_size), GET_THREADS_MAXSIZE(dgrid_size), 0, cuda_stream>>>(
-    dgrid_size, dgrid_addr);
+cudaError_t GridSampler2DGrad(const size_t size, const size_t dinput_size, const size_t dgrid_size, T *grad_addr,
+                              T *input_addr, T *grid_addr, T *dinput_addr, T *dgrid_addr,
+                              const std::vector<size_t> &grad_shape, const std::vector<size_t> &input_shape,
+                              const std::vector<size_t> &grid_shape, const std::vector<size_t> &dinput_shape,
+                              const std::vector<size_t> &dgrid_shape, const std::vector<size_t> &grad_stride,
+                              const std::vector<size_t> &input_stride, const std::vector<size_t> &grid_stride,
+                              const std::vector<size_t> &dinput_stride, const std::vector<size_t> &dgrid_stride,
+                              const GridSamplerInterpolationMode interpolation_mode,
+                              const GridSamplerPaddingMode padding_mode, const bool align_corners,
+                              cudaStream_t cuda_stream) {
+  GridSamplerGradInitKernel<<<GET_BLOCKS(dinput_size), GET_THREADS_MAXSIZE(dinput_size), 0, cuda_stream>>>(dinput_size,
+                                                                                                           dinput_addr);
+  GridSamplerGradInitKernel<<<GET_BLOCKS(dgrid_size), GET_THREADS_MAXSIZE(dgrid_size), 0, cuda_stream>>>(dgrid_size,
+                                                                                                         dgrid_addr);
   size_t thread_per_block = 256;
   size_t block_per_grid = (size + thread_per_block - 1) / thread_per_block;
   GridSampler2DGradKernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
-    size, grad_addr, input_addr, grid_addr, dinput_addr, dgrid_addr,
-    input_shape[1], input_shape[2], input_shape[3],
-    grid_shape[1], grid_shape[2],
-    input_stride[0], input_stride[1], input_stride[2], input_stride[3],
-    grid_stride[0], grid_stride[1], grid_stride[2], grid_stride[3],
-    dinput_stride[0], dinput_stride[1], dinput_stride[2], dinput_stride[3],
-    grad_stride[0], grad_stride[1], grad_stride[2], grad_stride[3],
-    dgrid_stride[2], interpolation_mode, padding_mode, align_corners);
+    size, grad_addr, input_addr, grid_addr, dinput_addr, dgrid_addr, input_shape[1], input_shape[2], input_shape[3],
+    grid_shape[1], grid_shape[2], input_stride[0], input_stride[1], input_stride[2], input_stride[3], grid_stride[0],
+    grid_stride[1], grid_stride[2], grid_stride[3], dinput_stride[0], dinput_stride[1], dinput_stride[2],
+    dinput_stride[3], grad_stride[0], grad_stride[1], grad_stride[2], grad_stride[3], dgrid_stride[2],
+    interpolation_mode, padding_mode, align_corners);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void GridSampler2DGrad<half>(const size_t size, const size_t dinput_size,
-                                                       const size_t dgrid_size, half *grad_addr, half *input_addr,
-                                                       half *grid_addr, half *dinput_addr, half *dgrid_addr,
-                                                       const std::vector<size_t> &grad_shape,
-                                                       const std::vector<size_t> &input_shape,
-                                                       const std::vector<size_t> &grid_shape,
-                                                       const std::vector<size_t> &dinput_shape,
-                                                       const std::vector<size_t> &dgrid_shape,
-                                                       const std::vector<size_t> &grad_stride,
-                                                       const std::vector<size_t> &input_stride,
-                                                       const std::vector<size_t> &grid_stride,
-                                                       const std::vector<size_t> &dinput_stride,
-                                                       const std::vector<size_t> &dgrid_stride,
-                                                       const GridSamplerInterpolationMode interpolation_mode,
-                                                       const GridSamplerPaddingMode padding_mode,
-                                                       const bool align_corners,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t GridSampler2DGrad<half>(
+  const size_t size, const size_t dinput_size, const size_t dgrid_size, half *grad_addr, half *input_addr,
+  half *grid_addr, half *dinput_addr, half *dgrid_addr, const std::vector<size_t> &grad_shape,
+  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+  const std::vector<size_t> &dinput_shape, const std::vector<size_t> &dgrid_shape,
+  const std::vector<size_t> &grad_stride, const std::vector<size_t> &input_stride,
+  const std::vector<size_t> &grid_stride, const std::vector<size_t> &dinput_stride,
+  const std::vector<size_t> &dgrid_stride, const GridSamplerInterpolationMode interpolation_mode,
+  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void GridSampler2DGrad<float>(const size_t size, const size_t dinput_size,
-                                                       const size_t dgrid_size, float *grad_addr, float *input_addr,
-                                                       float *grid_addr, float *dinput_addr, float *dgrid_addr,
-                                                       const std::vector<size_t> &grad_shape,
-                                                       const std::vector<size_t> &input_shape,
-                                                       const std::vector<size_t> &grid_shape,
-                                                       const std::vector<size_t> &dinput_shape,
-                                                       const std::vector<size_t> &dgrid_shape,
-                                                       const std::vector<size_t> &grad_stride,
-                                                       const std::vector<size_t> &input_stride,
-                                                       const std::vector<size_t> &grid_stride,
-                                                       const std::vector<size_t> &dinput_stride,
-                                                       const std::vector<size_t> &dgrid_stride,
-                                                       const GridSamplerInterpolationMode interpolation_mode,
-                                                       const GridSamplerPaddingMode padding_mode,
-                                                       const bool align_corners,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t GridSampler2DGrad<float>(
+  const size_t size, const size_t dinput_size, const size_t dgrid_size, float *grad_addr, float *input_addr,
+  float *grid_addr, float *dinput_addr, float *dgrid_addr, const std::vector<size_t> &grad_shape,
+  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+  const std::vector<size_t> &dinput_shape, const std::vector<size_t> &dgrid_shape,
+  const std::vector<size_t> &grad_stride, const std::vector<size_t> &input_stride,
+  const std::vector<size_t> &grid_stride, const std::vector<size_t> &dinput_stride,
+  const std::vector<size_t> &dgrid_stride, const GridSamplerInterpolationMode interpolation_mode,
+  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void GridSampler2DGrad<double>(const size_t size, const size_t dinput_size,
-                                                        const size_t dgrid_size, double *grad_addr, double *input_addr,
-                                                        double *grid_addr, double *dinput_addr, double *dgrid_addr,
-                                                        const std::vector<size_t> &grad_shape,
-                                                        const std::vector<size_t> &input_shape,
-                                                        const std::vector<size_t> &grid_shape,
-                                                        const std::vector<size_t> &dinput_shape,
-                                                        const std::vector<size_t> &dgrid_shape,
-                                                        const std::vector<size_t> &grad_stride,
-                                                        const std::vector<size_t> &input_stride,
-                                                        const std::vector<size_t> &grid_stride,
-                                                        const std::vector<size_t> &dinput_stride,
-                                                        const std::vector<size_t> &dgrid_stride,
-                                                        const GridSamplerInterpolationMode interpolation_mode,
-                                                        const GridSamplerPaddingMode padding_mode,
-                                                        const bool align_corners,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t GridSampler2DGrad<double>(
+  const size_t size, const size_t dinput_size, const size_t dgrid_size, double *grad_addr, double *input_addr,
+  double *grid_addr, double *dinput_addr, double *dgrid_addr, const std::vector<size_t> &grad_shape,
+  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+  const std::vector<size_t> &dinput_shape, const std::vector<size_t> &dgrid_shape,
+  const std::vector<size_t> &grad_stride, const std::vector<size_t> &input_stride,
+  const std::vector<size_t> &grid_stride, const std::vector<size_t> &dinput_stride,
+  const std::vector<size_t> &dgrid_stride, const GridSamplerInterpolationMode interpolation_mode,
+  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t cuda_stream);
 
 template <typename T>
-__global__ void GridSampler3DGradKernel(const size_t size, T *grad_addr, T *input_addr,
-                                        T *grid_addr, T *dinput_addr, T *dgrid_addr,
-                                        const size_t C, const size_t inp_D,
-                                        const size_t inp_H, const size_t inp_W,
-                                        const size_t out_D, const size_t out_H, const size_t out_W,
-                                        const size_t inp_sN, const size_t inp_sC, const size_t inp_sD,
-                                        const size_t inp_sH, const size_t inp_sW,
-                                        const size_t grid_sN, const size_t grid_sD, const size_t grid_sH,
-                                        const size_t grid_sW, const size_t grid_sCoor,
-                                        const size_t dinp_sN, const size_t dinp_sC, const size_t dinp_sD,
-                                        const size_t dinp_sH, const size_t dinp_sW,
-                                        const size_t grad_sN, const size_t grad_sC, const size_t grad_sD,
-                                        const size_t grad_sH, const size_t grad_sW,
-                                        const size_t dgrid_sW, GridSamplerInterpolationMode interpolation_mode,
-                                        GridSamplerPaddingMode padding_mode, bool align_corners) {
+__global__ void GridSampler3DGradKernel(
+  const size_t size, T *grad_addr, T *input_addr, T *grid_addr, T *dinput_addr, T *dgrid_addr, const size_t C,
+  const size_t inp_D, const size_t inp_H, const size_t inp_W, const size_t out_D, const size_t out_H,
+  const size_t out_W, const size_t inp_sN, const size_t inp_sC, const size_t inp_sD, const size_t inp_sH,
+  const size_t inp_sW, const size_t grid_sN, const size_t grid_sD, const size_t grid_sH, const size_t grid_sW,
+  const size_t grid_sCoor, const size_t dinp_sN, const size_t dinp_sC, const size_t dinp_sD, const size_t dinp_sH,
+  const size_t dinp_sW, const size_t grad_sN, const size_t grad_sC, const size_t grad_sD, const size_t grad_sH,
+  const size_t grad_sW, const size_t dgrid_sW, GridSamplerInterpolationMode interpolation_mode,
+  GridSamplerPaddingMode padding_mode, bool align_corners) {
   for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < size; index += blockDim.x * gridDim.x) {
     const size_t w = index % out_W;
     const size_t h = (index / out_W) % out_H;
@@ -402,14 +348,14 @@ __global__ void GridSampler3DGradKernel(const size_t size, T *grad_addr, T *inpu
       int64_t iz_bse = iz_tnw + 1;
 
       // get surfaces to each neighbor:
-      ItmType tnw = (ix_bse - ix)    * (iy_bse - iy)    * (iz_bse - iz);
-      ItmType tne = (ix - ix_bsw)    * (iy_bsw - iy)    * (iz_bsw - iz);
-      ItmType tsw = (ix_bne - ix)    * (iy - iy_bne)    * (iz_bne - iz);
-      ItmType tse = (ix - ix_bnw)    * (iy - iy_bnw)    * (iz_bnw - iz);
-      ItmType bnw = (ix_tse - ix)    * (iy_tse - iy)    * (iz - iz_tse);
-      ItmType bne = (ix - ix_tsw)    * (iy_tsw - iy)    * (iz - iz_tsw);
-      ItmType bsw = (ix_tne - ix)    * (iy - iy_tne)    * (iz - iz_tne);
-      ItmType bse = (ix - ix_tnw)    * (iy - iy_tnw)    * (iz - iz_tnw);
+      ItmType tnw = (ix_bse - ix) * (iy_bse - iy) * (iz_bse - iz);
+      ItmType tne = (ix - ix_bsw) * (iy_bsw - iy) * (iz_bsw - iz);
+      ItmType tsw = (ix_bne - ix) * (iy - iy_bne) * (iz_bne - iz);
+      ItmType tse = (ix - ix_bnw) * (iy - iy_bnw) * (iz_bnw - iz);
+      ItmType bnw = (ix_tse - ix) * (iy_tse - iy) * (iz - iz_tse);
+      ItmType bne = (ix - ix_tsw) * (iy_tsw - iy) * (iz - iz_tsw);
+      ItmType bsw = (ix_tne - ix) * (iy - iy_tne) * (iz - iz_tne);
+      ItmType bse = (ix - ix_tnw) * (iy - iy_tnw) * (iz - iz_tnw);
 
       ItmType dix = 0, diy = 0, diz = 0;
       size_t grad_idx_NCDHW = n * grad_sN + d * grad_sD + h * grad_sH + w * grad_sW;
@@ -440,51 +386,51 @@ __global__ void GridSampler3DGradKernel(const size_t size, T *grad_addr, T *inpu
         // calculate grad_grid
         if (within_bounds_3d(iz_tnw, iy_tnw, ix_tnw, inp_D, inp_H, inp_W)) {
           auto tnw_val = GetInput(inp_ptr_NC, iz_tnw * inp_sD + iy_tnw * inp_sH + ix_tnw * inp_sW);
-          dix -= tnw_val * (iy_bse - iy)    * (iz_bse - iz)    * grad;
-          diy -= tnw_val * (ix_bse - ix)    * (iz_bse - iz)    * grad;
-          diz -= tnw_val * (ix_bse - ix)    * (iy_bse - iy)    * grad;
+          dix -= tnw_val * (iy_bse - iy) * (iz_bse - iz) * grad;
+          diy -= tnw_val * (ix_bse - ix) * (iz_bse - iz) * grad;
+          diz -= tnw_val * (ix_bse - ix) * (iy_bse - iy) * grad;
         }
         if (within_bounds_3d(iz_tne, iy_tne, ix_tne, inp_D, inp_H, inp_W)) {
           auto tne_val = GetInput(inp_ptr_NC, iz_tne * inp_sD + iy_tne * inp_sH + ix_tne * inp_sW);
-          dix += tne_val * (iy_bsw - iy)    * (iz_bsw - iz)    * grad;
-          diy -= tne_val * (ix - ix_bsw)    * (iz_bsw - iz)    * grad;
-          diz -= tne_val * (ix - ix_bsw)    * (iy_bsw - iy)    * grad;
+          dix += tne_val * (iy_bsw - iy) * (iz_bsw - iz) * grad;
+          diy -= tne_val * (ix - ix_bsw) * (iz_bsw - iz) * grad;
+          diz -= tne_val * (ix - ix_bsw) * (iy_bsw - iy) * grad;
         }
         if (within_bounds_3d(iz_tsw, iy_tsw, ix_tsw, inp_D, inp_H, inp_W)) {
           auto tsw_val = GetInput(inp_ptr_NC, iz_tsw * inp_sD + iy_tsw * inp_sH + ix_tsw * inp_sW);
-          dix -= tsw_val * (iy - iy_bne)    * (iz_bne - iz)    * grad;
-          diy += tsw_val * (ix_bne - ix)    * (iz_bne - iz)    * grad;
-          diz -= tsw_val * (ix_bne - ix)    * (iy - iy_bne)    * grad;
+          dix -= tsw_val * (iy - iy_bne) * (iz_bne - iz) * grad;
+          diy += tsw_val * (ix_bne - ix) * (iz_bne - iz) * grad;
+          diz -= tsw_val * (ix_bne - ix) * (iy - iy_bne) * grad;
         }
         if (within_bounds_3d(iz_tse, iy_tse, ix_tse, inp_D, inp_H, inp_W)) {
           auto tse_val = GetInput(inp_ptr_NC, iz_tse * inp_sD + iy_tse * inp_sH + ix_tse * inp_sW);
-          dix += tse_val * (iy - iy_bnw)    * (iz_bnw - iz)    * grad;
-          diy += tse_val * (ix - ix_bnw)    * (iz_bnw - iz)    * grad;
-          diz -= tse_val * (ix - ix_bnw)    * (iy - iy_bnw)    * grad;
+          dix += tse_val * (iy - iy_bnw) * (iz_bnw - iz) * grad;
+          diy += tse_val * (ix - ix_bnw) * (iz_bnw - iz) * grad;
+          diz -= tse_val * (ix - ix_bnw) * (iy - iy_bnw) * grad;
         }
         if (within_bounds_3d(iz_bnw, iy_bnw, ix_bnw, inp_D, inp_H, inp_W)) {
           auto bnw_val = GetInput(inp_ptr_NC, iz_bnw * inp_sD + iy_bnw * inp_sH + ix_bnw * inp_sW);
-          dix -= bnw_val * (iy_tse - iy)    * (iz - iz_tse)    * grad;
-          diy -= bnw_val * (ix_tse - ix)    * (iz - iz_tse)    * grad;
-          diz += bnw_val * (ix_tse - ix)    * (iy_tse - iy)    * grad;
+          dix -= bnw_val * (iy_tse - iy) * (iz - iz_tse) * grad;
+          diy -= bnw_val * (ix_tse - ix) * (iz - iz_tse) * grad;
+          diz += bnw_val * (ix_tse - ix) * (iy_tse - iy) * grad;
         }
         if (within_bounds_3d(iz_bne, iy_bne, ix_bne, inp_D, inp_H, inp_W)) {
           auto bne_val = GetInput(inp_ptr_NC, iz_bne * inp_sD + iy_bne * inp_sH + ix_bne * inp_sW);
-          dix += bne_val * (iy_tsw - iy)    * (iz - iz_tsw)    * grad;
-          diy -= bne_val * (ix - ix_tsw)    * (iz - iz_tsw)    * grad;
-          diz += bne_val * (ix - ix_tsw)    * (iy_tsw - iy)    * grad;
+          dix += bne_val * (iy_tsw - iy) * (iz - iz_tsw) * grad;
+          diy -= bne_val * (ix - ix_tsw) * (iz - iz_tsw) * grad;
+          diz += bne_val * (ix - ix_tsw) * (iy_tsw - iy) * grad;
         }
         if (within_bounds_3d(iz_bsw, iy_bsw, ix_bsw, inp_D, inp_H, inp_W)) {
           auto bsw_val = GetInput(inp_ptr_NC, iz_bsw * inp_sD + iy_bsw * inp_sH + ix_bsw * inp_sW);
-          dix -= bsw_val * (iy - iy_tne)    * (iz - iz_tne)    * grad;
-          diy += bsw_val * (ix_tne - ix)    * (iz - iz_tne)    * grad;
-          diz += bsw_val * (ix_tne - ix)    * (iy - iy_tne)    * grad;
+          dix -= bsw_val * (iy - iy_tne) * (iz - iz_tne) * grad;
+          diy += bsw_val * (ix_tne - ix) * (iz - iz_tne) * grad;
+          diz += bsw_val * (ix_tne - ix) * (iy - iy_tne) * grad;
         }
         if (within_bounds_3d(iz_bse, iy_bse, ix_bse, inp_D, inp_H, inp_W)) {
           auto bse_val = GetInput(inp_ptr_NC, iz_bse * inp_sD + iy_bse * inp_sH + ix_bse * inp_sW);
-          dix += bse_val * (iy - iy_tnw)    * (iz - iz_tnw)    * grad;
-          diy += bse_val * (ix - ix_tnw)    * (iz - iz_tnw)    * grad;
-          diz += bse_val * (ix - ix_tnw)    * (iy - iy_tnw)    * grad;
+          dix += bse_val * (iy - iy_tnw) * (iz - iz_tnw) * grad;
+          diy += bse_val * (ix - ix_tnw) * (iz - iz_tnw) * grad;
+          diz += bse_val * (ix - ix_tnw) * (iy - iy_tnw) * grad;
         }
       }
 
@@ -506,9 +452,8 @@ __global__ void GridSampler3DGradKernel(const size_t size, T *grad_addr, T *inpu
       size_t NC_offset = n * dinp_sN;
       for (size_t c = 0; c < C; ++c, grad_ptr_NCDHW += grad_sC, NC_offset += dinp_sC) {
         // calculate and set grad_input. See Note [Passing pointer and offset to fastAtomicAdd].
-        safe_add_3d(dinput_addr, iz_nearest, iy_nearest, ix_nearest,
-                    dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W, *grad_ptr_NCDHW,
-                    NC_offset);
+        safe_add_3d(dinput_addr, iz_nearest, iy_nearest, ix_nearest, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W,
+                    *grad_ptr_NCDHW, NC_offset);
       }
       // assuming grad_grid is contiguous
       // thus we can
@@ -523,90 +468,58 @@ __global__ void GridSampler3DGradKernel(const size_t size, T *grad_addr, T *inpu
 }
 
 template <typename T>
-void GridSampler3DGrad(const size_t size, const size_t dinput_size,
-                       const size_t dgrid_size, T *grad_addr, T *input_addr,
-                       T *grid_addr, T *dinput_addr, T *dgrid_addr,
-                       const std::vector<size_t> &grad_shape,
-                       const std::vector<size_t> &input_shape,
-                       const std::vector<size_t> &grid_shape,
-                       const std::vector<size_t> &dinput_shape,
-                       const std::vector<size_t> &dgrid_shape,
-                       const std::vector<size_t> &grad_stride,
-                       const std::vector<size_t> &input_stride,
-                       const std::vector<size_t> &grid_stride,
-                       const std::vector<size_t> &dinput_stride,
-                       const std::vector<size_t> &dgrid_stride,
-                       const GridSamplerInterpolationMode interpolation_mode,
-                       const GridSamplerPaddingMode padding_mode,
-                       const bool align_corners,
-                       cudaStream_t cuda_stream) {
-  GridSamplerGradInitKernel<<<GET_BLOCKS(dinput_size), GET_THREADS_MAXSIZE(dinput_size), 0, cuda_stream>>>(
-    dinput_size, dinput_addr);
-  GridSamplerGradInitKernel<<<GET_BLOCKS(dgrid_size), GET_THREADS_MAXSIZE(dgrid_size), 0, cuda_stream>>>(
-    dgrid_size, dgrid_addr);
+cudaError_t GridSampler3DGrad(const size_t size, const size_t dinput_size, const size_t dgrid_size, T *grad_addr,
+                              T *input_addr, T *grid_addr, T *dinput_addr, T *dgrid_addr,
+                              const std::vector<size_t> &grad_shape, const std::vector<size_t> &input_shape,
+                              const std::vector<size_t> &grid_shape, const std::vector<size_t> &dinput_shape,
+                              const std::vector<size_t> &dgrid_shape, const std::vector<size_t> &grad_stride,
+                              const std::vector<size_t> &input_stride, const std::vector<size_t> &grid_stride,
+                              const std::vector<size_t> &dinput_stride, const std::vector<size_t> &dgrid_stride,
+                              const GridSamplerInterpolationMode interpolation_mode,
+                              const GridSamplerPaddingMode padding_mode, const bool align_corners,
+                              cudaStream_t cuda_stream) {
+  GridSamplerGradInitKernel<<<GET_BLOCKS(dinput_size), GET_THREADS_MAXSIZE(dinput_size), 0, cuda_stream>>>(dinput_size,
+                                                                                                           dinput_addr);
+  GridSamplerGradInitKernel<<<GET_BLOCKS(dgrid_size), GET_THREADS_MAXSIZE(dgrid_size), 0, cuda_stream>>>(dgrid_size,
+                                                                                                         dgrid_addr);
   size_t thread_per_block = 256;
   size_t block_per_grid = (size + thread_per_block - 1) / thread_per_block;
   GridSampler3DGradKernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
-    size, grad_addr, input_addr, grid_addr, dinput_addr, dgrid_addr,
-    input_shape[1], input_shape[2], input_shape[3], input_shape[4],
-    grid_shape[1], grid_shape[2], grid_shape[3],
-    input_stride[0], input_stride[1], input_stride[2], input_stride[3], input_stride[4],
-    grid_stride[0], grid_stride[1], grid_stride[2], grid_stride[3], grid_stride[4],
-    dinput_stride[0], dinput_stride[1], dinput_stride[2], dinput_stride[3], dinput_stride[4],
-    grad_stride[0], grad_stride[1], grad_stride[2], grad_stride[3], grad_stride[4],
-    dgrid_stride[3], interpolation_mode, padding_mode, align_corners);
+    size, grad_addr, input_addr, grid_addr, dinput_addr, dgrid_addr, input_shape[1], input_shape[2], input_shape[3],
+    input_shape[4], grid_shape[1], grid_shape[2], grid_shape[3], input_stride[0], input_stride[1], input_stride[2],
+    input_stride[3], input_stride[4], grid_stride[0], grid_stride[1], grid_stride[2], grid_stride[3], grid_stride[4],
+    dinput_stride[0], dinput_stride[1], dinput_stride[2], dinput_stride[3], dinput_stride[4], grad_stride[0],
+    grad_stride[1], grad_stride[2], grad_stride[3], grad_stride[4], dgrid_stride[3], interpolation_mode, padding_mode,
+    align_corners);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void GridSampler3DGrad<half>(const size_t size, const size_t dinput_size,
-                                                       const size_t dgrid_size, half *grad_addr, half *input_addr,
-                                                       half *grid_addr, half *dinput_addr, half *dgrid_addr,
-                                                       const std::vector<size_t> &grad_shape,
-                                                       const std::vector<size_t> &input_shape,
-                                                       const std::vector<size_t> &grid_shape,
-                                                       const std::vector<size_t> &dinput_shape,
-                                                       const std::vector<size_t> &dgrid_shape,
-                                                       const std::vector<size_t> &grad_stride,
-                                                       const std::vector<size_t> &input_stride,
-                                                       const std::vector<size_t> &grid_stride,
-                                                       const std::vector<size_t> &dinput_stride,
-                                                       const std::vector<size_t> &dgrid_stride,
-                                                       const GridSamplerInterpolationMode interpolation_mode,
-                                                       const GridSamplerPaddingMode padding_mode,
-                                                       const bool align_corners,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t GridSampler3DGrad<half>(
+  const size_t size, const size_t dinput_size, const size_t dgrid_size, half *grad_addr, half *input_addr,
+  half *grid_addr, half *dinput_addr, half *dgrid_addr, const std::vector<size_t> &grad_shape,
+  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+  const std::vector<size_t> &dinput_shape, const std::vector<size_t> &dgrid_shape,
+  const std::vector<size_t> &grad_stride, const std::vector<size_t> &input_stride,
+  const std::vector<size_t> &grid_stride, const std::vector<size_t> &dinput_stride,
+  const std::vector<size_t> &dgrid_stride, const GridSamplerInterpolationMode interpolation_mode,
+  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void GridSampler3DGrad<float>(const size_t size, const size_t dinput_size,
-                                                       const size_t dgrid_size, float *grad_addr, float *input_addr,
-                                                       float *grid_addr, float *dinput_addr, float *dgrid_addr,
-                                                       const std::vector<size_t> &grad_shape,
-                                                       const std::vector<size_t> &input_shape,
-                                                       const std::vector<size_t> &grid_shape,
-                                                       const std::vector<size_t> &dinput_shape,
-                                                       const std::vector<size_t> &dgrid_shape,
-                                                       const std::vector<size_t> &grad_stride,
-                                                       const std::vector<size_t> &input_stride,
-                                                       const std::vector<size_t> &grid_stride,
-                                                       const std::vector<size_t> &dinput_stride,
-                                                       const std::vector<size_t> &dgrid_stride,
-                                                       const GridSamplerInterpolationMode interpolation_mode,
-                                                       const GridSamplerPaddingMode padding_mode,
-                                                       const bool align_corners,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t GridSampler3DGrad<float>(
+  const size_t size, const size_t dinput_size, const size_t dgrid_size, float *grad_addr, float *input_addr,
+  float *grid_addr, float *dinput_addr, float *dgrid_addr, const std::vector<size_t> &grad_shape,
+  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+  const std::vector<size_t> &dinput_shape, const std::vector<size_t> &dgrid_shape,
+  const std::vector<size_t> &grad_stride, const std::vector<size_t> &input_stride,
+  const std::vector<size_t> &grid_stride, const std::vector<size_t> &dinput_stride,
+  const std::vector<size_t> &dgrid_stride, const GridSamplerInterpolationMode interpolation_mode,
+  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void GridSampler3DGrad<double>(const size_t size, const size_t dinput_size,
-                                                        const size_t dgrid_size, double *grad_addr, double *input_addr,
-                                                        double *grid_addr, double *dinput_addr, double *dgrid_addr,
-                                                        const std::vector<size_t> &grad_shape,
-                                                        const std::vector<size_t> &input_shape,
-                                                        const std::vector<size_t> &grid_shape,
-                                                        const std::vector<size_t> &dinput_shape,
-                                                        const std::vector<size_t> &dgrid_shape,
-                                                        const std::vector<size_t> &grad_stride,
-                                                        const std::vector<size_t> &input_stride,
-                                                        const std::vector<size_t> &grid_stride,
-                                                        const std::vector<size_t> &dinput_stride,
-                                                        const std::vector<size_t> &dgrid_stride,
-                                                        const GridSamplerInterpolationMode interpolation_mode,
-                                                        const GridSamplerPaddingMode padding_mode,
-                                                        const bool align_corners,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t GridSampler3DGrad<double>(
+  const size_t size, const size_t dinput_size, const size_t dgrid_size, double *grad_addr, double *input_addr,
+  double *grid_addr, double *dinput_addr, double *dgrid_addr, const std::vector<size_t> &grad_shape,
+  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+  const std::vector<size_t> &dinput_shape, const std::vector<size_t> &dgrid_shape,
+  const std::vector<size_t> &grad_stride, const std::vector<size_t> &input_stride,
+  const std::vector<size_t> &grid_stride, const std::vector<size_t> &dinput_stride,
+  const std::vector<size_t> &dgrid_stride, const GridSamplerInterpolationMode interpolation_mode,
+  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t cuda_stream);

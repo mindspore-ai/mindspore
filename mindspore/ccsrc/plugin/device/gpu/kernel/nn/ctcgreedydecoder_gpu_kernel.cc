@@ -165,14 +165,17 @@ bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
     }
   }
 
-  CalCTCGreedyDecoder(inputs_x, bound_, max_time_ * batch_size_, batch_size_, decoded_values_temp, log_probability,
-                      device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalCTCGreedyDecoder(inputs_x, bound_, max_time_ * batch_size_, batch_size_, decoded_values_temp,
+                                    log_probability, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
-  Calmerge(decoded_values_temp, sequence_length, batch_size_, bound_, merge_repeated_, log_probability, nums_count,
-           device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  status = Calmerge(decoded_values_temp, sequence_length, batch_size_, bound_, merge_repeated_, log_probability,
+                    nums_count, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
-  element_cnt_ = Calindices(decoded_values_temp, nums_count, batch_size_, decoded_indices, decoded_values,
-                            decoded_shape, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  status = Calindices(decoded_values_temp, nums_count, batch_size_, decoded_indices, decoded_values, decoded_shape,
+                      device_id_, reinterpret_cast<cudaStream_t>(stream_ptr), &element_cnt_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

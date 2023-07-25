@@ -108,11 +108,13 @@ bool SmoothL1LossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemsetAsync(workspace[0]->addr, false, workspace[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemsetAsync failed in SmoothL1LossGpuKernelMod::Launch.");
-    SmoothL1Loss(reduction_, tensor_size_, beta_, predict_addr, target_addr, result_addr, tmp_result_addr, device_id_,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = SmoothL1Loss(reduction_, tensor_size_, beta_, predict_addr, target_addr, result_addr, tmp_result_addr,
+                               device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
-    SmoothL1Loss(reduction_, tensor_size_, beta_, predict_addr, target_addr, result_addr, nullptr, device_id_,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = SmoothL1Loss(reduction_, tensor_size_, beta_, predict_addr, target_addr, result_addr, nullptr,
+                               device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 
   return true;

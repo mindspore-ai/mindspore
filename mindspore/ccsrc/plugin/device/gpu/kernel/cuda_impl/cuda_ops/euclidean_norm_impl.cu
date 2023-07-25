@@ -140,156 +140,164 @@ __global__ void NormCalHighPrecisionKernel(const float *middle_output, T *output
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void CalEuclideanNorm(const T *input, const size_t *input_shape, size_t input_shape_length,
-                                      size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                                      size_t output_shape_length, size_t output_elements, float *middle_output,
-                                      T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm(const T *input, const size_t *input_shape, size_t input_shape_length,
+                                             size_t input_elements, const size_t *output_axis,
+                                             const size_t *output_stride, size_t output_shape_length,
+                                             size_t output_elements, float *middle_output, T *output,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream) {
   EuclideanCalKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length, output);
   NormCalKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(output,
                                                                                                       output_elements);
+  return GetCudaStatus();
 }
 
 template <>
-CUDA_LIB_EXPORT void CalEuclideanNorm(const int8_t *input, const size_t *input_shape, size_t input_shape_length,
-                                      size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                                      size_t output_shape_length, size_t output_elements, float *middle_output,
-                                      int8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm(const int8_t *input, const size_t *input_shape, size_t input_shape_length,
+                                             size_t input_elements, const size_t *output_axis,
+                                             const size_t *output_stride, size_t output_shape_length,
+                                             size_t output_elements, float *middle_output, int8_t *output,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream) {
   EuclideanCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length,
     middle_output);
   NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     middle_output, output, output_elements);
+  return GetCudaStatus();
 }
 
 template <>
-CUDA_LIB_EXPORT void CalEuclideanNorm(const int16_t *input, const size_t *input_shape, size_t input_shape_length,
-                                      size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                                      size_t output_shape_length, size_t output_elements, float *middle_output,
-                                      int16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm(const int16_t *input, const size_t *input_shape, size_t input_shape_length,
+                                             size_t input_elements, const size_t *output_axis,
+                                             const size_t *output_stride, size_t output_shape_length,
+                                             size_t output_elements, float *middle_output, int16_t *output,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream) {
   EuclideanCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length,
     middle_output);
   NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     middle_output, output, output_elements);
+  return GetCudaStatus();
 }
 
 template <>
-CUDA_LIB_EXPORT void CalEuclideanNorm(const uint8_t *input, const size_t *input_shape, size_t input_shape_length,
-                                      size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                                      size_t output_shape_length, size_t output_elements, float *middle_output,
-                                      uint8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm(const uint8_t *input, const size_t *input_shape, size_t input_shape_length,
+                                             size_t input_elements, const size_t *output_axis,
+                                             const size_t *output_stride, size_t output_shape_length,
+                                             size_t output_elements, float *middle_output, uint8_t *output,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream) {
   EuclideanCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length,
     middle_output);
   NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     middle_output, output, output_elements);
+  return GetCudaStatus();
 }
 
 template <>
-CUDA_LIB_EXPORT void CalEuclideanNorm(const uint16_t *input, const size_t *input_shape, size_t input_shape_length,
-                                      size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                                      size_t output_shape_length, size_t output_elements, float *middle_output,
-                                      uint16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm(const uint16_t *input, const size_t *input_shape,
+                                             size_t input_shape_length, size_t input_elements,
+                                             const size_t *output_axis, const size_t *output_stride,
+                                             size_t output_shape_length, size_t output_elements, float *middle_output,
+                                             uint16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   EuclideanCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length,
     middle_output);
   NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     middle_output, output, output_elements);
+  return GetCudaStatus();
 }
 
 template <>
-CUDA_LIB_EXPORT void CalEuclideanNorm(const half *input, const size_t *input_shape, size_t input_shape_length,
-                                      size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                                      size_t output_shape_length, size_t output_elements, float *middle_output,
-                                      half *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm(const half *input, const size_t *input_shape, size_t input_shape_length,
+                                             size_t input_elements, const size_t *output_axis,
+                                             const size_t *output_stride, size_t output_shape_length,
+                                             size_t output_elements, float *middle_output, half *output,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream) {
   EuclideanCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length,
     middle_output);
   NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     middle_output, output, output_elements);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalEuclideanNorm<int8_t>(const int8_t *input, const size_t *input_shape,
-                                                       size_t input_shape_length, size_t input_elements,
-                                                       const size_t *output_axis, const size_t *output_stride,
-                                                       size_t output_shape_length, size_t output_elements,
-                                                       float *middle_output, int8_t *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream_);
-template CUDA_LIB_EXPORT void CalEuclideanNorm<int16_t>(const int16_t *input, const size_t *input_shape,
-                                                        size_t input_shape_length, size_t input_elements,
-                                                        const size_t *output_axis, const size_t *output_stride,
-                                                        size_t output_shape_length, size_t output_elements,
-                                                        float *middle_output, int16_t *output,
-                                                        const uint32_t &device_id, cudaStream_t cuda_stream_);
-template CUDA_LIB_EXPORT void CalEuclideanNorm<int>(const int *input, const size_t *input_shape,
-                                                    size_t input_shape_length, size_t input_elements,
-                                                    const size_t *output_axis, const size_t *output_stride,
-                                                    size_t output_shape_length, size_t output_elements,
-                                                    float *middle_output, int *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream_);
-template CUDA_LIB_EXPORT void CalEuclideanNorm<int64_t>(const int64_t *input, const size_t *input_shape,
-                                                        size_t input_shape_length, size_t input_elements,
-                                                        const size_t *output_axis, const size_t *output_stride,
-                                                        size_t output_shape_length, size_t output_elements,
-                                                        float *middle_output, int64_t *output,
-                                                        const uint32_t &device_id, cudaStream_t cuda_stream_);
-
-template CUDA_LIB_EXPORT void CalEuclideanNorm<uint8_t>(const uint8_t *input, const size_t *input_shape,
-                                                        size_t input_shape_length, size_t input_elements,
-                                                        const size_t *output_axis, const size_t *output_stride,
-                                                        size_t output_shape_length, size_t output_elements,
-                                                        float *middle_output, uint8_t *output,
-                                                        const uint32_t &device_id, cudaStream_t cuda_stream_);
-template CUDA_LIB_EXPORT void CalEuclideanNorm<uint16_t>(const uint16_t *input, const size_t *input_shape,
-                                                         size_t input_shape_length, size_t input_elements,
-                                                         const size_t *output_axis, const size_t *output_stride,
-                                                         size_t output_shape_length, size_t output_elements,
-                                                         float *middle_output, uint16_t *output,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream_);
-template CUDA_LIB_EXPORT void CalEuclideanNorm<uint32_t>(const uint32_t *input, const size_t *input_shape,
-                                                         size_t input_shape_length, size_t input_elements,
-                                                         const size_t *output_axis, const size_t *output_stride,
-                                                         size_t output_shape_length, size_t output_elements,
-                                                         float *middle_output, uint32_t *output,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream_);
-template CUDA_LIB_EXPORT void CalEuclideanNorm<uint64_t>(const uint64_t *input, const size_t *input_shape,
-                                                         size_t input_shape_length, size_t input_elements,
-                                                         const size_t *output_axis, const size_t *output_stride,
-                                                         size_t output_shape_length, size_t output_elements,
-                                                         float *middle_output, uint64_t *output,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream_);
-
-template CUDA_LIB_EXPORT void CalEuclideanNorm<half>(const half *input, const size_t *input_shape,
-                                                     size_t input_shape_length, size_t input_elements,
-                                                     const size_t *output_axis, const size_t *output_stride,
-                                                     size_t output_shape_length, size_t output_elements,
-                                                     float *middle_output, half *output, const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream_);
-
-template CUDA_LIB_EXPORT void CalEuclideanNorm<float>(const float *input, const size_t *input_shape,
-                                                      size_t input_shape_length, size_t input_elements,
-                                                      const size_t *output_axis, const size_t *output_stride,
-                                                      size_t output_shape_length, size_t output_elements,
-                                                      float *middle_output, float *output, const uint32_t &device_id,
-                                                      cudaStream_t cuda_stream_);
-template CUDA_LIB_EXPORT void CalEuclideanNorm<double>(const double *input, const size_t *input_shape,
-                                                       size_t input_shape_length, size_t input_elements,
-                                                       const size_t *output_axis, const size_t *output_stride,
-                                                       size_t output_shape_length, size_t output_elements,
-                                                       float *middle_output, double *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream_);
-
-template CUDA_LIB_EXPORT void CalEuclideanNorm<Complex<float>>(const Complex<float> *input, const size_t *input_shape,
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<int8_t>(const int8_t *input, const size_t *input_shape,
+                                                              size_t input_shape_length, size_t input_elements,
+                                                              const size_t *output_axis, const size_t *output_stride,
+                                                              size_t output_shape_length, size_t output_elements,
+                                                              float *middle_output, int8_t *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream_);
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<int16_t>(const int16_t *input, const size_t *input_shape,
                                                                size_t input_shape_length, size_t input_elements,
                                                                const size_t *output_axis, const size_t *output_stride,
                                                                size_t output_shape_length, size_t output_elements,
-                                                               float *middle_output, Complex<float> *output,
+                                                               float *middle_output, int16_t *output,
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream_);
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<int>(const int *input, const size_t *input_shape,
+                                                           size_t input_shape_length, size_t input_elements,
+                                                           const size_t *output_axis, const size_t *output_stride,
+                                                           size_t output_shape_length, size_t output_elements,
+                                                           float *middle_output, int *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream_);
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<int64_t>(const int64_t *input, const size_t *input_shape,
+                                                               size_t input_shape_length, size_t input_elements,
+                                                               const size_t *output_axis, const size_t *output_stride,
+                                                               size_t output_shape_length, size_t output_elements,
+                                                               float *middle_output, int64_t *output,
                                                                const uint32_t &device_id, cudaStream_t cuda_stream_);
 
-template CUDA_LIB_EXPORT void CalEuclideanNorm<Complex<double>>(const Complex<double> *input, const size_t *input_shape,
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<uint8_t>(const uint8_t *input, const size_t *input_shape,
+                                                               size_t input_shape_length, size_t input_elements,
+                                                               const size_t *output_axis, const size_t *output_stride,
+                                                               size_t output_shape_length, size_t output_elements,
+                                                               float *middle_output, uint8_t *output,
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream_);
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<uint16_t>(const uint16_t *input, const size_t *input_shape,
                                                                 size_t input_shape_length, size_t input_elements,
                                                                 const size_t *output_axis, const size_t *output_stride,
                                                                 size_t output_shape_length, size_t output_elements,
-                                                                float *middle_output, Complex<double> *output,
+                                                                float *middle_output, uint16_t *output,
                                                                 const uint32_t &device_id, cudaStream_t cuda_stream_);
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<uint32_t>(const uint32_t *input, const size_t *input_shape,
+                                                                size_t input_shape_length, size_t input_elements,
+                                                                const size_t *output_axis, const size_t *output_stride,
+                                                                size_t output_shape_length, size_t output_elements,
+                                                                float *middle_output, uint32_t *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream_);
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<uint64_t>(const uint64_t *input, const size_t *input_shape,
+                                                                size_t input_shape_length, size_t input_elements,
+                                                                const size_t *output_axis, const size_t *output_stride,
+                                                                size_t output_shape_length, size_t output_elements,
+                                                                float *middle_output, uint64_t *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream_);
+
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<half>(const half *input, const size_t *input_shape,
+                                                            size_t input_shape_length, size_t input_elements,
+                                                            const size_t *output_axis, const size_t *output_stride,
+                                                            size_t output_shape_length, size_t output_elements,
+                                                            float *middle_output, half *output,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream_);
+
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<float>(const float *input, const size_t *input_shape,
+                                                             size_t input_shape_length, size_t input_elements,
+                                                             const size_t *output_axis, const size_t *output_stride,
+                                                             size_t output_shape_length, size_t output_elements,
+                                                             float *middle_output, float *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream_);
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<double>(const double *input, const size_t *input_shape,
+                                                              size_t input_shape_length, size_t input_elements,
+                                                              const size_t *output_axis, const size_t *output_stride,
+                                                              size_t output_shape_length, size_t output_elements,
+                                                              float *middle_output, double *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream_);
+
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<Complex<float>>(
+  const Complex<float> *input, const size_t *input_shape, size_t input_shape_length, size_t input_elements,
+  const size_t *output_axis, const size_t *output_stride, size_t output_shape_length, size_t output_elements,
+  float *middle_output, Complex<float> *output, const uint32_t &device_id, cudaStream_t cuda_stream_);
+
+template CUDA_LIB_EXPORT cudaError_t CalEuclideanNorm<Complex<double>>(
+  const Complex<double> *input, const size_t *input_shape, size_t input_shape_length, size_t input_elements,
+  const size_t *output_axis, const size_t *output_stride, size_t output_shape_length, size_t output_elements,
+  float *middle_output, Complex<double> *output, const uint32_t &device_id, cudaStream_t cuda_stream_);

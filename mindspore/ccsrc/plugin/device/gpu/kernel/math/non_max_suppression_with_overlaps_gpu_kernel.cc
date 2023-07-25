@@ -187,13 +187,17 @@ bool NMSWithOverlapsFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     return false;
   }
   // num_output_ -> valid_num
-  num_output_ = CalSort(num_input_, index_buff, scores, up_score, valid_score_num, score_thershold, device_id_,
-                        reinterpret_cast<cudaStream_t>(stream_ptr));
-  CalPreprocess(num_output_, sel_boxes, row_mask, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
-  CalNms(num_output_, num_input_, iou_thershold, overlaps, sel_boxes, row_mask, index_buff, device_id_,
-         reinterpret_cast<cudaStream_t>(stream_ptr));
-  num_output_ = CalPostprocess(num_output_, max_output_size, valid_score_num, score_thershold, index_buff, sel_idx,
-                               sel_boxes, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalSort(num_input_, index_buff, scores, up_score, valid_score_num, score_thershold, device_id_,
+                        reinterpret_cast<cudaStream_t>(stream_ptr), &num_output_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  status = CalPreprocess(num_output_, sel_boxes, row_mask, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  status = CalNms(num_output_, num_input_, iou_thershold, overlaps, sel_boxes, row_mask, index_buff, device_id_,
+                  reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  status = CalPostprocess(num_output_, max_output_size, valid_score_num, score_thershold, index_buff, sel_idx,
+                          sel_boxes, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr), &num_output_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

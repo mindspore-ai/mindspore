@@ -50,8 +50,9 @@ class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
                       outputs_host_.get(), sizeof(T *) * output_num_, cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "Unpack opt cudaMemcpyAsync outputs failed");
-    UnpackKernel(input_size_, output_num_, dims_after_axis_, outputs_array, input,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = UnpackKernel(input_size_, output_num_, dims_after_axis_, outputs_array, input,
+                               reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

@@ -51,33 +51,36 @@ __global__ void MatrixCopyKernel(const T *input, T *output, const size_t count) 
 }
 
 template <typename T>
-void TriangleMatrixCopy(const T *input, T *output, bool clean, cublasFillMode_t uplo, const size_t count,
-                        const size_t ldb, const size_t m, cudaStream_t cuda_stream) {
+cudaError_t TriangleMatrixCopy(const T *input, T *output, bool clean, cublasFillMode_t uplo, const size_t count,
+                               const size_t ldb, const size_t m, cudaStream_t cuda_stream) {
   TriangleMatrixCopyKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, clean, uplo, count, ldb,
                                                                                m);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void TriangleMatrixCopy<float>(const float *input, float *output, bool clean,
-                                                        cublasFillMode_t uplo, const size_t count, const size_t ldb,
-                                                        const size_t m, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void TriangleMatrixCopy<half>(const half *input, half *output, bool clean,
-                                                       cublasFillMode_t uplo, const size_t count, const size_t ldb,
-                                                       const size_t m, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TriangleMatrixCopy<float>(const float *input, float *output, bool clean,
+                                                               cublasFillMode_t uplo, const size_t count,
+                                                               const size_t ldb, const size_t m,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TriangleMatrixCopy<half>(const half *input, half *output, bool clean,
+                                                              cublasFillMode_t uplo, const size_t count,
+                                                              const size_t ldb, const size_t m,
+                                                              cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void TriangleMatrixCopy<double>(const double *input, double *output, bool clean,
-                                                         cublasFillMode_t uplo, const size_t count, const size_t ldb,
-                                                         const size_t m, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t TriangleMatrixCopy<double>(const double *input, double *output, bool clean,
+                                                                cublasFillMode_t uplo, const size_t count,
+                                                                const size_t ldb, const size_t m,
+                                                                cudaStream_t cuda_stream);
 
 template <typename T>
-void MatrixCopy(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+cudaError_t MatrixCopy(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   MatrixCopyKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void MatrixCopy<float>(const float *input, float *output, const size_t count,
-                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixCopy<half>(const half *input, half *output, const size_t count,
-                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixCopy<double>(const double *input, double *output, const size_t count,
-                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixCopy<float>(const float *input, float *output, const size_t count,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixCopy<half>(const half *input, half *output, const size_t count,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixCopy<double>(const double *input, double *output, const size_t count,
+                                                        cudaStream_t cuda_stream);

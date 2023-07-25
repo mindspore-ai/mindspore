@@ -20,11 +20,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void Gelu(size_t input_size, const T *input_addr, T *output_addr, cudaStream_t cuda_stream,
-                          const uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t Gelu(size_t input_size, const T *input_addr, T *output_addr, cudaStream_t cuda_stream,
+                                 const uint32_t device_id);
 
 template <typename T>
-CUDA_LIB_EXPORT void GeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr, cudaStream_t cuda_stream,
-                                    const uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t GeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr, cudaStream_t cuda_stream,
+                                           const uint32_t device_id);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GELU_IMPL_CUH_

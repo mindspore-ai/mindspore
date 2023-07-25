@@ -36,39 +36,49 @@ __global__ void MatrixTransposeKernel(const T *input, int elements, int row, int
 }
 
 template <typename T>
-void MatrixTranspose(const T *input, int elements, int row, int col, T *output, uint32_t device_id,
-                     cudaStream_t cuda_stream) {
+cudaError_t MatrixTranspose(const T *input, int elements, int row, int col, T *output, uint32_t device_id,
+                            cudaStream_t cuda_stream) {
   MatrixTransposeKernel<<<CUDA_BLOCKS(device_id, elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, elements, row, col, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void MatrixTranspose<bool>(const bool *input, int elements, int row, int col, bool *output,
-                                                    uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<double>(const double *input, int elements, int row, int col,
-                                                      double *output, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<float>(const float *input, int elements, int row, int col, float *output,
-                                                     uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<half>(const half *input, int elements, int row, int col, half *output,
-                                                    uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<int64_t>(const int64_t *input, int elements, int row, int col,
-                                                       int64_t *output, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<int>(const int *input, int elements, int row, int col, int *output,
-                                                   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<int16_t>(const int16_t *input, int elements, int row, int col,
-                                                       int16_t *output, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<int8_t>(const int8_t *input, int elements, int row, int col,
-                                                      int8_t *output, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<uint64_t>(const uint64_t *input, int elements, int row, int col,
-                                                        uint64_t *output, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<uint32_t>(const uint32_t *input, int elements, int row, int col,
-                                                        uint32_t *output, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<uint16_t>(const uint16_t *input, int elements, int row, int col,
-                                                        uint16_t *output, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<uint8_t>(const uint8_t *input, int elements, int row, int col,
-                                                       uint8_t *output, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<Complex<float>>(const Complex<float> *input, int elements, int row,
-                                                              int col, Complex<float> *output, uint32_t device_id,
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<bool>(const bool *input, int elements, int row, int col,
+                                                           bool *output, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<double>(const double *input, int elements, int row, int col,
+                                                             double *output, uint32_t device_id,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<float>(const float *input, int elements, int row, int col,
+                                                            float *output, uint32_t device_id,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<half>(const half *input, int elements, int row, int col,
+                                                           half *output, uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<int64_t>(const int64_t *input, int elements, int row, int col,
+                                                              int64_t *output, uint32_t device_id,
                                                               cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MatrixTranspose<Complex<double>>(const Complex<double> *input, int elements, int row,
-                                                               int col, Complex<double> *output, uint32_t device_id,
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<int>(const int *input, int elements, int row, int col, int *output,
+                                                          uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<int16_t>(const int16_t *input, int elements, int row, int col,
+                                                              int16_t *output, uint32_t device_id,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<int8_t>(const int8_t *input, int elements, int row, int col,
+                                                             int8_t *output, uint32_t device_id,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<uint64_t>(const uint64_t *input, int elements, int row, int col,
+                                                               uint64_t *output, uint32_t device_id,
                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<uint32_t>(const uint32_t *input, int elements, int row, int col,
+                                                               uint32_t *output, uint32_t device_id,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<uint16_t>(const uint16_t *input, int elements, int row, int col,
+                                                               uint16_t *output, uint32_t device_id,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<uint8_t>(const uint8_t *input, int elements, int row, int col,
+                                                              uint8_t *output, uint32_t device_id,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<Complex<float>>(const Complex<float> *input, int elements, int row,
+                                                                     int col, Complex<float> *output,
+                                                                     uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixTranspose<Complex<double>>(const Complex<double> *input, int elements,
+                                                                      int row, int col, Complex<double> *output,
+                                                                      uint32_t device_id, cudaStream_t cuda_stream);

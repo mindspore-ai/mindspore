@@ -153,9 +153,11 @@ bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     "MatrixSetDiagV3GpuKernelMod cuda copy input to output Fail");
   bool right_align_super_diagonal = (alignment_.first == MatrixDiag::RIGHT);
   bool right_align_sub_diagonal = (alignment_.second == MatrixDiag::RIGHT);
-  MatrixSetDiag(outer_batch_, inner_rows_, inner_cols_, num_diags_, max_diag_len_, lower_, upper_,
-                right_align_super_diagonal, right_align_sub_diagonal, is_single_diag_, diag_device_address,
-                output_device_address, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    MatrixSetDiag(outer_batch_, inner_rows_, inner_cols_, num_diags_, max_diag_len_, lower_, upper_,
+                  right_align_super_diagonal, right_align_sub_diagonal, is_single_diag_, diag_device_address,
+                  output_device_address, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

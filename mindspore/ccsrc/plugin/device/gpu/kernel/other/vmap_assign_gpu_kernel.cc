@@ -88,15 +88,15 @@ bool VmapAssignGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     cudaMemcpyAsync(partition_array, partition_host.get(), sizeof(T *) * stack_num_, cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "VmapAssign opt cudaMemcpyAsync partition_array failed");
-
+  cudaError_t status = cudaErrorNotReady;
   if (kernel_name_ == prim::kPrimVmapStackAssign->name()) {
-    PackKernel(stacked_param_size_, stack_num_, dims_axis_, partition_array, stacked_param,
-               reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = PackKernel(stacked_param_size_, stack_num_, dims_axis_, partition_array, stacked_param,
+                        reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
-    UnpackKernel(stacked_param_size_, stack_num_, dims_axis_, partition_array, stacked_param,
-                 reinterpret_cast<cudaStream_t>(cuda_stream_));
+    status = UnpackKernel(stacked_param_size_, stack_num_, dims_axis_, partition_array, stacked_param,
+                          reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
-
+  CHECK_CUDA_STATUS(status, kernel_name_);
   int *output_address = GetDeviceAddress<int>(outputs, kIndex0);
   int output = 1;
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output_address, &output, sizeof(int), cudaMemcpyHostToDevice,

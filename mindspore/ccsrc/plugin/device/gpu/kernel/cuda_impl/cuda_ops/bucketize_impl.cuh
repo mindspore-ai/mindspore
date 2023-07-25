@@ -19,7 +19,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalBucketize(const int size, const int M, const float *bounds, const T *input, int32_t *output,
-                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBucketize(const int size, const int M, const float *bounds, const T *input,
+                                         int32_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BUCKETIZE_IMPL_CUH_

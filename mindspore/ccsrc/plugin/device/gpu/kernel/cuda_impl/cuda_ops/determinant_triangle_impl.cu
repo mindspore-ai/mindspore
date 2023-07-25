@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ 
+ */
 
 #include "determinant_triangle_impl.cuh"
 #include "include/cuda_fp16.h"
@@ -20,7 +20,7 @@ template <typename T>
 __global__ void DetTriangleKernel(T *input, T *output, size_t matrix_n_, size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = 1;
-    for (int pos = 0; pos < matrix_n_*matrix_n_; pos += matrix_n_+1) {
+    for (int pos = 0; pos < matrix_n_ * matrix_n_; pos += matrix_n_ + 1) {
       output[i] *= input[i * matrix_n_ * matrix_n_ + pos];
     }
   }
@@ -28,9 +28,9 @@ __global__ void DetTriangleKernel(T *input, T *output, size_t matrix_n_, size_t 
 }
 
 template <typename T>
-void DetTriangle(T *input, T *output, size_t matrix_n_, size_t count, cudaStream_t cuda_stream) {
+cudaError_t DetTriangle(T *input, T *output, size_t matrix_n_, size_t count, cudaStream_t cuda_stream) {
   DetTriangleKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, matrix_n_, count);
-  return;
+  return GetCudaStatus();
 }
 
 __device__ bool dev_error_res = false;
@@ -69,18 +69,18 @@ __global__ void CheckTriangleKernel(T *input, int fill_mode_, size_t matrix_n_, 
 }
 
 template <typename T>
-bool CheckTriangle(T *input, int fill_mode_, size_t matrix_n_, size_t count, cudaStream_t cuda_stream) {
+cudaError_t CheckTriangle(T *input, int fill_mode_, size_t matrix_n_, size_t count, cudaStream_t cuda_stream,
+                          bool *host_error_res) {
   CheckTriangleKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, fill_mode_, matrix_n_, count);
-  bool host_error_res = false;
-  cudaMemcpyFromSymbol(&host_error_res, dev_error_res, sizeof(bool));
-  return host_error_res;
+  cudaMemcpyFromSymbol(host_error_res, dev_error_res, sizeof(bool));
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void DetTriangle<float>(float *input, float *output, size_t matrix_n_, size_t count,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DetTriangle<half>(half *input, half *output, size_t matrix_n_, size_t count,
-                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool CheckTriangle<float>(float *input, int fill_mode_, size_t matrix_n_, size_t count,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool CheckTriangle<half>(half *input, int fill_mode_, size_t matrix_n_, size_t count,
-                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DetTriangle<float>(float *input, float *output, size_t matrix_n_, size_t count,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DetTriangle<half>(half *input, half *output, size_t matrix_n_, size_t count,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CheckTriangle<float>(float *input, int fill_mode_, size_t matrix_n_, size_t count,
+                                                          cudaStream_t cuda_stream, bool *host_error_res);
+template CUDA_LIB_EXPORT cudaError_t CheckTriangle<half>(half *input, int fill_mode_, size_t matrix_n_, size_t count,
+                                                         cudaStream_t cuda_stream, bool *host_error_res);

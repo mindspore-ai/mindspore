@@ -155,7 +155,7 @@ cudaError_t ApplyAdaptiveAvgPool2D(const uint size, const uint input_height, con
                                    cudaStream_t cuda_stream) {
   AdaptiveAvgPool2DKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, input_height, input_width, output_height, output_width, input_data, output_data);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveAvgPool2D<float>(const uint size, const uint input_height,

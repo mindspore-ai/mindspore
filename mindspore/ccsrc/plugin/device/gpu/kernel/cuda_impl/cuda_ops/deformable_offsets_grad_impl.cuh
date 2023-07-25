@@ -19,7 +19,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void ApplyDeformableOffsetGrad(
+CUDA_LIB_EXPORT cudaError_t ApplyDeformableOffsetGrad(
   const uint dim_x_n, const uint dim_x_h, const uint dim_x_w, const uint dim_offset_h, const uint dim_offset_w,
   const uint dim_kernel_h, const uint dim_kernel_w, const uint dim_pad_top, const uint dim_pad_left,
   const uint dim_stride_h, const uint dim_stride_w, const uint dim_dilation_h, const uint dim_dilation_w,

@@ -90,8 +90,8 @@ __global__ void PolarVectorized(Func func, const T *abs_addr, const T *angle_add
 }
 
 template <typename T, typename S>
-void CalPolar(const size_t size, const T *abs, const T *angle, S *output, const uint32_t &device_id,
-              cudaStream_t cuda_stream) {
+cudaError_t CalPolar(const size_t size, const T *abs, const T *angle, S *output, const uint32_t &device_id,
+                     cudaStream_t cuda_stream) {
   constexpr uint vec_size = cuda::elementwise::VecSize<T>();
   const auto block_x = uint(kThreadsPerBlock);
   const uint elements_per_block = kThreadsPerBlock * vec_size;
@@ -101,15 +101,14 @@ void CalPolar(const size_t size, const T *abs, const T *angle, S *output, const 
   PolarFunctor<T, S> functor{};
   PolarVectorized<PolarFunctor<T, S>, vec_size, T, S>
     <<<grid, block, 0, cuda_stream>>>(functor, abs, angle, output, size);
-  return;
+  return GetCudaStatus();
 }
 
-
-template
-CUDA_LIB_EXPORT void CalPolar<float, Complex<float>>(const size_t size, const float *abs, const float *angle,
-                                                     Complex<float> *output, const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalPolar<double, Complex<double>>(const size_t size, const double *abs, const double *angle,
-                                                       Complex<double> *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPolar<float, Complex<float>>(const size_t size, const float *abs,
+                                                                     const float *angle, Complex<float> *output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPolar<double, Complex<double>>(const size_t size, const double *abs,
+                                                                       const double *angle, Complex<double> *output,
+                                                                       const uint32_t &device_id,
+                                                                       cudaStream_t cuda_stream);

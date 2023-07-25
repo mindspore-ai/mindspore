@@ -116,34 +116,37 @@ class PadV3HelperGpuKernel : public GpuKernelHelperBase {
     }
 
     // call cuda kernel
+    cudaError_t status = cudaErrorNotReady;
     if (mode_ == ops::kConstant) {
       T *constant_value = nullptr;
       flag = GetDeviceAddress<T>(input_ptrs, 2, kernel_name_, &constant_value);
       if (flag != 0) {
         return flag;
       }
-      CalConstantPad3d(output_size_, input_ptr, input_shape_5d_[0], input_shape_5d_[1], input_shape_5d_[2],
-                       input_shape_5d_[3], input_shape_5d_[4], output_shape_5d_[2], output_shape_5d_[3],
-                       output_shape_5d_[4], paddings_3d_[0].first, paddings_3d_[1].first, paddings_3d_[2].first,
-                       constant_value, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+      status =
+        CalConstantPad3d(output_size_, input_ptr, input_shape_5d_[0], input_shape_5d_[1], input_shape_5d_[2],
+                         input_shape_5d_[3], input_shape_5d_[4], output_shape_5d_[2], output_shape_5d_[3],
+                         output_shape_5d_[4], paddings_3d_[0].first, paddings_3d_[1].first, paddings_3d_[2].first,
+                         constant_value, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     } else if (mode_ == ops::kReflect) {
-      CalReflectPad3d(output_size_, input_ptr, input_shape_5d_[0], input_shape_5d_[1], input_shape_5d_[2],
-                      input_shape_5d_[3], input_shape_5d_[4], output_shape_5d_[2], output_shape_5d_[3],
-                      output_shape_5d_[4], paddings_3d_[0].first, paddings_3d_[1].first, paddings_3d_[2].first,
-                      output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalReflectPad3d(output_size_, input_ptr, input_shape_5d_[0], input_shape_5d_[1], input_shape_5d_[2],
+                               input_shape_5d_[3], input_shape_5d_[4], output_shape_5d_[2], output_shape_5d_[3],
+                               output_shape_5d_[4], paddings_3d_[0].first, paddings_3d_[1].first, paddings_3d_[2].first,
+                               output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     } else if (mode_ == ops::kEdge) {
-      CalEdgePad3d(output_size_, input_ptr, input_shape_5d_[0], input_shape_5d_[1], input_shape_5d_[2],
-                   input_shape_5d_[3], input_shape_5d_[4], output_shape_5d_[2], output_shape_5d_[3],
-                   output_shape_5d_[4], paddings_3d_[0].first, paddings_3d_[1].first, paddings_3d_[2].first, output_ptr,
-                   device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalEdgePad3d(output_size_, input_ptr, input_shape_5d_[0], input_shape_5d_[1], input_shape_5d_[2],
+                            input_shape_5d_[3], input_shape_5d_[4], output_shape_5d_[2], output_shape_5d_[3],
+                            output_shape_5d_[4], paddings_3d_[0].first, paddings_3d_[1].first, paddings_3d_[2].first,
+                            output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     } else if (mode_ == ops::kCircular) {
-      CalCircularPad3d(output_size_, input_ptr, input_shape_5d_[kIndex2], input_shape_5d_[kIndex3],
-                       input_shape_5d_[kIndex4], output_shape_5d_[kIndex2], output_shape_5d_[kIndex3],
-                       output_shape_5d_[kIndex4], paddings_3d_[kIndex0].first, paddings_3d_[kIndex1].first,
-                       paddings_3d_[kIndex2].first, paddings_3d_[kIndex0].second, paddings_3d_[kIndex1].second,
-                       paddings_3d_[kIndex2].second, output_ptr, device_id_,
-                       reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalCircularPad3d(output_size_, input_ptr, input_shape_5d_[kIndex2], input_shape_5d_[kIndex3],
+                                input_shape_5d_[kIndex4], output_shape_5d_[kIndex2], output_shape_5d_[kIndex3],
+                                output_shape_5d_[kIndex4], paddings_3d_[kIndex0].first, paddings_3d_[kIndex1].first,
+                                paddings_3d_[kIndex2].first, paddings_3d_[kIndex0].second, paddings_3d_[kIndex1].second,
+                                paddings_3d_[kIndex2].second, output_ptr, device_id_,
+                                reinterpret_cast<cudaStream_t>(cuda_stream));
     }
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

@@ -20,7 +20,7 @@
 #include "batchnorm_fold_impl.cuh"
 
 template <typename T>
-__global__ void UpdateRunningStd(int channel_size, const double epsilon, T* running_std) {
+__global__ void UpdateRunningStd(int channel_size, const double epsilon, T *running_std) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < channel_size; i += blockDim.x * gridDim.x) {
     running_std[i] = sqrtf(running_std[i] + epsilon);
   }
@@ -28,7 +28,7 @@ __global__ void UpdateRunningStd(int channel_size, const double epsilon, T* runn
 }
 
 template <typename T>
-__global__ void UpdateBatchStd(int channel_size, T* batch_std) {
+__global__ void UpdateBatchStd(int channel_size, T *batch_std) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < channel_size; i += blockDim.x * gridDim.x) {
     batch_std[i] = 1 / batch_std[i];
   }
@@ -36,8 +36,8 @@ __global__ void UpdateBatchStd(int channel_size, T* batch_std) {
 }
 
 template <typename T>
-__global__ void CalDx(const T* d_batch_mean, const T* d_batch_std, const T* x, const T* batch_mean, const T* batch_std,
-                      int batch_size, int channel_size, int height, int width, T* dx) {
+__global__ void CalDx(const T *d_batch_mean, const T *d_batch_std, const T *x, const T *batch_mean, const T *batch_std,
+                      int batch_size, int channel_size, int height, int width, T *dx) {
   int n = batch_size * channel_size * height * width;
   int normal_size = batch_size * height * width;
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
@@ -49,40 +49,44 @@ __global__ void CalDx(const T* d_batch_mean, const T* d_batch_std, const T* x, c
 }
 
 template <typename T>
-void CalUpdateRunningStd(int channel_size, double epsilon, T* running_std, cudaStream_t cuda_stream) {
+cudaError_t CalUpdateRunningStd(int channel_size, double epsilon, T *running_std, cudaStream_t cuda_stream) {
   UpdateRunningStd<<<GET_BLOCKS(channel_size), GET_THREADS, 0, cuda_stream>>>(channel_size, epsilon, running_std);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalUpdateRunningStd<float>(int channel_size, double epsilon, float* running_std,
-                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpdateRunningStd<float>(int channel_size, double epsilon, float *running_std,
+                                                                cudaStream_t cuda_stream);
 
 template <typename T>
-void CalUpdateBatchStd(int channel_size, T* batch_std, cudaStream_t cuda_stream) {
+cudaError_t CalUpdateBatchStd(int channel_size, T *batch_std, cudaStream_t cuda_stream) {
   UpdateBatchStd<<<GET_BLOCKS(channel_size), GET_THREADS, 0, cuda_stream>>>(channel_size, batch_std);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalUpdateBatchStd<float>(int channel_size, float* batch_std, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpdateBatchStd<float>(int channel_size, float *batch_std,
+                                                              cudaStream_t cuda_stream);
 
 template <typename T>
-void CalBatchNormFoldGrad(const T* d_batch_mean, const T* d_batch_std, const T* x, const T* batch_mean,
-                          const T* batch_std, int batch_size, int channel_size, int height, int width, T* dx,
-                          cudaStream_t cuda_stream) {
+cudaError_t CalBatchNormFoldGrad(const T *d_batch_mean, const T *d_batch_std, const T *x, const T *batch_mean,
+                                 const T *batch_std, int batch_size, int channel_size, int height, int width, T *dx,
+                                 cudaStream_t cuda_stream) {
   CalDx<<<GET_BLOCKS(batch_size * channel_size * height * width), GET_THREADS, 0, cuda_stream>>>(
     d_batch_mean, d_batch_std, x, batch_mean, batch_std, batch_size, channel_size, height, width, dx);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBatchNormFoldGrad<float>(const float* d_batch_mean, const float* d_batch_std,
-                                                          const float* x, const float* batch_mean,
-                                                          const float* batch_std, int batch_size, int channel_size,
-                                                          int height, int width, float* dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBatchNormFoldGrad<float>(const float *d_batch_mean, const float *d_batch_std,
+                                                                 const float *x, const float *batch_mean,
+                                                                 const float *batch_std, int batch_size,
+                                                                 int channel_size, int height, int width, float *dx,
+                                                                 cudaStream_t cuda_stream);
 
 template <typename T>
-void ThrustFillWith(T* array, int size, T tofill, cudaStream_t cuda_stream) {
+cudaError_t ThrustFillWith(T *array, int size, T tofill, cudaStream_t cuda_stream) {
   thrust::device_ptr<T> dev_ptr(array);
   thrust::fill(thrust::cuda::par.on(cuda_stream), dev_ptr, dev_ptr + size, tofill);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void ThrustFillWith<float>(float* array, int size, float tofill, cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT cudaError_t ThrustFillWith<float>(float *array, int size, float tofill,
+                                                           cudaStream_t cuda_stream);

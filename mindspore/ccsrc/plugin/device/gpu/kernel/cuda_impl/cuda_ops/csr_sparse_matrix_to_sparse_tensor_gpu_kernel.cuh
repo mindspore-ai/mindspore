@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CSR_SPARSE_MATRIX_TO_SPARSE_TENSOR_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename S>
-CUDA_LIB_EXPORT void CallStackIndices2D(const S *row_indices, const S *col_indices, S *indices, int size,
-                                        cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CallStackIndices2D(const S *row_indices, const S *col_indices, S *indices, int size,
+                                               cudaStream_t cuda_stream);
 
 template <typename S>
-CUDA_LIB_EXPORT void CallStackIndices3D(const S *batch_pointers, const S *row_indices, const S *col_indices, S *indices,
-                                        int batch_size, int total_nnz, size_t shared_memory_size,
-                                        cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CallStackIndices3D(const S *batch_pointers, const S *row_indices, const S *col_indices,
+                                               S *indices, int batch_size, int total_nnz, size_t shared_memory_size,
+                                               cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CSR_SPARSE_MATRIX_TO_SPARSE_TENSOR_CUH_

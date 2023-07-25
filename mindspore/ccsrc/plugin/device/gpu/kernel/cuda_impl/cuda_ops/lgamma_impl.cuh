@@ -21,7 +21,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalLgamma(size_t size, const T *input, T *output, const uint32_t &device_id,
-                               cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalLgamma(size_t size, const T *input, T *output, const uint32_t &device_id,
+                                      cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LGAMMA_IMPL_CUH_

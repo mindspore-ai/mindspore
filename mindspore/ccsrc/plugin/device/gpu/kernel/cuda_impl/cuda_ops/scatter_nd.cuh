@@ -24,7 +24,7 @@ struct ScatterNdInfo {
   S shape[8] = {0};
 };
 template <typename T, typename S>
-CUDA_LIB_EXPORT void ScatterNd(S *indices, T *update, T *output, const size_t &block_size, const size_t &input_size,
-                               const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
-                               const ScatterNdInfo<S> &info, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t ScatterNd(S *indices, T *update, T *output, const size_t &block_size,
+                                      const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0,
+                                      const size_t &indices_dim_1, const ScatterNdInfo<S> &info, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SCATTER_ND_CUH_

@@ -19,6 +19,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 template <typename T>
-CUDA_LIB_EXPORT void CumProd(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, size_t dim2,
-                             size_t stride, size_t stride2, bool exclusive_, bool reverse_, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CumProd(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, size_t dim2,
+                                    size_t stride, size_t stride2, bool exclusive_, bool reverse_, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUMPROD_IMPL_CUH_

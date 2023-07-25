@@ -83,8 +83,9 @@ bool MinMaxUpdatePerChannelGpuKernelMod::Launch(const std::vector<AddressPtr> &i
   float *input_max = GetDeviceAddress<float>(inputs, kIndex2);
 
   // calculate the input min and max according by the parameter ema and ema_decay.
-  CalMinMaxPerChannel(input, input_min, input_max, output_min, output_max, input_size_ / sizeof(float), num_channels_,
-                      ema_decay_, ema_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalMinMaxPerChannel(input, input_min, input_max, output_min, output_max, input_size_ / sizeof(float),
+                                    num_channels_, ema_decay_, ema_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

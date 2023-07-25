@@ -29,12 +29,12 @@ __global__ void CalBiasAdd(const size_t num_value, const size_t num_bias, const 
 }
 
 template <typename T>
-cudaError_t CalBiasAddNHWC(const size_t num_value, const size_t num_bias, const T *src, const T*bias, T *output,
+cudaError_t CalBiasAddNHWC(const size_t num_value, const size_t num_bias, const T *src, const T *bias, T *output,
                            const uint32_t &device_id, cudaStream_t cuda_stream) {
   size_t thread_num = num_value > 256 ? 256 : num_value;
   CalBiasAdd<<<CUDA_BLOCKS_CAL(device_id, num_value, thread_num), thread_num, 0, cuda_stream>>>(num_value, num_bias,
                                                                                                 src, bias, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalBiasAddNHWC<half>(const size_t num_value, const size_t num_bias,

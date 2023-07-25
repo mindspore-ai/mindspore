@@ -63,7 +63,7 @@ cudaError_t CalAdjustContrastV2GpuKernel(const T *images, const float *contrast_
                                          cudaStream_t cuda_stream) {
   AdjustContrastV2GpuKernel<<<128, 128, 0, cuda_stream>>>(images, contrast_factor, images_out, total,
                                                           per_batch_elements);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalAdjustContrastV2GpuKernel<half>(const half *images,

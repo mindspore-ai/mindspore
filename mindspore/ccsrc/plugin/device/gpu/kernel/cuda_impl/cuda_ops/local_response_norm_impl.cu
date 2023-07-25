@@ -19,7 +19,7 @@
 
 template <typename T>
 __global__ void ComputeScaleNHWC(const T *input, const int depth_radius, const float bias, const float alpha,
-  const size_t channels, const size_t num_elements, float *scale) {
+                                 const size_t channels, const size_t num_elements, float *scale) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < num_elements; pos += blockDim.x * gridDim.x) {
     const int posc = static_cast<int>(pos % channels);
     float sqr_sum = 0;
@@ -36,7 +36,7 @@ __global__ void ComputeScaleNHWC(const T *input, const int depth_radius, const f
 
 template <typename T>
 __global__ void LocalResponseNormNHWC(const T *input, const float *scale, const float beta, const size_t num_elements,
-  T *output) {
+                                      T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < num_elements; pos += blockDim.x * gridDim.x) {
     float z = expf(logf(scale[pos]) * -beta);
     output[pos] = input[pos] * static_cast<T>(z);
@@ -46,8 +46,9 @@ __global__ void LocalResponseNormNHWC(const T *input, const float *scale, const 
 
 template <typename T>
 __global__ void LocalResponseNormGradNHWC(const T *dy, const T *x, const T *y, const float *scale,
-  const int depth_radius, const float alpha, const float beta, const float neg2_alpha_beta, const size_t channels,
-  const size_t num_elements, T *dx) {
+                                          const int depth_radius, const float alpha, const float beta,
+                                          const float neg2_alpha_beta, const size_t channels, const size_t num_elements,
+                                          T *dx) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < num_elements; pos += blockDim.x * gridDim.x) {
     const int posc = static_cast<int>(pos % channels);
     float ratio_sum = 0;
@@ -64,46 +65,47 @@ __global__ void LocalResponseNormGradNHWC(const T *dy, const T *x, const T *y, c
 }
 
 template <typename T>
-void CalLocalResponseNormNHWC(const T *input, const int depth_radius, const float bias, const float alpha,
-  const float beta, const size_t channels, const size_t num_elements, float *scale, T *output,
-  cudaStream_t cuda_stream) {
+cudaError_t CalLocalResponseNormNHWC(const T *input, const int depth_radius, const float bias, const float alpha,
+                                     const float beta, const size_t channels, const size_t num_elements, float *scale,
+                                     T *output, cudaStream_t cuda_stream) {
   ComputeScaleNHWC<<<GET_BLOCKS(num_elements), GET_THREADS, 0, cuda_stream>>>(input, depth_radius, bias, alpha,
-    channels, num_elements, scale);
+                                                                              channels, num_elements, scale);
   LocalResponseNormNHWC<<<GET_BLOCKS(num_elements), GET_THREADS, 0, cuda_stream>>>(input, scale, beta, num_elements,
-    output);
-  return;
+                                                                                   output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalLocalResponseNormGradNHWC(const T *dy, const T *x, const T *y, const int depth_radius, const float bias,
-  const float alpha, const float beta, const size_t channels, const size_t num_elements, float *scale, T *dx,
-  cudaStream_t cuda_stream) {
+cudaError_t CalLocalResponseNormGradNHWC(const T *dy, const T *x, const T *y, const int depth_radius, const float bias,
+                                         const float alpha, const float beta, const size_t channels,
+                                         const size_t num_elements, float *scale, T *dx, cudaStream_t cuda_stream) {
   float neg2_alpha_beta = -2.0f * alpha * beta;
   ComputeScaleNHWC<<<GET_BLOCKS(num_elements), GET_THREADS, 0, cuda_stream>>>(x, depth_radius, bias, alpha, channels,
-    num_elements, scale);
-  LocalResponseNormGradNHWC<<<GET_BLOCKS(num_elements), GET_THREADS, 0, cuda_stream>>>(dy, x, y, scale, depth_radius,
-    alpha, beta, neg2_alpha_beta, channels, num_elements, dx);
-  return;
+                                                                              num_elements, scale);
+  LocalResponseNormGradNHWC<<<GET_BLOCKS(num_elements), GET_THREADS, 0, cuda_stream>>>(
+    dy, x, y, scale, depth_radius, alpha, beta, neg2_alpha_beta, channels, num_elements, dx);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalLocalResponseNormNHWC<float>(const float *input, const int depth_radius,
-                                                              const float bias, const float alpha, const float beta,
-                                                              const size_t channels, const size_t num_elements,
-                                                              float *scale, float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLocalResponseNormNHWC<float>(const float *input, const int depth_radius,
+                                                                     const float bias, const float alpha,
+                                                                     const float beta, const size_t channels,
+                                                                     const size_t num_elements, float *scale,
+                                                                     float *output, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalLocalResponseNormNHWC<half>(const half *input, const int depth_radius,
-                                                             const float bias, const float alpha, const float beta,
-                                                             const size_t channels, const size_t num_elements,
-                                                             float *scale, half *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLocalResponseNormNHWC<half>(const half *input, const int depth_radius,
+                                                                    const float bias, const float alpha,
+                                                                    const float beta, const size_t channels,
+                                                                    const size_t num_elements, float *scale,
+                                                                    half *output, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalLocalResponseNormGradNHWC<float>(const float *dy, const float *x, const float *y,
-                                                                  const int depth_radius, const float bias,
-                                                                  const float alpha, const float beta,
-                                                                  const size_t channels, const size_t num_elements,
-                                                                  float *scale, float *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLocalResponseNormGradNHWC<float>(const float *dy, const float *x,
+                                                                         const float *y, const int depth_radius,
+                                                                         const float bias, const float alpha,
+                                                                         const float beta, const size_t channels,
+                                                                         const size_t num_elements, float *scale,
+                                                                         float *dx, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalLocalResponseNormGradNHWC<half>(const half *dy, const half *x, const half *y,
-                                                                 const int depth_radius, const float bias,
-                                                                 const float alpha, const float beta,
-                                                                 const size_t channels, const size_t num_elements,
-                                                                 float *scale, half *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLocalResponseNormGradNHWC<half>(
+  const half *dy, const half *x, const half *y, const int depth_radius, const float bias, const float alpha,
+  const float beta, const size_t channels, const size_t num_elements, float *scale, half *dx, cudaStream_t cuda_stream);

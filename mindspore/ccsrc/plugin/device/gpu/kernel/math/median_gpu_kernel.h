@@ -46,8 +46,9 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
     if (!global_median_) {
       output1_addr = GetDeviceAddress<S>(outputs, 1);
     }
-    Median(input_addr, output0_addr, output1_addr, input_shape_, axis_, global_median_,
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = Median(input_addr, output0_addr, output1_addr, input_shape_, axis_, global_median_,
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

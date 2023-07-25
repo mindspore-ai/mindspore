@@ -19,14 +19,14 @@
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
-CUDA_LIB_EXPORT void InitRandState(int seed, int num, curandState *state, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t InitRandState(int seed, int num, curandState *state, cudaStream_t stream);
 template <typename T, typename S>
-CUDA_LIB_EXPORT void Multinomial(int row, int col, T *probs, curandState *rand_state, int64_t *num_sample, S *output,
-                                 cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t Multinomial(int row, int col, T *probs, curandState *rand_state, int64_t *num_sample,
+                                        S *output, cudaStream_t stream);
 template <typename T>
-CUDA_LIB_EXPORT void CheckNonNeg(const size_t size, const T *input, T *output, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CheckNonNeg(const size_t size, const T *input, T *output, cudaStream_t stream);
 template <typename T>
-CUDA_LIB_EXPORT void CheckZero(const size_t distributions, const size_t categories, const T *input, T *output,
-                               cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CheckZero(const size_t distributions, const size_t categories, const T *input, T *output,
+                                      cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MULTINOMIAL_IMPL_CUH_

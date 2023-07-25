@@ -19,11 +19,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-void CalSparseMatrixMul(const T *a_shape_addr, T *a_batch_pointers_addr,
-                        T *a_indptr_addr, T *a_indices_addr, S *a_values_addr,
-                        S *b_dense_addr, T *c_shape_addr,
-                        T *c_batch_pointers_addr, T *c_indptr_addr,
-                        T *c_indices_addr, S *c_values_addr, int row_, int col_,
-                        uint32_t device_id, cudaStream_t cuda_stream);
+cudaError_t CalSparseMatrixMul(const T *a_shape_addr, T *a_batch_pointers_addr, T *a_indptr_addr, T *a_indices_addr,
+                               S *a_values_addr, S *b_dense_addr, T *c_shape_addr, T *c_batch_pointers_addr,
+                               T *c_indptr_addr, T *c_indices_addr, S *c_values_addr, int row_, int col_,
+                               uint32_t device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_MATRIX_MUL_CUH_

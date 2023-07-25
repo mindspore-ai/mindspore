@@ -27,7 +27,7 @@ __global__ void Angle(const size_t size, const Complex<S> *input, S *output) {
 template <typename T, typename S>
 cudaError_t CalAngle(const size_t size, T *input, S *output, const uint32_t device_id, cudaStream_t cuda_stream) {
   Angle<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalAngle<Complex<float>, float>(const size_t size, Complex<float> *input,

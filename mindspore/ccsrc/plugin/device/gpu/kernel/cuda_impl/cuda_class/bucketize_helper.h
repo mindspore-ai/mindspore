@@ -90,8 +90,9 @@ class BucketizeHelperGpuKernel : public GpuKernelHelperBase {
       return -1;
     }
     // call cuda kernel
-    CalBucketize(size, M, boundaries_ptr, input_ptr, output_ptr, device_id_,
-                 reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalBucketize(size, M, boundaries_ptr, input_ptr, output_ptr, device_id_,
+                               reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

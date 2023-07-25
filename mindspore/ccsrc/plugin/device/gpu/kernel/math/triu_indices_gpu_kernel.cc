@@ -77,8 +77,9 @@ bool TriuIndicesGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     if (offset_ < 0) {
       rectangle_size = std::min<int64_t>(row_, -offset_) * col_;
     }
-    CalTriuIndices(std::max<int64_t>(0, offset_), m_first_row, col_, rectangle_size, triu_size_, output, device_id_,
-                   reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = CalTriuIndices(std::max<int64_t>(0, offset_), m_first_row, col_, rectangle_size, triu_size_, output,
+                                 device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

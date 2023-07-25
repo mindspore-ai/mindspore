@@ -123,9 +123,10 @@ class ResizeBicubicHelperGpuKernel : public GpuKernelHelperBase {
     h_scale_ = kernel::Scaling(inputheight_, outputheight_, align_corners_);
     w_scale_ = kernel::Scaling(inputwidth_, outputwidth_, align_corners_);
     // call cuda kernel
-    CalResizeBicubic(input_ptr, batch_, channel_, inputheight_, inputwidth_, outputheight_, outputwidth_, h_scale_,
-                     w_scale_, output_ptr, half_pixel_centers_, device_id_,
-                     reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalResizeBicubic(input_ptr, batch_, channel_, inputheight_, inputwidth_, outputheight_, outputwidth_,
+                                   h_scale_, w_scale_, output_ptr, half_pixel_centers_, device_id_,
+                                   reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

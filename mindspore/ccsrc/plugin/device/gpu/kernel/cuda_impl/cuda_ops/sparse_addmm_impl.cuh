@@ -18,11 +18,10 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_ADDMM_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-
 template <typename T, typename S>
-CUDA_LIB_EXPORT void SparseAddmm(const S *input_indices, const T *input_values, int64_t input_values_num_,
-                                 const T *mat2, const T *mat3, int64_t mat2_col_, const T *alpha, const T *beta,
-                                 T *output, int64_t output_row_, int64_t output_col_,
-                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t SparseAddmm(const S *input_indices, const T *input_values, int64_t input_values_num_,
+                                        const T *mat2, const T *mat3, int64_t mat2_col_, const T *alpha, const T *beta,
+                                        T *output, int64_t output_row_, int64_t output_col_, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_ADDMM_IMPL_CUH_

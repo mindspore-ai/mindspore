@@ -19,6 +19,6 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CastAllKernel(T **inputs, S **output, const size_t max, const size_t num, const size_t *size,
-                                   cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CastAllKernel(T **inputs, S **output, const size_t max, const size_t num,
+                                          const size_t *size, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CAST_ALL_IMPL_CUH_

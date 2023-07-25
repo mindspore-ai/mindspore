@@ -142,29 +142,32 @@ __global__ void CalculateDeterminantByLuKernel(const Complex<double> *lu_input, 
 #endif
 
 template <typename T>
-void CalculateDeterminantByLu(const T *lu_input, const int *pivot, int m, int batch_size,
-                              bool is_sign_log_determinant, T *determinant_output, T *sign_output,
-                              const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateDeterminantByLu(const T *lu_input, const int *pivot, int m, int batch_size,
+                                     bool is_sign_log_determinant, T *determinant_output, T *sign_output,
+                                     const uint32_t &device_id, cudaStream_t cuda_stream) {
   // Parallelization by batch_size.
   CalculateDeterminantByLuKernel<<<CUDA_BLOCKS(device_id, batch_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     lu_input, pivot, m, batch_size, is_sign_log_determinant, determinant_output, sign_output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalculateDeterminantByLu<float>(const float *lu_input, const int *pivot, int m,
-                                                              int batch_size, bool is_sign_log_determinant,
-                                                              float *determinant_output, float *sign_output,
-                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateDeterminantByLu<float>(const float *lu_input, const int *pivot, int m,
+                                                                     int batch_size, bool is_sign_log_determinant,
+                                                                     float *determinant_output, float *sign_output,
+                                                                     const uint32_t &device_id,
+                                                                     cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateDeterminantByLu<double>(const double *lu_input, const int *pivot, int m,
-                                                               int batch_size, bool is_sign_log_determinant,
-                                                               double *determinant_output, double *sign_output,
-                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateDeterminantByLu<double>(const double *lu_input, const int *pivot, int m,
+                                                                      int batch_size, bool is_sign_log_determinant,
+                                                                      double *determinant_output, double *sign_output,
+                                                                      const uint32_t &device_id,
+                                                                      cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateDeterminantByLu<Complex<float>>(
+template CUDA_LIB_EXPORT cudaError_t CalculateDeterminantByLu<Complex<float>>(
   const Complex<float> *lu_input, const int *pivot, int m, int batch_size, bool is_sign_log_determinant,
   Complex<float> *determinant_output, Complex<float> *sign_output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateDeterminantByLu<Complex<double>>(
+template CUDA_LIB_EXPORT cudaError_t CalculateDeterminantByLu<Complex<double>>(
   const Complex<double> *lu_input, const int *pivot, int m, int batch_size, bool is_sign_log_determinant,
   Complex<double> *determinant_output, Complex<double> *sign_output, const uint32_t &device_id,
   cudaStream_t cuda_stream);

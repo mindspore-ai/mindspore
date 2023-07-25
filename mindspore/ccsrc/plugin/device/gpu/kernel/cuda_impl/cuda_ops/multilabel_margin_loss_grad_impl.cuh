@@ -22,27 +22,28 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-CUDA_LIB_EXPORT void CalMultilabelMarginLossGradFp16(const half *input_grad, const half *input, const int *target,
-                                                     int *is_target, const int batch_size, const int class_num,
-                                                     int64_t reduction, half *output_grad, const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMultilabelMarginLossGradFp16(const half *input_grad, const half *input,
+                                                            const int *target, int *is_target, const int batch_size,
+                                                            const int class_num, int64_t reduction, half *output_grad,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalMultilabelMarginLossGradFp32(const float *input_grad, const float *input, const int *target,
-                                                     int *is_target, const int batch_size, const int class_num,
-                                                     int64_t reduction, float *output_grad, const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMultilabelMarginLossGradFp32(const float *input_grad, const float *input,
+                                                            const int *target, int *is_target, const int batch_size,
+                                                            const int class_num, int64_t reduction, float *output_grad,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalMultilabelMarginLossGradFp64(const double *input_grad, const double *input, const int *target,
-                                                     int *is_target, const int batch_size, const int class_num,
-                                                     int64_t reduction, double *output_grad, const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMultilabelMarginLossGradFp64(const double *input_grad, const double *input,
+                                                            const int *target, int *is_target, const int batch_size,
+                                                            const int class_num, int64_t reduction, double *output_grad,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
 #ifdef __cplusplus
 }
 #endif
 
 template <typename T>
-CUDA_LIB_EXPORT void CalMultilabelMarginLossGrad(const T *input_grad, const T *input, const int *target, int *is_target,
-                                                 const int batch_size, const int class_num, int64_t reduction,
-                                                 T *output_grad, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMultilabelMarginLossGrad(const T *input_grad, const T *input, const int *target,
+                                                        int *is_target, const int batch_size, const int class_num,
+                                                        int64_t reduction, T *output_grad, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_NN_MUTILABEL_MARGIN_LOSS_GRAD_IMPL_CUH_

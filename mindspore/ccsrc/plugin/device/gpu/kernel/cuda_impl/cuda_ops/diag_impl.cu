@@ -45,37 +45,40 @@ __global__ void DiagKernel(const DataType *input_ptr, DataType *output_ptr, size
 }
 
 template <typename DataType>
-void CalDiag(const DataType *input_ptr, DataType *output_ptr, size_t input_size, size_t output_size,
-             cudaStream_t cuda_stream) {
+cudaError_t CalDiag(const DataType *input_ptr, DataType *output_ptr, size_t input_size, size_t output_size,
+                    cudaStream_t cuda_stream) {
   DiagKernel<<<GET_BLOCKS(output_size), GET_THREADS, 0, cuda_stream>>>(input_ptr, output_ptr, input_size, output_size);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalDiag<uint8_t>(const uint8_t *input_ptr, uint8_t *output_ptr, size_t input_size,
-                                               size_t output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiag<uint16_t>(const uint16_t *input_ptr, uint16_t *output_ptr, size_t input_size,
-                                                size_t output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiag<uint32_t>(const uint32_t *input_ptr, uint32_t *output_ptr, size_t input_size,
-                                                size_t output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiag<uint64_t>(const uint64_t *input_ptr, uint64_t *output_ptr, size_t input_size,
-                                                size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<uint8_t>(const uint8_t *input_ptr, uint8_t *output_ptr, size_t input_size,
+                                                      size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<uint16_t>(const uint16_t *input_ptr, uint16_t *output_ptr,
+                                                       size_t input_size, size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<uint32_t>(const uint32_t *input_ptr, uint32_t *output_ptr,
+                                                       size_t input_size, size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<uint64_t>(const uint64_t *input_ptr, uint64_t *output_ptr,
+                                                       size_t input_size, size_t output_size, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalDiag<half>(const half *input_ptr, half *output_ptr, size_t input_size,
-                                            size_t output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiag<float>(const float *input_ptr, float *output_ptr, size_t input_size,
-                                             size_t output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiag<double>(const double *input_ptr, double *output_ptr, size_t input_size,
-                                              size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<half>(const half *input_ptr, half *output_ptr, size_t input_size,
+                                                   size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<float>(const float *input_ptr, float *output_ptr, size_t input_size,
+                                                    size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<double>(const double *input_ptr, double *output_ptr, size_t input_size,
+                                                     size_t output_size, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalDiag<int8_t>(const int8_t *input_ptr, int8_t *output_ptr, size_t input_size,
-                                              size_t output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiag<int16_t>(const int16_t *input_ptr, int16_t *output_ptr, size_t input_size,
-                                               size_t output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiag<int32_t>(const int32_t *input_ptr, int32_t *output_ptr, size_t input_size,
-                                               size_t output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiag<int64_t>(const int64_t *input_ptr, int64_t *output_ptr, size_t input_size,
-                                               size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<int8_t>(const int8_t *input_ptr, int8_t *output_ptr, size_t input_size,
+                                                     size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<int16_t>(const int16_t *input_ptr, int16_t *output_ptr, size_t input_size,
+                                                      size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<int32_t>(const int32_t *input_ptr, int32_t *output_ptr, size_t input_size,
+                                                      size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<int64_t>(const int64_t *input_ptr, int64_t *output_ptr, size_t input_size,
+                                                      size_t output_size, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalDiag<Complex<float>>(const Complex<float> *input_ptr, Complex<float> *output_ptr,
-                                               size_t input_size, size_t output_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiag<Complex<double>>(const Complex<double> *input_ptr, Complex<double> *output_ptr,
-                                               size_t input_size, size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<Complex<float>>(const Complex<float> *input_ptr,
+                                                             Complex<float> *output_ptr, size_t input_size,
+                                                             size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiag<Complex<double>>(const Complex<double> *input_ptr,
+                                                              Complex<double> *output_ptr, size_t input_size,
+                                                              size_t output_size, cudaStream_t cuda_stream);

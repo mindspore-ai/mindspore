@@ -18,22 +18,14 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_APPLY_PROXIMAL_GRADIENT_DESCENT_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalSparseApplyProximalGradientDescent(const size_t size, const size_t indices_size,
-                                                   T *var, const T *alpha,
-                                                   const T *l1, const T *l2,
-                                                   const T *grad, const S *indices,
-                                                   T *var_out, S *indices_sort, int32_t *rows_index,
-                                                   int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                   int32_t *shrink_num, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseApplyProximalGradientDescent(
+  const size_t size, const size_t indices_size, T *var, const T *alpha, const T *l1, const T *l2, const T *grad,
+  const S *indices, T *var_out, S *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink,
+  int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalSparseApplyProximalGradientDescent_2(const size_t size, const size_t indices_size,
-                                                   T *var, const T *alpha,
-                                                   const T *l1, const T *l2,
-                                                   const T *grad, const S *indices,
-                                                   T *var_out, S *indices_sort, int32_t *rows_index,
-                                                   int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                   int32_t *shrink_num, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseApplyProximalGradientDescent_2(
+  const size_t size, const size_t indices_size, T *var, const T *alpha, const T *l1, const T *l2, const T *grad,
+  const S *indices, T *var_out, S *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink,
+  int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_APPLY_PROXIMAL_GRADIENT_DESCENT_IMPL_CUH_

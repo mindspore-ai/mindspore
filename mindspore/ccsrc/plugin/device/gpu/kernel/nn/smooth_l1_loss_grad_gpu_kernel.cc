@@ -101,8 +101,9 @@ bool SmoothL1LossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   const auto *dloss_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
   T *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  SmoothL1LossGrad(reduction_, tensor_size_, beta_, predict_addr, target_addr, dloss_addr, result_addr, device_id_,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = SmoothL1LossGrad(reduction_, tensor_size_, beta_, predict_addr, target_addr, dloss_addr, result_addr,
+                                 device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

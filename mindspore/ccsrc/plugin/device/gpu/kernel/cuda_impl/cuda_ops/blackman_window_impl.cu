@@ -34,8 +34,8 @@ __global__ void BlackmanWindow(const size_t size, const double N, const double P
 }
 
 template <typename T, typename S>
-void CalBlackmanWindow(const size_t size, const T *input, const bool periodic, S *output, const uint32_t &device_id,
-                       cudaStream_t cuda_stream) {
+cudaError_t CalBlackmanWindow(const size_t size, const T *input, const bool periodic, S *output,
+                              const uint32_t &device_id, cudaStream_t cuda_stream) {
   const double PI = acos(-1);
   T N = 0;
   cudaMemcpy(&N, &input[0], sizeof(T), cudaMemcpyDeviceToHost);
@@ -45,29 +45,28 @@ void CalBlackmanWindow(const size_t size, const T *input, const bool periodic, S
     N = periodic ? static_cast<double>(N + 1) : static_cast<double>(N);
     BlackmanWindow<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, N, PI, output);
   }
-  return;
+  return GetCudaStatus();
 }
 
-template
-CUDA_LIB_EXPORT void CalBlackmanWindow<int, half>(const size_t size, const int *input, const bool periodic,
-                                                  half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBlackmanWindow<int64_t, half>(const size_t size, const int64_t *input, const bool periodic,
-                                                      half *output, const uint32_t &device_id,
-                                                      cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBlackmanWindow<int, float>(const size_t size, const int *input, const bool periodic,
-                                                   float *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBlackmanWindow<int64_t, float>(const size_t size, const int64_t *input, const bool periodic,
-                                                       float *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBlackmanWindow<int, double>(const size_t size, const int *input, const bool periodic,
-                                                    double *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBlackmanWindow<int64_t, double>(const size_t size, const int64_t *input, const bool periodic,
-                                                        double *output, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBlackmanWindow<int, half>(const size_t size, const int *input,
+                                                                  const bool periodic, half *output,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBlackmanWindow<int64_t, half>(const size_t size, const int64_t *input,
+                                                                      const bool periodic, half *output,
+                                                                      const uint32_t &device_id,
+                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBlackmanWindow<int, float>(const size_t size, const int *input,
+                                                                   const bool periodic, float *output,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBlackmanWindow<int64_t, float>(const size_t size, const int64_t *input,
+                                                                       const bool periodic, float *output,
+                                                                       const uint32_t &device_id,
+                                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBlackmanWindow<int, double>(const size_t size, const int *input,
+                                                                    const bool periodic, double *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBlackmanWindow<int64_t, double>(const size_t size, const int64_t *input,
+                                                                        const bool periodic, double *output,
+                                                                        const uint32_t &device_id,
+                                                                        cudaStream_t cuda_stream);

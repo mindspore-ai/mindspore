@@ -114,8 +114,9 @@ bool BiasDropoutAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   T *residual = GetDeviceAddress<T>(inputs, kInputResidualIndex);
   T *y = GetDeviceAddress<T>(outputs, kOutputYIndex);
   T *mask = GetDeviceAddress<T>(outputs, kOutputMaskIndex);
-  BiasDropoutAdd(x, bias, residual, y, mask, num_count_, n_strides_, channel_strides_, keep_prob_, seed_, seed_offset_,
-                 cuda_stream_);
+  auto status = BiasDropoutAdd(x, bias, residual, y, mask, num_count_, n_strides_, channel_strides_, keep_prob_, seed_,
+                               seed_offset_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   seed_offset_ += num_count_;
   return true;
 }

@@ -113,12 +113,16 @@ bool CombinedNonMaxSuppressionGpuKernelMod::LaunchKernel(const std::vector<Addre
   bool *sel = GetDeviceAddress<bool>(workspace, kIndex4);
   bool *mask = GetDeviceAddress<bool>(workspace, kIndex5);
 
-  CalSort(scores, index, score_threshold, num_classes_, boxes, new_boxes, new_scores, batch_size_, num_boxes_,
-          boxes_result, q_, sel, device_id_, cuda_stream_);
-  Calnms(batch_size_, num_classes_, iou_threshold, sel, boxes_result, index, q_, num_boxes_, max_output_size_per_class,
-         new_scores, mask, device_id_, cuda_stream_);
-  Caloutput(batch_size_, per_detections_, index, new_scores, sel, new_boxes, nmsed_classes, nmsed_scores, nmsed_boxes,
-            valid_detections, clip_boxes_, num_classes_, num_boxes_, q_, device_id_, cuda_stream_);
+  auto status = CalSort(scores, index, score_threshold, num_classes_, boxes, new_boxes, new_scores, batch_size_,
+                        num_boxes_, boxes_result, q_, sel, device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  status = Calnms(batch_size_, num_classes_, iou_threshold, sel, boxes_result, index, q_, num_boxes_,
+                  max_output_size_per_class, new_scores, mask, device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  status =
+    Caloutput(batch_size_, per_detections_, index, new_scores, sel, new_boxes, nmsed_classes, nmsed_scores, nmsed_boxes,
+              valid_detections, clip_boxes_, num_classes_, num_boxes_, q_, device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -825,7 +825,7 @@ cudaError_t ArrayReduce(T *input, const std::vector<size_t> &input_reshape, cons
       break;
     }
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template <>
@@ -883,7 +883,7 @@ cudaError_t ArrayReduce(half *input, const std::vector<size_t> &input_reshape, c
       break;
     }
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -927,7 +927,7 @@ cudaError_t ArrayReduceComplex(T *input, const std::vector<size_t> &input_reshap
       break;
     }
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 #define ARRAY_REDUCE_REGISTER(T)                                                                             \

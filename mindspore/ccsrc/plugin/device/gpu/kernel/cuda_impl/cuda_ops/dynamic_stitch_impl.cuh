@@ -19,7 +19,7 @@
 #include <cuda_runtime.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
-CUDA_LIB_EXPORT void CallStitch(const int *index_addr, const unsigned char *data_addr, unsigned char *output_addr,
-                                const size_t index_num, const size_t data_size, int *max_index_dev,
-                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CallStitch(const int *index_addr, const unsigned char *data_addr,
+                                       unsigned char *output_addr, const size_t index_num, const size_t data_size,
+                                       int *max_index_dev, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DYNAMIC_STITCH_IMPL_CUH_

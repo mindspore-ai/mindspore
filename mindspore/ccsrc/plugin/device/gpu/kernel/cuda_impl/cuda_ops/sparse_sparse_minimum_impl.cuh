@@ -20,10 +20,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void SparseSparseMinimum(const T *a_indices, const S *a_values, const T *b_indices, const S *b_values,
-                               T *sum_indices, S *sum_values, int64_t *ab_status_ptr,
-                               int64_t *sum_ptr, const int64_t a_indices_num,
-                               const int64_t b_indices_num, const int64_t rank_1
-                               , cudaStream_t cuda_stream, const uint32_t &device_id
-                               , int64_t *ab_status_ptr1, int64_t *ab_status_ptr2);
+CUDA_LIB_EXPORT cudaError_t SparseSparseMinimum(const T *a_indices, const S *a_values, const T *b_indices,
+                                                const S *b_values, T *sum_indices, S *sum_values,
+                                                int64_t *ab_status_ptr, int64_t *sum_ptr, const int64_t a_indices_num,
+                                                const int64_t b_indices_num, const int64_t rank_1,
+                                                cudaStream_t cuda_stream, const uint32_t &device_id,
+                                                int64_t *ab_status_ptr1, int64_t *ab_status_ptr2);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_SPARSE_MINIMUM_IMPL_CUH_

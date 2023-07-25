@@ -66,8 +66,9 @@ class FusedAdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *v = GetDeviceAddress<T>(inputs, 8);
     T *gradient = GetDeviceAddress<T>(inputs, 9);
     float *weight_decay = weight_decay_ ? GetDeviceAddress<float>(inputs, 10) : nullptr;
-    AdamWeightDecay(element_nums_, true, beta1, one_sub_beta1, beta2, one_sub_beta2, epsilon, lr, weight_decay, m, v,
-                    param, gradient, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = AdamWeightDecay(element_nums_, true, beta1, one_sub_beta1, beta2, one_sub_beta2, epsilon, lr,
+                                  weight_decay, m, v, param, gradient, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

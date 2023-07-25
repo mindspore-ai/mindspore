@@ -20,9 +20,9 @@
 
 #define DEPTHTOSPACE_BUFFER_DIMENSION 4
 template <typename T>
-CUDA_LIB_EXPORT void CalDepthToSpace(const size_t size, const T *input, const size_t in, const size_t ic,
-                                     const size_t ih, const size_t iw, const size_t on, const size_t oc,
-                                     const size_t oh, const size_t ow, const size_t r, T *output,
-                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalDepthToSpace(const size_t size, const T *input, const size_t in, const size_t ic,
+                                            const size_t ih, const size_t iw, const size_t on, const size_t oc,
+                                            const size_t oh, const size_t ow, const size_t r, T *output,
+                                            const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DEPTHTOSPACE_IMPL_CUH_

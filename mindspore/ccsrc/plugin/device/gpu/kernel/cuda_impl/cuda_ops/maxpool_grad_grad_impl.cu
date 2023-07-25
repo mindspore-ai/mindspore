@@ -54,31 +54,28 @@ __global__ void MaxPoolGradGrad(const T *input, const T *grad, const int n, cons
 }
 
 template <typename T>
-void CalMaxPoolGradGrad(const T *input, const T *grad, const int n, const int c, const int h, const int w,
-                        const int windowHeight, const int windowWidth, const int strideHeight, const int strideWidth,
-                        const int padTop, const int padLeft, const int outputHeight, const int outputWidth, T *output,
-                        const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalMaxPoolGradGrad(const T *input, const T *grad, const int n, const int c, const int h, const int w,
+                               const int windowHeight, const int windowWidth, const int strideHeight,
+                               const int strideWidth, const int padTop, const int padLeft, const int outputHeight,
+                               const int outputWidth, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int outputNCHW = n * c * outputHeight * outputWidth;
   const int outputCHW = c * outputHeight * outputWidth;
   const int outputHW = outputHeight * outputWidth;
   MaxPoolGradGrad<<<CUDA_BLOCKS(device_id, n * c * outputHeight * outputWidth), CUDA_THREADS(device_id), 0,
                     cuda_stream>>>(input, grad, n, c, h, w, windowHeight, windowWidth, strideHeight, strideWidth,
                                    padTop, padLeft, outputHeight, outputWidth, outputNCHW, outputCHW, outputHW, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalMaxPoolGradGrad<float>(const float *input, const float *grad, const int n, const int c,
-                                                        const int h, const int w, const int windowHeight,
-                                                        const int windowWidth, const int strideHeight,
-                                                        const int strideWidth, const int padTop, const int padLeft,
-                                                        const int outputHeight, const int outputWidth, float *output,
-                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolGradGrad<float>(
+  const float *input, const float *grad, const int n, const int c, const int h, const int w, const int windowHeight,
+  const int windowWidth, const int strideHeight, const int strideWidth, const int padTop, const int padLeft,
+  const int outputHeight, const int outputWidth, float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolGradGrad<half>(const half *input, const half *grad, const int n, const int c,
-                                                       const int h, const int w, const int windowHeight,
-                                                       const int windowWidth, const int strideHeight,
-                                                       const int strideWidth, const int padTop, const int padLeft,
-                                                       const int outputHeight, const int outputWidth, half *output,
-                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolGradGrad<half>(
+  const half *input, const half *grad, const int n, const int c, const int h, const int w, const int windowHeight,
+  const int windowWidth, const int strideHeight, const int strideWidth, const int padTop, const int padLeft,
+  const int outputHeight, const int outputWidth, half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
 __global__ void MaxPool3DGradGrad(const T *input, const T *grad, const int n, const int c, const int d, const int h,
@@ -128,24 +125,26 @@ __global__ void MaxPool3DGradGrad(const T *input, const T *grad, const int n, co
 }
 
 template <typename T>
-void CalMaxPool3DGradGrad(const T *input, const T *grad, const int n, const int c, const int d, const int h,
-                          const int w, const int windowDepth, const int windowHeight, const int windowWidth,
-                          const int strideDepth, const int strideHeight, const int strideWidth, const int padFront,
-                          const int padTop, const int padLeft, const int outputDepth, const int outputHeight,
-                          const int outputWidth, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalMaxPool3DGradGrad(const T *input, const T *grad, const int n, const int c, const int d, const int h,
+                                 const int w, const int windowDepth, const int windowHeight, const int windowWidth,
+                                 const int strideDepth, const int strideHeight, const int strideWidth,
+                                 const int padFront, const int padTop, const int padLeft, const int outputDepth,
+                                 const int outputHeight, const int outputWidth, T *output, const uint32_t &device_id,
+                                 cudaStream_t cuda_stream) {
   MaxPool3DGradGrad<<<CUDA_BLOCKS(device_id, n * c * outputDepth * outputHeight * outputWidth), CUDA_THREADS(device_id),
                       0, cuda_stream>>>(input, grad, n, c, d, h, w, windowDepth, windowHeight, windowWidth, strideDepth,
                                         strideHeight, strideWidth, padFront, padTop, padLeft, outputDepth, outputHeight,
                                         outputWidth, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalMaxPool3DGradGrad<float>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPool3DGradGrad<float>(
   const float *input, const float *grad, const int n, const int c, const int d, const int h, const int w,
   const int windowDepth, const int windowHeight, const int windowWidth, const int strideDepth, const int strideHeight,
   const int strideWidth, const int padFront, const int padTop, const int padLeft, const int outputDepth,
   const int outputHeight, const int outputWidth, float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPool3DGradGrad<half>(
+template CUDA_LIB_EXPORT cudaError_t CalMaxPool3DGradGrad<half>(
   const half *input, const half *grad, const int n, const int c, const int d, const int h, const int w,
   const int windowDepth, const int windowHeight, const int windowWidth, const int strideDepth, const int strideHeight,
   const int strideWidth, const int padFront, const int padTop, const int padLeft, const int outputDepth,

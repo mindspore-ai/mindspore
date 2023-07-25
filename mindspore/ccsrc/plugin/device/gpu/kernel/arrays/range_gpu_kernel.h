@@ -48,9 +48,10 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
 
     stream_ptr_ = stream_ptr;
 
-    CudaValidateInputAndInferShape(range_start, range_end, range_delta, output_shape_device_address,
-                                   error_code_device_address, max_output_length_,
-                                   reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CudaValidateInputAndInferShape(range_start, range_end, range_delta, output_shape_device_address,
+                                                 error_code_device_address, max_output_length_,
+                                                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
 
     DynamicRangeErrorCode error_code = DynamicRangeErrorCode::kOk;
 
@@ -69,8 +70,9 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
 
     LogExceptionIfNotOk(error_code);
 
-    CalRange(range_start, range_end, range_delta, output_device_address, output_shape_device_address,
-             error_code_device_address, max_output_length_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = CalRange(range_start, range_end, range_delta, output_device_address, output_shape_device_address,
+                      error_code_device_address, max_output_length_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
 
     return true;
   }

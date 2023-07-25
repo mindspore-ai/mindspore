@@ -20,9 +20,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalResizeBicubic(const T *input, const int n, const int c, const int input_h, const int input_w,
-                                      const int output_h, const int output_w, const float h_scale, const float w_scale,
-                                      S *output, bool half_pixel_centers_, const uint32_t &device_id,
-                                      cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalResizeBicubic(const T *input, const int n, const int c, const int input_h,
+                                             const int input_w, const int output_h, const int output_w,
+                                             const float h_scale, const float w_scale, S *output,
+                                             bool half_pixel_centers_, const uint32_t &device_id,
+                                             cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RESIZE_BICUBIC_IMPL_CUH_

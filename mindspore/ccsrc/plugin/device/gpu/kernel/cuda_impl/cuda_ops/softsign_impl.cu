@@ -19,53 +19,52 @@
 template <typename T>
 
 __global__ void SoftsignKernel(const size_t size, const T *input_addr, T *output_addr) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size;
-       pos += blockDim.x * gridDim.x) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     output_addr[pos] = input_addr[pos] / (1. + abs(input_addr[pos]));
   }
 }
 
 template <>
 __global__ void SoftsignKernel(const size_t size, const half *input_addr, half *output_addr) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size;
-       pos += blockDim.x * gridDim.x) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     output_addr[pos] = __half2float(input_addr[pos]) / (1. + abs(__half2float(input_addr[pos])));
   }
 }
 
 template <>
 __global__ void SoftsignKernel(const size_t size, const double *input_addr, double *output_addr) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size;
-       pos += blockDim.x * gridDim.x) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     output_addr[pos] = input_addr[pos] / (1. + abs(input_addr[pos]));
   }
 }
 
 template <typename T>
-void Softsign(const size_t size, const T *input_addr, T *output_addr,
-          const uint32_t &device_id, cudaStream_t cuda_stream) {
-  SoftsignKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0,
-               cuda_stream>>>(size, input_addr, output_addr);
+cudaError_t Softsign(const size_t size, const T *input_addr, T *output_addr, const uint32_t &device_id,
+                     cudaStream_t cuda_stream) {
+  SoftsignKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input_addr,
+                                                                                            output_addr);
+  return GetCudaStatus();
 }
 
 template <>
-void Softsign(const size_t size, const half *input_addr, half *output_addr, const uint32_t &device_id,
-          cudaStream_t cuda_stream) {
-  SoftsignKernel<half><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0,
-                     cuda_stream>>>(size, input_addr, output_addr);
+cudaError_t Softsign(const size_t size, const half *input_addr, half *output_addr, const uint32_t &device_id,
+                     cudaStream_t cuda_stream) {
+  SoftsignKernel<half>
+    <<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input_addr, output_addr);
+  return GetCudaStatus();
 }
 
 template <>
-void Softsign(const size_t size,  const double *input_addr, double *output_addr,
-          const uint32_t &device_id, cudaStream_t cuda_stream) {
-  SoftsignKernel<double><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0,
-                       cuda_stream>>>(size, input_addr, output_addr);
+cudaError_t Softsign(const size_t size, const double *input_addr, double *output_addr, const uint32_t &device_id,
+                     cudaStream_t cuda_stream) {
+  SoftsignKernel<double>
+    <<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input_addr, output_addr);
+  return GetCudaStatus();
 }
 
-
-template CUDA_LIB_EXPORT void Softsign<float>(const size_t size, const float *input_addr, float *output_addr,
-                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Softsign<half>(const size_t size, const half *input_addr, half *output_addr,
-                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Softsign<double>(const size_t size, const double *input_addr, double *output_addr,
-                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softsign<float>(const size_t size, const float *input_addr, float *output_addr,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softsign<half>(const size_t size, const half *input_addr, half *output_addr,
+                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t Softsign<double>(const size_t size, const double *input_addr, double *output_addr,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);

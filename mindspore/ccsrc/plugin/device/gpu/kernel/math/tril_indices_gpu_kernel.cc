@@ -79,8 +79,10 @@ bool TrilIndicesGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     if (rectangle_row_offset < row_) {
       rectangle_size = (row_ - rectangle_row_offset) * col_;
     }
-    CalTrilIndices(trapezoid_row_offset, m_first_row, col_, static_cast<int64_t>(tril_size_) - rectangle_size,
-                   tril_size_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status =
+      CalTrilIndices(trapezoid_row_offset, m_first_row, col_, static_cast<int64_t>(tril_size_) - rectangle_size,
+                     tril_size_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

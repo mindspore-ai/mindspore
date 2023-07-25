@@ -99,8 +99,9 @@ bool DynamicStitchKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
     auto index_addr = GetDeviceAddress<int>(inputs, i);
     auto data_addr = GetDeviceAddress<unsigned char>(inputs, n_ + i);
     size_t index_num = input_size_list_[i] / sizeof(int);
-    CallStitch(index_addr, data_addr, output_addr, index_num, one_data_ele_num_ * data_type_size_, max_index_dev,
-               cuda_stream);
+    auto status = CallStitch(index_addr, data_addr, output_addr, index_num, one_data_ele_num_ * data_type_size_,
+                             max_index_dev, cuda_stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   CHECK_CUDA_RET_WITH_EXCEPT(
     kernel_node_, cudaMemcpyAsync(&max_index_, max_index_dev, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),

@@ -34,7 +34,7 @@ __global__ void AddReluV2Kernel(const size_t num, const T *x1, const T *x2, T *y
 template <typename T>
 cudaError_t AddReluV2(const size_t num, const T *x1, const T *x2, T *y, uint32_t *mask, cudaStream_t cuda_stream) {
   AddReluV2Kernel<<<kBlocksPerGrid(num), kThreadsPerBlock, 0, cuda_stream>>>(num, x1, x2, y, mask);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -49,7 +49,7 @@ template <typename T>
 cudaError_t AddReluGradV2(const size_t num, const T *x1, const T *x2, const uint32_t *mask, T *dx,
                           cudaStream_t cuda_stream) {
   AddReluGradV2Kernel<<<kBlocksPerGrid(num), kThreadsPerBlock, 0, cuda_stream>>>(num, x1, x2, mask, dx);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t AddReluV2(const size_t num, const float *x1, const float *x2, float *y,

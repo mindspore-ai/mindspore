@@ -135,9 +135,9 @@ __global__ void CumulativeLogsumexpKernelReverseExclusive(const T *input, T *out
 }
 
 template <typename T>
-void CumulativeLogsumexp(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
-                         size_t stride2, bool exclusive_, bool reverse_, const uint32_t &device_id,
-                         cudaStream_t stream) {
+cudaError_t CumulativeLogsumexp(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
+                                size_t stride2, bool exclusive_, bool reverse_, const uint32_t &device_id,
+                                cudaStream_t stream) {
   int size = dim0 * dim2;
   if (exclusive_) {
     if (reverse_) {
@@ -156,16 +156,18 @@ void CumulativeLogsumexp(const T *input, T *output, size_t dim0, size_t dim1, si
                                                                               stride2);
     }
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CumulativeLogsumexp<double>(const double *input, double *output, size_t dim0, size_t dim1,
-                                                          size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                                          bool reverse_, const uint32_t &device_id,
-                                                          cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumulativeLogsumexp<float>(const float *input, float *output, size_t dim0, size_t dim1,
-                                                         size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                                         bool reverse_, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CumulativeLogsumexp<half>(const half *input, half *output, size_t dim0, size_t dim1,
-                                                        size_t dim2, size_t stride, size_t stride2, bool exclusive_,
-                                                        bool reverse_, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumulativeLogsumexp<double>(const double *input, double *output, size_t dim0,
+                                                                 size_t dim1, size_t dim2, size_t stride,
+                                                                 size_t stride2, bool exclusive_, bool reverse_,
+                                                                 const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumulativeLogsumexp<float>(const float *input, float *output, size_t dim0,
+                                                                size_t dim1, size_t dim2, size_t stride, size_t stride2,
+                                                                bool exclusive_, bool reverse_,
+                                                                const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CumulativeLogsumexp<half>(const half *input, half *output, size_t dim0,
+                                                               size_t dim1, size_t dim2, size_t stride, size_t stride2,
+                                                               bool exclusive_, bool reverse_,
+                                                               const uint32_t &device_id, cudaStream_t stream);

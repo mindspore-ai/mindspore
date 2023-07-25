@@ -218,9 +218,10 @@ bool MaskedSelectGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   }
 
   // kernel
-  MaskedSelectGrad(input_grad_ptr, mask_ptr, index_ptr, input_shape_, mask_shape_, broadcast_shape_,
-                   input_broadcast_grad_ptr, mask_broadcast_ptr, output_grad_ptr, device_id_, cuda_stream_);
-
+  auto status =
+    MaskedSelectGrad(input_grad_ptr, mask_ptr, index_ptr, input_shape_, mask_shape_, broadcast_shape_,
+                     input_broadcast_grad_ptr, mask_broadcast_ptr, output_grad_ptr, device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

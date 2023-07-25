@@ -479,160 +479,172 @@ __global__ void BesselK1e(const size_t size, const T *input, T *output) {
 }
 
 template <typename T>
-void CalBesselJ0(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselJ0(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselJ0<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <>
-void CalBesselJ0(const size_t size, const half *input, half *output, const uint32_t &device_id,
-                 cudaStream_t cuda_stream) {
+cudaError_t CalBesselJ0(const size_t size, const half *input, half *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselJ0<half><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselJ1(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselJ1(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselJ1<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <>
-void CalBesselJ1(const size_t size, const half *input, half *output, const uint32_t &device_id,
-                 cudaStream_t cuda_stream) {
+cudaError_t CalBesselJ1(const size_t size, const half *input, half *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselJ1<half><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselK0(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselK0(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselK0<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselK0e(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselK0e(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
   BesselK0e<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselK1(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselK1(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselK1<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselK1e(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselK1e(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
   BesselK1e<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselY0(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselY0(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselY0<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselY1(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselY1(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselY1<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselI0(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselI0(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselI0<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselI0e(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselI0e(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
   BesselI0e<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselI1(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselI1(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                        cudaStream_t cuda_stream) {
   BesselI1<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalBesselI1e(const size_t size, const T *input, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBesselI1e(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
   BesselI1e<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBesselJ0<double>(const size_t size, const double *input, double *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselJ0<float>(const size_t size, const float *input, float *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselJ0<half>(const size_t size, const half *input, half *output,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselJ1<double>(const size_t size, const double *input, double *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselJ1<float>(const size_t size, const float *input, float *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselJ1<half>(const size_t size, const half *input, half *output,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK0<double>(const size_t size, const double *input, double *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK0<float>(const size_t size, const float *input, float *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK0<half>(const size_t size, const half *input, half *output,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK0e<double>(const size_t size, const double *input, double *output,
-                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK0e<float>(const size_t size, const float *input, float *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK0e<half>(const size_t size, const half *input, half *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK1<double>(const size_t size, const double *input, double *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK1<float>(const size_t size, const float *input, float *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK1<half>(const size_t size, const half *input, half *output,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK1e<double>(const size_t size, const double *input, double *output,
-                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK1e<float>(const size_t size, const float *input, float *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselK1e<half>(const size_t size, const half *input, half *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI0<double>(const size_t size, const double *input, double *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI0<float>(const size_t size, const float *input, float *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI0<half>(const size_t size, const half *input, half *output,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI0e<double>(const size_t size, const double *input, double *output,
-                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI0e<float>(const size_t size, const float *input, float *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI0e<half>(const size_t size, const half *input, half *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI1<double>(const size_t size, const double *input, double *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI1<float>(const size_t size, const float *input, float *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI1<half>(const size_t size, const half *input, half *output,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI1e<double>(const size_t size, const double *input, double *output,
-                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI1e<float>(const size_t size, const float *input, float *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselI1e<half>(const size_t size, const half *input, half *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselY0<double>(const size_t size, const double *input, double *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselY0<float>(const size_t size, const float *input, float *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselY0<half>(const size_t size, const half *input, half *output,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselY1<double>(const size_t size, const double *input, double *output,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselY1<float>(const size_t size, const float *input, float *output,
-                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBesselY1<half>(const size_t size, const half *input, half *output,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselJ0<double>(const size_t size, const double *input, double *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselJ0<float>(const size_t size, const float *input, float *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselJ0<half>(const size_t size, const half *input, half *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselJ1<double>(const size_t size, const double *input, double *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselJ1<float>(const size_t size, const float *input, float *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselJ1<half>(const size_t size, const half *input, half *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK0<double>(const size_t size, const double *input, double *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK0<float>(const size_t size, const float *input, float *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK0<half>(const size_t size, const half *input, half *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK0e<double>(const size_t size, const double *input, double *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK0e<float>(const size_t size, const float *input, float *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK0e<half>(const size_t size, const half *input, half *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK1<double>(const size_t size, const double *input, double *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK1<float>(const size_t size, const float *input, float *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK1<half>(const size_t size, const half *input, half *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK1e<double>(const size_t size, const double *input, double *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK1e<float>(const size_t size, const float *input, float *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselK1e<half>(const size_t size, const half *input, half *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI0<double>(const size_t size, const double *input, double *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI0<float>(const size_t size, const float *input, float *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI0<half>(const size_t size, const half *input, half *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI0e<double>(const size_t size, const double *input, double *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI0e<float>(const size_t size, const float *input, float *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI0e<half>(const size_t size, const half *input, half *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI1<double>(const size_t size, const double *input, double *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI1<float>(const size_t size, const float *input, float *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI1<half>(const size_t size, const half *input, half *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI1e<double>(const size_t size, const double *input, double *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI1e<float>(const size_t size, const float *input, float *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselI1e<half>(const size_t size, const half *input, half *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselY0<double>(const size_t size, const double *input, double *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselY0<float>(const size_t size, const float *input, float *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselY0<half>(const size_t size, const half *input, half *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselY1<double>(const size_t size, const double *input, double *output,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselY1<float>(const size_t size, const float *input, float *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBesselY1<half>(const size_t size, const half *input, half *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);

@@ -68,7 +68,8 @@ bool CastGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   if (input_addr == nullptr && output_addr == nullptr) {
     return true;
   } else if (input_addr != nullptr && output_addr != nullptr) {
-    Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the input and output device addresses must be both null or both not null";

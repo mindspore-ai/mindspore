@@ -108,8 +108,10 @@ bool SparseFillEmptyRowsGradGpuKernelMod::LaunchKernel(const std::vector<Address
   T *d_values = GetDeviceAddress<T>(outputs, 0);
   T *d_default_value = GetDeviceAddress<T>(outputs, 1);
 
-  CalFillRowsGrad(reverse_map_num_, grad_values_num_, reverse_index_map, grad_values, d_values, d_default_value,
-                  workspace_flag, workspace_sum_val, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+  auto status =
+    CalFillRowsGrad(reverse_map_num_, grad_values_num_, reverse_index_map, grad_values, d_values, d_default_value,
+                    workspace_flag, workspace_sum_val, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

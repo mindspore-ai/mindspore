@@ -93,14 +93,23 @@ namespace gpu {
     }                                                                                    \
   } while (0);
 
-#define CHECK_CUDA_LAUNCH_STATUS(status, kernel_name)                                                              \
+#define CHECK_CUDA_STATUS(status, kernel_name)                                                                     \
   do {                                                                                                             \
     if (status != cudaSuccess) {                                                                                   \
       MS_LOG(ERROR) << "For `" << kernel_name << "`, the cuda Kernel fails to run, the error number is " << status \
                     << ", which means " << cudaGetErrorString(status) << ".";                                      \
       return false;                                                                                                \
     }                                                                                                              \
-  } while (0)
+  } while (0);
+
+#define CHECK_CUDA_STATUS_WITH_RET(status, kernel_name, ret)                                                       \
+  do {                                                                                                             \
+    if (status != cudaSuccess) {                                                                                   \
+      MS_LOG(ERROR) << "For `" << kernel_name << "`, the cuda Kernel fails to run, the error number is " << status \
+                    << ", which means " << cudaGetErrorString(status) << ".";                                      \
+      return ret;                                                                                                  \
+    }                                                                                                              \
+  } while (0);
 
 #define CHECK_CUDA_RET_WITH_EXCEPT(node, expression, message)                                           \
   do {                                                                                                  \

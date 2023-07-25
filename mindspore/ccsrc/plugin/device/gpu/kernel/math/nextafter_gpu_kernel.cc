@@ -93,7 +93,9 @@ bool NextAfterGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *input1 = GetDeviceAddress<T>(inputs, 0);
   T *input2 = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
-  NextAfter(input_elements_, input1, input2, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    NextAfter(input_elements_, input1, input2, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

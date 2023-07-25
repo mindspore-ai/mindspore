@@ -137,8 +137,10 @@ bool QuantileGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     MS_LOG(ERROR) << "For Quantile, input tensor must be non-empty";
   }
   int flag_in = 0;
-  Quantile(input, q, out, sort, dim_, x_, y_, z_, each_q_elements_, output_elements_, &flag_in, ret_flag_device,
-           nan_flags, ignorenan_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    Quantile(input, q, out, sort, dim_, x_, y_, z_, each_q_elements_, output_elements_, &flag_in, ret_flag_device,
+             nan_flags, ignorenan_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   if (flag_in == 1) {
     MS_EXCEPTION(ValueError) << "For Quantile, q out of range (expected to be in range of [0, 1]).";
     return false;

@@ -32,29 +32,30 @@ __global__ void ReluV2Kernel(const size_t num, const T *x, T *y, uint32_t *mask)
 }
 
 template <typename T>
-void ReluV2(const size_t num, const T *x, T *y, uint32_t *mask, cudaStream_t cuda_stream) {
+cudaError_t ReluV2(const size_t num, const T *x, T *y, uint32_t *mask, cudaStream_t cuda_stream) {
   ReluV2Kernel<<<kBlocksPerGrid(num), kThreadsPerBlock, 0, cuda_stream>>>(num, x, y, mask);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const double *x, double *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const float *x, float *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const half *x, half *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const int8_t *x, int8_t *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const int16_t *x, int16_t *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const int32_t *x, int32_t *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const int64_t *x, int64_t *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const uint8_t *x, uint8_t *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const uint16_t *x, uint16_t *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const uint32_t *x, uint32_t *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluV2(const size_t num, const uint64_t *x, uint64_t *y, uint32_t *mask,
-                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const double *x, double *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const float *x, float *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const half *x, half *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const int8_t *x, int8_t *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const int16_t *x, int16_t *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const int32_t *x, int32_t *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const int64_t *x, int64_t *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const uint8_t *x, uint8_t *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const uint16_t *x, uint16_t *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const uint32_t *x, uint32_t *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluV2(const size_t num, const uint64_t *x, uint64_t *y, uint32_t *mask,
+                                            cudaStream_t cuda_stream);

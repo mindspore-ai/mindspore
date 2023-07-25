@@ -19,9 +19,9 @@
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-CUDA_LIB_EXPORT void CalSparseReshape(const int64_t *indices, const int64_t *shape, int64_t *y_indices,
-                                      int64_t *y_shape, const size_t indice_number_, const size_t shape_elements_,
-                                      const size_t new_shape_elements_, const uint32_t &device_id,
-                                      cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseReshape(const int64_t *indices, const int64_t *shape, int64_t *y_indices,
+                                             int64_t *y_shape, const size_t indice_number_,
+                                             const size_t shape_elements_, const size_t new_shape_elements_,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_RESHAPE_IMPL_CUH_

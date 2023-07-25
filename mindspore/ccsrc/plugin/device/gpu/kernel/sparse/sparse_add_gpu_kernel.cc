@@ -221,10 +221,11 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseAdd, cudaStreamSynchronize failed.");
 
-  SparseAdd(a_indices_ptr, a_values_ptr, b_indices_ptr, b_values_ptr, sum_indices_ptr, sum_values_ptr,
-            a_value_index_ptr, b_value_index_ptr, is_from_a_ptr, whole_values_ptr, place_holder_index_ptr, indices_ptr,
-            threshold_valid_ptr, a_indices_num, b_indices_num, res_store_mem_ptr, sum_count_ptr, threshold_ptr,
-            indices_column_, device_id_, cuda_stream_);
+  auto status = SparseAdd(a_indices_ptr, a_values_ptr, b_indices_ptr, b_values_ptr, sum_indices_ptr, sum_values_ptr,
+                          a_value_index_ptr, b_value_index_ptr, is_from_a_ptr, whole_values_ptr, place_holder_index_ptr,
+                          indices_ptr, threshold_valid_ptr, a_indices_num, b_indices_num, res_store_mem_ptr,
+                          sum_count_ptr, threshold_ptr, indices_column_, device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   // Get dynamic shape
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&real_output_size_, sum_count_ptr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream_),

@@ -230,9 +230,10 @@ int CalNms(const int num_input, int *num_keep, float iou_threshold, int max_outp
 }
 
 template <typename T, typename M, typename S>
-int DoNms(const int num_input, int *count, int *num_keep, T *scores, T *boxes_in, M iou_threshold_, M score_threshold_,
-          int *index_buff, S max_output_size_, int box_size, unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
-          const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t DoNms(const int num_input, int *count, int *num_keep, T *scores, T *boxes_in, M iou_threshold_,
+                  M score_threshold_, int *index_buff, S max_output_size_, int box_size, unsigned int *sel_mask,
+                  bool *sel_boxes, int *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream,
+                  int *output_size) {
   float iou_threshold = static_cast<float>(iou_threshold_);
   float score_threshold = static_cast<float>(score_threshold_);
   int max_output_size = static_cast<int>(max_output_size_);
@@ -298,53 +299,46 @@ int DoNms(const int num_input, int *count, int *num_keep, T *scores, T *boxes_in
   cudaMemcpyAsync(&num_count, count, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream);
   const int num_to_keep = num_count;
   if (num_to_keep <= 0) {
-    return 0;
+    return cudaErrorNotReady;
   }
-  int output_size = CalNms(num_to_keep, num_keep, iou_threshold, max_output_size, boxes_sort, index_sorted, box_size,
-                           sel_mask, sel_boxes, output_ptr, device_id, reinterpret_cast<cudaStream_t>(cuda_stream));
+  *output_size = CalNms(num_to_keep, num_keep, iou_threshold, max_output_size, boxes_sort, index_sorted, box_size,
+                        sel_mask, sel_boxes, output_ptr, device_id, reinterpret_cast<cudaStream_t>(cuda_stream));
   (void)cudaFree(boxes_sort);
   (void)cudaFree(index_sorted);
-
-  return output_size;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT int DoNms<float, float, int>(const int num_input, int *count, int *num_keep, float *scores,
-                                                      float *boxes_in, float iou_threshold_, float score_threshold_,
-                                                      int *index_buff, int max_output_size_, int box_size,
-                                                      unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
-                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int DoNms<float, float, int64_t>(const int num_input, int *count, int *num_keep, float *scores,
-                                                          float *boxes_in, float iou_threshold_, float score_threshold_,
-                                                          int *index_buff, int64_t max_output_size_, int box_size,
-                                                          unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int DoNms<half, float, int>(const int num_input, int *count, int *num_keep, half *scores,
-                                                     half *boxes_in, float iou_threshold_, float score_threshold_,
-                                                     int *index_buff, int max_output_size_, int box_size,
-                                                     unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int DoNms<half, float, int64_t>(const int num_input, int *count, int *num_keep, half *scores,
-                                                         half *boxes_in, float iou_threshold_, float score_threshold_,
-                                                         int *index_buff, int64_t max_output_size_, int box_size,
-                                                         unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int DoNms<float, half, int>(const int num_input, int *count, int *num_keep, float *scores,
-                                                     float *boxes_in, half iou_threshold_, half score_threshold_,
-                                                     int *index_buff, int max_output_size_, int box_size,
-                                                     unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int DoNms<float, half, int64_t>(const int num_input, int *count, int *num_keep, float *scores,
-                                                         float *boxes_in, half iou_threshold_, half score_threshold_,
-                                                         int *index_buff, int64_t max_output_size_, int box_size,
-                                                         unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int DoNms<half, half, int>(const int num_input, int *count, int *num_keep, half *scores,
-                                                    half *boxes_in, half iou_threshold_, half score_threshold_,
-                                                    int *index_buff, int max_output_size_, int box_size,
-                                                    unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
-                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int DoNms<half, half, int64_t>(const int num_input, int *count, int *num_keep, half *scores,
-                                                        half *boxes_in, half iou_threshold_, half score_threshold_,
-                                                        int *index_buff, int64_t max_output_size_, int box_size,
-                                                        unsigned int *sel_mask, bool *sel_boxes, int *output_ptr,
-                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DoNms<float, float, int>(
+  const int num_input, int *count, int *num_keep, float *scores, float *boxes_in, float iou_threshold_,
+  float score_threshold_, int *index_buff, int max_output_size_, int box_size, unsigned int *sel_mask, bool *sel_boxes,
+  int *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream, int *output_size);
+template CUDA_LIB_EXPORT cudaError_t DoNms<float, float, int64_t>(
+  const int num_input, int *count, int *num_keep, float *scores, float *boxes_in, float iou_threshold_,
+  float score_threshold_, int *index_buff, int64_t max_output_size_, int box_size, unsigned int *sel_mask,
+  bool *sel_boxes, int *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream, int *output_size);
+template CUDA_LIB_EXPORT cudaError_t DoNms<half, float, int>(
+  const int num_input, int *count, int *num_keep, half *scores, half *boxes_in, float iou_threshold_,
+  float score_threshold_, int *index_buff, int max_output_size_, int box_size, unsigned int *sel_mask, bool *sel_boxes,
+  int *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream, int *output_size);
+template CUDA_LIB_EXPORT cudaError_t DoNms<half, float, int64_t>(
+  const int num_input, int *count, int *num_keep, half *scores, half *boxes_in, float iou_threshold_,
+  float score_threshold_, int *index_buff, int64_t max_output_size_, int box_size, unsigned int *sel_mask,
+  bool *sel_boxes, int *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream, int *output_size);
+template CUDA_LIB_EXPORT cudaError_t DoNms<float, half, int>(
+  const int num_input, int *count, int *num_keep, float *scores, float *boxes_in, half iou_threshold_,
+  half score_threshold_, int *index_buff, int max_output_size_, int box_size, unsigned int *sel_mask, bool *sel_boxes,
+  int *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream, int *output_size);
+template CUDA_LIB_EXPORT cudaError_t DoNms<float, half, int64_t>(
+  const int num_input, int *count, int *num_keep, float *scores, float *boxes_in, half iou_threshold_,
+  half score_threshold_, int *index_buff, int64_t max_output_size_, int box_size, unsigned int *sel_mask,
+  bool *sel_boxes, int *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream, int *output_size);
+template CUDA_LIB_EXPORT cudaError_t DoNms<half, half, int>(const int num_input, int *count, int *num_keep,
+                                                            half *scores, half *boxes_in, half iou_threshold_,
+                                                            half score_threshold_, int *index_buff,
+                                                            int max_output_size_, int box_size, unsigned int *sel_mask,
+                                                            bool *sel_boxes, int *output_ptr, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream, int *output_size);
+template CUDA_LIB_EXPORT cudaError_t DoNms<half, half, int64_t>(
+  const int num_input, int *count, int *num_keep, half *scores, half *boxes_in, half iou_threshold_,
+  half score_threshold_, int *index_buff, int64_t max_output_size_, int box_size, unsigned int *sel_mask,
+  bool *sel_boxes, int *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream, int *output_size);

@@ -29,9 +29,9 @@ __global__ void SplitIndices2D(const S *indices, S *row_indices, S *col_indices,
 }
 
 template <typename S>
-void CallSplitIndices2D(const S *indices, S *row_indices, S *col_indices, int size, cudaStream_t cuda_stream) {
+cudaError_t CallSplitIndices2D(const S *indices, S *row_indices, S *col_indices, int size, cudaStream_t cuda_stream) {
   SplitIndices2D<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(indices, row_indices, col_indices, size);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename S>
@@ -44,11 +44,11 @@ __global__ void SplitIndices3D(const S *indices, S *batch_indices, S *row_indice
 }
 
 template <typename S>
-void CallSplitIndices3D(const S *indices, S *batch_indices, S *row_indices, S *col_indices, int size,
-                        cudaStream_t cuda_stream) {
+cudaError_t CallSplitIndices3D(const S *indices, S *batch_indices, S *row_indices, S *col_indices, int size,
+                               cudaStream_t cuda_stream) {
   SplitIndices3D<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(indices, batch_indices, row_indices, col_indices,
                                                                     size);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename S>
@@ -59,16 +59,17 @@ __global__ void NNZPerBatch(const S *batch_indices, S *nnz_per_batch, int size) 
 }
 
 template <typename S>
-void CallNNZPerBatch(const S *batch_indices, S *nnz_per_batch, int nnz, int batch_ptr_size, cudaStream_t cuda_stream) {
+cudaError_t CallNNZPerBatch(const S *batch_indices, S *nnz_per_batch, int nnz, int batch_ptr_size,
+                            cudaStream_t cuda_stream) {
   NNZPerBatch<<<GET_BLOCKS(nnz), GET_THREADS, 0, cuda_stream>>>(batch_indices, nnz_per_batch, nnz);
   thrust::device_ptr<S> batch_ptr(nnz_per_batch);
   thrust::inclusive_scan(thrust::cuda::par.on(cuda_stream), batch_ptr, batch_ptr + batch_ptr_size, batch_ptr);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CallSplitIndices2D<int>(const int *indices, int *row_indices, int *col_indices, int size,
-                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CallSplitIndices3D<int>(const int *indices, int *batch_indices, int *row_indices,
-                                                      int *col_indices, int size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CallNNZPerBatch<int>(const int *batch_indices, int *nnz_per_batch, int nnz,
-                                                   int batch_ptr_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CallSplitIndices2D<int>(const int *indices, int *row_indices, int *col_indices,
+                                                             int size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CallSplitIndices3D<int>(const int *indices, int *batch_indices, int *row_indices,
+                                                             int *col_indices, int size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CallNNZPerBatch<int>(const int *batch_indices, int *nnz_per_batch, int nnz,
+                                                          int batch_ptr_size, cudaStream_t cuda_stream);

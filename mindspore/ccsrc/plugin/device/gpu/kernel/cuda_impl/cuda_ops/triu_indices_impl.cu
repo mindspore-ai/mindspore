@@ -41,20 +41,20 @@ __global__ void TriuIndices(const int64_t col_offset, const int64_t m_first_row,
 }
 
 template <typename T>
-void CalTriuIndices(const int64_t col_offset, const int64_t m_first_row, const int64_t col,
-                    const int64_t rectangle_size, const size_t triu_size, T *output, const uint32_t &device_id,
-                    cudaStream_t cuda_stream) {
+cudaError_t CalTriuIndices(const int64_t col_offset, const int64_t m_first_row, const int64_t col,
+                           const int64_t rectangle_size, const size_t triu_size, T *output, const uint32_t &device_id,
+                           cudaStream_t cuda_stream) {
   TriuIndices<<<CUDA_BLOCKS(device_id, triu_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     col_offset, m_first_row, col, rectangle_size, triu_size, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalTriuIndices<int32_t>(const int64_t row_offset, const int64_t m_first_row,
-                                                      const int64_t col, const int64_t trapezoid_size,
-                                                      const size_t triu_size, int32_t *output,
-                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuIndices<int32_t>(const int64_t row_offset, const int64_t m_first_row,
+                                                             const int64_t col, const int64_t trapezoid_size,
+                                                             const size_t triu_size, int32_t *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalTriuIndices<int64_t>(const int64_t row_offset, const int64_t m_first_row,
-                                                      const int64_t col, const int64_t trapezoid_size,
-                                                      const size_t triu_size, int64_t *output,
-                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTriuIndices<int64_t>(const int64_t row_offset, const int64_t m_first_row,
+                                                             const int64_t col, const int64_t trapezoid_size,
+                                                             const size_t triu_size, int64_t *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);

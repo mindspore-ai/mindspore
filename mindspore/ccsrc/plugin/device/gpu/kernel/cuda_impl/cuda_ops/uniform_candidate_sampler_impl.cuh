@@ -20,8 +20,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename S>
-CUDA_LIB_EXPORT void CalUniformCandidateSampler(const int64_t true_size, const int64_t num_sampled, const S prob_val,
-                                                S *true_expected_count, S *sampled_expected_count,
-                                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalUniformCandidateSampler(const int64_t true_size, const int64_t num_sampled,
+                                                       const S prob_val, S *true_expected_count,
+                                                       S *sampled_expected_count, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNIFORM_CANDIDATE_SAMPLER_IMPL_CUH_

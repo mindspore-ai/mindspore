@@ -20,9 +20,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename DataType>
-CUDA_LIB_EXPORT void MatrixDiagV3(const DataType *x_ptr, const DataType *padding_value_ptr, DataType *y_ptr,
-                                  int64_t y_size, int64_t num_rows, int64_t num_cols, int64_t lower_diag_index,
-                                  int64_t upper_diag_index, int64_t max_diag_len, bool left_align_super_diag_,
-                                  bool left_align_sub_diag_, uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t MatrixDiagV3(const DataType *x_ptr, const DataType *padding_value_ptr, DataType *y_ptr,
+                                         int64_t y_size, int64_t num_rows, int64_t num_cols, int64_t lower_diag_index,
+                                         int64_t upper_diag_index, int64_t max_diag_len, bool left_align_super_diag_,
+                                         bool left_align_sub_diag_, uint32_t device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MATRIX_DIAG_V3_IMPL_CUH_

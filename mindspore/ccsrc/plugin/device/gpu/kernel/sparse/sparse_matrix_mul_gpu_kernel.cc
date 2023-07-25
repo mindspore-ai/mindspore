@@ -98,10 +98,10 @@ bool SparseMatrixMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "Cuda memcopy input to output Fail");
 
-  CalSparseMatrixMul(a_shape_addr, a_batch_pointers_addr, a_indptr_addr, a_indices_addr, a_values_addr, b_dense_addr,
-                     c_shape_addr, c_batch_pointers_addr, c_indptr_addr, c_indices_addr, c_values_addr, row_, col_,
-                     device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto status = CalSparseMatrixMul(a_shape_addr, a_batch_pointers_addr, a_indptr_addr, a_indices_addr, a_values_addr,
+                                   b_dense_addr, c_shape_addr, c_batch_pointers_addr, c_indptr_addr, c_indices_addr,
+                                   c_values_addr, row_, col_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   bool is_nullptr = (a_shape_addr == nullptr) || (a_batch_pointers_addr == nullptr) || (a_indptr_addr == nullptr) ||
                     (a_indices_addr == nullptr) || (a_values_addr == nullptr) || (b_dense_addr == nullptr) ||
                     (c_shape_addr == nullptr) || (c_batch_pointers_addr == nullptr) || (c_indptr_addr == nullptr) ||

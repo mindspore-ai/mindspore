@@ -20,6 +20,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalUniform(T *x, T *y, const float from, const float to, const size_t size,
-                                const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalUniform(T *x, T *y, const float from, const float to, const size_t size,
+                                       const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNIFORM_IMPL_CUH_

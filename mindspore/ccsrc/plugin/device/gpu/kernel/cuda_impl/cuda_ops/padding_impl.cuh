@@ -20,6 +20,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalculatePadding(const T *input_ptr, size_t output_outer_size_, size_t pad_dim_size, T *output_ptr,
-                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalculatePadding(const T *input_ptr, size_t output_outer_size_, size_t pad_dim_size,
+                                             T *output_ptr, const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_PADDING_IMPL_CUH_

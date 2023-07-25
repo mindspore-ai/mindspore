@@ -117,11 +117,13 @@ bool InTopKGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
 
   k_ = std::min(k_, static_cast<int64_t>(inner_size_));
 
+  cudaError_t status = cudaErrorNotReady;
   constexpr int64_t max_for_topk = 128;
   if (k_ > max_for_topk) {
     // ApplyInTopK have a better performance when k > 128.
-    ApplyInTopK(predictions_device, targets_device, output_device, input_shape_[0], input_shape_[1], k_, device_id_,
-                reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = ApplyInTopK(predictions_device, targets_device, output_device, input_shape_[0], input_shape_[1], k_,
+                         device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 
@@ -136,13 +138,15 @@ bool InTopKGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     float *casted_float32_input = GetDeviceAddress<float>(workspace, kIndex2);
     float *top_k_output_device_float32 = GetDeviceAddress<float>(workspace, kIndex3);
 
-    Cast(input_size_, predictions_device, casted_float32_input, reinterpret_cast<cudaStream_t>(stream_ptr));
-
-    FastTopK(outer_size_, inner_size_, casted_float32_input, static_cast<int32_t>(k_), top_k_output_device_float32,
-             top_k_indices_device, top_k_init, reinterpret_cast<cudaStream_t>(stream_ptr));
-
-    CalInTopK(casted_float32_input, targets_device, output_device, top_k_output_device_float32, input_shape_[0],
-              input_shape_[1], k_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = Cast(input_size_, predictions_device, casted_float32_input, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status =
+      FastTopK(outer_size_, inner_size_, casted_float32_input, static_cast<int32_t>(k_), top_k_output_device_float32,
+               top_k_indices_device, top_k_init, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalInTopK(casted_float32_input, targets_device, output_device, top_k_output_device_float32,
+                       input_shape_[0], input_shape_[1], k_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     // topk sorts the input along the last dimension
     T top_k_init;
@@ -153,11 +157,13 @@ bool InTopKGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     } else {
       top_k_init = std::numeric_limits<T>::lowest();
     }
-    FastTopK(outer_size_, inner_size_, predictions_device, static_cast<int32_t>(k_), top_k_output_device,
-             top_k_indices_device, top_k_init, reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = FastTopK(outer_size_, inner_size_, predictions_device, static_cast<int32_t>(k_), top_k_output_device,
+                      top_k_indices_device, top_k_init, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
 
-    CalInTopK(predictions_device, targets_device, output_device, top_k_output_device, input_shape_[0], input_shape_[1],
-              k_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = CalInTopK(predictions_device, targets_device, output_device, top_k_output_device, input_shape_[0],
+                       input_shape_[1], k_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 
   return true;

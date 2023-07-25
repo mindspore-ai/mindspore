@@ -117,7 +117,7 @@ cudaError_t CalUpsampleTrilinear3DGrad(const T *grad, const int n, const int c, 
       dinput_size, grad, n, c, grad_d, grad_h, grad_w, grad_dhw, dinput_d, dinput_h, dinput_w, dinput_dhw, d_scale,
       h_scale, w_scale, align_corner, dinput);
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalUpsampleTrilinear3DGrad<half, float>(

@@ -76,198 +76,198 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
 template <typename T, typename S>
-void CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
-                         const size_t &index_depth, const S *out_strides, const S *indices, const S *work_shape,
-                         const T *updates, T *input, uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
+                                const size_t &index_depth, const S *out_strides, const S *indices, const S *work_shape,
+                                const T *updates, T *input, uint32_t device_id, cudaStream_t cuda_stream) {
   const size_t updates_size = unit_size * num_units;
   switch (func_type) {
     case SCATTER_ND_FUNC_UPDATE:
-      return ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
         unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+      break;
     case SCATTER_ND_FUNC_ADD:
-      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
         MsAtomicAddFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+      break;
     case SCATTER_ND_FUNC_SUB:
-      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
         MsAtomicSubFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+      break;
     case SCATTER_ND_FUNC_MUL:
-      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
         MsAtomicMulFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+      break;
     case SCATTER_ND_FUNC_DIV:
-      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
         MsAtomicDivFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+      break;
     case SCATTER_ND_FUNC_MAX:
-      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
         MsAtomicMaxFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+      break;
     case SCATTER_ND_FUNC_MIN:
-      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
         MsAtomicMinFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+      break;
     default:
       break;
   }
+  return GetCudaStatus();
 }
 
 template <>
-void CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
-                         const size_t &index_depth, const int32_t *out_strides, const int32_t *indices,
-                         const int32_t *work_shape, const std::complex<float> *updates, std::complex<float> *input,
-                         uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
+                                const size_t &index_depth, const int32_t *out_strides, const int32_t *indices,
+                                const int32_t *work_shape, const std::complex<float> *updates,
+                                std::complex<float> *input, uint32_t device_id, cudaStream_t cuda_stream) {
   const size_t updates_size = unit_size * num_units;
-  return ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+  return GetCudaStatus();
 }
 
 template <>
-void CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
-                         const size_t &index_depth, const int64_t *out_strides, const int64_t *indices,
-                         const int64_t *work_shape, const std::complex<float> *updates, std::complex<float> *input,
-                         uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
+                                const size_t &index_depth, const int64_t *out_strides, const int64_t *indices,
+                                const int64_t *work_shape, const std::complex<float> *updates,
+                                std::complex<float> *input, uint32_t device_id, cudaStream_t cuda_stream) {
   const size_t updates_size = unit_size * num_units;
-  return ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+  return GetCudaStatus();
 }
 
 template <>
-void CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
-                         const size_t &index_depth, const int32_t *out_strides, const int32_t *indices,
-                         const int32_t *work_shape, const std::complex<double> *updates, std::complex<double> *input,
-                         uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
+                                const size_t &index_depth, const int32_t *out_strides, const int32_t *indices,
+                                const int32_t *work_shape, const std::complex<double> *updates,
+                                std::complex<double> *input, uint32_t device_id, cudaStream_t cuda_stream) {
   const size_t updates_size = unit_size * num_units;
-  return ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+  return GetCudaStatus();
 }
 
 template <>
-void CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
-                         const size_t &index_depth, const int64_t *out_strides, const int64_t *indices,
-                         const int64_t *work_shape, const std::complex<double> *updates, std::complex<double> *input,
-                         uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
+                                const size_t &index_depth, const int64_t *out_strides, const int64_t *indices,
+                                const int64_t *work_shape, const std::complex<double> *updates,
+                                std::complex<double> *input, uint32_t device_id, cudaStream_t cuda_stream) {
   const size_t updates_size = unit_size * num_units;
-  return ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     unit_size, index_depth, updates_size, out_strides, indices, work_shape, updates, input);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<double, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<double, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const double *updates, double *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<double, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<double, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const double *updates, double *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<float, int64_t>(enum ScatterNdFunctorType func_type,
-                                                                  const size_t &unit_size, const size_t &num_units,
-                                                                  const size_t &index_depth, const int64_t *out_strides,
-                                                                  const int64_t *indices, const int64_t *work_shape,
-                                                                  const float *updates, float *input,
-                                                                  uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<float, int32_t>(enum ScatterNdFunctorType func_type,
-                                                                  const size_t &unit_size, const size_t &num_units,
-                                                                  const size_t &index_depth, const int32_t *out_strides,
-                                                                  const int32_t *indices, const int32_t *work_shape,
-                                                                  const float *updates, float *input,
-                                                                  uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<half, int64_t>(enum ScatterNdFunctorType func_type,
-                                                                 const size_t &unit_size, const size_t &num_units,
-                                                                 const size_t &index_depth, const int64_t *out_strides,
-                                                                 const int64_t *indices, const int64_t *work_shape,
-                                                                 const half *updates, half *input, uint32_t device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<half, int32_t>(enum ScatterNdFunctorType func_type,
-                                                                 const size_t &unit_size, const size_t &num_units,
-                                                                 const size_t &index_depth, const int32_t *out_strides,
-                                                                 const int32_t *indices, const int32_t *work_shape,
-                                                                 const half *updates, half *input, uint32_t device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<int64_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<float, int64_t>(
+  enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
+  const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const float *updates, float *input,
+  uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<float, int32_t>(
+  enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
+  const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const float *updates, float *input,
+  uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<half, int64_t>(
+  enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
+  const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const half *updates, half *input,
+  uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<half, int32_t>(
+  enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
+  const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const half *updates, half *input,
+  uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<int64_t, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const int64_t *updates, int64_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<int64_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<int64_t, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const int64_t *updates, int64_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint64_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<uint64_t, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const uint64_t *updates,
   uint64_t *input, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint64_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<uint64_t, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const uint64_t *updates,
   uint64_t *input, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<int32_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<int32_t, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const int32_t *updates, int32_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<int32_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<int32_t, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const int32_t *updates, int32_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint32_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<uint32_t, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const uint32_t *updates,
   uint32_t *input, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint32_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<uint32_t, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const uint32_t *updates,
   uint32_t *input, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<int16_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<int16_t, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const int16_t *updates, int16_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<int16_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<int16_t, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const int16_t *updates, int16_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint16_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<uint16_t, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const uint16_t *updates,
   uint16_t *input, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint16_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<uint16_t, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const uint16_t *updates,
   uint16_t *input, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint8_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<uint8_t, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const uint8_t *updates, uint8_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint8_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<uint8_t, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const uint8_t *updates, uint8_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<int8_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<int8_t, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const int8_t *updates, int8_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<int8_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<int8_t, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const int8_t *updates, int8_t *input,
   uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<bool, int64_t>(enum ScatterNdFunctorType func_type,
-                                                                 const size_t &unit_size, const size_t &num_units,
-                                                                 const size_t &index_depth, const int64_t *out_strides,
-                                                                 const int64_t *indices, const int64_t *work_shape,
-                                                                 const bool *updates, bool *input, uint32_t device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<bool, int32_t>(enum ScatterNdFunctorType func_type,
-                                                                 const size_t &unit_size, const size_t &num_units,
-                                                                 const size_t &index_depth, const int32_t *out_strides,
-                                                                 const int32_t *indices, const int32_t *work_shape,
-                                                                 const bool *updates, bool *input, uint32_t device_id,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<std::complex<float>, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<bool, int64_t>(
+  enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
+  const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const bool *updates, bool *input,
+  uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<bool, int32_t>(
+  enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
+  const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const bool *updates, bool *input,
+  uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<std::complex<float>, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const std::complex<float> *updates,
   std::complex<float> *input, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<std::complex<float>, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<std::complex<float>, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const std::complex<float> *updates,
   std::complex<float> *input, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<std::complex<double>, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<std::complex<double>, int64_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int64_t *out_strides, const int64_t *indices, const int64_t *work_shape, const std::complex<double> *updates,
   std::complex<double> *input, uint32_t device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalScatterNdFunctor<std::complex<double>, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalScatterNdFunctor<std::complex<double>, int32_t>(
   enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units, const size_t &index_depth,
   const int32_t *out_strides, const int32_t *indices, const int32_t *work_shape, const std::complex<double> *updates,
   std::complex<double> *input, uint32_t device_id, cudaStream_t cuda_stream);

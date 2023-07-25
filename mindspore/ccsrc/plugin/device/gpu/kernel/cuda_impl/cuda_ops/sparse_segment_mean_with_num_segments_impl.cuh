@@ -20,12 +20,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT int CalSparseSegmentMeanWithNumSegments(const DataType *x_ptr, const IndexType *indices_ptr,
-                                                        const IndexType *segment_ids_ptr,
-                                                        const IndexType *num_segments_ptr, size_t *segment_pos_ptr,
-                                                        DataType *y_ptr, size_t outer_size, size_t inner_size,
-                                                        size_t indices_size, size_t segment_size, size_t x_size,
-                                                        size_t y_size, size_t batch_size, int *ret_flag_device,
-                                                        uint32_t device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseSegmentMeanWithNumSegments(
+  const DataType *x_ptr, const IndexType *indices_ptr, const IndexType *segment_ids_ptr,
+  const IndexType *num_segments_ptr, size_t *segment_pos_ptr, DataType *y_ptr, size_t outer_size, size_t inner_size,
+  size_t indices_size, size_t segment_size, size_t x_size, size_t y_size, size_t batch_size, int *ret_flag_device,
+  uint32_t device_id, cudaStream_t cuda_stream, int *ret_flag_host);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_SEGMENT_MEAN_WITH_NUM_SEGMENTS_IMPL_CUH_

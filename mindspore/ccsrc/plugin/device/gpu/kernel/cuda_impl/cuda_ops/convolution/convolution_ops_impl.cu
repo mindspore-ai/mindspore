@@ -436,7 +436,7 @@ struct ConvolutionFunc<ConvolutionOpType::kConv2dDepthWiseForwardNCHW, T> {
     size_t thread_num = output_size > kThreadPerBlock ? kThreadPerBlock : output_size;
     Conv2dDepthWiseForwardNCHWKernel<<<CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, output_size, thread_num), thread_num, 0,
                                        cuda_stream>>>(cuda_args, input0_addr, input1_addr, output_addr);
-    CHECK_CUDA_LAUNCH_SUCCESS();
+    return GetCudaStatus();
   }
 };
 
@@ -450,7 +450,7 @@ struct ConvolutionFunc<ConvolutionOpType::kConv2dDepthWiseForwardNHWC, T> {
     size_t thread_num = output_size > kThreadPerBlock ? kThreadPerBlock : output_size;
     Conv2dDepthWiseForwardNHWCKernel<<<CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, output_size, thread_num), thread_num, 0,
                                        cuda_stream>>>(cuda_args, input0_addr, input1_addr, output_addr);
-    CHECK_CUDA_LAUNCH_SUCCESS();
+    return GetCudaStatus();
   }
 };
 
@@ -464,7 +464,7 @@ struct ConvolutionFunc<ConvolutionOpType::kConv2dDepthWiseInputGradNCHW, T> {
     size_t thread_num = output_size > kThreadPerBlock ? kThreadPerBlock : output_size;
     Conv2dDepthWiseInputGradNCHWKernel<<<CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, output_size, thread_num), thread_num, 0,
                                          cuda_stream>>>(cuda_args, input0_addr, input1_addr, output_addr);
-    CHECK_CUDA_LAUNCH_SUCCESS();
+    return GetCudaStatus();
   }
 };
 
@@ -478,7 +478,7 @@ struct ConvolutionFunc<ConvolutionOpType::kConv2dDepthWiseInputGradNHWC, T> {
     size_t thread_num = output_size > kThreadPerBlock ? kThreadPerBlock : output_size;
     Conv2dDepthWiseInputGradNHWCKernel<<<CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, output_size, thread_num), thread_num, 0,
                                          cuda_stream>>>(cuda_args, input0_addr, input1_addr, output_addr);
-    CHECK_CUDA_LAUNCH_SUCCESS();
+    return GetCudaStatus();
   }
 };
 
@@ -492,7 +492,7 @@ struct ConvolutionFunc<ConvolutionOpType::kConv2dDepthWiseFilterGradNCHW, T> {
     size_t thread_num = output_size > kThreadPerBlock ? kThreadPerBlock : output_size;
     Conv2dDepthWiseFilterGradNCHWKernel<<<CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, output_size, thread_num), thread_num, 0,
                                           cuda_stream>>>(cuda_args, input0_addr, input1_addr, output_addr);
-    CHECK_CUDA_LAUNCH_SUCCESS();
+    return GetCudaStatus();
   }
 };
 

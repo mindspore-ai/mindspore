@@ -109,7 +109,7 @@ cudaError_t CalCropAndResize(const size_t size, const T *input_image, float *inp
   CropAndResize<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_image, input_boxes, input_box_index,
                                                                    batch, input_height, input_width, final_height,
                                                                    final_width, channel, method, extrapol_val, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalCropAndResize<int8_t>(const size_t size, const int8_t *input_image,

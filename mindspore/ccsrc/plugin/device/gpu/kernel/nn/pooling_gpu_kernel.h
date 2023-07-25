@@ -100,13 +100,15 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
                         reinterpret_cast<cudaStream_t>(stream_ptr)),
         "cudaMemcpyAsync failed.");
       if (ceil_mode_) {
-        CalRealKernelSize(output_shape_exclude_nc_, kernel_size_, edge_kernel_, work_addr, 0,
-                          reinterpret_cast<cudaStream_t>(stream_ptr));
+        auto status = CalRealKernelSize(output_shape_exclude_nc_, kernel_size_, edge_kernel_, work_addr, 0,
+                                        reinterpret_cast<cudaStream_t>(stream_ptr));
+        CHECK_CUDA_STATUS(status, kernel_name_);
       }
       std::vector<int64_t> shape = {static_cast<int64_t>(output_num)};
-      BinaryOpWithBroadcastCudaFunc<BinaryOpType::kMul, T, T, T>(false, shape, shape, shape, output_addr, work_addr,
-                                                                 output_addr, device_id_,
-                                                                 reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto status = BinaryOpWithBroadcastCudaFunc<BinaryOpType::kMul, T, T, T>(
+        false, shape, shape, shape, output_addr, work_addr, output_addr, device_id_,
+        reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     }
     return true;
   }

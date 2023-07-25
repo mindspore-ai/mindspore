@@ -66,7 +66,7 @@ cudaError_t ApplyAdaptiveAvgPool3D(const uint out_size, const uint input_channel
   AdaptiveAvgPool3DKernel<<<GET_BLOCKS(out_size), GET_THREADS, 0, cuda_stream>>>(
     out_size, input_channel, input_height, input_width, input_depth, output_channel, output_height, output_width,
     output_depth, input_data, output_data);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveAvgPool3D<float>(const uint out_size, const uint input_channel,

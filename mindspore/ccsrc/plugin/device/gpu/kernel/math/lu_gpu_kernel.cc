@@ -121,8 +121,11 @@ void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
   // query working space of getrf
   BufferSize(batch_output_addr, &lwork_);
   // Transpose input data from rowMajor to colMajor.
-  MatrixTranspose(batch_input_addr, SizeToInt(input_elements_), m_, m_, dev_work, device_id_,
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = MatrixTranspose(batch_input_addr, SizeToInt(input_elements_), m_, m_, dev_work, device_id_,
+                                reinterpret_cast<cudaStream_t>(cuda_stream_));
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch MatrixTranspose in GPU kernel Lu failed.";
+  }
   // malloc device working space of getrf
   d_work_ = reinterpret_cast<T *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(unit_size_ * lwork_));
   for (size_t batch = 0; batch < batch_size_; ++batch) {
@@ -173,8 +176,11 @@ void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
                       reinterpret_cast<cudaStream_t>(cuda_stream_)),
       "cudaMemcpyAsync failed in LuGpuKernelMod::Launch copy pivots array.");
   }
-  MatrixTranspose(dev_work, SizeToInt(input_elements_), m_, m_, batch_output_addr, device_id_,
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  status = MatrixTranspose(dev_work, SizeToInt(input_elements_), m_, m_, batch_output_addr, device_id_,
+                           reinterpret_cast<cudaStream_t>(cuda_stream_));
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch MatrixTranspose in GPU kernel Lu failed.";
+  }
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work_);
 }
 
@@ -203,8 +209,11 @@ void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
   CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetStream(cublas_handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                        "For LuGpuKernelMod cublasSetStream Fail");
   // Transpose input data from rowMajor to colMajor.
-  MatrixTranspose(batch_input_addr, SizeToInt(input_elements_), m_, m_, dev_transpose_work, device_id_,
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = MatrixTranspose(batch_input_addr, SizeToInt(input_elements_), m_, m_, dev_transpose_work, device_id_,
+                                reinterpret_cast<cudaStream_t>(cuda_stream_));
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch MatrixTranspose in GPU kernel Lu failed.";
+  }
   if constexpr (std::is_same_v<T, float>) {
     CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasSgetrfBatched(cublas_handle_, m_, reinterpret_cast<float **>(batch_lu_device_address), m_, dev_batch_piv,
@@ -229,8 +238,11 @@ void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', it's the input data type must be float32, float64, complex64 or complex128.";
   }
-  MatrixTranspose(dev_transpose_work, SizeToInt(input_elements_), m_, m_, batch_output_addr, device_id_,
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  status = MatrixTranspose(dev_transpose_work, SizeToInt(input_elements_), m_, m_, batch_output_addr, device_id_,
+                           reinterpret_cast<cudaStream_t>(cuda_stream_));
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch MatrixTranspose in GPU kernel Lu failed.";
+  }
   std::vector<int> host_permuted(batch_size_ * k_, 0);
   std::vector<int> host_pivots(batch_size_ * k_, 0);
   std::vector<S> host_p(batch_size_ * k_, 0);

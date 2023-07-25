@@ -19,54 +19,54 @@
 
 // cublas exec scale
 #ifndef CUBLAS_EXEC_SCALE
-#define CUBLAS_EXEC_SCALE(cublas_exec, real, cu_complex)                                           \
-  do {                                                                                             \
-    if (scale_factor != 1.0) {                                                                     \
-      auto alpha = static_cast<real>(scale_factor);                                                \
-      auto out = static_cast<cu_complex *>(y_ptr);                                                 \
-      CUBLAS_CALL(cublas_exec(scale_plan, y_elements, &alpha, out, 1));                            \
-    }                                                                                              \
+#define CUBLAS_EXEC_SCALE(cublas_exec, real, cu_complex)                \
+  do {                                                                  \
+    if (scale_factor != 1.0) {                                          \
+      auto alpha = static_cast<real>(scale_factor);                     \
+      auto out = static_cast<cu_complex *>(y_ptr);                      \
+      CUBLAS_CALL(cublas_exec(scale_plan, y_elements, &alpha, out, 1)); \
+    }                                                                   \
   } while (0)
 #endif  // CUBLAS_EXEC_SCALE
 
-void CalculateFFT(cufftComplex *x_ptr, cufftComplex *y_ptr,
-                  const double &scale_factor, const int &y_elements,
-                  cufftHandle cufft_plan, cublasHandle_t scale_plan,
-                  const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateFFT(cufftComplex *x_ptr, cufftComplex *y_ptr, const double &scale_factor, const int &y_elements,
+                         cufftHandle cufft_plan, cublasHandle_t scale_plan, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
   CUFFT_CALL(cufftSetStream(cufft_plan, cuda_stream));
   CUBLAS_CALL(cublasSetStream_v2(scale_plan, cuda_stream));
   CUFFT_CALL(cufftExecC2C(cufft_plan, x_ptr, y_ptr, CUFFT_FORWARD));
   CUBLAS_EXEC_SCALE(cublasCsscal_v2, float, cuComplex);
+  return GetCudaStatus();
 }
 
-void CalculateFFT(cufftDoubleComplex *x_ptr, cufftDoubleComplex *y_ptr,
-                  const double &scale_factor, const int &y_elements,
-                  cufftHandle cufft_plan, cublasHandle_t scale_plan,
-                  const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateFFT(cufftDoubleComplex *x_ptr, cufftDoubleComplex *y_ptr, const double &scale_factor,
+                         const int &y_elements, cufftHandle cufft_plan, cublasHandle_t scale_plan,
+                         const uint32_t &device_id, cudaStream_t cuda_stream) {
   CUFFT_CALL(cufftSetStream(cufft_plan, cuda_stream));
   CUBLAS_CALL(cublasSetStream_v2(scale_plan, cuda_stream));
   CUFFT_CALL(cufftExecZ2Z(cufft_plan, x_ptr, y_ptr, CUFFT_FORWARD));
   CUBLAS_EXEC_SCALE(cublasZdscal_v2, double, cuDoubleComplex);
+  return GetCudaStatus();
 }
 
-void CalculateIFFT(cufftComplex *x_ptr, cufftComplex *y_ptr,
-                   const double &scale_factor, const int &y_elements,
-                   cufftHandle cufft_plan, cublasHandle_t scale_plan,
-                   const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateIFFT(cufftComplex *x_ptr, cufftComplex *y_ptr, const double &scale_factor, const int &y_elements,
+                          cufftHandle cufft_plan, cublasHandle_t scale_plan, const uint32_t &device_id,
+                          cudaStream_t cuda_stream) {
   CUFFT_CALL(cufftSetStream(cufft_plan, cuda_stream));
   CUBLAS_CALL(cublasSetStream_v2(scale_plan, cuda_stream));
   CUFFT_CALL(cufftExecC2C(cufft_plan, x_ptr, y_ptr, CUFFT_INVERSE));
   CUBLAS_EXEC_SCALE(cublasCsscal_v2, float, cuComplex);
+  return GetCudaStatus();
 }
 
-void CalculateIFFT(cufftDoubleComplex *x_ptr, cufftDoubleComplex *y_ptr,
-                   const double &scale_factor, const int &y_elements,
-                   cufftHandle cufft_plan, cublasHandle_t scale_plan,
-                   const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateIFFT(cufftDoubleComplex *x_ptr, cufftDoubleComplex *y_ptr, const double &scale_factor,
+                          const int &y_elements, cufftHandle cufft_plan, cublasHandle_t scale_plan,
+                          const uint32_t &device_id, cudaStream_t cuda_stream) {
   CUFFT_CALL(cufftSetStream(cufft_plan, cuda_stream));
   CUBLAS_CALL(cublasSetStream_v2(scale_plan, cuda_stream));
   CUFFT_CALL(cufftExecZ2Z(cufft_plan, x_ptr, y_ptr, CUFFT_INVERSE));
   CUBLAS_EXEC_SCALE(cublasZdscal_v2, double, cuDoubleComplex);
+  return GetCudaStatus();
 }
 
 __global__ void Float2FloatComplex(const float *input_addr, cufftComplex *output_addr, const int len) {
@@ -93,42 +93,43 @@ __global__ void DoubleComplex2Double(const cufftDoubleComplex *input_addr, doubl
   }
 }
 
-void CalculateRFFT(float *x_ptr, cufftComplex *w_ptr, cufftComplex *y_ptr,
-                   const bool &is_onesided, const double &scale_factor, const int &x_elements, const int &y_elements,
-                   cufftHandle cufft_plan, cublasHandle_t scale_plan,
-                   const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateRFFT(float *x_ptr, cufftComplex *w_ptr, cufftComplex *y_ptr, const bool &is_onesided,
+                          const double &scale_factor, const int &x_elements, const int &y_elements,
+                          cufftHandle cufft_plan, cublasHandle_t scale_plan, const uint32_t &device_id,
+                          cudaStream_t cuda_stream) {
   CUFFT_CALL(cufftSetStream(cufft_plan, cuda_stream));
   CUBLAS_CALL(cublasSetStream_v2(scale_plan, cuda_stream));
   if (is_onesided) {  // onesided use native cufft r2c
     CUFFT_CALL(cufftExecR2C(cufft_plan, x_ptr, y_ptr));
   } else {  // full freq use [casting + c2c], cast real input buffer to complex workspace buffer
-    Float2FloatComplex<<<CUDA_BLOCKS(device_id, x_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      x_ptr, w_ptr, x_elements);
+    Float2FloatComplex<<<CUDA_BLOCKS(device_id, x_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(x_ptr, w_ptr,
+                                                                                                        x_elements);
     CUFFT_CALL(cufftExecC2C(cufft_plan, w_ptr, y_ptr, CUFFT_FORWARD));
   }
   CUBLAS_EXEC_SCALE(cublasCsscal_v2, float, cuComplex);
+  return GetCudaStatus();
 }
 
-void CalculateRFFT(double *x_ptr, cufftDoubleComplex *w_ptr, cufftDoubleComplex *y_ptr,
-                   const bool &is_onesided, const double &scale_factor, const int &x_elements, const int &y_elements,
-                   cufftHandle cufft_plan, cublasHandle_t scale_plan,
-                   const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateRFFT(double *x_ptr, cufftDoubleComplex *w_ptr, cufftDoubleComplex *y_ptr, const bool &is_onesided,
+                          const double &scale_factor, const int &x_elements, const int &y_elements,
+                          cufftHandle cufft_plan, cublasHandle_t scale_plan, const uint32_t &device_id,
+                          cudaStream_t cuda_stream) {
   CUFFT_CALL(cufftSetStream(cufft_plan, cuda_stream));
   CUBLAS_CALL(cublasSetStream_v2(scale_plan, cuda_stream));
   if (is_onesided) {  // onesided use native cufft r2c
     CUFFT_CALL(cufftExecD2Z(cufft_plan, x_ptr, y_ptr));
   } else {  // full freq use [casting + c2c], cast real input buffer to complex workspace buffer
-    Double2DoubleComplex<<<CUDA_BLOCKS(device_id, x_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      x_ptr, w_ptr, x_elements);
+    Double2DoubleComplex<<<CUDA_BLOCKS(device_id, x_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(x_ptr, w_ptr,
+                                                                                                          x_elements);
     CUFFT_CALL(cufftExecZ2Z(cufft_plan, w_ptr, y_ptr, CUFFT_FORWARD));
   }
   CUBLAS_EXEC_SCALE(cublasZdscal_v2, double, cuDoubleComplex);
+  return GetCudaStatus();
 }
 
-void CalculateIRFFT(cufftComplex *x_ptr, cufftComplex *w_ptr, float *y_ptr,
-                    const bool &is_onesided, const double &scale_factor, const int &x_elements, const int &y_elements,
-                    cufftHandle cufft_plan, cublasHandle_t scale_plan,
-                    const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateIRFFT(cufftComplex *x_ptr, cufftComplex *w_ptr, float *y_ptr, const bool &is_onesided,
+                    const double &scale_factor, const int &x_elements, const int &y_elements, cufftHandle cufft_plan,
+                    cublasHandle_t scale_plan, const uint32_t &device_id, cudaStream_t cuda_stream) {
   CUFFT_CALL(cufftSetStream(cufft_plan, cuda_stream));
   CUBLAS_CALL(cublasSetStream_v2(scale_plan, cuda_stream));
   if (is_onesided) {  // onesided use native cufft c2r
@@ -138,16 +139,17 @@ void CalculateIRFFT(cufftComplex *x_ptr, cufftComplex *w_ptr, float *y_ptr,
   } else {  // full freq use [c2c + casting]
     // dump c2c result to workspace buffer, then cast complex workspace buffer to real output buffer.
     CUFFT_CALL(cufftExecC2C(cufft_plan, x_ptr, w_ptr, CUFFT_INVERSE));
-    FloatComplex2Float<<<CUDA_BLOCKS(device_id, y_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      w_ptr, y_ptr, y_elements);
+    FloatComplex2Float<<<CUDA_BLOCKS(device_id, y_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(w_ptr, y_ptr,
+                                                                                                        y_elements);
   }
   CUBLAS_EXEC_SCALE(cublasSscal_v2, float, float);
+  return GetCudaStatus();
 }
 
-void CalculateIRFFT(cufftDoubleComplex *x_ptr, cufftDoubleComplex *w_ptr, double *y_ptr,
-                    const bool &is_onesided, const double &scale_factor, const int &x_elements, const int &y_elements,
-                    cufftHandle cufft_plan, cublasHandle_t scale_plan,
-                    const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalculateIRFFT(cufftDoubleComplex *x_ptr, cufftDoubleComplex *w_ptr, double *y_ptr, const bool &is_onesided,
+                           const double &scale_factor, const int &x_elements, const int &y_elements,
+                           cufftHandle cufft_plan, cublasHandle_t scale_plan, const uint32_t &device_id,
+                           cudaStream_t cuda_stream) {
   CUFFT_CALL(cufftSetStream(cufft_plan, cuda_stream));
   CUBLAS_CALL(cublasSetStream_v2(scale_plan, cuda_stream));
   if (is_onesided) {  // onesided use native cufft r2c
@@ -157,8 +159,9 @@ void CalculateIRFFT(cufftDoubleComplex *x_ptr, cufftDoubleComplex *w_ptr, double
   } else {  // full freq use [c2c + casting]
     // dump c2c result to workspace buffer, then cast complex workspace buffer to real output buffer.
     CUFFT_CALL(cufftExecZ2Z(cufft_plan, x_ptr, w_ptr, CUFFT_INVERSE));
-    DoubleComplex2Double<<<CUDA_BLOCKS(device_id, y_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      w_ptr, y_ptr, y_elements);
+    DoubleComplex2Double<<<CUDA_BLOCKS(device_id, y_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(w_ptr, y_ptr,
+                                                                                                          y_elements);
   }
   CUBLAS_EXEC_SCALE(cublasDscal_v2, double, double);
+  return GetCudaStatus();
 }

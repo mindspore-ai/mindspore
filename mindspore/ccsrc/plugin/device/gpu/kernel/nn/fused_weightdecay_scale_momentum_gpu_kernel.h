@@ -43,8 +43,10 @@ class FusedWeightDecayScaleMomentumGpuKernelMod : public DeprecatedNativeGpuKern
     S *gradient = GetDeviceAddress<S>(inputs, 5);
     T *momentum = GetDeviceAddress<T>(inputs, 6);
 
-    FusedWeightDecayScaleMomentum(element_num_, weight_decay, scale, variable, accumulation, learning_rate, gradient,
-                                  momentum, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status =
+      FusedWeightDecayScaleMomentum(element_num_, weight_decay, scale, variable, accumulation, learning_rate, gradient,
+                                    momentum, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {

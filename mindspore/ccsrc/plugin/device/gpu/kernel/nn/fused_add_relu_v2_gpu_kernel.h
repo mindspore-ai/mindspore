@@ -43,7 +43,7 @@ class FusedAddReluV2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto mask = GetDeviceAddress<uint32_t>(outputs, 1);
 
     auto status = AddReluV2(element_num_, x1, x2, y, mask, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

@@ -65,12 +65,16 @@ class BatchNormFoldGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
     T *dx = GetDeviceAddress<T>(outputs, kIndex0);
 
+    cudaError_t status = cudaErrorNotReady;
     if (!is_training_ || current_step_host[0] >= freeze_bn_) {
-      ThrustFillWith(dx, batch_ * channel_ * height_ * width_, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
+      status =
+        ThrustFillWith(dx, batch_ * channel_ * height_ * width_, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
       return true;
     }
-    CalBatchNormFoldGrad(d_batch_mean, d_batch_std, x, batch_mean, batch_std, batch_, channel_, height_, width_, dx,
-                         reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = CalBatchNormFoldGrad(d_batch_mean, d_batch_std, x, batch_mean, batch_std, batch_, channel_, height_,
+                                  width_, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

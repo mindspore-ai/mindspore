@@ -19,8 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename S, typename T>
-void CalSearchSorted(const size_t size, const S *sequence, const S *values, T *output, int *seq_dim,
-                    size_t search_repeat, size_t search_len, bool right, const uint32_t &device_id,
-                    cudaStream_t cuda_stream, int *count1);
+cudaError_t CalSearchSorted(const size_t size, const S *sequence, const S *values, T *output, int *seq_dim,
+                            size_t search_repeat, size_t search_len, bool right, const uint32_t &device_id,
+                            cudaStream_t cuda_stream, int *count1);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SearchSorted_IMPL_CUH_

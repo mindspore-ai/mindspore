@@ -20,18 +20,18 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void LogicalAnd(const int element_cnt, const T *input1, const T *input2, T *output, cudaStream_t stream,
-                                const uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t LogicalAnd(const int element_cnt, const T *input1, const T *input2, T *output,
+                                       cudaStream_t stream, const uint32_t device_id);
 
 template <typename T>
-CUDA_LIB_EXPORT void LogicalOr(const int element_cnt, const T *input1, const T *input2, T *output, cudaStream_t stream,
-                               const uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t LogicalOr(const int element_cnt, const T *input1, const T *input2, T *output,
+                                      cudaStream_t stream, const uint32_t device_id);
 
 template <typename T>
-CUDA_LIB_EXPORT void LogicalNot(const int element_cnt, const T *input1, T *output, cudaStream_t stream,
-                                const uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t LogicalNot(const int element_cnt, const T *input1, T *output, cudaStream_t stream,
+                                       const uint32_t device_id);
 
 template <typename T>
-CUDA_LIB_EXPORT void LogicalNot(const int element_cnt, const T *input1, T *output, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t LogicalNot(const int element_cnt, const T *input1, T *output, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LOGICAL_IMPL_CUH_

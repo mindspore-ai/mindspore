@@ -105,12 +105,12 @@ struct MulFunctor {
 };
 
 template <typename T>
-void CalBCEWithLogitsLoss(const size_t input_size, const T *predict, const T *target,
-                          const std::vector<int64_t> &input_shape, const size_t shape_size, const T *weight,
-                          const std::vector<int64_t> &weight_shape, const bool weight_need_broadcast,
-                          const T *pos_weight, const std::vector<int64_t> &pos_weight_shape,
-                          const bool pos_weight_need_broadcast, T *shape_broadcasted, T *output,
-                          cudaStream_t cuda_stream) {
+cudaError_t CalBCEWithLogitsLoss(const size_t input_size, const T *predict, const T *target,
+                                 const std::vector<int64_t> &input_shape, const size_t shape_size, const T *weight,
+                                 const std::vector<int64_t> &weight_shape, const bool weight_need_broadcast,
+                                 const T *pos_weight, const std::vector<int64_t> &pos_weight_shape,
+                                 const bool pos_weight_need_broadcast, T *shape_broadcasted, T *output,
+                                 cudaStream_t cuda_stream) {
   if (pos_weight_need_broadcast) {
     StrideInfo strides = CalBceStride(pos_weight_shape, input_shape);
     FillAndBroadcast<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(input_size, shape_size, strides,
@@ -132,15 +132,15 @@ void CalBCEWithLogitsLoss(const size_t input_size, const T *predict, const T *ta
   }
   MulFunctor<T> functor;
   cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(input_size), output, shape_broadcasted, cuda_stream);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBCEWithLogitsLoss<half>(
+template CUDA_LIB_EXPORT cudaError_t CalBCEWithLogitsLoss<half>(
   const size_t input_size, const half *predict, const half *target, const std::vector<int64_t> &input_shape,
   const size_t shape_size, const half *weight, const std::vector<int64_t> &weight_shape,
   const bool weight_need_broadcast, const half *pos_weight, const std::vector<int64_t> &pos_weight_shape,
   const bool pos_weight_need_broadcast, half *shape_broadcasted, half *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBCEWithLogitsLoss<float>(
+template CUDA_LIB_EXPORT cudaError_t CalBCEWithLogitsLoss<float>(
   const size_t input_size, const float *predict, const float *target, const std::vector<int64_t> &input_shape,
   const size_t shape_size, const float *weight, const std::vector<int64_t> &weight_shape,
   const bool weight_need_broadcast, const float *pos_weight, const std::vector<int64_t> &pos_weight_shape,

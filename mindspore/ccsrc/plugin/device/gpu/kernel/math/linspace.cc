@@ -74,7 +74,9 @@ bool LinSpaceGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   T *start_addr = GetDeviceAddress<T>(inputs, 0);
   T *stop_addr = GetDeviceAddress<T>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  calLinSpace(start_addr, stop_addr, value_count_, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status =
+    calLinSpace(start_addr, stop_addr, value_count_, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

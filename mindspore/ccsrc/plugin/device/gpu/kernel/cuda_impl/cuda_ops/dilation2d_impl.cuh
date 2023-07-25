@@ -20,10 +20,12 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalDilation2D(const T *input, const T *filter, T *output, const std::vector<int64_t> &input_shape,
-                                   const std::vector<int64_t> &filter_shape, const std::vector<int64_t> &output_shape,
-                                   const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,
-                                   int64_t (&pads)[2], const int64_t outer_size, const uint32_t &device_id,
-                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalDilation2D(const T *input, const T *filter, T *output,
+                                          const std::vector<int64_t> &input_shape,
+                                          const std::vector<int64_t> &filter_shape,
+                                          const std::vector<int64_t> &output_shape, const std::vector<int64_t> &stride,
+                                          const std::vector<int64_t> &dilation, int64_t (&pads)[2],
+                                          const int64_t outer_size, const uint32_t &device_id,
+                                          cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DILATION2D_IMPL_CUH_

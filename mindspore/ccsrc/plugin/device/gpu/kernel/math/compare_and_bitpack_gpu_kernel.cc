@@ -96,7 +96,9 @@ bool CompareAndBitpackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   T *threshold = GetDeviceAddress<T>(inputs, kIndex1);
   uint8_t *y = GetDeviceAddress<uint8_t>(outputs, kIndex0);
-  CalCompareAndBitpack(x, threshold, y, y_count_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    CalCompareAndBitpack(x, threshold, y, y_count_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

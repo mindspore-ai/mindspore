@@ -50,21 +50,20 @@ __device__ __forceinline__ half Sgn(half x) {
 template <typename T, typename S>
 __global__ void SparseApplyFtrlKernel(const T *gradient, const S *indices, const int num_index, const size_t n_stride,
                                       const float learning_rate, const float l1_regularization,
-                                      const float l2_regularization, const float learning_rate_power,
-                                      T *variable, T *accumulation, T *linear) {
+                                      const float l2_regularization, const float learning_rate_power, T *variable,
+                                      T *accumulation, T *linear) {
   const T two = static_cast<T>(2.0);
   const T learning_rate_val = static_cast<T>(learning_rate);
   const T l1_regularization_val = static_cast<T>(l1_regularization);
   const T l2_regularization_val = static_cast<T>(l2_regularization);
   const T learning_rate_power_val = static_cast<T>(-learning_rate_power);
 
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x;
-       pos < (num_index*n_stride);
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (num_index * n_stride);
        pos += gridDim.x * blockDim.x) {
     const int posn = pos / n_stride;
     const int posi = pos % n_stride;
     const int indexed_n = indices[posn];
-    const int i = indexed_n*n_stride + posi;
+    const int i = indexed_n * n_stride + posi;
     const T cur_accumulation = accumulation[i] + gradient[pos] * gradient[pos];
     const T accumulation_power = PowFunc(accumulation[i], learning_rate_power_val);
     const T cur_accumulation_power = PowFunc(cur_accumulation, learning_rate_power_val);
@@ -80,43 +79,29 @@ __global__ void SparseApplyFtrlKernel(const T *gradient, const S *indices, const
 }
 
 template <typename T, typename S>
-void CalSparseApplyFtrl(const T *gradient, const S *indices, const int num_index, const size_t n_stride,
-                        const float learning_rate, const float l1_regularization, const float l2_regularization,
-                        const float learning_rate_power, const bool use_locking, T *variable, T *accumulation,
-                        T *linear, cudaStream_t cuda_stream) {
-  SparseApplyFtrlKernel<<<GET_BLOCKS(num_index*n_stride), GET_THREADS, 0, cuda_stream>>>(gradient, indices, num_index,
-    n_stride, learning_rate, l1_regularization, l2_regularization, learning_rate_power, variable, accumulation, linear);
+cudaError_t CalSparseApplyFtrl(const T *gradient, const S *indices, const int num_index, const size_t n_stride,
+                               const float learning_rate, const float l1_regularization, const float l2_regularization,
+                               const float learning_rate_power, const bool use_locking, T *variable, T *accumulation,
+                               T *linear, cudaStream_t cuda_stream) {
+  SparseApplyFtrlKernel<<<GET_BLOCKS(num_index * n_stride), GET_THREADS, 0, cuda_stream>>>(
+    gradient, indices, num_index, n_stride, learning_rate, l1_regularization, l2_regularization, learning_rate_power,
+    variable, accumulation, linear);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalSparseApplyFtrl<float, int>(const float *gradient, const int *indices,
-                                                             const int num_index, const size_t n_stride,
-                                                             const float learning_rate, const float l1_regularization,
-                                                             const float l2_regularization,
-                                                             const float learning_rate_power, const bool use_locking,
-                                                             float *variable, float *accumulation, float *linear,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyFtrl<float, int64_t>(const float *gradient, const int64_t *indices,
-                                                                 const int num_index, const size_t n_stride,
-                                                                 const float learning_rate,
-                                                                 const float l1_regularization,
-                                                                 const float l2_regularization,
-                                                                 const float learning_rate_power,
-                                                                 const bool use_locking, float *variable,
-                                                                 float *accumulation, float *linear,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyFtrl<half, int>(const half *gradient, const int *indices,
-                                                            const int num_index, const size_t n_stride,
-                                                            const float learning_rate, const float l1_regularization,
-                                                            const float l2_regularization,
-                                                            const float learning_rate_power, const bool use_locking,
-                                                            half *variable, half *accumulation, half *linear,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyFtrl<half, int64_t>(const half *gradient, const int64_t *indices,
-                                                                const int num_index, const size_t n_stride,
-                                                                const float learning_rate,
-                                                                const float l1_regularization,
-                                                                const float l2_regularization,
-                                                                const float learning_rate_power, const bool use_locking,
-                                                                half *variable, half *accumulation, half *linear,
-                                                                cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyFtrl<float, int>(
+  const float *gradient, const int *indices, const int num_index, const size_t n_stride, const float learning_rate,
+  const float l1_regularization, const float l2_regularization, const float learning_rate_power, const bool use_locking,
+  float *variable, float *accumulation, float *linear, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyFtrl<float, int64_t>(
+  const float *gradient, const int64_t *indices, const int num_index, const size_t n_stride, const float learning_rate,
+  const float l1_regularization, const float l2_regularization, const float learning_rate_power, const bool use_locking,
+  float *variable, float *accumulation, float *linear, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyFtrl<half, int>(
+  const half *gradient, const int *indices, const int num_index, const size_t n_stride, const float learning_rate,
+  const float l1_regularization, const float l2_regularization, const float learning_rate_power, const bool use_locking,
+  half *variable, half *accumulation, half *linear, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyFtrl<half, int64_t>(
+  const half *gradient, const int64_t *indices, const int num_index, const size_t n_stride, const float learning_rate,
+  const float l1_regularization, const float l2_regularization, const float learning_rate_power, const bool use_locking,
+  half *variable, half *accumulation, half *linear, cudaStream_t cuda_stream);

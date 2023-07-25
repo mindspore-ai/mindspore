@@ -21,14 +21,15 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalFractionalmaxpool(const T *input, T *output, const int64_t *row_pooling_sequence,
-                                          const int64_t *col_pooling_sequence, const std::vector<int64_t> &input_shape,
-                                          const std::vector<int64_t> &output_shape, const bool overlapping,
-                                          const int64_t outer_size, const uint32_t &device_id,
-                                          cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool(const T *input, T *output, const int64_t *row_pooling_sequence,
+                                                 const int64_t *col_pooling_sequence,
+                                                 const std::vector<int64_t> &input_shape,
+                                                 const std::vector<int64_t> &output_shape, const bool overlapping,
+                                                 const int64_t outer_size, const uint32_t &device_id,
+                                                 cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalFractionalavgpool(const T *input, T *output, const int64_t *row_pooling_sequence,
+CUDA_LIB_EXPORT cudaError_t CalFractionalavgpool(const T *input, T *output, const int64_t *row_pooling_sequence,
                                           const int64_t *col_pooling_sequence, const std::vector<int64_t> &input_shape,
                                           const std::vector<int64_t> &output_shape, const bool overlapping,
                                           const int64_t outer_size, const uint32_t &device_id,

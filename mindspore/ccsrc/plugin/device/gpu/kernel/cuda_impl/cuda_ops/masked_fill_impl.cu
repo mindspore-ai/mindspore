@@ -69,16 +69,18 @@ __global__ void BroadcastMaskedFillKernel(size_t l0, size_t l1, size_t l2, size_
 }
 
 template <typename T>
-void ElewiseMaskedFill(size_t inner_size, size_t output_size, const T *input, const bool *mask, T *value, T *output,
-                       const uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t ElewiseMaskedFill(size_t inner_size, size_t output_size, const T *input, const bool *mask, T *value,
+                              T *output, const uint32_t device_id, cudaStream_t cuda_stream) {
   ElewiseMaskedFillKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     inner_size, output_size, input, mask, value, output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void BroadcastMaskedFill(size_t inner_size, const std::vector<size_t> &input_shape,
-                         const std::vector<size_t> &mask_shape, const std::vector<size_t> &output_shape, const T *input,
-                         const bool *mask, T *value, T *output, const uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t BroadcastMaskedFill(size_t inner_size, const std::vector<size_t> &input_shape,
+                                const std::vector<size_t> &mask_shape, const std::vector<size_t> &output_shape,
+                                const T *input, const bool *mask, T *value, T *output, const uint32_t device_id,
+                                cudaStream_t cuda_stream) {
   size_t size = 1;
   for (auto d : output_shape) {
     size *= d;
@@ -88,125 +90,116 @@ void BroadcastMaskedFill(size_t inner_size, const std::vector<size_t> &input_sha
     input_shape[7], mask_shape[0], mask_shape[1], mask_shape[2], mask_shape[3], mask_shape[4], mask_shape[5],
     mask_shape[6], mask_shape[7], output_shape[0], output_shape[1], output_shape[2], output_shape[3], output_shape[4],
     output_shape[5], output_shape[6], output_shape[7], inner_size, input, mask, value, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<half>(size_t inner_size, size_t output_size, const half *input,
-                                                      const bool *mask, half *value, half *output,
-                                                      const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<float>(size_t inner_size, size_t output_size, const float *input,
-                                                       const bool *mask, float *value, float *output,
-                                                       const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<double>(size_t inner_size, size_t output_size, const double *input,
-                                                        const bool *mask, double *value, double *output,
-                                                        const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<int8_t>(size_t inner_size, size_t output_size, const int8_t *input,
-                                                        const bool *mask, int8_t *value, int8_t *output,
-                                                        const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<int16_t>(size_t inner_size, size_t output_size, const int16_t *input,
-                                                         const bool *mask, int16_t *value, int16_t *output,
-                                                         const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<int32_t>(size_t inner_size, size_t output_size, const int32_t *input,
-                                                         const bool *mask, int32_t *value, int32_t *output,
-                                                         const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<int64_t>(size_t inner_size, size_t output_size, const int64_t *input,
-                                                         const bool *mask, int64_t *value, int64_t *output,
-                                                         const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<uint8_t>(size_t inner_size, size_t output_size, const uint8_t *input,
-                                                         const bool *mask, uint8_t *value, uint8_t *output,
-                                                         const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<uint16_t>(size_t inner_size, size_t output_size, const uint16_t *input,
-                                                          const bool *mask, uint16_t *value, uint16_t *output,
-                                                          const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<uint32_t>(size_t inner_size, size_t output_size, const uint32_t *input,
-                                                          const bool *mask, uint32_t *value, uint32_t *output,
-                                                          const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<uint64_t>(size_t inner_size, size_t output_size, const uint64_t *input,
-                                                          const bool *mask, uint64_t *value, uint64_t *output,
-                                                          const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<bool>(size_t inner_size, size_t output_size, const bool *input,
-                                                      const bool *mask, bool *value, bool *output,
-                                                      const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<Complex<float>>(size_t inner_size, size_t output_size,
-                                                                const Complex<float> *input, const bool *mask,
-                                                                Complex<float> *value, Complex<float> *output,
-                                                                const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseMaskedFill<Complex<double>>(size_t inner_size, size_t output_size,
-                                                                 const Complex<double> *input, const bool *mask,
-                                                                 Complex<double> *value, Complex<double> *output,
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<half>(size_t inner_size, size_t output_size, const half *input,
+                                                             const bool *mask, half *value, half *output,
+                                                             const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<float>(size_t inner_size, size_t output_size, const float *input,
+                                                              const bool *mask, float *value, float *output,
+                                                              const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<double>(size_t inner_size, size_t output_size,
+                                                               const double *input, const bool *mask, double *value,
+                                                               double *output, const uint32_t device_id,
+                                                               cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<int8_t>(size_t inner_size, size_t output_size,
+                                                               const int8_t *input, const bool *mask, int8_t *value,
+                                                               int8_t *output, const uint32_t device_id,
+                                                               cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<int16_t>(size_t inner_size, size_t output_size,
+                                                                const int16_t *input, const bool *mask, int16_t *value,
+                                                                int16_t *output, const uint32_t device_id,
+                                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<int32_t>(size_t inner_size, size_t output_size,
+                                                                const int32_t *input, const bool *mask, int32_t *value,
+                                                                int32_t *output, const uint32_t device_id,
+                                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<int64_t>(size_t inner_size, size_t output_size,
+                                                                const int64_t *input, const bool *mask, int64_t *value,
+                                                                int64_t *output, const uint32_t device_id,
+                                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<uint8_t>(size_t inner_size, size_t output_size,
+                                                                const uint8_t *input, const bool *mask, uint8_t *value,
+                                                                uint8_t *output, const uint32_t device_id,
+                                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<uint16_t>(size_t inner_size, size_t output_size,
+                                                                 const uint16_t *input, const bool *mask,
+                                                                 uint16_t *value, uint16_t *output,
                                                                  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<uint32_t>(size_t inner_size, size_t output_size,
+                                                                 const uint32_t *input, const bool *mask,
+                                                                 uint32_t *value, uint32_t *output,
+                                                                 const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<uint64_t>(size_t inner_size, size_t output_size,
+                                                                 const uint64_t *input, const bool *mask,
+                                                                 uint64_t *value, uint64_t *output,
+                                                                 const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<bool>(size_t inner_size, size_t output_size, const bool *input,
+                                                             const bool *mask, bool *value, bool *output,
+                                                             const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<Complex<float>>(size_t inner_size, size_t output_size,
+                                                                       const Complex<float> *input, const bool *mask,
+                                                                       Complex<float> *value, Complex<float> *output,
+                                                                       const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ElewiseMaskedFill<Complex<double>>(size_t inner_size, size_t output_size,
+                                                                        const Complex<double> *input, const bool *mask,
+                                                                        Complex<double> *value, Complex<double> *output,
+                                                                        const uint32_t device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<half>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                        const std::vector<size_t> &mask_shape,
-                                                        const std::vector<size_t> &output_shape, const half *input,
-                                                        const bool *mask, half *value, half *output,
-                                                        const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<float>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                         const std::vector<size_t> &mask_shape,
-                                                         const std::vector<size_t> &output_shape, const float *input,
-                                                         const bool *mask, float *value, float *output,
-                                                         const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<double>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                          const std::vector<size_t> &mask_shape,
-                                                          const std::vector<size_t> &output_shape, const double *input,
-                                                          const bool *mask, double *value, double *output,
-                                                          const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<int8_t>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                          const std::vector<size_t> &mask_shape,
-                                                          const std::vector<size_t> &output_shape, const int8_t *input,
-                                                          const bool *mask, int8_t *value, int8_t *output,
-                                                          const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<int16_t>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                           const std::vector<size_t> &mask_shape,
-                                                           const std::vector<size_t> &output_shape,
-                                                           const int16_t *input, const bool *mask, int16_t *value,
-                                                           int16_t *output, const uint32_t device_id,
-                                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<int32_t>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                           const std::vector<size_t> &mask_shape,
-                                                           const std::vector<size_t> &output_shape,
-                                                           const int32_t *input, const bool *mask, int32_t *value,
-                                                           int32_t *output, const uint32_t device_id,
-                                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<int64_t>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                           const std::vector<size_t> &mask_shape,
-                                                           const std::vector<size_t> &output_shape,
-                                                           const int64_t *input, const bool *mask, int64_t *value,
-                                                           int64_t *output, const uint32_t device_id,
-                                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<uint8_t>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                           const std::vector<size_t> &mask_shape,
-                                                           const std::vector<size_t> &output_shape,
-                                                           const uint8_t *input, const bool *mask, uint8_t *value,
-                                                           uint8_t *output, const uint32_t device_id,
-                                                           cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<uint16_t>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                            const std::vector<size_t> &mask_shape,
-                                                            const std::vector<size_t> &output_shape,
-                                                            const uint16_t *input, const bool *mask, uint16_t *value,
-                                                            uint16_t *output, const uint32_t device_id,
-                                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<uint32_t>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                            const std::vector<size_t> &mask_shape,
-                                                            const std::vector<size_t> &output_shape,
-                                                            const uint32_t *input, const bool *mask, uint32_t *value,
-                                                            uint32_t *output, const uint32_t device_id,
-                                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<uint64_t>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                            const std::vector<size_t> &mask_shape,
-                                                            const std::vector<size_t> &output_shape,
-                                                            const uint64_t *input, const bool *mask, uint64_t *value,
-                                                            uint64_t *output, const uint32_t device_id,
-                                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<bool>(size_t inner_size, const std::vector<size_t> &input_shape,
-                                                        const std::vector<size_t> &mask_shape,
-                                                        const std::vector<size_t> &output_shape, const bool *input,
-                                                        const bool *mask, bool *value, bool *output,
-                                                        const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<Complex<float>>(
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<half>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const half *input, const bool *mask, half *value, half *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<float>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const float *input, const bool *mask, float *value, float *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<double>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const double *input, const bool *mask, double *value, double *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<int8_t>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const int8_t *input, const bool *mask, int8_t *value, int8_t *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<int16_t>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const int16_t *input, const bool *mask, int16_t *value, int16_t *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<int32_t>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const int32_t *input, const bool *mask, int32_t *value, int32_t *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<int64_t>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const int64_t *input, const bool *mask, int64_t *value, int64_t *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<uint8_t>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const uint8_t *input, const bool *mask, uint8_t *value, uint8_t *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<uint16_t>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const uint16_t *input, const bool *mask, uint16_t *value, uint16_t *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<uint32_t>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const uint32_t *input, const bool *mask, uint32_t *value, uint32_t *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<uint64_t>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const uint64_t *input, const bool *mask, uint64_t *value, uint64_t *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<bool>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const bool *input, const bool *mask, bool *value, bool *output,
+  const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<Complex<float>>(
   size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
   const std::vector<size_t> &output_shape, const Complex<float> *input, const bool *mask, Complex<float> *value,
   Complex<float> *output, const uint32_t device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastMaskedFill<Complex<double>>(
+template CUDA_LIB_EXPORT cudaError_t BroadcastMaskedFill<Complex<double>>(
   size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
   const std::vector<size_t> &output_shape, const Complex<double> *input, const bool *mask, Complex<double> *value,
   Complex<double> *output, const uint32_t device_id, cudaStream_t stream);

@@ -57,8 +57,9 @@ bool PReLUGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   auto weight = GetDeviceAddress<T>(inputs, 1);
   auto output = GetDeviceAddress<T>(outputs, 0);
 
-  CalPReLU(input_length_, weight_length_, per_channel_length_, input, weight, output,
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalPReLU(input_length_, weight_length_, per_channel_length_, input, weight, output,
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

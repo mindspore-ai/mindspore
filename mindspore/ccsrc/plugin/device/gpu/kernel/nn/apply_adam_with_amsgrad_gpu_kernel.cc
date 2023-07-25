@@ -178,7 +178,7 @@ bool ApplyAdamWithAmsgradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   auto status = CalApplyAdamWithAmsgrad(input_elements_, batch_size_, var, m, v, vhat, beta1_power, beta2_power, lr,
                                         grad, beta1, beta2, epsilon, output_var, output_m, output_v, output_vhat,
                                         device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

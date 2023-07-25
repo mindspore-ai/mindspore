@@ -19,7 +19,6 @@
 #include "include/cuda_runtime.h"
 #include "include/cuda_fp16.h"
 
-
 template <typename T>
 __device__ int CompareTwoIndices(const T *a_indices, const T *b_indices, size_t a_row, size_t b_row,
                                  const size_t dims) {
@@ -50,13 +49,12 @@ __device__ void InitValue<cuDoubleComplex>(cuDoubleComplex *whole_values, size_t
   whole_values[index] = {0, 0};
 }
 
-
 template <typename T, typename S>
 __device__ void SparseAddPreprocess(const T *a_indices, const S *a_values, const T *b_indices, const S *b_values,
-                      size_t *a_value_index, size_t *b_value_index, bool *is_from_a, S* whole_values,
-                      size_t *place_holder_index, int64_t *indices, bool *threshold_valid,
-                      size_t *i, size_t *j, size_t *full_count, size_t *cross_count,
-                      const size_t a_indices_num, const size_t b_indices_num, const size_t indices_column) {
+                                    size_t *a_value_index, size_t *b_value_index, bool *is_from_a, S *whole_values,
+                                    size_t *place_holder_index, int64_t *indices, bool *threshold_valid, size_t *i,
+                                    size_t *j, size_t *full_count, size_t *cross_count, const size_t a_indices_num,
+                                    const size_t b_indices_num, const size_t indices_column) {
   while (*i < a_indices_num && *j < b_indices_num) {
     switch (CompareTwoIndices(a_indices, b_indices, *i, *j, indices_column)) {
       case -1:
@@ -109,10 +107,10 @@ __device__ bool IsInLimit(cuDoubleComplex val, K limit) {
 
 template <typename T, typename S, typename K>
 __device__ void SparseAddPostprocess(const T *a_indices, const S *a_values, const T *b_indices, const S *b_values,
-                                     const S* res_store_mem, T *sum_indices, S *sum_values,
-                                     size_t *a_value_index, size_t *b_value_index, bool *is_from_a, S* whole_values,
-                                     size_t *place_holder_index, int64_t *indices, bool *threshold_valid,
-                                     size_t *i, size_t *j, size_t *full_count, size_t *cross_count, int64_t *sum_count,
+                                     const S *res_store_mem, T *sum_indices, S *sum_values, size_t *a_value_index,
+                                     size_t *b_value_index, bool *is_from_a, S *whole_values,
+                                     size_t *place_holder_index, int64_t *indices, bool *threshold_valid, size_t *i,
+                                     size_t *j, size_t *full_count, size_t *cross_count, int64_t *sum_count,
                                      const size_t a_indices_num, const size_t b_indices_num, K threshold,
                                      const size_t indices_column) {
   for (size_t calculate_num = 0; calculate_num < *cross_count; calculate_num++) {
@@ -183,54 +181,42 @@ __device__ cuDoubleComplex AddImpl(cuDoubleComplex a, cuDoubleComplex b) {
 
 template <typename T, typename S, typename K>
 __global__ void SparseAddKernel(const T *a_indices, const S *a_values, const T *b_indices, const S *b_values,
-                      T *sum_indices, S *sum_values,
-                      size_t *a_value_index, size_t *b_value_index, bool *is_from_a, S* whole_values,
-                      size_t *place_holder_index, int64_t *indices, bool *threshold_valid,
-                      const size_t a_indices_num, const size_t b_indices_num,
-                      S *res_store_mem, int64_t *sum_count,
-                      const K* threshold, const size_t indices_column) {
+                                T *sum_indices, S *sum_values, size_t *a_value_index, size_t *b_value_index,
+                                bool *is_from_a, S *whole_values, size_t *place_holder_index, int64_t *indices,
+                                bool *threshold_valid, const size_t a_indices_num, const size_t b_indices_num,
+                                S *res_store_mem, int64_t *sum_count, const K *threshold, const size_t indices_column) {
   size_t i = 0, j = 0;
   size_t full_count = 0;
   size_t cross_count = 0;
 
-  SparseAddPreprocess(a_indices, a_values, b_indices, b_values,
-                      a_value_index, b_value_index, is_from_a, whole_values,
-                      place_holder_index, indices, threshold_valid,
-                      &i, &j, &full_count, &cross_count,
-                      a_indices_num, b_indices_num, indices_column);
+  SparseAddPreprocess(a_indices, a_values, b_indices, b_values, a_value_index, b_value_index, is_from_a, whole_values,
+                      place_holder_index, indices, threshold_valid, &i, &j, &full_count, &cross_count, a_indices_num,
+                      b_indices_num, indices_column);
 
   for (size_t k = blockIdx.x * blockDim.x + threadIdx.x; k < cross_count; k += blockDim.x * gridDim.x) {
     res_store_mem[k] = AddImpl(a_values[a_value_index[k]], b_values[b_value_index[k]]);
   }
 
-  SparseAddPostprocess(a_indices, a_values, b_indices, b_values,
-                      res_store_mem, sum_indices, sum_values,
-                      a_value_index, b_value_index, is_from_a, whole_values,
-                      place_holder_index, indices, threshold_valid,
-                      &i, &j, &full_count, &cross_count, sum_count,
-                      a_indices_num, b_indices_num, threshold, indices_column);
+  SparseAddPostprocess(a_indices, a_values, b_indices, b_values, res_store_mem, sum_indices, sum_values, a_value_index,
+                       b_value_index, is_from_a, whole_values, place_holder_index, indices, threshold_valid, &i, &j,
+                       &full_count, &cross_count, sum_count, a_indices_num, b_indices_num, threshold, indices_column);
 }
 
 template <typename T, typename S, typename K>
-void SparseAdd(const T *a_indices, const S *a_values, const T *b_indices, const S *b_values,
-               T *sum_indices, S *sum_values,
-               size_t *a_value_index, size_t *b_value_index, bool *is_from_a, S* whole_values,
-               size_t *place_holder_index, int64_t *indices, bool *threshold_valid,
-               const size_t a_indices_num, const size_t b_indices_num,
-               S *res_store_mem, int64_t *sum_count,
-               const K *threshold,  const size_t indices_column, const uint32_t &device_id,
-               cudaStream_t cuda_stream) {
+cudaError_t SparseAdd(const T *a_indices, const S *a_values, const T *b_indices, const S *b_values, T *sum_indices,
+                      S *sum_values, size_t *a_value_index, size_t *b_value_index, bool *is_from_a, S *whole_values,
+                      size_t *place_holder_index, int64_t *indices, bool *threshold_valid, const size_t a_indices_num,
+                      const size_t b_indices_num, S *res_store_mem, int64_t *sum_count, const K *threshold,
+                      const size_t indices_column, const uint32_t &device_id, cudaStream_t cuda_stream) {
   SparseAddKernel<<<GET_BLOCKS(1), 1, 0, cuda_stream>>>(
-                      a_indices, a_values, b_indices, b_values,
-                      sum_indices, sum_values,
-                      a_value_index, b_value_index, is_from_a, whole_values,
-                      place_holder_index, indices, threshold_valid,
-                      a_indices_num, b_indices_num,
-                      res_store_mem, sum_count, threshold, indices_column);
+    a_indices, a_values, b_indices, b_values, sum_indices, sum_values, a_value_index, b_value_index, is_from_a,
+    whole_values, place_holder_index, indices, threshold_valid, a_indices_num, b_indices_num, res_store_mem, sum_count,
+    threshold, indices_column);
+  return GetCudaStatus();
 }
 
 #define GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(index_type, val_type, thr_type)                                       \
-  template CUDA_LIB_EXPORT void SparseAdd<index_type, val_type, thr_type>(                                        \
+  template CUDA_LIB_EXPORT cudaError_t SparseAdd<index_type, val_type, thr_type>(                                 \
     const index_type *a_indices, const val_type *a_values, const index_type *b_indices, const val_type *b_values, \
     index_type *sum_indices, val_type *sum_values, size_t *a_value_index, size_t *b_value_index, bool *is_from_a, \
     val_type *whole_values, size_t *place_holder_index, int64_t *indices, bool *threshold_valid,                  \

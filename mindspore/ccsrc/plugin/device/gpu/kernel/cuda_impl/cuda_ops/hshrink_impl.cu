@@ -38,26 +38,30 @@ __global__ void HShrinkGradKernel(size_t size, const T *dout, const T *x, const 
 }
 
 template <typename T>
-void CalHShrink(const size_t &size, const T *input, const float lambd, T *output, const uint32_t &device_id,
-                cudaStream_t cuda_stream) {
+cudaError_t CalHShrink(const size_t &size, const T *input, const float lambd, T *output, const uint32_t &device_id,
+                       cudaStream_t cuda_stream) {
   HShrinkKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, lambd, output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalHShrinkGrad(const size_t &size, const T *dout, const T *x, const float lambd, T *output,
-                    const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalHShrinkGrad(const size_t &size, const T *dout, const T *x, const float lambd, T *output,
+                           const uint32_t &device_id, cudaStream_t cuda_stream) {
   HShrinkGradKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, dout, x, lambd,
                                                                                                output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalHShrink<half>(const size_t &size, const half *input, const float lambd, half *output,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHShrink<float>(const size_t &size, const float *input, const float lambd,
-                                                float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHShrink<half>(const size_t &size, const half *input, const float lambd,
+                                                      half *output, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHShrink<float>(const size_t &size, const float *input, const float lambd,
+                                                       float *output, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalHShrinkGrad<half>(const size_t &size, const half *dout, const half *x,
-                                                   const float lambd, half *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHShrinkGrad<float>(const size_t &size, const float *dout, const float *x,
-                                                    const float lambd, float *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHShrinkGrad<half>(const size_t &size, const half *dout, const half *x,
+                                                          const float lambd, half *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHShrinkGrad<float>(const size_t &size, const float *dout, const float *x,
+                                                           const float lambd, float *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);

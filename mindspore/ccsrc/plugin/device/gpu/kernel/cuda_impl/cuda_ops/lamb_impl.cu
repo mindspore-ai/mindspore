@@ -81,37 +81,41 @@ __global__ void ApplyLambAfterNormKernel(const size_t size, half *variable, cons
 }
 
 template <typename T>
-void ApplyLambEraly(const size_t size, T *variable, T *m, T *v, const float *beta1, const float *beta2,
-                    const float *epsilon, const float *decay, const int32_t *global_step, const T *gradient,
-                    float *update, float *var_float, float *grad_float, float *g_hat_var, cudaStream_t cuda_stream) {
+cudaError_t ApplyLambEraly(const size_t size, T *variable, T *m, T *v, const float *beta1, const float *beta2,
+                           const float *epsilon, const float *decay, const int32_t *global_step, const T *gradient,
+                           float *update, float *var_float, float *grad_float, float *g_hat_var,
+                           cudaStream_t cuda_stream) {
   ApplyLambEralyKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, variable, m, v, beta1, beta2, epsilon,
                                                                           decay, global_step, gradient, update,
                                                                           var_float, grad_float, g_hat_var);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void ApplyLambLater(const size_t size, T *variable, const float *lr, const float *update,
-                    const float *trust_ratio, cudaStream_t cuda_stream) {
+cudaError_t ApplyLambLater(const size_t size, T *variable, const float *lr, const float *update,
+                           const float *trust_ratio, cudaStream_t cuda_stream) {
   ApplyLambAfterNormKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, variable, lr, update, trust_ratio);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void ApplyLambEraly<float>(const size_t size, float *variable, float *m, float *v,
-                                                    const float *beta1, const float *beta2, const float *epsilon,
-                                                    const float *decay, const int32_t *global_step,
-                                                    const float *gradient, float *update, float *w_square_ptr,
-                                                    float *g_square_ptr, float *g_hat_square_ptr,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyLambEraly<float>(const size_t size, float *variable, float *m, float *v,
+                                                           const float *beta1, const float *beta2, const float *epsilon,
+                                                           const float *decay, const int32_t *global_step,
+                                                           const float *gradient, float *update, float *w_square_ptr,
+                                                           float *g_square_ptr, float *g_hat_square_ptr,
+                                                           cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyLambEraly<half>(const size_t size, half *variable, half *m, half *v,
-                                                   const float *beta1, const float *beta2, const float *epsilon,
-                                                   const float *decay, const int32_t *global_step, const half *gradient,
-                                                   float *update, float *w_square_ptr, float *g_square_ptr,
-                                                   float *g_hat_square_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyLambEraly<half>(const size_t size, half *variable, half *m, half *v,
+                                                          const float *beta1, const float *beta2, const float *epsilon,
+                                                          const float *decay, const int32_t *global_step,
+                                                          const half *gradient, float *update, float *w_square_ptr,
+                                                          float *g_square_ptr, float *g_hat_square_ptr,
+                                                          cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyLambLater<float>(const size_t size, float *variable, const float *lr,
-                                                    const float *update, const float *trust_ratio,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyLambLater<float>(const size_t size, float *variable, const float *lr,
+                                                           const float *update, const float *trust_ratio,
+                                                           cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyLambLater<half>(const size_t size, half *variable, const float *lr,
-                                                   const float *update, const float *trust_ratio,
-                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyLambLater<half>(const size_t size, half *variable, const float *lr,
+                                                          const float *update, const float *trust_ratio,
+                                                          cudaStream_t cuda_stream);

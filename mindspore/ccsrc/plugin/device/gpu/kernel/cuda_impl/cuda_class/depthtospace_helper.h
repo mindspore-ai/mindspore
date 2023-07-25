@@ -86,8 +86,9 @@ class DepthToSpaceHelperGpuKernel : public GpuKernelHelperBase {
     }
 
     // call cuda kernel
-    CalDepthToSpace(kernel_size_, input_ptr, in, ic, ih, iw, on, oc, oh, ow, attr_ptr_->block_size, output_ptr,
-                    device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalDepthToSpace(kernel_size_, input_ptr, in, ic, ih, iw, on, oc, oh, ow, attr_ptr_->block_size,
+                                  output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

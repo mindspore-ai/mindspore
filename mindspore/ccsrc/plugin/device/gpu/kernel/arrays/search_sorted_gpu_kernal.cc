@@ -127,8 +127,9 @@ bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   if (!should_last_repeat_) {
     search_repeat = value_size_;
   }
-  CalSearchSorted(input_elements_, sequence, values, output, seq_dim, search_repeat, search_len, right, device_id_,
-                  cuda_stream_, count1);
+  auto status = CalSearchSorted(input_elements_, sequence, values, output, seq_dim, search_repeat, search_len, right,
+                                device_id_, cuda_stream_, count1);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

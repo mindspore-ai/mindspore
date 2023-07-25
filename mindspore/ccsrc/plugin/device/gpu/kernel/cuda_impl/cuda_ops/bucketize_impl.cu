@@ -35,21 +35,21 @@ __global__ void Bucketize(const int N, const int M, const float *bounds, const T
 }
 
 template <typename T>
-void CalBucketize(const int size, const int M, const float *bounds, const T *input, int32_t *output,
-                  const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalBucketize(const int size, const int M, const float *bounds, const T *input, int32_t *output,
+                         const uint32_t &device_id, cudaStream_t cuda_stream) {
   Bucketize<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, M, bounds, input, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalBucketize<int32_t>(const int size, const int M, const float *bounds,
-                                                    const int32_t *input, int32_t *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBucketize<int64_t>(const int size, const int M, const float *bounds,
-                                                    const int64_t *input, int32_t *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBucketize<float>(const int size, const int M, const float *bounds,
-                                                  const float *input, int32_t *output, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBucketize<double>(const int size, const int M, const float *bounds,
-                                                   const double *input, int32_t *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBucketize<int32_t>(const int size, const int M, const float *bounds,
+                                                           const int32_t *input, int32_t *output,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBucketize<int64_t>(const int size, const int M, const float *bounds,
+                                                           const int64_t *input, int32_t *output,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBucketize<float>(const int size, const int M, const float *bounds,
+                                                         const float *input, int32_t *output, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBucketize<double>(const int size, const int M, const float *bounds,
+                                                          const double *input, int32_t *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);

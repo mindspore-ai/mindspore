@@ -19,13 +19,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename IndiceType>
-CUDA_LIB_EXPORT void SparseTensorToCSRSparseMatrix(const IndiceType* x_indices_ptr,
-                                                   IndiceType *out_row_indices_ptr,
-                                                   IndiceType *out_col_indices_ptr,
-                                                   IndiceType *out_batch_pointers_ptr,
-                                                   int total_num,
-                                                   int rank,
-                                                   cudaStream_t cuda_stream,
-                                                   const uint32_t device_id);
+CUDA_LIB_EXPORT cudaError_t SparseTensorToCSRSparseMatrix(const IndiceType *x_indices_ptr,
+                                                          IndiceType *out_row_indices_ptr,
+                                                          IndiceType *out_col_indices_ptr,
+                                                          IndiceType *out_batch_pointers_ptr, int total_num, int rank,
+                                                          cudaStream_t cuda_stream, const uint32_t device_id);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_TENSOR_TO_CSR_SPARSE_MATRIX_IMPL_CUH_

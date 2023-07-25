@@ -214,17 +214,19 @@ bool DeformableOffsetsGradGpuKernelMod::LaunchKernel(const std::vector<AddressPt
   uint dim_dilation_w = dims_.dilation_w;
   uint dim_deformable_group = dims_.deformable_group;
   uint dim_deformable_group_channel = dims_.deformable_group_channel;
+  cudaError_t status = cudaErrorNotReady;
   if (data_format_ == kOpFormat_NCHW) {
-    ApplyDeformableOffsetGrad(dim_x_n, dim_x_h, dim_x_w, dim_offset_h, dim_offset_w, dim_kernel_h, dim_kernel_w,
-                              dim_pad_top, dim_pad_left, dim_stride_h, dim_stride_w, dim_dilation_h, dim_dilation_w,
-                              dim_deformable_group, dim_deformable_group_channel, true, grad_addr, x_addr, offset_addr,
-                              grad_x_addr, grad_offset_addr, device_id_, cuda_stream_);
+    status = ApplyDeformableOffsetGrad(
+      dim_x_n, dim_x_h, dim_x_w, dim_offset_h, dim_offset_w, dim_kernel_h, dim_kernel_w, dim_pad_top, dim_pad_left,
+      dim_stride_h, dim_stride_w, dim_dilation_h, dim_dilation_w, dim_deformable_group, dim_deformable_group_channel,
+      true, grad_addr, x_addr, offset_addr, grad_x_addr, grad_offset_addr, device_id_, cuda_stream_);
   } else {
-    ApplyDeformableOffsetGrad(dim_x_n, dim_x_h, dim_x_w, dim_offset_h, dim_offset_w, dim_kernel_h, dim_kernel_w,
-                              dim_pad_top, dim_pad_left, dim_stride_h, dim_stride_w, dim_dilation_h, dim_dilation_w,
-                              dim_deformable_group, dim_deformable_group_channel, false, grad_addr, x_addr, offset_addr,
-                              grad_x_addr, grad_offset_addr, device_id_, cuda_stream_);
+    status = ApplyDeformableOffsetGrad(
+      dim_x_n, dim_x_h, dim_x_w, dim_offset_h, dim_offset_w, dim_kernel_h, dim_kernel_w, dim_pad_top, dim_pad_left,
+      dim_stride_h, dim_stride_w, dim_dilation_h, dim_dilation_w, dim_deformable_group, dim_deformable_group_channel,
+      false, grad_addr, x_addr, offset_addr, grad_x_addr, grad_offset_addr, device_id_, cuda_stream_);
   }
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

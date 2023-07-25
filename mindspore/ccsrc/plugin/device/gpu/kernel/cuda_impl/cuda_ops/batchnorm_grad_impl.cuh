@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BATCHNORM_GRAD_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalBatchNormGrad(T *x, T *dy, float *scale, float *save_mean, float *save_variance, T *dx,
-                                      float *bn_scale, float *bn_bias, double epsilon, int N, int C, int H, int W,
-                                      cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBatchNormGrad(T *x, T *dy, float *scale, float *save_mean, float *save_variance, T *dx,
+                                             float *bn_scale, float *bn_bias, double epsilon, int N, int C, int H,
+                                             int W, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BATCHNORM_GRAD_IMPL_CUH_

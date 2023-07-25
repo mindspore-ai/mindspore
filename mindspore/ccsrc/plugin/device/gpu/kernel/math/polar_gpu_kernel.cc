@@ -83,7 +83,9 @@ bool PolarGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   T *abs = GetDeviceAddress<T>(inputs, 0);
   T *angle = GetDeviceAddress<T>(inputs, 1);
   S *output = GetDeviceAddress<S>(outputs, 0);
-  CalPolar(output_elements_, abs, angle, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    CalPolar(output_elements_, abs, angle, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return True;
 }
 

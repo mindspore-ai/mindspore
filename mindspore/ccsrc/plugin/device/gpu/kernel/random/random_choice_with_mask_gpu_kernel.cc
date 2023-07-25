@@ -100,7 +100,7 @@ bool RandomChoiceWithMaskGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
     input += i * input_size_;
     output_index += i * count_ * input_shape_size_;
     output_mask += i * count_;
-
+    cudaError_t status = cudaErrorNotReady;
     if (count_ > kSmallK || input_shape_size_ > 1) {
       S *index_buff = GetDeviceAddress<S>(workspaces, 0);
       S *mask_buff = GetDeviceAddress<S>(workspaces, 1);
@@ -109,14 +109,15 @@ bool RandomChoiceWithMaskGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
       S *tmp_buff = GetDeviceAddress<S>(workspaces, 4);
       void *States = GetDeviceAddress<void *>(workspaces, 5);
       curandState *devStates = reinterpret_cast<curandState *>(States);
-      CalRandomChoiceWithMask(input_size_, input_shape_size_, input_shape_5D_[kIndex0], input_shape_5D_[kIndex1],
-                              input_shape_5D_[kIndex2], input_shape_5D_[kIndex3], input_shape_5D_[kIndex4], seedc,
-                              count_, input, output_index, output_mask, index_buff, mask_buff, rank_buff, Tnum_buff,
-                              tmp_buff, devStates, reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = CalRandomChoiceWithMask(
+        input_size_, input_shape_size_, input_shape_5D_[kIndex0], input_shape_5D_[kIndex1], input_shape_5D_[kIndex2],
+        input_shape_5D_[kIndex3], input_shape_5D_[kIndex4], seedc, count_, input, output_index, output_mask, index_buff,
+        mask_buff, rank_buff, Tnum_buff, tmp_buff, devStates, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
-      CalRandomChoiceWithMaskSmall<float, S, T>(input_size_, seedc, count_, input, output_index, output_mask,
-                                                reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = CalRandomChoiceWithMaskSmall<float, S, T>(input_size_, seedc, count_, input, output_index, output_mask,
+                                                         reinterpret_cast<cudaStream_t>(stream_ptr));
     }
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

@@ -190,7 +190,7 @@ cudaError_t ApplyAdagradV2(const size_t size, const float epsilon, const bool up
     ApplyAdagradV2Kernel_<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       size, epsilon, variable, accumulation, learning_rate, gradient);
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdagradV2<double, double>(const size_t size, const float epsilon,

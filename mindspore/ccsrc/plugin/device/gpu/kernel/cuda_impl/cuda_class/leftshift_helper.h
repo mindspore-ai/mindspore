@@ -123,15 +123,16 @@ class LeftShiftHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
+    cudaError_t status = cudaErrorNotReady;
     // call cuda kernel
     if (need_broadcast_) {
-      BroadcastLeftShift(lhs_shape_, rhs_shape_, output_shape_, inputx_ptr, inputy_ptr, output_ptr, device_id_,
-                         reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = BroadcastLeftShift(lhs_shape_, rhs_shape_, output_shape_, inputx_ptr, inputy_ptr, output_ptr, device_id_,
+                                  reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      CalLeftShift(output_num_, inputx_ptr, inputy_ptr, output_ptr, device_id_,
-                   reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalLeftShift(output_num_, inputx_ptr, inputy_ptr, output_ptr, device_id_,
+                            reinterpret_cast<cudaStream_t>(cuda_stream));
     }
-
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

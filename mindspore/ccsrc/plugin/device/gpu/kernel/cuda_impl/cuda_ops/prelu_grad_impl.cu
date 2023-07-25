@@ -18,8 +18,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T>
-__global__ void CalPReLUGradKernel(size_t size, size_t weight_size, size_t per_channel_size,
-                                   const T *dy, const T *x, const T *w, T *dx, float *dw_array) {
+__global__ void CalPReLUGradKernel(size_t size, size_t weight_size, size_t per_channel_size, const T *dy, const T *x,
+                                   const T *w, T *dx, float *dw_array) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     size_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     size_t channel_id = weight_size == 1 ? 0 : (pos / per_channel_size) % weight_size;
@@ -50,18 +50,18 @@ __global__ void ComputeDwData(size_t weight_size, size_t thread_num, const float
 }
 
 template <typename T>
-void CalPReLUGrad(size_t size, size_t weight_size, size_t per_channel_size,
-                  const T *dy, const T *x, const T *w, T *dx, T *dw, float *dw_array, cudaStream_t cuda_stream) {
+cudaError_t CalPReLUGrad(size_t size, size_t weight_size, size_t per_channel_size, const T *dy, const T *x, const T *w,
+                         T *dx, T *dw, float *dw_array, cudaStream_t cuda_stream) {
   size_t thread_num = static_cast<size_t>(GET_BLOCKS(size) * GET_THREADS);
   size_t dw_array_size = weight_size * thread_num;
   InitDwArrayData<<<GET_BLOCKS(dw_array_size), GET_THREADS, 0, cuda_stream>>>(dw_array_size, dw_array);
-  CalPReLUGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, weight_size, per_channel_size,
-                                                                        dy, x, w, dx, dw_array);
+  CalPReLUGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, weight_size, per_channel_size, dy, x, w,
+                                                                        dx, dw_array);
   ComputeDwData<<<GET_BLOCKS(weight_size), GET_THREADS, 0, cuda_stream>>>(weight_size, thread_num, dw_array, dw);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalPReLUGrad(size_t, size_t, size_t, const float *, const float *, const float *,
-                                           float *, float *, float *, cudaStream_t);
-template CUDA_LIB_EXPORT void CalPReLUGrad(size_t, size_t, size_t, const half *, const half *, const half *,
-                                           half *, half *, float *, cudaStream_t);
+template CUDA_LIB_EXPORT cudaError_t CalPReLUGrad(size_t, size_t, size_t, const float *, const float *, const float *,
+                                                  float *, float *, float *, cudaStream_t);
+template CUDA_LIB_EXPORT cudaError_t CalPReLUGrad(size_t, size_t, size_t, const half *, const half *, const half *,
+                                                  half *, half *, float *, cudaStream_t);

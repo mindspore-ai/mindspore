@@ -27,74 +27,82 @@ __global__ void SubOffset(T *indices, size_t size, int64_t offset) {
 }
 
 template <typename T, typename S>
-void CalEmbeddingLookup(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
-                        size_t input_dim1, int64_t offset, cudaStream_t stream) {
+cudaError_t CalEmbeddingLookup(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
+                               size_t output_dim2, size_t input_dim1, int64_t offset, cudaStream_t stream) {
   size_t size = output_dim0 * output_dim1 * output_dim2;
   SubOffset<<<GET_BLOCKS(output_dim1), GET_THREADS, 0, stream>>>(indices, output_dim1, offset);
   GatherV2Kernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0, output_dim1,
                                                                output_dim2, input_dim1);
   // restore indices
   SubOffset<<<GET_BLOCKS(output_dim1), GET_THREADS, 0, stream>>>(indices, output_dim1, -offset);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<float, int>(float *input, int *indices, float *output,
-                                                             size_t output_dim0, size_t output_dim1, size_t output_dim2,
-                                                             size_t input_dim1, int64_t offset, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<float, int64_t>(float *input, int64_t *indices, float *output,
-                                                                 size_t output_dim0, size_t output_dim1,
-                                                                 size_t output_dim2, size_t input_dim1, int64_t offset,
-                                                                 cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<half, int>(half *input, int *indices, half *output, size_t output_dim0,
-                                                            size_t output_dim1, size_t output_dim2, size_t input_dim1,
-                                                            int64_t offset, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<half, int64_t>(half *input, int64_t *indices, half *output,
-                                                                size_t output_dim0, size_t output_dim1,
-                                                                size_t output_dim2, size_t input_dim1, int64_t offset,
-                                                                cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<double, int>(double *input, int *indices, double *output,
-                                                              size_t output_dim0, size_t output_dim1,
-                                                              size_t output_dim2, size_t input_dim1, int64_t offset,
-                                                              cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<double, int64_t>(double *input, int64_t *indices, double *output,
-                                                                  size_t output_dim0, size_t output_dim1,
-                                                                  size_t output_dim2, size_t input_dim1, int64_t offset,
-                                                                  cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<int, int>(int *input, int *indices, int *output, size_t output_dim0,
-                                                           size_t output_dim1, size_t output_dim2, size_t input_dim1,
-                                                           int64_t offset, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<int, int64_t>(int *input, int64_t *indices, int *output,
-                                                               size_t output_dim0, size_t output_dim1,
-                                                               size_t output_dim2, size_t input_dim1, int64_t offset,
-                                                               cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<int16_t, int>(int16_t *input, int *indices, int16_t *output,
-                                                               size_t output_dim0, size_t output_dim1,
-                                                               size_t output_dim2, size_t input_dim1, int64_t offset,
-                                                               cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<int16_t, int64_t>(int16_t *input, int64_t *indices, int16_t *output,
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<float, int>(float *input, int *indices, float *output,
+                                                                    size_t output_dim0, size_t output_dim1,
+                                                                    size_t output_dim2, size_t input_dim1,
+                                                                    int64_t offset, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<float, int64_t>(float *input, int64_t *indices, float *output,
+                                                                        size_t output_dim0, size_t output_dim1,
+                                                                        size_t output_dim2, size_t input_dim1,
+                                                                        int64_t offset, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<half, int>(half *input, int *indices, half *output,
                                                                    size_t output_dim0, size_t output_dim1,
                                                                    size_t output_dim2, size_t input_dim1,
                                                                    int64_t offset, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<int8_t, int>(int8_t *input, int *indices, int8_t *output,
-                                                              size_t output_dim0, size_t output_dim1,
-                                                              size_t output_dim2, size_t input_dim1, int64_t offset,
-                                                              cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<int8_t, int64_t>(int8_t *input, int64_t *indices, int8_t *output,
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<half, int64_t>(half *input, int64_t *indices, half *output,
+                                                                       size_t output_dim0, size_t output_dim1,
+                                                                       size_t output_dim2, size_t input_dim1,
+                                                                       int64_t offset, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<double, int>(double *input, int *indices, double *output,
+                                                                     size_t output_dim0, size_t output_dim1,
+                                                                     size_t output_dim2, size_t input_dim1,
+                                                                     int64_t offset, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<double, int64_t>(double *input, int64_t *indices,
+                                                                         double *output, size_t output_dim0,
+                                                                         size_t output_dim1, size_t output_dim2,
+                                                                         size_t input_dim1, int64_t offset,
+                                                                         cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<int, int>(int *input, int *indices, int *output,
                                                                   size_t output_dim0, size_t output_dim1,
                                                                   size_t output_dim2, size_t input_dim1, int64_t offset,
                                                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<uint8_t, int>(uint8_t *input, int *indices, uint8_t *output,
-                                                               size_t output_dim0, size_t output_dim1,
-                                                               size_t output_dim2, size_t input_dim1, int64_t offset,
-                                                               cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<uint8_t, int64_t>(uint8_t *input, int64_t *indices, uint8_t *output,
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<int, int64_t>(int *input, int64_t *indices, int *output,
+                                                                      size_t output_dim0, size_t output_dim1,
+                                                                      size_t output_dim2, size_t input_dim1,
+                                                                      int64_t offset, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<int16_t, int>(int16_t *input, int *indices, int16_t *output,
+                                                                      size_t output_dim0, size_t output_dim1,
+                                                                      size_t output_dim2, size_t input_dim1,
+                                                                      int64_t offset, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<int16_t, int64_t>(int16_t *input, int64_t *indices,
+                                                                          int16_t *output, size_t output_dim0,
+                                                                          size_t output_dim1, size_t output_dim2,
+                                                                          size_t input_dim1, int64_t offset,
+                                                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<int8_t, int>(int8_t *input, int *indices, int8_t *output,
+                                                                     size_t output_dim0, size_t output_dim1,
+                                                                     size_t output_dim2, size_t input_dim1,
+                                                                     int64_t offset, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<int8_t, int64_t>(int8_t *input, int64_t *indices,
+                                                                         int8_t *output, size_t output_dim0,
+                                                                         size_t output_dim1, size_t output_dim2,
+                                                                         size_t input_dim1, int64_t offset,
+                                                                         cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<uint8_t, int>(uint8_t *input, int *indices, uint8_t *output,
+                                                                      size_t output_dim0, size_t output_dim1,
+                                                                      size_t output_dim2, size_t input_dim1,
+                                                                      int64_t offset, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<uint8_t, int64_t>(uint8_t *input, int64_t *indices,
+                                                                          uint8_t *output, size_t output_dim0,
+                                                                          size_t output_dim1, size_t output_dim2,
+                                                                          size_t input_dim1, int64_t offset,
+                                                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<bool, int>(bool *input, int *indices, bool *output,
                                                                    size_t output_dim0, size_t output_dim1,
                                                                    size_t output_dim2, size_t input_dim1,
                                                                    int64_t offset, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<bool, int>(bool *input, int *indices, bool *output, size_t output_dim0,
-                                                            size_t output_dim1, size_t output_dim2, size_t input_dim1,
-                                                            int64_t offset, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalEmbeddingLookup<bool, int64_t>(bool *input, int64_t *indices, bool *output,
-                                                                size_t output_dim0, size_t output_dim1,
-                                                                size_t output_dim2, size_t input_dim1, int64_t offset,
-                                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalEmbeddingLookup<bool, int64_t>(bool *input, int64_t *indices, bool *output,
+                                                                       size_t output_dim0, size_t output_dim1,
+                                                                       size_t output_dim2, size_t input_dim1,
+                                                                       int64_t offset, cudaStream_t stream);

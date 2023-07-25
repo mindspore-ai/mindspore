@@ -169,7 +169,7 @@ cudaError_t ApplyAdamax(const size_t size, const S *b1_power, const S *learning_
                         cudaStream_t cuda_stream) {
   ApplyAdamaxKernal<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     size, b1_power, learning_rate, b1, b2, eps, gradient, variable, m, v);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdamax<double, double, double>(

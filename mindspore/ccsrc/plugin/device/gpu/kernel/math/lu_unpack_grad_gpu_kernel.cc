@@ -121,23 +121,29 @@ bool LuUnpackGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   int64_t matrix_L_height = input_L_shape[input_L_dims - 1];
   int64_t matrix_U_width = input_U_shape[input_U_dims - 2];
   int64_t matrix_U_height = input_U_shape[input_U_dims - 1];
-
+  cudaError_t status = cudaErrorNotReady;
   if (lu_data_width > lu_data_height) {
-    CalTrilExpendWidth(matrix_num * output_stride, l_grad_input, matrix_L_height, matrix_L_width, l_grad_output,
-                       lu_data_height, lu_data_width, device_id_, stream_ptr_);
-    CalTriuUpper(matrix_num * output_stride, u_grad_input, matrix_U_height, matrix_U_width, u_grad_output,
-                 lu_data_height, lu_data_width, device_id_, stream_ptr_);
+    status = CalTrilExpendWidth(matrix_num * output_stride, l_grad_input, matrix_L_height, matrix_L_width,
+                                l_grad_output, lu_data_height, lu_data_width, device_id_, stream_ptr_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = CalTriuUpper(matrix_num * output_stride, u_grad_input, matrix_U_height, matrix_U_width, u_grad_output,
+                          lu_data_height, lu_data_width, device_id_, stream_ptr_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     if (lu_data_height > lu_data_width) {
-      CalTrilLower(matrix_num * output_stride, l_grad_input, matrix_L_height, matrix_L_width, l_grad_output,
-                   lu_data_height, lu_data_width, device_id_, stream_ptr_);
-      CalTriuExpendHeight(matrix_num * output_stride, u_grad_input, matrix_U_height, matrix_U_width, u_grad_output,
-                          lu_data_height, lu_data_width, device_id_, stream_ptr_);
+      status = CalTrilLower(matrix_num * output_stride, l_grad_input, matrix_L_height, matrix_L_width, l_grad_output,
+                            lu_data_height, lu_data_width, device_id_, stream_ptr_);
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      status = CalTriuExpendHeight(matrix_num * output_stride, u_grad_input, matrix_U_height, matrix_U_width,
+                                   u_grad_output, lu_data_height, lu_data_width, device_id_, stream_ptr_);
+      CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
-      CalTrilLower(matrix_num * output_stride, l_grad_input, matrix_L_height, matrix_L_width, l_grad_output,
-                   lu_data_height, lu_data_width, device_id_, stream_ptr_);
-      CalTriuUpper(matrix_num * output_stride, u_grad_input, matrix_U_height, matrix_U_width, u_grad_output,
-                   lu_data_height, lu_data_width, device_id_, stream_ptr_);
+      status = CalTrilLower(matrix_num * output_stride, l_grad_input, matrix_L_height, matrix_L_width, l_grad_output,
+                            lu_data_height, lu_data_width, device_id_, stream_ptr_);
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      status = CalTriuUpper(matrix_num * output_stride, u_grad_input, matrix_U_height, matrix_U_width, u_grad_output,
+                            lu_data_height, lu_data_width, device_id_, stream_ptr_);
+      CHECK_CUDA_STATUS(status, kernel_name_);
     }
   }
   return true;

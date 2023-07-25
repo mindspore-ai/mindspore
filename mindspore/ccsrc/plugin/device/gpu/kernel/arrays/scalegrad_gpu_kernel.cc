@@ -46,13 +46,17 @@ void ScaleGradGpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr>
                                                    size_t index) {
   T *input_addr = GetDeviceAddress<T>(inputs, index);
   T *output_addr = GetDeviceAddress<T>(outputs, index);
+  cudaError_t status = cudaErrorNotReady;
   if (scale_addr_half != nullptr) {
-    ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_half, output_addr,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_half, output_addr,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
     MS_EXCEPTION_IF_NULL(scale_addr_float);
-    ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_float, output_addr,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_float, output_addr,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
+  }
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
   }
 }
 

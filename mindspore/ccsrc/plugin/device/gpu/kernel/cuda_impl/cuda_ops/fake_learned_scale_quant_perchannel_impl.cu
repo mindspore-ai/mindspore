@@ -23,8 +23,8 @@
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
-__global__ void FakeLearnedScaleQuantPerChannel(float *output, const int size, float *input_alpha,
-                                                float *input_quant, const int channel_num) {
+__global__ void FakeLearnedScaleQuantPerChannel(float *output, const int size, float *input_alpha, float *input_quant,
+                                                const int channel_num) {
   int channel_idx = 0;
   int per_channel_num = size / channel_num;
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
@@ -54,7 +54,7 @@ __global__ void FakeLearnedScaleQuantPerChannelGrad(float *grad_input, float *gr
       grad_input[i] = 0;
     } else {
       grad_input[i] = gradient[i];
-      grad_alpha_temp = (gradient[i] * (input_quant[i] -  input_div_alpha[i]));
+      grad_alpha_temp = (gradient[i] * (input_quant[i] - input_div_alpha[i]));
     }
     MsAtomicAdd(grad_alpha + channel_idx, grad_alpha_temp);
   }
@@ -82,32 +82,26 @@ __global__ void LSQNudgePerChannel(const float *input, const int size, float *in
   return;
 }
 
-void CalFakeLearnedScaleQuantPerChannel(float *output, const int size, float *input_alpha, float *input_quant,
-                                        const int channel_num, cudaStream_t cuda_stream) {
+cudaError_t CalFakeLearnedScaleQuantPerChannel(float *output, const int size, float *input_alpha, float *input_quant,
+                                               const int channel_num, cudaStream_t cuda_stream) {
   FakeLearnedScaleQuantPerChannel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(output, size, input_alpha,
                                                                                      input_quant, channel_num);
-  return;
+  return GetCudaStatus();
 }
 
-void CalFakeLearnedScaleQuantPerChannelGrad(float *grad_input, float *grad_alpha, const float *gradient, const int size,
-                                            const float *input_div_alpha, const float *input_quant,
-                                            const bool neg_trunc, const int channel_num, cudaStream_t cuda_stream) {
-  FakeLearnedScaleQuantPerChannelGrad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(grad_input,
-                                                                                         grad_alpha,
-                                                                                         gradient,
-                                                                                         size,
-                                                                                         input_div_alpha,
-                                                                                         input_quant,
-                                                                                         neg_trunc,
-                                                                                         channel_num);
-  return;
+cudaError_t CalFakeLearnedScaleQuantPerChannelGrad(float *grad_input, float *grad_alpha, const float *gradient,
+                                                   const int size, const float *input_div_alpha,
+                                                   const float *input_quant, const bool neg_trunc,
+                                                   const int channel_num, cudaStream_t cuda_stream) {
+  FakeLearnedScaleQuantPerChannelGrad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
+    grad_input, grad_alpha, gradient, size, input_div_alpha, input_quant, neg_trunc, channel_num);
+  return GetCudaStatus();
 }
 
-void CalLSQNudgePerChannel(const float *input, const int size, float *input_alpha, float *input_quant_max,
-                           float *input_div_alpha, float *input_quant, const bool neg_trunc, const int channel_num,
-                           cudaStream_t cuda_stream) {
-  LSQNudgePerChannel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, size, input_alpha, input_quant_max,
-                                                                        input_div_alpha, input_quant, neg_trunc,
-                                                                        channel_num);
-  return;
+cudaError_t CalLSQNudgePerChannel(const float *input, const int size, float *input_alpha, float *input_quant_max,
+                                  float *input_div_alpha, float *input_quant, const bool neg_trunc,
+                                  const int channel_num, cudaStream_t cuda_stream) {
+  LSQNudgePerChannel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
+    input, size, input_alpha, input_quant_max, input_div_alpha, input_quant, neg_trunc, channel_num);
+  return GetCudaStatus();
 }

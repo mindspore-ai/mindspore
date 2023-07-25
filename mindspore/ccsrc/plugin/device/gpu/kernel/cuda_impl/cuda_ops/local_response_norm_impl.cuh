@@ -18,14 +18,14 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LOCAL_RESPONSE_NORM_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalLocalResponseNormNHWC(const T *input, const int depth_radius, const float bias,
-                                              const float alpha, const float beta, const size_t channels,
-                                              const size_t num_elements, float *scale, T *output,
-                                              cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalLocalResponseNormNHWC(const T *input, const int depth_radius, const float bias,
+                                                     const float alpha, const float beta, const size_t channels,
+                                                     const size_t num_elements, float *scale, T *output,
+                                                     cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalLocalResponseNormGradNHWC(const T *dy, const T *x, const T *y, const int depth_radius,
-                                                  const float bias, const float alpha, const float beta,
-                                                  const size_t channels, const size_t num_elements, float *scale, T *dx,
-                                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalLocalResponseNormGradNHWC(const T *dy, const T *x, const T *y, const int depth_radius,
+                                                         const float bias, const float alpha, const float beta,
+                                                         const size_t channels, const size_t num_elements, float *scale,
+                                                         T *dx, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LOCAL_RESPONSE_NORM_IMPL_CUH_

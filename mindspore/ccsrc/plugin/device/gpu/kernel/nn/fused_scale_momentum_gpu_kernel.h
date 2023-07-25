@@ -42,8 +42,9 @@ class FusedScaleMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     S *gradient = GetDeviceAddress<S>(inputs, 4);
     T *momentum = GetDeviceAddress<T>(inputs, 5);
 
-    FusedScaleMomentum(element_num_, scale, variable, accumulation, learning_rate, gradient, momentum,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = FusedScaleMomentum(element_num_, scale, variable, accumulation, learning_rate, gradient, momentum,
+                                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {

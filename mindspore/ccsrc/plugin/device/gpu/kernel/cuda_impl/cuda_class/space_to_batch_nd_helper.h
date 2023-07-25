@@ -68,12 +68,12 @@ class SpaceToBatchNDHelperGpuKernel : public GpuKernelHelperBase {
       return 0;
     }
     input_size_ = 1;
-    for (size_t i = 0; i < (size_t) static_cast<int64_t>(input_shape_.size()); ++i) {
+    for (size_t i = 0; i < input_shape_.size(); ++i) {
       input_size_ = input_shape_[i] * input_size_;
     }
 
     output_size_ = 1;
-    for (size_t i = 0; i < (size_t) static_cast<int64_t>(output_shape_.size()); ++i) {
+    for (size_t i = 0; i < output_shape_.size(); ++i) {
       output_size_ = output_shape_[i] * output_size_;
     }
 
@@ -102,9 +102,10 @@ class SpaceToBatchNDHelperGpuKernel : public GpuKernelHelperBase {
     }
 
     // call cuda kernel
-    CalSpaceToBatchND(input_ptr, paddings_start.data(), block_shape_.data(), input_shape_.data(), input_shape_size,
-                      stride.data(), on_stride.data(), off_set, input_size_, output_size_, output_ptr, device_id_,
-                      reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalSpaceToBatchND(input_ptr, paddings_start.data(), block_shape_.data(), input_shape_.data(),
+                                    input_shape_size, stride.data(), on_stride.data(), off_set, input_size_,
+                                    output_size_, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

@@ -86,8 +86,9 @@ bool HammingWindowGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   S *output = GetDeviceAddress<S>(outputs, 0);
   T N = 0;
   cudaMemcpyAsync(&N, &input[0], sizeof(T), cudaMemcpyDeviceToHost);
-  HammingWindow(output_elements_, N, alpha_, beta_, periodic_, output, device_id_,
-                reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = HammingWindow(output_elements_, N, alpha_, beta_, periodic_, output, device_id_,
+                              reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

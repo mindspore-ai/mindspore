@@ -86,8 +86,9 @@ bool TriuGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
                                     const std::vector<AddressPtr> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
-  CalTriu(input_elements_, input, diagonal_, matrix_row_, matrix_col_, output, device_id_,
-          reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalTriu(input_elements_, input, diagonal_, matrix_row_, matrix_col_, output, device_id_,
+                        reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

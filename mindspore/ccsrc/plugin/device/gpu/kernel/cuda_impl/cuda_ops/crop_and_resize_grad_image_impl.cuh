@@ -18,10 +18,10 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CROP_AND_RESIZE_GRAD_IMAGE_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T, typename G>
-CUDA_LIB_EXPORT void CalCropAndResizeGradImage(const int32_t size, const T *grads, const T *boxes, const int *box_ind,
-                                               int32_t num_boxes, int32_t batch, int32_t image_height,
-                                               int32_t image_width, int32_t crop_height, int32_t crop_width,
-                                               int32_t depth, int method, G *grad_image, const uint32_t &device_id,
-                                               cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCropAndResizeGradImage(const int32_t size, const T *grads, const T *boxes,
+                                                      const int *box_ind, int32_t num_boxes, int32_t batch,
+                                                      int32_t image_height, int32_t image_width, int32_t crop_height,
+                                                      int32_t crop_width, int32_t depth, int method, G *grad_image,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CROP_AND_RESIZE_GRAD_IMAGE_IMPL_CUH_

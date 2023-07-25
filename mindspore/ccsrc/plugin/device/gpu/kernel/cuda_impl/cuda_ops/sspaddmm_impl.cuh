@@ -21,14 +21,16 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalSparseAddSparse(const S *input_indices, const T *input_values, const int64_t input_values_num,
-                                        int64_t *y_indices, T *y_values, const int64_t y_values_num, const T *beta,
-                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseAddSparse(const S *input_indices, const T *input_values,
+                                               const int64_t input_values_num, int64_t *y_indices, T *y_values,
+                                               const int64_t y_values_num, const T *beta, const uint32_t &device_id,
+                                               cudaStream_t cuda_stream);
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalSparseMulDense(const S *mat1_indices, const T *mat1_values, const int64_t mat1_values_num,
-                                       const T *mat2, int64_t *y_indices, T *y_values, const int64_t y_values_num,
-                                       const int64_t mat2_col, const int64_t input_values_num, const T *alpha,
-                                       int64_t *index, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseMulDense(const S *mat1_indices, const T *mat1_values,
+                                              const int64_t mat1_values_num, const T *mat2, int64_t *y_indices,
+                                              T *y_values, const int64_t y_values_num, const int64_t mat2_col,
+                                              const int64_t input_values_num, const T *alpha, int64_t *index,
+                                              const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SSPADDMM_IMPL_CUH_

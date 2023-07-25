@@ -56,8 +56,9 @@ class AssertGpuKernelMod : public NativeGpuKernelMod {
       cudaMemcpyAsync(types_device, types_.data(), sizeof(int) * input_data_num, cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(cuda_stream)),
       "assert  cudaMemcpyAsync types failed");
-    AssertKernel(cond_device, inputs_device, summarizes_device, types_device, input_data_num, device_id_,
-                 reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = AssertKernel(cond_device, inputs_device, summarizes_device, types_device, input_data_num, device_id_,
+                               reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     bool cond = true;
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&cond, cond_device, sizeof(bool), cudaMemcpyDeviceToHost,
                                                        reinterpret_cast<cudaStream_t>(cuda_stream)),

@@ -100,7 +100,7 @@ cudaError_t ApplyAdam(const size_t size, const int64_t batch_size, const T *grad
   ApplyAdamKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, batch_size, gradient, beta1_power,
                                                                      beta2_power, learning_rate, beta1, beta2, epsilon,
                                                                      variable, m, v, use_nesterov);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 template <typename T, typename S>
 cudaError_t AdamWeightDecayOp(const size_t size, const S *gradient, const float *learning_rate, const float *beta1,
@@ -108,7 +108,7 @@ cudaError_t AdamWeightDecayOp(const size_t size, const S *gradient, const float 
                               cudaStream_t cuda_stream) {
   AdamWeightDecayKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, gradient, learning_rate, beta1, beta2,
                                                                            epsilon, decay, variable, m, v);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdam<float>(const size_t size, const int64_t batch_size,

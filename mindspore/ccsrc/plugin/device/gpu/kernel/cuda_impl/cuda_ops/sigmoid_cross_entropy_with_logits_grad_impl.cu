@@ -44,29 +44,23 @@ __global__ void SigmoidCrossEntropyWithLogitsGradKernel(const size_t size, const
 }
 
 template <typename T, typename S>
-void SigmoidCrossEntropyWithLogitsGrad(const size_t size, const T *logits, const S *labels, const T *dout_addr,
-                                       T *outputs, cudaStream_t cuda_stream) {
+cudaError_t SigmoidCrossEntropyWithLogitsGrad(const size_t size, const T *logits, const S *labels, const T *dout_addr,
+                                              T *outputs, cudaStream_t cuda_stream) {
   SigmoidCrossEntropyWithLogitsGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, logits, labels,
                                                                                              dout_addr, outputs);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SigmoidCrossEntropyWithLogitsGrad<half, half>(const size_t size,
-                                                                            const half *logits,
-                                                                            const half *labels,
-                                                                            const half *dout_addr,
-                                                                            half *outputs,
-                                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SigmoidCrossEntropyWithLogitsGrad<half, half>(const size_t size,
+                                                                                   const half *logits,
+                                                                                   const half *labels,
+                                                                                   const half *dout_addr, half *outputs,
+                                                                                   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void SigmoidCrossEntropyWithLogitsGrad<float, float>(const size_t size,
-                                                                              const float *logits,
-                                                                              const float *labels,
-                                                                              const float *dout_addr,
-                                                                              float *outputs,
-                                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+SigmoidCrossEntropyWithLogitsGrad<float, float>(const size_t size, const float *logits, const float *labels,
+                                                const float *dout_addr, float *outputs, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void SigmoidCrossEntropyWithLogitsGrad<double, double>(const size_t size,
-                                                                                const double *logits,
-                                                                                const double *labels,
-                                                                                const double *dout_addr,
-                                                                                double *outputs,
-                                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+SigmoidCrossEntropyWithLogitsGrad<double, double>(const size_t size, const double *logits, const double *labels,
+                                                  const double *dout_addr, double *outputs, cudaStream_t cuda_stream);

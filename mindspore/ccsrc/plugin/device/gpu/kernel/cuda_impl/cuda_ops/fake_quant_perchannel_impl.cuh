@@ -18,16 +18,18 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FAKE_QUANT_PERCHANNEL_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
-CUDA_LIB_EXPORT void CalNudgePerChannel(float *input_min, float *input_max, const float quant_min,
-                                        const float quant_max, float *nudge_min, float *nudge_max, float *scale,
-                                        const int channel_num, const bool symmetric, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalNudgePerChannel(float *input_min, float *input_max, const float quant_min,
+                                               const float quant_max, float *nudge_min, float *nudge_max, float *scale,
+                                               const int channel_num, const bool symmetric, cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalFakeQuantPerChannel(const float *input, float *output, const int total_num,
-                                            const int channel_num, const float *nudge_min, const float *nudge_max,
-                                            const float *scale, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalFakeQuantPerChannel(const float *input, float *output, const int total_num,
+                                                   const int channel_num, const float *nudge_min,
+                                                   const float *nudge_max, const float *scale,
+                                                   cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalFakeQuantPerChannelGrad(const float *input, const float *gradient, float *output,
-                                                const int total_num, const int channel_num, const float *nudge_min,
-                                                const float *nudge_max, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalFakeQuantPerChannelGrad(const float *input, const float *gradient, float *output,
+                                                       const int total_num, const int channel_num,
+                                                       const float *nudge_min, const float *nudge_max,
+                                                       cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FAKE_QUANT_PERCHANNEL_IMPL_CUH_

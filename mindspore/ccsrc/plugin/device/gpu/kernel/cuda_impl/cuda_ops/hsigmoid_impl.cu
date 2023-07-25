@@ -35,41 +35,43 @@ __global__ void HsigmoidGradKernel(size_t size, const T *dout, const T *x, T *ou
 }
 
 template <typename T>
-void CalHSigmoid(const size_t &size, const T *input, T *output, cudaStream_t cuda_stream) {
+cudaError_t CalHSigmoid(const size_t &size, const T *input, T *output, cudaStream_t cuda_stream) {
   HsigmoidKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, output);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalHSigmoidGrad(const size_t &size, const T *dout, const T *x, T *output, cudaStream_t cuda_stream) {
+cudaError_t CalHSigmoidGrad(const size_t &size, const T *dout, const T *x, T *output, cudaStream_t cuda_stream) {
   HsigmoidGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dout, x, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalHSigmoid<int8_t>(const size_t &size, const int8_t *input, int8_t *output,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoid<int16_t>(const size_t &size, const int16_t *input, int16_t *output,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoid<int32_t>(const size_t &size, const int32_t *input, int32_t *output,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoid<int64_t>(const size_t &size, const int64_t *input, int64_t *output,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoid<half>(const size_t &size, const half *input, half *output,
-                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoid<float>(const size_t &size, const float *input, float *output,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoid<double>(const size_t &size, const double *input, double *output,
-                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoid<int8_t>(const size_t &size, const int8_t *input, int8_t *output,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoid<int16_t>(const size_t &size, const int16_t *input, int16_t *output,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoid<int32_t>(const size_t &size, const int32_t *input, int32_t *output,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoid<int64_t>(const size_t &size, const int64_t *input, int64_t *output,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoid<half>(const size_t &size, const half *input, half *output,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoid<float>(const size_t &size, const float *input, float *output,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoid<double>(const size_t &size, const double *input, double *output,
+                                                         cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalHSigmoidGrad<int8_t>(const size_t &size, const int8_t *dout, const int8_t *x,
-                                                      int8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoidGrad<int16_t>(const size_t &size, const int16_t *dout, const int16_t *x,
-                                                       int16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoidGrad<int32_t>(const size_t &size, const int32_t *dout, const int32_t *x,
-                                                       int32_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoidGrad<int64_t>(const size_t &size, const int64_t *dout, const int64_t *x,
-                                                       int64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoidGrad<half>(const size_t &size, const half *dout, const half *x, half *output,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoidGrad<float>(const size_t &size, const float *dout, const float *x,
-                                                     float *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalHSigmoidGrad<double>(const size_t &size, const double *dout, const double *x,
-                                                      double *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoidGrad<int8_t>(const size_t &size, const int8_t *dout, const int8_t *x,
+                                                             int8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoidGrad<int16_t>(const size_t &size, const int16_t *dout, const int16_t *x,
+                                                              int16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoidGrad<int32_t>(const size_t &size, const int32_t *dout, const int32_t *x,
+                                                              int32_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoidGrad<int64_t>(const size_t &size, const int64_t *dout, const int64_t *x,
+                                                              int64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoidGrad<half>(const size_t &size, const half *dout, const half *x,
+                                                           half *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoidGrad<float>(const size_t &size, const float *dout, const float *x,
+                                                            float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalHSigmoidGrad<double>(const size_t &size, const double *dout, const double *x,
+                                                             double *output, cudaStream_t cuda_stream);

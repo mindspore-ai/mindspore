@@ -52,99 +52,79 @@ __global__ void MatrixDiagPartV3Kernel(const T *matrix_ptr, const T *padding_val
 }
 
 template <typename T>
-void MatrixDiagPartV3(const T *matrix_ptr, const T *padding_value_ptr, T *diagnal_ptr, const int64_t num_rows,
-                      const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index,
-                      const int64_t diag_size, const int64_t max_diag_len, const bool left_align_super_diag,
-                      const bool left_align_sub_diag, uint32_t device_id, cudaStream_t cuda_stream) {
+cudaError_t MatrixDiagPartV3(const T *matrix_ptr, const T *padding_value_ptr, T *diagnal_ptr, const int64_t num_rows,
+                             const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index,
+                             const int64_t diag_size, const int64_t max_diag_len, const bool left_align_super_diag,
+                             const bool left_align_sub_diag, uint32_t device_id, cudaStream_t cuda_stream) {
   const int64_t num_diag = upper_diag_index - lower_diag_idx + 1;
   MatrixDiagPartV3Kernel<<<CUDA_BLOCKS(device_id, diag_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     matrix_ptr, padding_value_ptr, diagnal_ptr, num_rows, num_cols, upper_diag_index, diag_size, num_diag, max_diag_len,
     left_align_super_diag, left_align_sub_diag);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<int8_t>(const int8_t *matrix_ptr, const int8_t *padding_value_ptr,
-                                                       int8_t *diagnal_ptr, const int64_t num_rows,
-                                                       const int64_t num_cols, const int64_t lower_diag_idx,
-                                                       const int64_t upper_diag_index, const int64_t diag_size,
-                                                       const int64_t max_diag_len, const bool left_align_super_diag,
-                                                       const bool left_align_sub_diag, uint32_t device_id,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<int8_t>(
+  const int8_t *matrix_ptr, const int8_t *padding_value_ptr, int8_t *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<uint8_t>(const uint8_t *matrix_ptr, const uint8_t *padding_value_ptr,
-                                                        uint8_t *diagnal_ptr, const int64_t num_rows,
-                                                        const int64_t num_cols, const int64_t lower_diag_idx,
-                                                        const int64_t upper_diag_index, const int64_t diag_size,
-                                                        const int64_t max_diag_len, const bool left_align_super_diag,
-                                                        const bool left_align_sub_diag, uint32_t device_id,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<uint8_t>(
+  const uint8_t *matrix_ptr, const uint8_t *padding_value_ptr, uint8_t *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<int16_t>(const int16_t *matrix_ptr, const int16_t *padding_value_ptr,
-                                                        int16_t *diagnal_ptr, const int64_t num_rows,
-                                                        const int64_t num_cols, const int64_t lower_diag_idx,
-                                                        const int64_t upper_diag_index, const int64_t diag_size,
-                                                        const int64_t max_diag_len, const bool left_align_super_diag,
-                                                        const bool left_align_sub_diag, uint32_t device_id,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<int16_t>(
+  const int16_t *matrix_ptr, const int16_t *padding_value_ptr, int16_t *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<uint16_t>(const uint16_t *matrix_ptr, const uint16_t *padding_value_ptr,
-                                                         uint16_t *diagnal_ptr, const int64_t num_rows,
-                                                         const int64_t num_cols, const int64_t lower_diag_idx,
-                                                         const int64_t upper_diag_index, const int64_t diag_size,
-                                                         const int64_t max_diag_len, const bool left_align_super_diag,
-                                                         const bool left_align_sub_diag, uint32_t device_id,
-                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<uint16_t>(
+  const uint16_t *matrix_ptr, const uint16_t *padding_value_ptr, uint16_t *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<int32_t>(const int32_t *matrix_ptr, const int32_t *padding_value_ptr,
-                                                        int32_t *diagnal_ptr, const int64_t num_rows,
-                                                        const int64_t num_cols, const int64_t lower_diag_idx,
-                                                        const int64_t upper_diag_index, const int64_t diag_size,
-                                                        const int64_t max_diag_len, const bool left_align_super_diag,
-                                                        const bool left_align_sub_diag, uint32_t device_id,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<int32_t>(
+  const int32_t *matrix_ptr, const int32_t *padding_value_ptr, int32_t *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<uint32_t>(const uint32_t *matrix_ptr, const uint32_t *padding_value_ptr,
-                                                         uint32_t *diagnal_ptr, const int64_t num_rows,
-                                                         const int64_t num_cols, const int64_t lower_diag_idx,
-                                                         const int64_t upper_diag_index, const int64_t diag_size,
-                                                         const int64_t max_diag_len, const bool left_align_super_diag,
-                                                         const bool left_align_sub_diag, uint32_t device_id,
-                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<uint32_t>(
+  const uint32_t *matrix_ptr, const uint32_t *padding_value_ptr, uint32_t *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<int64_t>(const int64_t *matrix_ptr, const int64_t *padding_value_ptr,
-                                                        int64_t *diagnal_ptr, const int64_t num_rows,
-                                                        const int64_t num_cols, const int64_t lower_diag_idx,
-                                                        const int64_t upper_diag_index, const int64_t diag_size,
-                                                        const int64_t max_diag_len, const bool left_align_super_diag,
-                                                        const bool left_align_sub_diag, uint32_t device_id,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<int64_t>(
+  const int64_t *matrix_ptr, const int64_t *padding_value_ptr, int64_t *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<uint64_t>(const uint64_t *matrix_ptr, const uint64_t *padding_value_ptr,
-                                                         uint64_t *diagnal_ptr, const int64_t num_rows,
-                                                         const int64_t num_cols, const int64_t lower_diag_idx,
-                                                         const int64_t upper_diag_index, const int64_t diag_size,
-                                                         const int64_t max_diag_len, const bool left_align_super_diag,
-                                                         const bool left_align_sub_diag, uint32_t device_id,
-                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<uint64_t>(
+  const uint64_t *matrix_ptr, const uint64_t *padding_value_ptr, uint64_t *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<half>(const half *matrix_ptr, const half *padding_value_ptr,
-                                                     half *diagnal_ptr, const int64_t num_rows, const int64_t num_cols,
-                                                     const int64_t lower_diag_idx, const int64_t upper_diag_index,
-                                                     const int64_t diag_size, const int64_t max_diag_len,
-                                                     const bool left_align_super_diag, const bool left_align_sub_diag,
-                                                     uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+MatrixDiagPartV3<half>(const half *matrix_ptr, const half *padding_value_ptr, half *diagnal_ptr, const int64_t num_rows,
+                       const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index,
+                       const int64_t diag_size, const int64_t max_diag_len, const bool left_align_super_diag,
+                       const bool left_align_sub_diag, uint32_t device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<float>(const float *matrix_ptr, const float *padding_value_ptr,
-                                                      float *diagnal_ptr, const int64_t num_rows,
-                                                      const int64_t num_cols, const int64_t lower_diag_idx,
-                                                      const int64_t upper_diag_index, const int64_t diag_size,
-                                                      const int64_t max_diag_len, const bool left_align_super_diag,
-                                                      const bool left_align_sub_diag, uint32_t device_id,
-                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<float>(
+  const float *matrix_ptr, const float *padding_value_ptr, float *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void MatrixDiagPartV3<double>(const double *matrix_ptr, const double *padding_value_ptr,
-                                                       double *diagnal_ptr, const int64_t num_rows,
-                                                       const int64_t num_cols, const int64_t lower_diag_idx,
-                                                       const int64_t upper_diag_index, const int64_t diag_size,
-                                                       const int64_t max_diag_len, const bool left_align_super_diag,
-                                                       const bool left_align_sub_diag, uint32_t device_id,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MatrixDiagPartV3<double>(
+  const double *matrix_ptr, const double *padding_value_ptr, double *diagnal_ptr, const int64_t num_rows,
+  const int64_t num_cols, const int64_t lower_diag_idx, const int64_t upper_diag_index, const int64_t diag_size,
+  const int64_t max_diag_len, const bool left_align_super_diag, const bool left_align_sub_diag, uint32_t device_id,
+  cudaStream_t cuda_stream);

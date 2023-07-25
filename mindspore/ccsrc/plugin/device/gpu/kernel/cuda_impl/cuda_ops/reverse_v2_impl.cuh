@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_REVERSE_V2_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalReverseV2(const T* input, T* output, const size_t* input_shape, const int64_t* strides,
-                                  const int64_t* axis, size_t input_size, size_t axis_size, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalReverseV2(const T *input, T *output, const size_t *input_shape, const int64_t *strides,
+                                         const int64_t *axis, size_t input_size, size_t axis_size,
+                                         cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_REVERSE_V2_IMPL_CUH_

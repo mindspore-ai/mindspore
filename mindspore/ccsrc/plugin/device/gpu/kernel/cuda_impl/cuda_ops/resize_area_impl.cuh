@@ -27,9 +27,9 @@ struct ResizeAreaCachedInterpolation {
   bool needs_bounding = true;
 };
 template <typename T>
-CUDA_LIB_EXPORT void CalResizeArea(const T *images, ResizeAreaCachedInterpolation *x_interps,
-  ResizeAreaCachedInterpolation *y_interps, float *output, int32_t batch_size, const int32_t channels,
-  const int32_t out_height, const int32_t out_width, const int32_t in_height, const int32_t in_width,
-  bool align_corners, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalResizeArea(const T *images, ResizeAreaCachedInterpolation *x_interps,
+                                          ResizeAreaCachedInterpolation *y_interps, float *output, int32_t batch_size,
+                                          const int32_t channels, const int32_t out_height, const int32_t out_width,
+                                          const int32_t in_height, const int32_t in_width, bool align_corners,
+                                          const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RESIZE_AREA_IMPL_CUH_
-

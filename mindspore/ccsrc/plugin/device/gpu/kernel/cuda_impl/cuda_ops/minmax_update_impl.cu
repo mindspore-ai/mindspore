@@ -56,17 +56,17 @@ __global__ void UpdateInputMinMaxPerChannel(float *input, float *input_min, floa
   return;
 }
 
-void CalMinMaxPerChannel(float *input, float *input_min, float *input_max, float *output_min, float *output_max,
-                         const int total_num, const int channel_num, const float ema_decay, const bool ema,
-                         cudaStream_t cuda_stream) {
+cudaError_t CalMinMaxPerChannel(float *input, float *input_min, float *input_max, float *output_min, float *output_max,
+                                const int total_num, const int channel_num, const float ema_decay, const bool ema,
+                                cudaStream_t cuda_stream) {
   int per_channel_num = total_num / channel_num;
   UpdateInputMinMaxPerChannel<<<GET_BLOCKS(channel_num), GET_THREADS, 0, cuda_stream>>>(
     input, input_min, input_max, output_min, output_max, channel_num, per_channel_num, ema, ema_decay);
-  return;
+  return GetCudaStatus();
 }
 
-void CalMinMaxPerLayer(float *input, float *input_min, float *input_max, float *output_min, float *output_max,
-                       const int total_num, const float ema_decay, const bool ema, cudaStream_t cuda_stream) {
+cudaError_t CalMinMaxPerLayer(float *input, float *input_min, float *input_max, float *output_min, float *output_max,
+                              const int total_num, const float ema_decay, const bool ema, cudaStream_t cuda_stream) {
   float minel = 0.f;
   float maxel = 0.f;
   auto policy = thrust::cuda::par.on(cuda_stream);
@@ -82,5 +82,5 @@ void CalMinMaxPerLayer(float *input, float *input_min, float *input_max, float *
   } else {
     UpdateInputMinMaxPerLayer<<<1, 1, 0, cuda_stream>>>(output_min, output_max, minel, maxel);
   }
-  return;
+  return GetCudaStatus();
 }

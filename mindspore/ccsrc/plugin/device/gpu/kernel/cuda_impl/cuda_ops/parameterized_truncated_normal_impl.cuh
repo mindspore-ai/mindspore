@@ -24,9 +24,10 @@ static constexpr int32_t kMaxSamplesPerItem = 2000;
 static constexpr int32_t kCounterNum = 4;
 
 template <typename T>
-CUDA_LIB_EXPORT void ParameterizedTruncatedNormal(int64_t seed, int64_t batch_size, int64_t samples_per_batch, T *mean,
-                                                  T *stdevs, T *min, T *max, T *output, bool scalar_mean,
-                                                  bool scalar_stdevs, bool scalar_min, bool scalar_max,
-                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ParameterizedTruncatedNormal(int64_t seed, int64_t batch_size, int64_t samples_per_batch,
+                                                         T *mean, T *stdevs, T *min, T *max, T *output,
+                                                         bool scalar_mean, bool scalar_stdevs, bool scalar_min,
+                                                         bool scalar_max, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_PARAMETERIZED_TRUNCATED_NORMAL_IMPL_CUH_

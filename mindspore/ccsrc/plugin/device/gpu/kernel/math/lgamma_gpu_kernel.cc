@@ -69,7 +69,8 @@ bool LgammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                                       const std::vector<AddressPtr> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
-  CalLgamma(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalLgamma(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

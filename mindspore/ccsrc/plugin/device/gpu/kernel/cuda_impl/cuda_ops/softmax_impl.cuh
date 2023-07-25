@@ -56,7 +56,7 @@ struct alignas(sizeof(scalar_t) * sizeof(float4) / sizeof(scalar_t)) aligned_vec
 };
 
 template <typename T, bool is_log_softmax>
-void Softmax(T *input_, T *output_, size_t dim_size_, size_t outer_size_, size_t inner_size_, size_t device_id,
-             cudaStream_t cuda_stream);
+cudaError_t Softmax(T *input_, T *output_, size_t dim_size_, size_t outer_size_, size_t inner_size_, size_t device_id,
+                    cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SOFTMAX_IMPL_CUH_

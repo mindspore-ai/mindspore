@@ -117,40 +117,49 @@ __global__ void SrandUniformInt(const int size, curandState *globalState, const 
   }
 }
 
-void BufferAppend(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
-                  unsigned char *buffer, const unsigned char *exp, cudaStream_t cuda_stream) {
+cudaError_t BufferAppend(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
+                         unsigned char *buffer, const unsigned char *exp, cudaStream_t cuda_stream) {
   BufferAppendKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(capacity, size, index, exp_batch, buffer, exp);
+  return GetCudaStatus();
 }
 
-void IncreaseCount(const int64_t capacity, const int exp_batch, int *count, int *head, int *index,
-                   cudaStream_t cuda_stream) {
+cudaError_t IncreaseCount(const int64_t capacity, const int exp_batch, int *count, int *head, int *index,
+                          cudaStream_t cuda_stream) {
   IncreaseCountKernel<<<1, 1, 0, cuda_stream>>>(capacity, exp_batch, count, head, index);
+  return GetCudaStatus();
 }
 
-void ReMappingIndex(const int *count, const int *head, const int *origin_index, int *index, cudaStream_t cuda_stream) {
+cudaError_t ReMappingIndex(const int *count, const int *head, const int *origin_index, int *index,
+                           cudaStream_t cuda_stream) {
   ReMappingIndexKernel<<<1, 1, 0, cuda_stream>>>(count, head, origin_index, index);
+  return GetCudaStatus();
 }
 
-void BufferGetItem(const size_t size, const int *index, const size_t one_exp_len, const unsigned char *buffer,
-                   unsigned char *out, cudaStream_t cuda_stream) {
+cudaError_t BufferGetItem(const size_t size, const int *index, const size_t one_exp_len, const unsigned char *buffer,
+                          unsigned char *out, cudaStream_t cuda_stream) {
   BufferGetItemKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, index, one_exp_len, buffer, out);
+  return GetCudaStatus();
 }
 
-void CheckBatchSize(const int *count, const int *head, const size_t batch_size, const int64_t capacity,
-                    cudaStream_t cuda_stream) {
+cudaError_t CheckBatchSize(const int *count, const int *head, const size_t batch_size, const int64_t capacity,
+                           cudaStream_t cuda_stream) {
   CheckBatchSizeKernel<<<1, 1, 0, cuda_stream>>>(count, head, batch_size, capacity);
+  return GetCudaStatus();
 }
 
-void BufferSample(const size_t size, const size_t one_element, const unsigned int *index, const unsigned char *buffer,
-                  unsigned char *out, cudaStream_t cuda_stream) {
+cudaError_t BufferSample(const size_t size, const size_t one_element, const unsigned int *index,
+                         const unsigned char *buffer, unsigned char *out, cudaStream_t cuda_stream) {
   BufferSampleKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, one_element, index, buffer, out);
+  return GetCudaStatus();
 }
 
-void RandInit(const int size, const int seed, curandState *state, cudaStream_t stream) {
+cudaError_t RandInit(const int size, const int seed, curandState *state, cudaStream_t stream) {
   SetupKernel<<<(size + 255) / 256, 256, 0, stream>>>(seed, state, size);
+  return GetCudaStatus();
 }
 
-void RandomGen(const int size, curandState *globalState, unsigned int *value, unsigned int *key, cudaStream_t stream) {
+cudaError_t RandomGen(const int size, curandState *globalState, unsigned int *value, unsigned int *key,
+                      cudaStream_t stream) {
   // 1 Generate two list, value for random int num, key for sequence form [0, size).
   SrandUInt<<<(size + 255) / 256, 256, 0, stream>>>(size, globalState, value, key);
   auto policy = thrust::cuda::par.on(stream);
@@ -158,16 +167,18 @@ void RandomGen(const int size, curandState *globalState, unsigned int *value, un
   thrust::device_ptr<unsigned int> dev_key_ptr(key);
   // 2 Sort the key and get the sorted indexes.
   thrust::sort_by_key(policy, dev_key_ptr, dev_key_ptr + size, dev_data_ptr);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void RandomGenUniform(const int size, curandState *globalState, const int up_bound, T *indexes, cudaStream_t stream) {
+cudaError_t RandomGenUniform(const int size, curandState *globalState, const int up_bound, T *indexes,
+                             cudaStream_t stream) {
   SrandUniformInt<<<(size + 255) / 256, 256, 0, stream>>>(size, globalState, up_bound, indexes);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT
-void RandomGenUniform<unsigned int>(const int size, curandState *globalState, const int up_bound,
-                                    unsigned int *indexes, cudaStream_t stream);
-template CUDA_LIB_EXPORT
-void RandomGenUniform<size_t>(const int size, curandState *globalState, const int up_bound, size_t *indexes,
-                              cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t RandomGenUniform<unsigned int>(const int size, curandState *globalState,
+                                                                    const int up_bound, unsigned int *indexes,
+                                                                    cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t RandomGenUniform<size_t>(const int size, curandState *globalState,
+                                                              const int up_bound, size_t *indexes, cudaStream_t stream);

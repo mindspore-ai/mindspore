@@ -92,6 +92,8 @@ class DenseToCSRSparseMatrixKernelMod : public NativeGpuKernelMod {
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  template <typename S>
+  void ProcessBeforeLaunch(S *dev_nd_strides, S *dev_nd_indices, S *dense_shape_addr, void *stream_ptr);
   using LaunchFunc = std::function<bool(DenseToCSRSparseMatrixKernelMod *, const std::vector<AddressPtr> &,
                                         const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
   static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;

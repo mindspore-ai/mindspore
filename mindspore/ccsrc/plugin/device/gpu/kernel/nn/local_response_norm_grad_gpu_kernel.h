@@ -32,6 +32,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t k3DSize = 3;
 constexpr size_t k4DSize = 4;
+constexpr auto kDim3 = 3;
 const unsigned int kCoef = 2;
 
 template <typename T>
@@ -71,18 +72,22 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
         OutInfo.perm[i] = static_cast<int>(to_nchw_axis[i]);
       }
 
-      CalNCHW2NHWCInterface(num_elements_, k4DSize, dy, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_dy,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
-      CalNCHW2NHWCInterface(num_elements_, k4DSize, x, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_x,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
-      CalNCHW2NHWCInterface(num_elements_, k4DSize, y, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_y,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
-
-      CalLocalResponseNormGradNHWC(ws_dy, ws_x, ws_y, depth_radius_, bias_, alpha_, beta_, transpose_shape_[3],
-                                   num_elements_, ws_scale, ws_dx, reinterpret_cast<cudaStream_t>(stream_ptr));
-
-      CalNHWC2NCHWInterface(num_elements_, k4DSize, ws_dx, &transpose_shape_[0], &to_nchw_axis[0], OutInfo, dx,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto status = CalNCHW2NHWCInterface(num_elements_, k4DSize, dy, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_dy,
+                                          reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      status = CalNCHW2NHWCInterface(num_elements_, k4DSize, x, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_x,
+                                     reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      status = CalNCHW2NHWCInterface(num_elements_, k4DSize, y, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_y,
+                                     reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      status =
+        CalLocalResponseNormGradNHWC(ws_dy, ws_x, ws_y, depth_radius_, bias_, alpha_, beta_, transpose_shape_[kDim3],
+                                     num_elements_, ws_scale, ws_dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      status = CalNHWC2NCHWInterface(num_elements_, k4DSize, ws_dx, &transpose_shape_[0], &to_nchw_axis[0], OutInfo, dx,
+                                     reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnLRNCrossChannelBackward(handle_, norm_desc_, lrn_mode_, &alpha, y_desc_, y, dy_desc_, dy, x_desc_, x,

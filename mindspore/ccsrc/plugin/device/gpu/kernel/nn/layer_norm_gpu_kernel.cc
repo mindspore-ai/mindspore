@@ -104,7 +104,11 @@ void LayerNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto mean = GetDeviceAddress<float>(outputs, kLayerNormOutputMeanIndex);
   auto variance = GetDeviceAddress<float>(outputs, kLayerNormOutputVarIndex);
 
-  LayerNorm(input_row_, input_col_, param_dim_, epsilon_, x, gamma, beta, y, mean, variance, cuda_stream_);
+  auto status =
+    LayerNorm(input_row_, input_col_, param_dim_, epsilon_, x, gamma, beta, y, mean, variance, cuda_stream_);
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch GPU kernel LayerNorm failed.";
+  }
 }
 
 std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormGpuKernelMod::func_list_ = {

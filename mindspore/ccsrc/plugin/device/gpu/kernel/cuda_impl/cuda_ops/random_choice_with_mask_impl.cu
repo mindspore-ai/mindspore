@@ -226,10 +226,11 @@ __global__ void MoveToOutput(const int input_shape_size, const int count, const 
 }
 
 template <typename T, typename S>
-void CalRandomChoiceWithMask(const int &input_size, const int &input_shape_size, const int &d1, const int &d2,
-                             const int &d3, const int &d4, const int &d5, const int &seedc, const int &count,
-                             const T *input, S *output_index, T *output_mask, S *index_buff, S *mask_buff, S *rank_buff,
-                             S *Tnum_buff, S *tmp_buff, curandState *globalState, cudaStream_t stream) {
+cudaError_t CalRandomChoiceWithMask(const int &input_size, const int &input_shape_size, const int &d1, const int &d2,
+                                    const int &d3, const int &d4, const int &d5, const int &seedc, const int &count,
+                                    const T *input, S *output_index, T *output_mask, S *index_buff, S *mask_buff,
+                                    S *rank_buff, S *Tnum_buff, S *tmp_buff, curandState *globalState,
+                                    cudaStream_t stream) {
   int ceil_power2 = RcwmRoundUpPower2(input_size);
 
   InitArray<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, ceil_power2, input, mask_buff, rank_buff);
@@ -255,11 +256,13 @@ void CalRandomChoiceWithMask(const int &input_size, const int &input_shape_size,
 
   MoveToOutput<<<GET_BLOCKS(count), GET_THREADS, 0, stream>>>(input_shape_size, count, input, output_index, output_mask,
                                                               index_buff, rank_buff, Tnum_buff);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalRandomChoiceWithMask(const int &input_size, const int &input_shape_size, const int &d1,
-                                                      const int &d2, const int &d3, const int &d4, const int &d5,
-                                                      const int &seedc, const int &count, const bool *input,
-                                                      int *output_index, bool *output_mask, int *index_buff,
-                                                      int *mask_buff, int *rank_buff, int *Tnum_buff, int *tmp_buff,
-                                                      curandState *globalState, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalRandomChoiceWithMask(const int &input_size, const int &input_shape_size,
+                                                             const int &d1, const int &d2, const int &d3, const int &d4,
+                                                             const int &d5, const int &seedc, const int &count,
+                                                             const bool *input, int *output_index, bool *output_mask,
+                                                             int *index_buff, int *mask_buff, int *rank_buff,
+                                                             int *Tnum_buff, int *tmp_buff, curandState *globalState,
+                                                             cudaStream_t stream);

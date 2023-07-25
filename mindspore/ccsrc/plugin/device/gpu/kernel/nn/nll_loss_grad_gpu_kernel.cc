@@ -86,9 +86,9 @@ bool NLLLossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   T *dinput_device = GetDeviceAddress<T>(outputs, 0);
 
-  NLLLossGrad(n_, c_, reduction_, input_device, target_device, weight_device, total_weight_device, dloss_device,
-              dinput_device, ignore_index_, reinterpret_cast<cudaStream_t>(stream_ptr));
-
+  auto status = NLLLossGrad(n_, c_, reduction_, input_device, target_device, weight_device, total_weight_device,
+                            dloss_device, dinput_device, ignore_index_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

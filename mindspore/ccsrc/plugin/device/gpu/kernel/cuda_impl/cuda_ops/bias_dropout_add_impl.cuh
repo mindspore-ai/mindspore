@@ -19,8 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void BiasDropoutAdd(const T *x, const T *bias, const T *residual, T *y, T *mask, size_t num_count,
-                                    size_t n_strides, size_t channel_strides, float keep_prob, uint64_t seed,
-                                    uint64_t seed_offset, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t BiasDropoutAdd(const T *x, const T *bias, const T *residual, T *y, T *mask,
+                                           size_t num_count, size_t n_strides, size_t channel_strides, float keep_prob,
+                                           uint64_t seed, uint64_t seed_offset, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BIAS_DROPOUT_ADD_IMPL_CUH_

@@ -21,21 +21,21 @@
 #include "include/cuda_fp16.h"
 
 template <typename T, typename S>
-__global__ void CastAll(T** inputs, S** output, const size_t num, const size_t *size) {
-    for (size_t i = 0; i < num; i++) {
-        for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size[i]; pos += blockDim.x * gridDim.x) {
-            output[i][pos] = static_cast<S>(inputs[i][pos]);
-        }
+__global__ void CastAll(T **inputs, S **output, const size_t num, const size_t *size) {
+  for (size_t i = 0; i < num; i++) {
+    for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size[i]; pos += blockDim.x * gridDim.x) {
+      output[i][pos] = static_cast<S>(inputs[i][pos]);
     }
+  }
 }
 
 template <typename T, typename S>
-void CastAllKernel(T** inputs, S** output, const size_t max, const size_t num, const size_t *size,
-                   cudaStream_t stream) {
-    CastAll<<<GET_BLOCKS(max), GET_THREADS, 0, stream>>>(inputs, output, num, size);
-    return;
+cudaError_t CastAllKernel(T **inputs, S **output, const size_t max, const size_t num, const size_t *size,
+                          cudaStream_t stream) {
+  CastAll<<<GET_BLOCKS(max), GET_THREADS, 0, stream>>>(inputs, output, num, size);
+  return GetCudaStatus();
 }
-template CUDA_LIB_EXPORT void CastAllKernel(half** inputs, float** output, const size_t max, const size_t num,
-                                            const size_t *size, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CastAllKernel(float** inputs, half** output, const size_t max, const size_t num,
-                                            const size_t *size, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CastAllKernel(half **inputs, float **output, const size_t max, const size_t num,
+                                                   const size_t *size, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CastAllKernel(float **inputs, half **output, const size_t max, const size_t num,
+                                                   const size_t *size, cudaStream_t stream);

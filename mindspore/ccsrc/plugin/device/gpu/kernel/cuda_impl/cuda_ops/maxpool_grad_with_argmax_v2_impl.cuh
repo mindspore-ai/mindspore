@@ -20,9 +20,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalMaxPoolGradWithArgmaxV2(const T *dy, const S *index, const int64_t x_hw, const int64_t x_chw,
-                                                const int64_t x_nchw, const int64_t dy_hw, const int64_t dy_chw,
-                                                const int64_t dy_nchw, T *dx, const uint32_t device_id,
-                                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMaxPoolGradWithArgmaxV2(const T *dy, const S *index, const int64_t x_hw,
+                                                       const int64_t x_chw, const int64_t x_nchw, const int64_t dy_hw,
+                                                       const int64_t dy_chw, const int64_t dy_nchw, T *dx,
+                                                       const uint32_t device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MAXPOOL_GRAD_WITH_ARGMAX_V2_IMPL_CUH_

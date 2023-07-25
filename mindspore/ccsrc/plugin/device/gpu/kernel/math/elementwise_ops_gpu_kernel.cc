@@ -237,7 +237,7 @@ bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::Addres
   auto output_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->addr);
   auto ret =
     UnaryOpsCudaFunc<Op, Inp_t, Out_t>(ele_num_, input_ptr, output_ptr, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_LAUNCH_STATUS(ret, kernel_name_);
+  CHECK_CUDA_STATUS(ret, kernel_name_);
   return true;
 }
 template <ElwiseOpType Op, typename In0_t, typename In1_t, typename Out_t>
@@ -248,7 +248,7 @@ bool ElementwiseOpsGpuKernel::BinaryLaunchKernel(const std::vector<kernel::Addre
   auto out_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->addr);
   auto ret = BinaryOpsCudaFunc<Op, In0_t, In1_t, Out_t>(ele_num_, in0_ptr, in1_ptr, out_ptr,
                                                         reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_LAUNCH_STATUS(ret, kernel_name_);
+  CHECK_CUDA_STATUS(ret, kernel_name_);
   return true;
 }
 #define MS_ELEWISE_KERNEL_FACTORY_REG_BY_CREATOR(kernel)       \

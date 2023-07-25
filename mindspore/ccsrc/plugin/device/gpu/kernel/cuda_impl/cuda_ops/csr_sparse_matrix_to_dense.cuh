@@ -19,8 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename S>
-void CalCSRSparseMatrixToDense(const T *dense_shape_addr, T *batch_ptr_addr, T *row_ptr_addr, T *col_indices_addr,
-                               S *values_addr, S *output, size_t ndim, size_t rows, size_t nums,
-                               cudaStream_t cuda_stream);
+cudaError_t CalCSRSparseMatrixToDense(const T *dense_shape_addr, T *batch_ptr_addr, T *row_ptr_addr,
+                                      T *col_indices_addr, S *values_addr, S *output, size_t ndim, size_t rows,
+                                      size_t nums, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CSR_SPARSE_MATRIX_TO_DENSE_CUH_

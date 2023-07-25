@@ -144,11 +144,13 @@ bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
 
   CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetStream(blas_handle_, cuda_stream_),
                                        "For LuSolveGpuKernelMod cublasSetStream Fail");
-
-  MatrixTranspose(a, LongToSize(batch_num_a_ * m_ * m_), SizeToInt(m_), SizeToInt(m_), a_col_major, device_id_,
-                  cuda_stream_);
-  MatrixTranspose(b, LongToSize(batch_num_b_ * m_ * k_), SizeToInt(m_), SizeToInt(k_), b_col_major, device_id_,
-                  cuda_stream_);
+  cudaError_t status = cudaErrorNotReady;
+  status = MatrixTranspose(a, LongToSize(batch_num_a_ * m_ * m_), SizeToInt(m_), SizeToInt(m_), a_col_major, device_id_,
+                           cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  status = MatrixTranspose(b, LongToSize(batch_num_b_ * m_ * k_), SizeToInt(m_), SizeToInt(k_), b_col_major, device_id_,
+                           cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   if (need_broadcast_) {
     std::vector<int64_t> simplified_inp_shape;
     std::vector<int64_t> simplified_out_shape;
@@ -157,7 +159,9 @@ bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     auto expand_size = output_shape_;
     expand_size[out_shape_len_ - kIndex1] = m_;
     SimplifyBroadcastToShape(origin_size, expand_size, &simplified_inp_shape, &simplified_out_shape);
-    BroadcastTo(simplified_inp_shape, simplified_out_shape, a_col_major, a_broadcast, device_id_, cuda_stream_);
+    status =
+      BroadcastTo(simplified_inp_shape, simplified_out_shape, a_col_major, a_broadcast, device_id_, cuda_stream_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
 
     // expand_size :(*,k,m)
     origin_size = rhs_shape_;
@@ -165,7 +169,9 @@ bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     std::swap(origin_size[out_shape_len_ - kIndex1], origin_size[out_shape_len_ - kIndex2]);
     std::swap(expand_size[out_shape_len_ - kIndex1], expand_size[out_shape_len_ - kIndex2]);
     SimplifyBroadcastToShape(origin_size, expand_size, &simplified_inp_shape, &simplified_out_shape);
-    BroadcastTo(simplified_inp_shape, simplified_out_shape, b_col_major, b_broadcast, device_id_, cuda_stream_);
+    status =
+      BroadcastTo(simplified_inp_shape, simplified_out_shape, b_col_major, b_broadcast, device_id_, cuda_stream_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
 
     // origin_size:(*,m,1)
     // expand_size :(*,m,1)
@@ -174,7 +180,9 @@ bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     expand_size = output_shape_;
     expand_size[out_shape_len_ - kIndex1] = 1;
     SimplifyBroadcastToShape(origin_size, expand_size, &simplified_inp_shape, &simplified_out_shape);
-    BroadcastTo(simplified_inp_shape, simplified_out_shape, piv_array, piv_broadcast, device_id_, cuda_stream_);
+    status =
+      BroadcastTo(simplified_inp_shape, simplified_out_shape, piv_array, piv_broadcast, device_id_, cuda_stream_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     a_broadcast = a_col_major;
     b_broadcast = b_col_major;
@@ -197,8 +205,9 @@ bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
                                                            piv_broadcast, b_device_array, &info, batch_num_out_),
                                        "For 'LuSolveGpuKernelMod', it launch cublasXgetrfBatched failed");
 
-  MatrixTranspose(b_broadcast, LongToSize(batch_num_out_ * m_ * k_), SizeToInt(k_), SizeToInt(m_), output, device_id_,
-                  cuda_stream_);
+  status = MatrixTranspose(b_broadcast, LongToSize(batch_num_out_ * m_ * k_), SizeToInt(k_), SizeToInt(m_), output,
+                           device_id_, cuda_stream_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

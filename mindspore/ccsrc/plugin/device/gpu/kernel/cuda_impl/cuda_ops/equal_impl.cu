@@ -24,14 +24,14 @@ __global__ void EqualKernel(const T *input1, const T *input2, T *output, const i
 }
 
 template <typename T>
-void Equal(const size_t input_size, const T *input1, const T *input2, T *output, cudaStream_t stream,
-           const uint32_t device_id) {
+cudaError_t Equal(const size_t input_size, const T *input1, const T *input2, T *output, cudaStream_t stream,
+                  const uint32_t device_id) {
   EqualKernel<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(input1, input2, output,
                                                                                           input_size);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void Equal(const size_t input_size, const float *input1, const float *input2, float *output,
-                                    cudaStream_t stream, const uint32_t device_id);
-template CUDA_LIB_EXPORT void Equal(const size_t input_size, const int *input1, const int *input2, int *output,
-                                    cudaStream_t stream, const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t Equal(const size_t input_size, const float *input1, const float *input2,
+                                           float *output, cudaStream_t stream, const uint32_t device_id);
+template CUDA_LIB_EXPORT cudaError_t Equal(const size_t input_size, const int *input1, const int *input2, int *output,
+                                           cudaStream_t stream, const uint32_t device_id);

@@ -58,7 +58,8 @@ class CastAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT(
       kernel_node_, cudaMemcpyAsync(size_dev, size_.get(), sizeof(size_t) * num_input_, cudaMemcpyHostToDevice, stream),
       "cudaMemCPY failed")
-    CastAllKernel(inputs_dev, outputs_dev, max_, num_input_, size_dev, stream);
+    auto status = CastAllKernel(inputs_dev, outputs_dev, max_, num_input_, size_dev, stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

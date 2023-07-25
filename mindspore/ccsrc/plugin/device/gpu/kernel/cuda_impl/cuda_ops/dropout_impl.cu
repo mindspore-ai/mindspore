@@ -30,10 +30,11 @@ __global__ void DropoutForwardKernel(const T *input, T *mask, T *output, float *
 }
 
 template <typename T>
-void DropoutForward(const T *input, T *mask, T *output, float *mask_f, size_t num_count, float drop_prob,
-                    cudaStream_t cuda_stream) {
+cudaError_t DropoutForward(const T *input, T *mask, T *output, float *mask_f, size_t num_count, float drop_prob,
+                           cudaStream_t cuda_stream) {
   DropoutForwardKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(input, mask, output, mask_f, num_count,
                                                                                drop_prob);
+  return GetCudaStatus();
 }
 template <typename T>
 __global__ void DropoutBackwardKernel(const T *dy, const T *mask, T *dx, size_t num_count, float keep_prob) {
@@ -44,8 +45,10 @@ __global__ void DropoutBackwardKernel(const T *dy, const T *mask, T *dx, size_t 
 }
 
 template <typename T>
-void DropoutBackward(const T *dy, const T *mask, T *dx, size_t num_count, float drop_prob, cudaStream_t cuda_stream) {
+cudaError_t DropoutBackward(const T *dy, const T *mask, T *dx, size_t num_count, float drop_prob,
+                            cudaStream_t cuda_stream) {
   DropoutBackwardKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(dy, mask, dx, num_count, drop_prob);
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -132,63 +135,74 @@ __global__ void FusedDropoutOnlyOutputKernel(const T *input, T *output, size_t n
 }
 
 template <typename T>
-void FusedDropoutForward(const T *input, T *mask, T *output, size_t num_count, float drop_prob, uint64_t seed,
-                         uint64_t seed_offset, cudaStream_t cuda_stream) {
+cudaError_t FusedDropoutForward(const T *input, T *mask, T *output, size_t num_count, float drop_prob, uint64_t seed,
+                                uint64_t seed_offset, cudaStream_t cuda_stream) {
   FusedDropoutForwardKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(input, mask, output, num_count,
                                                                                     drop_prob, seed, seed_offset);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void FusedDropoutForwardOnlyMask(T *mask, size_t num_count, float drop_prob, uint64_t seed, uint64_t seed_offset,
-                                 cudaStream_t cuda_stream) {
+cudaError_t FusedDropoutForwardOnlyMask(T *mask, size_t num_count, float drop_prob, uint64_t seed, uint64_t seed_offset,
+                                        cudaStream_t cuda_stream) {
   FusedDropoutForwardOnlyMaskKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(mask, num_count, drop_prob,
                                                                                             seed, seed_offset);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void FusedDropoutForwardOnlyOutput(const T *input, T *output, size_t num_count, float drop_prob, uint64_t seed,
-                                   uint64_t seed_offset, cudaStream_t cuda_stream) {
+cudaError_t FusedDropoutForwardOnlyOutput(const T *input, T *output, size_t num_count, float drop_prob, uint64_t seed,
+                                          uint64_t seed_offset, cudaStream_t cuda_stream) {
   FusedDropoutOnlyOutputKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(input, output, num_count,
                                                                                        drop_prob, seed, seed_offset);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void DropoutForward<float>(const float *input, float *mask, float *output, float *mask_f,
-                                                    size_t num_count, float drop_prob, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutForward<half>(const half *input, half *mask, half *output, float *mask_f,
-                                                   size_t num_count, float drop_prob, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutForward<double>(const double *input, double *mask, double *output, float *mask_f,
-                                                     size_t num_count, float drop_prob, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutBackward<float>(const float *dy, const float *mask, float *dx, size_t num_count,
-                                                     float drop_prob, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutBackward<half>(const half *dy, const half *mask, half *dx, size_t num_count,
-                                                    float drop_prob, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void DropoutBackward<double>(const double *dy, const double *mask, double *dx,
-                                                      size_t num_count, float drop_prob, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutForward<float>(const float *input, float *mask, float *output,
+                                                           float *mask_f, size_t num_count, float drop_prob,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutForward<half>(const half *input, half *mask, half *output, float *mask_f,
+                                                          size_t num_count, float drop_prob, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutForward<double>(const double *input, double *mask, double *output,
+                                                            float *mask_f, size_t num_count, float drop_prob,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutBackward<float>(const float *dy, const float *mask, float *dx,
+                                                            size_t num_count, float drop_prob,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutBackward<half>(const half *dy, const half *mask, half *dx, size_t num_count,
+                                                           float drop_prob, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t DropoutBackward<double>(const double *dy, const double *mask, double *dx,
+                                                             size_t num_count, float drop_prob,
+                                                             cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void FusedDropoutForward<float>(const float *input, float *mask, float *output,
-                                                         size_t num_count, float drop_prob, uint64_t seed,
-                                                         uint64_t seed_offset, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FusedDropoutForward<half>(const half *input, half *mask, half *output, size_t num_count,
-                                                        float drop_prob, uint64_t seed, uint64_t seed_offset,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FusedDropoutForward<double>(const double *input, double *mask, double *output,
-                                                          size_t num_count, float drop_prob, uint64_t seed,
-                                                          uint64_t seed_offset, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyMask<float>(float *mask, size_t num_count, float drop_prob,
-                                                                 uint64_t seed, uint64_t seed_offset,
-                                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyMask<half>(half *mask, size_t num_count, float drop_prob,
-                                                                uint64_t seed, uint64_t seed_offset,
-                                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyMask<double>(double *mask, size_t num_count, float drop_prob,
-                                                                  uint64_t seed, uint64_t seed_offset,
-                                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyOutput<float>(const float *input, float *output, size_t num_count,
-                                                                   float drop_prob, uint64_t seed, uint64_t seed_offset,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyOutput<half>(const half *input, half *output, size_t num_count,
-                                                                  float drop_prob, uint64_t seed, uint64_t seed_offset,
-                                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyOutput<double>(const double *input, double *output,
-                                                                    size_t num_count, float drop_prob, uint64_t seed,
-                                                                    uint64_t seed_offset, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FusedDropoutForward<float>(const float *input, float *mask, float *output,
+                                                                size_t num_count, float drop_prob, uint64_t seed,
+                                                                uint64_t seed_offset, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FusedDropoutForward<half>(const half *input, half *mask, half *output,
+                                                               size_t num_count, float drop_prob, uint64_t seed,
+                                                               uint64_t seed_offset, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FusedDropoutForward<double>(const double *input, double *mask, double *output,
+                                                                 size_t num_count, float drop_prob, uint64_t seed,
+                                                                 uint64_t seed_offset, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FusedDropoutForwardOnlyMask<float>(float *mask, size_t num_count, float drop_prob,
+                                                                        uint64_t seed, uint64_t seed_offset,
+                                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FusedDropoutForwardOnlyMask<half>(half *mask, size_t num_count, float drop_prob,
+                                                                       uint64_t seed, uint64_t seed_offset,
+                                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FusedDropoutForwardOnlyMask<double>(double *mask, size_t num_count,
+                                                                         float drop_prob, uint64_t seed,
+                                                                         uint64_t seed_offset,
+                                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FusedDropoutForwardOnlyOutput<float>(const float *input, float *output,
+                                                                          size_t num_count, float drop_prob,
+                                                                          uint64_t seed, uint64_t seed_offset,
+                                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FusedDropoutForwardOnlyOutput<half>(const half *input, half *output,
+                                                                         size_t num_count, float drop_prob,
+                                                                         uint64_t seed, uint64_t seed_offset,
+                                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FusedDropoutForwardOnlyOutput<double>(const double *input, double *output,
+                                                                           size_t num_count, float drop_prob,
+                                                                           uint64_t seed, uint64_t seed_offset,
+                                                                           cudaStream_t cuda_stream);

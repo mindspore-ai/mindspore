@@ -58,20 +58,23 @@ __global__ void Diagonal(const size_t out_size, const T *input, const size_t *in
   }
 }
 template <typename T>
-void CalDiagonal(const size_t size, const T *input, const size_t *input_shape, const size_t shape_size,
-                 const size_t left_dim, const size_t right_dim, T *output, cudaStream_t cuda_stream) {
+cudaError_t CalDiagonal(const size_t size, const T *input, const size_t *input_shape, const size_t shape_size,
+                        const size_t left_dim, const size_t right_dim, T *output, cudaStream_t cuda_stream) {
   Diagonal<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, input_shape, shape_size, left_dim, right_dim,
                                                               output);
+  return GetCudaStatus();
 }
-template CUDA_LIB_EXPORT void CalDiagonal<double>(const size_t size, const double *input, const size_t *input_shape,
-                                                  const size_t shape_size, const size_t left_dim,
-                                                  const size_t right_dim, double *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiagonal<float>(const size_t size, const float *input, const size_t *input_shape,
-                                                 const size_t shape_size, const size_t left_dim, const size_t right_dim,
-                                                 float *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiagonal<half>(const size_t size, const half *input, const size_t *input_shape,
-                                                const size_t shape_size, const size_t left_dim, const size_t right_dim,
-                                                half *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagonal<double>(const size_t size, const double *input,
+                                                         const size_t *input_shape, const size_t shape_size,
+                                                         const size_t left_dim, const size_t right_dim, double *output,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagonal<float>(const size_t size, const float *input,
+                                                        const size_t *input_shape, const size_t shape_size,
+                                                        const size_t left_dim, const size_t right_dim, float *output,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagonal<half>(const size_t size, const half *input, const size_t *input_shape,
+                                                       const size_t shape_size, const size_t left_dim,
+                                                       const size_t right_dim, half *output, cudaStream_t cuda_stream);
 template <typename T>
 __global__ void DiagonalGrad(const size_t d_size, const T *dout, const size_t *inp_shape, const size_t shape_size,
                              const size_t left_dim, const size_t right_dim, T *d_inp) {
@@ -110,20 +113,24 @@ __global__ void DiagonalGrad(const size_t d_size, const T *dout, const size_t *i
   }
 }
 template <typename T>
-void CalDiagonalGrad(const size_t d_size, const T *dout, const size_t *input_shape, const size_t shape_size,
-                     const size_t left_dim, const size_t right_dim, T *d_inp, cudaStream_t cuda_stream) {
+cudaError_t CalDiagonalGrad(const size_t d_size, const T *dout, const size_t *input_shape, const size_t shape_size,
+                            const size_t left_dim, const size_t right_dim, T *d_inp, cudaStream_t cuda_stream) {
   DiagonalGrad<<<GET_BLOCKS(d_size), GET_THREADS, 0, cuda_stream>>>(d_size, dout, input_shape, shape_size, left_dim,
                                                                     right_dim, d_inp);
+  return GetCudaStatus();
 }
-template CUDA_LIB_EXPORT void CalDiagonalGrad<double>(const size_t size, const double *dout, const size_t *input_shape,
-                                                      const size_t shape_size, const size_t left_dim,
-                                                      const size_t right_dim, double *d_inp, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiagonalGrad<float>(const size_t size, const float *dout, const size_t *input_shape,
-                                                     const size_t shape_size, const size_t left_dim,
-                                                     const size_t right_dim, float *d_inp, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDiagonalGrad<half>(const size_t size, const half *dout, const size_t *input_shape,
-                                                    const size_t shape_size, const size_t left_dim,
-                                                    const size_t right_dim, half *d_inp, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagonalGrad<double>(const size_t size, const double *dout,
+                                                             const size_t *input_shape, const size_t shape_size,
+                                                             const size_t left_dim, const size_t right_dim,
+                                                             double *d_inp, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagonalGrad<float>(const size_t size, const float *dout,
+                                                            const size_t *input_shape, const size_t shape_size,
+                                                            const size_t left_dim, const size_t right_dim, float *d_inp,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDiagonalGrad<half>(const size_t size, const half *dout,
+                                                           const size_t *input_shape, const size_t shape_size,
+                                                           const size_t left_dim, const size_t right_dim, half *d_inp,
+                                                           cudaStream_t cuda_stream);
 template <typename T>
 __global__ void ReduceSum(const size_t out_size, const T *input, T *output, const size_t *out_shape,
                           const size_t shape_size, const size_t reduce_dim, const size_t dim_val) {
@@ -193,10 +200,12 @@ __global__ void ReduceSum(const size_t out_size, const half *input, half *output
 }
 
 template <typename T>
-void CalReduceSum(const size_t out_size, const T *input, T *output, const size_t *out_shape, const size_t shape_size,
-                  const size_t reduce_dim, const size_t dim_val, cudaStream_t cuda_stream) {
+cudaError_t CalReduceSum(const size_t out_size, const T *input, T *output, const size_t *out_shape,
+                         const size_t shape_size, const size_t reduce_dim, const size_t dim_val,
+                         cudaStream_t cuda_stream) {
   ReduceSum<<<GET_BLOCKS(out_size), GET_THREADS, 0, cuda_stream>>>(out_size, input, output, out_shape, shape_size,
                                                                    reduce_dim, dim_val);
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -262,7 +271,7 @@ __global__ void Dot(const size_t size, T *input_a, const T *input_b, double *out
 }
 
 template <typename T>
-void CalDot(const size_t size, T *input_a, const T *input_b, T *output, cudaStream_t cuda_stream) {
+cudaError_t CalDot(const size_t size, T *input_a, const T *input_b, T *output, cudaStream_t cuda_stream) {
   int threads_num = GET_THREADS;
   int share_mem_size = GET_THREADS * sizeof(double);
   double *cur_out;
@@ -270,14 +279,15 @@ void CalDot(const size_t size, T *input_a, const T *input_b, T *output, cudaStre
   cudaMemset(cur_out, 0, sizeof(double) * 1);
   Dot<<<GET_BLOCKS(size), GET_THREADS, share_mem_size, cuda_stream>>>(size, input_a, input_b, cur_out, output);
   cudaFree(cur_out);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalDot<double>(const size_t size, double *input_a, const double *input_b, double *output,
-                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDot<float>(const size_t size, float *input_a, const float *input_b, float *output,
-                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDot<half>(const size_t size, half *input_a, const half *input_b, half *output,
-                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDot<double>(const size_t size, double *input_a, const double *input_b,
+                                                    double *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDot<float>(const size_t size, float *input_a, const float *input_b,
+                                                   float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDot<half>(const size_t size, half *input_a, const half *input_b, half *output,
+                                                  cudaStream_t cuda_stream);
 
 template <typename T>
 __global__ void DotGrad(const size_t size, const T dout, T *mid_res, T *input_b, T *input_a) {
@@ -287,15 +297,16 @@ __global__ void DotGrad(const size_t size, const T dout, T *mid_res, T *input_b,
   }
 }
 template <typename T>
-void CalDotGrad(const size_t size, const T dout, T *mid_res, T *input_b, T *input_a, cudaStream_t cuda_stream) {
+cudaError_t CalDotGrad(const size_t size, const T dout, T *mid_res, T *input_b, T *input_a, cudaStream_t cuda_stream) {
   DotGrad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dout, mid_res, input_b, input_a);
+  return GetCudaStatus();
 }
-template CUDA_LIB_EXPORT void CalDotGrad<double>(const size_t size, const double dout, double *mid_res, double *input_b,
-                                                 double *input_a, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDotGrad<float>(const size_t size, const float dout, float *mid_res, float *input_b,
-                                                float *input_a, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalDotGrad<half>(const size_t size, const half dout, half *mid_res, half *input_b,
-                                               half *input_a, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDotGrad<double>(const size_t size, const double dout, double *mid_res,
+                                                        double *input_b, double *input_a, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDotGrad<float>(const size_t size, const float dout, float *mid_res,
+                                                       float *input_b, float *input_a, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalDotGrad<half>(const size_t size, const half dout, half *mid_res, half *input_b,
+                                                      half *input_a, cudaStream_t cuda_stream);
 // Element-wise ArithMetic
 template <typename T>
 __global__ void ElewiseArithMulKernel(const size_t nums, const T *x0, const T *x1, T *y) {
@@ -331,26 +342,30 @@ __global__ void BroadcastArithMulKernel(const size_t shape_len, const size_t *lf
   }
 }
 template <typename T>
-void CalMul(const bool broadcast_flag, const size_t shape_len, const size_t *lft_shape, const size_t lft_num,
-            const size_t *rht_shape, const size_t rht_num, const size_t *out_shape, const size_t out_num, const T *x0,
-            const T *x1, T *y, cudaStream_t stream) {
+cudaError_t CalMul(const bool broadcast_flag, const size_t shape_len, const size_t *lft_shape, const size_t lft_num,
+                   const size_t *rht_shape, const size_t rht_num, const size_t *out_shape, const size_t out_num,
+                   const T *x0, const T *x1, T *y, cudaStream_t stream) {
   if (broadcast_flag) {
     BroadcastArithMulKernel<<<GET_BLOCKS(out_num), GET_THREADS, 0, stream>>>(shape_len, lft_shape, lft_num, rht_shape,
                                                                              rht_num, out_shape, out_num, x0, x1, y);
   } else {
     ElewiseArithMulKernel<<<GET_BLOCKS(out_num), GET_THREADS, 0, stream>>>(out_num, x0, x1, y);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalMul<double>(const bool broadcast_flag, const size_t shape_len, const size_t *lft_shape,
-                                             const size_t lft_num, const size_t *rht_shape, const size_t rht_num,
-                                             const size_t *out_shape, const size_t out_num, const double *x0,
-                                             const double *x1, double *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalMul<float>(const bool broadcast_flag, const size_t shape_len, const size_t *lft_shape,
-                                            const size_t lft_num, const size_t *rht_shape, const size_t rht_num,
-                                            const size_t *out_shape, const size_t out_num, const float *x0,
-                                            const float *x1, float *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalMul<half>(const bool broadcast_flag, const size_t shape_len, const size_t *lft_shape,
-                                           const size_t lft_num, const size_t *rht_shape, const size_t rht_num,
-                                           const size_t *out_shape, const size_t out_num, const half *x0,
-                                           const half *x1, half *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalMul<double>(const bool broadcast_flag, const size_t shape_len,
+                                                    const size_t *lft_shape, const size_t lft_num,
+                                                    const size_t *rht_shape, const size_t rht_num,
+                                                    const size_t *out_shape, const size_t out_num, const double *x0,
+                                                    const double *x1, double *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalMul<float>(const bool broadcast_flag, const size_t shape_len,
+                                                   const size_t *lft_shape, const size_t lft_num,
+                                                   const size_t *rht_shape, const size_t rht_num,
+                                                   const size_t *out_shape, const size_t out_num, const float *x0,
+                                                   const float *x1, float *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalMul<half>(const bool broadcast_flag, const size_t shape_len,
+                                                  const size_t *lft_shape, const size_t lft_num,
+                                                  const size_t *rht_shape, const size_t rht_num,
+                                                  const size_t *out_shape, const size_t out_num, const half *x0,
+                                                  const half *x1, half *y, cudaStream_t stream);

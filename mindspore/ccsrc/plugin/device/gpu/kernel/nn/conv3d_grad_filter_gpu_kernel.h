@@ -89,9 +89,10 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
     const float beta = 0;
     if (use_pad_) {
       T *padded = GetDeviceAddress<T>(workspace, 1);
-      CalPad3d(padded_size_ / sizeof(T), x, n_, c_, old_depth_, old_height_, old_width_, old_depth_ + pad_depth_,
-               old_height_ + pad_height_, old_width_ + pad_width_, pad_head_, pad_top_, pad_left_, pad_value_, padded,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto status = CalPad3d(padded_size_ / sizeof(T), x, n_, c_, old_depth_, old_height_, old_width_,
+                             old_depth_ + pad_depth_, old_height_ + pad_height_, old_width_ + pad_width_, pad_head_,
+                             pad_top_, pad_left_, pad_value_, padded, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnConvolutionBackwardFilter(cudnn_handle_, &alpha, padded_descriptor_, padded, dy_desc_, dy, conv_desc_,
                                        algo_, work_space, workspace_size_, &beta, dw_desc_, dw),

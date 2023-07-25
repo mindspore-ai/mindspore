@@ -49,12 +49,12 @@ class TransformOutputIterator {
   typedef TransformOutputIterator self_type;  ///< My own type
   typedef OffsetT difference_type;            ///< Type to express the result of subtracting one iterator from another
 
-  typedef void value_type;                    ///< In "cub/agent/agent_reduce.cuh"
-                                              ///< OutputT = (if output iterator's value type if void) ?
-                                              ///< then the input iterator's value type,
-                                              ///< else the output iterator's value type
+  typedef void value_type;  ///< In "cub/agent/agent_reduce.cuh"
+                            ///< OutputT = (if output iterator's value type if void) ?
+                            ///< then the input iterator's value type,
+                            ///< else the output iterator's value type
   typedef void pointer;
-  typedef Reference reference;                ///< The type of a reference to an element the iterator can point to
+  typedef Reference reference;  ///< The type of a reference to an element the iterator can point to
   typedef std::random_access_iterator_tag iterator_category;  ///< The iterator category
 
   OutputType *output_ptr;

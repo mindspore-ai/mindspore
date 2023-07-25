@@ -57,18 +57,20 @@ __global__ void FastGeluKernel(size_t size, half2 *input_addr, half2 *output_add
 }
 
 template <typename T>
-void FastGelu(size_t size, T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
+cudaError_t FastGelu(size_t size, T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
   FastGeluKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
+  return GetCudaStatus();
 }
 
 template <>
-void FastGelu(size_t size, half *input_addr, half *output_addr, cudaStream_t cuda_stream) {
+cudaError_t FastGelu(size_t size, half *input_addr, half *output_addr, cudaStream_t cuda_stream) {
   if (size % 2 == 0) {
     FastGeluKernel<half2><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
       size / 2, reinterpret_cast<half2 *>(input_addr), reinterpret_cast<half2 *>(output_addr));
   } else {
     FastGeluKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
   }
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -113,12 +115,13 @@ __global__ void FastGeluGradKernel(size_t size, half *dy_addr, half *x_addr, hal
 }
 
 template <typename T>
-void FastGeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr, cudaStream_t cuda_stream) {
+cudaError_t FastGeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr, cudaStream_t cuda_stream) {
   FastGeluGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy_addr, x_addr, dx_addr);
+  return GetCudaStatus();
 }
 
 template <>
-void FastGeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr, cudaStream_t cuda_stream) {
+cudaError_t FastGeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr, cudaStream_t cuda_stream) {
   if (size % 2 == 0) {
     FastGeluGradKernel<half2><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
       size / 2, reinterpret_cast<half2 *>(dy_addr), reinterpret_cast<half2 *>(x_addr),
@@ -126,11 +129,14 @@ void FastGeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr,
   } else {
     FastGeluGradKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy_addr, x_addr, dx_addr);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void FastGelu(size_t size, float *input_addr, float *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FastGelu(size_t size, half *input_addr, half *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FastGeluGradKernel(size_t size, float *dy_addr, float *x_addr, float *dx_addr,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FastGeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr,
-                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FastGelu(size_t size, float *input_addr, float *output_addr,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FastGelu(size_t size, half *input_addr, half *output_addr,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FastGeluGradKernel(size_t size, float *dy_addr, float *x_addr, float *dx_addr,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t FastGeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr,
+                                                        cudaStream_t cuda_stream);

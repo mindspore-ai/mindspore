@@ -190,9 +190,10 @@ bool SparseDenseCwiseOperationGpuKernelMod::LaunchKernel(const std::vector<Addre
   }
   bool isNotNeedBcast_ = (dense_shape_ == sparse_shape || dense_num_ == 1);
   if (isNotNeedBcast_) {
-    CalSparseDenseCwiseOperationNoBcastCompute(op_func_type_, x1_indices, x1_values, x1_shape, x2, y, dimension_,
-                                               value_num_, dense_dims_, device_id_,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr_));
+    auto status = CalSparseDenseCwiseOperationNoBcastCompute(op_func_type_, x1_indices, x1_values, x1_shape, x2, y,
+                                                             dimension_, value_num_, dense_dims_, device_id_,
+                                                             reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else if (dense_dims_ <= dimension_) {
     size_t offset_x = sparse_shape.size() - dense_shape_.size();
     for (size_t i = 0; i < dense_shape_.size(); ++i) {
@@ -213,8 +214,10 @@ bool SparseDenseCwiseOperationGpuKernelMod::LaunchKernel(const std::vector<Addre
       }
     }
 
-    CalSparseDenseCwiseOperationBcastCompute(op_func_type_, x1_indices, x1_values, x1_shape, x2, y, i_, o_, dimension_,
-                                             value_num_, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    auto status = CalSparseDenseCwiseOperationBcastCompute(op_func_type_, x1_indices, x1_values, x1_shape, x2, y, i_,
+                                                           o_, dimension_, value_num_, device_id_,
+                                                           reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', dims of 'x2' should be smaller or equal to Number of"
                   << "elements of 'x1_shape'. Because broadcast direction can only be from dense to sparse."

@@ -23,7 +23,8 @@ __global__ void LogNormalReverseHalf(const half *input, half *output, const size
   }
 }
 
-void CalLogNormalReverseHalf(const half *input, half *output, const size_t elem_num, float *mask_h,
-                             cudaStream_t cuda_stream_) {
+cudaError_t CalLogNormalReverseHalf(const half *input, half *output, const size_t elem_num, float *mask_h,
+                                    cudaStream_t cuda_stream_) {
   LogNormalReverseHalf<<<GET_BLOCKS(elem_num), GET_THREADS, 0, cuda_stream_>>>(input, output, elem_num, mask_h);
+  return GetCudaStatus();
 }

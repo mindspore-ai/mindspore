@@ -79,8 +79,9 @@ bool RandomPoissonGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   curandState *devStates = nullptr;
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
   devStates = reinterpret_cast<curandState *>(workspace_addr);
-  RandomPoisson(seed_, seed2_, devStates, rate_addr, rate_elements_, output, output_elements_,
-                reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = RandomPoisson(seed_, seed2_, devStates, rate_addr, rate_elements_, output, output_elements_,
+                              reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

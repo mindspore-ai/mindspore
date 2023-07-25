@@ -37,22 +37,20 @@ static std::map<std::string, GridSamplerPaddingMode> kGridSamplerPaddingMap{
   {"reflection", GridSamplerPaddingMode::REFLECTION}};
 
 template <typename T>
-CUDA_LIB_EXPORT void GridSampler2D(const size_t size, const T *input_addr, const T *grid_addr, T *output_addr,
-                                   const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
-                                   const std::vector<size_t> &output_shape, const std::vector<size_t> &input_stride,
-                                   const std::vector<size_t> &grid_stride, const std::vector<size_t> &output_stride,
-                                   const GridSamplerInterpolationMode interpolation_mode,
-                                   const GridSamplerPaddingMode padding_mode, const bool align_corners,
-                                   cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t GridSampler2D(
+  const size_t size, const T *input_addr, const T *grid_addr, T *output_addr, const std::vector<size_t> &input_shape,
+  const std::vector<size_t> &grid_shape, const std::vector<size_t> &output_shape,
+  const std::vector<size_t> &input_stride, const std::vector<size_t> &grid_stride,
+  const std::vector<size_t> &output_stride, const GridSamplerInterpolationMode interpolation_mode,
+  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void GridSampler3D(const size_t size, const T *input_addr, const T *grid_addr, T *output_addr,
-                                   const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
-                                   const std::vector<size_t> &output_shape, const std::vector<size_t> &input_stride,
-                                   const std::vector<size_t> &grid_stride, const std::vector<size_t> &output_stride,
-                                   const GridSamplerInterpolationMode interpolation_mode,
-                                   const GridSamplerPaddingMode padding_mode, const bool align_corners,
-                                   cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t GridSampler3D(
+  const size_t size, const T *input_addr, const T *grid_addr, T *output_addr, const std::vector<size_t> &input_shape,
+  const std::vector<size_t> &grid_shape, const std::vector<size_t> &output_shape,
+  const std::vector<size_t> &input_stride, const std::vector<size_t> &grid_stride,
+  const std::vector<size_t> &output_stride, const GridSamplerInterpolationMode interpolation_mode,
+  const GridSamplerPaddingMode padding_mode, const bool align_corners, cudaStream_t stream);
 
 template <typename T>
 static __forceinline__ __device__ T clip_coordinates(T in, int clip_limit) {
@@ -137,8 +135,7 @@ static __forceinline__ __device__ T grid_sampler_unnormalize(T coord, const int 
 }
 
 template <typename T>
-static __forceinline__ __device__ T compute_coordinates(T coord, const size_t size,
-                                                        GridSamplerPaddingMode padding_mode,
+static __forceinline__ __device__ T compute_coordinates(T coord, const size_t size, GridSamplerPaddingMode padding_mode,
                                                         bool align_corners) {
   if (padding_mode == GridSamplerPaddingMode::REFLECTION) {
     if (!align_corners) {
@@ -159,8 +156,7 @@ template <typename T>
 static __forceinline__ __device__ T grid_sampler_compute_source_index(T coord, size_t size,
                                                                       GridSamplerPaddingMode padding_mode,
                                                                       bool align_corners) {
-  coord = compute_coordinates(grid_sampler_unnormalize(coord, size, align_corners),
-                              size, padding_mode, align_corners);
+  coord = compute_coordinates(grid_sampler_unnormalize(coord, size, align_corners), size, padding_mode, align_corners);
   return coord;
 }
 
@@ -192,7 +188,7 @@ __device__ __forceinline__ static half cubic_interp1d(half x0, half x1, half x2,
   get_cubic_upsampling_coefficients<S>(coeffs, t);
 
   return __float2half(__half2float(x0) * coeffs[0] + __half2float(x1) * coeffs[1] + __half2float(x2) * coeffs[2] +
-         __half2float(x3) * coeffs[3]);
+                      __half2float(x3) * coeffs[3]);
 }
 
 template <typename T>

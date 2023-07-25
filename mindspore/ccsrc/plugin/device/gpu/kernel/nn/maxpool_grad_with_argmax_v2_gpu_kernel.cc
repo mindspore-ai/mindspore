@@ -38,8 +38,9 @@ bool MaxPoolGradWithArgmaxV2GpuKernelMod::LaunchKernel(const std::vector<Address
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(dx_addr, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'MaxPoolWithArgmaxGradV2' failed to cudaMemsetAsync");
-  CalMaxPoolGradWithArgmaxV2(dy_addr, index_addr, x_hw_, x_chw_, x_nchw_, dy_hw_, dy_chw_, dy_nchw_, dx_addr,
-                             device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalMaxPoolGradWithArgmaxV2(dy_addr, index_addr, x_hw_, x_chw_, x_nchw_, dy_hw_, dy_chw_, dy_nchw_,
+                                           dx_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

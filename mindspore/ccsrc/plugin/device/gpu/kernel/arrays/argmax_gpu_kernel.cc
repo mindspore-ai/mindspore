@@ -25,8 +25,9 @@ bool ArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   T *input_ptr = GetDeviceAddress<T>(inputs, 0);
   S *output_ptr = GetDeviceAddress<S>(outputs, 0);
   // call cuda kernel
-  CalArgmax(input_ptr, bound, outer_size_, inner_size_, output_ptr, device_id_,
-            reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalArgmax(input_ptr, bound, outer_size_, inner_size_, output_ptr, device_id_,
+                          reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

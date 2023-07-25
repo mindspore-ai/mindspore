@@ -286,9 +286,9 @@ __global__ void MultiMarginLossReduceKernel(int dim, T *output) {
 
 // namespace str
 template <typename T>
-void MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim, const T *input,
-                     const int64_t *target, const T *weight, T *output, const uint32_t &device_id,
-                     cudaStream_t cuda_stream) {
+cudaError_t MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim, const T *input,
+                            const int64_t *target, const T *weight, T *output, const uint32_t &device_id,
+                            cudaStream_t cuda_stream) {
   dim3 blocks(nframe);
   dim3 threads(MULTIMARGIN_THREADS);
   bool sizeAverage = false;
@@ -307,13 +307,14 @@ void MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int
     int reduce_dim = nframe;
     MultiMarginLossReduceKernel<<<reduce_blocks, reduce_threads, 0, cuda_stream>>>(reduce_dim, output);
   }
+  return GetCudaStatus();
 }
 
 // namespace str
 template <>
-void MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim, const half *input,
-                     const int64_t *target, const half *weight, half *output, const uint32_t &device_id,
-                     cudaStream_t cuda_stream) {
+cudaError_t MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim, const half *input,
+                            const int64_t *target, const half *weight, half *output, const uint32_t &device_id,
+                            cudaStream_t cuda_stream) {
   dim3 blocks(nframe);
   dim3 threads(128);
   bool sizeAverage = false;
@@ -332,17 +333,18 @@ void MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int
     int reduce_dim = nframe;
     MultiMarginLossReduceKernel_half<<<reduce_blocks, reduce_threads, 0, cuda_stream>>>(reduce_dim, output);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void MultiMarginLoss<float>(int64_t p, float margin, int64_t reduction, int nframe, int dim,
-                                                     const float *input, const int64_t *target, const float *weight,
-                                                     float *output, const uint32_t &device_id,
-                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MultiMarginLoss<double>(int64_t p, float margin, int64_t reduction, int nframe, int dim,
-                                                      const double *input, const int64_t *target, const double *weight,
-                                                      double *output, const uint32_t &device_id,
-                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MultiMarginLoss<half>(int64_t p, float margin, int64_t reduction, int nframe, int dim,
-                                                    const half *input, const int64_t *target, const half *weight,
-                                                    half *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MultiMarginLoss<float>(int64_t p, float margin, int64_t reduction, int nframe,
+                                                            int dim, const float *input, const int64_t *target,
+                                                            const float *weight, float *output,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MultiMarginLoss<double>(int64_t p, float margin, int64_t reduction, int nframe,
+                                                             int dim, const double *input, const int64_t *target,
+                                                             const double *weight, double *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t MultiMarginLoss<half>(int64_t p, float margin, int64_t reduction, int nframe,
+                                                           int dim, const half *input, const int64_t *target,
+                                                           const half *weight, half *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);

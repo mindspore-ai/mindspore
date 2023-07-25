@@ -166,7 +166,8 @@ bool InstanceNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
                                         epsilon_, ith_save_mean, ith_save_variance, activation_desc_, workspace_addr,
                                         workspace_size_, reserve_addr, 0),
       "For 'InstanceNormGradGpuKernelMod', it launch cudnnBatchNormalizationBackwardEx failed");
-    ComputeMean(batch_, channel_, ith_dgamma, ith_dbeta, ws_dgamma, ws_dbeta, stream_ptr_);
+    auto status = ComputeMean(batch_, channel_, ith_dgamma, ith_dbeta, ws_dgamma, ws_dbeta, stream_ptr_);
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 
   return true;

@@ -173,7 +173,7 @@ cudaError_t ApplyAdaptiveAvgPool2DGrad(const uint size, const uint input_height,
                                        float *workspace, cudaStream_t cuda_stream) {
   AdaptiveAvgPool2DGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, input_height, input_width, output_height, output_width, input_data, output_data, workspace);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveAvgPool2DGrad<float>(const uint size, const uint input_height,

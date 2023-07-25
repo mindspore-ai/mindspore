@@ -207,10 +207,11 @@ class FractionalMaxPool3DWithFixedKsizeHelperGpuKernel : public GpuKernelHelperB
       outer_size *= output_shape_[i];
     }
 
-    CalFractionalmaxpool3dwithfixedksize(input_ptr, random_samples_ptr, output_ptr, argmax_ptr, outputD_, outputH_,
-                                         outputW_, inputN_, inputC_, inputD_, inputH_, inputW_, kernelsizeD_,
-                                         kernelsizeH_, kernelsizeW_, outer_size, device_id_,
-                                         reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalFractionalmaxpool3dwithfixedksize(input_ptr, random_samples_ptr, output_ptr, argmax_ptr, outputD_,
+                                                       outputH_, outputW_, inputN_, inputC_, inputD_, inputH_, inputW_,
+                                                       kernelsizeD_, kernelsizeH_, kernelsizeW_, outer_size, device_id_,
+                                                       reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

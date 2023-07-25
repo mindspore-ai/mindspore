@@ -36,9 +36,9 @@ constexpr int kFixedSizeSortKeyDimsSecond = 2;
 constexpr int kFixedSizeSortKeyDimsLastSecond = -2;
 
 template <int A, int sort_size, int items_per_thread, typename K, typename V>
-CUDA_LIB_EXPORT bool SortFixedSize(const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices,
-                                   int64_t key_slice_size, int64_t key_slice_stride,
-                                   const TensorLayoutHelper &value_info, V *value_data, int64_t value_slice_stride,
-                                   bool descending, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t SortFixedSize(const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices,
+                                          int64_t key_slice_size, int64_t key_slice_stride,
+                                          const TensorLayoutHelper &value_info, V *value_data,
+                                          int64_t value_slice_stride, bool descending, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SORT_FIXED_SIZE_CUH_

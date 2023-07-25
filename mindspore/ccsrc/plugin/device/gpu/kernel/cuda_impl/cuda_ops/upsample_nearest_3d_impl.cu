@@ -68,7 +68,7 @@ cudaError_t CalUpsampleNearest3d(const T *input, const int n, const int c, const
                                                                      out_h, out_w, in_cdhw, out_cdhw, in_dhw, out_dhw,
                                                                      out_hw, d_scale, h_scale, w_scale, output);
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalUpsampleNearest3d<double>(const double *input, const int n, const int c,

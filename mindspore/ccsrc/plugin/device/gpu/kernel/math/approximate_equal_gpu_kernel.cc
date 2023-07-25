@@ -80,7 +80,7 @@ bool ApproximateEqualGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   bool *output = GetDeviceAddress<bool>(outputs, 0);
   auto status = CalApproximateEqual(input_elements_, input_x1, input_x2, tolerance_, output, device_id_,
                                     reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

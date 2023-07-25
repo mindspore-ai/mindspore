@@ -19,9 +19,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalCopyUpToLow(const size_t size, T *input, const int64_t rank, T *output,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCopyUpToLow(const size_t size, T *input, const int64_t rank, T *output,
+                                           const uint32_t &device_id, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalCopyLowToUp(const size_t size, T *input, const int64_t rank, T *output,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCopyLowToUp(const size_t size, T *input, const int64_t rank, T *output,
+                                           const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CHOLESKY_INVERSE_IMPL_CUH_

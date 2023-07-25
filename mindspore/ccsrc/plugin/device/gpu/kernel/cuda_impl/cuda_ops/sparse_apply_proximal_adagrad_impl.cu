@@ -82,27 +82,21 @@ __global__ void SparseApplyProximalAdagradUpdate(const size_t size, const size_t
 }
 
 template <typename T>
-void CalSparseApplyProximalAdagrad(const size_t size, const size_t indices_size, const T *learning_rate,
-                                   const T *l1_regularization, const T *l2_regularization, const T *gradient,
-                                   const int *indices, T *variable, T *accumulation, T *variable_out,
-                                   T *accumulation_out, cudaStream_t cuda_stream) {
+cudaError_t CalSparseApplyProximalAdagrad(const size_t size, const size_t indices_size, const T *learning_rate,
+                                          const T *l1_regularization, const T *l2_regularization, const T *gradient,
+                                          const int *indices, T *variable, T *accumulation, T *variable_out,
+                                          T *accumulation_out, cudaStream_t cuda_stream) {
   SparseApplyProximalAdagradUpdate<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, indices_size, learning_rate, l1_regularization, l2_regularization, gradient, indices, variable, accumulation,
     variable_out, accumulation_out);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalSparseApplyProximalAdagrad<float>(const size_t size, const size_t indices_size,
-                                                                   const float *learning_rate,
-                                                                   const float *l1_regularization,
-                                                                   const float *l2_regularization,
-                                                                   const float *gradient, const int *indices,
-                                                                   float *variable, float *accumulation,
-                                                                   float *variable_out, float *accumulation_out,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyProximalAdagrad<half>(const size_t size, const size_t indices_size,
-                                                                  const half *learning_rate,
-                                                                  const half *l1_regularization,
-                                                                  const half *l2_regularization, const half *gradient,
-                                                                  const int *indices, half *variable,
-                                                                  half *accumulation, half *variable_out,
-                                                                  half *accumulation_out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyProximalAdagrad<float>(
+  const size_t size, const size_t indices_size, const float *learning_rate, const float *l1_regularization,
+  const float *l2_regularization, const float *gradient, const int *indices, float *variable, float *accumulation,
+  float *variable_out, float *accumulation_out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyProximalAdagrad<half>(
+  const size_t size, const size_t indices_size, const half *learning_rate, const half *l1_regularization,
+  const half *l2_regularization, const half *gradient, const int *indices, half *variable, half *accumulation,
+  half *variable_out, half *accumulation_out, cudaStream_t cuda_stream);

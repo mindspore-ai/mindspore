@@ -27,14 +27,15 @@ enum BroadcastGradGradOpType {
 };
 
 template <typename T>
-CUDA_LIB_EXPORT void BroadcastGradGrad(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
-                                       const std::vector<size_t> &grad_shape, const size_t &nums,
-                                       BroadcastGradGradOpType op, const T *x1, const T *x2, const T *dy1, const T *dy2,
-                                       T *sopd_grad, const uint32_t &device_id, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t BroadcastGradGrad(const std::vector<size_t> &x1_shape, const std::vector<size_t> &x2_shape,
+                                              const std::vector<size_t> &grad_shape, const size_t &nums,
+                                              BroadcastGradGradOpType op, const T *x1, const T *x2, const T *dy1,
+                                              const T *dy2, T *sopd_grad, const uint32_t &device_id,
+                                              cudaStream_t stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void NoBroadcastGradGrad(const size_t &nums, BroadcastGradGradOpType op, const T *x1, const T *x2,
-                                         const T *dy1, const T *dy2, T *sopd_grad, const uint32_t &device_id,
-                                         cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t NoBroadcastGradGrad(const size_t &nums, BroadcastGradGradOpType op, const T *x1,
+                                                const T *x2, const T *dy1, const T *dy2, T *sopd_grad,
+                                                const uint32_t &device_id, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BROADCAST_GRAD_GRAD_IMPL_CUH_

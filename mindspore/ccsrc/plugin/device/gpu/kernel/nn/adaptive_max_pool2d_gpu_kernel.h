@@ -69,8 +69,9 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
     int64_t *indices_addr = nullptr;
     indices_addr = GetDeviceAddress<int64_t>(outputs, 1);
 
-    ApplyAdaptiveMaxPool2D(size_, input_height_, input_width_, output_height_, output_width_, input_addr, output_addr,
-                           indices_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = ApplyAdaptiveMaxPool2D(size_, input_height_, input_width_, output_height_, output_width_, input_addr,
+                                         output_addr, indices_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

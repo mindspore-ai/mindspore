@@ -31,10 +31,11 @@ __global__ void InitRandStateKernel(uint64_t seed, curandState *state) {
   curand_init(seed, tid, 0, &(state[tid]));
 }
 
-void InitRandState(const size_t &batch_size, const uint64_t &seed, curandState *state, cudaStream_t stream) {
+cudaError_t InitRandState(const size_t &batch_size, const uint64_t &seed, curandState *state, cudaStream_t stream) {
   size_t block = std::min(batch_size, kMaxThreadPerBlock);
   size_t grid = (batch_size + block - 1) / block;
   InitRandStateKernel<<<grid, block, 0, stream>>>(seed, state);
+  return GetCudaStatus();
 }
 
 __global__ void FifoSliceKernel(const uint8_t *input, const size_t *indice, uint8_t *output, size_t batch_size,
@@ -47,13 +48,13 @@ __global__ void FifoSliceKernel(const uint8_t *input, const size_t *indice, uint
   }
 }
 
-void FifoSlice(const uint8_t *input, const size_t *indice, uint8_t *output, size_t batch_size, size_t column,
-               cudaStream_t stream) {
+cudaError_t FifoSlice(const uint8_t *input, const size_t *indice, uint8_t *output, size_t batch_size, size_t column,
+                      cudaStream_t stream) {
   size_t num = batch_size * column;
   size_t block = std::min(num, kMaxThreadPerBlock);
   size_t grid = (num + block - 1) / block;
   FifoSliceKernel<<<grid, block, 0, stream>>>(input, indice, output, batch_size, column);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
@@ -147,55 +148,63 @@ __global__ void SumTreeUpdateKernel(T *tree, size_t capacity, size_t last_idx, f
 
 // Init Segment Tree: Fill all item with the specified value
 template <typename T>
-void SumTreeInit(T *tree, float *max_priority, const size_t &capacity, cudaStream_t stream) {
+cudaError_t SumTreeInit(T *tree, float *max_priority, const size_t &capacity, cudaStream_t stream) {
   size_t size = capacity * kNumSubNode;
   size_t block = std::min(size, kMaxThreadPerBlock);
   size_t grid = (size + block - 1) / block;
   SumTreeInitKernel<<<grid, block, 0, stream>>>(tree, max_priority, size);
+  return GetCudaStatus();
 }
 
 // Push one item to the tree. Set item with max_priority if the priority not provided.
 template <typename T>
-void SumTreePush(T *tree, const float &alpha, const size_t &idx, const size_t &capacity, float *priority,
-                 float *max_priority, cudaStream_t stream) {
+cudaError_t SumTreePush(T *tree, const float &alpha, const size_t &idx, const size_t &capacity, float *priority,
+                        float *max_priority, cudaStream_t stream) {
   size_t idx_in_tree = idx + capacity;
   SumTreePushKernel<<<1, 1, 0, stream>>>(tree, alpha, idx_in_tree, priority, max_priority);
+  return GetCudaStatus();
 }
 
 // Sample a batch item. Return indices and correction weights.
 template <typename T>
-void SumTreeSample(T *tree, curandState *state, const size_t &capacity, float *beta, const size_t &batch_size,
-                   size_t *indices, float *weights, cudaStream_t stream) {
+cudaError_t SumTreeSample(T *tree, curandState *state, const size_t &capacity, float *beta, const size_t &batch_size,
+                          size_t *indices, float *weights, cudaStream_t stream) {
   size_t block = std::min(batch_size, kMaxThreadPerBlock);
   size_t grid = (batch_size + block - 1) / block;
   SumTreeSampleKernel<<<grid, block, 0, stream>>>(tree, state, capacity, beta, batch_size, indices, weights);
+  return GetCudaStatus();
 }
 
-void SumTreeGetGlobalIdx(size_t batch_size, size_t *indices, size_t total_num, size_t capacity, cudaStream_t stream) {
+cudaError_t SumTreeGetGlobalIdx(size_t batch_size, size_t *indices, size_t total_num, size_t capacity,
+                                cudaStream_t stream) {
   size_t block = std::min(batch_size, kMaxThreadPerBlock);
   size_t grid = (batch_size + block - 1) / block;
   SumTreeGetGlobalIdxKernel<<<grid, block, 0, stream>>>(batch_size, indices, total_num, capacity);
+  return GetCudaStatus();
 }
 
 // Update item priority.
 template <typename T>
-void SumTreeUpdate(T *tree, const size_t &capacity, const size_t &last_idx, const float &alpha, float *max_priority,
-                   size_t *indices, float *priorities, const size_t &batch_size, cudaStream_t stream) {
+cudaError_t SumTreeUpdate(T *tree, const size_t &capacity, const size_t &last_idx, const float &alpha,
+                          float *max_priority, size_t *indices, float *priorities, const size_t &batch_size,
+                          cudaStream_t stream) {
   size_t block = std::min(batch_size, kMaxThreadPerBlock);
   size_t grid = (batch_size + block - 1) / block;
   SumTreeUpdateKernel<<<grid, block, 0, stream>>>(tree, capacity, last_idx, alpha, max_priority, indices, priorities,
                                                   batch_size);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SumTreeInit<SumMinTree>(SumMinTree *tree, float *max_priority, const size_t &capacity,
-                                                      cudaStream_t stream);
-template CUDA_LIB_EXPORT void SumTreePush<SumMinTree>(SumMinTree *tree, const float &alpha, const size_t &idx,
-                                                      const size_t &capacity, float *priority, float *max_priority,
-                                                      cudaStream_t stream);
-template CUDA_LIB_EXPORT void SumTreeSample<SumMinTree>(SumMinTree *tree, curandState *state, const size_t &capacity,
-                                                        float *beta, const size_t &batch_size, size_t *indices,
-                                                        float *weights, cudaStream_t stream);
-template CUDA_LIB_EXPORT void SumTreeUpdate<SumMinTree>(SumMinTree *tree, const size_t &capacity,
-                                                        const size_t &last_idx, const float &alpha, float *max_priority,
-                                                        size_t *indices, float *priorities, const size_t &batch_size,
-                                                        cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SumTreeInit<SumMinTree>(SumMinTree *tree, float *max_priority,
+                                                             const size_t &capacity, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SumTreePush<SumMinTree>(SumMinTree *tree, const float &alpha, const size_t &idx,
+                                                             const size_t &capacity, float *priority,
+                                                             float *max_priority, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SumTreeSample<SumMinTree>(SumMinTree *tree, curandState *state,
+                                                               const size_t &capacity, float *beta,
+                                                               const size_t &batch_size, size_t *indices,
+                                                               float *weights, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t SumTreeUpdate<SumMinTree>(SumMinTree *tree, const size_t &capacity,
+                                                               const size_t &last_idx, const float &alpha,
+                                                               float *max_priority, size_t *indices, float *priorities,
+                                                               const size_t &batch_size, cudaStream_t stream);

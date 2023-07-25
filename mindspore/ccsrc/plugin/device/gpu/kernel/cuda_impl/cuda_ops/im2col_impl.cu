@@ -71,7 +71,7 @@ cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_heigh
   Im2ColKernel<T><<<gridSize, blockSize, 0, stream>>>(
     num_kernels, x, y, inner_size_x, inner_size_y, x_height, x_width, kernel_height, kernel_width, pad_height,
     pad_width, stride_height, stride_width, dilation_height, dilation_width, y_height, y_width, inner_size_c);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
@@ -153,4 +153,3 @@ template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_c
                                                 const int dilation_height, const int dilation_width,
                                                 const int pad_height, const int pad_width, int64_t *x, int64_t *y,
                                                 int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
-

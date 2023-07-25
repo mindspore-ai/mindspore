@@ -135,8 +135,9 @@ bool IndexFillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     return false;
   }
 
-  IndexFill(y_ptr, index_ptr, index_num_, outer_size, dim_size, inner_size, value_ptr, out_bound_ptr, device_id_,
-            cuda_stream);
+  auto status = IndexFill(y_ptr, index_ptr, index_num_, outer_size, dim_size, inner_size, value_ptr, out_bound_ptr,
+                          device_id_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   bool out_bound = false;
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

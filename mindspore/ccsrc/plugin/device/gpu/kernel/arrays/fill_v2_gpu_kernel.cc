@@ -68,7 +68,7 @@ bool FillV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   DataType *input_ptr = GetDeviceAddress<DataType>(inputs, kIndex1);
   DataType *output_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
   auto status = FillV2(output_size_, input_ptr, output_ptr, device_id_, cuda_stream_);
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

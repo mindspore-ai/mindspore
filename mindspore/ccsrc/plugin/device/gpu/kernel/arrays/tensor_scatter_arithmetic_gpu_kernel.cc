@@ -141,14 +141,17 @@ bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<Address
     "cudaMemcpy output failed");
   if constexpr ((std::is_same_v<T, Complex<float>>) || (std::is_same_v<T, Complex<double>>)) {
     if (kernel_name_ == kTensorScatterUpdate) {
-      CallTensorScatterUpdate(input, indices, update, output, block_size_, update_size_, output_size_, indices_dim_0_,
-                              indices_dim_1_, info, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+      auto status =
+        CallTensorScatterUpdate(input, indices, update, output, block_size_, update_size_, output_size_, indices_dim_0_,
+                                indices_dim_1_, info, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+      CHECK_CUDA_STATUS(status, kernel_name_);
       return true;
     }
   } else {
-    TensorScatterArithmetic(op_func_type_, input, indices, update, output, block_size_, update_size_, output_size_,
-                            indices_dim_0_, indices_dim_1_, info, device_id_,
-                            reinterpret_cast<cudaStream_t>(stream_ptr_));
+    auto status = TensorScatterArithmetic(op_func_type_, input, indices, update, output, block_size_, update_size_,
+                                          output_size_, indices_dim_0_, indices_dim_1_, info, device_id_,
+                                          reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }

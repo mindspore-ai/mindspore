@@ -35,15 +35,15 @@ __global__ void SparseMulDenseKernel(const int64_t input_values_num, const S *ma
                                      int64_t *y_indices, const int64_t mat1_values_num, const T *mat2,
                                      const int64_t *index) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < mat1_values_num * mat2_col;
-    pos += blockDim.x * gridDim.x) {
-      int64_t indices_pos = static_cast<int64_t>(pos) / mat2_col;
-      int64_t j = static_cast<int64_t>(pos) % mat2_col;
-      S col = mat1_indices[indices_pos + mat1_values_num];
-      S idx = index[indices_pos];
-      T value = mat1_values[indices_pos] * mat2[col * mat2_col + j];
-      y_indices[idx * mat2_col + j + input_values_num] = static_cast<int64_t>(mat1_indices[indices_pos]);
-      y_indices[idx * mat2_col + j + y_values_num + input_values_num] = j;
-      MsAtomicAdd(&y_values[idx * mat2_col + j + input_values_num], value);
+       pos += blockDim.x * gridDim.x) {
+    int64_t indices_pos = static_cast<int64_t>(pos) / mat2_col;
+    int64_t j = static_cast<int64_t>(pos) % mat2_col;
+    S col = mat1_indices[indices_pos + mat1_values_num];
+    S idx = index[indices_pos];
+    T value = mat1_values[indices_pos] * mat2[col * mat2_col + j];
+    y_indices[idx * mat2_col + j + input_values_num] = static_cast<int64_t>(mat1_indices[indices_pos]);
+    y_indices[idx * mat2_col + j + y_values_num + input_values_num] = j;
+    MsAtomicAdd(&y_values[idx * mat2_col + j + input_values_num], value);
   }
   return;
 }
@@ -57,40 +57,36 @@ __global__ void MulAlphaKernel(T *y_values, const int64_t size, const int64_t in
 }
 
 template <typename T, typename S>
-void CalSparseAddSparse(const S *input_indices, const T *input_values, const int64_t input_values_num,
-                        int64_t *y_indices, T *y_values, const int64_t y_values_num, const T *beta,
-                        const uint32_t &device_id, cudaStream_t cuda_stream) {
-  SparseAddSparseKernel<<<CUDA_BLOCKS(device_id, input_values_num),
-                          CUDA_THREADS(device_id), 0, cuda_stream>>>(input_indices, input_values, input_values_num,
-                                                                     y_indices, y_values, y_values_num, beta);
+cudaError_t CalSparseAddSparse(const S *input_indices, const T *input_values, const int64_t input_values_num,
+                               int64_t *y_indices, T *y_values, const int64_t y_values_num, const T *beta,
+                               const uint32_t &device_id, cudaStream_t cuda_stream) {
+  SparseAddSparseKernel<<<CUDA_BLOCKS(device_id, input_values_num), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input_indices, input_values, input_values_num, y_indices, y_values, y_values_num, beta);
+  return GetCudaStatus();
 }
 
 template <typename T, typename S>
-void CalSparseMulDense(const S *mat1_indices, const T *mat1_values, const int64_t mat1_values_num, const T *mat2,
-                       int64_t *y_indices, T *y_values, const int64_t y_values_num,
-                       const int64_t mat2_col, const int64_t input_values_num, const T *alpha, int64_t *index,
-                       const uint32_t &device_id, cudaStream_t cuda_stream) {
-  SparseMulDenseKernel<<<CUDA_BLOCKS(device_id, mat1_values_num * mat2_col),
-                         CUDA_THREADS(device_id), 0, cuda_stream>>>(input_values_num, mat1_indices, mat1_values,
-                                                                    mat2_col, y_values_num, y_values, y_indices,
-                                                                    mat1_values_num, mat2, index);
+cudaError_t CalSparseMulDense(const S *mat1_indices, const T *mat1_values, const int64_t mat1_values_num, const T *mat2,
+                              int64_t *y_indices, T *y_values, const int64_t y_values_num, const int64_t mat2_col,
+                              const int64_t input_values_num, const T *alpha, int64_t *index, const uint32_t &device_id,
+                              cudaStream_t cuda_stream) {
+  SparseMulDenseKernel<<<CUDA_BLOCKS(device_id, mat1_values_num * mat2_col), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input_values_num, mat1_indices, mat1_values, mat2_col, y_values_num, y_values, y_indices, mat1_values_num, mat2,
+    index);
   int64_t size = y_values_num - input_values_num;
-  MulAlphaKernel<<<CUDA_BLOCKS(device_id, size),
-                   CUDA_THREADS(device_id), 0, cuda_stream>>>(y_values, size, input_values_num, alpha);
+  MulAlphaKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(y_values, size,
+                                                                                            input_values_num, alpha);
+  return GetCudaStatus();
 }
 
-#define GPU_SSPADDMM_EXPORT_REGISTER(T, S)                                                                            \
-  template CUDA_LIB_EXPORT void CalSparseAddSparse<T, S>(const S *input_indices, const T *input_values,               \
-                                                         const int64_t input_values_num, int64_t *y_indices,          \
-                                                         T *y_values, const int64_t y_values_num, const T *beta,      \
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);        \
-  template CUDA_LIB_EXPORT void CalSparseMulDense<T, S>(const S *mat1_indices, const T *mat1_values,                  \
-                                                        const int64_t mat1_values_num, const T *mat2,                 \
-                                                        int64_t *y_indices, T *y_values, const int64_t y_values_num,  \
-                                                        const int64_t mat2_col, const int64_t input_values_num,       \
-                                                        const T *alpha, int64_t *index, const uint32_t &device_id,    \
-                                                        cudaStream_t cuda_stream);
-
+#define GPU_SSPADDMM_EXPORT_REGISTER(T, S)                                                                           \
+  template CUDA_LIB_EXPORT cudaError_t CalSparseAddSparse<T, S>(                                                     \
+    const S *input_indices, const T *input_values, const int64_t input_values_num, int64_t *y_indices, T *y_values,  \
+    const int64_t y_values_num, const T *beta, const uint32_t &device_id, cudaStream_t cuda_stream);                 \
+  template CUDA_LIB_EXPORT cudaError_t CalSparseMulDense<T, S>(                                                      \
+    const S *mat1_indices, const T *mat1_values, const int64_t mat1_values_num, const T *mat2, int64_t *y_indices,   \
+    T *y_values, const int64_t y_values_num, const int64_t mat2_col, const int64_t input_values_num, const T *alpha, \
+    int64_t *index, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 GPU_SSPADDMM_EXPORT_REGISTER(int8_t, int)
 GPU_SSPADDMM_EXPORT_REGISTER(int16_t, int)
@@ -103,7 +99,6 @@ GPU_SSPADDMM_EXPORT_REGISTER(uint64_t, int)
 GPU_SSPADDMM_EXPORT_REGISTER(half, int)
 GPU_SSPADDMM_EXPORT_REGISTER(float, int)
 GPU_SSPADDMM_EXPORT_REGISTER(double, int)
-
 
 GPU_SSPADDMM_EXPORT_REGISTER(int8_t, int64_t)
 GPU_SSPADDMM_EXPORT_REGISTER(int16_t, int64_t)

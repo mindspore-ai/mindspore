@@ -238,9 +238,11 @@ bool SparseToDenseV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     "cudaMemcpyAsync default_value failed");
 
   auto cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
-  CallSetDefaultValue(default_value_data[0], output_elements, output, device_id_, cuda_stream);
-  CallSparseToDense(input_indices, input_values, num_elems, input_elements_values, input_output_shape, ndims, output,
-                    device_id_, cuda_stream);
+  auto status = CallSetDefaultValue(default_value_data[0], output_elements, output, device_id_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  status = CallSparseToDense(input_indices, input_values, num_elems, input_elements_values, input_output_shape, ndims,
+                             output, device_id_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

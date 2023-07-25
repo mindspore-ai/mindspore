@@ -94,7 +94,7 @@ cudaError_t ApplyAdagradDA(const size_t batch_size, const size_t size, T *var, T
   ApplyAdagradDAKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     batch_size, size, var, accum, squared_accum, grad, lr, l1, l2, global_step, output_var, output_accum,
     output_squared_accum);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ApplyAdagradDA<float, float, float, float, int32_t>(

@@ -79,7 +79,9 @@ bool TraceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   size_t sum_size = std::min(matrix_col_, matrix_row_);
-  CalTrace(input, sum_size, matrix_col_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    CalTrace(input, sum_size, matrix_col_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -47,8 +47,9 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
                       inputs_host_.get(), sizeof(T *) * input_num_, cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "Pack opt cudaMemcpyAsync inputs failed");
-    PackKernel(output_size_, input_num_, dims_behind_axis_, inputs_array, output,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = PackKernel(output_size_, input_num_, dims_behind_axis_, inputs_array, output,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,

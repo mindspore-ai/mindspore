@@ -88,8 +88,9 @@ bool PReLUGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto *dw = GetDeviceAddress<T>(outputs, kIndex1);
   auto *dw_array = GetDeviceAddress<float>(workspace, kIndex0);
 
-  CalPReLUGrad(input_length_, weight_length_, per_channel_length_, dy, x, w, dx, dw, dw_array,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalPReLUGrad(input_length_, weight_length_, per_channel_length_, dy, x, w, dx, dw, dw_array,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

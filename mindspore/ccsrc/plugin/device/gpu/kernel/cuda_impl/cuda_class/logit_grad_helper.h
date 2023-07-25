@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/helper_base.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/logit_grad_impl.cuh"
 
@@ -88,8 +88,9 @@ class LogitGradHelperGpuKernel : public GpuKernelHelperBase {
     }
 
     // call cuda kernel
-    CalLogitGrad(input_grad_ptr, input_x_ptr, eps_, output_dx_ptr, input_size_list_[0] / sizeof(T), device_id_,
-                 reinterpret_cast<cudaStream_t>(cuda_stream));
+    auto status = CalLogitGrad(input_grad_ptr, input_x_ptr, eps_, output_dx_ptr, input_size_list_[0] / sizeof(T),
+                               device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
     return 0;
   }
 

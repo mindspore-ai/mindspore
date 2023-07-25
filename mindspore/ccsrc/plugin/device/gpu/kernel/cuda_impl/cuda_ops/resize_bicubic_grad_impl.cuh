@@ -21,9 +21,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalResizeBicubicGrad(const T *input, const int n, const int c, const int grad_h, const int grad_w,
-                                          const int origin_h, const int origin_w, const float h_scale,
-                                          const float w_scale, float *work, S *output, bool half_pixel_centers_,
-                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalResizeBicubicGrad(const T *input, const int n, const int c, const int grad_h,
+                                                 const int grad_w, const int origin_h, const int origin_w,
+                                                 const float h_scale, const float w_scale, float *work, S *output,
+                                                 bool half_pixel_centers_, const uint32_t &device_id,
+                                                 cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RESIZE_BICUBIC_GRAD_IMPL_CUH_

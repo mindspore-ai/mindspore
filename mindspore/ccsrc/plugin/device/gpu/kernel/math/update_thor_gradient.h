@@ -65,13 +65,15 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       workspace3_addr = GetDeviceAddress<T>(workspace, 2);
     }
     T *workspace4_addr = nullptr;
+    cudaError_t status = cudaErrorNotReady;
     auto output_addr = GetDeviceAddress<T>(outputs, 0);
     if (gradient_size.pad_h != 0 || gradient_size.pad_w != 0) {
       workspace4_addr = GetDeviceAddress<T>(workspace, 3);
       const size_t size = (gradient_size.ori_h + gradient_size.pad_h) * (gradient_size.ori_w + gradient_size.pad_w);
-      CalPad(size, input2_addr, 1, 1, gradient_size.ori_h, gradient_size.ori_w,
-             gradient_size.ori_h + gradient_size.pad_h, gradient_size.ori_w + gradient_size.pad_w, 0, 0, 0.0,
-             workspace4_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = CalPad(size, input2_addr, 1, 1, gradient_size.ori_h, gradient_size.ori_w,
+                      gradient_size.ori_h + gradient_size.pad_h, gradient_size.ori_w + gradient_size.pad_w, 0, 0, 0.0,
+                      workspace4_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
       cudaMemsetAsync(workspace1_addr, 0,
                       gradient_size.w * gradient_size.h * gradient_size.batch_w * gradient_size.batch_h * sizeof(T),
                       reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -104,9 +106,10 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto r_input_addr = workspace1_addr;
     if (gradient_size.need_convert) {
       size_t size = gradient_size.batch_w * gradient_size.batch_h * gradient_size.w * gradient_size.h;
-      ConvertGradient(size, gradient_size.h, gradient_size.w, gradient_size.batch_w,
-                      gradient_size.batch_w * gradient_size.w, workspace1_addr, workspace2_addr,
-                      reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = ConvertGradient(size, gradient_size.h, gradient_size.w, gradient_size.batch_w,
+                               gradient_size.batch_w * gradient_size.w, workspace1_addr, workspace2_addr,
+                               reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
       r_input_addr = workspace2_addr;
     }
 
@@ -132,14 +135,15 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (gradient_size.need_convert) {
       size_t size = gradient_size.batch_w * gradient_size.batch_h * gradient_size.w * gradient_size.h;
       if (gradient_size.pad_h == 0 && gradient_size.pad_w == 0) {
-        ConvertGradientBack(size, gradient_size.h, gradient_size.w, gradient_size.batch_w,
-                            gradient_size.batch_w * gradient_size.w, r_output_addr, output_addr,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
+        status = ConvertGradientBack(size, gradient_size.h, gradient_size.w, gradient_size.batch_w,
+                                     gradient_size.batch_w * gradient_size.w, r_output_addr, output_addr,
+                                     reinterpret_cast<cudaStream_t>(stream_ptr));
       } else {
-        ConvertGradientBack(size, gradient_size.h, gradient_size.w, gradient_size.ori_h, gradient_size.ori_w,
-                            gradient_size.batch_w, gradient_size.ori_w, r_output_addr, output_addr,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
+        status = ConvertGradientBack(size, gradient_size.h, gradient_size.w, gradient_size.ori_h, gradient_size.ori_w,
+                                     gradient_size.batch_w, gradient_size.ori_w, r_output_addr, output_addr,
+                                     reinterpret_cast<cudaStream_t>(stream_ptr));
       }
+      CHECK_CUDA_STATUS(status, kernel_name_);
     }
     return true;
   }

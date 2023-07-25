@@ -92,9 +92,10 @@ bool MatrixDiagPartV3GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
     upper_diag_index = IntToLong(k_stand);
   }
 
-  MatrixDiagPartV3(matrix_ptr, padding_value_ptr, diag_ptr, num_rows_, num_cols_, lower_diag_index, upper_diag_index,
-                   diag_size_, max_diag_len_, left_align_super_diag_, left_align_sub_diag_, device_id_, stream_ptr_);
-
+  auto status =
+    MatrixDiagPartV3(matrix_ptr, padding_value_ptr, diag_ptr, num_rows_, num_cols_, lower_diag_index, upper_diag_index,
+                     diag_size_, max_diag_len_, left_align_super_diag_, left_align_sub_diag_, device_id_, stream_ptr_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

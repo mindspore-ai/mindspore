@@ -21,7 +21,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-void Median(const T *input_value, T *output, S *indices, const std::vector<int64_t> input_shape, const int64_t axis,
-            bool global_median, cudaStream_t cuda_stream);
+cudaError_t Median(const T *input_value, T *output, S *indices, const std::vector<int64_t> input_shape,
+                   const int64_t axis, bool global_median, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MEDIAN_IMPL_CUH_

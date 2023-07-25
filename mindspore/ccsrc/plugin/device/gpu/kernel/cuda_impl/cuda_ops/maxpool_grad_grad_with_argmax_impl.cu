@@ -28,34 +28,27 @@ __global__ void MaxPoolGradGradWithArgmax(const T *grad, const I *argmax, const 
 }
 
 template <typename T, typename I>
-void CalMaxPoolGradGradWithArgmax(const T *grad, const I *argmax, const int batch, const int input_stride,
-                                  const int output_stride, T *output, const uint32_t &device_id,
-                                  cudaStream_t cuda_stream) {
+cudaError_t CalMaxPoolGradGradWithArgmax(const T *grad, const I *argmax, const int batch, const int input_stride,
+                                         const int output_stride, T *output, const uint32_t &device_id,
+                                         cudaStream_t cuda_stream) {
   const int output_elements = batch * output_stride;
   MaxPoolGradGradWithArgmax<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     grad, argmax, input_stride, output_stride, output_elements, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalMaxPoolGradGradWithArgmax<float, int32_t>(const float *grad, const int32_t *argmax,
-                                                                           const int batch, const int input_stride,
-                                                                           const int output_stride, float *output,
-                                                                           const uint32_t &device_id,
-                                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolGradGradWithArgmax<float, int32_t>(
+  const float *grad, const int32_t *argmax, const int batch, const int input_stride, const int output_stride,
+  float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolGradGradWithArgmax<float, int64_t>(const float *grad, const int64_t *argmax,
-                                                                           const int batch, const int input_stride,
-                                                                           const int output_stride, float *output,
-                                                                           const uint32_t &device_id,
-                                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolGradGradWithArgmax<float, int64_t>(
+  const float *grad, const int64_t *argmax, const int batch, const int input_stride, const int output_stride,
+  float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolGradGradWithArgmax<half, int32_t>(const half *grad, const int32_t *argmax,
-                                                                          const int batch, const int input_stride,
-                                                                          const int output_stride, half *output,
-                                                                          const uint32_t &device_id,
-                                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolGradGradWithArgmax<half, int32_t>(
+  const half *grad, const int32_t *argmax, const int batch, const int input_stride, const int output_stride,
+  half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalMaxPoolGradGradWithArgmax<half, int64_t>(const half *grad, const int64_t *argmax,
-                                                                          const int batch, const int input_stride,
-                                                                          const int output_stride, half *output,
-                                                                          const uint32_t &device_id,
-                                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalMaxPoolGradGradWithArgmax<half, int64_t>(
+  const half *grad, const int64_t *argmax, const int batch, const int input_stride, const int output_stride,
+  half *output, const uint32_t &device_id, cudaStream_t cuda_stream);

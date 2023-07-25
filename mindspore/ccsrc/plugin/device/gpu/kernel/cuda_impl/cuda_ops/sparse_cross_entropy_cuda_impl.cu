@@ -52,25 +52,28 @@ __global__ void CalCrossEntropyGradKernel(const float *logits, T *labels, const 
 }
 
 template <typename T>
-void CalCrossEntropy(const float *logits, T *labels, const int batch_size, const int class_num, float *loss,
-                     cudaStream_t cuda_stream) {
+cudaError_t CalCrossEntropy(const float *logits, T *labels, const int batch_size, const int class_num, float *loss,
+                            cudaStream_t cuda_stream) {
   CalCrossEntropyKernel<<<1, 1, 0, cuda_stream>>>(logits, labels, batch_size, class_num, loss);
-  return;
+  return GetCudaStatus();
 }
 
 template <typename T>
-void CalCrossEntropyGrad(const float *logits, T *labels, const int batch_size, const int class_num, float *grad,
-                         cudaStream_t cuda_stream) {
+cudaError_t CalCrossEntropyGrad(const float *logits, T *labels, const int batch_size, const int class_num, float *grad,
+                                cudaStream_t cuda_stream) {
   CalCrossEntropyGradKernel<<<GET_BLOCKS(class_num), GET_THREADS, 0, cuda_stream>>>(logits, labels, batch_size,
                                                                                     class_num, grad);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalCrossEntropy<int>(const float *logits, int *labels, const int batch_size,
-                                                   const int class_num, float *loss, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCrossEntropy<uint64_t>(const float *logits, uint64_t *labels, const int batch_size,
-                                                        const int class_num, float *loss, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCrossEntropyGrad<int>(const float *logits, int *labels, const int batch_size,
-                                                       const int class_num, float *grad, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCrossEntropyGrad<uint64_t>(const float *logits, uint64_t *labels, const int batch_size,
-                                                            const int class_num, float *grad, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCrossEntropy<int>(const float *logits, int *labels, const int batch_size,
+                                                          const int class_num, float *loss, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCrossEntropy<uint64_t>(const float *logits, uint64_t *labels,
+                                                               const int batch_size, const int class_num, float *loss,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCrossEntropyGrad<int>(const float *logits, int *labels, const int batch_size,
+                                                              const int class_num, float *grad,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCrossEntropyGrad<uint64_t>(const float *logits, uint64_t *labels,
+                                                                   const int batch_size, const int class_num,
+                                                                   float *grad, cudaStream_t cuda_stream);

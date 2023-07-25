@@ -18,8 +18,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T>
-__global__ void SquareSumAllKernel(const size_t size, const T* input_addr_0, const T* input_addr_1,
-                                   float* ws_addr_0, float* ws_addr_1) {
+__global__ void SquareSumAllKernel(const size_t size, const T *input_addr_0, const T *input_addr_1, float *ws_addr_0,
+                                   float *ws_addr_1) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     size_t split = size / 2;
     float power = 2.0;
@@ -35,8 +35,8 @@ __global__ void SquareSumAllKernel(const size_t size, const T* input_addr_0, con
 }
 
 template <>
-__global__ void SquareSumAllKernel(const size_t size, const float* input_addr_0, const float* input_addr_1,
-                                   float* ws_addr_0, float* ws_addr_1) {
+__global__ void SquareSumAllKernel(const size_t size, const float *input_addr_0, const float *input_addr_1,
+                                   float *ws_addr_0, float *ws_addr_1) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     size_t split = size / 2;
     float power = 2.0;
@@ -52,8 +52,8 @@ __global__ void SquareSumAllKernel(const size_t size, const float* input_addr_0,
 }
 
 template <typename T>
-__global__ void AssignKernel(const size_t size, T* output_addr_0, T* output_addr_1,
-                                   float* ws_addr_0, float* ws_addr_1) {
+__global__ void AssignKernel(const size_t size, T *output_addr_0, T *output_addr_1, float *ws_addr_0,
+                             float *ws_addr_1) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     output_addr_0[0] = __float2half(ws_addr_0[0]);
     output_addr_1[0] = __float2half(ws_addr_1[0]);
@@ -62,8 +62,8 @@ __global__ void AssignKernel(const size_t size, T* output_addr_0, T* output_addr
 }
 
 template <>
-__global__ void AssignKernel(const size_t size, float* output_addr_0, float* output_addr_1,
-                             float* ws_addr_0, float* ws_addr_1) {
+__global__ void AssignKernel(const size_t size, float *output_addr_0, float *output_addr_1, float *ws_addr_0,
+                             float *ws_addr_1) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     output_addr_0[0] = ws_addr_0[0];
     output_addr_1[0] = ws_addr_1[0];
@@ -81,20 +81,20 @@ __global__ void InitOutput(const size_t size, T *output) {
 }
 
 template <typename T>
-void SquareSumAll(const size_t input_size_, const T* input_addr_0, const T* input_addr_1,
-                  T* output_addr_0, T* output_addr_1,
-                  float* ws_addr_0, float* ws_addr_1, cudaStream_t cuda_stream) {
+cudaError_t SquareSumAll(const size_t input_size_, const T *input_addr_0, const T *input_addr_1, T *output_addr_0,
+                         T *output_addr_1, float *ws_addr_0, float *ws_addr_1, cudaStream_t cuda_stream) {
   InitOutput<<<GET_BLOCKS(1), GET_THREADS, 0, cuda_stream>>>(1, ws_addr_0);
   InitOutput<<<GET_BLOCKS(1), GET_THREADS, 0, cuda_stream>>>(1, ws_addr_1);
   size_t size = input_size_ * 2;
-  SquareSumAllKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr_0, input_addr_1,
-                                                                        ws_addr_0, ws_addr_1);
+  SquareSumAllKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr_0, input_addr_1, ws_addr_0,
+                                                                        ws_addr_1);
   AssignKernel<<<GET_BLOCKS(1), GET_THREADS, 0, cuda_stream>>>(1, output_addr_0, output_addr_1, ws_addr_0, ws_addr_1);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void SquareSumAll(const size_t input_size_, const half* input_addr_0, const half* input_addr_1,
-                                           half* output_addr_0, half* output_addr_1, float* ws_addr_0, float* ws_addr_1,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void SquareSumAll(const size_t input_size_, const float* input_addr_0,
-                                           const float* input_addr_1, float* output_addr_0, float* output_addr_1,
-                                           float* ws_addr_0, float* ws_addr_1, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SquareSumAll(const size_t input_size_, const half *input_addr_0,
+                                                  const half *input_addr_1, half *output_addr_0, half *output_addr_1,
+                                                  float *ws_addr_0, float *ws_addr_1, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t SquareSumAll(const size_t input_size_, const float *input_addr_0,
+                                                  const float *input_addr_1, float *output_addr_0, float *output_addr_1,
+                                                  float *ws_addr_0, float *ws_addr_1, cudaStream_t cuda_stream);

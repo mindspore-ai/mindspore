@@ -19,43 +19,43 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselI0(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselI0(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselI0e(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselI0e(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                         cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselI1(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselI1(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselI1e(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselI1e(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                         cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselJ0(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselJ0(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselJ1(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselJ1(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselK0(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselK0(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselK0e(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselK0e(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                         cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselK1(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselK1(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselK1e(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselK1e(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                         cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselY0(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselY0(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalBesselY1(const size_t size, const T *input, T *output, const uint32_t &device_id,
-                                 cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBesselY1(const size_t size, const T *input, T *output, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BESSEL_IMPL_CUH_

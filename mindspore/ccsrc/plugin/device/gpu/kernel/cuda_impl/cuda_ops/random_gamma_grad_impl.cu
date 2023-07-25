@@ -178,18 +178,19 @@ __global__ void BroadcastRandomGammaGradKernel(size_t dim_size, size_t output_nu
 }
 
 template <typename T>
-void CalRandomGammaGrad(const T *alpha, const T *sample, T *output, int elements, const uint32_t &device_id,
-                        cudaStream_t cuda_stream) {
+cudaError_t CalRandomGammaGrad(const T *alpha, const T *sample, T *output, int elements, const uint32_t &device_id,
+                               cudaStream_t cuda_stream) {
   int thread_num = 1024 < elements ? 1024 : elements;
   cudaDeviceProp prop;
   (void)cudaGetDeviceProperties(&prop, device_id);
   int max_blocks = prop.multiProcessorCount;
   int block_num = std::min(static_cast<int>(((elements - 1) / thread_num) + 1), max_blocks);
   RandomGammaGradKernel<<<block_num, thread_num, 0, cuda_stream>>>(alpha, sample, output, elements);
+  return GetCudaStatus();
 }
 
 template <typename T>
-void BroadcastRandomGammaGrad(const std::vector<int64_t> &alpha_shape, const std::vector<int64_t> &sample_shape,
+cudaError_t BroadcastRandomGammaGrad(const std::vector<int64_t> &alpha_shape, const std::vector<int64_t> &sample_shape,
                               const std::vector<int64_t> &output_shape, const T *alpha, const T *sample, T *output,
                               const uint32_t &device_id, cudaStream_t cuda_stream) {
   size_t dim_size = output_shape.size();
@@ -205,22 +206,23 @@ void BroadcastRandomGammaGrad(const std::vector<int64_t> &alpha_shape, const std
   int block_num = std::min(static_cast<int>(((output_num - 1) / thread_num) + 1), max_blocks);
   BroadcastRandomGammaGradKernel<<<block_num, thread_num, 0, cuda_stream>>>(dim_size, output_num, strides, alpha,
                                                                             sample, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalRandomGammaGrad<double>(const double *alpha, const double *sample, double *output,
-                                                         int elements, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalRandomGammaGrad<float>(const float *alpha, const float *sample, float *output,
-                                                        int elements, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void BroadcastRandomGammaGrad<double>(const std::vector<int64_t> &,
-                                                               const std::vector<int64_t> &,
-                                                               const std::vector<int64_t> &, const double *,
-                                                               const double *, double *, const uint32_t &,
+template CUDA_LIB_EXPORT cudaError_t CalRandomGammaGrad<double>(const double *alpha, const double *sample,
+                                                                double *output, int elements, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalRandomGammaGrad<float>(const float *alpha, const float *sample, float *output,
+                                                               int elements, const uint32_t &device_id,
                                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void BroadcastRandomGammaGrad<float>(const std::vector<int64_t> &,
-                                                              const std::vector<int64_t> &,
-                                                              const std::vector<int64_t> &, const float *,
-                                                              const float *, float *, const uint32_t &,
-                                                              cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t BroadcastRandomGammaGrad<double>(const std::vector<int64_t> &,
+                                                                      const std::vector<int64_t> &,
+                                                                      const std::vector<int64_t> &, const double *,
+                                                                      const double *, double *, const uint32_t &,
+                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BroadcastRandomGammaGrad<float>(const std::vector<int64_t> &,
+                                                                     const std::vector<int64_t> &,
+                                                                     const std::vector<int64_t> &, const float *,
+                                                                     const float *, float *, const uint32_t &,
+                                                                     cudaStream_t cuda_stream);

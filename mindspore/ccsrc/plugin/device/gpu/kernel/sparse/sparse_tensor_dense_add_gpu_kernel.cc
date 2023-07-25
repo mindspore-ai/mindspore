@@ -238,10 +238,10 @@ bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
     cudaMemcpyAsync(y_addr, x2_values_addr, output_elements_ * sizeof(T), cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "Cuda memcopy input to output Fail");
-  SparseTensorDenseAddKernel(static_cast<size_t>(input_elements_), static_cast<size_t>(rank_), x2_shape,
-                             x1_indices_addr, x1_values_addr, x1_shape_addr, x2_values_addr, y_addr, device_id_,
-                             reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto status = SparseTensorDenseAddKernel(static_cast<size_t>(input_elements_), static_cast<size_t>(rank_), x2_shape,
+                                           x1_indices_addr, x1_values_addr, x1_shape_addr, x2_values_addr, y_addr,
+                                           device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -58,7 +58,7 @@ inline __device__ float trigamma(const float input) {
     y += 1;
   }
   const float ixx = 1 / (y * y);
-  result += (1 + 1 / (2*y) + ixx * (1.f/6 - ixx * (1.f/30 - ixx * (1.f/42)))) / y;
+  result += (1 + 1 / (2 * y) + ixx * (1.f / 6 - ixx * (1.f / 30 - ixx * (1.f / 42)))) / y;
   return sign * result;
 }
 
@@ -292,23 +292,21 @@ __global__ void CalPolygammaKernel(size_t num_count, const T1 *a, const T2 *inpu
   auto y = a[0];
   uint elements_per_block = kThreadsPerBlock * vec_size;
   if (y == T1(1)) {
-    for (uint offset = elements_per_block * blockIdx.x; offset < num_count;
-       offset += elements_per_block * gridDim.x) {
-    uint remaining = num_count - offset;
-    if (remaining < elements_per_block) {
-      NormalCallTri<vec_size, T2>(input, output, offset, remaining);
-    } else {
-      VectorizedCallTri<vec_size, T2>(input, output, offset);
-    }
+    for (uint offset = elements_per_block * blockIdx.x; offset < num_count; offset += elements_per_block * gridDim.x) {
+      uint remaining = num_count - offset;
+      if (remaining < elements_per_block) {
+        NormalCallTri<vec_size, T2>(input, output, offset, remaining);
+      } else {
+        VectorizedCallTri<vec_size, T2>(input, output, offset);
+      }
     }
   } else if (y > T1(1)) {
-    for (uint offset = elements_per_block * blockIdx.x; offset < num_count;
-       offset += elements_per_block * gridDim.x) {
-    uint remaining = num_count - offset;
-    if (remaining < elements_per_block) {
-      NormalCall<vec_size, T1, T2>(a, input, output, offset, remaining);
-    } else {
-      VectorizedCall<vec_size, T1, T2>(a, input, output, offset);
+    for (uint offset = elements_per_block * blockIdx.x; offset < num_count; offset += elements_per_block * gridDim.x) {
+      uint remaining = num_count - offset;
+      if (remaining < elements_per_block) {
+        NormalCall<vec_size, T1, T2>(a, input, output, offset, remaining);
+      } else {
+        VectorizedCall<vec_size, T1, T2>(a, input, output, offset);
       }
     }
   }
@@ -316,30 +314,25 @@ __global__ void CalPolygammaKernel(size_t num_count, const T1 *a, const T2 *inpu
 }
 
 template <typename T1, typename T2>
-void CalPolygamma(const size_t num_count, const T1 *a, const T2 *input, T2 *output, const uint32_t &device_id,
-                  cudaStream_t cuda_stream) {
+cudaError_t CalPolygamma(const size_t num_count, const T1 *a, const T2 *input, T2 *output, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
   constexpr size_t vec_size = cuda::elementwise::VecSize<T2>();
   const size_t block_x = kThreadsPerBlock < num_count ? kThreadsPerBlock : num_count;
   const size_t elements_per_block = kThreadsPerBlock * vec_size;
   const size_t grid_x = UP_DIV(num_count, elements_per_block);
   CalPolygammaKernel<vec_size, T1, T2><<<grid_x, block_x, 0, cuda_stream>>>(num_count, a, input, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalPolygamma(const size_t num_count, const int32_t *a, const float *input,
-                                                           float *output, const uint32_t &device_id,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPolygamma(const size_t num_count, const int32_t *a, const double *input,
-                                                            double *output, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPolygamma(const size_t num_count, const int32_t *a, const half *input,
-                                                          half *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPolygamma(const size_t num_count, const int64_t *a, const float *input,
-                                                           float *output, const uint32_t &device_id,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPolygamma(const size_t num_count, const int64_t *a, const double *input,
-                                                            double *output, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPolygamma(const size_t num_count, const int64_t *a, const half *input,
-                                                          half *output, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPolygamma(const size_t num_count, const int32_t *a, const float *input,
+                                                  float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPolygamma(const size_t num_count, const int32_t *a, const double *input,
+                                                  double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPolygamma(const size_t num_count, const int32_t *a, const half *input,
+                                                  half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPolygamma(const size_t num_count, const int64_t *a, const float *input,
+                                                  float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPolygamma(const size_t num_count, const int64_t *a, const double *input,
+                                                  double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPolygamma(const size_t num_count, const int64_t *a, const half *input,
+                                                  half *output, const uint32_t &device_id, cudaStream_t cuda_stream);

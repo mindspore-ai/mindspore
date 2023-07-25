@@ -160,10 +160,13 @@ void QrGpuKernelMod::LaunchQr(T *d_input, T *d_A, T *d_tau, T *d_output_q, T *d_
     auto status =
       CalTranspose(m_ * n_, d_output_r + batch * m_ * n_, info, kNum2, d_output_r_t + batch * m_ * n_, stream);
     if (status != cudaSuccess) {
-      MS_LOG(ERROR) << "For `" << kernel_name_ << "`, the transpose cuda Kernel fails to run, the error number is "
-                    << status << ", which means " << cudaGetErrorString(status) << ".";
+      MS_LOG(EXCEPTION) << "Launch CalTranspose in GPU kernel Qr failed.";
     }
-    CalTriu(p_ * n_, d_output_r_t + batch * m_ * n_, 0, p_, n_, output_r + batch * p_ * n_, device_id_, stream);
+    status =
+      CalTriu(p_ * n_, d_output_r_t + batch * m_ * n_, 0, p_, n_, output_r + batch * p_ * n_, device_id_, stream);
+    if (status != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Launch CalTriu in GPU kernel Qr failed.";
+    }
   }
 }
 
@@ -194,10 +197,10 @@ bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   }
 
   auto s1 = CalTranspose(total_size_, input, x_info, input_dims_, d_input, stream);
-  CHECK_CUDA_LAUNCH_STATUS(s1, "Transpose called by " + kernel_name_);
+  CHECK_CUDA_STATUS(s1, "Transpose called by " + kernel_name_);
   LaunchQr(d_input, d_A, d_tau, d_output_q, d_output_r, dev_info, d_output_r_t, output_r);
   auto s2 = CalTranspose(batch_size_ * m_ * p_, d_output_q, y_info, input_dims_, output_q, stream);
-  CHECK_CUDA_LAUNCH_STATUS(s2, "Transpose called by " + kernel_name_);
+  CHECK_CUDA_STATUS(s2, "Transpose called by " + kernel_name_);
   return true;
 }
 

@@ -118,8 +118,9 @@ bool SequenceConcatGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "SequenceConcat opt cudaMemcpyAsync length on axis failed");
   output_size_ = output_size_list_[0] / sizeof(T);
-  ConcatKernel(output_size_, input_num_, all_size_before_axis_, all_size_axis_, len_axis_device, inputs_device, output,
-               reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status = ConcatKernel(output_size_, input_num_, all_size_before_axis_, all_size_axis_, len_axis_device,
+                             inputs_device, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
 
   return true;
 }

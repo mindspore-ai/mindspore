@@ -22,7 +22,7 @@
 #define IOU_DIMENSION 4
 
 template <typename T>
-CUDA_LIB_EXPORT void IOU(const size_t &size, const T *box1, const T *box2, T *iou_results, const size_t &mode,
-                         const size_t &input_len_0, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t IOU(const size_t &size, const T *box1, const T *box2, T *iou_results, const size_t &mode,
+                                const size_t &input_len_0, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_IOU_IMPL_CUH_

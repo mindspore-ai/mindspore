@@ -90,7 +90,7 @@ bool BroadcastOptGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   auto status = BinaryOpWithBroadcastCudaFunc<op, In0_t, In1_t, Out_t>(is_broadcast_, simplified_in0_shape_,
                                                                        simplified_in1_shape_, simplified_out_shape_,
                                                                        lhs, rhs, out, device_id_, cuda_stream_);
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

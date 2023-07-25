@@ -72,18 +72,19 @@ __global__ void BiasDropoutAddKernel(const T *x, const T *bias, const T *residua
 }
 
 template <typename T>
-void BiasDropoutAdd(const T *x, const T *bias, const T *residual, T *y, T *mask, size_t num_count, size_t n_strides,
-                    size_t channel_strides, float drop_prob, uint64_t seed, uint64_t seed_offset,
-                    cudaStream_t cuda_stream) {
+cudaError_t BiasDropoutAdd(const T *x, const T *bias, const T *residual, T *y, T *mask, size_t num_count,
+                           size_t n_strides, size_t channel_strides, float drop_prob, uint64_t seed,
+                           uint64_t seed_offset, cudaStream_t cuda_stream) {
   BiasDropoutAddKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(
     x, bias, residual, y, mask, num_count, n_strides, channel_strides, drop_prob, seed, seed_offset);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void BiasDropoutAdd<float>(const float *x, const float *bias, const float *residual, float *y,
-                                                    float *mask, size_t num_count, size_t n_strides,
-                                                    size_t channel_strides, float drop_prob, uint64_t seed,
-                                                    uint64_t seed_offset, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void BiasDropoutAdd<half>(const half *x, const half *bias, const half *residual, half *y,
-                                                   half *mask, size_t num_count, size_t n_strides,
-                                                   size_t channel_strides, float drop_prob, uint64_t seed,
-                                                   uint64_t seed_offset, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BiasDropoutAdd<float>(const float *x, const float *bias, const float *residual,
+                                                           float *y, float *mask, size_t num_count, size_t n_strides,
+                                                           size_t channel_strides, float drop_prob, uint64_t seed,
+                                                           uint64_t seed_offset, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BiasDropoutAdd<half>(const half *x, const half *bias, const half *residual,
+                                                          half *y, half *mask, size_t num_count, size_t n_strides,
+                                                          size_t channel_strides, float drop_prob, uint64_t seed,
+                                                          uint64_t seed_offset, cudaStream_t cuda_stream);

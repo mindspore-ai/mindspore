@@ -44,8 +44,9 @@ class SparseFtrlGpuKernelMod : public NativeGpuKernelMod {
     T *variable_out = GetDeviceAddress<T>(outputs, 0);
     T *accumulation_out = GetDeviceAddress<T>(outputs, 1);
     T *linear_out = GetDeviceAddress<T>(outputs, 2);
-    CalSparseApplyFtrl(gradient, indices, num_index_, n_stride_, lr_, l1_, l2_, lr_power_, use_locking_, variable,
-                       accumulation, linear, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalSparseApplyFtrl(gradient, indices, num_index_, n_stride_, lr_, l1_, l2_, lr_power_, use_locking_,
+                                     variable, accumulation, linear, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,
                                                        reinterpret_cast<cudaStream_t>(stream_ptr)),
                                        "cudaMemcpyAsync output failed");

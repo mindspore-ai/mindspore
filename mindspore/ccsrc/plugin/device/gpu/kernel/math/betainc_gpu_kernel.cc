@@ -80,8 +80,9 @@ bool BetaincGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   T *input_b = GetDeviceAddress<T>(inputs, kBIndex);
   T *input_x = GetDeviceAddress<T>(inputs, kXIndex);
   T *output = GetDeviceAddress<T>(outputs, kAIndex);
-  CalBetainc(input_element_, input_a, input_b, input_x, output, device_id_,
-             reinterpret_cast<cudaStream_t>(cuda_stream));
+  auto status = CalBetainc(input_element_, input_a, input_b, input_x, output, device_id_,
+                           reinterpret_cast<cudaStream_t>(cuda_stream));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

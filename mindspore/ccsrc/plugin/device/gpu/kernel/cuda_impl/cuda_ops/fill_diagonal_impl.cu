@@ -26,37 +26,35 @@ __global__ void FillDiagonal(const size_t size, const float fill_value, const in
   return;
 }
 
-
 template <typename T>
-void CalFillDiagonal(const size_t size, const float fill_value, const int64_t step_size, T *output,
-                     const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalFillDiagonal(const size_t size, const float fill_value, const int64_t step_size, T *output,
+                            const uint32_t &device_id, cudaStream_t cuda_stream) {
   FillDiagonal<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, fill_value, step_size,
                                                                                           output);
-  return;
+  return GetCudaStatus();
 }
 
-template
-CUDA_LIB_EXPORT void CalFillDiagonal<half>(const size_t size, const float fill_value, const int64_t step_size,
-                                            half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalFillDiagonal<float>(const size_t size, const float fill_value, const int64_t step_size,
-                                            float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalFillDiagonal<double>(const size_t size, const float fill_value, const int64_t step_size,
-                                            double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalFillDiagonal<uint8_t>(const size_t size, const float fill_value, const int64_t step_size,
-                                              uint8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalFillDiagonal<int8_t>(const size_t size, const float fill_value, const int64_t step_size,
-                                              int8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalFillDiagonal<int16_t>(const size_t size, const float fill_value, const int64_t step_size,
-                                              int16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalFillDiagonal<int32_t>(const size_t size, const float fill_value, const int64_t step_size,
-                                              int32_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalFillDiagonal<int64_t>(const size_t size, const float fill_value, const int64_t step_size,
-                                              int64_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT cudaError_t CalFillDiagonal<half>(const size_t size, const float fill_value,
+                                                           const int64_t step_size, half *output,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFillDiagonal<float>(const size_t size, const float fill_value,
+                                                            const int64_t step_size, float *output,
+                                                            const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFillDiagonal<double>(const size_t size, const float fill_value,
+                                                             const int64_t step_size, double *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFillDiagonal<uint8_t>(const size_t size, const float fill_value,
+                                                              const int64_t step_size, uint8_t *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFillDiagonal<int8_t>(const size_t size, const float fill_value,
+                                                             const int64_t step_size, int8_t *output,
+                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFillDiagonal<int16_t>(const size_t size, const float fill_value,
+                                                              const int64_t step_size, int16_t *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFillDiagonal<int32_t>(const size_t size, const float fill_value,
+                                                              const int64_t step_size, int32_t *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalFillDiagonal<int64_t>(const size_t size, const float fill_value,
+                                                              const int64_t step_size, int64_t *output,
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);

@@ -30,9 +30,9 @@ class PermutationInputIterator {
   typedef PermutationInputIterator self_type;  ///< My own type
   typedef OffsetT difference_type;             ///< Type to express the result of subtracting one iterator from another
 
-  typedef ValueType value_type;                ///< The type of the element the iterator can point to
-  typedef ValueType *pointer;                  ///< The type of a pointer to an element the iterator can point to
-  typedef ValueType reference;                 ///< The type of a reference to an element the iterator can point to
+  typedef ValueType value_type;  ///< The type of the element the iterator can point to
+  typedef ValueType *pointer;    ///< The type of a pointer to an element the iterator can point to
+  typedef ValueType reference;   ///< The type of a reference to an element the iterator can point to
 
   typedef std::random_access_iterator_tag iterator_category;  ///< The iterator category
 

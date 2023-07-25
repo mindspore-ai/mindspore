@@ -42,56 +42,56 @@ __global__ void Fractionalmaxpool3dgradwithfixedksize(const T *origin_input, con
 }
 
 template <typename T, typename S>
-void CalFractionalmaxpool3dgradwithfixedksize(const T *origin_input, const T *out_backprop, S *argmax, T *output,
-                                              int64_t outputD, int64_t outputH, int64_t outputW, int64_t inputN,
-                                              int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
-                                              const int64_t outer_size, const int64_t out_backprop_size,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalFractionalmaxpool3dgradwithfixedksize(const T *origin_input, const T *out_backprop, S *argmax, T *output,
+                                                     int64_t outputD, int64_t outputH, int64_t outputW, int64_t inputN,
+                                                     int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
+                                                     const int64_t outer_size, const int64_t out_backprop_size,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream) {
   InitOutput<<<CUDA_BLOCKS(device_id, outer_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(output, outer_size);
   Fractionalmaxpool3dgradwithfixedksize<<<CUDA_BLOCKS(device_id, out_backprop_size), CUDA_THREADS(device_id), 0,
                                           cuda_stream>>>(origin_input, out_backprop, argmax, output, outputD, outputH,
                                                          outputW, inputN, inputC, inputD, inputH, inputW,
                                                          out_backprop_size);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<half, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<half, int32_t>(
   const half *origin_input, const half *out_backprop, int32_t *argmax, half *output, int64_t outputD, int64_t outputH,
   int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<float, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<float, int32_t>(
   const float *origin_input, const float *out_backprop, int32_t *argmax, float *output, int64_t outputD,
   int64_t outputH, int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<double, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<double, int32_t>(
   const double *origin_input, const double *out_backprop, int32_t *argmax, double *output, int64_t outputD,
   int64_t outputH, int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<int32_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<int32_t, int32_t>(
   const int32_t *origin_input, const int32_t *out_backprop, int32_t *argmax, int32_t *output, int64_t outputD,
   int64_t outputH, int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<int64_t, int32_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<int64_t, int32_t>(
   const int64_t *origin_input, const int64_t *out_backprop, int32_t *argmax, int64_t *output, int64_t outputD,
   int64_t outputH, int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<half, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<half, int64_t>(
   const half *origin_input, const half *out_backprop, int64_t *argmax, half *output, int64_t outputD, int64_t outputH,
   int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<float, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<float, int64_t>(
   const float *origin_input, const float *out_backprop, int64_t *argmax, float *output, int64_t outputD,
   int64_t outputH, int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<double, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<double, int64_t>(
   const double *origin_input, const double *out_backprop, int64_t *argmax, double *output, int64_t outputD,
   int64_t outputH, int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<int32_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<int32_t, int64_t>(
   const int32_t *origin_input, const int32_t *out_backprop, int64_t *argmax, int32_t *output, int64_t outputD,
   int64_t outputH, int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalFractionalmaxpool3dgradwithfixedksize<int64_t, int64_t>(
+template CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dgradwithfixedksize<int64_t, int64_t>(
   const int64_t *origin_input, const int64_t *out_backprop, int64_t *argmax, int64_t *output, int64_t outputD,
   int64_t outputH, int64_t outputW, int64_t inputN, int64_t inputC, int64_t inputD, int64_t inputH, int64_t inputW,
   const int64_t outer_size, const int64_t out_backprop_size, const uint32_t &device_id, cudaStream_t cuda_stream);

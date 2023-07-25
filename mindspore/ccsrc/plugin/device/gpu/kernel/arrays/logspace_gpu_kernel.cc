@@ -78,7 +78,9 @@ bool LogSpaceGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   auto start = GetDeviceAddress<T>(inputs, kIndex0);
   auto end = GetDeviceAddress<T>(inputs, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  CalLogSpace(start, end, steps_, base_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status =
+    CalLogSpace(start, end, steps_, base_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

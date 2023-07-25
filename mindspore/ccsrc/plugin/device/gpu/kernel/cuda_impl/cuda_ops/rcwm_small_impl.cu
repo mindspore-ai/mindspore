@@ -143,11 +143,11 @@ void RCWMScaleK(int seedc, int input_size, K *input, int k, S *output_index, K *
 }
 
 template <typename T, typename S, typename K>
-void CalRandomChoiceWithMaskSmall(int input_size, int seedc, int count, K *input, S *output_index, K *output_mask,
-                               cudaStream_t stream) {
+cudaError_t CalRandomChoiceWithMaskSmall(int input_size, int seedc, int count, K *input, S *output_index,
+                                         K *output_mask, cudaStream_t stream) {
   RCWMScaleK<T, S, K>(seedc, input_size, input, count, output_index, output_mask, stream);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalRandomChoiceWithMaskSmall<float, int, bool>(int input_size, int seedc, int count,
-                                                                             bool *input, int *output_index,
-                                                                             bool *output_mask, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalRandomChoiceWithMaskSmall<float, int, bool>(
+  int input_size, int seedc, int count, bool *input, int *output_index, bool *output_mask, cudaStream_t stream);

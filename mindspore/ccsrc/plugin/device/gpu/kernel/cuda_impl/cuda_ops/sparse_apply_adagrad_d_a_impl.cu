@@ -56,20 +56,20 @@ __device__ __forceinline__ T Sign(T num) {
 }
 
 template <typename T, typename S, typename S2>
-__global__ void SparseApplyAdagradDAKernel(const size_t inner_size, T *var, T *accum, T *squared_accum,
-                                     const T *grad, const T *lr, const T *l1, const T *l2, const S2 *global_step,
-                                     int32_t *rows_index, S *indices_sort, int32_t *thready_pos_shrink,
-                                     int32_t shrink_num) {
+__global__ void SparseApplyAdagradDAKernel(const size_t inner_size, T *var, T *accum, T *squared_accum, const T *grad,
+                                           const T *lr, const T *l1, const T *l2, const S2 *global_step,
+                                           int32_t *rows_index, S *indices_sort, int32_t *thready_pos_shrink,
+                                           int32_t shrink_num) {
   T zero = static_cast<T>(0.0);
   T minus_one = static_cast<T>(-1);
-  T global_step_scalar =  static_cast<T>(static_cast<double>(global_step[0]));
+  T global_step_scalar = static_cast<T>(static_cast<double>(global_step[0]));
   T gs_lr = global_step_scalar * lr[0];
   T l1_scalar = l1[0];
   T l2_scalar = l2[0];
 
   for (size_t pos_x = blockIdx.x * blockDim.x + threadIdx.x; pos_x < inner_size; pos_x += gridDim.x * blockDim.x) {
     for (size_t pos_y = blockIdx.y * blockDim.y + threadIdx.y; pos_y < shrink_num - 1;
-        pos_y += gridDim.y * blockDim.y) {
+         pos_y += gridDim.y * blockDim.y) {
       int32_t start_row = thready_pos_shrink[pos_y];
       int32_t end_row = thready_pos_shrink[pos_y + 1];
       S update_pos = indices_sort[start_row] * inner_size + pos_x;
@@ -89,8 +89,9 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, T *var, T *a
           var[update_pos] =
             minus_one * static_cast<T>(Sign(static_cast<double>(accum[update_pos]))) *
             static_cast<T>(MaxFunc(
-              static_cast<double>((static_cast<T>(AbsFunc(static_cast<double>(accum[update_pos]))) /
-            global_step_scalar) - l1_scalar), static_cast<double>(0.0))) /
+              static_cast<double>(
+                (static_cast<T>(AbsFunc(static_cast<double>(accum[update_pos]))) / global_step_scalar) - l1_scalar),
+              static_cast<double>(0.0))) /
             (l2_scalar + static_cast<T>(sqrt(static_cast<double>(squared_accum[update_pos]))) / gs_lr);
         } else {
           var[update_pos] = minus_one * (accum[update_pos] / global_step_scalar) /
@@ -103,9 +104,9 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, T *var, T *a
 
 template <>
 __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, half *accum, half *squared_accum,
-                                     const half *grad, const half *lr, const half *l1, const half *l2,
-                                     const int32_t *global_step, int32_t *rows_index, int32_t *indices_sort,
-                                     int32_t *thready_pos_shrink, int32_t shrink_num) {
+                                           const half *grad, const half *lr, const half *l1, const half *l2,
+                                           const int32_t *global_step, int32_t *rows_index, int32_t *indices_sort,
+                                           int32_t *thready_pos_shrink, int32_t shrink_num) {
   float zero = static_cast<float>(0.0);
   float minus_one = static_cast<float>(-1);
   float global_step_scalar = static_cast<float>(global_step[0]);
@@ -115,7 +116,7 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
 
   for (size_t pos_x = blockIdx.x * blockDim.x + threadIdx.x; pos_x < inner_size; pos_x += gridDim.x * blockDim.x) {
     for (size_t pos_y = blockIdx.y * blockDim.y + threadIdx.y; pos_y < shrink_num - 1;
-        pos_y += gridDim.y * blockDim.y) {
+         pos_y += gridDim.y * blockDim.y) {
       int32_t start_row = thready_pos_shrink[pos_y];
       int32_t end_row = thready_pos_shrink[pos_y + 1];
       int32_t update_pos = indices_sort[start_row] * inner_size + pos_x;
@@ -132,14 +133,14 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
           continue;
         }
         if (l1_scalar > zero) {
-          var[update_pos] = __float2half(
-            minus_one * (Sign(__half2float(accum[update_pos]))) *
-            (MaxFunc((((AbsFunc(__half2float(accum[update_pos]))) /
-            global_step_scalar) - l1_scalar), static_cast<float>(0.0))) /
-            (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
+          var[update_pos] =
+            __float2half(minus_one * (Sign(__half2float(accum[update_pos]))) *
+                         (MaxFunc((((AbsFunc(__half2float(accum[update_pos]))) / global_step_scalar) - l1_scalar),
+                                  static_cast<float>(0.0))) /
+                         (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
         } else {
           var[update_pos] = __float2half(minus_one * (__half2float(accum[update_pos]) / global_step_scalar) /
-                            (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
+                                         (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
         }
       }
     }
@@ -148,9 +149,9 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
 
 template <>
 __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, half *accum, half *squared_accum,
-                                     const half *grad, const half *lr, const half *l1, const half *l2,
-                                     const int64_t *global_step, int32_t *rows_index, int32_t *indices_sort,
-                                     int32_t *thready_pos_shrink, int32_t shrink_num) {
+                                           const half *grad, const half *lr, const half *l1, const half *l2,
+                                           const int64_t *global_step, int32_t *rows_index, int32_t *indices_sort,
+                                           int32_t *thready_pos_shrink, int32_t shrink_num) {
   float zero = static_cast<float>(0.0);
   float minus_one = static_cast<float>(-1);
   float global_step_scalar = static_cast<float>(global_step[0]);
@@ -160,7 +161,7 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
 
   for (size_t pos_x = blockIdx.x * blockDim.x + threadIdx.x; pos_x < inner_size; pos_x += gridDim.x * blockDim.x) {
     for (size_t pos_y = blockIdx.y * blockDim.y + threadIdx.y; pos_y < shrink_num - 1;
-        pos_y += gridDim.y * blockDim.y) {
+         pos_y += gridDim.y * blockDim.y) {
       int32_t start_row = thready_pos_shrink[pos_y];
       int32_t end_row = thready_pos_shrink[pos_y + 1];
       int32_t update_pos = indices_sort[start_row] * inner_size + pos_x;
@@ -177,14 +178,14 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
           continue;
         }
         if (l1_scalar > zero) {
-          var[update_pos] = __float2half(
-            minus_one * (Sign(__half2float(accum[update_pos]))) *
-            (MaxFunc((((AbsFunc(__half2float(accum[update_pos]))) /
-            global_step_scalar) - l1_scalar), static_cast<float>(0.0))) /
-            (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
+          var[update_pos] =
+            __float2half(minus_one * (Sign(__half2float(accum[update_pos]))) *
+                         (MaxFunc((((AbsFunc(__half2float(accum[update_pos]))) / global_step_scalar) - l1_scalar),
+                                  static_cast<float>(0.0))) /
+                         (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
         } else {
           var[update_pos] = __float2half(minus_one * (__half2float(accum[update_pos]) / global_step_scalar) /
-                            (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
+                                         (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
         }
       }
     }
@@ -193,9 +194,9 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
 
 template <>
 __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, half *accum, half *squared_accum,
-                                     const half *grad, const half *lr, const half *l1, const half *l2,
-                                     const int64_t *global_step, int32_t *rows_index, int64_t *indices_sort,
-                                     int32_t *thready_pos_shrink, int32_t shrink_num) {
+                                           const half *grad, const half *lr, const half *l1, const half *l2,
+                                           const int64_t *global_step, int32_t *rows_index, int64_t *indices_sort,
+                                           int32_t *thready_pos_shrink, int32_t shrink_num) {
   float zero = static_cast<float>(0.0);
   float minus_one = static_cast<float>(-1);
   float global_step_scalar = static_cast<float>(global_step[0]);
@@ -205,7 +206,7 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
 
   for (size_t pos_x = blockIdx.x * blockDim.x + threadIdx.x; pos_x < inner_size; pos_x += gridDim.x * blockDim.x) {
     for (size_t pos_y = blockIdx.y * blockDim.y + threadIdx.y; pos_y < shrink_num - 1;
-        pos_y += gridDim.y * blockDim.y) {
+         pos_y += gridDim.y * blockDim.y) {
       int32_t start_row = thready_pos_shrink[pos_y];
       int32_t end_row = thready_pos_shrink[pos_y + 1];
       int64_t update_pos = indices_sort[start_row] * inner_size + pos_x;
@@ -222,14 +223,14 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
           continue;
         }
         if (l1_scalar > zero) {
-          var[update_pos] = __float2half(
-            minus_one * (Sign(__half2float(accum[update_pos]))) *
-            (MaxFunc((((AbsFunc(__half2float(accum[update_pos]))) /
-            global_step_scalar) - l1_scalar), static_cast<float>(0.0))) /
-            (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
+          var[update_pos] =
+            __float2half(minus_one * (Sign(__half2float(accum[update_pos]))) *
+                         (MaxFunc((((AbsFunc(__half2float(accum[update_pos]))) / global_step_scalar) - l1_scalar),
+                                  static_cast<float>(0.0))) /
+                         (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
         } else {
           var[update_pos] = __float2half(minus_one * (__half2float(accum[update_pos]) / global_step_scalar) /
-                            (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
+                                         (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
         }
       }
     }
@@ -238,9 +239,9 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
 
 template <>
 __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, half *accum, half *squared_accum,
-                                     const half *grad, const half *lr, const half *l1, const half *l2,
-                                     const int32_t *global_step, int32_t *rows_index, int64_t *indices_sort,
-                                     int32_t *thready_pos_shrink, int32_t shrink_num) {
+                                           const half *grad, const half *lr, const half *l1, const half *l2,
+                                           const int32_t *global_step, int32_t *rows_index, int64_t *indices_sort,
+                                           int32_t *thready_pos_shrink, int32_t shrink_num) {
   float zero = static_cast<float>(0.0);
   float minus_one = static_cast<float>(-1);
   float global_step_scalar = static_cast<float>(global_step[0]);
@@ -250,7 +251,7 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
 
   for (size_t pos_x = blockIdx.x * blockDim.x + threadIdx.x; pos_x < inner_size; pos_x += gridDim.x * blockDim.x) {
     for (size_t pos_y = blockIdx.y * blockDim.y + threadIdx.y; pos_y < shrink_num - 1;
-        pos_y += gridDim.y * blockDim.y) {
+         pos_y += gridDim.y * blockDim.y) {
       int32_t start_row = thready_pos_shrink[pos_y];
       int32_t end_row = thready_pos_shrink[pos_y + 1];
       int64_t update_pos = indices_sort[start_row] * inner_size + pos_x;
@@ -267,14 +268,14 @@ __global__ void SparseApplyAdagradDAKernel(const size_t inner_size, half *var, h
           continue;
         }
         if (l1_scalar > zero) {
-          var[update_pos] = __float2half(
-            minus_one * (Sign(__half2float(accum[update_pos]))) *
-            (MaxFunc((((AbsFunc(__half2float(accum[update_pos]))) /
-            global_step_scalar) - l1_scalar), static_cast<float>(0.0))) /
-            (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
+          var[update_pos] =
+            __float2half(minus_one * (Sign(__half2float(accum[update_pos]))) *
+                         (MaxFunc((((AbsFunc(__half2float(accum[update_pos]))) / global_step_scalar) - l1_scalar),
+                                  static_cast<float>(0.0))) /
+                         (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
         } else {
           var[update_pos] = __float2half(minus_one * (__half2float(accum[update_pos]) / global_step_scalar) /
-                            (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
+                                         (l2_scalar + (sqrt(__half2float(squared_accum[update_pos]))) / gs_lr));
         }
       }
     }
@@ -285,9 +286,9 @@ template <typename S>
 __global__ void SumOfRows(S *indices_sort, size_t indices_num, int32_t *thready_pos) {
   for (size_t idx = blockIdx.x * blockDim.x + threadIdx.x; idx < indices_num; idx += blockDim.x * gridDim.x) {
     if (idx == 0 || idx == indices_num - 1 || indices_sort[idx] != indices_sort[idx - 1]) {
-        thready_pos[idx] = static_cast<S>(idx);
+      thready_pos[idx] = static_cast<S>(idx);
     } else {
-        thready_pos[idx] = static_cast<int32_t>(-1);
+      thready_pos[idx] = static_cast<int32_t>(-1);
     }
   }
 }
@@ -297,21 +298,17 @@ struct GreaterThan {
 };
 
 template <typename T, typename S, typename S2>
-void CalSparseApplyAdagradDA(const size_t batch_size, size_t indices_size, const size_t size,
-                    T *var, T *accum, T *squared_accum, const T *grad, const S *indices,
-                    const T *lr, const T *l1, const T *l2, const S2 *global_step, T *output_var,
-                    S *indices_sort, int32_t *rows_index, int32_t *thready_pos,
-                    int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id,
-                    cudaStream_t cuda_stream) {
+cudaError_t CalSparseApplyAdagradDA(const size_t batch_size, size_t indices_size, const size_t size, T *var, T *accum,
+                                    T *squared_accum, const T *grad, const S *indices, const T *lr, const T *l1,
+                                    const T *l2, const S2 *global_step, T *output_var, S *indices_sort,
+                                    int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink,
+                                    int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream) {
   auto policy = thrust::cuda::par.on(cuda_stream);
-  thrust::sequence(policy,
-                   thrust::device_pointer_cast(rows_index),
+  thrust::sequence(policy, thrust::device_pointer_cast(rows_index),
                    thrust::device_pointer_cast(rows_index) + indices_size);
-  thrust::copy(thrust::device_pointer_cast(indices),
-               thrust::device_pointer_cast(indices) + indices_size,
+  thrust::copy(thrust::device_pointer_cast(indices), thrust::device_pointer_cast(indices) + indices_size,
                thrust::device_pointer_cast(indices_sort));
-  thrust::stable_sort_by_key(policy,
-                             thrust::device_pointer_cast(indices_sort),
+  thrust::stable_sort_by_key(policy, thrust::device_pointer_cast(indices_sort),
                              thrust::device_pointer_cast(indices_sort) + indices_size,
                              thrust::device_pointer_cast(rows_index));
   const int inner_size = static_cast<int>(size / indices_size);
@@ -346,320 +343,161 @@ void CalSparseApplyAdagradDA(const size_t batch_size, size_t indices_size, const
   dim3 block_dim(thread_x, thread_y);
   dim3 grid_dim(block_x, block_y);
 
-  SparseApplyAdagradDAKernel<<<grid_dim, block_dim, 0, cuda_stream>>>(
-    inner_size, var, accum, squared_accum, grad, lr, l1, l2,
-    global_step, rows_index, indices_sort, thready_pos_shrink, h_shrink_num);
+  SparseApplyAdagradDAKernel<<<grid_dim, block_dim, 0, cuda_stream>>>(inner_size, var, accum, squared_accum, grad, lr,
+                                                                      l1, l2, global_step, rows_index, indices_sort,
+                                                                      thready_pos_shrink, h_shrink_num);
 
   cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream));
   cudaMemcpy(output_var, var, size * sizeof(T), cudaMemcpyDeviceToDevice);
+  return GetCudaStatus();
 }
 
 template <typename T, typename S, typename S1>
-CUDA_LIB_EXPORT void CalSparseApplyAdagradDA(const size_t batch_size,
-                                     size_t indices_size, const size_t size,
-                                     T *var, T *accum, T *squared_accum,
-                                     const T *grad, const S *indices, const T *lr,
-                                     const T *l1, const T *l2, const S1 *global_step,
-                                     T *output_var, S *indices_sort, int32_t *rows_index,
-                                     int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                     int32_t *shrink_num, const uint32_t &device_id,
-                                     cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA(const size_t batch_size, size_t indices_size, const size_t size,
+                                                    T *var, T *accum, T *squared_accum, const T *grad, const S *indices,
+                                                    const T *lr, const T *l1, const T *l2, const S1 *global_step,
+                                                    T *output_var, S *indices_sort, int32_t *rows_index,
+                                                    int32_t *thready_pos, int32_t *thready_pos_shrink,
+                                                    int32_t *shrink_num, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int8_t, int32_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int8_t *var,
-                                                             int8_t *accum, int8_t *squared_accum, const int8_t *grad,
-                                                             const int32_t *indices, const int8_t *lr,
-                                                             const int8_t *l1, const int8_t *l2,
-                                                             const int64_t *global_step, int8_t *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int8_t, int64_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int8_t *var,
-                                                             int8_t *accum, int8_t *squared_accum, const int8_t *grad,
-                                                             const int64_t *indices, const int8_t *lr,
-                                                             const int8_t *l1, const int8_t *l2,
-                                                             const int64_t *global_step, int8_t *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int8_t, int32_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int8_t *var,
-                                                             int8_t *accum, int8_t *squared_accum, const int8_t *grad,
-                                                             const int32_t *indices, const int8_t *lr,
-                                                             const int8_t *l1, const int8_t *l2,
-                                                             const int32_t *global_step, int8_t *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int8_t, int64_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int8_t *var,
-                                                             int8_t *accum, int8_t *squared_accum, const int8_t *grad,
-                                                             const int64_t *indices, const int8_t *lr,
-                                                             const int8_t *l1, const int8_t *l2,
-                                                             const int32_t *global_step, int8_t *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int16_t, int32_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int16_t *var,
-                                                             int16_t *accum, int16_t *squared_accum,
-                                                             const int16_t *grad,
-                                                             const int32_t *indices, const int16_t *lr,
-                                                             const int16_t *l1, const int16_t *l2,
-                                                             const int64_t *global_step, int16_t *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int16_t, int64_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int16_t *var,
-                                                             int16_t *accum, int16_t *squared_accum,
-                                                             const int16_t *grad,
-                                                             const int64_t *indices, const int16_t *lr,
-                                                             const int16_t *l1, const int16_t *l2,
-                                                             const int64_t *global_step, int16_t *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int16_t, int32_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int16_t *var,
-                                                             int16_t *accum, int16_t *squared_accum,
-                                                             const int16_t *grad,
-                                                             const int32_t *indices, const int16_t *lr,
-                                                             const int16_t *l1, const int16_t *l2,
-                                                             const int32_t *global_step, int16_t *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int16_t, int64_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int16_t *var,
-                                                             int16_t *accum, int16_t *squared_accum,
-                                                             const int16_t *grad,
-                                                             const int64_t *indices, const int16_t *lr,
-                                                             const int16_t *l1, const int16_t *l2,
-                                                             const int32_t *global_step, int16_t *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int32_t, int32_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int32_t *var,
-                                                             int32_t *accum, int32_t *squared_accum,
-                                                             const int32_t *grad,
-                                                             const int32_t *indices, const int32_t *lr,
-                                                             const int32_t *l1, const int32_t *l2,
-                                                             const int64_t *global_step, int32_t *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int32_t, int64_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int32_t *var,
-                                                             int32_t *accum, int32_t *squared_accum,
-                                                             const int32_t *grad,
-                                                             const int64_t *indices, const int32_t *lr,
-                                                             const int32_t *l1, const int32_t *l2,
-                                                             const int64_t *global_step, int32_t *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int32_t, int32_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int32_t *var,
-                                                             int32_t *accum, int32_t *squared_accum,
-                                                             const int32_t *grad,
-                                                             const int32_t *indices, const int32_t *lr,
-                                                             const int32_t *l1, const int32_t *l2,
-                                                             const int32_t *global_step, int32_t *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int32_t, int64_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int32_t *var,
-                                                             int32_t *accum, int32_t *squared_accum,
-                                                             const int32_t *grad,
-                                                             const int64_t *indices, const int32_t *lr,
-                                                             const int32_t *l1, const int32_t *l2,
-                                                             const int32_t *global_step, int32_t *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int64_t, int32_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int64_t *var,
-                                                             int64_t *accum, int64_t *squared_accum,
-                                                             const int64_t *grad,
-                                                             const int32_t *indices, const int64_t *lr,
-                                                             const int64_t *l1, const int64_t *l2,
-                                                             const int64_t *global_step, int64_t *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int64_t, int64_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int64_t *var,
-                                                             int64_t *accum, int64_t *squared_accum,
-                                                             const int64_t *grad,
-                                                             const int64_t *indices, const int64_t *lr,
-                                                             const int64_t *l1, const int64_t *l2,
-                                                             const int64_t *global_step, int64_t *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int64_t, int32_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int64_t *var,
-                                                             int64_t *accum, int64_t *squared_accum,
-                                                             const int64_t *grad,
-                                                             const int32_t *indices, const int64_t *lr,
-                                                             const int64_t *l1, const int64_t *l2,
-                                                             const int32_t *global_step, int64_t *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<int64_t, int64_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, int64_t *var,
-                                                             int64_t *accum, int64_t *squared_accum,
-                                                             const int64_t *grad,
-                                                             const int64_t *indices, const int64_t *lr,
-                                                             const int64_t *l1, const int64_t *l2,
-                                                             const int32_t *global_step, int64_t *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<double, int32_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, double *var,
-                                                             double *accum, double *squared_accum, const double *grad,
-                                                             const int32_t *indices, const double *lr,
-                                                             const double *l1, const double *l2,
-                                                             const int64_t *global_step, double *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<double, int64_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, double *var,
-                                                             double *accum, double *squared_accum, const double *grad,
-                                                             const int64_t *indices, const double *lr,
-                                                             const double *l1, const double *l2,
-                                                             const int64_t *global_step, double *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<double, int32_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, double *var,
-                                                             double *accum, double *squared_accum, const double *grad,
-                                                             const int32_t *indices, const double *lr,
-                                                             const double *l1, const double *l2,
-                                                             const int32_t *global_step, double *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<double, int64_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, double *var,
-                                                             double *accum, double *squared_accum, const double *grad,
-                                                             const int64_t *indices, const double *lr,
-                                                             const double *l1, const double *l2,
-                                                             const int32_t *global_step, double *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<float, int32_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, float *var,
-                                                             float *accum, float *squared_accum, const float *grad,
-                                                             const int32_t *indices, const float *lr,
-                                                             const float *l1, const float *l2,
-                                                             const int64_t *global_step, float *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<float, int64_t, int64_t>(const size_t batch_size,
-                                                             size_t indices_size,
-                                                             const size_t size, float *var,
-                                                             float *accum, float *squared_accum, const float *grad,
-                                                             const int64_t *indices, const float *lr,
-                                                             const float *l1, const float *l2,
-                                                             const int64_t *global_step, float *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<float, int32_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size, const size_t size, float *var,
-                                                             float *accum, float *squared_accum, const float *grad,
-                                                             const int32_t *indices, const float *lr,
-                                                             const float *l1, const float *l2,
-                                                             const int32_t *global_step, float *output_var,
-                                                             int32_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<float, int64_t, int32_t>(const size_t batch_size,
-                                                             size_t indices_size,
-                                                             const size_t size, float *var,
-                                                             float *accum, float *squared_accum, const float *grad,
-                                                             const int64_t *indices, const float *lr,
-                                                             const float *l1, const float *l2,
-                                                             const int32_t *global_step, float *output_var,
-                                                             int64_t *indices_sort, int32_t *rows_index,
-                                                             int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                             int32_t *shrink_num, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<half, int32_t, int64_t>(const size_t batch_size,
-                                                            size_t indices_size,
-                                                            const size_t size, half *var,
-                                                            half *accum, half *squared_accum, const half *grad,
-                                                            const int32_t *indices, const half *lr,
-                                                            const half *l1, const half *l2,
-                                                            const int64_t *global_step, half *output_var,
-                                                            int32_t *indices_sort, int32_t *rows_index,
-                                                            int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                            int32_t *shrink_num, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<half, int64_t, int64_t>(const size_t batch_size,
-                                                            size_t indices_size,
-                                                            const size_t size, half *var,
-                                                            half *accum, half *squared_accum, const half *grad,
-                                                            const int64_t *indices, const half *lr,
-                                                            const half *l1, const half *l2,
-                                                            const int64_t *global_step, half *output_var,
-                                                            int64_t *indices_sort, int32_t *rows_index,
-                                                            int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                            int32_t *shrink_num, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<half, int32_t, int32_t>(const size_t batch_size,
-                                                            size_t indices_size,
-                                                            const size_t size, half *var,
-                                                            half *accum, half *squared_accum, const half *grad,
-                                                            const int32_t *indices, const half *lr,
-                                                            const half *l1, const half *l2,
-                                                            const int32_t *global_step, half *output_var,
-                                                            int32_t *indices_sort, int32_t *rows_index,
-                                                            int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                            int32_t *shrink_num, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalSparseApplyAdagradDA<half, int64_t, int32_t>(const size_t batch_size,
-                                                            size_t indices_size,
-                                                            const size_t size, half *var,
-                                                            half *accum, half *squared_accum, const half *grad,
-                                                            const int64_t *indices, const half *lr,
-                                                            const half *l1, const half *l2,
-                                                            const int32_t *global_step, half *output_var,
-                                                            int64_t *indices_sort, int32_t *rows_index,
-                                                            int32_t *thready_pos, int32_t *thready_pos_shrink,
-                                                            int32_t *shrink_num, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int8_t, int32_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int8_t *var, int8_t *accum, int8_t *squared_accum,
+  const int8_t *grad, const int32_t *indices, const int8_t *lr, const int8_t *l1, const int8_t *l2,
+  const int64_t *global_step, int8_t *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int8_t, int64_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int8_t *var, int8_t *accum, int8_t *squared_accum,
+  const int8_t *grad, const int64_t *indices, const int8_t *lr, const int8_t *l1, const int8_t *l2,
+  const int64_t *global_step, int8_t *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int8_t, int32_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int8_t *var, int8_t *accum, int8_t *squared_accum,
+  const int8_t *grad, const int32_t *indices, const int8_t *lr, const int8_t *l1, const int8_t *l2,
+  const int32_t *global_step, int8_t *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int8_t, int64_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int8_t *var, int8_t *accum, int8_t *squared_accum,
+  const int8_t *grad, const int64_t *indices, const int8_t *lr, const int8_t *l1, const int8_t *l2,
+  const int32_t *global_step, int8_t *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int16_t, int32_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int16_t *var, int16_t *accum, int16_t *squared_accum,
+  const int16_t *grad, const int32_t *indices, const int16_t *lr, const int16_t *l1, const int16_t *l2,
+  const int64_t *global_step, int16_t *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int16_t, int64_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int16_t *var, int16_t *accum, int16_t *squared_accum,
+  const int16_t *grad, const int64_t *indices, const int16_t *lr, const int16_t *l1, const int16_t *l2,
+  const int64_t *global_step, int16_t *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int16_t, int32_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int16_t *var, int16_t *accum, int16_t *squared_accum,
+  const int16_t *grad, const int32_t *indices, const int16_t *lr, const int16_t *l1, const int16_t *l2,
+  const int32_t *global_step, int16_t *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int16_t, int64_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int16_t *var, int16_t *accum, int16_t *squared_accum,
+  const int16_t *grad, const int64_t *indices, const int16_t *lr, const int16_t *l1, const int16_t *l2,
+  const int32_t *global_step, int16_t *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int32_t, int32_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int32_t *var, int32_t *accum, int32_t *squared_accum,
+  const int32_t *grad, const int32_t *indices, const int32_t *lr, const int32_t *l1, const int32_t *l2,
+  const int64_t *global_step, int32_t *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int32_t, int64_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int32_t *var, int32_t *accum, int32_t *squared_accum,
+  const int32_t *grad, const int64_t *indices, const int32_t *lr, const int32_t *l1, const int32_t *l2,
+  const int64_t *global_step, int32_t *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int32_t, int32_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int32_t *var, int32_t *accum, int32_t *squared_accum,
+  const int32_t *grad, const int32_t *indices, const int32_t *lr, const int32_t *l1, const int32_t *l2,
+  const int32_t *global_step, int32_t *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int32_t, int64_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int32_t *var, int32_t *accum, int32_t *squared_accum,
+  const int32_t *grad, const int64_t *indices, const int32_t *lr, const int32_t *l1, const int32_t *l2,
+  const int32_t *global_step, int32_t *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int64_t, int32_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int64_t *var, int64_t *accum, int64_t *squared_accum,
+  const int64_t *grad, const int32_t *indices, const int64_t *lr, const int64_t *l1, const int64_t *l2,
+  const int64_t *global_step, int64_t *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int64_t, int64_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int64_t *var, int64_t *accum, int64_t *squared_accum,
+  const int64_t *grad, const int64_t *indices, const int64_t *lr, const int64_t *l1, const int64_t *l2,
+  const int64_t *global_step, int64_t *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int64_t, int32_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int64_t *var, int64_t *accum, int64_t *squared_accum,
+  const int64_t *grad, const int32_t *indices, const int64_t *lr, const int64_t *l1, const int64_t *l2,
+  const int32_t *global_step, int64_t *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<int64_t, int64_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, int64_t *var, int64_t *accum, int64_t *squared_accum,
+  const int64_t *grad, const int64_t *indices, const int64_t *lr, const int64_t *l1, const int64_t *l2,
+  const int32_t *global_step, int64_t *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<double, int32_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, double *var, double *accum, double *squared_accum,
+  const double *grad, const int32_t *indices, const double *lr, const double *l1, const double *l2,
+  const int64_t *global_step, double *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<double, int64_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, double *var, double *accum, double *squared_accum,
+  const double *grad, const int64_t *indices, const double *lr, const double *l1, const double *l2,
+  const int64_t *global_step, double *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<double, int32_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, double *var, double *accum, double *squared_accum,
+  const double *grad, const int32_t *indices, const double *lr, const double *l1, const double *l2,
+  const int32_t *global_step, double *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<double, int64_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, double *var, double *accum, double *squared_accum,
+  const double *grad, const int64_t *indices, const double *lr, const double *l1, const double *l2,
+  const int32_t *global_step, double *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<float, int32_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, float *var, float *accum, float *squared_accum,
+  const float *grad, const int32_t *indices, const float *lr, const float *l1, const float *l2,
+  const int64_t *global_step, float *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<float, int64_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, float *var, float *accum, float *squared_accum,
+  const float *grad, const int64_t *indices, const float *lr, const float *l1, const float *l2,
+  const int64_t *global_step, float *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<float, int32_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, float *var, float *accum, float *squared_accum,
+  const float *grad, const int32_t *indices, const float *lr, const float *l1, const float *l2,
+  const int32_t *global_step, float *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<float, int64_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, float *var, float *accum, float *squared_accum,
+  const float *grad, const int64_t *indices, const float *lr, const float *l1, const float *l2,
+  const int32_t *global_step, float *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos,
+  int32_t *thready_pos_shrink, int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<half, int32_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, half *var, half *accum, half *squared_accum,
+  const half *grad, const int32_t *indices, const half *lr, const half *l1, const half *l2, const int64_t *global_step,
+  half *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink,
+  int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<half, int64_t, int64_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, half *var, half *accum, half *squared_accum,
+  const half *grad, const int64_t *indices, const half *lr, const half *l1, const half *l2, const int64_t *global_step,
+  half *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink,
+  int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<half, int32_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, half *var, half *accum, half *squared_accum,
+  const half *grad, const int32_t *indices, const half *lr, const half *l1, const half *l2, const int32_t *global_step,
+  half *output_var, int32_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink,
+  int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSparseApplyAdagradDA<half, int64_t, int32_t>(
+  const size_t batch_size, size_t indices_size, const size_t size, half *var, half *accum, half *squared_accum,
+  const half *grad, const int64_t *indices, const half *lr, const half *l1, const half *l2, const int32_t *global_step,
+  half *output_var, int64_t *indices_sort, int32_t *rows_index, int32_t *thready_pos, int32_t *thready_pos_shrink,
+  int32_t *shrink_num, const uint32_t &device_id, cudaStream_t cuda_stream);

@@ -20,9 +20,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalSparseTensorDenseMatmul(const size_t values_size_, const size_t out_dim_1, const size_t b_rows,
-                                                const size_t b_cols, const T *a_indices, const S *a_values, const S *b,
-                                                S *output, bool adj_st, bool adj_dt, const uint32_t &device_id,
-                                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSparseTensorDenseMatmul(const size_t values_size_, const size_t out_dim_1,
+                                                       const size_t b_rows, const size_t b_cols, const T *a_indices,
+                                                       const S *a_values, const S *b, S *output, bool adj_st,
+                                                       bool adj_dt, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_TENSOR_DENSOR_MATMUL_IMPL_CUH_

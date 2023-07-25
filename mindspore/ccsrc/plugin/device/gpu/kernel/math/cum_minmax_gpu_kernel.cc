@@ -98,7 +98,7 @@ bool CumMinMaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
 
   auto status = CumMinMax(cum_op_type_, input_ptr, value_ptr, index_ptr, outer_size_, axis_size_, inner_size_,
                           device_id_, cuda_stream);
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

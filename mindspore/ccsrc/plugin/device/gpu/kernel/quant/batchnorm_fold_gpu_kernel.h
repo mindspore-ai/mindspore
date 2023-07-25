@@ -78,10 +78,12 @@ class BatchNormFoldGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                               cudaMemcpyAsync(running_std, variance, output_size_, cudaMemcpyDeviceToDevice,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy gpu memory.");
-    CalUpdateRunningStd(channel_, epsilon_, running_std, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalUpdateRunningStd(channel_, epsilon_, running_std, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     if (!is_training_ || current_step_host[0] >= freeze_bn_) {
       CHECK_CUDA_RET_WITH_ERROR(kernel_node_, cudaMemset(batch_mean, 0, output_size_), "Failed to set gpu memory.");
-      ThrustFillWith(batch_std, channel_, 1.f, reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = ThrustFillWith(batch_std, channel_, 1.f, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, kernel_name_);
       return true;
     }
     const T alpha = 1;
@@ -91,7 +93,8 @@ class BatchNormFoldGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                   handle_, mode_, &alpha, &beta, x_desc_, x, x_desc_, y, scale_bias_mean_var_desc_,
                                   mean, mean, exp_avg_factor_, mean, variance, epsilon_, batch_mean, batch_std),
                                 "Failed to launch kernel.")
-    CalUpdateBatchStd(channel_, batch_std, reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = CalUpdateBatchStd(channel_, batch_std, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 

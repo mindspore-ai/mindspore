@@ -168,8 +168,9 @@ bool MatrixBandPartGpuKernelMod::LaunchKernelNotBroadcast(const T *x_ptr, const 
   if (lower_ >= SizeToLong(m_) && upper_ >= SizeToLong(n_)) {
     return true;
   }
-  MatrixBandPart(output_outer_size_, x_ptr, m_, n_, lower_, upper_, output_ptr, device_id_,
-                 reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = MatrixBandPart(output_outer_size_, x_ptr, m_, n_, lower_, upper_, output_ptr, device_id_,
+                               reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 
@@ -182,9 +183,10 @@ bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   const auto upper_ptr = reinterpret_cast<LU *>(inputs.at(kIndex2)->addr);
   auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
   if (need_broadcast_) {
-    MatrixBandPartBroadcast(output_element_num_, broadcast_x_shape_, broadcast_lower_shape_, broadcast_upper_shape_,
-                            broadcast_output_shape_, x_ptr, m_, n_, lower_ptr, upper_ptr, output_ptr, device_id_,
-                            reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = MatrixBandPartBroadcast(
+      output_element_num_, broadcast_x_shape_, broadcast_lower_shape_, broadcast_upper_shape_, broadcast_output_shape_,
+      x_ptr, m_, n_, lower_ptr, upper_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   } else {
     return LaunchKernelNotBroadcast(x_ptr, lower_ptr, upper_ptr, output_ptr);

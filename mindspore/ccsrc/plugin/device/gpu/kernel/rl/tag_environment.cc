@@ -116,15 +116,18 @@ bool TagEnvironment::Init(const CNodePtr &cnode, void *stream_ptr) {
                     reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemcpy failed.");
 
-  InitEnv(env_num_, agent_num_, game_setting_device_, agent_state_device_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = InitEnv(env_num_, agent_num_, game_setting_device_, agent_state_device_,
+                        reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, "Init_InitEnv");
   return true;
 }
 
 bool TagEnvironment::Reset(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   auto state = reinterpret_cast<float *>(outputs[0]->addr);
-  ResetEnv(env_num_, agent_num_, game_setting_device_, agent_state_device_, state,
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = ResetEnv(env_num_, agent_num_, game_setting_device_, agent_state_device_, state,
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, "Reset_ResetEnv");
   return true;
 }
 
@@ -137,13 +140,15 @@ bool TagEnvironment::Step(const std::vector<AddressPtr> &inputs, const std::vect
   auto team_reward = reinterpret_cast<float *>(workspace[0]->addr);
   auto distance = reinterpret_cast<int *>(team_reward + env_num_);
   StepKernelProfiling(action, state, reward, done, team_reward, distance, reinterpret_cast<cudaStream_t>(stream_ptr));
+  cudaError_t status = cudaErrorNotReady;
   if (optimal_kernel_ == kBindBlock) {
-    StepBindBlock(env_num_, agent_num_, game_setting_device_, agent_state_device_, action, state, reward, done,
-                  reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = StepBindBlock(env_num_, agent_num_, game_setting_device_, agent_state_device_, action, state, reward, done,
+                           reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
-    StepCrossBlock(env_num_, agent_num_, game_setting_device_, agent_state_device_, action, state, reward, done,
-                   team_reward, distance, reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = StepCrossBlock(env_num_, agent_num_, game_setting_device_, agent_state_device_, action, state, reward,
+                            done, team_reward, distance, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
+  CHECK_CUDA_STATUS(status, "Step_StepCrossBlock");
   return true;
 }
 
@@ -196,12 +201,21 @@ void TagEnvironment::StepKernelProfiling(const int *action, float *state, float 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(agent_state_device, &agent_state, sizeof(AgentState), cudaMemcpyHostToDevice, stream),
     "cudaMemcpy failed.");
-  AgentStateCopy(env_num_, agent_num_, agent_state_device, agent_state_device_, stream);
-
+  auto status = AgentStateCopy(env_num_, agent_num_, agent_state_device, agent_state_device_, stream);
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
+  }
   // Warmup
-  StepBindBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done, stream);
-  StepCrossBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done,
-                 team_reward, distance, stream);
+  status =
+    StepBindBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done, stream);
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
+  }
+  status = StepCrossBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done,
+                          team_reward, distance, stream);
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
+  }
 
   // Collect profiling info
   device::gpu::CudaDeviceStream start = nullptr;
@@ -212,15 +226,22 @@ void TagEnvironment::StepKernelProfiling(const int *action, float *state, float 
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::ConstructEvent(&end), "Failed to create event.");
 
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::RecordEvent(start, stream), "Failed to record event to stream.");
-  StepBindBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done, stream);
+  status =
+    StepBindBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done, stream);
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
+  }
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::RecordEvent(end, stream), "Failed to record event to stream.");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::SyncEvent(start), "Failed to sync event.");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::SyncEvent(end), "Failed to sync event.");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::ElapsedTime(&bind_cost, start, end), "Record time failed.");
 
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::RecordEvent(start, stream), "Failed to record event to stream.");
-  StepCrossBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done,
-                 team_reward, distance, stream);
+  status = StepCrossBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done,
+                          team_reward, distance, stream);
+  if (status != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
+  }
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::RecordEvent(end, stream), "Failed to record event to stream.");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::SyncEvent(start), "Failed to sync event.");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::SyncEvent(end), "Failed to sync event.");

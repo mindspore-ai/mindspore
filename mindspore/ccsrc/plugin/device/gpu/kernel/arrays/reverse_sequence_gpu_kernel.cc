@@ -97,8 +97,10 @@ bool ReverseSequenceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     cudaMemcpyAsync(input_shape_ptr, &input_shape_[0], input_shape_.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemcpyAsync input_shape_ failed");
-  CalReverseSequence(input_size_, input, seq_len, batch_dim_, seq_dim_, cur_pos_arr, input_shape_ptr,
-                     input_cum_shape_ptr, shape_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status =
+    CalReverseSequence(input_size_, input, seq_len, batch_dim_, seq_dim_, cur_pos_arr, input_shape_ptr,
+                       input_cum_shape_ptr, shape_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

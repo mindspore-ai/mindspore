@@ -88,7 +88,7 @@ cudaError_t CalExtractGlimpse(const size_t output_size, const size_t batch_cnt, 
   CalExtractGlimpseKernel<<<CUDA_BLOCKS_CAL(0, output_size, thread_num), thread_num, 0, cuda_stream>>>(
     output_size, batch_cnt, channels, image_height, image_width, noise, centered, normalized, uniform_noise, inputs,
     size, offsets, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t

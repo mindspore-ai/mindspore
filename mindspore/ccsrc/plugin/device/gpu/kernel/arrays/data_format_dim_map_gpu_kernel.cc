@@ -47,8 +47,9 @@ bool DataFormatDimMapGpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
       "cudaMemcpy failed in DataFormatDimMapGpuKernelMod::Launch.");
   }
 
-  DataFormatDimMap(static_cast<size_t>(input_elements_), input_addr, output_addr, d_dim_map,
-                   reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = DataFormatDimMap(static_cast<size_t>(input_elements_), input_addr, output_addr, d_dim_map,
+                                 reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

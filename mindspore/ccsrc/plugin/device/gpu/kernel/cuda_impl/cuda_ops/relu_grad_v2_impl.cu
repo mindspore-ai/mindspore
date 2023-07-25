@@ -89,7 +89,7 @@ __global__ void ReluGradV2Vectorized(const T *dy, const uint32_t *mask, T *dx, u
 }
 
 template <typename T>
-void ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx, cudaStream_t cuda_stream) {
+cudaError_t ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx, cudaStream_t cuda_stream) {
   constexpr uint vec_size = cuda::elementwise::VecSize<T, uint32_t>();
   const auto block_x = uint(kThreadsPerBlock);
   const uint elements_per_block = kThreadsPerBlock * vec_size;
@@ -97,27 +97,28 @@ void ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx, cuda
   dim3 block{block_x};
   dim3 grid{grid_x};
   ReluGradV2Vectorized<vec_size, T><<<grid, block, 0, cuda_stream>>>(dy, mask, dx, num);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const double *dy, const uint32_t *mask, double *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const float *dy, const uint32_t *mask, float *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const half *dy, const uint32_t *mask, half *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const int8_t *dy, const uint32_t *mask, int8_t *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const int16_t *dy, const uint32_t *mask, int16_t *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const int32_t *dy, const uint32_t *mask, int32_t *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const int64_t *dy, const uint32_t *mask, int64_t *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const uint8_t *dy, const uint32_t *mask, uint8_t *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const uint16_t *dy, const uint32_t *mask, uint16_t *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const uint32_t *dy, const uint32_t *mask, uint32_t *dx,
-                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const uint64_t *dy, const uint32_t *mask, uint64_t *dx,
-                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const double *dy, const uint32_t *mask, double *dx,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const float *dy, const uint32_t *mask, float *dx,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const half *dy, const uint32_t *mask, half *dx,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const int8_t *dy, const uint32_t *mask, int8_t *dx,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const int16_t *dy, const uint32_t *mask, int16_t *dx,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const int32_t *dy, const uint32_t *mask, int32_t *dx,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const int64_t *dy, const uint32_t *mask, int64_t *dx,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const uint8_t *dy, const uint32_t *mask, uint8_t *dx,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const uint16_t *dy, const uint32_t *mask,
+                                                uint16_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const uint32_t *dy, const uint32_t *mask,
+                                                uint32_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ReluGradV2(const size_t num, const uint64_t *dy, const uint32_t *mask,
+                                                uint64_t *dx, cudaStream_t cuda_stream);

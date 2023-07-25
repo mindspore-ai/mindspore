@@ -109,7 +109,7 @@ cudaError_t CalAdjusthue(const int input_elements, const T *input, T *output, co
                          const uint32_t &device_id, cudaStream_t cuda_stream) {
   CalAdjustHueKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input_elements, input, output, hue_delta);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalAdjusthue<float>(const int input_elements, const float *input, float *output,

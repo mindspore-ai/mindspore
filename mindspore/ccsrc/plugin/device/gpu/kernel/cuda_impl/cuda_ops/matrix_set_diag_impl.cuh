@@ -20,10 +20,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void MatrixSetDiag(const int outer_batch, const int inner_row, const int inner_col, const int num_diags,
-                                   const int max_diag_len, const int lower_index, const int upper_index,
-                                   const bool right_align_super_diagonal, const bool right_align_sub_diagonal,
-                                   const bool is_single_diag, const T *diag_addr, T *output_addr,
-                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t MatrixSetDiag(const int outer_batch, const int inner_row, const int inner_col,
+                                          const int num_diags, const int max_diag_len, const int lower_index,
+                                          const int upper_index, const bool right_align_super_diagonal,
+                                          const bool right_align_sub_diagonal, const bool is_single_diag,
+                                          const T *diag_addr, T *output_addr, const uint32_t &device_id,
+                                          cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MATRIX_SET_DIAG_IMPL_CUH_

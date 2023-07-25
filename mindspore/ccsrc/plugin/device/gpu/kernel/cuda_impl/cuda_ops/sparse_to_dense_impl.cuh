@@ -19,12 +19,12 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T>
-void CallSetDefaultValue(T default_value, const int64_t output_elements, T *output, const uint32_t &device_id,
-                         cudaStream_t cuda_stream);
+cudaError_t CallSetDefaultValue(T default_value, const int64_t output_elements, T *output, const uint32_t &device_id,
+                                cudaStream_t cuda_stream);
 
 template <typename T, typename Index>
-void CallSparseToDense(const Index *indices, const T *vals, const int num_elems, const int num_vals,
-                       const Index *output_shape, const int ndims, T *output, const uint32_t &device_id,
-                       cudaStream_t cuda_stream);
+cudaError_t CallSparseToDense(const Index *indices, const T *vals, const int num_elems, const int num_vals,
+                              const Index *output_shape, const int ndims, T *output, const uint32_t &device_id,
+                              cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_TO_DENSE_CUH_

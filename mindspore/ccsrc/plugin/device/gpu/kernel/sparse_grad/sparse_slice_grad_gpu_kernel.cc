@@ -106,9 +106,9 @@ bool SparseSliceGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     cudaMemcpyAsync(num_propagated_ptr, &num_propagated, sizeof(size_t), cudaMemcpyHostToDevice, cuda_stream),
     "cudaMemcpyHostToDevice for 'SparseSliceGrad' num_propagated failed");
 
-  SparseSliceGrad(x_ptr, indices_ptr, start_ptr, new_indices_ptr, y_ptr, num_propagated_ptr, input_nnz_, output_nnz_,
-                  num_dim_, device_id_, cuda_stream);
-
+  auto status = SparseSliceGrad(x_ptr, indices_ptr, start_ptr, new_indices_ptr, y_ptr, num_propagated_ptr, input_nnz_,
+                                output_nnz_, num_dim_, device_id_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&num_propagated, num_propagated_ptr, sizeof(size_t), cudaMemcpyDeviceToHost, cuda_stream),
     "cudaMemcpyDeviceToHost for 'SparseSliceGrad' num_propagated failed");

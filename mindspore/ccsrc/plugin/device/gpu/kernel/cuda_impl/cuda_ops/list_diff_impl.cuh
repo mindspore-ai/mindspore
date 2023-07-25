@@ -23,7 +23,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT int CalListDiff(size_t x_size, size_t y_size, const T *x, const T *y, T *out, S *idx, T *workspace_y,
-                                S *workspace_xidx, bool *workspace_flag, const uint32_t &device_id,
-                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalListDiff(size_t x_size, size_t y_size, const T *x, const T *y, T *out, S *idx,
+                                        T *workspace_y, S *workspace_xidx, bool *workspace_flag,
+                                        const uint32_t &device_id, cudaStream_t cuda_stream, int *count);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LIST_DIFF_IMPL_CUH_

@@ -19,15 +19,17 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalUpdateRunningStd(int channel_size, double epsilon, T* running_std, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalUpdateRunningStd(int channel_size, double epsilon, T *running_std,
+                                                cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalUpdateBatchStd(int channel_size, T* batch_std, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalUpdateBatchStd(int channel_size, T *batch_std, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalBatchNormFoldGrad(const T* d_batch_mean, const T* d_batch_std, const T* x, const T* batch_mean,
-                                          const T* batch_std, int batch_size, int channel_size, int height, int width,
-                                          T* dx, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalBatchNormFoldGrad(const T *d_batch_mean, const T *d_batch_std, const T *x,
+                                                 const T *batch_mean, const T *batch_std, int batch_size,
+                                                 int channel_size, int height, int width, T *dx,
+                                                 cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void ThrustFillWith(T* array, int size, T tofill, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ThrustFillWith(T *array, int size, T tofill, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BATCHNORM_FOLD_IMPL_CUH_

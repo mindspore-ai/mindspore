@@ -35,9 +35,10 @@ bool Conv3dGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   const float beta = 0;
   if (use_pad_) {
     T *padded_addr = GetDeviceAddress<T>(workspace, 1);
-    CalPad3d(padded_size_ / sizeof(T), input_addr, n_, c_, old_depth_, old_height_, old_width_, old_depth_ + pad_depth_,
-             old_height_ + pad_height_, old_width_ + pad_width_, pad_head_, pad_top_, pad_left_, pad_value_,
-             padded_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    auto status = CalPad3d(padded_size_ / sizeof(T), input_addr, n_, c_, old_depth_, old_height_, old_width_,
+                           old_depth_ + pad_depth_, old_height_ + pad_height_, old_width_ + pad_width_, pad_head_,
+                           pad_top_, pad_left_, pad_value_, padded_addr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnConvolutionForward(cudnn_handle_, &alpha, padded_desc_, padded_addr, filter_desc_, filter_addr, conv_desc_,
                               conv_algorithm_, workspace_addr, workspace_size_, &beta, output_desc_, output_addr),

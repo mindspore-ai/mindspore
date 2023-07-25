@@ -19,18 +19,19 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalCTCGreedyDecoder(const T *input, const int bound, const size_t outer_size,
-                                         const size_t batch_size, int64_t *decoded_values_temp, T *log_probability,
-                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCTCGreedyDecoder(const T *input, const int bound, const size_t outer_size,
+                                                const size_t batch_size, int64_t *decoded_values_temp,
+                                                T *log_probability, const uint32_t &device_id,
+                                                cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void Calmerge(int64_t *decoded_values_temp, const int32_t *sequence_length, const size_t batch_size,
-                              const int bound, const bool merge_ok, T *log_probability, int64_t *nums_count,
-                              const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t Calmerge(int64_t *decoded_values_temp, const int32_t *sequence_length,
+                                     const size_t batch_size, const int bound, const bool merge_ok, T *log_probability,
+                                     int64_t *nums_count, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT int64_t Calindices(const int64_t *decoded_values_temp, const int64_t *nums_count,
-                                   const size_t batch_size, int64_t *decoded_indices, int64_t *decoded_values,
-                                   int64_t *decoded_shape, const uint32_t &device_id,
-                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t Calindices(const int64_t *decoded_values_temp, const int64_t *nums_count,
+                                       const size_t batch_size, int64_t *decoded_indices, int64_t *decoded_values,
+                                       int64_t *decoded_shape, const uint32_t &device_id, cudaStream_t cuda_stream,
+                                       int64_t *count);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CTC_GREEDY_DECODER_IMPL_CUH_

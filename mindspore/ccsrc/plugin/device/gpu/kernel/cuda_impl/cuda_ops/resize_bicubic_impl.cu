@@ -198,43 +198,39 @@ __global__ void ResizeBicubicSame(const T *input, S *output, int nchw) {
 }
 
 template <typename T, typename S>
-void CalResizeBicubic(const T *input, const int n, const int c, const int input_h, const int input_w,
-                      const int output_h, const int output_w, const float h_scale, const float w_scale, S *output,
-                      bool half_pixel_centers, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalResizeBicubic(const T *input, const int n, const int c, const int input_h, const int input_w,
+                             const int output_h, const int output_w, const float h_scale, const float w_scale,
+                             S *output, bool half_pixel_centers, const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int hw = output_h * output_w;
   const int chw = c * hw;
   const int nchw = n * chw;
   if (input_h == output_h && input_w == output_w) {
     ResizeBicubicSame<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, output, nchw);
-    return;
+    return GetCudaStatus();
   }
   float A = -0.75;
   if (half_pixel_centers == true) {
     A = -0.5;
     ResizeBicubicHalfPixelCenters<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       input, A, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output);
-    return;
   } else {
     ResizeBicubic<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       input, A, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output);
-    return;
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalResizeBicubic<half, half>(const half *input, const int n, const int c,
-                                                           const int input_h, const int input_w, const int output_h,
-                                                           const int output_w, const float h_scale, const float w_scale,
-                                                           half *output, bool half_pixel_centers,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalResizeBicubic<float, float>(const float *input, const int n, const int c,
-                                                             const int input_h, const int input_w, const int output_h,
-                                                             const int output_w, const float h_scale,
-                                                             const float w_scale, float *output,
-                                                             bool half_pixel_centers, const uint32_t &device_id,
-                                                             cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalResizeBicubic<double, double>(const double *input, const int n, const int c,
-                                                               const int input_h, const int input_w, const int output_h,
-                                                               const int output_w, const float h_scale,
-                                                               const float w_scale, double *output,
-                                                               bool half_pixel_centers, const uint32_t &device_id,
-                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalResizeBicubic<half, half>(const half *input, const int n, const int c,
+                                                                  const int input_h, const int input_w,
+                                                                  const int output_h, const int output_w,
+                                                                  const float h_scale, const float w_scale,
+                                                                  half *output, bool half_pixel_centers,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalResizeBicubic<float, float>(
+  const float *input, const int n, const int c, const int input_h, const int input_w, const int output_h,
+  const int output_w, const float h_scale, const float w_scale, float *output, bool half_pixel_centers,
+  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalResizeBicubic<double, double>(
+  const double *input, const int n, const int c, const int input_h, const int input_w, const int output_h,
+  const int output_w, const float h_scale, const float w_scale, double *output, bool half_pixel_centers,
+  const uint32_t &device_id, cudaStream_t cuda_stream);

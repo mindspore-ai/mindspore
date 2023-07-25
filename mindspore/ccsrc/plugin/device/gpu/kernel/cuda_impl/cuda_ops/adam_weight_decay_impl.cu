@@ -42,7 +42,7 @@ cudaError_t AdamWeightDecay(const int &element_num_, const bool &need_decay, con
   AdamWeightDecayKernel<<<GET_BLOCKS(element_num_), GET_THREADS, 0, stream>>>(
     element_num_, need_decay, beta1, one_sub_beta1, beta2, one_sub_beta2, epsilon, lr, weight_decay, m, v, param,
     gradient);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t AdamWeightDecay(const int &element_num_, const bool &need_decay,

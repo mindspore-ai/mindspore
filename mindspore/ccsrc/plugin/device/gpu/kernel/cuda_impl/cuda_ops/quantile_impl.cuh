@@ -19,9 +19,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void Quantile(const T *input, const T *q, T *out, T *sort, const int dim, const int x, const int y,
-                              const int z, const int each_q_elements, const int output_elements, int *flag_in,
-                              int *ret_flag_device, int *nan_flags, const bool ignorenan_, const uint32_t &device_id,
-                              cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t Quantile(const T *input, const T *q, T *out, T *sort, const int dim, const int x,
+                                     const int y, const int z, const int each_q_elements, const int output_elements,
+                                     int *flag_in, int *ret_flag_device, int *nan_flags, const bool ignorenan_,
+                                     const uint32_t &device_id, cudaStream_t cuda_stream);
 CUDA_LIB_EXPORT int RoundUpPower2(int v);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_QUANTILE_IMPL_CUH_

@@ -21,9 +21,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S, typename V>
-void MedianGrad(const T *input0_value, const T *input1_value, const T *input2_value, const S *input3_value, V *output,
-                const int64_t axis, bool global_median, const int64_t input0_size, const int64_t input1_size,
-                const int64_t input1_dim_, int *elem_num_each_dim_x, int *elem_num_each_dim_y, int *repeat_val,
-                cudaStream_t cuda_stream);
+cudaError_t MedianGrad(const T *input0_value, const T *input1_value, const T *input2_value, const S *input3_value,
+                       V *output, const int64_t axis, bool global_median, const int64_t input0_size,
+                       const int64_t input1_size, const int64_t input1_dim_, int *elem_num_each_dim_x,
+                       int *elem_num_each_dim_y, int *repeat_val, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MEDIAN_GRAD_IMPL_CUH_

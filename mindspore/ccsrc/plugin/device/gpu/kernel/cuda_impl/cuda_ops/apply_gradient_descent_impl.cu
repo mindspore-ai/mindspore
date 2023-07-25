@@ -31,7 +31,7 @@ template <typename T>
 cudaError_t CalApplyGradientDescent(const size_t &size, T *var, const T *alpha, const T *delta, T *output,
                                     cudaStream_t cuda_stream) {
   ApplyGradientDescent<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, var, alpha, delta, output);
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalApplyGradientDescent<float>(const size_t &size, float *var, const float *alpha,

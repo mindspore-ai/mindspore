@@ -22,20 +22,20 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-CUDA_LIB_EXPORT void CalHsvtorgbFp16(const size_t input_size, const half *input, half *output,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalHsvtorgbFp16(const size_t input_size, const half *input, half *output,
+                                            const uint32_t &device_id, cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalHsvtorgbFp32(const size_t input_size, const float *input, float *output,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalHsvtorgbFp32(const size_t input_size, const float *input, float *output,
+                                            const uint32_t &device_id, cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalHsvtorgbFp64(const size_t input_size, const double *input, double *output,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalHsvtorgbFp64(const size_t input_size, const double *input, double *output,
+                                            const uint32_t &device_id, cudaStream_t cuda_stream);
 #ifdef __cplusplus
 }
 #endif
 
 template <typename T>
-CUDA_LIB_EXPORT void CalHsvtorgb(const size_t input_size, const T *input,
-                               T *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalHsvtorgb(const size_t input_size, const T *input, T *output, const uint32_t &device_id,
+                                        cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_HSVTORGB_IMPL_CUH_

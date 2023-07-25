@@ -45,16 +45,18 @@ __global__ void Uniform(half *x, half *y, const float from, const float to, cons
 }
 
 template <typename T>
-void CalUniform(T *x, T *y, float from, float to, const size_t size, const uint32_t &device_id,
-                cudaStream_t cuda_stream) {
+cudaError_t CalUniform(T *x, T *y, float from, float to, const size_t size, const uint32_t &device_id,
+                       cudaStream_t cuda_stream) {
   Uniform<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(x, y, from, to, size);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalUniform<double>(double *x, double *y, const float from, const float to,
-                                                 const size_t size, const uint32_t &device_id,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUniform<float>(float *x, float *y, const float from, const float to, const size_t size,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUniform<half>(half *x, half *y, const float from, const float to, const size_t size,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUniform<double>(double *x, double *y, const float from, const float to,
+                                                        const size_t size, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUniform<float>(float *x, float *y, const float from, const float to,
+                                                       const size_t size, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUniform<half>(half *x, half *y, const float from, const float to,
+                                                      const size_t size, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);

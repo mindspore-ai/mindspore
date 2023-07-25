@@ -21,12 +21,12 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S, typename G>
-CUDA_LIB_EXPORT void CalFractionalmaxpool3dwithfixedksize(const T *input, const S *random_samples, T *output, G *argmax,
-                                                          int64_t outputD, int64_t outputH, int64_t outputW,
-                                                          int64_t inputN, int64_t inputC, int64_t inputD,
-                                                          int64_t inputH, int64_t inputW, int64_t kernelsizeD,
-                                                          int64_t kernelsizeH, int64_t kernelsizeW,
-                                                          const int64_t outer_size, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalFractionalmaxpool3dwithfixedksize(const T *input, const S *random_samples, T *output,
+                                                                 G *argmax, int64_t outputD, int64_t outputH,
+                                                                 int64_t outputW, int64_t inputN, int64_t inputC,
+                                                                 int64_t inputD, int64_t inputH, int64_t inputW,
+                                                                 int64_t kernelsizeD, int64_t kernelsizeH,
+                                                                 int64_t kernelsizeW, const int64_t outer_size,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FRACTIONALMAXPOOL3DWITHFIXEDKSIZE_IMPL_CUH_

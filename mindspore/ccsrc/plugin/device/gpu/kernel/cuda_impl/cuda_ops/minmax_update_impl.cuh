@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MINMAX_UPDATE_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
-CUDA_LIB_EXPORT void CalMinMaxPerChannel(float *input, float *input_min, float *input_max, float *output_min,
-                                         float *output_max, const int total_num, const int channel_num,
-                                         const float ema_decay, const bool ema, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMinMaxPerChannel(float *input, float *input_min, float *input_max, float *output_min,
+                                                float *output_max, const int total_num, const int channel_num,
+                                                const float ema_decay, const bool ema, cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalMinMaxPerLayer(float *input, float *input_min, float *input_max, float *output_min,
-                                       float *output_max, const int size, const float ema_decay, const bool ema,
-                                       cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMinMaxPerLayer(float *input, float *input_min, float *input_max, float *output_min,
+                                              float *output_max, const int size, const float ema_decay, const bool ema,
+                                              cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MINMAX_UPDATE_IMPL_CUH_

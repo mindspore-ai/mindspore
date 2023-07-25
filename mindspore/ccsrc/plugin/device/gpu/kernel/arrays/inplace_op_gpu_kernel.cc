@@ -126,8 +126,9 @@ bool InplaceOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(indices_ptr, indices_.data(), indices_.size() * sizeof(int64_t),
                                                      cudaMemcpyHostToDevice, cuda_stream),
                                      "cudaMemcpyAsync indices variable failed.");
-  CalInplaceOp(input_elements_v, input_v, output, indices_ptr, indices_key_ptr, first_dimension_, band_size_,
-               device_id_, kernel_type_, cuda_stream);
+  auto status = CalInplaceOp(input_elements_v, input_v, output, indices_ptr, indices_key_ptr, first_dimension_,
+                             band_size_, device_id_, kernel_type_, cuda_stream);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

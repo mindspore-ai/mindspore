@@ -65,7 +65,9 @@ bool NonDeterministicIntsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   curandStatePhilox4_32_10_t *devStates = nullptr;
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
   devStates = reinterpret_cast<curandStatePhilox4_32_10_t *>(workspace_addr);
-  LaunchNonDeterministicInts(devStates, output, output_num_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+  auto status =
+    LaunchNonDeterministicInts(devStates, output, output_num_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

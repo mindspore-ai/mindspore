@@ -104,9 +104,10 @@ bool BoundingBoxEncodeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
     return false;
   }
 
-  BoundingBoxEncode(block_size / coordinate, anchor_addr, groundtruth_addr, deltas_addr, means_[0], means_[1],
-                    means_[2], means_[3], stds_[0], stds_[1], stds_[2], stds_[3],
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = BoundingBoxEncode(block_size / coordinate, anchor_addr, groundtruth_addr, deltas_addr, means_[0],
+                                  means_[1], means_[2], means_[3], stds_[0], stds_[1], stds_[2], stds_[3],
+                                  reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

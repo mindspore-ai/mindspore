@@ -17,8 +17,7 @@
 
 template <typename T>
 __global__ void PopulationCount(const size_t size, const T *input, uint8_t *output) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size;
-       i += gridDim.x * blockDim.x) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     output[i] = __popc(__ldg(input + i));
   }
   return;
@@ -26,8 +25,7 @@ __global__ void PopulationCount(const size_t size, const T *input, uint8_t *outp
 
 template <>
 __global__ void PopulationCount(const size_t size, const int8_t *input, uint8_t *output) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size;
-       i += gridDim.x * blockDim.x) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     output[i] = __popc(static_cast<uint8_t>(__ldg(input + i)));
   }
   return;
@@ -35,8 +33,7 @@ __global__ void PopulationCount(const size_t size, const int8_t *input, uint8_t 
 
 template <>
 __global__ void PopulationCount(const size_t size, const int16_t *input, uint8_t *output) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size;
-       i += gridDim.x * blockDim.x) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     output[i] = __popc(static_cast<uint16_t>(__ldg(input + i)));
   }
   return;
@@ -44,33 +41,39 @@ __global__ void PopulationCount(const size_t size, const int16_t *input, uint8_t
 
 template <>
 __global__ void PopulationCount(const size_t size, const int64_t *input, uint8_t *output) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size;
-       i += gridDim.x * blockDim.x) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     output[i] = __popcll(__ldg(input + i));
   }
   return;
 }
 
 template <typename T>
-void CalPopulationCount(const size_t size, const T *input, uint8_t *output, const uint32_t &device_id,
-                        cudaStream_t cuda_stream) {
+cudaError_t CalPopulationCount(const size_t size, const T *input, uint8_t *output, const uint32_t &device_id,
+                               cudaStream_t cuda_stream) {
   PopulationCount<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalPopulationCount<uint8_t>(const size_t size, const uint8_t *input, uint8_t *output,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPopulationCount<int8_t>(const size_t size, const int8_t *input, uint8_t *output,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPopulationCount<uint16_t>(const size_t size, const uint16_t *input, uint8_t *output,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPopulationCount<int16_t>(const size_t size, const int16_t *input, uint8_t *output,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPopulationCount<uint32_t>(const size_t size, const uint32_t *input, uint8_t *output,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPopulationCount<int32_t>(const size_t size, const int32_t *input, uint8_t *output,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPopulationCount<uint64_t>(const size_t size, const uint64_t *input, uint8_t *output,
-                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPopulationCount<int64_t>(const size_t size, const int64_t *input, uint8_t *output,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPopulationCount<uint8_t>(const size_t size, const uint8_t *input,
+                                                                 uint8_t *output, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPopulationCount<int8_t>(const size_t size, const int8_t *input, uint8_t *output,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPopulationCount<uint16_t>(const size_t size, const uint16_t *input,
+                                                                  uint8_t *output, const uint32_t &device_id,
+                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPopulationCount<int16_t>(const size_t size, const int16_t *input,
+                                                                 uint8_t *output, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPopulationCount<uint32_t>(const size_t size, const uint32_t *input,
+                                                                  uint8_t *output, const uint32_t &device_id,
+                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPopulationCount<int32_t>(const size_t size, const int32_t *input,
+                                                                 uint8_t *output, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPopulationCount<uint64_t>(const size_t size, const uint64_t *input,
+                                                                  uint8_t *output, const uint32_t &device_id,
+                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalPopulationCount<int64_t>(const size_t size, const int64_t *input,
+                                                                 uint8_t *output, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);

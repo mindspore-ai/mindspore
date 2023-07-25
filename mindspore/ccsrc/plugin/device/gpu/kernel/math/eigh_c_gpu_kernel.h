@@ -98,6 +98,7 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                 "CublasSetStream failed");
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(cusolver_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                   "CusolverDnSetStream failed");
+    cudaError_t status = cudaErrorNotReady;
     // Matrix A, input or output(eigenvector)
     auto inout_A_addr = GetDeviceAddress<T>(inputs, kDim0);
     if (lower_) {
@@ -133,9 +134,9 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       info.shape[i] = static_cast<int>(input_shape[i]);
       info.perm[i] = static_cast<int>(input_axis[i]);
     }
-    auto s1 =
+    status =
       CalTranspose(m_ * m_, output_v_addr, info, kShape2dDims, w_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_LAUNCH_STATUS(s1, "Transpose called by " + kernel_name_);
+    CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
 
     int lwork = 0;
     void *d_work = nullptr;
@@ -162,12 +163,13 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Copy eigenvalue from workspace to host failed");
     // Convert real scalar to complex
-    RealToComplex(m_, reinterpret_cast<D *>(w_w_c_addr), reinterpret_cast<D *>(output_w_addr),
-                  reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = RealToComplex(m_, reinterpret_cast<D *>(w_w_c_addr), reinterpret_cast<D *>(output_w_addr),
+                           reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     if (compute_eigen_vectors_) {
-      auto s2 =
+      status =
         CalTranspose(m_ * m_, w_v_addr, info, kShape2dDims, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_LAUNCH_STATUS(s2, "Transpose called by " + kernel_name_);
+      CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
     }
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
     int info_gpu = 0;
@@ -185,7 +187,7 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void InitSizeLists() override {
     // In/out matrix, eigenvector
     input_size_list_.push_back(m_ * m_ * sizeof(T));
-    // Eigenvalues, cuda output original real scalar, should covert to complex<ft32/64>
+    // Eigenvalues, cuda output original real scalar, should convert to complex<ft32/64>
     output_size_list_.push_back(m_ * sizeof(T));
     // Eigenvector if need
     if (compute_eigen_vectors_) {

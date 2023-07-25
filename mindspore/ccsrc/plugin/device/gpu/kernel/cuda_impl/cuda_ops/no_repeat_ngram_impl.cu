@@ -30,13 +30,9 @@ __device__ __forceinline__ void max_val_init(half *init_val) {
 }
 
 template <typename StateType, typename LogProbType>
-__global__ void reassign_probability(StateType* __restrict__ tokens,
-                                    LogProbType* __restrict__ lprobs,
-                                    LogProbType* __restrict__ output,
-                                    int batch_mul_beam_size,
-                                    int vocab_size,
-                                    int no_repeat_ngram_size,
-                                     int total_blocks) {
+__global__ void reassign_probability(StateType *__restrict__ tokens, LogProbType *__restrict__ lprobs,
+                                     LogProbType *__restrict__ output, int batch_mul_beam_size, int vocab_size,
+                                     int no_repeat_ngram_size, int total_blocks) {
   extern __shared__ int32_t shared_mem[];
   LogProbType pad_value = 0.0;
   max_val_init(&pad_value);
@@ -50,7 +46,7 @@ __global__ void reassign_probability(StateType* __restrict__ tokens,
     if (position_id_in_one_batch == last_ngram_tokens) {
       for (int i = 0; i < no_repeat_ngram_size; ++i) {
         if (position_id_in_one_batch + i < batch_mul_beam_size) {
-          shared_mem[position_id_in_one_batch + i ] = tokens[indexed_token + i];
+          shared_mem[position_id_in_one_batch + i] = tokens[indexed_token + i];
         }
       }
     }
@@ -70,15 +66,10 @@ __global__ void reassign_probability(StateType* __restrict__ tokens,
   }
 }
 
-
 template <typename StateType, typename LogProbType>
-__global__ void reassign_probability_no_shared(StateType* __restrict__ tokens,
-                                               LogProbType* __restrict__ lprobs,
-                                               LogProbType* __restrict__ output,
-                                               int batch_mul_beam_size,
-                                               int vocab_size,
-                                               int no_repeat_ngram_size,
-                                               int total_blocks,
+__global__ void reassign_probability_no_shared(StateType *__restrict__ tokens, LogProbType *__restrict__ lprobs,
+                                               LogProbType *__restrict__ output, int batch_mul_beam_size,
+                                               int vocab_size, int no_repeat_ngram_size, int total_blocks,
                                                int total_threads) {
   extern __shared__ int32_t shared_mem[];
   LogProbType pad_value = 0.0;
@@ -106,57 +97,30 @@ __global__ void reassign_probability_no_shared(StateType* __restrict__ tokens,
 }
 
 template <typename StateType, typename LogProbType>
-void CalculateNoRepeatNGram(const StateType *tokens,
-                            LogProbType *lprobs,
-                            LogProbType *output,
-                            int batch_mul_beam_size,
-                            int no_repeat_ngram_size,
-                            const uint32_t &device_id,
-                            int vocab_size,
-                            int blocks,
-                            int shared_mem_size,
-                            cudaStream_t cuda_stream) {
+cudaError_t CalculateNoRepeatNGram(const StateType *tokens, LogProbType *lprobs, LogProbType *output,
+                                   int batch_mul_beam_size, int no_repeat_ngram_size, const uint32_t &device_id,
+                                   int vocab_size, int blocks, int shared_mem_size, cudaStream_t cuda_stream) {
   int threads = batch_mul_beam_size - no_repeat_ngram_size + 2 - 1;
-  if (threads <= 0) return;
+  if (threads <= 0) return cudaErrorNotReady;
   auto cuda_threads = CUDA_THREADS(device_id);
   if (cuda_threads >= threads) {
-      reassign_probability<<<CUDA_BLOCKS(device_id, blocks), threads, shared_mem_size, cuda_stream>>>(
-              tokens, lprobs, output, batch_mul_beam_size, vocab_size, no_repeat_ngram_size, blocks);
+    reassign_probability<<<CUDA_BLOCKS(device_id, blocks), threads, shared_mem_size, cuda_stream>>>(
+      tokens, lprobs, output, batch_mul_beam_size, vocab_size, no_repeat_ngram_size, blocks);
   } else {
-       reassign_probability_no_shared<<<CUDA_BLOCKS(device_id, blocks), cuda_threads, shared_mem_size, cuda_stream>>>(
-            tokens, lprobs, output, batch_mul_beam_size, vocab_size, no_repeat_ngram_size, blocks, threads);
+    reassign_probability_no_shared<<<CUDA_BLOCKS(device_id, blocks), cuda_threads, shared_mem_size, cuda_stream>>>(
+      tokens, lprobs, output, batch_mul_beam_size, vocab_size, no_repeat_ngram_size, blocks, threads);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalculateNoRepeatNGram<int32_t, half>(const int32_t *tokens,
-                                                                     half *lprobs,
-                                                                     half *outpout,
-                                                                     int step,
-                                                                     int no_repeat_ngram_size,
-                                                                     const uint32_t &device_id,
-                                                                     int vocab_size_,
-                                                                     int blocks,
-                                                                     int shared_mem_size,
-                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateNoRepeatNGram<int32_t, half>(
+  const int32_t *tokens, half *lprobs, half *output, int step, int no_repeat_ngram_size, const uint32_t &device_id,
+  int vocab_size_, int blocks, int shared_mem_size, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateNoRepeatNGram<int32_t, float>(const int32_t *tokens,
-                                                                     float *lprobs,
-                                                                     float *output,
-                                                                     int step,
-                                                                     int no_repeat_ngram_size,
-                                                                     const uint32_t &device_id,
-                                                                     int vocab_size_,
-                                                                     int blocks,
-                                                                     int shared_mem_size,
-                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateNoRepeatNGram<int32_t, float>(
+  const int32_t *tokens, float *lprobs, float *output, int step, int no_repeat_ngram_size, const uint32_t &device_id,
+  int vocab_size_, int blocks, int shared_mem_size, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalculateNoRepeatNGram<int32_t, double>(const int32_t *tokens,
-                                                                     double *lprobs,
-                                                                     double *output,
-                                                                     int step,
-                                                                     int no_repeat_ngram_size,
-                                                                     const uint32_t &device_id,
-                                                                     int vocab_size_,
-                                                                     int blocks,
-                                                                     int shared_mem_size,
-                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalculateNoRepeatNGram<int32_t, double>(
+  const int32_t *tokens, double *lprobs, double *output, int step, int no_repeat_ngram_size, const uint32_t &device_id,
+  int vocab_size_, int blocks, int shared_mem_size, cudaStream_t cuda_stream);

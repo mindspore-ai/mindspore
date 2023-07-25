@@ -137,8 +137,9 @@ bool RandomShuffleGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
         cudaMemcpyAsync(workspace_addr + i * shuffle_size_, perm.data(), shuffle_size_ * sizeof(int),
                         cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
         "RandomShuffle cudaMemcpy failed.");
-      ScalarShuffle(SizeToLong(shuffle_size_), workspace_addr, input_addr + offset, output_addr + offset, device_id_,
-                    reinterpret_cast<cudaStream_t>(cuda_stream_));
+      auto status = ScalarShuffle(SizeToLong(shuffle_size_), workspace_addr, input_addr + offset, output_addr + offset,
+                                  device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     }
   } else {
     for (int64_t i = 0; i < outer_size_; i++) {
@@ -148,8 +149,9 @@ bool RandomShuffleGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
         cudaMemcpyAsync(workspace_addr + i * shuffle_size_, perm.data(), shuffle_size_ * sizeof(int),
                         cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
         "RandomShuffle cudaMemcpy failed.");
-      TensorShuffle(SizeToLong(shuffle_size_), inner_size_, workspace_addr, input_addr + offset, output_addr + offset,
-                    device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      auto status = TensorShuffle(SizeToLong(shuffle_size_), inner_size_, workspace_addr, input_addr + offset,
+                                  output_addr + offset, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+      CHECK_CUDA_STATUS(status, kernel_name_);
     }
   }
 

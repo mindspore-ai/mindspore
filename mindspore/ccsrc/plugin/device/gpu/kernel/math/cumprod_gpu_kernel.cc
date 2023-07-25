@@ -55,8 +55,9 @@ bool CumProdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     return false;
   }
   Reshape();
-  CumProd(input_addr, output_addr, ws_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], stride_, stride2_,
-          exclusive_, reverse_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CumProd(input_addr, output_addr, ws_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], stride_,
+                        stride2_, exclusive_, reverse_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

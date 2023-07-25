@@ -89,7 +89,7 @@ cudaError_t CalUpsampleTrilinear3D(const T *input, const int n, const int c, con
       <<<gridSize, blockSize, 0, cuda_stream>>>(num_kernels, input, output, n, c, in_d, in_h, in_w, out_d, out_h, out_w,
                                                 d_scale, h_scale, w_scale, align_corners, in_dhw, out_hw, out_dhw);
   }
-  CHECK_CUDA_LAUNCH_SUCCESS();
+  return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalUpsampleTrilinear3D<half, float>(

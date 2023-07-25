@@ -34,15 +34,15 @@
 #define RIGHT 1
 
 template <typename T>
-CUDA_LIB_EXPORT void CalMirrorPad(const size_t size, const T *input, const int old_batch, const int old_channel,
-                                  const int old_height, const int old_width, const int padded_height,
-                                  const int padded_width, int padd_num, const int64_t *paddings, int mode, T *output,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMirrorPad(const size_t size, const T *input, const int old_batch, const int old_channel,
+                                         const int old_height, const int old_width, const int padded_height,
+                                         const int padded_width, int padd_num, const int64_t *paddings, int mode,
+                                         T *output, cudaStream_t cuda_stream);
 template <typename T>
-CUDA_LIB_EXPORT void CalMirrorPadGrad(const size_t dx_size, const size_t dy_size, T *dy, T *interim,
-                                      const int output_batch, const int output_channel, const int output_height,
-                                      const int output_width, const int input_height, const int input_width,
-                                      const int padd_dim, const int64_t *paddings, int mode, T *dx,
-                                      cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMirrorPadGrad(const size_t dx_size, const size_t dy_size, T *dy, T *interim,
+                                             const int output_batch, const int output_channel, const int output_height,
+                                             const int output_width, const int input_height, const int input_width,
+                                             const int padd_dim, const int64_t *paddings, int mode, T *dx,
+                                             cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MIRROR_PAD_IMPL_CUH_

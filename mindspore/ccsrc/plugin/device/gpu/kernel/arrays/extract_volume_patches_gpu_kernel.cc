@@ -139,11 +139,12 @@ bool ExtractVolumePatchesGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
                                                     const std::vector<AddressPtr> &outputs) {
   T *input_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_ptr = GetDeviceAddress<T>(outputs, kIndex0);
-  CalExtractVolumePatches(output_size_, stride_d_, stride_h_, stride_w_, output_depth_, output_height_, output_width_,
-                          need_batch_, d_stride_, h_stride_, w_stride_, patch_stride_, other_stride_, input_channel_,
-                          input_depth_, input_height_, input_width_, pad_head_, pad_top_, pad_left_, chan_input_stride_,
-                          dep_input_stride_, row_input_stride_, patch_input_stride_, input_ptr, output_ptr,
-                          reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalExtractVolumePatches(
+    output_size_, stride_d_, stride_h_, stride_w_, output_depth_, output_height_, output_width_, need_batch_, d_stride_,
+    h_stride_, w_stride_, patch_stride_, other_stride_, input_channel_, input_depth_, input_height_, input_width_,
+    pad_head_, pad_top_, pad_left_, chan_input_stride_, dep_input_stride_, row_input_stride_, patch_input_stride_,
+    input_ptr, output_ptr, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

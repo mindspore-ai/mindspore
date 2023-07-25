@@ -18,20 +18,22 @@
 #include "include/cuda_fp16.h"
 
 template <typename T>
-__global__ void CalPReLUKernel(size_t size, size_t weight_size, size_t per_channel_size,
-                               const T *input, const T *weight, T *output) {
+__global__ void CalPReLUKernel(size_t size, size_t weight_size, size_t per_channel_size, const T *input,
+                               const T *weight, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     size_t channel_id = weight_size == 1 ? 0 : (pos / per_channel_size) % weight_size;
-    output[pos] = input[pos] < static_cast<T>(0) ? weight[channel_id] * input[pos] :input[pos];
+    output[pos] = input[pos] < static_cast<T>(0) ? weight[channel_id] * input[pos] : input[pos];
   }
 }
 
 template <typename T>
-void CalPReLU(size_t size, size_t weight_size, size_t per_channel_size,
-              const T *input, const T *weight, T *output, cudaStream_t cuda_stream) {
-  CalPReLUKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, weight_size, per_channel_size,
-                                                                    input, weight, output);
+cudaError_t CalPReLU(size_t size, size_t weight_size, size_t per_channel_size, const T *input, const T *weight,
+                     T *output, cudaStream_t cuda_stream) {
+  CalPReLUKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, weight_size, per_channel_size, input, weight,
+                                                                    output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalPReLU(size_t, size_t, size_t, const float *, const float *, float *, cudaStream_t);
-template CUDA_LIB_EXPORT void CalPReLU(size_t, size_t, size_t, const half *, const half *, half *, cudaStream_t);
+template CUDA_LIB_EXPORT cudaError_t CalPReLU(size_t, size_t, size_t, const float *, const float *, float *,
+                                              cudaStream_t);
+template CUDA_LIB_EXPORT cudaError_t CalPReLU(size_t, size_t, size_t, const half *, const half *, half *, cudaStream_t);

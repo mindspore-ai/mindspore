@@ -18,18 +18,19 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SYNC_BATCH_NORM_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalSyncBatchNormPre(size_t N, size_t C, size_t H, size_t W, const T *input, int *output_n,
-                                         float *means_local, float *invstds_local, float epsilon,
-                                         cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormPre(size_t N, size_t C, size_t H, size_t W, const T *input, int *output_n,
+                                                float *means_local, float *invstds_local, float epsilon,
+                                                cudaStream_t cuda_stream);
 template <typename T, typename G>
-CUDA_LIB_EXPORT void CalSyncBatchNormGather(size_t N, size_t C, size_t H, size_t W, int *counts_global,
-                                            float *means_global, float *invstds_global, int *counts_local,
-                                            float *means_local, float *invstds_local, T *running_mean_output,
-                                            T *running_var_output, G *running_mean_input, G *running_var_input,
-                                            float epsilon, float momentum, size_t group_rank, size_t group_size,
-                                            cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormGather(size_t N, size_t C, size_t H, size_t W, int *counts_global,
+                                                   float *means_global, float *invstds_global, int *counts_local,
+                                                   float *means_local, float *invstds_local, T *running_mean_output,
+                                                   T *running_var_output, G *running_mean_input, G *running_var_input,
+                                                   float epsilon, float momentum, size_t group_rank, size_t group_size,
+                                                   cudaStream_t cuda_stream);
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalSyncBatchNormPost(size_t N, size_t C, size_t H, size_t W, const T *input, T *output,
-                                          float *means_local, float *invstds_local, S *scale, S *bias, S *output_scale,
-                                          S *output_bias, float epsilon, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalSyncBatchNormPost(size_t N, size_t C, size_t H, size_t W, const T *input, T *output,
+                                                 float *means_local, float *invstds_local, S *scale, S *bias,
+                                                 S *output_scale, S *output_bias, float epsilon,
+                                                 cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SYNC_BATCH_NORM_IMPL_CUH_

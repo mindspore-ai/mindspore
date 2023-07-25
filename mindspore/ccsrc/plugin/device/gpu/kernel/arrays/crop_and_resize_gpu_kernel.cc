@@ -127,7 +127,7 @@ bool CropAndResizeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   auto status = CalCropAndResize(output_size_, input_image, input_boxes, input_box_index, batch_, input_height_,
                                  input_width_, final_height_, final_width_, channel_, method_, extrapolation_value_,
                                  output, reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -18,8 +18,6 @@
 #include <limits>
 #include "include/cuda_fp16.h"
 
-
-
 template <typename T>
 __global__ void LogitGradLessZero(const T *grad, const T *input, const float eps, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -35,8 +33,8 @@ __global__ void LogitGradLessZero(const half *grad, const half *input, const flo
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = (input[i] < half(0) || input[i] > half(1))
                   ? half(std::numeric_limits<float>::quiet_NaN())
-                  : half(static_cast<float>(grad[i]) / static_cast<float>(input[i])
-                  / (static_cast<float>(1) - static_cast<float>(input[i])));
+                  : half(static_cast<float>(grad[i]) / static_cast<float>(input[i]) /
+                         (static_cast<float>(1) - static_cast<float>(input[i])));
   }
   return;
 }
@@ -57,15 +55,15 @@ __global__ void LogitGradGreaterZero(const half *grad, const half *input, const 
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = (input[i] < static_cast<half>(eps) || input[i] > half(1) - static_cast<half>(eps))
                   ? half(0)
-                  : half(static_cast<float>(grad[i]) / static_cast<float>(input[i])
-                  / (static_cast<float>(1) - static_cast<float>(input[i])));
+                  : half(static_cast<float>(grad[i]) / static_cast<float>(input[i]) /
+                         (static_cast<float>(1) - static_cast<float>(input[i])));
   }
   return;
 }
 
 template <typename T>
-void CalLogitGrad(const T *grad, const T *input, const float eps, T *output, const size_t count,
-                  const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalLogitGrad(const T *grad, const T *input, const float eps, T *output, const size_t count,
+                         const uint32_t &device_id, cudaStream_t cuda_stream) {
   if (eps < 0) {
     LogitGradLessZero<<<CUDA_BLOCKS(device_id, count), CUDA_THREADS(device_id), 0, cuda_stream>>>(grad, input, eps,
                                                                                                   output, count);
@@ -73,16 +71,15 @@ void CalLogitGrad(const T *grad, const T *input, const float eps, T *output, con
     LogitGradGreaterZero<<<CUDA_BLOCKS(device_id, count), CUDA_THREADS(device_id), 0, cuda_stream>>>(grad, input, eps,
                                                                                                      output, count);
   }
-
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalLogitGrad<half>(const half *grad, const half *input, const float eps, half *output,
-                                                 const size_t count, const uint32_t &device_id,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLogitGrad<float>(const float *grad, const float *input, const float eps, float *output,
-                                                  const size_t count, const uint32_t &device_id,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalLogitGrad<double>(const double *grad, const double *input, const float eps,
-                                                   double *output, const size_t count, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLogitGrad<half>(const half *grad, const half *input, const float eps,
+                                                        half *output, const size_t count, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLogitGrad<float>(const float *grad, const float *input, const float eps,
+                                                         float *output, const size_t count, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalLogitGrad<double>(const double *grad, const double *input, const float eps,
+                                                          double *output, const size_t count, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);

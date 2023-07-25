@@ -84,36 +84,33 @@ __global__ void BoundingBoxEncodeKernel(const size_t size, const half *anchor_bo
   }
 }
 
-
 template <typename T>
-void BoundingBoxEncode(const size_t size, const T *anchor_box, const T *groundtruth_box, T *deltas, const float &m1,
-                       const float &m2, const float &m3, const float &m4, const float &s1, const float &s2,
-                       const float &s3, const float &s4, cudaStream_t cuda_stream) {
+cudaError_t BoundingBoxEncode(const size_t size, const T *anchor_box, const T *groundtruth_box, T *deltas,
+                              const float &m1, const float &m2, const float &m3, const float &m4, const float &s1,
+                              const float &s2, const float &s3, const float &s4, cudaStream_t cuda_stream) {
   BoundingBoxEncodeKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, anchor_box, groundtruth_box, deltas,
                                                                              m1, m2, m3, m4, s1, s2, s3, s4);
+  return GetCudaStatus();
 }
 
 template <>
-void BoundingBoxEncode(const size_t size, const half *anchor_box, const half *groundtruth_box, half *deltas,
-                       const float &m1, const float &m2, const float &m3, const float &m4, const float &s1,
-                       const float &s2, const float &s3, const float &s4, cudaStream_t cuda_stream) {
-  BoundingBoxEncodeKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, anchor_box, groundtruth_box,
-                                                                                   deltas, m1, m2, m3, m4, s1, s2, s3,
-                                                                                   s4);
+cudaError_t BoundingBoxEncode(const size_t size, const half *anchor_box, const half *groundtruth_box, half *deltas,
+                              const float &m1, const float &m2, const float &m3, const float &m4, const float &s1,
+                              const float &s2, const float &s3, const float &s4, cudaStream_t cuda_stream) {
+  BoundingBoxEncodeKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
+    size, anchor_box, groundtruth_box, deltas, m1, m2, m3, m4, s1, s2, s3, s4);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void BoundingBoxEncode<float>(const size_t size, const float *anchor_box,
-                                                       const float *groundtruth_box, float *deltas,
-                                                       const float &m1, const float &m2,
-                                                       const float &m3, const float &m4,
-                                                       const float &s1, const float &s2,
-                                                       const float &s3, const float &s4,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BoundingBoxEncode<float>(const size_t size, const float *anchor_box,
+                                                              const float *groundtruth_box, float *deltas,
+                                                              const float &m1, const float &m2, const float &m3,
+                                                              const float &m4, const float &s1, const float &s2,
+                                                              const float &s3, const float &s4,
+                                                              cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void BoundingBoxEncode<half>(const size_t size, const half *anchor_box,
-                                                      const half *groundtruth_box, half *deltas,
-                                                      const float &m1, const float &m2,
-                                                      const float &m3, const float &m4,
-                                                      const float &s1, const float &s2,
-                                                      const float &s3, const float &s4,
-                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t BoundingBoxEncode<half>(const size_t size, const half *anchor_box,
+                                                             const half *groundtruth_box, half *deltas, const float &m1,
+                                                             const float &m2, const float &m3, const float &m4,
+                                                             const float &s1, const float &s2, const float &s3,
+                                                             const float &s4, cudaStream_t cuda_stream);

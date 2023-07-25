@@ -63,9 +63,9 @@ __global__ void InplaceAddOrSub(const size_t size, const T *input_v, T *output, 
 }
 
 template <typename T, typename S>
-void CalInplaceOp(const size_t size_v, const T *input_v, T *output, S *indices, S *indices_key,
-                  const int64_t first_dimension, const int64_t band_size, const uint32_t &device_id, int op_type,
-                  cudaStream_t cuda_stream) {
+cudaError_t CalInplaceOp(const size_t size_v, const T *input_v, T *output, S *indices, S *indices_key,
+                         const int64_t first_dimension, const int64_t band_size, const uint32_t &device_id, int op_type,
+                         cudaStream_t cuda_stream) {
   int thread_num = 256 > size_v ? size_v : 256;
   if (op_type == INPLACE_OP_TYPE_UPDATE) {
     auto policy = thrust::cuda::par.on(cuda_stream);
@@ -84,45 +84,53 @@ void CalInplaceOp(const size_t size_v, const T *input_v, T *output, S *indices, 
     InplaceAddOrSub<T, S, SubFunc<T>><<<CUDA_BLOCKS_CAL(device_id, size_v, thread_num), thread_num, 0, cuda_stream>>>(
       size_v, input_v, output, indices, band_size);
   }
-  return;
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalInplaceOp<half>(const size_t size_v, const half *input_v, half *output,
-                                                 int64_t *indices, int64_t *indices_key, const int64_t first_dimension,
-                                                 const int64_t band_size, const uint32_t &device_id, int op_type,
-                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalInplaceOp<half>(const size_t size_v, const half *input_v, half *output,
+                                                        int64_t *indices, int64_t *indices_key,
+                                                        const int64_t first_dimension, const int64_t band_size,
+                                                        const uint32_t &device_id, int op_type,
+                                                        cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalInplaceOp<float>(const size_t size_v, const float *input_v, float *output,
-                                                  int64_t *indices, int64_t *indices_key, const int64_t first_dimension,
-                                                  const int64_t band_size, const uint32_t &device_id, int op_type,
-                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalInplaceOp<float>(const size_t size_v, const float *input_v, float *output,
+                                                         int64_t *indices, int64_t *indices_key,
+                                                         const int64_t first_dimension, const int64_t band_size,
+                                                         const uint32_t &device_id, int op_type,
+                                                         cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalInplaceOp<double>(const size_t size_v, const double *input_v, double *output,
-                                                   int64_t *indices, int64_t *indices_key,
-                                                   const int64_t first_dimension, const int64_t band_size,
-                                                   const uint32_t &device_id, int op_type, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalInplaceOp<double>(const size_t size_v, const double *input_v, double *output,
+                                                          int64_t *indices, int64_t *indices_key,
+                                                          const int64_t first_dimension, const int64_t band_size,
+                                                          const uint32_t &device_id, int op_type,
+                                                          cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalInplaceOp<int>(const size_t size_v, const int *input_v, int *output, int64_t *indices,
-                                                int64_t *indices_key, const int64_t first_dimension,
-                                                const int64_t band_size, const uint32_t &device_id, int op_type,
-                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalInplaceOp<int>(const size_t size_v, const int *input_v, int *output,
+                                                       int64_t *indices, int64_t *indices_key,
+                                                       const int64_t first_dimension, const int64_t band_size,
+                                                       const uint32_t &device_id, int op_type,
+                                                       cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalInplaceOp<half>(const size_t size_v, const half *input_v, half *output,
-                                                 int32_t *indices, int32_t *indices_key, const int64_t first_dimension,
-                                                 const int64_t band_size, const uint32_t &device_id, int op_type,
-                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalInplaceOp<half>(const size_t size_v, const half *input_v, half *output,
+                                                        int32_t *indices, int32_t *indices_key,
+                                                        const int64_t first_dimension, const int64_t band_size,
+                                                        const uint32_t &device_id, int op_type,
+                                                        cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalInplaceOp<float>(const size_t size_v, const float *input_v, float *output,
-                                                  int32_t *indices, int32_t *indices_key, const int64_t first_dimension,
-                                                  const int64_t band_size, const uint32_t &device_id, int op_type,
-                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalInplaceOp<float>(const size_t size_v, const float *input_v, float *output,
+                                                         int32_t *indices, int32_t *indices_key,
+                                                         const int64_t first_dimension, const int64_t band_size,
+                                                         const uint32_t &device_id, int op_type,
+                                                         cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalInplaceOp<double>(const size_t size_v, const double *input_v, double *output,
-                                                   int32_t *indices, int32_t *indices_key,
-                                                   const int64_t first_dimension, const int64_t band_size,
-                                                   const uint32_t &device_id, int op_type, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalInplaceOp<double>(const size_t size_v, const double *input_v, double *output,
+                                                          int32_t *indices, int32_t *indices_key,
+                                                          const int64_t first_dimension, const int64_t band_size,
+                                                          const uint32_t &device_id, int op_type,
+                                                          cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalInplaceOp<int>(const size_t size_v, const int *input_v, int *output, int32_t *indices,
-                                                int32_t *indices_key, const int64_t first_dimension,
-                                                const int64_t band_size, const uint32_t &device_id, int op_type,
-                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalInplaceOp<int>(const size_t size_v, const int *input_v, int *output,
+                                                       int32_t *indices, int32_t *indices_key,
+                                                       const int64_t first_dimension, const int64_t band_size,
+                                                       const uint32_t &device_id, int op_type,
+                                                       cudaStream_t cuda_stream);

@@ -19,6 +19,6 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
-CUDA_LIB_EXPORT void CalLogNormalReverseHalf(const half *input, half *output, const size_t elem_num, float *mask_h,
-                                             cudaStream_t cuda_stream_);
+CUDA_LIB_EXPORT cudaError_t CalLogNormalReverseHalf(const half *input, half *output, const size_t elem_num,
+                                                    float *mask_h, cudaStream_t cuda_stream_);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LOG_NORMAL_REVERSE_IMPL_CUH_

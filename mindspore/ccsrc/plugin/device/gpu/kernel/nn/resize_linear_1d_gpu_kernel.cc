@@ -100,9 +100,9 @@ bool ResizeLinear1DGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
 
   int64_t output_size = batch_ * channel_ * out_width_;
 
-  ResizeLinear1D(mode_, output_size, in_width_, out_width_, input, output, device_id_,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
-
+  auto status = ResizeLinear1D(mode_, output_size, in_width_, out_width_, input, output, device_id_,
+                               reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

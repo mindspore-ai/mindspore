@@ -23,9 +23,9 @@
 #include "include/cuda_fp16.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalMaxUnpool3DGrad(const T *grad, const S *indices,
-                                        const std::vector<int64_t> backprop_input_shape,
-                                        const std::vector<int64_t> grad_shape, T *output, const int64_t outer_size,
-                                        const std::string data_format_, const uint32_t &device_id,
-                                        cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalMaxUnpool3DGrad(const T *grad, const S *indices,
+                                               const std::vector<int64_t> backprop_input_shape,
+                                               const std::vector<int64_t> grad_shape, T *output,
+                                               const int64_t outer_size, const std::string data_format_,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ARGMAX_IMPL_CUH_

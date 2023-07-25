@@ -57,20 +57,21 @@ __global__ void GetDimsProd(T *input_dims, const size_t dims_size) {
 }
 
 template <typename T>
-void CalUnravelIndex(T *input_indices, T *input_dims, const size_t indices_size, const size_t dims_size, T *output,
-                     const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalUnravelIndex(T *input_indices, T *input_dims, const size_t indices_size, const size_t dims_size,
+                            T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   GetDimsProd<<<1, 1, 0, cuda_stream>>>(input_dims, dims_size);
   CheckInputDims<<<CUDA_BLOCKS(device_id, dims_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(input_dims, dims_size);
   UnravelIndex<<<CUDA_BLOCKS(device_id, indices_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input_indices, input_dims, indices_size, dims_size, output);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalUnravelIndex<int32_t>(int32_t *input_indices, int32_t *input_dims,
-                                                       const size_t indices_size, const size_t dims_size,
-                                                       int32_t *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUnravelIndex<int32_t>(int32_t *input_indices, int32_t *input_dims,
+                                                              const size_t indices_size, const size_t dims_size,
+                                                              int32_t *output, const uint32_t &device_id,
+                                                              cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalUnravelIndex<int64_t>(int64_t *input_indices, int64_t *input_dims,
-                                                       const size_t indices_size, const size_t dims_size,
-                                                       int64_t *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUnravelIndex<int64_t>(int64_t *input_indices, int64_t *input_dims,
+                                                              const size_t indices_size, const size_t dims_size,
+                                                              int64_t *output, const uint32_t &device_id,
+                                                              cudaStream_t cuda_stream);

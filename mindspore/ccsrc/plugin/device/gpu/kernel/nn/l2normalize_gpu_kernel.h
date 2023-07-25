@@ -88,17 +88,19 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
           "cudnnReduceTensor failed.");
       }
     }
-    GetMaxWithEpsAndValue(workspace_size_list_[0] / sizeof(T), epsilon_, reduce_workspace_addr,
-                          reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = GetMaxWithEpsAndValue(workspace_size_list_[0] / sizeof(T), epsilon_, reduce_workspace_addr,
+                                        reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     std::vector<int64_t> simplified_in0_shape;
     std::vector<int64_t> simplified_in1_shape;
     std::vector<int64_t> simplified_out_shape;
     SimplifyBinaryBroadcastShape(lhs_shape_, rhs_shape_, output_shape_, &simplified_in0_shape, &simplified_in1_shape,
                                  &simplified_out_shape);
     bool is_broadcast = IsBinaryBroadcast(simplified_in0_shape, simplified_in1_shape);
-    BinaryOpWithBroadcastCudaFunc<BinaryOpType::kRealDiv, T, T, T>(
+    status = BinaryOpWithBroadcastCudaFunc<BinaryOpType::kRealDiv, T, T, T>(
       is_broadcast, simplified_in0_shape, simplified_in1_shape, simplified_out_shape, input_addr, reduce_workspace_addr,
       output_addr, GET_CTX_DEVICE_ID, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
