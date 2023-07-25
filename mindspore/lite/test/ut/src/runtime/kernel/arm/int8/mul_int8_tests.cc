@@ -22,6 +22,7 @@
 #include "mindspore/lite/src/litert/kernel_registry.h"
 #include "mindspore/lite/src/executor/kernel_exec.h"
 #include "mindspore/lite/src/tensor.h"
+#include "nnacl/arithmetic_parameter.h"
 
 namespace mindspore {
 
@@ -74,7 +75,7 @@ TEST_F(TestMulInt8, Mul_quant0) {
   output0_tensor->set_data_type(tid_int8);
   outputs_tensor[0] = output0_tensor;
 
-  MulParameter op_param;
+  ArithmeticParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_MulFusion;
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
@@ -148,7 +149,7 @@ TEST_F(TestMulInt8, Mul_quant0_thread0) {
   output0_tensor->set_data_type(tid_int8);
   outputs_tensor[0] = output0_tensor;
 
-  MulParameter op_param;
+  ArithmeticParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_MulFusion;
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
@@ -222,7 +223,7 @@ TEST_F(TestMulInt8, Mul_quant1) {
   output0_tensor->set_data_type(tid_int8);
   outputs_tensor[0] = output0_tensor;
 
-  MulParameter op_param;
+  ArithmeticParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_MulFusion;
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
@@ -296,7 +297,7 @@ TEST_F(TestMulInt8, Mul_quant1_thread1) {
   output0_tensor->set_data_type(tid_int8);
   outputs_tensor[0] = output0_tensor;
 
-  MulParameter op_param;
+  ArithmeticParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_MulFusion;
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 3;
@@ -370,7 +371,7 @@ TEST_F(TestMulInt8, test) {
   output0_tensor->set_data_type(tid_int8);
   outputs_tensor[0] = output0_tensor;
 
-  MulParameter op_param;
+  ArithmeticParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_MulFusion;
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;

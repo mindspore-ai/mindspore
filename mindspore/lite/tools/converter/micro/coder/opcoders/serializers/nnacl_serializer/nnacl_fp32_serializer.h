@@ -54,6 +54,7 @@
 #include "nnacl/kernel/layer_norm.h"
 #include "nnacl/kernel/fill.h"
 #include "nnacl/kernel/batch_norm.h"
+#include "nnacl/kernel/tile.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -70,7 +71,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const MicroMatmulParameter &micro_matmul_parameter);
   void CodeStruct(const std::string &name, const LstmParameter &lstm_parameter);
   void CodeStruct(const std::string &name, const ScaleStruct &scale_struct);
-  void CodeStruct(const std::string &name, const TileParameter &tile_parameter);
+  void CodeStruct(const std::string &name, const TileStruct &tile_parameter);
   void CodeStruct(const std::string &name, const TransposeParameter &transpose_parameter);
   void CodeStruct(const std::string &name, const DeQuantArg &de_quant_arg);
   void CodeStruct(const std::string &name, const SpliceParameter &splice_parameter);

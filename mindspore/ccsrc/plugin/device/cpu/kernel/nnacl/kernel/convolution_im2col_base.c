@@ -27,7 +27,7 @@ int ConvIm2ColBaseImpl(void *cdata, int task_id, float l, float r) {
 
 int ConvIm2ColBaseRunImpl(ConvolutionBaseStruct *conv, int task_id) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)conv;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_im2col);
+
   float *ori_input_data = (float *)conv->base_.in_[FIRST_INPUT]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(ori_input_data);
   ConvParameter *conv_param = (ConvParameter *)conv->base_.param_;

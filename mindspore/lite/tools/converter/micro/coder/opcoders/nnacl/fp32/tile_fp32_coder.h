@@ -36,8 +36,7 @@ class TileFP32Coder final : public OperatorCoder {
  private:
   void ComputeStrides(const int *shape, int *strides, int ndim) const;
   int Resize();
-
-  TileParameter *tile_param_{nullptr};
+  TileStruct tile_struct_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_TILE_FP32_CODER_H_

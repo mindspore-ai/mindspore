@@ -20,7 +20,6 @@
 #include "nnacl/op_base.h"
 
 typedef struct FlattenParameter {
-  // Primitive parameter
   OpParameter op_parameter_;
   int axis_;
 } FlattenParameter;

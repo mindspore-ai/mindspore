@@ -23,13 +23,6 @@ typedef struct TileParameter {
   size_t dims_size_;
   int dims_[MAX_SHAPE_SIZE];
   int multiples_[MAX_SHAPE_SIZE];
-
-  /* used in micro */
-  int in_dim_;
-  int in_shape_[MAX_SHAPE_SIZE];
-  int out_shape_[MAX_SHAPE_SIZE];
-  int in_strides_[MAX_SHAPE_SIZE];
-  int out_strides_[MAX_SHAPE_SIZE];
 } TileParameter;
 
 #endif  // NNACL_TILE_PARAMETER_H_

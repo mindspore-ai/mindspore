@@ -51,7 +51,6 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
 
   MS_LOG(INFO) << " initialize tensors ";
   auto param = reinterpret_cast<FillParameter *>(malloc(sizeof(FillParameter)));
-  param->num_dims_ = 9;
   param->op_parameter_.type_ = PrimitiveType_Fill;
   if (param == nullptr) {
     MS_LOG(INFO) << " new FillParameter failed ";

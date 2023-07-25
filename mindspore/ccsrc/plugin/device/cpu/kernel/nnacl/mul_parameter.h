@@ -29,11 +29,4 @@ typedef struct MulQuantArg {
   int shift_right_;
 } MulQuantArg;
 
-typedef struct MulParameter {
-  // Primitive parameter
-  OpParameter op_parameter_;
-  // other parameter
-  int thread_count_;
-} MulParameter;
-
 #endif  // NNACL_MUL_PARAMETER_H_
