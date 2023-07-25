@@ -1,5 +1,5 @@
 /**
- * Copyright 2023Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,15 +66,15 @@ int LstmNonMindirFp32CPUKernel::InitStateWeightBias() {
   auto weight_h_data = reinterpret_cast<float *>(weight_h->data());
   CHECK_NULL_RETURN(weight_h_data);
 
-  int stride = kGateNum * lstm_param_->hidden_size_ * lstm_param_->project_size_;
+  int stride = kGateNum * lstm_param_->hidden_size_ * lstm_param_->output_size_;
   auto weight_pack_size =
-    weight_segment_num_ * lstm_param_->state_col_align_ * lstm_param_->project_size_ * sizeof(float);
+    weight_segment_num_ * lstm_param_->state_col_align_ * lstm_param_->output_size_ * sizeof(float);
   if (lstm_param_->batch_ != 1) {
     weight_h_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(weight_pack_size));
     MS_CHECK_TRUE_MSG(weight_h_ptr_ != nullptr, lite::RET_NULL_PTR,
                       "LstmNonMindirCPUKernel malloc weight_h_ptr_ failed.");
     running_buffer_.push_back(weight_h_ptr_);
-    PackLstmWeightWithStride(weight_h_ptr_, weight_h_data, weight_segment_num_, lstm_param_->project_size_,
+    PackLstmWeightWithStride(weight_h_ptr_, weight_h_data, weight_segment_num_, lstm_param_->output_size_,
                              lstm_param_->hidden_size_, lstm_param_->state_col_align_, lstm_param_->bidirectional_,
                              stride, nullptr);
   } else {
@@ -84,9 +84,9 @@ int LstmNonMindirFp32CPUKernel::InitStateWeightBias() {
                       "LstmNonMindirCPUKernel malloc weight_h_ptr_ failed.");
     running_buffer_.push_back(weight_h_ptr_);
     for (int i = 0; i < weight_segment_num_; i++) {
-      const float *src_batch = weight_h_data + i * lstm_param_->hidden_size_ * lstm_param_->project_size_;
-      float *dst_batch = weight_h_ptr_ + i * lstm_param_->state_col_align_ * lstm_param_->project_size_;
-      RowMajor2Col32Major(src_batch, dst_batch, lstm_param_->hidden_size_, lstm_param_->project_size_);
+      const float *src_batch = weight_h_data + i * lstm_param_->hidden_size_ * lstm_param_->output_size_;
+      float *dst_batch = weight_h_ptr_ + i * lstm_param_->state_col_align_ * lstm_param_->output_size_;
+      RowMajor2Col32Major(src_batch, dst_batch, lstm_param_->hidden_size_, lstm_param_->output_size_);
     }
 #else
     weight_h_ptr_ = weight_h_data;
@@ -122,7 +122,7 @@ int LstmNonMindirFp32CPUKernel::InitProjectWeight() {
     MS_LOG(ERROR) << "Project-weight's shape[0] must be 1(bidirectional=false) or 2(bidirectional=true).";
     return lite::RET_ERROR;
   }
-  int col_align = UP_ROUND(lstm_param_->project_size_, col_tile_);
+  int col_align = UP_ROUND(lstm_param_->output_size_, col_tile_);
   auto pack_size = batch * lstm_param_->hidden_size_ * col_align * sizeof(float);
   if (lstm_param_->batch_ != 1) {
     weight_project_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_size));
@@ -130,8 +130,8 @@ int LstmNonMindirFp32CPUKernel::InitProjectWeight() {
                       "LstmNonMindirCPUKernel malloc weight_project_ptr_ failed.");
     running_buffer_.push_back(weight_project_ptr_);
     PackLstmWeightWithStride(weight_project_ptr_, weight_pro_data, batch, lstm_param_->hidden_size_,
-                             lstm_param_->project_size_, col_align, lstm_param_->bidirectional_,
-                             lstm_param_->hidden_size_ * lstm_param_->project_size_, nullptr);
+                             lstm_param_->output_size_, col_align, lstm_param_->bidirectional_,
+                             lstm_param_->hidden_size_ * lstm_param_->output_size_, nullptr);
   } else {
 #ifdef ENABLE_AVX
     weight_project_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_size));
@@ -139,9 +139,9 @@ int LstmNonMindirFp32CPUKernel::InitProjectWeight() {
                       "LstmNonMindirCPUKernel malloc weight_project_ptr_ failed.");
     running_buffer_.push_back(weight_project_ptr_);
     for (int i = 0; i < batch; ++i) {
-      const float *src_batch = weight_pro_data + i * lstm_param_->hidden_size_ * lstm_param_->project_size_;
+      const float *src_batch = weight_pro_data + i * lstm_param_->hidden_size_ * lstm_param_->output_size_;
       float *dst_batch = weight_project_ptr_ + i * lstm_param_->hidden_size_ * col_align;
-      RowMajor2Col32Major(src_batch, dst_batch, lstm_param_->project_size_, lstm_param_->hidden_size_);
+      RowMajor2Col32Major(src_batch, dst_batch, lstm_param_->output_size_, lstm_param_->hidden_size_);
     }
 #else
     weight_project_ptr_ = weight_pro_data;

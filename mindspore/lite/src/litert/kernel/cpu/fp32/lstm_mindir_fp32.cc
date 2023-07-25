@@ -1,5 +1,5 @@
 /**
- * Copyright 2023Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ int LstmMindirFp32CPUKernel::InitStateWeightBias() {
   CHECK_NULL_RETURN(weight_h_data);
 
   int cw_size = lstm_param_->input_size_ * lstm_param_->hidden_size_;
-  int hh_size = lstm_param_->hidden_size_ * lstm_param_->project_size_;
+  int hh_size = lstm_param_->hidden_size_ * lstm_param_->output_size_;
   int stride = (gpu_orig_state_) ? kGateNum * (cw_size + hh_size) : kGateNum * (hh_size);
 
   if (gpu_orig_state_) {
@@ -108,12 +108,12 @@ int LstmMindirFp32CPUKernel::InitStateWeightBias() {
   }
 
   auto weight_pack_size =
-    weight_segment_num_ * lstm_param_->state_col_align_ * lstm_param_->project_size_ * sizeof(float);
+    weight_segment_num_ * lstm_param_->state_col_align_ * lstm_param_->output_size_ * sizeof(float);
   if (lstm_param_->batch_ != 1) {
     weight_h_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(weight_pack_size));
     MS_CHECK_TRUE_MSG(weight_h_ptr_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc weight_h_ptr_ failed.");
     running_buffer_.push_back(weight_h_ptr_);
-    PackLstmWeightWithStride(weight_h_ptr_, weight_h_data, weight_segment_num_, lstm_param_->project_size_,
+    PackLstmWeightWithStride(weight_h_ptr_, weight_h_data, weight_segment_num_, lstm_param_->output_size_,
                              lstm_param_->hidden_size_, lstm_param_->state_col_align_, lstm_param_->bidirectional_,
                              stride, kWeightsOrderMap);
   } else {
@@ -122,9 +122,9 @@ int LstmMindirFp32CPUKernel::InitStateWeightBias() {
     MS_CHECK_TRUE_MSG(weight_h_ptr_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc weight_h_ptr_ failed.");
     running_buffer_.push_back(weight_h_ptr_);
     for (int i = 0; i < weight_segment_num_; i++) {
-      const float *src_batch = weight_h_data + i * lstm_param_->hidden_size_ * lstm_param_->project_size_;
-      float *dst_batch = weight_h_ptr_ + i * lstm_param_->state_col_align_ * lstm_param_->project_size_;
-      RowMajor2Col32Major(src_batch, dst_batch, lstm_param_->hidden_size_, lstm_param_->project_size_);
+      const float *src_batch = weight_h_data + i * lstm_param_->hidden_size_ * lstm_param_->output_size_;
+      float *dst_batch = weight_h_ptr_ + i * lstm_param_->state_col_align_ * lstm_param_->output_size_;
+      RowMajor2Col32Major(src_batch, dst_batch, lstm_param_->hidden_size_, lstm_param_->output_size_);
     }
 #else
     weight_h_ptr_ = weight_h_data;

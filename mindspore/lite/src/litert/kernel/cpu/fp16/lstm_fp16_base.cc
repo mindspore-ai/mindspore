@@ -117,7 +117,7 @@ int LstmFp16BaseCPUKernel::InitParam() {
   auto h_init_shape = in_tensors_.at(hidden_init_index_)->shape();
   auto c_init_shape = in_tensors_.at(cell_init_index_)->shape();
   lstm_param_->hidden_size_ = c_init_shape.back();
-  lstm_param_->project_size_ = h_init_shape.back();
+  lstm_param_->output_size_ = h_init_shape.back();
 
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? C2NUM * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
@@ -186,7 +186,7 @@ int LstmFp16BaseCPUKernel::MallocRunBuffer() {
 
   if (lstm_param_->batch_ != 1) {
     running_buffer_[kTempStateBufferIndex] = reinterpret_cast<float16_t *>(
-      ms_context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->project_size_ * sizeof(float16_t)));
+      ms_context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->output_size_ * sizeof(float16_t)));
     if (running_buffer_[kTempStateBufferIndex] == nullptr) {
       MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state * weight left matirx error.";
       return RET_ERROR;
@@ -210,7 +210,7 @@ int LstmFp16BaseCPUKernel::MallocRunBuffer() {
     }
   }
   if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
-    int buffer_size = lstm_param_->batch_ * lstm_param_->project_size_ * sizeof(float16_t);
+    int buffer_size = lstm_param_->batch_ * lstm_param_->output_size_ * sizeof(float16_t);
     running_buffer_[kTempHiddenStateBufferIndex] =
       reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(buffer_size));
     if (running_buffer_[kTempHiddenStateBufferIndex] == nullptr) {

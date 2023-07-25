@@ -69,7 +69,7 @@ int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
   MS_CHECK_PTR(weight_h);
   if (!is_vec_) {
     size_t weight_h_size =
-      weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->project_size_ * DataTypeSize(data_type_);
+      weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->output_size_ * DataTypeSize(data_type_);
     weight_h_ptr_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
     MS_CHECK_PTR(weight_h_ptr_);
     init_code.CodeBufferOffsetExpression(weight_h_ptr_, context->weight_name(), context->weight_offset_name(),
@@ -113,7 +113,7 @@ int LstmFP32Coder::InitParam() {
   lstm_param_->hidden_size_ = w_shape.at(SECOND_INPUT) / kFour;
   auto weight_h = input_tensors_.at(THIRD_INPUT);
   std::vector<int> h_shape = weight_h->shape();
-  lstm_param_->project_size_ = h_shape.back();
+  lstm_param_->output_size_ = h_shape.back();
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? kTwo * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
   weight_batch_ = lstm_param_->bidirectional_ ? kEight : kFour;

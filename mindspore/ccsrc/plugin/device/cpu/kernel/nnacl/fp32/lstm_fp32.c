@@ -175,13 +175,13 @@ void UpdateOutput(float *hidden_state, float *output, const float *cell_state, c
                   const float *weight_project, float *buffer[C8NUM], const LstmParameter *lstm_param) {
   int batch = lstm_param->batch_;
   int hidden_size = lstm_param->hidden_size_;
-  int project_size = lstm_param->project_size_;
+  int output_size = lstm_param->output_size_;
   float *state_buffer = buffer[C4NUM];
   float *hidden_buffer = weight_project ? buffer[C2NUM] : hidden_state;
   float zoneout = lstm_param->zoneout_hidden_;
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
-    (void)memcpy(state_buffer, hidden_state, batch * project_size * sizeof(float));
-    ElementOptMul(state_buffer, &zoneout, state_buffer, batch * project_size, false);
+    (void)memcpy(state_buffer, hidden_state, batch * output_size * sizeof(float));
+    ElementOptMul(state_buffer, &zoneout, state_buffer, batch * output_size, false);
   }
 
   Tanh(cell_state, batch * hidden_size, hidden_buffer);
@@ -200,13 +200,13 @@ void UpdateOutput(float *hidden_state, float *output, const float *cell_state, c
 #else
     int col_tile = C8NUM;
 #endif
-    LstmMatMul(hidden_state, left_matrix, weight_project, NULL, batch, hidden_size, project_size,
-               UP_ROUND(project_size, col_tile), batch == 1, buffer[C7NUM]);
+    LstmMatMul(hidden_state, left_matrix, weight_project, NULL, batch, hidden_size, output_size,
+               UP_ROUND(output_size, col_tile), batch == 1, buffer[C7NUM]);
   }
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
-    ElementOptMulAcc(hidden_state, 1 - zoneout, state_buffer, batch * project_size);
+    ElementOptMulAcc(hidden_state, 1 - zoneout, state_buffer, batch * output_size);
   }
-  (void)memcpy(output, hidden_state, batch * project_size * sizeof(float));
+  (void)memcpy(output, hidden_state, batch * output_size * sizeof(float));
 }
 
 void UpdateLstmGate(float *gate_buffer, const float *input, const float *weight, const float *bias, int row, int deep,
@@ -238,12 +238,12 @@ void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *c
   bool is_vec = lstm_param->batch_ == 1;
   // state * weight
   if (is_vec) {
-    UpdateLstmGate(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->project_size_,
+    UpdateLstmGate(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->output_size_,
                    lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec, packed_output);
   } else {
     // pack state for matmul
-    PackLstmInput(hidden_state, packed_state, lstm_param->batch_, lstm_param->project_size_);
-    UpdateLstmGate(state_gate, packed_state, state_weight, state_bias, lstm_param->batch_, lstm_param->project_size_,
+    PackLstmInput(hidden_state, packed_state, lstm_param->batch_, lstm_param->output_size_);
+    UpdateLstmGate(state_gate, packed_state, state_weight, state_bias, lstm_param->batch_, lstm_param->output_size_,
                    lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec, packed_output);
   }
   ElementAdd(input_gate, state_gate, input_gate, lstm_param->batch_ * lstm_param->hidden_size_);
@@ -276,7 +276,7 @@ void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *c
   }
 
   if (!(lstm_param->zoneout_hidden_ >= -FLT_EPSILON && lstm_param->zoneout_hidden_ <= FLT_EPSILON)) {
-    (void)memcpy(hidden_state, hidden_buffer, lstm_param->batch_ * lstm_param->project_size_ * sizeof(float));
+    (void)memcpy(hidden_state, hidden_buffer, lstm_param->batch_ * lstm_param->output_size_ * sizeof(float));
   }
 }
 
