@@ -96,7 +96,10 @@ def _slice_parameter(parameter, phase, layout):
     new_param = parameter.init_data(layout, set_sliced=True)
     parameter = new_param
     graph_executor.updata_param_node_default_input(phase, {parameter.name: parameter})
-    if not parameter.sliced and (layout is not None):
+    if layout is None:
+        parameter.sliced = True
+        return
+    if not parameter.sliced:
         new_tensor = _load_tensor_by_layout(parameter, layout)
         parameter.set_data(new_tensor, True)
 
