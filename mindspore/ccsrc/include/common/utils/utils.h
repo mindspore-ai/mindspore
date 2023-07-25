@@ -566,7 +566,7 @@ constexpr auto kBackendParamToFrontendParamIndex = "backend_param_to_frontend_pa
 constexpr auto kLabelNum = "label_num";
 constexpr auto kParameterUniqueNameToName = "param_unique_name_to_name";
 constexpr auto kRefInOutMap = "ref_in_out_map";
-constexpr auto kRetryIntervalSeconds = 500;
+constexpr auto kRetryIntervalMilliSeconds = 500;
 constexpr auto kSummaryNodes = "summary_nodes";
 constexpr auto kSummaryNodeExist = "summary_node_exist";
 

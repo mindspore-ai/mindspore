@@ -155,7 +155,7 @@ bool LoadJson(const std::string &filename, nlohmann::json *graph_json) {
   } catch (std::exception &e) {
     MS_LOG(INFO) << "Parse json file error: " << filename << ", sleep 500ms and retry again.";
     json_fs.close();
-    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryIntervalSeconds));
+    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryIntervalMilliSeconds));
     std::ifstream retry_tmp(filename);
     if (!retry_tmp.is_open()) {
       MS_LOG(ERROR) << "Open json file: " << filename << " error, please check cached file.";

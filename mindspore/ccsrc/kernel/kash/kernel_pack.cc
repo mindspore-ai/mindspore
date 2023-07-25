@@ -91,6 +91,31 @@ bool ParseJsonValue(const std::string &key, const nlohmann::json &json, T *res) 
   }
   return false;
 }
+
+bool LoadJsonFromFile(const std::string &json_file, nlohmann::json *js) {
+  std::ifstream json_fs(json_file);
+  if (!json_fs.is_open()) {
+    MS_LOG(INFO) << "Open json file: " << json_file << " error, please check kernel_meta.";
+    return false;
+  }
+  try {
+    json_fs >> *js;
+    json_fs.close();
+  } catch (std::exception &e) {
+    MS_LOG(WARNING) << "Parse json file error: " << json_file << ", sleep " << kRetryIntervalMilliSeconds
+                    << "ms and retry again. error ms: " << e.what();
+    json_fs.close();
+    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryIntervalMilliSeconds));
+    std::ifstream retry_tmp(json_file);
+    if (!retry_tmp.is_open()) {
+      MS_LOG(INFO) << "Open json file: " << json_file << " error, please check kernel_meta.";
+      return false;
+    }
+    retry_tmp >> *js;
+    retry_tmp.close();
+  }
+  return true;
+}
 }  // namespace
 
 bool KernelPack::ReadFromJsonFileHelper(std::ifstream &kernel_bin) {
@@ -129,14 +154,12 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
     return false;
   }
 
-  std::ifstream kernel_json(json_f);
-  if (!kernel_json.is_open()) {
-    MS_LOG(DEBUG) << "Read json file(" << json_f << ") error, please check kernel_meta.";
+  nlohmann::json js;
+  if (!LoadJsonFromFile(json_f, &js)) {
     return false;
   }
-  nlohmann::json js;
-  kernel_json >> js;
 
+  std::ifstream kernel_json(json_f);
   size_t bin_size = LongToSize(kernel_json.seekg(0, std::ios::end).tellg());
   void *ptr = static_cast<void *>(new (std::nothrow) uint8_t[sizeof(KernelPack) + bin_size]);
   if (ptr != nullptr) {
@@ -492,26 +515,9 @@ bool KernelPack::LoadKernelMeta(const std::string &json_f) {
     MS_LOG(ERROR) << "please check json path.";
     return false;
   }
-  std::ifstream kernel_json(json_f);
-  if (!kernel_json.is_open()) {
-    MS_LOG(INFO) << "Open json file: " << json_f << " error, please check kernel_meta.";
-    return false;
-  }
   nlohmann::json js;
-  try {
-    kernel_json >> js;
-    kernel_json.close();
-  } catch (std::exception &e) {
-    MS_LOG(WARNING) << "Parse json file error: " << json_f << ", sleep 500ms and retry again. error ms: " << e.what();
-    kernel_json.close();
-    std::this_thread::sleep_for(std::chrono::microseconds(500000));
-    std::ifstream retry_tmp(json_f);
-    if (!retry_tmp.is_open()) {
-      MS_LOG(INFO) << "Open json file: " << json_f << " error, please check kernel_meta.";
-      return false;
-    }
-    retry_tmp >> js;
-    retry_tmp.close();
+  if (!LoadJsonFromFile(json_f, &js)) {
+    return false;
   }
   ParseKernelJson(js);
 
