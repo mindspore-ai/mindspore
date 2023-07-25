@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class DATASET_API DvppDecodeResizeJpeg final : public TensorTransform {
   explicit DvppDecodeResizeJpeg(const std::vector<uint32_t> &resize);
 
   /// \brief Destructor.
-  ~DvppDecodeResizeJpeg() = default;
+  ~DvppDecodeResizeJpeg() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -84,7 +84,7 @@ class DATASET_API DvppDecodeResizeCropJpeg final : public TensorTransform {
   DvppDecodeResizeCropJpeg(const std::vector<uint32_t> &crop, const std::vector<uint32_t> &resize);
 
   /// \brief Destructor.
-  ~DvppDecodeResizeCropJpeg() = default;
+  ~DvppDecodeResizeCropJpeg() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -160,7 +160,7 @@ class DATASET_API DvppDecodeVideo final : public TensorTransform {
                   const std::vector<char> &output);
 
   /// \brief Destructor.
-  ~DvppDecodeVideo() = default;
+  ~DvppDecodeVideo() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -191,7 +191,7 @@ class DATASET_API DvppDecodePng final : public TensorTransform {
   DvppDecodePng();
 
   /// \brief Destructor.
-  ~DvppDecodePng() = default;
+  ~DvppDecodePng() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -203,5 +203,4 @@ class DATASET_API DvppDecodePng final : public TensorTransform {
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_ASCEND_H_

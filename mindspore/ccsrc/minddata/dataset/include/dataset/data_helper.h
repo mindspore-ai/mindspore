@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATA_HELPER_H_
 
 #include <sys/stat.h>
+
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -31,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 /// \brief Simple class to do data manipulation, contains helper function to update json files in dataset
 class DATASET_API DataHelper {
  public:
@@ -320,22 +320,21 @@ class DATASET_API DataHelper {
   /// \return Status The status code returned
   template <typename T>
   Status WriteBinFile(const std::string &in_file, const std::vector<T> &data) {
-    try {
-      std::ofstream o(in_file, std::ios::binary | std::ios::out);
-      if (!o.is_open()) {
-        return Status(kMDUnexpectedError, "Error opening Bin file to write");
-      }
-      size_t length = data.size();
-      if (length == 0) {
-        return Status(kMDUnexpectedError, "size of data is 0 when written into file.");
-      }
-      o.write(reinterpret_cast<const char *>(&data[0]), std::streamsize(length * sizeof(T)));
-      o.close();
+    std::ofstream ofs(in_file, std::ios::binary | std::ios::out);
+    if (!ofs.is_open()) {
+      return Status(kMDUnexpectedError, "Failed to open file: " + in_file);
     }
-    // Catch any exception and convert to Status return code
-    catch (const std::exception &err) {
-      return Status(kMDUnexpectedError, "Write bin file failed ");
+    size_t length = data.size();
+    if (length == 0) {
+      ofs.close();
+      return Status(kMDUnexpectedError, "Input data is empty.");
     }
+    (void)ofs.write(reinterpret_cast<const char *>(&data[0]), static_cast<std::streamsize>(length * sizeof(T)));
+    if (!ofs.good()) {
+      ofs.close();
+      return Status(kMDUnexpectedError, "Failed to write file: " + in_file);
+    }
+    ofs.close();
     return Status::OK();
   }
 
@@ -347,24 +346,19 @@ class DATASET_API DataHelper {
   /// \return Status The status code returned
   template <typename T>
   Status WriteBinFile(const std::string &in_file, T *data, size_t length) {
-    try {
-      if (data == nullptr) {
-        return Status(kMDUnexpectedError, "input data can not be null");
-      }
-      std::ofstream o(in_file, std::ios::binary | std::ios::out);
-      if (!o.is_open()) {
-        return Status(kMDUnexpectedError, "Error opening Bin file to write");
-      }
-      o.write(reinterpret_cast<const char *>(data), std::streamsize(length * sizeof(T)));
-      if (!o.good()) {
-        return Status(kMDUnexpectedError, "Error writing Bin file");
-      }
-      o.close();
+    if (data == nullptr) {
+      return Status(kMDUnexpectedError, "Input data can not be nullptr.");
     }
-    // Catch any exception and convert to Status return code
-    catch (const std::exception &err) {
-      return Status(kMDUnexpectedError, "Write bin file failed");
+    std::ofstream ofs(in_file, std::ios::binary | std::ios::out);
+    if (!ofs.is_open()) {
+      return Status(kMDUnexpectedError, "Failed to open file: " + in_file);
     }
+    (void)ofs.write(reinterpret_cast<const char *>(data), static_cast<std::streamsize>(length * sizeof(T)));
+    if (!ofs.good()) {
+      ofs.close();
+      return Status(kMDUnexpectedError, "Failed to write file: " + in_file);
+    }
+    ofs.close();
     return Status::OK();
   }
 
@@ -457,5 +451,4 @@ class DATASET_API DataHelper {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATA_HELPER_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ class DATASET_API AdjustBrightness final : public TensorTransform {
   explicit AdjustBrightness(float brightness_factor);
 
   /// \brief Destructor.
-  ~AdjustBrightness() = default;
+  ~AdjustBrightness() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -83,7 +83,7 @@ class DATASET_API AdjustContrast final : public TensorTransform {
   explicit AdjustContrast(float contrast_factor);
 
   /// \brief Destructor.
-  ~AdjustContrast() = default;
+  ~AdjustContrast() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -102,7 +102,7 @@ class DATASET_API AdjustGamma final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] gamma Non negative real number, which makes the output image pixel value
   ///     exponential in relation to the input image pixel value.
-  /// \param[in] gain The constant multiplier.
+  /// \param[in] gain The constant multiplier. Default: 1.0.
   /// \par Example
   /// \code
   ///     /* Define operations */
@@ -113,10 +113,10 @@ class DATASET_API AdjustGamma final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, adjust_gamma_op},  // operations
   ///                            {"image"});                   // input columns
   /// \endcode
-  explicit AdjustGamma(float gamma, float gain = 1);
+  explicit AdjustGamma(float gamma, float gain = 1.0);
 
   /// \brief Destructor.
-  ~AdjustGamma() = default;
+  ~AdjustGamma() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -146,7 +146,7 @@ class DATASET_API AdjustHue final : public TensorTransform {
   explicit AdjustHue(float hue_factor);
 
   /// \brief Destructor.
-  ~AdjustHue() = default;
+  ~AdjustHue() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -176,7 +176,7 @@ class DATASET_API AdjustSaturation final : public TensorTransform {
   explicit AdjustSaturation(float saturation_factor);
 
   /// \brief Destructor.
-  ~AdjustSaturation() = default;
+  ~AdjustSaturation() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -207,7 +207,7 @@ class DATASET_API AdjustSharpness final : public TensorTransform {
   explicit AdjustSharpness(float sharpness_factor);
 
   /// \brief Destructor.
-  ~AdjustSharpness() = default;
+  ~AdjustSharpness() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -248,7 +248,7 @@ class DATASET_API AutoAugment final : public TensorTransform {
                        const std::vector<uint8_t> &fill_value = {0, 0, 0});
 
   /// \brief Destructor.
-  ~AutoAugment() = default;
+  ~AutoAugment() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -279,7 +279,7 @@ class DATASET_API AutoContrast final : public TensorTransform {
   explicit AutoContrast(float cutoff = 0.0, const std::vector<uint32_t> &ignore = {});
 
   /// \brief Destructor.
-  ~AutoContrast() = default;
+  ~AutoContrast() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -341,7 +341,7 @@ class DATASET_API BoundingBoxAugment final : public TensorTransform {
   explicit BoundingBoxAugment(const std::reference_wrapper<TensorTransform> &transform, float ratio = 0.3);
 
   /// \brief Destructor.
-  ~BoundingBoxAugment() = default;
+  ~BoundingBoxAugment() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -368,7 +368,7 @@ class DATASET_API ConvertColor final : public TensorTransform {
   explicit ConvertColor(ConvertMode convert_mode);
 
   /// \brief Destructor.
-  ~ConvertColor() = default;
+  ~ConvertColor() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -398,7 +398,7 @@ class DATASET_API CutMixBatch final : public TensorTransform {
   explicit CutMixBatch(ImageBatchFormat image_batch_format, float alpha = 1.0, float prob = 1.0);
 
   /// \brief Destructor.
-  ~CutMixBatch() = default;
+  ~CutMixBatch() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -428,7 +428,7 @@ class DATASET_API CutOut final : public TensorTransform {
   explicit CutOut(int32_t length, int32_t num_patches = 1, bool is_hwc = true);
 
   /// \brief Destructor.
-  ~CutOut() = default;
+  ~CutOut() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -468,7 +468,7 @@ class DATASET_API Equalize final : public TensorTransform {
   Equalize();
 
   /// \brief Destructor.
-  ~Equalize() = default;
+  ~Equalize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -499,7 +499,7 @@ class DATASET_API Erase final : public TensorTransform {
         bool inplace = false);
 
   /// \brief Destructor.
-  ~Erase() = default;
+  ~Erase() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -537,7 +537,7 @@ class DATASET_API HorizontalFlip final : public TensorTransform {
   HorizontalFlip();
 
   /// \brief Destructor.
-  ~HorizontalFlip() = default;
+  ~HorizontalFlip() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -559,7 +559,7 @@ class DATASET_API Invert final : public TensorTransform {
   Invert();
 
   /// \brief Destructor.
-  ~Invert() = default;
+  ~Invert() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -580,10 +580,10 @@ class DATASET_API MixUpBatch final : public TensorTransform {
   ///     dataset = dataset->Map({std::make_shared<vision::MixUpBatch>()}, // operations
   ///                            {"image"});                               // input columns
   /// \endcode
-  explicit MixUpBatch(float alpha = 1);
+  explicit MixUpBatch(float alpha = 1.0);
 
   /// \brief Destructor.
-  ~MixUpBatch() = default;
+  ~MixUpBatch() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -626,7 +626,7 @@ class DATASET_API NormalizePad final : public TensorTransform {
                bool is_hwc = true);
 
   /// \brief Destructor.
-  ~NormalizePad() = default;
+  ~NormalizePad() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -668,7 +668,7 @@ class DATASET_API PadToSize final : public TensorTransform {
                      const std::vector<uint8_t> &fill_value = {0}, BorderType padding_mode = BorderType::kConstant);
 
   /// \brief Destructor.
-  ~PadToSize() = default;
+  ~PadToSize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -710,7 +710,7 @@ class DATASET_API Perspective final : public TensorTransform {
               const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
 
   /// \brief Destructor.
-  ~Perspective() = default;
+  ~Perspective() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -741,7 +741,7 @@ class DATASET_API Posterize final : public TensorTransform {
   explicit Posterize(uint8_t bits);
 
   /// \brief Destructor.
-  ~Posterize() = default;
+  ~Posterize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -779,7 +779,7 @@ class DATASET_API RandAugment final : public TensorTransform {
                        const std::vector<uint8_t> &fill_value = {0, 0, 0});
 
   /// \brief Destructor.
-  ~RandAugment() = default;
+  ~RandAugment() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -814,7 +814,7 @@ class DATASET_API RandomAutoContrast final : public TensorTransform {
   explicit RandomAutoContrast(float cutoff = 0.0, const std::vector<uint32_t> &ignore = {}, float prob = 0.5);
 
   /// \brief Destructor.
-  ~RandomAutoContrast() = default;
+  ~RandomAutoContrast() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -846,7 +846,7 @@ class DATASET_API RandomAdjustSharpness final : public TensorTransform {
   explicit RandomAdjustSharpness(float degree, float prob = 0.5);
 
   /// \brief Destructor.
-  ~RandomAdjustSharpness() = default;
+  ~RandomAdjustSharpness() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -879,7 +879,7 @@ class DATASET_API RandomColor final : public TensorTransform {
   RandomColor(float t_lb, float t_ub);
 
   /// \brief Destructor.
-  ~RandomColor() = default;
+  ~RandomColor() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -920,7 +920,7 @@ class DATASET_API RandomColorAdjust final : public TensorTransform {
                              const std::vector<float> &hue = {0.0, 0.0});
 
   /// \brief Destructor.
-  ~RandomColorAdjust() = default;
+  ~RandomColorAdjust() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -972,7 +972,7 @@ class DATASET_API RandomCrop final : public TensorTransform {
                       BorderType padding_mode = BorderType::kConstant);
 
   /// \brief Destructor.
-  ~RandomCrop() = default;
+  ~RandomCrop() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1013,12 +1013,12 @@ class DATASET_API RandomCropDecodeResize final : public TensorTransform {
   ///                            {"image"});              // input columns
   /// \endcode
   explicit RandomCropDecodeResize(const std::vector<int32_t> &size, const std::vector<float> &scale = {0.08, 1.0},
-                                  const std::vector<float> &ratio = {3. / 4, 4. / 3},
+                                  const std::vector<float> &ratio = {3. / 4., 4. / 3.},
                                   InterpolationMode interpolation = InterpolationMode::kLinear,
                                   int32_t max_attempts = 10);
 
   /// \brief Destructor.
-  ~RandomCropDecodeResize() = default;
+  ~RandomCropDecodeResize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1069,7 +1069,7 @@ class DATASET_API RandomCropWithBBox final : public TensorTransform {
                               BorderType padding_mode = BorderType::kConstant);
 
   /// \brief Destructor.
-  ~RandomCropWithBBox() = default;
+  ~RandomCropWithBBox() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1100,7 +1100,7 @@ class DATASET_API RandomEqualize final : public TensorTransform {
   explicit RandomEqualize(float prob = 0.5);
 
   /// \brief Destructor.
-  ~RandomEqualize() = default;
+  ~RandomEqualize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1130,7 +1130,7 @@ class DATASET_API RandomHorizontalFlip final : public TensorTransform {
   explicit RandomHorizontalFlip(float prob = 0.5);
 
   /// \brief Destructor.
-  ~RandomHorizontalFlip() = default;
+  ~RandomHorizontalFlip() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1159,7 +1159,7 @@ class DATASET_API RandomHorizontalFlipWithBBox final : public TensorTransform {
   explicit RandomHorizontalFlipWithBBox(float prob = 0.5);
 
   /// \brief Destructor.
-  ~RandomHorizontalFlipWithBBox() = default;
+  ~RandomHorizontalFlipWithBBox() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1190,7 +1190,7 @@ class DATASET_API RandomInvert final : public TensorTransform {
   explicit RandomInvert(float prob = 0.5);
 
   /// \brief Destructor.
-  ~RandomInvert() = default;
+  ~RandomInvert() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1220,7 +1220,7 @@ class DATASET_API RandomLighting final : public TensorTransform {
   explicit RandomLighting(float alpha = 0.05);
 
   /// \brief Destructor.
-  ~RandomLighting() = default;
+  ~RandomLighting() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1251,7 +1251,7 @@ class DATASET_API RandomPosterize final : public TensorTransform {
   explicit RandomPosterize(const std::vector<uint8_t> &bit_range = {4, 8});
 
   /// \brief Destructor.
-  ~RandomPosterize() = default;
+  ~RandomPosterize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1283,7 +1283,7 @@ class DATASET_API RandomResize final : public TensorTransform {
   explicit RandomResize(const std::vector<int32_t> &size);
 
   /// \brief Destructor.
-  ~RandomResize() = default;
+  ~RandomResize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1315,7 +1315,7 @@ class DATASET_API RandomResizeWithBBox final : public TensorTransform {
   explicit RandomResizeWithBBox(const std::vector<int32_t> &size);
 
   /// \brief Destructor.
-  ~RandomResizeWithBBox() = default;
+  ~RandomResizeWithBBox() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1362,7 +1362,7 @@ class DATASET_API RandomResizedCrop final : public TensorTransform {
                              InterpolationMode interpolation = InterpolationMode::kLinear, int32_t max_attempts = 10);
 
   /// \brief Destructor.
-  ~RandomResizedCrop() = default;
+  ~RandomResizedCrop() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1410,7 +1410,7 @@ class DATASET_API RandomResizedCropWithBBox final : public TensorTransform {
                                      int32_t max_attempts = 10);
 
   /// \brief Destructor.
-  ~RandomResizedCropWithBBox() = default;
+  ~RandomResizedCropWithBBox() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1454,7 +1454,7 @@ class DATASET_API RandomRotation final : public TensorTransform {
                           const std::vector<float> &center = {}, const std::vector<uint8_t> &fill_value = {0, 0, 0});
 
   /// \brief Destructor.
-  ~RandomRotation() = default;
+  ~RandomRotation() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1532,7 +1532,7 @@ class DATASET_API RandomSelectSubpolicy final : public TensorTransform {
     const std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> &policy);
 
   /// \brief Destructor.
-  ~RandomSelectSubpolicy() = default;
+  ~RandomSelectSubpolicy() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1564,7 +1564,7 @@ class DATASET_API RandomSharpness final : public TensorTransform {
   explicit RandomSharpness(const std::vector<float> &degrees = {0.1, 1.9});
 
   /// \brief Destructor.
-  ~RandomSharpness() = default;
+  ~RandomSharpness() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1596,7 +1596,7 @@ class DATASET_API RandomSolarize final : public TensorTransform {
   explicit RandomSolarize(const std::vector<uint8_t> &threshold = {0, 255});
 
   /// \brief Destructor.
-  ~RandomSolarize() = default;
+  ~RandomSolarize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1626,7 +1626,7 @@ class DATASET_API RandomVerticalFlip final : public TensorTransform {
   explicit RandomVerticalFlip(float prob = 0.5);
 
   /// \brief Destructor.
-  ~RandomVerticalFlip() = default;
+  ~RandomVerticalFlip() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1655,7 +1655,7 @@ class DATASET_API RandomVerticalFlipWithBBox final : public TensorTransform {
   explicit RandomVerticalFlipWithBBox(float prob = 0.5);
 
   /// \brief Destructor.
-  ~RandomVerticalFlipWithBBox() = default;
+  ~RandomVerticalFlipWithBBox() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1718,7 +1718,7 @@ class DATASET_API ResizedCrop final : public TensorTransform {
               InterpolationMode interpolation = InterpolationMode::kLinear);
 
   /// \brief Destructor.
-  ~ResizedCrop() = default;
+  ~ResizedCrop() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1756,7 +1756,7 @@ class DATASET_API ResizeWithBBox final : public TensorTransform {
                           InterpolationMode interpolation = InterpolationMode::kLinear);
 
   /// \brief Destructor.
-  ~ResizeWithBBox() = default;
+  ~ResizeWithBBox() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1785,7 +1785,7 @@ class DATASET_API RGBA2BGR final : public TensorTransform {
   RGBA2BGR();
 
   /// \brief Destructor.
-  ~RGBA2BGR() = default;
+  ~RGBA2BGR() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1810,7 +1810,7 @@ class DATASET_API RGBA2RGB final : public TensorTransform {
   RGBA2RGB();
 
   /// \brief Destructor.
-  ~RGBA2RGB() = default;
+  ~RGBA2RGB() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1843,7 +1843,7 @@ class DATASET_API SlicePatches final : public TensorTransform {
                         uint8_t fill_value = 0);
 
   /// \brief Destructor.
-  ~SlicePatches() = default;
+  ~SlicePatches() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -1875,7 +1875,7 @@ class DATASET_API Solarize final : public TensorTransform {
   explicit Solarize(const std::vector<float> &threshold);
 
   /// \brief Destructor.
-  ~Solarize() = default;
+  ~Solarize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1907,7 +1907,7 @@ class DATASET_API ToTensor final : public TensorTransform {
   explicit ToTensor(mindspore::DataType output_type);
 
   /// \brief Destructor.
-  ~ToTensor() = default;
+  ~ToTensor() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1944,7 +1944,7 @@ class DATASET_API TrivialAugmentWide final : public TensorTransform {
                               const std::vector<uint8_t> &fill_value = {0, 0, 0});
 
   /// \brief Destructor.
-  ~TrivialAugmentWide() = default;
+  ~TrivialAugmentWide() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -2011,7 +2011,7 @@ class DATASET_API UniformAugment final : public TensorTransform {
   explicit UniformAugment(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, int32_t num_ops = 2);
 
   /// \brief Destructor.
-  ~UniformAugment() = default;
+  ~UniformAugment() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -2040,7 +2040,7 @@ class DATASET_API VerticalFlip final : public TensorTransform {
   VerticalFlip();
 
   /// \brief Destructor.
-  ~VerticalFlip() = default;
+  ~VerticalFlip() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,7 +218,7 @@ class DATASET_API Compose final : public TensorTransform {
   explicit Compose(const std::vector<std::reference_wrapper<TensorTransform>> &transforms);
 
   /// \brief Destructor
-  ~Compose() = default;
+  ~Compose() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -251,7 +251,7 @@ class DATASET_API Concatenate final : public TensorTransform {
   explicit Concatenate(int8_t axis = 0, const MSTensor &prepend = {}, const MSTensor &append = {});
 
   /// \brief Destructor
-  ~Concatenate() = default;
+  ~Concatenate() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -281,7 +281,7 @@ class DATASET_API Duplicate final : public TensorTransform {
   Duplicate();
 
   /// \brief Destructor
-  ~Duplicate() = default;
+  ~Duplicate() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -310,7 +310,7 @@ class DATASET_API Fill final : public TensorTransform {
   explicit Fill(const MSTensor &fill_value);
 
   /// \brief Destructor
-  ~Fill() = default;
+  ~Fill() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -346,7 +346,7 @@ class DATASET_API Mask final : public TensorTransform {
                 mindspore::DataType ms_type = mindspore::DataType(mindspore::DataType::kNumberTypeBool));
 
   /// \brief Destructor
-  ~Mask() = default;
+  ~Mask() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -377,7 +377,7 @@ class DATASET_API OneHot final : public TensorTransform {
   explicit OneHot(int32_t num_classes, double smoothing_rate = 0.0);
 
   /// \brief Destructor
-  ~OneHot() = default;
+  ~OneHot() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -410,7 +410,7 @@ class DATASET_API PadEnd final : public TensorTransform {
   explicit PadEnd(const std::vector<dsize_t> &pad_shape, const MSTensor &pad_value = {});
 
   /// \brief Destructor
-  ~PadEnd() = default;
+  ~PadEnd() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -474,7 +474,7 @@ class DATASET_API RandomApply final : public TensorTransform {
   explicit RandomApply(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, double prob = 0.5);
 
   /// \brief Destructor
-  ~RandomApply() = default;
+  ~RandomApply() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -535,7 +535,7 @@ class DATASET_API RandomChoice final : public TensorTransform {
   explicit RandomChoice(const std::vector<std::reference_wrapper<TensorTransform>> &transforms);
 
   /// \brief Destructor
-  ~RandomChoice() = default;
+  ~RandomChoice() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -567,7 +567,7 @@ class DATASET_API Slice final : public TensorTransform {
   explicit Slice(const std::vector<SliceOption> &slice_input);
 
   /// \brief Destructor
-  ~Slice() = default;
+  ~Slice() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -596,7 +596,7 @@ class DATASET_API TypeCast final : public TensorTransform {
   explicit TypeCast(mindspore::DataType data_type);
 
   /// \brief Destructor
-  ~TypeCast() = default;
+  ~TypeCast() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -625,7 +625,7 @@ class DATASET_API Unique final : public TensorTransform {
   Unique();
 
   /// \brief Destructor
-  ~Unique() = default;
+  ~Unique() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.

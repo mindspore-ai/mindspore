@@ -1564,7 +1564,7 @@ LSUNDataset::LSUNDataset(const std::vector<char> &dataset_dir, const std::vector
 
 LSUNDataset::LSUNDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
                          const std::vector<std::vector<char>> &classes, bool decode,
-                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache) {
+                         const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
   // Create logical representation of LSUNDataset.
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<LSUNNode>(CharToString(dataset_dir), CharToString(usage), VectorCharToString(classes),

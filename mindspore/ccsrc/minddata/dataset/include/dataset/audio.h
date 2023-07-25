@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class DATASET_API AllpassBiquad final : public TensorTransform {
  public:
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
   explicit AllpassBiquad(int32_t sample_rate, float central_freq, float Q = 0.707);
 
   /// \brief Destructor.
@@ -77,11 +77,11 @@ class DATASET_API AllpassBiquad final : public TensorTransform {
 class DATASET_API AmplitudeToDB final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] stype Scale of input tensor, must be one of [ScaleType::kPower, ScaleType::kMagnitude] (Default:
-  ///    ScaleType::kPower).
-  /// \param[in] ref_value Calculate db_multiplier (Default: 1.0).
-  /// \param[in] amin Minimum threshold for input tensor and ref_value (Default: 1e-10). It must be greater than zero.
-  /// \param[in] top_db Decibels cut-off value (Default: 80.0). It must be greater than or equal to zero.
+  /// \param[in] stype Scale of input tensor, must be one of [ScaleType::kPower, ScaleType::kMagnitude].
+  ///     Default: ScaleType::kPower.
+  /// \param[in] ref_value Calculate db_multiplier. Default: 1.0.
+  /// \param[in] amin Minimum threshold for input tensor and ref_value. It must be greater than zero. Default: 1e-10.
+  /// \param[in] top_db Decibels cut-off value. It must be greater than or equal to zero. Default: 80.0.
   explicit AmplitudeToDB(ScaleType stype = ScaleType::kPower, float ref_value = 1.0, float amin = 1e-10,
                          float top_db = 80.0);
 
@@ -104,8 +104,8 @@ class DATASET_API BandBiquad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
-  /// \param[in] noise Choose alternate mode for un-pitched audio or mode oriented to pitched audio(Default: False).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
+  /// \param[in] noise Choose alternate mode for un-pitched audio or mode oriented to pitched audio. Default: False.
   explicit BandBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool noise = false);
 
   /// \brief Destructor.
@@ -127,9 +127,9 @@ class DATASET_API BandpassBiquad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
   /// \param[in] const_skirt_gain, If True, uses a constant skirt gain (peak gain = Q). If False, uses a
-  ///     constant 0dB peak gain (Default: False).
+  ///     constant 0dB peak gain. Default: False.
   explicit BandpassBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool const_skirt_gain = false);
 
   /// \brief Destructor.
@@ -151,7 +151,7 @@ class DATASET_API BandrejectBiquad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
   explicit BandrejectBiquad(int32_t sample_rate, float central_freq, float Q = 0.707);
 
   /// \brief Destructor.
@@ -173,9 +173,9 @@ class DATASET_API BassBiquad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] gain Desired gain at the boost (or attenuation) in dB.
-  /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
-  explicit BassBiquad(int32_t sample_rate, float gain, float central_freq = 100, float Q = 0.707);
+  /// \param[in] central_freq Central frequency (in Hz). Default: 100.0.
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
+  explicit BassBiquad(int32_t sample_rate, float gain, float central_freq = 100.0, float Q = 0.707);
 
   /// \brief Destructor.
   ~BassBiquad() override = default;
@@ -220,7 +220,7 @@ class DATASET_API Biquad final : public TensorTransform {
 class DATASET_API ComplexNorm final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] power Power of the norm, which must be non-negative (Default: 1.0).
+  /// \param[in] power Power of the norm, which must be non-negative. Default: 1.0.
   explicit ComplexNorm(float power = 1.0);
 
   /// \brief Destructor.
@@ -244,9 +244,9 @@ class DATASET_API ComputeDeltas final : public TensorTransform {
   /// \f[
   /// d_{t}=\frac{{\textstyle\sum_{n=1}^{N}}n(c_{t+n}-c_{t-n})}{2{\textstyle\sum_{n=1}^{N}}n^{2}}
   /// \f]
-  /// \param[in] win_length The window length used for computing delta, must be no less than 3 (Default: 5).
+  /// \param[in] win_length The window length used for computing delta, must be no less than 3. Default: 5.
   /// \param[in] pad_mode Padding mode. Can be one of BorderType::kConstant, BorderType::kEdge,
-  ///     BorderType::kReflect or BorderType::kSymmetric (Default: BorderType::kEdge).
+  ///     BorderType::kReflect or BorderType::kSymmetric. Default: BorderType::kEdge.
   explicit ComputeDeltas(int32_t win_length = 5, BorderType pad_mode = BorderType::kEdge);
 
   /// \brief Destructor.
@@ -266,7 +266,7 @@ class DATASET_API ComputeDeltas final : public TensorTransform {
 class DATASET_API Contrast final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] enhancement_amount Controls the amount of the enhancement (Default: 75.0).
+  /// \param[in] enhancement_amount Controls the amount of the enhancement. Default: 75.0.
   explicit Contrast(float enhancement_amount = 75.0);
 
   /// \brief Destructor.
@@ -359,12 +359,12 @@ class DATASET_API DetectPitchFrequency final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-  /// \param[in] frame_time Duration of a frame, the value must be greater than zero (default=0.02).
+  /// \param[in] frame_time Duration of a frame, the value must be greater than zero. Default: 0.02.
   /// \param[in] win_length The window length for median smoothing (in number of frames), the value must
-  ///     be greater than zero (default=30).
-  /// \param[in] freq_low Lowest frequency that can be detected (Hz), the value must be greater than zero (default=85).
+  ///     be greater than zero. Default: 30.
+  /// \param[in] freq_low Lowest frequency that can be detected (Hz), the value must be greater than zero. Default: 85.
   /// \param[in] freq_high Highest frequency that can be detected (Hz), the value must be greater than
-  ///     zero (default=3400).
+  ///     zero. Default: 3400.
   explicit DetectPitchFrequency(int32_t sample_rate, float frame_time = 0.01, int32_t win_length = 30,
                                 int32_t freq_low = 85, int32_t freq_high = 3400);
 
@@ -389,9 +389,9 @@ class DATASET_API Dither final : public TensorTransform {
   /// \param[in] density_function The density function of a continuous random variable.
   ///     Can be one of DensityFunction::kTPDF (Triangular Probability Density Function),
   ///     DensityFunction::kRPDF (Rectangular Probability Density Function) or
-  ///     DensityFunction::kGPDF (Gaussian Probability Density Function) (Default: DensityFunction::kTPDF).
+  ///     DensityFunction::kGPDF (Gaussian Probability Density Function). Default: DensityFunction::kTPDF.
   /// \param[in] noise_shaping A filtering process that shapes the spectral energy of
-  ///     quantisation error (Default: false).
+  ///     quantisation error. Default: false.
   explicit Dither(DensityFunction density_function = DensityFunction::kTPDF, bool noise_shaping = false);
 
   /// \brief Destructor.
@@ -414,7 +414,7 @@ class DATASET_API EqualizerBiquad final : public TensorTransform {
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] center_freq Filter's central frequency (in Hz).
   /// \param[in] gain Desired gain at the boost (or attenuation) in dB.
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
   EqualizerBiquad(int32_t sample_rate, float center_freq, float gain, float Q = 0.707);
 
   /// \brief Destructor.
@@ -435,10 +435,10 @@ class DATASET_API Fade final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] fade_in_len Length of fade-in (time frames), which must be non-negative
-  ///     and no more than the length of waveform (Default: 0).
+  ///     and no more than the length of waveform. Default: 0.
   /// \param[in] fade_out_len Length of fade-out (time frames), which must be non-negative
-  ///     and no more than the length of waveform (Default: 0).
-  /// \param[in] fade_shape An enum for the fade shape (Default: FadeShape::kLinear).
+  ///     and no more than the length of waveform. Default: 0.
+  /// \param[in] fade_shape An enum for the fade shape. Default: FadeShape::kLinear.
   explicit Fade(int32_t fade_in_len = 0, int32_t fade_out_len = 0, FadeShape fade_shape = FadeShape::kLinear);
 
   /// \brief Destructor.
@@ -484,16 +484,16 @@ class DATASET_API Flanger final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
-  /// \param[in] delay Desired delay in milliseconds (ms), range: [0, 30] (Default: 0.0).
-  /// \param[in] depth Desired delay depth in milliseconds (ms), range: [0, 10] (Default: 2.0).
-  /// \param[in] regen Desired regen (feedback gain) in dB., range: [-95, 95] (Default: 0.0).
-  /// \param[in] width Desired width (delay gain) in dB, range: [0, 100] (Default: 71.0).
-  /// \param[in] speed Modulation speed in Hz, range: [0.1, 10] (Default: 0.5).
-  /// \param[in] phase Percentage phase-shift for multi-channel, range: [0, 100] (Default: 25.0).
+  /// \param[in] delay Desired delay in milliseconds (ms), range: [0, 30]. Default: 0.0.
+  /// \param[in] depth Desired delay depth in milliseconds (ms), range: [0, 10]. Default: 2.0.
+  /// \param[in] regen Desired regen (feedback gain) in dB., range: [-95, 95]. Default: 0.0.
+  /// \param[in] width Desired width (delay gain) in dB, range: [0, 100]. Default: 71.0.
+  /// \param[in] speed Modulation speed in Hz, range: [0.1, 10]. Default: 0.5.
+  /// \param[in] phase Percentage phase-shift for multi-channel, range: [0, 100]. Default: 25.0.
   /// \param[in] modulation Modulation of input tensor, must be one of [Modulation::kSinusoidal,
-  ///     Modulation::kTriangular] (Default:Modulation::kSinusoidal).
+  ///     Modulation::kTriangular]. Default:Modulation::kSinusoidal.
   /// \param[in] interpolation Interpolation of input tensor, must be one of [Interpolation::kLinear,
-  ///     Interpolation::kQuadratic] (Default:Interpolation::kLinear).
+  ///     Interpolation::kQuadratic]. Default:Interpolation::kLinear.
   explicit Flanger(int32_t sample_rate, float delay = 0.0, float depth = 2.0, float regen = 0.0, float width = 71.0,
                    float speed = 0.5, float phase = 25.0, Modulation modulation = Modulation::kSinusoidal,
                    Interpolation interpolation = Interpolation::kLinear);
@@ -517,10 +517,10 @@ class DATASET_API FrequencyMasking final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] iid_masks Whether to apply different masks to each example.
-  /// \param[in] frequency_mask_param Maximum possible length of the mask, range: [0, freq_length] (Default: 0).
+  /// \param[in] frequency_mask_param Maximum possible length of the mask, range: [0, freq_length]. Default: 0.
   ///     Indices uniformly sampled from [0, frequency_mask_param].
   ///     Mask width when iid_masks=true.
-  /// \param[in] mask_start Mask start when iid_masks=true, range: [0, freq_length-frequency_mask_param] (Default: 0).
+  /// \param[in] mask_start Mask start when iid_masks=true, range: [0, freq_length-frequency_mask_param]. Default: 0.
   /// \param[in] mask_value Mask value.
   explicit FrequencyMasking(bool iid_masks = false, int32_t frequency_mask_param = 0, int32_t mask_start = 0,
                             float mask_value = 0.0);
@@ -542,7 +542,7 @@ class DATASET_API FrequencyMasking final : public TensorTransform {
 class DATASET_API Gain final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] gain_db Gain adjustment in decibels (dB) (Default: 1.0).
+  /// \param[in] gain_db Gain adjustment in decibels (dB). Default: 1.0.
   explicit Gain(float gain_db = 1.0);
 
   /// \brief Destructor.
@@ -566,22 +566,22 @@ class DATASET_API GriffinLim final : public TensorTransform {
   ///     x(n)=\frac{\sum_{m=-\infty}^{\infty} w(m S-n) y_{w}(m S, n)}{\sum_{m=-\infty}^{\infty} w^{2}(m S-n)}
   ///     where w represents the window function, y represents the reconstructed signal of each frame and x represents
   ///     the whole signal.
-  /// \param[in] n_fft Size of FFT (Default: 400).
-  /// \param[in] n_iter Number of iteration for phase recovery (Default: 32).
-  /// \param[in] win_length Window size for GriffinLim (Default: 0, will be set to n_fft).
-  /// \param[in] hop_length Length of hop between STFT windows (Default: 0, will be set to win_length / 2).
-  /// \param[in] window_type Window type for GriffinLim (Default: WindowType::kHann).
-  /// \param[in] power Exponent for the magnitude spectrogram (Default: 2.0).
-  /// \param[in] momentum The momentum for fast Griffin-Lim (Default: 0.99).
-  /// \param[in] length Length of the expected output waveform (Default: 0.0, will be set to the value of last
-  ///     dimension of the stft matrix).
-  /// \param[in] rand_init Flag for random phase initialization or all-zero phase initialization (Default: true).
+  /// \param[in] n_fft Size of FFT. Default: 400.
+  /// \param[in] n_iter Number of iteration for phase recovery. Default: 32.
+  /// \param[in] win_length Window size for GriffinLim. Default: 0, will be set to n_fft.
+  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to win_length / 2.
+  /// \param[in] window_type Window type for GriffinLim. Default: WindowType::kHann.
+  /// \param[in] power Exponent for the magnitude spectrogram. Default: 2.0.
+  /// \param[in] momentum The momentum for fast Griffin-Lim. Default: 0.99.
+  /// \param[in] length Length of the expected output waveform. Default: 0.0, will be set to the value of last
+  ///     dimension of the stft matrix.
+  /// \param[in] rand_init Flag for random phase initialization or all-zero phase initialization. Default: true.
   explicit GriffinLim(int32_t n_fft = 400, int32_t n_iter = 32, int32_t win_length = 0, int32_t hop_length = 0,
                       WindowType window_type = WindowType::kHann, float power = 2.0, float momentum = 0.99,
                       int32_t length = 0, bool rand_init = true);
 
   /// \brief Destructor.
-  ~GriffinLim() = default;
+  ~GriffinLim() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -599,7 +599,7 @@ class DATASET_API HighpassBiquad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] cutoff_freq Filter cutoff frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
   HighpassBiquad(int32_t sample_rate, float cutoff_freq, float Q = 0.707);
 
   /// \brief Destructor.
@@ -621,18 +621,18 @@ class DATASET_API InverseMelScale final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] n_stft Number of bins in STFT, must be positive.
-  /// \param[in] n_mels Number of mel filter, must be positive (Default: 128).
-  /// \param[in] sample_rate Sample rate of the signal, the value can't be zero (Default: 16000).
-  /// \param[in] f_min Minimum frequency, must be non-negative (Default: 0.0).
-  /// \param[in] f_max Maximum frequency, must be non-negative (Default: 0.0, will be set to sample_rate / 2).
-  /// \param[in] max_iter Maximum number of optimization iterations, must be positive (Default: 100000).
-  /// \param[in] tolerance_loss Value of loss to stop optimization at, must be non-negative (Default: 1e-5).
-  /// \param[in] tolerance_change Difference in losses to stop optimization at, must be non-negative (Default: 1e-8).
-  /// \param[in] sgdargs Parameters of SGD optimizer, including lr, momentum
-  ///     (Default: {{"sgd_lr", 0.1}, {"sgd_momentum", 0.0}}).
+  /// \param[in] n_mels Number of mel filter, must be positive. Default: 128.
+  /// \param[in] sample_rate Sample rate of the signal, the value can't be zero. Default: 16000.
+  /// \param[in] f_min Minimum frequency, must be non-negative. Default: 0.0.
+  /// \param[in] f_max Maximum frequency, must be non-negative. Default: 0.0, will be set to sample_rate / 2.
+  /// \param[in] max_iter Maximum number of optimization iterations, must be positive. Default: 100000.
+  /// \param[in] tolerance_loss Value of loss to stop optimization at, must be non-negative. Default: 1e-5.
+  /// \param[in] tolerance_change Difference in losses to stop optimization at, must be non-negative. Default: 1e-8.
+  /// \param[in] sgdargs Parameters of SGD optimizer, including lr, momentum.
+  ///     Default: {{"sgd_lr", 0.1}, {"sgd_momentum", 0.0}}.
   /// \param[in] norm Type of norm, value should be NormType::kSlaney or NormType::kNone. If norm is NormType::kSlaney,
-  ///     divide the triangle mel weight by the width of the mel band (Default: NormType::kNone).
-  /// \param[in] mel_type Type of mel, value should be MelType::kHtk or MelType::kSlaney (Default: MelType::kHtk).
+  ///     divide the triangle mel weight by the width of the mel band. Default: NormType::kNone.
+  /// \param[in] mel_type Type of mel, value should be MelType::kHtk or MelType::kSlaney. Default: MelType::kHtk.
   explicit InverseMelScale(int32_t n_stft, int32_t n_mels = 128, int32_t sample_rate = 16000, float f_min = 0.0,
                            float f_max = 0.0, int32_t max_iter = 100000, float tolerance_loss = 1e-5,
                            float tolerance_change = 1e-8,
@@ -640,7 +640,7 @@ class DATASET_API InverseMelScale final : public TensorTransform {
                            NormType norm = NormType::kNone, MelType mel_type = MelType::kHtk);
 
   /// \brief Destructor.
-  ~InverseMelScale() = default;
+  ~InverseMelScale() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -692,8 +692,8 @@ class DATASET_API LFCC final : public TensorTransform {
   /// \param[in] sample_rate Sample rate of audio signal. Default: 16000.
   /// \param[in] n_filter Number of linear filters to apply. Default: 128.
   /// \param[in] n_lfcc Number of lfc coefficients to retain. Default: 40.
-  /// \param[in] f_min Minimum frequency. Default: 0.
-  /// \param[in] f_max Maximum frequency. Default: 0, will be set to sample_rate // 2.
+  /// \param[in] f_min Minimum frequency. Default: 0.0.
+  /// \param[in] f_max Maximum frequency. Default: 0.0, will be set to sample_rate // 2.
   /// \param[in] dct_type Type of DCT (discrete cosine transform) to use. Default: 2.
   /// \param[in] norm Norm to use. Default: NormMode::kOrtho.
   /// \param[in] log_lf Whether to use log-lf spectrograms instead of db-scaled. Default: false.
@@ -712,11 +712,11 @@ class DATASET_API LFCC final : public TensorTransform {
   ///     BorderType::kReflect.
   /// \param[in] onesided Controls whether to return half of results to avoid
   ///     redundancy. Default: true.
-  LFCC(int32_t sample_rate = 16000, int32_t n_filter = 128, int32_t n_lfcc = 40, float f_min = 0.0, float f_max = 0.0,
-       int32_t dct_type = 2, NormMode norm = NormMode::kOrtho, bool log_lf = false, int32_t n_fft = 400,
-       int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0, WindowType window = WindowType::kHann,
-       float power = 2.0, bool normalized = false, bool center = true, BorderType pad_mode = BorderType::kReflect,
-       bool onesided = true);
+  explicit LFCC(int32_t sample_rate = 16000, int32_t n_filter = 128, int32_t n_lfcc = 40, float f_min = 0.0,
+                float f_max = 0.0, int32_t dct_type = 2, NormMode norm = NormMode::kOrtho, bool log_lf = false,
+                int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0,
+                WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false, bool center = true,
+                BorderType pad_mode = BorderType::kReflect, bool onesided = true);
 
   /// \brief Destructor.
   ~LFCC() override = default;
@@ -740,7 +740,7 @@ class DATASET_API LFilter final : public TensorTransform {
   /// \param[in] b_coeffs Numerator coefficients of difference equation of dimension of (n_order + 1).
   ///     Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
   ///     Must be same size as a_coeffs (pad with 0's as necessary).
-  /// \param[in] clamp If True, clamp the output signal to be in the range [-1, 1] (Default: True).
+  /// \param[in] clamp If True, clamp the output signal to be in the range [-1, 1]. Default: True.
   explicit LFilter(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp = true);
 
   /// \brief Destructor.
@@ -773,7 +773,7 @@ class DATASET_API LowpassBiquad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] cutoff_freq Filter cutoff frequency.
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
   LowpassBiquad(int32_t sample_rate, float cutoff_freq, float Q = 0.707);
 
   /// \brief Destructor.
@@ -793,7 +793,7 @@ class DATASET_API LowpassBiquad final : public TensorTransform {
 class DATASET_API Magphase final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] power Power of the norm, which must be non-negative (Default: 1.0).
+  /// \param[in] power Power of the norm, which must be non-negative. Default: 1.0.
   explicit Magphase(float power);
 
   /// \brief Destructor.
@@ -821,7 +821,7 @@ class MaskAlongAxis final : public TensorTransform {
   MaskAlongAxis(int32_t mask_start, int32_t mask_width, float mask_value, int32_t axis);
 
   /// \brief Destructor.
-  ~MaskAlongAxis() = default;
+  ~MaskAlongAxis() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -845,7 +845,7 @@ class MaskAlongAxisIID final : public TensorTransform {
   MaskAlongAxisIID(int32_t mask_param, float mask_value, int32_t axis);
 
   /// \brief Destructor.
-  ~MaskAlongAxisIID() = default;
+  ~MaskAlongAxisIID() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -862,19 +862,19 @@ class MaskAlongAxisIID final : public TensorTransform {
 class DATASET_API MelScale final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] n_mels Number of mel filter, which must be positive (Default: 128).
-  /// \param[in] sample_rate Sample rate of the signal, the value can't be zero (Default: 16000).
-  /// \param[in] f_min Minimum frequency, which must be non negative (Default: 0).
-  /// \param[in] f_max Maximum frequency, which must be positive (Default: 0, will be set to sample_rate / 2).
-  /// \param[in] n_stft Number of bins in STFT, which must be positive (Default: 201).
+  /// \param[in] n_mels Number of mel filter, which must be positive. Default: 128.
+  /// \param[in] sample_rate Sample rate of the signal, the value can't be zero. Default: 16000.
+  /// \param[in] f_min Minimum frequency, which must be non negative. Default: 0.0.
+  /// \param[in] f_max Maximum frequency, which must be positive. Default: 0.0, will be set to sample_rate / 2.
+  /// \param[in] n_stft Number of bins in STFT, which must be positive. Default: 201.
   /// \param[in] norm Type of norm, value should be NormType::kSlaney or NormType::kNone. If norm is NormType::kSlaney,
-  ///     divide the triangle mel weight by the width of the mel band (Default: NormType::kNone).
-  /// \param[in] mel_type Type of mel, value should be MelType::kHtk or MelType::kSlaney (Default: MelType::kHtk).
-  explicit MelScale(int32_t n_mels = 128, int32_t sample_rate = 16000, float f_min = 0, float f_max = 0.0,
+  ///     divide the triangle mel weight by the width of the mel band. Default: NormType::kNone.
+  /// \param[in] mel_type Type of mel, value should be MelType::kHtk or MelType::kSlaney. Default: MelType::kHtk.
+  explicit MelScale(int32_t n_mels = 128, int32_t sample_rate = 16000, float f_min = 0.0, float f_max = 0.0,
                     int32_t n_stft = 201, NormType norm = NormType::kNone, MelType mel_type = MelType::kHtk);
 
   /// \brief Destructor.
-  ~MelScale() = default;
+  ~MelScale() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -893,8 +893,8 @@ class DATASET_API MelScale final : public TensorTransform {
 /// \param[in] f_max Maximum frequency (Hz).
 /// \param[in] n_mels Number of mel filterbanks.
 /// \param[in] sample_rate Sample rate of the audio waveform.
-/// \param[in] norm Norm to use, can be NormType::kNone or NormType::kSlaney (Default: NormType::kNone).
-/// \param[in] mel_type Scale to use, can be MelType::kHtk or MelType::kSlaney (Default: MelType::kHtz).
+/// \param[in] norm Norm to use, can be NormType::kNone or NormType::kSlaney. Default: NormType::kNone.
+/// \param[in] mel_type Scale to use, can be MelType::kHtk or MelType::kSlaney. Default: MelType::kHtz.
 /// \return Status code.
 Status DATASET_API MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
                                   int32_t sample_rate, NormType norm = NormType::kNone,
@@ -907,14 +907,14 @@ class DATASET_API MelSpectrogram final : public TensorTransform {
   /// \param[in] n_fft Size of FFT, creates `n_fft // 2 + 1` bins. Default: 400.
   /// \param[in] win_length Window size. Default: 0, will be set to `n_fft` .
   /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to `win_length // 2` .
-  /// \param[in] f_min Minimum frequency. Default: 0.
-  /// \param[in] f_max Maximum frequency. Default: 0.
+  /// \param[in] f_min Minimum frequency. Default: 0.0.
+  /// \param[in] f_max Maximum frequency. Default: 0.0.
   /// \param[in] pad Two sided padding of signal. Default: 0.
   /// \param[in] n_mels Number of mel filterbanks. Default: 128.
   /// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
   ///     Default: WindowType::kHann.
   /// \param[in] power Exponent for the magnitude spectrogram, (must be > 0) e.g., 1 for energy, 2 for power, etc.
-  ///     Default: 2.
+  ///     Default: 2.0.
   /// \param[in] normalized Whether to normalize by magnitude after stft Default: false.
   /// \param[in] center Whether to pad waveform on both sides. Default: true.
   /// \param[in] pad_mode Controls the padding method used when center is True. Default: BorderType::kReflect.
@@ -923,8 +923,8 @@ class DATASET_API MelSpectrogram final : public TensorTransform {
   ///     Default: NormType::kNone.
   /// \param[in] mel_scale Scale to use: htk or slaney. Default: MelType::kHtk.
   explicit MelSpectrogram(int32_t sample_rate = 16000, int32_t n_fft = 400, int32_t win_length = 0,
-                          int32_t hop_length = 0, float f_min = 0, float f_max = 0, int32_t pad = 0,
-                          int32_t n_mels = 128, WindowType window = WindowType::kHann, float power = 2,
+                          int32_t hop_length = 0, float f_min = 0.0, float f_max = 0.0, int32_t pad = 0,
+                          int32_t n_mels = 128, WindowType window = WindowType::kHann, float power = 2.0,
                           bool normalized = false, bool center = true, BorderType pad_mode = BorderType::kReflect,
                           bool onesided = true, NormType norm = NormType::kNone, MelType mel_scale = MelType::kHtk);
 
@@ -953,8 +953,8 @@ class DATASET_API MFCC final : public TensorTransform {
   /// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
   /// \param[in] win_length Window size. Default: 0.
   /// \param[in] hop_length Length of hop between STFT windows. Default: 0.
-  /// \param[in] f_min Minimum frequency. Default: 0.
-  /// \param[in] f_max Maximum frequency. Default: 0.
+  /// \param[in] f_min Minimum frequency. Default: 0.0.
+  /// \param[in] f_max Maximum frequency. Default: 0.0.
   /// \param[in] pad Two sided padding of signal. Default: 0.
   /// \param[in] n_mels Number of mel filterbanks. Default: 128.
   /// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
@@ -969,7 +969,7 @@ class DATASET_API MFCC final : public TensorTransform {
   /// \param[in] mel_scale Scale to use: htk or slaney. Default: MelType::kHtk.
   explicit MFCC(int32_t sample_rate = 16000, int32_t n_mfcc = 40, int32_t dct_type = 2,
                 NormMode norm = NormMode::kOrtho, bool log_mels = false, int32_t n_fft = 400, int32_t win_length = 0,
-                int32_t hop_length = 0, float f_min = 0, float f_max = 0, int32_t pad = 0, int32_t n_mels = 128,
+                int32_t hop_length = 0, float f_min = 0.0, float f_max = 0.0, int32_t pad = 0, int32_t n_mels = 128,
                 WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false, bool center = true,
                 BorderType pad_mode = BorderType::kReflect, bool onesided = true, NormType norm_mel = NormType::kNone,
                 MelType mel_scale = MelType::kHtk);
@@ -992,7 +992,7 @@ class DATASET_API MFCC final : public TensorTransform {
 class DATASET_API MuLawDecoding final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] quantization_channels Number of channels, which must be positive (Default: 256).
+  /// \param[in] quantization_channels Number of channels, which must be positive. Default: 256.
   explicit MuLawDecoding(int32_t quantization_channels = 256);
 
   /// \brief Destructor.
@@ -1013,7 +1013,7 @@ class DATASET_API MuLawDecoding final : public TensorTransform {
 class DATASET_API MuLawEncoding final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] quantization_channels Number of channels, which must be positive (Default: 256).
+  /// \param[in] quantization_channels Number of channels, which must be positive. Default: 256.
   explicit MuLawEncoding(int32_t quantization_channels = 256);
 
   /// \brief Destructor.
@@ -1033,9 +1033,9 @@ class DATASET_API MuLawEncoding final : public TensorTransform {
 class DATASET_API Overdrive final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] gain Coefficient of overload in dB, in range of [0, 100] (Default: 20.0).
-  /// \param[in] color Coefficient of translation, in range of [0, 100] (Default: 20.0).
-  explicit Overdrive(float gain = 20.0f, float color = 20.0f);
+  /// \param[in] gain Coefficient of overload in dB, in range of [0, 100]. Default: 20.0.
+  /// \param[in] color Coefficient of translation, in range of [0, 100]. Default: 20.0.
+  explicit Overdrive(float gain = 20.0, float color = 20.0);
 
   /// \brief Destructor.
   ~Overdrive() override = default;
@@ -1056,16 +1056,16 @@ class DATASET_API Phaser final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
   /// \param[in] gain_in Desired input gain at the boost (or attenuation) in dB.
-  ///     Allowed range of values is [0, 1] (Default=0.4).
+  ///     Allowed range of values is [0, 1]. Default: 0.4.
   /// \param[in] gain_out Desired output gain at the boost (or attenuation) in dB.
-  ///     Allowed range of values is [0, 1e9] (Default=0.74).
-  /// \param[in] delay_ms Desired delay in milli seconds. Allowed range of values is [0, 5] (Default=3.0).
-  /// \param[in] decay Desired decay relative to gain-in. Allowed range of values is [0, 0.99] (Default=0.4).
-  /// \param[in] mod_speed Modulation speed in Hz. Allowed range of values is [0.1, 2] (Default=0.5).
+  ///     Allowed range of values is [0, 1e9]. Default: 0.74.
+  /// \param[in] delay_ms Desired delay in milli seconds. Allowed range of values is [0, 5]. Default: 3.0.
+  /// \param[in] decay Desired decay relative to gain-in. Allowed range of values is [0, 0.99]. Default: 0.4.
+  /// \param[in] mod_speed Modulation speed in Hz. Allowed range of values is [0.1, 2]. Default: 0.5.
   /// \param[in] sinusoidal If true, use sinusoidal modulation (preferable for multiple instruments).
-  ///     If false, use triangular modulation (gives single instruments a sharper phasing effect) (Default=true).
-  explicit Phaser(int32_t sample_rate, float gain_in = 0.4f, float gain_out = 0.74f, float delay_ms = 3.0f,
-                  float decay = 0.4f, float mod_speed = 0.5f, bool sinusoidal = true);
+  ///     If false, use triangular modulation (gives single instruments a sharper phasing effect). Default: true.
+  explicit Phaser(int32_t sample_rate, float gain_in = 0.4, float gain_out = 0.74, float delay_ms = 3.0,
+                  float decay = 0.4, float mod_speed = 0.5, bool sinusoidal = true);
 
   /// \brief Destructor.
   ~Phaser() override = default;
@@ -1090,7 +1090,7 @@ class DATASET_API PhaseVocoder final : public TensorTransform {
   PhaseVocoder(float rate, const MSTensor &phase_advance);
 
   /// \brief Destructor.
-  ~PhaseVocoder() = default;
+  ~PhaseVocoder() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -1132,21 +1132,21 @@ class DATASET_API PitchShift final : public TensorTransform {
 class DATASET_API Resample : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] orig_freq The original frequency of the signal, which must be positive (default=16000).
-  /// \param[in] new_freq The desired frequency, which must be positive (default=16000).
+  /// \param[in] orig_freq The original frequency of the signal, which must be positive. Default: 16000.0.
+  /// \param[in] new_freq The desired frequency, which must be positive. Default: 16000.0.
   /// \param[in] resample_method The resampling method, which can be ResampleMethod::kSincInterpolation
-  ///     and ResampleMethod::kKaiserWindow (default=ResampleMethod::kSincInterpolation).
+  ///     and ResampleMethod::kKaiserWindow. Default: ResampleMethod::kSincInterpolation.
   /// \param[in] lowpass_filter_width Controls the sharpness of the filter, more means sharper but less efficient,
-  ///     which must be positive (default=6).
+  ///     which must be positive. Default: 6.
   /// \param[in] rolloff The roll-off frequency of the filter, as a fraction of the Nyquist. Lower values
-  ///     reduce anti-aliasing, but also reduce some of the highest frequencies, range: (0, 1] (default=0.99).
-  /// \param[in] beta The shape parameter used for kaiser window (default=14.769656459379492).
-  explicit Resample(float orig_freq = 16000, float new_freq = 16000,
+  ///     reduce anti-aliasing, but also reduce some of the highest frequencies, range: (0, 1]. Default: 0.99.
+  /// \param[in] beta The shape parameter used for kaiser window. Default: 14.769656459379492.
+  explicit Resample(float orig_freq = 16000.0, float new_freq = 16000.0,
                     ResampleMethod resample_method = ResampleMethod::kSincInterpolation,
                     int32_t lowpass_filter_width = 6, float rolloff = 0.99, float beta = 14.769656459379492);
 
   /// \brief Destructor.
-  ~Resample() = default;
+  ~Resample() override = default;
 
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
@@ -1182,12 +1182,12 @@ class DATASET_API RiaaBiquad final : public TensorTransform {
 class DATASET_API SlidingWindowCmn final : public TensorTransform {
  public:
   /// \brief Constructor of SlidingWindowCmnOp.
-  /// \param[in] cmn_window The window in frames for running average CMN computation (Default: 600).
+  /// \param[in] cmn_window The window in frames for running average CMN computation. Default: 600.
   /// \param[in] min_cmn_window The minimum CMN window. Only applicable if center is false, ignored if center
-  ///      is true (Default: 100).
-  /// \param[in] center If true, use a window centered on the current frame. If false, window is to the left
-  ///     (Default: false).
-  /// \param[in] norm_vars If true, normalize variance to one (Default: false).
+  ///      is true. Default: 100.
+  /// \param[in] center If true, use a window centered on the current frame. If false, window is to the left.
+  ///     Default: false.
+  /// \param[in] norm_vars If true, normalize variance to one. Default: false.
   explicit SlidingWindowCmn(int32_t cmn_window = 600, int32_t min_cmn_window = 100, bool center = false,
                             bool norm_vars = false);
 
@@ -1209,13 +1209,13 @@ class DATASET_API SpectralCentroid : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
-  /// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins (Default: 400).
-  /// \param[in] win_length Window size (Default: 0, will use n_fft).
-  /// \param[in] hop_length Length of hop between STFT windows (Default: 0, will use win_length / 2).
-  /// \param[in] pad Two sided padding of signal (Default: 0).
+  /// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins. Default: 400.
+  /// \param[in] win_length Window size. Default: 0, will use n_fft.
+  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will use win_length / 2.
+  /// \param[in] pad Two sided padding of signal. Default: 0.
   /// \param[in] window Window function that is applied/multiplied to each frame/window,
   ///     which can be WindowType::kBartlett, WindowType::kBlackman, WindowType::kHamming,
-  ///     WindowType::kHann or WindowType::kKaiser (Default: WindowType::kHann).
+  ///     WindowType::kHann or WindowType::kKaiser. Default: WindowType::kHann.
   explicit SpectralCentroid(int32_t sample_rate, int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0,
                             int32_t pad = 0, WindowType window = WindowType::kHann);
 
@@ -1241,20 +1241,20 @@ class DATASET_API SpectralCentroid : public TensorTransform {
 class DATASET_API Spectrogram : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins (Default: 400).
-  /// \param[in] win_length Window size (Default: 0, will use n_fft).
-  /// \param[in] hop_length Length of hop between STFT windows (Default: 0, will use win_length / 2).
-  /// \param[in] pad Two sided padding of signal (Default: 0).
+  /// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins. Default: 400.
+  /// \param[in] win_length Window size. Default: 0, will use n_fft.
+  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will use win_length / 2.
+  /// \param[in] pad Two sided padding of signal. Default: 0.
   /// \param[in] window Window function that is applied/multiplied to each frame/window,
   ///     which can be WindowType::kBartlett, WindowType::kBlackman, WindowType::kHamming,
-  ///     WindowType::kHann or WindowType::kKaiser (Default: WindowType::kHann).
-  /// \param[in] power Exponent for the magnitude spectrogram, which must be greater than or equal to 0 (Default: 2.0).
-  /// \param[in] normalized Whether to normalize by magnitude after stft (Default: false).
-  /// \param[in] center Whether to pad waveform on both sides (Default: true).
+  ///     WindowType::kHann or WindowType::kKaiser. Default: WindowType::kHann.
+  /// \param[in] power Exponent for the magnitude spectrogram, which must be greater than or equal to 0. Default: 2.0.
+  /// \param[in] normalized Whether to normalize by magnitude after stft. Default: false.
+  /// \param[in] center Whether to pad waveform on both sides. Default: true.
   /// \param[in] pad_mode Controls the padding method used when center is true,
   ///     which can be BorderType::kReflect, BorderType::kConstant, BorderType::kEdge,
-  ///     BorderType::kSymmetric (Default: BorderType::kReflect).
-  /// \param[in] onesided Controls whether to return half of results to avoid redundancy (Default: true).
+  ///     BorderType::kSymmetric. Default: BorderType::kReflect.
+  /// \param[in] onesided Controls whether to return half of results to avoid redundancy. Default: true.
   explicit Spectrogram(int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0,
                        WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false,
                        bool center = true, BorderType pad_mode = BorderType::kReflect, bool onesided = true);
@@ -1288,10 +1288,10 @@ class DATASET_API TimeMasking final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] iid_masks Whether to apply different masks to each example.
-  /// \param[in] time_mask_param Maximum possible length of the mask, range: [0, time_length] (Default: 0).
+  /// \param[in] time_mask_param Maximum possible length of the mask, range: [0, time_length]. Default: 0.
   ///     Indices uniformly sampled from [0, time_mask_param].
   ///     Mask width when iid_masks=true.
-  /// \param[in] mask_start Mask start when iid_masks=true, range: [0, time_length-time_mask_param] (Default: 0).
+  /// \param[in] mask_start Mask start when iid_masks=true, range: [0, time_length-time_mask_param]. Default: 0.
   /// \param[in] mask_value Mask value.
   explicit TimeMasking(bool iid_masks = false, int32_t time_mask_param = 0, int32_t mask_start = 0,
                        float mask_value = 0.0);
@@ -1314,10 +1314,10 @@ class DATASET_API TimeMasking final : public TensorTransform {
 class DATASET_API TimeStretch final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] hop_length Length of hop between STFT windows (Default: None, will use ((n_freq - 1) * 2) // 2).
-  /// \param[in] n_freq Number of filter banks form STFT (Default: 201).
-  /// \param[in] fixed_rate Rate to speed up or slow down the input in time
-  ///     (Default: std::numeric_limits<float>::quiet_NaN(), will keep the original rate).
+  /// \param[in] hop_length Length of hop between STFT windows. Default: None, will use ((n_freq - 1) * 2) // 2.
+  /// \param[in] n_freq Number of filter banks form STFT. Default: 201.
+  /// \param[in] fixed_rate Rate to speed up or slow down the input in time.
+  ///     Default: std::numeric_limits<float>::quiet_NaN(), will keep the original rate.
   explicit TimeStretch(float hop_length = std::numeric_limits<float>::quiet_NaN(), int n_freq = 201,
                        float fixed_rate = std::numeric_limits<float>::quiet_NaN());
 
@@ -1340,9 +1340,9 @@ class DATASET_API TrebleBiquad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] gain Desired gain at the boost (or attenuation) in dB.
-  /// \param[in] central_freq Central frequency (in Hz) (Default: 3000).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
-  TrebleBiquad(int32_t sample_rate, float gain, float central_freq = 3000, float Q = 0.707);
+  /// \param[in] central_freq Central frequency (in Hz). Default: 3000.0.
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
+  TrebleBiquad(int32_t sample_rate, float gain, float central_freq = 3000.0, float Q = 0.707);
 
   /// \brief Destructor.
   ~TrebleBiquad() override = default;
@@ -1363,31 +1363,31 @@ class DATASET_API Vad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sample rate of audio signal.
-  /// \param[in] trigger_level The measurement level used to trigger activity detection (Default: 7.0).
-  /// \param[in] trigger_time The time constant (in seconds) used to help ignore short sounds (Default: 0.25).
+  /// \param[in] trigger_level The measurement level used to trigger activity detection. Default: 7.0.
+  /// \param[in] trigger_time The time constant (in seconds) used to help ignore short sounds. Default: 0.25.
   /// \param[in] search_time The amount of audio (in seconds) to search for quieter/shorter sounds to include prior to
-  ///     the detected trigger point (Default: 1.0).
+  ///     the detected trigger point. Default: 1.0.
   /// \param[in] allowed_gap The allowed gap (in seconds) between quiteter/shorter sounds to include prior to the
-  ///     detected trigger point (Default: 0.25).
+  ///     detected trigger point. Default: 0.25.
   /// \param[in] pre_trigger_time The amount of audio (in seconds) to preserve before the trigger point and any found
-  ///     quieter/shorter bursts (Default: 0.0).
-  /// \param[in] boot_time The time for the initial noise estimate (Default: 0.35).
-  /// \param[in] noise_up_time Time constant used by the adaptive noise estimator, when the noise level is increasing
-  ///     (Default: 0.1).
-  /// \param[in] noise_down_time Time constant used by the adaptive noise estimator, when the noise level is decreasing
-  ///     (Default: 0.01).
-  /// \param[in] noise_reduction_amount The amount of noise reduction used in the detection algorithm (Default: 1.35).
-  /// \param[in] measure_freq The frequency of the algorithm’s processing (Default: 20.0).
-  /// \param[in] measure_duration The duration of measurement (Default: 0, use twice the measurement period).
-  /// \param[in] measure_smooth_time The time constant used to smooth spectral measurements (Default: 0.4).
+  ///     quieter/shorter bursts. Default: 0.0.
+  /// \param[in] boot_time The time for the initial noise estimate. Default: 0.35.
+  /// \param[in] noise_up_time Time constant used by the adaptive noise estimator, when the noise level is increasing.
+  ///     Default: 0.1.
+  /// \param[in] noise_down_time Time constant used by the adaptive noise estimator, when the noise level is decreasing.
+  ///     Default: 0.01.
+  /// \param[in] noise_reduction_amount The amount of noise reduction used in the detection algorithm. Default: 1.35.
+  /// \param[in] measure_freq The frequency of the algorithm’s processing. Default: 20.0.
+  /// \param[in] measure_duration The duration of measurement. Default: 0, use twice the measurement period.
+  /// \param[in] measure_smooth_time The time constant used to smooth spectral measurements. Default: 0.4.
   /// \param[in] hp_filter_freq The "Brick-wall" frequency of high-pass filter applied at the input to the detector
-  ///     algorithm (Default: 50.0).
+  ///     algorithm. Default: 50.0.
   /// \param[in] lp_filter_freq The "Brick-wall" frequency of low-pass filter applied at the input to the detector
-  ///     algorithm (Default: 6000.0).
+  ///     algorithm. Default: 6000.0.
   /// \param[in] hp_lifter_freq The "Brick-wall" frequency of high-pass lifter applied at the input to the detector
-  ///     algorithm (Default: 150.0).
+  ///     algorithm. Default: 150.0.
   /// \param[in] lp_lifter_freq The "Brick-wall" frequency of low-pass lifter applied at the input to the detector
-  ///     algorithm (Default: 2000.0).
+  ///     algorithm. Default: 2000.0.
   explicit Vad(int32_t sample_rate, float trigger_level = 7.0, float trigger_time = 0.25, float search_time = 1.0,
                float allowed_gap = 0.25, float pre_trigger_time = 0.0, float boot_time = 0.35,
                float noise_up_time = 0.1, float noise_down_time = 0.01, float noise_reduction_amount = 1.35,
@@ -1396,7 +1396,7 @@ class DATASET_API Vad final : public TensorTransform {
                float lp_lifter_freq = 2000.0);
 
   /// \brief Destructor.
-  ~Vad() = default;
+  ~Vad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
