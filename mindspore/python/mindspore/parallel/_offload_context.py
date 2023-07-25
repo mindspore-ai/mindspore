@@ -33,6 +33,7 @@ class _OffloadConfig:
     OFFLOAD_PARAM = "offload_param"
     OFFLOAD_PATH = "offload_path"
     OFFLOAD_CPU_SIZE = "offload_cpu_size"
+    OFFLOAD_CHECKPOINT = "offload_checkpoint"
     OFFLOAD_DISK_SIZE = "offload_disk_size"
     ENABLE_AIO = "enable_aio"
     AIO_BLOCK_SIZE = "aio_block_size"
@@ -83,6 +84,16 @@ class _OffloadContext:
                             .format(type(offload_param)))
         Validator.check_string(offload_param.lower(), ["cpu", "disk"], "offload_param", "set_offload_param")
         self._context_handle.set_offload_param(offload_param.lower())
+
+    def set_offload_checkpoint(self, offload_checkpoint):
+        """Set offload_checkpoint"""
+        if not isinstance(offload_checkpoint, str):
+            raise TypeError("For 'set_offload_checkpoint', "
+                            "the argument 'offload_checkpoint' must be str, but got the type : {}."
+                            .format(type(offload_checkpoint)))
+        Validator.check_string(offload_checkpoint.lower(), ["cpu", "disk"], "offload_checkpoint",
+                               "set_offload_checkpoint")
+        self._context_handle.set_offload_checkpoint(offload_checkpoint.lower())
 
     def set_offload_path(self, offload_path):
         """Set offload_path"""
@@ -194,7 +205,8 @@ class _OffloadContext:
                                    _OffloadConfig.HBM_RATIO, _OffloadConfig.OFFLOAD_CPU_SIZE,
                                    _OffloadConfig.OFFLOAD_DISK_SIZE, _OffloadConfig.ENABLE_AIO,
                                    _OffloadConfig.AIO_BLOCK_SIZE, _OffloadConfig.AIO_QUEUE_DEPTH,
-                                   _OffloadConfig.ENABLE_PINNED_MEM, _OffloadConfig.AUTO_OFFLOAD]:
+                                   _OffloadConfig.ENABLE_PINNED_MEM, _OffloadConfig.AUTO_OFFLOAD,
+                                   _OffloadConfig.OFFLOAD_CHECKPOINT]:
                 unknown_config.append(config_name)
 
             if unknown_config:
@@ -220,7 +232,8 @@ class _OffloadContext:
             _OffloadConfig.AUTO_OFFLOAD: self._context_handle.auto_offload(),
             _OffloadConfig.HOST_MEM_BLOCk_SIZE: self._context_handle.host_mem_block_size(),
             _OffloadConfig.CPU_RATIO: self._context_handle.cpu_ratio(),
-            _OffloadConfig.HBM_RATIO: self._context_handle.hbm_ratio()
+            _OffloadConfig.HBM_RATIO: self._context_handle.hbm_ratio(),
+            _OffloadConfig.OFFLOAD_CHECKPOINT: self._context_handle.offload_checkpoint()
         }
         return offload_config
 
@@ -257,5 +270,6 @@ _set_offload_context_func_map = {
     _OffloadConfig.AUTO_OFFLOAD: offload_context().set_auto_offload,
     _OffloadConfig.HOST_MEM_BLOCk_SIZE: offload_context().set_host_mem_block_size,
     _OffloadConfig.CPU_RATIO: offload_context().set_cpu_ratio,
-    _OffloadConfig.HBM_RATIO: offload_context().set_hbm_ratio
+    _OffloadConfig.HBM_RATIO: offload_context().set_hbm_ratio,
+    _OffloadConfig.OFFLOAD_CHECKPOINT: offload_context().set_offload_checkpoint
 }

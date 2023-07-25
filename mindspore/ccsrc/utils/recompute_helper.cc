@@ -402,6 +402,11 @@ bool SetRecomputedScope(const CNodePtr &node) {
          (IsPrimitiveCNode(node, prim::kPrimDepend) && WithRecomputedScope(node->input(kRealInputIndexInDepend)));
 }
 
+void SetCkptOffloadAttr(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  node->AddAttr(kAttrCheckpoint, MakeValue(true));
+}
+
 // Set 'recompute' cnode attr for the nodes according to its scope.
 // A node set 'recompute' cnode attr can become the candidate recomputed node.
 void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &origin_nodes_topological) {
@@ -413,16 +418,20 @@ void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &o
     MS_EXCEPTION_IF_NULL(node);
     // The node may be set the non-recomputed before such as the cell outputs.
     if (IsSetNoRecomputeCNodeAttr(node)) {
+      SetCkptOffloadAttr(node);
       continue;
     }
     if (IsBpropNode(node)) {
+      SetCkptOffloadAttr(node);
       continue;
     }
     // Filter some unrecomputable operators.
     if (CanNotRecomputed(node)) {
+      SetCkptOffloadAttr(node);
       continue;
     }
     if (!HasForwardOutput(mng, node) || HasGradInputs(node, &has_grad_inputs_map)) {
+      SetCkptOffloadAttr(node);
       continue;
     }
 
@@ -441,6 +450,7 @@ void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &o
       cnode->AddAttr(kAttrRecompute, MakeValue(true));
     }
     if (!IsSetRecomputeCNodeAttr(node)) {
+      SetCkptOffloadAttr(node);
       continue;
     }
     // Set attr for the tuple_getitem outputs.
