@@ -15,11 +15,21 @@
 """sgd"""
 from __future__ import absolute_import
 
-from mindspore.ops import operations as P
+from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as Validator
 from mindspore.nn.optim_ex.optimizer import Optimizer
+
+_sgd_opt = C.MultitypeFuncGraph("sgd_opt")
+
+
+@_sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",)
+def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, stat):
+    """Apply sgd optimizer to the weight parameter using Tensor."""
+    success = True
+    success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
+    return success
 
 
 class SGD(Optimizer):
@@ -110,8 +120,8 @@ class SGD(Optimizer):
                         maximize=maximize, grad_centralization=False)
         super(SGD, self).__init__(params, defaults)
         for group in self.param_groups:
-            Validator.check_value_type("dampening", group["dampening"], [int, float], self.cls_name)
-            group["dampening"] = float(group["dampening"])
+            Validator.check_value_type("dampening", group.get("dampening"), [int, float], self.cls_name)
+            group["dampening"] = float(group.get("dampening"))
         if nesterov and (momentum <= 0.0 or dampening != 0.0):
             raise ValueError("For 'SGD', if 'nesterov' is true, 'momentum' must be > 0.0 and 'dampening' must "
                              "equal to 0.0, but got 'momentum' {}, 'dampening' {}".format(momentum, dampening))
@@ -121,32 +131,15 @@ class SGD(Optimizer):
 
     def construct(self, gradients):
         for group_id, group in enumerate(self.param_groups):
-            params = []
-            grads = []
-            accums = []
-            stats = []
-            params, grads, accums, stats = self._init_group(group, gradients, params, grads,
-                                                            accums, stats, group_id)
-            opt = P.SGD(group["dampening"], group["weight_decay"], group["nesterov"])
-            lr = group["lr"]
+            opt = P.SGD(group.get("dampening"), group.get("weight_decay"), group.get("nesterov"))
+            lr = group.get("lr")
             if isinstance(lr, float):
-                lr = self.op_cast(group["lr"], mstype.float32)
-            momentum = self.op_cast(group["momentum"], mstype.float32)
-            self.apply_sgd(opt, params, grads, lr, accums, momentum, stats, group["maximize"],
-                           group["grad_centralization"])
-
-    def apply_sgd(self, opt, params, grads, lr, accums, momentum, stats, maximize, grad_centralization):
-        grads = self._gradients_centralization(grad_centralization, grads)
-
-        for i, param in enumerate(params):
-            grad = grads[i] if not maximize else -grads[i]
-            opt(param, grad, lr, accums[i], momentum, stats[i])
-
-    def _init_group(self, group, gradients, params, accums, grads, stats, group_id):
-        p_id = self.group_start_id[group_id]
-        for i, param in enumerate(group["params"]):
-            params.append(param)
-            grads.append(gradients[p_id+i])
-            accums.append(self.accum[p_id+i])
-            stats.append(self.stat[p_id+i])
-        return params, grads, accums, stats
+                lr = self.op_cast(group.get("lr"), mstype.float32)
+            maximize = group.get("maximize")
+            momentum = self.op_cast(group.get("momentum"), mstype.float32)
+            start_id = self.group_start_id[group_id]
+            end_id = self.group_start_id[group_id+1]
+            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            self.hyper_map(F.partial(_sgd_opt, opt, momentum, lr), grads,
+                           self.parameters[start_id: end_id], self.accum[start_id: end_id],
+                           self.stat[start_id: end_id])
