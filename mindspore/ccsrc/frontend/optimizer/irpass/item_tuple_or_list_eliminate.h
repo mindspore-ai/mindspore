@@ -306,21 +306,21 @@ class TupleListSetitemEliminator : public AnfVisitor {
     if (args_.empty() && IsValueNode<ValueTuple>(vnode)) {
       auto tuple = GetValueNode<ValueTuplePtr>(vnode);
       if (tuple != nullptr) {
-        args_.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+        (void)args_.emplace_back(NewValueNode(prim::kPrimMakeTuple));
         for (auto &val : tuple->value()) {
           auto val_node = std::make_shared<ValueNode>(val);
           val_node->set_abstract(val->ToAbstract());
-          args_.emplace_back(val_node);
+          (void)args_.emplace_back(val_node);
         }
       }
     } else if (args_.empty() && IsValueNode<ValueList>(vnode)) {
       auto list = GetValueNode<ValueListPtr>(vnode);
       if (list != nullptr) {
-        args_.emplace_back(NewValueNode(prim::kPrimMakeList));
+        (void)args_.emplace_back(NewValueNode(prim::kPrimMakeList));
         for (auto &val : list->value()) {
           auto val_node = std::make_shared<ValueNode>(val);
           val_node->set_abstract(val->ToAbstract());
-          args_.emplace_back(val_node);
+          (void)args_.emplace_back(val_node);
         }
       }
     } else if (!args_.empty() && IsValueNode<Int64Imm>(vnode)) {

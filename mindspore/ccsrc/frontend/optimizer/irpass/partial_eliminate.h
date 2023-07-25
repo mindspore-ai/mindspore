@@ -351,6 +351,8 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
 
  private:
   AnfNodePtr BuildNewSwitchNode(const CNodePtr &switch_call, const std::vector<AnfNodePtr> &new_args) {
+    auto fg = switch_call->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
     const auto input0 = switch_call->input(0);
     MS_EXCEPTION_IF_NULL(input0);
     const auto switch_node = input0->cast<CNodePtr>();
@@ -358,13 +360,13 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
     // {Switch, cond, G1, G2}
     std::vector<AnfNodePtr> switch_inputs = {switch_node->input(0), switch_node->input(1)};
     (void)switch_inputs.insert(switch_inputs.end(), fg_list_.begin(), fg_list_.end());
-    const auto new_switch_cnode = switch_call->func_graph()->NewCNode(std::move(switch_inputs));
+    const auto new_switch_cnode = fg->NewCNode(std::move(switch_inputs));
     new_switch_cnode->set_abstract(switch_node->abstract());
     // Create switch call.
     TraceGuard guard2(std::make_shared<TraceCopy>(switch_call->debug_info()));
     AnfNodePtrList switch_call_inputs{new_switch_cnode};
     (void)switch_call_inputs.insert(switch_call_inputs.end(), new_args.begin(), new_args.end());
-    const auto new_call_node = switch_call->func_graph()->NewCNode(std::move(switch_call_inputs));
+    const auto new_call_node = fg->NewCNode(std::move(switch_call_inputs));
     new_call_node->set_abstract(switch_call->abstract());
     return new_call_node;
   }

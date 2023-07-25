@@ -300,7 +300,7 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
         std::vector<AnfNodePtr> new_depend_nodes_inputs;
         (void)std::copy(depend_nodes->cast<CNodePtr>()->inputs().begin(),
                         depend_nodes->cast<CNodePtr>()->inputs().end(), std::back_inserter(new_depend_nodes_inputs));
-        new_depend_nodes_inputs.emplace_back(bprop_caller->cast<CNodePtr>()->input(1));
+        (void)new_depend_nodes_inputs.emplace_back(bprop_caller->cast<CNodePtr>()->input(1));
         new_depend_nodes = bprop_fg->NewCNode(new_depend_nodes_inputs);
       }
       for (size_t i = 1; i < new_inputs.size(); ++i) {
@@ -320,7 +320,7 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
         {NewValueNode(prim::kPrimTupleGetItem), new_k_fg_caller, NewValueNode(static_cast<int64_t>(1))});
       (void)manager->Replace(origin_bprop_getter, new_bprop_getter);
     }
-    origin_to_new_nodes->emplace(node, new_k_fg_caller);
+    (void)origin_to_new_nodes->emplace(node, new_k_fg_caller);
     return new_k_fg_caller;
   }
   // If it is not tuple_getitem, it should be node which is not set recomputed.
@@ -337,7 +337,7 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
       MoveKCallerToBprop(manager, bprop_fg, input->cast<CNodePtr>(), depend_nodes, origin_to_new_nodes));
   }
   auto new_node = bprop_fg->NewCNode(new_inputs);
-  origin_to_new_nodes->emplace(node, new_node);
+  (void)origin_to_new_nodes->emplace(node, new_node);
   return new_node;
 }
 

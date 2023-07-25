@@ -108,6 +108,7 @@ class GetGradEliminater : public AnfVisitor {
         auto list = GetValueNode<ValueListPtr>(inner[1])->value();
         MS_EXCEPTION_IF_NULL(list[pos]);
         auto tensor = list[pos]->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
         auto param_inf = tensor->param_info();
         MS_EXCEPTION_IF_NULL(param_inf);
         name_ = param_inf->name();
