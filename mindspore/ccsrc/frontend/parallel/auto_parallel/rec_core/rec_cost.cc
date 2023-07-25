@@ -26,6 +26,36 @@
 
 namespace mindspore {
 namespace parallel {
+bool SameShape(const Shape4D &shape1, const Shape4D &shape2) {
+  bool equal = (shape1 == shape2);
+
+  return (equal || !ONLY_REDIST_WITH_SAME_SHAPE);
+}
+
+double minSize(const double &cost_if_cut_i, const double &cost_if_cut_j, const double &cost_if_cut_k) {
+  double min_distribution = std::min(cost_if_cut_j, cost_if_cut_i);
+  min_distribution = std::min(min_distribution, cost_if_cut_k);
+  min_distribution *= EXPERT_COEF;
+  return min_distribution;
+}
+
+double costOfDistributing(const TensorParam &t) {
+  return (static_cast<double>(t.tensor_shape.shape_n) * t.tensor_str.str_n *
+          static_cast<double>(t.tensor_shape.shape_c) * t.tensor_str.str_c *
+          static_cast<double>(t.tensor_shape.shape_h) * t.tensor_str.str_h *
+          static_cast<double>(t.tensor_shape.shape_w) * t.tensor_str.str_w / 2.0);
+}
+
+double minNodeSize(const Graph::NodeType &node) {
+  double distributing0 = costOfDistributing(node.apply.arguments[0]);
+  double distributing1 = costOfDistributing(node.apply.arguments[1]);
+  double distributing2 = costOfDistributing(node.tensor_parm);
+  double min_distribution = std::min(distributing0, distributing1);
+  min_distribution = std::min(min_distribution, distributing2);
+  min_distribution *= EXPERT_COEF;
+  return min_distribution;
+}
+
 // Compute redistributed cost
 double CostRedis(const Graph::NodeType &node,
                  const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
@@ -55,7 +85,9 @@ double CostRedis(const Graph::NodeType &node,
   for (size_t i_strategy = 0; i_strategy < num_strategy; i_strategy++) {
     // Find its forward nodes
     for (size_t i_node = 0; i_node < num_node_in; i_node++) {
-      if (graph.nodes[node.node_in[i_node]].name == node_name_to_strategy[i_strategy].first) {
+      if (graph.nodes[node.node_in[i_node]].name == node_name_to_strategy[i_strategy].first &&
+          SameShape(graph.nodes[node.node_in[i_node]].tensor_parm.tensor_shape,
+                    node.apply.arguments[i_node].tensor_shape)) {
         bool is_search_forward = true;
         MS_LOG(INFO) << "Node_in, index =  " << i_node << node_name_to_strategy[i_strategy].first;
         cost_redis +=
@@ -65,7 +97,8 @@ double CostRedis(const Graph::NodeType &node,
 
     // Find its backward nodes
     for (size_t i_node = 0; i_node < num_node_out; i_node++) {
-      if (graph.nodes[node.node_out[i_node]].name == node_name_to_strategy[i_strategy].first) {
+      if (graph.nodes[node.node_out[i_node]].name == node_name_to_strategy[i_strategy].first &&
+          SameShape(graph.nodes[node.node_out[i_node]].tensor_parm.tensor_shape, node.tensor_parm.tensor_shape)) {
         bool is_search_forward = false;
         cost_redis +=
           CostRedisWithAdjacentNode(node_name_to_strategy, mode, i_strategy, i_node, output_tensor, is_search_forward);
@@ -74,9 +107,11 @@ double CostRedis(const Graph::NodeType &node,
 
     // Calculate the Redis Cost of node_in_aux
     for (size_t i_node = 0; i_node < node.node_in_aux.size(); i_node++) {
-      if (graph.nodes[node.node_in_aux[i_node]].name == node_name_to_strategy[i_strategy].first) {
+      size_t index = node.node_in_aux_idx[i_node];
+      if (graph.nodes[node.node_in_aux[i_node]].name == node_name_to_strategy[i_strategy].first &&
+          SameShape(graph.nodes[node.node_in_aux[i_node]].tensor_parm.tensor_shape,
+                    node.apply.arguments[index].tensor_shape)) {
         bool is_search_forward = true;
-        size_t index = node.node_in_aux_idx[i_node];
         cost_redis +=
           CostRedisWithAdjacentNode(node_name_to_strategy, mode, i_strategy, index, input_tensor, is_search_forward);
       }
@@ -90,50 +125,31 @@ double CostRedisWithAdjacentNode(const std::vector<std::pair<std::string, Strate
                                  const std::vector<std::vector<float>> &mode, size_t i_strategy, size_t i_node,
                                  double tensor_size, bool search_forward) {
   double new_redis_cost = 0;
-  int64_t counter = 0;
+  bool diff = false;
+
+  auto output_tensor = node_name_to_strategy[i_strategy].second.outputTensor;
+  auto input_tensor = node_name_to_strategy[i_strategy].second.inputTensor[0];
 
   if (search_forward) {
-    if (static_cast<int64_t>(1 / node_name_to_strategy[i_strategy].second.outputTensor.str_n) !=
-        static_cast<int64_t>(1 / mode[i_node][0])) {
-      counter += 1;
-    }
-    if (static_cast<int64_t>(1 / node_name_to_strategy[i_strategy].second.outputTensor.str_c) !=
-        static_cast<int64_t>(1 / mode[i_node][1])) {
-      counter += 1;
-    }
-    if (static_cast<int64_t>(1 / node_name_to_strategy[i_strategy].second.outputTensor.str_h) !=
-        static_cast<int64_t>(1 / mode[i_node][2])) {
-      counter += 1;
-    }
-    if (static_cast<int64_t>(1 / node_name_to_strategy[i_strategy].second.outputTensor.str_w) !=
-        static_cast<int64_t>(1 / mode[i_node][3])) {
-      counter += 1;
+    float output_dims[NDIMS] = {output_tensor.str_n, output_tensor.str_c, output_tensor.str_h, output_tensor.str_w};
+    for (size_t i = 0; i < NDIMS; ++i) {
+      if (static_cast<int64_t>(1 / output_dims[i]) != static_cast<int64_t>(1 / mode[i_node][i])) {
+        diff = true;
+        break;
+      }
     }
   } else {
-    if (static_cast<int64_t>(1 / node_name_to_strategy[i_strategy].second.inputTensor[0].str_n) !=
-        static_cast<int64_t>(1 / mode[2][0])) {
-      counter += 1;
-    }
-    if (static_cast<int64_t>(1 / node_name_to_strategy[i_strategy].second.inputTensor[0].str_c) !=
-        static_cast<int64_t>(1 / mode[2][1])) {
-      counter += 1;
-    }
-    if (static_cast<int64_t>(1 / node_name_to_strategy[i_strategy].second.inputTensor[0].str_h) !=
-        static_cast<int64_t>(1 / mode[2][2])) {
-      counter += 1;
-    }
-    if (static_cast<int64_t>(1 / node_name_to_strategy[i_strategy].second.inputTensor[0].str_w) !=
-        static_cast<int64_t>(1 / mode[2][3])) {
-      counter += 1;
+    float input_dims[NDIMS] = {input_tensor.str_n, input_tensor.str_c, input_tensor.str_h, input_tensor.str_w};
+    for (size_t i = 0; i < NDIMS; ++i) {
+      if (static_cast<int64_t>(1 / input_dims[i]) != static_cast<int64_t>(1 / mode[2][i])) {
+        diff = true;
+        break;
+      }
     }
   }
 
-  if (counter >= 1) {
+  if (diff) {
     new_redis_cost = tensor_size * REDIS_COEF;
-  } else if (counter == 0) {
-    new_redis_cost = 0;
-  } else {
-    MS_LOG(EXCEPTION) << "Failure: CostRedis failed.";
   }
 
   MS_LOG(INFO) << "redis_cost = " << new_redis_cost;
@@ -152,31 +168,39 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   int64_t edge_k =
     static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_w * node.apply.arguments[0].tensor_str.str_w);
 
+  double cost_if_cut_i = StrConcatDimI(edge_j, edge_k);
+  double cost_if_cut_j = StrConcatDimJ(edge_i, edge_k);
+  double cost_if_cut_k = StrReduceDimK(edge_i, edge_j);
+  double cost_if_no_cut = StrRecom(cost_if_cut_i, cost_if_cut_j, cost_if_cut_k);
+
   std::vector<double> cost_op;
 
   MS_LOG(INFO) << "graph_batch" << graph.batch_size;
-  if (edge_i < 2 || edge_i % 2 != 0 ||
+  if (LongToSize(edge_i) < SIZE_TWO || edge_i % SIZE_TWO != 0 ||
       (1 / node.apply.arguments[0].tensor_str.str_h >= graph.batch_size && graph.batch_size != 0)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}};
-    cost_op.push_back(StrConcatDimI(edge_j, edge_k) + CostRedis(node, node_name_to_strategy, mode, graph));
+    cost_op.push_back(cost_if_cut_i + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
   // Do not partition the J-axis and K-axis for the same MatMul
-  if (edge_j < 2 || edge_j % 2 != 0 || node.apply.arguments[0].tensor_str.str_w < 1) {
+  if (LongToSize(edge_j) < SIZE_TWO || edge_j % SIZE_TWO != 0 || node.apply.arguments[0].tensor_str.str_w < 1) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}};
-    cost_op.push_back(StrConcatDimJ(edge_i, edge_k) + CostRedis(node, node_name_to_strategy, mode, graph));
+    cost_op.push_back(cost_if_cut_j + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (edge_k < 2 || edge_k % 2 != 0 || node.apply.arguments[1].tensor_str.str_w < 1) {
+  if (LongToSize(edge_k) < SIZE_TWO || edge_k % SIZE_TWO != 0 || node.apply.arguments[1].tensor_str.str_w < 1) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 0.5}, {1, 1, 0.5, 1}, {1, 1, 1, 1}};
-    cost_op.push_back(StrReduceDimK(edge_i, edge_j) + CostRedis(node, node_name_to_strategy, mode, graph));
+    cost_op.push_back(cost_if_cut_k + CostRedis(node, node_name_to_strategy, mode, graph));
   }
+
+  std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}};
+  cost_op.push_back(cost_if_no_cut + CostRedis(node, node_name_to_strategy, mode, graph));
 
   // If optimizer parallel is enabled, then MatMul must be cut at least once on the DP dimension
   // node.apply.arguments[0].tensor_str.str_h == 1 means that the batch dimension is not partitioned.
@@ -194,10 +218,16 @@ double CostMatMul::GetMaxCostIn(const OperatorRec &op) {
   int64_t edge_j = static_cast<int64_t>(op.arguments[1].tensor_shape.shape_w * op.arguments[1].tensor_str.str_w);
   int64_t edge_k = static_cast<int64_t>(op.arguments[0].tensor_shape.shape_w * op.arguments[0].tensor_str.str_w);
 
+  double cost_if_cut_i = StrConcatDimI(edge_j, edge_k);
+  double cost_if_cut_j = StrConcatDimJ(edge_i, edge_k);
+  double cost_if_cut_k = StrReduceDimK(edge_i, edge_j);
+  double cost_if_no_cut = StrRecom(cost_if_cut_i, cost_if_cut_j, cost_if_cut_k);
+
   std::vector<double> cost_in;
-  cost_in.push_back(StrConcatDimI(edge_j, edge_k));
-  cost_in.push_back(StrConcatDimJ(edge_i, edge_k));
-  cost_in.push_back(StrReduceDimK(edge_i, edge_j));
+  cost_in.push_back(cost_if_cut_i);
+  cost_in.push_back(cost_if_cut_j);
+  cost_in.push_back(cost_if_cut_k);
+  cost_in.push_back(cost_if_no_cut);
 
   return *max_element(cost_in.begin(), cost_in.end());
 }
@@ -215,6 +245,7 @@ StrategyRec CostMatMul::ChoseStr(const std::vector<double> &cost_op, StrategyRec
       str.outputTensor.str_h /= 2.0;
       str.cut_counter += 1;
       str.cost = str.cost + cost_in_i_;
+      MS_LOG(INFO) << "The I-axis is chosen to cut";
       break;
 
     case 1:
@@ -222,6 +253,7 @@ StrategyRec CostMatMul::ChoseStr(const std::vector<double> &cost_op, StrategyRec
       str.outputTensor.str_w /= 2.0;
       str.cut_counter += 1;
       str.cost = str.cost + cost_in_j_;
+      MS_LOG(INFO) << "The J-axis is chosen to cut";
       break;
 
     case 2:
@@ -229,10 +261,184 @@ StrategyRec CostMatMul::ChoseStr(const std::vector<double> &cost_op, StrategyRec
       str.inputTensor[1].str_h /= 2.0;
       str.cut_counter += 1;
       str.cost = str.cost + cost_in_k_;
+      MS_LOG(INFO) << "The K-axis is chosen to cut";
+      break;
+
+    case 3:
+      MS_LOG(INFO) << "Choose NOT to cut";
       break;
 
     default:
       MS_LOG(EXCEPTION) << "Failure:CostMatMul failed.";
+  }
+
+  return str;
+}
+
+size_t CostBatchMatMul::getBatchDimsSize(const OperatorRec &op) {
+  return static_cast<double>(std::max(op.arguments[0].tensor_shape.shape_n, op.arguments[1].tensor_shape.shape_n)) *
+         std::max(op.arguments[0].tensor_str.str_n, op.arguments[1].tensor_str.str_n) *
+         static_cast<double>(std::max(op.arguments[0].tensor_shape.shape_c, op.arguments[1].tensor_shape.shape_c)) *
+         std::max(op.arguments[0].tensor_str.str_c, op.arguments[1].tensor_str.str_c);
+}
+
+double CostBatchMatMul::cost(Axis a, const Graph::NodeType &node) {
+  double mc_ratio = std::max(NUMBER_ASCEND_CORES / static_cast<double>(getBatchDimsSize(node.apply)) - 1, 0.0);
+  double min_size = minNodeSize(node);
+
+  switch (a) {
+    // Calculate the cost if the Batch-axis of BatchMatMul is cut
+    case B:
+      return (mc_ratio * min_size);
+
+    // Calculate the cost if the Expert-axis of BatchMatMul is cut
+    case X:
+      return (mc_ratio * min_size) - 1;
+
+    // Calculate the cost if the I-axis of BatchMatMul is cut
+    case I:
+      return costOfDistributing(node.apply.arguments[1]);
+
+    // Calculate the cost if the J-axis of BatchMatMul is cut
+    case J:
+      return costOfDistributing(node.apply.arguments[0]);
+
+    // Calculate the cost if the K-axis of BatchMatMul is cut
+    case K:
+      return costOfDistributing(node.tensor_parm);
+
+    // Calculate the cost if BatchMatMul is not cut
+    case R:
+      return min_size * min_size / REPLICATE_BELOW;
+
+    default:
+      MS_LOG(EXCEPTION) << "Axis " << a << " is not taken into account";
+  }
+
+  return 1;
+}
+
+// Get optimal strategy for BatchMatMul
+StrategyRec CostBatchMatMul::GetOptimalStr(
+  const Graph::NodeType &node, const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+  const Graph &graph, const bool isTraining) {
+  int64_t edge_b =
+    static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_n * node.apply.arguments[0].tensor_str.str_n);
+  int64_t edge_x =
+    static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_c * node.apply.arguments[0].tensor_str.str_c);
+  int64_t edge_i =
+    static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_h * node.apply.arguments[0].tensor_str.str_h);
+  int64_t edge_j =
+    static_cast<int64_t>(node.apply.arguments[1].tensor_shape.shape_w * node.apply.arguments[1].tensor_str.str_w);
+  int64_t edge_k =
+    static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_w * node.apply.arguments[0].tensor_str.str_w);
+
+  std::vector<double> cost_op;
+
+  if (LongToSize(edge_b) < SIZE_TWO || edge_b % SIZE_TWO != 0 ||
+      1 / node.apply.arguments[0].tensor_str.str_n >= graph.batch_size) {
+    cost_op.push_back(DOUBLE_MAX);
+  } else {
+    std::vector<std::vector<float>> mode = {{0.5, 1, 1, 1}, {0.5, 1, 1, 1}, {0.5, 1, 1, 1}};
+    cost_op.push_back(cost(B, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+  }
+
+  if (LongToSize(edge_x) < SIZE_TWO || edge_x % SIZE_TWO != 0) {
+    cost_op.push_back(DOUBLE_MAX);
+  } else {
+    std::vector<std::vector<float>> mode = {{1, 0.5, 1, 1}, {1, 0.5, 1, 1}, {1, 0.5, 1, 1}};
+    cost_op.push_back(cost(X, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+  }
+
+  if (LongToSize(edge_i) < SIZE_TWO || edge_i % SIZE_TWO != 0) {
+    cost_op.push_back(DOUBLE_MAX);
+  } else {
+    std::vector<std::vector<float>> mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}};
+    cost_op.push_back(cost(I, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+  }
+
+  if (LongToSize(edge_j) < SIZE_TWO || edge_j % SIZE_TWO != 0 || node.apply.arguments[0].tensor_str.str_w < 1) {
+    cost_op.push_back(DOUBLE_MAX);
+  } else {
+    std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}};
+    cost_op.push_back((cost(J, node) + CostRedis(node, node_name_to_strategy, mode, graph)) / BMM_COEF);
+  }
+
+  if (LongToSize(edge_k) < SIZE_TWO || edge_k % SIZE_TWO != 0 || node.apply.arguments[1].tensor_str.str_w < 1) {
+    cost_op.push_back(DOUBLE_MAX);
+  } else {
+    std::vector<std::vector<float>> mode = {{1, 1, 1, 0.5}, {1, 1, 0.5, 1}, {1, 1, 1, 1}};
+    cost_op.push_back((cost(K, node) + CostRedis(node, node_name_to_strategy, mode, graph)) / BMM_COEF);
+  }
+
+  std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}};
+  cost_op.push_back(cost(R, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+
+  return ChoseStr(cost_op, node.apply.str);
+}
+
+// Get weight for BatchMatMul
+double CostBatchMatMul::GetMaxCostIn(const Graph::NodeType &node) {
+  std::vector<double> cost_in;
+  cost_in.push_back(cost(B, node));
+  cost_in.push_back(cost(X, node));
+  cost_in.push_back(cost(I, node));
+  cost_in.push_back(cost(J, node));
+  cost_in.push_back(cost(K, node));
+  cost_in.push_back(cost(R, node));
+
+  return *max_element(cost_in.begin(), cost_in.end());
+}
+
+// Chose strategy for BatchMatMul
+StrategyRec CostBatchMatMul::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const {
+  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+  if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
+    return str;
+  }
+
+  str.cut_counter += 1;
+  str.cost = str.cost + cost_op[min_position];
+
+  switch (min_position) {
+    case 0:
+      str.inputTensor[0].str_n /= 2.0;
+      str.inputTensor[1].str_n /= 2.0;
+      str.outputTensor.str_n /= 2.0;
+      MS_LOG(INFO) << "The Batch-axis is chosen to cut";
+      break;
+
+    case 1:
+      str.inputTensor[0].str_c /= 2.0;
+      str.inputTensor[1].str_c /= 2.0;
+      str.outputTensor.str_c /= 2.0;
+      MS_LOG(INFO) << "The Expert-axis is chosen to cut";
+      break;
+
+    case 2:
+      str.inputTensor[0].str_h /= 2.0;
+      str.outputTensor.str_h /= 2.0;
+      MS_LOG(INFO) << "The I-axis is chosen to cut";
+      break;
+
+    case 3:
+      str.inputTensor[1].str_w /= 2.0;
+      str.outputTensor.str_w /= 2.0;
+      MS_LOG(INFO) << "The J-axis is chosen to cut";
+      break;
+
+    case 4:
+      str.inputTensor[0].str_w /= 2.0;
+      str.inputTensor[1].str_h /= 2.0;
+      MS_LOG(INFO) << "The K-axis is chosen to cut";
+      break;
+
+    case 5:
+      MS_LOG(INFO) << "Choose NOT to cut";
+      break;
+
+    default:
+      MS_LOG(EXCEPTION) << "Failure:CostBatchMatMul failed.";
   }
 
   return str;

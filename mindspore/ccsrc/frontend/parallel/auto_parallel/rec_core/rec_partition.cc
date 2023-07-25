@@ -39,6 +39,11 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostMatMul>();
 
     return cost_ptr->GetMaxCostIn(op);
+  } else if (op.op_type == OperatorType::kRecBatchMatMul) {
+    // For BatchMatMul
+    auto cost_ptr = std::make_shared<CostBatchMatMul>();
+
+    return cost_ptr->GetMaxCostIn(node);
   } else if (op.op_type == OperatorType::kRecConvolution) {
     // For Convolution
     auto cost_ptr = std::make_shared<CostConvolution>();
@@ -140,6 +145,11 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     auto cost_ptr = std::make_shared<CostMatMul>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
+  } else if (node.apply.op_type == OperatorType::kRecBatchMatMul) {
+    // For BatchMatMul
+    auto cost_ptr = std::make_shared<CostBatchMatMul>();
+
+    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
   } else if (node.apply.op_type == OperatorType::kRecConvolution) {
     // For Convolution
     auto cost_ptr = std::make_shared<CostConvolution>();
@@ -230,7 +240,7 @@ Graph::NodeType ChangeStrategy(Graph::NodeType Node, size_t n_cut) {
   return Node;
 }
 
-size_t GetStratNumber(const Graph::NodeType &Node) { return Node.apply.strs.size(); }
+size_t GetStratNumber(const Graph::NodeType Node) { return Node.apply.strs.size(); }
 
 void PartitionPipelineStages(double device_memory, const std::shared_ptr<Graph> &graph) {
   if (!ENABLE_PIPE_ALGO) {

@@ -30,13 +30,12 @@
 namespace mindspore {
 namespace parallel {
 static const std::set<OperatorType> ElementWiseOpType = {
-  OperatorType::kRecReLU,         OperatorType::kRecLog,         OperatorType::kRecExp,
-  OperatorType::kRecAdd,          OperatorType::kRecElmWiseOp,   OperatorType::kRecBiasAdd,
-  OperatorType::kRecSub,          OperatorType::kRecMul,         OperatorType::kRecDiv,
-  OperatorType::kRecSqueeze,      OperatorType::kRecReduce,      OperatorType::kRecCast,
-  OperatorType::kRecReshape,      OperatorType::kRecGatherV2,    OperatorType::kRecArgWithValue,
-  OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,      OperatorType::kRecExpandDims,
-  OperatorType::kRecStridedSlice, OperatorType::kRecBatchMatMul, OperatorType::kRecLayerNorm};
+  OperatorType::kRecReLU,      OperatorType::kRecLog,        OperatorType::kRecExp,          OperatorType::kRecAdd,
+  OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd,    OperatorType::kRecSub,          OperatorType::kRecMul,
+  OperatorType::kRecDiv,       OperatorType::kRecSqueeze,    OperatorType::kRecReduce,       OperatorType::kRecCast,
+  OperatorType::kRecReshape,   OperatorType::kRecGatherV2,   OperatorType::kRecArgWithValue, OperatorType::kRecSoftmax,
+  OperatorType::kRecOneHot,    OperatorType::kRecExpandDims, OperatorType::kRecStridedSlice, OperatorType::kRecCum,
+  OperatorType::kRecLayerNorm};
 
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
