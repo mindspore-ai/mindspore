@@ -133,7 +133,7 @@ bool BpropExpander::Run(const CNodePtr &cnode, const std::vector<ValuePtr> &inpu
     ret = false;
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Bprop \"" << node_name << "\" encounter a problem: [" << e.what() << "]";
-    throw;
+    std::rethrow_exception(std::current_exception());
   }
   MS_LOG(DEBUG) << "Finish building bprop for " << cnode->fullname_with_scope();
   return ret;

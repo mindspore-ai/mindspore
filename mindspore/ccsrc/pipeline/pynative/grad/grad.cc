@@ -764,8 +764,8 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v) const {
   if (forward()->enable_async()) {
     auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
     auto fake_v = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value);
-    auto fn = [auto_grad_cell_ptr, fake_v]() { auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(fake_v); };
-    async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
+    auto task = [auto_grad_cell_ptr, fake_v]() { auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(fake_v); };
+    DispatchGradQueueTask(task);
   } else {
     top_cell()->auto_grad_cell_ptr()->UpdateOutputNodeOfTopCell(
       PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value));
@@ -1029,6 +1029,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
       GilReleaseWithCheck release_gil;
       async_executor_->Clear();
     }
+    async_executor_->CheckException();
     top_cell()->ClearParamGradInfo();
     AsyncClearTopCell();
     set_top_cell(already_run_top_cell);
@@ -1040,6 +1041,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
     GilReleaseWithCheck release_gil;
     async_executor_->Wait();
   }
+  async_executor_->CheckException();
   set_top_cell(already_run_top_cell);
   AsyncClearTopCell();
   op_num_in_bprop_graph_ = top_cell()->op_index();
@@ -1553,7 +1555,7 @@ void GradExecutor::AsyncClearTopCell() {
   for (const auto &need_gc_top_cell : need_gc_top_cell_list_) {
     if (forward()->enable_async()) {
       auto task = [need_gc_top_cell]() { need_gc_top_cell->Clear(); };
-      async_executor_->Push(new (std::nothrow) BpropTask(std::move(task)));
+      DispatchGradQueueTask(task);
     } else {
       need_gc_top_cell->Clear();
     }
@@ -1564,7 +1566,7 @@ void GradExecutor::AsyncClearTopCell() {
 void GradExecutor::AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell) {
   if (forward()->enable_async()) {
     auto task = [top_cell] { top_cell->set_auto_grad_cell_ptr(nullptr); };
-    async_executor_->Push(new (std::nothrow) BpropTask(std::move(task)));
+    DispatchGradQueueTask(task);
   } else {
     top_cell->set_auto_grad_cell_ptr(nullptr);
   }
@@ -1803,8 +1805,8 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const {
   auto &&grad_param = CreateOpGradParam(op_run_info, top_cell());
   if (forward()->enable_async()) {
     auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-    auto fn = [auto_grad_cell_ptr, grad_param]() { auto_grad_cell_ptr->KPynativeOp(grad_param); };
-    async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
+    auto task = [auto_grad_cell_ptr, grad_param]() { auto_grad_cell_ptr->KPynativeOp(grad_param); };
+    DispatchGradQueueTask(task);
   } else {
     top_cell()->auto_grad_cell_ptr()->KPynativeOp(grad_param);
   }
@@ -2115,6 +2117,13 @@ void GradExecutor::CheckGraphDynamic(const ValuePtrList &inputs, const DynamicDe
                   traceback.print_stack()
                   )");
     }
+  }
+}
+
+void GradExecutor::DispatchGradQueueTask(const std::function<void(void)> task) const {
+  bool success = async_executor_->Push(new (std::nothrow) BpropTask(std::move(task)));
+  if (!success) {
+    async_executor_->CheckException();
   }
 }
 }  // namespace pynative

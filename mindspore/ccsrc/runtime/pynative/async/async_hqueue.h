@@ -48,7 +48,7 @@ class BACKEND_EXPORT AsyncHqueue {
   void Init();
 
   // Add task to the end of the queue.
-  void Push(AsyncTask *task);
+  bool Push(AsyncTask *task);
 
   // Wait for all async task finish executing.
   void Wait();
@@ -68,6 +68,9 @@ class BACKEND_EXPORT AsyncHqueue {
   // Reinit resources after fork occurs.
   void ReinitAfterFork();
 
+  // Check grad queue exception.
+  void CheckException();
+
  protected:
   void WorkerLoop();
   void SetThreadName() const;
@@ -84,6 +87,7 @@ class BACKEND_EXPORT AsyncHqueue {
   bool stop_{false};
   std::atomic_int status_{kThreadBusy};
   size_t spin_count_{0};
+  std::exception_ptr e_ptr_{nullptr};
 };
 using AsyncHqueuePtr = std::shared_ptr<AsyncHqueue>;
 }  // namespace pynative
