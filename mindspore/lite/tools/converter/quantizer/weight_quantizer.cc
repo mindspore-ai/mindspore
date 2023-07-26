@@ -239,7 +239,7 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
 }
 
 int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter,
-                                   const tensor::TensorPtr tensor) {
+                                   const tensor::TensorPtr &tensor) {
   int ret = RET_OK;
   auto quantization_params = tensor->quant_params();
   if (quantization_params.empty()) {

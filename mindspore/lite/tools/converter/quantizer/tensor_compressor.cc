@@ -27,6 +27,7 @@
 
 namespace mindspore::lite::quant {
 void TensorCompressor::WriteBufferWithAlignByte(const std::vector<bool> &bool_vec, int8_t *data) {
+  CHECK_NULL_RETURN_VOID(data);
   size_t shift = kBitNumPerByte;
   for (bool bit : bool_vec) {
     *data |= bit << (shift - 1);
@@ -38,6 +39,7 @@ void TensorCompressor::WriteBufferWithAlignByte(const std::vector<bool> &bool_ve
 }
 
 int TensorCompressor::DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input) {
+  CHECK_NULL_RETURN(tensor_input);
   if (bit_num > 0 && bit_num < k8Bit) {
     std::vector<int8_t> origin_data(tensor_input->data.size());
     auto status = memcpy_s(origin_data.data(), origin_data.size() * sizeof(int8_t), tensor_input->data.data(),

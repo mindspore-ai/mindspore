@@ -132,6 +132,7 @@ int QuantNodePass::CheckNodeDType(const CNodePtr &cnode, const AnfNodePtr &input
 int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index) {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(input_node);
+  MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
   auto ret = CheckNodeDType(cnode, input_node, input_index);
   if (ret != RET_OK) {
     return ret;
@@ -149,6 +150,7 @@ int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPt
       return ret;
     }
   } else {
+    CHECK_NULL_RETURN(input_node->default_param());
     // quant weight
     auto tensor_info = input_node->default_param()->cast<tensor::TensorPtr>();
     if (tensor_info == nullptr) {
@@ -175,6 +177,7 @@ int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPt
 }
 
 int QuantNodePass::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index) {
+  MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
   CHECK_NULL_RETURN(quant_param_holder);
   auto ret = CheckNodeDType(cnode, input_node, input_index);

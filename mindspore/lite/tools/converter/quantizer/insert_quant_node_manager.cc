@@ -97,6 +97,7 @@ int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId c
 int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index,
                                                         bool activation_channel) {
   auto primitive = std::make_shared<ops::DynamicQuant>();
+  CHECK_NULL_RETURN(primitive);
   auto primitive_c = primitive->GetPrim();
   primitive->set_dst_type(dst_type_);
   bool symmetric = activation_channel ? true : false;
@@ -107,6 +108,7 @@ int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &grap
     return RET_ERROR;
   }
   auto dynamic_quant_cnode = graph->NewCNode(primitive_c, {cnode->input(index)});
+  CHECK_NULL_RETURN(dynamic_quant_cnode);
   auto name = cnode->fullname_with_scope() + "_dynamic_cast_node_" + std::to_string(index);
   dynamic_quant_cnode->set_fullname_with_scope(name);
   CHECK_NULL_RETURN(cnode->abstract());
@@ -353,6 +355,7 @@ int InsertQuantNodeManager::InsertForwardQuantNodeNew(const FuncGraphPtr &graph,
   }
   ValueNodePtr new_primitive =
     NewQuantCastPrimitive(src_dtype, dst_dtype, input_node, cast_output_quant_params, 0, true);
+  CHECK_NULL_RETURN(new_primitive);
   std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node};
   auto quant_cast_cnode = graph->NewCNode(op_inputs);
   CHECK_NULL_RETURN(quant_cast_cnode);
@@ -438,6 +441,7 @@ int InsertQuantNodeManager::InsertForwardQuantNode(const FuncGraphPtr &graph, co
   }
   ValueNodePtr new_primitive =
     NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, output_quant_params, 0, false);
+  CHECK_NULL_RETURN(new_primitive);
   std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node};
   auto quant_cast_cnode = graph->NewCNode(op_inputs);
   CHECK_NULL_RETURN(quant_cast_cnode);
@@ -510,6 +514,7 @@ int InsertQuantNodeManager::InsertBackwardDeQuantNode(const FuncGraphPtr &graph,
   }
   ValueNodePtr new_primitive =
     NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, output_quant_params, 0, false);
+  CHECK_NULL_RETURN(new_primitive);
   std::vector<AnfNodePtr> op_inputs = {new_primitive, cnode->cast<AnfNodePtr>()};
   auto quant_cast_cnode = graph->NewCNode(op_inputs);
   MS_CHECK_TRUE_MSG(quant_cast_cnode != nullptr, RET_NULL_PTR, "quant_cast_cnode is nullptr.");
@@ -622,6 +627,7 @@ int InsertQuantNodeManager::InsertBackwardCastNode(const FuncGraphPtr &graph, co
 int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                         size_t input_index, TypeId src_dtype, TypeId dst_dtype,
                                                         int axis) {
+  MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
   auto cnode_primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
   if (cnode_primitive == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
@@ -635,6 +641,7 @@ int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func
 
   auto input_quant_params = quant::GetInputNodeQuantParam(cnode, input_index);
   ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_node, {}, axis, false);
+  CHECK_NULL_RETURN(new_primitive);
   std::vector<float> scales;
   std::vector<int> zps;
   std::vector<float> mean_corrs;
@@ -687,6 +694,7 @@ int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph,
                                                  TypeId src_dtype, TypeId dst_dtype, int axis) {
   CHECK_NULL_RETURN(scales_node);
   CHECK_NULL_RETURN(zps_node);
+  MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
   auto input_node = cnode->input(input_index);
   auto input_quant_params = quant::GetInputNodeQuantParam(cnode, input_index);
   if (input_quant_params.empty()) {
@@ -750,6 +758,7 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
                                                       AscendBackend ascend_backend) {
   auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
   CHECK_NULL_RETURN(primitive);
+  MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
   auto input_node = cnode->input(input_index);
   auto manager = func_graph->manager();
   CHECK_NULL_RETURN(manager);
@@ -824,6 +833,7 @@ int InsertQuantNodeManager::InsertFSEDecodeNode(const FuncGraphPtr &func_graph, 
     MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
+  MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
   auto input_node = cnode->input(input_index);
   if (!input_node->isa<mindspore::Parameter>()) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " input " << input_index << " is not parameter node.";
@@ -865,6 +875,7 @@ int InsertQuantNodeManager::InsertFSEDecodeNode(const FuncGraphPtr &func_graph, 
 
 int InsertQuantNodeManager::CreateFSEInputs(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
                                             std::vector<AnfNodePtr> *op_inputs, TypeId dst_dtype) {
+  CHECK_NULL_RETURN(op_inputs);
   if (!input_node->isa<mindspore::Parameter>()) {
     MS_LOG(ERROR) << "FSEDecode input is not parameter node.";
     return RET_ERROR;
@@ -876,6 +887,7 @@ int InsertQuantNodeManager::CreateFSEInputs(const FuncGraphPtr &func_graph, cons
     return RET_ERROR;
   }
   auto tensor = parameter_ptr->default_param()->cast<tensor::TensorPtr>();
+  CHECK_NULL_RETURN(tensor);
   int8_t *data8 = reinterpret_cast<int8_t *>(tensor->data_c());
   size_t data_size = tensor->DataSize();
   FSEBuffer fse_buffer;
@@ -899,36 +911,30 @@ int InsertQuantNodeManager::CreateFSEInputs(const FuncGraphPtr &func_graph, cons
   op_inputs->push_back(input_node);
 
   size_t table_size = 1u << fse_buffer.table_log;
-  uint16_t *states_table = static_cast<uint16_t *>(malloc(table_size * sizeof(uint16_t)));
-  CHECK_NULL_RETURN(states_table);
-  uint8_t *bit_count_table = static_cast<uint8_t *>(malloc(table_size * sizeof(uint8_t)));
-  CHECK_NULL_RETURN(bit_count_table);
-  uint16_t *symbol_table = static_cast<uint16_t *>(malloc(table_size * sizeof(uint16_t)));
-  CHECK_NULL_RETURN(symbol_table);
+  std::vector<uint16_t> states_table(table_size);
+  std::vector<uint8_t> bit_count_table(table_size);
+  std::vector<uint16_t> symbol_table(table_size);
 
   ret = FSEDecoder::FSECreateStatesForDecoding(fse_buffer.frequency, fse_buffer.frequency_count, fse_buffer.table_log,
-                                               states_table, bit_count_table, symbol_table);
+                                               states_table.data(), bit_count_table.data(), symbol_table.data());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FSE create states for decoding failed.";
-    free(states_table);
-    free(bit_count_table);
-    free(symbol_table);
     return RET_ERROR;
   }
   std::vector<int64_t> shape = {static_cast<int64_t>(table_size)};
 
   auto states_table_tensor_info =
-    lite::CreateTensorInfo(states_table, sizeof(uint16_t) * table_size, shape, kNumberTypeUInt16);
+    lite::CreateTensorInfo(states_table.data(), sizeof(uint16_t) * table_size, shape, kNumberTypeUInt16);
   auto states_table_node = opt::BuildParameterNode(func_graph, states_table_tensor_info, "states_table");
   op_inputs->push_back(states_table_node);
 
   auto bit_count_table_tensor_info =
-    lite::CreateTensorInfo(bit_count_table, sizeof(uint8_t) * table_size, shape, kNumberTypeUInt8);
+    lite::CreateTensorInfo(bit_count_table.data(), sizeof(uint8_t) * table_size, shape, kNumberTypeUInt8);
   auto bit_count_table_node = opt::BuildParameterNode(func_graph, bit_count_table_tensor_info, "bit_count_table");
   op_inputs->push_back(bit_count_table_node);
 
   auto symbol_table_tensor_info =
-    lite::CreateTensorInfo(symbol_table, sizeof(uint16_t) * table_size, shape, kNumberTypeUInt16);
+    lite::CreateTensorInfo(symbol_table.data(), sizeof(uint16_t) * table_size, shape, kNumberTypeUInt16);
   auto symbol_table_node = opt::BuildParameterNode(func_graph, symbol_table_tensor_info, "symbol_table");
   op_inputs->push_back(symbol_table_node);
 
@@ -950,10 +956,6 @@ int InsertQuantNodeManager::CreateFSEInputs(const FuncGraphPtr &func_graph, cons
   auto chunk_ends_node = opt::BuildParameterNode(func_graph, chunk_ends_tensor_info, "chunk_ends");
   op_inputs->push_back(chunk_ends_node);
 
-  // Free buffer
-  free(states_table);
-  free(bit_count_table);
-  free(symbol_table);
   return RET_OK;
 }
 
@@ -1068,7 +1070,9 @@ ValueNodePtr InsertQuantNodeManager::NewQuantCastPrimitive(int src_type, int dst
   if (!output_quant_params.empty()) {
     auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(output_quant_params);
     std::vector<ValuePtr> quantization_list = {quantization_ptr};
-    prim->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
+    auto quant_ptr = std::make_shared<ValueList>(quantization_list);
+    MS_CHECK_TRUE_MSG(quant_ptr != nullptr, nullptr, "quant_ptr is nullptr.");
+    prim->AddAttr(quant::kQuantParam, quant_ptr);
   } else {
     MS_LOG(WARNING) << "New quant cast node's output quant param is empty, input node: "
                     << input_node->fullname_with_scope();
@@ -1104,6 +1108,7 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
                                                   size_t input_index) {
   CHECK_NULL_RETURN(func_graph);
   CHECK_NULL_RETURN(cnode);
+  MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
   auto x_q_param_origin = quant::GetInputNodeQuantParam(cnode, input_index);
   if (x_q_param_origin.size() != kPerTensor) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " x quant param size " << x_q_param_origin.size() << " != 1";
@@ -1114,6 +1119,7 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
   auto input_node = cnode->input(input_index);
   CHECK_NULL_RETURN(input_node);
   ValueNodePtr new_primitive = NewQuantCastPrimitive(kNumberTypeFloat32, kNumberTypeInt8, input_node, x_q_param);
+  CHECK_NULL_RETURN(new_primitive);
   std::vector<AnfNodePtr> op_inputs = {new_primitive, cnode->input(input_index)};
   auto quant_cast_cnode = func_graph->NewCNode(op_inputs);
   CHECK_NULL_RETURN(quant_cast_cnode);
