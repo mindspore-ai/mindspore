@@ -630,7 +630,8 @@ runtime::ActorSet *MindRTBackend::RealCompileGraphBeforeRunActor(const GraphComp
   MS_EXCEPTION_IF_NULL(actor_set);
   constexpr auto kKernelActorThreshold = 5000;
   // Turning off multithreading may cause stack overflow in control flow scenarios.
-  if (no_multi_graph && actor_set->kernel_actors_.size() < kKernelActorThreshold) {
+  if (no_multi_graph && actor_set->kernel_actors_.size() < kKernelActorThreshold &&
+      root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
     // Multithreading can cause spikes in memory usage and performance fluctuations.
     actor_set->is_multi_thread_execution_ = false;
     MS_LOG(INFO) << "Actor Multithreading is turned off!";
