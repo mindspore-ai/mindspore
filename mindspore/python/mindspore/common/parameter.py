@@ -841,7 +841,7 @@ class Parameter(Tensor_):
         Parameter._set_data_check_input_valid(self.shape, data.shape, current_tensor_is_init, incoming_tensor_is_init,
                                               slice_shape, self.slice_num)
         if self.dtype != data.dtype:
-            if mstype.implicit_conversion_seq[self.dtype] < mstype.implicit_conversion_seq[data.dtype]:
+            if mstype.implicit_conversion_seq.get(self.dtype) < mstype.implicit_conversion_seq.get(data.dtype):
                 self._raise_type_error(data.dtype)
             else:
                 from mindspore.ops import functional as F

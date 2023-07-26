@@ -198,7 +198,8 @@ def _update_seeds(op_seed, kernel_name):
     """
     global _KERNEL_SEED
     if op_seed is not None:
-        _KERNEL_SEED[(kernel_name, op_seed)] = _KERNEL_SEED[(kernel_name, op_seed)] + (keyConstant[0] ^ keyConstant[2])
+        _KERNEL_SEED[(kernel_name, op_seed)] = _KERNEL_SEED.get((kernel_name, op_seed)) + \
+                                               (keyConstant[0] ^ keyConstant[2])
 
 
 def _get_op_seed(op_seed, kernel_name):
