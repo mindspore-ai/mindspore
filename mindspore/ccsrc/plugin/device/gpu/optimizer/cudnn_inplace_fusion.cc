@@ -162,8 +162,8 @@ void CopyKernelInfo(AnfNodePtr src, AnfNodePtr dst) {
   std::vector<TypeId> types;
   std::vector<BaseShapePtr> shapes;
   for (size_t i = 0; i < output_num; i++) {
-    types.emplace_back(common::AnfAlgo::GetOutputInferDataType(src, i));
-    shapes.emplace_back(AnfAlgo::GetOutputDetailShape(src, i));
+    (void)types.emplace_back(common::AnfAlgo::GetOutputInferDataType(src, i));
+    (void)shapes.emplace_back(AnfAlgo::GetOutputDetailShape(src, i));
   }
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, dst.get());
 }
@@ -208,7 +208,7 @@ void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, size_t cove
     CopyKernelInfo(acc_node, new_inplace_node);
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
-    manager->Replace(acc_node, new_inplace_node);
+    (void)manager->Replace(acc_node, new_inplace_node);
     (*inplace_node)[acc_index].node = new_inplace_node;
   }
 }
@@ -248,7 +248,7 @@ void SetNodeAttr(AnfNodeIndex aggregate_node, AnfNodePtr skip_node, std::vector<
       depend_node->set_abstract(acc_node_input->abstract());
       auto manager = graph->manager();
       MS_EXCEPTION_IF_NULL(manager);
-      manager->Replace(acc_node_input, depend_node);
+      (void)manager->Replace(acc_node_input, depend_node);
     }
   }
   group++;
@@ -310,7 +310,7 @@ bool PatternMatch(const FuncGraphPtr &graph, const AnfNodePtr &node, AnfNodeInde
 std::map<AnfNodePtr, int> TopoIndex(const std::vector<AnfNodePtr> &node_list) {
   std::map<AnfNodePtr, int> topo_index;
   for (size_t i = 0; i < node_list.size(); i++) {
-    topo_index.insert(make_pair(node_list[i], i));
+    (void)topo_index.insert(make_pair(node_list[i], i));
   }
   return topo_index;
 }

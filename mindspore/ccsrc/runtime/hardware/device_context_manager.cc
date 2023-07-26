@@ -424,7 +424,7 @@ void DeviceContextManager::LoadPlugin() {
     if (dot == std::string::npos) {
       continue;
     }
-    multi_version_plugin_map[file_name.substr(0, dot)].insert(plugin_file);
+    (void)multi_version_plugin_map[file_name.substr(0, dot)].insert(plugin_file);
   }
 
   for (const auto &[plugin_name, file_names] : multi_version_plugin_map) {

@@ -50,13 +50,13 @@ bool KernelInfo::SetOutputAddr(const DeviceAddressPtr &output_address, size_t in
   // parameter and valuenode
   if (kernel_mod_ == nullptr && index >= output_address_list_.size()) {
     for (size_t i = output_address_list_.size(); i <= index; i++) {
-      output_address_list_.emplace_back(nullptr);
+      (void)output_address_list_.emplace_back(nullptr);
     }
   } else if (kernel_mod_ != nullptr && output_address_list_.empty()) {
     // set cnode
     MS_EXCEPTION_IF_NULL(select_kernel_build_info_);
     for (size_t i = 0; i < select_kernel_build_info_->GetOutputNum(); i++) {
-      output_address_list_.emplace_back(nullptr);
+      (void)output_address_list_.emplace_back(nullptr);
     }
   }
   if (index >= output_address_list_.size()) {
@@ -94,11 +94,11 @@ bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t
   if (workspace_address_list_.empty()) {
     // parameter and valuenode
     if (kernel_mod_ == nullptr) {
-      workspace_address_list_.emplace_back(nullptr);
+      (void)workspace_address_list_.emplace_back(nullptr);
     } else {
       // set cnode
       for (size_t i = 0; i < kernel_mod_->GetWorkspaceSizeList().size(); i++) {
-        workspace_address_list_.emplace_back(nullptr);
+        (void)workspace_address_list_.emplace_back(nullptr);
       }
     }
   }

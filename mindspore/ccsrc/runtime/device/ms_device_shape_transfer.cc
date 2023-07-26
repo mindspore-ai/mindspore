@@ -750,6 +750,9 @@ ShapeVector DeviceShapeTransfer::FRAC_ZDeviceShapeWithGroups(const ShapeVector &
   auto c1_dim = abstract::Shape::kShapeDimAny;
   auto g_dim = abstract::Shape::kShapeDimAny;
   auto n1 = abstract::Shape::kShapeDimAny;
+  if (shape.size() < kShape2dDims) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Format FRAC_ZDeviceShape don't support shape with " << shape.size() << " dims";
+  }
   if (!HasShapeDynamic({shape[kC], shape[kN]})) {
     auto group_size = groups;
     auto cin_ori_tmp = static_cast<int64_t>(shape[kC]);

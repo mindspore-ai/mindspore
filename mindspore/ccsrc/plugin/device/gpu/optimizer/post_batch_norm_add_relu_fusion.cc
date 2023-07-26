@@ -102,7 +102,9 @@ const AnfNodePtr PostBatchNormAddReluFusion::Process(const FuncGraphPtr &graph, 
 
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  manager->Replace(batch_norm, fused_batch_norm_with_add_relu);
+  if (!manager->Replace(batch_norm, fused_batch_norm_with_add_relu)) {
+    MS_LOG(EXCEPTION) << "manager replace node failed in post batchnorm add relu fusion.";
+  }
   auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
   MS_EXCEPTION_IF_NULL(kernel_info_setter);
   kernel_info_setter->SetKernelInfo(fused_batch_norm_with_add_relu, KernelType::UNKNOWN_KERNEL_TYPE);

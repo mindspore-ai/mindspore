@@ -44,10 +44,10 @@ OutputInfo GetNodeOutputInfo(const AnfNodePtr &node) {
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
   for (size_t i = 0; i < output_num; i++) {
-    output_infer_dtype.emplace_back(common::AnfAlgo::GetOutputInferDataType(type_ptr, i));
-    output_infer_shape.emplace_back(common::AnfAlgo::GetOutputInferShape(node, shape_ptr, i));
-    output_format.emplace_back(build_info->GetOutputFormat(i));
-    output_device_dtype.emplace_back(build_info->GetOutputDeviceType(i));
+    (void)output_infer_dtype.emplace_back(common::AnfAlgo::GetOutputInferDataType(type_ptr, i));
+    (void)output_infer_shape.emplace_back(common::AnfAlgo::GetOutputInferShape(node, shape_ptr, i));
+    (void)output_format.emplace_back(build_info->GetOutputFormat(i));
+    (void)output_device_dtype.emplace_back(build_info->GetOutputDeviceType(i));
   }
 
   return {output_infer_dtype, output_infer_shape, output_format, output_device_dtype};
@@ -64,8 +64,8 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const AnfNodePtr &concat, con
   size_t concat_input_num = common::AnfAlgo::GetInputTensorNum(concat);
   for (size_t i = 0; i < concat_input_num; ++i) {
     size_t input_index = allgather_input_idx + i * allgather_input_num;
-    inputs_device_format.emplace_back(std::get<kIndex2>(allgather_output_info)[input_index]);
-    inputs_device_type.emplace_back(std::get<kIndex3>(allgather_output_info)[input_index]);
+    (void)inputs_device_format.emplace_back(std::get<kIndex2>(allgather_output_info)[input_index]);
+    (void)inputs_device_type.emplace_back(std::get<kIndex3>(allgather_output_info)[input_index]);
   }
   // Current only support default format & float16
   auto cmp_format = inputs_device_format.begin();
@@ -81,8 +81,8 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const AnfNodePtr &concat, con
     MS_LOG(EXCEPTION) << "Input dtype is not same, value: " << TypeIdLabel(*dtype_iter)
                       << ", need dtype: " << TypeIdLabel(*cmp_dtype);
   }
-  outputs_device_format.emplace_back(*cmp_format);
-  outputs_device_type.emplace_back(*cmp_dtype);
+  (void)outputs_device_format.emplace_back(*cmp_format);
+  (void)outputs_device_type.emplace_back(*cmp_dtype);
 
   builder.SetFusionType(kPatternOpaque);
   builder.SetInputsFormat(inputs_device_format);
@@ -161,7 +161,7 @@ const AnfNodePtr ConcatOutputsForAllGather::Process(const FuncGraphPtr &func_gra
     MS_EXCEPTION_IF_NULL(tuple_getitem);
     auto shape = AnfAlgo::GetOutputDetailShape(node, i);
     common::AnfAlgo::SetOutputTypeAndDetailShape({std::get<0>(output_info)[i]}, {shape}, tuple_getitem.get());
-    new_outputs.emplace_back(std::move(tuple_getitem));
+    (void)new_outputs.emplace_back(std::move(tuple_getitem));
   }
   return InsertConcatForOutput(func_graph, node, output_info, new_outputs, rank_size);
 }

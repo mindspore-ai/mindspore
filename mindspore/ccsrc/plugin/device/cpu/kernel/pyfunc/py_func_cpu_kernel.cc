@@ -210,7 +210,10 @@ void PyObjectToRawMemorys(const py::object &object, const PyFuncArgumentInfo &ou
   if (result_tuple.size() != outputs.size()) {
     MS_LOG(EXCEPTION) << "The output num is: " << result_tuple.size() << ", with " << outputs.size() << " expect.";
   }
-
+  if (output_infos.object_types.size() != outputs.size() || output_infos.dtypes.size() != outputs.size()) {
+    MS_LOG(EXCEPTION) << "The output info size is: " << output_infos.object_types.size() << " and "
+                      << output_infos.dtypes.size() << ", with " << outputs.size() << " expect.";
+  }
   for (size_t i = 0; i < outputs.size(); i++) {
     ObjectToRawMemory(result_tuple[i], output_infos.object_types[i], output_infos.dtypes[i], outputs[i]);
   }

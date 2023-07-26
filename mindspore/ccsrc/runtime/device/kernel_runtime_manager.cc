@@ -123,7 +123,7 @@ void KernelRuntimeManager::ReleaseKernelRuntime(const std::string &device_name, 
     return;
   }
   runtime->ReleaseDeviceRes();
-  runtime_map_.erase(runtime_iter);
+  (void)runtime_map_.erase(runtime_iter);
 }
 
 void KernelRuntimeManager::WaitTaskFinishOnDevice() const {

@@ -97,6 +97,7 @@ bool CastAllFusion::Run(const FuncGraphPtr &graph) {
   for (auto cast_list : deal_list) {
     // 2 create node CastAll
     auto prim = std::make_shared<Primitive>("CastAll");
+    MS_EXCEPTION_IF_NULL(prim);
     std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
     // set inputs for CastAll
     for (size_t idx = 0; idx < cast_list.size(); ++idx) {

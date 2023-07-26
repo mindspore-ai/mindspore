@@ -75,7 +75,9 @@ const AnfNodePtr BiasDropoutAddFusion::Process(const FuncGraphPtr &graph, const 
   common::AnfAlgo::CopyNodeAttrs(dropout, fused_node);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  manager->Replace(dropout, fused_node);
+  if (!manager->Replace(dropout, fused_node)) {
+    MS_LOG(EXCEPTION) << "manager replace node failed in bias dropout fusion.";
+  }
   return get_item;
 }
 }  // namespace opt

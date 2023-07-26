@@ -159,10 +159,12 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
   common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, fused_batch_norm_with_add_relu.get());
   common::AnfAlgo::CopyNodeAttrs(batch_norm, fused_batch_norm_with_add_relu);
 
-  manager->Replace(batch_norm, fused_batch_norm_with_add_relu);
+  if (!manager->Replace(batch_norm, fused_batch_norm_with_add_relu)) {
+    MS_LOG(EXCEPTION) << "manager replace node failed in batchnorm add relu fusion.";
+  }
   auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
   kernel_info_setter->SetKernelInfo(fused_batch_norm_with_add_relu, KernelType::UNKNOWN_KERNEL_TYPE);
   return tuple_get_item;
-}
+}  // namespace opt
 }  // namespace opt
 }  // namespace mindspore
