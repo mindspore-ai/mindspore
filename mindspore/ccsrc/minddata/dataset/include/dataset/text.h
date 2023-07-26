@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,8 +201,8 @@ class SentencePieceVocab {
   ///     Status rc = SentencePieceVocab::BuildFromFile(path_list, 5000, 0.9995,
   ///                                                   SentencePieceModel::kUnigram, param_map, &spm);
   /// \endcode
-  static Status BuildFromFile(const std::vector<std::string> &path_list, const int32_t vocab_size,
-                              const float character_coverage, const SentencePieceModel model_type,
+  static Status BuildFromFile(const std::vector<std::string> &path_list, int32_t vocab_size, float character_coverage,
+                              const SentencePieceModel &model_type,
                               const std::unordered_map<std::string, std::string> &params,
                               std::shared_ptr<SentencePieceVocab> *vocab);
 
@@ -215,8 +215,8 @@ class SentencePieceVocab {
   ///     // Save vocab model to local
   ///     vocab->SaveModel(&vocab, datasets_root_path_ + "/test_sentencepiece", "m.model");
   /// \endcode
-  static Status SaveModel(const std::shared_ptr<SentencePieceVocab> *vocab, const std::string path,
-                          std::string filename);
+  static Status SaveModel(const std::shared_ptr<SentencePieceVocab> *vocab, const std::string &path,
+                          const std::string &filename);
 
   /// \brief Constructor.
   SentencePieceVocab();
@@ -226,7 +226,7 @@ class SentencePieceVocab {
 
   const std::string &model_proto();
 
-  void set_model_proto(const std::string model_proto);
+  void set_model_proto(const std::string &model_proto);
 
  private:
   std::string model_proto_;
@@ -293,7 +293,7 @@ class DATASET_API BasicTokenizer final : public TensorTransform {
                           bool with_offsets = false);
 
   /// \brief Destructor
-  ~BasicTokenizer() = default;
+  ~BasicTokenizer() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -365,7 +365,7 @@ class DATASET_API BertTokenizer final : public TensorTransform {
                 bool keep_whitespace, NormalizeForm normalize_form, bool preserve_unused_token, bool with_offsets);
 
   /// \brief Destructor
-  ~BertTokenizer() = default;
+  ~BertTokenizer() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -393,7 +393,7 @@ class DATASET_API CaseFold final : public TensorTransform {
   CaseFold();
 
   /// \brief Destructor
-  ~CaseFold() = default;
+  ~CaseFold() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -408,7 +408,7 @@ class FilterWikipediaXML final : public TensorTransform {
   FilterWikipediaXML();
 
   /// \brief Destructor
-  ~FilterWikipediaXML() = default;
+  ~FilterWikipediaXML() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -460,7 +460,7 @@ class DATASET_API JiebaTokenizer final : public TensorTransform {
                  bool with_offsets);
 
   /// \brief Destructor
-  ~JiebaTokenizer() = default;
+  ~JiebaTokenizer() override = default;
 
   /// \brief Add a user defined word to the JiebaTokenizer's dictionary.
   /// \param[in] word The word to be added to the JiebaTokenizer instance.
@@ -572,7 +572,7 @@ class DATASET_API Lookup final : public TensorTransform {
          mindspore::DataType data_type = mindspore::DataType::kNumberTypeInt32);
 
   /// \brief Destructor
-  ~Lookup() = default;
+  ~Lookup() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -622,7 +622,7 @@ class DATASET_API Ngram final : public TensorTransform {
         const std::pair<std::vector<char>, int32_t> &right_pad, const std::vector<char> &separator);
 
   /// \brief Destructor
-  ~Ngram() = default;
+  ~Ngram() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -659,7 +659,7 @@ class DATASET_API NormalizeUTF8 final : public TensorTransform {
   explicit NormalizeUTF8(NormalizeForm normalize_form = NormalizeForm::kNfkc);
 
   /// \brief Destructor
-  ~NormalizeUTF8() = default;
+  ~NormalizeUTF8() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -699,7 +699,7 @@ class DATASET_API RegexReplace final : public TensorTransform {
   RegexReplace(const std::vector<char> &pattern, const std::vector<char> &replace, bool replace_all);
 
   /// \brief Destructor
-  ~RegexReplace() = default;
+  ~RegexReplace() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -737,7 +737,7 @@ class DATASET_API RegexTokenizer final : public TensorTransform {
                           bool with_offsets);
 
   /// \brief Destructor
-  ~RegexTokenizer() = default;
+  ~RegexTokenizer() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -793,7 +793,7 @@ class DATASET_API SentencePieceTokenizer final : public TensorTransform {
   SentencePieceTokenizer(const std::vector<char> &vocab_path, mindspore::dataset::SPieceTokenizerOutType out_type);
 
   /// \brief Destructor
-  ~SentencePieceTokenizer() = default;
+  ~SentencePieceTokenizer() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -825,7 +825,7 @@ class DATASET_API SlidingWindow final : public TensorTransform {
   explicit SlidingWindow(int32_t width, int32_t axis = 0);
 
   /// \brief Destructor
-  ~SlidingWindow() = default;
+  ~SlidingWindow() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -858,7 +858,7 @@ class DATASET_API ToNumber final : public TensorTransform {
   explicit ToNumber(mindspore::DataType data_type);
 
   /// \brief Destructor
-  ~ToNumber() = default;
+  ~ToNumber() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -882,7 +882,7 @@ class DATASET_API ToVectors final : public TensorTransform {
                      bool lower_case_backup = false);
 
   /// \brief Destructor
-  ~ToVectors() = default;
+  ~ToVectors() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -911,7 +911,7 @@ class DATASET_API Truncate final : public TensorTransform {
   explicit Truncate(int32_t max_seq_len);
 
   /// \brief Destructor.
-  ~Truncate() = default;
+  ~Truncate() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -940,7 +940,7 @@ class DATASET_API TruncateSequencePair final : public TensorTransform {
   explicit TruncateSequencePair(int32_t max_length);
 
   /// \brief Destructor
-  ~TruncateSequencePair() = default;
+  ~TruncateSequencePair() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -969,7 +969,7 @@ class DATASET_API UnicodeCharTokenizer final : public TensorTransform {
   explicit UnicodeCharTokenizer(bool with_offsets = false);
 
   /// \brief Destructor
-  ~UnicodeCharTokenizer() = default;
+  ~UnicodeCharTokenizer() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1014,7 +1014,7 @@ class DATASET_API WordpieceTokenizer final : public TensorTransform {
                               int32_t max_bytes_per_token, const std::vector<char> &unknown_token, bool with_offsets);
 
   /// \brief Destructor
-  ~WordpieceTokenizer() = default;
+  ~WordpieceTokenizer() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1045,7 +1045,7 @@ class DATASET_API UnicodeScriptTokenizer final : public TensorTransform {
   explicit UnicodeScriptTokenizer(bool keep_whitespace = false, bool with_offsets = false);
 
   /// \brief Destructor
-  ~UnicodeScriptTokenizer() = default;
+  ~UnicodeScriptTokenizer() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1074,7 +1074,7 @@ class DATASET_API WhitespaceTokenizer final : public TensorTransform {
   explicit WhitespaceTokenizer(bool with_offsets = false);
 
   /// \brief Destructor
-  ~WhitespaceTokenizer() = default;
+  ~WhitespaceTokenizer() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.

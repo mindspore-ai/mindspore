@@ -28,53 +28,48 @@
 #include <utility>
 #include <vector>
 
+#include "nlohmann/json_fwd.hpp"
+
 #include "include/api/dual_abi_helper.h"
 #include "include/api/types.h"
 #include "include/dataset/iterator.h"
-#include "nlohmann/json_fwd.hpp"
 #include "include/dataset/samplers.h"
 #include "include/dataset/text.h"
 
 namespace mindspore {
 namespace dataset {
+class CsvBase;
+class DatasetCache;
+class DatasetNode;
+class DSCallback;
+class Iterator;
+class PullBasedIterator;
+class SamplerObj;
+class SchemaObj;
+enum class SentencePieceModel;
+class SentencePieceVocab;
 class Tensor;
+class TensorOperation;
 class TensorShape;
 class TreeAdapter;
 class TreeAdapterLite;
 class TreeGetters;
 class Vocab;
 
-class DatasetCache;
-class DatasetNode;
-
-class Iterator;
-class PullBasedIterator;
-
-class TensorOperation;
-class SchemaObj;
-class SamplerObj;
-class CsvBase;
-
 // Dataset classes (in alphabetical order)
 class BatchDataset;
+class BucketBatchByLengthDataset;
+class ConcatDataset;
+class CSVDataset;
+class FilterDataset;
 class MapDataset;
 class ProjectDataset;
-class ShuffleDataset;
-class BucketBatchByLengthDataset;
-class FilterDataset;
-class CSVDataset;
-class TransferDataset;
-class ConcatDataset;
 class RenameDataset;
-
-class SentencePieceVocab;
-enum class SentencePieceModel;
-
-class DSCallback;
-
 class RepeatDataset;
+class ShuffleDataset;
 class SkipDataset;
 class TakeDataset;
+class TransferDataset;
 class ZipDataset;
 
 /// \class Dataset datasets.h
@@ -331,7 +326,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \endcode
   std::shared_ptr<ConcatDataset> Concat(const std::vector<std::shared_ptr<Dataset>> &datasets) {
     std::vector<std::shared_ptr<Dataset>> all_datasets{shared_from_this()};
-    all_datasets.insert(std::end(all_datasets), std::begin(datasets), std::end(datasets));
+    (void)all_datasets.insert(all_datasets.end(), datasets.begin(), datasets.end());
     return std::make_shared<ConcatDataset>(all_datasets);
   }
 
@@ -3730,8 +3725,8 @@ class DATASET_API LSUNDataset : public Dataset {
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
   LSUNDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-              const std::vector<std::vector<char>> &classes, bool decode, const std::reference_wrapper<Sampler> sampler,
-              const std::shared_ptr<DatasetCache> &cache);
+              const std::vector<std::vector<char>> &classes, bool decode,
+              const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of LSUNDataset.
   ~LSUNDataset() override = default;

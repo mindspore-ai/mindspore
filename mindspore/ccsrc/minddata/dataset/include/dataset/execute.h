@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_EXECUTE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_EXECUTE_H_
 
-#include <string>
-#include <vector>
 #include <map>
 #include <memory>
+#include <string>
+#include <vector>
+
 #include "include/api/context.h"
 #include "include/api/types.h"
 #include "include/dataset/constants.h"
@@ -29,8 +30,8 @@
 namespace mindspore {
 namespace dataset {
 class DeviceResource;
-class TensorOp;
 class Tensor;
+class TensorOp;
 
 // class to run tensor operations in eager mode
 class DATASET_API Execute {
