@@ -72,6 +72,7 @@ class NNAPIDelegate : public Delegate {
       }
     }
     for (auto kernel : *kernels) {
+      MS_CHECK_TRUE_RET(kernel != nullptr, RET_ERROR);
       if (is_kernel_ready(kernel)) {
         tmp_kernels.push(kernel);
         ready_kernels->push_back(kernel);

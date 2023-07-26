@@ -52,6 +52,7 @@ static Status RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graph, &all_func_graphs);
   for (auto graph : all_func_graphs) {
+    MS_CHECK_TRUE_RET(graph != nullptr, kCoreFailed);
     auto node_list = TopoSort(graph->get_return());
     for (auto &node : node_list) {
       if (!utils::isa<CNodePtr>(node)) {
@@ -117,7 +118,7 @@ std::shared_ptr<AscendDeviceInfo> GeUtils::GetAscendDeviceInfo(const std::shared
   auto device_list = context->MutableDeviceInfo();
   auto itr =
     std::find_if(device_list.begin(), device_list.end(), [](const std::shared_ptr<DeviceInfoContext> &device_info) {
-      return device_info->GetDeviceType() == DeviceType::kAscend;
+      return device_info != nullptr && device_info->GetDeviceType() == DeviceType::kAscend;
     });
   if (itr == device_list.end()) {
     MS_LOG(ERROR) << "Can not find ascend device context.";

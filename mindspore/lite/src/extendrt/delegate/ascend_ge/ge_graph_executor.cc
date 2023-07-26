@@ -681,6 +681,7 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor
   std::vector<::ge::Tensor> ge_inputs;
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
+    MS_CHECK_TRUE_RET(input != nullptr, false);
     MS_LOG(INFO) << "Input " << i << " shape " << input->shape() << ", datatype " << input->data_type();
     auto ge_tensor = ConvertLiteTensor(input, kOpFormat_NCHW);
     if (ge_tensor == nullptr) {
@@ -709,6 +710,7 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor
   for (size_t i = 0; i < outputs->size(); ++i) {
     auto &ge_tensor = ge_outputs[i];
     auto &output = (*outputs)[i];
+    MS_CHECK_TRUE_RET(output != nullptr, false);
     if (output->data() != nullptr) {
       if (output->Size() < LongToSize(UlongToLong(ge_tensor.GetSize()))) {
         MS_LOG(EXCEPTION) << "Output node " << i << "'s mem size " << output->Size()
