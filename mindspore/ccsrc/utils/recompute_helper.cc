@@ -222,12 +222,13 @@ std::vector<AnfNodePtr> GetInputNodesWithFilter(const CNodePtr &node, std::funct
 
 void GetNewFirstTargetInputs(const std::vector<AnfNodePtr> &recompute_input_border_bprop_nodes,
                              std::function<bool(const AnfNodePtr &)> push_func,
-                             std::vector<AnfNodePtr> *first_target_inputs) {
+                             std::vector<AnfNodePtr> *first_target_inputs, bool *inserted) {
   for (const auto &input_border_bprop_node : recompute_input_border_bprop_nodes) {
     MS_LOG(INFO) << "input_border_bprop_node:" << input_border_bprop_node->DebugString()
                  << ", the fullname:" << input_border_bprop_node->fullname_with_scope();
     if (!input_border_bprop_node->isa<CNode>()) {
       (void)(*first_target_inputs).emplace_back(input_border_bprop_node);
+      *inserted = true;
       continue;
     }
     auto input_border_bprop_cnode = input_border_bprop_node->cast<CNodePtr>();
@@ -236,6 +237,7 @@ void GetNewFirstTargetInputs(const std::vector<AnfNodePtr> &recompute_input_bord
         continue;
       }
       (void)(*first_target_inputs).emplace_back(input_border_bprop_cnode->input(k));
+      *inserted = true;
     }
   }
 }
@@ -310,10 +312,14 @@ std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin
         continue;
       }
       auto input_cnode = input->cast<CNodePtr>();
+      if (!IsBpropNode(input_cnode)) {
+        continue;
+      }
       if (HasTargetOrRecomputeInputs(recomputed_origin_nodes, target_nodes, input_cnode, &has_grad_inputs_map)) {
         continue;
       }
 
+      bool inserted = false;
       for (size_t j = 1; j < input_cnode->size(); ++j) {
         if (filt_func(input_cnode->input(j))) {
           continue;
@@ -322,11 +328,12 @@ std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin
         auto recompute_input_border_bprop_nodes = GetInputNodesWithFilter(select_node, filt_func, push_func);
         if (recompute_input_border_bprop_nodes.empty()) {
           (void)first_target_inputs.emplace_back(input);
+          inserted = true;
           continue;
         }
-        GetNewFirstTargetInputs(recompute_input_border_bprop_nodes, push_func, &first_target_inputs);
+        GetNewFirstTargetInputs(recompute_input_border_bprop_nodes, push_func, &first_target_inputs, &inserted);
       }
-      if (first_target_inputs.empty()) {
+      if (!inserted) {
         (void)first_target_inputs.emplace_back(input);
       }
     }
