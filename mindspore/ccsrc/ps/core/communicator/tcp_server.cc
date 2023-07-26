@@ -241,13 +241,13 @@ void TcpServer::SendToAllClients(const char *data, size_t len) {
 void TcpServer::AddConnection(const evutil_socket_t &fd, std::shared_ptr<TcpConnection> connection) {
   MS_EXCEPTION_IF_NULL(connection);
   std::lock_guard<std::mutex> lock(connection_mutex_);
-  connections_.insert(std::make_pair(fd, connection));
+  (void)connections_.insert(std::make_pair(fd, connection));
 }
 
 void TcpServer::RemoveConnection(const evutil_socket_t &fd) {
   std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Remove connection fd: " << fd;
-  connections_.erase(fd);
+  (void)connections_.erase(fd);
 }
 
 std::shared_ptr<TcpConnection> &TcpServer::GetConnectionByFd(const evutil_socket_t &fd) { return connections_[fd]; }

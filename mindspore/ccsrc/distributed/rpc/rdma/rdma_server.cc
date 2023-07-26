@@ -74,6 +74,7 @@ void RDMAServer::urpc_req_handler(struct urpc_sgl *req, void *arg, struct urpc_s
   std::string rsp_msg = "Client calls " + std::to_string(server->func_id()) + " function.";
   auto rsp_buf = server->urpc_allocator()->alloc(rsp_msg.size());
   if (memcpy_s(rsp_buf, rsp_msg.size(), rsp_msg.c_str(), rsp_msg.size()) != EOK) {
+    server->urpc_allocator().free(rsp_buf);
     MS_LOG(EXCEPTION) << "Failed to memcpy_s for response message.";
   }
   rsp->sge[0].addr = reinterpret_cast<uintptr_t>(rsp_buf);
@@ -87,7 +88,6 @@ void RDMAServer::urpc_rsp_handler(struct urpc_sgl *rsp, void *arg) {
   MS_ERROR_IF_NULL_WO_RET_VAL(arg);
 
   auto urpc_allocator = static_cast<struct urpc_buffer_allocator *>(arg);
-  MS_ERROR_IF_NULL_WO_RET_VAL(urpc_allocator);
   urpc_allocator->free(reinterpret_cast<void *>(rsp->sge[0].addr));
 }
 }  // namespace rpc
