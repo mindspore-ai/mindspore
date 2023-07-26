@@ -161,7 +161,9 @@ int Convolution1x1Int8CPUKernel::InitBiasByzp(const void *src_weight, int input_
   CHECK_NULL_RETURN(conv_param_);
   CHECK_NULL_RETURN(src_weight);
   int32_t *bias_data = reinterpret_cast<int32_t *>(bias_data_);
+  CHECK_NULL_RETURN(bias_data);
   auto *weight = static_cast<const int8_t *>(src_weight);
+  CHECK_NULL_RETURN(weight);
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
   for (int oc = 0; oc < output_channel; oc++) {
     int32_t weight_sum_value = 0;
