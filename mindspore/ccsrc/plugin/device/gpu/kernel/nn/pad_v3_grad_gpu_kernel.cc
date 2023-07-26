@@ -111,6 +111,7 @@ bool PadV3GradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (!is_match) {
     return false;
   }
+  MS_ERROR_IF_NULL(attr_ptr_);
   attr_ptr_->mode = kernel_ptr->get_mode();
   const bool is_mode_available = std::find(mode_list.begin(), mode_list.end(), attr_ptr_->mode) != mode_list.end();
   if (is_mode_available == false) {

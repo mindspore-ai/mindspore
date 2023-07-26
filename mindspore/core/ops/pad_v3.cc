@@ -116,6 +116,20 @@ void ReflectModeCheck(const std::string &prim_name, const int64_t paddings_size,
   }
 }
 
+abstract::ShapePtr PaddingNoTensor(abstract::BaseShapePtr paddings_shape_ptr, const std::vector<int64_t> &x_shape) {
+  auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(paddings_shape_ptr)[kShape];
+  size_t pad_dim = 0;
+  if (paddings_shape.size() >= 1) {
+    pad_dim = paddings_shape[0] / nTwo;
+  }
+  auto out_shape = x_shape;
+  auto dim_size = x_shape.size();
+  for (size_t i = dim_size - pad_dim; i < dim_size; ++i) {
+    out_shape[i] = abstract::Shape::kShapeDimAny;
+  }
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+
 abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t kEdgeMaxDims = 5;
   constexpr int64_t kOtherMinDims = 3;
@@ -148,13 +162,7 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
     auto paddings_value = paddings->BuildValue();
     MS_EXCEPTION_IF_NULL(paddings_value);
     if (!paddings_value->isa<tensor::Tensor>()) {
-      auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(paddings_shape_ptr)[kShape];
-      size_t pad_dim = paddings_shape[0] / 2;
-      auto out_shape = x_shape;
-      for (size_t i = dim_size - pad_dim; i < dim_size; ++i) {
-        out_shape[i] = abstract::Shape::kShapeDimAny;
-      }
-      return std::make_shared<abstract::Shape>(out_shape);
+      return PaddingNoTensor(paddings_shape_ptr, x_shape);
     }
     paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name);
   } else if (padding_type->isa<Tuple>() || padding_type->isa<List>()) {

@@ -101,6 +101,7 @@ bool PadV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   if (!is_match) {
     return false;
   }
+  MS_ERROR_IF_NULL(attr_ptr_);
   attr_ptr_->mode = kernel_ptr->get_mode();
   attr_ptr_->paddings_contiguous = kernel_ptr->get_paddings_contiguous();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
