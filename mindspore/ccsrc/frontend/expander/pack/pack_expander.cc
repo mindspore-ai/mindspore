@@ -140,12 +140,16 @@ py::object PackExpander::BeginGraph(const abstract::AbstractBasePtrList &inputs)
   return outputs;
 }
 
+void PackExpander::UpdateFuncGraphFlags(const py::object &obj) {
+  parse::data_converter::SetFuncGraphByCellObj(graphs_.top(), obj);
+  parse::UpdateFuncGraphFlags(obj, graphs_.top(), true);
+}
+
 py::object PackExpander::BeginFuncGraph(const py::object &obj, const py::args &inputs) {
   auto up_graph = graphs_.top();
   auto graph = std::make_shared<FuncGraph>();
   graphs_.push(graph);
-  parse::data_converter::SetFuncGraphByCellObj(graph, obj);
-  parse::UpdateFuncGraphFlags(obj, graph, true);
+  UpdateFuncGraphFlags(obj);
   AnfNodePtrList node_inputs = {NewValueNode(graph)};
   auto args = py::cast<py::tuple>(inputs);
   py::tuple outputs(inputs.size());
@@ -301,14 +305,7 @@ AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
     py::object node = py::getattr(arg, stub::PY_ATTR_STUB);
     return node.cast<std::shared_ptr<PackNode>>()->Get();
   } else if (py::hasattr(arg, "__parameter__") && py::isinstance<tensor::MetaTensor>(arg) && !is_pynative_mode) {
-    if (IsReuse()) {
-      auto param = graphs_.top()->add_parameter();
-      param->set_name(py::cast<std::string>(python_adapter::GetPyObjAttr(arg, "name")));
-      param->set_abstract(parse::GetParameterValue(arg)->ToAbstract());
-      return param;
-    } else {
-      return parse::ResolveParameterObj(graphs_.top(), arg);
-    }
+    return parse::ResolveParameterObj(graphs_.top(), arg);
   } else {
     auto val = parse::data_converter::PyDataToValue(arg);
     MS_EXCEPTION_IF_NULL(val);
