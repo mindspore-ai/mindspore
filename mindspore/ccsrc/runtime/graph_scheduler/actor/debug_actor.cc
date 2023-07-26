@@ -171,8 +171,10 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     if (graphs.size() == 1) {
       const auto &graph_ = graphs[0];
       KernelGraphPtr kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(graph_);
+      MS_EXCEPTION_IF_NULL(kernel_graph);
       const auto kernels = kernel_graph->execution_order();
       is_data_map_ = std::any_of(kernels.cbegin(), kernels.cend(), [](const auto &kernel) {
+        MS_EXCEPTION_IF_NULL(kernel);
         return kernel->fullname_with_scope().find("InitDataSetQueue") != std::string::npos;
       });
     }

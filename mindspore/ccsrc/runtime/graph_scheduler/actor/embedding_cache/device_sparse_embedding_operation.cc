@@ -33,7 +33,7 @@ bool DeviceSparseEmbeddingOperation::CountCacheMissIds(int *batch_ids, const siz
                                                        size_t graph_running_step, bool *device_cache_need_wait_graph,
                                                        bool *host_cache_need_wait_graph) {
   MS_ERROR_IF_NULL(batch_ids);
-
+  MS_EXCEPTION_IF_NULL(statistics_info_);
   statistics_info_->batch_id_count_ = batch_ids_num;
   std::unique_ptr<bool[]> in_device = std::make_unique<bool[]>(batch_ids_num);
   auto ret = memset_s(in_device.get(), batch_ids_num * sizeof(bool), 0, batch_ids_num * sizeof(bool));
@@ -45,6 +45,7 @@ bool DeviceSparseEmbeddingOperation::CountCacheMissIds(int *batch_ids, const siz
   // 1. Analyze the hit/miss info of the local host cache and device cache.
   RETURN_IF_FALSE_WITH_LOG(CheckCacheHit(batch_ids, batch_ids_num, in_device.get(), data_step),
                            "Check cache hit or out range failed.");
+  MS_EXCEPTION_IF_NULL(actor_);
   RETURN_IF_FALSE_WITH_LOG(actor_->ResetEmbeddingHashMap(), "Reset embedding hash map failed.");
 
   // 2.calculate the swapping and mapping(feature id to cache index) information of the missing feature id that needs to
@@ -74,6 +75,7 @@ bool DeviceSparseEmbeddingOperation::CountCacheMissIds(int *batch_ids, const siz
 }
 
 bool DeviceSparseEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) {
+  MS_EXCEPTION_IF_NULL(statistics_info_);
   auto swap_indices_size = statistics_info_->device_to_host_size_;
   if (swap_indices_size == 0) {
     return true;
@@ -125,6 +127,7 @@ bool DeviceSparseEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTa
 }
 
 bool DeviceSparseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) {
+  MS_EXCEPTION_IF_NULL(statistics_info_);
   auto swap_indices_size = statistics_info_->host_to_device_size_;
   if (swap_indices_size == 0) {
     return true;

@@ -241,11 +241,15 @@ void MemSwapScheduler::AddSwappableTensors(const mindspore::device::DeviceContex
                                            const std::shared_ptr<device::SwapStrategy> &strategy,
                                            const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   const auto &swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
+  MS_EXCEPTION_IF_NULL(strategy);
+  MS_EXCEPTION_IF_NULL(graph);
   const auto &tensor_infos = strategy->tensor_infos_;
   const auto &ref_map = graph->GetRefMap();
   for (const auto &tensor_info : tensor_infos) {
+    MS_EXCEPTION_IF_NULL(tensor_info);
     if (tensor_info->is_workspace_ || tensor_info->node_ == nullptr) {
       continue;
     }

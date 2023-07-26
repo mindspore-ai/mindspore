@@ -538,6 +538,9 @@ CNodePtr CreateRealMakeTuple(const std::vector<DeviceTensor *> &addr_list) {
 void CheckDeviceAddressConsist(OpContext<DeviceTensor> *const context, const std::vector<DeviceTensor *> &addr_list,
                                const std::string &actor_name) {
   MS_EXCEPTION_IF_NULL(context);
+  if (addr_list.empty() || addr_list[0] == nullptr) {
+    return;
+  }
   // Check consistence of device address.
   const auto &shape = addr_list[0]->host_shape();
   const auto &size = addr_list[0]->GetSize();
@@ -573,6 +576,7 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
     auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
       {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
     MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
     const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
       nullptr, 0, kOpFormat_DEFAULT, TypeId::kNumberTypeInt64, {});
     MS_EXCEPTION_IF_NULL(new_device_tensor);
@@ -591,6 +595,7 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   }
 
   CheckDeviceAddressConsist(context, addr_list, GetAID().Name());
+  MS_EXCEPTION_IF_NULL(addr_list[0]);
   const auto &total_size = addr_list[0]->GetSize() * addr_list.size();
   ShapeVector total_shape = {SizeToLong(addr_list.size())};
   const auto &shape = addr_list[0]->host_shape();
@@ -598,6 +603,7 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {addr_list[0]->device_name(), addr_list[0]->device_id()});
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, total_size, addr_list[0]->format(), addr_list[0]->type_id(), total_shape);
   MS_EXCEPTION_IF_NULL(new_device_tensor);

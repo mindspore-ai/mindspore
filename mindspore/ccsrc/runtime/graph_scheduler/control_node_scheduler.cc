@@ -1694,6 +1694,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraphInSinkMode(const KernelGrap
       auto actor = FetchActor(parser->FetchGroupNameByKernelGraph(from_graph) + kExitActorNameSuffix);
       MS_EXCEPTION_IF_NULL(actor);
       auto exit_actor = dynamic_cast<ControlActor *>(actor);
+      MS_EXCEPTION_IF_NULL(exit_actor);
       size_t from_index = exit_actor->FetchNodePosition(front_node_with_index);
       SchedulerHelper::AddFormalParameterDeviceTensor(exit_actor, from_index, input_node, graph);
       SchedulerHelper::AddDataArrow(exit_actor, to_actor, from_index, i);
@@ -1754,6 +1755,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       // If the formal parameter is a tuple type, the parameter of the kernel graph will not directly correspond
       // to the front parameter, but the node in the internal parameter.
       const auto &from_node = from_node_with_index.first;
+      MS_EXCEPTION_IF_NULL(from_node);
       MS_LOG(DEBUG) << "Graph:" << graph->ToString() << " from node:" << from_node_with_index.first->DebugString()
                     << " index:" << from_node_with_index.second;
 

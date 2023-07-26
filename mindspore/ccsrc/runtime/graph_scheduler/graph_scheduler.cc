@@ -1896,6 +1896,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
                                    << front_output_with_index.first->DebugString();
       }
       real_depend_kernel = graph_output_to_actor_[front_output_with_index].second.first;
+      MS_EXCEPTION_IF_NULL(real_depend_kernel);
       const auto &func_graph = real_depend_kernel->func_graph();
       if (func_graph == nullptr || std::dynamic_pointer_cast<KernelGraph>(func_graph) == nullptr) {
         MS_LOG(WARNING) << "Cannot get kernel graph for node:" << real_depend_kernel->DebugString();
@@ -2387,6 +2388,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
   for (const auto &origin_output_order : graph_compiler_info.origin_outputs_order_) {
     const auto &front_output_with_index = origin_output_order.first;
     if (graph_output_to_actor_.count(front_output_with_index) == 0) {
+      MS_EXCEPTION_IF_NULL(front_output_with_index.first);
       MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find graph output by front node:"
                                  << front_output_with_index.first->DebugString();
     }
@@ -2402,6 +2404,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
       real_from_index = 0;
     } else {
       if (from_actor == nullptr) {
+        MS_EXCEPTION_IF_NULL(front_output_with_index.first);
         MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find output actor by front node:"
                                    << front_output_with_index.first->DebugString()
                                    << ", output node:" << real_from_kernel->DebugString();
@@ -2525,6 +2528,7 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       for (size_t j = 0; j < common::AnfAlgo::GetInputTensorNum(kernel); ++j) {
         const auto &input_node = common::AnfAlgo::GetInputNode(kernel, j);
         const auto &real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false).first;
+        MS_EXCEPTION_IF_NULL(real_input_node);
         if (real_input_node->isa<ValueNode>()) {
           PersistDeviceTensorForValueNode(real_input_node, graph, real_device_context);
         }
@@ -2560,6 +2564,7 @@ void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_nod
     auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
       nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
       device_tensor->host_shape());
+    MS_EXCEPTION_IF_NULL(other_type_device_tensor);
     other_type_device_tensor->SetNodeIndex(value_node, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
     SchedulerHelper::AddDeviceTensorStore(front_node.get(), other_type_device_tensor);

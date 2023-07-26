@@ -56,12 +56,14 @@ AnfNodePtr MatMulBiasAddFusionCPU::CreateMatmulWithBias(const FuncGraphPtr &grap
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x1_));
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x2_));
   auto new_node = NewCNode(inputs, graph);
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(node->scope());
   new_node->set_abstract(node->abstract());
   common::AnfAlgo::CopyNodeAttrs(matmul, new_node);
 
   auto prim = GetValueNode<PrimitivePtr>(new_node->input(0));
+  MS_EXCEPTION_IF_NULL(prim);
   (void)prim->AddAttr(kAttrWithBiasAdd, MakeValue(true));
   new_node->AddAttr(kAttrWithBiasAdd, MakeValue(true));
 

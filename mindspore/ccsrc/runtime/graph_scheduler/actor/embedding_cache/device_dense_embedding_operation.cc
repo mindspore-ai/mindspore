@@ -209,6 +209,7 @@ void DeviceDenseEmbeddingOperation::GetRemoteEmbeddingSliceBound(
       begin = 0;
       end = remote_embedding_slice_sizes[0] - 1;
     } else {
+      MS_EXCEPTION_IF_NULL(remote_embedding_slice_bounds);
       begin = remote_embedding_slice_bounds->at(i - 1).second + 1;
       end = begin + remote_embedding_slice_sizes[i] - 1;
     }

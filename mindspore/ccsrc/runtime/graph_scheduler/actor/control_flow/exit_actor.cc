@@ -204,7 +204,7 @@ void ExitActor::MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const cont
                                    " for actor:" + GetAID().Name();
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
         }
-        if (input_device_tensors_[i] == nullptr) {
+        if (input_device_tensors_[index] == nullptr) {
           std::string error_info =
             "Invalid input device address index:" + std::to_string(index) + " for index:" + std::to_string(i) +
             " total size:" + std::to_string(input_device_tensors_.size()) + " for actor:" + GetAID().Name();
@@ -239,6 +239,7 @@ void ExitActor::MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const cont
     for (auto &output_data : data_iter->second) {
       MS_EXCEPTION_IF_NULL(output_data.second);
       if (output_data.first >= new_device_tensors.size()) {
+        MS_EXCEPTION_IF_NULL(output_data.second);
         MS_LOG(EXCEPTION) << "Invalid from index:" << output_data.first << " for actor:" << GetAID()
                           << " to actor:" << output_data.second->op_id_ << " to index:" << output_data.second->index_;
       }
@@ -276,6 +277,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     // Update the real used device context by the input data.
     auto &device_context = device_contexts_[i];
     MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
     if (device_context->GetDeviceType() != input_device_tensor->GetDeviceType()) {
       device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {input_device_tensor->device_name(), input_device_tensor->device_id()});

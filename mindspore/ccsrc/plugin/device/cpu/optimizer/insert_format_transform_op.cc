@@ -49,6 +49,9 @@ std::vector<int64_t> TransposeAxis(const int dim, FormatTransformDir dir) {
     std::iota(axis.begin() + kNumSize1, axis.end(), kNumLong2);
     axis[dim - 1] = 1;
   } else {
+    if (dim <= 1) {
+      MS_LOG(EXCEPTION) << "Invalid dim:" << dim << " for transpose axis";
+    }
     std::iota(axis.begin() + kNumSize2, axis.end(), kNumLong1);
     axis[1] = dim - 1;
   }
@@ -76,9 +79,11 @@ ValueNodePtr CreateValueNode(const std::vector<int64_t> &transpose_perm, const F
 
 CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &used_node,
                            int used_node_index, const std::vector<int64_t> &transpose_perm) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(used_node);
   MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << ", used node: " << used_node->fullname_with_scope()
                 << ", index: " << used_node_index;
-  MS_EXCEPTION_IF_NULL(graph);
   // 1.Create a transpose node or a fake transpose node:reshape.
   auto primitive_ptr = prim::kPrimTranspose;
   auto transpose_prim = std::make_shared<Primitive>(primitive_ptr->name());
@@ -115,10 +120,12 @@ void SetTransposeOpBuildInfo(const std::string &input_format, const std::string 
 void ProcessForTupleItem(const FuncGraphPtr &graph, const AnfNodePtr &node, int node_index,
                          const std::vector<int64_t> &transpose_perm, const std::string &transpose_format) {
   auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, node_index);
+  MS_EXCEPTION_IF_NULL(used_node_list);
   for (size_t i = 0; i < used_node_list->size(); i++) {
     auto used_node = used_node_list->at(i).first;
     auto used_node_index = used_node_list->at(i).second - 1;
     if (common::AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+      MS_EXCEPTION_IF_NULL(used_node);
       MS_LOG(EXCEPTION) << "The used node of tuple item " << used_node->DebugString() << " can't be tuple item.";
     }
 
@@ -173,6 +180,7 @@ void InsertTransformOpForOutput(const FuncGraphPtr &graph, const AnfNodePtr &nod
     auto transpose_perm = TransposeAxis(dim, ChannelLast2ChannelFirst);
     // Find all nodes connected with node output, and change their inputs to transpose.
     auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, i);
+    MS_EXCEPTION_IF_NULL(used_node_list);
     for (size_t j = 0; j < used_node_list->size(); ++j) {
       auto used_node = used_node_list->at(j).first;
       auto used_node_index = used_node_list->at(j).second - 1;

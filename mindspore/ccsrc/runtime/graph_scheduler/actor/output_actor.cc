@@ -305,7 +305,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
 
     auto device_context = device_contexts_[i];
     MS_EXCEPTION_IF_NULL(device_context);
-
+    MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
     const auto &swap_manager = device_context->device_res_manager_->swap_manager();
     if (swap_manager != nullptr) {
       swap_manager->AddSwappableTensor(tensor_device_address);

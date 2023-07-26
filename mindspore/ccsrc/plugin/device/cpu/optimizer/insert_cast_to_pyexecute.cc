@@ -28,7 +28,10 @@ const BaseRef InsertCastToPyExecute::DefinePattern() const {
 
 const AnfNodePtr InsertCastToPyExecute::Process(const FuncGraphPtr &fg, const AnfNodePtr &node,
                                                 const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->abstract() == nullptr || !cnode->abstract()->isa<abstract::AbstractAny>()) {
     return nullptr;
   }
@@ -53,6 +56,7 @@ const AnfNodePtr InsertCastToPyExecute::Process(const FuncGraphPtr &fg, const An
   common::AnfAlgo::SetNodeAttr(kAttrAnyTypeCast, MakeValue(True), cast_node);
   if (fg->isa<session::KernelGraph>()) {
     auto kg = fg->cast_ptr<session::KernelGraph>();
+    MS_EXCEPTION_IF_NULL(kg);
     kg->ReplaceInternalOutput(node, cast_node);
   }
   return cast_node;

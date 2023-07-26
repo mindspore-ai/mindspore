@@ -132,6 +132,8 @@ void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const i
   MS_EXCEPTION_IF_NULL(memory_free_tensors);
   MS_EXCEPTION_IF_NULL(context);
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
+    MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
+    MS_EXCEPTION_IF_NULL(device_contexts_[0]);
     auto device_tensor = DeviceTensorStore::GetInstance()
                            .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
                            .get();
