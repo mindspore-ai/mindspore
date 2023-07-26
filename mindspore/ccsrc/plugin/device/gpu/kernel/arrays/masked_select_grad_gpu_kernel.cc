@@ -29,7 +29,6 @@ namespace {
 constexpr int kMaskedSelectGradInputsNum = 3;
 constexpr int kMaskedSelectGradOutputsNum = 1;
 constexpr size_t kIndexInput = 0;
-constexpr size_t kIndexInputGrad = 0;
 constexpr size_t kIndexMask = 1;
 constexpr size_t kIndexOutputGrad = 2;
 }  // namespace
