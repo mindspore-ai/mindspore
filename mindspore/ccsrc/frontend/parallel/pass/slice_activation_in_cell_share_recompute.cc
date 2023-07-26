@@ -50,7 +50,8 @@ std::vector<parallel::Group> InferRepeatedRankList(const CNodePtr &cnode) {
   OperatorInfoPtr operator_info = cnode->user_data<parallel::OperatorInfo>();
   std::vector<parallel::TensorInfo> output_info = operator_info->outputs_tensor_info();
   if (output_info.size() != 1) {
-    MS_LOG(EXCEPTION) << "The output_info size is wrong, node is" << cnode->DebugString();
+    MS_LOG(WARNING) << "The output_info size is wrong, node is" << cnode->DebugString();
+    return std::vector<parallel::Group>();
   }
   auto tensor_layout = output_info[0].tensor_layout();
   auto tensor_map = tensor_layout.origin_tensor_map();
@@ -229,6 +230,7 @@ void SliceReuseRecomputedActivationNodes(const FuncGraphPtr &graph) {
       auto slice_cnode = CreateSliceNode(slice_pos_node, groups);
       if (!slice_cnode) {
         MS_LOG(INFO) << "Create slice failed";
+        continue;
       }
       manager->SetEdge(node, i, slice_cnode);
       // create depend for slice
