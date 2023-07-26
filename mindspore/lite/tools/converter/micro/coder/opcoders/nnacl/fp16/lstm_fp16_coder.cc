@@ -69,7 +69,7 @@ int LstmFP16Coder::InitStateWeightBias(CoderContext *const context) {
   Tensor *weight_h = input_tensors().at(THIRD_INPUT);
   MS_CHECK_PTR(weight_h);
   size_t weight_h_size =
-    weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->project_size_ * DataTypeSize(data_type_);
+    weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->output_size_ * DataTypeSize(data_type_);
   weight_h_ptr_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
   MS_CHECK_PTR(weight_h_ptr_);
   init_code.CodeBufferOffsetExpression(weight_h_ptr_, context->weight_name(), context->weight_offset_name(),
@@ -78,7 +78,7 @@ int LstmFP16Coder::InitStateWeightBias(CoderContext *const context) {
   auto weight_h_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(reinterpret_cast<float16 *>(weight_h_ptr_));
 
   if (!is_vec_) {
-    init_code.CodeFunction("PackLstmWeightFp16", weight_h_str, weight_h, weight_batch_, lstm_param_->project_size_,
+    init_code.CodeFunction("PackLstmWeightFp16", weight_h_str, weight_h, weight_batch_, lstm_param_->output_size_,
                            lstm_param_->hidden_size_, lstm_param_->state_col_align_);
   } else {
     init_code.CodeFunction("memcpy", weight_h_str, weight_h, weight_h->Size());
@@ -114,7 +114,7 @@ int LstmFP16Coder::InitProjectWeight(CoderContext *const context) {
   Tensor *weight_pro = input_tensors().at(Index6);
   MS_CHECK_PTR(weight_pro);
   int batch = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
-  int col_align = is_vec_ ? lstm_param_->project_size_ : UP_ROUND(lstm_param_->project_size_, col_tile_);
+  int col_align = is_vec_ ? lstm_param_->output_size_ : UP_ROUND(lstm_param_->output_size_, col_tile_);
   size_t weight_pro_size = batch * lstm_param_->hidden_size_ * col_align * DataTypeSize(data_type_);
   weight_pro_ptr_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
   MS_CHECK_PTR(weight_pro_ptr_);
@@ -124,12 +124,12 @@ int LstmFP16Coder::InitProjectWeight(CoderContext *const context) {
   auto weight_pro_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(reinterpret_cast<float16 *>(weight_pro_ptr_));
   if (!is_vec_) {
     init_code.CodeFunction("PackLstmWeightFp16", weight_pro_str, weight_pro, batch, lstm_param_->hidden_size_,
-                           lstm_param_->project_size_, col_align);
+                           lstm_param_->output_size_, col_align);
   } else {
     init_code.CodeFunction("memcpy", weight_pro_str, weight_pro, weight_pro->Size());
   }
 
-  size_t bias_pro_size = UP_ROUND(lstm_param_->project_size_, col_tile_) * DataTypeSize(data_type_);
+  size_t bias_pro_size = UP_ROUND(lstm_param_->output_size_, col_tile_) * DataTypeSize(data_type_);
   bias_pro_ptr_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
   MS_CHECK_PTR(bias_pro_ptr_);
   init_code.CodeBufferOffsetExpression(bias_pro_ptr_, context->weight_name(), context->weight_offset_name(),
@@ -154,7 +154,7 @@ int LstmFP16Coder::MallocRunBuffer(CoderContext *const context) {
   MS_CHECK_PTR(buffer_fp16_[SECOND_INPUT]);
   if (!is_vec_) {
     buffer_fp16_[THIRD_INPUT] = allocator_->Malloc(
-      data_type_, lstm_param_->state_row_align_ * lstm_param_->project_size_ * DataTypeSize(data_type_), kWorkspace);
+      data_type_, lstm_param_->state_row_align_ * lstm_param_->output_size_ * DataTypeSize(data_type_), kWorkspace);
     MS_CHECK_PTR(buffer_fp16_[THIRD_INPUT]);
   }
   buffer_fp16_[FOURTH_INPUT] = allocator_->Malloc(
@@ -167,7 +167,7 @@ int LstmFP16Coder::MallocRunBuffer(CoderContext *const context) {
   }
   if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
     buffer_fp16_[SIXTH_INPUT] = allocator_->Malloc(
-      data_type_, lstm_param_->batch_ * lstm_param_->project_size_ * DataTypeSize(data_type_), kWorkspace);
+      data_type_, lstm_param_->batch_ * lstm_param_->output_size_ * DataTypeSize(data_type_), kWorkspace);
     MS_CHECK_PTR(buffer_fp16_[SIXTH_INPUT]);
   }
   if (!is_vec_) {

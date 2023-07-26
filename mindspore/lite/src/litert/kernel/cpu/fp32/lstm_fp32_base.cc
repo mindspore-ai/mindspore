@@ -1,5 +1,5 @@
 /**
- * Copyright 2023Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ int LstmSequenceLoopRun(void *cdata, int task_id, float, float) {
 }
 
 int LstmFp32BaseCPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), kMindirInputTensorNum);
+  MS_CHECK_TRUE_MSG(in_tensors_.size() == kMindirInputTensorNum || in_tensors_.size() >= C6NUM,
+                    lite::RET_INPUT_TENSOR_ERROR, "Lstm's input-num is invalid.");
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     CHECK_NULL_RETURN(in_tensors_.at(i));
   }
@@ -70,7 +71,7 @@ int LstmFp32BaseCPUKernel::ReSize() {
   auto h_init_shape = in_tensors_.at(hidden_init_index_)->shape();
   auto c_init_shape = in_tensors_.at(cell_init_index_)->shape();
   lstm_param_->hidden_size_ = c_init_shape.back();
-  lstm_param_->project_size_ = h_init_shape.back();
+  lstm_param_->output_size_ = h_init_shape.back();
 
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? C2NUM * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
@@ -195,7 +196,7 @@ int LstmFp32BaseCPUKernel::MallocRunBuffer(bool is_double) {
 
   segment = lstm_param_->batch_ == 1
               ? 0
-              : lstm_param_->state_row_align_ * lstm_param_->project_size_;  // 1: state * weight for left matirx
+              : lstm_param_->state_row_align_ * lstm_param_->output_size_;  // 1: state * weight for left matirx
   segments.push_back(segment);
   whole_size += segment * scale;
 
@@ -207,7 +208,7 @@ int LstmFp32BaseCPUKernel::MallocRunBuffer(bool is_double) {
   segments.push_back(segment);
   whole_size += segment * scale;
 
-  segment = need_zone ? lstm_param_->batch_ * lstm_param_->project_size_ : 0;  // 4: state_buffer for hidden
+  segment = need_zone ? lstm_param_->batch_ * lstm_param_->output_size_ : 0;  // 4: state_buffer for hidden
   segments.push_back(segment);
   whole_size += segment * scale;
 
@@ -231,7 +232,7 @@ int LstmFp32BaseCPUKernel::MallocRunBuffer(bool is_double) {
     segment = 0;
 #ifdef ENABLE_AVX
     segment =
-      output_need_packed ? lstm_param_->batch_ * UP_ROUND(lstm_param_->project_size_, state_col_tile_) * scale : 0;
+      output_need_packed ? lstm_param_->batch_ * UP_ROUND(lstm_param_->output_size_, state_col_tile_) * scale : 0;
 #endif
     segments.push_back(segment);  // 7: project-layer output
     whole_size += segment;
@@ -388,7 +389,7 @@ void LstmFp32BaseCPUKernel::LstmBackwardLoop(float *buffer[]) {
   }
   float *backward_weight_project =
     weight_project_ptr_
-      ? weight_project_ptr_ + lstm_param_->hidden_size_ * UP_ROUND(lstm_param_->project_size_, col_tile_)
+      ? weight_project_ptr_ + lstm_param_->hidden_size_ * UP_ROUND(lstm_param_->output_size_, col_tile_)
       : nullptr;
   LstmUnidirectional(backward_output, backward_weight_h, backward_state_bias, backward_hidden_state,
                      backward_cell_state, backward_weight_project, intermediate_states, buffer, true);

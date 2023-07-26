@@ -1,5 +1,5 @@
 /**
- * Copyright 2023Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,14 @@
 
 namespace mindspore::kernel {
 /*
- * 1. LSTM without project
+ * 1. LSTM without project, output_size = hidden_size
  *    h_init: second input, shape is [bidirectional, batch_size, hidden_size]
  *    c_init: third input, shape is [bidirectional, batch_size, hidden_size]
  *    weight_bias: forth input, weight_ih + weight_hh + bias, the gate order is IFGO
  *
- * 2. LSTM with project
+ * 2. LSTM with project, output_size = project_size
  *    don't support
- *    h_init: second input, shape is [bidirectional, batch_size, hidden_size]
+ *    h_init: second input, shape is [bidirectional, batch_size, project_size]
  *    c_init: third input, shape is [bidirectional, batch_size, hidden_size]
  *    weight_bias: forth input, weight_ih + weight_hh + proj + bias, the gate order is IFGO
  */

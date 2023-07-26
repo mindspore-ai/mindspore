@@ -22,12 +22,12 @@
 
 namespace mindspore::kernel {
 /*
- * 1. LSTM without project
+ * 1. LSTM without project, output_size = hidden_size
  *    h_init: second input, shape is [bidirectional, batch_size, hidden_size]
  *    c_init: third input, shape is [bidirectional, batch_size, hidden_size]
  *    weight_bias: forth input, weight_ih + weight_hh + bias, the gate order is IFGO
  *
- * 2. LSTM with project
+ * 2. LSTM with project, output_size = project_size
  *    don't support
  *    h_init: second input, shape is [bidirectional, batch_size, hidden_size]
  *    c_init: third input, shape is [bidirectional, batch_size, hidden_size]

@@ -25,6 +25,7 @@ typedef struct LstmParameter {
   int input_size_;
   int hidden_size_;
   int project_size_;
+  int output_size_;
   int seq_len_;
   int batch_;
   // other parameter

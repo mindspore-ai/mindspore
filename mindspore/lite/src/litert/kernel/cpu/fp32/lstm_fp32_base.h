@@ -1,5 +1,5 @@
 /**
- * Copyright 2023Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class LstmFp32BaseCPUKernel : public LiteKernel {
   int col_tile_{0};
   int state_row_tile_{0};
   int state_col_tile_{0};
-  int weight_segment_num_;
+  int weight_segment_num_{0};
   float *weight_i_ptr_{nullptr};
   float *weight_h_ptr_{nullptr};
   float *weight_project_ptr_{nullptr};
