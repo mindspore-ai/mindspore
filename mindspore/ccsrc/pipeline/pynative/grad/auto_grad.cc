@@ -908,6 +908,10 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
     ad_graph_dout->set_abstract(ad_param()->last_node_->abstract());
     ad_param()->last_variable_->fn()->UpdateAccumulativeDout(ad_graph_dout);
     (void)BackPropagate();
+  } else {
+    // Just have a return node
+    auto ad_graph_dout = ad_param()->tape_->add_parameter();
+    ad_graph_dout->set_abstract(grad_param->fg->output()->abstract());
   }
 
   AnfNodePtrList outputs{NewValueNode(prim::kPrimMakeTuple)};
