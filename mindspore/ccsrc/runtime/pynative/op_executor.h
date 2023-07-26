@@ -92,8 +92,6 @@ class BACKEND_EXPORT OpExecutor {
   pynative::AsyncQueue async_queue_{"runop_device", pynative::kThreadWaitLevel::kLevelDevice};
 
   std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> op_build_tasks_;
-
-  std::set<GraphId> actor_in_queue_;
   std::function<void()> batch_build_callback_{nullptr};
   inline static size_t kMaxQueueSize = 20;
   bool executing_{false};

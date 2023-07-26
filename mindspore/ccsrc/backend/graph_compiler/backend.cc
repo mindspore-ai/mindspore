@@ -962,9 +962,11 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   } else {
     promise.set_value(true);
   }
-  op_executor.PushOpRunTask(std::make_shared<pynative::DeviceOpRunTask>(
+  auto run_task = std::make_shared<pynative::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallback(ctx); },
-    std::move(future)));
+    std::move(future));
+  run_task->set_task_id(op_compiler_info->graph_id_);
+  op_executor.PushOpRunTask(run_task);
 
   op_executor.Register([this]() { BatchBuildCallback(); });
   if (op_executor.BuildQueueFull()) {
