@@ -106,14 +106,18 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
 
 void AdjustDependToTensorMove(const AnfNodePtr &input, const AnfNodePtr &tensor_move) {
   auto func_graph = input->func_graph();
-  if (!func_graph) {
+  if (func_graph == nullptr) {
     return;
   }
   auto manager = func_graph->manager();
   if (manager == nullptr) {
     return;
   }
-  auto input_users = manager->node_users()[input];
+  const auto &node_users = manager->node_users();
+  if (node_users.find(input) == node_users.end()) {
+    return;
+  }
+  const auto &input_users = node_users.at(input);
   for (const auto &input_user : input_users) {
     if (!IsPrimitiveCNode(input_user.first, prim::kPrimDepend)) {
       continue;
