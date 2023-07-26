@@ -647,11 +647,11 @@ bool RtModelZeroCopy::CheckRtModelValid(const session::KernelGraph &graph) {
   auto nodes = graph.execution_order();
   bool task_valid = true;
   for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     if (NeedSkipZeroCopy(node)) {
       continue;
     }
 
-    MS_EXCEPTION_IF_NULL(node);
     auto unique_name = node->UniqueName();
     auto iter = op_name_to_task.find(unique_name);
     if (iter == op_name_to_task.end()) {

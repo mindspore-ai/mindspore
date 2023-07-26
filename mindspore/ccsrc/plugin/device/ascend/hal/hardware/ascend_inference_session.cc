@@ -124,21 +124,21 @@ bool AscendInferenceSession::CheckModelInputs(uint32_t graph_id, const std::vect
   }
 
   // check inputs
+  if (paras.size() != inputs.size()) {
+    MS_LOG(ERROR) << "Input number is inconsistent. The actual input number [" << inputs.size()
+                  << "] but the graph input number is [" << paras.size() << "]";
+    MS_LOG(ERROR) << "InputsInfo --" << InputsInfo(paras, inputs);
+    if (error_msg != nullptr) {
+      std::stringstream str_stream;
+      str_stream << "Input number is inconsistent. The given input number [" << inputs.size()
+                 << "] but the graph input number is [" << paras.size() << "]\n";
+      str_stream << "InputsInfo --" << InputsInfo(paras, inputs);
+      *error_msg = str_stream.str();
+    }
+    return false;
+  }
   for (size_t i = 0; i < paras.size(); ++i) {
     // compare input number
-    if (paras.size() != inputs.size()) {
-      MS_LOG(ERROR) << "Input number is inconsistent. The actual input number [" << inputs.size()
-                    << "] but the graph input number is [" << paras.size() << "]";
-      MS_LOG(ERROR) << "InputsInfo --" << InputsInfo(paras, inputs);
-      if (error_msg != nullptr) {
-        std::stringstream str_stream;
-        str_stream << "Input number is inconsistent. The given input number [" << inputs.size()
-                   << "] but the graph input number is [" << paras.size() << "]\n";
-        str_stream << "InputsInfo --" << InputsInfo(paras, inputs);
-        *error_msg = str_stream.str();
-      }
-      return false;
-    }
     auto input = inputs[no_weight_input++];
     if (!CompareInput(input, paras[i])) {
       MS_LOG(ERROR) << "Please check the input information.";

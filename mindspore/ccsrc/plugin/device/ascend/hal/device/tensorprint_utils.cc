@@ -160,6 +160,7 @@ bool ConvertDataset2Tensor(acltdtDataset *acl_dataset) {
 
   for (size_t i = 0; i < acl_dataset_size; i++) {
     acltdtDataItem *item = acltdtGetDataItem(acl_dataset, i);
+    MS_EXCEPTION_IF_NULL(item);
     if (acltdtGetTensorTypeFromItem(item) == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
       ret_end_sequence = true;
       MS_LOG(INFO) << "end of sequence" << std::endl;
