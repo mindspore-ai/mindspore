@@ -379,6 +379,7 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
 
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
   }

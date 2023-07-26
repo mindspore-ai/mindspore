@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,19 @@ constexpr size_t kConv3DBackpropFilterFilterSizeIndex = 2;
 constexpr int64_t kConv3DBackpropFilterPadSize = 6;
 constexpr int64_t kConv3DBackpropFilterStrideSize = 5;
 constexpr int64_t kConv3DBackpropFilterDilationSize = 5;
+constexpr int64_t kConv3DBackpropFilterArgsSizeTwo = 2;
+constexpr int64_t kConv3DBackpropFilterArgsSizeThree = 3;
+
+inline void Conv3dBackpropFilterInferCheck(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args, bool infer_shape) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const int64_t input_num = infer_shape ? kConv3DBackpropFilterArgsSizeThree : kConv3DBackpropFilterArgsSizeTwo;
+  (void)CheckAndConvertUtils::CheckInteger("Conv3dBackpropFilter infer check", SizeToLong(input_args.size()),
+                                           kGreaterEqual, input_num, primitive->name());
+}
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Conv3DBackpropFilter, BaseOperator);
@@ -182,7 +195,7 @@ class Conv3DBackpropFilterInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
+    Conv3dBackpropFilterInferCheck(primitive, input_args, true);
     auto filter_size_v = GetShapeValue(primitive, input_args[kConv3DBackpropFilterFilterSizeIndex]);
     auto dout_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv3DBackpropFilterDoutIndex]->BuildShape())[kShape];
@@ -196,7 +209,7 @@ class Conv3DBackpropFilterInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(prim);
+    Conv3dBackpropFilterInferCheck(prim, input_args, false);
     auto prim_name = prim->name();
     // check
     std::map<std::string, TypePtr> types;
