@@ -65,6 +65,15 @@ int Conv2dFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     InitResource();
   }
   ResetResource();
+  // for dynamic pad in dynamic infer shape
+  conv_args_.pad_list.clear();
+  auto pad_list_attr = GetValue<std::vector<int64_t>>(base_operator->GetAttr("pad_list"));
+  if (pad_list_attr.size() != kConv2dInputDimSize) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 4, but got "
+                      << pad_list_attr.size();
+  }
+  std::transform(pad_list_attr.begin(), pad_list_attr.end(), std::back_inserter(conv_args_.pad_list),
+                 [](const int64_t &value) { return static_cast<int>(value); });
   return conv_kernel_ptr_->InitialKernel(&conv_args_, input_shape, filter_shape, output_shape, &input_size_list_,
                                          &output_size_list_, &workspace_size_list_);
 }
