@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ class OrderEnforcer {
     // whose refkey appears more than once,
     // or the load is input of call or partial,
     // or the first input of load is call or partial.
-    std::vector<CNodePtr> need_insert_loads = GetNeedInsertLoads();
+    mindspore::HashSet<CNodePtr> need_insert_loads = GetNeedInsertLoads();
     for (auto &node : need_insert_loads) {
       InsertTensorMoveForLoad(node->cast<CNodePtr>());
     }
@@ -396,7 +396,7 @@ class OrderEnforcer {
     });
   }
 
-  std::string GetRefKey(const AnfNodePtr &node) {
+  std::string GetRefKey(const AnfNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     auto abs = node->abstract();
     if (abs == nullptr) {
@@ -416,12 +416,12 @@ class OrderEnforcer {
     return ref_key->value();
   }
 
-  std::vector<CNodePtr> GetAllLoads(const AnfNodePtrList &check_nodes) const {
-    std::vector<CNodePtr> need_insert_loads;
+  mindspore::HashSet<CNodePtr> GetAllLoads(const AnfNodePtrList &check_nodes) const {
+    mindspore::HashSet<CNodePtr> need_insert_loads;
     for (auto &node : check_nodes) {
       if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
         auto load = node->cast<CNodePtr>();
-        (void)need_insert_loads.emplace_back(load);
+        (void)need_insert_loads.insert(load);
       }
     }
     return need_insert_loads;
@@ -429,25 +429,107 @@ class OrderEnforcer {
 
   using RefLoads = std::map<std::string, std::vector<CNodePtr>>;
 
-  void AppendLoads(const RefLoads &loads_map, std::vector<CNodePtr> *need_insert_loads) const {
+  void AppendLoads(const RefLoads &loads_map, mindspore::HashSet<CNodePtr> *need_insert_loads) const {
     for (auto &refkey_load_special : loads_map) {
       auto &loads = refkey_load_special.second;
-      // If loads size > 1, mean has exist in refkey_loads.
-      if (loads.size() == 1) {
-        (void)need_insert_loads->emplace_back(loads[0]);
+      for (auto load : loads) {
+        (void)need_insert_loads->insert(load);
       }
     }
   }
 
-  std::vector<CNodePtr> GetSpecialLoads(const RefLoads &loads_map1, const RefLoads &loads_map2,
-                                        const RefLoads &loads_map3, const RefLoads &loads_map4,
-                                        const std::set<CNodePtr> &call_nodes) const {
-    std::vector<CNodePtr> need_insert_loads;
+  bool HasRefKeyInput(const AnfNodePtr &node, const std::string &ref_key) const {
+    auto key = GetRefKey(node);
+    if (key == ref_key) {
+      return true;
+    }
+    if (!node->isa<CNode>()) {
+      return false;
+    }
+    auto inner_inputs = node->cast<CNodePtr>()->inputs();
+    return std::any_of(inner_inputs.begin(), inner_inputs.end(), [&](const AnfNodePtr &inner_input) {
+      return !HasAbstractMonad(inner_input) && HasRefKeyInput(inner_input, ref_key);
+    });
+  }
+
+  // If two loads at different times are used as inputs to the same node, need to plug in TensorMove
+  // load1 = Load(param, u1)
+  // load2 = Load(param, u2)
+  // load3 = Load(param, u3)
+  // tuple1 = MakeTuple(load1, load2)
+  // a1 = AddN(tuple1)
+  // tuple2 = MakeTuple(a1, load3)
+  // a2 = AddN(tuple2)
+  // ---> after insert TensorMove
+  // load1 = Load(param, u1)
+  // load2 = Load(param, u2)
+  // load3 = Load(param, u3)
+  // t1 = TensorMove(load1)
+  // t2 = TensorMove(load2)
+  // tuple1 = MakeTuple(t1, t2)
+  // a1 = AddN(tuple1)
+  // t3 = TensorMove(load3)
+  // tuple2 = MakeTuple(a1, t3)
+  // a2 = AddN(tuple2)
+  bool ReCheckUsersOfLoad(const AnfNodePtr &load, const std::string &ref_key) const {
+    auto &node_users = manager_->node_users();
+    auto iter = node_users.find(load);
+    if (iter == node_users.end()) {
+      return false;
+    }
+    auto &users = iter->second;
+    for (auto &user : users) {
+      auto &user_node = user.first;
+      auto user_cnode = user_node->cast<CNodePtr>();
+      if (IsPrimitiveCNode(user_cnode, prim::kPrimUpdateState)) {
+        continue;
+      }
+      const auto &inputs = user_cnode->inputs();
+      size_t ref_key_times = 0;
+      for (auto &input : inputs) {
+        if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
+          auto key = GetRefKey(input->cast<CNodePtr>()->input(1));
+          if (key == ref_key) {
+            ref_key_times++;
+            if (ref_key_times > 1) {
+              return true;
+            }
+          }
+        }
+
+        if (!input->isa<CNode>()) {
+          continue;
+        }
+        auto inner_inputs = input->cast<CNodePtr>()->inputs();
+        for (auto inner_input : inner_inputs) {
+          if (IsPrimitiveCNode(inner_input, prim::kPrimUpdateState) || !HasRefKeyInput(inner_input, ref_key)) {
+            continue;
+          }
+          ref_key_times++;
+          if (ref_key_times > 1) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  mindspore::HashSet<CNodePtr> GetSpecialLoads(const RefLoads &loads_map1, const RefLoads &loads_map2,
+                                               const RefLoads &loads_map3, const RefLoads &loads_map4,
+                                               const std::set<CNodePtr> &call_nodes) const {
+    mindspore::HashSet<CNodePtr> need_insert_loads;
     for (auto &refkey_load : loads_map1) {
       auto &loads = refkey_load.second;
       if (loads.size() > 1) {
-        (void)std::transform(loads.begin(), loads.end(), std::back_inserter(need_insert_loads),
-                             [](const CNodePtr &load) { return load; });
+        auto ref_key = refkey_load.first;
+        bool need_insert = std::any_of(loads.begin(), loads.end(),
+                                       [&](const AnfNodePtr &load) { return ReCheckUsersOfLoad(load, ref_key); });
+        if (need_insert) {
+          for (const auto &load : loads) {
+            (void)need_insert_loads.insert(load);
+          }
+        }
       }
     }
     AppendLoads(loads_map2, &need_insert_loads);
@@ -455,9 +537,7 @@ class OrderEnforcer {
     AppendLoads(loads_map4, &need_insert_loads);
     // Add call node will output is a AbstractRefTensor and ref_key is kValueAny.
     for (const auto &call_node : call_nodes) {
-      if (std::find(need_insert_loads.begin(), need_insert_loads.end(), call_node) == need_insert_loads.end()) {
-        need_insert_loads.push_back(call_node);
-      }
+      (void)need_insert_loads.insert(call_node);
     }
     return need_insert_loads;
   }
@@ -481,13 +561,6 @@ class OrderEnforcer {
         MS_LOG(INFO) << "Load without ref key:" << load->DebugString();
         return;
       }
-      auto iter = refkey_loads.find(refkey);
-      if (iter != refkey_loads.end()) {
-        size_t load_size = iter->second.size();
-        if (load_size > 1) {
-          return;
-        }
-      }
       (void)(*refkey_loads_return_is_load)[refkey].emplace_back(load);
     };
     if (IsPrimitiveCNode(return_input, prim::kPrimMakeTuple)) {
@@ -506,7 +579,7 @@ class OrderEnforcer {
     }
   }
 
-  std::vector<CNodePtr> GetNeedInsertLoads() {
+  mindspore::HashSet<CNodePtr> GetNeedInsertLoads() {
     auto check_nodes = TopoSort(func_graph_->get_return());
     static const bool enable_all_load = common::GetEnv("MS_DEV_ENABLE_LOAD_INSERT_TENSORMOVE") == "1";
     // Insert TensorMove for all Load nodes
@@ -559,9 +632,6 @@ class OrderEnforcer {
           auto refkey = GetRefKey(load->input(1));
           if (refkey == "") {
             MS_LOG(INFO) << "Load without ref key:" << load->DebugString();
-            continue;
-          }
-          if (refkey_loads[refkey].size() > 1) {
             continue;
           }
           (void)refkey_loads_in_call_or_partial[refkey].emplace_back(load);
