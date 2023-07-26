@@ -84,7 +84,7 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
   }
 }
 
-transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
+transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph, std::map<std::string, ShapeVector> *m_origin_shape) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap res;
   for (auto &anf_node : anf_graph->parameters()) {
@@ -96,10 +96,11 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
       MS_EXCEPTION_IF_NULL(value);
       auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
       MS_EXCEPTION_IF_NULL(tensor);
+      m_origin_shape->emplace(para->name(), tensor->shape_c());
       // need ref shape when auto parallel
       auto build_shape = para->abstract()->BuildShape();
       if (build_shape != nullptr) {
-        (void)tensor->set_shape(build_shape->cast<abstract::ShapePtr>()->shape());
+        (void)tensor->MetaTensor::set_shape(build_shape->cast<abstract::ShapePtr>()->shape());
         MS_LOG(INFO) << "ref abstract Parameter: " << para->name() << ", tensor: " << tensor->ToString();
       }
       res.emplace(para->name(), tensor);
@@ -107,6 +108,28 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
     }
   }
   return res;
+}
+
+void RevertOriginShape(const KernelGraphPtr &anf_graph, const std::map<std::string, ShapeVector> &m_origin_shape) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  transform::TensorOrderMap res;
+  for (auto &anf_node : anf_graph->parameters()) {
+    MS_EXCEPTION_IF_NULL(anf_node);
+    auto para = anf_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(para);
+    if (para->has_default()) {
+      auto it = m_origin_shape.find(para->name());
+      if (it == m_origin_shape.end()) {
+        MS_LOG(ERROR) << "Failed to find input " << para->name() << " in input_shape " << m_origin_shape;
+        continue;
+      }
+      auto value = para->default_param();
+      MS_EXCEPTION_IF_NULL(value);
+      auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
+      (void)tensor->MetaTensor::set_shape(it->second);
+      MS_LOG(INFO) << "ref abstract Parameter: " << para->name() << ", tensor: " << tensor->ToString();
+    }
+  }
 }
 
 std::vector<transform::GeTensorPtr> GetInputTensors(const FuncGraphPtr &anf_graph) {
@@ -640,7 +663,8 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
                                    const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   AscendGraphOptimization::GetInstance().OptimizeGEGraph(graph);
-  (void)BuildDFGraph(graph, GetParams(graph), false);
+  std::map<std::string, ShapeVector> m_origin_shape;
+  (void)BuildDFGraph(graph, GetParams(graph, &m_origin_shape), false);
   SetDynamicShapeAttr(graph);
   transform::RunOptions run_options;
   run_options.name = GetGraphName(graph);
@@ -674,6 +698,7 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   if (ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE) {
     graph->set_is_loop_count_sink(true);
   }
+  RevertOriginShape(graph, m_origin_shape);
   return true;
 }
 
@@ -687,7 +712,8 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     MS_EXCEPTION_IF_NULL(kg);
     AscendGraphOptimization::GetInstance().OptimizeGEGraph(kg);
-    (void)BuildDFGraph(kg, GetParams(kg), false);
+    std::map<std::string, ShapeVector> m_origin_shape;
+    (void)BuildDFGraph(kg, GetParams(kg, &m_origin_shape), false);
     SetDynamicShapeAttr(kg);
     AllocInputHostMemory(kg);
     AllocOutputHostMemory(kg);
@@ -697,6 +723,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     }
     // copy init weight to device
     RunGEInitGraph(kg);
+    RevertOriginShape(kg, m_origin_shape);
     return true;
   }
 }
