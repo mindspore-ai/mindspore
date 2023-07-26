@@ -213,11 +213,15 @@ uint32_t NoBcastCompute(CpuKernelContext &ctx) {
 template <typename T>
 uint32_t IgammaCpuKernel::IgammaCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
-  auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
+  auto input0_shape_ptr = input0_tensor->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(input0_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: input0_shape is nullptr.", kigamma);
+  auto input0_shape = input0_shape_ptr->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
 
   Tensor *input1_tensor = ctx.Input(1);
-  auto input1_shape = input1_tensor->GetTensorShape()->GetDimSizes();
+  auto input1_shape_ptr = input1_tensor->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(input1_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: input1_shape is nullptr.", kigamma);
+  auto input1_shape = input1_shape_ptr->GetDimSizes();
   int64_t input1_elements_nums = input1_tensor->NumElements();
 
   bool isNeedBcast = (input0_shape == input1_shape) || (input0_elements_nums == 1) || (input1_elements_nums == 1);

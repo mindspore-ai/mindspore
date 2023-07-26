@@ -42,6 +42,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr LgammaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto x = input_args[0]->BuildShape();
@@ -52,7 +53,10 @@ abstract::ShapePtr LgammaInferShape(const PrimitivePtr &primitive, const std::ve
 }
 
 TypePtr LgammaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32};
   auto x_type = input_args[kInputIndex0]->BuildType();
   TypeId tensor_type_id = x_type->cast<TensorTypePtr>()->element()->type_id();
@@ -64,16 +68,6 @@ TypePtr LgammaInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   }
 }
 }  // namespace
-
-AbstractBasePtr LgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto shapes = LgammaInferShape(primitive, input_args);
-  auto types = LgammaInferType(primitive, input_args);
-  return abstract::MakeAbstract(shapes, types);
-}
 
 MIND_API_OPERATOR_IMPL(Lgamma, BaseOperator);
 
@@ -87,10 +81,6 @@ class MIND_API AGLgammaInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return LgammaInferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return LgammaInfer(engine, primitive, input_args);
   }
 };
 

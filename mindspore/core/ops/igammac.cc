@@ -41,12 +41,16 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr IgammacInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   return BroadCastInferShape(prim_name, input_args);
 }
 
 TypePtr IgammacInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputNum = 2;
   auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto a_type = input_args[kInputIndex0]->BuildType();
   auto x_type = input_args[kInputIndex1]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
@@ -59,16 +63,6 @@ TypePtr IgammacInferType(const PrimitivePtr &primitive, const std::vector<Abstra
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Igammac, BaseOperator);
-AbstractBasePtr IgammacInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
-  const int64_t kInputNum = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-  auto infer_type = IgammacInferType(primitive, input_args);
-  auto infer_shape = IgammacInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
 // AG means auto generated
 class MIND_API AGIgammacInfer : public abstract::OpInferBase {
  public:
@@ -79,10 +73,6 @@ class MIND_API AGIgammacInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return IgammacInferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return IgammacInfer(engine, primitive, input_args);
   }
 };
 
