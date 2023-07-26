@@ -39,6 +39,7 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/ge_device_res_manager.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "runtime/dev.h"
 #include "runtime/stream.h"
 #include "runtime/mem.h"
@@ -422,6 +423,7 @@ void GeGraphExecutor::AllocConstMemory(const transform::RunOptions &options, siz
   if (memory_size == 0) {
     return;
   }
+  MS_LOG(INFO) << "Start AllocConstMemory, memory_size: " << memory_size;
   auto memory = ResManager()->AllocateMemory(memory_size);
   auto graph_runner = transform::GetGraphRunner();
   MS_EXCEPTION_IF_NULL(graph_runner);
@@ -429,28 +431,34 @@ void GeGraphExecutor::AllocConstMemory(const transform::RunOptions &options, siz
   if (ret != transform::Status::SUCCESS) {
     MS_LOG(EXCEPTION) << "SetConstMemory for graph " << options.name << " failed.";
   }
+  MS_LOG(INFO) << "End AllocConstMemory";
 }
 
 void GeGraphExecutor::AllocFeatureMemory(const transform::RunOptions &options, size_t memory_size) const {
   if (memory_size == 0) {
     return;
   }
+  MS_LOG(INFO) << "Start AllocFeatureMemory, memory_size: " << memory_size;
   auto memory_manager = ResManager()->mem_manager_;
   MS_EXCEPTION_IF_NULL(memory_manager);
   memory_manager->ResetDynamicMemory();
   auto memory = memory_manager->MallocWorkSpaceMem(memory_size);
+  if (memory == nullptr) {
+    MS_LOG(EXCEPTION) << "AllocFeatureMemory error, memory not enough, memory size: " << memory_size;
+  }
   auto graph_runner = transform::GetGraphRunner();
   MS_EXCEPTION_IF_NULL(graph_runner);
   auto ret = graph_runner->UpdateFeatureMemory(options, memory, memory_size);
   if (ret != transform::Status::SUCCESS) {
     MS_LOG(EXCEPTION) << "UpdateFeatureMemory for graph " << options.name << " failed.";
   }
+  MS_LOG(INFO) << "End AllocFeatureMemory";
 }
 
 void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *memo) const {
   // Set Device Type to be same as Host Type, AssignStaticMemoryInput will ignore parameters without DeviceType
   if (memo == nullptr) {
-    MS_LOG(INFO) << "Start AllocParameterMemory.";
+    MS_LOG(INFO) << "Start AllocParameterMemory, kernel graph: " << kernel_graph->ToString();
     std::set<KernelGraphPtr> memo_set;
     AllocParameterMemory(kernel_graph, &memo_set);
     MS_LOG(INFO) << "AllocParameterMemory finish.";
@@ -483,7 +491,7 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
 }
 
 void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph) {
-  MS_LOG(INFO) << "Start BuildInputDataGeTensor.";
+  MS_LOG(INFO) << "Start BuildInputDataGeTensor, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_inputs;
   std::vector<std::pair<AnfNodePtr, size_t>> need_update_input;
@@ -555,7 +563,7 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
 }
 
 void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph) {
-  MS_LOG(INFO) << "Start BuildOutputDataGeTensor.";
+  MS_LOG(INFO) << "Start BuildOutputDataGeTensor, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_outputs;
   std::vector<std::pair<AnfNodePtr, size_t>> graph_outputs;
@@ -586,7 +594,7 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
 
 void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph,
                                         const std::vector<ShapeVector> &outputs_shape) const {
-  MS_LOG(INFO) << "Start AllocOutputMemory.";
+  MS_LOG(INFO) << "Start AllocOutputMemory, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -950,8 +958,11 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
     auto output_device_addr = AnfAlgo::GetMutableOutputAddr(output_node, index, false);
     MS_LOG(INFO) << "Output addr " << output_device_addr->GetMutablePtr();
     if (output_device_addr->GetMutablePtr() == nullptr) {
-      MS_LOG(EXCEPTION) << "Input " << output_node->fullname_with_scope() << ", index: " << index
-                        << " address is nullptr, kernel graph: " << kernel_graph->ToString();
+      MS_LOG(EXCEPTION) << "Output " << output_node->fullname_with_scope() << ", index: " << index
+                        << " address is nullptr, kernel graph: " << kernel_graph->ToString()
+                        << ", addr memory size: " << output_device_addr->GetSize()
+                        << "\n Maybe memory is not enough, memory statistics:"
+                        << AscendMemAdapter::GetInstance().DevMemStatistics();
     }
     ge_outputs[idx].SetData(reinterpret_cast<uint8_t *>(output_device_addr->GetMutablePtr()),
                             output_device_addr->GetSize(), [](void *) {});
