@@ -274,8 +274,8 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   auto debug_info = std::make_shared<TaskDebugInfo>();
   MS_EXCEPTION_IF_NULL(debug_info);
   if (task_info_ptrs.empty()) {
-    MS_LOG(ERROR) << "Empty task_info_ptrs.";
-    return false;
+    MS_LOG(INFO) << anf_node_ptr->fullname_with_scope() << " task info is empty.";
+    return true;
   }
   MS_LOG(DEBUG) << "Node " << anf_node_ptr->fullname_with_scope() << " get task " << task_info_ptrs.front()->op_name();
   debug_info->op_name_ = anf_node_ptr->fullname_with_scope();
