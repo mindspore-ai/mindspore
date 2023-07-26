@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ops/orgqr.h"
 #include <map>
 #include <memory>
 #include <set>
@@ -32,7 +33,6 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/op_name.h"
-#include "ops/orgqr.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"

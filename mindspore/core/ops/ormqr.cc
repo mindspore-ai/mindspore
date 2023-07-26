@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ops/ormqr.h"
 #include <map>
 #include <memory>
 #include <set>
@@ -34,7 +35,6 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/op_name.h"
-#include "ops/ormqr.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
