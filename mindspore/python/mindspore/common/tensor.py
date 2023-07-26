@@ -4820,7 +4820,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
 def _vm_compare(*args):
     """Implement `vm_compare` for tensor."""
-    obj_str = args[-1]
+    if args:
+        obj_str = args[-1]
+    else:
+        raise ValueError("_vm_compare does not receive any input.")
     if obj_str == "shape":
         fn = getattr(args[0].asnumpy(), obj_str)
         return fn
