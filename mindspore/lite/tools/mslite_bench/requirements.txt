@@ -6,4 +6,4 @@ mindspore-lite==2.0.0
 tensorflow==1.15.0
 onnx==1.13.0
 onnxruntime==1.12.1
-paddlepaddle==2.5.0rc0
+paddlepaddle==2.5.0
