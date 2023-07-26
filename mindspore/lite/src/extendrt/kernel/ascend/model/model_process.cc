@@ -1029,37 +1029,32 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
   }
 
   aclError acl_ret;
+  struct timeval start_time;
   auto env = std::getenv("GLOG_v");
-  if (env != nullptr && env[0] == '1') {
-    struct timeval start_time;
-    struct timeval end_time;
+  constexpr char kINFOLogLevel = '1';
+  if (env != nullptr && env[0] == kINFOLogLevel) {
     (void)gettimeofday(&start_time, nullptr);
-    if (is_sharing_workspace_) {
-      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
-      AclMemManager::GetInstance().Lock();
-    }
-    acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
-    if (is_sharing_workspace_) {
-      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
-      AclMemManager::GetInstance().Unlock();
-    }
+  }
+
+  if (is_sharing_workspace_) {
+    MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
+    AclMemManager::GetInstance().Lock();
+  }
+  acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+  if (is_sharing_workspace_) {
+    MS_LOG(DEBUG) << "Unlock after aclmdlExecute.";
+    AclMemManager::GetInstance().Unlock();
+  }
+  if (env != nullptr && env[0] == kINFOLogLevel) {
+    struct timeval end_time;
     (void)gettimeofday(&end_time, nullptr);
     constexpr uint64_t kUSecondInSecond = 1000000;
     uint64_t cost =
       (kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec) + static_cast<uint64_t>(end_time.tv_usec)) -
       (kUSecondInSecond * static_cast<uint64_t>(start_time.tv_sec) + static_cast<uint64_t>(start_time.tv_usec));
     MS_LOG(INFO) << "Model execute in " << cost << " us";
-  } else {
-    if (is_sharing_workspace_) {
-      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
-      AclMemManager::GetInstance().Lock();
-    }
-    acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
-    if (is_sharing_workspace_) {
-      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
-      AclMemManager::GetInstance().Unlock();
-    }
   }
+
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Execute Model Failed, ret = " << acl_ret;
     return false;
@@ -1114,7 +1109,7 @@ bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
         aclrtMemcpy(host_data->addr, host_data->size, output_info.cur_device_data, output_info.buffer_size, kind);
       if (ret != ACL_ERROR_NONE) {
         MS_LOG(ERROR) << "Memcpy input " << i << " from " << (is_run_on_device_ ? "host" : "device")
-                      << " to host failed, memory size " << output_info.buffer_size;
+                      << " to host failed, memory size " << output_info.buffer_size << ",ret: " << ret;
         return false;
       }
     }
