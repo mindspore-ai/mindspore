@@ -270,7 +270,7 @@ static std::shared_ptr<AscendDeviceInfo> GetAscendDeviceInfo(const std::shared_p
     return nullptr;
   }
   auto &device_infos = context->MutableDeviceInfo();
-  if (device_infos.size() != 1) {
+  if (device_infos.size() != 1 || device_infos[0] == nullptr) {
     return nullptr;
   }
   auto ascend_info = device_infos[0]->Cast<AscendDeviceInfo>();

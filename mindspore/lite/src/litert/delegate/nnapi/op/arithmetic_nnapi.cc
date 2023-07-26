@@ -37,18 +37,26 @@ bool NNAPIArithmetic::IsSupport() {
 
 int NNAPIArithmetic::InitParams() {
   switch (type_) {
-    case schema::PrimitiveType_AddFusion:
-      act_type_ = op_primitive_->value_as_AddFusion()->activation_type();
-      break;
-    case schema::PrimitiveType_SubFusion:
-      act_type_ = op_primitive_->value_as_SubFusion()->activation_type();
-      break;
-    case schema::PrimitiveType_MulFusion:
-      act_type_ = op_primitive_->value_as_MulFusion()->activation_type();
-      break;
-    case schema::PrimitiveType_DivFusion:
-      act_type_ = op_primitive_->value_as_DivFusion()->activation_type();
-      break;
+    case schema::PrimitiveType_AddFusion: {
+      auto add = op_primitive_->value_as_AddFusion();
+      MS_CHECK_TRUE_RET(add != nullptr, RET_ERROR);
+      act_type_ = add->activation_type();
+    } break;
+    case schema::PrimitiveType_SubFusion: {
+      auto sub = op_primitive_->value_as_SubFusion();
+      MS_CHECK_TRUE_RET(sub != nullptr, RET_ERROR);
+      act_type_ = sub->activation_type();
+    } break;
+    case schema::PrimitiveType_MulFusion: {
+      auto mul = op_primitive_->value_as_MulFusion();
+      MS_CHECK_TRUE_RET(mul != nullptr, RET_ERROR);
+      act_type_ = mul->activation_type();
+    } break;
+    case schema::PrimitiveType_DivFusion: {
+      auto div = op_primitive_->value_as_DivFusion();
+      MS_CHECK_TRUE_RET(div != nullptr, RET_ERROR);
+      act_type_ = div->activation_type();
+    } break;
     default:
       act_type_ = schema::ActivationType_NO_ACTIVATION;
   }

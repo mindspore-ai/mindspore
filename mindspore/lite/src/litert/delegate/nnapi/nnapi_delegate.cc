@@ -50,6 +50,7 @@ namespace mindspore {
 namespace lite {
 void GetSpecifiedDevices(const std::vector<std::string> &specified_devices, bool only_use_acc_device,
                          bool disable_cpu_device, std::vector<ANeuralNetworksDevice *> *devices) {
+  MS_CHECK_TRUE_RET_VOID(devices != nullptr);
   uint32_t device_count;
   nnapi_->ANeuralNetworks_getDeviceCount(&device_count);
   int32_t type;
@@ -117,10 +118,12 @@ Status NNAPIDelegate::Init() {
 }
 
 Status NNAPIDelegate::Build(DelegateModel<schema::Primitive> *model) {
+  MS_CHECK_TRUE_RET(model != nullptr, mindspore::kLiteNullptr);
   std::vector<NNAPIOp *> condidate_ops;
   auto begin_iter = model->BeginKernelIterator();
   for (auto iter = begin_iter; iter != model->EndKernelIterator(); iter++) {
     auto kernel = *iter;
+    MS_CHECK_TRUE_RET(kernel != nullptr, mindspore::kLiteNullptr);
     auto primitive = model->GetPrimitive(kernel);
     MS_ASSERT(primitive != nullptr);
     auto prim_type = primitive->value_type();
@@ -130,6 +133,7 @@ Status NNAPIDelegate::Build(DelegateModel<schema::Primitive> *model) {
       continue;
     }
     auto get_op_func = op_func_lists_.at(prim_type);
+    MS_CHECK_TRUE_RET(get_op_func != nullptr, mindspore::kLiteNullptr);
     auto nnapi_op = get_op_func(kernel->name(), primitive, kernel->inputs(), kernel->outputs(), kernel->quant_type());
     if (nnapi_op == nullptr) {
       MS_LOG(WARNING) << "Get NNAPI op failed for " << prim_type;
@@ -203,6 +207,7 @@ Status NNAPIDelegate::Build(DelegateModel<schema::Primitive> *model) {
 void NNAPIDelegate::ReplaceNodes(const std::shared_ptr<LiteDelegateGraph> &graph) {
   MS_ASSERT(graph != nullptr);
   auto nodes = graph->nodes();
+  MS_CHECK_TRUE_RET_VOID(nodes != nullptr);
   nodes->erase(nodes->begin(), nodes->end());
   nodes->insert(nodes->begin(), sorted_kernels_.begin(), sorted_kernels_.end());
 }

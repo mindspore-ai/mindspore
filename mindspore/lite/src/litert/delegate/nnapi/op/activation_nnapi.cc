@@ -39,7 +39,9 @@ bool NNAPIActivation::IsSupport() {
 }
 
 int NNAPIActivation::InitParams() {
-  act_type_ = op_primitive_->value_as_Activation()->activation_type();
+  auto act = op_primitive_->value_as_Activation();
+  MS_CHECK_TRUE_RET(act != nullptr, RET_ERROR);
+  act_type_ = act->activation_type();
   return RET_OK;
 }
 
