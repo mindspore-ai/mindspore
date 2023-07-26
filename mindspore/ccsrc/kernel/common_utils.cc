@@ -294,6 +294,7 @@ std::vector<KernelObjectType> CalKernelObjectTypes(const std::vector<TypeId> &ob
 
 std::vector<KernelObjectType> CalInputKernelObjectTypes(const AnfNodePtr &kernel_node,
                                                         const kernel::KernelAttr &selected_kernel_attr) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto selected_input_object_types = GetInputObjectTypeListFromKernelAttr(selected_kernel_attr);
   auto input_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
   return CalKernelObjectTypes(input_object_types, selected_input_object_types, selected_kernel_attr.GetAllSame(),
@@ -302,6 +303,7 @@ std::vector<KernelObjectType> CalInputKernelObjectTypes(const AnfNodePtr &kernel
 
 std::vector<KernelObjectType> CalOutputKernelObjectTypes(const AnfNodePtr &kernel_node,
                                                          const kernel::KernelAttr &selected_kernel_attr) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto selected_output_object_types = GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
   auto output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
   return CalKernelObjectTypes(output_object_types, selected_output_object_types, selected_kernel_attr.GetAllSame(),
@@ -310,6 +312,7 @@ std::vector<KernelObjectType> CalOutputKernelObjectTypes(const AnfNodePtr &kerne
 
 std::vector<KernelObjectType> CalOutputElementObjectTypes(const AnfNodePtr &kernel_node,
                                                           const kernel::KernelAttr &selected_kernel_attr) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto selected_output_object_types = GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
   auto element_num = AnfAlgo::GetOutputElementNum(kernel_node);
   if (selected_kernel_attr.GetAllSame() && selected_output_object_types.size() == 1) {
@@ -340,6 +343,7 @@ std::string FetchPrintInfoByKernelAttr(KernelAttr selected_kernel_attr) {
 void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
                                   const std::vector<KernelObjectType> &input_kernel_object_types,
                                   const std::vector<KernelObjectType> &output_kernel_object_types) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   if (kernel_node->kernel_info() == nullptr) {
     kernel_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   }
@@ -358,6 +362,7 @@ void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
                                   const std::vector<KernelObjectType> &input_kernel_object_types,
                                   const std::vector<KernelObjectType> &output_kernel_object_types,
                                   const std::vector<KernelObjectType> &output_elements_kernel_object_types) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   if (kernel_node->kernel_info() == nullptr) {
     kernel_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   }
@@ -380,6 +385,7 @@ bool HasOutputElementsKernelObjectType(const std::vector<KernelObjectType> &outp
 }
 
 void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto input_kernel_object_types = CalInputKernelObjectTypes(kernel_node, selected_kernel_attr);
   auto output_kernel_object_types = CalOutputKernelObjectTypes(kernel_node, selected_kernel_attr);
   std::vector<KernelObjectType> output_element_object_types;
@@ -633,6 +639,7 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
 }
 
 bool IsFoldKernelBuildInfo(const KernelBuildInfoPtr &kernel_build_info) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info);
   auto inputs_object_type = kernel_build_info->GetAllInputKernelObjectTypes();
   if (std::find(inputs_object_type.begin(), inputs_object_type.end(), KernelObjectType::TUPLE) !=
       inputs_object_type.end()) {
@@ -663,6 +670,7 @@ KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info) {
 }
 
 KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   return GetKernelAttrFromBuildInfo(build_info);
 }
