@@ -22,30 +22,11 @@
 #include "utils/tensor_construct_utils.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
+#include "ops/test_ops.h"
 
 namespace mindspore {
 namespace ops {
-class TestAdd : public UT::Common {
- public:
-  TestAdd() {}
-  void SetUp() {
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    origin_device_target_ = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  }
-  void TearDown() {
-    auto context_ptr = MsContext::GetInstance();
-    if (context_ptr != nullptr) {
-      context_ptr->set_param<std::string>(MS_CTX_DEVICE_TARGET, origin_device_target_);
-    }
-  }
-
- private:
-  std::string origin_device_target_;
-};
-
-struct TestAddParams {
+struct AddParams {
   ShapeVector x_shape;
   TypePtr x_type;
   ShapeVector y_shape;
@@ -54,9 +35,9 @@ struct TestAddParams {
   TypePtr out_type;
 };
 
-class TestAddOnece : public TestAdd, public testing::WithParamInterface<TestAddParams> {};
+class TestAdd : public TestOps, public testing::WithParamInterface<AddParams> {};
 
-TEST_P(TestAddOnece, add_dyn_shape) {
+TEST_P(TestAdd, add_dyn_shape) {
   const auto &param = GetParam();
   auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
   auto y = std::make_shared<abstract::AbstractTensor>(param.y_type, param.y_shape);
@@ -71,23 +52,8 @@ TEST_P(TestAddOnece, add_dyn_shape) {
   ASSERT_TRUE(*out_abstract == *expect);
 }
 
-INSTANTIATE_TEST_CASE_P(TestAddGroup, TestAddOnece,
-                        testing::Values(
-                          TestAddParams{
-                            ShapeVector{-1, -1},
-                            kFloat32,
-                            ShapeVector{2, 3},
-                            kFloat32,
-                            ShapeVector{-1, -1},
-                            kFloat32,
-                          },
-                          TestAddParams{
-                            ShapeVector{-2},
-                            kFloat32,
-                            ShapeVector{2, 3},
-                            kFloat32,
-                            ShapeVector{-2},
-                            kFloat32,
-                          }));
+INSTANTIATE_TEST_CASE_P(TestAdd, TestAdd,
+                        testing::Values(AddParams{{-1, -1}, kFloat32, {2, 3}, kFloat32, {-1, -1}, kFloat32},
+                                        AddParams{{-2}, kFloat32, {2, 3}, kFloat32, {-2}, kFloat32}));
 }  // namespace ops
 }  // namespace mindspore
