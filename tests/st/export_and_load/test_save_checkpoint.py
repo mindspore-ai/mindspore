@@ -1,4 +1,22 @@
+# Copyright 2023 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+import os
+import stat
+
 import pytest
+
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
@@ -59,3 +77,25 @@ def test_ops_save_checkpoint(mode):
     assert 'conv2.weight' in output_param_dict
     assert 'conv1.weight' not in output_param_dict
     assert 'fc1.bias' not in output_param_dict
+
+    param_dict = ms.load_checkpoint("./lenet.ckpt")
+    ms.save_checkpoint(param_dict, "./lenet_dict.ckpt")
+    output_param_dict1 = ms.load_checkpoint("./lenet_dict.ckpt")
+    assert 'conv2.weight' in output_param_dict1
+    assert 'conv1.weight' not in output_param_dict1
+    assert 'fc1.bias' not in output_param_dict1
+
+    param_list = net.trainable_params()
+    ms.save_checkpoint(param_list, "./lenet_list.ckpt",
+                       choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
+    output_param_dict2 = ms.load_checkpoint("./lenet_list.ckpt")
+    assert 'conv2.weight' in output_param_dict2
+    assert 'conv1.weight' not in output_param_dict2
+    assert 'fc1.bias' not in output_param_dict2
+
+    file_list = os.listdir(os.getcwd())
+    ckpt_list = [k for k in file_list if k.endswith(".ckpt")]
+    for file_name in ckpt_list:
+        if os.path.exists(file_name):
+            os.chmod(file_name, stat.S_IWRITE)
+            os.remove(file_name)

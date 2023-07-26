@@ -23,7 +23,7 @@ import os
 import shutil
 import stat
 import threading
-from threading import Thread, Lock
+from threading import Thread, RLock
 from collections import defaultdict, OrderedDict
 from io import BytesIO
 
@@ -81,7 +81,7 @@ mindir_to_tensor_type = {1: mstype.float32, 2: mstype.uint8, 3: mstype.int8, 4: 
                          5: mstype.int16, 6: mstype.int32, 7: mstype.int64, 10: mstype.float16,
                          11: mstype.float64, 12: mstype.uint32, 13: mstype.uint64}
 
-_ckpt_mutex = Lock()
+_ckpt_mutex = RLock()
 
 # unit is KB
 SLICE_SIZE = 512 * 1024
@@ -335,8 +335,8 @@ def _write_hugeparameter(name, value, f):
 
 def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
     """Check save_obj and ckpt_file_name for save_checkpoint."""
-    if not isinstance(save_obj, nn.Cell) and not isinstance(save_obj, list):
-        raise TypeError("For 'save_checkpoint', the parameter 'save_obj' must be nn.Cell or list, "
+    if not isinstance(save_obj, (nn.Cell, list, dict)):
+        raise TypeError("For 'save_checkpoint', the parameter 'save_obj' must be nn.Cell, list or dict, "
                         "but got {}.".format(type(save_obj)))
     if not isinstance(ckpt_file_name, str):
         raise TypeError("For 'save_checkpoint', the parameter {} for checkpoint file name is invalid,"
@@ -353,14 +353,15 @@ def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
 
 def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                     async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None, **kwargs):
-    """
+    r"""
     Save checkpoint to a specified file.
 
     Args:
-        save_obj (Union[Cell, list]): The cell object or data list(each element is a dictionary, like
-                                      [{"name": param_name, "data": param_data},...], the type of
-                                      param_name would be string, and the type of param_data would
-                                      be parameter or Tensor).
+        save_obj (Union[Cell, list, dict]): The object to be saved. The data type can be :class:`mindspore.nn.Cell`,
+            list, or dict. If a list, it can be the returned value of `Cell.trainable_params()`, or a list of dict
+            elements(each element is a dictionary, like [{"name": param_name, "data": param_data},...], the type of
+            `param_name` must be string, and the type of `param_data` must be parameter or Tensor); If dict,
+            it can be the returned value of `mindspore.load_checkpoint()`.
         ckpt_file_name (str): Checkpoint file name. If the file name already exists, it will be overwritten.
         integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: ``True`` .
         async_save (bool): Whether to open an independent thread to save the checkpoint file. Default: ``False`` .
@@ -372,7 +373,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                         mode, currently supports ``"AES-GCM"`` and ``"AES-CBC"`` and ``"SM4-CBC"`` .
                         Default: ``"AES-GCM"`` .
         choice_func (function) : A function for saving custom selected parameters. The input value of `choice_func` is
-                                 a parameter name in string type, and the return value is a bool.
+                                 a parameter name in string type, and the returned value is a bool.
                                  If returns ``True`` , the Parameter that matching the custom condition will be saved.
                                  If returns ``False`` , the Parameter that not matching the custom condition will not
                                  be saved. Default: ``None`` .
@@ -381,7 +382,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             - incremental (bool): Whether export checkpoint for MapParameter incrementally.
 
     Raises:
-        TypeError: If the parameter `save_obj` is not `nn.Cell` or list type.
+        TypeError: If the parameter `save_obj` is not :class:`mindspore.nn.Cell` , list or dict type.
         TypeError: If the parameter `integrated_save` or `async_save` is not bool type.
         TypeError: If the parameter `ckpt_file_name` is not string type.
 
@@ -410,75 +411,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     map_param_inc = kwargs.get('incremental', False)
     logger.info("Execute the process of saving checkpoint files.")
 
-    if isinstance(save_obj, nn.Cell):
-        if save_obj.ge_init and not save_obj.ge_sync_data:
-            from mindspore.train.callback._callback import set_cur_net
-            set_cur_net(save_obj)
-            save_obj.exec_checkpoint_graph()
-        parameter_layout_dict = save_obj.parameter_layout_dict
-        if _is_in_auto_parallel_mode() and not parameter_layout_dict:
-            parameter_layout_dict = _get_parameter_layout()
-        if not _is_in_auto_parallel_mode():
-            save_obj.init_parameters_data()
-        param_dict = OrderedDict()
-        for _, param in save_obj.parameters_and_names():
-            not_sliced = not param.sliced
-            is_graph_mode = context.get_context('mode') == context.GRAPH_MODE
-            # All parameters are initialized immediately under PyNative mode, skip this judgement.
-            if is_graph_mode and _is_in_auto_parallel_mode() and (not_sliced or param.has_init):
-                continue
-            if choice_func is not None and not choice_func(param.name):
-                continue
-            # Add suffix for cache_enabled parameter, and then parameter can carry key info.
-            # Notice that suffix needs be removed when loading into net.
-            if param.cache_enable:
-                param_dict[param.name + ".__param_key__" + str(param.key)] = param
-            else:
-                param_dict[param.name] = param
-        param_list = []
-        if append_dict and "random_op" in append_dict:
-            phase = 'train' + '.' + str(save_obj.create_time) + '.' + str(id(save_obj)) + '.' + save_obj.arguments_key
-            if phase in save_obj.compile_cache and _executor.has_compiled(phase):
-                random_byte = _executor._graph_executor.get_random_status(phase)
-                param_list.append({"name": "random_op", "data": random_byte})
-            append_dict.pop("random_op")
-        for (key, value) in param_dict.items():
-            each_param = {"name": key}
-            if isinstance(value, MapParameter):
-                each_param["data"] = value
-                param_list.append(each_param)
-                continue
-
-            if value.data.is_persistent_data():
-                # list save persistent_data: [Tensor, shape, type, param.key]
-                param_data = ["persistent_data"]
-                param_data.append(value.data)
-                param_data.append(value.param_info.origin_shape)
-                param_data.append(str(value.dtype))
-                param_data.append(value.key)
-            elif value.data.offload_file_path() != "":
-                # list save offload data: [Param, shape, type, param.key]
-                param_data = ["offload_parameter"]
-                param_tensor = value.data
-                if key in parameter_layout_dict:
-                    param_tensor = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_tensor,
-                                                          integrated_save)
-                param_data.append(param_tensor)
-                param_data.append(param_tensor.shape)
-                param_data.append(str(param_tensor.dtype))
-                param_data.append(value.key)
-            else:
-                param_data = Tensor(value.data.asnumpy())
-
-                # in automatic model parallel scenario, some parameters were split to all the devices,
-                # which should be combined before saving
-                if key in parameter_layout_dict:
-                    param_data = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_data,
-                                                        integrated_save)
-
-            each_param["data"] = param_data
-            param_list.append(each_param)
-        save_obj = param_list
+    save_obj = _convert_save_obj_to_param_list(save_obj, integrated_save, append_dict, choice_func)
 
     if append_dict:
         append_info_list = []
@@ -535,6 +468,121 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc)
 
     logger.info("Saving checkpoint process is finished.")
+
+
+def _convert_list_to_param_list(save_obj, choice_func):
+    """Convert a list of Parameter to param_list."""
+    param_list = []
+    if isinstance(save_obj[0], dict):
+        param_list = [param for param in save_obj if choice_func is None or choice_func(param["name"])]
+    else:
+        for param in save_obj:
+            if isinstance(param, Parameter):
+                if choice_func is not None and not choice_func(param.name):
+                    continue
+                each_param = {"name": param.name, "data": param}
+                param_list.append(each_param)
+            else:
+                raise TypeError(f"For save_checkpoint, when save_obj is made up by list of Parameter,"
+                                f"the param should be parameter, but got {type(param)}")
+    return param_list
+
+
+def _convert_dict_to_param_dict(save_obj, choice_func):
+    """Convert a dict of Parameter to param_list."""
+    param_list = []
+    for (key, value) in save_obj.items():
+        if isinstance(key, str) and isinstance(value, (Parameter, str)):
+            if choice_func is not None and not choice_func(key):
+                continue
+            each_param = {"name": key, "data": value}
+            param_list.append(each_param)
+        else:
+            raise TypeError(f"For save_checkpoint, when save_obj is made up by dict, the key should be str and"
+                            f"value should be Parameter, but got the type of key is {type(key)} and"
+                            f"the type of value is {type(value)}")
+    return param_list
+
+
+def _convert_cell_param_and_names_to_dict(save_obj, choice_func):
+    """Convert cell.parameters_and_names to OrderedDict."""
+    param_dict = OrderedDict()
+    for _, param in save_obj.parameters_and_names():
+        not_sliced = not param.sliced
+        is_graph_mode = context.get_context('mode') == context.GRAPH_MODE
+        # All parameters are initialized immediately under PyNative mode, skip this judgement.
+        if is_graph_mode and _is_in_auto_parallel_mode() and (not_sliced or param.has_init):
+            continue
+        if choice_func is not None and not choice_func(param.name):
+            continue
+        # Add suffix for cache_enabled parameter, and then parameter can carry key info.
+        # Notice that suffix needs be removed when loading into net.
+        if param.cache_enable:
+            param_dict[param.name + ".__param_key__" + str(param.key)] = param
+        else:
+            param_dict[param.name] = param
+    return param_dict
+
+
+def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_func):
+    """Convert nn.Cell to param_list."""
+    param_list = []
+    parameter_layout_dict = save_obj.parameter_layout_dict
+    if _is_in_auto_parallel_mode() and not parameter_layout_dict:
+        parameter_layout_dict = _get_parameter_layout()
+    if not _is_in_auto_parallel_mode():
+        save_obj.init_parameters_data()
+    param_dict = _convert_cell_param_and_names_to_dict(save_obj, choice_func)
+    if append_dict and "random_op" in append_dict:
+        phase = 'train' + '.' + str(save_obj.create_time) + '.' + str(id(save_obj)) + '.' + save_obj.arguments_key
+        if phase in save_obj.compile_cache and _executor.has_compiled(phase):
+            random_byte = _executor._graph_executor.get_random_status(phase)
+            param_list.append({"name": "random_op", "data": random_byte})
+        append_dict.pop("random_op")
+    for (key, value) in param_dict.items():
+        each_param = {"name": key}
+        if isinstance(value, MapParameter):
+            each_param["data"] = value
+            param_list.append(each_param)
+            continue
+
+        if value.data.is_persistent_data():
+            # list save persistent_data: [Tensor, shape, type, param.key]
+            param_data = ["persistent_data", value.data, value.param_info.origin_shape, str(value.dtype), value.key]
+        elif value.data.offload_file_path() != "":
+            # list save offload data: [Param, shape, type, param.key]
+            param_data = ["offload_parameter"]
+            param_tensor = value.data
+            if key in parameter_layout_dict:
+                param_tensor = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_tensor,
+                                                      integrated_save)
+            param_data.append(param_tensor)
+            param_data.append(param_tensor.shape)
+            param_data.append(str(param_tensor.dtype))
+            param_data.append(value.key)
+        else:
+            param_data = Tensor(value.data.asnumpy())
+
+            # in automatic model parallel scenario, some parameters were split to all the devices,
+            # which should be combined before saving
+            if key in parameter_layout_dict:
+                param_data = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_data,
+                                                    integrated_save)
+
+        each_param["data"] = param_data
+        param_list.append(each_param)
+    return param_list
+
+
+def _convert_save_obj_to_param_list(save_obj, integrated_save, append_dict, choice_func):
+    """Convert a save_obj to param_list."""
+    if isinstance(save_obj, list):
+        return _convert_list_to_param_list(save_obj, choice_func)
+
+    if isinstance(save_obj, dict):
+        return _convert_dict_to_param_dict(save_obj, choice_func)
+
+    return _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_func)
 
 
 def _save_param_list_data(data_list, key, param):
