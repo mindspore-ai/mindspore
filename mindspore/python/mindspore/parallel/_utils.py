@@ -99,7 +99,7 @@ def _slice_parameter(parameter, phase, layout):
     if layout is None:
         parameter.sliced = True
         return
-    if not parameter.sliced and (parameter.size != 1):
+    if not parameter.sliced:
         new_tensor = _load_tensor_by_layout(parameter, layout)
         parameter.set_data(new_tensor, True)
 
