@@ -15,8 +15,8 @@ mindspore.set_offload_context
           - offload_path：offload到磁盘上的路径，支持相对路径。
           - offload_cpu_size：设置可用于offload到host侧总内存大小，格式只支持"xxGB"形式字符串。
           - offload_disk_size：设置可用于offload到磁盘的大小，格式只支持"xxGB"形式字符串。
-          - hbm_ratio：策略相关参数，策略在用户设置的最大显存基础上能够使用的比例，小数，值范围（0,1]。
-          - cpu_ratio：策略相关参数，策略在用户设置的最大host侧内存基础上能够使用的比例，小数，值范围（0,1]。
+          - hbm_ratio：策略相关参数，策略在用户设置的最大显存基础上能够使用的比例，小数，值范围(0,1]。
+          - cpu_ratio：策略相关参数，策略在用户设置的最大host侧内存基础上能够使用的比例，小数，值范围(0,1]。
           - enable_pinned_mem：是否开启pinn memory，开启后可加速HBM-DDR之间的拷贝，会影响系统虚拟内存，取值，True,False。
           - enable_aio：是否开启AIO，开启后可加速DDR-NVME之间的拷贝。
           - aio_block_size：AIO中blocksize值，格式只支持"xxGB"形式字符串。
