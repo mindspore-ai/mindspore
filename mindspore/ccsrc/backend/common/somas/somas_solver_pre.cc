@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,6 +105,7 @@ void FindBest(size_t total_sol, const vector<std::shared_ptr<SomasSolverCore>> &
   MS_EXCEPTION_IF_NULL(best_info);
   for (size_t sol = 0; sol < total_sol; sol++) {
     auto &solver = solvers[sol];
+    MS_EXCEPTION_IF_NULL(solver);
     auto &upperbound = solver->GetUpperbound();
     if (upperbound > best_info->worst) {
       best_info->worst = upperbound;
@@ -169,6 +170,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap
     for (auto &tensor : tensors) {
       *(tensor.second.get()) = *(vecTensorsMap[best_info.best_sol][tensor.first]);
     }
+    MS_EXCEPTION_IF_NULL(best_solver);
     max_offset_ = best_solver->GetUpperbound();
     constexpr float kFloatPresent = 100.0;
     MS_LOG(INFO) << "SOMAS SOLVER RESUME:";
@@ -261,6 +263,7 @@ void SomasSolverPre::SolverOutputLog(const session::KernelGraph &graph, const Te
   constexpr size_t contiguous_right = 3;
   for (auto &t : tensors) {
     SomasSolverTensorDescPtr tensor = t.second;
+    MS_EXCEPTION_IF_NULL(tensor);
     int continuous = 0;
     if (tensor->left_ == nullptr && tensor->right_ != nullptr) {
       continuous = contiguous_left;

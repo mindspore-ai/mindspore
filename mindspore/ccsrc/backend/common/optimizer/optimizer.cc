@@ -25,6 +25,7 @@ namespace mindspore {
 namespace opt {
 std::vector<AnfNodePtr> PatternPass::GetOrigNodes() const {
   std::vector<AnfNodePtr> orig_nodes;
+  MS_EXCEPTION_IF_NULL(equiv_);
   for (auto &prim_var : *primitive_vars_) {
     auto equiv_iter = equiv_->find(prim_var.second);
     if (equiv_iter == equiv_->end()) {

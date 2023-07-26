@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,17 @@ void GraphOptimizer::AddPassManager(const PassManagerPtr &pass_manager) {
 
 FuncGraphPtr GraphOptimizer::Optimize(const FuncGraphPtr &func_graph, bool run_only_once) {
   run_only_once_ = (pass_managers_.size() == 1) ? true : run_only_once;
+  MS_EXCEPTION_IF_NULL(func_graph);
   // cppcheck-suppress *
   auto manager = Manage(func_graph, true);
+  MS_EXCEPTION_IF_NULL(manager);
 
   bool changed = true;
   while (changed) {
     changed = false;
     for (size_t i = 0; i < pass_managers_.size(); ++i) {
       const PassManagerPtr &pm = pass_managers_[i];
+      MS_EXCEPTION_IF_NULL(pm);
       if (pm != nullptr && pm->Run(func_graph)) {
         changed = true;
       }

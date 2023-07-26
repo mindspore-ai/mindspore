@@ -77,16 +77,21 @@ void InferShapeForNopNode(const AnfNodePtr &input_node) {
 }
 
 TypeId GetSequenceType(const abstract::AbstractSequencePtr &seq_abs) {
+  MS_EXCEPTION_IF_NULL(seq_abs);
   auto elems = seq_abs->elements();
+  MS_EXCEPTION_IF_CHECK_FAIL(elems.size() >= 1, "Element size is less than 1.");
+  MS_EXCEPTION_IF_NULL(elems[0]);
   if (!elems[0]->isa<abstract::AbstractScalar>()) {
     MS_LOG(EXCEPTION) << "The 0'th element of sequence must be a scalar, but got:" << elems[0]->ToString();
   }
 
   auto fixed_type = elems[0]->BuildType()->type_id();
   for (size_t i = 1; i < elems.size(); i++) {
+    MS_EXCEPTION_IF_NULL(elems[i]);
     if (!elems[i]->isa<abstract::AbstractScalar>()) {
       MS_LOG(EXCEPTION) << "The " << i << "'th element of sequence must be a scalar, but got:" << elems[i]->ToString();
     }
+    MS_EXCEPTION_IF_NULL(elems[i]->BuildType());
     auto follow_type = elems[i]->BuildType()->type_id();
     if (fixed_type != follow_type) {
       MS_LOG(EXCEPTION) << "Different type found between 0'th element[Type: " << fixed_type << "] and " << i
@@ -107,6 +112,7 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
   TypeId type;
   if (abs->isa<abstract::AbstractScalar>()) {
     shape = {1};
+    MS_EXCEPTION_IF_NULL(abs->BuildType());
     type = abs->BuildType()->type_id();
   } else if (AnfAlgo::IsRealSquenceOutput(real_input)) {
     auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
@@ -143,6 +149,7 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(input_node_with_index.first);
   auto depended_value = CreateTensorMem(input_node_with_index);
+  MS_EXCEPTION_IF_NULL(depended_value);
   if (IsPrimitiveCNode(input_node_with_index.first, prim::kPrimPyExecute)) {
     MS_LOG(DEBUG) << "The input node is " << input_node_with_index.first->ToString()
                   << ", use user data instead of address.";
@@ -151,6 +158,7 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
   // First use the data of args.
   if (args != nullptr) {
     auto input_device_address = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
+    MS_EXCEPTION_IF_NULL(input_device_address);
     if (i < input_device_address->size() && input_device_address->at(i) != nullptr) {
       uint64_t start_time = 0;
       PROFILER_START(start_time);
@@ -166,6 +174,7 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
   // Second use the device address of node as fault-tolerant.
   auto output_addr =
     AnfAlgo::GetMutableOutputAddr(input_node_with_index.first, input_node_with_index.second, skip_nop_node);
+  MS_EXCEPTION_IF_NULL(output_addr);
   if (output_addr != nullptr && output_addr->IsPtrValid()) {
     // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
     // address size will be wrong in the dynamic shape scenario.
@@ -216,6 +225,8 @@ tensor::TensorPtr GetDependValueTensor(const std::vector<device::DeviceAddressPt
 
 abstract::AbstractBasePtr MakeNewAbstractByScalar(const tensor::TensorPtr &depended_value) {
   abstract::AbstractBasePtr new_abs;
+  MS_EXCEPTION_IF_NULL(depended_value);
+  MS_EXCEPTION_IF_NULL(depended_value->Dtype());
   auto type = depended_value->Dtype()->type_id();
   if (type == kNumberTypeInt32) {
     auto tensor_data = reinterpret_cast<int32_t *>(depended_value->data_c());
@@ -254,6 +265,9 @@ abstract::AbstractBasePtrList MakeElemsByTensorValue(void *data, size_t size) {
 abstract::AbstractBasePtr MakeNewAbstractBySequence(const tensor::TensorPtr &depended_value,
                                                     const abstract::AbstractBasePtr &input_abs) {
   abstract::AbstractBasePtr new_abs;
+  MS_EXCEPTION_IF_NULL(depended_value);
+  MS_EXCEPTION_IF_NULL(depended_value->Dtype());
+  MS_EXCEPTION_IF_NULL(input_abs);
   auto type = depended_value->Dtype()->type_id();
   AbstractBasePtrList elems;
   switch (type) {
@@ -284,16 +298,20 @@ abstract::AbstractBasePtr MakeNewAbstractBySequence(const tensor::TensorPtr &dep
   } else {
     MS_LOG(EXCEPTION) << "Unsupported abstract type:" << input_abs->ToString();
   }
+  MS_EXCEPTION_IF_NULL(new_abs);
   new_abs->set_value(depended_value);
   return new_abs;
 }
 
 abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor::TensorPtr &depended_value,
                                           const size_t &input_index) {
+  MS_EXCEPTION_IF_NULL(input);
   auto abs = input->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
   abstract::AbstractBasePtr new_abs;
   if (abs->isa<abstract::AbstractTensor>()) {
     new_abs = abs->Clone();
+    MS_EXCEPTION_IF_NULL(new_abs);
     new_abs->set_value(depended_value);
   } else if (abs->isa<abstract::AbstractScalar>()) {
     new_abs = MakeNewAbstractByScalar(depended_value);
@@ -304,6 +322,7 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
     MS_EXCEPTION_IF_NULL(abstract_seq);
     MS_EXCEPTION_IF_CHECK_FAIL((input_index < abstract_seq->elements().size()), "Index is out of range.");
     new_abs = abstract_seq->elements()[input_index]->Clone();
+    MS_EXCEPTION_IF_NULL(new_abs);
     new_abs->set_value(depended_value);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported abstract type:" << abs->ToString();
@@ -311,6 +330,7 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
   // Set user data for PyExecute infer.
   if (input->has_user_data<kernel::PyExecuteOutputUserData>()) {
     const auto &output_data = input->user_data<kernel::PyExecuteOutputUserData>();
+    MS_EXCEPTION_IF_NULL(new_abs);
     new_abs->set_user_data<kernel::PyExecuteOutputUserData>(output_data);
   }
 
@@ -320,6 +340,8 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
 void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
                         const AbstractBasePtrList &args_spec_list) {
   std::map<AnfNodePtr, AbstractBasePtr> node_abs_spec_map;
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
   if (args_spec_list.size() != func_graph->parameters().size()) {
     MS_LOG(EXCEPTION)
       << "The args_spec_list size should be the same as that of func_graph parameters, but get args_spec_list: "
@@ -330,6 +352,7 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
   }
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return());
   for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>() || !IsValueNode<Primitive>(node->cast<CNodePtr>()->input(0))) {
       continue;
     }
@@ -337,11 +360,13 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
       auto cnode_primitive = GetCNodePrimitive(node);
       MS_EXCEPTION_IF_NULL(cnode_primitive);
       auto prim_cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(prim_cnode);
 
       AbstractBasePtrList cnode_args_spec_list;
 
       for (size_t i = 1; i < prim_cnode->size(); i++) {
         auto input_node = prim_cnode->input(i);
+        MS_EXCEPTION_IF_NULL(input_node);
         auto para_spec = node_abs_spec_map.find(input_node);
         if (para_spec != node_abs_spec_map.end()) {
           (void)cnode_args_spec_list.emplace_back(para_spec->second);
@@ -353,6 +378,7 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
       (void)node_abs_spec_map.emplace(node, cnode->abstract());
     } else {
       auto return_cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(return_cnode);
       auto return_spec = node_abs_spec_map.find(return_cnode->input(1));
       if (return_spec == node_abs_spec_map.end()) {
         MS_LOG(EXCEPTION) << "There is no inferred result for the return value of the node: "
@@ -366,6 +392,7 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
 
 void InferShapeForPrimitive(const CNodePtr &cnode, const PrimitivePtr &primitive,
                             const AbstractBasePtrList &args_spec_list, bool has_py_execute_data) {
+  MS_EXCEPTION_IF_NULL(cnode);
   if (!has_py_execute_data && !IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
     // Pynative mode is rely on the origin abstract of cnode, so cannot modify the abstract inplace, clone from old
     // abstract instead.
@@ -422,6 +449,9 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
       }
 
       auto updated_abs = MakeNewAbstract(real_input, depended_value, real_input_index);
+      MS_EXCEPTION_IF_NULL(updated_abs);
+      MS_EXCEPTION_IF_NULL(real_input);
+      MS_EXCEPTION_IF_NULL(real_input->abstract());
       if (updated_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
         has_py_execute_data = true;
         if (IsPrimitiveCNode(real_input, prim::kPrimPyExecute) &&
@@ -450,8 +480,9 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
       }
     }
   }
-
+  MS_EXCEPTION_IF_NULL(inputs[0]);
   if (auto primitive = GetValueNode<PrimitivePtr>(inputs[0])) {
+    MS_EXCEPTION_IF_NULL(primitive);
     (void)primitive->AddAttr(kAttrListStartIndex, MakeValue(list_start_index));
     InferShapeForPrimitive(cnode, primitive, args_spec_list, has_py_execute_data);
   } else if (auto func_graph = GetValueNode<FuncGraphPtr>(inputs[0])) {
@@ -480,6 +511,7 @@ AnfNodePtr GenInferNode(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto infer_node = AnfUtils::NewInferActorNode([cnode](void *args) { InferOp(cnode, args); }, cnode);
+  MS_EXCEPTION_IF_NULL(infer_node);
   infer_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   return infer_node;
 }
@@ -504,6 +536,7 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node) {
   };
 
   auto init_node = AnfUtils::NewInitActorNode(actor_func, cnode);
+  MS_EXCEPTION_IF_NULL(init_node);
   init_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   return init_node;
 }
@@ -539,8 +572,10 @@ void InferShape(std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map,
   auto input_size = execute_kernel.inputs_device_address_.size();
   for (size_t i = 0; i < input_size; i++) {
     auto input_address = execute_kernel.inputs_device_address_[i];
+    MS_EXCEPTION_IF_NULL(input_address);
     if (depend_list.find(i) != depend_list.end()) {
       auto depended_value = GetDependValueTensor(execute_kernel.inputs_device_address_, input_tensors, i);
+      MS_EXCEPTION_IF_NULL(depended_value);
       auto ret2 = depend_tensor_map->try_emplace(i, depended_value);
       if (!ret2.second) {
         MS_LOG(EXCEPTION) << "Insert map failed.";
@@ -559,13 +594,18 @@ void InferShape(std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map,
 void UpdateOutputDeviceShape(const std::vector<device::DeviceAddressPtr> &output_device_address_list,
                              const AbstractBasePtr &abstract) {
   auto output_num = output_device_address_list.size();
+  MS_EXCEPTION_IF_NULL(abstract);
   if (abstract->isa<abstract::AbstractTuple>()) {
     auto abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(abstract_tuple);
     for (size_t i = 0; i < output_num; ++i) {
       auto real_abs = abstract_tuple->elements()[i];
+      MS_EXCEPTION_IF_NULL(real_abs);
+      MS_EXCEPTION_IF_NULL(output_device_address_list[i]);
       output_device_address_list[i]->set_host_shape(BaseShapeToShape(real_abs->BuildShape()));
     }
   } else {
+    MS_EXCEPTION_IF_NULL(output_device_address_list[0]);
     output_device_address_list[0]->set_host_shape(BaseShapeToShape(abstract->BuildShape()));
   }
 }
