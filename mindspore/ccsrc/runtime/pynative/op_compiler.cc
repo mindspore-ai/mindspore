@@ -304,6 +304,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   std::vector<KernelWithIndex> outputs_with_index;
   std::vector<size_t> outputs_tensor_num;
   std::vector<std::string> outputs_padding_type;
+  bool graph_output_dynamic = false;
   for (auto &node : output_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     const auto &output_with_index = common::AnfAlgo::VisitKernel(node, 0);
@@ -313,12 +314,21 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
                                   ? AnfAlgo::GetOutputReshapeType(output_with_index.first, output_with_index.second)
                                   : "");
     (void)outputs_padding_type.emplace_back(padding_type);
+
+    MS_EXCEPTION_IF_NULL(output_with_index.first);
+    const auto &abstract = output_with_index.first->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    const auto &shape = abstract->BuildShape();
+    MS_EXCEPTION_IF_NULL(shape);
+    if (shape->IsDynamic()) {
+      graph_output_dynamic = true;
+    }
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
-  auto op_compiler_info = std::make_shared<OpCompilerInfo>(graph_info, graph->graph_id(), graph, outputs_with_index,
-                                                           outputs_tensor_num, outputs_padding_type, device_context,
-                                                           op_run_info->base_op_run_info.need_earse_cache);
+  auto op_compiler_info = std::make_shared<OpCompilerInfo>(
+    graph_info, graph->graph_id(), graph, device_context, op_run_info->base_op_run_info.need_earse_cache,
+    graph_output_dynamic, outputs_with_index, outputs_tensor_num, outputs_padding_type);
 
   graph->set_graph_info(graph_info);
   ConvertGraphToExecuteInfo(op_compiler_info);
