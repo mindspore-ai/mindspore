@@ -126,7 +126,7 @@ class WeightQuantizer : public Quantizer {
                   bool compression = true);
   int MarkGraphWeightQuantType(const FuncGraphPtr &func_graph);
   int MarkCNodeWeightQuantType(const CNodePtr &cnode);
-  int DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter, const tensor::TensorPtr tensor);
+  int DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter, const tensor::TensorPtr &tensor);
   int DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &parameter, int idx, const tensor::TensorPtr &tensor_info,
                     int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true);
   int InsertDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const ParameterPtr &parameter, int idx,

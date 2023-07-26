@@ -30,6 +30,7 @@ constexpr int kMinSize = 2;
 constexpr int kAverage = 2;
 }  // namespace
 std::vector<float> ClusterQuantization::KMeansPlusPlusInit(const float *data, size_t elem_count, size_t k) {
+  MS_ASSERT(data != nullptr);
   std::vector<float> data_vector(data, data + elem_count);
   std::sort(data_vector.begin(), data_vector.end());
   data_vector.erase(std::unique(data_vector.begin(), data_vector.end()), data_vector.end());
@@ -96,6 +97,7 @@ std::vector<float> ClusterQuantization::LinearInit(const float *data, size_t ele
 void ClusterQuantization::SelectClusterCentroid(const float *data, size_t elem_count,
                                                 const std::vector<float> &clusters, std::vector<int8_t> *clusters_index,
                                                 std::vector<std::vector<float>> *clusters_data) {
+  CHECK_NULL_RETURN_VOID(data);
   for (size_t i = 0; i < elem_count; i++) {
     size_t index = 0;
     double euclidean_distance = std::pow(data[i] - clusters.at(0), kPowExponent);

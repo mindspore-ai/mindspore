@@ -74,6 +74,7 @@ int TransformUint8Pass::DoParameterNodeTrans(const CNodePtr &cnode, const Parame
                                              size_t input_index) {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(input_node);
+  MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
   if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, kHasBiasOperator)) {
     return RET_NOT_SUPPORT;
   }

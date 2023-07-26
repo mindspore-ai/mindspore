@@ -237,6 +237,7 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
 
 int PropagateQuantParamPass::FindNodeDepends(const std::list<CNodePtr> &nodes,
                                              std::map<CNodePtr, DependNodes> *node_depends) {
+  CHECK_NULL_RETURN(node_depends);
   for (const auto &cnode : nodes) {
     if (opt::IsSpecialType(cnode)) {
       continue;

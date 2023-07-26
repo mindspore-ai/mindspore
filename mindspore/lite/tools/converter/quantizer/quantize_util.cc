@@ -58,6 +58,7 @@ constexpr size_t kModelSizeLimit = static_cast<size_t>(2) * 1024 * 1024 * 1024;
 
 int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type) {
   CHECK_NULL_RETURN(cnode);
+  CHECK_NULL_RETURN(quant_type);
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
   if (quant_param_holder == nullptr) {
     *quant_type = quant::QUANT_NONE;
@@ -68,6 +69,8 @@ int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type) {
 }
 
 int GetQuantTypeNew(const CNodePtr &cnode, quant::QuantType *quant_type) {
+  CHECK_NULL_RETURN(cnode);
+  CHECK_NULL_RETURN(quant_type);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr.";
@@ -161,6 +164,7 @@ bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
 }
 
 int GetCastNodeType(const FuncGraphPtr &func_graph, const CNodePtr &cnode, CastNodeType *cast_node_type) {
+  CHECK_NULL_RETURN(cast_node_type);
   if (!opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
     MS_LOG(DEBUG) << "Not QuantDtypeCastNode, cnode name: " << cnode->fullname_with_scope();
     return RET_NOT_SUPPORT;
@@ -229,6 +233,9 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
 Status LargeModelBuildModel(const schema::MetaGraphT &meta_graph, const std::shared_ptr<ConverterPara> &param,
                             const std::shared_ptr<mindspore::Model> &model, const std::shared_ptr<Context> &context,
                             size_t *size) {
+  if (size == nullptr) {
+    return kLiteError;
+  }
   if (param->commonQuantParam.workspace.empty()) {
     MS_LOG(ERROR) << "The model is larger than 2G, mixedBitWeightQuant config needs to set workspace to save tmp model";
     return kLiteError;
@@ -297,6 +304,9 @@ int DumpGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPar
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
                              const std::shared_ptr<ConverterPara> &param, size_t *size) {
+  if (size == nullptr) {
+    return kLiteError;
+  }
   FuncGraphPtr func_graph_clone;
   if (CloneFuncGraph(func_graph, param, &func_graph_clone) != RET_OK) {
     MS_LOG(ERROR) << "Clone func_graph failed";
@@ -395,6 +405,8 @@ std::vector<mindspore::lite::Tensor *> MSTensorToLiteTensors(const std::vector<m
 }
 
 void GetParameterAndTensor(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {
+  CHECK_NULL_RETURN_VOID(param_node);
+  CHECK_NULL_RETURN_VOID(tensor_info);
   if (node == nullptr) {
     MS_LOG(ERROR) << "node is nullptr";
     return;
@@ -420,6 +432,7 @@ void GetParameterAndTensor(const AnfNodePtr &node, ParameterPtr *param_node, ten
 
 int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, size_t new_size,
                             TypeId new_data_type) {
+  CHECK_NULL_RETURN(quant_datas);
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(new_size > 0, RET_NULL_PTR);
   weight->set_data_type(new_data_type);

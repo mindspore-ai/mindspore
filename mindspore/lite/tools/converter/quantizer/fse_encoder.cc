@@ -99,6 +99,7 @@ int FSEEncoder::FSECreateStatesForEncoding(const uint32_t *frequency, size_t fre
 
 int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param,
                          mindspore::TensorCompressionType compress_type, int max_segments) {
+  CHECK_NULL_RETURN(weight->default_param());
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
   CHECK_NULL_RETURN(tensor_info);
   FSEQuant fse_quant;

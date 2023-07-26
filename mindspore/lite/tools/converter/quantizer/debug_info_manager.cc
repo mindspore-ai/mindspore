@@ -263,7 +263,8 @@ int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::lite::Tens
                                          const OpParameter *op_parameter, int tensor_index,
                                          QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor,
                                          const quant::DebugMode &debug_mode) {
-  MS_CHECK_TRUE_MSG(quant_debug_info != nullptr, RET_ERROR, "quant_debug_info is nullptr.");
+  CHECK_NULL_RETURN(op_parameter);
+  CHECK_NULL_RETURN(quant_debug_info);
   auto preferred_dim =
     mindspore::lite::WeightDecoder::GetPreferredDim(inputs, op_parameter, tensor_index, tensor.shape(), Version());
   float *quant_data;
