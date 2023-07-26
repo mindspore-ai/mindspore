@@ -462,7 +462,7 @@ STATUS ScalarOpPass::RemoveTensorToScalar(const FuncGraphPtr &func_graph, const 
 
 STATUS ScalarOpPass::RunScalarOpPass(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
   auto node_list = TopoSort(func_graph->get_return());
-  STATUS status = lite::RET_OK;
+  STATUS status = lite::RET_NO_CHANGE;
   for (auto &node : node_list) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
@@ -483,7 +483,7 @@ STATUS ScalarOpPass::RunScalarOpPass(const FuncGraphPtr &func_graph, const FuncG
       return lite::RET_ERROR;
     }
   }
-  return lite::RET_OK;
+  return status;
 }
 
 STATUS ScalarOpPass::RunMakeTuplePass(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
@@ -608,14 +608,16 @@ bool ScalarOpPass::Run(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_RET(manager != nullptr, false);
   auto status = RunShapeTupleGetPass(func_graph, manager);
   MS_CHECK_TRUE_RET(status != lite::RET_ERROR, false);
-  status = RunScalarOpPass(func_graph, manager);
+  auto scalar_replace_status = RunScalarOpPass(func_graph, manager);
   MS_CHECK_TRUE_RET(status != lite::RET_ERROR, false);
   status = RunMakeTuplePass(func_graph, manager);
   MS_CHECK_TRUE_RET(status != lite::RET_ERROR, false);
   status = RunRemoveTensorToScalarPass(func_graph, manager);
   MS_CHECK_TRUE_RET(status != lite::RET_ERROR, false);
-  status = RunArithmeticCheckPass(func_graph, manager);
-  MS_CHECK_TRUE_RET(status != lite::RET_ERROR, false);
+  if (scalar_replace_status != lite::RET_NO_CHANGE) {
+    status = RunArithmeticCheckPass(func_graph, manager);
+    MS_CHECK_TRUE_RET(status != lite::RET_ERROR, false);
+  }
 
   return true;
 }
