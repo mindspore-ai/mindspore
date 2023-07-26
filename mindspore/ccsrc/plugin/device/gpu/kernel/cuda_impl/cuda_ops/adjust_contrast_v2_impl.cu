@@ -27,7 +27,7 @@ __global__ void AdjustContrastV2GpuKernel(const T *images, const float *contrast
   const int block_num = 128;
   for (int k = blockIdx.x; k < total; k += block_num) {
     __shared__ float ssum[thread_num];  // calculate the sum of elements dealt by the threads
-    memset(ssum, 0, thread_num * sizeof(float));
+    ssum[threadIdx.x] = 0;
     __syncthreads();
     float sum = 0;
     int base = k / 3 * per_batch_elements + k % 3;

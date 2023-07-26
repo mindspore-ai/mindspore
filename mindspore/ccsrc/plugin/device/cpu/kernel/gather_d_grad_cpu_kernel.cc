@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/gather_d_grad_cpu_kernel.h"
 #include <algorithm>
 #include <complex>
+#include <cstdint>
 #include <functional>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -184,9 +185,18 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
       index[i] = max_index + index[i];
     }
   }
-  auto out_size = get_element_num(output_shape_);
   // memset_s does not support data that more than 2GB.
-  (void)memset(static_cast<void *>(out), 0, out_size * sizeof(T));
+  auto output_addr = reinterpret_cast<char *>(outputs[0]->addr);
+  while (output_size > 0) {
+    auto copy_size = std::min(output_size, static_cast<size_t>(INT32_MAX));
+    auto ret = memset_s(output_addr, output_size, 0, copy_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+    }
+    output_size -= copy_size;
+    output_addr += copy_size;
+  }
+
   // out_cargo_size
   std::vector<size_t> out_cargo_size = std::vector<size_t>(output_shape_.size(), 1);
   for (int i = static_cast<int>(out_cargo_size.size()) - 2; i >= 0; --i) {

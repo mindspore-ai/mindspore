@@ -19,6 +19,7 @@ Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
 #include "cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "kernel_log.h"
+#include "securec.h"
 #include "status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -38,7 +39,10 @@ void SparseSoftmaxCrossEntropyWithLogitsSingleOp(data_type *input_features, labe
                                                  int64_t classes_num, size_t features_total) {
   double_t *dims_exp_sum = static_cast<double_t *>(malloc(batch_size * sizeof(double_t)));
   data_type *dims_maximum = static_cast<data_type *>(malloc(batch_size * sizeof(data_type)));
-  memset(dims_exp_sum, 0, batch_size * sizeof(double_t));
+  auto ret = memset_s(dims_exp_sum, batch_size * sizeof(double_t), 0, batch_size * sizeof(double_t));
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("For 'SparseSoftmaxCrossEntropyWithLogitsSingle', memset_s failed, ret=%d.", ret);
+  }
   Eigen::TensorMap<Eigen::Tensor<data_type, kDimSizeTwo>, Eigen::Aligned> logits(input_features, batch_size,
                                                                                  classes_num);
   Eigen::TensorMap<Eigen::Tensor<double_t, 1>, Eigen::Aligned> dims_sum(dims_exp_sum, batch_size);

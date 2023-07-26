@@ -17,8 +17,10 @@
 #include "scatter_nd.h"
 
 #include <complex>
+#include <cstdint>
 #include <cmath>
 #include "eigen_tensor.h"
+#include "securec.h"
 #include "utils/kernel_util.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/atomic_op.h"
@@ -177,7 +179,19 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(CpuKernelContext &ctx) {
   auto Updates_data = reinterpret_cast<data_type_x *>(ctx.Input(1)->GetData());
   auto Output_data = reinterpret_cast<data_type_x *>(ctx.Output(0)->GetData());
 
-  memset(Output_data, 0, sizeof(data_type_x) * output_flat_size);
+  auto output_size = ctx.Output(0)->GetDataSize();
+  auto output_addr = reinterpret_cast<char *>(ctx.Output(0)->GetData());
+  while (output_size > 0) {
+    auto copy_size = std::min(output_size, static_cast<uint64_t>(INT32_MAX));
+    auto ret = memset_s(output_addr, output_size, 0, copy_size);
+    if (ret != EOK) {
+      KERNEL_LOG_ERROR("For 'ScatterNd', memset_s failed, ret=%d.", ret);
+      return KERNEL_STATUS_INNER_ERROR;
+    }
+    output_size -= copy_size;
+    output_addr += copy_size;
+  }
+
   auto task = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; ++i) {
       int64_t to_pos = 0;
