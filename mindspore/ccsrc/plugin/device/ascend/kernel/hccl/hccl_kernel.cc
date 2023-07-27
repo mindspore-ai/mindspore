@@ -235,6 +235,7 @@ const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
   auto hccl_node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(hccl_node);
   auto func_graph = hccl_node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto graph_run_mode = kernel_graph->is_graph_run_mode();
@@ -328,6 +329,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
     MS_EXCEPTION_IF_NULL(cnode);
     hcclTaskInfo->set_graph_id(AnfAlgo::GetGraphId(cnode.get()));
     FuncGraphPtr f_graph = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(f_graph);
     auto kernel_graph = f_graph->cast<KernelGraphPtr>();
     auto input_ctrl_tensors = kernel_graph->device_loop_control_tensors();
     hcclTaskInfo->set_device_loop_ctrl_tensors(input_ctrl_tensors);
@@ -342,7 +344,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
       hcclTaskInfo->add_output_size_list(address->GetSize());
       hcclTaskInfo->add_data_format(AnfAlgo::GetOutputFormat(anf_node, j));
     }
-    results.emplace_back(hcclTaskInfo);
+    (void)results.emplace_back(hcclTaskInfo);
   }
 
   return results;

@@ -71,6 +71,7 @@ bool MuxSendAscendKernel::Init(const AnfNodePtr &anf_node) {
   cgn_ = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
     distributed::cluster::ClusterContext::instance()->node_base());
   MS_EXCEPTION_IF_NULL(cgn_);
+  MS_EXCEPTION_IF_NULL(anf_node);
   bool ret = HcclKernel::Init(anf_node);
   if (!ret) {
     return ret;
