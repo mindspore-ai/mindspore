@@ -402,6 +402,7 @@ std::string AnfExporter::GetDictText(const FuncGraphPtr &func_graph, const Value
 }
 
 std::string AnfExporter::GetOtherValueText(const ValuePtr &value) const {
+  MS_EXCEPTION_IF_NULL(value);
   std::ostringstream oss;
 
   if (check_integrity_) {
@@ -623,6 +624,7 @@ void AnfExporter::OutputCNodes(std::ostringstream &oss, const std::vector<AnfNod
 void AnfExporter::OuputIrStyleCNodes(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
                                      int32_t total_para, std::ostringstream &oss,
                                      OrderedMap<AnfNodePtr, int32_t> *para_map) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto &parameters = func_graph->parameters();
   std::shared_ptr<SubGraphIRInfo> gsub = std::make_shared<SubGraphIRInfo>();
   ParamIndexMap param_map;
@@ -700,6 +702,7 @@ void AnfExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, const Tagge
   oss << "subgraph attr:" << std::endl;
   for (const auto &attr : func_graph->attrs()) {
     oss << attr.first << " : ";
+    MS_EXCEPTION_IF_NULL(attr.second);
     if (attr.second->isa<BoolImm>()) {
       oss << GetValue<bool>(attr.second);
     } else if (attr.second->isa<StringImm>()) {
@@ -746,6 +749,7 @@ void ExportGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer
   buffer << "#attrs         :" << std::endl;
   for (const auto &attr : graph->attrs()) {
     buffer << attr.first << " : ";
+    MS_EXCEPTION_IF_NULL(attr.second);
     if (attr.second->isa<BoolImm>()) {
       buffer << GetValue<bool>(attr.second);
     } else if (attr.second->isa<StringImm>()) {

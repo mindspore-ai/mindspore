@@ -2211,6 +2211,9 @@ AnfNodePtr Parser::ParseDict(const FunctionBlockPtr &block, const py::object &no
   MS_LOG(DEBUG) << "Process ast Dict";
   py::list keys = node.attr("keys");
   py::list values = node.attr("values");
+  if (keys.size() != values.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The keys' size is not equal to the values' size.";
+  }
   std::vector<AnfNodePtr> key_nodes;
   std::vector<AnfNodePtr> value_nodes;
   for (size_t i = 0; i < keys.size(); i++) {
@@ -2356,7 +2359,7 @@ bool Parser::CheckNameConstantCond(const FunctionBlockPtr &block, const py::obje
     return false;
   }
   auto v_node = dyn_cast<ValueNode>(block->ReadVariable(id.cast<std::string>()));
-  if (v_node == nullptr || !v_node->value()->isa<BoolImm>()) {
+  if (v_node == nullptr || v_node->value() == nullptr || !v_node->value()->isa<BoolImm>()) {
     return false;
   }
   *is_true_cond = GetValue<bool>(v_node->value());
@@ -2584,6 +2587,8 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
 }
 
 void Parser::CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &body_block) const {
+  MS_EXCEPTION_IF_NULL(block);
+  MS_EXCEPTION_IF_NULL(body_block);
   // Propagate flag of return statement in body_block back.
   if (body_block->is_return_statement_inside()) {
     MS_LOG(DEBUG) << "Propagate flag of return statement in body_block back, body_block: " << body_block->ToString()
@@ -3759,6 +3764,7 @@ FunctionBlockPtr Parser::ParseAssert(const FunctionBlockPtr &block, const py::ob
 AnfNodePtr Parser::ParseWithitem(const FunctionBlockPtr &block, const py::object &node,
                                  const AnfNodePtr &context_expr_node) {
   MS_LOG(DEBUG) << "Process ast Withitem";
+  MS_EXCEPTION_IF_NULL(block);
   // Handle __enter__(self)
   std::vector<AnfNodePtr> enter_inputs{NewValueNode(prim::kPrimWithEnter), context_expr_node};
   auto func_graph = block->func_graph();
@@ -3792,6 +3798,7 @@ FunctionBlockPtr Parser::ParseWith(const FunctionBlockPtr &block, const py::obje
     auto enter_node = ParseWithitem(block, items_obj, context_expr_node);
     entered_nodes.push(enter_node);
   }
+  MS_EXCEPTION_IF_NULL(block);
   auto func_graph = block->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
@@ -3856,6 +3863,8 @@ void Parser::PrintPhiArgMaps(const std::map<ParameterPtr, std::set<AnfNodePtr>> 
 
 bool UpdatePhiArgMaps(std::map<ParameterPtr, std::set<AnfNodePtr>> *phi_to_args,
                       std::map<AnfNodePtr, std::set<ParameterPtr>> *arg_to_phis) {
+  MS_EXCEPTION_IF_NULL(phi_to_args);
+  MS_EXCEPTION_IF_NULL(arg_to_phis);
   bool phi_arg_updated = false;
   auto copy_phi_to_args = *phi_to_args;
   for (const auto &[phi, args] : copy_phi_to_args) {
@@ -3913,6 +3922,8 @@ void Parser::UpdatePhiArgMapsRepeatedly(std::map<ParameterPtr, std::set<AnfNodeP
 
 void Parser::CreatePhiArgMaps(std::map<ParameterPtr, std::set<AnfNodePtr>> *phi_to_args,
                               std::map<AnfNodePtr, std::set<ParameterPtr>> *arg_to_phis) {
+  MS_EXCEPTION_IF_NULL(phi_to_args);
+  MS_EXCEPTION_IF_NULL(arg_to_phis);
   for (FunctionBlockPtr &block : func_block_list_) {
     MS_EXCEPTION_IF_NULL(block);
     for (const auto &[phi, args] : block->phi_args()) {
@@ -4010,6 +4021,7 @@ HashSet<size_t> RemovePhiParametersAndGetRemoveIndex(const FunctionBlockPtr &blo
 // If phi parameter is removable, then the corresponding arg should be removed.
 void RemoveJumpNodeArgs(const FunctionBlockPtr &block, const HashSet<size_t> &need_removed_indexes,
                         const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(block);
   if (need_removed_indexes.empty()) {
     return;
   }
@@ -4231,6 +4243,7 @@ void UpdateRecomputeScope(const FuncGraphPtr &func_graph) {
   auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
 
   for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     const auto &origin_scope_name = node->scope()->name();
     if (node->isa<CNode>() && origin_scope_name.compare(0, strlen(kAttrRecompute), kAttrRecompute) != 0) {
       std::stringstream scope_name_buffer;

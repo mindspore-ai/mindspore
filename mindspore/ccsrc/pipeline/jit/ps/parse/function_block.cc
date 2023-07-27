@@ -531,6 +531,7 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
 
 namespace {
 std::string GetVariableDefinedLocation(const FunctionBlock *block, const std::string &var, int start_line) {
+  MS_EXCEPTION_IF_NULL(block);
   HashSet<FunctionBlock *> visited;
   std::vector<FunctionBlock *> todo_list = {};
   (void)std::copy(block->prev_blocks().cbegin(), block->prev_blocks().cend(), std::back_inserter(todo_list));
@@ -580,6 +581,7 @@ std::set<AnfNodePtr> FunctionBlock::SearchAllArgsOfPhiNode(const std::string &va
   for (auto &prev : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(prev);
     AnfNodePtr temp_node = prev->ReadVariable(var);
+    MS_EXCEPTION_IF_NULL(temp_node);
     MS_LOG(DEBUG) << "Read from prev block:" << prev->ToString() << "Found var: " << var
                   << ", as: " << temp_node->DebugString();
     bool undefined_symbol_flag = false;
