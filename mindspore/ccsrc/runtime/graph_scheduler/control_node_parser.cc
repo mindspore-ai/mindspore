@@ -255,6 +255,7 @@ TypeId FetchTypeIdByNode(const AnfNodePtr &node, size_t index) {
       const auto &tensor_type = type->cast<TensorTypePtr>();
       MS_EXCEPTION_IF_NULL(tensor_type);
       const auto &element = tensor_type->element();
+      MS_EXCEPTION_IF_NULL(element);
       type_id = element->type_id();
     } else if (common::AnfAlgo::IsDynamicSequence(node)) {
       const auto &sequence_abs = abs->cast<abstract::AbstractSequencePtr>();
@@ -459,6 +460,7 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   device::DeviceAddressPtr address = nullptr;
   if (node->isa<ValueNode>()) {
     const auto &node_value = node->cast<ValueNodePtr>()->value();
+    MS_EXCEPTION_IF_NULL(node_value);
     if (node_value->isa<tensor::Tensor>() && node_value->cast<TensorPtr>()->is_forward_output()) {
       // If is_forward_output, get address from tensor
       auto tensor = node_value->cast<TensorPtr>();
@@ -920,6 +922,7 @@ void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr>
       FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
     }
   } else {
+    MS_EXCEPTION_IF_NULL(depend_nodes);
     (void)depend_nodes->emplace(real_node);
   }
 }
@@ -1095,6 +1098,9 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByCallNode(const AnfNodePt
       return_to_call_with_dynamic_sequence_index_[func_graph->return_node()][node] = return_sequence_indexes;
     }
     // Check the consistency of arguments and parameters.
+    if (cnode->inputs().empty()) {
+      MS_LOG(EXCEPTION) << "Invalid cnode:" << cnode->DebugString();
+    }
     size_t args_num = cnode->inputs().size() - 1;
     size_t para_num = func_graph->parameters().size();
     MS_LOG(DEBUG) << "for call node:" << cnode->DebugString() << " arg size:" << args_num << " para size:" << para_num;
@@ -1275,6 +1281,7 @@ void ControlNodeParser::InsertDependForParallelCall(const std::vector<AnfNodePtr
   // Fetch call node in funcgraph.
   FuncGraphToCallNode func_graph_to_call_nodes;
   for (const auto &control_node : control_nodes) {
+    MS_EXCEPTION_IF_NULL(control_node);
     if (common::AnfAlgo::IsCallNode(control_node)) {
       const auto &func_graph = control_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
@@ -1314,6 +1321,7 @@ void ControlNodeParser::InsertDependForParallelCall(const std::vector<AnfNodePtr
         std::vector<AnfNodePtr> depend_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                                  cnode->input(0), call_nodes[j]};
         auto new_depend = func_graph->NewCNode(depend_inputs);
+        MS_EXCEPTION_IF_NULL(new_depend);
         new_depend->set_abstract(cnode->input(0)->abstract());
 
         // Set depend node to call input.

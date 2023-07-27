@@ -900,6 +900,7 @@ bool EmbeddingCachePrefetchActor::SyncHostEmbeddingTable() {
   std::unique_ptr<int[]> host_to_server_indices_ptr = std::make_unique<int[]>(swap_indices_lens);
   MS_ERROR_IF_NULL(host_to_server_indices_ptr);
   size_t idx = 0;
+  MS_EXCEPTION_IF_NULL(emb_ops_);
   const auto &modified_ids = emb_ops_->modified_ids();
   for (const auto &item : hash_id_to_index) {
     if (modified_ids.find(item.first) != modified_ids.end()) {

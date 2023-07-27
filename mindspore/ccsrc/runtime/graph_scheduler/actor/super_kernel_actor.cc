@@ -105,7 +105,10 @@ size_t SuperKernelActor::FetchInputNodePosition(const AnfNodePtr &intput_node) {
 void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
+                                                  "Invalid device context for super kernel actor:" + GetAID().Name());
+  }
   std::vector<DeviceTensor *> memory_free_list;
   const auto &data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter != input_op_datas_.end()) {
@@ -168,6 +171,10 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
 
 void SuperKernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
+                                                  "Invalid device context for super kernel actor:" + GetAID().Name());
+  }
   if (ActorDispatcher::is_memory_allocation_sync()) {
     ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
                               device_contexts_[0], context, GetAID());
@@ -192,7 +199,12 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     const std::vector<tensor::Tensor> inputs;
     std::vector<tensor::Tensor> outputs;
     const std::map<string, string> compile_options;
+    if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
+                                                    "Invalid device context for super kernel actor:" + GetAID().Name());
+    }
     MS_EXCEPTION_IF_NULL(device_contexts_[0]->graph_executor_);
+    MS_EXCEPTION_IF_NULL(graph_);
     if (!IsSkippedLaunch(nullptr, graph_)) {
       ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kGraphLaunch, GetAID().Name());
       auto ret = device_contexts_[0]->graph_executor_->RunGraph(graph_, inputs, &outputs, compile_options);
@@ -232,6 +244,10 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
 
 void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
+  if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
+                                                  "Invalid device context for super kernel actor:" + GetAID().Name());
+  }
   ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugForGraph, graph_, device_contexts_[0], context, &GetAID());
   OnDebugFinish(context);
 }
@@ -239,6 +255,11 @@ void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
 bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
+  if (device_contexts_.empty() || device_contexts_[0] == nullptr ||
+      device_contexts_[0]->device_res_manager_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid device context for actor:" << GetAID();
+    return false;
+  }
   auto &input_nodes = graph_->input_nodes();
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     if (i >= node_device_tensors_.size()) {
@@ -278,7 +299,6 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
       }
       copy_device_tensor = copy_input_device_tensors_[i];
       MS_EXCEPTION_IF_NULL(copy_device_tensor);
-      MS_EXCEPTION_IF_NULL(device_contexts_[0]);
       if ((copy_device_tensor->GetPtr() == nullptr) &&
           (!device_contexts_[0]->device_res_manager_->AllocateMemory(copy_device_tensor.get()))) {
         MS_LOG(ERROR) << "Device(id:" << std::to_string((device_contexts_[0])->device_context_key().device_id_)
@@ -313,6 +333,12 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
 
 void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+
+  if (device_contexts_.empty() || device_contexts_[0] == nullptr ||
+      device_contexts_[0]->device_res_manager_ == nullptr) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
+                                                  "Invalid device context for super kernel actor:" + GetAID().Name());
+  }
   if (memory_free_lists_.size() > 0 && memory_free_lists_.back().size() > 0) {
     if (ActorDispatcher::is_memory_free_sync()) {
       ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
@@ -326,7 +352,6 @@ void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context)
   // Free the address that is the temp store for kernel input copy.
   for (auto &copy_input_device_tensor : copy_input_device_tensors_) {
     if ((copy_input_device_tensor != nullptr) && (copy_input_device_tensor->GetPtr() != nullptr)) {
-      MS_EXCEPTION_IF_NULL(device_contexts_[0]);
       device_contexts_[0]->device_res_manager_->FreeMemory(copy_input_device_tensor.get());
     }
   }

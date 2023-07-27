@@ -304,6 +304,7 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
       }
       // In this scenario, the Init function can ensure that the pointer of the relevant operation is not nullptr.
       // In order to perform performance, the pointer validity is not checked here.
+      MS_EXCEPTION_IF_NULL(workspace_device_tensors_[i]);
       workspace_device_tensors_[i]->set_ptr(device_ptr);
     }
   }
@@ -342,9 +343,12 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
     device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemAllocate(input_device_tensors_,
                                                                                             output_device_tensors_);
+    MS_EXCEPTION_IF_NULL(kernel_info_);
     for (const auto &out_in : kernel_info_->out_in_ref_map()) {
+      MS_EXCEPTION_IF_NULL(input_device_tensors_[out_in.second]);
       const auto &ptr = input_device_tensors_[out_in.second]->GetValidPtr(kDefaultStreamIndex);
-      if (ptr == nullptr || output_device_tensors_[out_in.first]->GetPtr() != nullptr) {
+      if (ptr == nullptr || output_device_tensors_[out_in.first] == nullptr ||
+          output_device_tensors_[out_in.first]->GetPtr() != nullptr) {
         continue;
       }
       // Pointer in DeviceAddress which is reference output may not be updated to the same as the reference input which
@@ -370,7 +374,8 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
-    MS_LOG(EXCEPTION) << "Invalid device context for kernel actor:" << GetAID();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context),
+                                                  "Invalid device context for kernel actor:" + GetAID().Name());
   }
   if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
     device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemFree(
@@ -399,7 +404,10 @@ void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
 void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(kernel_);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context),
+                                                  "Invalid device context for kernel actor:" + GetAID().Name());
+  }
   if (IsRunningFailed(context)) {
     return;
   }
@@ -437,6 +445,10 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
+  if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context),
+                                                  "Invalid device context for kernel actor:" + GetAID().Name());
+  }
   ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context,
                             &GetAID());
   OnDebugFinish(context);
@@ -459,7 +471,8 @@ void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tens
     const auto &input_tensor = (*input_tensors)[input_index];
     MS_EXCEPTION_IF_NULL(input_tensor);
     const auto &device_tensor = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
-    if (device_tensor != nullptr) {
+    if (device_tensor != nullptr && input_index < input_device_tensors_.size() &&
+        input_index < memory_free_list_.size()) {
       input_device_tensors_[input_index] = device_tensor.get();
       memory_free_list_[input_index] = device_tensor.get();
     }

@@ -44,6 +44,7 @@ constexpr size_t kMapTensorStatusIndex = 2;
 constexpr size_t kPinMemThreshold = 1024 << 10;
 
 bool IsDataTakenOverByMemOffload(const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(device_context);
   if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
     return false;
   }
@@ -57,6 +58,7 @@ device::StorageInfo GetStorageInfo(const TensorPtr &host_tensor, const DeviceTen
   MS_EXCEPTION_IF_NULL(host_tensor);
   MS_EXCEPTION_IF_NULL(device_tensor);
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   auto swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
   if (host_tensor->data_type() == device_tensor->type_id()) {
@@ -90,6 +92,7 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   MS_EXCEPTION_IF_NULL(device_tensor);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   MS_EXCEPTION_IF_NULL(context);
   const bool taken_over_by_swap_manager = IsDataTakenOverByMemOffload(device_context);
   auto allocator_type = node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
@@ -580,6 +583,7 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
       MS_EXCEPTION_IF_NULL(value_node);
       if (AnfAlgo::OutputAddrExist(value_node, 0)) {
         const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
+        MS_EXCEPTION_IF_NULL(front_node);
         MS_LOG(DEBUG) << "Prepare data for value node:" << value_node->fullname_with_scope()
                       << ", debug name:" << value_node->DebugString()
                       << ", front node:" << front_node->fullname_with_scope();
@@ -924,11 +928,11 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   }
   // Maybe the same host_tensor_address corresponds to the different front_node in shared weight scene,
   // so need update the device tensor store always.
+  MS_EXCEPTION_IF_NULL(host_tensor_address);
   host_tensor_address->SetNodeIndex(backend_node, 0);
   DeviceTensorStore::GetInstance().Insert(front_node.get(), host_tensor_address);
 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
-  MS_EXCEPTION_IF_NULL(host_tensor_address);
   if (is_need_sync || (!host_tensor_address->IsPtrValid())) {
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->DebugString()
                  << ", device type:" << host_tensor_address->GetDeviceType();

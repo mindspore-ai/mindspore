@@ -77,6 +77,7 @@ bool SendActor::ConnectServer() {
 }
 
 void SendActor::FlushData() {
+  MS_EXCEPTION_IF_NULL(client_);
   if (!client_->Flush(server_url_)) {
     MS_LOG(EXCEPTION) << "Failed to flush client for server " << server_url_;
   }
@@ -246,6 +247,7 @@ void SendActor::SerializeDynamicShapeMessage(MessageBase *message, const kernel:
   if (workspace_addr->size != offset) {
     MS_LOG(EXCEPTION) << "Send void data size is not the same as workspace size.";
   }
+  MS_EXCEPTION_IF_NULL(message);
   message->data = workspace_addr->addr;
   message->size = workspace_addr->size;
 }

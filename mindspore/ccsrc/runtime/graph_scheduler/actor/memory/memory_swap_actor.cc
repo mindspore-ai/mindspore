@@ -77,6 +77,7 @@ void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *>
     MS_EXCEPTION_IF_NULL(device_tensor);
     size_list.emplace_back(device_tensor->GetSize());
   }
+  MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
   const auto &device_ptrs = device_contexts_[0]->device_res_manager_->AllocateContinuousMemory(size_list);
@@ -145,10 +146,15 @@ void MemorySwapInActor::Run(OpContext<DeviceTensor> *context) {
                          " bug got"
                       << continuous_device_tensors_.size() << ", " << continuous_device_tensor_sizes_.size();
   }
+
+  MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
   for (size_t j = 0; j < continuous_device_tensors_.size(); ++j) {
     const auto &device_ptrs =
       device_contexts_[0]->device_res_manager_->AllocateContinuousMemory(continuous_device_tensor_sizes_[j]);
     for (size_t k = 0; k < continuous_device_tensors_[j].size(); ++k) {
+      MS_EXCEPTION_IF_NULL(continuous_device_tensors_[j][k]);
       continuous_device_tensors_[j][k]->set_ptr(device_ptrs[k]);
       continuous_device_tensors_[j][k]->set_from_mem_pool(true);
     }

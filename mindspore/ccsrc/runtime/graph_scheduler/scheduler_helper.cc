@@ -237,6 +237,7 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   // The continuous memory inpus need allocate memory in advance, so must be from the inside subgraph.
   if (to_actor->type() == KernelTransformType::kKernelActor) {
     auto to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
+    MS_EXCEPTION_IF_NULL(to_kernel_actor);
     if (to_kernel_actor->inputs_continuous_memory() && (from_actor->type() != KernelTransformType::kKernelActor)) {
       MS_LOG(INTERNAL_EXCEPTION)
         << "#dmsg#Runtime error info:#dmsg#The continuous memory input is not from the inside subgraph, to actor: "

@@ -171,7 +171,7 @@ void GatherActor::GatherInput(OpContext<DeviceTensor> *const context) {
                                    " for actor:" + GetAID().Name();
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
         }
-        if (input_device_tensors_[i] == nullptr) {
+        if (input_device_tensors_[index] == nullptr) {
           std::string error_info =
             "Invalid input device address index:" + std::to_string(index) + " for index:" + std::to_string(i) +
             " total size:" + std::to_string(input_device_tensors_.size()) + " for actor:" + GetAID().Name();

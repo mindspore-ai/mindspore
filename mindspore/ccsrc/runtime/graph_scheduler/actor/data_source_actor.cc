@@ -130,6 +130,7 @@ void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *cons
 void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(data_kernel_);
+  MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   if (IsRunningFailed(context)) {
     return;

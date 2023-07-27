@@ -66,6 +66,7 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
     size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t i = 0; i < input_num; i++) {
       auto current_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i);
+      MS_EXCEPTION_IF_NULL(current_node);
       // not tensor(tuple, scalar, string)
       if (current_node->cast<ValueNodePtr>() == nullptr) {
         continue;
@@ -87,6 +88,7 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
       }
     }
     if (value_type.size() != 0) {
+      MS_EXCEPTION_IF_NULL(not_tensor_pos_vec);
       opt_list->push_back(node);
       not_tensor_pos_vec->push_back(value_type);
     }

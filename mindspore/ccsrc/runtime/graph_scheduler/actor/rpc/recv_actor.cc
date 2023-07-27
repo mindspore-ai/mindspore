@@ -209,6 +209,9 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
   // Release data allocated by AllocateMessage.
   if (recv_data_ != nullptr) {
+    MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
+    MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+    MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
     device_contexts_[0]->device_res_manager_->FreeMemory(recv_data_.get());
   }
 
@@ -258,6 +261,7 @@ void *RecvActor::AllocateMemByDeviceRes(size_t size) {
     recv_data_->SetSize(size);
   }
 
+  MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
   MS_ERROR_IF_NULL_W_RET_VAL(device_contexts_[kIndex0], nullptr);
   MS_ERROR_IF_NULL_W_RET_VAL(device_contexts_[kIndex0]->device_res_manager_, nullptr);
   if (!device_contexts_[kIndex0]->device_res_manager_->AllocateMemory(recv_data_.get())) {

@@ -104,6 +104,8 @@ std::vector<std::vector<MemSwapActorPtr>> MemorySwapNodeScheduler::Build(const G
     explicit MemAllocated(DeviceContext *device_context) : device_context_(device_context) {}
     ~MemAllocated() {
       for (const auto &mem : mem_allocated_) {
+        MS_EXCEPTION_IF_NULL(device_context_);
+        MS_EXCEPTION_IF_NULL(device_context_->device_res_manager_);
         device_context_->device_res_manager_->FreeMemory(mem.second);
       }
     }
@@ -115,6 +117,7 @@ std::vector<std::vector<MemSwapActorPtr>> MemorySwapNodeScheduler::Build(const G
     const auto device_context = graph_compiler_info.device_contexts_[i];
     std::vector<MemSwapActorPtr> sub_graph_swap_actors;
     const auto &graph = graph_compiler_info.graphs_[i];
+    MS_EXCEPTION_IF_NULL(graph);
     // Sub graph executed on CPU do not need memory offload.
     // Graph with dynamic shape kernel dost not support memory offload.
     if (device_context == nullptr || device_context->GetDeviceType() == device::DeviceType::kCPU ||
@@ -142,6 +145,9 @@ MemOffloadStrategyPtr MemorySwapNodeScheduler::GenMemOffloadStrategy(const Kerne
                                                                      const DeviceContext *device_context,
                                                                      const ControlNodeParserPtr &parser,
                                                                      std::map<DeviceTensor *, void *> *mem_allocated) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   const auto &mem_statistic = CollectMemStatistic(graph, device_context, parser);
   const auto total_available_mem_size = device_context->device_res_manager_->GetAvailableMemSize();
   for (size_t factor = kMaxMemReuseFactor; factor > kMinMemReuseFactor; factor -= kRetryFactor) {
@@ -160,6 +166,7 @@ MemOffloadStrategyPtr MemorySwapNodeScheduler::GenMemOffloadStrategy(const Kerne
 DeviceTensor *MemorySwapNodeScheduler::GetNodeOutputDeviceTensor(
   const mindspore::AnfNodePtr &node, size_t output_idx, const mindspore::KernelGraphPtr &graph,
   const mindspore::device::DeviceContext *device_context) const {
+  MS_EXCEPTION_IF_NULL(node);
   auto device_address = AnfAlgo::GetMutableOutputAddr(node, output_idx, true).get();
   if (node->isa<CNode>()) {
     return device_address;
@@ -181,10 +188,13 @@ void MemorySwapNodeScheduler::CollectGraphInputMemStatistic(const mindspore::Ker
                                                             const mindspore::runtime::ControlNodeParserPtr &parser,
                                                             device::GraphMemStatistic<DeviceTensor *> *statistic) {
   constexpr size_t first_step = 0;
+  MS_EXCEPTION_IF_NULL(graph);
   for (const auto &input : graph->input_nodes()) {
+    MS_EXCEPTION_IF_NULL(input);
     auto device_address = GetNodeOutputDeviceTensor(input, 0, graph, device_context);
     const auto &parameter = input->cast<ParameterPtr>();
     if (common::AnfAlgo::IsParameterWeight(parameter)) {
+      MS_EXCEPTION_IF_NULL(device_address);
       statistic->Record(device_address, device::kInit, device_address->GetSize(), device::kMemPriorityHigh, first_step);
     }
     if (parser->IsControlFlowDataArrow(graph, input)) {
@@ -211,16 +221,21 @@ void MemorySwapNodeScheduler::CollectKernelInputMemStatistic(size_t kernel_index
     const auto &prev_node_output = common::AnfAlgo::GetPrevNodeOutput(node, index, true);
     const auto &input_address =
       GetNodeOutputDeviceTensor(prev_node_output.first, prev_node_output.second, graph, device_context);
+    MS_EXCEPTION_IF_NULL(input_address);
+    MS_EXCEPTION_IF_NULL(statistic);
     statistic->Record(input_address, device::kGet, input_address->GetSize(), device::kMemPriorityLow, kernel_index);
     if (continuous_input_mem) {
       total_size += input_address->GetSize();
       (void)size_list.emplace_back(input_address->GetSize());
       (void)device_tensors.emplace_back(input_address);
     }
+    MS_EXCEPTION_IF_NULL(offload_conflict);
     (void)offload_conflict->insert(input_address);
     device::MemoryOffloadConflict::GetInstance().AddOffloadBacklog(input_address);
   }
   if (continuous_input_mem) {
+    MS_EXCEPTION_IF_NULL(statistic);
+    MS_EXCEPTION_IF_NULL(statistic->continuous_mem_info_helper_);
     statistic->continuous_mem_info_helper_->AddContinuousMemInfo(true, kernel_index, total_size, size_list,
                                                                  device_tensors);
   }
