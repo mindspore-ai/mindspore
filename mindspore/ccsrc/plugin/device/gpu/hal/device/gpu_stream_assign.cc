@@ -48,7 +48,7 @@ void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) 
   const auto default_stream_id = GPUDeviceManager::GetInstance().default_stream_id();
   for (const auto &kernel_node : execution_kernels) {
     if (common::AnfAlgo::GetCNodeName(kernel_node) == kAllReduceOpName) {
-      allreduce_kernels.emplace_back(kernel_node);
+      (void)allreduce_kernels.emplace_back(kernel_node);
     } else {
       AnfAlgo::SetStreamId(default_stream_id, kernel_node.get());
     }
@@ -239,6 +239,7 @@ CNodePtr CreateStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &ker
   MS_EXCEPTION_IF_NULL(abstract_none);
   node->set_abstract(abstract_none);
   auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
+  MS_EXCEPTION_IF_NULL(kernel_info_setter);
   kernel_info_setter->SetKernelInfo(node, KernelType::UNKNOWN_KERNEL_TYPE);
   return node;
 }

@@ -1147,7 +1147,7 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
     MS_EXCEPTION_IF_NULL(input);
     input->addr = device_address->ptr_;
     input->size = device_address->size_;
-    kernel_inputs->emplace_back(input);
+    (void)kernel_inputs->emplace_back(input);
   }
   return true;
 }
@@ -1172,7 +1172,7 @@ bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::Kern
     MS_EXCEPTION_IF_NULL(output);
     output->addr = device_address->ptr_;
     output->size = output_sizes[i];
-    kernel_outputs->emplace_back(output);
+    (void)kernel_outputs->emplace_back(output);
   }
   return true;
 }
@@ -1185,7 +1185,7 @@ bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::K
   auto workspace_sizes = kernel_mod.GetWorkspaceSizeList();
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
     if (workspace_sizes[i] == 0) {
-      kernel_workspaces->emplace_back(nullptr);
+      (void)kernel_workspaces->emplace_back(nullptr);
       continue;
     }
     auto device_address = AnfAlgo::GetMutableWorkspaceAddr(kernel, i);
@@ -1197,7 +1197,7 @@ bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::K
     MS_EXCEPTION_IF_NULL(workspace);
     workspace->addr = device_address->ptr_;
     workspace->size = workspace_sizes[i];
-    kernel_workspaces->emplace_back(workspace);
+    (void)kernel_workspaces->emplace_back(workspace);
   }
   return true;
 }
@@ -1246,8 +1246,8 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
       is_need_free_memory = true;
     }
     total_size += intput_sizes[i];
-    size_list.emplace_back(intput_sizes[i]);
-    addr_list.emplace_back(device_address);
+    (void)size_list.emplace_back(intput_sizes[i]);
+    (void)addr_list.emplace_back(device_address);
   }
   AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);
 }
@@ -1271,8 +1271,8 @@ void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::Anf
       is_need_free_memory = true;
     }
     total_size += output_sizes[i];
-    size_list.emplace_back(output_sizes[i]);
-    addr_list.emplace_back(device_address);
+    (void)size_list.emplace_back(output_sizes[i]);
+    (void)addr_list.emplace_back(device_address);
   }
   AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);
 }

@@ -683,6 +683,7 @@ bool GPUHashTable<Key, Value, Allocator>::EraseElements(const Key *keys, size_t 
   MS_ERROR_IF_NULL(cuda_dynamic_map_);
   auto &dynamic_map = cuda_dynamic_map_->dynamic_map_;
   size_t size_before_erase = dynamic_map.get_size();
+  MS_ERROR_IF_NULL(keys);
   dynamic_map.erase(keys, keys + key_num, stream);
   size_t size_after_erase = dynamic_map.get_size();
 
@@ -710,7 +711,7 @@ bool GPUHashTable<Key, Value, Allocator>::Import(const DataLenPair &input_data) 
   // Really import input data to hash table when receive kImportTensorNum(3) input tensor.
   static std::vector<DataLenPair> input_data_list;
   if (input_data_list.size() < kImportTensorNum) {
-    input_data_list.emplace_back(input_data);
+    (void)input_data_list.emplace_back(input_data);
   }
   if (input_data_list.size() != kImportTensorNum) {
     return true;

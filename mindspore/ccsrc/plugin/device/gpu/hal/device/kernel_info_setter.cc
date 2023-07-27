@@ -557,6 +557,9 @@ bool GetSelectKernelResult(const CNodePtr &kernel_node,
                            const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> &builder,
                            KernelType *kernel_type,
                            std::vector<std::tuple<size_t, TypeId, TypeId>> *input_reduce_index) {
+  MS_EXCEPTION_IF_NULL(builder);
+  MS_EXCEPTION_IF_NULL(kernel_type);
+  MS_EXCEPTION_IF_NULL(input_reduce_index);
   bool result = false;
   std::vector<std::tuple<size_t, TypeId, TypeId>> output_reduce_index;
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
@@ -668,7 +671,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   std::vector<TypeId> inputs_type;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_format.emplace_back(kOpFormat_DEFAULT);
+    (void)inputs_format.emplace_back(kOpFormat_DEFAULT);
     inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
   }
 
@@ -681,7 +684,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   } else {
     size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
-      outputs_format.emplace_back(kOpFormat_DEFAULT);
+      (void)outputs_format.emplace_back(kOpFormat_DEFAULT);
       outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
     }
   }

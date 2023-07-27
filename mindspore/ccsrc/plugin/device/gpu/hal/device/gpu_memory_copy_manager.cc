@@ -45,7 +45,7 @@ void GPUMemCopyManager::AddMemSwapOutTask(const DeviceAddressPtr &device_address
 
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::RecordEvent(event, swap_out_stream_),
                            "Failed to record CUDA event to swap out stream.");
-  swap_out_queue_.emplace(device_address, event);
+  (void)swap_out_queue_.emplace(device_address, event);
 }
 
 void GPUMemCopyManager::AddMemSwapInTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr,
@@ -77,19 +77,19 @@ void GPUMemCopyManager::AddMemSwapInTask(const DeviceAddressPtr &device_address,
     CHECK_OP_RET_WITH_EXCEPT(CudaDriver::ElapsedTime(cost_time, start, end), "Failed to record elapsed time.");
     CHECK_OP_RET_WITH_EXCEPT(CudaDriver::DestroyEvent(start), "Failed to destroy event.");
   }
-  swap_in_queue_.emplace(device_address, end);
+  (void)swap_in_queue_.emplace(device_address, end);
 }
 
 void GPUMemCopyManager::AddMemSwapOutTaskMock(const DeviceAddressPtr &device_address) {
   MS_EXCEPTION_IF_NULL(device_address);
   device_address->set_status(DeviceAddressStatus::kInDeviceToHost);
-  swap_out_queue_mock_.emplace(device_address);
+  (void)swap_out_queue_mock_.emplace(device_address);
 }
 
 void GPUMemCopyManager::AddMemSwapInTaskMock(const DeviceAddressPtr &device_address) {
   MS_EXCEPTION_IF_NULL(device_address);
   device_address->set_status(DeviceAddressStatus::kInHostToDevice);
-  swap_in_queue_mock_.emplace(device_address);
+  (void)swap_in_queue_mock_.emplace(device_address);
 }
 
 bool GPUMemCopyManager::SyncMemCopyStream(SwapKind swap_kind) {

@@ -261,6 +261,7 @@ KernelRefCountPtr MemReuseUtil::GetRef(const AnfNodePtr &node, size_t output_idx
 }
 
 KernelRefCountPtr MemReuseUtil::GetKernelInputRef(const CNodePtr &kernel, size_t input_idx) {
+  MS_EXCEPTION_IF_NULL(kernel);
   if (input_idx >= common::AnfAlgo::GetInputTensorNum(kernel)) {
     MS_LOG(EXCEPTION) << "Input index " << input_idx << " is larger than input number "
                       << common::AnfAlgo::GetInputTensorNum(kernel);
@@ -286,6 +287,7 @@ KernelRefCountPtr MemReuseUtil::GetKernelInputRef(const CNodePtr &kernel, size_t
 void MemReuseUtil::SetKernelDefMap() {
   auto kernel_cnodes = graph_->execution_order();
   for (auto &kernel : kernel_cnodes) {
+    MS_EXCEPTION_IF_NULL(kernel);
     KernelDefPtr kernel_def_ptr = std::make_shared<KernelDef>();
     kernel_def_ptr->set_kernel_name(common::AnfAlgo::GetCNodeName(kernel));
     kernel_def_ptr->set_scope_full_name(kernel->fullname_with_scope());
