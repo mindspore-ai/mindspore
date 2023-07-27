@@ -95,7 +95,7 @@ int LstmNonMindirFp16CPUKernel::InitStateWeightBias() {
   MS_CHECK_TRUE_MSG(weight_h_ptr_ != nullptr, lite::RET_NULL_PTR,
                     "LstmNonMindirCPUKernel malloc weight_h_ptr_ failed.");
 
-  if (lstm_param_->batch_ != 1) {
+  if (weight_need_pack_) {
     if (weight_h->data_type() == kNumberTypeFloat32) {
       PackLstmWeightFp32ToFp16(weight_h_ptr_, reinterpret_cast<float *>(weight_h_data), weight_segment_num_,
                                lstm_param_->output_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_);
@@ -154,13 +154,13 @@ int LstmNonMindirFp16CPUKernel::InitProjectWeight() {
     MS_LOG(ERROR) << "Project-weight's shape[0] must be 1(bidirectional=false) or 2(bidirectional=true).";
     return RET_ERROR;
   }
-  int pro_col_align = lstm_param_->batch_ == 1 ? lstm_param_->output_size_ : UP_ROUND(lstm_param_->output_size_, C8NUM);
+  int pro_col_align = lstm_param_->proj_col_align_;
   weight_project_ptr_ =
     reinterpret_cast<float16_t *>(malloc(batch * lstm_param_->hidden_size_ * pro_col_align * sizeof(float16_t)));
   MS_CHECK_TRUE_MSG(weight_project_ptr_ != nullptr, lite::RET_NULL_PTR,
                     "LstmNonMindirCPUKernel malloc weight_project_ptr_ failed.");
 
-  if (lstm_param_->batch_ != 1) {
+  if (weight_need_pack_) {
     if (weight_pro->data_type() == kNumberTypeFloat32) {
       PackLstmWeightFp32ToFp16(weight_project_ptr_, reinterpret_cast<float *>(weight_pro_data), batch,
                                lstm_param_->hidden_size_, lstm_param_->output_size_, pro_col_align);

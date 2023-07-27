@@ -42,6 +42,7 @@ class LstmFp16BaseCPUKernel : public LiteKernel {
   virtual int InitProjectWeight() = 0;
 
   bool running_pack_{false};
+  bool weight_need_pack_{false};
   int hidden_init_index_{0};
   int cell_init_index_{0};
   int weight_segment_num_{0};

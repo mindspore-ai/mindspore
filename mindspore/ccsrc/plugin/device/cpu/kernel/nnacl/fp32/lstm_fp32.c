@@ -193,15 +193,8 @@ void UpdateOutput(float *hidden_state, float *output, const float *cell_state, c
       left_matrix = buffer[C6NUM];
       PackLstmInput(hidden_buffer, left_matrix, batch, hidden_size);
     }
-#ifdef ENABLE_AVX
-    int col_tile = batch == 1 ? C8NUM : C16NUM;
-#elif defined(ENABLE_ARM32)
-    int col_tile = C4NUM;
-#else
-    int col_tile = C8NUM;
-#endif
     LstmMatMul(hidden_state, left_matrix, weight_project, NULL, batch, hidden_size, output_size,
-               UP_ROUND(output_size, col_tile), batch == 1, buffer[C7NUM]);
+               lstm_param->proj_col_align_, batch == 1, buffer[C7NUM]);
   }
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
     ElementOptMulAcc(hidden_state, 1 - zoneout, state_buffer, batch * output_size);
@@ -322,12 +315,12 @@ void Lstm(float *output, const float *input, const float *weight_i, const float 
   // backward
   if (lstm_param->bidirectional_) {
     const float *backward_weight_i = weight_i + 4 * lstm_param->input_col_align_ * lstm_param->input_size_;
-    const float *backward_weight_h = weight_h + 4 * lstm_param->state_col_align_ * lstm_param->hidden_size_;
+    const float *backward_weight_h = weight_h + 4 * lstm_param->state_col_align_ * lstm_param->output_size_;
     const float *backward_input_bias = input_bias + 4 * lstm_param->input_col_align_;
     const float *backward_state_bias = state_bias + 4 * lstm_param->state_col_align_;
-    float *backward_output = output + lstm_param->batch_ * lstm_param->hidden_size_;
+    float *backward_output = output + lstm_param->batch_ * lstm_param->output_size_;
     float *backward_cell_state = cell_state + lstm_param->batch_ * lstm_param->hidden_size_;
-    float *backward_hidden_state = hidden_state + lstm_param->batch_ * lstm_param->hidden_size_;
+    float *backward_hidden_state = hidden_state + lstm_param->batch_ * lstm_param->output_size_;
 
     LstmUnidirectional(backward_output, packed_input, backward_weight_i, backward_weight_h, backward_input_bias,
                        backward_state_bias, backward_hidden_state, backward_cell_state, buffer, lstm_param, true);

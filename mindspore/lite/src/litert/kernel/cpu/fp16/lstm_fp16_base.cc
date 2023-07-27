@@ -119,9 +119,18 @@ int LstmFp16BaseCPUKernel::InitParam() {
   lstm_param_->hidden_size_ = c_init_shape.back();
   lstm_param_->output_size_ = h_init_shape.back();
 
-  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? C2NUM * lstm_param_->batch_ * lstm_param_->hidden_size_
-                                                          : lstm_param_->batch_ * lstm_param_->hidden_size_;
+  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? C2NUM * lstm_param_->batch_ * lstm_param_->output_size_
+                                                          : lstm_param_->batch_ * lstm_param_->output_size_;
   weight_segment_num_ = lstm_param_->bidirectional_ ? C2NUM * kGateNum : kGateNum;
+#ifdef ENABLE_ARM64
+  lstm_param_->input_row_align_ = UP_ROUND(lstm_param_->seq_len_ * lstm_param_->batch_, C4NUM);
+  lstm_param_->input_col_align_ = UP_ROUND(lstm_param_->hidden_size_, C8NUM);
+
+  lstm_param_->state_row_align_ = UP_ROUND(lstm_param_->batch_, C4NUM);
+  lstm_param_->state_col_align_ = UP_ROUND(lstm_param_->hidden_size_, C8NUM);
+  lstm_param_->proj_col_align_ = UP_ROUND(lstm_param_->output_size_, C8NUM);
+  weight_need_pack_ = true;
+#else
   lstm_param_->input_row_align_ = UP_ROUND(lstm_param_->seq_len_ * lstm_param_->batch_, C16NUM);
   lstm_param_->input_col_align_ = UP_ROUND(lstm_param_->hidden_size_, C8NUM);
 
@@ -129,6 +138,10 @@ int LstmFp16BaseCPUKernel::InitParam() {
     lstm_param_->batch_ == 1 ? lstm_param_->batch_ : UP_ROUND(lstm_param_->batch_, C16NUM);
   lstm_param_->state_col_align_ =
     lstm_param_->batch_ == 1 ? lstm_param_->hidden_size_ : UP_ROUND(lstm_param_->hidden_size_, C8NUM);
+  lstm_param_->proj_col_align_ =
+    lstm_param_->batch_ == 1 ? lstm_param_->output_size_ : UP_ROUND(lstm_param_->output_size_, C8NUM);
+  weight_need_pack_ = lstm_param_->batch_ != 1;
+#endif
   return RET_OK;
 }
 
@@ -170,11 +183,17 @@ int LstmFp16BaseCPUKernel::MallocRunBuffer() {
   for (int i = 0; i < C7NUM; i++) {
     running_buffer_[i] = nullptr;
   }
-  running_buffer_[kTempInputBufferIndex] = reinterpret_cast<float16_t *>(
-    ms_context_->allocator->Malloc(lstm_param_->input_row_align_ * lstm_param_->input_size_ * sizeof(float16_t)));
-  if (running_buffer_[kTempInputBufferIndex] == nullptr) {
-    MS_LOG(ERROR) << "LstmFp16CPUKernel malloc input * weight left matirx error.";
-    return RET_ERROR;
+  bool need_pack_input = true;
+#ifdef ENABLE_ARM64
+  need_pack_input = lstm_param_->seq_len_ != 1 || lstm_param_->batch_ != 1;
+#endif
+  if (need_pack_input) {
+    running_buffer_[kTempInputBufferIndex] = reinterpret_cast<float16_t *>(
+      ms_context_->allocator->Malloc(lstm_param_->input_row_align_ * lstm_param_->input_size_ * sizeof(float16_t)));
+    if (running_buffer_[kTempInputBufferIndex] == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc input * weight left matirx error.";
+      return RET_ERROR;
+    }
   }
 
   running_buffer_[kTempInputGateBufferIndex] = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(
