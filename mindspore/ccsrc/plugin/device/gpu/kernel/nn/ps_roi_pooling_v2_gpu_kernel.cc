@@ -35,6 +35,7 @@ constexpr size_t kWidthIndex = 3;
 
 bool PSROIPoolingV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
@@ -76,14 +77,14 @@ int PSROIPoolingV2GpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensor
 int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs,
                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   auto ret = ResizeCheckInputs(inputs);
   if (ret != KRET_OK) {
     MS_LOG(ERROR) << "Inputs check failed, see above message for details.";
     return ret;
   }
-
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
 
   output_shape = outputs[0]->GetShapeVector();
   if (output_shape.size() != OUTPUT_SHAPE_SIZE) {

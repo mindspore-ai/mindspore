@@ -51,11 +51,14 @@ void PSROIPoolingGradCpuKernelMod::PSROIPoolBackward(size_t start, size_t end, c
   auto elements_per_roi_box = 5;
   constexpr float zero = 0;
 
+  MS_EXCEPTION_IF_ZERO("pooled_width", pooled_width);
+  MS_EXCEPTION_IF_ZERO("pooled_height", pooled_height);
+  MS_EXCEPTION_IF_ZERO("output_channels", output_channels);
+  MS_EXCEPTION_IF_ZERO("rois_num", rois_num);
   for (auto index = start; index < end; ++index) {
     int width_offset_n = index % pooled_width;
     int height_offset_n = (index / pooled_width) % pooled_height;
     int n = index / pooled_width / pooled_height / output_channels;
-
     int n_batch = n / rois_num;
     int n_rois_num = n % rois_num;
 
@@ -122,6 +125,7 @@ void PSROIPoolingGradCpuKernelMod::PSROIPoolBackward(size_t start, size_t end, c
 bool PSROIPoolingGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &inputs,
                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
@@ -196,6 +200,7 @@ int PSROIPoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs,
                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto ret = ResizeCheckInputs(inputs);
   if (ret != KRET_OK) {
     MS_LOG(ERROR) << "Inputs check failed, see above message for details.";
@@ -301,6 +306,10 @@ int PSROIPoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 bool PSROIPoolingGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                           const std::vector<AddressPtr> &outputs) {
   auto output_size = output_channels_ * pooled_height_ * pooled_width_ * output_n_;
+  constexpr size_t kInputsNum = 2;
+  constexpr size_t kOutputsNum = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (data_type_id_ == kNumberTypeFloat32) {
     auto top_diff = static_cast<float *>(inputs[0]->addr);
     MS_EXCEPTION_IF_NULL(top_diff);

@@ -34,6 +34,7 @@ constexpr int ROIS_NUM_INDEX = 2;
 bool PSROIPoolingBackV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
@@ -108,6 +109,11 @@ int PSROIPoolingBackV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs,
                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t kInputsNum = 2;
+  constexpr size_t kOutputsNum = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto ret = ResizeCheckInputs(inputs);
   if (ret != KRET_OK) {
     MS_LOG(ERROR) << "Inputs check failed, see above message for details.";

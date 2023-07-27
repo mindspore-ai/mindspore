@@ -89,7 +89,6 @@ AbstractBasePtr PSROIPoolingGradInfer(const abstract::AnalysisEnginePtr &, const
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-
   auto type = PSROIPoolingGradInferType(primitive, input_args);
   auto shape = PSROIPoolingGradInferShape(primitive, input_args);
 
