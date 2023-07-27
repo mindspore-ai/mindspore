@@ -63,7 +63,9 @@ template <typename T>
 bool GcdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   const T *x1 = static_cast<const T *>(inputs[0]->addr);
+  MS_EXCEPTION_IF_NULL(x1);
   const T *x2 = static_cast<const T *>(inputs[1]->addr);
+  MS_EXCEPTION_IF_NULL(x2);
   T *y = static_cast<T *>(outputs[0]->addr);
   if (y_shape_.size() == 0) {
     (void)y_shape_.insert(y_shape_.begin(), 1);

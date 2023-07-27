@@ -49,6 +49,9 @@ namespace ops {
 namespace {
 void ReduceAxes(std::vector<int64_t> *output_shape, std::vector<int64_t> *axes, int64_t input_rank, bool keep_dims,
                 const PrimitivePtr &primitive) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_EXCEPTION_IF_NULL(axes);
+  MS_EXCEPTION_IF_NULL(output_shape);
   auto prim_name = primitive->name();
   if (axes->size() > 1) {
     for (size_t i = 0; i < axes->size(); ++i) {
@@ -96,13 +99,16 @@ void ReduceAxes(std::vector<int64_t> *output_shape, std::vector<int64_t> *axes, 
 
 abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto axes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   if (IsDynamicRank(input_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto keep_dims = GetValue<bool>(primitive->GetAttr("keep_dims"));
+  auto keep_dims_ptr = primitive->GetAttr("keep_dims");
+  MS_EXCEPTION_IF_NULL(keep_dims_ptr);
+  auto keep_dims = GetValue<bool>(keep_dims_ptr);
   if (IsDynamicRank(axes_shape) || IsDynamicShape(axes_shape)) {
     if (keep_dims) {
       return std::make_shared<abstract::Shape>(ShapeVector(input_shape.size(), -1));
@@ -137,11 +143,14 @@ abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr EuclideanNormInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   auto x_type = input_args[kInputIndex0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex, prim_name);
   const std::set<TypePtr> axes_valid_types = {kInt64, kInt32};
   auto axes_type = input_args[kInputIndex1]->BuildType();
+  MS_EXCEPTION_IF_NULL(axes_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("axes", axes_type, axes_valid_types, prim_name);
   return x_type;
 }
@@ -166,6 +175,7 @@ void EuclideanNorm::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kK
 
 bool EuclideanNorm::get_keep_dims() const {
   auto value_ptr = this->GetAttr(kKeepDims);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 

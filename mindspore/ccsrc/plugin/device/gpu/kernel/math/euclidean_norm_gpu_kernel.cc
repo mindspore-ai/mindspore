@@ -29,6 +29,9 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputsNum = 2;
+constexpr size_t kOutputsNum = 1;
+
 void EuclideanNormGpuKernelMod::InitWorkSpaceSizeList() {
   const size_t device_input_shape_size = input_shape_.size() * sizeof(size_t);
   const size_t device_axes_shape_size = output_axes_.size() * sizeof(size_t);
@@ -45,6 +48,7 @@ void EuclideanNormGpuKernelMod::InitWorkSpaceSizeList() {
 
 bool EuclideanNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
@@ -69,11 +73,14 @@ int EuclideanNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
 
   auto kernel_ptr = std::make_shared<ops::EuclideanNorm>(base_operator->GetPrim());
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   keep_dims_ = kernel_ptr->get_keep_dims();
   if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &axes_)) {
     MS_LOG(EXCEPTION) << "For" << kernel_name_ << ", can't get axis value from input!";
   }
 
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   data_type_ = inputs.at(kIndex0)->GetDtype();
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
