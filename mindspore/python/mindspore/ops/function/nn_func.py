@@ -2996,9 +2996,17 @@ def dense(input, weight, bias=None):
     _check_is_tensor("bias", bias, "dense")
     weight = ops.t(weight)
     input = ops.matmul(input, weight)
+    input_shape = input.shape
     if bias is not None:
         input = input + bias
+        _check_dense_add_bias_shape(input_shape, input.shape, bias.shape)
     return input
+
+
+def _check_dense_add_bias_shape(input_shape, output_shape, bias_shape):
+    """Check that the output has the correct shape after adding bias."""
+    if input_shape != output_shape:
+        raise ValueError(f"For dense, the bias shape {bias_shape} does not match the input shape {input_shape}.")
 
 
 @_primexpr
@@ -3665,9 +3673,8 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
           l_n = - w_{y_n} \log \frac{\exp(x_{n,y_n})}{\sum_{c=1}^C \exp(x_{n,c})}
           \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}
 
-      where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight,
-      N is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of
-      classes.
+      where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, N is the batch size,
+      :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
       If reduction is not 'none' (default 'mean'), then
 
@@ -3688,9 +3695,8 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
           \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
           l_n = - \sum_{c=1}^C w_c \log \frac{\exp(x_{n,c})}{\sum_{i=1}^C \exp(x_{n,i})} y_{n,c}
 
-      where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight,
-      N is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of
-      classes.
+      where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, N is the batch size,
+      :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
       If reduction is not 'none' (default 'mean'), then
 
@@ -3708,12 +3714,10 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
             in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
             `input` is expected to be log-probabilities, data type must be float16 or float32.
         target (Tensor): For class indices, tensor of shape :math:`()`, :math:`(N)` or
-            :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32.
-            For probabilities, tensor of shape :math:`(C,)` :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` ,
-            data type must be float16 or float32.
+            :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32. For probabilities, tensor of shape :math:`(C,)` ,
+            :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32.
         weight (Tensor): A rescaling weight applied to the loss of each batch element.
-            If not None, the shape is :math:`(C,)`,
-            data type must be float16 or float32. Default: ``None`` .
+            If not None, the shape is :math:`(C,)`, data type must be float16 or float32. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored
             and does not contribute to the input gradient. Default: ``-100`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
@@ -3733,17 +3737,16 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
+        >>> import mindspore as ms
         >>> import numpy as np
-        >>> from mindspore import Tensor, ops
         >>> # Case 1: Indices labels
-        >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
-        >>> target = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
-        >>> output = ops.cross_entropy(inputs, target)
+        >>> inputs = ms.Tensor(np.random.randn(3, 5), ms.float32)
+        >>> target = ms.Tensor(np.array([1, 0, 4]), ms.int32)
+        >>> output = ms.ops.cross_entropy(inputs, target)
         >>> # Case 2: Probability labels
-        >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
-        >>> target = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
-        >>> output = ops.cross_entropy(inputs, target)
+        >>> inputs = ms.Tensor(np.random.randn(3, 5), ms.float32)
+        >>> target = ms.Tensor(np.random.randn(3, 5), ms.float32)
+        >>> output = ms.ops.cross_entropy(inputs, target)
     """
     _check_is_tensor('input', input, "cross_entropy_loss")
     _check_is_tensor('target', target, "cross_entropy_loss")
@@ -4809,8 +4812,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor, ops
         >>> import mindspore.common.dtype as mstype
         >>> arr1 = np.arange(8).reshape((4, 2))
         >>> arr2 = np.array([2, 3, 1, 4, 6, 4, 4, 9]).reshape((4, 2))
