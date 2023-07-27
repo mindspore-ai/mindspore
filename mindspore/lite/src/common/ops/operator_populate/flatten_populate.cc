@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/flatten_parameter.h"
 #include "ops/flatten.h"
 using mindspore::ops::kNameFlatten;
@@ -28,15 +29,9 @@ OpParameter *PopulateFlattenOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
 
-  mindspore::ValuePtr attr = base_operator->GetPrim()->GetAttr(mindspore::ops::kAxis);
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << mindspore::ops::kAxis << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  auto axis = GetValue<int64_t>(attr);
+  auto axis = GetAttrWithDefault<int64_t>(base_operator, ops::kAxis, 1);
   CHECK_LESS_RETURN_RET(INT32_MAX, axis, nullptr, param);
-  param->axis_ = axis;
+  param->axis_ = static_cast<int32_t>(axis);
   return reinterpret_cast<OpParameter *>(param);
 }
 

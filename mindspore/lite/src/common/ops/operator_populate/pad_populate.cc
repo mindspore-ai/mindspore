@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/pad_parameter.h"
 #include "ops/fusion/pad_fusion.h"
 using mindspore::ops::kNamePadFusion;
@@ -33,8 +34,10 @@ OpParameter *PopulatePadOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
 
-  param->pad_mode_ = static_cast<int>(op->get_padding_mode());
-  param->constant_value_ = op->get_constant_value();
+  auto pad_mode = GetAttrWithDefault<int64_t>(base_operator, ops::kPaddingMode, PaddingMode::CONSTANT);
+  CHECK_LESS_RETURN_RET(INT32_MAX, pad_mode, nullptr, param);
+  param->pad_mode_ = static_cast<int>(pad_mode);
+  param->constant_value_ = GetAttrWithDefault<float>(base_operator, ops::kConstantValue, 0.0);
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_OPERATOR_POPULATE(kNamePadFusion, PrimitiveType_PadFusion, PopulatePadOpParameter)

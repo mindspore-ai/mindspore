@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/matmul_parameter.h"
 #include "ops/mat_mul.h"
 #include "ops/fusion/mat_mul_fusion.h"
@@ -33,27 +34,11 @@ OpParameter *PopulateMatMulOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
 
-  auto attr_b_transpose = base_operator->GetPrim()->GetAttr(kTransposeB);
-  if (attr_b_transpose == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kTransposeB << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  param->b_transpose_ = GetValue<bool>(attr_b_transpose);
-
-  auto attr_a_transpose = base_operator->GetPrim()->GetAttr(kTransposeA);
-  if (attr_a_transpose == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kTransposeA << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  param->a_transpose_ = GetValue<bool>(attr_a_transpose);
+  param->b_transpose_ = GetAttrWithDefault(base_operator, kTransposeB, false);
+  param->a_transpose_ = GetAttrWithDefault(base_operator, kTransposeA, false);
   param->has_bias_ = false;
-
-  auto attr_act_type = base_operator->GetPrim()->GetAttr(kActivationType);
-  if (attr_act_type != nullptr) {
-    param->act_type_ = static_cast<ActType>(GetValue<int64_t>(attr_act_type));
-  }
+  param->act_type_ =
+    static_cast<ActType>(GetAttrWithDefault<int64_t>(base_operator, kActivationType, ActType::ActType_No));
   return reinterpret_cast<OpParameter *>(param);
 }
 

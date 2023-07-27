@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/conv_parameter.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 using mindspore::ops::kNameConv2dTransposeFusion;
@@ -123,7 +124,7 @@ OpParameter *PopulateDeconv2dOpParameter(const BaseOperatorPtr &base_operator) {
   CHECK_LESS_RETURN_RET(INT32_MAX, *(dilation.begin() + 1), nullptr, param);
   param->dilation_w_ = static_cast<int>(*(dilation.begin() + 1));
 
-  auto output_paddings = op->get_output_paddings();
+  auto output_paddings = GetAttrWithDefault<std::vector<int64_t>>(base_operator, ops::kOutputPaddings, {0, 0});
   param->output_padding_h_ = 0;
   param->output_padding_w_ = 0;
   if (output_paddings.size() < kMinShapeSizeTwo) {
@@ -144,7 +145,8 @@ OpParameter *PopulateDeconv2dOpParameter(const BaseOperatorPtr &base_operator) {
   param->output_channel_ = static_cast<int>(op->get_out_channel());
   param->input_channel_ = static_cast<int>(op->get_in_channel());
   param->group_ = static_cast<int>(op->get_group());
-  auto act_type = static_cast<schema::ActivationType>(op->get_activation_type());
+  auto act_type = static_cast<schema::ActivationType>(
+    GetAttrWithDefault<int64_t>(base_operator, ops::kActivationType, schema::ActivationType_NO_ACTIVATION));
   auto attr_pad_mode = base_operator->GetPrim()->GetAttr(kPadMode);
   if (attr_pad_mode == nullptr) {
     MS_LOG(ERROR) << "The attr(" << kPadMode << ") of operator(" << base_operator->name() << ") not exist";

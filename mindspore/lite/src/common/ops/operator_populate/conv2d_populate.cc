@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/conv_parameter.h"
 #include "ops/conv2d.h"
 #include "ops/fusion/conv2d_fusion.h"
@@ -103,13 +104,7 @@ OpParameter *PopulateConv2dOpParameter(const BaseOperatorPtr &base_operator) {
   param->stride_h_ = static_cast<int>(*(stride.begin()));
   param->stride_w_ = static_cast<int>(*(stride.begin() + 1));
 
-  auto attr_pad_list = base_operator->GetPrim()->GetAttr(kPadList);
-  if (attr_pad_list == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kPadList << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  auto pad_list = GetValue<std::vector<int64_t>>(attr_pad_list);
+  auto pad_list = GetAttrWithDefault<std::vector<int64_t>>(base_operator, kPadList, {0, 0, 0, 0});
   if (pad_list.size() < kMinShapeSizeFour) {
     param->pad_u_ = 0;
     param->pad_d_ = 0;
@@ -141,26 +136,15 @@ OpParameter *PopulateConv2dOpParameter(const BaseOperatorPtr &base_operator) {
   CHECK_LESS_RETURN_RET(INT32_MAX, *(dilation.begin() + 1), nullptr, param);
   param->dilation_w_ = static_cast<int>(*(dilation.begin() + 1));
 
-  auto attr_in_channel = base_operator->GetPrim()->GetAttr(kInChannel);
-  if (attr_in_channel == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kInChannel << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  auto in_channel = GetValue<int64_t>(attr_in_channel);
+  auto in_channel = GetAttrWithDefault<int64_t>(base_operator, kInChannel, 0);
   CHECK_LESS_RETURN_RET(INT32_MAX, in_channel, nullptr, param);
   param->input_channel_ = static_cast<int>(in_channel);
 
   param->output_channel_ = static_cast<int>(op->get_out_channel());
   param->group_ = static_cast<int>(op->get_group());
 
-  auto attr_act_type = base_operator->GetPrim()->GetAttr(kActivationType);
-  if (attr_act_type == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kActivationType << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  auto act_type = static_cast<schema::ActivationType>(GetValue<int64_t>(attr_act_type));
+  auto act_type = static_cast<schema::ActivationType>(
+    GetAttrWithDefault<int64_t>(base_operator, kActivationType, schema::ActivationType_NO_ACTIVATION));
   auto pad_mode = static_cast<schema::PadMode>(op->get_pad_mode());
   if (SetPadModeAndActType(pad_mode, act_type, param) != RET_OK) {
     MS_LOG(ERROR) << "SetPadModeAndActType failed.";

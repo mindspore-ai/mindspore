@@ -85,6 +85,37 @@ void ShapePush(int *shape, size_t *shape_size, int value) {
   *shape_size = *shape_size + 1;
 }
 
+int GetInt32DataFromTensor(const TensorC *tensor, int *result, size_t *result_size) {
+  if (tensor->data_ == NULL || result == NULL || result_size == NULL) {
+    return NNACL_ERR;
+  }
+  if (tensor->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
+  }
+  int ele_num = GetElementNum(tensor);
+  if (ele_num <= 0) {
+    return NNACL_ERR;
+  }
+  *result_size = (size_t)ele_num;
+  if (tensor->data_type_ == kNumberTypeInt || tensor->data_type_ == kNumberTypeInt32) {
+    int *data = (int *)(tensor->data_);
+    for (int i = 0; i < ele_num; i++) {
+      result[i] = data[i];
+    }
+  } else if (tensor->data_type_ == kNumberTypeInt64) {
+    int64_t *data = (int64_t *)(tensor->data_);
+    for (int i = 0; i < ele_num; i++) {
+      if (data[i] >= INT32_MAX) {
+        return NNACL_ERR;
+      }
+      result[i] = (int32_t)data[i];
+    }
+  } else {
+    return NNACL_UNSUPPORTED_DATA_TYPE;
+  }
+  return NNACL_OK;
+}
+
 int ShapeInsert(int *shape, size_t *shape_size, int index, int value) {
   if (index < 0 || index > *shape_size) {
     return NNACL_ERR;

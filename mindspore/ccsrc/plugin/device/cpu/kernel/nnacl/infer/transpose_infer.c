@@ -52,6 +52,21 @@ int SetOutputShape(int perms_num, const TensorC *input, TensorC *output, const i
   return NNACL_OK;
 }
 
+int GetAndCheckPerm(const TensorC *perm_tensor, const int perms_num, int *perm, size_t *perm_size) {
+  if (perms_num >= MAX_TRANSPOSE_DIM_SIZE) {
+    return NNACL_TRANSPOSE_PERM_DIMS_INVALID;
+  }
+
+  int ret = GetInt32DataFromTensor(perm_tensor, perm, perm_size);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+  for (size_t i = 0; i < *perm_size; i++) {
+    NNACL_CHECK_TRUE_RET(perm[i] < perms_num, NNACL_ERR);
+  }
+  return NNACL_OK;
+}
+
 int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
@@ -67,18 +82,18 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (perm_tensor == NULL) {
     return NNACL_INFER_INVALID;
   }
-  const int32_t *perm_data = (int32_t *)perm_tensor->data_;
   NNACL_CHECK_TRUE_RET(perm_tensor->shape_size_ == 1, NNACL_INFER_INVALID);
   const int perms_num = perm_tensor->shape_[0];
-  if (perms_num != 0 && perm_data == NULL) {
+  if (perms_num != 0 && perm_tensor->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
   int perm[MAX_TRANSPOSE_DIM_SIZE] = {0};
   size_t perm_size = 0;
-  for (int i = 0; i < perms_num; i++) {
-    NNACL_CHECK_TRUE_RET(perm_data[i] < perms_num, NNACL_ERR);
-    ShapePush(perm, &perm_size, perm_data[i]);
+  int ret = GetAndCheckPerm(perm_tensor, perms_num, perm, &perm_size);
+  if (ret != NNACL_OK) {
+    return ret;
   }
+
   if (perms_num == PERM_NUM_FOUR) {
     const int nchw2nhwc[4] = {0, 2, 3, 1};
     const int nhwc2nchw[4] = {0, 3, 1, 2};
