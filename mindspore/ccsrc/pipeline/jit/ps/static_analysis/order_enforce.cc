@@ -197,6 +197,7 @@ class OrderEnforcer {
   }
 
   bool IsRef(const AnfNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(node);
     auto &abs = node->abstract();
     return abs != nullptr && abs->isa<abstract::AbstractRefTensor>();
   }
@@ -312,6 +313,7 @@ class OrderEnforcer {
     q.push(user_cnode);
     while (!q.empty()) {
       auto cnode = q.front();
+      MS_EXCEPTION_IF_NULL(cnode);
       q.pop();
       for (auto &input : cnode->inputs()) {
         if (input == update_state) {
@@ -409,6 +411,7 @@ class OrderEnforcer {
     if (abs_ref == nullptr) {
       return "";
     }
+    MS_EXCEPTION_IF_NULL(abs_ref->ref_key_value());
     auto ref_key = abs_ref->ref_key_value()->cast<StringImmPtr>();
     if (ref_key == nullptr) {
       return "";
@@ -446,7 +449,7 @@ class OrderEnforcer {
     if (!node->isa<CNode>()) {
       return false;
     }
-    auto inner_inputs = node->cast<CNodePtr>()->inputs();
+    const auto &inner_inputs = node->cast<CNodePtr>()->inputs();
     return std::any_of(inner_inputs.begin(), inner_inputs.end(), [&](const AnfNodePtr &inner_input) {
       return !HasAbstractMonad(inner_input) && HasRefKeyInput(inner_input, ref_key);
     });
@@ -500,7 +503,7 @@ class OrderEnforcer {
         if (!input->isa<CNode>()) {
           continue;
         }
-        auto inner_inputs = input->cast<CNodePtr>()->inputs();
+        const auto &inner_inputs = input->cast<CNodePtr>()->inputs();
         for (auto inner_input : inner_inputs) {
           if (IsPrimitiveCNode(inner_input, prim::kPrimUpdateState) || !HasRefKeyInput(inner_input, ref_key)) {
             continue;
@@ -550,6 +553,7 @@ class OrderEnforcer {
   }
 
   void ProcessReturnLoad(const AnfNodePtr &node, const RefLoads &refkey_loads, RefLoads *refkey_loads_return_is_load) {
+    MS_EXCEPTION_IF_NULL(node->cast<CNodePtr>());
     auto return_input = node->cast<CNodePtr>()->input(1);
     while (IsPrimitiveCNode(return_input, prim::kPrimDepend)) {
       return_input = return_input->cast<CNodePtr>()->input(1);

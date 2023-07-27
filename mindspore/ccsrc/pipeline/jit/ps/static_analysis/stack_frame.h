@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ class StackFrame final : public Base {
 
   AnfNodePtr &NextNode() {
     auto &current_node = CurrentNode();
+    MS_EXCEPTION_IF_NULL(func_graph_);
     // Set `done_` true, if the stack frames is being exhausted.
     if (current_node == func_graph_->get_return()) {
       done_ = true;
@@ -105,6 +106,7 @@ class StackFrame final : public Base {
       buffer << "(Exhausted..)";
     }
     buffer << ", parent: ";
+    MS_EXCEPTION_IF_NULL(parent_context_);
     auto parent_graph = parent_context_->func_graph();
     if (parent_graph != nullptr) {
       buffer << parent_graph << "/" << parent_graph->ToString();
@@ -122,7 +124,7 @@ class StackFrame final : public Base {
 
  private:
   AbstractBasePtrList GenerateArgsAbsList(const AnalysisEnginePtr &engine, const EvaluatorPtr &evaluator,
-                                          const CNodePtr current_cnode);
+                                          const CNodePtr &current_cnode);
   AnalysisContextPtr GetParentContext(const BaseFuncGraphEvaluatorPtr &fg_evaluator,
                                       const AbstractFunctionPtr &graph_func) const;
   StackFramePtr DoJump(const AnalysisEnginePtr &engine, const CNodePtr &current_cnode,

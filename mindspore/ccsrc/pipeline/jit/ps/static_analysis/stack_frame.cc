@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace abstract {
 AbstractBasePtrList StackFrame::GenerateArgsAbsList(const AnalysisEnginePtr &engine, const EvaluatorPtr &evaluator,
-                                                    const CNodePtr current_cnode) {
+                                                    const CNodePtr &current_cnode) {
   MS_EXCEPTION_IF_NULL(current_cnode);
   MS_EXCEPTION_IF_NULL(evaluator);
   AbstractBasePtrList args_abs_list;
@@ -74,9 +74,11 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   // Evaluate the inputs firstly. Build arguments for the func graph.
   AbstractBasePtrList args_abs_list = GenerateArgsAbsList(engine, evaluator, current_cnode);
   // Check if already evaluated before.
+  MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
   auto &cache = evaluator->evaluator_cache_mgr()->GetCache();
   auto iter = cache.find(args_abs_list);
   if (iter != cache.end()) {
+    MS_EXCEPTION_IF_NULL(current_context_);
     MS_LOG(DEBUG) << "Eval before, current_node: " << current_cnode->DebugString()
                   << ", current_context_: " << current_context_->ToString() << ", args: " << args_abs_list;
     // Update inputs sequence nodes info, if matched in cache.
@@ -224,6 +226,7 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
   MS_EXCEPTION_IF_NULL(eval_result);
   // Overwrite the result if func graph is stub.
   EvalResultPtr result = eval_result;
+  MS_EXCEPTION_IF_NULL(last_stack_frame->func_graph());
   if (last_stack_frame->func_graph()->stub()) {
     result = std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), nullptr);
   }
@@ -232,6 +235,7 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
   if (engine->check_side_effect()) {
     auto cnode = dyn_cast_ptr<CNode>(CurrentNode());
     MS_EXCEPTION_IF_NULL(cnode);
+    MS_EXCEPTION_IF_NULL(func_graph());
     if (last_stack_frame->func_graph()->has_side_effect_node()) {
       MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
                     << ", func_graph: " << func_graph()->ToString();
@@ -255,6 +259,7 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
   // Save func graph eval result for specialize.
   auto evaluator = last_stack_frame->evaluator();
   MS_EXCEPTION_IF_NULL(evaluator);
+  MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
   evaluator->evaluator_cache_mgr()->SetValue(last_stack_frame->args_abs_list(), result);
   auto fg_evaluator = dyn_cast_ptr<BaseFuncGraphEvaluator>(evaluator);
   if (fg_evaluator == nullptr) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ void AnalysisSchedule::HandleException(const std::exception &ex) {
   // Free all the locks. Let all the threads continue to run.
   std::lock_guard<std::mutex> lock(activate_thread_lock_);
   for (auto &item : schedule_list_) {
+    MS_EXCEPTION_IF_NULL(item);
     item->SetException();
   }
   schedule_list_.clear();
@@ -141,7 +142,7 @@ void AnalysisSchedule::SetNextReady() {
     return;
   }
   // Exit Flag
-  if (schedule_list_.front()->thread_id() == kStateStop) {
+  if (schedule_list_.front() != nullptr && schedule_list_.front()->thread_id() == kStateStop) {
     run_ = false;
     schedule_list_.pop_front();
     return;
@@ -167,6 +168,7 @@ void AnalysisSchedule::SetNextReady() {
         return item->SetPossibleResult(true);
       });
       if (possible_it != schedule_list_.end()) {
+        MS_EXCEPTION_IF_NULL(*possible_it);
         MS_LOG(DEBUG) << "Try to set one branch result from the other branch, ignore value: true, infer thread: "
                       << (*possible_it)->thread_id() << " , result: " << (*possible_it)->HasResult();
         it = possible_it;
@@ -178,13 +180,14 @@ void AnalysisSchedule::SetNextReady() {
         return item->SetPossibleResult(false);
       });
       if (possible_it != schedule_list_.end()) {
+        MS_EXCEPTION_IF_NULL(*possible_it);
         MS_LOG(DEBUG) << "Try to set one branch result from the other branch, ignore value: false, infer thread: "
                       << (*possible_it)->thread_id() << " , result: " << (*possible_it)->HasResult();
         it = possible_it;
         break;
       }
     }
-
+    MS_EXCEPTION_IF_NULL(schedule_list_.front());
     // Enter endless loop if there is not ready result.
     (void)activate_threads_.insert(schedule_list_.front()->thread_id());
     // Let the first thread to trigger endless loop exception.
@@ -196,6 +199,7 @@ void AnalysisSchedule::SetNextReady() {
   }
 
   auto async_task = *it;
+  MS_EXCEPTION_IF_NULL(async_task);
   (void)activate_threads_.insert(async_task->thread_id());
   async_task->SetReady();
   (void)schedule_list_.erase(it);
@@ -241,6 +245,7 @@ bool AsyncAbstract::SetPossibleResult(bool first) {
 namespace {
 AbstractFunctionPtr GetAbstractFuncRecursively(const AbstractBasePtr &abs, const std::vector<std::size_t> &index,
                                                const std::size_t offset) {
+  MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<AbstractFuncAtom>()) {
     return abs->cast<AbstractFuncAtomPtr>();
   }
@@ -257,6 +262,7 @@ AbstractFunctionPtr GetAbstractFuncRecursively(const AbstractBasePtr &abs, const
                                  << " is less than or equal to index: " << index[offset];
     }
     auto resolved = GetAbstractFuncRecursively(elements[index[offset]], index, offset + 1);
+    MS_EXCEPTION_IF_NULL(resolved);
     if (!resolved->isa<AbstractFuncAtom>()) {
       MS_LOG(INTERNAL_EXCEPTION) << "AsyncAbstract result cannot be resolved to AbstractFuncAtom, but: "
                                  << resolved->ToString();
@@ -357,6 +363,7 @@ void AnalysisResultCacheMgr::SetCacheValue(const AnfNodeConfigPtr &conf, const A
       abstract_list.push_back(previous_abs);
       abstract_list.push_back(current_abs);
       // Join two branches's result
+      MS_EXCEPTION_IF_NULL(conf->node());
       MS_LOG(DEBUG) << "Join node: " << conf->node()->DebugString() << ", previous_abs: " << previous_abs->ToString()
                     << ", and current_abs: " << current_abs->ToString();
       auto joined_result = AnalysisEngine::ProcessEvalResults(abstract_list, conf->node());
@@ -378,6 +385,10 @@ void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const 
 std::string ArgsToString(const AbstractBasePtrList &args_abs_list) {
   std::ostringstream buffer;
   for (const auto &item : args_abs_list) {
+    MS_EXCEPTION_IF_NULL(item);
+    MS_EXCEPTION_IF_NULL(item->BuildType());
+    MS_EXCEPTION_IF_NULL(item->BuildShape());
+    MS_EXCEPTION_IF_NULL(item->BuildValue());
     buffer << " # " << item->BuildType()->ToString() << ", " << item->BuildShape()->ToString() << ", "
            << item->BuildValue()->ToString() << "\n";
   }

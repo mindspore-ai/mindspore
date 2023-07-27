@@ -31,6 +31,7 @@ bool InnerAbsEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) con
     auto abs_seq = args_abs_list[0]->cast<AbstractSequencePtr>();
     const auto &elements = abs_seq->elements();
     for (auto ele : elements) {
+      MS_EXCEPTION_IF_NULL(ele);
       if (!ele->isa<AbstractScalar>()) {
         return false;
       }
@@ -56,8 +57,10 @@ EvalResultPtr InnerAbsEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   if (args_abs_list.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "abs() requires 1 argument.";
   }
+  MS_EXCEPTION_IF_NULL(out_conf->node());
   auto cnode = out_conf->node()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
   // Convert pyexecute.
   if (fallback::ContainsSequenceAnyType(args_abs_list[0])) {
     const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
@@ -92,6 +95,7 @@ EvalResultPtr InnerAbsEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
 }
 
 bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) const {
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
   if (args_abs_list[0]->isa<AbstractTensor>()) {
     return false;
   }
@@ -99,6 +103,7 @@ bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) c
     auto abs_seq = args_abs_list[0]->cast<AbstractSequencePtr>();
     const auto &elements = abs_seq->elements();
     for (auto ele : elements) {
+      MS_EXCEPTION_IF_NULL(ele);
       if (!ele->isa<AbstractScalar>()) {
         return false;
       }
@@ -123,6 +128,7 @@ bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) c
   if (args_abs_list.size() == 1) {
     return false;
   }
+  MS_EXCEPTION_IF_NULL(args_abs_list[1]);
   if (args_abs_list[1]->isa<AbstractScalar>()) {
     auto const_abstract_value = args_abs_list[1]->cast_ptr<AbstractScalar>();
     MS_EXCEPTION_IF_NULL(const_abstract_value);
@@ -138,6 +144,7 @@ EvalResultPtr InnerRoundEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   if (args_abs_list.size() == 0 || args_abs_list.size() > max_input_index) {
     MS_LOG(INTERNAL_EXCEPTION) << "round() requires 1 or 2 arguments.";
   }
+  MS_EXCEPTION_IF_NULL(out_conf->node());
   auto cnode = out_conf->node()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Convert pyexecute.
@@ -188,8 +195,10 @@ EvalResultPtr InnerLenEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   if (args_abs_list.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "len() requires 1 argument.";
   }
+  MS_EXCEPTION_IF_NULL(out_conf->node());
   auto cnode = out_conf->node()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
   MS_LOG(DEBUG) << "args_abs_list[0]:" << args_abs_list[0]->ToString();
 
   // Process constants.
