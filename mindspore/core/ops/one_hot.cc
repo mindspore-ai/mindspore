@@ -63,8 +63,7 @@ class OneHotInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
     const int64_t input_num = kOneHotInputsNum;
-    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
-                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     auto op_name = primitive->name();
     const size_t depth_index = 1;
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
@@ -112,8 +111,7 @@ class OneHotInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(prim);
     auto op_name = prim->name();
-    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kOneHotInputsNum,
-                                             op_name);
+    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kOneHotInputsNum, op_name);
 
     (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->BuildType(),
                                                      {kUInt8, kInt32, kInt64}, op_name);
