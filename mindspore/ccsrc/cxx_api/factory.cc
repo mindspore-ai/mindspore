@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ std::shared_ptr<ModelImpl> ModelImplFactory::Create(enum DeviceType device_type)
   for (auto &item : creators_) {
     MS_EXCEPTION_IF_NULL(item);
     auto val = item();
+    MS_EXCEPTION_IF_NULL(val);
     if (val->CheckDeviceSupport(device_type)) {
       return val;
     }

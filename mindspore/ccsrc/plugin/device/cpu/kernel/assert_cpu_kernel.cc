@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ void PrintDataInt8(const AddressPtr &input, int summarize) {
   std::ostringstream oss;
   oss << "input data: [";
   int8_t *data = reinterpret_cast<int8_t *>(input->addr);
+  MS_EXCEPTION_IF_NULL(data);
   for (int j = 0; j < summarize - 1; j++) {
     oss << static_cast<int32_t>(data[j]) << " ";
   }
@@ -36,6 +37,7 @@ void PrintDataUInt8(const AddressPtr &input, int summarize) {
   std::ostringstream oss;
   oss << "input data: [";
   uint8_t *data = reinterpret_cast<uint8_t *>(input->addr);
+  MS_EXCEPTION_IF_NULL(data);
   for (int j = 0; j < summarize - 1; j++) {
     oss << static_cast<uint32_t>(data[j]) << " ";
   }
@@ -49,6 +51,7 @@ void PrintData(const AddressPtr &input, int summarize) {
   std::ostringstream oss;
   oss << "input data: [";
   T *data = reinterpret_cast<T *>(input->addr);
+  MS_EXCEPTION_IF_NULL(data);
   for (int j = 0; j < summarize - 1; j++) {
     oss << data[j] << " ";
   }
@@ -91,6 +94,7 @@ int AssertCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   kernel_funcs_.resize(inputs_size);
   summarizes_.resize(inputs_size);
   for (size_t i = 0; i < inputs_size; i++) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
     auto input_type_id = inputs[i]->GetDtype();
     auto func_iter = func_map_.find(input_type_id);
     if (func_iter == func_map_.end()) {
@@ -119,6 +123,7 @@ bool AssertCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 
   std::cout << "For '" << kernel_name_ << "' condition is false." << std::endl;
   for (size_t i = 1; i < inputs.size(); i++) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
     kernel_funcs_[i](inputs[i], summarizes_[i]);
   }
   MS_LOG(EXCEPTION) << "assert failed";
