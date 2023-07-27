@@ -41,7 +41,11 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   MS_EXCEPTION_IF_NULL(new_cnode);
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto predict_input = cnode->inputs()[1];
+  auto predict_inputs_list = cnode->inputs();
+  if (predict_inputs_list.size() <= 1) {
+    MS_LOG(EXCEPTION) << "Node must have more than 2 inputs, but get " << predict_inputs_list.size();
+  }
+  auto predict_input = predict_inputs_list[1];
   auto new_node_dtype = {common::AnfAlgo::GetOutputInferDataType(predict_input, 0)};
   auto new_node_shape = {AnfAlgo::GetOutputDetailShape(predict_input, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(new_node_dtype, new_node_shape, new_cnode.get());

@@ -34,7 +34,7 @@ MemoryOffloadConflict &MemoryOffloadConflict::GetInstance() {
 
 void MemoryOffloadConflict::AddMemoryOffloadConflict(const HashSet<const void *> &conflict_set) {
   for (const auto &key : conflict_set) {
-    conflict_map_[key].insert(conflict_set.cbegin(), conflict_set.cend());
+    (void)conflict_map_[key].insert(conflict_set.cbegin(), conflict_set.cend());
   }
 }
 

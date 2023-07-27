@@ -113,7 +113,9 @@ void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const A
     output_index++;
   }
 
-  manager->Replace(relu_grad, bn_add_relu_grad_output[kBNAddReluGradOutputNum - 1]);
+  if (!manager->Replace(relu_grad, bn_add_relu_grad_output[kBNAddReluGradOutputNum - 1])) {
+    MS_LOG(EXCEPTION) << "manager replace node failed in batchnorm add relu grad fusion.";
+  }
   return;
 }
 

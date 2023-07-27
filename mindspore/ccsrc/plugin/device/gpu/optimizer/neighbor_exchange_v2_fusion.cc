@@ -75,7 +75,7 @@ void AddNewOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &new_splitv,
   MS_EXCEPTION_IF_NULL(inputs);
   std::vector<AnfNodePtr> new_splitv_output;
   CreateMultipleOutputsOfAnfNode(func_graph, new_splitv, LongToSize(outputs_num), &new_splitv_output);
-  inputs->insert(inputs->end(), new_splitv_output.begin(), new_splitv_output.end());
+  (void)inputs->insert(inputs->end(), new_splitv_output.begin(), new_splitv_output.end());
 }
 
 // cal split attrs size_splits, shapes and num_split
@@ -201,7 +201,7 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const AnfNodePtr &split_inpu
     slice = CreateSliceNode(graph, slice_inputs, slice_node_info, pass);
     MS_EXCEPTION_IF_NULL(slice);
     AddNewOutputs(graph, slice, 1, &make_tuple_inputs);
-    abstract_list.emplace_back(slice->abstract());
+    (void)abstract_list.emplace_back(slice->abstract());
     slice_node_info.slice_begin += splitv_node_info->size_splits[idx];
   }
   if (SizeToLong(make_tuple_inputs.size()) - 1 != splitv_node_info->num_split) {
@@ -245,16 +245,19 @@ std::vector<AnfNodePtr> CreateAllToAllvInput(const std::vector<std::vector<AnfNo
   std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName))};
   const std::vector<size_t> split_idx = {0, 2, 1, 3, 0, 3, 1, 2};
   const std::vector<bool> is_begin = {true, false, false, false, false, true, true, true};
+  if (send_rank_ids.size() > is_begin.size()) {
+    MS_LOG(EXCEPTION) << "send_rank_ids size must <= " << is_begin.size();
+  }
   for (size_t idx = 0; idx < send_rank_ids.size(); ++idx) {
     if (send_rank_ids[idx] == kInvalidId) {
       continue;
     }
     if (is_begin[idx]) {
-      all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[split_idx[idx]].begin(),
-                                split_outputs[split_idx[idx]].begin() + 1);
+      (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[split_idx[idx]].begin(),
+                                      split_outputs[split_idx[idx]].begin() + 1);
     } else {
-      all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[split_idx[idx]].end() - 1,
-                                split_outputs[split_idx[idx]].end());
+      (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[split_idx[idx]].end() - 1,
+                                      split_outputs[split_idx[idx]].end());
     }
   }
   return all_to_all_v_input;
@@ -311,37 +314,39 @@ std::vector<AnfNodePtr> CreateAllToAllvInputForGrad(const std::vector<int64_t> &
                                   [&send_rank_ids](int idx) { return send_rank_ids[idx] == kInvalidId; });
   if (no_send_side) {
     if (send_rank_ids[kRankIdZero] != kInvalidId) {
-      all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[0].begin(), split_outputs[0].begin() + 1);
+      (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[0].begin(), split_outputs[0].begin() + 1);
     }
     if (send_rank_ids[kRankIdFour] != kInvalidId) {
-      all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[0].end() - 1, split_outputs[0].end());
+      (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[0].end() - 1, split_outputs[0].end());
     }
     return all_to_all_v_input;
   }
   // 0, 1
   if (split_nodes[1] != nullptr) {
     if (send_rank_ids[kRankIdSeven] != kInvalidId) {
-      all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[1].begin() + 1, split_outputs[1].end());
+      (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[1].begin() + 1, split_outputs[1].end());
     } else {
-      all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[1].begin(), split_outputs[1].end());
+      (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[1].begin(), split_outputs[1].end());
     }
   }
   // 2
   if (split_nodes[kIndex2] != nullptr && send_rank_ids[kRankIdTwo] != kInvalidId) {
-    all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[kIndex2].end() - 1, split_outputs[kIndex2].end());
+    (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[kIndex2].end() - 1,
+                                    split_outputs[kIndex2].end());
   }
   // 3, 4, 5
   if (split_nodes[kIndex3] != nullptr) {
-    all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[kIndex3].rbegin(), split_outputs[kIndex3].rend());
+    (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[kIndex3].rbegin(),
+                                    split_outputs[kIndex3].rend());
   }
   // 6
   if (split_nodes[kIndex2] != nullptr && send_rank_ids[kRankIdSix] != kInvalidId) {
-    all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[kIndex2].begin(),
-                              split_outputs[kIndex2].begin() + 1);
+    (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[kIndex2].begin(),
+                                    split_outputs[kIndex2].begin() + 1);
   }
   // 7
   if (split_nodes[1] != nullptr && send_rank_ids[kRankIdSeven] != kInvalidId) {
-    all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[1].begin(), split_outputs[1].begin() + 1);
+    (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs[1].begin(), split_outputs[1].begin() + 1);
   }
 
   return all_to_all_v_input;
@@ -374,7 +379,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
                           << trace::DumpSourceLines(split_nodes[i]);
       }
     }
-    split_outputs.emplace_back(output);
+    (void)split_outputs.emplace_back(output);
   }
 
   // all_to_all_v input
@@ -393,7 +398,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
     std::count_if(send_rank_ids.begin(), send_rank_ids.end(), [](int64_t ids) { return ids != kInvalidId; });
   bool need_drop_input = false;
   if (all_to_all_input_num == 0) {
-    all_to_all_v_input.emplace_back(neighbor_exchange_v2_or_grad->input(kNeighborExchangeV2InputIdx));
+    (void)all_to_all_v_input.emplace_back(neighbor_exchange_v2_or_grad->input(kNeighborExchangeV2InputIdx));
     need_drop_input = true;
   }
 
@@ -492,7 +497,7 @@ std::vector<CNodePtr> NeighborExchangeV2Fusion::CreateSplitNodes(const FuncGraph
   if (splitv_node_info.is_first || splitv_node_info.is_last) {
     split_v_top_bottom = CreateSplitNode(graph, neighbor_exchange_v2_input, &splitv_node_info, *this);
   }
-  split_nodes.emplace_back(split_v_top_bottom);
+  (void)split_nodes.emplace_back(split_v_top_bottom);
   split_num->push_back(splitv_node_info.num_split);
 
   // Splitv for left & right
@@ -503,7 +508,7 @@ std::vector<CNodePtr> NeighborExchangeV2Fusion::CreateSplitNodes(const FuncGraph
   if (splitv_node_info.is_first || splitv_node_info.is_last) {
     split_v_left_right = CreateSplitNode(graph, neighbor_exchange_v2_input, &splitv_node_info, *this);
   }
-  split_nodes.emplace_back(split_v_left_right);
+  (void)split_nodes.emplace_back(split_v_left_right);
   split_num->push_back(splitv_node_info.num_split);
 
   // splitv for corner
@@ -527,10 +532,10 @@ std::vector<CNodePtr> NeighborExchangeV2Fusion::CreateSplitNodes(const FuncGraph
       splitv_node_info.base_shape = shape_tmp;
       CNodePtr split_v_corner_top =
         CreateSplitNode(graph, *(split_outputs_top_bottom.begin()), &splitv_node_info, *this);
-      split_nodes.emplace_back(split_v_corner_top);
+      (void)split_nodes.emplace_back(split_v_corner_top);
       split_num->push_back(splitv_node_info.num_split);
     } else {
-      split_nodes.emplace_back(nullptr);
+      (void)split_nodes.emplace_back(nullptr);
       split_num->push_back(0);
     }
     // for bottom corner
@@ -542,16 +547,16 @@ std::vector<CNodePtr> NeighborExchangeV2Fusion::CreateSplitNodes(const FuncGraph
       splitv_node_info.base_shape = shape_tmp;
       CNodePtr split_v_corner_bottom =
         CreateSplitNode(graph, *(split_outputs_top_bottom.end() - 1), &splitv_node_info, *this);
-      split_nodes.emplace_back(split_v_corner_bottom);
+      (void)split_nodes.emplace_back(split_v_corner_bottom);
       split_num->push_back(splitv_node_info.num_split);
     } else {
-      split_nodes.emplace_back(nullptr);
+      (void)split_nodes.emplace_back(nullptr);
       split_num->push_back(0);
     }
   } else {
-    split_nodes.emplace_back(nullptr);
+    (void)split_nodes.emplace_back(nullptr);
     split_num->push_back(0);
-    split_nodes.emplace_back(nullptr);
+    (void)split_nodes.emplace_back(nullptr);
     split_num->push_back(0);
   }
   return split_nodes;
@@ -597,10 +602,11 @@ CNodePtr NeighborExchangeV2Fusion::CreateLeftRightConcat(const FuncGraphPtr &gra
     single_shape[kDim2] += recv_lens[1];  // H in NCHW
   }
   if (is_left) {
-    concat_input.insert(concat_input.end(), all_to_all_v_outputs.rbegin(), all_to_all_v_outputs.rbegin() + input_num);
+    (void)concat_input.insert(concat_input.end(), all_to_all_v_outputs.rbegin(),
+                              all_to_all_v_outputs.rbegin() + input_num);
   } else {
-    concat_input.insert(concat_input.end(), all_to_all_v_outputs.begin() + AllToAllRealIds(1, recv_rank_ids),
-                        all_to_all_v_outputs.begin() + input_num + AllToAllRealIds(1, recv_rank_ids));
+    (void)concat_input.insert(concat_input.end(), all_to_all_v_outputs.begin() + AllToAllRealIds(1, recv_rank_ids),
+                              all_to_all_v_outputs.begin() + input_num + AllToAllRealIds(1, recv_rank_ids));
   }
 
   std::vector<TypeId> concat_output_dtype = {
@@ -627,9 +633,10 @@ CNodePtr NeighborExchangeV2Fusion::CreateMiddleConcat(const FuncGraphPtr &graph,
   // left
   if (recv_rank_ids[first_idx] != kInvalidId) {
     if (concat_dim == kWDim) {
-      concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.end() - 1, all_to_all_v_outputs.end());
+      (void)concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.end() - 1, all_to_all_v_outputs.end());
     } else {
-      concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin(), all_to_all_v_outputs.begin() + 1);
+      (void)concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin(),
+                                    all_to_all_v_outputs.begin() + 1);
     }
 
     ++input_num_all;
@@ -641,11 +648,12 @@ CNodePtr NeighborExchangeV2Fusion::CreateMiddleConcat(const FuncGraphPtr &graph,
   // right
   if (recv_rank_ids[last_idx] != kInvalidId) {
     if (concat_dim == kWDim) {
-      concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin(), all_to_all_v_outputs.begin() + 1);
+      (void)concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin(),
+                                    all_to_all_v_outputs.begin() + 1);
     } else {
       int64_t bottom_num = AllToAllRealIds(kRankIdFour, recv_rank_ids);
-      concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin() + bottom_num,
-                              all_to_all_v_outputs.begin() + bottom_num + 1);
+      (void)concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin() + bottom_num,
+                                    all_to_all_v_outputs.begin() + bottom_num + 1);
     }
 
     ++input_num_all;
@@ -732,7 +740,7 @@ CNodePtr NeighborExchangeV2Fusion::CreateConcatNodes(const FuncGraphPtr &graph, 
       MS_LOG(EXCEPTION) << "The node " << concat_left->DebugString() << " should have at least one output, but got 0."
                         << trace::DumpSourceLines(concat_left);
     }
-    concat_input_all.insert(concat_input_all.end(), concat_left_outputs.begin(), concat_left_outputs.end());
+    (void)concat_input_all.insert(concat_input_all.end(), concat_left_outputs.begin(), concat_left_outputs.end());
     ++input_nums_all;
     shape_all[kDim3] += recv_lens[kDim2];
   }
@@ -744,7 +752,7 @@ CNodePtr NeighborExchangeV2Fusion::CreateConcatNodes(const FuncGraphPtr &graph, 
     MS_LOG(EXCEPTION) << "The node " << concat_middle->DebugString() << " should have at least one output, but got 0."
                       << trace::DumpSourceLines(concat_middle);
   }
-  concat_input_all.insert(concat_input_all.end(), concat_middle_outputs.begin(), concat_middle_outputs.end());
+  (void)concat_input_all.insert(concat_input_all.end(), concat_middle_outputs.begin(), concat_middle_outputs.end());
   ++input_nums_all;
 
   if (is_right) {
@@ -757,7 +765,7 @@ CNodePtr NeighborExchangeV2Fusion::CreateConcatNodes(const FuncGraphPtr &graph, 
       MS_LOG(EXCEPTION) << "The node " << concat_right->DebugString() << " should have at least one output, but got 0."
                         << trace::DumpSourceLines(concat_right);
     }
-    concat_input_all.insert(concat_input_all.end(), concat_right_outputs.begin(), concat_right_outputs.end());
+    (void)concat_input_all.insert(concat_input_all.end(), concat_right_outputs.begin(), concat_right_outputs.end());
     ++input_nums_all;
     shape_all[kDim3] += recv_lens[kDim3];
   }
@@ -809,7 +817,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradFusion::CreateSplitNodesForGrad(cons
   if (splitv_h_node_info.is_first || splitv_h_node_info.is_last) {
     split_v_top_bottom = CreateSplitNode(graph, neighbor_exchange_v2_grad_input, &splitv_h_node_info, *this);
   }
-  split_nodes.emplace_back(split_v_top_bottom);
+  (void)split_nodes.emplace_back(split_v_top_bottom);
   split_num->push_back(splitv_h_node_info.num_split);
 
   // splitvs for left & right
@@ -852,7 +860,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradFusion::CreateSplitNodesForGrad(cons
       base_shape[kHDim] = size_split_h[i];
       splitv_w_node_info.base_shape = base_shape;
       auto split_v_left_right = CreateSplitNode(graph, split_outputs_top_bottom[i], &splitv_w_node_info, *this);
-      split_nodes.emplace_back(split_v_left_right);
+      (void)split_nodes.emplace_back(split_v_left_right);
       split_num->push_back(splitv_w_node_info.num_split);
     }
     // if is not bottom
@@ -882,7 +890,7 @@ CNodePtr NeighborExchangeV2GradFusion::CreatePadNode(const FuncGraphPtr &graph, 
   auto pad = NewCNode(pad_inputs, graph);
   std::vector<std::vector<int64_t>> paddings;
   for (size_t i = 0; i < shape.size(); ++i) {
-    paddings.emplace_back(std::vector<int64_t>{begin[i], shape[i] - begin[i] - size[i]});
+    (void)paddings.emplace_back(std::vector<int64_t>{begin[i], shape[i] - begin[i] - size[i]});
   }
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape}, pad.get());
   common::AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), pad);
@@ -955,7 +963,7 @@ CNodePtr NeighborExchangeV2GradFusion::CreateSplitGradNodes(const FuncGraphPtr &
       auto pad =
         CreatePadNode(graph, all_to_all_v_outputs[output_index], begins[i], sizes[i], centerx_shape, centerx_dtype);
       ++output_index;
-      pad_nodes.emplace_back(pad);
+      (void)pad_nodes.emplace_back(pad);
     }
   }
 
@@ -969,7 +977,7 @@ CNodePtr NeighborExchangeV2GradFusion::CreateSplitGradNodes(const FuncGraphPtr &
       MS_LOG(EXCEPTION) << "The node " << pad->DebugString() << " should have at least one output, but got 0."
                         << trace::DumpSourceLines(pad);
     }
-    addn_inputs.insert(addn_inputs.end(), pad_outputs.begin(), pad_outputs.end());
+    (void)addn_inputs.insert(addn_inputs.end(), pad_outputs.begin(), pad_outputs.end());
     ++pad_num;
   }
   auto addn = NewCNode(addn_inputs, graph);

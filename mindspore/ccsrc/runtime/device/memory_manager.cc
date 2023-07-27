@@ -177,7 +177,7 @@ std::vector<void *> MemoryManager::MallocContinuousMemFromMemPool(const std::vec
   }
   std::vector<void *> device_ptr_list;
   for (size_t i = 0; i < size_list.size(); ++i) {
-    device_ptr_list.emplace_back(nullptr);
+    (void)device_ptr_list.emplace_back(nullptr);
   }
   return device_ptr_list;
 }

@@ -570,7 +570,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
   MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph.graph_id();
   auto graph_inputs = GetGraphInputs(graph);
   auto graph_valid_input = graph.valid_inputs();
-  graph_inputs.insert(graph_inputs.end(), graph.child_graph_result().begin(), graph.child_graph_result().end());
+  (void)graph_inputs.insert(graph_inputs.end(), graph.child_graph_result().begin(), graph.child_graph_result().end());
   std::vector<AnfNodePtr> need_alloc_nodes;
   auto add_need_alloc_nodes = [&need_alloc_nodes, this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
@@ -689,7 +689,7 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph &graph) 
     if (common::AnfAlgo::IsCommunicationOp(kernel_with_index.first)) {
       AssignCommunicationNodeMem(kStaticMem, kernel_with_index.first);
     } else {
-      non_communication_op.emplace_back(kernel_with_index);
+      (void)non_communication_op.emplace_back(kernel_with_index);
     }
   }
 
@@ -781,7 +781,7 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
       mem_size = MemoryManager::GetCommonAlignSize(mem_size);
     }
     total_size += mem_size;
-    align_size_list.emplace_back(mem_size);
+    (void)align_size_list.emplace_back(mem_size);
   }
 
   if (align_size_list.empty()) {
@@ -872,7 +872,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
     MS_EXCEPTION_IF_NULL(address);
     auto mem_size = MemoryManager::GetCommonAlignSize(address->size());
     total_size += mem_size;
-    addr_size.emplace_back(address, mem_size);
+    (void)addr_size.emplace_back(address, mem_size);
   }
   if (addr_size.empty()) {
     return;
@@ -1205,7 +1205,7 @@ void KernelRuntime::AssignDynamicMemory(const session::KernelGraph &graph) {
       // skip if the memory is already allocated
       AssignCommunicationNodeMem(mem_type, node);
     } else {
-      compute_nodes.emplace_back(node);
+      (void)compute_nodes.emplace_back(node);
     }
   }
 
@@ -1381,7 +1381,7 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
         MS_LOG(DEBUG) << "The node:" << pre_node->fullname_with_scope() << " real output size is " << real_output_size;
         input->size = real_output_size;
       }
-      kernel_inputs->emplace_back(input);
+      (void)kernel_inputs->emplace_back(input);
     }
     MS_LOG(DEBUG) << "AtomicAddClean clean output size:" << clean_output_indexes.size();
   }
@@ -1405,7 +1405,7 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
         MS_EXCEPTION_IF_NULL(workspace->addr);
       }
       workspace->size = device_address->size_;
-      kernel_inputs->emplace_back(workspace);
+      (void)kernel_inputs->emplace_back(workspace);
     }
   }
 }
