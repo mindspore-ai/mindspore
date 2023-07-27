@@ -39,7 +39,6 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr DigammaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto input_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("Digamma", input_args, 0);
   auto input_shape = input_shape_ptr->shape();
   if (IsDynamicRank(input_shape)) {
@@ -51,7 +50,10 @@ abstract::ShapePtr DigammaInferShape(const PrimitivePtr &primitive, const std::v
   return input_shape_ptr;
 }
 TypePtr DigammaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto input = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input, valid_types, prim_name);
@@ -59,18 +61,7 @@ TypePtr DigammaInferType(const PrimitivePtr &primitive, const std::vector<Abstra
 }
 }  // namespace
 
-AbstractBasePtr DigammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = DigammaInferType(primitive, input_args);
-  auto infer_shape = DigammaInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
 MIND_API_OPERATOR_IMPL(Digamma, BaseOperator);
-
 // AG means auto generated
 class MIND_API AGDigammaInfer : public abstract::OpInferBase {
  public:
@@ -81,10 +72,6 @@ class MIND_API AGDigammaInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return DigammaInferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return DigammaInfer(engine, primitive, input_args);
   }
 };
 

@@ -342,7 +342,7 @@ bool IgammacCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   MS_EXCEPTION_IF_NULL(base_operator);
   constexpr size_t input_num = kInputNum;
   constexpr size_t output_num = kOutputNum;
-  kernel_name_ = base_operator->GetPrim()->name();
+  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   dtype_ = inputs[kInputIndex0]->GetDtype();

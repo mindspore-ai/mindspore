@@ -21,6 +21,7 @@ namespace kernel {
 bool DigammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Digamma>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr_);
   kernel_name_ = kernel_ptr_->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -45,13 +46,8 @@ bool DigammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
 int DigammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just
-    // return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
   ResetResource();
   std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),

@@ -376,7 +376,7 @@ void IgammaGradACpuKernelMod::NoBcastCompute(const std::vector<kernel::AddressPt
 bool IgammaGradACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+  kernel_name_ = base_operator->name();
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
