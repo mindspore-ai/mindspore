@@ -81,6 +81,14 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
 
   void Swap(DeviceAddress *other) override;
 
+  virtual bool DeviceToFileDirectly(void *ptr, size_t size, const std::string &file_name, size_t stream_id) const {
+    return false;
+  }
+
+  virtual bool FileToDeviceDirectly(void *ptr, size_t size, const std::string &file_name, size_t stream_id) const {
+    return false;
+  }
+
   virtual void set_swappable(bool swappable) { swappable_ = swappable; }
   virtual bool swappable() { return swappable_ && !(status_ == DeviceAddressStatus::kInDevice && ptr_ == nullptr); }
 
