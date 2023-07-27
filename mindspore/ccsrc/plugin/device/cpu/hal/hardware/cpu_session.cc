@@ -92,6 +92,7 @@ void CPUSession::Reorder(std::vector<CNodePtr> *node_list) const {
 }
 
 void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
 #if defined(__linux__) && defined(WITH_BACKEND)
