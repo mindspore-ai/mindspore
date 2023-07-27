@@ -68,7 +68,9 @@ endif()
 if(MSLITE_ENABLE_DUMP)
     set(LITE_SRC_COMMON_MID_SRC
             ${LITE_SRC_COMMON_MID_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/graphviz_drawer.cc)
+            ${CMAKE_CURRENT_SOURCE_DIR}/draw/graphviz_graph.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/draw/graphviz_graph_builder.cc
+            )
 endif()
 
 set(LITE_SRC_TRAIN_COMMON_MID_SRC

@@ -14,46 +14,40 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_EXECUTOR_SUB_GRAPH_KERNEL_DRAWER_H_
-#define MINDSPORE_LITE_SRC_EXECUTOR_SUB_GRAPH_KERNEL_DRAWER_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_DRAWER_GRAPHVIZ_GRAPH_BUILDER_H_
+#define MINDSPORE_LITE_SRC_COMMON_DRAWER_GRAPHVIZ_GRAPH_BUILDER_H_
 
 #include <utility>
 #include <vector>
-#include <memory>
-#include <functional>
 #include <string>
+#include <memory>
 #include <unordered_map>
 #include "src/common/log_adapter.h"
-#include "src/common/graphviz_drawer.h"
+#include "src/common/draw/graphviz_graph.h"
+#include "src/common/draw/adapter_graph.h"
+#include "src/tensor.h"
 #include "include/errorcode.h"
-#include "src/executor/kernel_exec.h"
-#include "src/executor/sub_graph_kernel.h"
-#include "src/executor/drawer_mark_filter.h"
 
 namespace mindspore::lite {
-class SubGraphKernelGVGraph : public GVGraph {
+class GVGraphBuilder {
  public:
-  static std::shared_ptr<SubGraphKernelGVGraph> Create(const kernel::SubGraphKernel &sub_graph,
-                                                       const MarkFilter &mark_filter);
+  std::shared_ptr<GVGraph> Build(const std::shared_ptr<AdapterGraph> &graph);
 
-  static std::shared_ptr<SubGraphKernelGVGraph> Create(const kernel::SubGraphKernel &sub_graph,
-                                                       const std::vector<schema::PrimitiveType> &mark_types);
-
-  explicit SubGraphKernelGVGraph(const std::string &name) : GVGraph(name) {}
   void AppendGraphInputNode(const lite::Tensor &tensor);
   int AppendWeightNode(const lite::Tensor &tensor, const std::string &name);
-  int AppendKernelExecNode(const kernel::KernelExec &kernel, bool highlight = false);
+  int AppendComputeNode(const AdapterNode &node);
   int AppendGraphOutputNode(const std::vector<lite::Tensor *> &out_tensors);
 
  protected:
-  static GVNode *CreateKernelExecNode(const kernel::KernelExec &kernel, bool highlight = false);
-  int LinkNodes(const kernel::KernelExec &kernel, const GVNode &gv_node);
+  static GVNode *CreateComputeNode(const AdapterNode &node);
+  int LinkNodes(const AdapterNode &node, const GVNode &gv_node);
   void AppendOutTensorMap(const lite::Tensor *tensor, lite::GVNode *node, size_t out_index);
   std::pair<lite::GVNode *, size_t> GetBelongingGVNode(const lite::Tensor *tensor) const;
 
+  std::shared_ptr<GVGraph> gv_graph_{nullptr};
   std::string name_;
   std::unordered_map<const lite::Tensor *, std::pair<lite::GVNode *, size_t>> gv_node_out_tensor_map_;
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_EXECUTOR_SUB_GRAPH_KERNEL_DRAWER_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_DRAWER_GRAPHVIZ_GRAPH_BUILDER_H_

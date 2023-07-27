@@ -171,8 +171,9 @@ set(LITE_SRC ${API_SRC}
 
 if(MSLITE_ENABLE_DUMP)
     set(LITE_SRC ${LITE_SRC}
-            ${SRC_DIR}/common/graphviz_drawer.cc
-            ${SRC_DIR}/executor/sub_graph_kernel_drawer.cc)
+            ${SRC_DIR}/common/draw/graphviz_graph.cc
+            ${SRC_DIR}/common/draw/graphviz_graph_builder.cc
+            )
 endif()
 
 if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)

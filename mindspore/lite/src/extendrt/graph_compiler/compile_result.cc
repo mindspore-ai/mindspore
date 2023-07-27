@@ -27,6 +27,8 @@
 #include "ir/primitive.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "src/common/file_utils.h"
+#include "src/extendrt/graph_compiler/compile_result_adapter_graph.h"
 
 namespace mindspore {
 namespace lite {
@@ -392,6 +394,24 @@ CompileResult::~CompileResult() {
     delete (node);
   }
   arg_nodes_.clear();
+}
+
+void CompileResult::Draw(const std::string &path, const std::string &file_name) const {
+#ifndef ENABLE_DUMP
+  MS_LOG(INFO) << "Dump is not enabled, please set env 'export MSLITE_ENABLE_DUMP=on' to enable dump.";
+#else
+  auto gv_graph = lite::CreateGVGraph(this);
+  if (gv_graph == nullptr) {
+    MS_LOG(ERROR) << "Create gv_graph failed.";
+    return;
+  }
+  auto write_path = lite::WriteStrToFile(path, file_name, gv_graph->Code());
+  if (write_path.empty()) {
+    MS_LOG(ERROR) << "Save dot to file failed.";
+  } else {
+    MS_LOG(INFO) << "Save dot to " << write_path << " successfully.";
+  }
+#endif
 }
 }  // namespace lite
 }  // namespace mindspore
