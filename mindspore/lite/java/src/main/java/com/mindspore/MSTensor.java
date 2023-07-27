@@ -40,12 +40,14 @@ public class MSTensor {
     }
 
     private long tensorPtr;
+    private Object buffer;
 
     /**
      * MSTensor construct function.
      */
     public MSTensor() {
         this.tensorPtr = POINTER_DEFAULT_VALUE;
+        this.buffer = null;
     }
 
     /**
@@ -55,6 +57,7 @@ public class MSTensor {
      */
     public MSTensor(long tensorPtr) {
         this.tensorPtr = tensorPtr;
+        this.buffer = null;
     }
 
     /**
@@ -122,7 +125,13 @@ public class MSTensor {
      * @return The byte array containing all MSTensor output data.
      */
     public byte[] getByteData() {
-        return this.getByteData(this.tensorPtr);
+        if (this.buffer == null) {
+            return this.getByteData(this.tensorPtr);
+        }
+        if (this.buffer instanceof byte[]) {
+            return (byte[]) this.buffer;
+        }
+        return null;
     }
 
     /**
@@ -131,10 +140,16 @@ public class MSTensor {
      * @return The float array containing all MSTensor output data.
      */
     public float[] getFloatData() {
-        if (this.getDataType() == DataType.kNumberTypeFloat16) {
-            return this.getFloat16Data(this.tensorPtr);
+        if (this.buffer == null) {
+            if (this.getDataType() == DataType.kNumberTypeFloat16) {
+                return this.getFloat16Data(this.tensorPtr);
+            }
+            return this.getFloatData(this.tensorPtr);
         }
-        return this.getFloatData(this.tensorPtr);
+        if (this.buffer instanceof float[]) {
+            return (float[]) this.buffer;
+        }
+        return null;
     }
 
     /**
@@ -143,7 +158,13 @@ public class MSTensor {
      * @return The int array containing all MSTensor output data.
      */
     public int[] getIntData() {
-        return this.getIntData(this.tensorPtr);
+        if (this.buffer == null) {
+            return this.getIntData(this.tensorPtr);
+        }
+        if (this.buffer instanceof int[]) {
+            return (int[]) this.buffer;
+        }
+        return null;
     }
 
     /**
@@ -152,7 +173,13 @@ public class MSTensor {
      * @return The long array containing all MSTensor output data.
      */
     public long[] getLongData() {
-        return this.getLongData(this.tensorPtr);
+        if (this.buffer == null) {
+            return this.getLongData(this.tensorPtr);
+        }
+        if (this.buffer instanceof long[]) {
+            return (long[]) this.buffer;
+        }
+        return null;
     }
 
     /**
@@ -180,7 +207,11 @@ public class MSTensor {
             LOGGER.severe("input param null.");
             return false;
         }
-        return this.setByteData(this.tensorPtr, data, data.length);
+        if (data.length != this.size()) {
+            return false;
+        }
+        this.buffer = data;
+        return true;
     }
 
     /**
@@ -194,7 +225,11 @@ public class MSTensor {
             LOGGER.severe("input param null.");
             return false;
         }
-        return this.setFloatData(this.tensorPtr, data, data.length);
+        if (data.length != this.elementsNum()) {
+            return false;
+        }
+        this.buffer = data;
+        return true;
     }
 
     /**
@@ -208,7 +243,11 @@ public class MSTensor {
             LOGGER.severe("input param null.");
             return false;
         }
-        return this.setIntData(this.tensorPtr, data, data.length);
+        if (data.length != this.elementsNum()) {
+            return false;
+        }
+        this.buffer = data;
+        return true;
     }
 
     /**
@@ -222,21 +261,11 @@ public class MSTensor {
             LOGGER.severe("input param null.");
             return false;
         }
-        return this.setLongData(this.tensorPtr, data, data.length);
-    }
-
-    /**
-     * Set the input data of MSTensor.
-     *
-     * @param data data Input data of ByteBuffer type
-     * @return whether set data success.
-     */
-    public boolean setData(ByteBuffer data) {
-        if (data == null) {
-            LOGGER.severe("input param null.");
+        if (data.length != this.elementsNum()) {
             return false;
         }
-        return this.setByteBufferData(this.tensorPtr, data);
+        this.buffer = data;
+        return true;
     }
 
     /**
@@ -263,6 +292,7 @@ public class MSTensor {
     public void free() {
         this.free(this.tensorPtr);
         this.tensorPtr = POINTER_DEFAULT_VALUE;
+        this.buffer = null;
     }
 
     /**

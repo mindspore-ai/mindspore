@@ -62,10 +62,13 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_MSTensor_getByteData(
     return env->NewByteArray(0);
   }
   auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
-  auto *local_data = static_cast<jbyte *>(ms_tensor_ptr->MutableData());
+  auto *local_data = static_cast<jbyte *>(const_cast<void *>(ms_tensor_ptr->Data().get()));
   if (local_data == nullptr) {
-    MS_LOG(DEBUG) << "Tensor has no data";
-    return env->NewByteArray(0);
+      MS_LOG(DEBUG) << "Tensor has no data";
+      if (ms_tensor_ptr->DataSize()) {
+          MS_LOG(WARNING) << "Tensor data size is not 0";
+      }
+      return env->NewByteArray(0);
   }
 
   auto local_size = ms_tensor_ptr->DataSize();
@@ -91,10 +94,12 @@ extern "C" JNIEXPORT jlongArray JNICALL Java_com_mindspore_MSTensor_getLongData(
   }
 
   auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
-
-  auto *local_data = static_cast<jlong *>(ms_tensor_ptr->MutableData());
+  auto *local_data = static_cast<jlong *>(const_cast<void *>(ms_tensor_ptr->Data().get()));
   if (local_data == nullptr) {
     MS_LOG(DEBUG) << "Tensor has no data";
+    if (ms_tensor_ptr->DataSize()) {
+        MS_LOG(WARNING) << "Tensor data size is not 0";
+    }
     return env->NewLongArray(0);
   }
 
@@ -126,12 +131,14 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_MSTensor_getIntData(JN
 
   auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
 
-  auto *local_data = static_cast<jint *>(ms_tensor_ptr->MutableData());
+  auto *local_data = static_cast<jint *>(const_cast<void *>(ms_tensor_ptr->Data().get()));
   if (local_data == nullptr) {
-    MS_LOG(DEBUG) << "Tensor has no data";
-    return env->NewIntArray(0);
+      MS_LOG(DEBUG) << "Tensor has no data";
+      if (ms_tensor_ptr->DataSize()) {
+          MS_LOG(WARNING) << "Tensor data size is not 0";
+      }
+      return env->NewIntArray(0);
   }
-
   if (ms_tensor_ptr->DataType() != mindspore::DataType::kNumberTypeInt32) {
     MS_LOG(ERROR) << "data type is error : " << static_cast<int>(ms_tensor_ptr->DataType());
     return env->NewIntArray(0);
@@ -159,11 +166,13 @@ extern "C" JNIEXPORT jfloatArray JNICALL Java_com_mindspore_MSTensor_getFloatDat
   }
 
   auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
-
-  auto *local_data = static_cast<jfloat *>(ms_tensor_ptr->MutableData());
+  auto *local_data = static_cast<jfloat *>(const_cast<void *>(ms_tensor_ptr->Data().get()));
   if (local_data == nullptr) {
-    MS_LOG(DEBUG) << "Tensor has no data";
-    return env->NewFloatArray(0);
+      MS_LOG(DEBUG) << "Tensor has no data";
+      if (ms_tensor_ptr->DataSize()) {
+          MS_LOG(WARNING) << "Tensor data size is not 0";
+      }
+      return env->NewFloatArray(0);
   }
 
   if (ms_tensor_ptr->DataType() != mindspore::DataType::kNumberTypeFloat32) {
@@ -452,8 +461,8 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_MSTensor_tensorName(JNIE
 }
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_MSTensor_createTensorByNative(JNIEnv *env, jobject thiz,
-                                                                                    jstring tensor_name, jint data_type,
-                                                                                    jintArray tensor_shape,
+jstring tensor_name, jint data_type,
+jintArray tensor_shape,
                                                                                     jobject buffer) {
   // check inputs
   if (buffer == nullptr || tensor_name == nullptr || tensor_shape == nullptr) {
