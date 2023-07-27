@@ -69,6 +69,7 @@ bool LiteRTExecutorPlugin::Register() {
     MS_LOG(ERROR) << "Create custom litert kernel failed.";
     return false;
   }
+  delete plugin_impl;
   is_registered_ = true;
   MS_LOG(INFO) << "Register litert plugin success.";
 #endif
