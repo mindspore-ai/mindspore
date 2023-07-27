@@ -31,6 +31,7 @@ TEST_NODE_NUM = 1000
 SEED = 20
 
 
+@pytest.mark.skip(reason="because GraphData API was deleted in dataset")
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

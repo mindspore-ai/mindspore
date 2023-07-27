@@ -456,6 +456,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
     Multithread or multiprocess generator worker process loop.
     """
     if is_multiprocessing:
+        result_queue.cancel_join_thread()
         signal.signal(signal.SIGTERM, partial(_subprocess_handle, eof))
     while True:
         _ignore_sigint(is_multiprocessing=is_multiprocessing)

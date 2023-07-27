@@ -419,6 +419,9 @@ Status ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::string
         int raw_page_id = std::stoi(labels[i][3]);
         uint64_t label_start = std::stoull(labels[i][4]) + kInt64Len;
         uint64_t label_end = std::stoull(labels[i][5]);
+        CHECK_FAIL_RETURN_UNEXPECTED_MR(label_end >= label_start,
+                                        "The sample's end offset: " + std::to_string(label_end) +
+                                          " should >= start offset: " + std::to_string(label_start) + ", check fail.");
         auto len = label_end - label_start;
         auto label_raw = std::vector<uint8_t>(len);
         auto &io_seekg = fs->seekg(page_size_ * raw_page_id + header_size_ + label_start, std::ios::beg);
@@ -1300,6 +1303,7 @@ Status ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int,
   for (int shard_id = 0; shard_id < shard_count_; shard_id++) {
     sample_count += offsets[shard_id].size();
   }
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(sample_count == num_rows_, "Unequal number of index entries and data entries.");
   MS_LOG(DEBUG) << "Succeed to get " << sample_count << " records from dataset.";
 
   // Init the tasks_ size
