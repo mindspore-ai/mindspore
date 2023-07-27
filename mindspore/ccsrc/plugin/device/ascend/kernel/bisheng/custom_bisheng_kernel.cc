@@ -29,12 +29,14 @@ namespace kernel {
 CustomBiShengKernel::~CustomBiShengKernel() {
   if (handle_ != nullptr) {
     (void)dlclose(handle_);
+    handle_ = nullptr;
   }
-
+  init_func_ = nullptr;
   attrs_.DestructKernelData();
 }
 
 bool CustomBiShengKernel::InitKernel(const AnfNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   const auto &exec_info = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
   auto pos = exec_info.find(":");
@@ -84,11 +86,12 @@ bool CustomBiShengKernel::InitKernel(const AnfNodePtr &kernel_node) {
   (void)std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                        [](auto &str) { return str.c_str(); });
   auto cnode = kernel_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   attrs_.SetKernelPrim(common::AnfAlgo::GetCNodePrimitive(cnode));
 
-  if (!handle_) {
+  if (handle_ == nullptr) {
     handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
-    if (!handle_) {
+    if (handle_ == nullptr) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' on Ascend, dlopen file '" << file_path_
                     << "' should be successful, but error occurs! Error message is: " << dlerror();
       return false;
@@ -153,12 +156,12 @@ bool CustomBiShengKernel::Launch(const std::vector<AddressPtr> &inputs, const st
     params.push_back(GetDeviceAddress<void>(workspace, i));
   }
 
-  if (!handle_) {
+  if (handle_ == nullptr) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on Ascend, the handle should be not nullptr since the file '"
                       << file_path_ << "' should be opened successfully in Init method.";
   }
 
-  if (!aot_func_) {
+  if (aot_func_ == nullptr) {
     aot_func_ =
       reinterpret_cast<std::add_pointer<int(int, void **, int *, int64_t **, const char **, void *, void *)>::type>(
         dlsym(handle_, func_name_.c_str()));
