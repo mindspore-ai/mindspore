@@ -1575,7 +1575,7 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto kConvertToListString = "list(map(str, __inner_convert_object__))";
     constexpr auto kConvertToListKey = "__inner_convert_object__";
     std::vector<AnfNodePtr> list_str_value_list = {NewValueNode(prim::kPrimMakeTuple)};
-    std::copy(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list));
+    (void)std::copy(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list));
 
     std::vector<AnfNodePtr> list_str_key_list = {NewValueNode(prim::kPrimMakeTuple), NewValueNode(kConvertToListKey)};
     auto list_str_key_node = fg->NewCNode(list_str_key_list);
@@ -2302,7 +2302,7 @@ AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPt
   }
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(seq_abs);
-  const auto elements = seq_abs->elements();
+  const auto &elements = seq_abs->elements();
   if (abs->isa<abstract::AbstractList>()) {
     const std::string element_prefix = "__list_element_";
     std::stringstream script_buffer;
