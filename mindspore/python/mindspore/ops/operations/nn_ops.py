@@ -1491,7 +1491,7 @@ class Conv2D(Primitive):
 
     Inputs:
         - **x** (Tensor) - Input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or
-        :math:`(N, H_{in}, W_{in}, C_{in}, )` depending on `data_format` .
+          :math:`(N, H_{in}, W_{in}, C_{in}, )` depending on `data_format` .
         - **weight** (Tensor) - The convolutional kernel value, it should has shape
           :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})` 。
 

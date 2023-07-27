@@ -16,7 +16,7 @@ mindspore.nn.PolynomialLR
 
     参数：
         - **optimizer** (:class:`mindspore.nn.optim_ex.Optimizer`) - 优化器实例。
-        - **total_iters** (int， 可选) - 通过多项式拟合调整学习率的迭代次数。默认值： ``5``。
+        - **total_iters** (int，可选) - 通过多项式拟合调整学习率的迭代次数。默认值： ``5``。
         - **power** (float，可选) -  多项式的幂。默认值： ``1.0``。
         - **last_epoch** (int，可选) - 最后一个epoch的索引。默认值： ``-1``。
         - **verbose** (bool，可选) - 是否打印学习率。默认值： ``False``。

@@ -241,11 +241,11 @@ def get_py_obj_dtype(obj):
 
 
 def dtype_to_nptype(type_):
-    """
+    r"""
     Convert MindSpore dtype to numpy data type.
 
     Args:
-        type_ (:class:`mindspore.dtype`): MindSpore's dtype.
+        type\_ (:class:`mindspore.dtype`): MindSpore's dtype.
 
     Returns:
         The data type of numpy.
@@ -275,11 +275,11 @@ def dtype_to_nptype(type_):
 
 
 def dtype_to_pytype(type_):
-    """
+    r"""
     Convert MindSpore dtype to python data type.
 
     Args:
-        type_ (:class:`mindspore.dtype`): MindSpore's dtype.
+        type\_ (:class:`mindspore.dtype`): MindSpore's dtype.
 
     Returns:
         Type of python.
