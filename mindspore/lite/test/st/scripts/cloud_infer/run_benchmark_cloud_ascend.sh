@@ -100,7 +100,11 @@ function Run_Benchmark() {
 
         # set accuracy limitation
         acc_limit="0.5"
-        if [[ ${spec_acc_limit} != "" ]]; then
+        # when specified accuracy limit is set to -1, skip in/out accuracy check
+        if [[ ${spec_acc_limit} == "-1" ]]; then
+            input_files=""
+            output_file=""
+        elif [[ ${spec_acc_limit} != "" ]]; then
             acc_limit="${spec_acc_limit}"
         elif [[ ${mode} == "fp16" ]]; then
             acc_limit="5"
