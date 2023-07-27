@@ -17,8 +17,8 @@
 #include "plugin/device/cpu/kernel/upsample_trilinear_3d_cpu_kernel.h"
 #include <string>
 #include <utility>
-#include "kernel/ops_utils.h"
 #include "kernel/kernel_get_value.h"
+#include "kernel/ops_utils.h"
 #include "ops/upsample_trilinear_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -57,9 +57,12 @@ bool UpsampleTrilinear3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  x_type_ = inputs[kIndex0]->GetDtype();
-  auto kernel_ptr = std::make_shared<ops::UpsampleTrilinear3D>(base_operator->GetPrim());
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::UpsampleTrilinear3D>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   align_corners_ = kernel_ptr->get_align_corners();
+  auto x = inputs.at(kIndex0);
+  MS_EXCEPTION_IF_NULL(x);
+  x_type_ = x->GetDtype();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -89,6 +92,7 @@ int UpsampleTrilinear3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex3]));
   workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex4]));
   // none_list
+  MS_EXCEPTION_IF_NULL(base_operator);
   none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
@@ -107,6 +111,11 @@ template <typename T, typename S>
 bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                    const std::vector<kernel::AddressPtr> &workspace,
                                                    const std::vector<kernel::AddressPtr> &outputs) {
+  auto x_ptr = GetDeviceAddress<T>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(x_ptr);
+  auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(y_ptr);
+
   // treat batch and channels as one dimension
   int64_t channels = x_shape_[kIndex0] * x_shape_[kIndex1];
   int64_t input_depth = x_shape_[kIndex2];
@@ -117,9 +126,6 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   int64_t output_depth = y_shape_[kIndex2];
   int64_t output_height = y_shape_[kIndex3];
   int64_t output_width = y_shape_[kIndex4];
-
-  auto x_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto y_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
 
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
     auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size, x_ptr, outputs[kIndex0]->size);
@@ -133,9 +139,12 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   const S height_scale = AreaPixelComputeScale<S>(input_height, output_height, align_corners_, scales_[kIndex1]);
   const S width_scale = AreaPixelComputeScale<S>(input_width, output_width, align_corners_, scales_[kIndex2]);
 
-  WeightsAndIndices<S> *const d_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex0]->addr);
-  WeightsAndIndices<S> *const h_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex1]->addr);
-  WeightsAndIndices<S> *const w_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex2]->addr);
+  WeightsAndIndices<S> *const d_helper = GetDeviceAddress<WeightsAndIndices<S>>(workspace, kIndex0);
+  MS_EXCEPTION_IF_NULL(d_helper);
+  WeightsAndIndices<S> *const h_helper = GetDeviceAddress<WeightsAndIndices<S>>(workspace, kIndex1);
+  MS_EXCEPTION_IF_NULL(h_helper);
+  WeightsAndIndices<S> *const w_helper = GetDeviceAddress<WeightsAndIndices<S>>(workspace, kIndex2);
+  MS_EXCEPTION_IF_NULL(w_helper);
   (void)ComputeHelper<S>(d_helper, depth_scale, input_depth, output_depth, input_height * input_width);
   (void)ComputeHelper<S>(h_helper, height_scale, input_height, output_height, input_width);
   (void)ComputeHelper<S>(w_helper, width_scale, input_width, output_width, 1);

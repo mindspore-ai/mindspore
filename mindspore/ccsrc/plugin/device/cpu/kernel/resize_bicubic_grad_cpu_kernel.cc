@@ -17,9 +17,9 @@
 #include "plugin/device/cpu/kernel/resize_bicubic_grad_cpu_kernel.h"
 #include <limits>
 #include <utility>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/ops_utils.h"
 #include "mindspore/core/ops/grad/resize_bicubic_grad.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,8 +35,8 @@ constexpr int64_t calnum3 = 3;
 constexpr int64_t calnum2 = 2;
 static const int64_t kTableSize = (1 << 10);
 const int64_t kParallelDataNum = 1024 * 256;
-std::vector<int64_t> shape0;
-std::vector<int64_t> shape1;
+std::vector<int64_t> resize_shape;
+std::vector<int64_t> origin_shape;
 bool align_corners = false;
 bool half_pixel_centers = false;
 int64_t origin_chw;
@@ -46,13 +46,13 @@ int64_t resized_hw;
 }  // namespace
 
 struct ResizerGradState {
-  void CalculateSize(const std::vector<int64_t> &shape0, const std::vector<int64_t> &shape1) {
-    batch_size = shape0[kIndex0];
-    channels = shape0[kIndex1];
-    resized_height = shape0[kIndex2];
-    resized_width = shape0[kIndex3];
-    original_height = shape1[kIndex2];
-    original_width = shape1[kIndex3];
+  void CalculateSize(const std::vector<int64_t> &resize_shape, const std::vector<int64_t> &origin_shape) {
+    batch_size = resize_shape[kIndex0];
+    channels = resize_shape[kIndex1];
+    resized_height = resize_shape[kIndex2];
+    resized_width = resize_shape[kIndex3];
+    original_height = origin_shape[kIndex2];
+    original_width = origin_shape[kIndex3];
     height_scale = Scaling(original_height, resized_height, align_corners);
     width_scale = Scaling(original_width, resized_width, align_corners);
     origin_chw = channels * original_height * original_width;
@@ -337,24 +337,25 @@ int ResizeBicubicGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-
-  shape0 = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  shape1 = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  resize_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  origin_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
   return KRET_OK;
 }
 
 template <typename T>
 bool ResizeBicubicGradCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &outputs) const {
-  auto input0_addr = static_cast<float *>(inputs[0]->addr);
-  auto output_addr = static_cast<T *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size;
-  if (memset_s(output_addr, output_size, 0, output_size) != EOK) {
+  auto dy = GetDeviceAddress<float>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(dy);
+  auto dx = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(dx);
+  size_t dx_size = outputs[kIndex0]->size;
+  if (memset_s(dx, dx_size, 0, dx_size) != EOK) {
     MS_EXCEPTION(ValueError) << "Memset Failed!";
   }
   ResizerGradState sta;
-  sta.CalculateSize(shape0, shape1);
-  ResizeBicubicGrad(input0_addr, sta, half_pixel_centers, output_addr);
+  sta.CalculateSize(resize_shape, origin_shape);
+  ResizeBicubicGrad(dy, sta, half_pixel_centers, dx);
   return true;
 }
 

@@ -33,6 +33,8 @@ bool ResizeNearestNeighborV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_o
                                                    const std::vector<KernelTensorPtr> &outputs) {
   MS_ERROR_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeNearestNeighborV2GradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborV2GradOutputNum, kernel_name_);
   auto op_prim = std::dynamic_pointer_cast<ops::ResizeNearestNeighborV2Grad>(base_operator);
   MS_ERROR_IF_NULL(op_prim);
   align_corners_ = op_prim->get_align_corners();
@@ -44,6 +46,7 @@ bool ResizeNearestNeighborV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_o
     return false;
   }
   kernel_func_ = func_list_[index].second;
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   y_type_ = outputs[kIndex0]->GetDtype();
   return true;
 }
@@ -108,9 +111,12 @@ bool ResizeNearestNeighborV2GradCpuKernelMod::LaunchKernel(const std::vector<ker
                                                            const std::vector<AddressPtr> &workspace,
                                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output);
   if (y_type_ == kNumberTypeFloat16) {
-    auto work_fp32 = GetDeviceAddress<float>(outputs, kIndex0);
+    auto work_fp32 = GetDeviceAddress<float>(workspace, kIndex0);
+    MS_EXCEPTION_IF_NULL(work_fp32);
     RealCompute<T, float>(input, work_fp32);
     auto task = [work_fp32, output](const size_t start, const size_t end) {
       for (size_t i = start; i < end; i++) {

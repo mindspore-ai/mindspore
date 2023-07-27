@@ -66,47 +66,45 @@ bool ResizeBilinearGrad::get_half_pixel_centers() const {
 namespace {
 abstract::ShapePtr ResizeBilinearGradInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<abstract::AbstractBasePtr> &input_args) {
-  const int64_t kRank = 4;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  for (const auto &item : input_args) {
+  constexpr int64_t kInputNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
+  for (auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x = input_args[kOriginalImageIndex]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x);
-  auto shape_x = x->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_x);
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x);
-  auto x_shape_val = x_shape_map[kShape];
+
+  const int64_t kRank = 4;
+  auto x_shape_val =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kOriginalImageIndex]->BuildShape())[kShape];
   if (!IsDynamicRank(x_shape_val)) {
     int64_t x_rank = SizeToLong(x_shape_val.size());
     if (x_rank != kRank) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', x should have rank 4, but got " << x_rank << ".";
     }
   }
-  auto dy = input_args[kGradIndex]->BuildShape();
-  MS_EXCEPTION_IF_NULL(dy);
-  auto dy_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dy);
-  auto dy_shape_val = dy_shape_map[kShape];
+
+  auto dy_shape_val = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->BuildShape())[kShape];
   if (!IsDynamicRank(dy_shape_val)) {
     int64_t dy_rank = SizeToLong(dy_shape_val.size());
     if (dy_rank != kRank) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', dy should have rank 4, but got " << dy_rank << ".";
     }
   }
-  return shape_x;
+
+  return std::make_shared<abstract::Shape>(x_shape_val);
 }
 
 TypePtr ResizeBilinearGradInferType(const PrimitivePtr &primitive,
                                     const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[kOriginalImageIndex]);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kOriginalImageIndex);
+  constexpr int64_t kInputNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
+  for (auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+
   auto x_type = input_args[kOriginalImageIndex]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
@@ -114,8 +112,9 @@ TypePtr ResizeBilinearGradInferType(const PrimitivePtr &primitive,
                             << ".";
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[0]->BuildType(), valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kInputIndex0]->BuildType(), valid_types,
+                                                   prim_name);
   return x_type;
 }
 }  // namespace

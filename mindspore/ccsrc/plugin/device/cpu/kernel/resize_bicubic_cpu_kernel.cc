@@ -36,23 +36,18 @@ constexpr int64_t calnum4 = 4;
 constexpr int64_t calnum3 = 3;
 constexpr int64_t calnum2 = 2;
 constexpr int64_t kTableSize = (1 << 10);
-std::vector<int64_t> shape0;
-std::vector<int64_t> shape1;
+std::vector<int64_t> x_shape;
+std::vector<int64_t> y_shape;
 bool align_corners = false;
 bool half_pixel_centers = false;
 struct ResizerState {
-  void CalculateSize_kernel_node(const std::vector<KernelTensorPtr> &inputs) {
-    shape0 = inputs[kIndex0]->GetDeviceShapeAdaptively();
-    batch_size = shape0[kIndex0];
-    channels = shape0[kIndex1];
-    in_height = shape0[kIndex2];
-    in_width = shape0[kIndex3];
-  }
-  void CalculateSize_inputs(const std::vector<kernel::AddressPtr> &inputs) {
-    auto *input_addr = static_cast<int32_t *>(inputs[1]->addr);
-    out_height = static_cast<int64_t>(input_addr[0]);
-    out_width = static_cast<int64_t>(input_addr[1]);
-
+  void CalculateSize() {
+    batch_size = x_shape[kIndex0];
+    channels = x_shape[kIndex1];
+    in_height = x_shape[kIndex2];
+    in_width = x_shape[kIndex3];
+    out_height = y_shape[kIndex2];
+    out_width = y_shape[kIndex3];
     out_hw_size = out_height * out_width;
     in_hw_size = in_height * in_width;
     bchw_size = in_hw_size * channels * batch_size;
@@ -334,29 +329,28 @@ int ResizeBicubicCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-
-  shape0 = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  shape1 = inputs[kIndex1]->GetDeviceShapeAdaptively();
-
-  sta.CalculateSize_kernel_node(inputs);
+  x_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  y_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  sta.CalculateSize();
   return KRET_OK;
 }
 
 template <typename T1, typename T2>
 bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &outputs) {
-  auto output_addr = static_cast<T2 *>(outputs[0]->addr);
-  auto input0_addr = static_cast<T1 *>(inputs[0]->addr);
-  sta.CalculateSize_inputs(inputs);
+  auto out = GetDeviceAddress<T2>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(out);
+  auto input = GetDeviceAddress<T1>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input);
   if (sta.out_height == sta.in_height && sta.out_width == sta.in_width) {
     auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
-        output_addr[i] = static_cast<T2>(input0_addr[i]);
+        out[i] = static_cast<T2>(input[i]);
       }
     };
     ParallelLaunchAutoSearch(task, static_cast<size_t>(sta.bchw_size), this, &parallel_search_info_);
   } else {
-    interpolate_with_caching(input0_addr, half_pixel_centers, output_addr);
+    interpolate_with_caching(input, half_pixel_centers, out);
   }
 
   return true;

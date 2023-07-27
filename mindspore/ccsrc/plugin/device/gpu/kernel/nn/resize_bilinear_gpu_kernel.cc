@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <map>
-#include <functional>
+#include "plugin/device/gpu/kernel/nn/resize_bilinear_gpu_kernel.h"
 #include <algorithm>
+#include <functional>
+#include <map>
 #include <utility>
 #include "mindspore/core/ops/resize_bilinear.h"
-#include "plugin/device/gpu/kernel/nn/resize_bilinear_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
 
 namespace mindspore {
@@ -27,7 +27,6 @@ namespace {
 constexpr size_t kInputsNum = 1;
 constexpr size_t kDynamicInputsNum = 2;
 constexpr size_t kOutputsNum = 1;
-constexpr size_t kImagRank = 4;
 constexpr size_t kZero = 0;
 constexpr size_t kOne = 1;
 constexpr size_t kTwo = 2;
@@ -44,7 +43,6 @@ bool ResizeBilinearGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or 2"
                       << ", but got " << inputs.size();
   }
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -53,28 +51,30 @@ bool ResizeBilinearGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
   kernel_func_ = func_list_[index].second;
+
+  auto align_corners_ptr = base_operator->GetAttr(kAttrAlignCorners);
+  MS_EXCEPTION_IF_NULL(align_corners_ptr);
+  align_corners_ = GetValue<bool>(align_corners_ptr);
+  auto half_pixel_centers_ptr = base_operator->GetAttr(kAttrHalfPixelCenters);
+  MS_EXCEPTION_IF_NULL(half_pixel_centers_ptr);
+  half_pixel_centers_ = GetValue<bool>(half_pixel_centers_ptr);
+
   return true;
 }
 
 int ResizeBilinearGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs,
                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs[kIndex0]->GetShapeVector();
-  auto output_shape = outputs[kIndex0]->GetShapeVector();
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
   if (is_null_input_) {
     return static_cast<int>(KRET_OK);
-  }
-  if (input_shape.size() != kImagRank || output_shape.size() != kImagRank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output must be equal to 4, but "
-                      << "got the dimension of input: " << input_shape.size()
-                      << ", the dimension of output: " << output_shape.size();
   }
   n_ = LongToInt(input_shape[kZero]);
   c_ = LongToInt(input_shape[kOne]);
@@ -82,15 +82,7 @@ int ResizeBilinearGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   input_w_ = LongToInt(input_shape[kThree]);
   output_h_ = LongToInt(output_shape[kTwo]);
   output_w_ = LongToInt(output_shape[kThree]);
-  input_size_ = abstract::TypeIdSize(inputs[kZero]->GetDtype()) * SizeOf(input_shape);
-  output_size_ = abstract::TypeIdSize(outputs[kZero]->GetDtype()) * SizeOf(output_shape);
-  auto align_corners = base_operator->GetAttr(kAttrAlignCorners);
-  MS_EXCEPTION_IF_NULL(align_corners);
-  align_corners_ = GetValue<bool>(align_corners);
-  auto half_pixel_centers = base_operator->GetAttr(kAttrHalfPixelCenters);
-  MS_EXCEPTION_IF_NULL(half_pixel_centers);
-  half_pixel_centers_ = GetValue<bool>(half_pixel_centers);
-  return static_cast<int>(KRET_OK);
+  return KRET_OK;
 }
 
 template <typename T>
@@ -98,7 +90,9 @@ bool ResizeBilinearGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
                                               const std::vector<AddressPtr> &workspace,
                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   T *input = GetDeviceAddress<T>(inputs, kZero);
+  MS_EXCEPTION_IF_NULL(input);
   T *output = GetDeviceAddress<T>(outputs, kZero);
+  MS_EXCEPTION_IF_NULL(output);
   float h_scale = Scaling(input_h_, output_h_, align_corners_);
   float w_scale = Scaling(input_w_, output_w_, align_corners_);
   auto status = CalResizeBilinear(input, n_, c_, input_h_, input_w_, output_h_, output_w_, h_scale, w_scale,

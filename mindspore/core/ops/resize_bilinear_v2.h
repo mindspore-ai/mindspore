@@ -49,9 +49,6 @@ class MIND_API ResizeBilinearV2 : public BaseOperator {
   /// \return half_pixel_centers.
   bool get_half_pixel_centers() const;
 };
-MIND_API abstract::AbstractBasePtr ResizeBilinearV2Infer(const abstract::AnalysisEnginePtr &,
-                                                         const PrimitivePtr &primitive,
-                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

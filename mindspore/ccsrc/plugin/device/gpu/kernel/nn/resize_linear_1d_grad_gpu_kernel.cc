@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/kernel/nn/resize_linear_1d_grad_gpu_kernel.h"
 #include "mindspore/core/abstract/utils.h"
-#include "mindspore/core/ops/grad/resize_linear_1d_grad.h"
+#include "ops/grad/resize_linear_1d_grad.h"
 
 namespace {
 constexpr const size_t kResizeLinear1DGradInputsNum = 2;
@@ -30,10 +30,8 @@ bool ResizeLinear1DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs) {
   MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1DGrad>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kResizeLinear1DGradInputsNum || outputs.size() != kResizeLinear1DGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', grad_output and grad_input size must be "
@@ -72,22 +70,16 @@ int ResizeLinear1DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
 
-  grad_output_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  grad_output_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
   batch_ = grad_output_shape_[kIndex0];
   channel_ = grad_output_shape_[kIndex1];
   out_width_ = grad_output_shape_[kIndex2];
-  grad_input_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+
+  grad_input_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
   in_width_ = grad_input_shape_[kIndex2];
   size_t work_space_size = SizeOf(grad_input_shape_);
   workspace_size_list_.push_back(work_space_size * sizeof(float));
 
-  if (grad_output_shape_.size() != kResizeInputDims) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'grad_output' should be 3, but got "
-                  << grad_output_shape_.size() << ".";
-    return KRET_RESIZE_FAILED;
-  }
   return KRET_OK;
 }
 
@@ -95,26 +87,23 @@ template <typename T>
 bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &workspace,
                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeLinear1DGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeLinear1DGradOutputsNum, kernel_name_);
   T *grad_output = GetDeviceAddress<T>(inputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_output, false);
-
   T *grad_input = GetDeviceAddress<T>(outputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_input, false);
-
   float *grad_work = GetDeviceAddress<float>(workspace, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_work, false);
 
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(grad_input, 0, outputs.at(kIndex0)->size),
+  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
+  MS_EXCEPTION_IF_NULL(cuda_stream);
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(grad_input, 0, outputs.at(kIndex0)->size, cuda_stream),
                                     "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset grad_input.");
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(grad_work, 0, workspace.at(kIndex0)->size),
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(grad_work, 0, workspace.at(kIndex0)->size, cuda_stream),
                                     "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset grad_work.");
 
   auto status = ResizeLinear1DGrad(mode_, batch_, channel_, in_width_, out_width_, grad_output, grad_input, grad_work,
-                                   device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+                                   device_id_, cuda_stream);
   CHECK_CUDA_STATUS(status, kernel_name_);
-  cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 

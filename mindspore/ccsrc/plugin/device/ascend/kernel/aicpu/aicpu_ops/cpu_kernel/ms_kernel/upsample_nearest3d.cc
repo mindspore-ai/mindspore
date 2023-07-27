@@ -19,11 +19,11 @@
 #include <cstring>
 #include "cpu_kernel_utils.h"
 #include "cpu_types.h"
-#include "utils/kernel_util.h"
 #include "kernel_log.h"
 #include "securec.h"
 #include "status.h"
 #include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
 
 namespace {
 constexpr float kValueZero = 0.;
@@ -103,6 +103,8 @@ uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dParamCheck(CpuKernelContex
                      x_dims);
 
   auto none_list_ptr = ctx.GetAttr("none_list");
+  KERNEL_CHECK_NULLPTR(none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
+                       ctx.GetOpType().c_str());
   none_list = none_list_ptr->GetListInt();
   KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
                      "For 'UpsampleNearest3D', only one of output_size or scales should be specified.");

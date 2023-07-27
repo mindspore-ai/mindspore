@@ -59,24 +59,6 @@ class ResizeBilinearGradGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
 
  private:
-  void ResetResource() noexcept {
-    align_corners_ = false;
-    half_pixel_centers_ = false;
-    is_null_input_ = false;
-    n_ = 0;
-    c_ = 0;
-    dy_h_ = 0;
-    dy_w_ = 0;
-    dx_h_ = 0;
-    dx_w_ = 0;
-    dy_size_ = 0;
-    dx_size_ = 0;
-    workspace_size_ = 0;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
   void InitSizeLists() { workspace_size_list_.push_back(workspace_size_); }
 
   template <typename T>
@@ -97,7 +79,6 @@ class ResizeBilinearGradGpuKernelMod : public NativeGpuKernelMod {
   int dy_w_;
   int dx_h_;
   int dx_w_;
-  size_t dy_size_;
   size_t dx_size_;
   size_t workspace_size_;
 };

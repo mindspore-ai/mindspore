@@ -41,11 +41,17 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr int64_t bicubic_grad_input_num = 2;
 constexpr int64_t num4 = 4;
+
 abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, bicubic_grad_input_num, prim_name);
+  for (auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
 
   auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto original_image_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
@@ -61,14 +67,14 @@ abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
   }
   if (!is_dynamic) {
     if (grads_shape[kInputIndex0] != original_image_shape[kInputIndex0]) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[0] is "
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of grads_shape[0] is "
                                << grads_shape[kInputIndex0] << ", but the shape of original_image_shape[0] is "
                                << original_image_shape[kInputIndex0]
                                << ". The batch dimension of the shape of grads_shape "
                                << "must be equal to that of original_image_shape.";
     }
     if (grads_shape[kInputIndex1] != original_image_shape[kInputIndex1]) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[1] is "
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of grads_shape[1] is "
                                << grads_shape[kInputIndex1] << ", but the shape of original_image_shape[1] is "
                                << original_image_shape[kInputIndex1]
                                << ". The channel dimension of the shape of grads_shape "
@@ -80,18 +86,23 @@ abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ResizeBicubicGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, bicubic_grad_input_num, prim_name);
+  for (auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
   }
+
   auto grads_type = input_args[0]->BuildType();
   auto original_image_type = input_args[1]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   const std::map<std::string, TypePtr> types = {{"grads_type", grads_type},
                                                 {"original_image_type", original_image_type}};
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return grads_type;
 }
 }  // namespace
+
 MIND_API_OPERATOR_IMPL(ResizeBicubicGrad, BaseOperator);
 void ResizeBicubicGrad::set_align_corners(const bool align_corners) {
   (void)this->AddAttr("align_corners", api::MakeValue(align_corners));
@@ -116,12 +127,9 @@ void ResizeBicubicGrad::Init(const bool align_corners, const bool half_pixel_cen
 
 AbstractBasePtr ResizeBicubicGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = ResizeBicubicGradInferType(primitive, input_args);
   auto infer_shape = ResizeBicubicGradInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstractTensor(infer_shape, infer_type);
 }
 
 // AG means auto generated
@@ -135,6 +143,7 @@ class MIND_API AGResizeBicubicGradInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return ResizeBicubicGradInferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return ResizeBicubicGradInfer(engine, primitive, input_args);

@@ -30,8 +30,8 @@
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
-#include "mindspore/core/ops/image_ops.h"
 #include "ops/grad/resize_linear_1d_grad.h"
+#include "ops/image_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -51,16 +51,24 @@ abstract::ShapePtr ResizeLinear1DGradInferShape(const PrimitivePtr &primitive,
   auto input_x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
   auto input_x_shape = input_x_shape_ptr->shape();
-  std::vector<int64_t> ret_shape;
-  ret_shape.push_back(grad_shape[kInputIndex0]);
-  ret_shape.push_back(grad_shape[kInputIndex1]);
-  ret_shape.push_back(input_x_shape[kInputIndex2]);
-
+  std::vector<int64_t> ret_shape(kInputIndex3, abstract::Shape::kShapeDimAny);
+  if (!IsDynamicRank(grad_shape)) {
+    ret_shape[kInputIndex0] = grad_shape[kInputIndex0];
+    ret_shape[kInputIndex1] = grad_shape[kInputIndex1];
+  }
+  if (!IsDynamicRank(input_x_shape)) {
+    ret_shape[kInputIndex2] = input_x_shape[kInputIndex2];
+  }
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 
-TypePtr ResizeLinear1DGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  return input_args[1]->BuildType();
+TypePtr ResizeLinear1DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  MS_EXCEPTION_IF_NULL(input_args.at(kInputIndex1));
+  auto x_type = input_args[kInputIndex1]->BuildType();
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
 }
 }  // namespace
 
@@ -79,6 +87,7 @@ void ResizeLinear1DGrad::Init(const std::string coordinate_transformation_mode) 
 MIND_API_OPERATOR_IMPL(ResizeLinear1DGrad, BaseOperator);
 AbstractBasePtr ResizeLinear1DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args)),

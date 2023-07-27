@@ -42,6 +42,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr int64_t kUpsample3DGradMinInputNum = 3;
 const int64_t kVALUE_1 = 1;
 const int64_t kVALUE_2 = 2;
 const int64_t kVALUE_3 = 3;
@@ -52,8 +53,12 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
                         size_t *const scales_idx, const std::string &prim_name) {
   if (input_args.size() == kVALUE_4) {
     std::vector<int64_t> none_list{};
-    auto is_output_size_none = input_args[kInputIndex2]->BuildType()->type_id() == kMetaTypeNone;
-    auto is_scales_none = input_args[kInputIndex3]->BuildType()->type_id() == kMetaTypeNone;
+    auto size_type = input_args[kInputIndex2]->BuildType();
+    MS_EXCEPTION_IF_NULL(size_type);
+    auto is_output_size_none = size_type->type_id() == kMetaTypeNone;
+    auto scale_type = input_args[kInputIndex3]->BuildType();
+    MS_EXCEPTION_IF_NULL(scale_type);
+    auto is_scales_none = scale_type->type_id() == kMetaTypeNone;
     if (is_output_size_none && is_scales_none) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', either output_size or scales should be defined.";
     } else if (!is_output_size_none && !is_scales_none) {
@@ -72,6 +77,7 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
 void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg, const std::string &prim_name,
                    std::vector<int64_t> *const y_shape) {
   auto size_value_ptr = input_arg->BuildValue();
+  MS_EXCEPTION_IF_NULL(size_value_ptr);
   auto output_size = GetShapeValue(primitive, input_arg);
   if (IsValueKnown(size_value_ptr)) {
     (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
@@ -88,6 +94,7 @@ void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_a
 void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_name,
                      const std::vector<int64_t> &input_size, std::vector<int64_t> *const y_shape) {
   auto scales_value_ptr = input_arg->BuildValue();
+  MS_EXCEPTION_IF_NULL(scales_value_ptr);
   if (IsValueKnown(scales_value_ptr)) {
     std::vector<double> scales;
     if (scales_value_ptr->isa<tensor::Tensor>()) {
@@ -162,7 +169,10 @@ abstract::ShapePtr UpsampleInterpolating3DGradInferShape(const PrimitivePtr &pri
                                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kUpsample3DGradMinInputNum, prim_name);
+  for (auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto input_size_ptr = input_args[kInputIndex1]->BuildValue();
   MS_EXCEPTION_IF_NULL(input_size_ptr);
@@ -191,7 +201,9 @@ TypePtr UpsampleInterpolating3DGradInferType(const PrimitivePtr &primitive,
   if (prim_name == "UpsampleNearest3DGrad") {
     (void)valid_types.insert(kUInt8);
   }
-  TypePtr grad_type = input_args[kInputIndex0]->BuildType();
+  auto grad_arg = input_args.at(kInputIndex0);
+  MS_EXCEPTION_IF_NULL(grad_arg);
+  TypePtr grad_type = grad_arg->BuildType();
   return CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, prim_name);
 }
 }  // namespace

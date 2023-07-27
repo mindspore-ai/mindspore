@@ -55,8 +55,8 @@ int UpsampleNearest3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (auto ret = NativeGpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> dy_shape = inputs[kIndex0]->GetShapeVector();
-  std::vector<int64_t> dx_shape = outputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> dy_shape = inputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> dx_shape = outputs.at(kIndex0)->GetShapeVector();
   n_ = dy_shape[kIndex0];
   c_ = dy_shape[kIndex1];
   // input
@@ -68,6 +68,7 @@ int UpsampleNearest3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   dx_h_ = dx_shape[kIndex3];
   dx_w_ = dx_shape[kIndex4];
   // none list
+  MS_EXCEPTION_IF_NULL(base_operator);
   none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
@@ -86,8 +87,10 @@ template <typename T>
 bool UpsampleNearest3DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                      const std::vector<AddressPtr> &workspace,
                                                      const std::vector<AddressPtr> &outputs) {
-  auto dy = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto dx = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto dy = GetDeviceAddress<T>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(dy);
+  auto dx = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(dx);
 
   const float d_scale = ComputeScalesBackward<float>(scales_[kIndex0], dy_d_, dx_d_);
   const float h_scale = ComputeScalesBackward<float>(scales_[kIndex1], dy_h_, dx_h_);

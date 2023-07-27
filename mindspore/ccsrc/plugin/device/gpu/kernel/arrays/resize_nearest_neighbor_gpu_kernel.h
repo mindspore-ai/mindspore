@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_RESIZE_NEAREST_NEIGHBOR_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_RESIZE_NEAREST_NEIGHBOR_GPU_KERNEL_H_
 
-#include <vector>
 #include <map>
+#include <vector>
+#include "mindspore/core/ops/resize_nearest_neighbor.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_impl.cuh"
-#include "mindspore/core/ops/resize_nearest_neighbor.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,9 +40,11 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    auto output_size = outputs[kIndex0]->size;
     T *input = GetDeviceAddress<T>(inputs, 0);
+    MS_EXCEPTION_IF_NULL(input);
     T *output = GetDeviceAddress<T>(outputs, 0);
+    MS_EXCEPTION_IF_NULL(output);
+    auto output_size = outputs[kIndex0]->size;
     int size = SizeToInt(output_size / sizeof(T));
     float h_scale = Scaling(input_shape_[2], output_shape_[2], align_corners_);
     float w_scale = Scaling(input_shape_[3], output_shape_[3], align_corners_);
@@ -77,8 +79,8 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
       return ret;
     }
-    auto input_shape = inputs[kIndex0]->GetShapeVector();
-    auto output_shape = outputs[kIndex0]->GetShapeVector();
+    auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+    auto output_shape = outputs.at(kIndex0)->GetShapeVector();
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
@@ -91,9 +93,6 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     output_shape_.clear();
     for (size_t i = 0; i < output_shape.size(); ++i) {
       output_shape_.push_back(LongToInt(output_shape[i]));
-    }
-    if (input_num_ == kInputNumTwo) {
-      input_size_list_.push_back(sizeof(int32_t) * kSecondInputSize);
     }
     return KRET_OK;
   }

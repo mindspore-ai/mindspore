@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include <map>
-#include <functional>
 #include "plugin/device/cpu/kernel/resize_bilinear_cpu_kernel.h"
-#include "mindspore/core/ops/image_ops.h"
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include <functional>
+#include <map>
 #include "kernel/ops_utils.h"
+#include "mindspore/core/ops/image_ops.h"
 #include "ops/resize_bilinear.h"
 #include "ops/resize_bilinear_v2.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,7 +29,6 @@ namespace {
 constexpr size_t kResizeBilinearInputsNum = 1;
 constexpr size_t kResizeBilinearV2InputsNum = 2;
 constexpr size_t kResizeBilinearOutputsNum = 1;
-constexpr size_t kResizeBilinearInputsShapeSize = 4;
 }  // namespace
 
 using FuncVec = const std::vector<std::pair<KernelAttr, ResizeBilinearCpuKernelMod::KernelRunFunc>>;
@@ -67,7 +66,6 @@ bool ResizeBilinearCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
 
-  dtype_ = inputs[0]->GetDtype();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -77,17 +75,8 @@ int ResizeBilinearCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
-  output_shape_ = Convert2SizeTClipNeg(outputs[kIndex0]->GetShapeVector());
-  if (shape_.size() != kResizeBilinearInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' must be " << kResizeBilinearInputsShapeSize
-                      << ", but got " << shape_.size();
-  }
-  if (output_shape_.size() != kResizeBilinearInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'output' must be "
-                      << kResizeBilinearInputsShapeSize << ", but got " << output_shape_.size();
-  }
-
+  shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetShapeVector());
+  output_shape_ = Convert2SizeTClipNeg(outputs.at(kIndex0)->GetShapeVector());
   is_null_input_ = (std::accumulate(shape_.begin(), shape_.end(), size_t(1), std::multiplies<size_t>()) == 0);
   is_null_input_ = is_null_input_ || (std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1),
                                                       std::multiplies<size_t>()) == 0);
@@ -107,10 +96,13 @@ int ResizeBilinearCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPtr> &inputs,
                                                      const std::vector<AddressPtr> &,
                                                      const std::vector<AddressPtr> &outputs) const {
-  auto *output_addr = reinterpret_cast<float16 *>(outputs[0]->addr);
+  auto output_addr = GetDeviceAddress<float16>(outputs, kIndex0);
+  auto input_addr = GetDeviceAddress<float16>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output_addr);
+  MS_EXCEPTION_IF_NULL(input_addr);
+
   float *float_input_addr = nullptr;
   float *float_output_addr = nullptr;
-  auto *input_addr = reinterpret_cast<float16 *>(inputs[0]->addr);
   size_t input_mem_size = inputs[0]->size / sizeof(float16) * sizeof(float);
   float_input_addr = reinterpret_cast<float *>(malloc(input_mem_size));
   if (float_input_addr == nullptr) {
@@ -128,9 +120,6 @@ bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPt
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
     return false;
   }
-  MS_EXCEPTION_IF_NULL(output_addr);
-  MS_EXCEPTION_IF_NULL(float_input_addr);
-  MS_EXCEPTION_IF_NULL(float_output_addr);
 
   size_t batch_size = shape_[0];
   size_t channel = shape_[1];
@@ -187,12 +176,9 @@ bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPt
 template <typename T>
 bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                               const std::vector<AddressPtr> &outputs) const {
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  T *float_input_addr = nullptr;
-  T *float_output_addr = nullptr;
-  float_input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  float_output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-
+  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  auto float_input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  auto float_output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output_addr);
   MS_EXCEPTION_IF_NULL(float_input_addr);
   MS_EXCEPTION_IF_NULL(float_output_addr);

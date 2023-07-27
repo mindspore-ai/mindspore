@@ -15,10 +15,10 @@
  */
 
 #include "plugin/device/cpu/kernel/resize_bilinear_grad_cpu_kernel.h"
-#include <utility>
 #include <functional>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include <utility>
 #include "kernel/ops_utils.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -256,6 +256,8 @@ bool ResizeBilinearGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                   << inputs.size() << " and " << outputs.size();
     return false;
   }
+  align_corners_ = GetValue<bool>(base_operator->GetAttr(kAttrAlignCorners));
+  half_pixel_centers_ = GetValue<bool>(base_operator->GetAttr(kAttrHalfPixelCenters));
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -266,15 +268,12 @@ int ResizeBilinearGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
-  size_ = Convert2SizeTClipNeg(inputs[kIndex1]->GetShapeVector());
-  align_corners_ = GetValue<bool>(base_operator->GetAttr(kAttrAlignCorners));
-  half_pixel_centers_ = GetValue<bool>(base_operator->GetAttr(kAttrHalfPixelCenters));
+  shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetShapeVector());
+  size_ = Convert2SizeTClipNeg(inputs.at(kIndex1)->GetShapeVector());
   is_null_input_ = (std::accumulate(shape_.begin(), shape_.end(), size_t(1), std::multiplies<size_t>()) == 0);
   if (is_null_input_) {
     return static_cast<int>(KRET_OK);
   }
-
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
   size_t out_height = size_[2];
@@ -288,11 +287,15 @@ template <typename T>
 bool ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel(const std::vector<kernel::AddressPtr> &inputs,
                                                          const std::vector<AddressPtr> &,
                                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto *output_addr = reinterpret_cast<float16 *>(outputs[0]->addr);
+  auto output_addr = GetDeviceAddress<float16>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
-  auto *input_addr_T = reinterpret_cast<float16 *>(inputs[0]->addr);
+
+  auto input_addr_T = GetDeviceAddress<float16>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input_addr_T);
+
   size_t input_mem_size = inputs[0]->size / sizeof(float16) * sizeof(float);
   float *float_dloss_addr = reinterpret_cast<float *>(malloc(input_mem_size));
   if (float_dloss_addr == NULL) {
@@ -317,10 +320,6 @@ bool ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel(const std::vector<kerne
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
 
-  MS_EXCEPTION_IF_NULL(output_addr);
-  MS_EXCEPTION_IF_NULL(float_dloss_addr);
-  MS_EXCEPTION_IF_NULL(float_output_addr);
-
   if (half_pixel_centers_) {
     ResizeBilinearGradFP16_HPC(float_dloss_addr, float_output_addr, output_addr, shape_.data(), size_.data(),
                                height_scale, width_scale);
@@ -338,14 +337,13 @@ template <typename T>
 bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &,
                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
-  auto *float_dloss_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *float_output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-
-  MS_EXCEPTION_IF_NULL(output_addr);
+  auto float_dloss_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  auto float_output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(float_dloss_addr);
   MS_EXCEPTION_IF_NULL(float_output_addr);
 

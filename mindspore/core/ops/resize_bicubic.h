@@ -39,9 +39,6 @@ class MIND_API ResizeBicubic : public BaseOperator {
   bool get_align_corners() const;
   bool get_half_pixel_centers() const;
 };
-MIND_API abstract::AbstractBasePtr ResizeBicubicInfer(const abstract::AnalysisEnginePtr &,
-                                                      const PrimitivePtr &primitive,
-                                                      const std::vector<AbstractBasePtr> &input_args);
 using PrimResizeBicubic = std::shared_ptr<ResizeBicubic>;
 }  // namespace ops
 }  // namespace mindspore

@@ -44,7 +44,8 @@ bool UpsampleTrilinear3DGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::UpsampleTrilinear3D>(base_operator->GetPrim());
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::UpsampleTrilinear3D>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   align_corners_ = kernel_ptr->get_align_corners();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -63,8 +64,9 @@ int UpsampleTrilinear3DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
-  std::vector<int64_t> output_shape = outputs[kIndex0]->GetShapeVector();
+
+  std::vector<int64_t> input_shape = inputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetShapeVector();
   n_ = input_shape[kIndex0];
   c_ = input_shape[kIndex1];
   input_d_ = input_shape[kIndex2];
@@ -73,6 +75,8 @@ int UpsampleTrilinear3DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   output_d_ = output_shape[kIndex2];
   output_h_ = output_shape[kIndex3];
   output_w_ = output_shape[kIndex4];
+
+  MS_EXCEPTION_IF_NULL(base_operator);
   none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
@@ -91,13 +95,17 @@ template <typename T, typename S>
 bool UpsampleTrilinear3DGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                    const std::vector<AddressPtr> &workspace,
                                                    const std::vector<AddressPtr> &outputs) {
+  auto x_ptr = GetDeviceAddress<T>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(x_ptr);
+  auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(y_ptr);
+
   const S depth_scale = AreaPixelComputeScale<S>(input_d_, output_d_, align_corners_, scales_[kIndex0]);
   const S height_scale = AreaPixelComputeScale<S>(input_h_, output_h_, align_corners_, scales_[kIndex1]);
   const S width_scale = AreaPixelComputeScale<S>(input_w_, output_w_, align_corners_, scales_[kIndex2]);
-  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  auto status = CalUpsampleTrilinear3D<T, S>(input, n_, c_, input_d_, input_h_, input_w_, output_d_, output_h_,
-                                             output_w_, depth_scale, height_scale, width_scale, align_corners_, output,
+
+  auto status = CalUpsampleTrilinear3D<T, S>(x_ptr, n_, c_, input_d_, input_h_, input_w_, output_d_, output_h_,
+                                             output_w_, depth_scale, height_scale, width_scale, align_corners_, y_ptr,
                                              device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

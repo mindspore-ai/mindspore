@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RESIZE_LINEAR_1D_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RESIZE_LINEAR_1D_CPU_KERNEL_H_
 
+#include <map>
 #include <memory>
 #include <string>
-#include <vector>
-#include <map>
 #include <utility>
+#include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -72,6 +72,7 @@ class ResizeLinear1DCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
                                   size_t *interp_upper, T *interp_lerp);
 
   std::string kernel_type_{kUnknown};
+  TypeId x_type_{kTypeUnknown};
   size_t batch_{0};
   size_t channel_{0};
   size_t in_width_{0};

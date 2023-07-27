@@ -105,6 +105,8 @@ uint32_t UpsampleNearest3dGradCpuKernel::UpsampleNearest3dGradParamCheck(CpuKern
                      "dims. but got %d dim(s).",
                      grads_output_shape.size());
   auto none_list_ptr = ctx.GetAttr("none_list");
+  KERNEL_CHECK_NULLPTR(none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
+                       ctx.GetOpType().c_str());
   none_list = none_list_ptr->GetListInt();
   KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
                      "For 'UpsampleNearest3DGrad', only one of output_size or scales should be specified.");

@@ -110,6 +110,8 @@ uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dParamCheck(CpuKernelCo
     align_corners = align_corners_ptr->GetBool();
   }
   auto none_list_ptr = ctx.GetAttr("none_list");
+  KERNEL_CHECK_NULLPTR(none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
+                       ctx.GetOpType().c_str());
   none_list = none_list_ptr->GetListInt();
   KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
                      "For 'UpsampleTrilinear3D', only one of output_size or scales should be specified.");
