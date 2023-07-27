@@ -1653,10 +1653,10 @@ class Cell(Cell_):
             - `Model Training - Implementing Training and Evaluation
               <https://mindspore.cn/tutorials/en/master/beginner/train.html#implementing-training-and-evaluation>`_
         """
-        if mode is False:
-            self._phase = 'predict'
-        else:
+        if mode:
             self._phase = 'train'
+        else:
+            self._phase = 'predict'
         self.add_flags_recursive(training=mode)
         return self
 

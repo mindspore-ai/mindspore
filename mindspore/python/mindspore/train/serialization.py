@@ -479,7 +479,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             if not isinstance(value, str):
                 value = Tensor(value)
             append_info_list.append({"name": k_name, "data": value})
-            save_obj.extend(append_info_list)
+        save_obj.extend(append_info_list)
 
     data_list = OrderedDict()
     with _ckpt_mutex:
