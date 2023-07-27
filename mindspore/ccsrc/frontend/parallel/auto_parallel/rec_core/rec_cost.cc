@@ -133,6 +133,9 @@ double CostRedisWithAdjacentNode(const std::vector<std::pair<std::string, Strate
   if (search_forward) {
     float output_dims[NDIMS] = {output_tensor.str_n, output_tensor.str_c, output_tensor.str_h, output_tensor.str_w};
     for (size_t i = 0; i < NDIMS; ++i) {
+      if (output_dims[i] == 0 || mode[i_node][i] == 0) {
+        MS_LOG(EXCEPTION) << "divisors cannot be 0!";
+      }
       if (static_cast<int64_t>(1 / output_dims[i]) != static_cast<int64_t>(1 / mode[i_node][i])) {
         diff = true;
         break;
@@ -141,6 +144,9 @@ double CostRedisWithAdjacentNode(const std::vector<std::pair<std::string, Strate
   } else {
     float input_dims[NDIMS] = {input_tensor.str_n, input_tensor.str_c, input_tensor.str_h, input_tensor.str_w};
     for (size_t i = 0; i < NDIMS; ++i) {
+      if (input_dims[i] == 0 || mode[2][i] == 0) {
+        MS_LOG(EXCEPTION) << "divisors cannot be 0!";
+      }
       if (static_cast<int64_t>(1 / input_dims[i]) != static_cast<int64_t>(1 / mode[2][i])) {
         diff = true;
         break;
@@ -176,6 +182,9 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   std::vector<double> cost_op;
 
   MS_LOG(INFO) << "graph_batch" << graph.batch_size;
+  if (node.apply.arguments[0].tensor_str.str_h == 0) {
+    MS_LOG(EXCEPTION) << "str_h cannot be 0!";
+  }
   if (LongToSize(edge_i) < SIZE_TWO || edge_i % SIZE_TWO != 0 ||
       (1 / node.apply.arguments[0].tensor_str.str_h >= graph.batch_size && graph.batch_size != 0)) {
     cost_op.push_back(DOUBLE_MAX);
@@ -283,6 +292,9 @@ size_t CostBatchMatMul::getBatchDimsSize(const OperatorRec &op) {
 }
 
 double CostBatchMatMul::cost(Axis a, const Graph::NodeType &node) {
+  if (static_cast<double>(getBatchDimsSize(node.apply)) - 1 == 0) {
+    MS_LOG(EXCEPTION) << "divisor cannot be 0!";
+  }
   double mc_ratio = std::max(NUMBER_ASCEND_CORES / static_cast<double>(getBatchDimsSize(node.apply)) - 1, 0.0);
   double min_size = minNodeSize(node);
 
@@ -334,7 +346,9 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
     static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_w * node.apply.arguments[0].tensor_str.str_w);
 
   std::vector<double> cost_op;
-
+  if (node.apply.arguments[0].tensor_str.str_n == 0) {
+    MS_LOG(EXCEPTION) << "str_n cannot be 0!";
+  }
   if (LongToSize(edge_b) < SIZE_TWO || edge_b % SIZE_TWO != 0 ||
       1 / node.apply.arguments[0].tensor_str.str_n >= graph.batch_size) {
     cost_op.push_back(DOUBLE_MAX);
