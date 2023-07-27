@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ops/matrix_triangular_solve.h"
 #include <algorithm>
 #include <iterator>
 #include <map>
@@ -34,7 +35,6 @@
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
-#include "ops/matrix_triangular_solve.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "ops/primitive_c.h"
