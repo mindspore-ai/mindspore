@@ -69,6 +69,10 @@ bool GradientsAllReduceDependLastSend::InsertDependBetweenAllReduceAndSend(const
                                                                            const std::vector<CNodePtr> &addn_list,
                                                                            const CNodePtr &last_send) const {
   bool changed = false;
+  if (last_send == nullptr) {
+    MS_LOG(DEBUG) << "last depend is null " << graph->ToString();
+    return false;
+  }
   FuncGraphManagerPtr manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   for (auto &addn : addn_list) {
