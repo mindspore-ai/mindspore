@@ -26,6 +26,7 @@
 namespace mindspore {
 namespace lite {
 constexpr const char *kDivisorOverride = "divisor_override";
+constexpr const char *kExclusive = "exclusive";
 STATUS AvgPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   ValueNodePtr value_node = nullptr;
   PrimitivePtr src_prim = nullptr;
@@ -43,6 +44,13 @@ STATUS AvgPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   if (!dst_prim->HasAttr(kDivisorOverride)) {
     // default value of divisor_override is 0
     dst_prim->AddAttr(kDivisorOverride, 0);
+  }
+  if (src_prim->HasAttr(ops::kCountIncludePad)) {
+    bool exclusive = !GetValue<bool>(src_prim->GetAttr(ops::kCountIncludePad));
+    dst_prim->AddAttr(kExclusive, MakeValue(exclusive));
+  } else {
+    // default value of exclusive is true
+    dst_prim->AddAttr(kExclusive, MakeValue(true));
   }
   if (AdjustPoolAttr(fmk_type, kNameAvgPoolFusion, dst_prim) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adjust pool attr failed.";

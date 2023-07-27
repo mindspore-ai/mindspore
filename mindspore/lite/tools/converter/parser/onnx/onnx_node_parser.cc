@@ -168,18 +168,8 @@ TypeId OnnxNodeParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type)
   return iter->second;
 }
 
-STATUS OnnxNodeParser::GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value,
-                                             int *type) {
-  if (value == nullptr || type == nullptr) {
-    MS_LOG(ERROR) << "Input value or type is nullptr";
-    return RET_INPUT_PARAM_INVALID;
-  }
-  bool overflow = false;
-  auto data_count = GetOnnxElementNum(onnx_tensor, &overflow);
-  if (overflow) {
-    MS_LOG(ERROR) << "data count overflow";
-    return RET_ERROR;
-  }
+STATUS OnnxNodeParser::SetDataTypeAndValue(const onnx::TensorProto &onnx_tensor, std::vector<float> *value,
+                                           size_t data_count, int *type) {
   switch (onnx_tensor.data_type()) {
     case onnx::TensorProto_DataType_FLOAT:
       *type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_FLOAT);
@@ -223,11 +213,32 @@ STATUS OnnxNodeParser::GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tenso
         value->push_back(static_cast<float>(reinterpret_cast<const float16 *>(onnx_tensor.raw_data().data())[i]));
       }
       break;
+    case onnx::TensorProto_DataType_BOOL:
+      *type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
+      for (size_t i = 0; i < data_count; i++) {
+        value->push_back(static_cast<float>(reinterpret_cast<const bool *>(onnx_tensor.raw_data().data())[i]));
+      }
+      break;
     default:
       MS_LOG(ERROR) << "The data type is not supported.";
       return RET_ERROR;
   }
   return RET_OK;
+}
+
+STATUS OnnxNodeParser::GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value,
+                                             int *type) {
+  if (value == nullptr || type == nullptr) {
+    MS_LOG(ERROR) << "Input value or type is nullptr";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  bool overflow = false;
+  auto data_count = GetOnnxElementNum(onnx_tensor, &overflow);
+  if (overflow) {
+    MS_LOG(ERROR) << "data count overflow";
+    return RET_ERROR;
+  }
+  return SetDataTypeAndValue(onnx_tensor, value, data_count, type);
 }
 
 size_t OnnxNodeParser::GetOnnxElementNum(const onnx::TensorProto &onnx_tensor, bool *overflowed) {

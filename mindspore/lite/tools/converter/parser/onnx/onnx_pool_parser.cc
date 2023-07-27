@@ -73,6 +73,10 @@ PrimitiveCPtr OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
         round_mode = mindspore::RoundMode::CEIL;
       }
     }
+    if (attribute_name == ops::kCountIncludePad) {
+      bool include = onnx_node_attr.i() == 0 ? false : true;
+      (void)prim->AddAttr(ops::kCountIncludePad, api::MakeValue(include));
+    }
     if (attribute_name == "dilations") {
       MS_LOG(ERROR) << "pooling op not support dilations now";
       return nullptr;
