@@ -199,20 +199,7 @@ else
     chmod 550 ${config_file}
 fi
 
-chmod u-w ${targetdir}/vendors
-
-if [ -d ${targetdir}/$vendordir/op_impl/cpu/aicpu_kernel/impl/ ]; then
-    chmod -R 440 ${targetdir}/$vendordir/op_impl/cpu/aicpu_kernel/impl/* >/dev/null 2>&1
-fi
-if [ -f ${targetdir}/ascend_install.info ]; then
-    chmod -R 440 ${targetdir}/ascend_install.info
-fi
-if [ -f ${targetdir}/scene.info ]; then
-    chmod -R 440 ${targetdir}/scene.info
-fi
-if [ -f ${targetdir}/version.info ]; then
-    chmod -R 440 ${targetdir}/version.info
-fi
+chmod 755 ${targetdir}/${vendordir}
 
 echo "SUCCESS"
 exit 0
