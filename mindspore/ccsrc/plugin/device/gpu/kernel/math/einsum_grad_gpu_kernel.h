@@ -71,7 +71,10 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override {
-    node_name_ = base_operator->GetPrim()->name();
+    MS_EXCEPTION_IF_NULL(base_operator);
+    auto primitive = base_operator->GetPrim();
+    MS_EXCEPTION_IF_NULL(primitive);
+    node_name_ = primitive->name();
     size_t input_num = inputs.size();
     if (input_num < INPUT_NUM_MIN) {
       MS_LOG(ERROR) << "For " << node_name_ << ", input number should be no less than 2, but got " << input_num;
@@ -102,7 +105,9 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
       input_shapes_.push_back(in_shape);
     }
 
-    std::string equation = GetValue<std::string>(base_operator->GetAttr("equation"));
+    auto equation_ptr = base_operator->GetAttr("equation");
+    MS_EXCEPTION_IF_NULL(equation_ptr);
+    std::string equation = GetValue<std::string>(equation_ptr);
     single_op_ = std::vector<std::vector<OpStruct>>(input_shapes_.size());
     bool flag = func_helper_.Preprocess(equation, node_name_, input_shapes_, &out_shape_, &single_op_, &res_op_);
     if (!flag) {

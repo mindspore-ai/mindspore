@@ -32,6 +32,7 @@ constexpr int64_t kLastSecond = -2;
 
 bool GeqrfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
@@ -52,6 +53,7 @@ int GeqrfCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     return ret;
   }
   std::vector<int64_t> input0_tensor_shape = inputs[0]->GetShapeVector();
+  MS_EXCEPTION_IF_CHECK_FAIL(!input0_tensor_shape.empty(), "For Geqrf, input0_tensor_shape should not be empty.");
   elem_num = static_cast<size_t>(
     std::accumulate(input0_tensor_shape.begin(), input0_tensor_shape.end(), 1, std::multiplies<int64_t>()));
   num_m = static_cast<size_t>(input0_tensor_shape.end()[kLastSecond]);
@@ -143,6 +145,9 @@ void GeqrfCpuKernelMod::Geqrf(size_t num_m_, size_t num_n_, T *x, T *tau) {
 template <typename T>
 bool GeqrfCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(outputs[kOutputIndex0]);
+  MS_EXCEPTION_IF_NULL(outputs[kOutputIndex1]);
   T *x = static_cast<T *>(inputs[kInputIndex0]->addr);
   T *y = static_cast<T *>(outputs[kOutputIndex0]->addr);
   T *tau = static_cast<T *>(outputs[kOutputIndex1]->addr);

@@ -29,6 +29,7 @@ namespace mindspore {
 namespace kernel {
 bool GeqrfGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Geqrf>(base_operator);
   kernel_name_ = kernel_ptr->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);

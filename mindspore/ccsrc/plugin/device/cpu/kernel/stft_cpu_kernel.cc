@@ -126,6 +126,9 @@ bool STFTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
                   << kSTFTOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   input_type_1_ = inputs[kIndex0]->GetDtype();
   input_type_2_ = inputs[kIndex1]->GetDtype();
   output_type_ = outputs[kIndex0]->GetDtype();
@@ -144,6 +147,9 @@ int STFTCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     return ret;
   }
 
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   input_shape_1_ = inputs[kIndex0]->GetShapeVector();
   input_shape_2_ = inputs[kIndex1]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();

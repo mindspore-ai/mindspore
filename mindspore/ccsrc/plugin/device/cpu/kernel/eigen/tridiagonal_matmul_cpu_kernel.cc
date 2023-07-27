@@ -38,6 +38,7 @@ bool TridiagonalMatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &outputs) {
   MS_ERROR_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   dtype_ = inputs[kIndex0]->GetDtype();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
@@ -56,6 +57,11 @@ int TridiagonalMatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
+
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex2]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex3]);
   auto input0_shape = inputs[kIndex0]->GetShapeVector();
   auto input1_shape = inputs[kIndex1]->GetShapeVector();
   auto input2_shape = inputs[kIndex2]->GetShapeVector();

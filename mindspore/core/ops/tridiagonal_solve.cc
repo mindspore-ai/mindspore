@@ -44,12 +44,13 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kTridiagonalSolveInputNums = 2;
 namespace {
 abstract::ShapePtr TridiagonalSolveInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTridiagonalSolveInputNums, primitive->name());
   auto diagonals_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto rhs_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto diagonals_shp = diagonals_shape_map[kShape];
@@ -86,6 +87,7 @@ abstract::ShapePtr TridiagonalSolveInferShape(const PrimitivePtr &primitive,
 
 TypePtr TridiagonalSolveInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTridiagonalSolveInputNums, prim->name());
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
   (void)types.insert({"diagonals", input_args[0]->BuildType()});
@@ -104,9 +106,6 @@ bool TridiagonalSolve::get_partial_pivoting() const {
 
 AbstractBasePtr TridiagonalSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = TridiagonalSolveInferType(primitive, input_args);
   auto infer_shape = TridiagonalSolveInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
