@@ -76,7 +76,7 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
 
   int id = GenerateId();
   OptionMap new_options = options;
-  std::string ge_graph_key = compile_cache_dep_files_hash + "_" + std::to_string(id);
+  auto ge_graph_key = compile_cache_dep_files_hash + "_" + name;
   new_options.insert_or_assign("ge.graph_key", ge_graph_key);
 
   DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, new_options);
