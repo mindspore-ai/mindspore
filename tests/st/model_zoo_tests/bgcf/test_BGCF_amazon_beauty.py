@@ -18,6 +18,7 @@ import pytest
 from tests.st.model_zoo_tests import utils
 
 
+@pytest.mark.skip(reason="because GraphData API was deleted in dataset")
 @pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training

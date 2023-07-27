@@ -2936,6 +2936,7 @@ class _PythonCallable:
         return self.py_callable.to_json()
 
 
+# used when python_multiprocessing=True in map
 class Pipe:
     """
     Class to handle communication between the master process and the worker processes.
@@ -2950,8 +2951,7 @@ class Pipe:
         else:
             self.in_queue = _Queue(1)
             self.res_queue = _Queue(1)
-        self.in_queue._joincancelled = True  # pylint: disable=W0212
-        self.res_queue._joincancelled = True  # pylint: disable=W0212
+        self.in_queue.cancel_join_thread()  # Ensure that the process does not hung when exiting
 
     def master_send(self, func_index, data):
         self.in_queue.put_nowait((func_index, *data))
@@ -2967,8 +2967,6 @@ class Pipe:
         self.eof.set()
         self.send_finish_signal_to_worker()
         self.send_finish_signal()
-        self.res_queue.cancel_join_thread()
-        self.in_queue.cancel_join_thread()
 
     def send_finish_signal(self):
         self.worker_send(None)
@@ -2988,10 +2986,6 @@ class Pipe:
         func_index, *data = result
         return func_index, tuple(data)
 
-    def worker_close(self):
-        self.res_queue.cancel_join_thread()
-        self.in_queue.cancel_join_thread()
-
 
 def _main_process_already_exit():
     """
@@ -3009,6 +3003,8 @@ def _worker_loop(operations, pipe, seed=get_seed()):
     """
     Multiprocess worker process loop.
     """
+    # Ensure that the process does not hung when exiting
+    pipe.res_queue.cancel_join_thread()
 
     def _ignore_sigint():
         """
@@ -3024,11 +3020,9 @@ def _worker_loop(operations, pipe, seed=get_seed()):
 
         result = pipe.worker_receive()
         if result is None:
-            pipe.worker_close()
             return
         (idx, input_tensors) = result
         if input_tensors == "QUIT":
-            pipe.worker_close()
             break
         try:
             output_tensors = operations[idx](*input_tensors)
