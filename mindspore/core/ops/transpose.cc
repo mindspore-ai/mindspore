@@ -48,17 +48,28 @@ std::vector<int64_t> Transpose::get_perm() {
 
 MIND_API_OPERATOR_IMPL(Transpose, BaseOperator);
 
-ShapeVector CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args, const PrimitivePtr &primitive) {
+ShapeVector CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args, const PrimitivePtr &primitive,
+                                 const ShapeVector &x_shape) {
   const std::string &op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
   auto input_value = input_args[kInputIndex1]->BuildValue();
   if (input_args[kInputIndex1]->isa<abstract::AbstractTuple>()) {
     if (IsValueKnown(input_value)) {
-      return CheckAndConvertUtils::CheckTupleInt("perm", input_value, op_name);
+      auto perm_shape = CheckAndConvertUtils::CheckTupleInt("perm", input_value, op_name);
+      if (perm_shape.empty()) {
+        MS_EXCEPTION(ValueError) << op_name << " expects inputs(1) is vector of size: " << x_shape.size()
+                                 << ", but gout the size of inputs(1) is 0.";
+      }
+      return perm_shape;
     }
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
     if (input_value->isa<tensor::Tensor>()) {
-      return CheckAndConvertUtils::CheckTensorIntValue("perm", input_value, op_name);
+      auto perm_shape = CheckAndConvertUtils::CheckTensorIntValue("perm", input_value, op_name);
+      if (perm_shape.empty()) {
+        MS_EXCEPTION(ValueError) << op_name << " expects inputs(1) is vector of size: " << x_shape.size()
+                                 << ", but gout the size of inputs(1) is 0.";
+      }
+      return perm_shape;
     }
     auto perm_shape = CheckAndConvertUtils::GetTensorInputShape("perm", input_args, 1);
     if (perm_shape->shape().size() != 1) {
@@ -96,7 +107,7 @@ class TransposeInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
 
-    auto p_value_raw = CheckAndGetPermValue(input_args, primitive);
+    auto p_value_raw = CheckAndGetPermValue(input_args, primitive, x_shape);
     if (p_value_raw.empty()) {
       ShapeVector out_shape(x_shape.size(), abstract::Shape::kShapeDimAny);
       return std::make_shared<abstract::Shape>(out_shape);
