@@ -301,7 +301,7 @@ AnfNodePtr GetRealOutput(const AnfNodePtr &node) {
   return node;
 }
 
-std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output) {
+kernel::PyExecuteOutputUserDataPtr GetUserDataFromNode(const AnfNodePtr &output) {
   static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
   if (allow_fallback_runtime) {
     const auto &real_output = GetRealOutput(output);
@@ -311,13 +311,117 @@ std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output) {
     if (real_output->has_user_data<kernel::PyExecuteOutputUserData>()) {
       py::gil_scoped_acquire gil_acquire;
       const auto &output_data = real_output->user_data<kernel::PyExecuteOutputUserData>();
-      py::object res_obj = output_data->obj;
-      MS_LOG(DEBUG) << "Has \'PyExecuteOutputUserData\', just return it. res_obj: " << res_obj;
       // Need support real none.
-      return {res_obj, true};
+      return output_data;
     }
   }
-  return {py::none(), false};
+  return nullptr;
+}
+
+kernel::PyExecuteOutputUserDataPtr GetUserDataFromAddress(const py::object &res) {
+  if (py::isinstance<tensor::Tensor>(res) || IsStubTensor(res)) {
+    auto res_tensor = IsStubTensor(res) ? ConvertStubTensor(res) : res.cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(res_tensor);
+    if (res_tensor->device_address() != nullptr) {
+      auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(res_tensor->device_address());
+      MS_LOG(DEBUG) << "res tensor_address:" << tensor_address;
+      AnfNodePtr real_node = AnfNodePtr(tensor_address->node_index().first.lock());
+      if (real_node != nullptr) {
+        MS_LOG(DEBUG) << "real_node:" << real_node->DebugString();
+        return GetUserDataFromNode(real_node);
+      }
+    }
+  }
+  return nullptr;
+}
+
+std::pair<py::object, bool> GetTotalVectorRefPyData(const VectorRef &value_list) {
+  auto value_size = value_list.size();
+  if (value_size == 0) {
+    return {py::none(), false};
+  }
+  auto first_element = value_list[0];
+  auto user_data = GetUserDataFromAddress(BaseRefToPyData(first_element));
+  if (user_data == nullptr) {
+    return {py::none(), false};
+  }
+  // If all elements in VectorRef has the same user data, it is a whole pyexecute node with sequence output.
+  // So, we only need to take out the user data of one element and use it as the whole output.
+  for (size_t i = 1; i < value_size; ++i) {
+    auto element = value_list[i];
+    auto res = BaseRefToPyData(element);
+    auto cur_user_data = GetUserDataFromAddress(res);
+    if (user_data != cur_user_data) {
+      return {py::none(), false};
+    }
+  }
+  return {user_data->obj, true};
+}
+
+py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBasePtr &abs);
+
+template <typename T>
+py::object GetVectorRefPyDataWithAbstract(const VectorRef &value_list, const abstract::AbstractSequencePtr &seq_abs) {
+  auto value_size = value_list.size();
+  auto ret = T(value_size);
+
+  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  size_t ref_idx = 0;
+  for (size_t i = 0; i < seq_abs->size(); ++i) {
+    auto elem_abs = seq_abs->elements()[i];
+    if (elem_abs->isa<abstract::AbstractNone>() && !allow_fallback_runtime) {
+      continue;
+    }
+    ret[ref_idx] = BaseRefToPyDataWithUserData(value_list[ref_idx], elem_abs);
+    ref_idx++;
+  }
+  if (ref_idx != value_size) {
+    MS_LOG(EXCEPTION) << "The size of elements (excluding None) should be equal to " << value_size << ", but got "
+                      << ref_idx;
+  }
+  return ret;
+}
+
+py::object GetVectorRefPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
+  const auto &[py_res, use_as_total] = GetTotalVectorRefPyData(value_list);
+  if (use_as_total) {
+    return py_res;
+  }
+  if (abs == nullptr || abs->isa<abstract::AbstractCSRTensor>() || abs->isa<abstract::AbstractCOOTensor>()) {
+    return BaseRefToPyData(value_list, abs);
+  }
+  // Need to consider AbstractAny with vector ref scene later.
+  if (!abs->isa<abstract::AbstractSequence>()) {
+    MS_LOG(EXCEPTION) << "Can not convert vector ref with abstract " << abs->ToString();
+  }
+  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  if (seq_abs->dynamic_len()) {
+    return BaseRefToPyData(value_list, abs);
+  }
+  if (seq_abs->isa<abstract::AbstractTuple>()) {
+    return GetVectorRefPyDataWithAbstract<py::tuple>(value_list, seq_abs);
+  }
+  return GetVectorRefPyDataWithAbstract<py::list>(value_list, seq_abs);
+}
+
+py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBasePtr &abs) {
+  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  if (!allow_fallback_runtime) {
+    return BaseRefToPyData(value, abs);
+  }
+  if (utils::isa<ValuePtr>(value)) {
+    // Do not use abs as input to BaseRefToPyData, since the res need to be a tensor to get user data.
+    auto res = BaseRefToPyData(value);
+    MS_LOG(DEBUG) << "res: " << py::str(res);
+    const auto user_data = GetUserDataFromAddress(res);
+    if (user_data != nullptr) {
+      return user_data->obj;
+    }
+  } else if (utils::isa<VectorRef>(value)) {
+    auto vec_ref = utils::cast<VectorRef>(value);
+    return GetVectorRefPyData(vec_ref, abs);
+  }
+  return BaseRefToPyData(value, abs);
 }
 }  // namespace
 
@@ -1330,103 +1434,6 @@ void GraphExecutorPy::TerminateDebugger() {
 }
 #endif
 
-std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const py::object &res) const {
-  if (py::isinstance<tensor::Tensor>(res) || IsStubTensor(res)) {
-    auto res_tensor = IsStubTensor(res) ? ConvertStubTensor(res) : res.cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(res_tensor);
-    if (res_tensor->device_address() != nullptr) {
-      auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(res_tensor->device_address());
-      MS_LOG(DEBUG) << "res tensor_address:" << tensor_address;
-      AnfNodePtr real_node = AnfNodePtr(tensor_address->node_index().first.lock());
-      if (real_node != nullptr) {
-        MS_LOG(DEBUG) << "real_node:" << real_node->DebugString();
-        const auto &[py_res, has_real_output] = GetPyExecuteOutput(real_node);
-        if (has_real_output) {
-          MS_LOG(DEBUG) << "py_res:" << py_res;
-          return {py_res, true};
-        }
-      }
-    }
-  }
-  return {py::none(), false};
-}
-
-std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteSequenceOutputFromAddress(const py::object &obj,
-                                                                                   const BaseRef &value,
-                                                                                   const AbstractBasePtr &abs) const {
-  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-  if (allow_inplace_ops && abs != nullptr && abs->isa<abstract::AbstractList>()) {
-    auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    if (abs_list->has_list_py_obj()) {
-      MS_LOG(DEBUG) << "Current abstract list has python object, directly return the corresponding object.";
-      return {*(abs_list->list_py_obj<py::list>()), true};
-    }
-  }
-  bool has_real_node_address = false;
-  py::object output = py::none();
-  if (py::isinstance<py::tuple>(obj)) {
-    const auto &[py_res, has_real_output] = GetPyExecuteData<py::tuple>(obj, value, abs);
-    if (has_real_output) {
-      output = py_res;
-      has_real_node_address = true;
-    }
-  } else if (py::isinstance<py::list>(obj)) {
-    const auto &[py_res, has_real_output] = GetPyExecuteData<py::list>(obj, value, abs);
-    if (has_real_output) {
-      output = py_res;
-      has_real_node_address = true;
-    }
-  }
-  const auto &[py_res, has_real_output] = GetPyExecuteOutputFromAddress(obj);
-  if (has_real_output) {
-    output = py_res;
-    has_real_node_address = true;
-  }
-  return {output, has_real_node_address};
-}
-
-AbstractBasePtrList GetSeqElementsAbs(const AbstractBasePtr &abs, size_t len) {
-  if (abs == nullptr) {
-    return AbstractBasePtrList(len, nullptr);
-  }
-  auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(abs_seq);
-  if (abs_seq->dynamic_len()) {
-    return AbstractBasePtrList(len, nullptr);
-  }
-  if (abs_seq->size() != len) {
-    bool need_recovery = distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
-                         distributed::recovery::RecoveryContext::GetInstance()->need_reset();
-    if (need_recovery) {
-      MS_LOG(WARNING) << "This is recovery scenario and output could be empty. Do not throw exception.";
-    } else {
-      MS_LOG(INTERNAL_EXCEPTION) << "The output python object sequence size should equal to abstract sequence size "
-                                 << "but got python object sequence size: " << len
-                                 << " and abstract sequence size: " << abs_seq->size();
-    }
-  }
-  return abs_seq->elements();
-}
-
-template <typename T>
-std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteData(const py::object &res, const BaseRef &value,
-                                                              const AbstractBasePtr &abs) const {
-  const auto &res_seq = res.cast<T>();
-  T output_seq = T(res_seq.size());
-  bool has_real_node_address = false;
-  const auto &elements = GetSeqElementsAbs(abs, res_seq.size());
-  for (size_t i = 0; i < res_seq.size(); ++i) {
-    const auto &[py_res, has_real_output] = GetPyExecuteSequenceOutputFromAddress(res_seq[i], value, elements[i]);
-    if (has_real_output) {
-      output_seq[i] = py_res;
-      has_real_node_address = true;
-    } else {
-      output_seq[i] = res_seq[i];
-    }
-  }
-  return {output_seq, has_real_node_address};
-}
-
 py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) {
   py::object res;
   HandleExceptionRethrow(
@@ -1551,14 +1558,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
       // In recovery scenario, the output value could be empty, do not transform return data.
       return py::none();
     }
-    res = BaseRefToPyData(value, output_abs);
-    // If crossing the graph, may not get PyExecuteOutputUserData in the parent graph.
-    // Get PyExecuteOutputUserData by device_address bound AnfNode which is in sub graph.
-    const auto &[py_res, has_real_node_address] = GetPyExecuteSequenceOutputFromAddress(res, value, output_abs);
-    // Replace the output if it's not Tensor, but Python data.
-    if (has_real_node_address) {
-      return py_res;
-    }
+    res = BaseRefToPyDataWithUserData(value, output_abs);
   }
 
   MS_LOG(DEBUG) << "Run end";
