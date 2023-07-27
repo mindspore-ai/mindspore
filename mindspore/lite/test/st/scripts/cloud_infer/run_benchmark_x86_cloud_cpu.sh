@@ -63,8 +63,9 @@ if [[ ${level} == "level1" ]]; then
 fi
 
 models_mindir_config=${basepath}/../${config_folder}/cloud_infer/models_mindir_cloud.cfg
+models_mindir_reconstitution_config=${basepath}/../${config_folder}/models_mindir_reconstitution_cloud_process_only.cfg
 # Prepare the config file list
-x86_cfg_file_list=("$models_mindir_config")
+x86_cfg_file_list=("$models_mindir_config" "$models_mindir_reconstitution_config")
 
 # Write benchmark result to temp file
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/op_base.h"
 #include "ops/split.h"
@@ -65,15 +66,7 @@ OpParameter *PopulateSplitOpParameter(const BaseOperatorPtr &base_operator) {
   param->op_parameter_.destroy_func_ = DestroySplitSizes;
   memset(param->split_sizes_, 0, static_cast<size_t>(param->num_split_) * sizeof(int));
 
-  mindspore::ValuePtr attr_size_splits = base_operator->GetPrim()->GetAttr(kSizeSplits);
-  if (attr_size_splits == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kSizeSplits << ") of operator(" << base_operator->name() << ") not exist";
-    DestroySplitSizes(reinterpret_cast<OpParameter *>(param));
-    free(param);
-    return nullptr;
-  }
-  auto split_sizes_vector = GetValue<std::vector<int64_t>>(attr_size_splits);
-
+  auto split_sizes_vector = GetAttrWithDefault<std::vector<int64_t>>(base_operator, kSizeSplits, {0});
   if (split_sizes_vector.size() <= static_cast<uint32_t>(param->num_split_)) {
     int i = 0;
     for (auto iter : split_sizes_vector) {

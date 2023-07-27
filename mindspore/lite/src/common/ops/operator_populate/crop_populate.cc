@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/crop_parameter.h"
 #include "ops/crop.h"
 using mindspore::ops::kNameCrop;
@@ -34,7 +35,7 @@ OpParameter *PopulateCropOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
 
-  auto offset = op->get_offsets();
+  auto offset = GetAttrWithDefault<std::vector<int64_t>>(base_operator, ops::kOffsets, {});
   if (offset.size() > COMM_SHAPE_SIZE) {
     MS_LOG(ERROR) << "param offset size(" << offset.size() << ") should <= " << COMM_SHAPE_SIZE;
     free(param);

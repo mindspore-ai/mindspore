@@ -164,6 +164,7 @@ bool DefaultGraphRuntime::ResizeKernels() {
   }
   auto kernels = infer_execution_plan->ToKernelList();
   auto isolate_input_map = infer_execution_plan->GetInputsMap();
+  auto isolate_output_map = infer_execution_plan->GetOutputsMap();
   for (auto kernel : kernels) {
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "DefaultGraphRuntime::ResizeKernels input kernel is nullptr!";
@@ -178,9 +179,18 @@ bool DefaultGraphRuntime::ResizeKernels() {
       for (auto input : sub_graph_kernel->in_tensors()) {
         if (isolate_input_map->find(input) != isolate_input_map->end()) {
           input->set_shape(isolate_input_map->at(input)->shape());
+          input->set_data_type(isolate_input_map->at(input)->data_type());
+          input->set_format(isolate_input_map->at(input)->format());
         }
       }
       ret = sub_graph_kernel->ReSize();
+      for (auto output : sub_graph_kernel->out_tensors()) {
+        if (isolate_input_map->find(output) != isolate_input_map->end()) {
+          isolate_output_map->at(output)->set_shape(output->shape());
+          isolate_output_map->at(output)->set_data_type(output->data_type());
+          isolate_output_map->at(output)->set_format(output->format());
+        }
+      }
     }
     if (ret == lite::RET_INFER_INVALID) {
       MS_LOG(WARNING) << "DefaultGraphRuntime::ResizeKernels  InferShape is interrupted";

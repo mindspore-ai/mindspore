@@ -115,7 +115,8 @@ int SubGraphKernel::InferShape() {
       infer_ret = RET_INFER_INVALID;
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, type: "
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()));
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
+                    << ", name:" << kernel->name();
       return RET_INFER_ERR;
     }
   }

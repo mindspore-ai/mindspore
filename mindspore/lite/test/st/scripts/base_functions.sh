@@ -460,8 +460,13 @@ function Run_Benchmark() {
           cat adb_run_cmd.txt >> "$4"
           adb -s $8 shell < adb_run_cmd.txt >> "$4"
         else
-          echo './benchmark --enableParallelPredict='${use_parallel_predict}' --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> "$4"
-          ./benchmark --enableParallelPredict=${use_parallel_predict} --inDataFile=${input_files} --modelFile=${model_file} --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} >> "$4"
+          if [[ ${cfg_file_name} =~ "_reconstitution_cloud_process_only" ]]; then  #  for reconstitution extendrt
+            echo './benchmark --enableParallelPredict='${use_parallel_predict}' --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} --provider=mindrt >> "$4"
+            ./benchmark --enableParallelPredict=${use_parallel_predict} --inDataFile=${input_files} --modelFile=${model_file} --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} --provider=mindrt >> "$4"
+          else
+            echo './benchmark --enableParallelPredict='${use_parallel_predict}' --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> "$4"
+            ./benchmark --enableParallelPredict=${use_parallel_predict} --inDataFile=${input_files} --modelFile=${model_file} --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} >> "$4"
+          fi
         fi
         if [ $? = 0 ]; then
             run_result="$6_$7_${mode}_loop: ${model_file##*/} pass"; echo ${run_result} >> $5

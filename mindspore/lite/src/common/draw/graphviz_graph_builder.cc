@@ -35,20 +35,26 @@ inline void ShortName(std::string *str) {
   *str = str->substr(pos + 1);
 }
 
-inline std::string NodeNameForDraw(const AdapterNode &node) {
+inline std::string GetNodeId(const AdapterNode &node) {
+  auto name = node.GetName();
+  StrReplace(&name);
+  return name;
+}
+
+inline std::string GetNodeLabel(const AdapterNode &node) {
   auto name = node.GetName();
   ShortName(&name);
   StrReplace(&name);
   return name;
 }
 
-inline std::string TensorNameForDraw(const lite::Tensor &tensor) {
+inline std::string GetTensorId(const lite::Tensor &tensor) {
   auto name = tensor.tensor_name();
   StrReplace(&name);
   return name;
 }
 
-inline std::string TensorInfoForDraw(const lite::Tensor &tensor) {
+inline std::string GetTensorInfo(const lite::Tensor &tensor) {
   auto tensor_info = FormatEnumToString(tensor.format());
   tensor_info += ", ";
   tensor_info += TypeIdToString(tensor.data_type());
@@ -66,12 +72,14 @@ std::shared_ptr<GVGraph> GVGraphBuilder::Build(const std::shared_ptr<AdapterGrap
   }
   // nodes
   for (const auto *node : graph->GetNodes()) {
-    auto node_name = NodeNameForDraw(*node);
+    auto node_id = GetNodeId(*node);
+    auto node_label = GetNodeLabel(*node);
     for (size_t i = 0; i < node->InputSize(); i++) {
       auto in_tensor = node->GetInput(i);
       if (in_tensor->IsConst()) {
-        auto tensor_name = node_name + "_in_" + std::to_string(i);
-        auto ret = this->AppendWeightNode(*in_tensor, tensor_name);
+        auto tensor_id = node_id + "_in_" + std::to_string(i);
+        auto tensor_label = node_label + "_in_" + std::to_string(i);
+        auto ret = this->AppendWeightNode(*in_tensor, tensor_id, tensor_label);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "Create and append " << i << "th  weight node of " << node->GetName() << " failed.";
           return nullptr;
@@ -94,8 +102,8 @@ std::shared_ptr<GVGraph> GVGraphBuilder::Build(const std::shared_ptr<AdapterGrap
 }
 
 void GVGraphBuilder::AppendGraphInputNode(const lite::Tensor &tensor) {
-  auto tensor_name = TensorNameForDraw(tensor);
-  auto gv_node = lite::GVNode::CreateInput(tensor_name, {tensor_name}, {TensorInfoForDraw(tensor)});
+  auto tensor_id = GetTensorId(tensor);
+  auto gv_node = lite::GVNode::CreateInput(tensor_id, {tensor_id}, {GetTensorInfo(tensor)});
   MS_ASSERT(gv_node != nullptr);
   gv_graph_->AppendNode(gv_node);
   gv_node_out_tensor_map_[&tensor] = std::make_pair(gv_node, 0);
@@ -158,12 +166,12 @@ std::string TensorDataString(const lite::Tensor &tensor) {
 }
 }  // namespace
 
-int GVGraphBuilder::AppendWeightNode(const lite::Tensor &tensor, const std::string &name) {
+int GVGraphBuilder::AppendWeightNode(const lite::Tensor &tensor, const std::string &id, const std::string &label) {
   if (MS_UNLIKELY(!tensor.IsConst())) {
     MS_LOG(ERROR) << "Input `tensor` is not a const tensor.";
     return RET_ERROR;
   }
-  auto gv_node = lite::GVNode::CreateWeight(name, name + TensorDataString(tensor), {name}, {TensorInfoForDraw(tensor)});
+  auto gv_node = lite::GVNode::CreateWeight(id, label + TensorDataString(tensor), {id}, {GetTensorInfo(tensor)});
   MS_ASSERT(gv_node != nullptr);
   gv_graph_->AppendNode(gv_node);
   AppendOutTensorMap(&tensor, gv_node, 0);
@@ -210,15 +218,16 @@ int GVGraphBuilder::AppendGraphOutputNode(const std::vector<lite::Tensor *> &out
 }
 
 GVNode *GVGraphBuilder::CreateComputeNode(const AdapterNode &node) {
-  auto node_name = NodeNameForDraw(node);
+  auto node_id = GetNodeId(node);
+  auto node_label = GetNodeLabel(node);
   std::vector<std::string> output_names;
   std::vector<std::string> output_infos;
   for (auto out_tensor : node.GetOutputs()) {
-    output_names.emplace_back(TensorNameForDraw(*out_tensor));
-    output_infos.emplace_back(TensorInfoForDraw(*out_tensor));
+    output_names.emplace_back(GetTensorId(*out_tensor));
+    output_infos.emplace_back(GetTensorInfo(*out_tensor));
   }
   auto *gv_node =
-    lite::GVNode::CreateCNode(node_name, node.InputSize(), output_names, output_infos, node.IsHighlight());
+    lite::GVNode::CreateCNode(node_id, node_label, node.InputSize(), output_names, output_infos, node.IsHighlight());
   MS_ASSERT(gv_node != nullptr);
   return gv_node;
 }

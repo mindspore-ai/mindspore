@@ -53,19 +53,20 @@ class Edge {
 
 class GVNode {
  public:
-  static GVNode *CreateCNode(const std::string &name, size_t input_size, const std::vector<std::string> &output_names,
+  static GVNode *CreateCNode(const std::string &id, const std::string &label, size_t input_size,
+                             const std::vector<std::string> &output_names, const std::vector<std::string> &output_infos,
+                             bool highlight = false);
+  static GVNode *CreateInput(const std::string &id, const std::vector<std::string> &output_names,
                              const std::vector<std::string> &output_infos, bool highlight = false);
-  static GVNode *CreateInput(const std::string &name, const std::vector<std::string> &output_names,
-                             const std::vector<std::string> &output_infos, bool highlight = false);
-  static GVNode *CreateOutput(const std::string &name, size_t input_size, bool highlight = false);
-  static GVNode *CreateWeight(const std::string &name, const std::string &content,
+  static GVNode *CreateOutput(const std::string &id, size_t input_size, bool highlight = false);
+  static GVNode *CreateWeight(const std::string &id, const std::string &label,
                               const std::vector<std::string> &output_names,
                               const std::vector<std::string> &output_infos, bool highlight = false);
   virtual ~GVNode();
 
   int type() const { return this->type_; }
   std::string prefix() const { return this->prefix_; }
-  std::string name() const { return this->name_; }
+  std::string name() const { return this->id_; }
   size_t input_size() const { return input_size_; }
   size_t output_size() const { return output_size_; }
   const std::vector<Edge *> &inputs() const { return inputs_; }
@@ -74,9 +75,9 @@ class GVNode {
   std::string Code() const;
 
  protected:
-  GVNode(std::string name, std::string content, int type, size_t input_size, size_t output_size, bool highlight = false)
-      : name_(std::move(name)),
-        content_(std::move(content)),
+  GVNode(std::string id, std::string label, int type, size_t input_size, size_t output_size, bool highlight = false)
+      : id_(std::move(id)),
+        label_(std::move(label)),
         type_(type),
         input_size_(input_size),
         output_size_(output_size),
@@ -85,8 +86,8 @@ class GVNode {
   size_t FindCols() const;
 
  private:
-  std::string name_;
-  std::string content_;
+  std::string id_;
+  std::string label_;
   int type_;
   std::string prefix_;
   size_t input_size_{0};
