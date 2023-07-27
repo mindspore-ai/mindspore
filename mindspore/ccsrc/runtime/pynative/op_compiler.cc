@@ -362,8 +362,8 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
 }
 
 #ifdef ENABLE_D
-std::string GetGraphInfoEnableD(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim,
-                                const std::string &graph_info) {
+std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim,
+                                         const std::string &graph_info) {
   std::string ascend_special_info = graph_info;
   auto op_name = op_prim->name();
   auto ms_context = MsContext::GetInstance();
@@ -393,6 +393,18 @@ std::string GetGraphInfoEnableD(const pynative::BaseOpRunInfo &op_info, const Pr
   return ascend_special_info;
 }
 #endif
+
+std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
+  std::set<int64_t> depend_list;
+  auto op_infer_opt = abstract::GetPrimitiveInferImpl(op_prim);
+  if (op_infer_opt.has_value()) {
+    auto op_infer = op_infer_opt.value().Get();
+    if (op_infer != nullptr) {
+      depend_list = op_infer->GetValueDependArgIndices();
+    }
+  }
+  return depend_list;
+}
 
 std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info,
                                              const PrimitivePtr &op_prim) const {
@@ -426,6 +438,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
       graph_info.append(element.second->ToString());
     });
   }
+  auto depend_list = GetInputDependValueList(op_prim);
   for (size_t index = 0; index < op_info.input_tensor.size(); ++index) {
     const auto &input_tensor = op_info.input_tensor[index];
     MS_EXCEPTION_IF_NULL(input_tensor);
@@ -454,8 +467,9 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
       MS_EXCEPTION_IF_NULL(p_address);
       graph_info += p_address->format();
     }
-    // For constant input
-    if (op_info.input_mask[index] == kValueNodeTensorMask) {
+    // For constant input or op depend input value
+    if (op_info.input_mask[index] == kValueNodeTensorMask ||
+        (!depend_list.empty() && depend_list.find(index) != depend_list.end())) {
       graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
     }
     graph_info += "_";
@@ -468,7 +482,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
 
 #ifdef ENABLE_D
   // Ascend special info.
-  graph_info = GetGraphInfoEnableD(op_info, op_prim, graph_info);
+  graph_info = GetGraphInfoForAscendSpecial(op_info, op_prim, graph_info);
 #endif
 
   return graph_info;

@@ -225,6 +225,7 @@ class MIND_API AGEyeInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return EyeInfer(engine, primitive, input_args);
   }
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Eye, prim::kPrimEye, AGEyeInfer, true);
