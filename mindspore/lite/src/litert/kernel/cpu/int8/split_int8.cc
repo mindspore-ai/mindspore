@@ -30,8 +30,10 @@ using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
 int SplitInt8CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), C1NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   auto ret = SplitBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;

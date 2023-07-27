@@ -26,6 +26,7 @@ namespace mindspore::lite::micro::nnacl {
 constexpr int kDouble = 2;
 int PadInt8Coder::Prepare(CoderContext *context) {
   pad_param_ = reinterpret_cast<PadParameter *>(parameter_);
+  MS_CHECK_PTR(pad_param_);
   if (pad_param_->pad_mode_ != static_cast<int>(schema::PaddingMode_CONSTANT)) {
     MS_LOG(ERROR) << "The int8 pad operator only supports PaddingMode_CONSTANT mode at present.";
     return RET_ERROR;

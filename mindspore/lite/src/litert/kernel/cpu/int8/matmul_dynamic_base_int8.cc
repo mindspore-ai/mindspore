@@ -352,6 +352,8 @@ int MatmulDynamicBaseInt8CPUKernel::ReSize() {
 int MatmulDynamicBaseInt8CPUKernel::InitBroadcastParams(const std::vector<int> &a_shape_const,
                                                         const std::vector<int> &b_shape_const, MatMulParameter *params,
                                                         std::vector<int> *a_offsets, std::vector<int> *b_offsets) {
+  CHECK_NULL_RETURN(a_offsets);
+  CHECK_NULL_RETURN(b_offsets);
   std::vector<int> a_shape = a_shape_const;
   if (a_shape.size() < kNCHWDimNumber) {
     size_t add_nums = kNCHWDimNumber - a_shape.size();
