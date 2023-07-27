@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <tuple>
 #include <utility>
+#include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "mindspore/ccsrc/include/common/utils/convert_utils_py.h"
 #include "plugin/device/ascend/hal/hardware/ge_device_context.h"
 #include "include/transform/graph_ir/types.h"
@@ -35,6 +36,7 @@
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
 #include "graph/utils/graph_utils_ex.h"
+#include "mindspore/core/utils/singleton.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -52,6 +54,8 @@ namespace ascend {
 namespace {
 std::mutex g_tsd_mutex;
 void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *const tensors) {
+  const auto &infer_need_update_parameter_names =
+    Singleton<InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   for (auto item : dict) {
     if ((!py::isinstance<py::str>(item.first))) {
       MS_LOG(WARNING) << "Type of key of py_dict is not string, ignore it.";
@@ -59,6 +63,15 @@ void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *con
     }
     std::shared_ptr<tensor::Tensor> tensor;
     std::string name = py::cast<std::string>(item.first);
+    auto env_ge = common::GetEnv("MS_ENABLE_GE");
+    auto env_training = common::GetEnv("MS_GE_TRAIN");
+    bool infer = false;
+    if (env_ge == "1" && env_training != "1") {
+      infer = true;
+    }
+    if (infer && infer_need_update_parameter_names.find(name) == infer_need_update_parameter_names.end()) {
+      continue;
+    }
     if (py::isinstance<py::float_>(item.second.attr("data"))) {
       // convert float to tensor with shape([1])
       tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, std::vector<int64_t>({1}));
@@ -126,6 +139,8 @@ void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, cons
       MS_LOG(INFO) << "Exec broadcast graph success.";
     }
   }
+  auto &infer_need_update_parameter_names = Singleton<InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
+  infer_need_update_parameter_names.clear();
 }
 
 void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {

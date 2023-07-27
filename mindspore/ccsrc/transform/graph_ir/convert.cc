@@ -46,6 +46,7 @@
 #include "ops/structure_ops.h"
 #include "ops/lite_ops.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_desc.h"
@@ -55,6 +56,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
+#include "utils/singleton.h"
 
 namespace mindspore {
 namespace transform {
@@ -500,6 +502,8 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   auto manager = Manage(anf_graph_, true);
   MS_EXCEPTION_IF_NULL(manager);
   const auto &node_users = manager->node_users();
+  auto &infer_need_update_parameter_names =
+    Singleton<mindspore::device::ascend::InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   for (auto it : tensors) {
     std::string name = it.first;
     auto node_itor = params_.find(name);
@@ -578,6 +582,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
         init_ops_.push_back(assign_op);
         init_ops_.push_back(init_var);
         init_data_names_.push_back(name);
+        infer_need_update_parameter_names.insert(name);
       }
 
       auto variable = std::make_shared<Variable>(name);
