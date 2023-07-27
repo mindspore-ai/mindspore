@@ -45,7 +45,6 @@ struct BaseOpRunInfo {
   bool need_earse_cache = false;
   std::string op_name;
   std::string next_op_name;
-  std::string graph_info;
   std::string device_target = "Unknown";
 #if defined(__APPLE__)
   int next_input_index = 0;

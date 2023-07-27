@@ -1661,9 +1661,6 @@ ValuePtr DynamicOpRun(ResMgrHandle res_mgr, const FrontendOpRunInfoPtr &op_run_i
   auto device_id = ms_context->get_param<uint32_t>(mindspore::MS_CTX_DEVICE_ID);
   ms_context->set_param<bool>(mindspore::MS_CTX_ENABLE_PYNATIVE_INFER, true);
   mindspore::pynative::PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, nullptr);
-  // get graph info for checking it whether existing in the cache
-  op_run_info->base_op_run_info.graph_info = mindspore::pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(
-    op_run_info->base_op_run_info, op_run_info->op_grad_info->op_prim);
   auto backend_op_run_info = std::make_shared<mindspore::BackendOpRunInfo>(
     op_run_info->base_op_run_info, std::make_shared<mindspore::Primitive>(*op_run_info->op_grad_info->op_prim), true,
     false);
