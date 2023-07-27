@@ -49,6 +49,7 @@ const BaseRef AddInputStructuralForPyExecute::DefinePattern() const {
 }
 const AnfNodePtr AddInputStructuralForPyExecute::Process(const FuncGraphPtr &, const AnfNodePtr &node,
                                                          const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(node);
   if (!common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute)) {
     return nullptr;
   }

@@ -31,7 +31,6 @@ class ReduceOptimizer : public PatternProcessPass {
  private:
   AnfNodePtr NewRankOp(const AnfNodePtr &cnode, const KernelGraphPtr &kernel_graph) const;
   AnfNodePtr NewRangeOp(const AnfNodePtr &rank_op, const KernelGraphPtr &kernel_graph) const;
-  AnfNodePtr InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &) const;
   AnfNodePtr NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const;
   AnfNodePtr HandleAxisWithEmptyTensor(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
                                        const AnfNodePtr &axis_input) const;

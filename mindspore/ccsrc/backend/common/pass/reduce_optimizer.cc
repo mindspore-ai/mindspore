@@ -16,6 +16,8 @@
 
 #include "backend/common/pass/reduce_optimizer.h"
 #include <vector>
+#include <set>
+#include <string>
 #include "ops/math_op_name.h"
 #include "ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
@@ -68,13 +70,6 @@ AnfNodePtr ReduceOptimizer::NewRangeOp(const AnfNodePtr &rank_op, const KernelGr
   MS_EXCEPTION_IF_NULL(range_op);
   range_op->set_abstract(rank_op->abstract());
   return range_op;
-}
-
-AnfNodePtr ReduceOptimizer::InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &) const {
-  // the input dim is unknown, need rank + range, don't supported now;
-  MS_LOG(EXCEPTION)
-    << "Can not support the case that input is dim unknown and axis is empty or axis contain value less 0. node: "
-    << trace::DumpSourceLines(cnode);
 }
 
 AnfNodePtr ReduceOptimizer::CreateValueNodeWithVector(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
