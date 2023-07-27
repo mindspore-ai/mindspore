@@ -389,6 +389,7 @@ std::vector<AnfNodePtr> InsertTensorMoveForGraphOutput(const FuncGraphPtr &graph
         }
         break;
       }
+      MS_EXCEPTION_IF_NULL(output_pair.first);
       if (next_node == output_pair.first->cast<CNodePtr>()) {
         find = true;
         break;
@@ -399,6 +400,7 @@ std::vector<AnfNodePtr> InsertTensorMoveForGraphOutput(const FuncGraphPtr &graph
     }
     auto tensor_move = CreateTensorMoveOp(graph, next_node);
     auto kernel_info = std::make_shared<device::KernelInfo>();
+    MS_EXCEPTION_IF_NULL(tensor_move);
     tensor_move->set_kernel_info(kernel_info);
     (void)manager->Replace(next_node, tensor_move);
     ret.push_back(tensor_move);
@@ -636,6 +638,7 @@ CNodePtr CreateMakeTupleNode(const FuncGraphPtr &func_graph, const std::vector<A
                   (void)make_tuple_abstract.emplace_back(node->abstract());
                 });
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  MS_EXCEPTION_IF_NULL(make_tuple);
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(make_tuple_abstract));
   return make_tuple;
 }
@@ -694,6 +697,7 @@ CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, cons
     shape = AnfAlgo::GetOutputDetailShape(node, 0);
   }
   CNodePtr new_cast = NewCNode(new_cast_inputs, func_graph, {node});
+  MS_EXCEPTION_IF_NULL(new_cast);
   new_cast->set_scope(node->scope());
   new_cast->set_abstract(node->abstract());
   common::AnfAlgo::SetNodeAttr(kAttrDstType, MakeValue(static_cast<size_t>(dst_type)), new_cast);
@@ -872,6 +876,7 @@ std::pair<AbstractBasePtr, size_t> RectifyAbstractFromStructuralAttr(const Value
     for (size_t i = 0; i < seq_value->size(); ++i) {
       auto [abs, offset_inner] =
         RectifyAbstractFromStructuralAttr((*seq_value)[i], input_abstract, list_start_vec, input_index + offset);
+      MS_EXCEPTION_IF_NULL(abs);
       if (abs->isa<abstract::AbstractSequence>() &&
           std::find(list_start_vec.begin(), list_start_vec.end(), input_index + offset) != list_start_vec.end()) {
         auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
@@ -880,6 +885,7 @@ std::pair<AbstractBasePtr, size_t> RectifyAbstractFromStructuralAttr(const Value
                                      [](const AbstractBasePtr &abs) { return abs->isa<abstract::AbstractSequence>(); });
         if (!is_nested) {
           const auto &first_abs_in_list = input_abstract[input_index + offset];
+          MS_EXCEPTION_IF_NULL(first_abs_in_list);
           if (!first_abs_in_list->has_user_data<kernel::PyExecuteOutputUserData>()) {
             MS_LOG(INTERNAL_EXCEPTION) << "List input abstract PyExecuteOutputUserData not found.";
           }
@@ -907,13 +913,14 @@ std::pair<AbstractBasePtr, size_t> RectifyAbstractFromStructuralAttr(const Value
 }
 
 AbstractBasePtr RectifyEmptyTupleAbstract(const ValuePtr &structural) {
+  MS_EXCEPTION_IF_NULL(structural);
   if (!structural->isa<ValueTuple>()) {
     MS_LOG(EXCEPTION) << "input abstract is out of range.";
   }
 
   auto value_tuple = structural->cast_ptr<ValueTuple>();
   std::vector<AbstractBasePtr> abs_list;
-
+  MS_EXCEPTION_IF_NULL(value_tuple);
   for (size_t i = 0; i < value_tuple->size(); ++i) {
     auto item = (*value_tuple)[i];
     (void)abs_list.emplace_back(RectifyEmptyTupleAbstract(item));
@@ -934,6 +941,7 @@ AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const ValuePtr &tupl
   size_t input_index = 0;
   for (size_t i = 0; i < tuple_structural_value->size(); ++i) {
     auto item = (*tuple_structural_value)[i];
+    MS_EXCEPTION_IF_NULL(item);
     if (input_abstract.size() <= input_index) {
       // The Ori  Node : Oper(a, b, ())  ==> Oper(a, b)  with structural --> (-1, -1 , ())
       // The abstract size will be smaller than the attr of tuple input structural.
@@ -1189,6 +1197,7 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
   }
 
   PrimitivePtr prim_clone = prim;
+  MS_EXCEPTION_IF_NULL(prim_clone);
   std::string me_name;
   std::string ori_name;
   bool ir_change = false;
@@ -1230,6 +1239,7 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
 AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(prim);
   PrimitivePtr prim_clone = prim;
+  MS_EXCEPTION_IF_NULL(prim_clone);
   std::string me_name;
   std::string ori_name;
   bool ir_change = false;
@@ -1346,6 +1356,7 @@ size_t GetInputNodeIndex(const AnfNodePtr &input, const CNodePtr &user_node) {
 
 int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
                          std::vector<AnfNodePtr> *plant_inputs) {
+  MS_EXCEPTION_IF_NULL(tuple_input);
   if (!common::AnfAlgo::IsTupleOutput(tuple_input)) {
     auto abs = tuple_input->abstract();
     MS_EXCEPTION_IF_NULL(abs);
@@ -1419,6 +1430,7 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
   // If there is dynamic input, set the dyn_input_sizes as an attribute and update the inputs.
   if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
     auto new_cnode = NewCNode(plant_inputs, graph, {cnode_ptr});
+    MS_EXCEPTION_IF_NULL(new_cnode);
     new_cnode->set_abstract(cnode_ptr->abstract());
     new_cnode->set_scope(cnode_ptr->scope());
     new_cnode->set_primal_attrs(cnode_ptr->primal_attrs());

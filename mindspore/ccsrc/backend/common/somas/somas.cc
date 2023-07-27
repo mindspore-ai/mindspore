@@ -826,6 +826,7 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
                                  << prenode_index.first->fullname_with_scope() << "] is not init.";
     }
     SomasNodePtr pre_somas_node = iter->second.at(0);
+    MS_EXCEPTION_IF_NULL(pre_somas_node);
     if (prenode_index.second > pre_somas_node->output_tensors_.size()) {
       MS_LOG(INTERNAL_EXCEPTION) << "Output index " << prenode_index.second << " exceed input node ["
                                  << prenode_index.first->fullname_with_scope() << "]'s outputs size "
