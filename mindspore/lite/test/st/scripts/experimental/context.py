@@ -160,8 +160,7 @@ class Context:
                                      help="Exit test if any model failed. for example: yes, true, False, No, 0")
 
     def __str__(self):
-        return "*" * 10 + "MindSpore Lite Test Context:" + "*" * 10 + \
-               "Test config: \r\n" + \
+        return "*" * 10 + "MindSpore Lite Test Context:" + "*" * 10 + "\r\n" + \
                f"fmk: {str(self.fmk)}\r\n" + \
                f"mode: {str(self.mode)}\r\n" + \
                f"exit on failed: {str(self.exit_on_failed)}\r\n" + \

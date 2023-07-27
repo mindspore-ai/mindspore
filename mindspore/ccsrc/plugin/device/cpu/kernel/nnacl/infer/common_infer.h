@@ -66,6 +66,7 @@ void SetShapeArray(TensorC *dst, const int *src, size_t src_size);
 void ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size_t src_shape_size);
 bool Int64ShapeSet(int *dst_shape, size_t *dst_shape_size, const int64_t *src_shape, size_t src_shape_size);
 void ShapePush(int *shape, size_t *shape_size, int value);
+int GetInt32DataFromTensor(const TensorC *tensor, int *result, size_t *result_size);
 int ShapeInsert(int *shape, size_t *shape_size, int index, int value);
 int ShapeErase(int *shape, size_t *shape_size, int index);
 bool ShapeEqual(const int *shape0, size_t shape0_size, const int *shape1, size_t shape1_size);

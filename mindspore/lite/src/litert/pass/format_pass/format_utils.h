@@ -24,7 +24,9 @@
 namespace mindspore::lite::pass {
 static const std::unordered_map<std::string, std::vector<size_t>> cloud_format_kernel_list = {
   {"AvgPool", {0}},
+  {"AvgPoolFusion", {0}},
   {"MaxPool", {0}},
+  {"MaxPoolFusion", {0}},
   {"BatchNorm", {0}},
   {"BatchNormWithActivation", {0}},
   {"BatchNormWithAddAndActivation", {0}},
@@ -32,6 +34,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> cloud_format_k
   {"Conv2D", {0, 1}},
   {"Conv2DFusion", {0, 1}},
   {"Conv2DTranspose", {0, 1}},
+  {"Conv2dTransposeFusion", {0, 1}},
   {"DepthToSpace", {0}},
   {"FusedBatchNorm", {0}},
   {"InstanceNorm", {0}},

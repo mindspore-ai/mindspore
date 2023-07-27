@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/pooling_parameter.h"
 #include "ops/fusion/avg_pool_fusion.h"
 #include "ops/fusion/max_pool_fusion.h"
@@ -85,7 +86,7 @@ OpParameter *PopulateAvgPoolOpParameter(const BaseOperatorPtr &base_operator) {
   }
 
   param->pool_mode_ = PoolMode_AvgPool;
-  param->global_ = op->get_global();
+  param->global_ = GetAttrWithDefault<bool>(base_operator, ops::kGlobal, false);
   auto strides = op->get_strides();
   if (strides.size() < DIMENSION_2D) {
     MS_LOG(ERROR) << "strides is invalid!";
@@ -113,7 +114,9 @@ OpParameter *PopulateAvgPoolOpParameter(const BaseOperatorPtr &base_operator) {
   }
 
   UpdateOpRoundMode(op->get_round_mode(), param);
-  UpdateOpActivationType(op->get_activation_type(), param);
+  auto act_type = static_cast<ActivationType>(
+    GetAttrWithDefault<int64_t>(base_operator, ops::kActivationType, ActivationType::NO_ACTIVATION));
+  UpdateOpActivationType(act_type, param);
   UpdateOpPadMode(op->get_pad_mode(), param);
 
   if (CheckOpPoolingParam(param) != RET_OK) {
@@ -137,7 +140,7 @@ OpParameter *PopulateMaxPoolOpParameter(const BaseOperatorPtr &base_operator) {
   }
 
   param->pool_mode_ = PoolMode_MaxPool;
-  param->global_ = op->get_global();
+  param->global_ = GetAttrWithDefault<bool>(base_operator, ops::kGlobal, false);
   if (!param->global_) {
     auto kernel_size = op->get_kernel_size();
     auto strides = op->get_strides();
@@ -160,7 +163,9 @@ OpParameter *PopulateMaxPoolOpParameter(const BaseOperatorPtr &base_operator) {
   }
 
   UpdateOpRoundMode(op->get_round_mode(), param);
-  UpdateOpActivationType(op->get_activation_type(), param);
+  auto act_type = static_cast<ActivationType>(
+    GetAttrWithDefault<int64_t>(base_operator, ops::kActivationType, ActivationType::NO_ACTIVATION));
+  UpdateOpActivationType(act_type, param);
   UpdateOpPadMode(op->get_pad_mode(), param);
 
   if (CheckOpPoolingParam(param) != RET_OK) {

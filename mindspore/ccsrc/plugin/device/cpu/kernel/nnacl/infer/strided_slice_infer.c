@@ -63,19 +63,20 @@ int HandleAxesCheckNull(const TensorC *input_tensor, const TensorC *begin_tensor
 
 int HandleAxesInputNotExist(const TensorC *const *inputs, struct StridedSliceTransferBuffer *transfer_buffer) {
   const TensorC *begin_tensor = inputs[1];
-  int *begin_data = (int *)(begin_tensor->data_);
   const TensorC *end_tensor = inputs[2];
-  int *end_data = (int *)(end_tensor->data_);
   const TensorC *stride_tensor = inputs[3];
-  int *stride_data = (int *)(stride_tensor->data_);
-  if (begin_data == NULL || end_data == NULL || stride_data == NULL) {
-    return NNACL_ERR;
+  int ret = GetInt32DataFromTensor(begin_tensor, transfer_buffer->begins_, &transfer_buffer->begins_size_);
+  if (ret != NNACL_OK) {
+    return ret;
   }
   transfer_buffer->ndim_ = GetElementNum(begin_tensor);
-  for (int i = 0; i < transfer_buffer->ndim_; ++i) {
-    ShapePush(transfer_buffer->begins_, &transfer_buffer->begins_size_, begin_data[i]);
-    ShapePush(transfer_buffer->ends_, &transfer_buffer->ends_size_, end_data[i]);
-    ShapePush(transfer_buffer->strides_, &transfer_buffer->strides_size_, stride_data[i]);
+  ret = GetInt32DataFromTensor(end_tensor, transfer_buffer->ends_, &transfer_buffer->ends_size_);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+  ret = GetInt32DataFromTensor(stride_tensor, transfer_buffer->strides_, &transfer_buffer->strides_size_);
+  if (ret != NNACL_OK) {
+    return ret;
   }
   return NNACL_OK;
 }
@@ -111,9 +112,20 @@ int GenerateAxes(const TensorC *axes_tensor, int *axes, int num, int ndim) {
 int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape, int *begins, int *strides, int *ends) {
   const TensorC *input_tensor = inputs[0];
   const TensorC *begin_tensor = inputs[1];
-  int *begin_data = (int *)(begin_tensor->data_);
+  int begin_data[MAX_SHAPE_SIZE];
+  size_t begin_data_size;
+  int ret = GetInt32DataFromTensor(begin_tensor, begin_data, &begin_data_size);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+
   const TensorC *end_tensor = inputs[2];
-  int *end_data = (int *)(end_tensor->data_);
+  int end_data[MAX_SHAPE_SIZE];
+  size_t end_data_size;
+  ret = GetInt32DataFromTensor(end_tensor, end_data, &end_data_size);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
 
   int handle_check_ret = HandleAxesCheckNull(input_tensor, begin_tensor, begin_data, end_tensor, end_data);
   if (handle_check_ret != NNACL_OK) {
@@ -134,7 +146,7 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
 
   const TensorC *axes_tensor = inputs[3];
   int axes[MAX_SHAPE_SIZE] = {0};
-  int ret = GenerateAxes(axes_tensor, axes, begin_ndim, *ndim);
+  ret = GenerateAxes(axes_tensor, axes, begin_ndim, *ndim);
   if (ret != NNACL_OK) {
     return ret;
   }

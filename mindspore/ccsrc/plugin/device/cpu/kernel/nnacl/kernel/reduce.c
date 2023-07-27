@@ -178,6 +178,15 @@ int ReduceCheckInputsOutputs(ReduceStruct *reduce) {
   for (size_t i = 0; i < reduce->base_.out_size_; i++) {
     NNACL_CHECK_NULL_RETURN_ERR(reduce->base_.out_[i]);
   }
+  TensorC *input_tensor = reduce->base_.in_[FIRST_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(input_tensor);
+  if (reduce->base_.in_size_ > ONE_TENSOR) {
+    TensorC *axes_tensor = reduce->base_.in_[SECOND_INPUT];
+    NNACL_CHECK_NULL_RETURN_ERR(axes_tensor);
+    NNACL_CHECK_FALSE(axes_tensor->data_type_ != kNumberTypeInt && axes_tensor->data_type_ != kNumberTypeInt32 &&
+                        axes_tensor->data_type_ != kNumberTypeInt64,
+                      NNACL_REDUCE_AXES_TENSOR_ERROR);
+  }
   return NNACL_OK;
 }
 
@@ -193,12 +202,7 @@ int ReduceCommonPrepare(ReduceStruct *reduce) {
   }
 
   TensorC *axes_tensor = reduce->base_.in_[SECOND_INPUT];
-  NNACL_CHECK_NULL_RETURN_ERR(axes_tensor);
-  NNACL_CHECK_FALSE(axes_tensor->data_type_ != kNumberTypeInt && axes_tensor->data_type_ != kNumberTypeInt32,
-                    NNACL_REDUCE_AXES_TENSOR_ERROR);
-
   reduce->num_axes_ = GetElementNum(axes_tensor);
-
   if (axes_tensor->data_ != NULL && (reduce->num_axes_ <= 0 || reduce->num_axes_ > MAX_SHAPE_SIZE)) {
     return NNACL_REDUCE_AXES_TENSOR_ERROR;
   }
@@ -208,8 +212,15 @@ int ReduceCommonPrepare(ReduceStruct *reduce) {
       reduce->axes_[i] = i;
     }
   } else {
-    NNACL_CHECK_FALSE(GetSize(axes_tensor) == 0, NNACL_REDUCE_AXES_TENSOR_ERROR);
-    (void)memcpy(reduce->axes_, axes_tensor->data_, GetSize(axes_tensor));
+    if (axes_tensor->data_type_ == kNumberTypeInt32 || axes_tensor->data_type_ == kNumberTypeInt) {
+      NNACL_CHECK_FALSE(GetSize(axes_tensor) == 0, NNACL_REDUCE_AXES_TENSOR_ERROR);
+      (void)memcpy(reduce->axes_, axes_tensor->data_, GetSize(axes_tensor));
+    } else {
+      int64_t *axes_data = axes_tensor->data_;
+      for (size_t i = 0; i < reduce->num_axes_; i++) {
+        reduce->axes_[i] = (int32_t)axes_data[i];
+      }
+    }
   }
 
   return NNACL_OK;

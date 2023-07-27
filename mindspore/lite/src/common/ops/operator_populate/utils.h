@@ -20,17 +20,21 @@
 #include <string>
 #include "ops/base_operator.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 template <typename T>
 T GetAttrWithDefault(const BaseOperatorPtr &base_operator, const std::string &key, T default_value) {
-  auto attr = base_operator->GetPrim()->GetAttr(key);
-  if (attr != nullptr) {
-    return GetValue<T>(attr);
-  } else {
+  if (MS_UNLIKELY(base_operator == nullptr)) {
     return default_value;
   }
+  auto prim = base_operator->GetPrim();
+  if (MS_UNLIKELY(prim == nullptr)) {
+    return default_value;
+  }
+  auto attr = prim->GetAttr(key);
+  if (attr == nullptr) {
+    return default_value;
+  }
+  return GetValue<T>(attr);
 }
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_COMMON_OPS_OPERATOR_POPULATE_UTILS_H_
