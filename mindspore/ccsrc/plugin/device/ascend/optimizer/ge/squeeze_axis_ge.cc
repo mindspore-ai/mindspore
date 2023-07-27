@@ -46,6 +46,9 @@ const AnfNodePtr SqueezeAxisGe::Process(const FuncGraphPtr &graph, const AnfNode
     const auto dim = shape_vec.size();
     std::vector<int64_t> axis;
     for (size_t i = 0; i < dim; ++i) {
+      if (shape_vec[i] != 1) {
+        continue;
+      }
       (void)axis.emplace_back(i);
     }
     prim->set_attr(kAttrAxis, MakeValue(axis));
