@@ -429,6 +429,7 @@ void SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(const AnalysisEnginePtr
                                                          const CNodePtr &cnode,
                                                          const AbstractFunctionPtr &base_func_graph_func,
                                                          const AnalysisContextPtr &fg_context);
+EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs);
 }  // namespace abstract
 }  // namespace mindspore
 
