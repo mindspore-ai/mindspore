@@ -70,7 +70,6 @@ def test_fallback_hasattr_asnumpy():
     assert res
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
