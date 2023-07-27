@@ -132,6 +132,7 @@ std::vector<transform::GeTensorPtr> GetInputTensors(const FuncGraphPtr &anf_grap
 
 void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
   MS_LOG(DEBUG) << "ExecInitGraph start.";
+  MS_EXCEPTION_IF_NULL(anf_graph);
 
   transform::RunOptions run_options;
   run_options.name = "init_subgraph." + anf_graph->ToString();
@@ -296,6 +297,7 @@ struct GraphSummary {
 };
 
 std::map<std::string, ParameterPtr> FilterAllParameters(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   std::map<std::string, ParameterPtr> ret;
   std::vector<AnfNodePtr> todo = kernel_graph->inputs();
   (void)todo.insert(todo.end(), kernel_graph->child_graph_result().begin(), kernel_graph->child_graph_result().end());
@@ -691,6 +693,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   MS_EXCEPTION_IF_NULL(graph);
   if (common::IsEnableRefMode()) {
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+    MS_EXCEPTION_IF_NULL(kg);
     return CompileGraph(kg, compile_options);
   } else {
     MS_EXCEPTION_IF_NULL(graph);

@@ -45,6 +45,7 @@ constexpr char kOperatorOriginFormat[] = "operator_origin_format";
 constexpr char kKernelObjectTypeNotSupportedStr[] = "KernelObjectTypeNotSupported";
 
 abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
   // Other abstract class, such as AbstractCSRTensor and AbstractCOOTensor, is converted to AbstractTensor early time.
   abstract::BaseShapePtr res_shape;
   if (abs->isa<abstract::AbstractTensor>() || abs->isa<abstract::AbstractMapTensor>()) {
@@ -58,6 +59,7 @@ abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr
 }
 
 abstract::AbstractBasePtr GetChildAbstract(const abstract::AbstractBasePtr &cur_abstract, size_t idx) {
+  MS_EXCEPTION_IF_NULL(cur_abstract);
   abstract::AbstractBasePtr child_abs = cur_abstract;
   if (cur_abstract->isa<abstract::AbstractTuple>()) {
     auto abs_tuple = cur_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
@@ -78,6 +80,7 @@ abstract::AbstractBasePtr GetChildAbstract(const abstract::AbstractBasePtr &cur_
 KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type, size_t idx,
                                    const ShapeVector &device_shape_adaptively, const std::string &format_str,
                                    bool prev_node_has_getitem = false) {
+  MS_EXCEPTION_IF_NULL(cur_abstract);
   abstract::AbstractBasePtr tag_abstract = nullptr;
   if (prev_node_has_getitem) {
     tag_abstract = cur_abstract;
@@ -118,6 +121,8 @@ KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract
 }
 
 void AdditionalAttrProcess(const ops::PrimitiveCPtr &primc, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(primc);
+  MS_EXCEPTION_IF_NULL(cnode);
   mindspore::HashMap<std::string, ValuePtr> additional_attrs;
   additional_attrs[kOperatorOriginFormat] = MakeValue(AnfAlgo::GetOriginDataFormat(cnode));
   (void)primc->SetAttrs(additional_attrs);
@@ -134,6 +139,7 @@ bool CheckRealTupleFromCNode(const std::vector<mindspore::kernel::KernelObjectTy
 
 using InOutKernelTensors = std::pair<std::vector<KernelTensorPtr>, std::vector<KernelTensorPtr>>;
 inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
   // Makeup input KernelTensors, meta_types can be tensor, scalar, tuple, list.
   std::vector<KernelTensorPtr> input_tensors;
   auto real_input_types = AnfAlgo::GetAllInputDeviceTypes(cnode);
@@ -186,6 +192,7 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
 inline InOutKernelTensors AbstractInOutFromDeviceAddress(
   KernelMod *const kernel_mod, const std::vector<device::DeviceAddressPtr> &inputs_device_address,
   const std::vector<device::DeviceAddressPtr> &outputs_device_address, const AbstractBasePtr &out_abstract) {
+  MS_EXCEPTION_IF_NULL(out_abstract);
   // Makeup input KernelTensors, meta_types can be tensor, scalar, tuple, list.
   auto &input_tensors = kernel_mod->GetInputs();
   size_t input_num = inputs_device_address.size();
@@ -465,6 +472,7 @@ bool SetOutputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &ou
 void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std::vector<TypeId> &input_types,
                         const std::vector<std::string> &output_formats, const std::vector<TypeId> &output_types,
                         const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   if (kernel_node->kernel_info() == nullptr) {
     kernel_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   }
@@ -512,6 +520,7 @@ void SetKernelBuildInfo(const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBu
 bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr, Processor processor,
                    std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   size_t real_input_num = AnfAlgo::GetInputElementNum(kernel_node);
   size_t real_output_num = AnfAlgo::GetOutputElementNum(kernel_node);
@@ -880,6 +889,7 @@ bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<Ker
 }
 
 std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto GetObjectTypeStr = [](const std::vector<TypeId> &object_types) {
     std::vector<std::string> object_type_strs;
     (void)std::transform(object_types.begin(), object_types.end(), std::back_inserter(object_type_strs), TypeIdLabel);
@@ -982,6 +992,7 @@ void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
 }
 
 int64_t CalOutputTupleSize(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   bool is_bprop_cut = common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimBpropCut);
   bool skip = (is_bprop_cut && node->abstract()->isa<abstract::AbstractSparseTensor>());
   if (skip || !common::AnfAlgo::IsTupleOutput(node)) {

@@ -75,6 +75,7 @@ std::optional<std::vector<double>> TryGetFloatValueFromInputs(const std::vector<
 
 bool TryGetFloatValue(const CNodePtr &kernel_node, const size_t input_index, std::vector<double> *attr_value,
                       bool data_from_host) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto args = GetArgsFromCNode(kernel_node);
   if (args == nullptr) {
     return false;
@@ -140,6 +141,7 @@ std::optional<std::vector<int64_t>> TryGetIntValueFromInputs(const std::vector<K
 
 bool TryGetIntValue(const CNodePtr &kernel_node, const size_t input_index, std::vector<int64_t> *attr_value,
                     bool data_from_host) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto args = GetArgsFromCNode(kernel_node);
   if (args == nullptr) {
     return false;

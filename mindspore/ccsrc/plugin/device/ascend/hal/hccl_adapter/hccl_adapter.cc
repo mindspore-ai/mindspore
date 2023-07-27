@@ -314,6 +314,7 @@ bool HcclAdapter::GenTask(const AnfNodePtr &node, HcclDataType datatype,
 }
 
 int64_t HcclAdapter::CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType datatype) const {
+  MS_EXCEPTION_IF_NULL(node);
   if (ops_kernel_builder_ == nullptr) {
     MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Hccl ops kernel builder is null, may not be inited. "
                          "Please call HCCL init() first.";

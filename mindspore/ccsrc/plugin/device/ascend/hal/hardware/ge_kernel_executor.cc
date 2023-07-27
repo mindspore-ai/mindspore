@@ -82,6 +82,7 @@ std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> Que
 
 std::string KernelSelectDebugString(const kernel::KernelBuildInfo *build_info,
                                     const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
+  MS_EXCEPTION_IF_NULL(build_info);
   std::ostringstream output_buffer;
   output_buffer << std::endl;
   output_buffer << "need build info: " << std::endl;
@@ -129,6 +130,7 @@ TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
 }
 
 void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_type) {
+  MS_EXCEPTION_IF_NULL(kernel);
   std::vector<std::string> input_formats;
   std::vector<std::string> output_formats;
   std::vector<std::string> input_reshape_types;
@@ -203,6 +205,7 @@ void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_
 
 bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
   for (const auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
     if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {
       kernel_mod_ptr = kernel::AclOpBuild(kernel);
@@ -384,6 +387,7 @@ bool GeKernelExecutor::PySyncRuning() const {
 
 bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs,
                                        const vector<AddressPtr> &outputs) const {
+  MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Launch MemoryCopyAsync instead for kernel " << node->fullname_with_scope();
   if (inputs.size() != 1 || outputs.size() != 1) {
     MS_LOG(DEBUG) << "Kernel " << node->fullname_with_scope() << " input output size should be 1 but"
@@ -405,12 +409,12 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Addres
 bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
                                     const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
                                     size_t stream_id) const {
+  MS_EXCEPTION_IF_NULL(kernel);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto graph_id = AnfAlgo::GetGraphId(kernel.get());
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   KernelType kernel_type = AnfAlgo::GetKernelType(kernel);
-  MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(res_manager_);
   (void)res_manager_->BindDeviceToCurrentThread(false);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
