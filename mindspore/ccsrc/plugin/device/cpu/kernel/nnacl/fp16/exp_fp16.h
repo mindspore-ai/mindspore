@@ -40,18 +40,21 @@ static inline void single_exp_fp16(float16_t src, float16_t *dst) {
   static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};
   int integer;
   if (src > 0) {
-    src = MSMIN(88.0f, src);
+    src = MSMIN(88.72283935546875f, src);
     integer = (float)src * 1.44269504088896341f + 0.5f;
   } else {
-    src = MSMAX(-88.0f, src);
+    src = MSMAX(-87.3365478515625f, src);
     integer = (float)src * 1.44269504088896341f - 0.5f;
   }
+  const int shift = 23;
+  const int bias = 126;
+  const float factor = 2;
   float decimal = (float)src - integer * param[0];
-  int int_exp = (integer + 127) << 23;
+  int int_exp = (integer + bias) << shift;
   const float decimal_exp =
     1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
   float *tmp = (float *)(&int_exp);
-  *dst = (float16_t)(*(tmp)*decimal_exp);
+  *dst = (float16_t)(*(tmp)*decimal_exp * factor);
 }
 
 #ifdef __cplusplus

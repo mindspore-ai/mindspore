@@ -69,7 +69,7 @@ def test_mish(data_shape, data_type):
     """
     context.set_context(mode=context.GRAPH_MODE)
     x = np.random.random(data_shape).astype(data_type)
-    error = 1e-6
+    error = 1e-4
     if data_type == np.float16:
         error = 1e-3
     benchmark_output = mish_np_bencmark(x)
@@ -94,7 +94,7 @@ def test_mish_vmap():
     data_shape = (10, 4, 5, 7)
     data_type = np.float32
     input_x = np.random.random(data_shape).astype(data_type)
-    error = 1e-6
+    error = 1e-4
     benchmark_output = mish_np_bencmark(input_x)
     mish = MishNet()
     in_axes = 0
@@ -117,7 +117,7 @@ def test_mish_dy_shape():
     data_type = np.float32
     data_shape = (4, 5, 7)
     x = np.random.random(data_shape).astype(data_type)
-    loss = 1e-6
+    loss = 1e-4
     benchmark_output = mish_np_bencmark(x)
     mish = MishNet()
     input_dyn = Tensor(shape=[4, 5, None], dtype=ms_data_type)

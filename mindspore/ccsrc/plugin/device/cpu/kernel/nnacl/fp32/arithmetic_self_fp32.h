@@ -61,6 +61,8 @@ int ElementReciprocal(const float *input, float *output, const int element_size)
 int ElementErf(const float *input, float *output, const int element_size);
 
 int ElementIsFinite(const float *input, bool *output, const int element_size);
+
+int ElementMish(const float *input, float *output, const int element_size);
 #ifdef __cplusplus
 }
 #endif

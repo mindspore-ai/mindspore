@@ -222,6 +222,9 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
 
 int Softplus(const float *src, int length, float *dst) {
   int i = 0;
+
+  SIMD_RUN_NO_SCALAR(Softplus, i, src, length, dst);
+
   for (; i < length; ++i) {
     simd_exp32(src[i], dst + i);
     dst[i] = log1p(dst[i]);
