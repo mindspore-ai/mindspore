@@ -1393,6 +1393,12 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
   if (type == LAYER_NORM) {
     return PrepareLayerNorm(ops, iter_ops, basic_stra);
   }
+  // Dropout's strategy shape must be 1.
+  if (type == DROPOUT_DO_MASK) {
+    stra.clear();
+    stra.push_back(basic_stra);
+    return stra;
+  }
 
   return CheckDivisible(ops, iter_ops, basic_stra);
 }
@@ -2097,7 +2103,7 @@ void RecStrategyPropagator::FixInvalidStra() {
     }
     StrategyPtr old_strategys = op->selected_strategy();
     Strategies new_strategys;
-    for (size_t iter_op_inputs = 0; iter_op_inputs < op->inputs_shape().size(); iter_op_inputs++) {
+    for (size_t iter_op_inputs = 0; iter_op_inputs < old_strategys->GetInputDim().size(); iter_op_inputs++) {
       Dimensions stra;
       for (size_t iter_op_input_stra = 0; iter_op_input_stra < op->inputs_shape()[iter_op_inputs].size();
            iter_op_input_stra++) {
