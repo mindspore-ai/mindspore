@@ -19,6 +19,8 @@
 #include <string>
 #include "common/common_test.h"
 #include "utils/ms_context.h"
+#include "mindapi/base/shape_vector.h"
+#include "base/base.h"
 
 namespace mindspore::ops {
 class TestOps : public UT::Common {
@@ -38,6 +40,22 @@ class TestOps : public UT::Common {
 
  private:
   std::string origin_device_target_;
+};
+
+struct EltwiseOpParams {
+  ShapeVector x_shape;
+  TypePtr x_type;
+  ShapeVector out_shape;
+  TypePtr out_type;
+};
+
+struct BroadcastOpParams {
+  ShapeVector x_shape;
+  TypePtr x_type;
+  ShapeVector y_shape;
+  TypePtr y_type;
+  ShapeVector out_shape;
+  TypePtr out_type;
 };
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_TESTS_UT_CPP_OPS_TEST_OPS_H_
