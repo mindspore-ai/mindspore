@@ -128,6 +128,7 @@ std::vector<int64_t> CalGenMaskV3OutputShape(const std::vector<int64_t> &shape, 
 
 std::shared_ptr<abstract::AbstractTensor> GetDropoutMaskShapeAbstract(const abstract::ShapePtr &input_shape,
                                                                       const CNodePtr &dropout, bool use_v3) {
+  MS_EXCEPTION_IF_NULL(input_shape);
   std::shared_ptr<abstract::AbstractTensor> gen_mask_abstract;
   if (input_shape->IsDynamic() || (dropout != nullptr && common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, dropout))) {
     ShapeVector mask_shp = {abstract::Shape::kShapeDimAny};
@@ -312,6 +313,7 @@ void UpdateReturnNode(const FuncGraphPtr &graph, const AnfNodePtr &origin_node, 
   }
 
   auto g_output = graph->NewCNode(make_tuple_inputs);
+  MS_EXCEPTION_IF_NULL(g_output);
   auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
   g_output->set_abstract(abstract);
   graph->set_output(g_output);
@@ -337,6 +339,7 @@ AnfNodePtr BuildDropoutDoMask(const PatternMap &m, const AnfNodePtr &) {
   auto node = m.Get(kMDropoutGrad);
   MS_EXCEPTION_IF_NULL(node);
   auto dropout_grad_cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(dropout_grad_cnode);
   CheckCNodeInputSize(dropout_grad_cnode, kDropoutGradInputTensorNum);
 
   auto func_graph = dropout_grad_cnode->func_graph();

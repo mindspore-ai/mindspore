@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   std::vector<AnfNodePtr> transpose_inputs = {NewValueNode(std::make_shared<Primitive>(kTransposeOpName)),
                                               transposed->input(1), perm_vnode};
   auto transpose = NewCNode(transpose_inputs, kernel_graph);
+  MS_EXCEPTION_IF_NULL(transpose);
   transpose->set_scope(transposed->scope());
   transpose->set_abstract(transposed->abstract());
 

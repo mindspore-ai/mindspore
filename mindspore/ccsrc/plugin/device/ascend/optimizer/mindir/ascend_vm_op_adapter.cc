@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,10 @@ constexpr auto kHasRunMindIR = "HasRunMindIR";
 const AnfNodePtr AscendMindIROpAdapter::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                                 const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
-  if (common::AnfAlgo::HasNodeAttr(kHasRunMindIR, node->cast<CNodePtr>())) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::HasNodeAttr(kHasRunMindIR, cnode)) {
     return node;
   }
   // There are other UnifyMindIR pass before AscendMindIROpAdapter which may create new nodes.
