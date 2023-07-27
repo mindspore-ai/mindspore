@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +125,7 @@ bool ParseAttrListFloat(const mindspore::ValuePtr &value, nlohmann::json *attr_o
 }
 
 bool ParseAttrFloat(const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
+  MS_EXCEPTION_IF_NULL(attr_obj);
   auto attr_value = GetValue<float>(value);
   if (std::isinf(attr_value)) {
     (*attr_obj)[kJValue] = (attr_value < 0) ? "-inf" : "inf";
@@ -337,6 +338,7 @@ bool TbeJsonCreator::GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *
 }
 
 void TbeJsonCreator::GenFusionOpName(nlohmann::json *kernel_json, std::string prefix) {
+  MS_EXCEPTION_IF_NULL(kernel_json);
   json_name_.clear();
   json_hash_ = GenJsonHash((*kernel_json));
   auto context_ptr = MsContext::GetInstance();
@@ -355,6 +357,7 @@ void TbeJsonCreator::GenFusionOpName(nlohmann::json *kernel_json, std::string pr
 }
 
 void TbeJsonCreator::DeleteDescName(nlohmann::json *desc_jsons) const {
+  MS_EXCEPTION_IF_NULL(desc_jsons);
   for (auto &desc_json : (*desc_jsons)) {
     if (desc_json.is_array()) {
       for (auto &desc_item : desc_json) {
@@ -387,6 +390,7 @@ size_t TbeJsonCreator::GenJsonHash(nlohmann::json tbe_json) const {
 }
 
 void TbeJsonCreator::AddOpNameForComputeNode(nlohmann::json *kernel_json) const {
+  MS_EXCEPTION_IF_NULL(kernel_json);
   auto op_name = GetJsonValue<std::string>((*kernel_json), kJFusionOpName);
   for (auto &node_json : (*kernel_json).at(kJOpList)) {
     // compute node
@@ -512,6 +516,7 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
 void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, size_t desc_output_idx,
                                  nlohmann::json *output_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(output_desc);
   GenDesJsonCommon(output_desc);
   std::vector<int64_t> shape;
   std::vector<int64_t> ori_shape;
@@ -564,6 +569,7 @@ void TbeJsonCreator::GenDesJsonCommon(nlohmann::json *output_desc) const {
 
 void ParseConstValue(const mindspore::ValuePtr &value, nlohmann::json *json_obj) {
   MS_EXCEPTION_IF_NULL(json_obj);
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);

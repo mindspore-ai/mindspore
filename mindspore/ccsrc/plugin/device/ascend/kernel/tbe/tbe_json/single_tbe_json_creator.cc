@@ -64,6 +64,7 @@ bool SingleTbeJsonCreator::GenJson(const AnfNodePtr &anf_node, nlohmann::json *k
 }
 
 void NpuClearV2PostProcessing(std::vector<nlohmann::json> *op_list_json) {
+  MS_EXCEPTION_IF_NULL(op_list_json);
   if (op_list_json->size() != kOpListJsonSize) {
     MS_LOG(ERROR) << "Op list json's size is not equal to " << kOpListJsonSize << ", abort post processing.";
   }
@@ -74,11 +75,12 @@ void NpuClearV2PostProcessing(std::vector<nlohmann::json> *op_list_json) {
   compute_json[kJOutputDataDesc] = empty_vector_json;
   compute_json[kJOutputDesc] = empty_vector_json;
   op_list_json->clear();
-  (*op_list_json).emplace_back(compute_json);
+  (void)(*op_list_json).emplace_back(compute_json);
   MS_LOG(DEBUG) << "Op list json after post processing:" << compute_json.dump();
 }
 
 void NpuGetV2PostProcessing(std::vector<nlohmann::json> *op_list_json) {
+  MS_EXCEPTION_IF_NULL(op_list_json);
   if (op_list_json->size() != kOpListJsonSize) {
     MS_LOG(ERROR) << "Op list json's size is not equal to " << kOpListJsonSize << ", abort post processing.";
   }
@@ -87,7 +89,7 @@ void NpuGetV2PostProcessing(std::vector<nlohmann::json> *op_list_json) {
   std::vector<nlohmann::json> empty_vector_json;
   compute_json[kJInputDesc] = empty_vector_json;
   op_list_json->clear();
-  (*op_list_json).emplace_back(compute_json);
+  (void)(*op_list_json).emplace_back(compute_json);
   MS_LOG(DEBUG) << "Op list json after post processing:" << compute_json.dump();
 }
 
@@ -124,9 +126,13 @@ void SingleTbeJsonCreator::GenDataJson(const AnfNodePtr &anf_node, const nlohman
   MS_LOG(DEBUG) << "Start";
   auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, anf_node);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
   auto inputs_ptr = op_info_ptr->inputs_ptr();
   auto inputs_json = GetJsonValue<std::vector<nlohmann::json>>(compute_json, kJInputDesc);
   for (size_t i = 0; i < inputs_ptr.size(); i++) {
+    if (i >= inputs_json.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid idx: " << i;
+    }
     auto input_json = inputs_json.at(i);
     auto input_ptr = inputs_ptr[i];
     MS_EXCEPTION_IF_NULL(input_ptr);
@@ -245,6 +251,7 @@ void SingleTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
 void SingleTbeJsonCreator::GenOutputDescJson(const AnfNodePtr &anf_node, size_t node_out_idx,
                                              nlohmann::json *output_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(output_desc);
   GenDescJson(anf_node, node_out_idx, node_out_idx, output_desc);
   output_desc->erase(kJOutputIndex);
   auto type_str = GetJsonValue<std::string>(*output_desc, kJDtype);
@@ -263,6 +270,9 @@ bool SingleTbeJsonCreator::AssignInputsJson(const AnfNodePtr &anf_node, const st
   MS_LOG(DEBUG) << "Start.";
   size_t inputs_desc_index = 0;
   for (size_t i = 0; i < inputs_tensor_num.size(); i++) {
+    if (i >= inputs_ptr.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid idx: " << i;
+    }
     auto input_ptr = inputs_ptr[i];
     MS_EXCEPTION_IF_NULL(input_ptr);
     auto param_type = input_ptr->param_type();
@@ -348,9 +358,13 @@ bool SingleTbeJsonCreator::AssignOutputsJson(const AnfNodePtr &anf_node,
                                              const std::vector<OpIOInfoPtr> &outputs_ptr,
                                              std::vector<nlohmann::json> *outputs_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(outputs_json);
   MS_LOG(DEBUG) << "Start.";
   size_t outputs_desc_index = 0;
   for (size_t i = 0; i < outputs_tensor_num.size(); i++) {
+    if (i >= outputs_ptr.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid idx: " << i;
+    }
     auto output_ptr = outputs_ptr[i];
     MS_EXCEPTION_IF_NULL(output_ptr);
     auto param_type = output_ptr->param_type();
@@ -363,12 +377,12 @@ bool SingleTbeJsonCreator::AssignOutputsJson(const AnfNodePtr &anf_node,
         dynamic_outputs_desc.emplace_back(current_input_desc);
         outputs_desc_index++;
       }
-      (*outputs_json).emplace_back(dynamic_outputs_desc);
+      (void)(*outputs_json).emplace_back(dynamic_outputs_desc);
     } else if (param_type == kJParamRequred || param_type == kJParamOptional) {
       auto current_input_desc = outputs_desc.at(outputs_desc_index);
       current_input_desc[kJName] = output_ptr->name();
       current_input_desc[kJParamType] = output_ptr->param_type();
-      (*outputs_json).emplace_back(current_input_desc);
+      (void)(*outputs_json).emplace_back(current_input_desc);
       outputs_desc_index++;
     } else {
       MS_LOG(ERROR) << "Unsupported output param type:[" << param_type
@@ -395,12 +409,13 @@ void SingleTbeJsonCreator::GenOtherJson(const AnfNodePtr &anf_node, nlohmann::js
 void SelectTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, size_t desc_output_idx,
                                        nlohmann::json *output_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(output_desc);
   GenDesJsonCommon(output_desc);
   std::vector<int64_t> shape;
   std::vector<int64_t> ori_shape;
   ori_shape = TbeJsonUtils::GetOutputOriShapeForTbeBuild(anf_node, node_out_idx);
   if (ori_shape.empty()) {
-    ori_shape.emplace_back(1);
+    (void)ori_shape.emplace_back(1);
   }
   shape = ori_shape;
 
@@ -420,10 +435,11 @@ void SelectTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_o
 void SelectTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t real_input_index,
                                             nlohmann::json *input_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(input_desc);
   GenDesJsonCommon(input_desc);
   auto ori_shape = TbeJsonUtils::GetInputOriShapeForTbeBuild(anf_node, real_input_index);
   if (ori_shape.empty()) {
-    ori_shape.emplace_back(1);
+    (void)ori_shape.emplace_back(1);
   }
   auto shape = ori_shape;
 

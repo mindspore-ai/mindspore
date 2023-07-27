@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class TbeKernelSelect {
  private:
   void FilterInvalidKernelInfo();
   bool FilterInvalidShape(const KernelBuildInfoPtr &kernel_build_info, const std::vector<int64_t> &dynamic_inputs);
-  bool FilterUnspportedMatMul(const KernelBuildInfoPtr &kernel_build_info);
+  bool FilterUnsupportedMatMul(const KernelBuildInfoPtr &kernel_build_info);
   bool IsShapeMatchFormat(const ShapeVector &shape, const std::string &format);
   bool IsShapeMatchFormatRNN(const ShapeVector &shape, const std::string &format);
   bool TbeCheckSupported(const KernelBuildInfoPtr &kernel_build_info);

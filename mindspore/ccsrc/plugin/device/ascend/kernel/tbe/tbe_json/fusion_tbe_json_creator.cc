@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ bool FusionBuildTbeJsonCreator::GenOpListJson(const FusionScopeInfo &fusion_scop
   MS_LOG(DEBUG) << "Start";
   if (!CheckInput(fusion_scope_info)) {
     for (const auto &cnode : fusion_scope_info.compute_nodes) {
+      MS_EXCEPTION_IF_NULL(cnode);
       MS_LOG(WARNING) << "Fusion Error: check input failed, scope id: " << fusion_scope_info.scope_id
                       << ", compute node: " << cnode->fullname_with_scope();
     }
@@ -70,6 +71,7 @@ bool FusionBuildTbeJsonCreator::GenOpListJson(const FusionScopeInfo &fusion_scop
   auto compute_nodes = fusion_scope_info.compute_nodes;
   std::vector<nlohmann::json> compute_list;
   for (const auto &compute_node : compute_nodes) {
+    MS_EXCEPTION_IF_NULL(compute_node);
     nlohmann::json compute_json;
     if (!GenComputeJson(compute_node, &compute_json)) {
       MS_LOG(WARNING) << "Fusion Error: gen fusion compute json failed. node full name: "
@@ -86,7 +88,7 @@ bool FusionBuildTbeJsonCreator::GenOpListJson(const FusionScopeInfo &fusion_scop
     return false;
   }
   GenDataJson(compute_nodes, compute_list, fusion_json, spec_data_input);
-  (*fusion_json).insert((*fusion_json).end(), compute_list.cbegin(), compute_list.cend());
+  (void)(*fusion_json).insert((*fusion_json).end(), compute_list.cbegin(), compute_list.cend());
   MS_LOG(DEBUG) << "End";
   return true;
 }
@@ -153,11 +155,13 @@ void FusionBuildTbeJsonCreator::GenDataJson(const std::vector<AnfNodePtr> &compu
   MS_LOG(DEBUG) << "End.";
 }
 AnfNodePtr FusionBuildTbeJsonCreator::GetInputCNode(const AnfNodePtr &node, const nlohmann::json &input_desc) const {
+  MS_EXCEPTION_IF_NULL(node);
   auto input_name = GetJsonValue<std::string>(input_desc, kJName);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto kernel_idx = common::AnfAlgo::VisitKernel(cnode->input(i), 0);
+    MS_EXCEPTION_IF_NULL(kernel_idx.first);
     auto full_name = kernel_idx.first->fullname_with_scope();
     std::string desc_name = kernel_idx.second > 0 ? (full_name + "_" + std::to_string(kernel_idx.second)) : full_name;
     if (input_name == desc_name) {
@@ -257,6 +261,10 @@ bool FusionBuildTbeJsonCreator::GenOutputsJson(const AnfNodePtr &anf_node, nlohm
     }
     auto desc_output_index = GetDescOutputIndex(output_used_nums);
     for (size_t i = 0; i < output_size; ++i) {
+      if (i >= desc_output_index.size()) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Invalid idx: " << i
+                                   << ", which exceed size of desc_output_index: " << desc_output_index.size();
+      }
       MS_LOG(DEBUG) << "Fusion index: " << i << ", desc_output_index: " << desc_output_index[i];
       nlohmann::json output_desc;
       GenDescJson(anf_node, i, desc_output_index[i], &output_desc);

@@ -252,6 +252,7 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name_, node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   for (const auto &attr : op_info_ptr->attrs_ptr()) {
+    MS_EXCEPTION_IF_NULL(attr);
     auto kernel_attr_name = attr->name();
     auto ms_attr_name = kernel::SuperBar::GetSBMSAttrByKernelAttr(primitive->name(), kernel_attr_name);
     auto value = primitive->GetAttr(ms_attr_name);

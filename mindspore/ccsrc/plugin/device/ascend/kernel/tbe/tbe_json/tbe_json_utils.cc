@@ -53,8 +53,10 @@ bool TbeJsonUtils::GetInputsRealNum(const AnfNodePtr &anf_node, const std::vecto
 bool TbeJsonUtils::GetOutputsRealNum(const AnfNodePtr &anf_node, const std::vector<OpIOInfoPtr> &outputs_ptr,
                                      std::vector<size_t> *outputs_num) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(outputs_num);
   size_t real_output_num = AnfAlgo::GetOutputElementNum(anf_node);
   for (const auto &output_ptr : outputs_ptr) {
+    MS_EXCEPTION_IF_NULL(output_ptr);
     if (output_ptr->param_type() == kJParamDynamic) {
       if (outputs_ptr.size() > 1) {
         MS_LOG(ERROR) << "Dynamic output is unsupported multi output, node [ "

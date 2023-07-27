@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -380,7 +380,7 @@ void TbeKernelCompileManager::GetAllTbeNodes(const std::shared_ptr<session::Kern
     KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
     if (kernel_type == TBE_KERNEL) {
       if (AnfAlgo::GetKernelMod(anf_node) == nullptr) {
-        (void)tbe_nodes->push_back(anf_node);
+        tbe_nodes->push_back(anf_node);
       }
     }
   }
@@ -435,7 +435,7 @@ void TbeKernelCompileManager::SaveFailedTaskCompileResult(int task_id) {
   }
   file_write << json_name << std::endl;
   file_write.close();
-  not_support_fusion_ops_.insert(json_name);
+  (void)not_support_fusion_ops_.insert(json_name);
 }
 
 void TbeKernelCompileManager::SaveSucceedTaskCompileResult(int task_id, const std::string &compile_info,
@@ -766,7 +766,7 @@ void TbeKernelCompileManager::DistributePreBuildTask(const std::vector<CNodePtr>
       // same op skip prebuild
       continue;
     }
-    pre_build_single_processed_kernels_.insert(json_name);
+    (void)pre_build_single_processed_kernels_.insert(json_name);
     JsonAssemble(kPreCompile, kernel_json, &build_json);
     auto task_id = GetJsonValue<int>(build_json, kJobId);
     auto is_dynamic = common::AnfAlgo::IsDynamicShape(node);
@@ -824,7 +824,7 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
       // same op only compile once
       continue;
     }
-    single_processed_kernels_.insert(json_name);
+    (void)single_processed_kernels_.insert(json_name);
     JsonAssemble(job_type, kernel_json, &build_json);
     // save compile json to file; cache io size for gen kernel mod
     auto build_str = build_json.dump(indent);
@@ -928,7 +928,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
       // fusion op not support
       continue;
     }
-    fusion_processed_kernels_.insert(json_name);
+    (void)fusion_processed_kernels_.insert(json_name);
     JsonAssemble(job_type, fusion_op, &build_json);
     auto build_str = build_json.dump(indent);
     MS_LOG(DEBUG) << "FusionOp build json file : " << build_str;
@@ -965,6 +965,7 @@ std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) con
 
 bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann::json *kernel_json) const {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(kernel_json);
   auto full_name = node->fullname_with_scope();
   MS_LOG(DEBUG) << "Check supported for op [" << full_name << "]";
   auto json_creator = std::make_shared<BuildTbeJsonCreator>();
@@ -1009,7 +1010,7 @@ void TbeKernelCompileManager::LoadNotSupportFusionOp() {
     }
     std::string json_name;
     while (file_read >> json_name) {
-      not_support_fusion_ops_.insert(json_name);
+      (void)not_support_fusion_ops_.insert(json_name);
     }
     file_read.close();
     has_load = true;
