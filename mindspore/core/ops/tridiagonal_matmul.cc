@@ -36,11 +36,13 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kTridiagonalMatMulInputNums = 4;
 namespace {
 abstract::ShapePtr TridiagonalMatMulInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTridiagonalMatMulInputNums, primitive->name());
   auto superdiag_shape_ptr = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(superdiag_shape_ptr);
   auto maindiag_shape_ptr = input_args[1]->BuildShape();
@@ -109,6 +111,8 @@ abstract::ShapePtr TridiagonalMatMulInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr TridiagonalMatMulInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTridiagonalMatMulInputNums, prim->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
   auto superdiag_infer_type = input_args[0]->BuildType();
@@ -130,9 +134,6 @@ TypePtr TridiagonalMatMulInferType(const PrimitivePtr &prim, const std::vector<A
 
 AbstractBasePtr TridiagonalMatMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 4;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = TridiagonalMatMulInferType(primitive, input_args);
   auto infer_shape = TridiagonalMatMulInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

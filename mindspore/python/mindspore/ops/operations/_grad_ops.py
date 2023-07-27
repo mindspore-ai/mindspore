@@ -636,7 +636,7 @@ class EinsumGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, equation):
-        self.add_prim_attr('equation', equation)
+        pass
 
     def infer_shape(self, x_shapes, dout_shape):
         out_shape = ()

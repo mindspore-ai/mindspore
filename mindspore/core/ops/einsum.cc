@@ -240,8 +240,11 @@ std::string Einsum::get_equation() const {
 }
 
 abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto equation = GetValue<std::string>(primitive->GetAttr(kEquation));
+  auto equation_ptr = primitive->GetAttr(kEquation);
+  MS_EXCEPTION_IF_NULL(equation_ptr);
+  auto equation = GetValue<std::string>(equation_ptr);
   (void)equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end());
   if (equation.length() == 0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the equation is required, but got none.";
@@ -269,7 +272,9 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dim of inputs' shape can not be zero, but got input["
                                << idx << "] shape: " << shape->ToString() << ".";
     }
-    auto &shape_vec = shape->cast<abstract::ShapePtr>()->shape();
+    auto shape_ptr = shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    auto &shape_vec = shape_ptr->shape();
     for (auto &val : shape_vec) {
       if (val == 0) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape can not contain zero, but got input[" << idx
@@ -296,7 +301,9 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
   return std::make_shared<abstract::Shape>(out_shape);
 }
 TypePtr EinsumInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   const auto &prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   AbstractBasePtrList elements = input_args;
   if (input_args.size() == 1) {
     if (!input_args[0]->isa<abstract::AbstractSequence>()) {

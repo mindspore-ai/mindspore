@@ -2832,7 +2832,6 @@ class Einsum(Primitive):
         seg_equation = equation.split("->")
         if len(seg_equation) > 2:
             raise TypeError("the equation can contain only one arrow !")
-        self.add_prim_attr('equation', equation)
         self.init_prim_io_names(inputs=['inputs'], outputs=['output'])
 
 

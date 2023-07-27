@@ -201,12 +201,14 @@ template <typename T>
 uint32_t GeqrfCpuKernel::DoCompute(CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input0_tensor_shape = input0_tensor->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(input0_tensor_shape, KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_tensor_shape is null.");
   int32_t dim = input0_tensor_shape->GetDims();
   if (dim != kOutputNum) {
     KERNEL_LOG_ERROR("The input matrix must have dimension = 2");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> input0_dims = input0_tensor_shape->GetDimSizes();
+  KERNEL_CHECK_FALSE(!input0_dims.empty(), KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_dims is empty.");
   const int32_t m = input0_dims[0];
   const int32_t n = input0_dims[1];
   auto input_m = reinterpret_cast<T *>(ctx.Input(0)->GetData());
@@ -228,6 +230,10 @@ uint32_t GeqrfCpuKernel::DoCompute(CpuKernelContext &ctx) {
       *(output_r + i * n + j) = A[i][j];
     }
   }
+  for (int i = 0; i < m; i++) {
+    delete A[i];
+  }
+  delete A;
   return KERNEL_STATUS_OK;
 }
 
@@ -235,12 +241,14 @@ template <typename T>
 uint32_t GeqrfCpuKernel::DoComputeC(CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input0_tensor_shape = input0_tensor->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(input0_tensor_shape, KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_tensor_shape is null.");
   int32_t dim = input0_tensor_shape->GetDims();
   if (dim != kOutputNum) {
     KERNEL_LOG_ERROR("The input matrix must have dimension = 2");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> input0_dims = input0_tensor_shape->GetDimSizes();
+  KERNEL_CHECK_FALSE(!input0_dims.empty(), KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_dims is empty.");
   const int32_t m = input0_dims[0];
   const int32_t n = input0_dims[1];
   auto input_m = reinterpret_cast<complex<T> *>(ctx.Input(0)->GetData());
@@ -262,6 +270,10 @@ uint32_t GeqrfCpuKernel::DoComputeC(CpuKernelContext &ctx) {
       *(output_r + i * n + j) = A[i][j];
     }
   }
+  for (int i = 0; i < m; i++) {
+    delete A[i];
+  }
+  delete A;
   return KERNEL_STATUS_OK;
 }
 REGISTER_CPU_KERNEL(kGeqrf, GeqrfCpuKernel);

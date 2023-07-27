@@ -46,6 +46,8 @@ namespace {
 abstract::TupleShapePtr GeqrfInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const int64_t kTwo = 2;
   const std::vector<int64_t> UNKNOWN_RANK = {-2};
+  MS_EXCEPTION_IF_NULL(primitive);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());
   auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   if (IsDynamicRank(a_shape) || IsDynamic(a_shape)) {
     ShapeVector dyn_shape{UNKNOWN_RANK};
@@ -79,6 +81,8 @@ abstract::TupleShapePtr GeqrfInferShape(const PrimitivePtr &primitive, const std
 }
 
 TypePtr GeqrfInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, prim->name());
   auto infer_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(infer_type);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
@@ -91,10 +95,6 @@ TypePtr GeqrfInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 
 AbstractBasePtr GeqrfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputsNum = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
-
   auto infer_type = GeqrfInferType(primitive, input_args);
   auto infer_shape = GeqrfInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
