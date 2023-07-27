@@ -22,6 +22,7 @@
 namespace mindspore {
 namespace opt {
 bool AddDynamicShapeAttr::Process(const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
   if (common::AnfAlgo::IsDynamicShape(node)) {
     auto func_graph = node->func_graph();
     MS_LOG(DEBUG) << "Set Dynamic Shape Attr to Node:" << node->fullname_with_scope();

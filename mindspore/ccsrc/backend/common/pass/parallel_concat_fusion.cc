@@ -43,6 +43,7 @@ const AnfNodePtr ParallelConcatFusion::Process(const FuncGraphPtr &graph, const 
 
   for (size_t idx = kIndex1; idx < cnode->inputs().size(); ++idx) {
     auto input_node = cnode->input(idx);
+    MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() || input_node->isa<ValueNode>()) {
       n += 1;
     } else if (input_node->isa<CNode>()) {
