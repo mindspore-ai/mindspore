@@ -21,15 +21,13 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <condition_variable>
 
 #include "include/backend/visible.h"
 #include "runtime/pynative/async/task.h"
-#ifndef USE_HQUEUE
-#define USE_HQUEUE
-#endif
 
 namespace mindspore {
 namespace pynative {
@@ -68,6 +66,8 @@ class BACKEND_EXPORT AsyncQueue {
   // Reinit resources after fork occurs.
   void ReinitAfterFork();
 
+  bool TaskInQueue(uint32_t task_id);
+
  protected:
   void WorkerLoop();
   void SetThreadName() const;
@@ -84,6 +84,7 @@ class BACKEND_EXPORT AsyncQueue {
   void ClearTaskWithException();
 
   std::queue<std::shared_ptr<AsyncTask>> tasks_queque_;
+  std::set<uint32_t> task_in_queue_;
 };
 using AsyncQueuePtr = std::shared_ptr<AsyncQueue>;
 }  // namespace pynative

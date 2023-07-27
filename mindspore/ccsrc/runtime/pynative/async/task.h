@@ -40,9 +40,12 @@ class AsyncTask {
   virtual void SetException(const std::exception_ptr & /* e */) {}
 
   TaskType task_type() const { return task_type_; }
+  uint32_t task_id() const { return task_id_; }
+  void set_task_id(uint32_t task_id) { task_id_ = task_id; }
 
  private:
   TaskType task_type_;
+  uint32_t task_id_{UINT32_MAX};
 };
 
 class ExitTask : public AsyncTask {

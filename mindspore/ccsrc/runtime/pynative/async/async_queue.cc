@@ -56,6 +56,11 @@ void AsyncQueue::SetThreadName() const {
 #endif
 }
 
+bool AsyncQueue::TaskInQueue(uint32_t task_id) {
+  std::unique_lock<std::mutex> lock(task_mutex_);
+  return task_in_queue_.find(task_id) != task_in_queue_.end();
+}
+
 void AsyncQueue::WorkerLoop() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   // cppcheck-suppress unreadVariable
@@ -95,6 +100,7 @@ void AsyncQueue::WorkerLoop() {
       std::unique_lock<std::mutex> lock(task_mutex_);
       if (!tasks_queque_.empty()) {
         tasks_queque_.pop();
+        task_in_queue_.erase(task->task_id());
       }
 
       if (tasks_queque_.empty()) {
@@ -117,6 +123,7 @@ void AsyncQueue::WorkerLoop() {
           }
           t->SetException(e_ptr);
           tasks_queque_.pop();
+          task_in_queue_.erase(task->task_id());
         }
 
         task_cond_var_->notify_all();
@@ -135,6 +142,9 @@ void AsyncQueue::Push(const std::shared_ptr<AsyncTask> &task) {
   // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   tasks_queque_.push(task);
+  if (task->task_id() != UINT32_MAX) {
+    task_in_queue_.insert(task->task_id());
+  }
   task_cond_var_->notify_all();
 }
 
@@ -208,6 +218,7 @@ void AsyncQueue::ClearTaskWithException() {
     auto &t = tasks_queque_.front();
     t->SetException(std::make_exception_ptr(std::runtime_error("Clean up tasks that are not yet running")));
     tasks_queque_.pop();
+    task_in_queue_.erase(t->task_id());
   }
 }
 

@@ -85,7 +85,6 @@ void OpExecutor::PushOpBuildTask(const std::shared_ptr<pynative::DeviceOpBuildTa
 
 void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> &op_run_task) {
   async_queue_.Push(op_run_task);
-  (void)actor_in_queue_.insert(op_run_task->context()->graph_id());
 }
 
 std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> OpExecutor::PopOpBuildTasks() {
@@ -107,10 +106,7 @@ bool OpExecutor::BuildQueueFull() {
   return op_build_tasks_.size() > kMaxQueueSize;
 }
 
-bool OpExecutor::ActorInQueue(GraphId graph_id) {
-  auto iter = actor_in_queue_.find(graph_id);
-  return iter != actor_in_queue_.end();
-}
+bool OpExecutor::ActorInQueue(GraphId graph_id) { return async_queue_.TaskInQueue(graph_id); }
 
 bool OpExecutor::BuildInQueue(GraphId graph_id) {
   return std::any_of(op_build_tasks_.begin(), op_build_tasks_.end(),
