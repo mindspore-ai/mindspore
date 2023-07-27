@@ -315,10 +315,17 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
     auto tuple_type = type->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_type);
     res = tuple_type->size();
+    if (res == 0) {
+      return res;
+    }
+    auto last_type = tuple_type->elements()[res - 1];
+    MS_EXCEPTION_IF_NULL(last_type);
     // Some nodes could have monad outputs like RpcRecv. We need to jump these outputs.
-    if (NeedJumpMonadOutput(node) && tuple_type->elements()[res - 1]->isa<MonadType>()) {
+    if (NeedJumpMonadOutput(node) && last_type->isa<MonadType>()) {
       for (size_t i = 0; i < tuple_type->elements().size(); i++) {
-        if (tuple_type->elements()[i]->isa<MonadType>()) {
+        auto tuple_type_elem = tuple_type->elements()[i];
+        MS_EXCEPTION_IF_NULL(tuple_type_elem);
+        if (tuple_type_elem->isa<MonadType>()) {
           res = i;
           break;
         }
@@ -381,6 +388,7 @@ int64_t AnfUtils::GetIntValue(const AnfNodePtr &anf_node) {
 }
 
 int64_t AnfUtils::GetIntValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<Int64Imm>()) {
     return GetValue<int64_t>(value);
   } else if (value->isa<Int32Imm>()) {

@@ -1130,6 +1130,7 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
 
 std::vector<int64_t> CheckAndConvertUtils::CheckAttrTuple(const PrimitivePtr &prim, const std::string &attr_name,
                                                           size_t num_element) {
+  MS_EXCEPTION_IF_NULL(prim);
   auto attr = prim->GetAttr(attr_name);
   MS_EXCEPTION_IF_NULL(attr);
   std::vector<int64_t> result;
