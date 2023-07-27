@@ -419,9 +419,13 @@ LRScheduler类
     :template: classtemplate.rst
 
     mindspore.nn.ChainedScheduler
+    mindspore.nn.ConstantLR
     mindspore.nn.ExponentialLR
+    mindspore.nn.LambdaLR
     mindspore.nn.LinearLR
     mindspore.nn.LRScheduler
+    mindspore.nn.MultiplicativeLR
+    mindspore.nn.MultiStepLR
     mindspore.nn.PolynomialLR
     mindspore.nn.StepLR
 
