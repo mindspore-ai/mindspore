@@ -123,6 +123,7 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   }
   auto cloned_debug_info = CloneNodeDebugInfo(debug_info, relation_);
   CNodePtr new_node = std::make_shared<CNode>(std::move(inputs), target, std::move(cloned_debug_info));
+  MS_EXCEPTION_IF_NULL(new_node->debug_info());
   new_node->debug_info()->set_node(new_node);
   auto node_debug_info = std::dynamic_pointer_cast<NodeDebugInfo>(debug_info);
   if (node_debug_info != nullptr) {
@@ -528,8 +529,10 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   OrderParameters(func_graph, inputs, caller_first_arg_index);
 
   AbstractBasePtrList args_abs_list;
-  (void)std::for_each(inputs.begin() + caller_first_arg_index, inputs.end(),
-                      [&args_abs_list](const AnfNodePtr &node) { args_abs_list.push_back(node->abstract()); });
+  (void)std::for_each(inputs.begin() + caller_first_arg_index, inputs.end(), [&args_abs_list](const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    args_abs_list.push_back(node->abstract());
+  });
   MS_EXCEPTION_IF_NULL(func_graph->ToAbstract());
   auto abs = std::make_shared<abstract::PartialAbstractClosure>(
     func_graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_abs_list, cnode);
@@ -846,6 +849,7 @@ FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes, 
   }
   auto target_func_graph = cloner[func_graph];
   if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    MS_EXCEPTION_IF_NULL(target_func_graph);
     target_func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
   }
   return target_func_graph;

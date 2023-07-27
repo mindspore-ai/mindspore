@@ -288,6 +288,7 @@ FuncGraphSet &FuncGraphManager::func_graphs_used_total(const FuncGraphPtr &fg) c
 }
 
 const FuncGraphIndexPtr &FuncGraphManager::func_graph_index(const FuncGraphPtr &fg) const {
+  MS_EXCEPTION_IF_NULL(fg);
   auto iter = func_graphs_index_.find(fg);
   if (iter == func_graphs_index_.end()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Func graph: " << fg->ToString() << " is not add FuncGraphIndexMap.";
@@ -365,6 +366,7 @@ void FuncGraphManager::AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root
 // Clear the all information in manager
 void FuncGraphManager::Clear() noexcept {
   for (auto graph : func_graphs_) {
+    MS_EXCEPTION_IF_NULL(graph);
     graph->DecAttachedMngCnt();
     if (graph->attached_mng_cnt() == 0) {
       graph->ClearAllManagerInfo();
@@ -699,6 +701,7 @@ void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const F
       MS_LOG(DEBUG) << "Start move inlined node:" << node->DebugString();
       auto new_debug_info = DebugInfo::UpdateInlineCNodeDebugInfo(call_node->debug_info(), node->debug_info());
       auto node_new_debug_info = std::dynamic_pointer_cast<NodeDebugInfo>(new_debug_info);
+      MS_EXCEPTION_IF_NULL(node_new_debug_info);
       node->set_debug_info(node_new_debug_info);
       node_new_debug_info->set_node(node);
     }

@@ -262,6 +262,7 @@ TypePtr Dictionary::DeepCopy() const {
 std::string DumpKeyVector(const std::vector<ValuePtr> &keys) {
   std::ostringstream buffer;
   for (const auto &key : keys) {
+    MS_EXCEPTION_IF_NULL(key);
     buffer << key->ToString() << ",";
   }
   return buffer.str();

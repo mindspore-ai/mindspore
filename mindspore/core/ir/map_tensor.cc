@@ -90,9 +90,11 @@ void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) 
   auto keys_length = keys->size();
   auto keys_num = keys_length / abstract::TypeIdSize(key_dtype());
   ShapeVector key_tensor_shape{SizeToLong(keys_num)};
-  (void)key_tensor()->set_shape(key_tensor_shape);
+  auto tensor_key = key_tensor();
+  MS_EXCEPTION_IF_NULL(tensor_key);
+  (void)tensor_key->set_shape(key_tensor_shape);
   if (keys_length > 0) {
-    auto ret = memcpy_s(key_tensor()->data_c(), key_tensor()->Size(), keys->data(), keys_length);
+    auto ret = memcpy_s(tensor_key->data_c(), tensor_key->Size(), keys->data(), keys_length);
     if (ret != EOK) {
       MS_LOG(INTERNAL_EXCEPTION) << "Memcpy for key tensor failed, errno[" << ret << "]";
     }
@@ -105,9 +107,11 @@ void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) 
   auto values_num = values_length / element_length;
   ShapeVector value_tensor_shape{SizeToLong(values_num)};
   (void)std::copy(value_shape().cbegin(), value_shape().cend(), std::back_inserter(value_tensor_shape));
-  (void)value_tensor()->set_shape(value_tensor_shape);
+  auto tensor_value = value_tensor();
+  MS_EXCEPTION_IF_NULL(tensor_value);
+  (void)tensor_value->set_shape(value_tensor_shape);
   if (values_length > 0) {
-    auto ret = memcpy_s(value_tensor()->data_c(), value_tensor()->Size(), values->data(), values_length);
+    auto ret = memcpy_s(tensor_value->data_c(), tensor_value->Size(), values->data(), values_length);
     if (ret != EOK) {
       MS_LOG(INTERNAL_EXCEPTION) << "Memcpy for value tensor failed, errno[" << ret << "]";
     }
@@ -121,9 +125,11 @@ void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) 
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid export data: keys num: " << keys_num << ", statuses num: " << statuses_num;
   }
   ShapeVector status_tensor_shape{SizeToLong(statuses_num)};
-  (void)status_tensor()->set_shape(status_tensor_shape);
+  auto tensor_status = status_tensor();
+  MS_EXCEPTION_IF_NULL(tensor_status);
+  (void)tensor_status->set_shape(status_tensor_shape);
   if (statuses_length > 0) {
-    auto ret = memcpy_s(status_tensor()->data_c(), status_tensor()->Size(), statuses->data(), statuses_length);
+    auto ret = memcpy_s(tensor_status->data_c(), tensor_status->Size(), statuses->data(), statuses_length);
     if (ret != EOK) {
       MS_LOG(INTERNAL_EXCEPTION) << "Memcpy for status tensor failed, errno[" << ret << "]";
     }
@@ -169,8 +175,10 @@ MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &devic
 // If the data on the host side is valid, the data on the host side will be exported.
 bool MapTensor::CheckData() const {
   // check key
-  if (key_tensor()->shape().size() != 1 || key_tensor()->shape()[0] < 1) {
-    MS_LOG(WARNING) << "Invalid key tensor shape: " << tensor::ShapeToString(key_tensor()->shape());
+  auto tensor_key = key_tensor();
+  MS_EXCEPTION_IF_NULL(tensor_key);
+  if (tensor_key->shape().size() != 1 || tensor_key->shape()[0] < 1) {
+    MS_LOG(WARNING) << "Invalid key tensor shape: " << tensor::ShapeToString(tensor_key->shape());
     return false;
   }
   // check value
@@ -181,8 +189,10 @@ bool MapTensor::CheckData() const {
     return false;
   }
   // check status
-  if (status_tensor()->shape().size() != 1 || status_tensor()->shape()[0] < 1) {
-    MS_LOG(WARNING) << "Invalid status tensor shape: " << tensor::ShapeToString(status_tensor()->shape());
+  auto tensor_status = status_tensor();
+  MS_EXCEPTION_IF_NULL(tensor_status);
+  if (tensor_status->shape().size() != 1 || tensor_status->shape()[0] < 1) {
+    MS_LOG(WARNING) << "Invalid status tensor shape: " << tensor::ShapeToString(tensor_status->shape());
     return false;
   }
   return true;

@@ -99,6 +99,7 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph, int var
   for (size_t i = 0; i < IntToSize(GetPositionalArgsCount()); ++i) {
     specialized_parameter_list->push_back(specialized_graph->parameters()[i]);
   }
+  MS_EXCEPTION_IF_NULL(specialized_graph->GetVariableArgParameter());
   TraceGuard trace_guard(
     std::make_shared<TraceGenerateVarArg>(specialized_graph->GetVariableArgParameter()->debug_info()));
   std::vector<AnfNodePtr> var_param_tuple_nodes;
@@ -259,6 +260,7 @@ FuncGraphPtr FuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_abs_li
   }
   auto iter = func_graph_cache_.find(args_abs_list);
   if (iter != func_graph_cache_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
     MS_LOG(DEBUG) << "Found in cache, " << iter->second->ToString() << ", for " << ToString();
     return iter->second;
   }

@@ -872,6 +872,7 @@ void Tensor::ExecuteLazyTask() const {
 DeviceSyncPtr Tensor::device_address() const {
   if (address_future_ != nullptr) {
     device_sync_ = address_future_->Get();
+    MS_EXCEPTION_IF_NULL(device_sync_);
     device_sync_->set_original_ref_count(SIZE_MAX);
     device_sync_->ResetRefCount();
   }
