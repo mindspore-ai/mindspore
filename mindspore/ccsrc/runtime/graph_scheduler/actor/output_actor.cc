@@ -204,8 +204,8 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
 
 TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
   MS_EXCEPTION_IF_NULL(output_node);
-  MS_LOG(INFO) << "Create output tensor, output node: " << output_node->fullname_with_scope()
-               << ", output index: " << output_index << ", output position: " << output_position;
+  MS_LOG(DEBUG) << "Create output tensor, output node: " << output_node->fullname_with_scope()
+                << ", output index: " << output_index << ", output position: " << output_position;
 
   // If output is an empty sequence return an empty tensor directly.
   if (output_node->abstract() != nullptr && output_node->abstract()->isa<abstract::AbstractSequence>() &&
