@@ -71,15 +71,21 @@ AICORE_METRICS_DICT = {
 class DeviceSupportParam(Enum):
     """The device target enum."""
     CPU = ['start', 'start_profile', 'output_path', 'timeline_limit', 'profile_framework', 'op_time']
-    GPU = ['start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'sync_enable', 'op_time',
-           'profile_framework']
-    ASCEND = ['start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
-              'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'op_time', 'ascend_job_id',
-              'profile_framework']
+    GPU = [
+        'start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'sync_enable', 'op_time',
+        'profile_framework'
+    ]
+    ASCEND = [
+        'start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
+        'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'op_time', 'ascend_job_id',
+        'profile_framework'
+    ]
 
 
-ALWAYS_VALID_PARAM = ['start', 'start_profile', 'output_path', 'data_process', 'parallel_strategy', 'l2_cache',
-                      'ascend_job_id', 'op_time', 'profile_framework']
+ALWAYS_VALID_PARAM = [
+    'start', 'start_profile', 'output_path', 'data_process', 'parallel_strategy', 'l2_cache',
+    'ascend_job_id', 'op_time', 'profile_framework'
+]
 
 
 def _environment_check():
@@ -188,8 +194,10 @@ def _extract_timeline_item(row, time_line, ts_map):
     # Put the instance event into timeline.
     elif start_end == '2':
         title = row['event'] + '::' + row['stage']
-        event = {'name': title, 'cat': row['module_name'], 'ts': int(row['time_stamp(us)']), 'ph': 'i',
-                 'pid': row['pid'], 'tid': row['tid'], 'args': {'parent_pid': row['parent_pid']}}
+        event = {
+            'name': title, 'cat': row['module_name'], 'ts': int(row['time_stamp(us)']), 'ph': 'i',
+            'pid': row['pid'], 'tid': row['tid'], 'args': {'parent_pid': row['parent_pid']}
+        }
         time_line.append(event)
     else:
         logger.warning("Can not map the start time for item: %s.", row)
@@ -209,8 +217,10 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
     time_line = []
     # ts_map is used to store the start time of each event_stage_tid_pid
     ts_map = {}
-    memory_header = ['tid', 'pid', 'parent_pid', 'module_name', 'event', 'stage', 'level', 'start_end', 'custom_info',
-                     'memory_usage(kB)', 'time_stamp(us)']
+    memory_header = [
+        'tid', 'pid', 'parent_pid', 'module_name', 'event', 'stage', 'level', 'start_end', 'custom_info',
+        'memory_usage(kB)', 'time_stamp(us)'
+    ]
     memory_info = []
     with open(input_file, 'r') as f:
         for row in csv.DictReader(f):
@@ -1394,8 +1404,10 @@ class Profiler:
         job_dirs = filter(lambda item: item.startswith('JOB') or item.startswith('PROF') and \
                                        os.path.isdir(os.path.join(self._output_path, item)),
                           os.listdir(self._output_path))
-        sorted_job_dirs = sorted(job_dirs, key=lambda x: os.path.getmtime(os.path.join(self._output_path, x)),
-                                 reverse=True)
+        sorted_job_dirs = sorted(
+            job_dirs, key=lambda x: os.path.getmtime(os.path.join(self._output_path, x)),
+            reverse=True
+        )
 
         for dir_name in sorted_job_dirs:
             if dir_name.startswith('PROF'):

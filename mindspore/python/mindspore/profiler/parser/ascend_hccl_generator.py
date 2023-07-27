@@ -271,13 +271,17 @@ class AscendHCCLGenerator:
                         sdma_communication_size = np.sum(groupby_sdma['size']) * 1e-3
                         sdma_bandwidth = sdma_communication_size / sdma_communication_time * 1e-3 \
                             if sdma_communication_time != 0 else 0
-                        transport_information['SDMA'] = [sdma_communication_time, sdma_communication_size,
-                                                         sdma_bandwidth]
+                        transport_information['SDMA'] = [
+                            sdma_communication_time, sdma_communication_size,
+                            sdma_bandwidth
+                        ]
                     elif transport_index == 'RDMA':
                         transport_information['RDMA'] = self._rdma_analyse(groupby_transport)
                     link_info_information[link_info_index] = transport_information
                 communication_cost = np.sum(groupby_tag[groupby_tag['name'] != 'Notify_Wait']['dur'])
                 wait_cost = np.sum(groupby_tag[groupby_tag['name'] == 'Notify_Wait']['dur'])
-                tag_information[tag_index] = [str(iteration_index), communication_cost, wait_cost,
-                                              link_info_information]
+                tag_information[tag_index] = [
+                    str(iteration_index), communication_cost, wait_cost,
+                    link_info_information
+                ]
         return tag_information

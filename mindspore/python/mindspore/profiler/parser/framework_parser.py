@@ -52,8 +52,10 @@ TASK_TYPE_TO_KERNEL_TYPE = {
     1000: 'MSPROF_UNKNOWN_TYPE'
 }
 
-COL_NAMES = ['task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name', 'op_type', 'subgraph', 'op_info',
-             'graph_id', 'kernel_type']
+COL_NAMES = [
+    'task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name', 'op_type', 'subgraph', 'op_info',
+    'graph_id', 'kernel_type'
+]
 OpData = namedtuple('OpData', field_names=COL_NAMES)
 
 
@@ -545,14 +547,18 @@ class GpuFrameWorkParser:
                 op_total_time = float(line_info[-4])
                 if not self.op_detail.get(op_name):
                     # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
-                    self.op_detail[op_name] = [op_occurrences, op_total_time,
-                                               round(op_total_time / op_occurrences, 4), op_side]
+                    self.op_detail[op_name] = [
+                        op_occurrences, op_total_time,
+                        round(op_total_time / op_occurrences, 4), op_side
+                    ]
                 else:
                     self.op_detail.get(op_name)[1] += op_total_time
                     self.op_detail.get(op_name)[2] = self.op_detail.get(op_name)[1] / self.op_detail.get(op_name)[0]
-                    self.op_detail[op_name] = [self.op_detail.get(op_name)[0],
-                                               round(self.op_detail.get(op_name)[1], 4),
-                                               round(self.op_detail.get(op_name)[2], 4), op_side]
+                    self.op_detail[op_name] = [
+                        self.op_detail.get(op_name)[0],
+                        round(self.op_detail.get(op_name)[1], 4),
+                        round(self.op_detail.get(op_name)[2], 4), op_side
+                    ]
 
     def combine_performance_data(self, op_name):
         """Combine operator detail info with framework info."""
@@ -575,8 +581,10 @@ class GpuFrameWorkParser:
                     op_shape_dict.get(op_shape)[0] += op_occurrences
                     op_shape_dict.get(op_shape)[1] += op_total_time
                     op_shape_dict.get(op_shape)[2] = op_shape_dict.get(op_shape)[1] / op_shape_dict.get(op_shape)[0]
-                    op_shape_dict[op_shape] = [op_shape_dict.get(op_shape)[0], round(op_shape_dict.get(op_shape)[1], 4),
-                                               round(op_shape_dict.get(op_shape)[2], 4), op_side]
+                    op_shape_dict[op_shape] = [
+                        op_shape_dict.get(op_shape)[0], round(op_shape_dict.get(op_shape)[1], 4),
+                        round(op_shape_dict.get(op_shape)[2], 4), op_side
+                    ]
                 else:
                     op_shape_dict[op_shape] = [op_occurrences, op_total_time, op_avg_time, op_side]
 
@@ -723,10 +731,12 @@ class GpuFrameWorkParser:
             else:
                 self.one_step_op_time[sort_type][0] += duration
                 self.one_step_op_time[sort_type][1] += 1
-                self.one_step_op_time[sort_type] = [self.one_step_op_time[sort_type][0],
-                                                    self.one_step_op_time[sort_type][1],
-                                                    round(self.one_step_op_time[sort_type][0] /
-                                                          self.one_step_op_time[sort_type][1], 4)]
+                self.one_step_op_time[sort_type] = [
+                    self.one_step_op_time[sort_type][0],
+                    self.one_step_op_time[sort_type][1],
+                    round(self.one_step_op_time[sort_type][0] /
+                          self.one_step_op_time[sort_type][1], 4)
+                ]
         else:
             sort_type = item.get("op_name")
             op_full_name = item.get("op_full_name")
@@ -736,11 +746,13 @@ class GpuFrameWorkParser:
             else:
                 self.one_step_kernel_time[sort_type][0] += duration
                 self.one_step_kernel_time[sort_type][1] += 1
-                self.one_step_kernel_time[sort_type] = [self.one_step_kernel_time[sort_type][0],
-                                                        self.one_step_kernel_time[sort_type][1],
-                                                        round(self.one_step_kernel_time[sort_type][0] /
-                                                              self.one_step_kernel_time[sort_type][1], 4),
-                                                        op_full_name]
+                self.one_step_kernel_time[sort_type] = [
+                    self.one_step_kernel_time[sort_type][0],
+                    self.one_step_kernel_time[sort_type][1],
+                    round(self.one_step_kernel_time[sort_type][0] /
+                          self.one_step_kernel_time[sort_type][1], 4),
+                    op_full_name
+                ]
 
 
 class DynamicFrameWorkParser:

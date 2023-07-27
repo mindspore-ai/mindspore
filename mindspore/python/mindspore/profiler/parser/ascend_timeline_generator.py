@@ -421,8 +421,10 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             except IndexError as err:
                 logger.error(err)
 
-        metrices_per_step_list = [time_info.get("computation_time"), comm_alone_time, time_info.get("stage_time"),
-                                  recieve_alone_time, collective_comm_alone_time]
+        metrices_per_step_list = [
+            time_info.get("computation_time"), comm_alone_time, time_info.get("stage_time"),
+            recieve_alone_time, collective_comm_alone_time
+        ]
         if step_num > 1:
             for metric in metrices_per_step_list:
                 metric.append(sum(metric[1:]) / (step_num - 1))

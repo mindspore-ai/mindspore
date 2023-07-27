@@ -344,8 +344,10 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         communication time between stages slow down the training. The value of t3 indicates the degree
         that communication inside each stage slow down the training.
         """
-        time_info = {"stage_time": [], "computation_time": [], "recieve_alone_time": [], "comm_alone_time": [],
-                     "collective_comm_alone_time": []}
+        time_info = {
+            "stage_time": [], "computation_time": [], "recieve_alone_time": [], "comm_alone_time": [],
+            "collective_comm_alone_time": []
+        }
         is_pipeline_parallel = False
         comm_timeline = self._get_merged_time_list(
             comm_info,
@@ -429,9 +431,11 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             except IndexError as e:
                 logger.error(e)
 
-        metrices_per_step_list = [time_info.get("computation_time"), time_info.get("comm_alone_time"),
-                                  time_info.get("stage_time"), time_info.get("recieve_alone_time"),
-                                  time_info.get("collective_comm_alone_time")]
+        metrices_per_step_list = [
+            time_info.get("computation_time"), time_info.get("comm_alone_time"),
+            time_info.get("stage_time"), time_info.get("recieve_alone_time"),
+            time_info.get("collective_comm_alone_time")
+        ]
         if step_num > 1:
             for metric in metrices_per_step_list:
                 metric.append(sum(metric[1:]) / (step_num - 1))
@@ -604,7 +608,7 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
                         op_timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when load operator timeline data intermediate file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return op_timeline_list
 

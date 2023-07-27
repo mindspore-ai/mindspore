@@ -77,11 +77,11 @@ class ConvertToolLoader:
                 'dump_data_parser').DumpDataParser
             self.format_conversion = import_module(
                 'shape_conversion').FormatConversionMain
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as err:
             self.reset_system_path()
             raise ModuleNotFoundError(
                 "Failed to load CANN conversion tools under {}. Please make sure Ascend " \
-                "toolkit has been installed properly.".format(self.toolkit_path))
+                "toolkit has been installed properly.".format(self.toolkit_path)) from err
 
         try:
             self.progress = import_module("progress").Progress

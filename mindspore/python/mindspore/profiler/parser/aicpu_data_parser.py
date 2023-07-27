@@ -72,9 +72,11 @@ class DataPreProcessParser:
     _source_file_target_old = 'DATA_PREPROCESS.dev.AICPU.'
     _source_file_target = 'DATA_PREPROCESS.AICPU.'
     _dst_file_title = 'title:DATA_PREPROCESS AICPU'
-    _dst_file_column_title = ['serial_number', 'node_type_name', 'total_time(ms)',
-                              'dispatch_time(ms)', 'execution_time(ms)', 'run_start',
-                              'run_end']
+    _dst_file_column_title = [
+        'serial_number', 'node_type_name', 'total_time(ms)',
+        'dispatch_time(ms)', 'execution_time(ms)', 'run_start',
+        'run_end'
+    ]
     _ms_unit = 1000
     _us_unit = 100  # Convert 10ns to 1us.
     _task_id_threshold = 65536

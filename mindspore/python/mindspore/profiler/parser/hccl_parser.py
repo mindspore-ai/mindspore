@@ -269,8 +269,10 @@ class HcclParser:
 
             # index_0:step_num, index_1:start_point, index_2:end_point
             # The unit of time stamp is 10ns. To convert it to μs, you need to divide it by 100.
-            step_timestamps_info = [[info[0], float(info[1]) / 100, float(info[2]) / 100]
-                                    for info in csv_reader if info[0].isdigit()]
+            step_timestamps_info = [
+                [info[0], float(info[1]) / 100, float(info[2]) / 100]
+                for info in csv_reader if info[0].isdigit()
+            ]
 
         return [communication_operators_names, step_timestamps_info]
 
@@ -294,8 +296,10 @@ class HcclParser:
                                           for op_name in operators_names_in_step_trace})
         op_names_in_step_trace_dic = dict()
         for item in op_names_in_step_trace_set:
-            op_names_in_step_trace_dic[item] = [op_name for op_name in operators_names_in_step_trace
-                                                if op_name.split('/')[-1].split('-')[0].split('_')[-1] == item]
+            op_names_in_step_trace_dic[item] = [
+                op_name for op_name in operators_names_in_step_trace
+                if op_name.split('/')[-1].split('-')[0].split('_')[-1] == item
+            ]
 
         communication_operator_mapping_info = dict()
         for hccl_key, hccl_value in op_names_in_hccl_dic.items():
@@ -548,9 +552,9 @@ class HcclParser:
         """Validate file path."""
         try:
             file_path = validate_and_normalize_path(file_path)
-        except RuntimeError:
+        except RuntimeError as err:
             logger.warning('file path is invalid.')
-            raise ProfilerPathErrorException('file path is invalid.')
+            raise ProfilerPathErrorException('file path is invalid.') from err
         if not os.path.isfile(file_path):
             logger.warning('The file <%s> not found.', file_path)
             raise ProfilerFileNotFoundException(file_path)
@@ -560,9 +564,9 @@ class HcclParser:
         """Validate dir path."""
         try:
             dir_path = validate_and_normalize_path(dir_path)
-        except RuntimeError:
+        except RuntimeError as err:
             logger.warning('dir path is invalid.')
-            raise ProfilerPathErrorException('dir path is invalid.')
+            raise ProfilerPathErrorException('dir path is invalid.') from err
         if not os.path.isdir(dir_path):
             logger.warning('The  dir <%s> not found.', dir_path)
             raise ProfilerDirNotFoundException(dir_path)

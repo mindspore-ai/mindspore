@@ -452,8 +452,10 @@ class BaseTimelineGenerator:
                        'w') as file_handle:
             csv_writer = csv.writer(file_handle)
             if is_pipeline_parallel:
-                header = ['computation_time', 'communication_alone_time', 'stage_time',
-                          'receive_alone_time', 'collective_communication_alone_time']
+                header = [
+                    'computation_time', 'communication_alone_time', 'stage_time',
+                    'receive_alone_time', 'collective_communication_alone_time'
+                ]
                 zip_metrices = zip(metrices[0], metrices[1], metrices[2], metrices[3], metrices[4])
             else:
                 header = ['computation_time', 'communication_alone_time']

@@ -92,8 +92,10 @@ class MsadvisorParser:
         finally:
             pass
 
-        op = {"name": name, "pid": pid, "ts": ts, "dur": dur,
-              "args": {"Task Type": task_type, "Stream Id": sid, "Task Id": tid}, "ph": "X"}
+        op = {
+            "name": name, "pid": pid, "ts": ts, "dur": dur,
+            "args": {"Task Type": task_type, "Stream Id": sid, "Task Id": tid}, "ph": "X"
+        }
         return op
 
     @staticmethod
@@ -127,8 +129,10 @@ class MsadvisorParser:
         finally:
             pass
 
-        op = {"name": name, "pid": pid, "ts": ts, "dur": dur,
-              "args": {"Task Type": task_type, "Stream Id": sid, "Task Id": tid}, "ph": "X"}
+        op = {
+            "name": name, "pid": pid, "ts": ts, "dur": dur,
+            "args": {"Task Type": task_type, "Stream Id": sid, "Task Id": tid}, "ph": "X"
+        }
         return op
 
     def get_input_file(self):
