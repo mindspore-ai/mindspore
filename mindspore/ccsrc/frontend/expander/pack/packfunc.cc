@@ -47,7 +47,8 @@ FuncGraphPtr UpdateReusingGraphForPack(const FuncGraphPtr &reusing_graph, const 
     pack_node->add_input(param);
   }
   reusing_graph->set_has_vararg(false);
-  reusing_graph->set_attr("reuse", MakeValue(True));
+  reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+  reusing_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
   auto prim_py = GetPackFuncPrimitive(reusing_graph);
   prim_py->AddAttr("reuse", MakeValue(True));
   return reusing_graph;
@@ -113,25 +114,68 @@ void ReorderParamsForReuseGraph(const FuncGraphPtr &graph, const PrimitivePyPtr 
     });
     if (found_in_fv_list != old_params.end()) {
       new_params.push_back(*found_in_fv_list);
+    } else {
+      new_params.push_back(i);
     }
   }
   graph->set_parameters(new_params);
   return;
 }
 
-FuncGraphPtr PostProcessForReuseGraph(const FuncGraphPtr &graph, const PrimitivePyPtr &prim_py) {
-  ReorderParamsForReuseGraph(graph, prim_py);
-  FuncGraphVector func_graphs = {graph};
+void GetTrainableParameters(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *parameters) {
+  std::set<const AnfNode *> memo;
+  for (auto &item : fg->parameter_obj_nodes()) {
+    if (item->cast<ParameterPtr>()->has_default() && memo.emplace(item.get()).second) {
+      parameters->push_back(item);
+    }
+  }
+  auto used_fgs = fg->func_graphs_used_total();
+  for (auto &g : used_fgs) {
+    for (auto &item : g->parameter_obj_nodes()) {
+      if (item->cast<ParameterPtr>()->has_default() && memo.emplace(item.get()).second) {
+        parameters->push_back(item);
+      }
+    }
+  }
+}
+
+FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
+  std::vector<AnfNodePtr> parameters;
+  GetTrainableParameters(fg, &parameters);
+  FuncGraphVector func_graphs = {fg};
   Cloner cloner(func_graphs, false, false, true, std::make_shared<TraceCopy>(), std::make_shared<TraceGraphReusing>());
   cloner.Run();
-  auto cloned_fg_iter = cloner.cloned_func_graphs().find(graph);
-  if (cloned_fg_iter == cloner.cloned_func_graphs().end()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Clone func graph failed! " << graph->ToString();
+  auto cloned_fg_iter = cloner.cloned_func_graphs().find(fg);
+  auto reusing_graph = cloned_fg_iter->second;
+  auto &cloned_nodes = cloner.cloned_nodes();
+  auto manager = fg->manager();
+  for (auto &fv : parameters) {
+    TraceGuard guard(std::make_shared<TraceGraphReusing>(fv->debug_info()));
+    auto param = reusing_graph->add_parameter();
+    param->set_name(fv->cast<ParameterPtr>()->name());
+    param->set_abstract(fv->cast<ParameterPtr>()->abstract());
+    auto &node_users = manager->node_users()[fv];
+    for (auto &n : node_users) {
+      auto iter = cloned_nodes.find(n.first);
+      if (iter == cloned_nodes.end()) {
+        continue;
+      }
+      auto repl_n = iter->second->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(repl_n);
+      repl_n->set_input(IntToSize(n.second), param);
+    }
   }
-  auto fg = cloned_fg_iter->second;
-  fg->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
-  fg->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
-  fg->set_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE, true);
+  return reusing_graph;
+}
+
+FuncGraphPtr PostProcessForReuseGraph(const FuncGraphPtr &graph, const PrimitivePyPtr &prim_py) {
+  auto mng = graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(graph, false);
+    graph->set_manager(mng);
+  }
+  auto fg = GenerateReusingGraph(graph);
+  ReorderParamsForReuseGraph(fg, prim_py);
   return fg;
 }
 }  // namespace
@@ -153,7 +197,6 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
   MS_EXCEPTION_IF_NULL(prim_py);
   auto expander = expander::PackExpander::Instance();
   bool reuse = prim->HasAttr("reuse");
-  expander->SetReuse(reuse);
   abstract::AbstractBasePtrList new_abs_list;
   for (auto &i : abs_list) {
     if (reuse && i->cast_ptr<abstract::AbstractRefTensor>()) {
@@ -166,6 +209,10 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
     py::gil_scoped_acquire acquire;
     py::object expand_func = prim_py->GetPyObj().attr("__expand__");
     py::object inputs = expander->BeginGraph(new_abs_list);
+    py::object cell_obj = prim_py->GetPyObj().attr("cell_obj");
+    if (!cell_obj.is_none()) {
+      expander->UpdateFuncGraphFlags(cell_obj);
+    }
     py::object output = expand_func(inputs);
     graph = expander->EndGraph(output);
     if (reuse) {
@@ -177,7 +224,6 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
   if (dump_result) {
     DumpIR("pack_func_" + key + ".ir", graph, true);
   }
-  expander->SetReuse(false);
   return graph;
 }
 
