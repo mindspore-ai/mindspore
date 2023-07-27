@@ -28,6 +28,7 @@ constexpr size_t kKIndex = 2;
 bool WKVGradBishengKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
+  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kWKVOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
