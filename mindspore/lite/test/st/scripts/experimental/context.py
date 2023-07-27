@@ -50,7 +50,7 @@ class Fmk(enum.Enum):
 
 class TestMode:
     def __init__(self):
-        self.convert = True
+        self.convert = False
         self.performance = False
         self.accuracy = False
 

@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_COMMON_GRAPHVIZ_DRAWER_H_
-#define MINDSPORE_LITE_SRC_COMMON_GRAPHVIZ_DRAWER_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_DRAW_GRAPHVIZ_GRAPH_H_
+#define MINDSPORE_LITE_SRC_COMMON_DRAW_GRAPHVIZ_GRAPH_H_
 
 #include <utility>
 #include <vector>
 #include <string>
 #include <unordered_map>
 #include "src/common/log_adapter.h"
+#include "src/tensor.h"
 #include "include/errorcode.h"
 
 namespace mindspore::lite {
@@ -57,7 +58,8 @@ class GVNode {
   static GVNode *CreateInput(const std::string &name, const std::vector<std::string> &output_names,
                              const std::vector<std::string> &output_infos, bool highlight = false);
   static GVNode *CreateOutput(const std::string &name, size_t input_size, bool highlight = false);
-  static GVNode *CreateWeight(const std::string &name, const std::vector<std::string> &output_names,
+  static GVNode *CreateWeight(const std::string &name, const std::string &content,
+                              const std::vector<std::string> &output_names,
                               const std::vector<std::string> &output_infos, bool highlight = false);
   virtual ~GVNode();
 
@@ -72,8 +74,9 @@ class GVNode {
   std::string Code() const;
 
  protected:
-  GVNode(std::string name, int type, size_t input_size, size_t output_size, bool highlight = false)
+  GVNode(std::string name, std::string content, int type, size_t input_size, size_t output_size, bool highlight = false)
       : name_(std::move(name)),
+        content_(std::move(content)),
         type_(type),
         input_size_(input_size),
         output_size_(output_size),
@@ -83,6 +86,7 @@ class GVNode {
 
  private:
   std::string name_;
+  std::string content_;
   int type_;
   std::string prefix_;
   size_t input_size_{0};
@@ -109,4 +113,4 @@ class GVGraph {
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_COMMON_GRAPHVIZ_DRAWER_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_DRAW_GRAPHVIZ_GRAPH_H_

@@ -28,7 +28,7 @@
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
 #include "src/litert/kernel_exec_util.h"
-#include "src/executor/sub_graph_kernel_drawer.h"
+#include "src/executor/sub_graph_kernel_adapter_graph.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -37,34 +37,20 @@ using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
 
 void SubGraphKernel::Draw(const std::string &path, const std::string &file_name,
-                          const std::vector<schema::PrimitiveType> &mark_types) {
-#ifndef ENABLE_DUMP
-  MS_LOG(INFO) << "Dump is not enabled, please set env 'export MSLITE_ENABLE_DUMP=on' to enable dump.";
-#else
-  auto drawer = lite::SubGraphKernelGVGraph::Create(*this, mark_types);
-  if (drawer == nullptr) {
-    MS_LOG(ERROR) << "Create drawer failed.";
-    return;
-  }
-  auto write_path = lite::WriteStrToFile(path, file_name, drawer->Code());
-  if (write_path.empty()) {
-    MS_LOG(ERROR) << "Save dot to file failed.";
-  } else {
-    MS_LOG(INFO) << "Save dot to " << write_path << " successfully.";
-  }
-#endif
+                          const std::vector<schema::PrimitiveType> &mark_types) const {
+  Draw(path, file_name, [&mark_types](const KernelExec &kernel) { return lite::IsContain(mark_types, kernel.type()); });
 }
 
-void SubGraphKernel::Draw(const std::string &path, const std::string &file_name, const lite::MarkFilter &filter) {
+void SubGraphKernel::Draw(const std::string &path, const std::string &file_name, const lite::MarkFilter &filter) const {
 #ifndef ENABLE_DUMP
   MS_LOG(INFO) << "Dump is not enabled, please set env 'export MSLITE_ENABLE_DUMP=on' to enable dump.";
 #else
-  auto drawer = lite::SubGraphKernelGVGraph::Create(*this, filter);
-  if (drawer == nullptr) {
-    MS_LOG(ERROR) << "Create drawer failed.";
+  auto gv_graph = lite::CreateGVGraph(this, filter);
+  if (gv_graph == nullptr) {
+    MS_LOG(ERROR) << "Create gv_graph failed.";
     return;
   }
-  auto write_path = lite::WriteStrToFile(path, file_name, drawer->Code());
+  auto write_path = lite::WriteStrToFile(path, file_name, gv_graph->Code());
   if (write_path.empty()) {
     MS_LOG(ERROR) << "Save dot to file failed.";
   } else {

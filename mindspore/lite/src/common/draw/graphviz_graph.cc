@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/common/graphviz_drawer.h"
+#include "src/common/draw/graphviz_graph.h"
 #include <set>
 #include <algorithm>
 #include <sstream>
@@ -51,7 +51,7 @@ std::string Edge::Code() const {
 
 GVNode *GVNode::CreateCNode(const std::string &name, size_t input_size, const std::vector<std::string> &output_names,
                             const std::vector<std::string> &output_infos, bool highlight) {
-  auto node = new GVNode(name, kNodeTypeCNode, input_size, output_names.size(), highlight);
+  auto node = new GVNode(name, name, kNodeTypeCNode, input_size, output_names.size(), highlight);
   node->prefix_ = "Node_";
   node->shape_ = "plaintext";
   node->Init(output_names, output_infos);
@@ -60,7 +60,7 @@ GVNode *GVNode::CreateCNode(const std::string &name, size_t input_size, const st
 
 GVNode *GVNode::CreateInput(const std::string &name, const std::vector<std::string> &output_names,
                             const std::vector<std::string> &output_infos, bool highlight) {
-  auto node = new GVNode(name, kNodeTypeInput, 0, output_names.size(), highlight);
+  auto node = new GVNode(name, name, kNodeTypeInput, 0, output_names.size(), highlight);
   node->prefix_ = "Input_";
   node->shape_ = "egg";
   node->Init(output_names, output_infos);
@@ -68,16 +68,17 @@ GVNode *GVNode::CreateInput(const std::string &name, const std::vector<std::stri
 }
 
 GVNode *GVNode::CreateOutput(const std::string &name, size_t input_size, bool highlight) {
-  auto node = new GVNode(name, kNodeTypeOutput, input_size, 0, highlight);
+  auto node = new GVNode(name, name, kNodeTypeOutput, input_size, 0, highlight);
   node->prefix_ = "Output_";
   node->shape_ = "egg";
   node->Init({}, {});
   return node;
 }
 
-GVNode *GVNode::CreateWeight(const std::string &name, const std::vector<std::string> &output_names,
-                             const std::vector<std::string> &output_infos, bool highlight) {
-  auto node = new GVNode(name, kNodeTypeWeight, 0, output_names.size(), highlight);
+GVNode *GVNode::CreateWeight(const std::string &name, const std::string &content,
+                             const std::vector<std::string> &output_names, const std::vector<std::string> &output_infos,
+                             bool highlight) {
+  auto node = new GVNode(name, content, kNodeTypeWeight, 0, output_names.size(), highlight);
   node->prefix_ = "Weight_";
   node->shape_ = "octagon";
   node->Init(output_names, output_infos);
@@ -138,20 +139,20 @@ std::string GVNode::Code() const {
     oss << indent << "<tr>";
     auto input_cols = input_size_ == 0 ? 0 : cols / input_size_;
     for (size_t i = 0; i < input_size_; i++) {
-      oss << "<td colspan='" << input_cols << "' port='I" << i << "'>I" << i << "</td>";
+      oss << "<td align='center' colspan='" << input_cols << "' port='I" << i << "'>I" << i << "</td>";
     }
     oss << "</tr>" << std::endl;
-    oss << indent << "<tr><td colspan='" << cols << "' bgcolor='" << bgcolor << "'>" << name_ << "</td></tr>"
-        << std::endl;
+    oss << indent << "<tr><td align='center' colspan='" << cols << "' bgcolor='" << bgcolor << "'>" << name_
+        << "</td></tr>" << std::endl;
     oss << indent << "<tr>";
     auto output_cols = output_size_ == 0 ? 0 : cols / output_size_;
     for (size_t i = 0; i < output_size_; i++) {
-      oss << "<td colspan='" << output_cols << "' port='O" << i << "'>O" << i << "</td>";
+      oss << "<td align='center' colspan='" << output_cols << "' port='O" << i << "'>O" << i << "</td>";
     }
     oss << "</tr>" << std::endl;
     oss << indent << "</table>>";
   } else {
-    oss << "\"" << name_ << "\"";
+    oss << "\"" << content_ << "\"";
   }
   auto label = oss.str();
   oss.str("");

@@ -36,7 +36,7 @@ namespace lite {
 StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
   MS_ASSERT(graph_ != nullptr);
   if (graph_->InputSize() > 0) {
-    MS_LOG(ERROR) << "Please don't call BuildOutputs twice.";
+    MS_LOG(ERROR) << "Please don't call BuildInputs twice.";
     return kLiteError;
   }
   std::vector<std::unique_ptr<InferTensor>> results;
@@ -195,7 +195,7 @@ StatusCode CompileResultBuilder::RemoveSeqGetItemNode() {
       iter++;
       continue;
     }
-    MS_LOG(INFO) << "Handling GetItem node: " << node->GetName();
+    MS_LOG(DEBUG) << "Handling GetItem node: " << node->GetName();
     if (node->OutputSize() != 1) {
       MS_LOG(ERROR) << "GetItem node should has 1 outputs, but got " << node->OutputSize();
       return kLiteError;
@@ -340,6 +340,10 @@ StatusCode CompileResultBuilder::AppendInputValueNodeToInputs(const ValueNodePtr
   if (compile_node == nullptr) {
     MS_LOG(ERROR) << "Input compile_node is nullptr.";
     return kLiteInputParamInvalid;
+  }
+  if (value_node->value() != nullptr && value_node->value()->isa<Monad>()) {
+    MS_LOG(WARNING) << "Skip Monad value node: " << value_node->fullname_with_scope();
+    return kSuccess;
   }
   auto tensor_from_value = TensorAdapter::Convert2Tensor(value_node);
   if (tensor_from_value == nullptr) {

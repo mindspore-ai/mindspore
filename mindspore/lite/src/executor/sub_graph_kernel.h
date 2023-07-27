@@ -152,8 +152,8 @@ class SubGraphKernel : public KernelExec {
   int SubGraphSplitByOperator(KernelsArray *out_kernels);
 
   void Draw(const std::string &path, const std::string &file_name,
-            const std::vector<schema::PrimitiveType> &mark_types = {});
-  void Draw(const std::string &path, const std::string &file_name, const lite::MarkFilter &filter);
+            const std::vector<schema::PrimitiveType> &mark_types = {}) const;
+  void Draw(const std::string &path, const std::string &file_name, const lite::MarkFilter &filter) const;
 
  protected:
   std::vector<KernelExec *> nodes_{};
