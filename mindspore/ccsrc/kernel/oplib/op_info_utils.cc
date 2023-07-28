@@ -151,7 +151,7 @@ bool OpInfoUtils::GenerateOpInfos(const std::string &version, const std::string 
       return false;
     }
     auto key = op_name + kImplyTBEStr;
-    op_infos.emplace(key, op_info_ptr);
+    (void)op_infos.emplace(key, op_info_ptr);
   }
 
   (void)OpLib::GetOpInfoMap()[kImplyTBE].insert(op_infos.begin(), op_infos.end());

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,19 +74,6 @@ enum MatchCountPriority : size_t {
   MATCH_OUTPUT_DTYPE_COUNT,
   MATCH_COUNT_PRIORITY_END
 };
-static const std::unordered_set<std::string> kAclKernelSet = {kConv2DOpName,
-                                                              kConv2DBackpropFilterOpName,
-                                                              kConv2DBackpropInputOpName,
-                                                              kBNInferOpName,
-                                                              kBNTrainingUpdateGradOpName,
-                                                              kBNTrainingReduceGradOpName,
-                                                              kBNTrainingReduceOpName,
-                                                              kBNTrainingUpdateOpName,
-                                                              kMatMulOpName,
-                                                              kBatchMatMulOpName,
-                                                              kCastOpName,
-                                                              kReLUOpName,
-                                                              kReluOpName};
 
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
@@ -173,8 +160,8 @@ bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelB
 
   for (size_t input_index = 0; input_index < fold_input_tensor_num; ++input_index) {
     std::vector<TypeId> inputs_type = common::AnfAlgo::GetRealPrevNodesOutputInferDataType(cnode, input_index);
-    for (size_t i = 0; i < inputs_type.size(); ++i) {
-      if (!ProcessKernelInputIdx(kernel_build_info, input_type_converter(inputs_type[i]), kernel_input_index)) {
+    for (auto &i : inputs_type) {
+      if (!ProcessKernelInputIdx(kernel_build_info, input_type_converter(i), kernel_input_index)) {
         return false;
       }
       if (is_input_need_unfold) {
@@ -213,8 +200,8 @@ bool MatchFoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBui
       ++kernel_index;
     } else {
       std::vector<TypeId> inputs_type = common::AnfAlgo::GetRealPrevNodesOutputInferDataType(cnode, input_index);
-      for (size_t i = 0; i < inputs_type.size(); ++i) {
-        if (!ProcessKernelInputIdx(kernel_build_info, input_type_converter(inputs_type[i]), kernel_index)) {
+      for (auto &i : inputs_type) {
+        if (!ProcessKernelInputIdx(kernel_build_info, input_type_converter(i), kernel_index)) {
           return false;
         }
         ++kernel_index;
@@ -525,7 +512,7 @@ bool MatchObjectType(const CNodePtr &cnode, const std::shared_ptr<kernel::Kernel
     MS_EXCEPTION_IF_NULL(tuple_abs);
     auto items = tuple_abs->elements();
     size_t output_index = 0;
-    for (auto item : items) {
+    for (const auto &item : items) {
       if (output_index >= kernel_outputs_object_type.size()) {
         MS_LOG(DEBUG) << "index is large equal than list size: " << output_index << " vs "
                       << kernel_outputs_object_type.size();
@@ -799,10 +786,10 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
     MS_EXCEPTION_IF_NULL(input_node);
     if (common::AnfAlgo::IsTupleOutput(input_node)) {
       std::vector<KernelWithIndex> inputs_with_index = common::AnfAlgo::GetRealPrevNodesOutput(kernel_node, i);
-      for (size_t j = 0; j < inputs_with_index.size(); ++j) {
-        auto type = GetInputDeviceType(inputs_with_index[j]);
+      for (auto &j : inputs_with_index) {
+        auto type = GetInputDeviceType(j);
         inputs_device_type.emplace_back(type);
-        auto format = AnfAlgo::GetOutputFormat(inputs_with_index[j].first, inputs_with_index[j].second);
+        auto format = AnfAlgo::GetOutputFormat(j.first, j.second);
         inputs_format.emplace_back(format);
         all_input_formats.insert(format);
       }
@@ -853,8 +840,8 @@ void FillNoneInKernelInfo(const CNodePtr &kernel_node, std::vector<kernel::Kerne
   if (!IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     return;
   }
-  for (size_t idx = 0; idx < kernel_info_list->size(); ++idx) {
-    auto build_info = (*kernel_info_list)[idx];
+  for (auto &idx : *kernel_info_list) {
+    auto build_info = idx;
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(build_info);
     // Fill inputs info. If type or format is None, infer it from inputs
     std::vector<TypeId> inputs_device_type;
@@ -891,7 +878,7 @@ void FillNoneInKernelInfo(const CNodePtr &kernel_node, std::vector<kernel::Kerne
     }
     builder->SetOutputsDeviceType(outputs_device_type);
     builder->SetOutputsFormat(outputs_format);
-    (*kernel_info_list)[idx] = builder->Build();
+    idx = builder->Build();
   }
 }
 
@@ -928,7 +915,6 @@ void RefreshInputParameter(const CNodePtr &kernel_node, const AnfNodePtr &input_
 
   std::vector<std::string> output_format = {input_format};
   SetWeightFormat(real_input_node, output_format, kernel_node, input_index);
-  return;
 }
 
 void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
@@ -942,9 +928,9 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
     if (input_object_type == kernel::KernelObjectType::TUPLE_UNFOLD) {
       std::vector<KernelWithIndex> kernels_with_index =
         common::AnfAlgo::GetRealPrevNodesOutput(kernel_node, input_index);
-      for (size_t i = 0; i < kernels_with_index.size(); ++i) {
-        RefreshInputParameter(kernel_node, kernels_with_index[i].first,
-                              selected_kernel_info->GetInputFormat(real_input_num), real_input_num);
+      for (auto &i : kernels_with_index) {
+        RefreshInputParameter(kernel_node, i.first, selected_kernel_info->GetInputFormat(real_input_num),
+                              real_input_num);
         ++real_input_num;
       }
     } else {
@@ -1047,8 +1033,8 @@ std::string KernelInfoCandidateList(const std::vector<std::shared_ptr<kernel::Ke
   std::ostringstream buffer;
   buffer << "\nAI CORE:\n";
   if (!ai_core.empty()) {
-    for (size_t i = 0; i < ai_core.size(); i++) {
-      buffer << ai_core[i]->ToString();
+    for (const auto &i : ai_core) {
+      buffer << i->ToString();
       buffer << "\n";
     }
   } else {
@@ -1056,8 +1042,8 @@ std::string KernelInfoCandidateList(const std::vector<std::shared_ptr<kernel::Ke
   }
   buffer << "AI CPU:\n";
   if (!ai_cpu.empty()) {
-    for (size_t i = 0; i < ai_cpu.size(); i++) {
-      buffer << ai_cpu[i]->ToString();
+    for (const auto &i : ai_cpu) {
+      buffer << i->ToString();
       buffer << "\n";
     }
     buffer << "\n";
@@ -1218,7 +1204,7 @@ void RefreshDynamicInputSizeAttr(const CNodePtr &cnode) {
     MS_LOG(DEBUG) << "Node has not set kAttrDynInputSizes yet, node: " << cnode->fullname_with_scope();
     return;
   }
-  std::vector<int64_t> dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  auto dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
   auto input_obj_types = AnfAlgo::GetInputKernelObjectTypes(cnode);
   auto node_inputs_object_type = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(cnode));
   // For the condition node is tuple & kernel is tensor
@@ -1409,7 +1395,7 @@ void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes) {
   // Check whether the node has completed kernel selection.
   for (const auto &node : nodes) {
     auto kernel_info = AnfAlgo::GetSelectKernelBuildInfo(node);
-    if (kernel_info != nullptr && kernel_info->valid() == true) {
+    if (kernel_info != nullptr && kernel_info->valid()) {
       continue;
     }
 

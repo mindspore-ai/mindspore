@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,8 +250,10 @@ bool OpLib::DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::sha
     std::vector<std::string> format;
     std::vector<std::string> object_type;
     for (const auto &it : dtype_format) {
-      dtype.emplace_back(it[index][kIndex0]);
-      format.emplace_back(it[index][kIndex1]);
+      if (index < it.size() && kIndex1 < it[index].size()) {
+        dtype.emplace_back(it[index][kIndex0]);
+        format.emplace_back(it[index][kIndex1]);
+      }
       if (it[index].size() == kIndex3) {
         object_type.emplace_back(it[index][kIndex2]);
       } else {

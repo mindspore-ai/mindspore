@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ class KernelAdjust {
   CNodePtr CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
   CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
-  void SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const string name,
+  void SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const string &name,
                                int64_t value) const;
 
  private:
@@ -165,7 +165,7 @@ class KernelAdjust {
                                         std::vector<CNodePtr> *exec_order,
                                         const std::vector<uint32_t> &fpbp_active_streams) const;
   void AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_graph, KernelRuntime *runtime_instance,
-                               const string name) const;
+                               const string &name) const;
   void InsertGradientOverflowCheckOperations(const AnfNodePtr &specify_para,
                                              const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   void InsertDynamicLossScaleCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,

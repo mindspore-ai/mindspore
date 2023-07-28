@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,18 +56,6 @@ bool SuperBar::LoadSBConfig(const nlohmann::json &js) {
 std::string SuperBar::GetSBMSAttrByKernelAttr(const std::string &op_name, const std::string &attr_name) {
   auto iter = node_attr_kernel_to_ms_.find(op_name);
   if (iter == node_attr_kernel_to_ms_.end()) {
-    return attr_name;
-  }
-  auto iter_attr = iter->second.find(attr_name);
-  if (iter_attr == iter->second.end()) {
-    return attr_name;
-  }
-  return iter_attr->second;
-}
-
-std::string SuperBar::GetSBKernelAttrByMSAttr(const std::string &op_name, const std::string &attr_name) {
-  auto iter = node_attr_ms_to_kernel_.find(op_name);
-  if (iter == node_attr_ms_to_kernel_.end()) {
     return attr_name;
   }
   auto iter_attr = iter->second.find(attr_name);
