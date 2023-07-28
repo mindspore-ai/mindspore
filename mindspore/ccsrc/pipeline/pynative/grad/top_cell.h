@@ -123,7 +123,8 @@ class TopCellInfo {
   }
   void set_auto_grad_cell_ptr(autograd::AutoGradCellImplPtr &&auto_grad_cell_ptr) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
-                                       runtime::ProfilerEvent::kPyNativeGradClearAutoGradCell, std::string(), true);
+                                       runtime::ProfilerEvent::kPyNativeGradClearAutoGradCell,
+                                       runtime::ProfilerRecorder::kNoName, true);
     auto_grad_cell_ptr_ = std::move(auto_grad_cell_ptr);
   }
   inline size_t op_index() const { return op_index_; }

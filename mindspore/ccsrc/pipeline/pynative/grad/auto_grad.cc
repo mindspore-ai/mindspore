@@ -1148,7 +1148,8 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, AnfNodePtrLis
 
 void AutoGradCellImpl::UpdateOutputNodeOfTopCell(const ValuePtr &sens_out) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
-                                     runtime::ProfilerEvent::kPyNativeGradUpdateSens, std::string(), true);
+                                     runtime::ProfilerEvent::kPyNativeGradUpdateSens,
+                                     runtime::ProfilerRecorder::kNoName, true);
   MS_EXCEPTION_IF_NULL(sens_out);
   MS_LOG(DEBUG) << "Real output of top cell is " << PyNativeAlgo::Common::GetIdByValue(sens_out);
   ad_param()->sens_value_ = sens_out;

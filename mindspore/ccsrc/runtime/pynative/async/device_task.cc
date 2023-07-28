@@ -32,7 +32,7 @@ void DeviceOpBuildTask::SetBuildReady(bool build_success) {
 
 void DeviceOpRunTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     std::string(), false);
+                                     runtime::ProfilerRecorder::kNoName, false);
   MS_LOG(DEBUG) << "Wait for build";
   auto build_status = future_.get();
   if (!build_status) {

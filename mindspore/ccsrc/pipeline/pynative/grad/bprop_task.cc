@@ -23,7 +23,7 @@ namespace mindspore {
 namespace pynative {
 void BpropTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBpropTask,
-                                     std::string(), false);
+                                     runtime::ProfilerRecorder::kNoName, false);
   MS_LOG(DEBUG) << "run construct bprop task";
   run_task_();
   MS_LOG(DEBUG) << "finish construct bprop task";

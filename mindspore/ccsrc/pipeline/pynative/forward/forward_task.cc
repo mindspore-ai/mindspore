@@ -24,7 +24,7 @@ namespace mindspore {
 namespace pynative {
 void FrontendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
-                                     std::string(), false);
+                                     runtime::ProfilerRecorder::kNoName, false);
   run_func_(op_run_info_);
   op_run_info_ = nullptr;
 }
@@ -38,7 +38,7 @@ void FrontendTask::SetException(const std::exception_ptr &e) {
 
 void BackendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
-                                     std::string(), false);
+                                     runtime::ProfilerRecorder::kNoName, false);
   run_func_(op_run_info_, backend_op_run_info_);
   op_run_info_ = nullptr;
 }
