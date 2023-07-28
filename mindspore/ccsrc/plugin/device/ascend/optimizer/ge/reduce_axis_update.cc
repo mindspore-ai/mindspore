@@ -73,6 +73,7 @@ bool ReduceAxisUpdate::IsReduce(const BaseRef &ref) {
 }
 
 bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
+  MS_EXCEPTION_IF_NULL(axis_node);
   const ValuePtr &value = axis_node->value();
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<ValueTuple>()) {
@@ -92,6 +93,7 @@ bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
 }
 
 bool ReduceAxisUpdate::IsInputScalar(const AnfNodePtr &x_node) const {
+  MS_EXCEPTION_IF_NULL(x_node);
   auto x_shape_ptr = x_node->Shape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   ShapeVector x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];

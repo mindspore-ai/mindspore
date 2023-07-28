@@ -127,6 +127,7 @@ std::tuple<MemRange, MemRange> CalcAllToAllvForGEInput(const CNodePtr &origin_no
 }
 
 std::vector<ShapeVector> GetAllToAllvOutputShapes(const CNodePtr &all_to_all_v) {
+  MS_EXCEPTION_IF_NULL(all_to_all_v);
   std::vector<ShapeVector> output_shapes;
   size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(all_to_all_v->abstract());
   for (size_t i = 0; i < output_num; ++i) {
@@ -140,6 +141,7 @@ std::vector<ShapeVector> GetAllToAllvOutputShapes(const CNodePtr &all_to_all_v) 
 }
 
 AnfNodePtrList CreateFlattenReshapeNodes(const FuncGraphPtr &graph, const AnfNodePtrList &input_nodes) {
+  MS_EXCEPTION_IF_NULL(graph);
   AnfNodePtrList flatten_reshape_nodes;
   (void)std::transform(input_nodes.begin(), input_nodes.end(), std::back_inserter(flatten_reshape_nodes),
                        [&graph](const auto &input_node) {
@@ -153,6 +155,7 @@ AnfNodePtrList CreateFlattenReshapeNodes(const FuncGraphPtr &graph, const AnfNod
 }
 
 CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const AnfNodePtrList &input_nodes) {
+  MS_EXCEPTION_IF_NULL(graph);
   if (input_nodes.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Need at least 1 input to create Concat node.";
   }
@@ -184,6 +187,9 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const AnfNodePtrList &input
 
 CNodePtr CreateAllToAllvForGENode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, const CNodePtr &origin_node,
                                   const std::vector<ShapeVector> &origin_output_shapes) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(origin_node);
   auto group = common::AnfAlgo::GetNodeAttr<std::string>(origin_node, kAttrGroup);
   auto rank_size = GetRankSize(group);
   auto [send_mem_range, recv_mem_range] = CalcAllToAllvForGEInput(origin_node, rank_size, origin_output_shapes);
@@ -218,6 +224,7 @@ CNodePtr CreateAllToAllvForGENode(const FuncGraphPtr &graph, const AnfNodePtr &i
 
 CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node,
                          const std::vector<ShapeVector> &origin_output_shapes) {
+  MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input_node);
 
   auto base_dtype = common::AnfAlgo::GetOutputInferDataType(input_node, kIndex0);
@@ -243,6 +250,7 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node
 
 AnfNodePtrList CreateReshapeNodes(const FuncGraphPtr &graph, const AnfNodePtrList &input_nodes,
                                   const std::vector<ShapeVector> &origin_output_shapes) {
+  MS_EXCEPTION_IF_NULL(graph);
   if (input_nodes.size() != origin_output_shapes.size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The number of input nodes to reshape must match shapes, but got "
                                << input_nodes.size() << " and " << origin_output_shapes.size();
