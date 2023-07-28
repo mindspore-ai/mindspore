@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_PRELU_PARAMETER_H_
-#define NNACL_PRELU_PARAMETER_H_
+#ifndef NNACL_KERNEL_PRELU_H_
+#define NNACL_KERNEL_PRELU_H_
 
 #include "nnacl/op_base.h"
-typedef struct PReluParameter {
-  OpParameter op_parameter_;
-  bool channel_shared_;
-} PReluParameter;
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-#endif  // NNACL_PRELU_PARAMETER_H_
+typedef struct PReluStruct {
+  KernelBase base_;
+  int data_type_;
+  int input_num_;
+  int channel_num_;
+  bool channel_shared_;
+} PReluStruct;
+
+KernelBase *CreatePRelu(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_PRELU_H_

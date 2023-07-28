@@ -33,7 +33,7 @@ OpParameter *PopulatePReLUOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
 
-  param->channelShared = op->get_channel_shared();
+  param->channel_shared_ = op->get_channel_shared();
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_OPERATOR_POPULATE(kNamePReLUFusion, PrimitiveType_PReLUFusion, PopulatePReLUOpParameter)

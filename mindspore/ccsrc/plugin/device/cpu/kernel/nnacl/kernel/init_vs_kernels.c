@@ -41,6 +41,7 @@
 #include "nnacl/kernel/non_zero.h"
 #include "nnacl/kernel/nllloss.h"
 #include "nnacl/kernel/prior_box.h"
+#include "nnacl/kernel/prelu.h"
 #include "nnacl/kernel/pad.h"
 #include "nnacl/kernel/pow.h"
 #include "nnacl/kernel/reshape.h"
@@ -113,6 +114,7 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_Neg][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_PadFusion][REGIST_DT(kNumberTypeFloat16)] = CreatePad;
+  creators[PrimType_PReLUFusion][REGIST_DT(kNumberTypeFloat16)] = CreatePRelu;
   creators[PrimType_PowFusion][REGIST_DT(kNumberTypeFloat16)] = CreatePow;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_RealDiv][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
@@ -244,6 +246,7 @@ void InitVSKernelI(KernelCreator **creators) {
   creators[PrimType_PriorBox][REGIST_DT(kNumberTypeFloat32)] = CreatePriorBox;
   creators[PrimType_PriorBox][REGIST_DT(kNumberTypeInt8)] = CreatePriorBox;
   creators[PrimType_PowFusion][REGIST_DT(kNumberTypeFloat32)] = CreatePow;
+  creators[PrimType_PReLUFusion][REGIST_DT(kNumberTypeFloat32)] = CreatePRelu;
 }
 
 void InitVSKernelR(KernelCreator **creators) {

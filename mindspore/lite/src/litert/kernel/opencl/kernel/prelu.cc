@@ -174,7 +174,7 @@ int PReluOpenCLKernel::Prepare() {
   Broadcast2GpuShape(output_shape.s, out_tensors_.at(0)->shape().size(), out_shape_.s, DIMENSION_4D, 1);
   Broadcast2GpuShape(weight_shape.s, in_tensors_.at(1)->shape().size(), weight_shape_.s, DIMENSION_4D, 1);
   auto param = reinterpret_cast<PReluParameter *>(op_parameter_);
-  weight_is_scalar = param->channelShared;
+  weight_is_scalar = param->channel_shared_;
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   std::string source = prelu_source;
   const std::string program_name = "PRelu";
