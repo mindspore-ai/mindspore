@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 
 #include <memory>
 #include <random>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -57,7 +57,7 @@ class RandomCropAndResizeOp : public TensorOp {
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
-  TensorShape ComputeOutputShape(const TensorShape &input, int32_t target_height, int32_t target_width);
+  TensorShape ComputeOutputShape(const TensorShape &input) const;
 
   Status GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width);
 
@@ -80,5 +80,4 @@ class RandomCropAndResizeOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_CROP_AND_RESIZE_OP_H_

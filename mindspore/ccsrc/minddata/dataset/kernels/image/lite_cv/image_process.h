@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,15 @@
 #define IMAGE_PROCESS_H_
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <limits>
-#include <cmath>
 #include <vector>
 
 #include "lite_cv/lite_mat.h"
 
 namespace mindspore {
 namespace dataset {
-
 #define CV_PI 3.1415926535897932384626433832795
 #define IM_TOOL_EXIF_ORIENTATION_0_DEG 1
 #define IM_TOOL_EXIF_ORIENTATION_0_DEG_MIRROR 2
@@ -301,14 +300,14 @@ bool DATASET_API Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::
 
 /// \brief Get default anchor boxes for Faster R-CNN, SSD, YOLO etc.
 /// \param[in] config Objects of BoxesConfig structure.
-std::vector<std::vector<float>> DATASET_API GetDefaultBoxes(const BoxesConfig config);
+std::vector<std::vector<float>> DATASET_API GetDefaultBoxes(const BoxesConfig &config);
 
 /// \brief Convert the prediction boxes to the actual boxes of (y, x, h, w).
 /// \param[in] boxes Actual size box.
 /// \param[in] default_boxes Default box.
 /// \param[in] config Objects of BoxesConfig structure.
 void DATASET_API ConvertBoxes(std::vector<std::vector<float>> &boxes,
-                              const std::vector<std::vector<float>> &default_boxes, const BoxesConfig config);
+                              const std::vector<std::vector<float>> &default_boxes, const BoxesConfig &config);
 
 /// \brief Apply Non-Maximum Suppression.
 /// \param[in] all_boxes All input boxes.
@@ -653,7 +652,6 @@ bool DATASET_API ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, i
 /// \endcode
 /// \return Return true if transform successfully.
 bool DATASET_API HWC2CHW(LiteMat &src, LiteMat &dst);
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // IMAGE_PROCESS_H_

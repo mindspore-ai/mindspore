@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,20 +20,25 @@
 #include <utility>
 #include <vector>
 
+#if defined(ENABLE_MINDDATA_PYTHON)
+#include <opencv2/imgproc/types_c.h>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#endif
+
+#if defined(ENABLE_MINDDATA_PYTHON)
+#include "minddata/dataset/core/cv_tensor.h"
+#endif
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 #include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
 #include "minddata/dataset/kernels/image/math_utils.h"
-#include "minddata/dataset/util/random.h"
 #if defined(ENABLE_MINDDATA_PYTHON)
-#include <opencv2/imgproc/types_c.h>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
 #endif
+#include "minddata/dataset/util/random.h"
 
 constexpr int64_t hw_shape = 2;
 constexpr int64_t hwc_rank = 3;
@@ -152,7 +157,7 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
   std::vector<JSAMPLE> scanline(scanline_size);
   JSAMPLE *scanline_ptr = &scanline[0];
   while (cinfo->output_scanline < static_cast<unsigned int>(max_scanlines_to_read)) {
-    int num_lines_read = 0;
+    unsigned int num_lines_read = 0;
     try {
       num_lines_read = jpeg_read_scanlines(cinfo, &scanline_ptr, 1);
     } catch (const std::exception &e) {
@@ -228,12 +233,12 @@ void JpegErrorExitCustom(j_common_ptr cinfo) {
 
 Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int crop_x, int crop_y,
                          int crop_w, int crop_h) {
-  struct jpeg_decompress_struct cinfo;
+  struct jpeg_decompress_struct cinfo {};
   auto DestroyDecompressAndReturnError = [&cinfo](const std::string &err) {
     jpeg_destroy_decompress(&cinfo);
     RETURN_STATUS_UNEXPECTED(err);
   };
-  struct JpegErrorManagerCustom jerr;
+  struct JpegErrorManagerCustom jerr {};
   cinfo.err = jpeg_std_error(&jerr.pub);
   jerr.pub.error_exit = JpegErrorExitCustom;
   try {
@@ -248,8 +253,8 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - crop_w) > crop_x, "invalid crop width");
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - crop_h) > crop_y, "invalid crop height");
   if (crop_x == 0 && crop_y == 0 && crop_w == 0 && crop_h == 0) {
-    crop_w = cinfo.output_width;
-    crop_h = cinfo.output_height;
+    crop_w = static_cast<int>(cinfo.output_width);
+    crop_h = static_cast<int>(cinfo.output_height);
   } else if (crop_w == 0 || static_cast<unsigned int>(crop_w + crop_x) > cinfo.output_width || crop_h == 0 ||
              static_cast<unsigned int>(crop_h + crop_y) > cinfo.output_height) {
     return DestroyDecompressAndReturnError("Decode: invalid crop size");
@@ -270,19 +275,19 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   TensorShape ts = TensorShape({crop_h, crop_w, kOutNumComponents});
   std::shared_ptr<Tensor> output_tensor;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(ts, DataType(DataType::DE_UINT8), &output_tensor));
-  const int buffer_size = output_tensor->SizeInBytes();
+  const int buffer_size = static_cast<int>(output_tensor->SizeInBytes());
   JSAMPLE *buffer = reinterpret_cast<JSAMPLE *>(&(*output_tensor->begin<uint8_t>()));
   // stride refers to output tensor, which has 3 components at most
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - skipped_scanlines) > crop_h,
                                "Invalid crop height.");
-  const int max_scanlines_to_read = skipped_scanlines + crop_h;
+  const int max_scanlines_to_read = static_cast<int>(skipped_scanlines) + crop_h;
   // stride refers to output tensor, which has 3 components at most
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / crop_w) > kOutNumComponents,
                                "Invalid crop width.");
   const int stride = crop_w * kOutNumComponents;
   // offset is calculated for scanlines read from the image, therefore
   // has the same number of components as the image
-  const int offset = (crop_x - crop_x_aligned) * cinfo.output_components;
+  const int offset = (crop_x - static_cast<int>(crop_x_aligned)) * cinfo.output_components;
   RETURN_IF_NOT_OK(
     JpegReadScanlines(&cinfo, max_scanlines_to_read, buffer, buffer_size, crop_w, crop_w_aligned, offset, stride));
   *output = output_tensor;
@@ -363,16 +368,18 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   try {
     LiteMat lite_mat_rgb;
     TensorShape shape{h, w};
+    int input_height = static_cast<int>(input->shape()[0]);
+    int input_width = static_cast<int>(input->shape()[1]);
+    int input_channel = static_cast<int>(input->shape()[2]);
     if (input->Rank() == 2) {
-      lite_mat_rgb.Init(input->shape()[1], input->shape()[0],
+      lite_mat_rgb.Init(input_width, input_height,
                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                         GetLiteCVDataType(input->type()));
     } else {  // rank == 3
-      lite_mat_rgb.Init(input->shape()[1], input->shape()[0], input->shape()[2],
+      lite_mat_rgb.Init(input_width, input_height, input_channel,
                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                         GetLiteCVDataType(input->type()));
-      int num_channels = input->shape()[2];
-      shape = shape.AppendDim(num_channels);
+      shape = shape.AppendDim(input_channel);
     }
 
     std::shared_ptr<Tensor> output_tensor;
@@ -408,8 +415,8 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
     jpeg_destroy_decompress(&cinfo);
     RETURN_STATUS_UNEXPECTED(e.what());
   }
-  *img_height = cinfo.output_height;
-  *img_width = cinfo.output_width;
+  *img_height = static_cast<int>(cinfo.output_height);
+  *img_width = static_cast<int>(cinfo.output_width);
   jpeg_destroy_decompress(&cinfo);
   return Status::OK();
 }
@@ -427,7 +434,10 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   try {
     LiteMat lite_mat_norm;
     bool ret = false;
-    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+    int input_height = static_cast<int>(input->shape()[0]);
+    int input_width = static_cast<int>(input->shape()[1]);
+    int input_channel = static_cast<int>(input->shape()[2]);
+    LiteMat lite_mat_rgb(input_width, input_height, input_channel,
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
@@ -485,16 +495,16 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int>::max() / kResizeShapeLimits) > in_image.cols,
                                "Resize: in_image cols out of bounds.");
   if (output_height > in_image.rows * kResizeShapeLimits || output_width > in_image.cols * kResizeShapeLimits) {
-    std::string err_msg =
+    RETURN_STATUS_ERROR(
+      StatusCode::kMDShapeMisMatch,
       "Resize: the resizing width or height is too big, it's 1000 times bigger than the original image, got output "
       "height: " +
-      std::to_string(output_height) + ", width: " + std::to_string(output_width) +
-      ", and original image size:" + std::to_string(in_image.rows) + ", " + std::to_string(in_image.cols);
-    return Status(StatusCode::kMDShapeMisMatch, err_msg);
+        std::to_string(output_height) + ", width: " + std::to_string(output_width) +
+        ", and original image size:" + std::to_string(in_image.rows) + ", " + std::to_string(in_image.cols));
   }
   if (output_height == 0 || output_width == 0) {
-    std::string err_msg = "Resize: the input value of 'resize' is invalid, width or height is zero.";
-    return Status(StatusCode::kMDShapeMisMatch, err_msg);
+    RETURN_STATUS_ERROR(StatusCode::kMDShapeMisMatch,
+                        "Resize: the input value of 'resize' is invalid, width or height is zero.");
   }
 
   if (mode == InterpolationMode::kCubicPil) {
@@ -599,9 +609,12 @@ Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, in
   outputs->resize(size);
   CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() > 0,
                                "Invalid input, should be greater than 0, but got " + std::to_string(inputs.size()));
-  std::shared_ptr<Tensor> input = inputs[0];
+  const std::shared_ptr<Tensor> &input = inputs[0];
   CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 3, "Invalid input shape, should be greater than 3 dimensions.");
-  LiteMat lite_mat_src(input->shape()[1], input->shape()[0], input->shape()[2],
+  int input_height = static_cast<int>(input->shape()[0]);
+  int input_width = static_cast<int>(input->shape()[1]);
+  int input_channel = static_cast<int>(input->shape()[2]);
+  LiteMat lite_mat_src(input_width, input_height, input_channel,
                        const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                        GetLiteCVDataType(input->type()));
 
@@ -610,7 +623,7 @@ Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, in
   TensorShape new_shape = TensorShape({height, width, input->shape()[2]});
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, DataType(DataType::DE_FLOAT32), &image_tensor));
   uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*image_tensor->begin<uint8_t>()));
-  lite_mat_dst.Init(width, height, input->shape()[2], reinterpret_cast<void *>(buffer), LDataType::FLOAT32);
+  lite_mat_dst.Init(width, height, input_channel, reinterpret_cast<void *>(buffer), LDataType::FLOAT32);
 
   float ratioShiftWShiftH[3] = {0};
   float invM[2][3] = {{0, 0, 0}, {0, 0, 0}};
@@ -643,22 +656,22 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   }
 
   try {
-    int output_height = input->shape()[0];
-    int output_width = input->shape()[1];
-
-    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+    int input_height = static_cast<int>(input->shape()[0]);
+    int input_width = static_cast<int>(input->shape()[1]);
+    int input_channel = static_cast<int>(input->shape()[1]);
+    LiteMat lite_mat_rgb(input_width, input_height, input_channel,
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
     LiteMat lite_mat_convert;
     std::shared_ptr<Tensor> output_tensor;
-    TensorShape new_shape = TensorShape({output_height, output_width, 3});
+    TensorShape new_shape = TensorShape({input_height, input_width, 3});
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-    lite_mat_convert.Init(output_width, output_height, 3, reinterpret_cast<void *>(buffer),
+    lite_mat_convert.Init(input_width, input_height, 3, reinterpret_cast<void *>(buffer),
                           GetLiteCVDataType(input->type()));
 
     bool ret =
-      ConvertRgbToBgr(lite_mat_rgb, GetLiteCVDataType(input->type()), output_width, output_height, lite_mat_convert);
+      ConvertRgbToBgr(lite_mat_rgb, GetLiteCVDataType(input->type()), input_width, input_height, lite_mat_convert);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "RgbToBgr: RGBToBGR failed.");
 
     *output = output_tensor;
@@ -677,22 +690,22 @@ Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   }
 
   try {
-    int output_height = input->shape()[0];
-    int output_width = input->shape()[1];
-
-    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+    int input_height = static_cast<int>(input->shape()[0]);
+    int input_width = static_cast<int>(input->shape()[1]);
+    int input_channel = static_cast<int>(input->shape()[2]);
+    LiteMat lite_mat_rgb(input_width, input_height, input_channel,
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
     LiteMat lite_mat_convert;
     std::shared_ptr<Tensor> output_tensor;
-    TensorShape new_shape = TensorShape({output_height, output_width, 1});
+    TensorShape new_shape = TensorShape({input_height, input_width, 1});
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-    lite_mat_convert.Init(output_width, output_height, 1, reinterpret_cast<void *>(buffer),
+    lite_mat_convert.Init(input_width, input_height, 1, reinterpret_cast<void *>(buffer),
                           GetLiteCVDataType(input->type()));
 
     bool ret =
-      ConvertRgbToGray(lite_mat_rgb, GetLiteCVDataType(input->type()), output_width, output_height, lite_mat_convert);
+      ConvertRgbToGray(lite_mat_rgb, GetLiteCVDataType(input->type()), input_width, input_height, lite_mat_convert);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "RgbToGray: RGBToGRAY failed.");
 
     *output = output_tensor;
@@ -720,7 +733,10 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
   }
 
   try {
-    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+    int input_height = static_cast<int>(input->shape()[0]);
+    int input_width = static_cast<int>(input->shape()[1]);
+    int input_channel = static_cast<int>(input->shape()[2]);
+    LiteMat lite_mat_rgb(input_width, input_height, input_channel,
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
     LiteMat lite_mat_pad;
@@ -763,7 +779,10 @@ static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std
     int width = 0;
     double M[6] = {};
 
-    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+    int input_height = static_cast<int>(input->shape()[0]);
+    int input_width = static_cast<int>(input->shape()[1]);
+    int input_channel = static_cast<int>(input->shape()[2]);
+    LiteMat lite_mat_rgb(input_width, input_height, input_channel,
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
@@ -793,7 +812,7 @@ static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std
       M[2] = 0.0f;
       M[3] = -1.0f;
       M[4] = 0.0f;
-      M[5] = lite_mat_rgb.width_ - 1.0f;
+      M[5] = static_cast<float>(lite_mat_rgb.width_) - 1.0f;
     } else {
     }
 
@@ -824,8 +843,10 @@ static Status RotateAngleWithMirror(const std::shared_ptr<Tensor> &input, std::s
     int height = 0;
     int width = 0;
     double M[6] = {};
-
-    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+    int input_height = static_cast<int>(input->shape()[0]);
+    int input_width = static_cast<int>(input->shape()[1]);
+    int input_channel = static_cast<int>(input->shape()[2]);
+    LiteMat lite_mat_rgb(input_width, input_height, input_channel,
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
@@ -904,7 +925,7 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     RETURN_STATUS_UNEXPECTED("Rotate: image datatype is not float32 or uint8.");
   }
 
-  if (!IsMirror(orientation)) {
+  if (!IsMirror(static_cast<int>(orientation))) {
     return RotateAngleWithOutMirror(input, output, orientation);
   } else {
     return RotateAngleWithMirror(input, output, orientation);
@@ -940,8 +961,8 @@ Status GetAffineMatrix(const std::shared_ptr<Tensor> &input, std::vector<float_t
   // Thus, the affine matrix is M = T * C * RSS * C^-1
 
   // image is hwc, rows = shape()[0]
-  float_t cx = ((input->shape()[1] - 1) / 2.0);
-  float_t cy = ((input->shape()[0] - 1) / 2.0);
+  float_t cx = (static_cast<float_t>(input->shape()[1]) - 1.0F) / 2.0F;
+  float_t cy = (static_cast<float_t>(input->shape()[0]) - 1.0F) / 2.0F;
 
   CHECK_FAIL_RETURN_UNEXPECTED(cos(shear_y) != 0.0, "AffineOp: cos(shear_y) should not be zero.");
 
@@ -977,8 +998,10 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     for (int i = 0; i < matrix.size(); i++) {
       M[i] = static_cast<double>(matrix[i]);
     }
-
-    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+    int input_height = static_cast<int>(input->shape()[0]);
+    int input_width = static_cast<int>(input->shape()[1]);
+    int input_channel = static_cast<int>(input->shape()[2]);
+    LiteMat lite_mat_rgb(input_width, input_height, input_channel,
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
@@ -1010,17 +1033,20 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
                     int32_t kernel_y, float sigma_x, float sigma_y) {
   try {
     LiteMat lite_mat_input;
+    int input_height = static_cast<int>(input->shape()[0]);
+    int input_width = static_cast<int>(input->shape()[1]);
+    int input_channel = static_cast<int>(input->shape()[2]);
     if (input->Rank() == 3) {
       if (input->shape()[2] != 1 && input->shape()[2] != 3) {
         RETURN_STATUS_UNEXPECTED("GaussianBlur: input image is not in channel of 1 or 3");
       }
-      lite_mat_input = LiteMat(input->shape()[1], input->shape()[0], input->shape()[2],
+      lite_mat_input = LiteMat(input_width, input_height, input_channel,
                                const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                                GetLiteCVDataType(input->type()));
     } else if (input->Rank() == 2) {
-      lite_mat_input = LiteMat(input->shape()[1], input->shape()[0],
-                               const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
-                               GetLiteCVDataType(input->type()));
+      lite_mat_input =
+        LiteMat(input_width, input_height, const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                GetLiteCVDataType(input->type()));
     } else {
       RETURN_STATUS_UNEXPECTED("GaussianBlur: input image is not in shape of <H,W,C> or <H,W>");
     }
@@ -1136,21 +1162,21 @@ Status ValidateImageRank(const std::string &op_name, int32_t rank) {
   return Status::OK();
 }
 
-Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
+Status HwcToChw(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
     if (input->Rank() <= 3) {
-      int output_height = input->shape()[0];
-      int output_width = input->shape()[1];
-      int output_channel = input->shape()[2];
-      LiteMat lite_mat_hwc(input->shape()[1], input->shape()[0], input->shape()[2],
+      int input_height = static_cast<int>(input->shape()[0]);
+      int input_width = static_cast<int>(input->shape()[1]);
+      int input_channel = static_cast<int>(input->shape()[2]);
+      LiteMat lite_mat_hwc(input_width, input_height, input_channel,
                            const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                            GetLiteCVDataType(input->type()));
       LiteMat lite_mat_chw;
       std::shared_ptr<Tensor> output_tensor;
-      TensorShape new_shape = TensorShape({output_channel, output_height, output_width});
+      TensorShape new_shape = TensorShape({input_channel, input_height, input_width});
       RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
       uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-      lite_mat_chw.Init(output_height, output_channel, output_width, reinterpret_cast<void *>(buffer),
+      lite_mat_chw.Init(input_height, input_channel, input_width, reinterpret_cast<void *>(buffer),
                         GetLiteCVDataType(input->type()));
       bool ret = HWC2CHW(lite_mat_hwc, lite_mat_chw);
       CHECK_FAIL_RETURN_UNEXPECTED(ret, "HwcToChw: HwcToChw failed.");

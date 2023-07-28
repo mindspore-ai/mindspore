@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 #include "minddata/dataset/kernels/image/rotate_op.h"
+
+#include <utility>
 
 #include "minddata/dataset/kernels/data/data_utils.h"
 #ifndef ENABLE_ANDROID
@@ -46,7 +48,7 @@ RotateOp::RotateOp(float degrees, InterpolationMode resample, bool expand, std::
                    uint8_t fill_g, uint8_t fill_b)
     : angle_id_(0),
       degrees_(degrees),
-      center_(center),
+      center_(std::move(center)),
       interpolation_(resample),
       expand_(expand),
       fill_r_(fill_r),
@@ -73,7 +75,7 @@ Status RotateOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     // split [N, H, W, C] to N [H, W, C], and Rotate N [H, W, C]
     std::vector<std::shared_ptr<Tensor>> input_vector_hwc, output_vector_hwc;
     RETURN_IF_NOT_OK(BatchTensorToTensorVector(input, &input_vector_hwc));
-    for (auto input_hwc : input_vector_hwc) {
+    for (const auto &input_hwc : input_vector_hwc) {
       std::shared_ptr<Tensor> output_img;
 #ifndef ENABLE_ANDROID
       RETURN_IF_NOT_OK(
@@ -99,16 +101,17 @@ Status RotateOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   int32_t outputH = -1, outputW = -1;
   // if expand_, then we cannot know the shape. We need the input image to find the output shape --> set it to
   // <-1,-1[,3]>
-  if (!expand_) {
-    outputH = inputs[0][0];
-    outputW = inputs[0][1];
-  }
-  TensorShape out = TensorShape{outputH, outputW};
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "Rotate: inputs cannot be empty.");
   if (inputs[0].Rank() < kMinImageRank) {
     std::string err_msg =
       "Rotate: input tensor should have at least 2 dimensions, but got: " + std::to_string(inputs[0].Rank());
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+  if (!expand_) {
+    outputH = static_cast<int32_t>(inputs[0][0]);
+    outputW = static_cast<int32_t>(inputs[0][1]);
+  }
+  TensorShape out = TensorShape{outputH, outputW};
   if (inputs[0].Rank() == kMinImageRank) {
     (void)outputs.emplace_back(out);
   }
@@ -131,13 +134,13 @@ Status RotateOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
 #endif
 }
 
-TensorShape RotateOp::ConstructShape(const TensorShape &in_shape) {
+TensorShape RotateOp::ConstructShape(const TensorShape &in_shape) const {
   auto in_shape_vec = in_shape.AsVector();
   const int h_index = -3, w_index = -2;
   int32_t outputH = -1, outputW = -1;
   if (!expand_) {
-    outputH = in_shape[h_index];
-    outputW = in_shape[w_index];
+    outputH = static_cast<int32_t>(in_shape[h_index]);
+    outputW = static_cast<int32_t>(in_shape[w_index]);
   }
   in_shape_vec[in_shape_vec.size() + h_index] = outputH;
   in_shape_vec[in_shape_vec.size() + w_index] = outputW;

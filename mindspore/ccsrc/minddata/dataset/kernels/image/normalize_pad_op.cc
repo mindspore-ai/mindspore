@@ -16,15 +16,15 @@
 #include "minddata/dataset/kernels/image/normalize_pad_op.h"
 
 #include <random>
+#include <utility>
 
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-NormalizePadOp::NormalizePadOp(const std::vector<float> &mean, const std::vector<float> &std, const std::string dtype,
-                               bool is_hwc)
-    : mean_(mean), std_(std), dtype_(dtype), is_hwc_(is_hwc) {}
+NormalizePadOp::NormalizePadOp(std::vector<float> mean, std::vector<float> std, std::string dtype, bool is_hwc)
+    : mean_(std::move(mean)), std_(std::move(std)), dtype_(std::move(dtype)), is_hwc_(is_hwc) {}
 
 Status NormalizePadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);

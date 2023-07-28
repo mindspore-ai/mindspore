@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,11 @@ class RandomColorAdjustOp : public TensorOp {
   std::string Name() const override { return kRandomColorAdjustOp; }
 
  private:
+  /// \brief Compare two floating point variables. Return true if they are same / very close.
+  static inline bool CmpFloat(const float &a, const float &b, float epsilon = 0.0000000001f) {
+    return (std::fabs(a - b) < epsilon);
+  }
+
   std::mt19937 rnd_;
   float bright_factor_start_;
   float bright_factor_end_;
@@ -65,12 +70,7 @@ class RandomColorAdjustOp : public TensorOp {
   float saturation_factor_end_;
   float hue_factor_start_;
   float hue_factor_end_;
-  // Compare two floating point variables. Return true if they are same / very close.
-  inline bool CmpFloat(const float &a, const float &b, float epsilon = 0.0000000001f) const {
-    return (std::fabs(a - b) < epsilon);
-  }
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_COLOR_ADJUST_OP_H_

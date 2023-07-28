@@ -35,7 +35,7 @@ Status InvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     if (input_cv->Rank() != 3) {
       RETURN_STATUS_UNEXPECTED("Invert: image shape is not <H,W,C>, got rank: " + std::to_string(input_cv->Rank()));
     }
-    int num_channels = input_cv->shape()[2];
+    auto num_channels = input_cv->shape()[2];
     if (num_channels != 3) {
       RETURN_STATUS_UNEXPECTED(
         "Invert: image shape is incorrect, expected num of channels is 3, "

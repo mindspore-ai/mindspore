@@ -1,10 +1,11 @@
-/*
- * Copyright (c) 2020-2021.Huawei Technologies Co., Ltd. All rights reserved.
+/**
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,11 +14,12 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/kernels/image/dvpp/utils/DvppCommon.h"
+
 #include <memory>
 
+#include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/util/log_adapter.h"
-#include "DvppCommon.h"
-#include "CommonDataType.h"
 
 const static auto g_resizeConfigDeleter = [](acldvppResizeConfig *p) { (void)acldvppDestroyResizeConfig(p); };
 const static auto g_picDescDeleter = [](acldvppPicDesc *picDesc) { (void)acldvppDestroyPicDesc(picDesc); };
@@ -34,7 +36,7 @@ DvppCommon::DvppCommon(const VdecConfig &vdecConfig) : vdecConfig_(vdecConfig) {
  *               the channel description is created by acldvppCreateChannelDesc
  * @return: APP_ERR_OK if success, other values if failure
  */
-APP_ERROR DvppCommon::Init(void) {
+APP_ERROR DvppCommon::Init() {
   dvppChannelDesc_ = acldvppCreateChannelDesc();
   if (dvppChannelDesc_ == nullptr) {
     return APP_ERR_COMM_INVALID_POINTER;
@@ -113,7 +115,7 @@ APP_ERROR DvppCommon::InitVdec() {
  *               Otherwise destroy the channel and the channel description used by image.
  * @return: APP_ERR_OK if success, other values if failure
  */
-APP_ERROR DvppCommon::DeInit(void) {
+APP_ERROR DvppCommon::DeInit() {
   if (isVdec_) {
     return DestroyResource();
   }
@@ -397,13 +399,13 @@ APP_ERROR DvppCommon::CheckResizeParams(const DvppDataInfo &input, const DvppDat
     MS_LOG(ERROR) << "Output format[" << output.format << "] for VPC is not supported, only NV12 or NV21 or RGB888.";
     return APP_ERR_COMM_INVALID_PARAM;
   }
-  if (((float)output.height / input.height) < MIN_RESIZE_SCALE ||
-      ((float)output.height / input.height) > MAX_RESIZE_SCALE) {
+  if (static_cast<float>(output.height) / static_cast<float>(input.height) < MIN_RESIZE_SCALE ||
+      static_cast<float>(output.height) / static_cast<float>(input.height) > MAX_RESIZE_SCALE) {
     MS_LOG(ERROR) << "Resize scale should be in range [1/16, 16], which is " << (output.height / input.height) << ".";
     return APP_ERR_COMM_INVALID_PARAM;
   }
-  if (((float)output.width / input.width) < MIN_RESIZE_SCALE ||
-      ((float)output.width / input.width) > MAX_RESIZE_SCALE) {
+  if (static_cast<float>(output.width) / static_cast<float>(input.width) < MIN_RESIZE_SCALE ||
+      static_cast<float>(output.width) / static_cast<float>(input.width) > MAX_RESIZE_SCALE) {
     MS_LOG(ERROR) << "Resize scale should be in range [1/16, 16], which is " << (output.width / input.width) << ".";
     return APP_ERR_COMM_INVALID_PARAM;
   }
@@ -509,9 +511,9 @@ void DvppCommon::GetCropRoi(const DvppDataInfo &input, const DvppDataInfo &outpu
 
   bool widthRatioSmaller = true;
   // The scaling ratio is based on the smaller ratio to ensure the smallest edge to fill the targe edge
-  float resizeRatio = static_cast<float>(input.width) / output.width;
-  if (resizeRatio > (static_cast<float>(input.height) / output.height)) {
-    resizeRatio = static_cast<float>(input.height) / output.height;
+  float resizeRatio = static_cast<float>(input.width) / static_cast<float>(output.width);
+  if (resizeRatio > (static_cast<float>(input.height) / static_cast<float>(output.height))) {
+    resizeRatio = static_cast<float>(input.height) / static_cast<float>(output.height);
     widthRatioSmaller = false;
   }
 
@@ -529,7 +531,6 @@ void DvppCommon::GetCropRoi(const DvppDataInfo &input, const DvppDataInfo &outpu
   cropRoi.down = CONVERT_TO_ODD(input.height - ODD_NUM_1);
   cropRoi.left = CONVERT_TO_EVEN(static_cast<uint32_t>((input.width - output.width * resizeRatio) / halfValue));
   cropRoi.right = CONVERT_TO_ODD((input.width - cropRoi.left) - ODD_NUM_1);
-  return;
 }
 
 /*
@@ -550,16 +551,18 @@ void DvppCommon::GetPasteRoi(const DvppDataInfo &input, const DvppDataInfo &outp
 
   bool widthRatioLarger = true;
   // The scaling ratio is based on the larger ratio to ensure the largest edge to fill the targe edge
-  float resizeRatio = static_cast<float>(input.width) / output.width;
-  if (resizeRatio < (static_cast<float>(input.height) / output.height)) {
-    resizeRatio = static_cast<float>(input.height) / output.height;
+  float resizeRatio = static_cast<float>(input.width) / static_cast<float>(output.width);
+  if (resizeRatio < (static_cast<float>(input.height) / static_cast<float>(output.height))) {
+    resizeRatio = static_cast<float>(input.height) / static_cast<float>(output.height);
     widthRatioLarger = false;
   }
 
   // Left and up is 0 when the roi paste on the upper left corner
   if (processType == VPC_PT_PADDING) {
-    pasteRoi.right = (input.width / resizeRatio) - ODD_NUM_1;
-    pasteRoi.down = (input.height / resizeRatio) - ODD_NUM_1;
+    pasteRoi.right =
+      static_cast<uint32_t>((static_cast<float>(input.width) / resizeRatio) - static_cast<float>(ODD_NUM_1));
+    pasteRoi.down =
+      static_cast<uint32_t>((static_cast<float>(input.height) / resizeRatio) - static_cast<float>(ODD_NUM_1));
     pasteRoi.right = CONVERT_TO_ODD(pasteRoi.right);
     pasteRoi.down = CONVERT_TO_ODD(pasteRoi.down);
     return;
@@ -570,12 +573,16 @@ void DvppCommon::GetPasteRoi(const DvppDataInfo &input, const DvppDataInfo &outp
   if (widthRatioLarger) {
     pasteRoi.left = 0;
     pasteRoi.right = output.width - ODD_NUM_1;
-    pasteRoi.up = static_cast<uint32_t>((output.height - (input.height / resizeRatio)) / halfValue);
+    pasteRoi.up =
+      static_cast<uint32_t>((static_cast<float>(output.height) - (static_cast<float>(input.height) / resizeRatio)) /
+                            static_cast<float>(halfValue));
     pasteRoi.down = (output.height - pasteRoi.up) - ODD_NUM_1;
   } else {
     pasteRoi.up = 0;
     pasteRoi.down = output.height - ODD_NUM_1;
-    pasteRoi.left = static_cast<uint32_t>((output.width - (input.width / resizeRatio)) / halfValue);
+    pasteRoi.left =
+      static_cast<uint32_t>((static_cast<float>(output.width) - (static_cast<float>(input.width) / resizeRatio)) /
+                            static_cast<float>(halfValue));
     pasteRoi.right = (output.width - pasteRoi.left) - ODD_NUM_1;
   }
 
@@ -584,7 +591,6 @@ void DvppCommon::GetPasteRoi(const DvppDataInfo &input, const DvppDataInfo &outp
   pasteRoi.right = CONVERT_TO_ODD(pasteRoi.right);
   pasteRoi.up = CONVERT_TO_EVEN(pasteRoi.up);
   pasteRoi.down = CONVERT_TO_ODD(pasteRoi.down);
-  return;
 }
 
 /*
@@ -633,7 +639,7 @@ APP_ERROR DvppCommon::CombineResizeProcess(DvppDataInfo &input, const DvppDataIn
   }
   // Malloc buffer for output of resize module
   // Need to pay attention to release of the buffer
-  ret = acldvppMalloc((void **)(&(resizedImage_->data)), resizedImage_->dataSize);
+  ret = acldvppMalloc(reinterpret_cast<void **>(&(resizedImage_->data)), resizedImage_->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc " << resizedImage_->dataSize << " bytes on dvpp for resize, ret = " << ret
                   << ".";
@@ -813,7 +819,7 @@ APP_ERROR DvppCommon::CombineCropProcess(DvppCropInputInfo &input, const DvppDat
 
   // Malloc buffer for output of resize module
   // Need to pay attention to release of the buffer
-  ret = acldvppMalloc((void **)(&(cropImage_->data)), cropImage_->dataSize);
+  ret = acldvppMalloc(reinterpret_cast<void **>(&(cropImage_->data)), cropImage_->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc " << cropImage_->dataSize << " bytes on dvpp for resize, ret = " << ret << ".";
     return ret;
@@ -1092,7 +1098,7 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
   decodedImage_->dataSize = outBuffSize;
   // Malloc dvpp buffer to store the output data after decoding
   // Need to pay attention to release of the buffer
-  ret = acldvppMalloc((void **)&decodedImage_->data, decodedImage_->dataSize);
+  ret = acldvppMalloc(reinterpret_cast<void **>(&(decodedImage_->data)), decodedImage_->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc memory on dvpp, ret = " << ret << ".";
     RELEASE_DVPP_DATA(inputImage_->data);
@@ -1192,7 +1198,7 @@ APP_ERROR DvppCommon::CombinePngdProcess(const RawData &imageInfo, acldvppPixelF
   decodedImage_->dataSize = outBuffSize;
   // Malloc dvpp buffer to store the output data after decoding
   // Need to pay attention to release of the buffer
-  ret = acldvppMalloc((void **)&decodedImage_->data, decodedImage_->dataSize);
+  ret = acldvppMalloc(reinterpret_cast<void **>(&(decodedImage_->data)), decodedImage_->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc memory on dvpp, ret = " << ret << ".";
     RELEASE_DVPP_DATA(inputImage_->data);
@@ -1222,7 +1228,7 @@ APP_ERROR DvppCommon::TransferYuvDataH2D(const DvppDataInfo &imageinfo) {
     return APP_ERR_COMM_INVALID_PARAM;
   }
   uint8_t *device_ptr = nullptr;
-  APP_ERROR ret = acldvppMalloc((void **)&device_ptr, imageinfo.dataSize);
+  APP_ERROR ret = acldvppMalloc(reinterpret_cast<void **>(&device_ptr), imageinfo.dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc " << imageinfo.dataSize << " bytes on dvpp, ret = " << ret << ".";
     return ret;
@@ -1270,7 +1276,7 @@ APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shar
   }
 
   uint8_t *inDevBuff = nullptr;  // This pointer will be on device
-  APP_ERROR ret = acldvppMalloc((void **)&inDevBuff, imageInfo.lenOfByte);
+  APP_ERROR ret = acldvppMalloc(reinterpret_cast<void **>(&inDevBuff), imageInfo.lenOfByte);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc " << imageInfo.lenOfByte << " bytes on dvpp, ret = " << ret << ".";
     return ret;
@@ -1351,7 +1357,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo, acldvppPixelFormat 
   decodedImage_->dataSize = outBufferSize;
   // Malloc dvpp buffer to store the output data after decoding
   // Need to pay attention to release of the buffer
-  ret = acldvppMalloc((void **)&decodedImage_->data, decodedImage_->dataSize);
+  ret = acldvppMalloc(reinterpret_cast<void **>(&(decodedImage_->data)), decodedImage_->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc memory on dvpp, ret = " << ret << ".";
     RELEASE_DVPP_DATA(inputImage_->data);
@@ -1409,7 +1415,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo) {
   decodedImage_->dataSize = outBuffSize;
   // Malloc dvpp buffer to store the output data after decoding
   // Need to pay attention to release of the buffer
-  ret = acldvppMalloc((void **)&decodedImage_->data, decodedImage_->dataSize);
+  ret = acldvppMalloc(reinterpret_cast<void **>(&(decodedImage_->data)), decodedImage_->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc memory on dvpp, ret = " << ret << ".";
     RELEASE_DVPP_DATA(inputImage_->data);
@@ -1469,7 +1475,7 @@ APP_ERROR DvppCommon::CreateStreamDesc(const std::shared_ptr<DvppDataInfo> &data
  * @return: APP_ERR_OK if success, other values if failure
  * @attention: This function can be called only when the DvppCommon object is initialized with InitVdec
  */
-APP_ERROR DvppCommon::CombineVdecProcess(const std::shared_ptr<DvppDataInfo> data, void *userData) {
+APP_ERROR DvppCommon::CombineVdecProcess(const std::shared_ptr<DvppDataInfo> &data, void *userData) {
   // Return special error code when the DvppCommon object is not initialized with InitVdec
   if (!isVdec_) {
     MS_LOG(ERROR)
@@ -1649,7 +1655,7 @@ APP_ERROR DvppCommon::JpegEncode(const DvppDataInfo &input, DvppDataInfo &output
 APP_ERROR DvppCommon::GetJpegEncodeStrideSize(const std::shared_ptr<DvppDataInfo> &inputImage) {
   uint32_t inputWidth = inputImage->width;
   uint32_t inputHeight = inputImage->height;
-  acldvppPixelFormat format = static_cast<enum acldvppPixelFormat>(inputImage->format);
+  auto format = static_cast<enum acldvppPixelFormat>(inputImage->format);
   uint32_t widthStride;
   uint32_t heightStride;
   uint32_t encodedBufferSize;
@@ -1723,7 +1729,7 @@ APP_ERROR DvppCommon::SetEncodeLevel(uint32_t level, acldvppJpegeConfig &jpegeCo
   // The coding quality range [0, 100]
   // The level 0 coding quality is similar to the level 100
   // The smaller the value in [1, 100], the worse the quality of the output picture
-  auto ret = (APP_ERROR)acldvppSetJpegeConfigLevel(&jpegeConfig, level);
+  auto ret = static_cast<APP_ERROR>(acldvppSetJpegeConfigLevel(&jpegeConfig, level));
   if (ret != APP_ERR_OK) {
     return ret;
   }
@@ -1787,7 +1793,7 @@ APP_ERROR DvppCommon::CombineJpegeProcess(const RawData &imageInfo, uint32_t wid
   encodedImage_->dataSize = encodeOutBufferSize;
   // Malloc dvpp buffer to store the output data after decoding
   // Need to pay attention to release of the buffer
-  ret = acldvppMalloc((void **)&encodedImage_->data, encodedImage_->dataSize);
+  ret = acldvppMalloc(reinterpret_cast<void **>(&(encodedImage_->data)), encodedImage_->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc memory on dvpp, ret = " << ret << ".";
     (void)acldvppFree(inputImage_->data);
@@ -1815,4 +1821,4 @@ std::shared_ptr<DvppDataInfo> DvppCommon::GetEncodedImage() { return encodedImag
 
 std::shared_ptr<DvppDataInfo> DvppCommon::GetCropedImage() { return cropImage_; }
 
-DvppCommon::~DvppCommon() {}
+DvppCommon::~DvppCommon() = default;

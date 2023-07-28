@@ -48,5 +48,4 @@ class RandomPosterizeOp : public PosterizeOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_POSTERIZE_OP_H_

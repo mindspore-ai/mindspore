@@ -31,8 +31,8 @@
  * ============================================================================
  */
 
-#ifndef THREAD_SAFE_QUEUE_H_
-#define THREAD_SAFE_QUEUE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_THREAD_SAFE_QUEUE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_THREAD_SAFE_QUEUE_H_
 
 #include <mutex>
 #include <queue>
@@ -44,7 +44,7 @@ class ThreadSafeQueue {
    * @brief ThreadSafeQueue constructor
    * @param [in] capacity: the queue capacity
    */
-  ThreadSafeQueue(uint32_t capacity) {
+  explicit ThreadSafeQueue(uint32_t capacity) {
     // check the input value: capacity is valid
     if (capacity >= kMinQueueCapacity && capacity <= kMaxQueueCapacity) {
       queueCapacity = capacity;
@@ -126,5 +126,4 @@ class ThreadSafeQueue {
   const uint32_t kMaxQueueCapacity = 10000;   // the maximum queue capacity
   const uint32_t kDefaultQueueCapacity = 10;  // default queue capacity
 };
-
-#endif /* THREAD_SAFE_QUEUE_H_ */
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_THREAD_SAFE_QUEUE_H_

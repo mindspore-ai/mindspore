@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H_
 
-#include <string>
 #include <memory>
+#include <string>
+
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
+#include "minddata/dataset/kernels/image/resize_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/kernels/image/resize_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -55,5 +56,4 @@ class ResizeWithBBoxOp : public ResizeOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H_

@@ -46,5 +46,4 @@ class PerspectiveOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_PERSPECTIVE_OP_H_

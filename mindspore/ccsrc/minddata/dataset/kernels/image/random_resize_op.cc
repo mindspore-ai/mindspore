@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #include <random>
 
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -29,7 +28,7 @@ Status RandomResizeOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   const auto output_count = input.size();
   output->resize(output_count);
-  InterpolationMode interpolation_random_resize = static_cast<InterpolationMode>(distribution_(random_generator_));
+  auto interpolation_random_resize = static_cast<InterpolationMode>(distribution_(random_generator_));
   std::shared_ptr<TensorOp> resize_op = std::make_shared<ResizeOp>(size1_, size2_, interpolation_random_resize);
   for (size_t i = 0; i < input.size(); i++) {
     RETURN_IF_NOT_OK(resize_op->Compute(input[i], &(*output)[i]));

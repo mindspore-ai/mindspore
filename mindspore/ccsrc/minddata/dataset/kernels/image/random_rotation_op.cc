@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
 
 #include <random>
+#include <utility>
 
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -36,7 +37,7 @@ RandomRotationOp::RandomRotationOp(float start_degree, float end_degree, Interpo
                                    std::vector<float> center, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
     : degree_start_(start_degree),
       degree_end_(end_degree),
-      center_(center),
+      center_(std::move(center)),
       interpolation_(resample),
       expand_(expand),
       fill_r_(fill_r),
@@ -67,13 +68,13 @@ Status RandomRotationOp::OutputShape(const std::vector<TensorShape> &inputs, std
   int32_t outputH = -1, outputW = -1;
   // if expand_, then we cannot know the shape. We need the input image to find the output shape --> set it to
   // <-1,-1[,3]>
-  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() > 0 && inputs[0].Size() >= 2,
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty() && inputs[0].Size() >= 2,
                                "RandomRotationOp: invalid input shape, expected 2D or 3D input, but got input"
                                " dimension is: " +
                                  std::to_string(inputs[0].Rank()));
   if (!expand_) {
-    outputH = inputs[0][0];
-    outputW = inputs[0][1];
+    outputH = static_cast<int32_t>(inputs[0][0]);
+    outputW = static_cast<int32_t>(inputs[0][1]);
   }
   TensorShape out = TensorShape{outputH, outputW};
   if (inputs[0].Rank() == 2) {
@@ -82,12 +83,10 @@ Status RandomRotationOp::OutputShape(const std::vector<TensorShape> &inputs, std
   if (inputs[0].Rank() == 3) {
     (void)outputs.emplace_back(out.AppendDim(inputs[0][2]));
   }
-  if (!outputs.empty()) {
-    return Status::OK();
-  }
-  return Status(StatusCode::kMDUnexpectedError,
-                "RandomRotation: invalid input shape, expected 2D or 3D input, but got input dimension is:" +
-                  std::to_string(inputs[0].Rank()));
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    !outputs.empty(), "RandomRotation: invalid input shape, expected 2D or 3D input, but got input dimension is:" +
+                        std::to_string(inputs[0].Rank()));
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

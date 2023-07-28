@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/solarize_op.h"
-#include "minddata/dataset/kernels/image/image_utils.h"
+
 #include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {

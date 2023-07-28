@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_SWAP_RED_BLUE_OP_H_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -46,5 +46,4 @@ class SwapRedBlueOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_SWAP_RED_BLUE_OP_H_

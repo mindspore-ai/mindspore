@@ -1,5 +1,5 @@
 /**
-* Copyright 2022 Huawei Technologies Co., Ltd
+* Copyright 2022-2023 Huawei Technologies Co., Ltd
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -13,21 +13,24 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ACLLITEUTILS_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ACLLITEUTILS_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ACL_LITE_UTILS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ACL_LITE_UTILS_H_
 
+#include <unistd.h>
+
+#include <chrono>
 #include <iostream>
-#include <vector>
+#include <map>
 #include <memory>
 #include <mutex>
-#include <chrono>
-#include <unistd.h>
 #include <string>
-#include <map>
+#include <vector>
+
 #include "acl/acl.h"
 #include "acl/ops/acl_dvpp.h"
-#include "AclLiteError.h"
-#include "AclLiteType.h"
+
+#include "minddata/dataset/kernels/image/dvpp/utils/AclLiteError.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/AclLiteType.h"
 
 /**
  * @brief calculate RGB 24bits image size
@@ -65,21 +68,24 @@
  * @param [in]: buf: memory pointer, malloc by acldvppMalloc
  * @return shared pointer of input buffer
  */
-#define SHARED_PTR_DVPP_BUF(buf) (std::shared_ptr<uint8_t>((uint8_t *)(buf), [](uint8_t *p) { acldvppFree(p); }))
+#define SHARED_PTR_DVPP_BUF(buf) \
+  (std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(buf), [](uint8_t *p) { acldvppFree(p); }))
 
 /**
  * @brief generate shared pointer of device memory
  * @param [in]: buf: memory pointer, malloc by acldvppMalloc
  * @return shared pointer of input buffer
  */
-#define SHARED_PTR_DEV_BUF(buf) (std::shared_ptr<uint8_t>((uint8_t *)(buf), [](uint8_t *p) { aclrtFree(p); }))
+#define SHARED_PTR_DEV_BUF(buf) \
+  (std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(buf), [](uint8_t *p) { aclrtFree(p); }))
 
 /**
  * @brief generate shared pointer of memory
  * @param [in]: buf memory pointer, malloc by new
  * @return shared pointer of input buffer
  */
-#define SHARED_PTR_U8_BUF(buf) (std::shared_ptr<uint8_t>((uint8_t *)(buf), [](uint8_t *p) { delete[](p); }))
+#define SHARED_PTR_U8_BUF(buf) \
+  (std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(buf), [](uint8_t *p) { delete[](p); }))
 
 /**
  * @brief calculate aligned number
@@ -461,4 +467,4 @@ bool ReadConfig(std::map<std::string, std::string> &config, const char *configFi
  */
 void PrintConfig(const std::map<std::string, std::string> &m);
 
-#endif
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ACL_LITE_UTILS_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -22,8 +21,8 @@
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_tensor.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_video_op.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_video_op.h"
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {
@@ -36,7 +35,7 @@ Status DvppDecodeVideoOp::Compute(const std::shared_ptr<Tensor> &input, std::sha
 
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetBuffer() != nullptr, "The input video buffer is empty.");
-    uint8_t *buffer = const_cast<uint8_t *>(input->GetBuffer());
+    auto *buffer = const_cast<uint8_t *>(input->GetBuffer());
     auto data_size = input->SizeInBytes();
     // assuem that output equals to input
     RETURN_IF_NOT_OK(mindspore::dataset::Tensor::CreateFromTensor(input, output));
@@ -82,16 +81,12 @@ Status DvppDecodeVideoOp::Compute(const std::shared_ptr<Tensor> &input, std::sha
 Status DvppDecodeVideoOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
-  if (inputs.size() < 1) {
-    RETURN_STATUS_UNEXPECTED("DvppDecodeVideoOp: OutputShape inputs is null");
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "DvppDecodeVideo: inputs cannot be empty.");
   if (inputs[0].Rank() == 1) {
     outputs = inputs;
   }
-  if (!outputs.empty()) {
-    return Status::OK();
-  }
-  return Status(StatusCode::kMDUnexpectedError, "Input has a wrong shape");
+  CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(), "DvppDecodeVideo: Invalid input shape.");
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

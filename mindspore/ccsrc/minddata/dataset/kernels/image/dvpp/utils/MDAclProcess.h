@@ -1,10 +1,11 @@
-/*
- * Copyright (c) 2020-2021.Huawei Technologies Co., Ltd. All rights reserved.
+/**
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,28 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef MDACLMANAGER_H
-#define MDACLMANAGER_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_MD_ACL_PROCESS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_MD_ACL_PROCESS_H_
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <chrono>
 #include <climits>
 #include <cstdio>
-#include <map>
 #include <iostream>
+#include <map>
 #include <memory>
-#include <unistd.h>
 #include <string>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <vector>
+
 #include "acl/acl.h"
 
-#include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/device_tensor.h"
+#include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/DvppCommon.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
-#include "minddata/dataset/core/device_tensor.h"
-#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
 
@@ -42,8 +46,8 @@ mode_t SetFileDefaultUmask();
 
 class RunTimeUtil {
  public:
-  RunTimeUtil() {}
-  ~RunTimeUtil() {}
+  RunTimeUtil() = default;
+  ~RunTimeUtil() = default;
   inline void Start() { this->start = std::chrono::system_clock::now(); }
   inline void End() { this->end = std::chrono::system_clock::now(); }
   std::vector<double> GetRunTime();
@@ -62,10 +66,10 @@ class MDAclProcess {
   MDAclProcess(uint32_t ParaWidth, uint32_t ParaHeight, aclrtContext context, bool is_crop = false,
                aclrtStream stream = nullptr, const std::shared_ptr<DvppCommon> &dvppCommon = nullptr);
 
-  MDAclProcess(aclrtContext context, bool is_crop = false, aclrtStream stream = nullptr,
-               const std::shared_ptr<DvppCommon> &dvppCommon = nullptr);
+  explicit MDAclProcess(aclrtContext context, bool is_crop = false, aclrtStream stream = nullptr,
+                        const std::shared_ptr<DvppCommon> &dvppCommon = nullptr);
 
-  ~MDAclProcess(){};
+  ~MDAclProcess() = default;
 
   // Release all the resource
   APP_ERROR Release();
@@ -121,9 +125,9 @@ class MDAclProcess {
 
  private:
   // Crop definition
-  void CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropinfo, DvppDataInfo &resizeinfo);
+  void CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropinfo, DvppDataInfo &resizeinfo) const;
   // Resize definition
-  APP_ERROR ResizeConfigFilter(DvppDataInfo &resizeinfo, const uint32_t pri_w_, const uint32_t pri_h_) const;
+  APP_ERROR ResizeConfigFilter(DvppDataInfo &resizeinfo, uint32_t pri_w_, uint32_t pri_h_) const;
   // Initialize DVPP modules used by this sample
   APP_ERROR InitModule();
   // Dvpp process with crop
@@ -154,4 +158,4 @@ class MDAclProcess {
   bool contain_crop_;                       // Initialize with crop or not
 };
 
-#endif
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_MD_ACL_PROCESS_H_

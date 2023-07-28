@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@
 #include <memory>
 #include <random>
 #include <vector>
+
 #include "minddata/dataset/util/status.h"
 
 #define CV_PI 3.1415926535897932384626433832795
 
 namespace mindspore {
 namespace dataset {
-
 /// \brief Returns lower and upper pth percentiles of the input histogram.
 /// \param[in] hist: Input histogram (mutates the histogram for computation purposes)
 /// \param[in] hi_p: Right side percentile
@@ -46,7 +46,6 @@ Status DegreesToRadians(float_t degrees, float_t *radians_target);
 /// \param[in] rnd: Random device
 /// \param[out] result: Random number in range [a,b)
 Status GenerateRealNumber(float_t a, float_t b, std::mt19937 *rnd, float_t *result);
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_MATH_UTILS_H_

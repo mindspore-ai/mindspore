@@ -42,7 +42,7 @@ namespace dataset {
 class RandAugmentOp : public TensorOp {
  public:
   RandAugmentOp(int32_t num_ops, int32_t magnitude, int32_t num_magnitude_bins, InterpolationMode interpolation,
-                const std::vector<uint8_t> &fill_value);
+                std::vector<uint8_t> fill_value);
 
   ~RandAugmentOp() override = default;
 
@@ -51,7 +51,7 @@ class RandAugmentOp : public TensorOp {
   std::string Name() const override { return kRandAugmentOp; }
 
  private:
-  Space GetSpace(int32_t num_bins, const std::vector<dsize_t> &image_size);
+  static Space GetSpace(int32_t num_bins, const std::vector<dsize_t> &image_size);
 
   int32_t RandInt(int32_t low, int32_t high);
 
@@ -64,5 +64,4 @@ class RandAugmentOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RAND_AUGMENT_OP_H_

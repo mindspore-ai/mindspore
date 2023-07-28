@@ -76,8 +76,8 @@ Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output)
     auto input_shape = input[i]->shape();
     std::vector<dsize_t> size;
     RETURN_IF_NOT_OK(ImageSize(input[i], &size));
-    int h_in = size[0];
-    int w_in = size[1];
+    int h_in = static_cast<int>(size[0]);
+    int w_in = static_cast<int>(size[1]);
     if (i == 0) {
       RETURN_IF_NOT_OK(GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width));
     }
@@ -91,22 +91,21 @@ Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output)
       // split [N, H, W, C] to N [H, W, C], and Resize N [H, W, C]
       std::vector<std::shared_ptr<Tensor>> input_vector_hwc, output_vector_hwc;
       RETURN_IF_NOT_OK(BatchTensorToTensorVector(input[i], &input_vector_hwc));
-      for (auto input_hwc : input_vector_hwc) {
+      for (const auto &input_hwc : input_vector_hwc) {
         std::shared_ptr<Tensor> output_img;
         RETURN_IF_NOT_OK(CropAndResize(input_hwc, &output_img, x, y, crop_height, crop_width, target_height_,
                                        target_width_, interpolation_));
         output_vector_hwc.push_back(output_img);
       }
       RETURN_IF_NOT_OK(TensorVectorToBatchTensor(output_vector_hwc, &(*output)[i]));
-      auto output_shape = ComputeOutputShape(input_shape, target_height_, target_width_);
+      auto output_shape = ComputeOutputShape(input_shape);
       RETURN_IF_NOT_OK((*output)[i]->Reshape(output_shape));
     }
   }
   return Status::OK();
 }
 
-TensorShape RandomCropAndResizeOp::ComputeOutputShape(const TensorShape &input, int32_t target_height,
-                                                      int32_t target_width) {
+TensorShape RandomCropAndResizeOp::ComputeOutputShape(const TensorShape &input) const {
   auto out_shape_vec = input.AsVector();
   auto size = out_shape_vec.size();
   int32_t kHeightIdx = -3;
@@ -127,17 +126,15 @@ Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs
   if (inputs[0].Rank() == 3) {
     (void)outputs.emplace_back(out.AppendDim(inputs[0][2]));
   } else if (inputs[0].Rank() > kDefaultImageRank) {
-    auto out_shape = ComputeOutputShape(inputs[0], target_height_, target_width_);
+    auto out_shape = ComputeOutputShape(inputs[0]);
     (void)outputs.emplace_back(out_shape);
   }
-  if (!outputs.empty()) {
-    return Status::OK();
-  }
-  return Status(StatusCode::kMDUnexpectedError,
-                "RandomCropAndResize: input tensor should have at least 2 dimensions, "
-                "but got: " +
-                  std::to_string(inputs[0].Rank()));
+  CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(),
+                               "RandomCropAndResize: input tensor should have at least 2 dimensions, but got: " +
+                                 std::to_string(inputs[0].Rank()));
+  return Status::OK();
 }
+
 Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width) {
   CHECK_FAIL_RETURN_UNEXPECTED(crop_height != nullptr, "crop_height is nullptr.");
   CHECK_FAIL_RETURN_UNEXPECTED(crop_width != nullptr, "crop_width is nullptr.");
@@ -161,7 +158,7 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
       static_cast<double>((std::numeric_limits<int32_t>::max() / h_in) / w_in) > sample_scale,
       "RandomCropAndResizeOp: multiplication out of bounds, check image width, image height and sample scale first.");
     CHECK_FAIL_RETURN_UNEXPECTED(
-      (static_cast<double>((std::numeric_limits<int32_t>::max() / h_in) / w_in) / sample_scale) > sample_aspect,
+      static_cast<double>((std::numeric_limits<int32_t>::max() / h_in) / w_in) / sample_scale > sample_aspect,
       "RandomCropAndResizeOp: multiplication out of bounds, check image width, image "
       "height, sample scale and sample aspect first.");
     *crop_width = static_cast<int32_t>(std::round(std::sqrt(h_in * w_in * sample_scale * sample_aspect)));
@@ -205,8 +202,8 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
     *crop_height = 1;
   }
 
-  *x = static_cast<int32_t>(std::round((w_in - *crop_width) / crop_ratio));
-  *y = static_cast<int32_t>(std::round((h_in - *crop_height) / crop_ratio));
+  *x = static_cast<int32_t>(std::round(static_cast<float>(w_in - *crop_width) / crop_ratio));
+  *y = static_cast<int32_t>(std::round(static_cast<float>(h_in - *crop_height) / crop_ratio));
   return Status::OK();
 }
 }  // namespace dataset

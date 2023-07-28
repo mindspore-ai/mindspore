@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/rgb_to_bgr_op.h"
+
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
 #else
@@ -29,7 +30,6 @@ Status RgbToBgrOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
     input_type != DataType::DE_UINT32 && input_type != DataType::DE_UINT64 && input_type != DataType::DE_INT64 &&
       !input_type.IsString(),
     "RgbToBgr: Input includes unsupported data type in [uint32, int64, uint64, string, bytes].");
-
   return RgbToBgr(input, output);
 }
 }  // namespace dataset

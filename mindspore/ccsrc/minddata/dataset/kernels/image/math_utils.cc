@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p,
   try {
     int32_t n = std::accumulate(hist->begin(), hist->end(), 0);
     constexpr float kMaxPerc = 100.0;
-    int32_t cut = static_cast<int32_t>((low_p / kMaxPerc) * n);
+    auto cut = static_cast<int32_t>(static_cast<float>(low_p) / kMaxPerc * static_cast<float>(n));
     for (int32_t lb = 0; lb < static_cast<int32_t>(hist->size()) && cut > 0; lb++) {
       if (cut > (*hist)[lb]) {
         cut -= (*hist)[lb];
@@ -40,7 +40,7 @@ Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p,
         cut = 0;
       }
     }
-    cut = static_cast<int32_t>((hi_p / kMaxPerc) * n);
+    cut = static_cast<int32_t>(static_cast<float>(hi_p) / kMaxPerc * static_cast<float>(n));
     for (auto ub_iter = hist->end() - 1; ub_iter >= hist->begin() && cut > 0; ub_iter--) {
       if (cut > *ub_iter) {
         cut -= *ub_iter;
@@ -51,7 +51,7 @@ Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p,
       }
     }
     *lo = 0;
-    *hi = hist->size() - 1;
+    *hi = static_cast<int32_t>(hist->size()) - 1;
     for (; (*lo) < (*hi) && !(*hist)[*lo]; (*lo)++) {
     }
     for (; (*hi) >= 0 && !(*hist)[*hi]; (*hi)--) {
@@ -83,6 +83,5 @@ Status GenerateRealNumber(float_t a, float_t b, std::mt19937 *rnd, float_t *resu
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

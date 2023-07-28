@@ -26,8 +26,8 @@ namespace mindspore {
 namespace dataset {
 class PadToSizeOp : public TensorOp {
  public:
-  PadToSizeOp(const std::vector<int32_t> &size, const std::vector<int32_t> &offset,
-              const std::vector<uint8_t> &fill_value, BorderType padding_mode);
+  PadToSizeOp(std::vector<int32_t> size, std::vector<int32_t> offset, std::vector<uint8_t> fill_value,
+              BorderType padding_mode);
 
   ~PadToSizeOp() override = default;
 

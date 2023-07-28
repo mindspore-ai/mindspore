@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,13 @@
 
 namespace mindspore {
 namespace dataset {
+RandomSelectSubpolicyOp::RandomSelectSubpolicyOp(const std::vector<Subpolicy> &policy)
+    : gen_(GetSeed()), policy_(policy), rand_int_(0, policy.size() - 1), rand_double_(0, 1) {
+  if (policy_.empty()) {
+    MS_LOG(ERROR) << "RandomSelectSubpolicy: input 'policy' in RandomSelectSubpolicy is empty, check input parameter.";
+  }
+  is_deterministic_ = false;
+}
 
 Status RandomSelectSubpolicyOp::Compute(const TensorRow &input, TensorRow *output) {
   TensorRow in_row = input;
@@ -86,13 +93,5 @@ Status RandomSelectSubpolicyOp::OutputType(const std::vector<DataType> &inputs, 
   }
   return Status::OK();
 }
-RandomSelectSubpolicyOp::RandomSelectSubpolicyOp(const std::vector<Subpolicy> &policy)
-    : gen_(GetSeed()), policy_(policy), rand_int_(0, policy.size() - 1), rand_double_(0, 1) {
-  if (policy_.empty()) {
-    MS_LOG(ERROR) << "RandomSelectSubpolicy: input 'policy' in RandomSelectSubpolicy is empty, check input parameter.";
-  }
-  is_deterministic_ = false;
-}
-
 }  // namespace dataset
 }  // namespace mindspore

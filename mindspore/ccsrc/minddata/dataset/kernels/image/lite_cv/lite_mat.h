@@ -353,15 +353,15 @@ class DATASET_API LiteMat {
   /// \param[in] p The point of references count.
   /// \param[in] value The value of new added references.
   /// \return return reference count.
-  int addRef(int *p, int value);
+  static int addRef(int *p, int value);
 
   /// \brief Set the step size of the pixels in the Litemat array.
   /// \param[in] c0 The number used to set teh value of step[0].
   /// \param[in] c1 The number used to set teh value of step[1].
   /// \param[in] c2 The number used to set teh value of step[2].
-  void setSteps(int c0, int c1, int c2);
+  void setSteps(size_t c0, size_t c1, size_t c2);
 
-  bool CheckLiteMat();
+  bool CheckLiteMat() const;
 
  public:
   void *data_ptr_ = nullptr;
@@ -374,7 +374,7 @@ class DATASET_API LiteMat {
   size_t size_;
   LDataType data_type_;
   int *ref_count_;
-  size_t steps_[kMaxDims];
+  size_t steps_[kMaxDims]{};
   bool release_flag_;
 };
 

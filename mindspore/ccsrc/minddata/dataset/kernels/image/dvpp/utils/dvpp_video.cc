@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/dvpp/utils/dvpp_video.h"
+
 #include <malloc.h>
-#include <sys/prctl.h>
-#include <sys/time.h>
 #include <unistd.h>
 
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <thread>
 
+#include "minddata/dataset/kernels/image/dvpp/utils/AclLiteUtils.h"
 #include "mindspore/core/utils/log_adapter.h"
-#include "AclLiteUtils.h"
 
 namespace {
 const int64_t kUsec = 1000000;
@@ -87,7 +83,6 @@ void FrameExtarct::ExtractFrameH264(const uint8_t *buf_ptr, int *size_ptr) {
   if (!isFindEnd) {
     *size_ptr = i + 8;
   }
-  return;
 }
 
 void FrameExtarct::ExtractFrameH265(const uint8_t *buf_ptr, int *size_ptr) {
@@ -122,18 +117,17 @@ void FrameExtarct::ExtractFrameH265(const uint8_t *buf_ptr, int *size_ptr) {
   if (!isFindEnd) {
     *size_ptr = i + 6;
   }
-
-  return;
 }
+
 void FrameExtarct::Decode(FrameProcessCallBack callback, void *callbackParam) {
   MS_LOG(INFO) << "Start extarct frame from video...";
 
   int32_t usedBytes = 0;
   uint32_t count = 0;
-  uint8_t *bufPointer = nullptr;
   bool processOk = true;
 
   while (!isStop_ && processOk) {
+    uint8_t *bufPointer;
     bufPointer = data_ + usedBytes;
     int32_t readlen = size_ - usedBytes;
     if (readlen <= 0) {
@@ -190,7 +184,7 @@ void DvppVideo::DestroyResource() {
   isStop_ = true;
   frameExtarct_->StopDecode();
   while ((status_ >= DecodeStatus::DECODE_START) && (status_ < DecodeStatus::DECODE_FRAME_EXTRACT_FINISHED)) {
-    usleep(kWaitDecodeFinishInterval);
+    (void)usleep(kWaitDecodeFinishInterval);
   }
   // 2. delete ffmpeg decoder
   delete frameExtarct_;
@@ -207,10 +201,13 @@ void DvppVideo::DestroyResource() {
     }
 
     if (frame->data != nullptr) {
-      acldvppFree(frame->data.get());
+      auto ret = acldvppFree(frame->data.get());
+      if (ret != ACL_SUCCESS) {
+        MS_LOG(ERROR) << "acldvppFree failed, errorno: " << ret;
+      }
       frame->data = nullptr;
     }
-  } while (1);
+  } while (true);
   // 5. release channel id
   channelIdGenerator.ReleaseChannelId(channelId_);
 
@@ -312,7 +309,7 @@ AclLiteError DvppVideo::Init() {
 
 // dvpp vdec callback
 void DvppVideo::DvppVdecCallback(acldvppStreamDesc *input, acldvppPicDesc *output, void *userData) {
-  DvppVideo *decoder = reinterpret_cast<DvppVideo *>(userData);
+  auto *decoder = reinterpret_cast<DvppVideo *>(userData);
   // Get decoded image parameters
   std::shared_ptr<ImageData> image = std::make_shared<ImageData>();
   image->format = acldvppGetPicDescFormat(output);
@@ -336,7 +333,10 @@ void DvppVideo::DvppVdecCallback(acldvppStreamDesc *input, acldvppPicDesc *outpu
   if (input != nullptr) {
     void *inputBuf = acldvppGetStreamDescData(input);
     if (inputBuf != nullptr) {
-      acldvppFree(inputBuf);
+      ret = acldvppFree(inputBuf);
+      if (ret != ACL_SUCCESS) {
+        MS_LOG(ERROR) << "acldvppFree failed, errorno: " << ret;
+      }
     }
 
     ret = acldvppDestroyStreamDesc(input);
@@ -354,7 +354,10 @@ void DvppVideo::ProcessDecodedImage(std::shared_ptr<ImageData> frameData) {
     return;
   }
 
-  FrameImageEnQueue(frameData);
+  auto ret = FrameImageEnQueue(frameData);
+  if (ret != ACLLITE_OK) {
+    MS_LOG(ERROR) << "FrameImageEnQueue faile, errorno: " << ret;
+  }
 
   if ((status_ == DecodeStatus::DECODE_FRAME_EXTRACT_FINISHED) && (finFrameCnt_ >= frameId_)) {
     MS_LOG(INFO) << "Last frame decoded by dvpp, change status to " << DecodeStatus::DECODE_DVPP_FINISHED;
@@ -362,12 +365,12 @@ void DvppVideo::ProcessDecodedImage(std::shared_ptr<ImageData> frameData) {
   }
 }
 
-AclLiteError DvppVideo::FrameImageEnQueue(std::shared_ptr<ImageData> frameData) {
+AclLiteError DvppVideo::FrameImageEnQueue(const std::shared_ptr<ImageData> &frameData) {
   for (int count = 0; count < kFrameEnQueueRetryTimes; count++) {
     if (frameImageQueue_.Push(frameData)) {
       return ACLLITE_OK;
     }
-    usleep(kDecodeQueueOpWait);
+    (void)usleep(kDecodeQueueOpWait);
   }
   MS_LOG(ERROR) << "Video lost decoded image for queue full";
 
@@ -386,7 +389,10 @@ void DvppVideo::StartFrameDecoder() {
 
 // ffmpeg decoder entry
 void DvppVideo::FrameDecodeThreadFunction(void *decoderSelf) {
-  DvppVideo *thisPtr = reinterpret_cast<DvppVideo *>(decoderSelf);
+  if (decoderSelf == nullptr) {
+    return;
+  }
+  auto *thisPtr = reinterpret_cast<DvppVideo *>(decoderSelf);
 
   aclError aclRet = thisPtr->SetAclContext();
   if (aclRet != ACL_SUCCESS) {
@@ -405,11 +411,14 @@ void DvppVideo::FrameDecodeThreadFunction(void *decoderSelf) {
   videoFrame->isFinished = true;
   videoFrame->data = nullptr;
   videoFrame->size = 0;
-  thisPtr->dvppVdec_->Process(videoFrame, decoderSelf);
+  auto ret = thisPtr->dvppVdec_->Process(videoFrame, decoderSelf);
+  if (ret != ACLLITE_ERROR) {
+    MS_LOG(ERROR) << "DvppVdec procesing failed, errorno: " << ret;
+  }
 
   thisPtr->dvppVdec_->DestroyChannel();
   while ((thisPtr->GetStatus() != DecodeStatus::DECODE_DVPP_FINISHED) && !thisPtr->IsStop()) {
-    usleep(kWaitDecodeFinishInterval);
+    (void)usleep(kWaitDecodeFinishInterval);
   }
 }
 
@@ -421,7 +430,11 @@ AclLiteError DvppVideo::FrameDecodeCallback(void *decoder, void *frameData, int 
   }
 
   // copy data to dvpp memory
-  DvppVideo *videoDecoder = reinterpret_cast<DvppVideo *>(decoder);
+  if (decoder == nullptr) {
+    MS_LOG(ERROR) << "Decoder is nullptr";
+    return ACLLITE_ERROR_H26X_FRAME;
+  }
+  auto *videoDecoder = reinterpret_cast<DvppVideo *>(decoder);
 
   void *buffer = CopyDataToDevice(frameData, frameSize, videoDecoder->runMode_, MemoryType::MEMORY_DVPP);
   if (buffer == nullptr) {
@@ -445,6 +458,10 @@ AclLiteError DvppVideo::FrameDecodeCallback(void *decoder, void *frameData, int 
 
 // read decoded frame
 AclLiteError DvppVideo::Read(std::shared_ptr<ImageData> *image_ptr) {
+  if (image_ptr == nullptr) {
+    MS_LOG(ERROR) << "image_ptr is nullptr";
+    return ACLLITE_ERROR;
+  }
   // return nullptr,if decode fail/finish
   if (status_ == DecodeStatus::DECODE_ERROR) {
     MS_LOG(ERROR) << "Read failed for decode failed";
@@ -458,7 +475,7 @@ AclLiteError DvppVideo::Read(std::shared_ptr<ImageData> *image_ptr) {
   // start decode if status is ok
   if (status_ == DecodeStatus::DECODE_READY) {
     StartFrameDecoder();
-    usleep(kDecodeQueueOpWait);
+    (void)usleep(kDecodeQueueOpWait);
   }
   // read frame from decode queue
   bool noWait = (status_ == DecodeStatus::DECODE_DVPP_FINISHED);
@@ -493,7 +510,7 @@ std::shared_ptr<ImageData> DvppVideo::FrameImageOutQueue(bool noWait) {
   }
 
   for (int count = 0; count < kQueueOpRetryTimes - 1; count++) {
-    usleep(kDecodeQueueOpWait);
+    (void)usleep(kDecodeQueueOpWait);
 
     image = frameImageQueue_.Pop();
     if (image != nullptr) {
@@ -506,7 +523,7 @@ std::shared_ptr<ImageData> DvppVideo::FrameImageOutQueue(bool noWait) {
 
 // YUV data write to a file
 void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
-  uint8_t *addr = reinterpret_cast<uint8_t *>(frame.data.get());
+  auto *addr = reinterpret_cast<uint8_t *>(frame.data.get());
   uint32_t imageSize = frame.width * frame.height * 3 / 2;  // Size = width * height * 3 / 2
   uint8_t *outImageBuf = nullptr;
   uint32_t outWidthStride = frame.alignWidth;
@@ -531,10 +548,14 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
         return;
       }
 
-      fwrite(outImageBuf, 1, imageSize, fd);
-      aclrtFreeHost(outImageBuf);
+      (void)fwrite(outImageBuf, 1, imageSize, fd);
+      ret = aclrtFreeHost(outImageBuf);
+      if (ret != ACL_SUCCESS) {
+        MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
+        return;
+      }
     } else {
-      fwrite(addr, imageSize, 1, fd);
+      (void)fwrite(addr, imageSize, 1, fd);
     }
   } else {
     if (runMode_ == ACL_HOST) {
@@ -548,7 +569,10 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
         if (ret != ACL_SUCCESS) {
           MS_LOG(ERROR) << "Chn " << channelId_ << " Copy aclrtMemcpy " << imageSize
                         << " from device to host failed, error code " << ret;
-          aclrtFreeHost(outImageBuf);
+          ret = aclrtFreeHost(outImageBuf);
+          if (ret != ACL_SUCCESS) {
+            MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
+          }
           return;
         }
       }
@@ -560,13 +584,19 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
         if (ret != ACL_SUCCESS) {
           MS_LOG(ERROR) << "Chn " << channelId_ << " Copy aclrtMemcpy " << imageSize
                         << " from device to host failed, error code " << ret;
-          aclrtFreeHost(outImageBuf);
+          ret = aclrtFreeHost(outImageBuf);
+          if (ret != ACL_SUCCESS) {
+            MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
+          }
           return;
         }
       }
 
-      fwrite(outImageBuf, 1, imageSize, fd);
-      aclrtFreeHost(outImageBuf);
+      (void)fwrite(outImageBuf, 1, imageSize, fd);
+      aclError ret = aclrtFreeHost(outImageBuf);
+      if (ret != ACL_SUCCESS) {
+        MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
+      }
     } else {
       // Crop the invalid data, then write the valid data to a file
       outImageBuf = reinterpret_cast<uint8_t *>(malloc(imageSize));
@@ -592,17 +622,16 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
         }
       }
 
-      fwrite(outImageBuf, 1, imageSize, fd);
+      (void)fwrite(outImageBuf, 1, imageSize, fd);
       free(outImageBuf);
     }
   }
-  return;
 }
 
 AclLiteError DvppVideo::DumpFrame() {
   auto frame = std::make_shared<ImageData>();
   int frameCnt = 0;
-  while (1) {
+  while (true) {
     AclLiteError ret = Read(&frame);
     if (ret != ACLLITE_OK) {
       if (ret == ACLLITE_ERROR_DECODE_FINISH) {
@@ -618,8 +647,8 @@ AclLiteError DvppVideo::DumpFrame() {
     MS_LOG(INFO) << "Dump the " << frameCnt << "th frame to " << full_path;
     FILE *outFileFp = fopen(full_path.c_str(), "wb+");
     SaveYuvFile(outFileFp, *frame);
-    fflush(outFileFp);
-    fclose(outFileFp);
+    (void)fflush(outFileFp);
+    (void)fclose(outFileFp);
   }
 }
 

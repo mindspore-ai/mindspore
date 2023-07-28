@@ -17,12 +17,7 @@
 #include "minddata/dataset/kernels/image/trivial_augment_wide_op.h"
 
 #include "minddata/dataset/kernels/image/affine_op.h"
-#include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
-#include "minddata/dataset/kernels/image/invert_op.h"
-#include "minddata/dataset/kernels/image/posterize_op.h"
-#include "minddata/dataset/kernels/image/sharpness_op.h"
-#include "minddata/dataset/kernels/image/solarize_op.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {
@@ -48,13 +43,13 @@ Status TrivialAugmentWideOp::Compute(const std::shared_ptr<Tensor> &input, std::
       op_name_list.push_back(p.first);
     });
 
-  int32_t op_index = RandInt(0, space_size);
+  int32_t op_index = RandInt(0, static_cast<int32_t>(space_size));
   const std::string op_name = op_name_list[static_cast<size_t>(op_index)];
   std::vector<float> magnitudes = std::get<0>(space[op_name]);
   bool sign = std::get<1>(space[op_name]);
   float magnitude = 0.0;
   if (magnitudes.size() != 1) {
-    int32_t magnitude_index = RandInt(0, magnitudes.size());
+    int32_t magnitude_index = RandInt(0, static_cast<int32_t>(magnitudes.size()));
     magnitude = magnitudes[static_cast<size_t>(magnitude_index)];
   }
   const int kRandUpperBound = 2;
@@ -68,7 +63,7 @@ Status TrivialAugmentWideOp::Compute(const std::shared_ptr<Tensor> &input, std::
   return Status::OK();
 }
 
-Space TrivialAugmentWideOp::GetSpace(int32_t num_bins) const {
+Space TrivialAugmentWideOp::GetSpace(int32_t num_bins) {
   Space space = {{"Identity", {{0.0}, false}},
                  {"ShearX", {Linspace(0.0, 0.99, num_bins), true}},
                  {"ShearY", {Linspace(0.0, 0.99, num_bins), true}},
@@ -79,7 +74,10 @@ Space TrivialAugmentWideOp::GetSpace(int32_t num_bins) const {
                  {"Color", {Linspace(0.0, 0.99, num_bins), true}},
                  {"Contrast", {Linspace(0.0, 0.99, num_bins), true}},
                  {"Sharpness", {Linspace(0.0, 0.99, num_bins), true}},
-                 {"Posterize", {Linspace(0.0, num_bins - 1.f, num_bins, -6.0f / (num_bins - 1.f), 8, true), false}},
+                 {"Posterize",
+                  {Linspace(0.0, static_cast<float>(num_bins) - 1.F, num_bins,
+                            -6.0F / (static_cast<float>(num_bins) - 1.F), 8, true),
+                   false}},
                  {"Solarize", {Linspace(255.0, 0.0, num_bins), false}},
                  {"AutoContrast", {{0.0}, false}},
                  {"Equalize", {{0.0}, false}}};

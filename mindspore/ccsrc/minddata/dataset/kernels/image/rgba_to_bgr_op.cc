@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status RgbaToBgrOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   return RgbaToBgr(input, output);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ static void GetSobelKernel(float *kernel, int flag, int ksize, double scale) {
 
   scale = flag == 0 ? scale : 1.0;
   for (int i = 0; i < ksize; i++) {
-    kernel[i] = buffer[i] * scale;
+    kernel[i] = buffer[i] * static_cast<float>(scale);
   }
 }
 
@@ -113,9 +113,9 @@ static float GetEdge(const std::vector<float> &temp, int width, int height, int 
 static float Round(float value) {
   // rounding if the result is even
   // eg. 1.5 -> 2, 2.5 -> 2
-  float rnd = round(value);
-  float rnd_l = floor(value);
-  float rnd_h = ceil(value);
+  float rnd = roundf(value);
+  float rnd_l = floorf(value);
+  float rnd_h = ceilf(value);
   if (std::fabs(value - rnd_l - kHalf) <= std::numeric_limits<float>::epsilon()) {
     if (fmod(rnd, 2) == 0) {
       return rnd;
@@ -141,9 +141,9 @@ static void NonMaximumSuppression(const LiteMat &gx, const LiteMat &gy, LiteMat 
     float gx_value = Round(gx_ptr[i]);
     float gy_value = Round(gy_ptr[i]);
     if (L2gradient) {
-      temp[i] = sqrt(gx_value * gx_value + gy_value * gy_value);
+      temp[i] = sqrtf(gx_value * gx_value + gy_value * gy_value);
     } else {
-      temp[i] = abs(gx_value) + abs(gy_value);
+      temp[i] = std::abs(gx_value) + std::abs(gy_value);
     }
   }
 
@@ -154,7 +154,7 @@ static void NonMaximumSuppression(const LiteMat &gx, const LiteMat &gy, LiteMat 
 
       float gx_value_abs = std::abs(gx_value);
       float gy_value_abs = std::abs(gy_value);
-      float angle_value = atan2(gy_value_abs, gx_value_abs);
+      float angle_value = atan2f(gy_value_abs, gx_value_abs);
       float edge_value = temp[y * gx.width_ + x];
       float edge_pre, edge_nex;
       if (angle_value < kAngle22_5 || angle_value > kAngle67_5) {

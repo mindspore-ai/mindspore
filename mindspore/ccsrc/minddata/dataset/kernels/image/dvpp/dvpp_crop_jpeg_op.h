@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_CROP_JPEG_OP_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_CROP_JPEG_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_CROP_JPEG_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_CROP_JPEG_OP_H_
 
 #include <memory>
 #include <string>
@@ -25,8 +25,8 @@
 #include "minddata/dataset/core/device_resource.h"
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
@@ -53,10 +53,8 @@ class DvppCropJpegOp : public TensorOp {
  private:
   uint32_t crop_height_;
   uint32_t crop_width_;
-
   std::shared_ptr<void> processor_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_CROP_JPEG_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_CROP_JPEG_OP_H_

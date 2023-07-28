@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ class SlicePatchesOp : public TensorOp {
   static const uint8_t kDefFillV;
   static const SliceMode kDefSliceMode;
 
-  SlicePatchesOp(int32_t num_height = kDefNumH, int32_t num_width = kDefNumW, SliceMode slice_mode = kDefSliceMode,
-                 uint8_t fill_value = kDefFillV);
+  explicit SlicePatchesOp(int32_t num_height = kDefNumH, int32_t num_width = kDefNumW,
+                          SliceMode slice_mode = kDefSliceMode, uint8_t fill_value = kDefFillV);
 
   ~SlicePatchesOp() override = default;
 
@@ -56,5 +56,4 @@ class SlicePatchesOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_SLICE_PATCHES_OP_H_

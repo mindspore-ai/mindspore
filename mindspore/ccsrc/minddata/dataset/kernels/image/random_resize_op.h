@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ class RandomResizeOp : public ResizeOp {
     is_deterministic_ = false;
   }
 
-  ~RandomResizeOp() = default;
+  ~RandomResizeOp() override = default;
 
   // Description: A function that prints info about the node
   void Print(std::ostream &out) const override { out << Name() << ": " << ResizeOp::size1_ << " " << ResizeOp::size2_; }
@@ -57,5 +57,4 @@ class RandomResizeOp : public ResizeOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_RESIZE_OP_H_
