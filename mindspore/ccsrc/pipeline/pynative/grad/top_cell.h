@@ -26,6 +26,7 @@
 #include <set>
 #include <map>
 #include "include/common/utils/convert_utils.h"
+#include "include/common/profiler.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "pybind11/numpy.h"
@@ -121,6 +122,8 @@ class TopCellInfo {
     return auto_grad_cell_ptr_;
   }
   void set_auto_grad_cell_ptr(autograd::AutoGradCellImplPtr &&auto_grad_cell_ptr) {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                       runtime::ProfilerEvent::kPyNativeGradClearAutoGradCell, std::string(), true);
     auto_grad_cell_ptr_ = std::move(auto_grad_cell_ptr);
   }
   inline size_t op_index() const { return op_index_; }

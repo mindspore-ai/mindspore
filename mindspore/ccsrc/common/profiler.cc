@@ -91,7 +91,11 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyNativeBpropTask, "BpropTask"},
   {ProfilerEvent::kPyNativeCast, "PyNativeCast"},
   {ProfilerEvent::kPyNativeInfer, "PyNativeInfer"},
-  {ProfilerEvent::kPyNativeOpCompile, "OpCompile"}};
+  {ProfilerEvent::kPyNativeOpCompile, "OpCompile"},
+  {ProfilerEvent::kPyNativeGradExpander, "Expander"},
+  {ProfilerEvent::kPyNativeGradUpdateSens, "UpdateSens"},
+  {ProfilerEvent::kPyNativeGradClearTopCell, "ClearTopCell"},
+  {ProfilerEvent::kPyNativeGradClearAutoGradCell, "ClearAutoGradCell"}};
 
 namespace {
 std::string GetRealPathName(const std::string &name) {

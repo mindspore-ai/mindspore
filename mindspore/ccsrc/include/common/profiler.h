@@ -82,6 +82,10 @@ enum class ProfilerEvent {
   kPyNativeCast,
   kPyNativeInfer,
   kPyNativeOpCompile,
+  kPyNativeGradExpander,
+  kPyNativeGradUpdateSens,
+  kPyNativeGradClearTopCell,
+  kPyNativeGradClearAutoGradCell,
 };
 
 #define PROFILER_START(start_time)                                          \
