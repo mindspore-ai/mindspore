@@ -24,15 +24,17 @@
 int DepthToSpaceResize(KernelBase *self) {
   DepthToSpaceStruct *depth_to_space = (DepthToSpaceStruct *)self;
   DepthToSpaceArgs *args = &depth_to_space->args_;
-  TensorC *input = self->in_[FIRST_INPUT];
 
+  TensorC *input = self->in_[FIRST_INPUT];
   int32_t in_strides[DIMENSION_4D] = {0};
   ComputeStrides(input->shape_, in_strides, input->shape_size_);
   args->in_stride_dim0_ = in_strides[Index0];
   args->in_stride_dim1_ = in_strides[Index1];
   args->in_stride_dim2_ = in_strides[Index2];
+
+  TensorC *output = self->out_[OUTPUT_INDEX];
   int32_t out_strides[DIMENSION_4D] = {0};
-  ComputeStrides(input->shape_, out_strides, input->shape_size_);
+  ComputeStrides(output->shape_, out_strides, output->shape_size_);
   args->out_stride_dim0_ = out_strides[Index0];
   args->out_stride_dim1_ = out_strides[Index1];
   args->out_stride_dim2_ = out_strides[Index2];
@@ -61,7 +63,10 @@ int DepthToSpaceCompute(KernelBase *self) {
 KernelBase *CreateDepthToSpace(OpParameter *param, int data_type) {
   DepthToSpaceStruct *depth_to_space = (DepthToSpaceStruct *)malloc(sizeof(DepthToSpaceStruct));
   NNACL_CHECK_NULL_RETURN_NULL(depth_to_space);
+  memset(depth_to_space, 0, sizeof(DepthToSpaceStruct));
+
   depth_to_space->args_.data_type_size_ = DataTypeCSize(data_type);
+  depth_to_space->args_.block_size_ = ((DepthToSpaceParameter *)param)->block_size_;
   depth_to_space->base_.Release = DefaultRelease;
   depth_to_space->base_.Prepare = DefaultPrepare1In1Out;
   depth_to_space->base_.Resize = DepthToSpaceResize;
