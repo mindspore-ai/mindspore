@@ -59,7 +59,7 @@ class PackExpander {
   py::object BeginGraph(const abstract::AbstractBasePtrList &inputs);
   FuncGraphPtr EndGraph(const py::object &output);
   py::object BeginFuncGraph(const py::object &obj, const py::args &inputs);
-  py::object EndFuncGraph(const py::object &output);
+  py::object EndFuncGraph(const py::object &obj, const py::object &output);
 
   py::object Emit(const py::object &prim, const py::args &inputs) const;
   static bool is_pynative_mode;
