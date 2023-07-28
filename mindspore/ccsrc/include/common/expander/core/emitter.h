@@ -312,10 +312,19 @@ class COMMON_EXPORT Emitter {
   FuncGraphPtr func_graph_;
   ExpanderInferPtr infer_{nullptr};
   ScopePtr scope_{nullptr};
-  inline static const std::map<TypeId, size_t> type_map_ = {
-    {kNumberTypeBool, 1},    {kNumberTypeInt8, 2},    {kNumberTypeUInt8, 3},
-    {kNumberTypeInt16, 4},   {kNumberTypeInt32, 5},   {kNumberTypeInt64, 6},
-    {kNumberTypeFloat16, 7}, {kNumberTypeFloat32, 8}, {kNumberTypeFloat64, 9}};
+  inline static const std::vector<size_t> type_vector_ = [] {
+    std::vector<size_t> type_vector(kSparseTypeEnd + 1);
+    type_vector[kNumberTypeBool] = 1;
+    type_vector[kNumberTypeInt8] = 2;
+    type_vector[kNumberTypeUInt8] = 3;
+    type_vector[kNumberTypeInt16] = 4;
+    type_vector[kNumberTypeInt32] = 5;
+    type_vector[kNumberTypeInt64] = 6;
+    type_vector[kNumberTypeFloat16] = 7;
+    type_vector[kNumberTypeFloat32] = 8;
+    type_vector[kNumberTypeFloat64] = 9;
+    return type_vector;
+  }();
   static HashMap<std::string, ops::OpPrimCDefineFunc> &primc_func_cache() {
     static HashMap<std::string, ops::OpPrimCDefineFunc> cache{};
     return cache;

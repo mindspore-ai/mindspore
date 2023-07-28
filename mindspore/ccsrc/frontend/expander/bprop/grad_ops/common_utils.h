@@ -101,7 +101,6 @@ NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const No
 
 NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                                      const NodePtr &dy, size_t shift);
-NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const NodePtr &axis);
 
 std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step = 1);
 std::vector<int64_t> Range(int64_t stop);

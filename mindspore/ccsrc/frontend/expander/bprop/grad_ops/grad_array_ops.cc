@@ -1261,14 +1261,8 @@ REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
   MS_EXCEPTION_IF_CHECK_FAIL(!broadcast_axes.empty(), "BroadcastGradientArgs out should not be empty!");
   auto reduction_axes = broadcast_axes[kIndex1];
   NodePtr reduced_grad = nullptr;
-  auto dout_dtype = ib->GetDtype(dout)->type_id();
-  if (dout_dtype == kNumberTypeInt16 || dout_dtype == kNumberTypeInt32 || dout_dtype == kNumberTypeInt64) {
-    auto dout_cast = ib->Cast(dout, kFloat32);
-    reduced_grad = ib->ReduceSum(dout_cast, reduction_axes, true, true);
-    reduced_grad = ib->Cast(reduced_grad, ib->GetDtype(dout));
-  } else {
-    reduced_grad = ib->ReduceSum(dout, reduction_axes, true, true);
-  }
+
+  reduced_grad = ib->ReduceSum(dout, reduction_axes, true, true);
   auto dx = ib->Reshape(reduced_grad, x_shape_node);
 
   return {dx};
@@ -1466,17 +1460,10 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto r_shape = calc_res[0];
   auto axis = calc_res[1];
   auto dout_reshaped = ib->Reshape(dout, r_shape);
-  auto dout_dtype = ib->GetDtype(dout_reshaped)->type_id();
   NodePtr dx;
   auto need_reduce = ib->NeedReduce(r_shape, axis, false);
   if (need_reduce.first) {
-    if (dout_dtype == kNumberTypeInt16 || dout_dtype == kNumberTypeInt32 || dout_dtype == kNumberTypeInt64) {
-      dout_reshaped = ib->Cast(dout_reshaped, kFloat32);
-      dx = ib->ReduceSum(dout_reshaped, axis);
-      dx = ib->Cast(dx, dout_dtype);
-    } else {
-      dx = ib->ReduceSum(dout_reshaped, axis);
-    }
+    dx = ib->ReduceSum(dout_reshaped, axis);
   } else {
     dx = ib->Reshape(dout_reshaped, need_reduce.second);
   }
