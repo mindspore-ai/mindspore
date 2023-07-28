@@ -1222,6 +1222,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
             new_param = copy.deepcopy(parameter_dict[param.name])
             _update_param(param, new_param, strict_load)
             ckpt_not_load.remove(param.name)
+            del parameter_dict[param.name]
         else:
             param_not_load.append(param.name)
 
