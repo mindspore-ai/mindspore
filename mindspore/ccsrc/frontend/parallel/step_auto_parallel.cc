@@ -710,8 +710,10 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
   bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
                 (ParallelContext::GetInstance()->sharding_propagation());
   // Init costs for this edge
-  if (!use_sp && edge_ptr->InitEdgeCost() != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Edge cost initialization failed";
+  if (ParallelContext::GetInstance()->strategy_search_mode() != kRecursiveProgramming) {
+    if (!use_sp && edge_ptr->InitEdgeCost() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Edge cost initialization failed";
+    }
   }
   node_op_info->AddPrevEdge(edge_ptr);
   prev_op_info->AddSuccEdge(edge_ptr);
@@ -1015,6 +1017,7 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
       (void)GenerateStrategiesByOperatorInfoPtr(operator_info);
       (void)GenerateStrategiesByOperatorInfoPtr(pre_operator_info);
+      ConstructCNodeCostGraphEdges(cnode, all_nodes);
     }
     if (is_prev_param) {
       auto reshape_info1 = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
@@ -1042,6 +1045,7 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
         // 如果是双递归的话枚举reshape的后向算子的策略
         if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
           (void)GenerateStrategiesByOperatorInfoPtr(op_index.first);
+          ConstructCNodeCostGraphEdges(op_index.first->cnode(), all_nodes);
         }
         auto op_cost = op_index.first->strategy_cost();
         (void)next_costs_index.emplace_back(std::make_pair(op_cost, op_index.second));
