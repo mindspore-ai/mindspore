@@ -28,6 +28,7 @@ import hashlib
 import contextlib
 import warnings
 from collections import OrderedDict, namedtuple
+import warnings
 from functools import wraps
 import numpy as np
 import mindspore as ms
