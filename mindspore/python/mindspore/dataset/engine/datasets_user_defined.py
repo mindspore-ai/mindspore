@@ -456,6 +456,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
     Multithread or multiprocess generator worker process loop.
     """
     if is_multiprocessing:
+        result_queue.cancel_join_thread()  # Ensure that the process does not hung when exiting
         signal.signal(signal.SIGTERM, partial(_subprocess_handle, eof))
     while True:
         _ignore_sigint(is_multiprocessing=is_multiprocessing)
@@ -546,8 +547,7 @@ class _GeneratorWorkerMp(multiprocessing.Process):
             self.res_queue = _SharedQueue(queue_size, count, max_rowsize=max_rowsize)
         else:
             self.res_queue = multiprocessing.Queue(queue_size)
-        self.idx_queue._joincancelled = True  # pylint: disable=W0212
-        self.res_queue._joincancelled = True  # pylint: disable=W0212
+        self.idx_queue.cancel_join_thread()  # Ensure that the process does not hung when exiting
         super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, True, ppid),
                          name="GeneratorWorkerProcess")
 
