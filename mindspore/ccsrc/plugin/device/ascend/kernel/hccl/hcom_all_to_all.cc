@@ -182,6 +182,7 @@ std::vector<TaskInfoPtr> HcomAllToAllKernel::GenTask(const std::vector<AddressPt
     MS_EXCEPTION_IF_NULL(cnode);
     hcclTaskInfo->set_graph_id(AnfAlgo::GetGraphId(cnode.get()));
     FuncGraphPtr f_graph = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(f_graph);
     auto kernel_graph = f_graph->cast<KernelGraphPtr>();
     auto input_ctrl_tensors = kernel_graph->device_loop_control_tensors();
     hcclTaskInfo->set_device_loop_ctrl_tensors(input_ctrl_tensors);
@@ -196,7 +197,7 @@ std::vector<TaskInfoPtr> HcomAllToAllKernel::GenTask(const std::vector<AddressPt
       hcclTaskInfo->add_output_size_list(address->GetSize());
       hcclTaskInfo->add_data_format(AnfAlgo::GetOutputFormat(anf_node, j));
     }
-    results.emplace_back(hcclTaskInfo);
+    (void)results.emplace_back(hcclTaskInfo);
   }
 
   return results;
