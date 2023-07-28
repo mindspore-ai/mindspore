@@ -297,6 +297,7 @@ int ConstFoldProcessor::DoConstantFold(const FuncGraphPtr &func_graph, const CNo
     return lite::RET_ERROR;
   }
   for (auto output_tensor : output_tensors) {
+    output_tensor->set_allocator(context_->allocator);
     auto status = output_tensor->MallocData();
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "MallocData failed";

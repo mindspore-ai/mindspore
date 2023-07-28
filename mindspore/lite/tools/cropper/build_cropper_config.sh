@@ -305,6 +305,7 @@ getCommonFile() {
   while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/assembly/*/*.S)
   others_files_c=(
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_utils.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/errorcode.c
     mindspore/lite/src/litert/infer_manager.cc
     mindspore/lite/src/common/ops/populate/populate_register.cc
     mindspore/lite/src/common/ops/populate/custom_populate.cc

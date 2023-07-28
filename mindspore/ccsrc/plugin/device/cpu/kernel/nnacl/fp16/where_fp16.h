@@ -18,12 +18,13 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/where_parameter.h"
+#include "nnacl/kernel/where.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void WhereWithTripleInputsFp16(const bool *condition, const float16_t *x, const float16_t *y, float16_t *output,
-                               const WhereParameter *param, int task_id);
+void WhereWithTripleInputsFp16(const float16_t *x, const float16_t *y, float16_t *output, const WhereArgs *param,
+                               int task_id, int thread_num);
 #ifdef __cplusplus
 }
 #endif

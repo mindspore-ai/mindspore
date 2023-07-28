@@ -17,6 +17,8 @@
 #ifndef NNACL_ERRORCODE_H_
 #define NNACL_ERRORCODE_H_
 
+#include <string.h>
+
 typedef enum ErrorCodeCommonEnum {
   NNACL_OK = 0,
   NNACL_ERR = 1,
@@ -151,7 +153,12 @@ typedef enum ErrorCodeCommonEnum {
   NNACL_TRANSPOSE_PERM_TENSOR_INVALID,
   NNACL_TRANSPOSE_PERM_TENSOR_VALUE_INVALID,
   NNACL_TRANSPOSE_PERM_DELETE_DIMENSION_FAILED,
-  NNACL_COMMON_END = 9999
+  NNACL_WHERE_INPUT_NUM_INVALID,
+  NNACL_WHERE_CONDITION_DATA_TYPE_ERROR,
+  NNACL_WHERE_CONDITION_NUM_INVALID,
+  NNACL_WHERE_INVALID_OUT_NUM,
+  NNACL_WHERE_NUM_MAX_INVALID,
+  NNACL_COMMON_END
 } ErrorCodeCommonEnum;
 
 typedef enum ErrorCodeFp32OpEnum {
@@ -186,4 +193,11 @@ typedef enum ErrorCodeInt8OpEnum {
   NNACL_ERRCODE_OP_INT8_END = 49999
 } ErrorCodeInt8OpEnums;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+char *NNACLErrorMsg(int error_code);
+#ifdef __cplusplus
+}
+#endif
 #endif  // NNACL_ERRORCODE_H_
