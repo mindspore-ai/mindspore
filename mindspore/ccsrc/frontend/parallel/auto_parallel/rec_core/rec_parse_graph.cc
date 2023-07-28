@@ -182,6 +182,8 @@ size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &i
 
 void Eliminate_Aux(size_t node_index, const std::shared_ptr<Graph> &graph,
                    const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(eli_list);
   std::vector<size_t> eli;
   eli.push_back(node_index);
   for (size_t i = 0; i < graph->nodes[node_index].node_out.size(); i++) {
@@ -224,7 +226,9 @@ void Eliminate_Aux(size_t node_index, const std::shared_ptr<Graph> &graph,
 }
 
 void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &graph, size_t i) {
+  MS_EXCEPTION_IF_NULL(graph);
   auto *outgoing_inputs = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in;
+  MS_EXCEPTION_IF_NULL(outgoing_inputs);
   // Check if the current node is the input operator of the current node's output operator
   auto it = find(outgoing_inputs->begin(), outgoing_inputs->end(), node_index);
   if (it != outgoing_inputs->end()) {
@@ -293,7 +297,9 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
 }
 
 void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph> &graph, size_t i) {
+  MS_EXCEPTION_IF_NULL(graph);
   auto *outgoing_auxinputs = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux;
+  MS_EXCEPTION_IF_NULL(outgoing_auxinputs);
   auto *outgoing_auxinputs_index = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx;
   // Check if the current node is the aux_input operator of the current node's output operator
   auto it = find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), node_index);

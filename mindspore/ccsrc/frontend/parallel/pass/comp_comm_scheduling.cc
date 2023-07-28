@@ -282,6 +282,9 @@ void FastGreedyScheduler::ComputeBottomLevelAndWeightedLength(std::vector<std::s
       children_max[pred_id] = std::max(children_max[pred_id], selected_task->weighted_length());
       unprocessed_children[pred_id] -= 1;
       if (unprocessed_children[pred_id] == 0) {
+        if (children_max[pred_id] == 0) {
+          MS_LOG(EXCEPTION) << "divisor children_max[pred_id] cannot be 0!";
+        }
         predecessor.lock()->set_weighted_length(predecessor.lock()->parallel_weight() + children_max[pred_id] +
                                                 children_sum[pred_id] / children_max[pred_id]);
         tasks_to_visit.push(predecessor.lock());
@@ -322,6 +325,9 @@ Time FastGreedyScheduler::LowerBoundPEs(std::vector<std::shared_ptr<Task>> &task
   for (const auto &type_to_num : type_to_num_cores_map) {
     const auto &type = type_to_num.first;
     const auto &num_cores = type_to_num.second;
+    if (num_cores == 0) {
+      MS_LOG(EXCEPTION) << "divisor num_cores cannot be 0!";
+    }
     lower_bound = std::max(lower_bound, type_task_sum[type] / (1.0 * num_cores));
   }
   return std::ceil(lower_bound);

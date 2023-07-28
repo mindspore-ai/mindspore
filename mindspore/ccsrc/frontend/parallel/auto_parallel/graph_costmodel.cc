@@ -116,6 +116,7 @@ void CostGraph::StrategyPropagate(const std::map<OperatorInfoPtr, StrategyPtr, O
 }
 
 bool CheckVisitedEdgeConsistency(const EdgePtr &edge) {
+  MS_EXCEPTION_IF_NULL(edge);
   auto prev_op = edge->prev_operator();
   auto next_op = edge->next_operator();
   bool consistency = true;
@@ -147,6 +148,7 @@ bool CheckVisitedEdgeConsistency(const EdgePtr &edge) {
 
 bool CheckConfiguredSuccEdgeConsistency(const EdgePtr &edge,
                                         const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops) {
+  MS_EXCEPTION_IF_NULL(edge);
   auto curr_op = edge->prev_operator();
   auto next_op = edge->next_operator();
   auto next_op_conf_stra = configured_ops.at(next_op);
@@ -195,6 +197,10 @@ void BFSPreNode(
   const std::shared_ptr<Edge> &edge, std::map<OperatorInfoPtr, bool> *visited, int64_t curr_depth,
   const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops, const OperatorInfoPtr &curr_op,
   std::queue<std::pair<std::pair<OperatorInfoPtr, std::pair<StrategyPtr, int64_t>>, int64_t>> *next_level) {
+  MS_EXCEPTION_IF_NULL(edge);
+  MS_EXCEPTION_IF_NULL(visited);
+  MS_EXCEPTION_IF_NULL(curr_op);
+  MS_EXCEPTION_IF_NULL(next_level);
   const auto &prev_op = edge->prev_operator();
   bool is_has_stra_op = visited->at(prev_op) || configured_ops.find(prev_op) != configured_ops.end();
   if (edge->InitEdgeCost() != SUCCESS && !is_has_stra_op) {
@@ -243,6 +249,10 @@ void BFSNextNode(
   const std::shared_ptr<Edge> &edge, std::map<OperatorInfoPtr, bool> *visited, int64_t curr_depth,
   const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops, const OperatorInfoPtr &curr_op,
   std::queue<std::pair<std::pair<OperatorInfoPtr, std::pair<StrategyPtr, int64_t>>, int64_t>> *next_level) {
+  MS_EXCEPTION_IF_NULL(edge);
+  MS_EXCEPTION_IF_NULL(visited);
+  MS_EXCEPTION_IF_NULL(curr_op);
+  MS_EXCEPTION_IF_NULL(next_level);
   const auto &next_op = edge->next_operator();
   bool is_has_stra_op = visited->at(next_op) || configured_ops.find(next_op) != configured_ops.end();
   if (edge->InitEdgeCost() != SUCCESS && !is_has_stra_op) {
