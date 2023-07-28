@@ -346,6 +346,14 @@
     :exclude-members: infer_value, infer_shape, infer_dtype, auto_parallel_compile_and_run, load_parameter_slice, set_auto_parallel, set_parallel_input_with_inputs
     :members:
 
+{% elif "mindspore.dataset.vision" in fullname and objname[0].istitle() %}
+
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: to_c_type, to_python_type
+    :members:
+
 {% elif objname[0].istitle() %}
 {{ fullname | underline }}
 

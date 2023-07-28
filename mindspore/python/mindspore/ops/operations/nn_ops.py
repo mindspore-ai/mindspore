@@ -8601,8 +8601,8 @@ class Conv3DTranspose(Primitive):
             Single int means the value is for the depth, height and width of the kernel.
             A tuple of 3 ints means the first value is for the depth, the second value is for the height and the
             other is for the width of the kernel.
-        mode (int): Modes for different convolutions. Default is ``1`` . It is currently not used.
-        pad_mode (str): Specifies padding mode. The optional values are
+        mode (int, optional): Modes for different convolutions. Default is ``1`` . It is currently not used.
+        pad_mode (str, optional): Specifies padding mode. The optional values are
             ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"valid"`` .
 
             - ``"same"``: Adopts the way of completion. The depth, height and width of the output will be equal to
@@ -8618,18 +8618,20 @@ class Conv3DTranspose(Primitive):
             - ``"pad"``: Implicit paddings on both sides of the input in depth, height and width. The number of `pad`
               will be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
-        pad (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the paddings
-             of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six integers,
-             the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4]
-             and pad[5] correspondingly.
-        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+        pad (Union(int, tuple[int]), optional): The pad value to be filled. Default: ``0`` . If `pad` is an integer,
+            the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
+            If `pad` is a tuple of six integers,
+            the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4]
+            and pad[5] correspondingly.
+        stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: ``1`` .
-        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: ``1`` .
-        group (int): The number of groups into which the filter is divided. `in_channels`
+        dilation (Union(int, tuple[int]), optional): Specifies the space to use between kernel elements.
+            Default: ``1`` .
+        group (int, optional): The number of groups into which the filter is divided. `in_channels`
             and `out_channels` must be divisible by `group`. Default: ``1`` .
         output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: ``0`` .
-        data_format (str): The optional value for data format. Currently only ``'NCDHW'`` is supported.
+        data_format (str, optional): The optional value for data format. Currently only ``'NCDHW'`` is supported.
             Default: ``'NCDHW'``.
 
     Inputs:
