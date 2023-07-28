@@ -43,7 +43,7 @@ class RandpermV2CPUKernelMod : public NativeCpuKernelMod {
   TypeId output_type_;
   std::vector<int64_t> output_shape_;
   int64_t n_data_;
-  int64_t seed_;
+  int64_t seed_{0};
   int64_t offset_;
   template <typename T1>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

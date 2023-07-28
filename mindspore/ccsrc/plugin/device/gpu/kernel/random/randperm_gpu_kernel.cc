@@ -20,11 +20,17 @@ namespace mindspore {
 namespace kernel {
 bool RandpermGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  auto randperm_ptr = std::dynamic_pointer_cast<ops::Randperm>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(randperm_ptr, false);
+
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -33,8 +39,6 @@ bool RandpermGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   }
   kernel_func_ = func_list_[index].second;
 
-  auto randperm_ptr = std::dynamic_pointer_cast<ops::Randperm>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(randperm_ptr, false);
   max_length_ = static_cast<size_t>(randperm_ptr->get_max_length());
   pad_ = randperm_ptr->get_pad();
   return true;
@@ -53,8 +57,8 @@ template <typename T, typename S>
 bool RandpermGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   T *input_device = GetDeviceAddress<T>(inputs, 0);
-  MS_ERROR_IF_NULL_W_RET_VAL(input_device, false);
   T *output_device = GetDeviceAddress<T>(outputs, 0);
+  MS_ERROR_IF_NULL_W_RET_VAL(input_device, false);
   MS_ERROR_IF_NULL_W_RET_VAL(output_device, false);
 
   S n = 0;

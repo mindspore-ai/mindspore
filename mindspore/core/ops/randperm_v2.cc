@@ -47,6 +47,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 int64_t GetDtypeMaxForCheckOverFlow(const TypePtr tid) {
+  MS_EXCEPTION_IF_NULL(tid);
   int64_t max = 0;
   int64_t max_float16 = 65504;
   switch (tid->type_id()) {
@@ -73,17 +74,23 @@ int64_t GetDtypeMaxForCheckOverFlow(const TypePtr tid) {
 }
 
 abstract::ShapePtr RandpermV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
   auto dtype_value = primitive->GetAttr("dtype");
+  MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {
     MS_EXCEPTION(TypeError) << "For RandpermV2, the dtype of " << prim_name << "is invalid!";
   }
   auto output_type = dtype_value->cast<TypePtr>();
   int64_t max_data = GetDtypeMaxForCheckOverFlow(output_type);
+
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
   auto n_value = input_args[kInputIndex0]->BuildValue();
   auto seed_value = input_args[kInputIndex1]->BuildValue();
   auto offset_value = input_args[kInputIndex2]->BuildValue();
+
   if (!n_value->isa<ValueAny>() && !n_value->isa<None>()) {
     auto n = CheckAndConvertUtils::CheckTensorIntValue("n", n_value, prim_name)[0];
     auto seed = CheckAndConvertUtils::CheckTensorIntValue("seed", seed_value, prim_name)[0];
@@ -115,9 +122,14 @@ abstract::ShapePtr RandpermV2InferShape(const PrimitivePtr &primitive, const std
 }
 
 TypePtr RandpermV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
+
   auto input_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
   auto input_type_id = input_type->cast<TensorTypePtr>();
@@ -126,7 +138,9 @@ TypePtr RandpermV2InferType(const PrimitivePtr &prim, const std::vector<Abstract
   MS_EXCEPTION_IF_NULL(input_type_element);
   std::set<TypePtr> input_valid_types{kInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("input_n", input_type, input_valid_types, prim_name);
+
   auto dtype_value = prim->GetAttr("dtype");
+  MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {
     MS_EXCEPTION(TypeError) << "For RandpermV2, the dtype of " << prim_name << "is invalid!";
   }

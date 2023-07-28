@@ -29,6 +29,9 @@ namespace kernel {
 namespace {
 const uint32_t kInputNum = 3;
 const uint32_t kOutputNum = 1;
+constexpr size_t kIndex0 = 0;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
 constexpr size_t kOutputIndex0 = 0;
 constexpr size_t kOutputShapeLen = 1;
 }  // namespace
@@ -39,7 +42,8 @@ bool RandpermV2CPUKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   auto randperm_ptr = std::dynamic_pointer_cast<ops::RandpermV2>(base_operator);
   MS_EXCEPTION_IF_NULL(randperm_ptr);
   kernel_name_ = base_operator->GetPrim()->name();
-  output_type_ = outputs[0]->GetDtype();
+  MS_EXCEPTION_IF_NULL(outputs[kOutputIndex0]);
+  output_type_ = outputs[kOutputIndex0]->GetDtype();
   int64_t layout_ = GetValue<int64_t>(randperm_ptr->GetAttr("layout"));
   if (seed_ < 0 && seed_ != -1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
@@ -75,6 +79,10 @@ bool RandpermV2CPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
                                     const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex2]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   if (output_type_ == kNumberTypeInt32) {
     (void)LaunchKernel<int32_t>(inputs, outputs);
   } else if (output_type_ == kNumberTypeInt64) {
@@ -102,23 +110,25 @@ bool RandpermV2CPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
 template <typename T1>
 bool RandpermV2CPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &outputs) {
-  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[0]->addr);
+  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
+  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
+  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
+  auto output = reinterpret_cast<T1 *>(outputs[kIndex0]->addr);
   MS_EXCEPTION_IF_NULL(n_tensor);
-  n_data_ = reinterpret_cast<int64_t *>(inputs[0]->addr)[0];
-  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[1]->addr);
   MS_EXCEPTION_IF_NULL(seed_tensor);
-  seed_ = static_cast<int64_t *>(seed_tensor)[0];
-  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[2]->addr);
   MS_EXCEPTION_IF_NULL(offset_tensor);
+  MS_EXCEPTION_IF_NULL(output);
+
+  n_data_ = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr)[0];
+  seed_ = static_cast<int64_t *>(seed_tensor)[0];
   offset_ = static_cast<int64_t *>(offset_tensor)[0];
-  std::random_device rd;
-  int64_t final_seed = (offset_ != 0) ? offset_ : (seed_ != -1) ? seed_ : rd();
-  auto output = reinterpret_cast<T1 *>(outputs[0]->addr);
-  size_t output_elem_num = outputs[0]->size / sizeof(T1);
-  ShapeVector out_shape;
-  out_shape.push_back(n_data_);
+
   std::vector<T1> temp;
+  std::random_device rd;
+  size_t output_elem_num = outputs[kIndex0]->size / sizeof(T1);
+  int64_t final_seed = (offset_ != 0) ? offset_ : (seed_ != -1) ? seed_ : rd();
   std::mt19937 gen(final_seed);
+
   for (auto i = 0; i < static_cast<T1>(n_data_); i++) {
     temp.push_back(i);
   }
@@ -131,23 +141,25 @@ bool RandpermV2CPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
 bool RandpermV2CPUKernelMod::LaunchKernelFp16(const std::vector<AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &outputs) {
-  auto output = reinterpret_cast<Eigen::half *>(outputs[0]->addr);
-  size_t output_elem_num = outputs[0]->size / sizeof(float16);
-  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[0]->addr);
+  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
+  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
+  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
+  auto output = reinterpret_cast<Eigen::half *>(outputs[kIndex0]->addr);
   MS_EXCEPTION_IF_NULL(n_tensor);
-  n_data_ = reinterpret_cast<int64_t *>(inputs[0]->addr)[0];
-  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[1]->addr);
   MS_EXCEPTION_IF_NULL(seed_tensor);
-  seed_ = static_cast<int64_t *>(seed_tensor)[0];
-  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[2]->addr);
   MS_EXCEPTION_IF_NULL(offset_tensor);
+  MS_EXCEPTION_IF_NULL(output);
+
+  n_data_ = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr)[0];
+  seed_ = static_cast<int64_t *>(seed_tensor)[0];
   offset_ = static_cast<int64_t *>(offset_tensor)[0];
-  std::random_device rd;
-  int64_t final_seed = (offset_ != 0) ? offset_ : (seed_ != -1) ? seed_ : rd();
-  ShapeVector out_shape;
-  out_shape.push_back(n_data_);
+
   std::vector<float> temp;
+  std::random_device rd;
+  size_t output_elem_num = outputs[kIndex0]->size / sizeof(float16);
+  int64_t final_seed = (offset_ != 0) ? offset_ : (seed_ != -1) ? seed_ : rd();
   std::mt19937 gen(final_seed);
+
   for (auto i = 0; i < static_cast<float>(n_data_); i++) {
     temp.push_back(i);
   }
