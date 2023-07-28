@@ -22,7 +22,7 @@
 #include "nnacl/fp32/pack_fp32_opt.h"
 
 typedef struct MatrixAPack {
-  int64_t points_[8];
+  int64_t points_[MAX_THREAD_NUM];
   int64_t unit_num_;
   int thread_;
   int deep_;

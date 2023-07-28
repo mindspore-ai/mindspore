@@ -18,7 +18,7 @@
 #include "schema/ops_generated.h"
 #include "src/extendrt/kernel/cuda/batchtospace.h"
 #include "ut/src/extendrt/kernel/cuda/common.h"
-#include "nnacl/batch_to_space.h"
+#include "nnacl/batch_to_space_parameter.h"
 
 namespace mindspore {
 class CudaTest_BatchToSpace : public CommonTest {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NNACL_BATCH_TO_SPACE_H_
-#define NNACL_BATCH_TO_SPACE_H_
+#ifndef NNACL_KERNEL_BATCH_TO_SPACE_H_
+#define NNACL_KERNEL_BATCH_TO_SPACE_H_
 
-#include <string.h>
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
+#include "nnacl/batch_to_space_parameter.h"
 
-#define BATCH_TO_SPACE_BLOCK_SHAPE_SIZE 2
-
-typedef struct BatchToSpaceParameter {
-  OpParameter op_parameter_;
-  int32_t block_shape_[BATCH_TO_SPACE_BLOCK_SHAPE_SIZE];
-  int32_t crops_[COMM_SHAPE_SIZE];
+typedef struct BatchToSpaceStruct {
+  KernelBase base_;
   bool no_crop_;
-} BatchToSpaceParameter;
+  int32_t crops_[COMM_SHAPE_SIZE];
+  int32_t block_shape_[BATCH_TO_SPACE_BLOCK_SHAPE_SIZE];
+} BatchToSpaceStruct;
 
-#endif  // NNACL_FP32_BATCH_TO_SPACE_H_
+KernelBase *CreateBatchToSpace(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_BATCH_TO_SPACE_H_

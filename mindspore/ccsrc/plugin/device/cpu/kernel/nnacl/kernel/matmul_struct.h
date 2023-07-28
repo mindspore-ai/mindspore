@@ -19,7 +19,7 @@
 #include "nnacl/kernel.h"
 #include "nnacl/matmul_parameter.h"
 
-#define SPLIT_COUNT 32
+#define SPLIT_COUNT MAX_THREAD_NUM
 
 typedef struct MatrixInfo {
   bool need_pack_;

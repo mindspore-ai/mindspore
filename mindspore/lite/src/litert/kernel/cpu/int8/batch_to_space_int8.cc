@@ -127,7 +127,6 @@ int BatchToSpaceInt8CPUKernel::Run() {
         no_crop_ = false;
       }
     }
-    no_crop_ = param->no_crop_;
   } else if (in_tensors_.size() == DIMENSION_3D) {
     auto ret = Processinput();
     if (ret != RET_OK) {

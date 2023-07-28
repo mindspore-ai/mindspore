@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_BATCH_TO_SPACE_INFER_H
-#define MINDSPORE_NNACL_BATCH_TO_SPACE_INFER_H
+#ifndef NNACL_BATCH_TO_SPACE_PARAMETER_H_
+#define NNACL_BATCH_TO_SPACE_PARAMETER_H_
 
-#include "nnacl/infer/common_infer.h"
-#include "nnacl/batch_to_space_parameter.h"
+#include <string.h>
+#include "nnacl/op_base.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define BATCH_TO_SPACE_BLOCK_SHAPE_SIZE 2
 
-int BatchToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                           OpParameter *parameter);
+typedef struct BatchToSpaceParameter {
+  OpParameter op_parameter_;
+  int32_t block_shape_[BATCH_TO_SPACE_BLOCK_SHAPE_SIZE];
+  int32_t crops_[COMM_SHAPE_SIZE];
+} BatchToSpaceParameter;
 
-#ifdef __cplusplus
-}
-#endif
-#endif  // MINDSPORE_NNACL_BATCH_TO_SPACE_INFER_H
+#endif  // NNACL_BATCH_TO_SPACE_PARAMETER_H_

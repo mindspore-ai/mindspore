@@ -32,7 +32,7 @@ int NNACLDefaultParallelLunch(void *threadPool, void *task, void *param, int tas
   int (*function)(void *cdata, int task_id, float l, float r) = task;
   int ret = 0;
   for (int i = 0; i < taskNr; i++) {
-    ret += function(param, taskNr, 0, 1);
+    ret += function(param, i, 0, 1);
   }
   return ret == NNACL_OK ? NNACL_OK : NNACL_ERR;
 }
