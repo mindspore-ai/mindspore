@@ -240,12 +240,12 @@ class OrderEnforcer {
           // Check the special operator, only one level of user is considered for now.
           if (IsSpecialPrimitive(load_user)) {
             auto special_real_users = FindNodeUsers(load_user);
-            real_users.insert(special_real_users.begin(), special_real_users.end());
+            (void)real_users.insert(special_real_users.begin(), special_real_users.end());
           } else if (IsSpecialParallelPrimitive(load_user)) {
             auto parallel__users = FindParallelNodeUsers(load_user);
-            real_users.insert(parallel__users.begin(), parallel__users.end());
+            (void)real_users.insert(parallel__users.begin(), parallel__users.end());
           } else {
-            real_users.insert(load_user);
+            (void)real_users.insert(load_user);
           }
         }
         AddInputEdges(update_state, real_users);
@@ -355,7 +355,7 @@ class OrderEnforcer {
     for (auto &user : iter->second) {
       auto &user_node = user.first;
       if (pred == nullptr || pred(user_node)) {
-        users.insert(user_node);
+        (void)users.insert(user_node);
       }
     }
     return users;
@@ -372,11 +372,11 @@ class OrderEnforcer {
     for (auto &user : iter->second) {
       auto &user_node = user.first;
       if (!IsSpecialParallelPrimitive(user_node)) {
-        users.insert(user_node);
+        (void)users.insert(user_node);
       } else {
         mindspore::CompactSet<AnfNodePtr> real_users;
         real_users = FindParallelNodeUsers(user_node);
-        users.insert(real_users.begin(), real_users.end());
+        (void)users.insert(real_users.begin(), real_users.end());
       }
     }
     return users;

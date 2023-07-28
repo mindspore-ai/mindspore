@@ -1146,7 +1146,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &c
     backed_fnval = partial_closure->fn();
     args = partial_closure->args();
   }
-  std::transform(new_inputs.cbegin() + 1, new_inputs.cend(), std::back_inserter(args), [](const AnfNodePtr &inp) {
+  (void)std::transform(new_inputs.cbegin() + 1, new_inputs.cend(), std::back_inserter(args), [](const AnfNodePtr &inp) {
     MS_EXCEPTION_IF_NULL(inp);
     return inp->abstract();
   });
