@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr int kNumInputSize = 4;
+constexpr int kNumInputSize = 3;
 }
 std::shared_ptr<KernelInterface> FlashAttentionInferCreater() {
   std::shared_ptr<KernelInterface> infer = std::make_shared<FlashAttentionInfer>();
@@ -51,7 +51,7 @@ Status FlashAttentionInfer::Infer(std::vector<mindspore::MSTensor> *inputs, std:
     MS_LOG(ERROR) << "param type is nullptr.";
     return kLiteError;
   }
-  if ((*inputs).size() != kNumInputSize || (*outputs).size() != 1) {
+  if ((*inputs).size() < kNumInputSize || (*outputs).size() != 1) {
     MS_LOG(ERROR) << "input or output tensor size is wrong, input size: " << (*inputs).size()
                   << ", output size: " << (*outputs).size();
     return kLiteError;
