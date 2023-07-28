@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ void TbeKernelReduceSelector::GetSupportedFormatDType(SupportFormatDType *suppor
 }
 
 void TbeKernelReduceSelector::GetReduceNodeInfo() {
+  MS_EXCEPTION_IF_NULL(cnode_ptr_);
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
   auto output_num = AnfAlgo::GetOutputElementNum(cnode_ptr_);
   if (input_num != 1 || output_num != 1) {
@@ -197,8 +198,9 @@ void TbeKernelReduceSelector::GetReduceSupportFracNZ(SupportFormat *support_form
 }
 
 void TbeKernelReduceSelector::GetReduceAttrKeepDim() {
+  MS_EXCEPTION_IF_NULL(cnode_ptr_);
   if (!common::AnfAlgo::HasNodeAttr(kAttrKeepDims, cnode_ptr_)) {
-    MS_LOG(INFO) << "This node doesn't have keep_attr.";
+    MS_LOG(INFO) << "This node doesn't have keep_attr. Node: " << cnode_ptr_->fullname_with_scope();
     keep_dims_ = false;
     return;
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ std::vector<std::string> TbeUtils::SplitAndRemoveSpace(const std::string &s, cha
   std::istringstream is(s);
   std::vector<std::string> ret;
   while (std::getline(is, item, delim)) {
-    item.erase(std::remove(item.begin(), item.end(), ' '), item.end());
+    (void)item.erase(std::remove(item.begin(), item.end(), ' '), item.end());
     ret.push_back(item);
   }
   return ret;
@@ -289,7 +289,7 @@ KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name, const bool i
 }
 
 KernelPackPtr TbeUtils::InsertCache(const std::string &kernel_name, const std::string &processor, const bool is_akg) {
-  MS_LOG(INFO) << "kernel name:  " << kernel_name << ", processr:" << processor;
+  MS_LOG(INFO) << "kernel name:  " << kernel_name << ", processor:" << processor;
   if (processor != kProcessorAiCore) {
     MS_LOG(EXCEPTION) << "process type should be aicore, actually is: " << processor;
   }
@@ -454,6 +454,8 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
 
 void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info, bool *get_flag) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(get_flag);
+  MS_EXCEPTION_IF_NULL(compile_info);
   MS_LOG(DEBUG) << "Get compile info from json file start. [" << node->fullname_with_scope() << "]";
   std::string json_name;
   if (common::AnfAlgo::HasNodeAttr(kAttrJsonFileName, node->cast<CNodePtr>())) {
@@ -497,6 +499,7 @@ void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info,
 }
 
 void TbeUtils::SaveCompileInfo(const std::string &json_name, const std::string &build_res, bool *save_flag) {
+  MS_EXCEPTION_IF_NULL(save_flag);
   MS_LOG(DEBUG) << "Save compile info to json file start, op: [" << json_name << "].";
   auto config_path = TbeUtils::GetOpDebugPath();
   std::string path = config_path + kCceKernelMeta + json_name + kJsonSuffix;

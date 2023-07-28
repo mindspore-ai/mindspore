@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ bool TbeAdapter::GetSpecDataInput(const FusionScopeInfo &fusion_scope_info,
       auto input = ccompute_node->input(i);
       auto find_iter = std::find(input_nodes.begin(), input_nodes.end(), input);
       if (find_iter != input_nodes.end()) {
-        layer.emplace_back((*find_iter));
+        (void)layer.emplace_back((*find_iter));
       }
     }
     InputOrderPass<AnfNodePtr>(compute_node, layer, &reorder_layer);
@@ -228,11 +228,12 @@ void TbeAdapter::CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpA
 }
 
 void TbeAdapter::CastAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *attrs_json) {
+  MS_EXCEPTION_IF_NULL(attrs_json);
   if (common::AnfAlgo::GetCNodeName(anf_node) != kCastOpName) {
     return;
   }
-  std::map<int, std::string> dst_type_map{{0, "float32"}, {1, "float16"}, {2, "int8"}, {3, "int32"},
-                                          {4, "uint8"},   {10, "uint64"}, {12, "bool"}};
+  const std::map<int, std::string> dst_type_map = {{0, "float32"}, {1, "float16"}, {2, "int8"}, {3, "int32"},
+                                                   {4, "uint8"},   {10, "uint64"}, {12, "bool"}};
   auto type_id = GetJsonValue<int>(attrs_json->at(0), kJValue);
   auto iter = dst_type_map.find(type_id);
   if (iter != dst_type_map.end()) {

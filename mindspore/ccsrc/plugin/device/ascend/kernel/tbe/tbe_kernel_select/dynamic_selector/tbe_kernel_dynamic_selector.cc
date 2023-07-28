@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/dynamic_selector/tbe_kernel_dynamic_selector.h"
 #include <string>
-#include <map>
-#include <vector>
 #include "include/common/utils/json_operation_utils.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 
@@ -63,6 +60,7 @@ void ParseOpSelectJson(bool is_dynamic_impl, const std::string &op_select_json,
 }  // namespace
 
 void TbeKernelDynamicSelector::GetSupportedFormatDType(SupportFormatDType *support_format_dtype) {
+  MS_EXCEPTION_IF_NULL(cnode_ptr_);
   auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
   std::string op_format_dtype_str = build_manager.TbeOpSelectFormat(cnode_ptr_);
   if (op_format_dtype_str.empty()) {

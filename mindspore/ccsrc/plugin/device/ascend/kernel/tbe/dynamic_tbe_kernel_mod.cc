@@ -79,11 +79,11 @@ void DynamicTbeKernelMod::GenFuncStub() {
     auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, &handle_);
     if (kernel_pack_->kernel_json_info().has_kernel_list) {
       if (func_stub != 1) {
-        MS_LOG(INTERNAL_EXCEPTION) << "GenFuncStub failed.";
+        MS_LOG(INTERNAL_EXCEPTION) << "GenFuncStub failed. Op:" << kernel_pack_->kernel_json_info().kernel_name;
       }
     } else {
       if (func_stub == 0) {
-        MS_LOG(INTERNAL_EXCEPTION) << "GenFuncStub failed.";
+        MS_LOG(INTERNAL_EXCEPTION) << "GenFuncStub failed. Op:" << kernel_pack_->kernel_json_info().kernel_name;
       }
       func_stub_ = reinterpret_cast<void *>(func_stub);
     }
@@ -187,13 +187,14 @@ std::string DynamicTbeKernelMod::ParseCompileJson(const CNodePtr &cnode) const {
 }
 
 void DynamicTbeKernelMod::InitTilingDataPtr() {
-  if (tiling_data_ptr_ != nullptr) {
+  if (tiling_data_ptr_ != nullptr || kernel_pack_ == nullptr) {
     return;
   }
   auto kernel_json_info = kernel_pack_->kernel_json_info();
   auto op_para_size = kernel_json_info.op_para_size;
   if (op_para_size > 0) {
     auto mem_manager = std::make_shared<device::ascend::AscendMemoryManager>();
+    MS_EXCEPTION_IF_NULL(mem_manager);
     tiling_data_ptr_ = mem_manager->MallocMemFromMemPool(op_para_size, false);
     if (tiling_data_ptr_ == nullptr) {
       MS_LOG(EXCEPTION) << "RtMalloc tiling data failed.";

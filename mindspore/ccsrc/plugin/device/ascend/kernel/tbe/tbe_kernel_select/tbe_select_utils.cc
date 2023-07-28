@@ -20,12 +20,7 @@
 #include <memory>
 #include <map>
 #include <string>
-#include "ops/array_op_name.h"
-#include "base/base.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "utils/ms_context.h"
 #include "kernel/common_utils.h"
@@ -35,8 +30,10 @@ namespace {
 constexpr size_t kNcdhwShapeSize = 5;
 
 bool CheckValidInputAndHiddenSize(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (node->isa<Parameter>()) {
     auto param = node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
     return param->input_size() > 0 && param->hidden_size() > 0;
   }
   if (node->isa<CNode>()) {
@@ -48,6 +45,7 @@ bool CheckValidInputAndHiddenSize(const AnfNodePtr &node) {
 }  // namespace
 
 bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   size_t real_input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < real_input_num; i++) {
     auto format = AnfAlgo::GetInputFormat(node, i);
@@ -74,6 +72,7 @@ std::vector<int64_t> HostCheck::GetFinalInferShape(const AnfNodePtr &node, size_
                                                    const std::string &format) {
   auto shape =
     is_output ? AnfAlgo::GetOutputDetailShape(node, index) : AnfAlgo::GetPrevNodeOutputDetailShape(node, index);
+  MS_EXCEPTION_IF_NULL(shape);
   std::vector<int64_t> infer_shape;
   if (shape->isa<abstract::Shape>()) {
     auto shape_ptr = shape->cast<abstract::ShapePtr>();
@@ -196,6 +195,7 @@ void PadScalarShape(ShapeVector *shape) {
 
 void GenerateSupportFormat(const std::string &support_input_format, size_t input_num,
                            const std::string &support_output_format, size_t output_num, SupportFormat *support_format) {
+  MS_EXCEPTION_IF_NULL(support_format);
   SupportFormatItem input_item(input_num, support_input_format);
   (void)support_format->input_format.emplace_back(input_item);
   SupportFormatItem output_item(output_num, support_output_format);
@@ -222,6 +222,10 @@ void ConstructSupportFormats(size_t put_size, const std::vector<SupportFormatIte
   for (size_t i = 0; i < put_size; ++i) {
     SupportFormatItem support_format_item = {};
     for (const auto &formats : support_format) {
+      if (i >= formats.size() && type_size > 0) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Invalid index: " << i
+                                   << ", which exceed the size of formats: " << formats.size();
+      }
       for (size_t j = 0; j < type_size; ++j) {
         (void)support_format_item.emplace_back(formats.at(i));
       }

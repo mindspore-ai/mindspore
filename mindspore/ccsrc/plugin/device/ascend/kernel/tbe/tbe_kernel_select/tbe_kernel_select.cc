@@ -23,7 +23,6 @@
 #include <vector>
 #include "include/backend/optimizer/helper.h"
 #include "ops/framework_ops.h"
-#include "ops/array_op_name.h"
 #include "ops/math_ops.h"
 #include "ops/nn_ops.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
@@ -230,7 +229,7 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
     if (!FilterInvalidShape(kernel_build_info, dynamic_inputs)) {
       continue;
     }
-    if (!FilterUnspportedMatMul(kernel_build_info)) {
+    if (!FilterUnsupportedMatMul(kernel_build_info)) {
       continue;
     }
     // Skip check for ACL op.
@@ -247,7 +246,8 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
   (*kernel_info_list_).swap(kernel_info_list);
 }
 
-bool TbeKernelSelect::FilterUnspportedMatMul(const KernelBuildInfoPtr &kernel_build_info) {
+bool TbeKernelSelect::FilterUnsupportedMatMul(const KernelBuildInfoPtr &kernel_build_info) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info);
   if (common::AnfAlgo::GetCNodeName(cnode_ptr_) != prim::kPrimMatMul->name()) {
     return true;
   }
@@ -468,6 +468,7 @@ void TbeKernelSelect::PrintSupportedFormatDtype(const SupportFormatDType &suppor
 
 bool TbeKernelSelect::Initialize() {
   // Init 1.op_name, 2.full_name, 3.op_info, 4.kernel_json, 5.kernel_hash_name
+  MS_EXCEPTION_IF_NULL(cnode_ptr_);
   node_name_ = common::AnfAlgo::GetCNodeName(cnode_ptr_);
   full_name_ = cnode_ptr_->fullname_with_scope();
   op_info_ = tbe::TbeDynamicShapeUtil::FindOp(node_name_, cnode_ptr_);
@@ -520,6 +521,7 @@ void TbeKernelSelect::GenerateKernelBuildInfo(const SupportFormatDType &support_
   }
 
   auto select_support_num = support_format_dtype.output_dtypes.at(0).size();
+  MS_EXCEPTION_IF_NULL(op_info_);
   for (size_t support_index = 0; support_index < select_support_num; ++support_index) {
     KernelBuildInfoItem input_kernel_build_info;
     KernelBuildInfoItem output_kernel_build_info;
@@ -560,6 +562,8 @@ void TbeKernelSelect::GenerateKernelBuildInfo(const SupportFormatDType &support_
 void TbeKernelSelect::ConstructKernelBuildInfo(const KernelBuildInfoItem &input_kernel_build_info,
                                                const KernelBuildInfoItem &output_kernel_build_info) {
   auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
+  MS_EXCEPTION_IF_NULL(op_info_);
+  MS_EXCEPTION_IF_NULL(kernel_info_list_);
   builder.SetProcessor(AICORE);
   builder.SetOpPattern(op_info_->op_pattern());
   builder.SetKernelType(TBE_KERNEL);

@@ -78,7 +78,7 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
 
   AddressPtr overflow_address_ptr = GetOverflowAddress();
   if (overflow_address_ptr != nullptr) {
-    runtimeargs.emplace_back(overflow_address_ptr->addr);
+    (void)runtimeargs.emplace_back(overflow_address_ptr->addr);
     MS_LOG(DEBUG) << "Assign overflow memory for node " << cnode->fullname_with_scope() << ", addr is "
                   << overflow_address_ptr->addr;
   }
@@ -176,12 +176,14 @@ void TbeKernelMod::GenAtomicInitInfo(AtomicInitInfo *info) {
 
 AddressPtr TbeKernelMod::GetOverflowAddress() {
   AddressPtr overflow_address_ptr = nullptr;
+  MS_EXCEPTION_IF_NULL(kernel_pack_);
   auto is_overflow = kernel_pack_.get()->kernel_json_info().global_workspace.is_overflow;
   if (is_overflow) {
     auto overflow_memory_ptr =
       device::ascend::AscendMemoryManager().MallocOverflowMemFromMemFromMemPool(kOverflowAddrSize, false);
     MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
     overflow_address_ptr = std::make_shared<kernel::Address>();
+    MS_EXCEPTION_IF_NULL(overflow_address_ptr);
     overflow_address_ptr->addr = overflow_memory_ptr;
     overflow_address_ptr->size = kOverflowAddrSize;
   }
@@ -192,6 +194,7 @@ void TbeKernelMod::GetRealIOAddress(const AnfNodePtr &cnode, const vector<Addres
                                     const vector<AddressPtr> &outputs,
                                     vector<mindspore::kernel::AddressPtr> *real_inputs,
                                     vector<mindspore::kernel::AddressPtr> *real_outputs) const {
+  MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   MS_EXCEPTION_IF_NULL(real_inputs);
   MS_EXCEPTION_IF_NULL(real_outputs);

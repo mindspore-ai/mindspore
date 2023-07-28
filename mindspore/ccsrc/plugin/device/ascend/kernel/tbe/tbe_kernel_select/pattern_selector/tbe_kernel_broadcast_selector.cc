@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/pattern_selector/tbe_kernel_broadcast_selector.h"
-
-#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
-#include "include/common/utils/anfalgo.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 
 namespace mindspore::kernel {
 constexpr size_t kChannelN = 0;
