@@ -105,14 +105,14 @@ class StructType(Enum):
         for name, data_type in data_struct.items():
             data_size = StructType.sizeof(data_type)
             if special_process_func:
-                unpack_data, success = special_process_func(binary_data[cursor:cursor+data_size], name,
+                unpack_data, success = special_process_func(binary_data[cursor:cursor + data_size], name,
                                                             data_type, unpacked_data)
                 if success:
                     cursor += data_size
                     unpacked_data[name] = unpack_data
                     continue
 
-            unpack_data = struct.unpack(data_type.value, binary_data[cursor: cursor+data_size])[0]
+            unpack_data = struct.unpack(data_type.value, binary_data[cursor: cursor + data_size])[0]
             cursor += data_size
             unpacked_data[name] = unpack_data
         return unpacked_data

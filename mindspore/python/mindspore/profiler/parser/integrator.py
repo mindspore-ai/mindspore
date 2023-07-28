@@ -39,8 +39,10 @@ class Integrator:
     _file_name_framework = 'framework_raw_{}.csv'
     _header_aicore_type = ['op_type', 'total_time', 'execution_frequency', 'percent']
     _header_aicore_detail = ['full_op_name', 'execution_time', 'execution_frequency']
-    _header_aicpu = ['serial_number', 'op_type', 'total_time', 'dispatch_time',
-                     'execution_time', 'run_start', 'run_end']
+    _header_aicpu = [
+        'serial_number', 'op_type', 'total_time', 'dispatch_time',
+        'execution_time', 'run_start', 'run_end'
+    ]
 
     _file_name_aicore_type_time = 'aicore_intermediate_{}_type.csv'
     _file_name_aicore_detail_info = 'aicore_intermediate_{}_detail.csv'
@@ -276,7 +278,8 @@ class Integrator:
             _ = next(csv_reader)
             for info in csv_reader:
                 framework_infos[info[3]] = [
-                    info[3], info[4], info[5], info[6], json.loads(info[7]) if info[7] else None]
+                    info[3], info[4], info[5], info[6], json.loads(info[7]) if info[7] else None
+                ]
 
         with open(op_detail_file_path, 'r') as file:
             csv_reader = csv.reader(file)
@@ -374,8 +377,10 @@ class Integrator:
         factor = 1e5  # convert time unit from 10ns to 1ms
         reduce_pid = 10000
         reduce_info = []
-        reduce_fields = [field_name for field_name in self._column
-                         if field_name.startswith('stream_') and not field_name.endswith('point')]
+        reduce_fields = [
+            field_name for field_name in self._column
+            if field_name.startswith('stream_') and not field_name.endswith('point')
+        ]
         for reduce_field in reduce_fields:
             reduce_start = row_info_dict.get(reduce_field + '_start_point')
             reduce_start = reduce_start / factor \
@@ -388,8 +393,10 @@ class Integrator:
             cur_stream_id = reduce_field.split('_', 3)[1]
             if reduce_field.split('_', 2)[1] == 'ops':
                 cur_stream_id = reduce_field.split('_', 3)[2]
-            reduce_meta = [reduce_field, int(cur_stream_id), reduce_start,
-                           reduce_duration, reduce_pid]
+            reduce_meta = [
+                reduce_field, int(cur_stream_id), reduce_start,
+                reduce_duration, reduce_pid
+            ]
             reduce_info.append(reduce_meta)
 
         return reduce_info

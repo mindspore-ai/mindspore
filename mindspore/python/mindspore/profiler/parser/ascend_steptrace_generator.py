@@ -29,9 +29,11 @@ class AscendStepTraceGenerator:
         self.steptrace = steptrace
         self.steptrace_detail = None
 
-        self.steptrace_detail_dt = [('step_num', object), ('start_point', np.int64), ('end_point', np.int64),
-                                    ('total', np.int64), ('fp_point', np.int64), ('bp_point', np.int64),
-                                    ('iteration_interval', np.int64), ('fp_and_bp', np.int64), ('tail', np.int64)]
+        self.steptrace_detail_dt = [
+            ('step_num', object), ('start_point', np.int64), ('end_point', np.int64),
+            ('total', np.int64), ('fp_point', np.int64), ('bp_point', np.int64),
+            ('iteration_interval', np.int64), ('fp_and_bp', np.int64), ('tail', np.int64)
+        ]
 
     def parse(self):
         """Analyse the original steptrace data generate steptrace data."""
