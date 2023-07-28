@@ -393,6 +393,14 @@ Others
 .. autoclass:: {{ name }}
     :members: sync_epoch_begin, sync_step_begin
 
+{% elif "mindspore.dataset.vision" in fullname and objname[0].istitle() %}
+
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: to_c_type, to_python_type
+    :members:
+
 {% elif objname[0].istitle() %}
 
 {{ fullname | underline }}

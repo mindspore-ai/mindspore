@@ -12,7 +12,7 @@ Transforms
 .. autosummary::
     :toctree: dataset_transforms
     :nosignatures:
-    :template: classtemplate.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.transforms.Compose
     mindspore.dataset.transforms.Concatenate
@@ -34,7 +34,7 @@ Utilities
 .. autosummary::
     :toctree: dataset_transforms
     :nosignatures:
-    :template: classtemplate.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.transforms.Relational
 
@@ -55,7 +55,7 @@ Transforms
 .. autosummary::
     :toctree: dataset_vision
     :nosignatures:
-    :template: classtemplate.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.vision.AdjustBrightness
     mindspore.dataset.vision.AdjustContrast
@@ -142,7 +142,7 @@ Utilities
 .. autosummary::
     :toctree: dataset_vision
     :nosignatures:
-    :template: classtemplate.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.vision.AutoAugmentPolicy
     mindspore.dataset.vision.Border
@@ -178,7 +178,7 @@ Transforms
 .. msnoteautosummary::
     :toctree: dataset_text
     :nosignatures:
-    :template: classtemplate.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.text.AddToken
     mindspore.dataset.text.BasicTokenizer
@@ -210,7 +210,7 @@ Utilities
 .. msnoteautosummary::
     :toctree: dataset_text
     :nosignatures:
-    :template: classtemplate.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.text.CharNGram
     mindspore.dataset.text.FastText
@@ -243,7 +243,7 @@ Transforms
 .. autosummary::
     :toctree: dataset_audio
     :nosignatures:
-    :template: classtemplate.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.audio.AllpassBiquad
     mindspore.dataset.audio.AmplitudeToDB
@@ -304,7 +304,7 @@ Utilities
 .. autosummary::
     :toctree: dataset_audio
     :nosignatures:
-    :template: classtemplate.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.audio.BorderType
     mindspore.dataset.audio.DensityFunction
