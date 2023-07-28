@@ -21,6 +21,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/array_ops.h"
 #include "include/common/expander/core/infer.h"
+#include "include/common/profiler.h"
 #include "utils/anf_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/expander/utils.h"
@@ -118,6 +119,8 @@ bool BpropExpander::Run(const CNodePtr &cnode, const std::vector<ValuePtr> &inpu
     outputs_->clear();
   }
   auto node_name = AnfUtils::GetCNodeName(cnode);
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeGradExpander,
+                                     node_name, true);
   if (OpEnvManager::UsePyBprop(node_name)) {
     MS_LOG(DEBUG) << "Python bprop will be used for op " << node_name;
     return false;

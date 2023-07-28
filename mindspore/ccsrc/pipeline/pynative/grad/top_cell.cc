@@ -18,6 +18,7 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "ir/tensor.h"
 #include "include/backend/device_address.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace pynative {
@@ -136,6 +137,8 @@ void TopCellInfo::ClearParamGradInfo() {
 }
 
 void TopCellInfo::Clear() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                     runtime::ProfilerEvent::kPyNativeGradClearTopCell, std::string(), true);
   MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
   auto_grad_cell_ptr_ = nullptr;
   hook_changed_ = false;

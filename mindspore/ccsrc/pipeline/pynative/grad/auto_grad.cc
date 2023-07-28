@@ -28,6 +28,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/primitive_utils.h"
+#include "include/common/profiler.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "ops/array_ops.h"
@@ -1146,6 +1147,8 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, AnfNodePtrLis
 }
 
 void AutoGradCellImpl::UpdateOutputNodeOfTopCell(const ValuePtr &sens_out) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                     runtime::ProfilerEvent::kPyNativeGradUpdateSens, std::string(), true);
   MS_EXCEPTION_IF_NULL(sens_out);
   MS_LOG(DEBUG) << "Real output of top cell is " << PyNativeAlgo::Common::GetIdByValue(sens_out);
   ad_param()->sens_value_ = sens_out;
