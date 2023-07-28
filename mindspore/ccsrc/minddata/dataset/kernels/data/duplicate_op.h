@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_DUPLICATE_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_DUPLICATE_OP_H_
 
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 
 namespace mindspore {
 namespace dataset {
-
 class DuplicateOp : public TensorOp {
  public:
   DuplicateOp() = default;
@@ -40,4 +39,4 @@ class DuplicateOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DUPLICATE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_DUPLICATE_OP_H_

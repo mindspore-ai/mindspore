@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status MaskOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   std::shared_ptr<Tensor> temp_output;
@@ -41,9 +40,9 @@ Status MaskOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
 
 Status MaskOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "Mask: inputs cannot be empty.");
   outputs[0] = type_;
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

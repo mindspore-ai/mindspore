@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_COMPOSE_OP_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_COMPOSE_OP_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_COMPOSE_OP_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_COMPOSE_OP_
 
 #include <memory>
 #include <string>
@@ -66,5 +66,4 @@ class ComposeOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_COMPOSE_OP_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_COMPOSE_OP_

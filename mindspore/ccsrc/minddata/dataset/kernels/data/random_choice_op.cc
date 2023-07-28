@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 uint32_t RandomChoiceOp::NumInput() {
   uint32_t num_input = ops_.front()->NumInput();
   for (auto &op : ops_) {
@@ -82,6 +81,7 @@ Status RandomChoiceOp::Compute(const TensorRow &input, TensorRow *output) {
   RETURN_IF_NOT_OK(ops_[rand_num]->Compute(input, output));
   return Status::OK();
 }
+
 RandomChoiceOp::RandomChoiceOp(const std::vector<std::shared_ptr<TensorOp>> &ops)
     : ops_(ops), gen_(GetSeed()), rand_int_(0, ops.size() - 1) {
   if (ops_.empty()) {

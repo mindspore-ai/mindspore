@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/image_utils.h"
+
 #include <opencv2/imgproc/types_c.h>
+
 #include <algorithm>
 #include <fstream>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
+
 #include <opencv2/imgcodecs.hpp>
-#include "utils/file_utils.h"
-#include "utils/ms_utils.h"
+
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/affine_op.h"
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #include "minddata/dataset/kernels/image/invert_op.h"
@@ -36,7 +39,8 @@
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
 #include "minddata/dataset/kernels/image/sharpness_op.h"
 #include "minddata/dataset/kernels/image/solarize_op.h"
-#include "minddata/dataset/kernels/data/data_utils.h"
+#include "utils/file_utils.h"
+#include "utils/ms_utils.h"
 
 const int32_t MAX_INT_PRECISION = 16777216;  // float int precision is 16777216
 const int32_t DOUBLING_FACTOR = 2;           // used as multiplier with MAX_INT_PRECISION
@@ -77,6 +81,7 @@ int GetCVBorderType(BorderType type) {
 
 Status GetConvertShape(ConvertMode convert_mode, const std::shared_ptr<CVTensor> &input_cv,
                        std::vector<dsize_t> *node) {
+  RETURN_UNEXPECTED_IF_NULL(node);
   std::vector<ConvertMode> one_channels = {ConvertMode::COLOR_BGR2GRAY, ConvertMode::COLOR_RGB2GRAY,
                                            ConvertMode::COLOR_BGRA2GRAY, ConvertMode::COLOR_RGBA2GRAY};
   std::vector<ConvertMode> three_channels = {

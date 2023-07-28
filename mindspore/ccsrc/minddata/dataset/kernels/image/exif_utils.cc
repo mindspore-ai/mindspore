@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 template <typename T>
 T parse_bytes(const uint8_t *buf, bool intel_align);
 
 template <>
 uint8_t parse_bytes(const uint8_t *buf, bool intel_align) {
+  if (buf == nullptr) {
+    return 0;
+  }
   return *buf;
 }
 
@@ -65,20 +67,18 @@ uint32_t parse_bytes(const uint8_t *buf, bool intel_align) {
 }
 
 int parseExif(const uint8_t *buf, uint32_t len) {
-  bool intel_align = true;
-  uint32_t offset = 0;
-  if (!buf || len < 6) {
+  if (buf == nullptr || len < 6) {
     return UNKNOW_ORIENTATION;
   }
 
   if (!std::equal(buf, buf + 6, "Exif\0\0")) {
     return UNKNOW_ORIENTATION;
   }
-  offset += 6;
-
+  uint32_t offset = 6;
   if (offset + 8 > len) {
     return UNKNOW_ORIENTATION;
   }
+  bool intel_align = true;
   if (buf[offset] == 'I' && buf[offset + 1] == 'I') {
     intel_align = true;
   } else if (buf[offset] == 'M' && buf[offset + 1] == 'M') {
@@ -124,24 +124,34 @@ int ExifInfo::parseOrientation(const unsigned char *data, unsigned len) {
   constexpr int64_t len_min = 2;
   constexpr int64_t offset_factor = 4;
   constexpr int64_t section_length_min = 16;
-  if (!data || len < len_size) return UNKNOW_ORIENTATION;
+  if (data == nullptr || len < len_size) {
+    return UNKNOW_ORIENTATION;
+  }
 
-  if (data[0] != 0xFF || data[1] != 0xD8) return UNKNOW_ORIENTATION;
+  if (data[0] != 0xFF || data[1] != 0xD8) {
+    return UNKNOW_ORIENTATION;
+  }
 
   while (len > len_min) {
     if (data[len - 1] == 0xD9 && data[len - 2] == 0xFF) break;
     len--;
   }
-  if (len <= len_min) return UNKNOW_ORIENTATION;
+  if (len <= len_min) {
+    return UNKNOW_ORIENTATION;
+  }
 
   unsigned int offset = 0;
   for (; offset < len - 1; offset++) {
     if (data[offset] == 0xFF && data[offset + 1] == 0xE1) break;
   }
-  if (offset + offset_factor > len) return UNKNOW_ORIENTATION;
+  if (offset + offset_factor > len) {
+    return UNKNOW_ORIENTATION;
+  }
   offset += 2;
   uint16_t section_length = parse_bytes<uint16_t>(data + offset, false);
-  if (offset + section_length > len || section_length < section_length_min) return UNKNOW_ORIENTATION;
+  if (offset + section_length > len || section_length < section_length_min) {
+    return UNKNOW_ORIENTATION;
+  }
   offset += 2;
 
   return parseExif(data + offset, len - offset);

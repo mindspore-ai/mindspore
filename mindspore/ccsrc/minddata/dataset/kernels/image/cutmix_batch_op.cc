@@ -19,7 +19,6 @@
 #include <cmath>
 #include <limits>
 #include <string>
-#include <utility>
 
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
@@ -29,7 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 constexpr size_t kInputColumnSize = 2;
 constexpr size_t kMinLabelShapeSize = 2;
 constexpr size_t kMaxLabelShapeSize = 3;
@@ -205,12 +203,12 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   CHECK_FAIL_RETURN_UNEXPECTED(
     images.size() <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
     "The size of \"images\" must not be more than \"INT64_MAX\", but got: " + std::to_string(images.size()));
-  for (int64_t idx = 0; idx < static_cast<int64_t>(images.size()); idx++) {
+  for (auto idx = 0; idx < images.size(); idx++) {
     rand_indx.push_back(idx);
   }
   std::shuffle(rand_indx.begin(), rand_indx.end(), rnd_);
-  std::gamma_distribution<float> gamma_alpha(alpha_, 1.F);
-  std::gamma_distribution<float> gamma_beta(alpha_, 1.F);
+  std::gamma_distribution<float> gamma_alpha(alpha_, 1.0);
+  std::gamma_distribution<float> gamma_beta(alpha_, 1.0);
   std::uniform_real_distribution<double> uniform_distribution(0.0, 1.0);
 
   // Tensor holding the output labels
@@ -220,7 +218,7 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   int64_t num_classes = label_shape[-1];
 
   // Compute labels and images
-  for (size_t i = 0; i < static_cast<size_t>(image_shape[0]); i++) {
+  for (auto i = 0; i < image_shape[0]; i++) {
     // Calculating lambda
     // If x1 is a random variable from Gamma(a1, 1) and x2 is a random variable from Gamma(a2, 1)
     // then x = x1 / (x1+x2) is a random variable from Beta(a1, a2)

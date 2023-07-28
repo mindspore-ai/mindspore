@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const uint8_t kNumOfCols = 4;
 
 BoundingBox::BoundingBox(bbox_float x, bbox_float y, bbox_float width, bbox_float height)
@@ -46,8 +45,8 @@ Status BoundingBox::ReadFromTensor(const TensorPtr &bbox_tensor, dsize_t index_o
 }
 
 Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
-  constexpr int64_t input_size = 2;
-  if (image_and_bbox.size() != input_size) {
+  const int64_t kValidInputSize = 2;
+  if (image_and_bbox.size() != kValidInputSize) {
     RETURN_STATUS_ERROR(StatusCode::kMDBoundingBoxInvalidShape,
                         "BoundingBox: invalid input, size of input data should be 2 "
                         "(including image and bounding box), but got: " +
@@ -74,19 +73,15 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
   int64_t img_h = image_and_bbox[0]->shape()[0];
   int64_t img_w = image_and_bbox[0]->shape()[1];
   for (auto &bbox : bbox_list) {
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int64_t>::max() - bbox->x()) > bbox->width(),
-                                 "BoundingBox: bbox width is too large as coordinate x bigger than max num of int64.");
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int64_t>::max() - bbox->y()) > bbox->height(),
-                                 "BoundingBox: bbox height is too large as coordinate y bigger than max num of int64.");
-    if ((static_cast<int64_t>(bbox->x() + bbox->width()) > img_w) ||
-        (static_cast<int64_t>(bbox->y() + bbox->height()) > img_h)) {
+    if (static_cast<int64_t>(ceil(bbox->x() + bbox->width())) > img_w ||
+        static_cast<int64_t>(ceil(bbox->y() + bbox->height())) > img_h) {
       RETURN_STATUS_ERROR(
         StatusCode::kMDBoundingBoxOutOfBounds,
         "BoundingBox: bounding boxes is out of bounds of the image, as image width: " + std::to_string(img_w) +
           ", bbox width coordinate: " + std::to_string(bbox->x() + bbox->width()) + ", and image height: " +
           std::to_string(img_h) + ", bbox height coordinate: " + std::to_string(bbox->y() + bbox->height()));
     }
-    if (static_cast<int>(bbox->x()) < 0 || static_cast<int>(bbox->y()) < 0) {
+    if (bbox->x() < 0.0 || bbox->y() < 0.0) {
       RETURN_STATUS_ERROR(StatusCode::kMDBoundingBoxOutOfBounds,
                           "BoundingBox: the coordinates of the bounding boxes has negative value, got: (" +
                             std::to_string(bbox->x()) + "," + std::to_string(bbox->y()) + ").");
@@ -95,7 +90,7 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
   return Status::OK();
 }
 
-Status BoundingBox::WriteToTensor(const TensorPtr &bbox_tensor, dsize_t index_of_bbox) {
+Status BoundingBox::WriteToTensor(const TensorPtr &bbox_tensor, dsize_t index_of_bbox) const {
   CHECK_FAIL_RETURN_UNEXPECTED(bbox_tensor != nullptr, "BoundingBox: bbox_tensor is null.");
   RETURN_IF_NOT_OK(bbox_tensor->SetItemAt<bbox_float>({index_of_bbox, 0}, x_));
   RETURN_IF_NOT_OK(bbox_tensor->SetItemAt<bbox_float>({index_of_bbox, 1}, y_));
@@ -122,7 +117,7 @@ Status BoundingBox::CreateTensorFromBoundingBoxList(const std::vector<std::share
   std::vector<bbox_float> bboxes_for_tensor;
   for (dsize_t i = 0; i < num_of_boxes; i++) {
     bbox_float b_data[kNumOfCols] = {bboxes[i]->x(), bboxes[i]->y(), bboxes[i]->width(), bboxes[i]->height()};
-    bboxes_for_tensor.insert(bboxes_for_tensor.end(), b_data, b_data + kNumOfCols);
+    (void)bboxes_for_tensor.insert(bboxes_for_tensor.end(), b_data, b_data + kNumOfCols);
   }
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(bboxes_for_tensor, TensorShape{num_of_boxes, kNumOfCols}, tensor_out));
   return Status::OK();
@@ -133,12 +128,8 @@ Status BoundingBox::PadBBoxes(const TensorPtr *bbox_list, size_t bbox_count, int
   for (dsize_t i = 0; i < bbox_count; i++) {
     std::shared_ptr<BoundingBox> bbox;
     RETURN_IF_NOT_OK(ReadFromTensor(*bbox_list, i, &bbox));
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - bbox->x()) > pad_left,
-                                 "BoundingBox: pad_left is too large as coordinate x bigger than max num of int64.");
-    bbox->SetX(bbox->x() + pad_left);
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() - bbox->y()) > pad_top,
-                                 "BoundingBox: pad_top is too large as coordinate y bigger than max num of int64.");
-    bbox->SetY(bbox->y() + pad_top);
+    bbox->SetX(bbox->x() + static_cast<float>(pad_left));
+    bbox->SetY(bbox->y() + static_cast<float>(pad_top));
     RETURN_IF_NOT_OK(bbox->WriteToTensor(*bbox_list, i));
   }
   return Status::OK();
@@ -158,7 +149,8 @@ Status BoundingBox::UpdateBBoxesForCrop(TensorPtr *bbox_list, size_t *bbox_count
     bbox_float bb_Xmax = bbox->x() + bbox->width();
     bbox_float bb_Ymax = bbox->y() + bbox->height();
     // check for image / BB overlap
-    if (((bbox->x() > CB_Xmax) || (bbox->y() > CB_Ymax)) || ((bb_Xmax < CB_Xmin) || (bb_Ymax < CB_Ymin))) {
+    if (bbox->x() > static_cast<float>(CB_Xmax) || bbox->y() > static_cast<float>(CB_Ymax) ||
+        bb_Xmax < static_cast<float>(CB_Xmin) || bb_Ymax < static_cast<float>(CB_Ymin)) {
       continue;  // no overlap found
     }
     // Update this bbox and select it to move to the final output tensor
@@ -166,10 +158,12 @@ Status BoundingBox::UpdateBBoxesForCrop(TensorPtr *bbox_list, size_t *bbox_count
     // adjust BBox corners by bringing into new CropBox if beyond
     // Also resetting/adjusting for boxes to lie within CropBox instead of Image - subtract CropBox Xmin/YMin
 
-    bbox_float bb_Xmin = bbox->x() - std::min(static_cast<bbox_float>(0.0), (bbox->x() - CB_Xmin)) - CB_Xmin;
-    bbox_float bb_Ymin = bbox->y() - std::min(static_cast<bbox_float>(0.0), (bbox->y() - CB_Ymin)) - CB_Ymin;
-    bb_Xmax = bb_Xmax - std::max(static_cast<bbox_float>(0.0), (bb_Xmax - CB_Xmax)) - CB_Xmin;
-    bb_Ymax = bb_Ymax - std::max(static_cast<bbox_float>(0.0), (bb_Ymax - CB_Ymax)) - CB_Ymin;
+    bbox_float bb_Xmin =
+      bbox->x() - std::min(0.F, bbox->x() - static_cast<float>(CB_Xmin)) - static_cast<float>(CB_Xmin);
+    bbox_float bb_Ymin =
+      bbox->y() - std::min(0.F, bbox->y() - static_cast<float>(CB_Ymin)) - static_cast<float>(CB_Ymin);
+    bb_Xmax = bb_Xmax - std::max(0.F, bb_Xmax - static_cast<float>(CB_Xmax)) - static_cast<float>(CB_Xmin);
+    bb_Ymax = bb_Ymax - std::max(0.F, bb_Ymax - static_cast<float>(CB_Ymax)) - static_cast<float>(CB_Ymin);
 
     // bound check for float values
     bb_Xmin = std::max(bb_Xmin, static_cast<bbox_float>(0));
@@ -208,8 +202,8 @@ Status BoundingBox::UpdateBBoxesForResize(const TensorPtr &bbox_list, size_t bbo
   CHECK_FAIL_RETURN_UNEXPECTED(orig_height != 0, "BoundingBox: orig_height is zero.");
 
   // cast to float to preserve fractional
-  bbox_float W_aspRatio = (target_width * 1.0) / (orig_width * 1.0);
-  bbox_float H_aspRatio = (target_height * 1.0) / (orig_height * 1.0);
+  bbox_float W_aspRatio = static_cast<float>(target_width) / static_cast<float>(orig_width);
+  bbox_float H_aspRatio = static_cast<float>(target_height) / static_cast<float>(orig_height);
   for (dsize_t i = 0; i < bbox_count; i++) {
     // for each bounding box
     std::shared_ptr<BoundingBox> bbox;
@@ -234,6 +228,5 @@ Status BoundingBox::UpdateBBoxesForResize(const TensorPtr &bbox_list, size_t bbo
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

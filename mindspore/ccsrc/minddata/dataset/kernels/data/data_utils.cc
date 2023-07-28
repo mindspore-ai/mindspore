@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,25 @@
 #include <algorithm>
 #include <limits>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
-#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/core/pybind_support.h"
 #endif
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/data/type_cast_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
 template <typename T>
 Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
                           int64_t index, double smoothing_rate) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   T class_idx;
   if (input->Rank() == 0) {
     RETURN_IF_NOT_OK(input->GetItemAt<T>(&class_idx, {}));
@@ -57,7 +57,7 @@ Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<
     for (; itr != end; itr++) {
       *itr = val;
     }
-    double value = (1 - smoothing_rate) + val;
+    double value = (1. - smoothing_rate) + val;
     RETURN_IF_NOT_OK((*output)->SetItemAt<double>({index, static_cast<dsize_t>(class_idx)}, value));
   } else {
     RETURN_STATUS_UNEXPECTED("OneHot: signed input case only supports signed int as input but got:" +
@@ -68,15 +68,13 @@ Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<
 
 Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
                       double smoothing_rate) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   input->Squeeze();
 
-  if (input->Rank() > 1) {  // We expect the input to be int he first dimension
-    RETURN_STATUS_UNEXPECTED("OneHot: OneHot only supports scalars or 1D input, got rank: " +
-                             std::to_string(input->Rank()));
-  }
-  if (!input->type().IsInt()) {
-    RETURN_STATUS_UNEXPECTED("OneHot: OneHot only support input of int type, but got:" + input->type().ToString());
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() <= 1,
+                               "OneHot: Only support scalar or 1D input, got rank: " + std::to_string(input->Rank()));
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type().IsInt(),
+                               "OneHot: Only support input of int type, but got: " + input->type().ToString());
   try {
     dsize_t num_elements = 1;
     if (input->Rank() == 1) {
@@ -85,7 +83,7 @@ Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     TensorShape out_shape({num_elements, num_classes});
     std::shared_ptr<Tensor> out;
     mindspore::dataset::DataType type = input->type();
-    if (smoothing_rate != 0) {
+    if (abs(smoothing_rate) > std::numeric_limits<double>::epsilon()) {
       type = DataType(DataType::DE_FLOAT64);
     }
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(out_shape, type, &out));
@@ -115,14 +113,13 @@ Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     *output = out;
     return Status::OK();
   } catch (const std::exception &e) {
-    std::string err_msg = "Error raised in OneHot operation: ";
-    err_msg += e.what();
-    RETURN_STATUS_UNEXPECTED(err_msg);
+    RETURN_STATUS_UNEXPECTED("OneHot: Unexpected errors occurred: " + std::string(e.what()));
   }
 }
 
 Status FillHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out,
                   const std::shared_ptr<Tensor> &fill_output) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   const DataType &input_type = input->type();
   const TensorShape &input_shape = input->shape();
   switch (input_type.value()) {
@@ -187,13 +184,13 @@ Status FillHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
       break;
     }
     case DataType::DE_FLOAT32: {
-      float value = 0;
+      float value = 0.;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
       RETURN_IF_NOT_OK((*out)->Fill<float>(value));
       break;
     }
     case DataType::DE_FLOAT64: {
-      double value = 0;
+      double value = 0.;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
       RETURN_IF_NOT_OK((*out)->Fill<double>(value));
       break;
@@ -205,7 +202,7 @@ Status FillHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&fill_string_view, {}));
       std::string fill_string = std::string(fill_string_view);
       for (int i = 0; i < input_shape.NumOfElements(); i++) {
-        strings.emplace_back(fill_string);
+        (void)strings.emplace_back(fill_string);
       }
       RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, input_shape, DataType(input_type.value()), out));
       break;
@@ -220,6 +217,7 @@ Status FillHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
 
 Status Fill(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
             const std::shared_ptr<Tensor> &fill_value) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   const DataType &fill_type = fill_value->type();
   const DataType &input_type = input->type();
   const TensorShape &input_shape = input->shape();
@@ -312,6 +310,7 @@ void CastFrom(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
 // Type cast operator
 Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   switch (input->type().value()) {
     case DataType::DE_BOOL:
       RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
@@ -415,7 +414,7 @@ Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, 
               const std::shared_ptr<Tensor> &pad_val) {
   if (pad_val == nullptr) {
     if (src->type().IsNumeric()) {
-      return PadEndNumeric(src, dst, pad_shape, 0);
+      return PadEndNumeric(src, dst, pad_shape, 0.);
     } else {
       return PadEndString(src, dst, pad_shape, "");
     }
@@ -426,7 +425,7 @@ Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, 
   if (pad_val->type().IsNumeric()) {
     std::shared_ptr<Tensor> float_pad_value;
     RETURN_IF_NOT_OK(TypeCast(pad_val, &float_pad_value, DataType(DataType::DE_FLOAT32)));
-    float val = 0;
+    float val = 0.;
     RETURN_IF_NOT_OK(float_pad_value->GetItemAt<float>(&val, {}));
     return PadEndNumeric(src, dst, pad_shape, val);
   } else {
@@ -486,7 +485,8 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
   }
   return Status::OK();
 }
-Status PadEndNumericHelper(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> dst,
+
+Status PadEndNumericHelper(const std::shared_ptr<Tensor> &src, const std::shared_ptr<Tensor> &dst,
                            std::vector<dsize_t> cur_ind, size_t cur_dim) {
   if (cur_dim == src->Rank() - 1) {  // if this is the last dimension, copy the data
     RETURN_IF_NOT_OK(dst->CopyLastDimAt(src, cur_ind));
@@ -526,10 +526,10 @@ Status PadEndStringHelper(const std::shared_ptr<Tensor> &src, std::vector<std::s
       cur_ind[cur_dim] = i;
       std::string_view item;
       RETURN_IF_NOT_OK(src->GetItemAt(&item, cur_ind));
-      dst->emplace_back(item);
+      (void)dst->emplace_back(item);
     }
     for (dsize_t i = min_ind; i < dst_shape[cur_dim]; i++) {
-      dst->emplace_back(pad_value);
+      (void)dst->emplace_back(pad_value);
     }
 
   } else {  // not the last dimension, keep doing recursion
@@ -540,7 +540,7 @@ Status PadEndStringHelper(const std::shared_ptr<Tensor> &src, std::vector<std::s
     }
     dsize_t count = (dst_shape[cur_dim] - min_ind) * dst_shape.Strides()[cur_dim];
     for (dsize_t i = 0; i < count; i++) {
-      dst->emplace_back(pad_value);
+      (void)dst->emplace_back(pad_value);
     }
   }
   return Status::OK();
@@ -652,9 +652,9 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   return Status::OK();
 }
 
-Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::shared_ptr<Tensor> prepend,
-                   std::shared_ptr<Tensor> append) {
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() > 0, "Concatenate: input is null");
+Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, const std::shared_ptr<Tensor> &prepend,
+                   const std::shared_ptr<Tensor> &append) {
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() > 0, "Concatenate: input cannot be empty.");
   axis = Tensor::HandleNeg(axis, input[0]->shape().Rank());
   CHECK_FAIL_RETURN_UNEXPECTED(
     axis == 0, "Concatenate: only 1D input supported, input 'axis' should be 0, but got: " + std::to_string(axis));
@@ -676,12 +676,12 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
     tensor_list.emplace_back(prepend);
   }
 
-  for (dsize_t i = 0; i < input.size(); i++) {
-    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == input[i]->type(), "Concatenate: inconsistent datatype of input.");
+  for (const auto &tensor : input) {
+    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == tensor->type(), "Concatenate: inconsistent datatype of input.");
     CHECK_FAIL_RETURN_UNEXPECTED(
-      input[i]->shape().Rank() == 1,
-      "Concatenate: only 1D input supported, got rank of input: " + std::to_string(input[i]->shape().Rank()));
-    tensor_list.emplace_back(input[i]);
+      tensor->shape().Rank() == 1,
+      "Concatenate: only 1D input supported, got rank of input: " + std::to_string(tensor->shape().Rank()));
+    tensor_list.emplace_back(tensor);
   }
 
   if (append != nullptr) {
@@ -701,8 +701,8 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
       t = t.AppendDim(tensor_list[0]->shape()[i]);
     } else {
       dsize_t new_shape = 0;
-      for (dsize_t j = 0; j < tensor_list.size(); j++) {
-        new_shape = tensor_list[j]->shape()[i] + new_shape;
+      for (auto &tensor : tensor_list) {
+        new_shape = tensor->shape()[i] + new_shape;
       }
       t = t.AppendDim(new_shape);
     }
@@ -714,18 +714,18 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(t, tensor_list[0]->type(), &out));
     std::vector<dsize_t> index(axis + 1, 0);
 
-    int n = index.size() - 1;
-    for (dsize_t i = 0; i < tensor_list.size(); i++) {
-      RETURN_IF_NOT_OK(out->InsertTensor({index}, tensor_list[i], true));
-      index[n] = index[n] + tensor_list[i]->shape()[axis];
+    auto n = index.size() - 1;
+    for (auto &tensor : tensor_list) {
+      RETURN_IF_NOT_OK(out->InsertTensor({index}, tensor, true));
+      index[n] = index[n] + tensor->shape()[axis];
     }
   } else {
     std::vector<std::string> strings;
 
-    for (dsize_t i = 0; i < tensor_list.size(); i++) {
-      auto itr = tensor_list[i]->begin<std::string_view>();
-      for (; itr != tensor_list[i]->end<std::string_view>(); ++itr) {
-        strings.emplace_back(*itr);
+    for (auto &i : tensor_list) {
+      auto itr = i->begin<std::string_view>();
+      for (; itr != i->end<std::string_view>(); ++itr) {
+        (void)strings.emplace_back(*itr);
       }
     }
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, t, input[0]->type(), &out));
@@ -739,13 +739,13 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
 #ifndef ENABLE_ANDROID
 Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
                                    std::vector<std::shared_ptr<CVTensor>> *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   std::vector<int64_t> tensor_shape = input->shape().AsVector();
   TensorShape remaining({-1});
   std::vector<int64_t> index(tensor_shape.size(), 0);
-  if (tensor_shape.size() <= 1) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: input must be at least 2-D in order to unpack, but got rank: " +
-                             std::to_string(tensor_shape.size()));
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    tensor_shape.size() > 1,
+    "MixUpBatch: input must be at least 2-D in order to unpack, but got rank: " + std::to_string(tensor_shape.size()));
   TensorShape element_shape(std::vector<int64_t>(tensor_shape.begin() + 1, tensor_shape.end()));
 
   for (; index[0] < tensor_shape[0]; index[0]++) {
@@ -765,13 +765,13 @@ Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
 #endif
 
 Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vector<std::shared_ptr<Tensor>> *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   std::vector<int64_t> tensor_shape = input->shape().AsVector();
   TensorShape remaining({-1});
   std::vector<int64_t> index(tensor_shape.size(), 0);
-  if (tensor_shape.size() <= 1) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: input must be at least 2-D in order to unpack, but got rank:" +
-                             std::to_string(tensor_shape.size()));
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    tensor_shape.size() > 1,
+    "CutMixBatch: input must be at least 2-D in order to unpack, but got rank:" + std::to_string(tensor_shape.size()));
   TensorShape element_shape(std::vector<int64_t>(tensor_shape.begin() + 1, tensor_shape.end()));
 
   for (; index[0] < tensor_shape[0]; index[0]++) {
@@ -786,11 +786,10 @@ Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vect
 }
 
 Status TensorVectorToBatchTensor(const std::vector<std::shared_ptr<Tensor>> &input, std::shared_ptr<Tensor> *output) {
-  if (input.empty()) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: the input is empty.");
-  }
+  RETURN_UNEXPECTED_IF_NULL(output);
+  CHECK_FAIL_RETURN_UNEXPECTED(!input.empty(), "CutMixBatch: the input is empty.");
   std::vector<int64_t> tensor_shape = input.front()->shape().AsVector();
-  tensor_shape.insert(tensor_shape.begin(), input.size());
+  (void)tensor_shape.insert(tensor_shape.begin(), input.size());
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(tensor_shape), input.at(0)->type(), output));
   for (int i = 0; i < input.size(); i++) {
     RETURN_IF_NOT_OK((*output)->InsertTensor({i}, input[i]));
@@ -897,6 +896,5 @@ Status Unique(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

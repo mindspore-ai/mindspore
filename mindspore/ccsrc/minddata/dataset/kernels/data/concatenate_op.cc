@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status ConcatenateOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   RETURN_IF_NOT_OK(Concatenate(input, output, axis_, prepend_, append_));
@@ -33,6 +32,8 @@ Status ConcatenateOp::Compute(const TensorRow &input, TensorRow *output) {
 
 Status ConcatenateOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
+
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "Concatenate: inputs can not be empty.");
 
   std::vector<TensorShape> inputs_copy;
   inputs_copy.push_back(inputs[0].Squeeze());
@@ -60,7 +61,7 @@ Status ConcatenateOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
     output_shape = output_shape + append_->shape().NumOfElements();
   }
 
-  outputs.emplace_back(std::vector<dsize_t>{output_shape});
+  (void)outputs.emplace_back(std::vector<dsize_t>{output_shape});
   return Status::OK();
 }
 }  // namespace dataset

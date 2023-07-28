@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,7 @@ namespace mindspore {
 namespace dataset {
 class OneHotOp : public TensorOp {
  public:
-  explicit OneHotOp(int num_classes, double smoothing_rate)
-      : num_classes_(num_classes), smoothing_rate_(smoothing_rate) {}
+  OneHotOp(int num_classes, double smoothing_rate) : num_classes_(num_classes), smoothing_rate_(smoothing_rate) {}
 
   ~OneHotOp() override = default;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,16 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
-#include "minddata/dataset/include/dataset/constants.h"
+#include <vector>
+
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/core/cv_tensor.h"
 #endif
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
 namespace dataset {
@@ -41,7 +42,7 @@ namespace dataset {
 // @param num_classes: Number of classes in dataset.
 // @param smoothing_rate: Adjustable hyperparameter for label smoothing level.
 Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
-                      double smoothing_rate = 0);
+                      double smoothing_rate = 0.);
 
 template <typename T>
 Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
@@ -51,7 +52,6 @@ Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<
 // @param input  Tensor
 // @param output Tensor. The shape and type of the output tensor is same as input
 // @param fill_value Tensor. A scalar tensor used to fill the output tensor
-
 Status Fill(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
             const std::shared_ptr<Tensor> &fill_value);
 
@@ -61,7 +61,6 @@ Status Fill(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 // @param output Tensor. The shape of the output tensor is same as input with the type changed.
 // @param data_type: type of data to cast data to
 // @note: this operation will do a memcpy and if the value is truncated then precision will be lost
-
 template <typename T>
 void CastFrom(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
@@ -100,7 +99,7 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
 // @param T pad_val - value to pad tensor with
 // @param size_t cur_dim - recursion helper
 // @return Status The status code returned
-Status PadEndNumericHelper(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> dst,
+Status PadEndNumericHelper(const std::shared_ptr<Tensor> &src, const std::shared_ptr<Tensor> &dst,
                            std::vector<dsize_t> cur_ind, size_t cur_dim = 0);
 
 // Pad input string tensor according pad_shape, need to have same rank.
@@ -145,8 +144,8 @@ Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Te
 Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::shared_ptr<Tensor> &value,
             RelationalOp op);
 
-Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::shared_ptr<Tensor> prepend,
-                   std::shared_ptr<Tensor> append);
+Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, const std::shared_ptr<Tensor> &prepend,
+                   const std::shared_ptr<Tensor> &append);
 
 // helper for concat, always append to the input, and pass that to the output
 Status ConcatenateHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int8_t axis,
@@ -193,5 +192,4 @@ Status Unique(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               std::shared_ptr<Tensor> *output_idx, std::shared_ptr<Tensor> *output_cnt);
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_DATA_UTILS_H_

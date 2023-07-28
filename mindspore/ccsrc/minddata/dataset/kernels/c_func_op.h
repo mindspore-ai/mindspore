@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_C_FUNC_OP_H_
 
 #include <memory>
-#include <vector>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -34,6 +34,7 @@ class CFuncOp : public TensorOp {
   ~CFuncOp() override = default;
 
   uint32_t NumInput() override { return 0; }
+
   uint32_t NumOutput() override { return 0; }
 
   // Calls c_func_ptr and returns the result
@@ -46,5 +47,4 @@ class CFuncOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_C_FUNC_OP_H_

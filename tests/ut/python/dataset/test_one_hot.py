@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing OneHot Op in Dataset
+Testing OneHot in Dataset
 """
 import numpy as np
 import pytest
@@ -237,7 +237,7 @@ def test_one_hot_type_error():
         for index, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
             assert item["label"][index] == 1.0
     except RuntimeError as e:
-        assert "OneHot only support input of int type, but got:float64" in str(e)
+        assert "Only support input of int type, but got: float64" in str(e)
 
 
 def test_one_hot_smoothing_rate():

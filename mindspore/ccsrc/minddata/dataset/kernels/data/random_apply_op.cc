@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 uint32_t RandomApplyOp::NumOutput() {
   if (compose_->NumOutput() != NumInput()) {
     MS_LOG(WARNING) << "NumOutput!=NumInput (randomApply would randomly affect number of outputs).";
@@ -39,6 +38,7 @@ Status RandomApplyOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
   }
   return Status::OK();
 }
+
 Status RandomApplyOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(compose_->OutputType(inputs, outputs));
   if (inputs != outputs) {  // when RandomApply is not applied, input should be the same as output
@@ -47,20 +47,21 @@ Status RandomApplyOp::OutputType(const std::vector<DataType> &inputs, std::vecto
   }
   return Status::OK();
 }
+
 Status RandomApplyOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
   if (rand_double_(gen_) <= prob_) {
     RETURN_IF_NOT_OK(compose_->Compute(input, output));
   } else {
-    IO_CHECK_VECTOR(input, output);
     *output = input;  // copy over the tensors
   }
   return Status::OK();
 }
+
 RandomApplyOp::RandomApplyOp(const std::vector<std::shared_ptr<TensorOp>> &ops, double prob)
-    : prob_(prob), gen_(GetSeed()), rand_double_(0, 1) {
+    : prob_(prob), gen_(GetSeed()), rand_double_(0., 1.) {
   compose_ = std::make_unique<ComposeOp>(ops);
   is_deterministic_ = false;
 }
-
 }  // namespace dataset
 }  // namespace mindspore

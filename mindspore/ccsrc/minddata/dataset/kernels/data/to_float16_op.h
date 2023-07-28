@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDDATA_TOFLOAT16OP_H
-#define MINDDATA_TOFLOAT16OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_TO_FLOAT16_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_TO_FLOAT16_OP_H_
 
 #include <map>
 #include <memory>
@@ -45,5 +45,4 @@ class ToFloat16Op : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDDATA_TOFLOAT16OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_TO_FLOAT16_OP_H_

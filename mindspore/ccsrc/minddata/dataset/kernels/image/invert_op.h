@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_INVERT_OP_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_INVERT_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_INVERT_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_INVERT_OP_H_
 
 #include <memory>
 #include <string>
@@ -28,8 +28,9 @@ namespace mindspore {
 namespace dataset {
 class InvertOp : public TensorOp {
  public:
-  InvertOp() {}
-  ~InvertOp() = default;
+  InvertOp() = default;
+
+  ~InvertOp() override = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
@@ -37,5 +38,4 @@ class InvertOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_INVERT_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_INVERT_OP_H_
