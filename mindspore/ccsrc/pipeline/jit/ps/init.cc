@@ -55,6 +55,8 @@
 #include "frontend/expander/pack/pack_expander.h"
 #include "include/common/profiler.h"
 
+#include "pipeline/jit/graph_jit/external.h"
+
 namespace py = pybind11;
 
 using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;
@@ -673,4 +675,10 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)m.def("_ms_memory_recycle", &mindspore::pipeline::MemoryRecycle, "Recycle memory used by mindspore.");
   (void)m.def("_bind_device_ctx", &mindspore::pipeline::BindDeviceCtx, "Bind device context to current thread");
+
+  (void)m.def("jit_mode_pi_enable", &mindspore::graph_jit_enable, "enable jit from python byte code");
+  (void)m.def("jit_mode_pi_disable", &mindspore::graph_jit_disable, "disable jit from python byte code");
+  (void)m.def("jit_mode_pi_compile", &mindspore::graph_jit_should_compile, "add function to compile");
+  // belowing code is used for debugging code generate, and will be remove soon
+  (void)m.def("TestGraphIRCodeGen", &mindspore::test_graph_ir_code_gen, "add function to compile");
 }

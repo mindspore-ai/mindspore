@@ -36,6 +36,7 @@ from mindspore._check_jit_forbidden_api import get_obj_module_and_name_info, is_
     is_invalid_or_jit_forbidden_method
 from mindspore import _install_custom
 from mindspore.ops_generate import arg_dtype_cast, arg_handler
+from mindspore.graph_jit import GraphJit
 
 __all__ = ["run_check"]
 __all__.extend(__version__)
@@ -47,3 +48,4 @@ __all__.extend(parallel.__all__)
 __all__.extend(rewrite.__all__)
 __all__.extend(safeguard.__all__)
 __all__.append("Profiler")
+__all__.append("GraphJit")
