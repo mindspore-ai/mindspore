@@ -113,10 +113,12 @@ uint32_t ResizeBicubicCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   in_shape_ = input_tensor->GetTensorShape()->GetDimSizes();
   auto size_tensor = input_size_tensor->GetTensorShape()->GetDimSizes();
 
-  KERNEL_CHECK_FALSE((in_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID, "Dim of input[0] must be 4, but got[%zu].",
+  KERNEL_CHECK_FALSE((in_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID, "Dim of images must be 4, but got[%zu].",
                      in_shape_.size());
-  KERNEL_CHECK_FALSE((size_tensor.size() == 1), KERNEL_STATUS_PARAM_INVALID, "Dim of input[1] must be 1, but got[%zu].",
+  KERNEL_CHECK_FALSE((size_tensor.size() == 1), KERNEL_STATUS_PARAM_INVALID, "Dim of size must be 1, but got[%zu].",
                      size_tensor.size());
+  KERNEL_CHECK_FALSE((size_tensor[0] == 2), KERNEL_STATUS_PARAM_INVALID, "size.shape[0] must be 2, but got[%zu].",
+                     size_tensor[0]);
 
   auto size_type = input_size_tensor->GetDataType();
   std::vector<int64_t> size_value{};

@@ -74,6 +74,7 @@ int UpsampleNearest3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   workspace_size_list_.push_back(unit_size * static_cast<size_t>(output_shape_[kIndex3]));
   workspace_size_list_.push_back(unit_size * static_cast<size_t>(output_shape_[kIndex4]));
   // none_list
+  MS_EXCEPTION_IF_NULL(base_operator);
   none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
@@ -93,7 +94,8 @@ bool UpsampleNearest3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
                                                      const std::vector<kernel::AddressPtr> &workspace,
                                                      const std::vector<kernel::AddressPtr> &outputs) {
   // the input grad of backward process is the output of forward process
-  auto grad_output_ptr = static_cast<T *>(inputs[kIndex0]->addr);
+  auto grad_output_ptr = GetDeviceAddress<T>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(grad_output_ptr);
   const int64_t total = CPUKernelUtils::CalcElementNum(input_shape_);
   S *grad_input_ptr = nullptr;
   bool is_fp16 = std::is_same<T, float16>::value;
@@ -102,13 +104,16 @@ bool UpsampleNearest3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   if (is_fp16) {
     grad_input_copy.resize(total, 0);
     grad_input_ptr = grad_input_copy.data();
+    MS_EXCEPTION_IF_NULL(grad_input_ptr);
   } else {
-    grad_input_ptr = static_cast<S *>(outputs[kIndex0]->addr);
+    grad_input_ptr = GetDeviceAddress<S>(outputs, kIndex0);
+    MS_EXCEPTION_IF_NULL(grad_input_ptr);
     int ret = memset_s(outputs[kIndex0]->addr, outputs[kIndex0]->size, 0, outputs[kIndex0]->size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
     }
   }
+
   // treat nbatch and channels as one dimension
   int64_t channels = input_shape_[kIndex0] * input_shape_[kIndex1];
   int64_t input_depth = input_shape_[kIndex2];
@@ -123,8 +128,11 @@ bool UpsampleNearest3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   int64_t input_slice_size = input_depth * input_height * input_width;
 
   int64_t *const d_helper = GetDeviceAddress<int64_t>(workspace, kIndex0);
+  MS_EXCEPTION_IF_NULL(d_helper);
   int64_t *const h_helper = GetDeviceAddress<int64_t>(workspace, kIndex1);
+  MS_EXCEPTION_IF_NULL(h_helper);
   int64_t *const w_helper = GetDeviceAddress<int64_t>(workspace, kIndex2);
+  MS_EXCEPTION_IF_NULL(w_helper);
   (void)ComputeNearestIndex(d_helper, input_height * input_width, input_depth, output_depth,
                             static_cast<double>(scales_[kIndex0]));
   (void)ComputeNearestIndex(h_helper, input_width, input_height, output_height, static_cast<double>(scales_[kIndex1]));
@@ -153,7 +161,8 @@ bool UpsampleNearest3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   ParallelLaunch(loop3d, static_cast<size_t>(channels), block_size);
   // memcopy and cast for fp16
   if (is_fp16) {
-    T *real_input_ptr = static_cast<T *>(outputs[kIndex0]->addr);
+    T *real_input_ptr = GetDeviceAddress<T>(outputs, kIndex0);
+    MS_EXCEPTION_IF_NULL(real_input_ptr);
     auto task_fp16 = [&](int64_t begin, int64_t end) {
       for (int64_t idx = begin; idx < end; ++idx) {
         real_input_ptr[idx] = static_cast<T>(grad_input_ptr[idx]);

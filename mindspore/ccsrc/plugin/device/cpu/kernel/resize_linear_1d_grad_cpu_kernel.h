@@ -76,6 +76,7 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   std::string kernel_type_{kUnknown};
   bool align_corners_{false};
   bool half_pixel_center_{false};
+  TypeId type_{kTypeUnknown};
   size_t batch_{0};
   size_t channel_{0};
   size_t input_width_{0};

@@ -28,10 +28,8 @@ namespace kernel {
 bool ResizeLinear1DGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1D>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kResizeLinear1DInputsNum || outputs.size() != kResizeLinear1DOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kResizeLinear1DInputsNum
@@ -67,22 +65,12 @@ int ResizeLinear1DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
     return ret;
   }
-
-  input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                      inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
   batch_ = LongToSize(input_shape_[kIndex0]);
   channel_ = LongToSize(input_shape_[kIndex1]);
   in_width_ = input_shape_[kIndex2];
-  output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  output_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
   out_width_ = output_shape_[kIndex2];
-
-  if (input_shape_.size() != kResizeInputDims) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the dimension of 'input_x' should be greater than or equal to 1, but got "
-                  << input_shape_.size() << ".";
-    return KRET_RESIZE_FAILED;
-  }
   return KRET_OK;
 }
 
@@ -90,16 +78,11 @@ template <typename T>
 bool ResizeLinear1DGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &workspace,
                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeLinear1DInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeLinear1DOutputsNum, kernel_name_);
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
-
   int64_t output_size = batch_ * channel_ * out_width_;
-
   auto status = ResizeLinear1D(mode_, output_size, in_width_, out_width_, input, output, device_id_,
                                reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDA_STATUS(status, kernel_name_);

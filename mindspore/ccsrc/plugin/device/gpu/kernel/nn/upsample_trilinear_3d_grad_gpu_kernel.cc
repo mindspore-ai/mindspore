@@ -39,13 +39,8 @@ bool UpsampleTrilinear3DGradGpuKernelMod::Init(const BaseOperatorPtr &base_opera
                                                const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  if (inputs.empty() || outputs.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
-    return false;
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  auto kernel_ptr = std::make_shared<ops::UpsampleTrilinear3DGrad>(base_operator->GetPrim());
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::UpsampleTrilinear3DGrad>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   align_corners_ = kernel_ptr->get_align_corners();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -64,8 +59,8 @@ int UpsampleTrilinear3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> grad_shape = inputs[kIndex0]->GetShapeVector();
-  std::vector<int64_t> dinput_shape = outputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> grad_shape = inputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> dinput_shape = outputs.at(kIndex0)->GetShapeVector();
   n_ = grad_shape[kIndex0];
   c_ = grad_shape[kIndex1];
   // grad_output
@@ -77,6 +72,7 @@ int UpsampleTrilinear3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   dinput_h_ = dinput_shape[kIndex3];
   dinput_w_ = dinput_shape[kIndex4];
   // none list
+  MS_EXCEPTION_IF_NULL(base_operator);
   none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
@@ -96,7 +92,9 @@ bool UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel(const std::vector<Address
                                                        const std::vector<AddressPtr> &workspace,
                                                        const std::vector<AddressPtr> &outputs) {
   auto grad = GetDeviceAddress<T>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(grad);
   auto dinput = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(dinput);
 
   const S depth_scale = AreaPixelComputeScale<S>(dinput_d_, grad_d_, align_corners_, scales_[kIndex0]);
   const S height_scale = AreaPixelComputeScale<S>(dinput_h_, grad_h_, align_corners_, scales_[kIndex1]);

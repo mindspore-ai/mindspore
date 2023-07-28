@@ -75,6 +75,7 @@ int UpsampleNearest3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   workspace_size_list_.push_back(unit_size_ * LongToSize(y_shape_[kIndex3]));
   workspace_size_list_.push_back(unit_size_ * LongToSize(y_shape_[kIndex4]));
   // none_list
+  MS_EXCEPTION_IF_NULL(base_operator);
   none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
@@ -93,6 +94,11 @@ template <typename T>
 bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) {
+  auto x_ptr = GetDeviceAddress<T>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(x_ptr);
+  auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(y_ptr);
+
   int64_t channels = x_shape_[kIndex0] * x_shape_[kIndex1];
   int64_t input_depth = x_shape_[kIndex2];
   int64_t input_height = x_shape_[kIndex3];
@@ -103,9 +109,6 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   int64_t output_height = y_shape_[kIndex3];
   int64_t output_width = y_shape_[kIndex4];
   int64_t output_slice_size = output_depth * output_height * output_width;
-
-  auto x_ptr = static_cast<T *>(inputs[kIndex0]->addr);
-  auto y_ptr = static_cast<T *>(outputs[kIndex0]->addr);
 
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
     auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size, x_ptr, outputs[kIndex0]->size);
@@ -118,6 +121,9 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   int64_t *const d_helper = GetDeviceAddress<int64_t>(workspace, kIndex0);
   int64_t *const h_helper = GetDeviceAddress<int64_t>(workspace, kIndex1);
   int64_t *const w_helper = GetDeviceAddress<int64_t>(workspace, kIndex2);
+  MS_EXCEPTION_IF_NULL(d_helper);
+  MS_EXCEPTION_IF_NULL(d_helper);
+  MS_EXCEPTION_IF_NULL(d_helper);
   ComputeNearestIndex(d_helper, input_height * input_width, input_depth, output_depth, scales_[kIndex0]);
   ComputeNearestIndex(h_helper, input_width, input_height, output_height, scales_[kIndex1]);
   ComputeNearestIndex(w_helper, 1, input_width, output_width, scales_[kIndex2]);

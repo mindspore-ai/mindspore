@@ -41,9 +41,6 @@ class MIND_API ResizeNearestNeighborV2 : public BaseOperator {
   bool get_half_pixel_centers() const;
   std::string get_data_format() const;
 };
-
-AbstractBasePtr ResizeNearestNeighborV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args);
 using PrimResizeNearestNeighborV2Ptr = std::shared_ptr<ResizeNearestNeighborV2>;
 }  // namespace ops
 }  // namespace mindspore

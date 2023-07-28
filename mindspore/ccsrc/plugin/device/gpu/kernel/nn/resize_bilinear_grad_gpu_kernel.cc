@@ -15,9 +15,9 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/resize_bilinear_grad_gpu_kernel.h"
-#include <map>
-#include <functional>
 #include <algorithm>
+#include <functional>
+#include <map>
 #include <utility>
 #include "mindspore/core/ops/grad/resize_bilinear_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
@@ -25,8 +25,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputsNum = 2;
-constexpr size_t kOutputsNum = 1;
 constexpr size_t kDyIndexForN = 0;
 constexpr size_t kDyIndexForC = 1;
 constexpr size_t kDyIndexForH = 2;
@@ -40,14 +38,13 @@ using FuncVec = std::vector<std::pair<KernelAttr, ResizeBilinearGradGpuKernelMod
 bool ResizeBilinearGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeBilinearGrad>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast ResizeBilinearGrad ops failed!";
     return false;
   }
   kernel_name_ = kernel_ptr->name();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -56,24 +53,6 @@ bool ResizeBilinearGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  return true;
-}
-
-int ResizeBilinearGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
-    return ret;
-  }
-  auto dy_shape = inputs[kIndex0]->GetShapeVector();
-  auto dx_shape = outputs[kIndex0]->GetShapeVector();
-  auto input_element_num = std::accumulate(dy_shape.begin(), dy_shape.end(), size_t(1), std::multiplies<size_t>());
-  is_null_input_ = (input_element_num == 0);
-  if (is_null_input_) {
-    return static_cast<int>(KRET_OK);
-  }
 
   auto align_corners = base_operator->GetAttr(kAttrAlignCorners);
   MS_EXCEPTION_IF_NULL(align_corners);
@@ -82,13 +61,29 @@ int ResizeBilinearGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   MS_EXCEPTION_IF_NULL(half_pixel_centers);
   half_pixel_centers_ = GetValue<bool>(half_pixel_centers);
 
+  return true;
+}
+
+int ResizeBilinearGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs,
+                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto dy_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto dx_shape = outputs.at(kIndex0)->GetShapeVector();
+  auto input_element_num = std::accumulate(dy_shape.begin(), dy_shape.end(), size_t(1), std::multiplies<size_t>());
+  is_null_input_ = (input_element_num == 0);
+  if (is_null_input_) {
+    return static_cast<int>(KRET_OK);
+  }
   n_ = LongToInt(dy_shape[kDyIndexForN]);
   c_ = LongToInt(dy_shape[kDyIndexForC]);
   dy_h_ = LongToInt(dy_shape[kDyIndexForH]);
   dy_w_ = LongToInt(dy_shape[kDyIndexForW]);
   dx_h_ = LongToInt(dx_shape[kDxIndexForH]);
   dx_w_ = LongToInt(dx_shape[kDxIndexForW]);
-  dy_size_ = abstract::TypeIdSize(inputs[0]->GetDtype()) * SizeOf(dy_shape);
   dx_size_ = abstract::TypeIdSize(inputs[1]->GetDtype()) * SizeOf(dx_shape);
   if (inputs[0]->GetDtype() == kNumberTypeFloat16) {
     workspace_size_ = SizeOf(dx_shape) * sizeof(float);
@@ -106,6 +101,9 @@ bool ResizeBilinearGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   T *dy = GetDeviceAddress<T>(inputs, 0);
   T *interim = GetDeviceAddress<T>(workspace, 0);
   T *dx = GetDeviceAddress<T>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(dy);
+  MS_EXCEPTION_IF_NULL(interim);
+  MS_EXCEPTION_IF_NULL(dx);
   float h_scale = Scaling(dx_h_, dy_h_, align_corners_);
   float w_scale = Scaling(dx_w_, dy_w_, align_corners_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(dx, 0, dx_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -126,6 +124,9 @@ bool ResizeBilinearGradGpuKernelMod::LaunchHalfKernel(const std::vector<AddressP
   T *dy = GetDeviceAddress<T>(inputs, 0);
   float *interim = GetDeviceAddress<float>(workspace, 0);
   T *dx = GetDeviceAddress<T>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(dy);
+  MS_EXCEPTION_IF_NULL(interim);
+  MS_EXCEPTION_IF_NULL(dx);
   float h_scale = Scaling(dx_h_, dy_h_, align_corners_);
   float w_scale = Scaling(dx_w_, dy_w_, align_corners_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(dx, 0, dx_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),

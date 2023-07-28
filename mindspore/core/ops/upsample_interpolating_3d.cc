@@ -47,17 +47,23 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int64_t kVALUE_1 = 1;
-const int64_t kVALUE_2 = 2;
-const int64_t kVALUE_3 = 3;
-const int64_t kVALUE_5 = 5;
+constexpr int64_t kUpsample3DMinInputNum = 2;
+constexpr int64_t kUpsample3DMaxInputNum = 3;
+constexpr int64_t kVALUE_1 = 1;
+constexpr int64_t kVALUE_2 = 2;
+constexpr int64_t kVALUE_3 = 3;
+constexpr int64_t kVALUE_5 = 5;
 
 void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
                         size_t *const scales_idx, const std::string &prim_name) {
   if (input_args.size() == kVALUE_3) {
     std::vector<int64_t> none_list{};
-    auto is_output_size_none = input_args[kInputIndex1]->BuildType()->type_id() == kMetaTypeNone;
-    auto is_scales_none = input_args[kInputIndex2]->BuildType()->type_id() == kMetaTypeNone;
+    auto size_type = input_args[kInputIndex1]->BuildType();
+    MS_EXCEPTION_IF_NULL(size_type);
+    auto is_output_size_none = size_type->type_id() == kMetaTypeNone;
+    auto scale_type = input_args[kInputIndex2]->BuildType();
+    MS_EXCEPTION_IF_NULL(scale_type);
+    auto is_scales_none = scale_type->type_id() == kMetaTypeNone;
     if (is_output_size_none && is_scales_none) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
                                << " But get both empty or None.";
@@ -78,6 +84,7 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
 void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg, const std::string &prim_name,
                    std::vector<int64_t> *const y_shape) {
   auto size_value_ptr = input_arg->BuildValue();
+  MS_EXCEPTION_IF_NULL(size_value_ptr);
   auto output_size = GetShapeValue(primitive, input_arg);
   if (IsValueKnown(size_value_ptr)) {
     (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
@@ -94,6 +101,7 @@ void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_a
 void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_name,
                      const std::vector<int64_t> &x_shape, std::vector<int64_t> *const y_shape) {
   auto scales_value_ptr = input_arg->BuildValue();
+  MS_EXCEPTION_IF_NULL(scales_value_ptr);
   if (IsValueKnown(scales_value_ptr) && !IsDynamicRank(x_shape)) {
     std::vector<double> scales;
     if (scales_value_ptr->isa<tensor::Tensor>()) {
@@ -142,6 +150,10 @@ abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primiti
                                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kUpsample3DMinInputNum, prim_name);
+  for (auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, kVALUE_5, prim_name);
@@ -173,7 +185,10 @@ TypePtr UpsampleInterpolatingInferType(const PrimitivePtr &primitive, const std:
   if (prim_name == "UpsampleNearest3D") {
     (void)valid_types.insert(kUInt8);
   }
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, prim_name);
+  auto x_arg = input_args.at(kInputIndex0);
+  MS_EXCEPTION_IF_NULL(x_arg);
+  auto x_type = x_arg->BuildType();
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
 }
 }  // namespace
 
@@ -182,8 +197,7 @@ abstract::AbstractBasePtr UpsampleInterpolating3DInfer(const abstract::AnalysisE
                                                        const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUpsample3DMaxInputNum, prim_name);
   auto type = UpsampleInterpolatingInferType(primitive, input_args);
   auto shape = UpsampleInterpolating3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

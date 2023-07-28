@@ -18,9 +18,9 @@
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
+#include "kernel/ops_utils.h"
 #include "mindspore/core/ops/resize_linear_1d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "kernel/ops_utils.h"
 
 namespace mindspore::kernel {
 constexpr auto kResizeLinear1D = "ResizeLinear1D";
@@ -51,11 +51,9 @@ template <typename T>
 bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &workspace,
                                               const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeLinear1DInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeLinear1DOutputsNum, kernel_name_);
-  T *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto input = GetDeviceAddress<T>(inputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  T *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   if (out_width_ == in_width_) {
@@ -68,11 +66,11 @@ bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
     return true;
   }
 
-  size_t *interp_lower = reinterpret_cast<size_t *>(workspace[kIndex0]->addr);
+  auto interp_lower = GetDeviceAddress<size_t>(workspace, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(interp_lower, false);
-  size_t *interp_upper = reinterpret_cast<size_t *>(workspace[kIndex1]->addr);
+  auto interp_upper = GetDeviceAddress<size_t>(workspace, kIndex1);
   MS_ERROR_IF_NULL_W_RET_VAL(interp_upper, false);
-  T *interp_lerp = reinterpret_cast<T *>(workspace[kIndex2]->addr);
+  auto interp_lerp = GetDeviceAddress<T>(workspace, kIndex2);
   MS_ERROR_IF_NULL_W_RET_VAL(interp_lerp, false);
 
   auto coordinate_transformation_func = ChooseCoordinateTransformationFunc<T>(coordinate_transformation_mode_);
@@ -119,6 +117,7 @@ ResizeLinear1DCpuKernelMod::ChooseCoordinateTransformationFunc(
 
 bool ResizeLinear1DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1D>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
@@ -139,6 +138,8 @@ bool ResizeLinear1DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                   << " not support now.";
     return false;
   }
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  x_type_ = inputs[kIndex0]->GetDtype();
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -147,13 +148,11 @@ bool ResizeLinear1DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 }
 
 void ResizeLinear1DCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTensorPtr> &inputs) {
-  workspace_size_list_.clear();
   workspace_size_list_.push_back(sizeof(size_t) * out_width_);
   workspace_size_list_.push_back(sizeof(size_t) * out_width_);
-  auto input_data_type = inputs[kIndex0]->GetDtype();
-  if (input_data_type == kNumberTypeFloat32) {
+  if (x_type_ == kNumberTypeFloat32) {
     workspace_size_list_.push_back(sizeof(float) * out_width_);
-  } else if (input_data_type == kNumberTypeFloat64) {
+  } else if (x_type_ == kNumberTypeFloat64) {
     workspace_size_list_.push_back(sizeof(double) * out_width_);
   }
 }
@@ -165,21 +164,12 @@ int ResizeLinear1DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;
   }
-
-  std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
-  std::vector<int64_t> output_shape = outputs[kIndex0]->GetShapeVector();
-  if (input_shape.size() != kResizeDims || output_shape.size() != kResizeDims) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the dimension of 'input_x' and the dimension of 'output' should be equal to 3, but got "
-                  << input_shape.size() << " and " << output_shape.size() << ".";
-    return KRET_RESIZE_FAILED;
-  }
-
+  std::vector<int64_t> input_shape = inputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetShapeVector();
   batch_ = LongToSize(input_shape[kIndex0]);
   channel_ = LongToSize(input_shape[kIndex1]);
   in_width_ = LongToSize(input_shape[kIndex2]);
   out_width_ = LongToSize(output_shape[kIndex2]);
-
   SetWorkSpaceSize(inputs);
   return KRET_OK;
 }

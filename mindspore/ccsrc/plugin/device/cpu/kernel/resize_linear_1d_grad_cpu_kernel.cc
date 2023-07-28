@@ -18,9 +18,9 @@
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
-#include "mindspore/core/ops/grad/resize_linear_1d_grad.h"
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/ops_utils.h"
+#include "ops/grad/resize_linear_1d_grad.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore::kernel {
 constexpr auto kResizeLinear1DGrad = "ResizeLinear1DGrad";
@@ -50,11 +50,9 @@ template <typename T>
 bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &workspace,
                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeLinear1DGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeLinear1DGradOutputsNum, kernel_name_);
-  T *grad_output = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto grad_output = GetDeviceAddress<T>(inputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_output, false);
-  T *grad_input = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto grad_input = GetDeviceAddress<T>(outputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_input, false);
 
   if (output_width_ == input_width_) {
@@ -71,11 +69,11 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
 
-  size_t *interp_lower = reinterpret_cast<size_t *>(workspace[kIndex0]->addr);
+  auto interp_lower = GetDeviceAddress<size_t>(workspace, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(interp_lower, false);
-  size_t *interp_upper = reinterpret_cast<size_t *>(workspace[kIndex1]->addr);
+  auto interp_upper = GetDeviceAddress<size_t>(workspace, kIndex1);
   MS_ERROR_IF_NULL_W_RET_VAL(interp_upper, false);
-  T *interp_lerp = reinterpret_cast<T *>(workspace[kIndex2]->addr);
+  auto interp_lerp = GetDeviceAddress<T>(workspace, kIndex2);
   MS_ERROR_IF_NULL_W_RET_VAL(interp_lerp, false);
 
   auto coordinate_transformation_func = ChooseCoordinateTransformationFunc<T>(coordinate_transformation_mode_);
@@ -123,9 +121,9 @@ ResizeLinear1DGradCpuKernelMod::ChooseCoordinateTransformationFunc(
 bool ResizeLinear1DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1DGrad>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kResizeLinear1DGradInputsNum || outputs.size() != kResizeLinear1DGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kResizeLinear1DGradInputsNum
@@ -144,6 +142,8 @@ bool ResizeLinear1DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                   << " not support now.";
     return false;
   }
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  type_ = inputs[kIndex0]->GetDtype();
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -152,13 +152,11 @@ bool ResizeLinear1DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 }
 
 void ResizeLinear1DGradCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTensorPtr> &inputs) {
-  workspace_size_list_.clear();
   workspace_size_list_.push_back(sizeof(size_t) * output_width_);
   workspace_size_list_.push_back(sizeof(size_t) * output_width_);
-  auto input_data_type = inputs[kIndex0]->GetDtype();
-  if (input_data_type == kNumberTypeFloat32) {
+  if (type_ == kNumberTypeFloat32) {
     workspace_size_list_.push_back(sizeof(float) * output_width_);
-  } else if (input_data_type == kNumberTypeFloat64) {
+  } else if (type_ == kNumberTypeFloat64) {
     workspace_size_list_.push_back(sizeof(double) * output_width_);
   }
 }
@@ -171,24 +169,12 @@ int ResizeLinear1DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;
   }
-
-  std::vector<int64_t> grad_shape = inputs[kIndex0]->GetShapeVector();
-  auto grad_batch = LongToSize(grad_shape[kIndex0]);
-  auto grad_channel = LongToSize(grad_shape[kIndex1]);
+  std::vector<int64_t> grad_shape = inputs.at(kIndex0)->GetShapeVector();
   output_width_ = LongToSize(grad_shape[kIndex2]);
-
-  std::vector<int64_t> shape_ = inputs[kIndex1]->GetShapeVector();
+  std::vector<int64_t> shape_ = inputs.at(kIndex1)->GetShapeVector();
   batch_ = LongToSize(shape_[kIndex0]);
   channel_ = LongToSize(shape_[kIndex1]);
   input_width_ = LongToSize(shape_[kIndex2]);
-
-  if (grad_batch != batch_ || grad_channel != channel_) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', grad batch is : " << grad_batch
-                  << ", while input batch is : " << batch_ << "; "
-                  << "grad channel is : " << grad_channel << ", while input channel is : " << channel_;
-    return KRET_RESIZE_FAILED;
-  }
-
   SetWorkSpaceSize(inputs);
   return KRET_OK;
 }

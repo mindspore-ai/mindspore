@@ -32,7 +32,7 @@
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
-#include "mindspore/core/ops/image_ops.h"
+#include "ops/image_ops.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "ops/primitive_c.h"
@@ -43,71 +43,64 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int64_t kInputShape0Dim = 3;
-const int64_t kInputShape1Dim = 1;
+constexpr int64_t kResizeLinear1InputNum = 2;
+constexpr int64_t kInputShape0Dim = 3;
+constexpr int64_t kInputShape1Dim = 1;
 abstract::ShapePtr ResizeLinear1DInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-
-  const int64_t shape0_dim = 3;
-  std::vector<int64_t> output_shape(shape0_dim, abstract::Shape::kShapeDimAny);
-
-  auto shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  if (!IsDynamicRank(shape0)) {
-    (void)CheckAndConvertUtils::CheckInteger("images' rank", SizeToLong(shape0.size()), kEqual, shape0_dim, prim_name);
-    output_shape[kInputIndex0] = shape0[kInputIndex0];
-    output_shape[kInputIndex1] = shape0[kInputIndex1];
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kResizeLinear1InputNum, prim_name);
+  for (auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto value_ptr = input_args[kInputIndex1]->BuildValue();
-  MS_EXCEPTION_IF_NULL(value_ptr);
+  const int64_t expect_x_rank = 3;
+  std::vector<int64_t> output_shape(expect_x_rank, abstract::Shape::kShapeDimAny);
 
-  if (!IsValueKnown(value_ptr)) {
-    return std::make_shared<abstract::Shape>(output_shape);
-  }
-
-  auto size_type = input_args[kInputIndex1]->BuildType();
-  std::vector<int64_t> size_value{};
-  if (size_type->isa<TensorType>()) {
-    const int64_t kDimOne = 1;
-    auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    (void)CheckAndConvertUtils::CheckInteger("rank of size's shape", SizeToLong(size_shape.size()), kEqual, kDimOne,
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  if (!IsDynamicRank(x_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("images' rank", SizeToLong(x_shape.size()), kEqual, expect_x_rank,
                                              prim_name);
-    size_value = CheckAndConvertUtils::CheckTensorIntValue("size", value_ptr, prim_name);
-  } else if (IsIdentidityOrSubclass(size_type, kTuple) || IsIdentidityOrSubclass(size_type, kList)) {
-    size_value = CheckAndConvertUtils::CheckIntOrTupleInt("size", value_ptr, prim_name);
-  } else {
-    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the `size` "
-                            << " must be a tuple、list or tensor with all Int elements, but got "
-                            << value_ptr->type_name() << ".";
+    output_shape[kInputIndex0] = x_shape[kInputIndex0];
+    output_shape[kInputIndex1] = x_shape[kInputIndex1];
   }
 
+  auto size_value = GetShapeValue(primitive, input_args[kInputIndex1]);
+  if (IsDynamicRank(size_value)) {
+    size_value = ShapeVector{abstract::Shape::kShapeDimAny};
+  }
   const int64_t size_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("size", SizeToLong(size_value.size()), kEqual, size_num, prim_name);
-  const int64_t kNumZero = 0;
-  for (size_t i = 0; i < size_value.size(); ++i) {
-    (void)CheckAndConvertUtils::CheckInteger("size", size_value[i], kGreaterThan, kNumZero, prim_name);
+  if (!IsDynamic(size_value)) {
+    const int64_t kNumZero = 0;
+    for (size_t i = 0; i < size_value.size(); ++i) {
+      (void)CheckAndConvertUtils::CheckInteger("size", size_value[i], kGreaterThan, kNumZero, prim_name);
+    }
   }
-
   output_shape[kInputIndex2] = size_value[kInputIndex0];
-
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr ResizeLinear1DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "For 'ResizeLinear1D', input args contain nullptr.";
-  }
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kResizeLinear1InputNum, prim_name);
+  for (auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+
   auto x_type = input_args[kInputIndex0]->BuildType();
-  auto size_type = input_args[kInputIndex1]->BuildType();
   const std::set<TypePtr> valid0_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("images", x_type, valid0_types, prim_name);
+
+  auto size_type = input_args[kInputIndex1]->BuildType();
+  MS_EXCEPTION_IF_NULL(size_type);
   if (size_type->isa<TensorType>()) {
     const std::set<TypePtr> valid1_types = {kInt32, kInt64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("size", size_type, valid1_types, prim_name);
   }
+
   return x_type;
 }
 }  // namespace
@@ -128,9 +121,6 @@ void ResizeLinear1D::Init(const std::string coordinate_transformation_mode) {
 
 abstract::AbstractBasePtr ResizeLinear1DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const std::vector<abstract::AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = ResizeLinear1DInferType(primitive, input_args);
   auto infer_shape = ResizeLinear1DInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
