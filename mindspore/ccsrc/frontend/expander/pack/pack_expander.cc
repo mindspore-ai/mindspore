@@ -173,10 +173,19 @@ FuncGraphPtr PackExpander::EndGraph(const py::object &output) {
   return graph;
 }
 
-py::object PackExpander::EndFuncGraph(const py::object &output) {
+py::object PackExpander::EndFuncGraph(const py::object &obj, const py::object &output) {
   auto func_node = func_graph_node_.top();
   func_graph_node_.pop();
-  func_node->set_abstract(EndGraph(output)->output()->abstract());
+  auto fg = EndGraph(output);
+  py::object scope_str =
+    python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_SCOPE_NAME, obj);
+  if (!py::isinstance<py::none>(scope_str)) {
+    auto scope_name = py::cast<std::string>(scope_str);
+    if (scope_name.find("recompute_") == 0) {
+      parse::UpdateRecomputeScope(fg);
+    }
+  }
+  func_node->set_abstract(fg->output()->abstract());
   return ConvertCNodeToPython(func_node);
 }
 
