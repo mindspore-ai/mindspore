@@ -18,6 +18,7 @@
 #include "common/common_test.h"
 #include "nnacl/fp32/gatherNd_fp32.h"
 #include "nnacl/int8/gatherNd_int8.h"
+#include "nnacl/gather_nd_parameter.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
 #include "mindspore/lite/src/executor/kernel_exec.h"
 
