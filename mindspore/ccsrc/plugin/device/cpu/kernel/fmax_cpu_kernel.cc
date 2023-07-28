@@ -57,6 +57,8 @@ bool FmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 int FmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFmaxInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFmaxOutputsNum, kernel_name_);
   int ret = 0;
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;

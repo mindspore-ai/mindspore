@@ -31,6 +31,7 @@ bool LrnGradCpuKernelMod::GetLrnGradAttr(const BaseOperatorPtr &base_operator) {
     return false;
   }
   auto kernel_ptr = std::make_shared<ops::LRNGrad>(base_operator->GetPrim());
+  MS_ERROR_IF_NULL(kernel_ptr);
   depth_radius_ = kernel_ptr->get_depth_radius();
   bias_ = kernel_ptr->get_bias();
   alpha_ = kernel_ptr->get_alpha();
@@ -41,6 +42,7 @@ bool LrnGradCpuKernelMod::GetLrnGradAttr(const BaseOperatorPtr &base_operator) {
 
 bool LrnGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -63,10 +65,13 @@ bool LrnGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
 int LrnGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   int ret = KRET_OK;
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
     return ret;
   }
+  constexpr size_t kInputsNum = 3;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   dnnl::memory::desc src_desc = GetDefaultMemDesc(input_shape);
   const auto lrn_multiple = 2;
@@ -91,6 +96,10 @@ template <typename T>
 bool LrnGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   // The input order is dout, x, out.
+  constexpr size_t kInputsNum = 3;
+  constexpr size_t kOutputsNum = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto dout = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
   auto input = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
   auto out = reinterpret_cast<T *>(inputs.at(kIndex2)->addr);

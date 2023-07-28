@@ -48,7 +48,9 @@ bool UnravelIndexGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
 
 bool UnravelIndexGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::UnravelIndex>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
@@ -67,7 +69,10 @@ int UnravelIndexGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
-
+  constexpr size_t kInputsNum = 2;
+  constexpr size_t kOutputsNum = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   std::vector<int64_t> inp_indices_shape = inputs[0]->GetShapeVector();
   std::vector<int64_t> inp_dims_shape = inputs[1]->GetShapeVector();
   if (!IsValidShape(inp_indices_shape)) {

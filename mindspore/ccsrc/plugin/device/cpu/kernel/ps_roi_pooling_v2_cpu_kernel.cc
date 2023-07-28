@@ -52,6 +52,9 @@ void PSROIPoolingCpuKernelMod::PSROIPoolForward(size_t start, size_t end, const 
   auto elements_per_roi_box = 5;
   constexpr float zero = 0;
 
+  MS_EXCEPTION_IF_ZERO("pooled_width", pooled_width);
+  MS_EXCEPTION_IF_ZERO("pooled_height", pooled_height);
+  MS_EXCEPTION_IF_ZERO("output_channels", output_channels);
   for (auto index = start; index < end; ++index) {
     int width_offset_n = index % pooled_width;
     int height_offset_n = (index / pooled_width) % pooled_height;
@@ -105,6 +108,7 @@ void PSROIPoolingCpuKernelMod::PSROIPoolForward(size_t start, size_t end, const 
 
 bool PSROIPoolingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
@@ -146,6 +150,7 @@ int PSROIPoolingCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensorPt
 int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs,
                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto ret = ResizeCheckInputs(inputs);
   if (ret != KRET_OK) {
     MS_LOG(ERROR) << "Inputs check failed, see above message for details.";

@@ -108,6 +108,9 @@ abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr PSROIPoolingInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat64, kFloat32, kFloat16},
                                                    prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[1]->BuildType(), {kFloat64, kFloat32, kFloat16},
@@ -119,10 +122,6 @@ TypePtr PSROIPoolingInferType(const PrimitivePtr &prim, const std::vector<Abstra
     MS_EXCEPTION(TypeError) << "For '" << prim->name()
                             << "', input[features] is expected to have the same type with input[rois], but got type ("
                             << input_type << ", " << rois_type << ").";
-  }
-
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
   }
   return input_args[0]->BuildType();
 }
