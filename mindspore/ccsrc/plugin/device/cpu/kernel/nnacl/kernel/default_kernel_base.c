@@ -41,7 +41,7 @@ int DefaultPrepare1In1Out(KernelBase *self) {
 }
 
 int DefaultPrepare2In1Out(KernelBase *self) {
-  NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
   return NNACL_OK;
 }
