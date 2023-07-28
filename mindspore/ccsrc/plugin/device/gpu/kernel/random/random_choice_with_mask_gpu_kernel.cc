@@ -24,6 +24,8 @@ bool RandomChoiceWithMaskGpuKernelMod::Init(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &outputs) {
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 2;
+  MS_EXCEPTION_IF_NULL(base_operator);
+  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
@@ -52,6 +54,7 @@ int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   auto input_shape_with_batch = inputs[kIndex0]->GetShapeVector();
   input_shape_size_ = input_shape_with_batch.size() - batch_rank_;
   input_shape_5D_.clear();

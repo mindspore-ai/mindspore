@@ -94,6 +94,7 @@ class RandomChoiceWithMaskInfer : public abstract::OpInferBase {
     const auto &shape_vec = input_x_shape_ptr->cast<abstract::ShapePtr>()->shape();
 
     auto value_ptr = primitive->GetAttr("count");
+    MS_EXCEPTION_IF_NULL(value_ptr);
     auto count_value = GetValue<int64_t>(value_ptr);
     ShapeVector count_shape;
     (void)copy(shape_vec.begin(), shape_vec.begin() + batch_rank, std::back_inserter(count_shape));

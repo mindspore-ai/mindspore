@@ -137,6 +137,7 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override {
+    MS_EXCEPTION_IF_NULL(base_operator);
     kernel_name_ = base_operator->name();
     if (kernel_name_ != prim::kPrimRandomCategorical->name()) {
       MS_LOG(ERROR) << "For 'RandomCategorical', the kernel name must be 'RandomCategorical', but got " << kernel_name_;
