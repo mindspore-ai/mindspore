@@ -52,6 +52,7 @@ class ClassTypeResolve : public AnfVisitor {
   ValuePtr ConvertValue(const ValuePtr &value, bool *need_convert);
 };
 ValuePtr ClassTypeResolve::ConvertValue(const ValuePtr &value, bool *need_convert) {
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<parse::ClassType>()) {
     auto class_type = value->cast<parse::ClassTypePtr>()->name();
     (*need_convert) = true;
@@ -76,7 +77,6 @@ ValuePtr ClassTypeResolve::ConvertValue(const ValuePtr &value, bool *need_conver
   }
 
   if (value->isa<ValueSequence>()) {
-    MS_EXCEPTION_IF_NULL(value);
     auto seq_value = value->cast<ValueSequencePtr>();
     return ConvertValueSequence(seq_value, need_convert);
   }

@@ -61,7 +61,7 @@ class SpecializeTransform {
           continue;
         }
         // replace the parameter with arg in new_fg without changing origin func_graph.
-        mng->Replace(params[i], NewReplaceValueNode(need_eliminate_args[i]));
+        (void)mng->Replace(params[i], NewReplaceValueNode(need_eliminate_args[i]));
       }
       mng->SetParameters(new_fg, new_params);
       cache[key] = new_fg;
@@ -116,7 +116,7 @@ class SpecializeOnGraphArguments : public AnfVisitor {
         need_eliminated_args.push_back(GetValueNode(inputs[i]));
         hasVNode = true;
       } else {
-        need_eliminated_args.emplace_back(nullptr);
+        (void)need_eliminated_args.emplace_back(nullptr);
         new_xs.push_back(inputs[i]);
       }
     }

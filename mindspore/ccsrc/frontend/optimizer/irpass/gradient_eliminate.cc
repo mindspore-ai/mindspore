@@ -103,7 +103,7 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
       j_node_to_index_map[j_node] = index++;
     } else if (IsValueNode<Primitive>(j_node_inp1)) {
       auto expanded_j = internal::ExpandJPrimitive(j_node_inp1->cast<ValueNodePtr>(), optimizer->resource());
-      manager->Replace(j_node, expanded_j);
+      (void)manager->Replace(j_node, expanded_j);
       set_k_graph_flag(j_node->func_graph());
       change = true;
     }
