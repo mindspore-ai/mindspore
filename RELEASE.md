@@ -860,7 +860,6 @@ Contributions of any kind are welcome!
 - [BETA] Add operator primitive for `mindspore.ops.Cummin`.
 - [BETA] Add operator primitive for `mindspore.ops.Diag`.
 - [BETA] Add operator primitive for `mindspore.ops.Digamma`.
-- [BETA] Add operator primitive for `mindspore.ops.Eig`.
 - [BETA] Add operator primitive for `mindspore.ops.Expand`.
 - [BETA] Add operator primitive for `mindspore.ops.Fmax`.
 - [BETA] Add operator primitive for `mindspore.ops.Gcd`.
@@ -894,7 +893,6 @@ Contributions of any kind are welcome!
 - [BETA] Add operator primitive for `mindspore.ops.NextAfter`.
 - [BETA] Add operator primitive for `mindspore.ops.Orgqr`.
 - [BETA] Add operator primitive for `mindspore.ops.Polygamma`.
-- [BETA] Add operator primitive for `mindspore.ops.Qr`.
 - [BETA] Add operator primitive for `mindspore.ops.ResizeBilinearV2`.
 - [BETA] Add operator primitive for `mindspore.ops.RightShift`.
 - [BETA] Add operator primitive for `mindspore.ops.ScatterNdDiv`.
@@ -1721,7 +1719,6 @@ The original cloud inference integrated through MindSpore training can be change
 - [STABLE] Add operator primitive for `mindspore.ops.CompareAndBitpack`.
 - [STABLE] Add operator primitive for `mindspore.ops.Complex`.
 - [STABLE] Add operator primitive for `mindspore.ops.DataFormatVecPermute`.
-- [STABLE] Add operator primitive for `mindspore.ops.Eig`.
 - [STABLE] Add operator primitive for `mindspore.ops.EuclideanNorm`.
 - [STABLE] Add operator primitive for `mindspore.ops.Expand`.
 - [STABLE] Add operator primitive for `mindspore.ops.ExtractGlimpse`.
