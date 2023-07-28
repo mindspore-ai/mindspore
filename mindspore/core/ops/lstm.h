@@ -51,6 +51,12 @@ class MIND_API LSTM : public BaseOperator {
   ///
   /// \return hidden_size.
   int64_t get_hidden_size() const;
+  /// \brief Set proj_size.
+  void set_proj_size(const int64_t proj_size);
+  /// \brief Get proj_size.
+  ///
+  /// \return proj_size.
+  int64_t get_proj_size() const;
   /// \brief Set num_layers.
   void set_num_layers(const int64_t num_layers);
   /// \brief Get num_layers.

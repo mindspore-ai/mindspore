@@ -59,6 +59,11 @@ void LSTMGrad::set_hidden_size(const int64_t hidden_size) {
   (void)AddAttr(kHidden_size, api::MakeValue(hidden_size));
 }
 int64_t LSTMGrad::get_hidden_size() const { return GetValue<int64_t>(GetAttr(kHidden_size)); }
+void LSTMGrad::set_proj_size(const int64_t proj_size) {
+  (void)CheckAndConvertUtils::CheckInteger(kProjection_size, proj_size, kGreaterThan, 0, this->name());
+  (void)AddAttr(kProjection_size, api::MakeValue(proj_size));
+}
+int64_t LSTMGrad::get_proj_size() const { return GetValue<int64_t>(GetAttr(kProjection_size)); }
 void LSTMGrad::set_num_layers(const int64_t num_layers) {
   (void)CheckAndConvertUtils::CheckInteger(kNumLayers, num_layers, kGreaterThan, 0, this->name());
   (void)AddAttr(kNumLayers, api::MakeValue(num_layers));
@@ -99,14 +104,15 @@ void LSTMGrad::set_zoneout_hidden(float zoneout_hidden) {
 float LSTMGrad::get_zoneout_hidden() const { return GetValue<float>(this->GetAttr(kZoneoutHidden)); }
 
 void LSTMGrad::Init(const int64_t input_size, const int64_t hidden_size, const int64_t num_layers, const bool has_bias,
-                    const float dropout, const bool bidirectional, const float zoneout_cell,
-                    const float zoneout_hidden) {
+                    const float dropout, const bool bidirectional, const float zoneout_cell, const float zoneout_hidden,
+                    const int64_t proj_size) {
   this->set_input_size(input_size);
   this->set_hidden_size(hidden_size);
   this->set_num_layers(num_layers);
   this->set_has_bias(has_bias);
   this->set_dropout(dropout);
   this->set_bidirectional(bidirectional);
+  this->set_proj_size(proj_size);
   if (bidirectional) {
     constexpr int k2Directions = 2;
     this->set_num_directions(k2Directions);
@@ -152,11 +158,13 @@ class LstmGradInfer : public abstract::OpInferBase {
       num_directions = kNumberTwo;
     }
     int64_t hidden_size = GetValue<int64_t>(primitive->GetAttr(kHidden_size));
+    int64_t proj_size = GetValue<int64_t>(primitive->GetAttr(kProjection_size));
+    int64_t real_hidden_size = proj_size > 0 ? proj_size : hidden_size;
     if (!is_dynamic_shape_dhy) {
       (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", dhy_shape[kIndex0], kEqual, num_layers * num_directions,
                                                prim_name);
-      (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", dhy_shape[kIndex2], kEqual, hidden_size, prim_name);
-      if (!is_dynamic_shape_dcy) {
+      (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", dhy_shape[kIndex2], kEqual, real_hidden_size, prim_name);
+      if (!is_dynamic_shape_dcy && proj_size == 0) {
         CheckAndConvertUtils::Check("dhy and dcy shape", dhy_shape, kEqual, dcy_shape, prim_name);
       }
     }
@@ -165,8 +173,8 @@ class LstmGradInfer : public abstract::OpInferBase {
         (void)CheckAndConvertUtils::CheckInteger("dy_shape[1]", dy_shape[kIndex1], kEqual, dhy_shape[kIndex1],
                                                  prim_name);
       }
-      (void)CheckAndConvertUtils::CheckInteger("dy_shape[2]", dy_shape[kIndex2], kEqual, hidden_size * num_directions,
-                                               prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("dy_shape[2]", dy_shape[kIndex2], kEqual,
+                                               real_hidden_size * num_directions, prim_name);
     }
     int64_t input_size = GetValue<int64_t>(primitive->GetAttr(kInput_size));
     auto weight_size = GetWeightSize(primitive, num_layers, num_directions);
@@ -193,6 +201,8 @@ class LstmGradInfer : public abstract::OpInferBase {
     bool has_bias = GetValue<bool>(primitive->GetAttr(kHasBias));
     int64_t input_size = GetValue<int64_t>(primitive->GetAttr(kInput_size));
     int64_t hidden_size = GetValue<int64_t>(primitive->GetAttr(kHidden_size));
+    int64_t proj_size = GetValue<int64_t>(primitive->GetAttr(kProjection_size));
+    int64_t real_hidden_size = proj_size > 0 ? proj_size : hidden_size;
     int64_t gate_size = hidden_size * kNumberFour;
     for (int i = 0; i < num_layers; ++i) {
       for (int j = 0; j < num_directions; ++j) {
@@ -201,7 +211,10 @@ class LstmGradInfer : public abstract::OpInferBase {
           input_layer_size = hidden_size * num_directions;
         }
         weight_size += gate_size * input_layer_size;
-        weight_size += gate_size * hidden_size;
+        weight_size += gate_size * real_hidden_size;
+        if (proj_size > 0) {
+          weight_size += proj_size * hidden_size;
+        }
         if (has_bias) {
           weight_size += gate_size;
         }

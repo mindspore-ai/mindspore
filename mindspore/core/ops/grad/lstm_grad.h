@@ -31,11 +31,13 @@ class MIND_API LSTMGrad : public BaseOperator {
   LSTMGrad() : BaseOperator(kNameLSTMGrad) {}
   void Init(const int64_t input_size, const int64_t hidden_size, const int64_t num_layers, const bool has_bias,
             const float dropout, const bool bidirectional = false, const float zoneout_cell = 0.0f,
-            const float zoneout_hidden = 0.0f);
+            const float zoneout_hidden = 0.0f, const int64_t proj_size = 0);
   void set_input_size(const int64_t input_size);
   int64_t get_input_size() const;
   void set_hidden_size(const int64_t hidden_size);
   int64_t get_hidden_size() const;
+  void set_proj_size(const int64_t proj_size);
+  int64_t get_proj_size() const;
   void set_num_layers(const int64_t num_layers);
   int64_t get_num_layers() const;
   void set_has_bias(const bool has_bias);

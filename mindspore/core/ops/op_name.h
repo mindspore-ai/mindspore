@@ -268,6 +268,7 @@ constexpr auto kWindowSize = "window_size";
 constexpr auto kPaddings = "paddings";
 constexpr auto kInput_size = "input_size";
 constexpr auto kHidden_size = "hidden_size";
+constexpr auto kProjection_size = "proj_size";
 constexpr auto kChannelShared = "channel_shared";
 constexpr auto kSlope = "slope";
 constexpr auto kBase = "base";

@@ -90,6 +90,14 @@ auto GetWeightsIterDesc(const T &prim_desc) {
 }
 
 template <class T>
+auto GetWeightsProjectionDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::weights_projection_desc()";
+  auto desc = prim_desc.weights_projection_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::weights_projection_desc()";
+  return desc;
+}
+
+template <class T>
 auto GetBiasDesc(const T &prim_desc) {
   MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::bias_desc()";
   auto desc = prim_desc.bias_desc();
@@ -110,6 +118,14 @@ auto GetDiffWeightsIterDesc(const T &prim_desc) {
   MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::diff_weights_iter_desc()";
   auto desc = prim_desc.diff_weights_iter_desc();
   MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::diff_weights_iter_desc()";
+  return desc;
+}
+
+template <class T>
+auto GetDiffWeightsProjectionDesc(const T &prim_desc) {
+  MS_LOG(DEBUG) << "begin to invoke " << demangle(typeid(T).name()) << "::diff_weights_projection_desc()";
+  auto desc = prim_desc.diff_weights_projection_desc();
+  MS_LOG(DEBUG) << "end to invoke " << demangle(typeid(T).name()) << "::diff_weights_projection_desc()";
   return desc;
 }
 

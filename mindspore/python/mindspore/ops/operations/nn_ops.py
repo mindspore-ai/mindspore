@@ -4417,10 +4417,16 @@ class LSTM(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
+    def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout, proj_size=0):
         """Initialize LSTM."""
+        device_target = context.get_context("device_target")
+        if device_target != "CPU" and proj_size != 0:
+            raise ValueError(f"For '{self.name}', the 'proj_size' is only supported in CPU target, "
+                             f"but got the 'proj_size' is {proj_size} and the platform is {device_target}.")
         self.input_size = validator.check_positive_int(input_size, "input_size", self.name)
         self.hidden_size = validator.check_positive_int(hidden_size, "hidden_size", self.name)
+        self.proj_size = validator.check_int_range(proj_size, 0, hidden_size, validator.INC_LEFT,
+                                                   'proj_size', self.name)
         self.num_layers = validator.check_positive_int(num_layers, "num_layers", self.name)
         self.has_bias = validator.check_value_type("has_bias", has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type("bidirectional", bidirectional, (bool,), self.name)

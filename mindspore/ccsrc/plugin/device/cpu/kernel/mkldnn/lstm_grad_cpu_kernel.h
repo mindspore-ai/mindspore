@@ -75,34 +75,44 @@ class LSTMGradCpuKernelMod : public MKLCpuKernelMod {
   bool has_bias_{false};
   int64_t weight_size_{0};
   int64_t weight_h_size_{0};
+  int64_t weight_r_size_{0};
   int64_t input_size_{0};
   int64_t hidden_size_{0};
   int64_t num_layers_{0};
   int64_t batch_size_{0};
   int64_t seq_len_{0};
+  int64_t proj_size_{0};
+  int64_t real_hidden_size_{0};
   size_t reserve_size_{0};
 
   dnnl::memory::dims weights_dims_;
   dnnl::memory::dims weights_h_dims_;
+  dnnl::memory::dims weights_r_dims_;
   dnnl::memory::dims bias_dims_;
   dnnl::lstm_backward::primitive_desc prim_backward_desc_;
 
   dnnl::memory::desc weights_layer_desc_;
   dnnl::memory::desc weights_iter_desc_;
+  dnnl::memory::desc weights_proj_desc_;
   dnnl::memory::desc bias_desc_;
   dnnl::memory::desc diff_weights_layer_desc_;
   dnnl::memory::desc diff_weights_iter_desc_;
+  dnnl::memory::desc diff_weights_proj_desc_;
   dnnl::memory::desc diff_bias_desc_;
   dnnl::memory user_weights_memory_;
   dnnl::memory user_weights_h_memory_;
+  dnnl::memory user_weights_r_memory_;
   dnnl::memory weights_memory_;
   dnnl::memory weights_h_memory_;
+  dnnl::memory weights_r_memory_;
   dnnl::memory bias_memory_;
   dnnl::memory diff_weights_memory_;
   dnnl::memory diff_weights_h_memory_;
+  dnnl::memory diff_weights_r_memory_;
   dnnl::memory diff_bias_memory_;
   dnnl::memory user_diff_weights_memory_;
   dnnl::memory user_diff_weights_h_memory_;
+  dnnl::memory user_diff_weights_r_memory_;
 };
 }  // namespace kernel
 }  // namespace mindspore
