@@ -488,9 +488,6 @@ VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_
   MS_EXCEPTION_IF_NULL(ms_context);
   device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
-  // get graph info for checking it whether existing in the cache
-  backend_op_run_info->base_op_run_info.graph_info = pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(
-    backend_op_run_info->base_op_run_info, backend_op_run_info->op_prim);
 
   VectorRef outputs;
   const auto &cur_mind_rt_backend = GetMindRtBackend(backend_op_run_info->base_op_run_info.device_target);

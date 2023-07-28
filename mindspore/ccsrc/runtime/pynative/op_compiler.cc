@@ -254,7 +254,7 @@ void OpCompiler::ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_
 OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run_info, bool *single_op_cache_hit,
                                       const std::string &device_name, const uint32_t &device_id) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &graph_info = op_run_info->base_op_run_info.graph_info;
+  const auto &graph_info = GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
   const auto &iter = op_compiler_infos_.find(graph_info);
   // Check if the graph cache exists.
   auto &op_executor = runtime::OpExecutor::GetInstance();
@@ -268,7 +268,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
     return iter->second;
   }
 
-  MS_LOG(INFO) << "Run Op cache miss " << op_run_info->base_op_run_info.graph_info;
+  MS_LOG(INFO) << "Run Op cache miss " << graph_info;
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeOpCompile,
                                      graph_info, true);
 

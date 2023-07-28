@@ -776,11 +776,10 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       } else {
         auto is_dynamic = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel);
         session::BackendOpRunInfoPtr op_run_info;
-        GraphInfo graph_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);
         graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, is_dynamic, &op_run_info,
-                                                        &graph_info, &graph_output_info);
+                                                        &graph_output_info);
         if (is_dynamic) {
           op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
           AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
@@ -1061,7 +1060,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
     UpdateOutputAbstract(*outputs, op_run_info);
   }
   if (op_compiler_info->need_erase_) {
-    EraseSingleOpCache(op_run_info->base_op_run_info.graph_info);
+    EraseSingleOpCache(op_compiler_info->graph_info_);
   }
 }
 

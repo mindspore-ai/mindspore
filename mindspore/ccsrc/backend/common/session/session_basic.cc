@@ -461,8 +461,7 @@ void SessionBasic::InitExecutor(const std::string &device_name, uint32_t device_
   executor_ = ExecutorManager::Instance().GetExecutor(device_name, device_id);
 }
 
-BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
-                                                     const InputTensorInfo &tensor_info,
+BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const InputTensorInfo &tensor_info,
                                                      const GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
@@ -488,7 +487,6 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
   base_op_run_info.is_mixed_precision_cast = false;
   base_op_run_info.op_name = primitive->name();
   base_op_run_info.next_op_name = std::string();
-  base_op_run_info.graph_info = graph_info;
   base_op_run_info.device_target = GetOpRunDeviceTarget(primitive);
   base_op_run_info.next_input_index = 0;
   base_op_run_info.input_tensor = tensor_info.input_tensors;
@@ -1356,8 +1354,10 @@ void SessionBasic::BuildGraph(GraphId graph_id) {
 void SessionBasic::RunOp(const BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
   MS_EXCEPTION_IF_NULL(op_run_info);
-  executor_->RunOp(shared_from_this(), op_run_info, op_run_info->base_op_run_info.graph_info,
-                   &op_run_info->base_op_run_info.input_tensor, outputs, op_run_info->base_op_run_info.input_mask);
+  executor_->RunOp(
+    shared_from_this(), op_run_info,
+    pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim),
+    &op_run_info->base_op_run_info.input_tensor, outputs, op_run_info->base_op_run_info.input_mask);
 }
 
 void SessionBasic::RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
@@ -1430,17 +1430,14 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     GetOpInputTensors(kernel, op_output_map, parameter_index, inputs, &input_tensor_info);
 
     VectorRef op_outputs;
-    GraphInfo graph_info;
     // Get OpRunInfo and GraphInfo
-    BackendOpRunInfoPtr run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, &graph_output_info);
+    BackendOpRunInfoPtr run_info = GetSingleOpRunInfo(kernel, input_tensor_info, &graph_output_info);
     MS_EXCEPTION_IF_NULL(run_info);
-    graph_info =
-      pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(run_info->base_op_run_info, run_info->op_prim);
-    run_info->base_op_run_info.graph_info = graph_info;
 
     // Build and run current single op
-    RunOpImplOrigin(graph_info, run_info, &input_tensor_info.input_tensors, &op_outputs,
-                    input_tensor_info.input_tensors_mask);
+    RunOpImplOrigin(
+      pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(run_info->base_op_run_info, run_info->op_prim), run_info,
+      &input_tensor_info.input_tensors, &op_outputs, input_tensor_info.input_tensors_mask);
     graph_output_info.graph_output_tensors.clear();
     // Handle inputs and outputs of current op
     ReleaseForwardOpOutput(input_tensor_info.input_tensors, &forward_op_output_tensor_id);
