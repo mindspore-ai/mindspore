@@ -972,7 +972,7 @@ bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &a
 
   auto actions = GetPipeline(resource, phase, use_vm);
   for (auto iter = actions.begin(); iter != actions.end();) {
-    if (iter->first == "parse" || iter->first == "symbol_resolve") {
+    if (iter->first == "parse") {
       iter = actions.erase(iter);
     } else {
       iter++;
