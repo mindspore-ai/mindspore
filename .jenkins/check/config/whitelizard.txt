@@ -57,6 +57,7 @@ mindspore/mindspore/lite/src/litert/ios_reg_kernels.h:mindspore::kernel::IosRegi
 mindspore/mindspore/lite/src/litert/kernel/cpu/base/quant_dtype_cast.cc:mindspore::kernel::QuantDTypeCastCPUKernel::QuantDTypeCast
 mindspore/mindspore/lite/src/litert/kernel/cpu/base/quant_dtype_cast.cc:mindspore::kernel::QuantDTypeCastCPUKernel::Run
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/strided_slice_infer.c:StridedSliceInferShape
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/lstm_infer.c:CheckInputShapeValid
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp16/winograd_transform_fp16.c:WinogradInputTransformFp16
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp16/pooling_fp16.c:AvgPoolingFp16
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp16/pooling_fp16.c:MaxPoolingFp16

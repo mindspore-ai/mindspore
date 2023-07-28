@@ -37,6 +37,9 @@ OpParameter *PopulateLstmParameter(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   param->bidirectional_ = value->bidirectional();
+  param->has_bias_ = value->has_bias();
+  param->input_size_ = value->input_size();
+  param->hidden_size_ = value->hidden_size();
   param->zoneout_cell_ = value->zoneout_cell();
   param->zoneout_hidden_ = value->zoneout_hidden();
   return reinterpret_cast<OpParameter *>(param);

@@ -37,6 +37,7 @@ typedef struct LstmParameter {
   int input_col_align_;
   int state_row_align_;
   int state_col_align_;
+  bool has_bias_;
 } LstmParameter;
 
 #endif  // NNACL_LSTM_PARAMETER_H_
