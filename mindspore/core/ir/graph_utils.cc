@@ -101,6 +101,7 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &root) {
   std::vector<CNodePtr> cnodes;
   cnodes.reserve(kVecReserve);
   auto seen = NewSeenGeneration();
+  MS_EXCEPTION_IF_NULL(root);
   root->seen_ = seen;
   (void)cnodes.emplace_back(root);
   for (size_t i = 0; i < cnodes.size(); ++i) {
@@ -244,6 +245,7 @@ std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &
     auto input_fg = GetValuePtr<FuncGraph>(input);
     if (input_fg != nullptr) {
       for (auto &fv : input_fg->free_variables_nodes()) {
+        MS_EXCEPTION_IF_NULL(fv);
         if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
           vecs.push_back(fv);
         }

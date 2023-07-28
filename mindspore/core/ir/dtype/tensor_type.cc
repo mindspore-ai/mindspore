@@ -177,8 +177,10 @@ std::string SparseTensorType::ToReprString() const {
 
 const TypePtrList SparseTensorType::ElementsClone() const {
   TypePtrList elems;
-  (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(elems),
-                       [](const TypePtr &ele) { return ele->DeepCopy(); });
+  (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(elems), [](const TypePtr &ele) {
+    MS_EXCEPTION_IF_NULL(ele);
+    return ele->DeepCopy();
+  });
   return elems;
 }
 

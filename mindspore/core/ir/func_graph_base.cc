@@ -24,6 +24,7 @@ namespace mindspore {
 FuncGraphLoopBreaker::~FuncGraphLoopBreaker() {
   std::lock_guard<std::mutex> lock_set(func_mutex_);
   for (auto fg : func_set_) {
+    MS_EXCEPTION_IF_NULL(fg);
     fg->reg_flg_ = false;
   }
 }

@@ -566,6 +566,7 @@ AbstractBasePtr AbstractAny::Clone() const {
   if (supposed_tensor_dtype()) {
     MS_EXCEPTION_IF_NULL(element());
     const auto &dtype = element()->BuildType();
+    MS_EXCEPTION_IF_NULL(any_abstract->element());
     any_abstract->element()->set_type(dtype);
     any_abstract->set_supposed_tensor_dtype(true);
   }
