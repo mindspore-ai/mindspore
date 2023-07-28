@@ -31,12 +31,13 @@ void ArithmeticFP16Coder::InitFunTable() {
     {PrimitiveType_SubFusion, schema::ActivationType_RELU, "ElementSubReluFp16", "", "", "", ""},
     {PrimitiveType_SubFusion, schema::ActivationType_RELU6, "ElementSubRelu6Fp16", "", "", "", ""},
     {PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION, "ElementSubFp16", "", "", "", ""},
-    {PrimitiveType_DivFusion, schema::ActivationType_RELU, "ElementDivReluFp16", "", "", "", ""},
-    {PrimitiveType_DivFusion, schema::ActivationType_RELU6, "ElementDivRelu6Fp16", "", "", "", ""},
-    {PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION, "ElementDivFp16", "", "", "", ""},
-    {PrimitiveType_RealDiv, schema::ActivationType_RELU, "ElementDivReluFp16", "", "", "", ""},
-    {PrimitiveType_RealDiv, schema::ActivationType_RELU6, "ElementDivRelu6Fp16", "", "", "", ""},
-    {PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION, "ElementDivFp16", "", "", "", ""},
+    {PrimitiveType_DivFusion, schema::ActivationType_RELU, "ElementDivReluFp16", "", "", "ElementOptDivReluFp16", ""},
+    {PrimitiveType_DivFusion, schema::ActivationType_RELU6, "ElementDivRelu6Fp16", "", "", "ElementOptDivRelu6Fp16",
+     ""},
+    {PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION, "ElementDivFp16", "", "", "ElementOptDivFp16", ""},
+    {PrimitiveType_RealDiv, schema::ActivationType_RELU, "ElementDivReluFp16", "", "", "ElementOptDivReluFp16", ""},
+    {PrimitiveType_RealDiv, schema::ActivationType_RELU6, "ElementDivRelu6Fp16", "", "", "ElementOptDivRelu6Fp16", ""},
+    {PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION, "ElementDivFp16", "", "", "ElementOptDivFp16", ""},
     {PrimitiveType_LogicalAnd, schema::ActivationType_NO_ACTIVATION, "ElementLogicalAndFp16", "", "", "", ""},
     {PrimitiveType_LogicalOr, schema::ActivationType_NO_ACTIVATION, "ElementLogicalOrFp16", "", "", "", ""},
     {PrimitiveType_Maximum, schema::ActivationType_NO_ACTIVATION, "ElementMaximumFp16", "", "", "", ""},
@@ -74,6 +75,11 @@ int ArithmeticFP16Coder::ExecuteCode(const std::string &input0, const std::strin
   for (size_t i = 0; i < fun_table_.size(); i++) {
     if (fun_table_[i].primitive_type_ == arithmetic_parameter_->op_parameter_.type_ &&
         fun_table_[i].activation_type_ == arithmetic_parameter_->activation_type_) {
+      if (IsScalarClac()) {
+        code->CodeFunction(fun_table_[i].opt_func_, input0, input1, output, size,
+                           arithmetic_parameter_->in_elements_num0_ == 1);
+        break;
+      }
       code->CodeFunction(fun_table_[i].func_, input0, input1, output, size);
       break;
     }
@@ -98,6 +104,11 @@ int ArithmeticFP16Coder::DoCode(CoderContext *const context) {
             "arithmetic_base.c",
             "broadcast_to.c",
           });
+  if (IsScalarClac()) {
+    ChooseArithmeticFunc(true);
+    return ExecuteCode(input0_ptr_str_, input1_ptr_str_, output_ptr_str_, element_num, context, &code);
+  }
+
   // all elements eltwise calculation
   ChooseArithmeticFunc(false);
   auto in0_shape = input_tensor_->shape();

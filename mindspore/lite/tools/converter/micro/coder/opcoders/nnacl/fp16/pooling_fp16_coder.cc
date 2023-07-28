@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "coder/opcoders/nnacl/fp16/avg_pooling_fp16_coder.h"
+#include "coder/opcoders/nnacl/fp16/pooling_fp16_coder.h"
 #include <cfloat>
 #include <string>
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
@@ -22,12 +22,13 @@
 #include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_AvgPoolFusion;
+using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int PoolingFP16Coder::Prepare(CoderContext *const context) {
-  if (input_tensor_->data_type() != kNumberTypeFloat16) {
-    MS_LOG(INFO) << "Input tensor data type is invalid";
-    return RET_INPUT_PARAM_INVALID;
+  if (input_tensor_->data_type() != kNumberTypeFloat16 || output_tensor_->data_type() != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Tensor data type is invalid";
+    return lite::RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
 }
@@ -81,8 +82,16 @@ int PoolingFP16Coder::DoCode(CoderContext *const context) {
   compute_param_.maxf = maxf;
   code.CodeStruct("pooling_args", compute_param_);
 
-  code.CodeFunction("AvgPoolingFp16", input_tensor_, output_tensor_, "&pooling_parameter", "&pooling_args",
-                    kDefaultTaskId, parameter_->thread_num_);
+  if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
+    code.CodeFunction("MaxPoolingFp16", input_tensor_, output_tensor_, "&pooling_parameter", "&pooling_args",
+                      kDefaultTaskId, parameter_->thread_num_);
+  } else if (pooling_parameter->pool_mode_ == PoolMode_AvgPool) {
+    code.CodeFunction("AvgPoolingFp16", input_tensor_, output_tensor_, "&pooling_parameter", "&pooling_args",
+                      kDefaultTaskId, parameter_->thread_num_);
+  } else {
+    MS_LOG(ERROR) << "Unsupported pooling mode.";
+    return lite::RET_ERROR;
+  }
 
   MS_LOG(INFO) << "PoolingFp16Code has been called";
   context->AppendCode(code.str());
@@ -91,4 +100,6 @@ int PoolingFP16Coder::DoCode(CoderContext *const context) {
 
 REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingFP16Coder>)
 REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_MaxPoolFusion, CPUOpCoderCreator<PoolingFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_MaxPoolFusion, CPUOpCoderCreator<PoolingFP16Coder>)
 }  // namespace mindspore::lite::micro::nnacl

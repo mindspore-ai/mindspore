@@ -79,7 +79,7 @@ set(CODER_OPCODERS_SRC
         #### nnacl fp16 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/activation_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/arithmetic_fp16_coder.cc
-        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/avg_pooling_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/pooling_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/concat_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/custom_gru_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/deconv2d_fp16_coder.cc
@@ -98,6 +98,10 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/conv_depthwise_3x3_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/conv_depthwise_sw_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/lstm_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/arithmetic_self_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/softmax_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/slice_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/scale_fp16_coder.cc
         #### nnacl fp32 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/activation_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/addn_fp32_coder.cc
@@ -138,6 +142,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/layernorm_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/ones_like_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/fill_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/slice_fp32_coder.cc
         #### nnacl fp32_grad coder
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/activation_grad_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/adam_coder.cc
