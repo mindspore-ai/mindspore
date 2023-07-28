@@ -247,6 +247,7 @@ class AutoGradCellImpl {
   void AddUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
   void AddTupleGetItemUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
   void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, UserType *user, bool need_update = false);
+  // To elimate tuplegetitem cnode
   void ElimateTupleGetItem();
 
   // Fbprop

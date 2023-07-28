@@ -160,7 +160,12 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> 
       input_nodes_[i]->SetValue(input_values[i]);
     }
   }
-  auto &attrs = GetCNodePrimitive(cnode)->attrs();
+  mindspore::HashMap<std::string, ValuePtr> attrs;
+  {
+    const auto prim = GetCNodePrimitive(cnode);
+    PrimitiveReadLock read_lock(prim->shared_mutex());
+    attrs = prim->attrs();
+  }
   auto handle = BpropIRBuilderFactory::Instance().GetBuilder(name);
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
