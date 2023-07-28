@@ -16,12 +16,20 @@
 #include "tools/graph_kernel/converter/akg/ascend_kernel_builder.h"
 #include <vector>
 #include <memory>
+#include <string>
 #include "utils/anf_utils.h"
 #include "tools/graph_kernel/converter/akg/utils.h"
 
 namespace mindspore::graphkernel {
 bool AscendKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
-  dir_path_ = SaveNodesInfo(node_list, "./akg_kernel_meta", AkgKernelBuilder::json_option(), &node_info_map_, nullptr);
+  static std::string rank_id = common::GetEnv("RANK_ID");
+  std::string dir;
+  if (rank_id.empty()) {
+    dir = "./akg_kernel_meta";
+  } else {
+    dir = "./rank_" + rank_id + "/akg_kernel_meta";
+  }
+  dir_path_ = SaveNodesInfo(node_list, dir, AkgKernelBuilder::json_option(), &node_info_map_, nullptr);
   return !dir_path_.empty();
 }
 
