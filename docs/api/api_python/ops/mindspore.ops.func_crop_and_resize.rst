@@ -14,7 +14,12 @@ mindspore.ops.crop_and_resize
         - **boxes** (Tensor) - shape为 :math:`(num\_boxes, 4)` 的二维Tensor，表示归一化的边框坐标，坐标格式为 :math:`[y1, x1, y2, x2]` 。其中 :math:`(y1, x1)` 为第一个角点， :math:`(y2, x2)` 为第二个角点。如果 :math:`y1 > y2` ，就是对图像进行的上下翻转，当 :math:`x1 > x2` ，宽度方向操作类似。如果归一化的坐标值超出 :math:`[0, 1]` 的区间，采用 `extrapolation_value` 进行填充。数据类型：float32。
         - **box_indices** (Tensor) - shape为 :math:`(num\_boxes)` 的一维Tensor，表示每个方框的索引。数据类型：int32。
         - **crop_size** (Tuple[int]) - 2元组(crop_height, crop_width)，指定对裁剪出的图像进行调整时的输出大小，元素均为正值。数据类型：int32。
-        - **method** (str，可选) - 指定调整大小时的采样方法，取值为 ``"bilinear"`` 、 ``"nearest"`` 或 ``"bilinear_v2"`` ，其中， ``"bilinear"`` 是标准的线性插值算法，而在某些情况下， ``"bilinear_v2"`` 可能会得到更优的效果。 ``"nearest"`` 是最邻近插值算法。默认值： ``"bilinear"`` 。
+        - **method** (str, 可选) - 指定调整大小的采样方法，为可选字符串。提供的方法有： ``"bilinear"`` 、 ``"nearest"`` 或 ``"bilinear_v2"`` 。默认值： ``"bilinear"`` 。
+          
+          - ``"nearest"``：最近邻插值。每个输出像素的值为最近的输入像素的值。这种方法简单快速，但可能导致块状或像素化的输出。
+          - ``"bilinear"``：双线性插值。每个输出像素是最接近的四个输入像素的加权平均值，使用双线性插值计算。与最近邻插值相比，此方法产生更平滑的结果。
+          - ``"bilinear_v2"``：优化后的双线性插值算法，在某些情况下可能会产生更好的结果（更高的精度和速度）。
+
         - **extrapolation_value** (float，可选) - 指定外插时的浮点值。默认值： ``0.0`` 。
 
     返回：

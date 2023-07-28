@@ -181,7 +181,7 @@ class Conv2d(_Conv):
             in both height and width directions. A tuple of two integers represents the movement step size in the height
             and width directions respectively. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
-            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"same"`` .
 
             - ``"same"``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
@@ -375,7 +375,7 @@ class Conv1d(_Conv):
         kernel_size (int): Specifies the width of the 1D convolution kernel.
         stride (int): The movement stride of the 1D convolution kernel. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
-            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"same"`` .
 
             - ``"same"``: Pad the input at the begin and end so that the shape of input and output
               are the same when `stride` is set to ``1``.
@@ -579,7 +579,7 @@ class Conv3d(_Conv):
             in depth, height and width directions. A tuple of three integers represents the movement step size
             in the depth, height and width directions respectively. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
-            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"same"`` .
 
             - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
               are the same when `stride` is set to ``1``.
@@ -787,7 +787,7 @@ class Conv3dTranspose(_Conv):
             in depth, height and width directions. A tuple of three integers represents the movement step size
             in the depth, height and width directions respectively. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
-            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"same"`` .
 
             - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
               are the same when `stride` is set to ``1``.
@@ -1011,7 +1011,7 @@ class Conv2dTranspose(_Conv):
             in both height and width directions. A tuple of two integers represents the movement step size in the height
             and width directions respectively. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
-            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"same"`` .
 
             - ``"same"``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
@@ -1236,7 +1236,7 @@ class Conv1dTranspose(_Conv):
         kernel_size (int): Specifies the width of the 1D convolution kernel.
         stride (int): The movement stride of the 1D convolution kernel. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
-            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
+            ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"same"`` .
 
             - ``"same"``: Pad the input at the begin and end so that the shape of input and output
               are the same when `stride` is set to ``1``.

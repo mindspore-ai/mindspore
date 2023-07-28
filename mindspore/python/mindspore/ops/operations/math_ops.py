@@ -5727,7 +5727,7 @@ class Atan(Primitive):
         - **x** (Tensor): The input Tensor. Supported dtypes:
 
           - Ascend: float16, float32.
-          - GPU/CPU: float16, float32, float64, complex64, complex128.
+          - GPU/CPU: float16, float32, float64.
 
     Outputs:
         A Tensor, has the same type as the input.
@@ -5969,7 +5969,7 @@ class BesselI0(Primitive):
             \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
         \end{array}
 
-    where J_{0} is Bessel function of the first kind, order 0.
+    where :math:`J_{0}` is Bessel function of the first kind, order 0.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6014,7 +6014,7 @@ class BesselI1(Primitive):
             {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
         \end{array}
 
-    where J_{1} is Bessel function of the first kind, order 1.
+    where :math:`J_{1}` is Bessel function of the first kind, order 1.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6055,11 +6055,11 @@ class BesselI0e(Primitive):
 
     .. math::
         \begin{array}{ll} \\
-            \text I_{0e}(x)=e^{(-|x|)} * I_{0}(x)=e^{(-|x|)} * \sum_{m=0}^
+            \text I_{0}e(x)=e^{(-|x|)} * I_{0}(x)=e^{(-|x|)} * \sum_{m=0}^
             {\infty} \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
         \end{array}
 
-    where I_{0} is modified Bessel function of the first kind, order 0.
+    where :math:`I_{0}` is modified Bessel function of the first kind, order 0.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -6100,11 +6100,11 @@ class BesselI1e(Primitive):
 
     .. math::
         \begin{array}{ll} \\
-            \text I_{1e}(x)=e^{(-|x|)} * I_{1}(x)=e^{(-|x|)} * \sum_{m=0}^
+            \text I_{1}e(x)=e^{(-|x|)} * I_{1}(x)=e^{(-|x|)} * \sum_{m=0}^
             {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
         \end{array}
 
-    where I_{1} is  modified Bessel function of the first kind, order 1.
+    where :math:`I_{1}` is  modified Bessel function of the first kind, order 1.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -6149,7 +6149,7 @@ class BesselK0(Primitive):
             {I_{-\nu}(x)-I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} d t
         \end{array}
 
-    where I_{0} is modified Bessel function of the first kind, order 0.
+    where :math:`I_{0}` is modified Bessel function of the first kind, order 0.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6195,7 +6195,7 @@ class BesselK1(Primitive):
             I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
 
-    where I_{1} is modified Bessel function of the first kind, order 1.
+    where :math:`I_{1}` is modified Bessel function of the first kind, order 1.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6237,11 +6237,11 @@ class BesselK0e(Primitive):
 
     .. math::
         \begin{array}{ll} \\
-            K_{0e}(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
+            K_{0}e(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
             {\infty} e^{-x \cosh t} d t
         \end{array}
 
-    where K_{0} is modified Bessel function of the second kind, order 0.
+    where :math:`K_{0}` is modified Bessel function of the second kind, order 0.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6283,11 +6283,11 @@ class BesselK1e(Primitive):
 
     .. math::
         \begin{array}{ll} \\
-            K_{1e}(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
+            K_{1}e(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
             ^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
 
-     where K_{1} is modified Bessel function of the second kind, order 1.
+    where :math:`K_{1}` is modified Bessel function of the second kind, order 1.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6422,7 +6422,7 @@ class BesselY0(Primitive):
             Y_{0}(x)=\lim_{n \to 0} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
         \end{array}
 
-    where J_{0} is Bessel function of the first kind, order 0.
+    where :math:`J_{0}` is Bessel function of the first kind, order 0.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6468,7 +6468,7 @@ class BesselY1(Primitive):
             Y_{1}(x)=\lim_{n \to 1} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
         \end{array}
 
-    where J_{1} is Bessel function of the first kind, order 1.
+    where :math:`J_{1}` is Bessel function of the first kind, order 1.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.

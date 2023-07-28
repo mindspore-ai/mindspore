@@ -13,7 +13,7 @@ mindspore.ops.BesselI0
             \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
         \end{array}
 
-    其中J_{0}是第一类零阶Bessel函数。
+    其中 :math:`J_{0}` 是第一类零阶Bessel函数。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

@@ -9,11 +9,11 @@ mindspore.ops.bessel_k1e
 
     .. math::
         \begin{array}{ll} \\
-            K_{1e}(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
+            K_{1}e(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
             ^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
 
-    其中K_{1}是第二类一阶修正Bessel函数。
+    其中 :math:`K_{1}` 是第二类一阶修正Bessel函数。
 
     参数：
         - **x** (Tensor) - Tensor的输入。数据类型应为float16，float32或float64。

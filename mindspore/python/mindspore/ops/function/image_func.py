@@ -184,10 +184,16 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
             the output size of the cropped and resized images.
             Only positive values are supported. Supported type: int32.
         method (str, optional): An optional string that specifies the sampling method for resizing.
-            It can be ``"bilinear"`` , ``"nearest"`` or ``"bilinear_v2"`` . The option ``"bilinear"`` stands for
-            standard bilinear interpolation algorithm, while ``"bilinear_v2"`` may result in better result in some
-            cases. ``"nearest"`` is the nearest neighbor interpolation algorithm.
-            Default: ``"bilinear"`` .
+            It can be ``"bilinear"`` , ``"nearest"`` or ``"bilinear_v2"`` . Default: ``"bilinear"`` .
+
+            - ``"nearest"``: Nearest neighbor interpolation. Each output pixel is assigned the value of the
+              nearest input pixel. This method is simple and fast but can result in blocky or pixelated outputs.
+            - ``"bilinear"``: Bilinear interpolation. Each output pixel is a weighted average of the four nearest input
+              pixels, computed using bilinear interpolation. This method produces smoother results compared
+              to nearest neighbor interpolation.
+            - ``"bilinear_v2"``: The optimized variant of
+              "bilinear"``, it may achieve better result(higher precision and speed) in some cases.
+
         extrapolation_value (float, optional): An optional float value used extrapolation, if applicable.
             Default: ``0.0`` .
 

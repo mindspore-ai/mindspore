@@ -9,11 +9,11 @@ mindspore.ops.BesselK0e
 
     .. math::
         \begin{array}{ll} \\
-            K_{0e}(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
+            K_{0}e(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
             {\infty} e^{-x \cosh t} d t
         \end{array}
 
-    其中K_{0}是第二类零阶修正Bessel函数。
+    其中 :math:`K_{0}` 是第二类零阶修正Bessel函数。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

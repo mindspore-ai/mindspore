@@ -1206,7 +1206,7 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor or Scalar, if `reduction` is 'none', it's a tensor with the same shape and type as input `logits`.
@@ -2577,7 +2577,7 @@ def soft_margin_loss(input, target, reduction='mean'):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Outputs:
         Tensor or Scalar. If `reduction` is ``'none'``, its shape is the same as `logits`.
@@ -3721,7 +3721,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: ``0.0`` .
@@ -3823,7 +3823,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: ``0.0`` .
@@ -3946,7 +3946,7 @@ def l1_loss(input, target, reduction='mean'):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `input`.
@@ -4012,11 +4012,11 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
         beta (float): A parameter used to control the point where the function will change between
             L1 to L2 loss. The value should be greater than zero. Default: ``1.0`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'mean'`` .
+            ``'sum'`` . Default: ``'none'`` .
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `input`.
@@ -4447,7 +4447,7 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor or Scalar, if `reduction` is "none", its shape is the same as `target`.
@@ -4702,7 +4702,7 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
         zero_infinity (bool, optional): Whether to set infinite loss and correlation gradient to 0. Default: ``False`` .
 
@@ -4792,7 +4792,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
@@ -4923,7 +4923,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
@@ -5546,7 +5546,7 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
         delta (Union[int, float]): The threshold to change between two type of loss.
             The value must be greater than zero. Default: ``1.0`` .
@@ -5817,7 +5817,7 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor or Scalar. Returns Tensor that has the same dtype and shape as `logits` if `reduction` is 'none'.
@@ -6225,7 +6225,7 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor. If `reduction` is 'none', returns a Tensor with the same shape as `target`.
@@ -6297,7 +6297,7 @@ def multilabel_margin_loss(input, target, reduction='mean'):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         - **outputs** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
@@ -6360,7 +6360,7 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor, the data type is the same as input, if the reduction is 'none',
@@ -6758,7 +6758,7 @@ def mse_loss(input, target, reduction='mean'):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor, loss of type float, the shape is zero if `reduction` is ``'mean'`` or ``'sum'`` ,
@@ -6866,7 +6866,7 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Returns:
         Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.

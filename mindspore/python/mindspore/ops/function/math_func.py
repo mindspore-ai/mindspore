@@ -3404,7 +3404,7 @@ def bessel_i0(x):
             \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
         \end{array}
 
-    where J_{0} is Bessel function of the first kind, order 0.
+    where :math:`J_{0}` is Bessel function of the first kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3439,11 +3439,11 @@ def bessel_i0e(x):
 
     .. math::
         \begin{array}{ll} \\
-            \text I_{0e}(x)=e^{(-|x|)} * I_{0}(x)=e^{(-|x|)} * \sum_{m=0}^
+            \text I_{0}e(x)=e^{(-|x|)} * I_{0}(x)=e^{(-|x|)} * \sum_{m=0}^
             {\infty} \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
         \end{array}
 
-    where I_{0} is modified Bessel function of the first kind, order 0.
+    where :math:`I_{0}` is modified Bessel function of the first kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3482,7 +3482,7 @@ def bessel_k0(x):
             {I_{-\nu}(x)-I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} d t
         \end{array}
 
-    where I_{0} is modified Bessel function of the first kind, order 0.
+    where :math:`I_{0}` is modified Bessel function of the first kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3517,11 +3517,11 @@ def bessel_k0e(x):
 
     .. math::
         \begin{array}{ll} \\
-            K_{0e}(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
+            K_{0}e(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
             {\infty} e^{-x \cosh t} d t
         \end{array}
 
-    where K_{0} is modified Bessel function of the second kind, order 0.
+    where :math:`K_{0}` is modified Bessel function of the second kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3559,7 +3559,7 @@ def bessel_y0(x):
             Y_{0}(x)=\lim_{n \to 0} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
         \end{array}
 
-    where J_{0} is Bessel function of the first kind, order 0.
+    where :math:`J_{0}` is Bessel function of the first kind, order 0.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -3597,7 +3597,7 @@ def bessel_y1(x):
             Y_{1}(x)=\lim_{n \to 1} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
         \end{array}
 
-    where J_{1} is Bessel function of the first kind, order 1.
+    where :math:`J_{1}` is Bessel function of the first kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -6608,7 +6608,7 @@ def bessel_i1(x):
             {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
         \end{array}
 
-    where J_{1} is Bessel function of the first kind, order 1.
+    where :math:`J_{1}` is Bessel function of the first kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -6643,11 +6643,11 @@ def bessel_i1e(x):
 
     .. math::
         \begin{array}{ll} \\
-            \text I_{1e}(x)=e^{(-|x|)} * I_{1}(x)=e^{(-|x|)} * \sum_{m=0}^
+            \text I_{1}e(x)=e^{(-|x|)} * I_{1}(x)=e^{(-|x|)} * \sum_{m=0}^
             {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
         \end{array}
 
-    where I_{1} is  modified Bessel function of the first kind, order 1.
+    where :math:`I_{1}` is  modified Bessel function of the first kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -6686,7 +6686,7 @@ def bessel_k1(x):
             I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
 
-    where I_{1} is modified Bessel function of the first kind, order 1.
+    where :math:`I_{1}` is modified Bessel function of the first kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
@@ -6721,11 +6721,11 @@ def bessel_k1e(x):
 
     .. math::
         \begin{array}{ll} \\
-            K_{1e}(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
+            K_{1}e(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
             ^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
 
-     where K_{1} is modified Bessel function of the second kind, order 1.
+    where :math:`K_{1}` is modified Bessel function of the second kind, order 1.
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.

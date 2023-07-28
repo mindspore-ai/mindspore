@@ -9,7 +9,7 @@ mindspore.ops.BesselI1e
 
     .. math::
         \begin{array}{ll} \\
-            \text I_{0e}(x)=e^{(-|x|)} * I_{1}(x)=e^{(-|x|)} * \sum_{m=0}^
+            \text I_{1}e(x)=e^{(-|x|)} * I_{1}(x)=e^{(-|x|)} * \sum_{m=0}^
             {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
         \end{array}
 

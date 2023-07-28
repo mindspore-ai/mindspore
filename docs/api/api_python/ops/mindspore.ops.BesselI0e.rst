@@ -9,11 +9,11 @@ mindspore.ops.BesselI0e
 
     .. math::
         \begin{array}{ll} \\
-            \text I_{0e}(x)=e^{(-|x|)} * I_{0}(x)=e^{(-|x|)} * \sum_{m=0}^
+            \text I_{0}e(x)=e^{(-|x|)} * I_{0}(x)=e^{(-|x|)} * \sum_{m=0}^
             {\infty} \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
         \end{array}
 
-    其中I_{0}是第一类零阶修正Bessel函数。
+    其中 :math:`I_{0}` 是第一类零阶修正Bessel函数。
 
     输入：
         - **x** (Tensor) - 输入Tensor。数据类型应为float16、float32或float64。
