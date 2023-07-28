@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ops/add.h"
+#include "ops/not_equal.h"
 #include "ir/dtype/type.h"
 #include "abstract/dshape.h"
 #include "utils/tensor_construct_utils.h"
@@ -26,35 +26,30 @@
 
 namespace mindspore {
 namespace ops {
-struct AddParams {
-  ShapeVector x_shape;
-  TypePtr x_type;
-  ShapeVector y_shape;
-  TypePtr y_type;
-  ShapeVector out_shape;
-  TypePtr out_type;
-};
+class TestNotEqual : public TestOps, public testing::WithParamInterface<BroadcastOpParams> {};
 
-class TestAdd : public TestOps, public testing::WithParamInterface<AddParams> {};
-
-TEST_P(TestAdd, add_dyn_shape) {
+TEST_P(TestNotEqual, dyn_shape) {
   const auto &param = GetParam();
   auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
   auto y = std::make_shared<abstract::AbstractTensor>(param.y_type, param.y_shape);
   auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
   ASSERT_NE(x, nullptr);
   ASSERT_NE(y, nullptr);
-  auto add = std::make_shared<Add>();
-  add->Init();
-  auto prim = std::make_shared<Primitive>(kNameAdd);
-  auto out_abstract = AddInfer(nullptr, prim, {x, y});
+  auto not_equal_op = std::make_shared<NotEqual>();
+  not_equal_op->Init();
+  auto prim = std::make_shared<Primitive>(kNameNotEqual);
+  auto out_abstract = NotEqualInfer(nullptr, prim, {x, y});
   ASSERT_NE(out_abstract, nullptr);
   ASSERT_TRUE(*out_abstract == *expect);
 }
 
-INSTANTIATE_TEST_CASE_P(TestAdd, TestAdd,
-                        testing::Values(AddParams{{-1, -1}, kFloat32, {1, 1}, kFloat32, {-1, -1}, kFloat32},
-                                        AddParams{{-1, -1}, kFloat32, {2, 3}, kFloat32, {2, 3}, kFloat32},
-                                        AddParams{{-2}, kFloat32, {2, 3}, kFloat32, {-2}, kFloat32}));
+INSTANTIATE_TEST_CASE_P(TestNotEqualGroup, TestNotEqual,
+                        testing::Values(
+                          BroadcastOpParams{{1, 3}, kFloat, {2, 1}, kFloat, {2, 3}, kBool},
+                          BroadcastOpParams{{-1, 3}, kFloat, {-1, 1}, kFloat, {-1, 3}, kBool},
+                          BroadcastOpParams{{-1, 3}, kFloat, {-1, 1}, kFloat, {-1, 3}, kBool},
+                          BroadcastOpParams{{-1, 1, 3}, kFloat, {1, -1, 3}, kFloat, {-1, -1, 3}, kBool},
+                          BroadcastOpParams{{-1, 2, 3}, kFloat, {2, -1, 3}, kFloat, {2, 2, 3}, kBool},
+                          BroadcastOpParams{{-2}, kFloat, {2, 3}, kFloat, {-2}, kBool}));
 }  // namespace ops
 }  // namespace mindspore

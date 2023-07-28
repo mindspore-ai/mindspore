@@ -35,7 +35,7 @@ class MIND_API Pow : public BaseOperator {
   /// \brief Constructor.
   explicit Pow(const std::string &k_name = kNamePow) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Pow for the inputs.
-  void Init();
+  void Init() const {}
 };
 MIND_API abstract::AbstractBasePtr PowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const std::vector<abstract::AbstractBasePtr> &input_args);
