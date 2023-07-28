@@ -31,6 +31,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "plugin/device/ascend/hal/device/ascend_dma_handle.h"
 #include "ir/dtype/type.h"
 #include "ir/tensor.h"
 #include "abstract/utils.h"
@@ -49,6 +50,10 @@ namespace ascend {
 const auto kFloat16Bytes = 2;
 const auto kFloatBytes = sizeof(float);
 const auto kFloat64Bytes = 8;
+
+#if defined(RT_MEMORY_P2PDMA)
+static std::mutex dma_lock;
+#endif
 
 bool IsUseTransDataTypeFormat(const std::pair<std::string, std::string> &type_format) {
   static const std::set<std::pair<std::string, std::string>> use_trans_data = {
@@ -199,6 +204,94 @@ bool AscendDeviceAddress::CopyDeviceToHost(void *dst, const void *src, size_t si
 bool AscendDeviceAddress::CopyHostToDevice(void *dst, const void *src, size_t size, bool async,
                                            size_t stream_id) const {
   return CopyBetweenHostDevice(dst, src, size, async, stream_id, true);
+}
+
+bool AscendDeviceAddress::DeviceToFileDirectly(void *ptr, size_t size, const std::string &file_name,
+                                               size_t stream_id) const {
+#if defined(RT_MEMORY_P2PDMA)
+  void *dargs = AscendDmaHandle::GetInstance().GetDargs();
+  void *buf = AscendDmaHandle::GetInstance().GetBuf();
+  if (dargs == nullptr || buf == nullptr) {
+    return false;
+  }
+  std::lock_guard<std::mutex> lock(dma_lock);
+  auto nvme_fd = open(file_name.c_str(), O_RDWR | O_CREAT | O_DIRECT, S_IRUSR | S_IWUSR);
+  if (nvme_fd < 0) {
+    MS_LOG(ERROR) << "Open file failed, file name:" << file_name;
+    return false;
+  }
+  size_t buf_size = AscendDmaHandle::GetInstance().GetSize();
+  size_t count = (size + buf_size - 1) / buf_size;
+  for (size_t i = 0; i < count; i++) {
+    size_t ptr_offset = i * buf_size;
+    size_t write_size = (i == count - 1) ? (size % buf_size) : buf_size;
+    DeviceToDevice(dargs, static_cast<uint8_t *>(ptr) + ptr_offset, write_size, stream_id);
+    size_t w_size = write(nvme_fd, buf, write_size);
+    if (w_size != write_size) {
+      MS_LOG(ERROR) << "Write file failed, file name:" << file_name << ", size:" << size;
+      close(nvme_fd);
+      return false;
+    }
+  }
+  close(nvme_fd);
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool AscendDeviceAddress::FileToDeviceDirectly(void *ptr, size_t size, const std::string &file_name,
+                                               size_t stream_id) const {
+#if defined(RT_MEMORY_P2PDMA)
+  void *dargs = AscendDmaHandle::GetInstance().GetDargs();
+  void *buf = AscendDmaHandle::GetInstance().GetBuf();
+  if (dargs == nullptr || buf == nullptr) {
+    return false;
+  }
+  std::lock_guard<std::mutex> lock(dma_lock);
+  auto nvme_fd = open(file_name.c_str(), O_RDWR | O_DIRECT, S_IRUSR | S_IWUSR);
+  if (nvme_fd < 0) {
+    MS_LOG(ERROR) << "Open file failed, file name:" << file_name;
+    return false;
+  }
+  size_t buf_size = AscendDmaHandle::GetInstance().GetSize();
+  size_t count = (size + buf_size - 1) / buf_size;
+  for (size_t i = 0; i < count; i++) {
+    size_t ptr_offset = i * buf_size;
+    size_t read_size = (i == count - 1) ? (size % buf_size) : buf_size;
+    size_t r_size = read(nvme_fd, buf, read_size);
+    if (r_size != read_size) {
+      MS_LOG(ERROR) << "Read file failed, file name:" << file_name << ", size:" << size;
+      close(nvme_fd);
+      return false;
+    }
+    DeviceToDevice(static_cast<uint8_t *>(ptr) + ptr_offset, dargs, read_size, stream_id);
+  }
+  close(nvme_fd);
+  auto res = unlink(file_name.c_str());
+  if (res != 0) {
+    MS_LOG(ERROR) << "Delete file failed, file name:" << file_name;
+  }
+  storage_info_.file_name_ = "";
+  return true;
+#else
+  return false;
+#endif
+}
+
+void AscendDeviceAddress::DeviceToDevice(void *dst, void *src, size_t size, size_t stream_id) const {
+  MS_EXCEPTION_IF_NULL(dst);
+  MS_EXCEPTION_IF_NULL(src);
+  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream);
+  BindDevice();
+  auto ret = aclrtMemcpyAsync(dst, size, src, size, ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call aclrtMemcpyAsync device to device failed, the error num[" << ret << "].";
+  }
+  if (!AscendStreamMng::GetInstance().SyncStream(stream_id)) {
+    MS_LOG(EXCEPTION) << "Sync default failed.";
+  }
 }
 
 bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *const host_ptr) const {

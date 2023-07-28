@@ -81,6 +81,12 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
   bool CopyDeviceToHost(void *dst, const void *src, size_t size, bool async, size_t stream_id) const override;
   bool CopyHostToDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id) const override;
 
+  bool DeviceToFileDirectly(void *ptr, size_t size, const std::string &file_name, size_t stream_id) const override;
+
+  bool FileToDeviceDirectly(void *ptr, size_t size, const std::string &file_name, size_t stream_id) const override;
+
+  void DeviceToDevice(void *dst, void *src, size_t size, size_t stream_id) const;
+
  private:
   bool SyncDeviceToHostAndConvertFormat(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const;
   bool ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const;

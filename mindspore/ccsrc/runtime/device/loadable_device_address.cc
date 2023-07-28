@@ -153,8 +153,21 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
   const auto swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  if (status_ == DeviceAddressStatus::kInFile && !MoveToHost(false, stream_id)) {
-    return false;
+  if (status_ == DeviceAddressStatus::kInFile) {
+#if defined(RT_MEMORY_P2PDMA)
+    if (ptr_ == nullptr) {
+      ptr_ = swap_manager->AllocDeviceMemory(size_);
+    }
+    if (FileToDeviceDirectly(ptr_, size_, storage_info_.file_name_, stream_id)) {
+      storage_info_.host_ptr_ = nullptr;
+      status_ = DeviceAddressStatus::kInDevice;
+      MS_LOG(INFO) << "Copy data from file to device success by dma. file name:" << storage_info_.file_name_;
+      return true;
+    }
+#endif
+    if (!MoveToHost(false, stream_id)) {
+      return false;
+    }
   }
   if (ptr_ == nullptr) {
     ptr_ = swap_manager->AllocDeviceMemory(size_);
@@ -190,8 +203,21 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
   const auto swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  if (status_ == DeviceAddressStatus::kInDevice && !MoveToHost(false, stream_id)) {
-    return false;
+  if (status_ == DeviceAddressStatus::kInDevice) {
+#if defined(RT_MEMORY_P2PDMA)
+    storage_info_.file_name_ = GetSwapFileName();
+    if (DeviceToFileDirectly(ptr_, size_, storage_info_.file_name_, stream_id)) {
+      storage_info_.host_ptr_ = nullptr;
+      status_ = DeviceAddressStatus::kInFile;
+      swap_manager->FreeDeviceMemory(ptr_);
+      ptr_ = nullptr;
+      MS_LOG(INFO) << "Copy data from device to file success by dma. file name:" << storage_info_.file_name_;
+      return true;
+    }
+#endif
+    if (!MoveToHost(false, stream_id)) {
+      return false;
+    }
   }
   if (storage_info_.file_name_.empty() || storage_info_.file_name_mutable_) {
     storage_info_.file_name_ = GetSwapFileName();
