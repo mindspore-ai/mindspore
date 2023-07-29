@@ -36,7 +36,7 @@ OpParameter *PopulatePReLUParameter(const void *prim) {
   memset(param, 0, sizeof(PReluParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
-  param->channelShared = value->channel_shared();
+  param->channel_shared_ = value->channel_shared();
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_PReLUFusion, PopulatePReLUParameter, SCHEMA_CUR)
