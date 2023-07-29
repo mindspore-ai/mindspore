@@ -78,6 +78,12 @@ class AdaptiveAvgPool3DGradHelperGpuKernel : public GpuKernelHelperBase {
       return -1;
     }
 
+    if (output_rank < OUTPUT_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 3, but got "
+                    << output_rank;
+      return -1;
+    }
+
     constexpr int DEPTH = 1;
     constexpr int WIDTH = 2;
     constexpr int HEIGHT = 3;
@@ -97,12 +103,6 @@ class AdaptiveAvgPool3DGradHelperGpuKernel : public GpuKernelHelperBase {
     out_size = output_rank == DIMENSION
                  ? output_shapes[0][0] * output_height * output_width * output_depth
                  : output_shapes[0][0] * output_shapes[0][1] * output_height * output_width * output_depth;
-
-    if (output_rank < OUTPUT_SHAPE_SIZE) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 3, but got "
-                    << output_rank;
-      return -1;
-    }
 
     return 0;
   }

@@ -156,6 +156,7 @@ uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute(CpuKernelContext &
   };
 
   auto get_per_unit_size = [&](int64_t data_size) -> int64_t {
+    KERNEL_CHECK_FALSE(data_size != 0, KERNEL_STATUS_PARAM_INVALID, "data_size can not be 0.");
     const int64_t max_core_num =
       std::max(static_cast<int64_t>(1), static_cast<int64_t>(aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2));
     return data_size / std::min(max_core_num, data_size);
