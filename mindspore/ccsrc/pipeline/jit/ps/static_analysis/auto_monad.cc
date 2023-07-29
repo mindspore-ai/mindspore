@@ -1686,9 +1686,9 @@ class AutoMonadConverter {
     }
     // Multiple Loads, Create a MakeTuple before UpdateState.
     abstract::AbstractBasePtrList load_abstracts;
-    std::transform(loads.begin(), loads.end(), std::back_inserter(load_abstracts),
-                   [](const AnfNodePtr &load) { return load->abstract(); });
-    loads.insert(loads.begin(), NewValueNode(prim::kPrimMakeTuple));
+    (void)std::transform(loads.begin(), loads.end(), std::back_inserter(load_abstracts),
+                         [](const AnfNodePtr &load) { return load->abstract(); });
+    (void)loads.insert(loads.begin(), NewValueNode(prim::kPrimMakeTuple));
     auto make_tuple = func_graph_->NewCNode(loads);
     make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(load_abstracts));
     u_ = UpdateState(current_u, make_tuple);

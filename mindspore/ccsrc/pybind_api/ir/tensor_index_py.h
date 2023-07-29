@@ -400,12 +400,12 @@ class TensorIndex final {
     std::vector<int64_t> slice_ele_list_index;
     if (step > 0) {
       for (int64_t j = start; j < stop; j += step) {
-        slice_ele_list_index.emplace_back(j);
+        (void)slice_ele_list_index.emplace_back(j);
       }
       return slice_ele_list_index;
     }
     for (int64_t j = start; j > stop; j += step) {
-      slice_ele_list_index.emplace_back(j);
+      (void)slice_ele_list_index.emplace_back(j);
     }
     return slice_ele_list_index;
   }
@@ -483,18 +483,18 @@ class TensorIndex final {
     }
     shape[slice_cnt] = slice_shape[slice_cnt];
     ShapeVector temp_shape(broadcast_shape_len, 1);
-    shape.insert(shape.begin() + fancy_position, temp_shape.begin(), temp_shape.end());
+    (void)shape.insert(shape.begin() + fancy_position, temp_shape.begin(), temp_shape.end());
     return shape;
   }
 
   static ShapeVector ComputeMultiples(const ShapeVector &origin_shape, const ShapeVector &broadcast_shape) {
     int64_t len_gap = SizeToLong(broadcast_shape.size()) - SizeToLong(origin_shape.size());
     ShapeVector output_shape = broadcast_shape;
-    std::transform(broadcast_shape.begin() + len_gap, broadcast_shape.end(), origin_shape.begin(),
-                   output_shape.begin() + len_gap, [](int64_t x, int64_t y) {
-                     MS_EXCEPTION_IF_ZERO("dim of data shape", y);
-                     return x / y;
-                   });
+    (void)std::transform(broadcast_shape.begin() + len_gap, broadcast_shape.end(), origin_shape.begin(),
+                         output_shape.begin() + len_gap, [](int64_t x, int64_t y) {
+                           MS_EXCEPTION_IF_ZERO("dim of data shape", y);
+                           return x / y;
+                         });
     return output_shape;
   }
 
@@ -503,7 +503,7 @@ class TensorIndex final {
       MS_EXCEPTION(ValueError) << "Can not pad " << shape << " to length " << length;
     }
     ShapeVector pad_shape(length - SizeToLong(shape.size()), 1);
-    pad_shape.insert(pad_shape.begin(), shape.begin(), shape.end());
+    (void)pad_shape.insert(pad_shape.begin(), shape.begin(), shape.end());
     return pad_shape;
   }
   static py::object BroadCastTo(const ShapeVector &broadcast_shape, const py::object &item);
@@ -535,12 +535,12 @@ class TensorIndex final {
     if (type_ == TensorIndexType::Tuple) {
       output.reserve(tuple_.size());
       for (auto const &e : tuple_) {
-        output.emplace_back(TensorIndex(e));
+        (void)output.emplace_back(TensorIndex(e));
       }
     } else {
       output.reserve(list_.size());
       for (auto const &e : list_) {
-        output.emplace_back(TensorIndex(e));
+        (void)output.emplace_back(TensorIndex(e));
       }
     }
     return output;
@@ -606,7 +606,7 @@ class TensorIndex final {
     size_t index = std::min(shape.size(), not_expanded_dim.size() - static_cast<size_t>(diff));
     for (size_t i = 0; i < index; i++) {
       if (not_expanded_dim[(i + static_cast<size_t>(diff))]) {
-        res.emplace_back(shape[i]);
+        (void)res.emplace_back(shape[i]);
       }
     }
     return res;

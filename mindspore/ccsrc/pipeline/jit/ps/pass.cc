@@ -137,8 +137,8 @@ bool TransformTopGraphPass(const ResourcePtr &resource) {
     resource->set_func_graph(func_graph);
     AbstractBasePtrList abs_spec_list;
     auto &params = func_graph->parameters();
-    std::transform(params.begin(), params.end(), std::back_inserter(abs_spec_list),
-                   [](const AnfNodePtr &node) { return node->abstract(); });
+    (void)std::transform(params.begin(), params.end(), std::back_inserter(abs_spec_list),
+                         [](const AnfNodePtr &node) { return node->abstract(); });
     resource->set_args_abs(abs_spec_list);
   }
   return true;
@@ -809,8 +809,8 @@ bool AddCacheEmbeddingPass(const ResourcePtr &resource) {
   if (func_graph->has_flag(GRAPH_FLAG_CACHE_ENABLE)) {
     auto params = func_graph->parameters();
     AbstractBasePtrList args_abs_list;
-    std::for_each(params.begin(), params.end(),
-                  [&args_abs_list](const AnfNodePtr &node) { args_abs_list.push_back(node->abstract()); });
+    (void)std::for_each(params.begin(), params.end(),
+                        [&args_abs_list](const AnfNodePtr &node) { args_abs_list.push_back(node->abstract()); });
     func_graph = pipeline::Renormalize(resource, func_graph, args_abs_list);
   }
   return true;

@@ -77,7 +77,7 @@ void TryToDoReplace(FuncGraphManager *const manager, const AnfNodePtr &node, Has
     }
   }
   // Meet for the first time, append node to bucket.
-  bucket.emplace_back(node);
+  (void)bucket.emplace_back(node);
 }
 }  // namespace pipeline
 }  // namespace mindspore
