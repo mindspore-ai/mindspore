@@ -1203,6 +1203,20 @@ TensorPtrList Tensor::GetFlattenedTensors(const TensorPtrList &tensors) {
   return result_tensors;
 }
 
+bool Tensor::CheckStub() {
+#if defined(WITH_BACKEND)
+  return false;
+#else
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string backend_name = context_ptr->backend_policy();
+  if (backend_name == "vm") {
+    return false;
+  }
+  return true;
+#endif
+}
+
 size_t Tensor::GetFusionSize(const TensorPtrList &flat_tensors) {
   size_t fusion_size = 0;
   std::map<TypeId, size_t> type_groups;

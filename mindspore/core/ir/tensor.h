@@ -785,6 +785,13 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return Tensors that data are pointed to each contiguous memory chunks, empty if failed.
   static TensorPtrList GetFlattenedTensors(const TensorPtrList &tensors);
 
+  /// \brief Get tensors stub flag.
+  ///
+  /// \param[in] none.
+  ///
+  /// \return If compile with backend, return false, else return true.
+  static bool CheckStub();
+
   /// \brief Get the fusion size for the given flat tensors.
   ///
   /// \param[in] flat_tensors The input flat tensors.

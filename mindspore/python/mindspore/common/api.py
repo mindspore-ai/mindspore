@@ -535,8 +535,6 @@ class _MindsporeFunctionExecutor:
             output = _pynative_executor.grad_jit(output, *new_inputs)
 
         enable_ge = os.getenv("MS_ENABLE_GE") == "1"
-        if enable_ge and self.jit_config_dict is None:
-            raise RuntimeError("GE and jit_level=O3 should be used together, but jit_config is None.")
         if self.jit_config_dict:
             enable_jit_level_o3 = self.jit_config_dict.get('jit_level') == "O3"
             if (enable_ge and not enable_jit_level_o3) or (not enable_ge and enable_jit_level_o3):

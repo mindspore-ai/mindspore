@@ -19,6 +19,7 @@ rm -rf ${BASE_PATH}/while_by_cell_list_in_while
 mkdir ${BASE_PATH}/while_by_cell_list_in_while
 export PYTHONPATH=${BASE_PATH}/:$PYTHONPATH
 export MS_ENABLE_GE=1
+export MS_DEV_FORCE_ACL=1
 unset SLOG_PRINT_TO_STDOUT
 cd ${BASE_PATH}/while_by_cell_list_in_while
 echo "start test while by cell list in while with ge backend"
@@ -27,6 +28,7 @@ python ../run_while_by_cell_list_in_while.py > test_while_by_cell_list_in_while.
 process_pid=`echo $!`
 wait ${process_pid}
 unset MS_ENABLE_GE
+unset MS_DEV_FORCE_ACL
 status=`echo $?`
 if [ "${status}" != "0" ]; then
     echo "[ERROR] test while by cell list in while with ge backend failed. status: ${status}"

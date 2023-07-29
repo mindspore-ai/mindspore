@@ -17,7 +17,7 @@
 
 from __future__ import absolute_import
 from collections import UserDict
-from mindspore import context
+from mindspore._c_expression import Tensor as Tensor_
 
 
 class Registry(UserDict):
@@ -31,7 +31,7 @@ class Registry(UserDict):
         """Get the value by str."""
         if not isinstance(obj_str, str):
             raise TypeError("key for tensor registry must be string.")
-        if context.get_context("enable_ge"):
+        if Tensor_._is_test_stub() is True:  # pylint: disable=W0212
             def wrap(*args):
                 new_args = list(args)
                 new_args.append(obj_str)

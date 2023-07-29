@@ -664,6 +664,7 @@ void RegMetaTensor(const py::module *m) {
     .def("_is_flattened", Tensor::IsFlattened)
     .def("_get_flattened_tensors", Tensor::GetFlattenedTensors)
     .def("_get_fusion_size", Tensor::GetFusionSize)
+    .def("_is_test_stub", Tensor::CheckStub)
     .def("from_numpy", TensorPy::MakeTensorOfNumpy, R"mydelimiter(
                              Creates a Tensor from a numpy.ndarray without copy.
 
