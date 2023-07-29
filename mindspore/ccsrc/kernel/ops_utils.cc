@@ -169,8 +169,8 @@ void ParseStrideSliceMasks(const BaseOperatorPtr &base_operator, std::vector<int
 }
 
 float Scaling(size_t in_size, size_t out_size, bool align_corners) {
-  return (align_corners && out_size > 1) ? (in_size - 1) / static_cast<float>(out_size - 1)
-                                         : in_size / static_cast<float>(out_size);
+  return (align_corners && out_size > 1) ? SizeToFloat(in_size - 1) / static_cast<float>(out_size - 1)
+                                         : SizeToFloat(in_size) / static_cast<float>(out_size);
 }
 
 float ScaleGrid(const int x, const float scale, bool half_pixel_centers) {
@@ -186,7 +186,7 @@ void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, co
   interpolation[out_size].lower = 0;
   interpolation[out_size].upper = 0;
   for (size_t i = 0; i <= out_size - 1; ++i) {
-    const float in = ScaleGrid(i, scale, half_pixel_centers);
+    const float in = ScaleGrid(SizeToInt(i), scale, half_pixel_centers);
     const float in_f = std::floor(in);
     interpolation[i].lower = std::max(static_cast<int64_t>(in_f), static_cast<int64_t>(0));
     interpolation[i].upper = std::min(static_cast<int64_t>(std::ceil(in)), static_cast<int64_t>(in_size - 1));

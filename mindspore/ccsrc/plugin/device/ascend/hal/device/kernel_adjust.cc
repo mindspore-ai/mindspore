@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@ CNodePtr CreateEventApplyKernel(const std::shared_ptr<session::KernelGraph> &gra
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), event_node_ptr.get());
   common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), event_node_ptr);
   auto abstract_none = std::make_shared<abstract::AbstractNone>();
+  MS_EXCEPTION_IF_NULL(abstract_none);
   event_node_ptr->set_abstract(abstract_none);
   return event_node_ptr;
 }
@@ -1136,7 +1137,7 @@ void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGra
 }
 
 void KernelAdjust::AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_graph, KernelRuntime *runtime_instance,
-                                           const string name) const {
+                                           const string &name) const {
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto device_loop_control_params = kernel_graph.device_loop_control_params();
   if (device_loop_control_params.count(name) == 0) {
@@ -1200,7 +1201,7 @@ void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph
 }
 
 void KernelAdjust::SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                           const std::string name, int64_t value) const {
+                                           const std::string &name, int64_t value) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   auto device_loop_control_tensors = kernel_graph_ptr->device_loop_control_tensors();
   if (device_loop_control_tensors.count(name) == 0) {

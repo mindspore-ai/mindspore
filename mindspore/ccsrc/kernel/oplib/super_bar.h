@@ -30,7 +30,6 @@ class BACKEND_EXPORT SuperBar {
   ~SuperBar() = default;
   static bool LoadSBConfig(const nlohmann::json &js);
   static std::string GetSBMSAttrByKernelAttr(const std::string &op_name, const std::string &attr_name);
-  static std::string GetSBKernelAttrByMSAttr(const std::string &op_name, const std::string &attr_name);
   static std::string GetSBNodeAttrDefaultValue(const std::string &op_name, const std::string &attr_name);
   static std::optional<std::map<size_t, size_t>> GetKernelIdxToGraphIdx(const std::string &op_name);
   static std::optional<std::map<size_t, size_t>> GetGraphIdxToKernelIdx(const std::string &op_name);

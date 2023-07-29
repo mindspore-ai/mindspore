@@ -106,7 +106,7 @@ inline T ComputeScalesBackward(const double scale, const int64_t src_size, const
 }
 
 inline size_t NearestNeighborSourceIndex(const float &scale, const size_t &dst_index, const size_t &input_size) {
-  size_t src_index = std::min(static_cast<size_t>(floorf(dst_index * scale)), input_size - 1);
+  size_t src_index = std::min(static_cast<size_t>(floorf(SizeToFloat(dst_index) * scale)), input_size - 1);
   return src_index;
 }
 
@@ -120,7 +120,7 @@ inline size_t NearestIndex(const size_t &output_index, const size_t &input_size,
     // scale_factor = 2, shift input index
     return output_index >> 1;
   } else {
-    float scale = ComputeScales<float>(scales, input_size, output_size);
+    auto scale = ComputeScales<float>(scales, input_size, output_size);
     return NearestNeighborSourceIndex(scale, output_index, input_size);
   }
 }
@@ -144,7 +144,7 @@ inline T AreaPixelComputeSourceIndex(T scale, int64_t dst_index, bool align_corn
     return scale * static_cast<T>(dst_index);
   } else {
     constexpr T zero = 0.;
-    T src_idx = scale * (dst_index + 0.5) - 0.5;
+    T src_idx = scale * (LongToDouble(dst_index) + 0.5) - 0.5;
     return src_idx < zero ? zero : src_idx;
   }
 }

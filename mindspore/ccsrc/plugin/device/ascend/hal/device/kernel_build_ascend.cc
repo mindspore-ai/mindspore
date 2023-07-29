@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,6 +181,9 @@ void GetAtomicWorkspaceAndOutputIndex(const kernel::NodeBaseInfo &node_base_info
     if (idx >= params_size) {
       continue;
     }
+    if (idx >= parameters_indexes.size()) {
+      continue;
+    }
     (void)tmp.emplace_back(parameters_indexes[idx]);
     if (parameters_indexes[idx] != 0) {
       *workspace_atomic_flag = true;
@@ -195,6 +198,9 @@ void GetAtomicWorkspaceAndOutputIndex(const kernel::NodeBaseInfo &node_base_info
   for (size_t i = 0; i < node_base_info.output_num; ++i) {
     size_t idx = node_base_info.offset_index + node_base_info.input_num + i;
     if (idx >= params_size) {
+      continue;
+    }
+    if (idx >= parameters_indexes.size()) {
       continue;
     }
     (void)tmp.emplace_back(parameters_indexes[idx]);
@@ -223,7 +229,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
 
-  kernel::NodeBaseInfo node_base_info;
+  kernel::NodeBaseInfo node_base_info{};
   node_base_info.input_num = input_num;
   node_base_info.output_num = output_num;
   node_base_info.workspace_num = workspace_num;
@@ -311,6 +317,9 @@ std::vector<int64_t> GetClearSize(const CNodePtr &pre_node) {
     auto output_indexes = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
     auto output_men_size = kernel_mod->GetOutputSizeList();
     for (auto index : output_indexes) {
+      if (index >= output_men_size.size()) {
+        continue;
+      }
       auto clean_item =
         SizeToLong((output_men_size.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize);
       (void)clean_size_list.emplace_back(clean_item);
@@ -514,6 +523,9 @@ std::map<AnfNodePtr, std::vector<size_t>> GetCommunicationOpInputInfo(const std:
     auto input_num = common::AnfAlgo::GetInputTensorNum(kernel);
     if (common::AnfAlgo::IsCommunicationOp(kernel)) {
       for (size_t i = 0; i < input_num; i++) {
+        if ((i + kIndex1) >= kernel->inputs().size()) {
+          continue;
+        }
         auto input_node = kernel->inputs().at(i + kIndex1);
         auto kernel_input = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
         MS_EXCEPTION_IF_NULL(kernel_input.first);
