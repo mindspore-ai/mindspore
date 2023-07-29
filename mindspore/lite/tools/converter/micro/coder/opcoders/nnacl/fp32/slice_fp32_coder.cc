@@ -82,9 +82,8 @@ int SliceFP32Coder::DoCode(CoderContext *const context) {
   NNaclFp32Serializer code;
   code.CodeStruct("slice_struct", slice_struct_);
 
-  code.CodeBaseStruct("SliceFp32Args", kRunArgs, input_tensor_, output_tensor_, "&slice_struct", thread_num_);
-
   if (support_parallel_) {
+    code.CodeBaseStruct("SliceFp32Args", kRunArgs, input_tensor_, output_tensor_, "&slice_struct", thread_num_);
     code.CodeFunction(kParallelLaunch, "DoSliceRun", kRunArgsAddr, gThreadNum);
   } else {
     code.CodeFunction("DoSliceNoParallel", input_tensor_, output_tensor_, "&slice_struct",

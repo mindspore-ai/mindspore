@@ -315,12 +315,12 @@ void *TransformInput(MSTensorHandle tensor, int expect_type, bool *type_changed)
   if (type_trans_mode == TypeTransMode_UNSUPPORT) {
     return NULL;
   }
+#ifdef ENABLE_FP16
   int shape_size = micro_tensor->ndim;
   int num = 1;
   for (int i = 0; i < shape_size; ++i) {
     num *= micro_tensor->shape[i];
   }
-#ifdef ENABLE_FP16
   if (type_trans_mode == TypeTransMode_FP32_TO_FP16) {
     void *expect_input_fp16 = (void *)malloc(DataTypeSize(expect_type) * num);
     Fp32CastToFp16((float *)micro_tensor->data, (float16_t *)expect_input_fp16, num);
