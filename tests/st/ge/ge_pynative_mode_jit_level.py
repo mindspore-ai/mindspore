@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
+import pytest  # pylint: disable=unused-import
 import numpy as np
 
 import ge_infer_env  # pylint: disable=unused-import
@@ -95,15 +95,14 @@ def test_pynative_o2_jit_level_ms_function_with_ge():
     """
     Feature: PyNative ms function with GE.
     Description: jit_level=O2 ms function with GE.
-    Expectation: Raise ValueError.
+    Expectation: Run ok.
     """
     context.set_context(device_target="Ascend", mode=context.PYNATIVE_MODE)
     inputs = Tensor(np.ones((3, 3), np.float32))
-    with pytest.raises(RuntimeError):
-        net = NetInnerO2()
-        output = net(inputs, inputs)
-        print("===>output:", output)
-
+    net = NetInnerO2()
+    output = net(inputs, inputs)
+    expected = np.array([[2, 2, 2], [2, 2, 2], [2, 2, 2]], np.float32)
+    np.allclose(output.asnumpy(), expected, 1e-05, 1e-05)
 
 def test_pynative_o3_jit_level_ms_function_with_ge():
     """
@@ -137,14 +136,14 @@ def test_pynative_o2_nested_one_o2_one_o3_jit_level_ms_function_with_ge():
     """
     Feature: PyNative ms function with GE.
     Description: O2 nested O2 + O3 ms function with GE.
-    Expectation: Raise ValueError, GE only support O3.
+    Expectation: Run ok.
     """
     context.set_context(device_target="Ascend", mode=context.PYNATIVE_MODE)
     inputs = Tensor(np.ones((3, 3), np.float32))
-    with pytest.raises(RuntimeError):
-        net = O2NestedOneO2OneO3MsFuncNet()
-        output = net(inputs, inputs)
-        print("===>output:", output)
+    net = O2NestedOneO2OneO3MsFuncNet()
+    output = net(inputs, inputs)
+    expected = np.array([[5, 5, 5], [5, 5, 5], [5, 5, 5]], np.float32)
+    np.allclose(output.asnumpy(), expected, 1e-05, 1e-05)
 
 
 def test_pynative_o3_nested_two_o3_jit_level_ms_function_with_ge():
