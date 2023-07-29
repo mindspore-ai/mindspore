@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <random>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/kernels/image/affine_op.h"
@@ -27,7 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const InterpolationMode AffineOp::kDefInterpolation = InterpolationMode::kNearestNeighbour;
 const float_t AffineOp::kDegrees = 0.0;
 const std::vector<float_t> AffineOp::kTranslation = {0.0, 0.0};
@@ -47,10 +47,13 @@ AffineOp::AffineOp(float_t degrees, const std::vector<float_t> &translation, flo
 
 Status AffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->shape().Size() >= kDefaultImageRank,
+    "Affine: input tensor is not in shape of <H,W,C>, but got rank: " + std::to_string(input->shape().Size()));
   dsize_t height = input->shape()[0];
   dsize_t width = input->shape()[1];
-  float_t translation_x = translation_[0] * width;
-  float_t translation_y = translation_[1] * height;
+  float_t translation_x = translation_[0] * static_cast<float>(width);
+  float_t translation_y = translation_[1] * static_cast<float>(height);
   std::vector<float_t> new_translation{translation_x, translation_y};
   if (fill_value_.size() == 1) {
     fill_value_ = {fill_value_[0], fill_value_[0], fill_value_[0]};

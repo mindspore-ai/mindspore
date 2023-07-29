@@ -42,5 +42,4 @@ class AdjustHueOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_ADJUST_HUE_OP_H_

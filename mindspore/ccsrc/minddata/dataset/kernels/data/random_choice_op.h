@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_CHOICE_OP_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_CHOICE_OP_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_RANDOM_CHOICE_OP_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_RANDOM_CHOICE_OP_
 
 #include <memory>
 #include <random>
@@ -37,7 +37,7 @@ class RandomChoiceOp : public TensorOp {
   explicit RandomChoiceOp(const std::vector<std::shared_ptr<TensorOp>> &ops);
 
   /// default destructor
-  ~RandomChoiceOp() = default;
+  ~RandomChoiceOp() override = default;
 
   /// return the number of inputs. All op in ops_ should have the same number of inputs
   /// \return number of input tensors
@@ -73,5 +73,4 @@ class RandomChoiceOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_CHOICE_OP_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_RANDOM_CHOICE_OP_

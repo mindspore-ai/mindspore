@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,18 @@
 
 namespace mindspore {
 namespace dataset {
-
 class SliceOp : public TensorOp {
  public:
-  explicit SliceOp(std::vector<SliceOption> slice_input) : slice_options_(slice_input) {}
-  explicit SliceOp(SliceOption slice_option) { slice_options_.push_back(slice_option); }
+  explicit SliceOp(std::vector<SliceOption> slice_input) : slice_options_(std::move(slice_input)) {}
+
+  explicit SliceOp(const SliceOption &slice_option) { slice_options_.push_back(slice_option); }
+
   // short hand notation for slicing along fist dimension
-  explicit SliceOp(Slice slice) { slice_options_.push_back(SliceOption(slice)); }
-  explicit SliceOp(bool all) { slice_options_.push_back(SliceOption(all)); }
-  explicit SliceOp(std::vector<dsize_t> indices) { slice_options_.push_back(SliceOption(indices)); }
+  explicit SliceOp(Slice slice) { (void)slice_options_.emplace_back(slice); }
+
+  explicit SliceOp(bool all) { (void)slice_options_.emplace_back(all); }
+
+  explicit SliceOp(const std::vector<dsize_t> &indices) { (void)slice_options_.emplace_back(indices); }
 
   ~SliceOp() override = default;
 

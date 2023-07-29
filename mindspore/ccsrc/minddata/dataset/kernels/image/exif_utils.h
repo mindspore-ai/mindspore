@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_EXIF_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_EXIF_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_EXIF_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_EXIF_H_
 
 namespace mindspore {
 namespace dataset {
@@ -26,4 +26,4 @@ class ExifInfo {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_EXIF_H_

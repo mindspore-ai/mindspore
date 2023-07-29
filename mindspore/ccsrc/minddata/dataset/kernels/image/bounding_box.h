@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_BOUNDING_BOX_H_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
+
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/util/status.h"
@@ -47,10 +48,10 @@ class BoundingBox {
   }
 
   /// Getters
-  bbox_float x() { return x_; }
-  bbox_float y() { return y_; }
-  bbox_float width() { return width_; }
-  bbox_float height() { return height_; }
+  bbox_float x() const { return x_; }
+  bbox_float y() const { return y_; }
+  bbox_float width() const { return width_; }
+  bbox_float height() const { return height_; }
 
   /// Setters
   void SetX(bbox_float x) { x_ = x; }
@@ -63,7 +64,7 @@ class BoundingBox {
   ///    and first 4 items of each row are x,y,w,h of the bounding box
   /// \param[in] index_of_bbox index of bounding box to set to tensor
   /// \returns Status status of bounding box set
-  Status WriteToTensor(const TensorPtr &bbox_tensor, dsize_t index_of_bbox = 0);
+  Status WriteToTensor(const TensorPtr &bbox_tensor, dsize_t index_of_bbox = 0) const;
 
   /// \brief Create a bounding box object from an item at a certain index in a tensor.
   /// \param[in] bbox_tensor tensor containing a list of bounding boxes of shape (m, n) where n >= 4
@@ -133,5 +134,4 @@ class BoundingBox {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_BOUNDING_BOX_H_

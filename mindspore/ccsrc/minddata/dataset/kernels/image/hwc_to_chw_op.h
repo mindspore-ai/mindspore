@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_CHANNEL_SWAP_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_CHANNEL_SWAP_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_HWC_TO_CHW_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_HWC_TO_CHW_OP_H_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -29,11 +29,11 @@ namespace dataset {
 class HwcToChwOp : public TensorOp {
  public:
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
   std::string Name() const override { return kHwcToChwOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_CHANNEL_SWAP_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_HWC_TO_CHW_OP_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,9 @@ namespace mindspore {
 namespace dataset {
 class EqualizeOp : public TensorOp {
  public:
-  EqualizeOp() {}
-  ~EqualizeOp() = default;
+  EqualizeOp() = default;
+
+  ~EqualizeOp() override = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
@@ -37,5 +38,4 @@ class EqualizeOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_EQUALIZE_OP_H_

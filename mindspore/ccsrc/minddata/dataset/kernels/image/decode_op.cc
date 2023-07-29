@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/kernels/image/decode_op.h"
 
 #ifndef ENABLE_ANDROID
@@ -56,15 +57,14 @@ Status DecodeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   if (inputs[0].Rank() == 1) {
     (void)outputs.emplace_back(out);
   }
-  if (!outputs.empty()) {
-    return Status::OK();
-  }
-  return Status(
-    StatusCode::kMDUnexpectedError,
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    !outputs.empty(),
     "Decode: invalid input shape, expected 1D input, but got input dimension is:" + std::to_string(inputs[0].Rank()));
+  return Status::OK();
 }
 
 Status DecodeOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "Decode: inputs cannot be empty.");
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
   outputs[0] = DataType(DataType::DE_UINT8);
   return Status::OK();

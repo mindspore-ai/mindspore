@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@
 #include <memory>
 #include <string>
 
-#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
@@ -31,7 +31,7 @@ class AdjustGammaOp : public TensorOp {
  public:
   /// Default gain to be used
   static const float kGain;
-  AdjustGammaOp(const float &gamma, const float &gain) : gamma_(gamma), gain_(gain) {}
+  AdjustGammaOp(float gamma, float gain) : gamma_(gamma), gain_(gain) {}
 
   ~AdjustGammaOp() override = default;
 
@@ -51,5 +51,4 @@ class AdjustGammaOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_ADJUST_GAMMA_OP_H_

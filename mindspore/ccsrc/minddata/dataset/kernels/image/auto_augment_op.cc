@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,8 @@ Status AutoAugmentOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   }
 
   int transform_id;
-  std::vector<float> *probs = new std::vector<float>{0, 0};
-  std::vector<int32_t> *signs = new std::vector<int32_t>{0, 0};
+  auto probs = std::make_shared<std::vector<float>>(2);
+  auto signs = std::make_shared<std::vector<int32_t>>(2);
   GetParams(transforms_.size(), &transform_id, probs, signs);
 
   std::vector<dsize_t> image_size = {input->shape()[0], input->shape()[1]};
@@ -114,16 +114,14 @@ Status AutoAugmentOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
     }
   }
   *output = img;
-  delete probs;
-  delete signs;
   return Status::OK();
 }
 
-void AutoAugmentOp::GetParams(int transform_num, int *transform_id, std::vector<float> *probs,
-                              std::vector<int32_t> *signs) {
+void AutoAugmentOp::GetParams(int transform_num, int *transform_id, const std::shared_ptr<std::vector<float>> &probs,
+                              const std::shared_ptr<std::vector<int32_t>> &signs) {
   std::uniform_int_distribution<int32_t> id_dist(0, transform_num - 1);
   *transform_id = id_dist(rnd_);
-  std::uniform_real_distribution<float> prob_dist(0, 1);
+  std::uniform_real_distribution<float> prob_dist(0.0, 1.0);
 
   (*probs)[0] = prob_dist(rnd_);
   (*probs)[1] = prob_dist(rnd_);
@@ -137,18 +135,21 @@ void AutoAugmentOp::GetParams(int transform_num, int *transform_id, std::vector<
 Space AutoAugmentOp::GetSpace(int32_t num_bins, const std::vector<dsize_t> &image_size) {
   Space space = {{"ShearX", {Linspace(0.0, 0.3, num_bins), true}},
                  {"ShearY", {Linspace(0.0, 0.3, num_bins), true}},
-                 {"TranslateX", {Linspace(0.0, 150.0f / 331 * image_size[1], num_bins), true}},
-                 {"TranslateY", {Linspace(0.0, 150.0f / 331 * image_size[0], num_bins), true}},
-                 {"Rotate", {Linspace(0.0, 30, num_bins), true}},
+                 {"TranslateX", {Linspace(0.0, 150.0F / 331.F * static_cast<float>(image_size[1]), num_bins), true}},
+                 {"TranslateY", {Linspace(0.0, 150.0F / 331.F * static_cast<float>(image_size[0]), num_bins), true}},
+                 {"Rotate", {Linspace(0.0, 30., num_bins), true}},
                  {"Brightness", {Linspace(0.0, 0.9, num_bins), true}},
                  {"Color", {Linspace(0.0, 0.9, num_bins), true}},
                  {"Contrast", {Linspace(0.0, 0.9, num_bins), true}},
                  {"Sharpness", {Linspace(0.0, 0.9, num_bins), true}},
-                 {"Posterize", {Linspace(0.0, num_bins - 1.f, num_bins, -4.0f / (num_bins - 1.f), 8, true), false}},
+                 {"Posterize",
+                  {Linspace(0.0, static_cast<float>(num_bins) - 1.F, num_bins,
+                            -4.0F / (static_cast<float>(num_bins) - 1.F), 8., true),
+                   false}},
                  {"Solarize", {Linspace(256.0, 0.0, num_bins), false}},
-                 {"AutoContrast", {{0}, false}},
-                 {"Equalize", {{0}, false}},
-                 {"Invert", {{0}, false}}};
+                 {"AutoContrast", {{0.}, false}},
+                 {"Equalize", {{0.}, false}},
+                 {"Invert", {{0.}, false}}};
   return space;
 }
 }  // namespace dataset

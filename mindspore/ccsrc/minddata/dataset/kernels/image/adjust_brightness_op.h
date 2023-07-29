@@ -42,5 +42,4 @@ class AdjustBrightnessOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_ADJUST_BRIGHTNESS_OP_H_

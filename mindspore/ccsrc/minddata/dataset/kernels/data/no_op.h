@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_NO_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_NO_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_NO_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_NO_OP_H_
 
 #include <memory>
 #include <string>
@@ -27,6 +27,7 @@ namespace dataset {
 class NoOp : public TensorOp {
  public:
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override {
+    RETURN_UNEXPECTED_IF_NULL(output);
     *output = input;
     return Status::OK();
   }
@@ -35,4 +36,4 @@ class NoOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_NO_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_NO_OP_H_

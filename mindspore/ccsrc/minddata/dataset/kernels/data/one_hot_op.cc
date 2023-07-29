@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,19 +29,19 @@ Status OneHotOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
 
 Status OneHotOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "OneHot: inputs cannot be empty.");
   outputs.clear();
   std::vector<TensorShape> inputs_copy;
   inputs_copy.push_back(inputs[0].Squeeze());
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    inputs[0].Rank() <= 1, "OneHot: Only support scalar or 1D input, got rank: " + std::to_string(inputs[0].Rank()));
   if (inputs_copy[0].Rank() == 0) {
     (void)outputs.emplace_back(std::vector<dsize_t>{num_classes_});
-  }
-  if (inputs_copy[0].Rank() == 1) {
+  } else if (inputs_copy[0].Rank() == 1) {
     (void)outputs.emplace_back(std::vector<dsize_t>{inputs_copy[0][0], num_classes_});
   }
-  if (!outputs.empty()) {
-    return Status::OK();
-  }
-  return Status(StatusCode::kMDUnexpectedError, "OneHot: invalid input shape.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(), "OneHot: Invalid input shape.");
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

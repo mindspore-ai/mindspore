@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_DATA_MASK_OP_H_
-#define DATASET_KERNELS_DATA_MASK_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_MASK_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_MASK_OP_H_
 
 #include <algorithm>
 #include <memory>
@@ -23,13 +23,12 @@
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/kernels/data/type_cast_op.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
+#include "minddata/dataset/kernels/data/type_cast_op.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 
 namespace mindspore {
 namespace dataset {
-
 class MaskOp : public TensorOp {
  public:
   MaskOp(RelationalOp op, std::shared_ptr<Tensor> value, DataType type = DataType(DataType::DE_BOOL))
@@ -51,4 +50,4 @@ class MaskOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_KERNELS_DATA_MASK_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_MASK_OP_H_

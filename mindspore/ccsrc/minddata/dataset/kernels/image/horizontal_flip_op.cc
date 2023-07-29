@@ -37,9 +37,9 @@ Status HorizontalFlipOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
     // split [N, H, W, C] to N [H, W, C], and horizental flip N [H, W, C]
     std::vector<std::shared_ptr<Tensor>> input_vector_hwc, output_vector_hwc;
     RETURN_IF_NOT_OK(BatchTensorToTensorVector(input, &input_vector_hwc));
-    for (int i = 0; i < num_batch; i++) {
+    for (auto &image : input_vector_hwc) {
       std::shared_ptr<Tensor> flip;
-      RETURN_IF_NOT_OK(HorizontalFlip(input_vector_hwc[i], &flip));
+      RETURN_IF_NOT_OK(HorizontalFlip(image, &flip));
       output_vector_hwc.push_back(flip);
     }
 

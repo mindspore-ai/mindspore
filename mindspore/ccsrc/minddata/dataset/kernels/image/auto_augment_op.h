@@ -49,7 +49,8 @@ class AutoAugmentOp : public TensorOp {
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
  private:
-  void GetParams(int transform_num, int *transform_id, std::vector<float> *probs, std::vector<int32_t> *signs);
+  void GetParams(int transform_num, int *transform_id, const std::shared_ptr<std::vector<float>> &probs,
+                 const std::shared_ptr<std::vector<int32_t>> &signs);
 
   Transforms GetTransforms(AutoAugmentPolicy policy);
 

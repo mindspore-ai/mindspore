@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ namespace dataset {
 const float BoundingBoxAugmentOp::kDefRatio = 0.3;
 
 BoundingBoxAugmentOp::BoundingBoxAugmentOp(std::shared_ptr<TensorOp> transform, float ratio)
-    : ratio_(ratio), uniform_(0, 1), transform_(std::move(transform)) {
+    : ratio_(ratio), uniform_(0.0, 1.0), transform_(std::move(transform)) {
   rnd_.seed(GetSeed());
 }
 
@@ -55,22 +55,23 @@ Status BoundingBoxAugmentOp::Compute(const TensorRow &input, TensorRow *output) 
       // place the transformed region back in the restored input
       std::shared_ptr<CVTensor> res_img = CVTensor::AsCVTensor(res_out_row[0]);
       // check if transformed crop is out of bounds of the box
-      if (res_img->mat().cols > bbox->width() || res_img->mat().rows > bbox->height() ||
-          res_img->mat().cols < bbox->width() || res_img->mat().rows < bbox->height()) {
+      if (res_img->mat().cols > static_cast<int32_t>(bbox->width()) ||
+          res_img->mat().rows > static_cast<int32_t>(bbox->height()) ||
+          res_img->mat().cols < static_cast<int32_t>(bbox->width()) ||
+          res_img->mat().rows < static_cast<int32_t>(bbox->height())) {
         // if so, resize to fit in the box
         std::shared_ptr<TensorOp> resize_op =
           std::make_shared<ResizeOp>(static_cast<int32_t>(bbox->height()), static_cast<int32_t>(bbox->width()));
         RETURN_IF_NOT_OK(resize_op->Compute(std::static_pointer_cast<Tensor>(res_img), &res_out_row[0]));
         res_img = CVTensor::AsCVTensor(res_out_row[0]);
       }
-      res_img->mat().copyTo(
-        input_restore->mat()(cv::Rect(bbox->x(), bbox->y(), res_img->mat().cols, res_img->mat().rows)));
+      res_img->mat().copyTo(input_restore->mat()(
+        cv::Rect(static_cast<int>(bbox->x()), static_cast<int>(bbox->y()), res_img->mat().cols, res_img->mat().rows)));
     }
   }
-  (*output).push_back(std::move(std::static_pointer_cast<Tensor>(input_restore)));
+  (*output).push_back(std::static_pointer_cast<Tensor>(input_restore));
   (*output).push_back(input[1]);
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

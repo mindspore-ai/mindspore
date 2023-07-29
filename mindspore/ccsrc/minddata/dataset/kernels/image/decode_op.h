@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DECODE_OP_H_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -33,11 +33,12 @@ class DecodeOp : public TensorOp {
 
   explicit DecodeOp(bool rgb = true);
 
-  ~DecodeOp() = default;
+  ~DecodeOp() override = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
+
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
 
   std::string Name() const override { return kDecodeOp; }
@@ -47,5 +48,4 @@ class DecodeOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DECODE_OP_H_
