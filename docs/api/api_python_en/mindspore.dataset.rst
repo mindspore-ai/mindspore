@@ -190,11 +190,9 @@ Others
     mindspore.dataset.BatchInfo
     mindspore.dataset.DatasetCache
     mindspore.dataset.DSCallback
-    mindspore.dataset.SamplingStrategy
     mindspore.dataset.Schema
     mindspore.dataset.Shuffle
     mindspore.dataset.WaitedDSCallback
-    mindspore.dataset.OutputFormat
     mindspore.dataset.compare
     mindspore.dataset.debug.DebugHook
     mindspore.dataset.deserialize
