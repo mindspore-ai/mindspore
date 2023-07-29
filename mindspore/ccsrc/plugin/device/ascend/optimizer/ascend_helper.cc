@@ -830,6 +830,7 @@ void SelectCallInlineKernelInfo(const CNodePtr &node) {
   }
   // need inline
   auto sub_graph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(node, kAttrKernelGraph);
+  MS_EXCEPTION_IF_NULL(sub_graph);
   auto sub_ret = sub_graph->output();
   std::vector<std::string> input_formats;
   std::vector<TypeId> input_types;

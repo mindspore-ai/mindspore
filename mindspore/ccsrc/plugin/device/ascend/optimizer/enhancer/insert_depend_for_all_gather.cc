@@ -45,6 +45,7 @@ bool InsertDependForAllGather::Run(const FuncGraphPtr &graph) {
   auto iter = all_gather_node.begin();
   for (int64_t i = 0; i < SizeToInt(all_gather_node.size()) - 1; ++i) {
     auto current_node = iter->second;
+    MS_EXCEPTION_IF_NULL(current_node);
     auto next_node = (++iter)->second;
     MS_EXCEPTION_IF_NULL(next_node);
     auto next_cnode = next_node->cast<CNodePtr>();
@@ -66,6 +67,7 @@ bool InsertDependForAllGather::Run(const FuncGraphPtr &graph) {
     cur_new_input->AddAttr("opt_shard_depend", MakeValue(true));
     if (current_node->isa<CNode>()) {
       auto manager = graph->manager();
+      MS_EXCEPTION_IF_NULL(manager);
       auto cur_node_users = manager->node_users()[current_node];
       for (const auto &allgather_node_user : cur_node_users) {
         if (!IsPrimitiveCNode(allgather_node_user.first) ||

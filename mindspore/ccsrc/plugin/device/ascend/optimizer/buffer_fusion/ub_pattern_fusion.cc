@@ -330,6 +330,8 @@ AnfNodePtr RemoveNodeFromUpdateState(
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(updatestate);
+  MS_EXCEPTION_IF_NULL(removed_updatestate_infos);
+  MS_EXCEPTION_IF_NULL(newest_updatestate_related_fusion_ids);
   auto updatestate_cnode = updatestate->cast<CNodePtr>();
   auto inputs = updatestate_cnode->inputs();
   std::vector<AnfNodePtr> new_inputs;
