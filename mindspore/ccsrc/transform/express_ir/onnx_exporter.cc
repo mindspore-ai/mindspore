@@ -4432,6 +4432,7 @@ void OnnxExporter::ExportMergeDynamicGRUV2(const FuncGraphPtr &, const CNodePtr 
 
   auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
   auto gru_node = dyn_cast<CNode>(node->input(1));
+  MS_EXCEPTION_IF_NULL(gru_node);
 
   /* Get Attributes */
   auto direction = GetOpAttribute<std::string>(gru_node, "direction");
