@@ -43,6 +43,7 @@ constexpr float kAdamBlock = 1000;
 template <typename T>
 void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   T *var = static_cast<T *>(inputs[kIndexVar]->addr);
   T *m = static_cast<T *>(inputs[kIndexM]->addr);
   T *v = static_cast<T *>(inputs[kIndexV]->addr);
@@ -81,6 +82,7 @@ void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
 
 void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   float *var = static_cast<float *>(inputs[kIndexVar]->addr);
   float *m = static_cast<float *>(inputs[kIndexM]->addr);
   float *v = static_cast<float *>(inputs[kIndexV]->addr);
@@ -145,6 +147,7 @@ int AdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   }
   input_elements_ = 0;
 
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();
   std::vector<int64_t> beta1_power_shape = inputs[kIndexBeta1Power]->GetShapeVector();
   std::vector<int64_t> beta2_power_shape = inputs[kIndexBeta2Power]->GetShapeVector();

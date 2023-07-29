@@ -132,6 +132,8 @@ bool ApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, c
 template <typename T, typename T1, typename T2, typename T3, typename T4>
 bool ApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
   auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
   auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->addr);
   auto *squared_accum = reinterpret_cast<T *>(inputs[kSquaredAccumIndex]->addr);

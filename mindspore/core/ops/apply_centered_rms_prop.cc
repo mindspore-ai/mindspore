@@ -57,6 +57,11 @@ abstract::ShapePtr ApplyCenteredRMSPropInferShape(const PrimitivePtr &primitive,
   auto mom_shape_ptr = mom_shape->cast<abstract::ShapePtr>();
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
   // ToSupport Dynamic rank
+  MS_EXCEPTION_IF_NULL(var_shape_ptr);
+  MS_EXCEPTION_IF_NULL(mg_shape_ptr);
+  MS_EXCEPTION_IF_NULL(ms_shape_ptr);
+  MS_EXCEPTION_IF_NULL(mom_shape_ptr);
+  MS_EXCEPTION_IF_NULL(grad_shape_ptr);
   if (IsDynamicRank(var_shape_ptr->shape()) || IsDynamicRank(mg_shape_ptr->shape()) ||
       IsDynamicRank(ms_shape_ptr->shape()) || IsDynamicRank(mom_shape_ptr->shape()) ||
       IsDynamicRank(grad_shape_ptr->shape())) {

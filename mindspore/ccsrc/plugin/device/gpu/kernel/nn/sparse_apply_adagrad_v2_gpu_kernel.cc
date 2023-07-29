@@ -22,6 +22,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kSparseApplyAdagradV2InputsNum = 4;
+constexpr size_t kSparseApplyAdagradV2OutputsNum = 2;
 constexpr size_t kVarIndex = 0;
 constexpr size_t kAccIndex = 1;
 constexpr size_t kGradIndex = 2;
@@ -129,6 +130,8 @@ template <typename T, typename S>
 bool SparseApplyAdagradV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                     const std::vector<AddressPtr> &workspace,
                                                     const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyAdagradV2InputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyAdagradV2OutputsNum, kernel_name_);
   auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
   auto accum = reinterpret_cast<T *>(inputs[kAccIndex]->addr);
   auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);

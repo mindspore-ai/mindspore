@@ -263,6 +263,7 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
   }
 
   for (auto &[address, ref_count] : address_ref_count) {
+    MS_EXCEPTION_IF_NULL(address);
     address->set_original_ref_count(ref_count);
     address->ResetRefCount();
     MS_LOG(DEBUG) << "device_address " << address.get() << " ref_count " << address->ref_count();
@@ -351,6 +352,7 @@ bool GraphAdapter::PyNativeEnableTaskSink(const FuncGraphPtr &func_graph) {
     return true;
   }
 
+  MS_EXCEPTION_IF_NULL(func_graph);
   if (!func_graph->has_attr(kAttrJitLevel)) {
     MS_LOG(EXCEPTION) << "Not jit_level set to func_graph";
   }

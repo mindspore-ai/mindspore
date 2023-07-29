@@ -49,6 +49,9 @@ class AdamInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
+    const int64_t input_num = 10;
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                             primitive->name());
     auto prim_name = primitive->name();
     auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
     auto m_shape_ptr = input_args[kInputIndex1]->BuildShape();
@@ -68,6 +71,10 @@ class AdamInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::TupleShape>(
         std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr, unknow_shape_ptr});
     }
+    MS_EXCEPTION_IF_NULL(var_shape_ptr);
+    MS_EXCEPTION_IF_NULL(m_shape_ptr);
+    MS_EXCEPTION_IF_NULL(v_shape_ptr);
+    MS_EXCEPTION_IF_NULL(grad_shape_ptr);
     if (var_shape_ptr->IsDynamic() || m_shape_ptr->IsDynamic() || v_shape_ptr->IsDynamic() ||
         grad_shape_ptr->IsDynamic()) {
       return std::make_shared<abstract::TupleShape>(
@@ -119,6 +126,9 @@ class AdamInfer : public abstract::OpInferBase {
       std::vector<abstract::BaseShapePtr>{var_shape_ptr, m_shape_ptr, v_shape_ptr});
   }
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    const int64_t input_num = 10;
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                             primitive->name());
     auto prim_name = primitive->name();
     auto var_type = input_args[kInputIndex0]->BuildType();
     auto m_type = input_args[kInputIndex1]->BuildType();
