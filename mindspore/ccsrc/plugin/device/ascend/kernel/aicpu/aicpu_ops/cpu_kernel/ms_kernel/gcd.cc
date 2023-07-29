@@ -121,8 +121,12 @@ uint32_t GcdCompute(CpuKernelContext &ctx) {
   const T1 *x1_ptr = reinterpret_cast<const T1 *>(x1->GetData());
   const T2 *x2_ptr = reinterpret_cast<const T2 *>(x2->GetData());
   T3 *y_ptr = reinterpret_cast<T3 *>(y->GetData());
-  auto x1_shape = x1->GetTensorShape()->GetDimSizes();
-  auto x2_shape = x2->GetTensorShape()->GetDimSizes();
+  auto x1_shape_ptr = x1->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(x1_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: x1 shape is nullptr.", kGcd);
+  auto x1_shape = x1_shape_ptr->GetDimSizes();
+  auto x2_shape_ptr = x2->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(x2_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: x2 shape is nullptr.", kGcd);
+  auto x2_shape = x2_shape_ptr->GetDimSizes();
   Bcast bcast(x1_shape, x2_shape);
   if (bcast.IsValid()) {
     return GcdElewiseCompute<T1, T2, T3>(ctx, x1_ptr, x2_ptr, y_ptr, bcast);

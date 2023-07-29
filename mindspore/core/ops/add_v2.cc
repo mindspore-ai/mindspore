@@ -34,6 +34,9 @@ namespace {
 abstract::ShapePtr AddV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   if (!is_gpu) {
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
@@ -45,6 +48,9 @@ abstract::ShapePtr AddV2InferShape(const PrimitivePtr &primitive, const std::vec
 
 TypePtr AddV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
+  MS_EXCEPTION_IF_NULL(prim);
+  const size_t kInputNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim->name());
   const std::set<TypePtr> valid_types = {kInt8,   kInt16, kInt32,   kInt64,   kUInt8,   kUInt16,    kUInt32,
                                          kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)types.emplace("x", input_args[0]->BuildType());
@@ -57,9 +63,6 @@ TypePtr AddV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 MIND_API_OPERATOR_IMPL(AddV2, BaseOperator);
 AbstractBasePtr AddV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputNum = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto output_type = AddV2InferType(primitive, input_args);
   auto output_shape = AddV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(output_shape, output_type);

@@ -28,7 +28,8 @@ constexpr size_t kCompareAndBitpackOutputsNum = 1;
 bool CompareAndBitpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCompareAndBitpackInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCompareAndBitpackOutputsNum, kernel_name_);
   dtype_ = inputs[kIndex0]->GetDtype();
@@ -40,8 +41,11 @@ bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
                                                  const std::vector<kernel::AddressPtr> &,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
   T *input0 = static_cast<T *>(inputs[0]->addr);
+  MS_EXCEPTION_IF_NULL(input0);
   T *input1 = static_cast<T *>(inputs[1]->addr);
+  MS_EXCEPTION_IF_NULL(input1);
   uint8_t *output = static_cast<uint8_t *>(outputs[0]->addr);
+  MS_EXCEPTION_IF_NULL(output);
   int64_t data_num = SizeToLong(outputs[0]->size);
   T thresh = *input1;
   const int64_t shift_num1 = 1;

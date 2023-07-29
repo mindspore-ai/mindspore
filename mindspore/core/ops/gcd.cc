@@ -29,12 +29,14 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr GcdInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   return BroadCastInferShape(primitive->name(), input_args);
 }
 
 TypePtr GcdInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> gcd_valid_types = {kInt32, kInt64};
   TypePtr x1_type = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x1_type);
   auto inferred_type = CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_type, gcd_valid_types, prim->name());
   return inferred_type;
 }

@@ -87,8 +87,12 @@ TypePtr CompareAndBitpackInferType(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(primitive);
   const std::set<TypePtr> valid_types = {kBool, kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("threshold", input_args[kInputIndex1]->BuildType());
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  auto threshold_type = input_args[kInputIndex1]->BuildType();
+  MS_EXCEPTION_IF_NULL(threshold_type);
+  (void)types.emplace("x", x_type);
+  (void)types.emplace("threshold", threshold_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return std::make_shared<TensorType>(kUInt8);
 }
