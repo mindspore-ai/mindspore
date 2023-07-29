@@ -26,7 +26,6 @@ from mindspore.common import mutable
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -46,8 +45,8 @@ def test_return_interpret_object():
     output = foo(Tensor([2]))
     assert len(output) == 3
     assert output[0] == 1
-    assert output[2] == Tensor([2])
-    assert np.all(output[3], np.array([1, 2, 3, 4]))
+    assert output[1] == Tensor([2])
+    assert np.all(output[2] == np.array([1, 2, 3, 4]))
 
 
 @pytest.mark.level0
@@ -93,7 +92,6 @@ def test_str_format_in_variable_scene():
     assert output == "[2], [1]"
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -112,7 +110,7 @@ def test_numpy_asarray_with_variable_scene():
         return np.asarray(a)
 
     output = foo(mutable(1), mutable(2))
-    assert output == np.array([1, 2])
+    assert np.all(output == np.array([1, 2]))
 
 
 @pytest.mark.level0
@@ -195,7 +193,8 @@ def test_slice_with_variable():
         a = slice(0, 3, 1)
         return x[a]
 
-    assert foo(Tensor([1, 2, 3, 4, 5])) == Tensor([1, 2, 3])
+    out = foo(Tensor([1, 2, 3, 4, 5])).asnumpy()
+    assert np.all(out.asnumpy() == Tensor([1, 2, 3]).asnumpy())
 
 
 @pytest.mark.skip(reason="not support now")
@@ -212,14 +211,13 @@ def test_slice_with_mutable_input():
     """
 
     @jit
-    def foo(x):
+    def foo():
         a = slice(mutable(0), 3, 1)
         return a.step
 
-    assert foo(Tensor([1, 2, 3, 4, 5])) == 1
+    assert foo() == 1
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -239,7 +237,7 @@ def test_compress_with_mutable_input():
         z = np.compress(cond, a)
         return z
 
-    assert foo(Tensor([1])) == [Tensor([1]), Tensor([3]), Tensor([4])]
+    assert (foo(Tensor([1])) == [1, 3, 4]).all()
 
 
 @pytest.mark.skip(reason="not support now")
@@ -336,7 +334,6 @@ def test_starred_to_unpack_input():
     assert ret == "output is (1, 2, 3, 4)"
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -354,13 +351,13 @@ def test_call_third_party_class():
         ret = deque()
         for i in x:
             ret.appendleft(i)
-        return list(ret)
+        return ret
 
-    ret = foo([1, 2, 3, 4])
-    assert ret == [1, 2, 3, 4]
+    out = foo([1, 2, 3, 4])
+    assert isinstance(out, deque)
+    assert out == deque([4, 3, 2, 1])
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -378,17 +375,16 @@ def test_np_ix_with_variable():
         grids = ([np.array(list(range(start, stop, step)), dtype=np.int64)] +
                  [np.array(list(range(dim_size)), dtype=np.int64) for dim_size in shape[1:]])
         mesh = np.ix_(*grids)
-        return Tensor(np.stack(np.broadcast_arrays(*mesh), axis=-1))
+        return np.stack(np.broadcast_arrays(*mesh), axis=-1)
 
     @jit
     def foo():
         return convert(mutable(0), mutable(5), mutable(1))
 
     ret = foo()
-    assert ret == [[0], [1], [2], [3], [4]]
+    assert (ret == [[0], [1], [2], [3], [4]]).all()
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -407,11 +403,10 @@ def test_generate_tensor_using_variable_numpy_array():
         ret = np.arange(a)
         return Tensor(ret)
 
-    ret = foo()
-    assert ret == Tensor([0, 1])
+    out = foo()
+    assert (out == Tensor([0, 1])).all()
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -429,7 +424,7 @@ def test_numpy_prod_with_variable_axis():
         a = x.asnumpy()
         return np.prod(a, axis=y)
 
-    ret = foo(Tensor([1, 2], [3, 4]), mutable(1))
+    ret = foo(Tensor([[1, 2], [3, 4]]), mutable(1))
     assert np.all(ret == np.array([2, 12]))
 
 
