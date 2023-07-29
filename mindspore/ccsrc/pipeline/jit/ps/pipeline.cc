@@ -74,6 +74,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/device/stream_synchronizer.h"
+#include "include/common/fallback.h"
 #include "include/common/profiler.h"
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
@@ -302,7 +303,7 @@ AnfNodePtr GetRealOutput(const AnfNodePtr &node) {
 }
 
 kernel::PyExecuteOutputUserDataPtr GetUserDataFromNode(const AnfNodePtr &output) {
-  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   if (allow_fallback_runtime) {
     const auto &real_output = GetRealOutput(output);
     MS_LOG(DEBUG) << "Real output: " << real_output << ", " << real_output->DebugString()
@@ -365,7 +366,7 @@ py::object GetVectorRefPyDataWithAbstract(const VectorRef &value_list, const abs
   auto value_size = value_list.size();
   auto ret = T(value_size);
 
-  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   size_t ref_idx = 0;
   for (size_t i = 0; i < seq_abs->size(); ++i) {
     auto elem_abs = seq_abs->elements()[i];
@@ -405,7 +406,7 @@ py::object GetVectorRefPyData(const VectorRef &value_list, const AbstractBasePtr
 }
 
 py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBasePtr &abs) {
-  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   if (!allow_fallback_runtime) {
     return BaseRefToPyData(value, abs);
   }
@@ -718,7 +719,10 @@ py::bytes GraphExecutorPy::GetOptimizeGraphProto(const std::string &phase) {
   return proto_str;
 }
 
-void GraphExecutorPy::SetJitConfig(const py::dict &jit_config) { jit_config_ = GenerateJitConfigMap(jit_config); }
+void GraphExecutorPy::SetJitConfig(const py::dict &config) {
+  auto jit_config = GenerateJitConfigMap(config);
+  PhaseManager::GetInstance().set_jit_config(jit_config);
+}
 
 py::dict GraphExecutorPy::GetParallelGraphInfo(const std::string &phase) {
   MS_LOG(DEBUG) << "GetParallelGraphInfo!";
@@ -1807,10 +1811,10 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   }
   MS_LOG(DEBUG) << "InitDataSetVm End.";
   return true;
-}  // namespace pipeline
+}
 
 std::string GetJitLevel() {
-  const auto &jit_config = GraphExecutorPy::GetInstance()->jit_config();
+  const auto &jit_config = PhaseManager::GetInstance().jit_config();
   auto iter = jit_config.find("jit_level");
   if (iter != jit_config.end()) {
     return iter->second;

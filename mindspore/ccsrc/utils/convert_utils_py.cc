@@ -37,6 +37,7 @@
 #include "pybind_api/ir/base_ref_py.h"
 #include "ir/dtype/tensor_type.h"
 #include "utils/ms_context.h"
+#include "include/common/fallback.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/convert_utils.h"
 #include "frontend/expander/pack/pack_expander.h"
@@ -556,7 +557,7 @@ py::object AbstractSequenceToPyData(const VectorRef &value_list, const AbstractB
     }
     return ret;
   }
-  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   // If FALLBACK_RUNTIME is not enable
   // The size of seq_abs may be larger than the size of value_list, because the backend will eliminate None.
   size_t ref_idx = 0;

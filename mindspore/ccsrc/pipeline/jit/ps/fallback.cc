@@ -26,6 +26,7 @@
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "include/common/fallback.h"
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
@@ -648,7 +649,7 @@ std::string GetPyObjectPtrStr(const py::object &obj) {
 }
 
 bool EnableFallbackList() {
-  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
   return allow_fallback_runtime && allow_inplace_ops;
 }

@@ -38,6 +38,7 @@
 #include "pipeline/jit/ps/parse/parse_base.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/operator/composite/composite.h"
+#include "include/common/fallback.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "ir/anf.h"
 #include "ir/value.h"
@@ -235,7 +236,7 @@ class BeforeOptARewriter : public BaseRewriter {
 
  protected:
   void ConvertParameter() {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime || !is_dict_output_) {
       return;
     }
@@ -336,7 +337,7 @@ class BeforeOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertDictGetItem(const CNodePtr &node) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime || !is_dict_output_) {
       return ConvertDictGetItemToTupleGetItem(node);
     }
@@ -399,7 +400,7 @@ class BeforeOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertDictSetItem(const CNodePtr &node) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime || !is_dict_output_) {
       return ConvertDictSetItemToTupleSetItem(node);
     }
@@ -437,7 +438,7 @@ class BeforeOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime || (!is_dict_output_ && !CheckUserHasPyExecute(node))) {
       auto new_node = EraseMakeDictNode(node);
       return new_node;
@@ -454,7 +455,7 @@ class BeforeOptARewriter : public BaseRewriter {
     constexpr size_t expect_inputs_size = 2;
     CheckInputsSize(node, expect_inputs_size);
     auto input = node->input(1);
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime || !is_dict_output_) {
       return input;
     }
@@ -497,7 +498,7 @@ class BeforeOptARewriter : public BaseRewriter {
     std::vector<AnfNodePtr> new_inputs;
     new_inputs.reserve(elements.size() + 1);
     (void)new_inputs.emplace_back(NewValueNode(prim::kPrimMakeList));
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     bool convert_to_tuple = !allow_fallback_runtime || !is_dict_output_;
     for (size_t i = 0; i < elements.size(); ++i) {
       auto index_node = NewValueNode(static_cast<int64_t>(i));
@@ -608,7 +609,7 @@ class BeforeOptARewriter : public BaseRewriter {
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     // Convert Dictionary value node.
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     bool convert_dict = !allow_fallback_runtime || !is_dict_output_;
     bool need_convert = false;
     auto new_value = ConvertDictValue(value, 0, convert_dict, &need_convert);
@@ -669,7 +670,7 @@ class BeforeOptARewriter : public BaseRewriter {
       }
     }
     // AbstractDictionary --> AbstractTuple.
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     bool convert_to_tuple = !allow_fallback_runtime || !is_dict_output_;
     auto abs_dict = abs->cast<AbstractDictionaryPtr>();
     if (abs_dict != nullptr && convert_to_tuple) {
@@ -1296,7 +1297,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // x.clear() --> PyExecute(_jit_fallback_list_inplace_clear(x))
   AnfNodePtr ConvertListInplaceClear(const CNodePtr &node) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       return nullptr;
     }
@@ -1353,7 +1354,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // raise(string, keys, values, io) --> PyExecute(string, keys, values, io)
   AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       return nullptr;
     }
@@ -1430,7 +1431,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // ScalarCast(x, dtype) --> PyExecute(string, keys, values)
   AnfNodePtr ConvertScalarCast(const CNodePtr &cnode) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       return nullptr;
     }
@@ -1540,7 +1541,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertIsInstance(const CNodePtr &cnode) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       return nullptr;
     }
@@ -1563,7 +1564,7 @@ class AfterOptARewriter : public BaseRewriter {
   // B = PyExecute("".join(__inner_str_list__)", ("__inner_str_list__",), (A,)).
   // replace(B --> JoinedStr)
   AnfNodePtr ConvertJoinedStr(const CNodePtr &cnode) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       return nullptr;
     }
@@ -1596,7 +1597,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertPrint(const CNodePtr &cnode) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       return nullptr;
     }
@@ -1755,7 +1756,7 @@ class AfterOptARewriter : public BaseRewriter {
       }
       return ConvertNoneToPyExecute(fg);
     }
-    if (vm_pipeline_ && MsContext::GetInstance()->GetJitSyntaxLevel() == kLax) {
+    if (vm_pipeline_ && fallback::GetJitSyntaxLevel() == kLax) {
       if (value->isa<Type>()) {
         return ConvertTypeToPyExecute(fg, value_node, value->cast<TypePtr>());
       } else if (value->isa<parse::ClassType>()) {
@@ -1795,7 +1796,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   void ConvertValueInputToPyExecute(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       return;
     }
@@ -1815,7 +1816,7 @@ class AfterOptARewriter : public BaseRewriter {
         continue;
       }
       const auto &value = value_node->value();
-      if (vm_pipeline_ && MsContext::GetInstance()->GetJitSyntaxLevel() == kLax) {
+      if (vm_pipeline_ && fallback::GetJitSyntaxLevel() == kLax) {
         // Not convert the 'type' used by Cast primitive.
         if (value->isa<Type>() && IsPrimitiveCNode(cnode, prim::kPrimCast)) {
           continue;
@@ -1984,7 +1985,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (allow_fallback_runtime) {
       if (value->isa<ValueDictionary>()) {
         return RebuildValueDict(root_graph_, value_node, value->cast<ValueDictionaryPtr>());

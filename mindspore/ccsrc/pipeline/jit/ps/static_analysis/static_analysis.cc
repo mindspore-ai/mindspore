@@ -284,7 +284,7 @@ EvalResultPtr ConvertClassTypeToFunc(const CNodePtr &cnode, const AbstractBasePt
   auto py_fn =
     python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION, py::str(class_name), class_obj);
   if (py::isinstance<py::none>(py_fn)) {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
     if (allow_fallback_runtime) {
       return ConvertToPyExecuteCall(cnode, conf);
     }
@@ -637,7 +637,7 @@ AnfNodeConfigPtr AnalysisEngine::GetForwardConfig(const AnfNodeConfigPtr &conf) 
 }
 
 EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
-  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
   if (!allow_fallback_runtime) {
     return nullptr;
   }

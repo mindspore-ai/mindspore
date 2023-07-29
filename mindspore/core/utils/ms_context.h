@@ -191,7 +191,6 @@ class MS_CORE_API MsContext {
 
   void Refresh();
 
-  int GetJitSyntaxLevel() const;
   bool enable_dump_ir() const;
   std::string GetSaveGraphsPath() const;
   bool CanDump(const DumpLevel &level) const;

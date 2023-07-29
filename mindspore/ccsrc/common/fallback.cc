@@ -20,6 +20,8 @@
 
 #include "include/common/utils/python_adapter.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
+#include "utils/phase.h"
 
 namespace mindspore {
 namespace fallback {
@@ -37,6 +39,36 @@ py::object PopPyExecuteOutput() {
 void PushPyExecuteOutput(const py::object &output) {
   MS_LOG(DEBUG) << "output: " << output;
   py_execute_output_queue.push(output);
+}
+
+int GetJitSyntaxLevel() {
+  // Get jit_syntax_level from environment variable 'MS_DEV_JIT_SYNTAX_LEVEL'.
+  std::string env_level_str = common::GetEnv("MS_DEV_JIT_SYNTAX_LEVEL");
+  if (env_level_str.size() == 1) {
+    int env_level = std::stoi(env_level_str);
+    if (env_level >= kStrict && env_level <= kLax) {
+      return env_level;
+    }
+  }
+  if (!env_level_str.empty()) {
+    MS_LOG(EXCEPTION) << "JIT syntax level should be a number and from 0 to 2, but got " << env_level_str;
+  }
+
+  // Get jit_syntax_level from jit_config, default to an empty string.
+  const auto &jit_config = PhaseManager::GetInstance().jit_config();
+  auto iter = jit_config.find("jit_syntax_level");
+  if (iter != jit_config.end()) {
+    auto level = iter->second;
+    if (level == "STRICT") {
+      return kStrict;
+    } else if (level == "COMPATIBLE") {
+      return kCompatible;
+    } else if (level == "LAX") {
+      return kLax;
+    }
+  }
+  // Get jit_syntax_level from context.
+  return MsContext::GetInstance()->get_param<int>(MS_CTX_JIT_SYNTAX_LEVEL);
 }
 
 bool CheckListToMemory(const py::list &obj) {

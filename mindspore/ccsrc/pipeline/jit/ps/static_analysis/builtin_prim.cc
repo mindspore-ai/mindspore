@@ -19,6 +19,7 @@
 #include "pipeline/jit/ps/static_analysis/builtin_prim.h"
 
 #include "include/common/utils/convert_utils_py.h"
+#include "include/common/fallback.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "pipeline/jit/ps/fallback.h"
@@ -63,7 +64,7 @@ EvalResultPtr InnerAbsEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   MS_EXCEPTION_IF_NULL(args_abs_list[0]);
   // Convert pyexecute.
   if (fallback::ContainsSequenceAnyType(args_abs_list[0])) {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (allow_fallback_runtime) {
       auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "abs");
       MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
@@ -150,7 +151,7 @@ EvalResultPtr InnerRoundEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   // Convert pyexecute.
   if (fallback::ContainsSequenceAnyType(args_abs_list[0]) ||
       (args_abs_list.size() == max_input_index && fallback::ContainsSequenceAnyType(args_abs_list[1]))) {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (allow_fallback_runtime) {
       auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "round");
       MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
@@ -228,7 +229,7 @@ EvalResultPtr InnerLenEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   } else if (args_abs_list[0]->isa<AbstractDictionary>()) {
     new_cnode->set_input(0, NewValueNode(prim::kPrimDictLen));
   } else if (args_abs_list[0]->isa<AbstractAny>()) {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     // Convert pyexecute.
     if (allow_fallback_runtime) {
       auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "len");

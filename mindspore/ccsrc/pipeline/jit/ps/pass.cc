@@ -36,6 +36,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/graph_transform.h"
 #include "frontend/optimizer/auto_monad_eliminate.h"
+#include "include/common/fallback.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
@@ -103,7 +104,7 @@ void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource)
 }  // namespace
 
 bool PyInterpretToExecutePass(const ResourcePtr &resource) {
-  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
   if (!allow_fallback_runtime) {
     return true;
   }
@@ -180,9 +181,10 @@ bool OrderPyExecuteAfterRewriterPass(const ResourcePtr &resource) {
 }
 
 bool ConvertListToTupleForExportPass(const ResourcePtr &resource) {
-  if (MsContext::GetInstance()->GetJitSyntaxLevel() == kStrict) {
+  auto jit_syntax_level = fallback::GetJitSyntaxLevel();
+  if (jit_syntax_level == kStrict) {
     return true;
-  } else if (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax) {
+  } else if (jit_syntax_level == kLax) {
     // Throw exception later.
     MS_LOG(INFO) << "Not allow to export when set JIT syntax level to Lax.";
     return true;

@@ -25,6 +25,7 @@
 #include "utils/ms_context.h"
 #include "pipeline/jit/ps/fallback.h"
 #include "include/common/pybind_api/api_register.h"
+#include "include/common/fallback.h"
 #include "ir/signature.h"
 #include "ir/dtype.h"
 #include "pipeline/jit/ps/debug/trace.h"
@@ -258,7 +259,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
     return stub;
   }
 
-  const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
   bool has_dic = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<Dictionary>(); });
   if (allow_fallback_runtime && (!need_raise_ || !has_dic)) {
     FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
