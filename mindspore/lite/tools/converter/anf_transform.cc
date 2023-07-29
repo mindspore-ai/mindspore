@@ -135,6 +135,7 @@
 #include "tools/common/string_util.h"
 #include "src/common/common.h"
 #include "tools/optimizer/graph/miniaturization_pass.h"
+#include "tools/optimizer/graph/scalar_op_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -805,7 +806,8 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>(), false},
     {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>(), false},
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
-    {"RemoveUnusedAddNodePass", std::make_shared<opt::RemoveUnusedAddNodePass>(), false}};
+    {"RemoveUnusedAddNodePass", std::make_shared<opt::RemoveUnusedAddNodePass>(), false},
+    {"ScalarOpPass", std::make_shared<opt::ScalarOpPass>(), true}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
