@@ -54,6 +54,7 @@
 #include "nnacl/kernel/shape.h"
 #include "nnacl/kernel/reduce.h"
 #include "nnacl/kernel/ragged_range.h"
+#include "nnacl/kernel/reduce_scatter.h"
 #include "nnacl/kernel/stack.h"
 #include "nnacl/kernel/strided_slice.h"
 #include "nnacl/kernel/softmax.h"
@@ -117,6 +118,7 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_Neg][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_PadFusion][REGIST_DT(kNumberTypeFloat16)] = CreatePad;
+  creators[PrimType_Rank][REGIST_DT(kNumberTypeFloat16)] = CreateRank;
   creators[PrimType_PReLUFusion][REGIST_DT(kNumberTypeFloat16)] = CreatePRelu;
   creators[PrimType_PowFusion][REGIST_DT(kNumberTypeFloat16)] = CreatePow;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
@@ -261,7 +263,6 @@ void InitVSKernelR(KernelCreator **creators) {
   creators[PrimType_Range][REGIST_DT(kNumberTypeInt32)] = CreateRange;
   creators[PrimType_Range][REGIST_DT(kNumberTypeFloat16)] = CreateRange;
   creators[PrimType_Rank][REGIST_DT(kNumberTypeFloat32)] = CreateRank;
-  creators[PrimType_Rank][REGIST_DT(kNumberTypeFloat32)] = CreateRank;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeBool)] = CreateReshape;
@@ -269,6 +270,7 @@ void InitVSKernelR(KernelCreator **creators) {
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeBool)] = CreateReduce;
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeInt32)] = CreateReduce;
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeFloat32)] = CreateReduce;
+  creators[PrimType_ReduceScatter][REGIST_DT(kNumberTypeFloat32)] = CreateReduceScatter;
   creators[PrimType_Reciprocal][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_ReverseV2][REGIST_DT(kNumberTypeInt32)] = CreateReverse;
   creators[PrimType_ReverseV2][REGIST_DT(kNumberTypeFloat32)] = CreateReverse;
