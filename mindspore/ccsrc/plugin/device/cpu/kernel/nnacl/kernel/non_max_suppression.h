@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_NLLLOSS_H_
-#define NNACL_KERNEL_NLLLOSS_H_
+#ifndef NNACL_KERNEL_NON_MAX_SUPPRESSION_H_
+#define NNACL_KERNEL_NON_MAX_SUPPRESSION_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
@@ -23,10 +23,12 @@
 
 typedef struct {
   KernelBase base_;
-  int batch_;
-  int class_num_;
-} NLLLossStruct;
+  int center_point_box_;
+  int max_output_per_class_;
+  float iou_threshold_;
+  float score_threshold_;
+} NonMaxSuppressionStruct;
 
-KernelBase *CreateNLLLoss(OpParameter *param, int data_type);
+KernelBase *CreateNonMaxSuppression(OpParameter *param, int data_type);
 
-#endif  // NNACL_KERNEL_NLLLOSS_H_
+#endif  // NNACL_KERNEL_NON_MAX_SUPPRESSION_H_

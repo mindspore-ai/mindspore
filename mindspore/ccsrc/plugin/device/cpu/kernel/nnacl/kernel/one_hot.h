@@ -21,7 +21,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-typedef struct OneHotStruct {
+typedef struct {
   KernelBase base_;
   int axis_;
   int depth_;

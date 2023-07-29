@@ -38,6 +38,7 @@
 #include "nnacl/kernel/local_response_norm.h"
 #include "nnacl/kernel/layer_norm.h"
 #include "nnacl/kernel/matmul.h"
+#include "nnacl/kernel/non_max_suppression.h"
 #include "nnacl/kernel/non_zero.h"
 #include "nnacl/kernel/nllloss.h"
 #include "nnacl/kernel/prior_box.h"
@@ -242,6 +243,7 @@ void InitVSKernelI(KernelCreator **creators) {
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt64)] = CreateArithmeticCompare;
   creators[PrimType_NonZero][REGIST_DT(kNumberTypeBool)] = CreateNonZero;
+  creators[PrimType_NonMaxSuppression][REGIST_DT(kNumberTypeFloat32)] = CreateNonMaxSuppression;
   creators[PrimType_PadFusion][REGIST_DT(kNumberTypeFloat32)] = CreatePad;
   creators[PrimType_PriorBox][REGIST_DT(kNumberTypeFloat32)] = CreatePriorBox;
   creators[PrimType_PriorBox][REGIST_DT(kNumberTypeInt8)] = CreatePriorBox;

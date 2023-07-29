@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_NLLLOSS_H_
-#define NNACL_KERNEL_NLLLOSS_H_
+#ifndef NNACL_FP32_NON_MAX_SUPPRESSION_FP32_H_
+#define NNACL_FP32_NON_MAX_SUPPRESSION_FP32_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/tensor_c.h"
-#include "nnacl/kernel.h"
+#include "nnacl/kernel/non_max_suppression.h"
 
-typedef struct {
-  KernelBase base_;
-  int batch_;
-  int class_num_;
-} NLLLossStruct;
+int NonMaxSuppressionSelecte(NonMaxSuppressionStruct *nm_suppression, bool simple_out, int *score_dims);
 
-KernelBase *CreateNLLLoss(OpParameter *param, int data_type);
-
-#endif  // NNACL_KERNEL_NLLLOSS_H_
+#endif  // NNACL_FP32_NON_MAX_SUPPRESSION_FP32_H_

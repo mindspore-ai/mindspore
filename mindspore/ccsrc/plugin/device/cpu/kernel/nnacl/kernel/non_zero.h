@@ -21,7 +21,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-typedef struct NonZeroStruct {
+typedef struct {
   KernelBase base_;
 } NonZeroStruct;
 
