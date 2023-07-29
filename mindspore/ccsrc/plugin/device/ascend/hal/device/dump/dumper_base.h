@@ -64,6 +64,8 @@ bool KernelNeedDump(const CNodePtr &kernel);
 void SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info, const uint32_t debug_task_id,
                            const uint32_t debug_stream_id, const void *op_debug_dump_args);
 void SetDumpShape(const ShapeVector &ms_shape, NotNull<aicpu::dump::Shape *> dump_shape);
+void SetdeviceLoopcontrolTensors(const std::map<std::string, tensor::TensorPtr> &input_ctrl_tensors,
+                                 const NotNull<aicpu::dump::OpMappingInfo *> dump_info);
 void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr);
 void ReleaseDevMem(void **ptr);
 }  // namespace ascend

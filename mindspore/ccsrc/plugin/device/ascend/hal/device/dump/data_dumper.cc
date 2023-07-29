@@ -95,8 +95,7 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   MS_EXCEPTION_IF_NULL(kernel_graph_);
   auto dump_path = DumpJsonParser::GetInstance().path();
   auto input_ctrl_tensors = kernel_graph_->device_loop_control_tensors();
-  constexpr size_t kLoopSinkCtrlTensorNum = 5;  // cur step, next step, cur epoch, one, steps per epoch
-  bool valid_ctrl_tensors = input_ctrl_tensors.size() >= kLoopSinkCtrlTensorNum;
+
   std::string net_name = DumpJsonParser::GetInstance().net_name();
   std::string iteration = DumpJsonParser::GetInstance().iteration_string();
 
@@ -131,32 +130,7 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   dump_info->set_model_id(graph_id);
   dump_info->set_flag(kAicpuLoadFlag);
 
-  if (!valid_ctrl_tensors) {
-    MS_LOG(INFO) << "[DataDump] input_ctrl_tensors not valid.";
-    return;
-  }
-  const auto &current_step_tensor = input_ctrl_tensors[kCurLoopCountName];
-  const auto &current_epoch_tensor = input_ctrl_tensors[kCurEpochCountName];
-  const auto &steps_per_epoch_tensor = input_ctrl_tensors[kConstLoopNumInEpochName];
-
-  MS_EXCEPTION_IF_NULL(current_step_tensor);
-  MS_EXCEPTION_IF_NULL(current_epoch_tensor);
-  MS_EXCEPTION_IF_NULL(steps_per_epoch_tensor);
-  MS_EXCEPTION_IF_NULL(current_step_tensor->device_address());
-  MS_EXCEPTION_IF_NULL(current_epoch_tensor->device_address());
-  MS_EXCEPTION_IF_NULL(steps_per_epoch_tensor->device_address());
-
-  void *current_step = current_step_tensor->device_address()->GetMutablePtr();
-  void *current_epoch = current_epoch_tensor->device_address()->GetMutablePtr();
-  void *steps_per_epoch = steps_per_epoch_tensor->device_address()->GetMutablePtr();
-
-  if (current_epoch != nullptr && current_step != nullptr && steps_per_epoch != nullptr) {
-    dump_info->set_step_id_addr(reinterpret_cast<uint64_t>(current_epoch));
-    dump_info->set_loop_cond_addr(reinterpret_cast<uint64_t>(current_step));
-    dump_info->set_iterations_per_loop_addr(reinterpret_cast<uint64_t>(steps_per_epoch));
-  } else {
-    MS_LOG(INFO) << "Invalid ctrl tensor device address";
-  }
+  SetdeviceLoopcontrolTensors(input_ctrl_tensors, dump_info);
   MS_LOG(INFO) << "SetOpMappinglnfo End.";
 }
 #endif

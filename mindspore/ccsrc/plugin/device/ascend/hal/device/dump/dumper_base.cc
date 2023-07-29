@@ -91,14 +91,59 @@ void SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info
   dump_info->mutable_task()->Add(std::move(task));
 }
 
+void SetdeviceLoopcontrolTensors(const std::map<std::string, tensor::TensorPtr> &input_ctrl_tensors,
+                                 const NotNull<aicpu::dump::OpMappingInfo *> dump_info) {
+  constexpr size_t kLoopSinkCtrlTensorNum = 5;  // cur step, next step, cur epoch, one, steps per epoch
+  bool valid_ctrl_tensors = input_ctrl_tensors.size() >= kLoopSinkCtrlTensorNum;
+  if (!valid_ctrl_tensors) {
+    MS_LOG(INFO) << "[DataDump] input_ctrl_tensors not valid.";
+    return;
+  }
+  auto iter_current_step_tensor = input_ctrl_tensors.find(kCurLoopCountName);
+  if (iter_current_step_tensor == input_ctrl_tensors.end()) {
+    MS_LOG(WARNING) << "Failed to get value in input_ctrl_tensors, key: " << kCurLoopCountName;
+    return;
+  }
+  const auto &current_step_tensor = iter_current_step_tensor->second;
+
+  auto iter_current_epoch_tensor = input_ctrl_tensors.find(kCurEpochCountName);
+  if (iter_current_epoch_tensor == input_ctrl_tensors.end()) {
+    MS_LOG(WARNING) << "Failed to get value in input_ctrl_tensors, key: " << kCurEpochCountName;
+    return;
+  }
+  const auto &current_epoch_tensor = iter_current_epoch_tensor->second;
+
+  auto iter_steps_per_epoch_tensor = input_ctrl_tensors.find(kConstLoopNumInEpochName);
+  if (iter_steps_per_epoch_tensor == input_ctrl_tensors.end()) {
+    MS_LOG(WARNING) << "Failed to get value in input_ctrl_tensors, key: " << kConstLoopNumInEpochName;
+    return;
+  }
+  const auto &steps_per_epoch_tensor = iter_steps_per_epoch_tensor->second;
+
+  MS_EXCEPTION_IF_NULL(current_step_tensor);
+  MS_EXCEPTION_IF_NULL(current_epoch_tensor);
+  MS_EXCEPTION_IF_NULL(steps_per_epoch_tensor);
+  MS_EXCEPTION_IF_NULL(current_step_tensor->device_address());
+  MS_EXCEPTION_IF_NULL(current_epoch_tensor->device_address());
+  MS_EXCEPTION_IF_NULL(steps_per_epoch_tensor->device_address());
+
+  void *current_step = current_step_tensor->device_address()->GetMutablePtr();
+  void *current_epoch = current_epoch_tensor->device_address()->GetMutablePtr();
+  void *steps_per_epoch = steps_per_epoch_tensor->device_address()->GetMutablePtr();
+
+  if (current_epoch != nullptr && current_step != nullptr && steps_per_epoch != nullptr) {
+    dump_info->set_step_id_addr(reinterpret_cast<uint64_t>(current_epoch));
+    dump_info->set_loop_cond_addr(reinterpret_cast<uint64_t>(current_step));
+    dump_info->set_iterations_per_loop_addr(reinterpret_cast<uint64_t>(steps_per_epoch));
+  } else {
+    MS_LOG(INFO) << "Invalid ctrl tensor device address";
+  }
+}
+
 void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr) {
   std::string proto_str;
   size_t proto_size = dump_info.ByteSizeLong();
   bool ret = dump_info.SerializeToString(&proto_str);
-
-  std::string proto_json;
-  (void)google::protobuf::util::MessageToJsonString(dump_info, &proto_json);
-
   if (!ret || proto_size == 0) {
     MS_LOG(EXCEPTION) << "[DumperBase] Protobuf SerializeToString failed, proto size %zu.";
   }
