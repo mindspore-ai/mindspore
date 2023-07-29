@@ -450,10 +450,9 @@ int ResizeBicubic(const float *input_data, float *output_data, const int32_t *in
 }
 
 int RewriteExtrapolationValue(const float *input_data, float *output_data, const int32_t *box_idx, const float *boxes,
-                              const CropAndResizeParameter *param, const int32_t *input_shape,
-                              const int32_t *output_shape, const int32_t *y_tops, const int h_begin, const int h_end) {
-  if (input_data == NULL || output_data == NULL || box_idx == NULL || param == NULL || input_shape == NULL ||
-      output_shape == NULL) {
+                              float extrapolation_value, const int32_t *input_shape, const int32_t *output_shape,
+                              const int32_t *y_tops, const int h_begin, const int h_end) {
+  if (input_data == NULL || output_data == NULL || box_idx == NULL || input_shape == NULL || output_shape == NULL) {
     return NNACL_NULL_PTR;
   }
   int batch = output_shape[0];
@@ -465,7 +464,6 @@ int RewriteExtrapolationValue(const float *input_data, float *output_data, const
 
   for (int b = 0; b < batch; b++) {
     float *output = output_data + b * new_height * new_width * new_channel;
-    const float extrapolation_value = param->extrapolation_value_;
     const float *box = boxes + 4 * b;
     float start_h = box[0];
     float end_h = box[2];
@@ -506,13 +504,13 @@ int RewriteExtrapolationValue(const float *input_data, float *output_data, const
 }
 
 int CropAndResizeBilinear(const float *input_data, float *output_data, const int32_t *box_idx, const float *boxes,
-                          const CropAndResizeParameter *param, const int32_t *input_shape, const int32_t *output_shape,
+                          float extrapolation_value, const int32_t *input_shape, const int32_t *output_shape,
                           const int32_t *y_bottoms, const int32_t *y_tops, const int32_t *x_lefts,
                           const int32_t *x_rights, const float *y_bottom_weights, const float *x_left_weights,
                           float *line0, float *line1, const int h_begin, const int h_end) {
-  if (input_data == NULL || output_data == NULL || box_idx == NULL || param == NULL || input_shape == NULL ||
-      output_shape == NULL || y_bottoms == NULL || y_tops == NULL || x_lefts == NULL || x_rights == NULL ||
-      y_bottom_weights == NULL || x_left_weights == NULL) {
+  if (input_data == NULL || output_data == NULL || box_idx == NULL || input_shape == NULL || output_shape == NULL ||
+      y_bottoms == NULL || y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL ||
+      x_left_weights == NULL) {
     return NNACL_NULL_PTR;
   }
   int batch = output_shape[0];
@@ -535,8 +533,8 @@ int CropAndResizeBilinear(const float *input_data, float *output_data, const int
     Bilinear(cur_img, output, input_shape, output_shape, y_bottom, y_top, x_left, x_right, y_bottom_weight,
              x_left_weight, line0, line1, h_begin, h_end);
   }
-  RewriteExtrapolationValue(input_data, output_data, box_idx, boxes, param, input_shape, output_shape, y_tops, h_begin,
-                            h_end);
+  RewriteExtrapolationValue(input_data, output_data, box_idx, boxes, extrapolation_value, input_shape, output_shape,
+                            y_tops, h_begin, h_end);
   return NNACL_OK;
 }
 
