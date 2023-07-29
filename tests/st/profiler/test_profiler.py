@@ -176,7 +176,7 @@ class TestProfiler:
         self._check_gpu_profiling_file()
         self._check_host_profiling_file()
 
-    @pytest.mark.level1
+    @pytest.mark.level0
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
