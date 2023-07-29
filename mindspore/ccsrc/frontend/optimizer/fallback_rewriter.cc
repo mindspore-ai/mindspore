@@ -2300,7 +2300,7 @@ static inline bool OrderPyExecuteCNode(const FuncGraphPtr &graph, const FuncGrap
   bool change = false;
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+    if (!IsPrimitiveCNode(node, prim::kPrimPyExecute) || node->func_graph() != graph) {
       continue;
     }
     if (former_node == nullptr) {
