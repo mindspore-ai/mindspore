@@ -1349,6 +1349,9 @@ class CellContainer(Node):
         # so here we need to write a if judgement
         if node.get_instance() not in self.get_instance().cell_list:
             self.get_instance().append(node.get_instance())
+        # record tree nodes to symbol_tree
+        if isinstance(node, TreeNode) and self.get_belong_symbol_tree():
+            self.get_belong_symbol_tree().get_tree_nodes().append(node)
 
     def erase(self, node):
         """Erase node form container."""
@@ -1367,6 +1370,9 @@ class CellContainer(Node):
         setattr(node, "valid", True)
         node.set_belong_symbol_tree(self.get_belong_symbol_tree())
         self.get_instance()._insert(index, node.get_instance())
+        # record tree nodes to symbol_tree
+        if isinstance(node, TreeNode) and self.get_belong_symbol_tree():
+            self.get_belong_symbol_tree().get_tree_nodes().append(node)
 
     def nodes(self):
         """ Return a iterator of node."""

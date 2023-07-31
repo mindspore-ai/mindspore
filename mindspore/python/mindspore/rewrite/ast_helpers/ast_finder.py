@@ -225,3 +225,132 @@ class GetPropertyOfObj(ast.NodeVisitor):
         self._property = set()
         self.generic_visit(self._context)
         return self._property
+
+
+class AstAssignFinder(ast.NodeVisitor):
+    """
+    Get assign definition ast of specifical parameter in specific scope.
+
+    Args:
+        node (ast.AST): An instance of ast node as check scope.
+    """
+    def __init__(self, node: ast.AST):
+        self._context = node
+        self._scope = ""
+        self._value = ""
+        self._target = None
+
+    def visit_Assign(self, node: ast.Assign):
+        if self._scope and isinstance(node.targets[0], ast.Attribute):
+            if node.targets[0].attr == self._value and isinstance(node.targets[0].value, ast.Name) \
+                and node.targets[0].value.id == self._scope:
+                self._target = node
+        elif not self._scope and isinstance(node.targets[0], ast.Name):
+            if node.targets[0].id == self._value:
+                self._target = node
+
+    def get_ast(self, value: str, scope: str = "") -> bool:
+        """
+        Get assign ast of specifical parameter in specific ast.
+
+        Args:
+            value (str): A string indicates assign target value.
+            scope (str): A string indicates assign target scope.
+
+        Returns:
+            An assign ast with the same target name as `scope.value` .
+        """
+        self._scope = scope
+        self._value = value
+        self.generic_visit(self._context)
+        return self._target
+
+
+class AstClassFinder(ast.NodeVisitor):
+    """
+    Find all specific name of ast class node in specific scope.
+
+    Args:
+        node (ast.AST): An instance of ast node as search scope.
+    """
+
+    def __init__(self, node: ast.AST):
+        self._scope: ast.AST = node
+        self._target: str = ""
+        self._results: [ast.ClassDef] = []
+
+    def visit_ClassDef(self, node):
+        """
+        An override method, iterating over all ClassDef nodes and save target ast nodes.
+
+        Args:
+            node (ast.AST): An instance of ast node which is visited currently.
+        """
+
+        if node.name == self._target:
+            self._results.append(node)
+
+    def find_all(self, class_name: str) -> [ast.AST]:
+        """
+        Find all matched ast node.
+
+        Args:
+            class_name (str): Name of class to be found.
+
+        Returns:
+            A list of instance of ast.ClassDef as matched result.
+
+        Raises:
+            TypeError: If input `class_name` is not str.
+        """
+        if not isinstance(class_name, str):
+            raise TypeError("Input class_name should be a str")
+        self._target = class_name
+        self._results.clear()
+        self.visit(self._scope)
+        return self._results
+
+
+class AstFunctionFinder(ast.NodeVisitor):
+    """
+    Find all specific name of ast function node in specific scope.
+
+    Args:
+        node (ast.AST): An instance of ast node as search scope.
+    """
+
+    def __init__(self, node: ast.AST):
+        self._scope: ast.AST = node
+        self._target: str = ""
+        self._results: [ast.ClassDef] = []
+
+    def visit_FunctionDef(self, node):
+        """
+        An override method, iterating over all FunctionDef nodes and save target ast nodes.
+
+        Args:
+            node (ast.AST): An instance of ast node which is visited currently.
+        """
+
+        if node.name == self._target:
+            self._results.append(node)
+
+    def find_all(self, func_name: str) -> [ast.AST]:
+        """
+        Find all matched ast node.
+
+        Args:
+            func_name (str): Name of function to be found.
+
+        Returns:
+            A list of instance of ast.FunctionDef as matched result.
+
+        Raises:
+            TypeError: If input `func_name` is not str.
+        """
+        if not isinstance(func_name, str):
+            raise TypeError("Input func_name should be a str")
+        self._target = func_name
+        self._results.clear()
+        self.visit(self._scope)
+        return self._results
