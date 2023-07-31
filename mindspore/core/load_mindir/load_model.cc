@@ -1714,10 +1714,20 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
   if (type == FORM_PARSE_SCALAR && !multi_value_map.empty()) {
     if (ref_attr_name.find("Tuple") != std::string::npos) {
       auto value_tuple_ptr = ParserScalarAttrValue<ValueTuple>(ref_attr_name, multi_value_map);
+      if (value_tuple_ptr == nullptr) {
+        MS_LOG(ERROR) << "Failed to build the value of the ValueNode, attr_proto:" << attr_proto.DebugString()
+                      << ", value_node_name:" << value_node_name;
+        return false;
+      }
       new_value_node = NewValueNode(value_tuple_ptr);
       new_value_node->set_abstract(value_tuple_ptr->ToAbstract());
     } else {
       auto value_list_ptr = ParserScalarAttrValue<ValueList>(ref_attr_name, multi_value_map);
+      if (value_list_ptr == nullptr) {
+        MS_LOG(ERROR) << "Failed to build the value of the ValueNode, attr_proto:" << attr_proto.DebugString()
+                      << ", value_node_name:" << value_node_name;
+        return false;
+      }
       new_value_node = NewValueNode(value_list_ptr);
       new_value_node->set_abstract(value_list_ptr->ToAbstract());
     }
