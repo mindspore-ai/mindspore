@@ -688,13 +688,12 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
         auto new_sequence = dyn_cast<AbstractSequence>(args_abs_list[i]);
         auto old_sequence = dyn_cast<AbstractSequence>(iter->first[i]);
         if (old_sequence != nullptr && new_sequence != nullptr) {
-          MS_EXCEPTION_IF_NULL(out_conf);
-          MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags for NodeConfig: " << out_conf->ToString()
-                        << ", old_sequence: " << old_sequence->ToString()
+          MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags for NodeConfig: "
+                        << (out_conf ? out_conf->ToString() : "NULL") << "old_sequence: " << old_sequence->ToString()
                         << ", new_sequence: " << new_sequence->ToString();
           SynchronizeSequenceElementsUseFlagsRecursively(old_sequence, new_sequence);
-          MS_LOG(DEBUG) << "After synchronize sequence nodes use flags for NodeConfig: " << out_conf->ToString()
-                        << ", old_sequence: " << old_sequence->ToString()
+          MS_LOG(DEBUG) << "After synchronize sequence nodes use flags for NodeConfig: "
+                        << (out_conf ? out_conf->ToString() : "NULL") << ", old_sequence: " << old_sequence->ToString()
                         << ", new_sequence: " << new_sequence->ToString();
         }
       }
