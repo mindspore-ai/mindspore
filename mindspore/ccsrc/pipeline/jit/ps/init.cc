@@ -549,6 +549,7 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)py::class_<CollectiveManager, std::shared_ptr<CollectiveManager>>(m, "CollectiveManager")
     .def_static("get_instance", &CollectiveManager::instance, "Get collective manager instance.")
+    .def("initialized", &CollectiveManager::initialized, "Returns whether distributed module is initialized.")
     .def("create_group", &CollectiveManager::CreateCommunicationGroup, "Create collective group.")
     .def("destroy_group", &CollectiveManager::DestroyCommunicationGroup, "Destroy collective group.")
     .def("get_local_rank_id", &CollectiveManager::GetLocalRankId, "Get the node rank id.")
@@ -558,7 +559,9 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_group_rank_from_world_rank", &CollectiveManager::GetGroupRankFromWorldRank,
          "Get group rank by world rank.")
     .def("get_rank_id", &CollectiveManager::GetRankId, "Get the node rank id.")
-    .def("get_group_size", &CollectiveManager::GetGroupSize, "Get the nodes number in the collective communication.");
+    .def("get_group_size", &CollectiveManager::GetGroupSize, "Get the nodes number in the collective communication.")
+    .def("get_group_ranks", &CollectiveManager::GetGroupRanks,
+         "Get group ranks for the specified communication group.");
 
   (void)py::class_<PSContext, std::shared_ptr<PSContext>>(m, "PSContext")
     .def_static("get_instance", &PSContext::instance, "Get PS context instance.")
