@@ -99,9 +99,13 @@ uint32_t AscendStreamMng::GetCurAllocStreamId() const {
 
 void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
-  const auto ret = rtStreamCreate(stream, priority);
+  auto ret = rtStreamCreate(stream, priority);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
+  }
+  ret = rtStreamSetMode(*stream, 1);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
 }
@@ -109,9 +113,13 @@ void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
 void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   rtStream_t stream;
-  const auto ret = rtStreamCreate(&stream, priority);
+  auto ret = rtStreamCreate(&stream, priority);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
+  }
+  ret = rtStreamSetMode(stream, 1);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
@@ -119,9 +127,13 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
 
 void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
-  const auto ret = rtStreamCreateWithFlags(stream, priority, flags);
+  auto ret = rtStreamCreateWithFlags(stream, priority, flags);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
+  }
+  ret = rtStreamSetMode(*stream, 1);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
 }
@@ -129,9 +141,13 @@ void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, 
 void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   rtStream_t stream;
-  const auto ret = rtStreamCreateWithFlags(&stream, priority, flags);
+  auto ret = rtStreamCreateWithFlags(&stream, priority, flags);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
+  }
+  ret = rtStreamSetMode(stream, 1);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
