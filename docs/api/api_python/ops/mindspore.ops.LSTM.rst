@@ -1,7 +1,7 @@
 mindspore.ops.LSTM
 ===================
 
-.. py:class:: mindspore.ops.LSTM(input_size, hidden_size, num_layers, has_bias, bidirectional, dropout)
+.. py:class:: mindspore.ops.LSTM(input_size, hidden_size, num_layers, has_bias, bidirectional, dropout, proj_size=0)
 
     对输入执行长短期记忆（LSTM）网络。
 
@@ -14,18 +14,22 @@ mindspore.ops.LSTM
         - **has_bias** (bool) - Cell是否有偏置 `b_ih` 和 `b_hh` 。
         - **bidirectional** (bool) - 是否为双向LSTM。
         - **dropout** (float) - 指的是除第一层外每层输入时的dropout概率。dropout的范围为[0.0, 1.0]。
+        - **proj_size** (int) - 如果大于0，则会使用对应大小的投影，当前只支持CPU后端。默认值: ``0``。
 
     输入：
         - **input** (Tensor) - shape为 :math:`(seq\_len, batch\_size, input\_size)` 或 :math:`(batch\_size, seq\_len, input\_size)` 的Tensor。
-        - **h** (tuple) - shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 的Tensor。
+        - **h** (tuple) - shape为 :math:`(num\_directions * num\_layers, batch\_size, real\_hidden\_size)` 的Tensor。
         - **c** (tuple) - shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 的Tensor。
         - **w** (Tensor) - 权重。
+
+        其中:
+            :math:`real\_hidden\_size = proj\_size if proj\_size > 0 else hidden\_size`。
 
     输出：
         tuple，tuple包含( `output` , `h\_n` , `c\_n` , `reserve` , `state` )。
 
-        - **output** (Tensor) - shape为 :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` 的Tensor。
-        - **h_n** (Tensor) - shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 的Tensor。
+        - **output** (Tensor) - shape为 :math:`(seq\_len, batch\_size, num\_directions * real\_hidden\_size)` 的Tensor。
+        - **h_n** (Tensor) - shape为 :math:`(num\_directions * num\_layers, batch\_size, real\_hidden\_size)` 的Tensor。
         - **c_n** (Tensor) - shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 的Tensor。
         - **reserve** (Tensor) - shape为 :math:`(r, 1)` 。
         - **state** (Tensor) - 使用随机数生成状态及其shape为 :math:`(s, 1)` 。
@@ -35,3 +39,4 @@ mindspore.ops.LSTM
         - **TypeError** - 如果 `has_bias` 或 `bidirectional` 不是bool。
         - **TypeError** - 如果 `dropout` 不是float。
         - **ValueError** - 如果 `dropout` 不在范围[0.0, 1.0]内。
+        - **ValueError** - 如果 `proj_size` 不在范围[0, `hidden_size`)内。
