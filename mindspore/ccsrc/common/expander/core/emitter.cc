@@ -248,27 +248,25 @@ std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const
     return std::make_pair(false, shape);
   }
   auto rank = SizeToLong(shape.size());
-  auto real_axis = axis;
-  if (real_axis.empty()) {
-    // all reduce
-    for (int64_t i = 0; i < rank; ++i) {
-      real_axis.push_back(i);
+  std::vector<bool> axis_map;
+  if (axis.empty()) {
+    axis_map = std::vector<bool>(shape.size(), true);
+  } else {
+    axis_map = std::vector<bool>(shape.size(), false);
+    for (size_t i = 0; i < axis.size(); ++i) {
+      if (axis[i] < -rank || axis[i] >= rank) {
+        MS_EXCEPTION(ValueError) << "Reduce axis[" << i << "] is " << axis[i] << ", which is out of range [-" << rank
+                                 << ", " << rank << ") for shape: " << shape;
+      }
+      auto axis_i = axis[i] < 0 ? axis[i] + rank : axis[i];
+      axis_map[LongToSize(axis_i)] = true;
     }
-  }
-  std::unordered_set<size_t> uniq_axis;
-  for (size_t i = 0; i < real_axis.size(); ++i) {
-    if (real_axis[i] < -rank || real_axis[i] >= rank) {
-      MS_EXCEPTION(ValueError) << "Reduce axis[" << i << "] is " << real_axis[i] << ", which is out of range [-" << rank
-                               << ", " << rank << ") for shape: " << shape;
-    }
-    auto axis_i = real_axis[i] < 0 ? real_axis[i] + rank : real_axis[i];
-    (void)uniq_axis.insert(LongToSize(axis_i));
   }
   // Calc reduce output shape
   ShapeVector out_shape;
   bool need_reduce = false;
   for (size_t i = 0; i < shape.size(); ++i) {
-    if (uniq_axis.find(i) == uniq_axis.end()) {
+    if (!axis_map[i]) {
       // not reduce axis
       out_shape.push_back(shape[i]);
     } else {
@@ -403,12 +401,12 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtr
 }
 
 std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) const {
-  auto it1 = type_map_.find(lhs->dtype()->type_id());
-  auto it2 = type_map_.find(rhs->dtype()->type_id());
-  if (it1 == type_map_.end() || it2 == type_map_.end() || it1->second == it2->second) {
+  auto it1 = type_vector_[lhs->dtype()->type_id()];
+  auto it2 = type_vector_[rhs->dtype()->type_id()];
+  if (!it1 || !it2 || it1 == it2) {
     return {lhs, rhs};
   }
-  if (it1->second < it2->second) {
+  if (it1 < it2) {
     return {this->Cast(lhs, rhs->dtype()), rhs};
   }
   return {lhs, this->Cast(rhs, lhs->dtype())};

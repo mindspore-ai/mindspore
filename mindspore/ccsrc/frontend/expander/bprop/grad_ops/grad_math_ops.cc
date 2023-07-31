@@ -58,8 +58,8 @@ NodePtrList IgammaBpropExpanderDyn(const BpropIRBuilder *ib) {
   auto lgamma = LGamma(ib, a);
   auto partial_x = ib->Exp(
     ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Log(x)))))), lgamma));
-  auto r1 = ib->Reshape(SumGradReduceAxisWithCast(ib, ib->Mul(partial_a, dout), ra), sa);
-  auto r2 = ib->Reshape(SumGradReduceAxisWithCast(ib, ib->Mul(partial_x, dout), rx), sx);
+  auto r1 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_a, dout), ra, false, true), sa);
+  auto r2 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_x, dout), rx, false, true), sx);
   return {r1, r2};
 }
 

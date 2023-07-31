@@ -29,27 +29,9 @@
 
 namespace mindspore::expander::bprop {
 namespace {
-NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis) {
-  NodePtr reduce_x = dx;
-  auto need_reduce = ib->NeedReduce(ib->GetShape(dx), axis, false);
-  if (need_reduce.first) {
-    auto dx_origin_dtypeptr = ib->GetDtype(dx);
-    auto dx_origin_dtype = dx_origin_dtypeptr->type_id();
-    if (dx_origin_dtype == TypeId::kNumberTypeInt16 || dx_origin_dtype == TypeId::kNumberTypeInt32 ||
-        dx_origin_dtype == TypeId::kNumberTypeInt64) {
-      auto dx_fp32 = ib->Cast(dx, kFloat32);
-      auto red = ib->ReduceSum(dx_fp32, axis);
-      reduce_x = ib->Cast(red, dx_origin_dtypeptr);
-    } else {
-      reduce_x = ib->ReduceSum(dx, axis);
-    }
-  }
-  return reduce_x;
-}
-
-static NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis,
-                                 const ShapeVector &shape_x) {
-  auto reduce_x = ReduceSumWithCast(ib, dx, axis);
+static NodePtr ReduceSumWithReshape(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis,
+                                    const ShapeVector &shape_x) {
+  auto reduce_x = ib->ReduceSum(dx, axis);
   return ib->Reshape(reduce_x, shape_x);
 }
 
@@ -58,8 +40,8 @@ NodePtrList DynBinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const
   auto broadcast_axes = ib->BroadcastGradientArgs(x, y);
   auto rx = broadcast_axes[kIndex0];
   auto ry = broadcast_axes[kIndex1];
-  auto reduce_dx = SumGradReduceAxisWithCast(ib, dx, rx);
-  auto reduce_dy = SumGradReduceAxisWithCast(ib, dy, ry);
+  auto reduce_dx = ib->ReduceSum(dx, rx, false, true);
+  auto reduce_dy = ib->ReduceSum(dy, ry, false, true);
   reduce_dx = ib->Reshape(reduce_dx, ib->Shape(x));
   reduce_dy = ib->Reshape(reduce_dy, ib->Shape(y));
   return {reduce_dx, reduce_dy};
@@ -75,36 +57,6 @@ NodePtrList DynBinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr 
   reduce_dx = ib->Reshape(reduce_dx, ib->Shape(x));
   reduce_dy = ib->Reshape(reduce_dy, ib->Shape(y));
   return {reduce_dx, reduce_dy};
-}
-
-void ComputeReduceIndex(const std::vector<int64_t> &x_rev, const std::vector<int64_t> &y_rev,
-                        std::vector<int64_t> *grad_x_reduce_idx, std::vector<int64_t> *grad_y_reduce_idy) {
-  MS_EXCEPTION_IF_NULL(grad_x_reduce_idx);
-  MS_EXCEPTION_IF_NULL(grad_y_reduce_idy);
-  const size_t n = x_rev.size();
-  if (y_rev.size() < n) {
-    MS_LOG(EXCEPTION) << "The size of y_rev is less than the size of x_rev.";
-  }
-  for (size_t i = 0; i < n; ++i) {
-    const int64_t x_i = x_rev[i];
-    const int64_t y_i = y_rev[i];
-    const int64_t reduce_idx = SizeToLong(n - 1 - i);
-    if (x_i == y_i) {
-      if (x_i == 1) {
-        grad_x_reduce_idx->push_back(reduce_idx);
-        grad_y_reduce_idy->push_back(reduce_idx);
-      }
-    } else if (x_i == 1) {
-      grad_x_reduce_idx->push_back(reduce_idx);
-    } else if (y_i == 1) {
-      grad_y_reduce_idy->push_back(reduce_idx);
-    } else {
-      MS_LOG(EXCEPTION) << "not compatible shape input(" << x_rev << ", " << y_rev << ") for BroadcastGradientArgs.";
-    }
-  }
-
-  std::reverse(grad_x_reduce_idx->begin(), grad_x_reduce_idx->end());
-  std::reverse(grad_y_reduce_idy->begin(), grad_y_reduce_idy->end());
 }
 
 TypeId GetOutputDtype(TypeId t1, TypeId t2, bool use_complex = false) {
@@ -146,31 +98,12 @@ int64_t NormalizeAxis(int64_t axis, size_t rank) {
   return (axis < 0) ? (axis + rank_i) : axis;
 }
 
-NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const NodePtr &axis) {
-  MS_EXCEPTION_IF_NULL(ib);
-  MS_EXCEPTION_IF_NULL(dx);
-  auto reduce_dx = dx;
-  auto dx_origin_dtype = dx->dtype();
-  MS_EXCEPTION_IF_NULL(dx_origin_dtype);
-  auto dx_origin_dtype_id = dx_origin_dtype->type_id();
-  bool need_cast = (dx_origin_dtype_id == kNumberTypeInt16 || dx_origin_dtype_id == kNumberTypeInt32 ||
-                    dx_origin_dtype_id == kNumberTypeInt64);
-  if (need_cast) {
-    reduce_dx = ib->Cast(reduce_dx, kFloat32);
-  }
-  reduce_dx = ib->ReduceSum(reduce_dx, axis, false, true);
-  if (need_cast) {
-    reduce_dx = ib->Cast(reduce_dx, dx_origin_dtype_id);
-  }
-  return reduce_dx;
-}
-
 std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis) {
   auto rank = SizeToLong(input_shape.size());
   if (rank == 0) {
     return {};
   }
-  std::set<int64_t> reduction_indices_set;
+  std::vector<bool> reduction_indices_map(input_shape.size());
   ShapeVector perm;
   int64_t reduced_num = 1;
   int64_t other_num = 1;
@@ -178,12 +111,12 @@ std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_sha
     if (i < 0) {
       i += rank;
     }
-    (void)reduction_indices_set.insert(i);
+    reduction_indices_map[i] = True;
     reduced_num *= input_shape[LongToSize(i)];
     (void)perm.emplace_back(i);
   }
   for (int64_t i = 0; i < rank; i++) {
-    if (reduction_indices_set.find(i) == reduction_indices_set.end()) {
+    if (!reduction_indices_map[i]) {
       other_num *= input_shape[LongToSize(i)];
       (void)perm.emplace_back(i);
     }
@@ -200,23 +133,29 @@ std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_
     (void)bc_axis.emplace_back(std::vector<int64_t>{});
     return bc_axis;
   }
-  std::vector<int64_t> reverse_x;
-  std::vector<int64_t> reverse_y;
-
-  (void)std::transform(x_shape.rbegin(), x_shape.rend(), std::back_inserter(reverse_x),
-                       [](const int64_t &c) { return c; });
-  (void)std::transform(y_shape.rbegin(), y_shape.rend(), std::back_inserter(reverse_y),
-                       [](const int64_t &c) { return c; });
-
-  if (reverse_x.size() > reverse_y.size()) {
-    reverse_y.resize(reverse_x.size(), 1);
-  } else {
-    reverse_x.resize(reverse_y.size(), 1);
-  }
-
   std::vector<int64_t> grad_x_reduce_idx;
   std::vector<int64_t> grad_y_reduce_idy;
-  ComputeReduceIndex(reverse_x, reverse_y, &grad_x_reduce_idx, &grad_y_reduce_idy);
+  auto x_size = x_shape.size();
+  auto y_size = y_shape.size();
+  auto n = std::max(x_size, y_size);
+  for (size_t i = n; i >= 1; i--) {
+    auto x_i = x_size < i ? 1 : x_shape[x_size - i];
+    auto y_i = y_size < i ? 1 : y_shape[y_size - i];
+    const int64_t reduce_idx = SizeToLong(n - i);
+    if (x_i == y_i) {
+      if (x_i == 1) {
+        grad_x_reduce_idx.push_back(reduce_idx);
+        grad_y_reduce_idy.push_back(reduce_idx);
+      }
+    } else if (x_i == 1) {
+      grad_x_reduce_idx.push_back(reduce_idx);
+    } else if (y_i == 1) {
+      grad_y_reduce_idy.push_back(reduce_idx);
+    } else {
+      MS_LOG(EXCEPTION) << "not compatible shape input(" << x_shape << ", " << y_shape
+                        << ") for BroadcastGradientArgs.";
+    }
+  }
 
   (void)bc_axis.emplace_back(std::move(grad_x_reduce_idx));
   (void)bc_axis.emplace_back(std::move(grad_y_reduce_idy));
@@ -246,24 +185,19 @@ std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vecto
   if (x.empty()) {
     return {};
   }
-  std::vector<int64_t> out;
   if (axis.empty()) {
     return std::vector<int64_t>(x.size(), 1LL);
   }
-  std::unordered_set<int64_t> axis_set;
   int64_t x_rank = SizeToLong(x.size());
-  for (const auto &i : axis) {
+  std::vector<int64_t> out(x);
+  for (auto i : axis) {
     if (i >= x_rank || i < (-x_rank)) {
       MS_LOG(EXCEPTION) << "axis should be in range [" << (-x_rank) << ", " << x_rank << ").";
     }
-    (void)axis_set.insert(i);
-  }
-  for (auto i = 0; i < x_rank; i++) {
-    if (axis_set.count(i) > 0 || axis_set.count(i - x_rank) > 0) {
-      out.push_back(1LL);
-    } else {
-      out.push_back(x[LongToSize(i)]);
+    if (i < 0) {
+      i += x_rank;
     }
+    out[i] = 1LL;
   }
   return out;
 }
@@ -312,25 +246,25 @@ NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const No
   auto reduce_dx = dx;
   auto reduce_dy = dy;
 
-  if (!IsDynamic(shape_x) && !IsDynamic(shape_y)) {
-    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(shape_x, shape_y);
-    if (!bc_axis[0].empty()) {
-      reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0], shape_x);
+  if (shape_x.empty() || shape_y.empty()) {
+    // x or y is scalar
+    if (shape_x.empty()) {
+      reduce_dx = ib->ReduceSum(reduce_dx, std::vector<int64_t>{});
     }
-
-    if (!bc_axis[1].empty()) {
-      reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1], shape_y);
+    if (shape_y.empty()) {
+      reduce_dy = ib->ReduceSum(reduce_dy, std::vector<int64_t>{});
     }
     return {reduce_dx, reduce_dy};
   }
 
-  if (shape_x.empty() || shape_y.empty()) {
-    // x or y is scalar
-    if (shape_x.empty()) {
-      reduce_dx = ReduceSumWithCast(ib, reduce_dx, std::vector<int64_t>{});
+  if (!IsDynamic(shape_x) && !IsDynamic(shape_y)) {
+    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(shape_x, shape_y);
+    if (!bc_axis[0].empty()) {
+      reduce_dx = ReduceSumWithReshape(ib, reduce_dx, bc_axis[0], shape_x);
     }
-    if (shape_y.empty()) {
-      reduce_dy = ReduceSumWithCast(ib, reduce_dy, std::vector<int64_t>{});
+
+    if (!bc_axis[1].empty()) {
+      reduce_dy = ReduceSumWithReshape(ib, reduce_dy, bc_axis[1], shape_y);
     }
     return {reduce_dx, reduce_dy};
   }
@@ -359,21 +293,21 @@ NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x,
 
     std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
     if (!bc_axis[0].empty()) {
-      reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0], shape_x);
+      reduce_dx = ReduceSumWithReshape(ib, reduce_dx, bc_axis[0], shape_x);
     }
 
     if (!bc_axis[1].empty()) {
-      reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1], shape_y);
+      reduce_dy = ReduceSumWithReshape(ib, reduce_dy, bc_axis[1], shape_y);
     }
     return {reduce_dx, reduce_dy};
   }
   if (shape_x.empty() || shape_y.empty()) {
     // x or y is scalar
     if (shape_x.empty()) {
-      reduce_dx = ReduceSumWithCast(ib, reduce_dx, std::vector<int64_t>{});
+      reduce_dx = ib->ReduceSum(reduce_dx, std::vector<int64_t>{});
     }
     if (shape_y.empty()) {
-      reduce_dy = ReduceSumWithCast(ib, reduce_dy, std::vector<int64_t>{});
+      reduce_dy = ib->ReduceSum(reduce_dy, std::vector<int64_t>{});
     }
     return {reduce_dx, reduce_dy};
   }

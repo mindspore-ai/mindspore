@@ -164,18 +164,7 @@ REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> 
   auto dout = ib->GetInput(kIndex3);
   auto broadcast_axes = ib->BroadcastGradientArgs(out, x);
   auto reduction_axes = broadcast_axes[kIndex1];
-  auto dout_dtype = dout->dtype();
-  MS_EXCEPTION_IF_NULL(dout_dtype);
-  auto dout_dtype_id = dout_dtype->type_id();
-  bool need_cast =
-    (dout_dtype_id == kNumberTypeInt16 || dout_dtype_id == kNumberTypeInt32 || dout_dtype_id == kNumberTypeInt64);
-  if (need_cast) {
-    dout = ib->Cast(dout, kFloat32);
-  }
   auto reduced_grad = ib->ReduceSum(dout, reduction_axes, true, true);
-  if (need_cast) {
-    reduced_grad = ib->Cast(reduced_grad, dout_dtype_id);
-  }
   auto dx = ib->Reshape(reduced_grad, ib->Shape(x));
   return {dx, ib->OutZeros(shp)};
 });
