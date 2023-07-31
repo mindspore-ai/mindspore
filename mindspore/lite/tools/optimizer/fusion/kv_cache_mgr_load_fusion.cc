@@ -15,7 +15,7 @@
  */
 
 #define USE_DEPRECATED_API
-#include "tools/optimizer/fusion/kv_cache_mgr_assign_fusion.h"
+#include "tools/optimizer/fusion/kv_cache_mgr_load_fusion.h"
 #include <vector>
 #include <memory>
 #include "ops/array_ops.h"
@@ -28,26 +28,29 @@
 
 namespace mindspore {
 namespace opt {
-int KVCacheMgrAssignFusion::RemoveAssignOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager,
-                                           const CNodePtr &kv_cache_cnode) {
-  const int expected_assign_input_count = 4;
-  auto assign_cnode = anf_node->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(assign_cnode->inputs().size() == expected_assign_input_count, lite::RET_NO_CHANGE);
-  const int past_input_index = 1;
-  const int kv_cache_mgr_input_index = 2;
-  if (kv_cache_cnode->input(past_input_index) != assign_cnode->input(past_input_index)) {
-    MS_LOG(INFO) << "kv_cache_cnode->input(1) != assign_cnode->input(1)";
+int KVCacheMgrLoadFusion::RemoveLoadOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager,
+                                       const CNodePtr &kv_cache_cnode) {
+  const int expected_load_input_count = 3;
+  auto load_cnode = anf_node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(load_cnode->inputs().size() == expected_load_input_count, lite::RET_NO_CHANGE);
+  const size_t past_input_index = 1;
+  const size_t input_para_index = 1;
+  if (kv_cache_cnode->input(past_input_index) != load_cnode) {
+    MS_LOG(INFO) << "kv_cache_cnode->input(1) != load_cnode";
     return lite::RET_NO_CHANGE;
   }
-  if (kv_cache_cnode != assign_cnode->input(kv_cache_mgr_input_index)) {
-    MS_LOG(INFO) << "kv_cache_cnode != assign_cnode->input(2)";
+  auto past_para_ptr = load_cnode->input(input_para_index);
+  if (!utils::isa<ParameterPtr>(past_para_ptr)) {
+    MS_LOG(INFO) << "load_cnode input is not parameter";
     return lite::RET_NO_CHANGE;
   }
+
   (void)this->remove_cnode_.insert(anf_node);
-  return manager->Replace(anf_node, kv_cache_cnode) ? RET_OK : RET_ERROR;
+  kv_cache_cnode->set_input(past_input_index, past_para_ptr);
+  return manager->Replace(anf_node, past_para_ptr) ? RET_OK : RET_ERROR;
 }
 
-bool KVCacheMgrAssignFusion::Run(const FuncGraphPtr &func_graph) {
+bool KVCacheMgrLoadFusion::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
   if (manager == nullptr) {
@@ -67,22 +70,16 @@ bool KVCacheMgrAssignFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto kv_cache_cnode = node->cast<CNodePtr>();
-    auto iter = manager->node_users().find(kv_cache_cnode);
-    if (iter == manager->node_users().end()) {
-      MS_LOG(ERROR) << "node has no output in manager";
-      return false;
-    }
-    auto output_list = iter->second;
-    for (auto &out : output_list) {
-      if (!utils::isa<CNodePtr>(out.first)) {
+    for (auto &input : kv_cache_cnode->inputs()) {
+      if (!utils::isa<CNodePtr>(input)) {
         continue;
       }
       auto status = lite::RET_OK;
-      if (CheckPrimitiveType(out.first, prim::kPrimAssign)) {
-        status = this->RemoveAssignOp(out.first, manager, kv_cache_cnode);
+      if (CheckPrimitiveType(input, prim::kPrimLoad)) {
+        status = this->RemoveLoadOp(input, manager, kv_cache_cnode);
       }
       if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-        MS_LOG(ERROR) << "Failed to run kv_cache_mgr assign elimination pass.";
+        MS_LOG(ERROR) << "Failed to run kv_cache_mgr load elimination pass.";
         return false;
       }
     }
