@@ -71,7 +71,7 @@ class GradientAccumulation(Cell):
 
         if self._accumulation_step >= self._max_accumulation_step:
             loss = F.depend(loss, self.optimizer(self._grad_accumulation))
-            self._accumulation_step = 0
+            F.assign(self._accumulation_step, 0)
 
         if self._accumulation_step == 0:
             loss = F.depend(loss, self.hyper_map(F.partial(gradient_clear_op), self._grad_accumulation))

@@ -190,6 +190,12 @@ static inline MS_FLOAT32X8 MS256_LOG_F32(MS_FLOAT32X8 src) {
   MS_FLOAT32X8 tmp1 = MS_MUL256_F32(square, MS_ADD256_F32(MS_MUL256_F32(square, tmp), data4));
   MS_FLOAT32X8 res =
     MS_ADD256_F32(MS_MUL256_F32(ln2, expsPD), MS_MUL256_F32(MS_MUL256_F32(div, MS_ADD256_F32(tmp1, data5)), data6));
+  // if (src == 0) res = -inf;
+  // if (src < 0) res = nan;
+  MS_FLOAT32X8 mask = MS_CMP256_F32(src, MS_MOV256_F32(0.0f), _CMP_EQ_OQ);
+  res = MS_BLEND256_F32(res, MS_MOV256_F32(-INFINITY), mask);
+  mask = MS_CMPLT256_F32(src, MS_MOV256_F32(0.0f));
+  res = MS_BLEND256_F32(res, MS_MOV256_F32(NAN), mask);
   return res;
 }
 
