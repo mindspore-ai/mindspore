@@ -534,13 +534,6 @@ class _MindsporeFunctionExecutor:
         if context.get_context("mode") == context.PYNATIVE_MODE:
             output = _pynative_executor.grad_jit(output, *new_inputs)
 
-        enable_ge = os.getenv("MS_ENABLE_GE") == "1"
-        if self.jit_config_dict:
-            enable_jit_level_o3 = self.jit_config_dict.get('jit_level') == "O3"
-            if (enable_ge and not enable_jit_level_o3) or (not enable_ge and enable_jit_level_o3):
-                raise RuntimeError("GE and jit_level=O3 should be used together, but got MS_ENABLE_GE={}, jit_level={}".
-                                   format(os.getenv("MS_ENABLE_GE"), self.jit_config_dict.get('jit_level')))
-
         return output
 
     def compile(self, method_name, *args, **kwargs):
@@ -595,9 +588,6 @@ class _MindsporeFunctionExecutor:
             self._graph_executor.set_jit_config(self.jit_config_dict)
         else:
             jit_config_dict = JitConfig().jit_config_dict
-            enable_ge = os.getenv("MS_ENABLE_GE") == "1"
-            if enable_ge:
-                jit_config_dict["jit_level"] = "O3"
             self._graph_executor.set_jit_config(jit_config_dict)
 
         if self.obj is None:
@@ -1624,8 +1614,6 @@ class _CellGraphExecutor:
             self._graph_executor.set_jit_config(jit_config_dict)
         else:
             jit_config_dict = JitConfig().jit_config_dict
-            if enable_ge:
-                jit_config_dict["jit_level"] = "O3"
             self._graph_executor.set_jit_config(jit_config_dict)
         result = self._graph_executor.compile(obj, args, kwargs, phase, self._use_vm_mode())
         obj.compile_cache.add(phase)

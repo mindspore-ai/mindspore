@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1690,11 +1690,6 @@ class Cell(Cell_):
             logger.warning("For Cell, jit config can only be set once, ignore this setting.")
         else:
             self._jit_config_dict = jit_config.jit_config_dict
-            enable_ge = os.getenv("MS_ENABLE_GE") == '1'
-            enable_jit_level_o3 = self._jit_config_dict.get('jit_level') == "O3"
-            if (not enable_ge and enable_jit_level_o3) or (enable_ge and not enable_jit_level_o3):
-                raise RuntimeError("GE and jit_level=O3 should be used together, but got MS_ENABLE_GE={}, jie_level={}".
-                                   format(os.getenv("MS_ENABLE_GE"), self.jit_config_dict.get('jit_level')))
 
     def flatten_weights(self, fusion_size=0):
         """

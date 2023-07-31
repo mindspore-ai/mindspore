@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
+import pytest  # pylint: disable=unused-import
 import numpy as np
 
 import ge_infer_env  # pylint: disable=unused-import
@@ -66,15 +66,15 @@ def test_ge_graph_mode_with_jit_level_o2():
     """
     Feature: GE with jit_level.
     Description: Graph Mode jit_level==O2 with GE.
-    Expectation: Raise ValueError when jit_level==O2/O1/O0.
+    Expectation: Run ok.
     """
     context.set_context(device_target="Ascend", mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones((3, 3), np.float32))
     net = NetOuter()
-    with pytest.raises(RuntimeError):
-        net.set_jit_config(JitConfig(jit_level="O2"))
-        output_o2 = net(inputs, inputs)
-        print("===>output:", output_o2)
+    net.set_jit_config(JitConfig(jit_level="O2"))
+    output_o2 = net(inputs, inputs)
+    expected = np.array([[5, 5, 5], [5, 5, 5], [5, 5, 5]], np.float32)
+    np.allclose(output_o2.asnumpy(), expected, 1e-05, 1e-05)
 
 
 def test_ge_graph_mode_without_jit_level():

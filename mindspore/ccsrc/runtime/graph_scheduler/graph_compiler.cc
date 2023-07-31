@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License"){}
  * you may not use this file except in compliance with the License.
@@ -501,9 +501,8 @@ KernelGraphPtr GraphCompiler::ConstructKernelGraphForGraphRunMode(const FuncGrap
   }
 
   // todo: waiting for GraphExecutor
-  auto jit_level = common::AnfAlgo::GetJitLevel(func_graph);
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  if (MsContext::GetInstance()->backend_policy() == "ge" && (jit_level == "O3" || jit_level == "")) {
+  if (MsContext::GetInstance()->backend_policy() == "ge") {
     auto manager = MakeManager();
     MS_EXCEPTION_IF_NULL(manager);
     for (const auto &graph : *all_graphs) {

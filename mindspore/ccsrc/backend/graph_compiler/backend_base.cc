@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -461,9 +461,8 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   func_graph_to_kernel_graph_ids_.clear();
   control_nodes_.clear();
 
-  auto jit_level = common::AnfAlgo::GetJitLevel(func_graph);
   const auto &device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_}, jit_level);
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
   bool all_support = device_context->PartitionGraph(func_graph);
@@ -486,7 +485,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
   if ((ms_execution_mode_ == kGraphMode ||
-       (ms_execution_mode_ == kPynativeMode && jit_level == "O3" && context_ptr->backend_policy() == "ge")) &&
+       (ms_execution_mode_ == kPynativeMode && context_ptr->backend_policy() == "ge")) &&
       ((!graph_compiler_info->graphs_.empty()) || graph_compiler_info->control_nodes_.size() > 1)) {
     // Transform graph to actor DAG, and schedule the actor DAG.
     ParseControlNodes(*graph_compiler_info);

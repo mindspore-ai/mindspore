@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -490,14 +490,13 @@ bool IsNotAscend(const std::string &device_name) {
 }
 }  // namespace
 
-DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key,
-                                                              string jit_level /* ="" */) {
+DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key) {
   std::string device_context_key_str = device_context_key.ToString();
   std::string name = device_context_key.device_name_;
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!IsNotAscend(name) && ms_context->backend_policy() == "ge" && (jit_level == kAttrJitLevelO3 || jit_level == "")) {
+  if (!IsNotAscend(name) && ms_context->backend_policy() == "ge") {
     name = "GE";
     device_context_key_str = "GE_0";
   }
