@@ -166,14 +166,18 @@ def init(backend_name=None):
         init_hccl()
         GlobalComm.WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
     elif backend_name == "nccl":
+        if device_target != "GPU":
+            raise RuntimeError("For 'init', the argument 'backend_name' should be 'GPU' to init nccl, "
+                               "but got '{}'".format(device_target))
         init_cluster()
         GlobalComm.WORLD_COMM_GROUP = NCCL_WORLD_COMM_GROUP
     elif backend_name == "mccl":
         init_cluster()
         GlobalComm.WORLD_COMM_GROUP = MCCL_WORLD_COMM_GROUP
     else:
-        raise RuntimeError("For 'init', the argument 'backend_name' must be nccl while 'device_target' is GPU, "
-                           "but got the 'backend_name' : hccl.")
+        raise TypeError("For 'init', the argument 'backend_name' must be one of 'hccl', 'nccl' and 'mccl', "
+                        "but got 'backend_name' : {}".format(backend_name))
+
     GlobalComm.INITED = True
     _set_elegant_exit_handle()
 
