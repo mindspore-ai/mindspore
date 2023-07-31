@@ -428,7 +428,8 @@ void Jit::GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecut
                                                            op_run_info->base_op_run_info.abstract);
   node_info->is_graph_node = true;
   node_info->graph_phase = op_run_info->base_op_run_info.op_name;
-  grad_executor->CheckGraphDynamic(op_run_info->op_grad_info->input_value, node_info);
+  grad_executor->dynamic_shape()->CheckNodeDynamic(grad_executor->top_cell(), op_run_info->op_grad_info->input_value,
+                                                   node_info);
 }
 
 void Jit::UpdateJitlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) {
