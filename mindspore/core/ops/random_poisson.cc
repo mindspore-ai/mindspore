@@ -50,6 +50,8 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   if (IsDynamic(shape_shape) || IsDynamicRank(rate_shape)) {
@@ -68,7 +70,11 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
 
     size_t rate_rank = rate_shape.size();
     for (size_t i = 0; i < rate_rank; i++) {
-      out_shape.push_back(rate_shape[i]);
+      if (rate_shape[i] > 0) {
+        out_shape.push_back(rate_shape[i]);
+      } else {
+        MS_EXCEPTION(ValueError) << "For RandomPoisson, each dimension of 'rate' must be greater than 0.";
+      }
     }
 
     return std::make_shared<abstract::Shape>(out_shape);
@@ -81,10 +87,13 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
 TypePtr RandomPoissonInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[0]->BuildType(), valid_shape_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[kInputIndex0]->BuildType(), valid_shape_types,
+                                             prim_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("rate", input_args[1]->BuildType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("rate", input_args[kInputIndex1]->BuildType(), valid_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {

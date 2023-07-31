@@ -371,7 +371,6 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kGLUOpName,
   mindspore::kGluGradOpName,
   mindspore::kBesselI0OpName,
-  mindspore::kRandomPoissonOpName,
   mindspore::kLuOpName,
   mindspore::kIndexPutOpName};
 

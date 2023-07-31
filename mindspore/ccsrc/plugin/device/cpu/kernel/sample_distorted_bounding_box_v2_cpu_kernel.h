@@ -97,6 +97,8 @@ class SampleDistortedBoundingBoxV2CPUKernelMod : public NativeCpuKernelMod {
   bool GenerateRandomCrop(int original_width, int original_height, float min_relative_crop_area,
                           float max_relative_crop_area, float aspect_ratio, Region *crop_rect);
   template <typename T>
+  void CheckSDBBExt2(T *inputs0, float *inputs1, float *inputs2, T *outputs0, T *outputs1, float *outputs2);
+  template <typename T>
   void LaunchSDBBExt2(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };
 }  // namespace kernel

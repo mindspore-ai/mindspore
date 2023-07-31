@@ -30,13 +30,14 @@ static constexpr size_t OUTPUT_NUM = 1;
 bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomGamma>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast RandomGamma ops failed!";
-    return false;
-  }
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   seed_ = kernel_ptr->get_seed();
   seed2_ = kernel_ptr->get_seed2();
+
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
   output_shape_ = outputs[0]->GetShapeVector();
   alpha_shape_ = inputs[1]->GetShapeVector();
   alpha_dtype_ = inputs[1]->GetDtype();
@@ -79,7 +80,6 @@ int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 // T: float16 float32 float64 dtype of alpha, beta and output
 template <typename T>
 void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  generator_.Init(seed_, seed2_);
   const auto *alpha_flat = reinterpret_cast<T *>(inputs[1]->addr);
   auto *samples_flat = reinterpret_cast<T *>(outputs[0]->addr);
 
@@ -111,6 +111,7 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
     sample_shape_per_al = num_samples / num_alphas;
   }
 
+  generator_.Init(seed_, seed2_);
   MSPhiloxRandom rng = generator_.ReserveRandomOutputs(num_samples, kReservedSamplesPerOutput);
 
   auto DoWork = [sample_shape_per_al, num_alphas, &rng, samples_flat, alpha_flat](int64_t start_output,

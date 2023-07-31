@@ -53,10 +53,9 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
   const constexpr int64_t kIndex0 = 0;
   const constexpr int64_t kIndex1 = 1;
   const constexpr int64_t kIndex2 = 2;
-  const constexpr int64_t kSize1 = 1;
-  const constexpr int64_t kSize2 = 2;
-  const constexpr int64_t kSize3 = 3;
-  const constexpr int64_t kSize4 = 4;
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
 
   auto image_size_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
@@ -132,7 +131,12 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
 
 TuplePtr SampleDistortedBoundingBoxV2InferType(const PrimitivePtr &prim,
                                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   auto name = prim->name();
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
+
   const std::set<TypePtr> valid_types1 = {kUInt8, kInt8, kInt16, kInt32, kInt64};
   const std::set<TypePtr> valid_types2 = {kFloat32};
   auto image_size_type = input_args[kInputIndex0]->BuildType();

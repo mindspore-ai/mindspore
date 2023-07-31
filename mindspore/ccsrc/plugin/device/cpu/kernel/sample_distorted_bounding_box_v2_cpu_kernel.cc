@@ -282,6 +282,14 @@ int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const BaseOperatorPtr &base
 bool SampleDistortedBoundingBoxV2CPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                                       const std::vector<kernel::AddressPtr> & /* workspace */,
                                                       const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex2]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex1]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex2]);
   if (dtype_ == kNumberTypeUInt8) {
     LaunchSDBBExt2<uint8_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt8) {
@@ -299,6 +307,17 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::Launch(const std::vector<kernel::
 }
 
 template <typename T>
+void SampleDistortedBoundingBoxV2CPUKernelMod::CheckSDBBExt2(T *inputs0, float *inputs1, float *inputs2, T *outputs0,
+                                                             T *outputs1, float *outputs2) {
+  MS_EXCEPTION_IF_NULL(inputs0);
+  MS_EXCEPTION_IF_NULL(inputs1);
+  MS_EXCEPTION_IF_NULL(inputs2);
+  MS_EXCEPTION_IF_NULL(outputs0);
+  MS_EXCEPTION_IF_NULL(outputs1);
+  MS_EXCEPTION_IF_NULL(outputs2);
+}
+
+template <typename T>
 void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<AddressPtr> &inputs,
                                                               const std::vector<AddressPtr> &outputs) {
   auto image_size = reinterpret_cast<T *>(inputs[kIndex0]->addr);
@@ -307,6 +326,7 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<
   auto begin = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   auto size = reinterpret_cast<T *>(outputs[kIndex1]->addr);
   auto bboxes = reinterpret_cast<float *>(outputs[kIndex2]->addr);
+  CheckSDBBExt2(image_size, bounding_boxes, min_object_covered, begin, size, bboxes);
 
   const int32_t height = static_cast<int32_t>(image_size[kIndex0]);
   const int32_t width = static_cast<int32_t>(image_size[kIndex1]);

@@ -172,20 +172,23 @@ template <typename Tin, typename T>
 bool RandomPoissonCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &,
                                              const std::vector<kernel::AddressPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+  auto *rate_flat = reinterpret_cast<Tin *>(inputs[1]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  MS_EXCEPTION_IF_NULL(rate_flat);
+  MS_EXCEPTION_IF_NULL(output);
+
+  size_t num_of_rate = inputs[1]->size / sizeof(Tin);
+  size_t num_of_output = outputs[0]->size / sizeof(T);
+
   auto attr_seed = LongToUlong(seed_);
   uint64_t final_seed = attr_seed;
   if (final_seed == 0) {
     auto attr_seed2 = seed2_;
     final_seed = LongToUlong(attr_seed2);
   }
-
-  auto *rate_flat = reinterpret_cast<Tin *>(inputs[1]->addr);
-  MS_EXCEPTION_IF_NULL(rate_flat);
-
-  size_t num_of_rate = inputs[1]->size / sizeof(Tin);
-  size_t num_of_output = outputs[0]->size / sizeof(T);
-
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
 
   if (AddrAlignedCheck(outputs[0]->addr)) {
     Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> eigen_output(static_cast<T *>(output), num_of_output);

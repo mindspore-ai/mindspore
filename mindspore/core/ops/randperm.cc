@@ -50,9 +50,14 @@ int64_t Randperm::get_pad() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-TypeId Randperm::get_dtype() const { return GetAttr("dtype")->cast<api::TensorTypePtr>()->element()->type_id(); }
+TypeId Randperm::get_dtype() const {
+  auto dtype_ptr = GetAttr("dtype");
+  MS_EXCEPTION_IF_NULL(dtype_ptr);
+  return dtype_ptr->cast<api::TensorTypePtr>()->element()->type_id();
+}
 
 int64_t GetDtypeMaxForCheckOverFlow(const TypePtr tid) {
+  MS_EXCEPTION_IF_NULL(tid);
   int64_t max = 0;
   int64_t max_float16 = 65504;
   switch (tid->type_id()) {
@@ -97,11 +102,9 @@ class RandpermInfer : public abstract::OpInferBase {
     auto shape_ptr = input_args[kInputIndex0]->BuildShape();
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_ptr);
     auto x_shape = shape_map[kShape];
-
     if (IsDynamic(x_shape)) {
       return shape_ptr;
     }
-
     if (x_shape.size() != kInputShape0Dim) {
       MS_EXCEPTION(ValueError) << "For 'Randperm', the rank of input tensor must be equal 1. But got "
                                << x_shape.size();
@@ -110,12 +113,13 @@ class RandpermInfer : public abstract::OpInferBase {
       MS_EXCEPTION(ValueError) << "For 'Randperm', the shape value of input tensor must be equal 1. But got "
                                << x_shape.front();
     }
-    auto value_ptr = primitive->GetAttr("max_length");
-    auto max_length = GetValue<int64_t>(value_ptr);
+
     auto input_x = input_args[kInputIndex0];
     MS_EXCEPTION_IF_NULL(input_x);
     auto x_value = input_x->BuildValue();
     MS_EXCEPTION_IF_NULL(x_value);
+    auto value_ptr = primitive->GetAttr("max_length");
+    auto max_length = GetValue<int64_t>(value_ptr);
     if (input_x->isa<abstract::AbstractTensor>()) {
       if (x_value->isa<tensor::Tensor>()) {
         auto x_int = CheckAndConvertUtils::CheckTensorIntValue("x", x_value, primitive->name());
@@ -127,8 +131,9 @@ class RandpermInfer : public abstract::OpInferBase {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input 'n' (" << x_int[0]
                                    << ") cannot exceed 'max_length' (" << max_length << ").";
         }
-        auto dtype_value = primitive->GetAttr("dtype");
-        auto output_type = dtype_value->cast<TypePtr>();
+        auto dtype_ptr = primitive->GetAttr("dtype");
+        MS_EXCEPTION_IF_NULL(dtype_ptr);
+        auto output_type = dtype_ptr->cast<TypePtr>();
         int64_t max_data = GetDtypeMaxForCheckOverFlow(output_type);
         if (x_int[0] > max_data + 1) {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input 'n' must be less than "
@@ -144,10 +149,12 @@ class RandpermInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-    MS_EXCEPTION_IF_NULL(input_args[0]);
-    auto x_type = input_args[0]->BuildType();
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+
+    auto x_type = input_args[kInputIndex0]->BuildType();
     const std::set<TypePtr> valid_types_x = {kInt32, kInt64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types_x, prim_name);
+
     auto dtype = GetValue<TypePtr>(prim->GetAttr("dtype"));
     const std::set<TypePtr> valid_types_dtype = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                                  kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
