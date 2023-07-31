@@ -55,6 +55,39 @@ class LossBase(Cell):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops, Tensor, nn
+        >>> import numpy as np
+        >>>
+        >>> class Net(nn.LossBase):
+        ...     def __init__(self, reduction='mean'):
+        ...         super(Net, self).__init__(reduction)
+        ...         self.abs = ops.Abs()
+        ...
+        ...     def construct(self, logits, labels):
+        ...         x = self.abs(logits - labels)
+        ...         output = self.get_loss(x)
+        ...         axis = self.get_axis(x)
+        ...         return output, axis
+        >>> net = Net()
+        >>> # Case 1: logits.shape = labels.shape = (3,)
+        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> output, axis = net(logits, labels)
+        >>> print(output)
+        0.33333334
+        >>> print(axis)
+        (0,)
+        >>> # Case 2: logits.shape = labels.shape = (3, 3)
+        >>> logits = Tensor(np.array([[1, 2, 3],[1, 2, 3],[1, 2, 3]]), mindspore.float32)
+        >>> labels = Tensor(np.array([[1, 2, 2],[1, 2, 3],[1, 2, 3]]), mindspore.float32)
+        >>> output, axis = net(logits, labels)
+        >>> print(output)
+        0.11111111
+        >>> print(axis)
+        (0, 1)
     """
 
     def __init__(self, reduction='mean'):
@@ -83,34 +116,6 @@ class LossBase(Cell):
 
         Args:
             x (Tensor): Tensor of any shape.
-
-        Examples:
-            >>> import mindspore
-            >>> from mindspore import ops, Tensor, nn
-            >>> import numpy as np
-            >>>
-            >>> class Net(nn.LossBase):
-            ...     def __init__(self, reduction='mean'):
-            ...         super(Net, self).__init__(reduction)
-            ...         self.abs = ops.Abs()
-            ...
-            ...     def construct(self, logits, labels):
-            ...         x = self.abs(logits - labels)
-            ...         axis = self.get_axis(x)
-            ...         return axis
-            >>> net = Net()
-            >>> # Case 1: logits.shape = labels.shape = (3,)
-            >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
-            >>> labels = Tensor(np.array([1, 2, 3]), mindspore.float32)
-            >>> output = net(logits, labels)
-            >>> print(output)
-            (0,)
-            >>> # Case 2: logits.shape = labels.shape = (3, 3)
-            >>> logits = Tensor(np.array([[1, 2, 3],[1, 2, 3],[1, 2, 3]]), mindspore.float32)
-            >>> labels = Tensor(np.array([[1, 2, 3],[1, 2, 3],[1, 2, 3]]), mindspore.float32)
-            >>> output = net(logits, labels)
-            >>> print(output)
-            (0, 1)
         """
         shape = F.shape(x)
         length = F.tuple_len(shape)
@@ -130,34 +135,6 @@ class LossBase(Cell):
 
         Returns:
             Return the weighted loss.
-
-        Examples:
-            >>> import mindspore
-            >>> from mindspore import ops, Tensor, nn
-            >>> import numpy as np
-            >>>
-            >>> class Net(nn.LossBase):
-            ...     def __init__(self, reduction='mean'):
-            ...         super(Net, self).__init__(reduction)
-            ...         self.abs = ops.Abs()
-            ...
-            ...     def construct(self, logits, labels):
-            ...         x = self.abs(logits - labels)
-            ...         output = self.get_loss(x)
-            ...         return output
-            >>> net = Net()
-            >>> # Case 1: logits.shape = labels.shape = (3,)
-            >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
-            >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
-            >>> output = net(logits, labels)
-            >>> print(output)
-            0.33333334
-            >>> # Case 2: logits.shape = labels.shape = (3, 3)
-            >>> logits = Tensor(np.array([[1, 2, 3],[1, 2, 3],[1, 2, 3]]), mindspore.float32)
-            >>> labels = Tensor(np.array([[1, 2, 2],[1, 2, 3],[1, 2, 3]]), mindspore.float32)
-            >>> output = net(logits, labels)
-            >>> print(output)
-            0.11111111
         """
         input_dtype = x.dtype
         x = self.cast(x, mstype.float32)
