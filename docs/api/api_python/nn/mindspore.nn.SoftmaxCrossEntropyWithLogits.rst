@@ -24,7 +24,7 @@ mindspore.nn.SoftmaxCrossEntropyWithLogits
 
     参数：
         - **sparse** (bool，可选) - 指定目标值是否使用稀疏格式。默认值： ``False`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'none'`` 。
 
           - ``"none"``：不应用规约方法。
           - ``"mean"``：计算输出元素的平均值。

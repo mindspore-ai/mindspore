@@ -13,7 +13,7 @@ mindspore.ops.BesselI1
             {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
         \end{array}
 
-    其中J_{1}是第一类一阶的Bessel函数。
+    其中 :math:`J_{1}` 是第一类一阶的Bessel函数。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

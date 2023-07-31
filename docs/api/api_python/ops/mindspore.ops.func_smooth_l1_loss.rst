@@ -31,7 +31,7 @@ mindspore.ops.smooth_l1_loss
         - **input** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型为float16，float32和float64。
         - **target** (Tensor) - shape： :math:`(N, *)` ，与 `input` 的shape和数据类型相同。
         - **beta** (float) - 控制损失函数在L1Loss和L2Loss间变换的阈值，该值必须大于0。默认值： ``1.0`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'none'`` 。
 
           - ``"none"``：不应用规约方法。
           - ``"mean"``：计算输出元素的平均值。

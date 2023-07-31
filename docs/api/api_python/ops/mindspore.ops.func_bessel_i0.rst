@@ -13,7 +13,7 @@ mindspore.ops.bessel_i0
             \frac{x^{2 m}}{2^{2 m} (m !)^{2}}
         \end{array}
 
-    其中J_{0}是第一类零阶Bessel函数。
+    其中 :math:`J_{0}` 是第一类零阶Bessel函数。
 
     参数：
         - **x** (Tensor) - Tensor的输入。数据类型应为float16，float32或float64。

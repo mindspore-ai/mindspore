@@ -2894,7 +2894,7 @@ class NLLLoss(Primitive):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
         ignore_index (int): Specifies a target value that is ignored
             and does not contribute to the input gradient. Default: ``-100`` .
@@ -3206,11 +3206,11 @@ class SmoothL1Loss(Primitive):
         beta (float, optional): A parameter used to control the point where the function will change between
             L1 to L2 loss. The value should be greater than zero. Default: ``1.0`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'mean'`` .
+            ``'sum'`` . Default: ``'none'`` .
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Input Tensor of any dimension. Data type must be float16, float32 or float64.
@@ -3264,7 +3264,7 @@ class MultiMarginLoss(Primitive):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Inputs:
         - **inputs** (Tensor) - Input , with shape :math:`(N, C)`. Data type only support float32, float16
@@ -3323,7 +3323,7 @@ class SoftMarginLoss(Primitive):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
@@ -4538,7 +4538,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Inputs:
         - **logits** (Tensor) - Input logits. Data type must be float16 or float32.
@@ -5831,7 +5831,7 @@ class BinaryCrossEntropy(Primitive):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Inputs:
         - **logits** (Tensor) - The predictive value whose data type must be float16 or float32,
@@ -9520,7 +9520,7 @@ class MultilabelMarginLoss(Primitive):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Inputs:
         - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
@@ -10298,7 +10298,7 @@ class TripletMarginLoss(Primitive):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Inputs:
         - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.

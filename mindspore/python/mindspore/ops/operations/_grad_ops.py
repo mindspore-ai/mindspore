@@ -2584,7 +2584,7 @@ class MultilabelMarginLossGrad(Primitive):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Inputs:
         - **y_grad** (Tensor) - The gradients of loss to output of MultilabelMarginLoss function, with
@@ -2933,7 +2933,7 @@ class MultiMarginLossGrad(Primitive):
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the outputelements will be summed.
+            - ``'sum'``: the output elements will be summed.
 
     Inputs:
         - **y_grad** (Tensor) - If it's not a scalar, the shape of 'y_grad' :math:`(N, C)`.

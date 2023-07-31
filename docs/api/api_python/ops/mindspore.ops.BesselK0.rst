@@ -13,7 +13,7 @@ mindspore.ops.BesselK0
             {I_{-\nu}(x)-I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} d t
         \end{array}
     
-    其中I_{0}是第一类零阶修正Bessel函数。
+    其中 :math:`I_{0}` 是第一类零阶修正Bessel函数。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

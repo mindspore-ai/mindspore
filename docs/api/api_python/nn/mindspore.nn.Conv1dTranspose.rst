@@ -14,7 +14,7 @@ mindspore.nn.Conv1dTranspose
         - **out_channels** (int) - Conv1dTranspose层输出Tensor的空间维度。
         - **kernel_size** (int) - 指定一维卷积核的宽度。
         - **stride** (int) - 一维卷积核的移动步长，默认值：``1`` 。
-        - **pad_mode** (str，可选) - 指定填充模式，填充值为0。可选值为 ``"same"`` ， ``"valid"`` 或 ``"pad"`` 。默认值： ``"valid"`` 。
+        - **pad_mode** (str，可选) - 指定填充模式，填充值为0。可选值为 ``"same"`` ， ``"valid"`` 或 ``"pad"`` 。默认值： ``"same"`` 。
 
           - ``"same"``：在输入的两端填充，使得当 `stride` 为 ``1`` 时，输入和输出的shape一致。待填充的量由算子内部计算，若为偶数，则均匀地填充在四周，若为奇数，多余的填充量将补充在右端。如果设置了此模式， `padding` 必须为0。
           - ``"valid"``：不对输入进行填充，返回输出可能的最大长度，不能构成一个完整stride的额外的像素将被丢弃。如果设置了此模式， `padding` 必须为0。
