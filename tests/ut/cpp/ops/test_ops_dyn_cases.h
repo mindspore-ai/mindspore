@@ -17,62 +17,12 @@
 #define MINDSPORE_TESTS_UT_CPP_OPS_TEST_OPS_DYN_CASES_H_
 
 #include "common/common_test.h"
+#include "gtest/internal/gtest-param-util.h"
+
 namespace mindspore::ops {
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Int8;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Int16;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Int32;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Int64;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_UInt8;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_UInt16;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_UInt32;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_UInt64;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Float16;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Float32;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Float64;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Complex64;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Complex128;
-extern testing::internal::ValueArray<EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams, EltwiseOpParams, EltwiseOpParams, EltwiseOpParams,
-                                     EltwiseOpParams>
-  EltwiseDynTestCase_Bool;
+extern testing::internal::ValueArray<
+  EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams,
+  EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams>
+  EltwiseDynShapeTestCases;
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_TESTS_UT_CPP_OPS_TEST_OPS_DYN_CASES_H_
