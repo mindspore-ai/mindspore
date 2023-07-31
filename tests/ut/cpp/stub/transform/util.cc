@@ -102,5 +102,6 @@ int OpAdapterImpl::getAttr(const OperatorPtr &, uint32_t, ValuePtr *) { return 0
 bool IsCustomCNode(const mindspore::AnfNodePtr &node) { return true; }
 std::string TransformUtil::NormOpName(const std::string &anf_name) { return ""; }
 GeDataType TransformUtil::ConvertDataType(const MeDataType &type) { return GeDataType::DT_UNDEFINED; }
+bool ConvertCheck(const AnfNodePtr &node) { return true; }
 }  // namespace transform
 }  // namespace mindspore
