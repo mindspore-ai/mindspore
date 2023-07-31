@@ -16,14 +16,15 @@
 
 #include "fractional_max_pool_3d_grad_with_fixed_ksize.h"
 
+#include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <vector>
-#include <cmath>
 
 #include "cpu_kernel_utils.h"
+#include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kInputNum = 3;
@@ -148,7 +149,18 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::FractionalMaxPool3DGrad
     outputW = out_backprop_shape[w_dim];
   }
 
-  memset(output_data, 0, ctx.Output(0)->GetDataSize());
+  auto output_size = ctx.Output(0)->GetDataSize();
+  auto output_addr = reinterpret_cast<char *>(ctx.Output(0)->GetData());
+  while (output_size > 0) {
+    auto copy_size = std::min(output_size, static_cast<uint64_t>(INT32_MAX));
+    auto ret = memset_s(output_addr, output_size, 0, copy_size);
+    if (ret != EOK) {
+      KERNEL_LOG_ERROR("For 'FractionalMaxPool3DGradWithFixedKsize', memset_s failed, ret=%d.", ret);
+      return KERNEL_STATUS_INNER_ERROR;
+    }
+    output_size -= copy_size;
+    output_addr += copy_size;
+  }
 
   if (input_dims == Num4) {
     uint32_t min_core_num = 1;

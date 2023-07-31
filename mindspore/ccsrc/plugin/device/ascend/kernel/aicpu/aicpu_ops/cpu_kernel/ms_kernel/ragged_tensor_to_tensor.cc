@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "ragged_tensor_to_tensor.h"
+#include "securec.h"
 
 namespace {
 constexpr uint32_t kInputNum = 4;
@@ -352,7 +353,7 @@ vector<INDEX_TYPE> RaggedTensorToTensorCpuKernel::CalculateFirstParentOutputInde
   for (INDEX_TYPE i = min_dimension; i < first_dimension; ++i) {
     result.push_back(-1);
   }
-  unsigned int fisrt_dim = (unsigned int)first_dimension;
+  auto fisrt_dim = static_cast<unsigned int>(first_dimension);
   if (result.size() < fisrt_dim) KERNEL_LOG_ERROR("Resize size shou l d be greater equal first dim.");
   return result;
 }
@@ -606,7 +607,12 @@ uint32_t RaggedTensorToTensorCpuKernel::SetOutput(CpuKernelContext &ctx, const v
       if (output_index[i] >= 0) {
         VALUE_TYPE *dst = base_output + output_index[i];
         const VALUE_TYPE *src = values_base + value_index;
-        copy_array<VALUE_TYPE, INDEX_TYPE>(dst, src, value_element_size, value_element_bytesize);
+        auto data_size_max = (output_element_size - output_index[i]) * sizeof(VALUE_TYPE);
+        auto ret = memcpy_s(dst, data_size_max, src, value_element_bytesize);
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("For 'RaggedTensorToTensor', memcpy_s failed, ret=%d.", ret);
+          return KERNEL_STATUS_INNER_ERROR;
+        }
       }
     }
   }

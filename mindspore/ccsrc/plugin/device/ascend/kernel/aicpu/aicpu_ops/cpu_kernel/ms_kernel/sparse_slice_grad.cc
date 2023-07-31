@@ -1,6 +1,7 @@
 #include "sparse_slice_grad.h"
 #include <complex>
 #include "cpu_kernel_utils.h"
+#include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "utils/sparse_tensor.h"
@@ -73,7 +74,12 @@ uint32_t SparseSliceGradCpuKernel::GradCompute(CpuKernelContext &ctx) {
   const int64_t input_nnz = indices_shape->GetDimSize(0);
   Tensor *y_grad = ctx.Output(0);
   auto *y_grad_vec = static_cast<T *>(y_grad->GetData());
-  memset(y_grad_vec, 0, sizeof(T) * input_nnz);
+  auto output_size = y_grad->GetDataSize();
+  auto ret = memset_s(y_grad_vec, output_size, 0, sizeof(T) * input_nnz);
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("For 'SparseSlice', memset_s failed, ret=%d.", ret);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
 
   std::vector<T> backprop_val_grad_flat;
   auto *backprop_val_grad_vec = static_cast<T *>(backprop_val_grad->GetData());

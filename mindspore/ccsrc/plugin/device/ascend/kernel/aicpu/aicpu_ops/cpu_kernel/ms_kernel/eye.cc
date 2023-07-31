@@ -15,9 +15,11 @@
  */
 #include "eye.h"
 
+#include <cstdint>
 #include <string.h>
 #include "Eigen/Dense"
 #include "cpu_kernel_utils.h"
+#include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -75,10 +77,18 @@ uint32_t EyeCpuKernel::EyePartCompute(CpuKernelContext &ctx) {
   int64_t min_value = num_rows > num_cols ? num_cols : num_rows;
 
   Tensor *y = ctx.Output(0);
-  int64_t data_num = y->NumElements();
-  int64_t data_size = data_num * sizeof(T);
-  auto y_addr = y->GetData();
-  memset(y_addr, 0.0, data_size);
+  auto output_size = y->GetDataSize();
+  auto y_addr = reinterpret_cast<char *>(y->GetData());
+  while (output_size > 0) {
+    auto copy_size = std::min(output_size, static_cast<uint64_t>(INT32_MAX));
+    auto ret = memset_s(y_addr, output_size, 0, copy_size);
+    if (ret != EOK) {
+      KERNEL_LOG_ERROR("For 'Eye', memset_s failed, ret=%d.", ret);
+      return KERNEL_STATUS_INNER_ERROR;
+    }
+    output_size -= copy_size;
+    y_addr += copy_size;
+  }
 
   KERNEL_CHECK_NULLPTR(y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
   auto output_y = reinterpret_cast<T *>(y->GetData());

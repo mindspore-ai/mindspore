@@ -17,6 +17,7 @@
 
 #include <random>
 #include "cpu_kernel_utils.h"
+#include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -58,7 +59,10 @@ float SDBBExt2CpuKernel::RandFloat() {
   const uint32_t val = (exp << 23) | man;
 
   float result;
-  memcpy(&result, &val, sizeof(val));
+  auto ret = memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("For 'SampleDistortedBoundingBoxExt2', memcpy_s failed, ret=%d.", ret);
+  }
   return result - 1.0f;
 }
 

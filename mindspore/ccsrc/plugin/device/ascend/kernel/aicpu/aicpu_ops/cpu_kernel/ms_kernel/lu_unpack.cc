@@ -22,6 +22,7 @@
 #include "cpu_ops_kernel.h"
 #include "cpu_kernel_utils.h"
 #include "cpu_tensor.h"
+#include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -115,13 +116,19 @@ uint32_t LuUnpackCpuKernel::LuUnpack(CpuKernelContext &ctx, T_pivots *Lu_pivots_
   }
   //  Index_select
   auto output_y0 = reinterpret_cast<T_data *>(ctx.Output(kFirstOutputIndex)->GetData());
+  auto output_size = ctx.Output(kFirstOutputIndex)->GetDataSize();
   int64_t indices_num = final_order.size();
   int64_t inner_size = Lu_data_dim1;
   int64_t slice_size = inner_size * sizeof(T_data);
   for (int64_t j = 0; j < indices_num; ++j) {
     auto params_idx = final_order[j] * inner_size;
     auto out_idx = j * inner_size;
-    memcpy(output_y0 + matrix_index * pivots_stride + out_idx, P_eye + params_idx, slice_size);
+    auto offset = matrix_index * pivots_stride + out_idx;
+    auto ret = memcpy_s(output_y0 + offset, output_size - offset * sizeof(T_data), P_eye + params_idx, slice_size);
+    if (ret != EOK) {
+      KERNEL_LOG_ERROR("For 'LuUnpack', memcpy_s failed, ret=%d.", ret);
+      return KERNEL_STATUS_INNER_ERROR;
+    }
   }
   return KERNEL_STATUS_OK;
 }

@@ -54,38 +54,6 @@ using graphStatus = uint32_t;
 const graphStatus GRAPH_FAILED = 0xFFFFFFFF;
 const graphStatus GRAPH_SUCCESS = 0;
 
-template <typename VALUE_TYPE, typename INDEX_TYPE>
-void slow_copy_array(VALUE_TYPE *dst, const VALUE_TYPE *src, INDEX_TYPE size) {
-  for (INDEX_TYPE index = 0; index < size; ++index) {
-    dst[index] = src[index];
-  }
-}
-
-template <typename VALUE_TYPE, typename INDEX_TYPE>
-void copy_array(VALUE_TYPE *dst, const VALUE_TYPE *src, INDEX_TYPE size, size_t bytes) {
-  memcpy(dst, src, bytes);
-}
-
-template <>
-void copy_array<string, int64_t>(std::string *dst, const string *src, int64_t size, size_t bytes) {
-  slow_copy_array(dst, src, size);
-}
-
-template <>
-void copy_array<string, int32_t>(string *dst, const string *src, int32_t size, size_t bytes) {
-  slow_copy_array(dst, src, size);
-}
-
-template <>
-void copy_array<Eigen::half, int64_t>(Eigen::half *dst, const Eigen::half *src, int64_t size, size_t bytes) {
-  slow_copy_array(dst, src, size);
-}
-
-template <>
-void copy_array<Eigen::half, int32_t>(Eigen::half *dst, const Eigen::half *src, int32_t size, size_t bytes) {
-  slow_copy_array(dst, src, size);
-}
-
 class RaggedTensorToTensorCpuKernel : public CpuKernel {
  public:
   graphStatus GetRowPartitionTypes(CpuKernelContext &ctx);

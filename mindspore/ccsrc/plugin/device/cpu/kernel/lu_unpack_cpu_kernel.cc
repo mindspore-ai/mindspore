@@ -151,13 +151,18 @@ void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &input
   }
   //  Index_select
   auto output_y0 = reinterpret_cast<T_data *>(outputs[kFirstOutputIndex]->addr);
+  auto output_size = outputs[kFirstOutputIndex]->size;
   size_t indices_num = final_order.size();
   size_t inner_size = Lu_data_dim1_unsigned;
   size_t slice_size = static_cast<size_t>(inner_size * sizeof(T_data));
   for (size_t j = 0; j < indices_num; ++j) {
     size_t params_idx = static_cast<size_t>(final_order[j] * inner_size);
     size_t out_idx = j * inner_size;
-    (void)std::memcpy(output_y0 + matrix_index * pivots_stride + out_idx, P_eye + params_idx, slice_size);
+    auto offset = matrix_index * pivots_stride + out_idx;
+    auto ret = memcpy_s(output_y0 + offset, output_size - offset * sizeof(T_data), P_eye + params_idx, slice_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For 'LuUnpack', memcpy_s failed, ret=" << ret;
+    }
   }
 }
 

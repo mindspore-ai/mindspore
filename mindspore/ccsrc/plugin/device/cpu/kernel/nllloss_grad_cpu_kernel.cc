@@ -91,7 +91,11 @@ bool NLLLossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   if (logits == nullptr || loss_grad == nullptr || labels == nullptr || weight == nullptr || total_weight == nullptr) {
     MS_LOG(ERROR) << "For NLLLossGrad, it does not support NULL input";
   }
-  (void)memset(logits_grad, 0, nllloss_param_.batch_ * nllloss_param_.class_num_ * sizeof(float));
+  auto ret =
+    memset_s(logits_grad, outputs[0]->size, 0, nllloss_param_.batch_ * nllloss_param_.class_num_ * sizeof(float));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+  }
   for (int i = 0; i < nllloss_param_.batch_; i++) {
     if (labels[i] == ignore_index_) {
       continue;
