@@ -27,6 +27,10 @@
 
 namespace mindspore::lite {
 void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor> *context) {
+  if (inputs == nullptr || context == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr.";
+    return;
+  }
   auto op_uuid = context->sequential_num_;
   input_op_datas_[op_uuid].push_back(inputs);
   inputs_data_[inputs->index_] = inputs->data_;
@@ -72,6 +76,9 @@ bool OfflineIsolated(const std::vector<kernel::KernelExec *> &kernels, const ker
 }
 
 TypeId GetSubgraphInTensorDataType(const kernel::KernelExec *kernel, const lite::Tensor *tensor) {
+  if (kernel == nullptr || tensor == nullptr) {
+    return kTypeUnknown;
+  }
 #ifdef ENABLE_LITE_ACL
   if (kernel->subgraph_type() == kernel::kCustomSubGraph) {
     return tensor->data_type();
@@ -87,12 +94,18 @@ TypeId GetSubgraphInTensorDataType(const kernel::KernelExec *kernel, const lite:
 
 int LiteOpActor::PreInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                          std::unordered_map<Tensor *, Tensor *> *input_map) {
+  if (actors == nullptr || input_map == nullptr) {
+    return RET_ERROR;
+  }
   return IsolateInputData(actors, input_map);
 }
 int LiteOpActor::PostInit() { return PrepareOutputData(); }
 
 int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                                   std::unordered_map<Tensor *, Tensor *> *input_map) {
+  if (actors == nullptr || input_map == nullptr) {
+    return RET_ERROR;
+  }
   isolate_input_map_ = input_map;
   std::vector<kernel::KernelExec *> kernels{};
   std::transform(actors->begin(), actors->end(), std::back_inserter(kernels),
@@ -242,6 +255,9 @@ bool LiteOpActor::ArrowHasCompiled(const AID &actor_name, size_t to_index,
 
 void LiteOpActor::MarkArrowAsCompiled(const AID *actor_name, size_t to_index,
                                       std::unordered_map<AID, std::set<size_t>> *receiver_index_set) {
+  if (actor_name == nullptr || receiver_index_set == nullptr) {
+    return;
+  }
   if (receiver_index_set->find(*actor_name) == receiver_index_set->end()) {
     std::set<size_t> tmp{to_index};
     receiver_index_set->insert(std::pair<AID, std::set<size_t>>(*actor_name, tmp));
@@ -253,6 +269,9 @@ void LiteOpActor::MarkArrowAsCompiled(const AID *actor_name, size_t to_index,
 int LiteOpActor::CreateCommonArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
                                    const std::set<void *> &receiver_tensors, const size_t &output_index,
                                    std::unordered_map<AID, std::set<size_t>> *receiver_index_set) {
+  if (receiver_index_set == nullptr) {
+    return RET_ERROR;
+  }
   std::unordered_map<void *, std::set<std::pair<AID, size_t>>>::const_iterator iter;
   for (auto receiver_tensor : receiver_tensors) {
     iter = receivers_map.find(receiver_tensor);
@@ -387,6 +406,9 @@ int LiteOpActor::InitInputData() {
 }
 
 void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
+  if (context == nullptr) {
+    return;
+  }
   auto output_size = output_data_arrows_.size();
   for (size_t i = 0; i < output_size; ++i) {
     auto data = outputs_data_[i];
@@ -401,6 +423,9 @@ void LiteOpActor::AddResultIndex(size_t index, size_t tensor_index) {
 }
 
 void LiteOpActor::SetOutputData(const OpContext<Tensor> *context) {
+  if (context == nullptr) {
+    return;
+  }
   for (auto index : results_index_) {
     context->SetResult(index, RET_OK);
   }
@@ -423,6 +448,7 @@ int LiteOpActor::PrepareOutputData() {
 
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::KernelExec *> &kernels,
                                                         lite::InnerContext *ctx, const std::shared_ptr<ActorMgr> &mgr) {
+  MS_CHECK_TRUE_RET(ctx != nullptr, {});
   std::vector<std::shared_ptr<LiteOpActor>> actors;
   ActorThreadPool *thread_pool = reinterpret_cast<ActorThreadPool *>(ctx->thread_pool_);
   if (thread_pool == nullptr) {

@@ -66,7 +66,7 @@ bool RemoveUnusedAddNodePass::Run(const FuncGraphPtr &func_graph) {
       auto mul_cnode = add_input->cast<CNodePtr>();
       auto mul_inputs = mul_cnode->inputs();
       for (auto mul_input : mul_inputs) {
-        if (!utils::isa<CNodePtr>(node)) {
+        if (!utils::isa<CNodePtr>(mul_input)) {
           MS_LOG(DEBUG) << "node is not Cnode";
           continue;
         }
@@ -75,6 +75,10 @@ bool RemoveUnusedAddNodePass::Run(const FuncGraphPtr &func_graph) {
           continue;
         }
         auto const_of_shape_cnode = mul_input->cast<CNodePtr>();
+        if (const_of_shape_cnode->inputs().empty()) {
+          MS_LOG(ERROR) << "inputs is empty.";
+          return false;
+        }
         auto prim = ops::GetOperator<mindspore::ops::ConstantOfShape>(const_of_shape_cnode->input(0));
         if (prim == nullptr) {
           MS_LOG(ERROR) << "remove add 0 failed.";

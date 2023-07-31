@@ -35,9 +35,19 @@ static const size_t kNumMaxMallocSize = GetMaxMallocSize();
 }  // namespace
 
 bool InferCheckerAll(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
+  if (outputs.empty()) {
+    return false;
+  }
   auto out = outputs.front();
-  if (!out->get_shape_changed() &&
-      std::any_of(inputs.begin(), inputs.end(), [](const lite::Tensor *input) { return input->get_shape_changed(); })) {
+  if (out == nullptr) {
+    return false;
+  }
+  if (!out->get_shape_changed() && std::any_of(inputs.begin(), inputs.end(), [](const lite::Tensor *input) {
+        if (input == nullptr) {
+          return false;
+        }
+        return input->get_shape_changed();
+      })) {
     return false;
   }
   auto shape = out->shape();
@@ -45,12 +55,28 @@ bool InferCheckerAll(const std::vector<Tensor *> &inputs, const std::vector<Tens
 }
 
 bool InferCheckerInput(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
+  if (outputs.empty()) {
+    return false;
+  }
+  if (outputs.front() == nullptr) {
+    return false;
+  }
   return outputs.front()->get_shape_changed() ||
-         std::all_of(inputs.begin(), inputs.end(),
-                     [](const lite::Tensor *input) { return !input->get_shape_changed(); });
+         std::all_of(inputs.begin(), inputs.end(), [](const lite::Tensor *input) {
+           if (input == nullptr) {
+             return false;
+           }
+           return !input->get_shape_changed();
+         });
 }
 
 bool InferCheckerOutput(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
+  if (outputs.empty()) {
+    return false;
+  }
+  if (outputs.front() == nullptr) {
+    return false;
+  }
   auto shape = outputs.front()->shape();
   return !std::any_of(shape.begin(), shape.end(), [](const int dim) { return dim < 0; });
 }

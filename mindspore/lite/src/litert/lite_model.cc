@@ -290,6 +290,7 @@ int LiteModel::GraphInOutVerify() const {
 }
 
 int LiteModel::SubGraphInOutVerify(const LiteGraph::SubGraph *graph) const {
+  MS_CHECK_TRUE_RET(graph != nullptr, RET_ERROR);
   auto from_node = [&, this](uint32_t cur_idx) -> bool {
     for (auto node_idx : graph->node_indices_) {
       auto node = this->graph_.all_nodes_.at(node_idx);

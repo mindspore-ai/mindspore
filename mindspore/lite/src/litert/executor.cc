@@ -31,12 +31,15 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
 
   // clear ref_count
   for (auto *kernel : kernels) {
+    CHECK_NULL_RETURN(kernel);
     for (auto *tensor : kernel->in_tensors()) {
+      CHECK_NULL_RETURN(tensor);
       tensor->set_ref_count(0);
     }
   }
 
   for (auto kernel : kernels) {
+    CHECK_NULL_RETURN(kernel);
     int ret = kernel->Execute(before, after);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();

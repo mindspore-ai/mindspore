@@ -76,6 +76,7 @@ STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decode
 }
 
 STATUS HuffmanDecode::RebuildHuffmanTree(std::string keys, std::string codes, const HuffmanNodePtr &root) {
+  CHECK_NULL_RETURN(root);
   HuffmanNodePtr cur_node;
   HuffmanNodePtr tmp_node;
   HuffmanNodePtr new_node;
@@ -134,6 +135,8 @@ STATUS HuffmanDecode::RebuildHuffmanTree(std::string keys, std::string codes, co
 }
 
 STATUS HuffmanDecode::DoHuffmanDecompress(HuffmanNodePtr root, std::string encoded_data, std::string *decoded_str) {
+  CHECK_NULL_RETURN(decoded_str);
+  CHECK_NULL_RETURN(root);
   HuffmanNodePtr cur_node = root;
   bool pseudo_eof = false;
   size_t pos = 0;
@@ -149,6 +152,7 @@ STATUS HuffmanDecode::DoHuffmanDecompress(HuffmanNodePtr root, std::string encod
       } else {
         cur_node = cur_node->left;
       }
+      CHECK_NULL_RETURN(cur_node);
       if (cur_node->left == nullptr && cur_node->right == nullptr) {
         auto key = cur_node->key;
         if (key == PSEUDO_EOF) {

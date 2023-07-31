@@ -79,6 +79,10 @@ int ModelPool::GetDefaultThreadNum(int worker_num) {
  * */
 Status ModelPool::SetNumaBindStrategy(std::vector<std::vector<int>> *all_worker_bind_list,
                                       std::vector<int> *numa_node_id, int thread_num) {
+  if (all_worker_bind_list == nullptr || numa_node_id == nullptr) {
+    MS_LOG(ERROR) << "has nullptr.";
+    return kLiteError;
+  }
   if (MS_UNLIKELY(thread_num == 0)) {
     MS_LOG(ERROR) << "thread num is zero.";
     return kLiteError;
@@ -130,6 +134,10 @@ Status ModelPool::SetNumaBindStrategy(std::vector<std::vector<int>> *all_worker_
 
 Status ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
                                   int thread_num) {
+  if (all_model_bind_list == nullptr || numa_node_id == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr.";
+    return kLiteError;
+  }
   if (thread_num == 0) {
     MS_LOG(ERROR) << "thread num is zero.";
     return kLiteError;
@@ -425,6 +433,10 @@ Status ModelPool::SetWorkersNumaId(std::vector<int> *numa_node_id) {
 
 std::shared_ptr<Context> ModelPool::CopyContext(const std::shared_ptr<Context> &context) {
   auto new_context = std::make_shared<Context>();
+  if (new_context == nullptr) {
+    MS_LOG(ERROR) << "create context failed.";
+    return nullptr;
+  }
   new_context->SetThreadNum(context->GetThreadNum());
   new_context->SetInterOpParallelNum(context->GetInterOpParallelNum());
   new_context->SetThreadAffinity(context->GetThreadAffinityMode());

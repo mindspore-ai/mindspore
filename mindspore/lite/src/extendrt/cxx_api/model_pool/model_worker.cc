@@ -46,6 +46,10 @@ void ModelWorker::InitModelWorker(const char *model_buf, size_t size,
                                   const std::shared_ptr<WorkerConfig> &worker_config,
                                   const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success,
                                   ModelType model_type) {
+  if (create_success == nullptr) {
+    MS_LOG(ERROR) << "create_success is nullptr.";
+    return;
+  }
   worker_config_ = worker_config;
   MS_LOG(INFO) << "worker bind core id list: " << worker_config_->context->GetThreadAffinityCoreList();
   MS_LOG(INFO) << "worker thread num: " << worker_config_->context->GetThreadNum();
