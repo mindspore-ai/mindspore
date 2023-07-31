@@ -199,7 +199,10 @@ class Parser {
   AnfNodePtr ParseNull(const FunctionBlockPtr &block, const py::object &value_body) const;
   // Process a compare expression.
   AnfNodePtr ParseCompare(const FunctionBlockPtr &block, const py::object &node);
-  AnfNodePtr ParseCompareInner(const FunctionBlockPtr &block, const py::object &node, bool force_interpret = false);
+  AnfNodePtr ParseSingleCompare(const FunctionBlockPtr &block, const py::object &left, const py::object &right,
+                                const py::object &compare_op);
+  AnfNodePtr ConnectSingleCompare(const FunctionBlockPtr &block, const AnfNodePtr &left_node,
+                                  const AnfNodePtr &right_node);
   // Process a bool operation.
   AnfNodePtr ParseBoolOp(const FunctionBlockPtr &block, const py::object &node);
   // Process a lambda operation.

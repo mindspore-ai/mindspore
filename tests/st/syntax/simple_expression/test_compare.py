@@ -15,9 +15,10 @@
 """ test syntax for logic expression """
 
 import pytest
+import numpy as np
 import mindspore.nn as nn
 import mindspore
-from mindspore import context
+from mindspore import context, jit
 from mindspore.common.tensor import Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -80,3 +81,94 @@ def test_compare_tensor_int_vs_tensor_float():
     net = Net()
     ret = net(x, y)
     assert not ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_compare():
+    """
+    Feature: Test compare including multiple comparators.
+    Description: test compare.
+    Expectation: No exception
+    """
+    @jit
+    def comp_func(x, y, z):
+        return x < y < z
+
+    a = Tensor([1])
+    b = Tensor([2])
+    c = Tensor([3])
+
+    ret = comp_func(a, b, c)
+    assert ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_compare_2():
+    """
+    Feature: Test compare including multiple comparators.
+    Description: test compare.
+    Expectation: No exception
+    """
+    @jit
+    def comp_func(x, y, z):
+        return x < y >= z
+
+    a = Tensor([1])
+    b = Tensor([2])
+    c = Tensor([3])
+
+    ret = comp_func(a, b, c)
+    assert not ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_compare_3():
+    """
+    Feature: Test compare including multiple comparators.
+    Description: test compare.
+    Expectation: No exception
+    """
+    @jit
+    def comp_func(x, y, z):
+        return x == y == z
+
+    a = Tensor([1])
+    b = Tensor([1])
+    c = Tensor([1])
+
+    ret = comp_func(a, b, c)
+    assert ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_compare_4():
+    """
+    Feature: Test compare including multiple comparators.
+    Description: test compare.
+    Expectation: No exception
+    """
+    @jit
+    def comp_func():
+        x = np.array([1])
+        y = np.array([2])
+        z = np.array([3])
+        return x <= y <= z
+
+    ret = comp_func()
+    assert ret
