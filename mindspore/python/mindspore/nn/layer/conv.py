@@ -139,31 +139,44 @@ class _Conv(Cell):
 
 class Conv2d(_Conv):
     r"""
-    Calculates the 2D convolution on the input tensor.
-    The input is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
-    where :math:`N` is batch size, :math:`C_{in}` is a number of channels,
-    :math:`H_{in}, W_{in}` are the height and width of the feature layer respectively.
-    For the tensor of each batch, its shape is :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
+    2D convolution layer.
+
+    Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is feature height, :math:`W` is feature width.
+
+    The output is calculated based on formula:
 
     .. math::
 
         \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the :math:`j`-th channel of
-    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
-    is a convolution kernel slice with shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
-    where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the convolution
-    kernel respectively. :math:`\text{bias}` is the bias parameter and :math:`\text{X}` is the input tensor.
-    In this case, `data_format` of the input tensor is 'NCHW' and the shape of full convolution kernel is
-    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
-    where `group` is the number of groups to split the input `x` in the channel dimension. If `data_format` of the
-    input tensor is 'NHWC', the shape of full convolution kernel will be
-    :math:`(C_{out}, \text{kernel_size[0]}, \text{kernel_size[1]}), C_{in} / \text{group}`.
+    where :math:`bias` is the output channel bias, :math:`ccor` is
+    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
+    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
-    For more details, please refers to the paper `Gradient Based Learning Applied to Document
-    Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
+    Here are the indices' meanings:
+    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+      output channels, which is also equal to the number of kernels.
+
+    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+      input channels, which is also equal to the number of channels in the convolutional kernels.
+
+    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
+    channel in the :math:`i`-th batch of the input feature map.
+
+    The shape of the convolutional kernel is given by :math:`(kernel_size[0], kernel_size[1])`,
+    where :math:`kernel_size[0]` and :math:`kernel_size[1]` are the height and width of the kernel, respectively.
+    If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
+    will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
+
+    For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
+    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
@@ -176,7 +189,7 @@ class Conv2d(_Conv):
             The data type is an integer or a tuple of two integers. An integer represents the height
             and width of the convolution kernel. A tuple of two integers represents the height
             and width of the convolution kernel respectively.
-        stride (Union[int, tuple[int]]): The movement stride of the 2D convolution kernel.
+        stride (Union[int, tuple[int]], optional): The movement stride of the 2D convolution kernel.
             The data type is an integer or a tuple of two or four integers. An integer represents the movement step size
             in both height and width directions. A tuple of two integers represents the movement step size in the height
             and width directions respectively. Default: ``1`` .
@@ -195,31 +208,40 @@ class Conv2d(_Conv):
               in the height and width directions is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union[int, tuple[int]]): The number of padding on the height and width directions of the input.
+        padding (Union[int, tuple[int]], optional): The number of padding
+            on the height and width directions of the input.
             The data type is an integer or a tuple of four integers. If `padding` is an integer,
             then the top, bottom, left, and right padding are all equal to `padding`.
             If `padding` is a tuple of 4 integers, then the top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, and `padding[3]` respectively.
             The value should be greater than or equal to 0. Default: ``0`` .
-        dilation (Union[int, tuple[int]]): Dilation size of 2D convolution kernel.
-            The data type is an integer or a tuple of two or four integers. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` on the height and width directions is in range of [1, H]
-            and [1, W] respectively. Default: ``1`` .
-        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
+        dilation (Union(int, tuple[int]), optional): Specifies the dilation rate to use for dilated convolution.
+            It can be a single int or a tuple of 2 or 4 integers. A single int means the dilation size is the same
+            in both the height and width directions. A tuple of two ints represents the dilation size in
+            the height and width directions, respectively. For a tuple of four ints, the two ints correspond
+            to (N, C) dimension are treated as 1, and the two correspond to (H, W) dimensions is the
+            dilation size in the height and width directions respectively.
+            Assuming :math:`dilation=(d0, d1)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the height direction and :math:`d1-1` elements in the width direction.
+            The values in the height and width dimensions are in the ranges [1, H] and [1, W], respectively.
+            Default: ``1`` .
+        group (int, optional): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `group`. If the group is equal to `in_channels` and `out_channels`,
             this 2D convolution layer also can be called 2D depthwise convolution layer. Default: ``1`` .
-        has_bias (bool): Whether the Conv2d layer has a bias parameter. Default: ``False`` .
+        has_bias (bool, optional): Whether the Conv2d layer has a bias parameter. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
-            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``None`` ,
-            weight will be initialized using HeUniform.
+            lowercase are both acceptable. Refer to the values of
+            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
-        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
+        data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
 
     Inputs:
@@ -344,26 +366,45 @@ def _check_input_3d(input_shape, op_name):
 
 class Conv1d(_Conv):
     r"""
-    Calculates the 1D convolution on the input tensor. The input is typically of shape :math:`(N, C_{in}, L_{in})`,
-    where :math:`N` is batch size, :math:`C_{in}` is a number of channels and :math:`L_{in}` is a length of sequence.
-    For the tensor of each batch, its shape is :math:`(C_{in}, L_{in})`, and the formula is defined as:
+    1D convolution layer.
+
+    Applies a 1D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, L_{in})`,
+    where :math:`N` is batch size, :math:`C` is channel number, :math:`L` is input sequence width.
+
+    The output is calculated based on formula:
 
     .. math::
 
         \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the :math:`j`-th channel of
-    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
-    is a convolution kernel slice with shape :math:`\text{kernel_size}`, where :math:`\text{kernel_size}`
-    is the width of the convolution kernel. :math:`\text{bias}` is the bias parameter,
-    and :math:`\text{X}` is the input tensor. The shape of full convolution kernel is
-    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
-    where `group` is the number of groups to split the input `x` in the channel dimension.
+    where :math:`bias` is the output channel bias, :math:`ccor` is
+    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
+    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
-    For more details, please refers to the paper `Gradient Based Learning Applied to Document
-    Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
+    Here are the indices' meanings:
+    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+      output channels, which is also equal to the number of kernels.
+
+    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+      input channels, which is also equal to the number of channels in the convolutional kernels.
+
+    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
+    channel in the :math:`i`-th batch of the input feature map.
+
+    The shape of the convolutional kernel is given by :math:`(kernel_size)`,
+    where :math:`kernel_size` is the width of the kernel.
+    If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
+    will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
+    where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
+
+    For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
+    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_
+    and `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ .
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
@@ -373,7 +414,7 @@ class Conv1d(_Conv):
         in_channels (int): The channel number of the input tensor of the Conv1d layer.
         out_channels (int): The channel number of the output tensor of the Conv1d layer.
         kernel_size (int): Specifies the width of the 1D convolution kernel.
-        stride (int): The movement stride of the 1D convolution kernel. Default: ``1`` .
+        stride (int, optional): The movement stride of the 1D convolution kernel. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
             ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"same"`` .
 
@@ -389,23 +430,32 @@ class Conv1d(_Conv):
               at the begin and end is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (int): The number of padding on both sides of input.
-            The value should be greater than or equal to 0. Default: ``0`` .
-        dilation (int): Dilation size of 1D convolution kernel. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` is in range of [1, L]. Default: ``1`` .
-        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
+        padding (Union(int, tuple[int], list[int]), optional):  Specifies the amount of padding to apply on
+            both side of `input` when `pad_mode` is set to ``"pad"``. The
+            paddings of left and right are the same, equal to padding or padding[0] when padding is a tuple of
+            1 integer. Default: ``0`` .
+        dilation (Union(int, tuple[int]), optional): Specifies the dilation rate to use for dilated convolution.
+            It can be a single int or a tuple of 1 integer.
+            Assuming :math:`dilation=(d0,)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the width direction.
+            The value should be in the ranges [1, L].
+            Default: ``1`` .
+        group (int, optional): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `group`. Default: ``1`` .
-        has_bias (bool): Whether the Conv1d layer has a bias parameter. Default: ``False`` .
-        weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
+        has_bias (bool, optional): Whether the Conv1d layer has a bias parameter. Default: ``False`` .
+        weight_init (Union[Tensor, str, Initializer, numbers.Number], optional):
+            Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant 'One' and 'Zero' distributions are possible. Alias ``'xavier_uniform'`` ,
             ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and lowercase are both acceptable.
-            Refer to the values of Initializer for more details. Default: ``None`` ,
-            weight will be initialized using HeUniform.
-        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
+            Refer to the values of
+            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
+        bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
+            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            for more details. Default: ``None`` , bias will be initialized using ``'Uniform'``.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -537,31 +587,48 @@ def _check_input_5dims(input_shape, op_name):
 
 class Conv3d(_Conv):
     r"""
-    Calculates the 3D convolution on the input tensor. The input is typically of shape
-    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`,
-    where :math:`N` is batch size, :math:`C_{in}` is a number of channels,
-    :math:`D_{in}, H_{in}, W_{in}` are the depth, height and width of the feature layer respectively.
-    For the tensor of each batch, its shape is :math:`(C_{in}, D_{in}, H_{in}, W_{in})`, the formula is defined as:
+    3D convolution layer.
+
+    Applies a 3D convolution over an input tensor which is typically of shape
+    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`, where :math:`N` is batch size, :math:`C` is channel number,
+    :math:`D` is feature depth, :math:`H` is feature height, :math:`W` is feature width.
+
+    The output is calculated based on formula:
 
     .. math::
 
         \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the :math:`j`-th channel of
-    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
-    is a convolution kernel slice with shape
-    :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
-    where :math:`\text{kernel_size[0]}`, :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are
-    the depth, height and width of the convolution kernel respectively. :math:`\text{bias}` is the bias parameter
-    and :math:`\text{X}` is the input tensor.
-    The shape of full convolution kernel is
-    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
-    where `group` is the number of groups to split the input `x` in the channel dimension.
+    where :math:`bias` is the output channel bias, :math:`ccor` is
+    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
+    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
-    For more details, please refers to the paper `Gradient Based Learning Applied to Document
-    Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
+    Here are the indices' meanings:
+    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+      output channels, which is also equal to the number of kernels.
+
+    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+      input channels, which is also equal to the number of channels in the convolutional kernels.
+
+    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
+    channel in the :math:`i`-th batch of the input feature map.
+
+    The shape of the convolutional kernel is given by
+    :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`
+    where :math:`kernel_size[0]` , :math:`kernel_size[1]` and :math:`kernel_size[2]` are the depth,
+    height and width of the kernel, respectively.
+    If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
+    will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]},
+    \text{kernel_size[1]}, \text{kernel_size[2]})`,
+    where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
+
+    For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
+    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
@@ -571,10 +638,10 @@ class Conv3d(_Conv):
         in_channels (int): The channel number of the input tensor of the Conv3d layer.
         out_channels (int): The channel number of the output tensor of the Conv3d layer.
         kernel_size (Union[int, tuple[int]]): Specifies the depth, height and width of the 3D convolution kernel.
-            The data type is an integer or a tuple of three integers. An integer represents the depth, height
-            and width of the convolution kernel. A tuple of three integers represents the depth, height
-            and width of the convolution kernel respectively.
-        stride (Union[int, tuple[int]]): The movement stride of the 3D convolution kernel.
+            It can be a single int or a tuple of 3 integers. A single int means the value is for depth, height
+            and the width. A tuple of 3 ints means the first value is
+            for depth and the rest is for the height and width.
+        stride (Union[int, tuple[int]], optional): The movement stride of the 3D convolution kernel.
             The data type is an integer or a tuple of three integers. An integer represents the movement step size
             in depth, height and width directions. A tuple of three integers represents the movement step size
             in the depth, height and width directions respectively. Default: ``1`` .
@@ -594,30 +661,40 @@ class Conv3d(_Conv):
               in the depth, height and width dimension is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of the input.
+        padding (Union(int, tuple[int]), optional): The number of padding on the depth,
+            height and width directions of the input.
             The data type is an integer or a tuple of six integers. If `padding` is an integer,
             then the head, tail, top, bottom, left, and right padding are all equal to `padding`.
             If `padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, `padding[3]`, `padding[4]` and `padding[5]`
             respectively. The value should be greater than or equal to 0. Default: ``0`` .
-        dilation (Union[int, tuple[int]]): Dilation size of 3D convolution kernel.
-            The data type is an integer or a tuple of three integers. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` on the depth, height and width directions is in range of
-            [1, D], [1, H] and [1, W] respectively. Default: ``1`` .
-        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
+        dilation (Union(int, tuple[int]), optional): Specifies the dilation rate to use for dilated convolution.
+            It can be a single int or a tuple of 3 integers. A single int means the dilation size is the same
+            in the depth, height and width directions. A tuple of 3 ints represents the dilation size in
+            the depth, height and width directions, respectively.
+            Assuming :math:`dilation=(d0, d1, d2)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the depth direction, :math:`d1-1` elements in the height direction,
+            :math:`d2-1` elements in the width direction respectively.
+            The values in the depth, height and width dimensions are in
+            the ranges [1, D], [1, H] and [1, W], respectively.
+            Default: ``1`` .
+        group (int, optional): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `group`. Default: ``1`` .
-        has_bias (bool): Whether the Conv3d layer has a bias parameter. Default: ``False`` .
-        weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
+        has_bias (bool, optional): Whether the Conv3d layer has a bias parameter. Default: ``False`` .
+        weight_init (Union[Tensor, str, Initializer, numbers.Number], optional):
+            Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
-            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``None`` ,
-            weight will be initialized using HeUniform.
-        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
+            lowercase are both acceptable. Refer to the values of
+            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
+        bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
-        data_format (str): The optional value for data format. Currently only support ``'NCDHW'``.
+            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
+        data_format (str, optional): The optional value for data format. Currently only support ``'NCDHW'``.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.

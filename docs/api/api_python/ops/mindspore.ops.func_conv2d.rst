@@ -3,18 +3,32 @@ mindspore.ops.conv2d
 
 .. py:function:: mindspore.ops.conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dilation=1, groups=1)
 
-    对输入Tensor计算二维卷积。该Tensor的常见shape为 :math:`(N, C_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size，:math:`C_{in}` 为通道数， :math:`H_{in}, W_{in}` 分别为特征层的高度和宽度， :math:`X_i` 为 :math:`i^{th}` 输入值， :math:`b_i` 为 :math:`i^{th}` 输入值的偏置项。对于每个batch中的Tensor，其shape为 :math:`(C_{in}, H_{in}, W_{in})` ，公式定义如下：
+    对输入Tensor计算二维卷积。通常输入的shape为 :math:`(N, C_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size，:math:`C` 为通道数， :math:`H` 为特征图的高度，:math:`W` 为特征图的宽度。
+
+    根据以下公式计算输出：
 
     .. math::
-        out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,
 
-    其中， :math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ， :math:`C_{in}` 为输入通道数， :math:`j` 的范围从 :math:`0` 到 :math:`C_{out} - 1` ， :math:`W_{ij}` 对应第 :math:`j` 个过滤器的第 :math:`i` 个通道， :math:`out_{j}` 对应输出的第 :math:`j` 个通道。 :math:`W_{ij}` 为卷积核的切片，其shape为 :math:`(\text{kernel_size[0]},\text{kernel_size[1]})` ，其中 :math:`\text{kernel_size[0]}` 和 :math:`\text{kernel_size[1]}` 是卷积核的高度和宽度。完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})` ，其中 `groups` 是在通道上分割输入 `input` 的组数。
+        \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
+        \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    如果 `pad_mode` 设置为"valid"，则输出高度和宽度将分别为 :math:`\left \lfloor{1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} - (\text{kernel_size[0]} - 1) \times (\text{dilation[0]} - 1) }{\text{stride[0]}}} \right \rfloor` 和 :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} - (\text{kernel_size[1]} - 1) \times (\text{dilation[1]} - 1) }{\text{stride[1]}}} \right \rfloor` 。
-    其中， :math:`dialtion` 为卷积核元素之间的间距， :math:`stride` 为移动步长， :math:`padding` 为添加到输入两侧的零填充。
-    对于取其他值的 `pad_mode` 时候的输出高度和宽度的计算，请参考 :class:`mindspore.nn.Conv2d` 里的计算公式。
+    其中， :math:`bias` 为输出偏置，:math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ 操作， 
+    :math:`weight` 为卷积核的值， :math:`X` 为输入的特征图。
 
-    请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。更详细的介绍，参见： `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ 。
+    :math:`i` 对应batch数，其范围为 :math:`[0, N-1]` ，其中 :math:`N` 为输入batch。
+
+    :math:`j` 对应输出通道，其范围为 :math:`[0, C_{out}-1]` ，其中 :math:`C_{out}` 为输出通道数，该值也等于卷积核的个数。
+
+    :math:`k` 对应输入通道数，其范围为 :math:`[0, C_{in}-1]` ，其中 :math:`C_{in}` 为输入通道数，该值也等于卷积核的通道数。
+
+    因此，上面的公式中， :math:`{bias}(C_{\text{out}_j})` 为第 :math:`j` 个输出通道的偏置， :math:`{weight}(C_{\text{out}_j}, k)` 表示第 :math:`j` 个
+    卷积核在第 :math:`k` 个输入通道的卷积核切片， :math:`{X}(N_i, k)` 为特征图第 :math:`i` 个batch第 :math:`k` 个输入通道的切片。
+    卷积核shape为 :math:`(\text{kernel_size[0]},\text{kernel_size[1]})` ，其中 :math:`\text{kernel_size[0]}` 和
+    :math:`\text{kernel_size[1]}` 是卷积核的高度和宽度。若考虑到输入输出通道以及group，则完整卷积核的shape为
+    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})` ，
+    其中 `group` 是分组卷积时在通道上分割输入 `x` 的组数。
+
+    想更深入了解卷积层，请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 以及 `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ 。
 
     .. note::
         在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `groups>1` 的场景下，必须要满足 `C_{in}` = `C_{out}` = `groups` 的约束条件。
@@ -22,7 +36,7 @@ mindspore.ops.conv2d
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
         - **weight** (Tensor) - shape为 :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})` ，则卷积核的大小为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})` 。
-        - **bias** (Tensor) - 偏置Tensor，shape为 :math:`(C_{out})` 的Tensor。如果 `bias` 是 ``None`` ，将不会添加偏置。默认值： ``None`` 。
+        - **bias** (Tensor，可选) - 偏置Tensor，shape为 :math:`(C_{out})` 的Tensor。如果 `bias` 是 ``None`` ，将不会添加偏置。默认值： ``None`` 。
         - **stride** (Union(int, tuple[int])，可选) - 卷积核移动的步长，数据类型为int，或者由两个或四个int组成的tuple。一个int表示在高度和宽度方向的移动步长均为该值。两个int组成的tuple分别表示在高度和宽度方向的移动步长。默认值： ``1`` 。
         - **pad_mode** (str，可选) - 指定填充模式。取值为 ``"same"`` ， ``"valid"`` ，或 ``"pad"`` 。默认值： ``"valid"`` 。
 
@@ -36,6 +50,7 @@ mindspore.ops.conv2d
 
     返回：
         Tensor，卷积后的值。shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
+        要了解不同的填充模式如何影响输出shape，请参考 :class:`mindspore.nn.Conv2d` 以获取更多详细信息。
 
     异常：
         - **TypeError** -  `stride` 、 `padding` 或 `dilation` 既不是int也不是tuple。

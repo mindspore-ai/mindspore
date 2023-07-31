@@ -1448,8 +1448,6 @@ class Conv2D(Primitive):
         mode (int, optional): Modes for different convolutions. The value is currently not used. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
             ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
-            To see how different pad modes affect the output shape, please refer to
-            :class:`mindspore.nn.Conv2d` for more details.
 
             - ``"same"``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
@@ -1480,8 +1478,8 @@ class Conv2D(Primitive):
             the height and width directions, respectively. For a tuple of four ints, the two ints correspond
             to (N, C) dimension are treated as 1, and the two correspond to (H, W) dimensions is the
             dilation size in the height and width directions respectively.
-            Assuming :math:`dilation=(d1, d2)`, the convolutional kernel samples the input with a
-            spacing of :math:`d1-1` elements in the height direction and :math:`d2-1` elements in the width direction.
+            Assuming :math:`dilation=(d0, d1)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the height direction and :math:`d1-1` elements in the width direction.
             The values in the height and width dimensions are in the ranges [1, H] and [1, W], respectively.
             Default: ``1`` .
         group (int, optional): Specifies the number of groups dividing `x`'s input channel when applying
@@ -1498,6 +1496,8 @@ class Conv2D(Primitive):
     Outputs:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`
         or :math:`(N, H_{out}, W_{out}, C_{out}, )`.
+        To see how different pad modes affect the output shape, please refer to
+        :class:`mindspore.nn.Conv2d` for more details.
 
     Raises:
         TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
@@ -8086,42 +8086,60 @@ class AvgPool3D(Primitive):
 
 class Conv3D(Primitive):
     r"""
-    Applies a 3D convolution over an input tensor. The input tensor is typically of shape
-    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
-    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`, where :math:`N` is batch size, :math:`C` is channel number,
-    :math:`D` is depth, :math:`H, W` is feature height and width respectively.
-    the output value of a layer is calculated as:
+    3D convolution layer.
+
+    Applies a 3D convolution over an input tensor which is typically of shape
+    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`,
+    where :math:`N` is batch size, :math:`C` is channel number, :math:`D` is feature depth,
+    :math:`H` is feature height, :math:`W` is feature width.
+
+    The output is calculated based on formula:
 
     .. math::
-        \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
-        \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
-        \operatorname{input}\left(N_{i}, k\right))
 
-    where :math:`k` is kernel,
-    :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ,
-    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the :math:`j`-th channel of
-    the output and :math:`j` is in the range of :math:`[0, C_{out} - 1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
-    is a convolution kernel slice with shape
-    :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
-    where :math:`\text{kernel_size[0]}`, :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are
-    the depth, height and width of the convolution kernel respectively. :math:`\text{bias}` is the bias parameter
-    and :math:`\text{X}` is the input tensor.
-    The shape of full convolution kernel is
-    :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
-    where `groups` is the number of groups to split `input` in the channel dimension.
+        \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
+        \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    For more details, please refer to the paper `Gradient Based Learning Applied to Document
-    Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ .
+    where :math:`bias` is the output channel bias, :math:`ccor` is
+    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
+    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
+
+    Here are the indices' meanings:
+    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+      output channels, which is also equal to the number of kernels.
+
+    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+      input channels, which is also equal to the number of channels in the convolutional kernels.
+
+    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
+    channel in the :math:`i`-th batch of the input feature map.
+
+    The shape of the convolutional kernel is given by
+    :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`
+    where :math:`kernel_size[0]` , :math:`kernel_size[1]` and :math:`kernel_size[2]` are the depth,
+    height and width of the kernel, respectively.
+    If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
+    will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]},
+    \text{kernel_size[1]}, \text{kernel_size[2]})`,
+    where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
+
+    For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
+    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
     Note:
-        On Ascend platform, `group = 1` must be satisfied.
+        1. On Ascend platform, `groups = 1` must be satisfied.
+        2. On Ascend `dilation` on depth only supports the case of 1.
 
     Args:
-        out_channel (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): Specifies the depth, height
-            and width of the 3D convolution window. It can be a single int or a tuple of 3 integers.
-            Single int means the value is for the depth, height and width
-            of the kernel. A tuple of 3 ints corresponds to the depth, height and width of the kernel respectively.
+        out_channel (int): Specifies output channel :math:`C_{out}`.
+        kernel_size (Union[int, tuple[int]]): Specifies the depth, height and width of the 3D convolution kernel.
+            It can be a single int or a tuple of 3 integers. A single int means the value is for depth, height
+            and the width. A tuple of 3 ints means the first value is for depth and
+            the rest is for the height and width.
         mode (int, optional): Modes for different convolutions. It is currently not used. Default: ``1`` .
         stride (Union[int, tuple[int]], optional): The distance of kernel moving, it can be an int number
             that represents the depth, height and width of movement or a tuple of three int numbers that
@@ -8142,18 +8160,23 @@ class Conv3D(Primitive):
               in the depth, height and width dimension is determined by the `pad` parameter.
               If this mode is set, `pad` must be greater than or equal to 0.
 
-        pad (Union(int, tuple[int]), optional): The pad value to be filled. Default: ``0`` .
-            If `pad` is an integer, the paddings
-            of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
-            integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
-            pad[3], pad[4] and pad[5] correspondingly.
-        dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
-            :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1
-            on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
-            there will be :math:`k - 1` pixels skipped for each sampling location.
-            The value ranges for the depth, height, and width dimensions are [1, D], [1, H], and [1, W],
-            respectively. Default: ``1`` .
-        group (int, optional):The number of groups into which the filter is divided. `in_channels`
+        pad (Union(int, tuple[int]), optional): Specifies the amount of padding to apply on input
+            when `pad_mode` is set to ``"pad"``. It can be a single int or a tuple of 6 ints.
+            If `pad` is one integer, the paddings of head, tail, top, bottom,
+            left and right are the same, equal to `pad`. If `pad` is a tuple with 6 integers, the
+            paddings of head, tail, top, bottom, left and right is equal to pad[0],
+            pad[1], pad[2], pad[3], pad[4] and pad[5] accordingly. Default: ``0`` .
+        dilation (Union(int, tuple[int]), optional): Specifies the dilation rate to use for dilated convolution.
+            It can be a single int or a tuple of 3 integers. A single int means the dilation size is the same
+            in the depth, height and width directions. A tuple of 3 ints represents the dilation size in
+            the depth, height and width directions, respectively.
+            Assuming :math:`dilation=(d0, d1, d2)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the depth direction,
+            :math:`d1-1` elements in the height direction, :math:`d2-1` elements in the
+            width direction respectively. The values in the depth, height and width dimensions are in the
+            ranges [1, D], [1, H] and [1, W], respectively.
+            Default: ``1`` .
+        group (int, optional): The number of groups into which the filter is divided. `in_channels`
             and `out_channels` must be divisible by `group`. Default: ``1`` .
         data_format (str, optional): The optional value for data format. Currently only support ``"NCDHW"`` .
 
@@ -8169,7 +8192,7 @@ class Conv3D(Primitive):
     Outputs:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
 
-        `pad_mode` is 'same':
+        `pad_mode` is ``"same"``:
 
         .. math::
             \begin{array}{ll} \\
@@ -8178,7 +8201,7 @@ class Conv3D(Primitive):
                 W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
             \end{array}
 
-        `pad_mode` is 'valid':
+        `pad_mode` is ``"valid"``:
 
         .. math::
             \begin{array}{ll} \\
@@ -8190,7 +8213,7 @@ class Conv3D(Primitive):
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
-        `pad_mode` is 'pad':
+        `pad_mode` is ``"pad"``:
 
         .. math::
             \begin{array}{ll} \\

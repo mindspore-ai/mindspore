@@ -5160,74 +5160,87 @@ def _check_conv_iterable_lengths(iterable, dim, iter_name):
 
 def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dilation=1, groups=1):
     r"""
-    Applies a 1D convolution over an input tensor.
-    The input tensor is typically of shape :math:`(N, C_{in}, W_{in})`,
-    where :math:`N` is batch size, :math:`C_{in}` is channel number, :math:`W` is width, :math:`X_i` is
-    the :math:`i^{th}` input value and :math:`b_i` indicates the deviation value of the :math:`i^{th}` input value.
-    For each batch of shape :math:`(C_{in}, W_{in})`, the formula is defined as:
+    Applies a 1D convolution over an input tensor. The input Tensor is typically
+    of shape :math:`(N, C_{in}, L_{in})`,
+    where :math:`N` is batch size, :math:`C` is channel number, :math:`L` is input sequence width.
+
+    The output is calculated based on formula:
 
     .. math::
 
-        out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{j}, X_i) + b_j,
+        \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
+        \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_  operator,
-    :math:`C_{in}` is the input channel number, :math:`j` ranges
-    from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
-    filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{j}` is a slice
-    of kernel, and it has shape :math:`(\text{kernal_size})`, where :math:`\text{kernel_size}` is the width of
-    the convolution kernel. The full kernel has shape :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size})`,
-    where `groups` is the group number to split the input in the channel dimension.
+    where :math:`bias` is the output channel bias, :math:`ccor` is
+    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
+    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
-    If the `pad_mode` is set to be "valid", the output width will be :math:`\left \lfloor{
-    1 + \frac{W_{in} + \text{padding[0]} - \text{kernel_size} - (\text{kernel_size} - 1) \times(\text{dilation} - 1)}
-    {\text { stride }}} \right \rfloor`.
+    Here are the indices' meanings:
+    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
 
-    where :math:`dilation` is spacing between kernel elements, :math:`stride` is The step length of each step,
-    :math:`padding` is zero-padding added to both sides of the input.
-    For output width on other `pad_mode`, please refer to formula on `mindspore.nn.Conv1d
-    <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Conv2d.html>`_.
+    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+      output channels, which is also equal to the number of kernels.
 
-    The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
-    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
-    `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ .
+    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+      input channels, which is also equal to the number of channels in the convolutional kernels.
+
+    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
+    channel in the :math:`i`-th batch of the input feature map.
+
+    The shape of the convolutional kernel is given by :math:`(kernel_size)`,
+    where :math:`kernel_size` is the width of the kernel.
+    If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
+    will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
+    where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
+
+    For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
+    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_
+    and `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ .
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
         That is, when `groups>1`, condition `C_{in}` = `C_{out}` = `groups` must be satisfied.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, C_{in}, W_{in})`.
-        weight (Tensor): Tensor of shape
-            :math:`(N, C_{in} / \text{groups}, \text{kernel_size})`, then the size of kernel is
-            :math:`(\text{kernel_size})`.
-        bias (Tensor): Bias Tensor with shape :math:`(C_{out})`.
+        input (Tensor): Input Tensor of shape :math:`(N, C_{in}, L_{in})`.
+        weight (Tensor): The convolutional kernel value, it should has shape
+            :math:`(N, C_{in} / \text{groups}, \text{kernel_size})`.
+        bias (Tensor, optional): Bias Tensor with shape :math:`(C_{out})`.
             When bias is None, zeros will be used. Default: ``None`` .
         stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number or a tuple of one int
-            that represents width of movement. Default: 1.
+            that represents width of movement. Default: ``1``.
         pad_mode (str, optional): Specifies padding mode. The optional values are
             ``"same"`` , ``"valid"`` and ``"pad"`` . Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The height and width of the output will be equal to
+            - ``"same"``: Adopts the way of completion. The height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in left and right possiblily.
               Otherwise, the last extra padding will be calculated from the right side.
               If this mode is set, `padding` must be 0.
 
-            - valid: Adopts the way of discarding. The possible largest width of output will be returned
+            - ``"valid"``: Adopts the way of discarding. The possible largest width of output will be returned
               without padding. Extra pixels will be discarded. If this mode is set, `padding` must be 0.
 
-            - pad: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to the input
+            - ``"pad"``: Implicit paddings on both sides of the input `x`.
+              The number of `padding` will be padded to the input
               Tensor borders. `padding` must be greater than or equal to 0.
-        padding (Union(int, tuple[int], list[int]), optional): Implicit paddings on both sides of `input`, meaning the
+        padding (Union(int, tuple[int], list[int]), optional):  Specifies the amount of padding to apply on
+            both side of `input` when `pad_mode` is set to ``"pad"``. The
             paddings of left and right are the same, equal to padding or padding[0] when padding is a tuple of
             1 integer. Default: ``0`` .
-        dilation (Union(int, tuple[int]), optional): Gaps between kernel elements. The data type is int or a tuple of
-            1 integer. Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
-            there will be :math:`k - 1` pixels skipped for each sampling location. Its value must be greater than or
-            equal to 1 and bounded by the width of `input`. Default: ``1`` .
+        dilation (Union(int, tuple[int]), optional): Specifies the dilation rate to use for dilated convolution.
+            It can be a single int or a tuple of 1 integer.
+            Assuming :math:`dilation=(d0,)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the width direction.
+            The value should be in the ranges [1, L].
+            Default: ``1`` .
         groups (int, optional): Splits `input` into groups. Default: ``1`` .
 
     Returns:
-        Tensor, the value that applied 1D convolution. The shape is :math:`(N, C_{out}, W_{out})`.
+        Tensor, the value that applied 1D convolution. The shape is :math:`(N, C_{out}, L_{out})`.
+        To see how different pad modes affect the output shape, please refer to
+        :class:`mindspore.nn.Conv1d` for more details.
 
     Raises:
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
@@ -5296,40 +5309,44 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
 def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dilation=1, groups=1):
     r"""
-    Applies a 2D convolution over an input tensor.
-    The input tensor is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
-    where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is height, :math:`W` is width, :math:`X_i` is
-    the :math:`i^{th}` input value and :math:`b_i` indicates the deviation value of the :math:`i^{th}` input value.
-    For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
+    Applies a 2D convolution over an input tensor. The input tenor is typically of
+    shape :math:`(N, C_{in}, H_{in}, W_{in})`, where :math:`N` is batch size, :math:`C` is
+    channel number, :math:`H` is feature height, :math:`W` is feature width.
+
+    The output is calculated based on formula:
 
     .. math::
 
-        out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,
+        \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
+        \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_  operator,
-    :math:`C_{in}` is the input channel number, :math:`j` ranges
-    from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
-    filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
-    of kernel, and it has shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`, where :math:`\text{
-    kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the convolution kernel.
-    The full kernel has shape :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
-    where `groups` is the group number to split the input in the channel dimension.
+    where :math:`bias` is the output channel bias, :math:`ccor` is
+    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
+    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
-    If the `pad_mode` is set to be "valid", the output height and width will be :math:`\left \lfloor{
-    1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
-    (\text{kernel_size[0]} - 1) \times(\text{dilation[0]} - 1)} {\text { stride[0] }}} \right \rfloor` and
+    Here are the indices' meanings:
+    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
 
-    :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
-    (\text{kernel_size[1]} - 1) \times(\text{dilation[1]} - 1)} {\text { stride[1] }}} \right \rfloor` respectively.
+    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+      output channels, which is also equal to the number of kernels.
 
-    where :math:`dilation` is spacing between kernel elements, :math:`stride` is The step length of each step,
-    :math:`padding` is zero-padding added to both sides of the input.
-    For output height and width on other `pad_mode`, please refer to formula on `mindspore.nn.Conv2d
-    <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Conv2d.html>`_.
+    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+      input channels, which is also equal to the number of channels in the convolutional kernels.
 
-    The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
-    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
-    `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ .
+    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
+    channel in the :math:`i`-th batch of the input feature map.
+
+    The shape of the convolutional kernel is given by :math:`(kernel_size[0], kernel_size[1])`,
+    where :math:`kernel_size[0]` and :math:`kernel_size[1]` are the height and width of the kernel, respectively.
+    If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
+    will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
+
+    For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
+    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ and
+    `ConvNets <http://cs231n.github.io/convolutional-networks/>`_.
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
@@ -5340,7 +5357,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         weight (Tensor): Tensor of shape
             :math:`(N, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})`, then the size of kernel
             is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`.
-        bias (Tensor): Bias Tensor with shape :math:`(C_{out})`.
+        bias (Tensor, optional): Bias Tensor with shape :math:`(C_{out})`.
             When bias is ``None`` , zeros will be used. Default: ``None`` .
         stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
@@ -5370,6 +5387,9 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
     Returns:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
+        To see how different pad modes affect the output shape, please refer to
+        :class:`mindspore.nn.Conv2d` for more details.
+
 
     Raises:
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
@@ -5851,32 +5871,46 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
 
 def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dilation=1, groups=1):
     r"""
-    Applies a 3D convolution over an input tensor. The input tensor is typically of shape
-    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
-    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`, where :math:`N` is batch size, :math:`C` is channel number,
-    :math:`D` is depth, :math:`H, W` is feature height and width respectively.
-    the output value of a layer is calculated as:
+    Applies a 3D convolution over an input tensor. The input tensor is typically of
+    shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`, where :math:`N` is batch size, :math:`C`
+    is channel number, :math:`D` is feature depth,:math:`H` is feature height, :math:`W` is feature width.
+
+    The output is calculated based on formula:
 
     .. math::
-        \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
-        \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
-        \operatorname{input}\left(N_{i}, k\right))
 
-    where :math:`k` is kernel,
-    :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ,
-    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
-    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
-    is a convolution kernel slice with shape
-    :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
-    where :math:`\text{kernel_size[0]}`, :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are
-    the depth, height and width of the convolution kernel respectively. :math:`\text{bias}` is the bias parameter
-    and :math:`\text{X}` is the input tensor.
-    The shape of full convolution kernel is
-    :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
-    where `groups` is the number of groups to split `input` in the channel dimension.
+        \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
+        \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    For more details, please refer to the paper `Gradient Based Learning Applied to Document
-    Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ .
+    where :math:`bias` is the output channel bias, :math:`ccor` is
+    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
+    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
+
+    Here are the indices' meanings:
+    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+      output channels, which is also equal to the number of kernels.
+
+    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+      input channels, which is also equal to the number of channels in the convolutional kernels.
+
+    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
+    channel in the :math:`i`-th batch of the input feature map.
+
+    The shape of the convolutional kernel is given by
+    :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`
+    where :math:`kernel_size[0]` , :math:`kernel_size[1]` and :math:`kernel_size[2]` are the depth,
+    height and width of the kernel, respectively.
+    If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
+    will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]},
+    \text{kernel_size[1]}, \text{kernel_size[2]})`,
+    where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
+
+    For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
+    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
     Note:
         1. On Ascend platform, `groups = 1` must be satisfied.
@@ -5887,8 +5921,8 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         weight (Tensor): Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]},
             \text{kernel_size[2]})`, then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]},
             \text{kernel_size[1]}, \text{kernel_size[1]})`.
-        bias (Tensor): Bias Tensor with shape :math:`(C_{out})`. When bias is None, zeros will be used. Default:
-            ``None`` .
+        bias (Tensor, optional): Bias Tensor with shape :math:`(C_{out})`.
+            When bias is None, zeros will be used. Default: ``None`` .
         stride (Union[int, tuple[int]], optional): The distance of kernel moving,
             it can be an int number that represents
             the depth, height and width of movement or a tuple of three int numbers that
@@ -5896,18 +5930,18 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         pad_mode (str, optional): Specifies padding mode. The optional values are
             ``"same"`` , ``"valid"`` and ``"pad"`` . Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The depth, height and width of the output will be equal to
+            - ``"same"``: Adopts the way of completion. The depth, height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
               left and right directions possiblily.
               Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
               If this mode is set, `pad` must be 0.
 
-            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+            - ``"valid"``: Adopts the way of discarding. The possible largest depth, height and width of output
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
               must be 0.
 
-            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
-              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+            - ``"pad"``: Implicit paddings on both sides of the input in depth, height and width.
+              The number of `pad` will be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
         padding (Union[int, tuple[int], list[int]], optional): The pad value to be filled. If `pad` is an integer,
             the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
@@ -5925,7 +5959,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     Returns:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
 
-        `pad_mode` is 'same':
+        `pad_mode` is ``"same"``:
 
         .. math::
             \begin{array}{ll} \\
@@ -5934,7 +5968,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
                 W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
             \end{array}
 
-        `pad_mode` is 'valid':
+        `pad_mode` is ``"valid"``:
 
         .. math::
             \begin{array}{ll} \\
@@ -5946,7 +5980,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
-        `pad_mode` is 'pad':
+        `pad_mode` is ``"pad"``:
 
         .. math::
             \begin{array}{ll} \\
