@@ -23,9 +23,11 @@ import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.TrainCfg;
 
 import java.nio.MappedByteBuffer;
+import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * The Model class is used to define a MindSpore model, facilitating computational graph management.
@@ -33,6 +35,8 @@ import java.util.List;
  * @since v1.0
  */
 public class Model {
+    private static final Logger LOGGER = Logger.getLogger(Model.class.toString());
+
     static {
         MindsporeLite.init();
     }
@@ -274,7 +278,7 @@ public class Model {
     /**
      * Load config file.
      *
-     * @param config_path          config file path.
+     * @param configPath          config file path.
      *
      * @return Whether the LoadConfig is successful.
      */
@@ -315,6 +319,25 @@ public class Model {
             return export(modelPtr, fileName, quantizationType, isOnlyExportInfer, outputTensorArray);
         }
         return export(modelPtr, fileName, quantizationType, isOnlyExportInfer, null);
+    }
+
+    /**
+     * Export model's weights, which can be used in micro only.
+     *
+     * @param weightFile                  The path of exported weight file.
+     * @param isInference                 Whether to export weights from a reasoning model. Currently, only support`true`.
+     * @param enableFp16                  Float-weight is whether to be saved in float16 format.
+     * @param changeableWeightNames       The set the name of these weight tensors, whose shape is changeable.
+     * @return
+     */
+    public boolean exportWeightsCollaborateWithMicro(String weightFile, boolean isInference,
+                                 boolean enableFp16, List<String> changeableWeightNames) {
+        if (StringUtils.isEmpty(weightFile)) {
+            LOGGER.severe("Input params invalid.");
+            return false;
+        }
+        return exportWeightsCollaborateWithMicro(modelPtr, weightFile, isInference, enableFp16,
+                             changeableWeightNames.toArray(new String[0]));
     }
 
     /**
@@ -434,6 +457,9 @@ public class Model {
     private native boolean updateConfig(long modelPtr, String section, HashMap<String, String> config);
 
     private native boolean export(long modelPtr, String fileName, int quantizationType, boolean isOnlyExportInfer, String[] outputTensorNames);
+
+    private native boolean exportWeightsCollaborateWithMicro(long modelPtr, String weightFile, boolean isInference,
+                                         boolean enableFp16, String[] changeableWeightNames);
 
     private native List<Long> getFeatureMaps(long modelPtr);
 
