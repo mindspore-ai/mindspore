@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,7 +244,7 @@ ShardTaskList ShardTaskList::Combine(std::vector<ShardTaskList> &category_tasks,
   }
   auto total_categories = category_tasks.size();
   res.categories = static_cast<int64_t>(total_categories);
-  if (replacement == false) {
+  if (!replacement) {
     auto minTasks = category_tasks[0].Size();
     for (int64_t i = 1; i < total_categories; i++) {
       minTasks = std::min(minTasks, category_tasks[i].Size());

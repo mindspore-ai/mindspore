@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ Status TimeMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   }
 
   // iid_masks - whether to apply different masks to each example/channel.
-  if (iid_masks_ == false) {
+  if (!iid_masks_) {
     return MaskAlongAxis(input_tensor, output, time_mask_param_, mask_start_, mask_value_, 2);
   } else {
     return RandomMaskAlongAxis(input_tensor, output, time_mask_param_, mask_value_, 2, rnd_);

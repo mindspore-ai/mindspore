@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ ShardPkSample::ShardPkSample(const std::string &category_field, int64_t num_elem
 }
 
 Status ShardPkSample::SufExecute(ShardTaskList &tasks) {
-  if (shuffle_ == true) {
+  if (shuffle_) {
     RETURN_IF_NOT_OK_MR((*shuffle_op_)(tasks));
   }
   return Status::OK();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,6 +215,7 @@ Status ShardReader::Open(int n_consumer) {
       std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
       fs->open(whole_path.value(), std::ios::in | std::ios::binary);
       if (!fs->good()) {
+        fs->close();
         RETURN_STATUS_UNEXPECTED_MR(
           "Invalid file, failed to open files for reading mindrecord files. Please check file path, permission and "
           "open files limit(ulimit -a): " +
@@ -263,6 +264,7 @@ Status ShardReader::ExtendRandomFileStreams(const int n_new_consumers) {
       std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
       fs->open(whole_path.value(), std::ios::in | std::ios::binary);
       if (!fs->good()) {
+        fs->close();
         RETURN_STATUS_UNEXPECTED_MR(
           "Invalid file, failed to open files for reading mindrecord files. Please check file path, permission and "
           "open files limit(ulimit -a): " +
