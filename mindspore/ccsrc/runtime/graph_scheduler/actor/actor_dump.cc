@@ -143,7 +143,8 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
       for (auto &internal_parameter_weakptr : internal_parameter_iter.second) {
         auto internal_parameter = internal_parameter_weakptr.lock();
         MS_EXCEPTION_IF_NULL(internal_parameter);
-        ofs << "\t\t\toutput_index:" << internal_parameter_iter.first
+        ofs << "\t\t\toutput_node:" << internal_parameter_iter.first.first->fullname_with_scope()
+            << "\toutput_index:" << internal_parameter_iter.first.second
             << "\tinternal_parameter:" << internal_parameter->DebugString() << "\n";
       }
     }

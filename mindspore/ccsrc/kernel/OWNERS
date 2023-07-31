@@ -1,12 +1,9 @@
 approvers:
-- jjfeing #
-- zhoufeng54
-- yuchaojie
-- linqingke
-- kisnwang
-- laiyongqiang
-- HulkTang
+- zhaizhiqiang #
+- limingqi107
+- chujinjin
 - liulili-huawei
 - zhang_xue_tong
-- mengyuanli
 
+options:
+    no_parent_owners: true

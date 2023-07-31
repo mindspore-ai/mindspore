@@ -1633,7 +1633,7 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
       dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
     }
     MS_EXCEPTION_IF_NULL(dynamic_shape_actor);
-    auto &internal_parameters = dynamic_shape_actor->internal_parameters_[real_from_kernel_with_output_idx.second];
+    auto &internal_parameters = dynamic_shape_actor->internal_parameters_[real_from_kernel_with_output_idx];
     auto repeat_it = std::find_if(internal_parameters.begin(), internal_parameters.end(),
                                   [&internal_parameter](const AnfNodeWeakPtr &internal_parameter_weakptr) {
                                     return internal_parameter == internal_parameter_weakptr.lock();
@@ -1786,7 +1786,8 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
                                  << copy_actor->output_->GetDeviceType()
                                  << ", to device context type:" << to_device_context->GetDeviceType();
     }
-    copy_actor->is_need_update_output_size_ = common::AnfAlgo::IsDynamicShape(to_kernel_with_input_idx.first);
+    copy_actor->is_need_update_output_size_ = common::AnfAlgo::IsDynamicShape(to_kernel_with_input_idx.first) ||
+                                              common::AnfAlgo::IsNodeOutputDynamicShape(to_kernel_with_input_idx.first);
 
     // Link between from actor and copy actor.
     SchedulerHelper::AddDataArrow(from_actor, copy_actor, from_kernel_with_output_idx.second, 0, from_kernel);

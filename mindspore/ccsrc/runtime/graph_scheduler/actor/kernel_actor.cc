@@ -701,7 +701,7 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
       MS_EXCEPTION_IF_NULL(kernel_);
       kernel::UpdateNodeShape(kernel_);
       AnfAlgo::UpdateOutputAddrSize(kernel_info_, kernel_);
-      AnfAlgo::UpdateInternalParameterShape(internal_parameters_, kernel_);
+      AnfAlgo::UpdateInternalParameterShape(internal_parameters_);
     } catch (const std::exception &e) {
       if (strategy_ == GraphExecutionStrategy::kPipeline) {
         MsException::Instance().SetException();

@@ -87,7 +87,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
   const std::vector<std::pair<AID, ControlArrow *>> &input_control_arrow_aids() const {
     return input_control_arrow_aids_;
   }
-  const std::map<size_t, std::vector<AnfNodeWeakPtr>> &internal_parameters() const { return internal_parameters_; }
+  const std::map<KernelWithIndex, std::vector<AnfNodeWeakPtr>> &internal_parameters() const {
+    return internal_parameters_;
+  }
   const mindspore::HashMap<std::string, std::vector<DataArrowPtr>> &batch_output_data_arrows() const {
     return batch_output_data_arrows_;
   }
@@ -158,10 +160,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // The device tensor stores which have the auto monad attribute.
   std::set<AnfNodePtr> auto_monad_device_tensor_stores_;
 
-  // Map <output_index, internal_parameter> is used to update the shape of internal parameter node for inferring the
-  // dynamic shape information of the nodes located at the boundary of the graph partition, such as heterogeneous
-  // scenario and so on.
-  std::map<size_t, std::vector<AnfNodeWeakPtr>> internal_parameters_;
+  // Map <output_node_with_index, internal_parameter> is used to update the shape of internal parameter node for
+  // inferring the dynamic shape information of the nodes located at the boundary of the graph partition, such as
+  // heterogeneous scenario and so on.
+  std::map<KernelWithIndex, std::vector<AnfNodeWeakPtr>> internal_parameters_;
 
   // The dependent input actors.
   std::vector<std::pair<AID, DataArrow *>> input_data_arrow_aids_;
