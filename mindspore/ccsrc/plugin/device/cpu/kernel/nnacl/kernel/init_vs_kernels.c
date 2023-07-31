@@ -46,6 +46,7 @@
 #include "nnacl/kernel/pad.h"
 #include "nnacl/kernel/pow.h"
 #include "nnacl/kernel/reshape.h"
+#include "nnacl/kernel/reverse.h"
 #include "nnacl/kernel/range.h"
 #include "nnacl/kernel/rank.h"
 #include "nnacl/kernel/scale.h"
@@ -267,6 +268,8 @@ void InitVSKernelR(KernelCreator **creators) {
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeInt32)] = CreateReduce;
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeFloat32)] = CreateReduce;
   creators[PrimType_Reciprocal][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_ReverseV2][REGIST_DT(kNumberTypeInt32)] = CreateReverse;
+  creators[PrimType_ReverseV2][REGIST_DT(kNumberTypeFloat32)] = CreateReverse;
   creators[PrimType_Round][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Rsqrt][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_ScaleFusion][REGIST_DT(kNumberTypeFloat32)] = CreateScale;

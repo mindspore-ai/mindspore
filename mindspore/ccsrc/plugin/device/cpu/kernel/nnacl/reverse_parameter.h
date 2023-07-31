@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_FP32_REVERSE_FP32_H_
-#define NNACL_FP32_REVERSE_FP32_H_
+#ifndef NNACL_REVERSE_PARAMETER_H_
+#define NNACL_REVERSE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/reverse_parameter.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int Reverse(const float *input, float *output, size_t elem_size, int32_t *index);
-#ifdef __cplusplus
-}
-#endif
+#define REVERSE_SHAPE_MAX_SIZE 4
 
-#endif  // NNACL_FP32_REVERSE_FP32_H_
+typedef struct ReverseParameter {
+  OpParameter op_parameter_;
+  int axis_[REVERSE_SHAPE_MAX_SIZE];
+  int num_axis_;
+} ReverseParameter;
+
+#endif  // NNACL_REVERSE_PARAMETER_H_

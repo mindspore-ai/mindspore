@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_FP32_REVERSE_FP32_H_
-#define NNACL_FP32_REVERSE_FP32_H_
+#ifndef NNACL_KERNEL_REVERSE_H_
+#define NNACL_KERNEL_REVERSE_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/reverse_parameter.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int Reverse(const float *input, float *output, size_t elem_size, int32_t *index);
-#ifdef __cplusplus
-}
-#endif
+typedef struct {
+  KernelBase base_;
+  int thread_stride_;
+  int data_size_;
+  int *tmp_;
+  int strides_[COMM_SHAPE_SIZE];
+  int in_count_[COMM_SHAPE_SIZE];
+  int out_count_[COMM_SHAPE_SIZE];
+} ReverseStruct;
 
-#endif  // NNACL_FP32_REVERSE_FP32_H_
+KernelBase *CreateReverse(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_REVERSE_H_
