@@ -72,7 +72,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         logger.info('Initiating timeline...')
 
-        timeline_list = op_summary[['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
+        timeline_list = op_summary[~np.isin(op_summary['Task Type'], ['AI_CPU', 'HCCL'])][
+            ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
 
         timeline_list = timeline_list.tolist()
         cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._model)
