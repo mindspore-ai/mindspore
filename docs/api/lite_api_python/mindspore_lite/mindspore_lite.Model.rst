@@ -5,7 +5,7 @@ mindspore_lite.Model
 
     `Model` 类定义MindSpore Lite模型，便于计算图管理。
 
-    .. py:method:: build_from_file(model_path, model_type, context=None, config_path="")
+    .. py:method:: build_from_file(model_path, model_type, context=None, config_path="", config_dict: dict = None)
 
         从文件加载并构建模型。
 
@@ -33,6 +33,23 @@ mindspore_lite.Model
                     input_shape=input_name:[input_dim]（模型输入维度，用于动态shape）
                     dynamic_dims=[min_dim~max_dim]（模型输入的动态维度范围，用于动态shape）
                     opt_dims=[opt_dim]（模型最优输入维度，用于动态shape）
+
+            - **config_dict** (dict，可选) - 配置参数字典，当使用该字典配置参数时，优先级高于配置文件。
+
+              推理配置rank table。配置文件中的内容及说明如下：
+
+              .. code-block::
+
+                  [ascend_context]
+                  rank_table_file=[path_a]（使用路径a的rank table）
+
+              同时配置参数字典中如下：
+
+              .. code-block::
+
+                  config_dict = {"ascend_context" : {"rank_table_file" : "path_b"}}
+
+              那么配置参数字典中路径b的rank table将覆盖配置文件中的路径a的rank table。
 
         异常：
             - **TypeError** - `model_path` 不是str类型。
