@@ -15,6 +15,7 @@
 """Ast optimizer for flatten recursive call."""
 
 from typing import Any, Tuple
+import keyword
 import ast
 from ast import FunctionDef
 import astunparse
@@ -41,6 +42,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             ast.UnaryOp: ["operand"],
             ast.Compare: ["left", "comparators"],
         }
+        self._transform_functions = []
 
     @staticmethod
     def _generate_target_name(node: ast.AST, target_names):
@@ -67,6 +69,9 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
         else:
             logger.info("unhandled type of node while generating new target name: %s ", type(node))
             target_name = type(node).__name__.lower() + "_var"
+        # avoid python keyword
+        if keyword.iskeyword(target_name):
+            target_name = target_name + "_var"
         suffix = 0
         result = target_name
         while result in target_names:
@@ -176,7 +181,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
 
     def visit_FunctionDef(self, node: FunctionDef) -> Any:
         """Traverse construct node and flatten recursive nodes."""
-        if node.name != "construct":
+        if node.name not in self._transform_functions:
             return node
 
         target_names = []
@@ -213,8 +218,9 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             index -= 1
         return node
 
-    def transform(self, ast_root):
+    def transform(self, ast_root, transform_functions=None):
         """Interface of FlattenRecursiveStmt."""
+        self._transform_functions = transform_functions if transform_functions else ["construct"]
         ast_root = self.visit(ast_root)
         ast_root = ast.fix_missing_locations(ast_root)
         return ast_root

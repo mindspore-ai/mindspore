@@ -15,11 +15,11 @@
 """Parse ast.Assign in construct function to node of SymbolTree."""
 import ast
 
-from mindspore.rewrite.parser import Parser
+from mindspore.rewrite.parsers.parser import Parser
 from mindspore.rewrite.symbol_tree import SymbolTree
-from mindspore.rewrite.parser_register import reg_parser
+from mindspore.rewrite.parsers.parser_register import reg_parser
 from ..common import error_str
-
+from ..node.node_manager import NodeManager
 
 class NameParser(Parser):
     """Parse ast.Name in construct function to node of SymbolTree."""
@@ -28,13 +28,14 @@ class NameParser(Parser):
         """Parse target type."""
         return ast.Name
 
-    def process(self, stree: SymbolTree, node: ast.Name):
+    def process(self, stree: SymbolTree, node: ast.Name, node_manager: NodeManager):
         """
         Parse ast.Name node.
 
         Args:
             stree ([SymbolTree]): Symbol Tree under parsing.
             node ([ast.Name]): An ast.Name node.
+            node_manager (NodeManager): NodeManager those asts belong to.
 
         Raises:
             TypeError: Name parser only supports parsing ast.Name type nodes.
@@ -52,13 +53,14 @@ class NumParser(Parser):
         """Parse target type."""
         return ast.Num
 
-    def process(self, stree: SymbolTree, node: ast.Num):
+    def process(self, stree: SymbolTree, node: ast.Num, node_manager: NodeManager):
         """
         Parse ast.Num node.
 
         Args:
             stree ([SymbolTree]): Symbol Tree under parsing.
             node ([ast.Num]): An ast.Num node.
+            node_manager (NodeManager): NodeManager those asts belong to.
 
         Raises:
             TypeError: Num parser only supports parsing ast.Num type nodes.
@@ -76,13 +78,14 @@ class StrParser(Parser):
         """Parse target type."""
         return ast.Str
 
-    def process(self, stree: SymbolTree, node: ast.Str):
+    def process(self, stree: SymbolTree, node: ast.Str, node_manager: NodeManager):
         """
         Parse ast.Str node.
 
         Args:
             stree ([SymbolTree]): Symbol Tree under parsing.
             node ([ast.Str]): An ast.Str node.
+            node_manager (NodeManager): NodeManager those asts belong to.
 
         Returns:
             The value of node.

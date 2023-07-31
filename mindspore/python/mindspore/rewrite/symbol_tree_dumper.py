@@ -15,7 +15,7 @@
 """SymbolTree dumper."""
 import inspect
 
-from .node import Node
+from .node.node import Node
 from .api.node_type import NodeType
 from .api.scoped_value import ScopedValue, ValueType
 
@@ -69,7 +69,7 @@ class SymbolTreeDumper:
         self._dump_buffer += f"Symbol Tree @construct {{ \n"
         node_no = -1
 
-        node: Node = self._symbol_tree.get_head_node().get_next()
+        node: Node = self._symbol_tree.get_head().get_next()
         while node is not None:
             if node.get_node_type() is NodeType.Output:
                 self._dump_buffer += f"  Return(%{node_no}) \n"

@@ -15,24 +15,25 @@
 """Parse bodies of ast.FunctionDef which is construct function to nodes of SymbolTree."""
 import ast
 from mindspore import log as logger
-from ..parser_register import ParserRegister, reg_parser
-from ..parser import Parser
+from .parser_register import ParserRegister, reg_parser
+from .parser import Parser
 from ..symbol_tree import SymbolTree
 from ..api.node_type import NodeType
+from ..node.node_manager import NodeManager
 
 
 class FunctionDefParser(Parser):
-    """Parse bodies of ast.FunctionDef which is construct function to nodes of SymbolTree."""
+    """Parse bodies of ast.FunctionDef in SymbolTree."""
 
     def target(self):
         """Parse target type"""
         return ast.FunctionDef
 
-    def remove_dead_code(self, stree: SymbolTree):
+    def remove_dead_code(self, node_manager: NodeManager):
         """Remove dead codes"""
         # Find out return node position
         return_idx = -1
-        for idx, node in enumerate(stree.nodes()):
+        for idx, node in enumerate(node_manager.nodes()):
             if node.get_node_type() == NodeType.Output:
                 return_idx = idx
                 break
@@ -40,29 +41,36 @@ class FunctionDefParser(Parser):
             return
         # Remove nodes after return node.
         # Reverse traversal to ensure that nodes are orphaned and can be deleted.
-        for idx, node in reversed(list(enumerate(stree.nodes()))):
+        for idx, node in reversed(list(enumerate(node_manager.nodes()))):
             if idx <= return_idx:
                 break
             logger.info(f"Remove dead code node:{node.get_name()}")
-            stree.erase_node(node)
+            node_manager.erase_node(node)
 
-    def process(self, stree: SymbolTree, node: ast.FunctionDef):
-        """Parse bodies of ast.FunctionDef which is construct function to nodes of SymbolTree."""
-        stree.set_ast_root(node)
+    def process(self, stree: SymbolTree, ast_node: ast.FunctionDef, node_manager: NodeManager):
+        """
+        Parse bodies of ast.FunctionDef in SymbolTree.
+
+        Args:
+            stree (SymbolTree): symbol tree under parsing.
+            ast_node (ast.FunctionDef): Ast FunctionDef node in construct.
+            node_manager (NodeManager): NodeManager those asts belong to.
+        """
         # parse args as inputs of stree
-        arguments: ast.arguments = node.args
+        arguments: ast.arguments = ast_node.args
         parser: Parser = ParserRegister.instance().get_parser(ast.arguments)
-        parser.process(stree, arguments)
+        parser.process(stree, arguments, node_manager)
 
         # parse body as node of stree
-        for body in node.body:
+        for body in ast_node.body:
             # avoid add dead code, so we need to break if return is added.
             parser: Parser = ParserRegister.instance().get_parser(type(body))
             if parser is None:
-                stree.append_python_node(node, body)
+                stree.append_python_node(ast_node, body, node_manager)
             else:
-                parser.process(stree, body)
-        self.remove_dead_code(stree)
+                parser.process(stree, body, node_manager)
+
+        self.remove_dead_code(node_manager)
 
 
 g_functiondef_parser = reg_parser(FunctionDefParser())

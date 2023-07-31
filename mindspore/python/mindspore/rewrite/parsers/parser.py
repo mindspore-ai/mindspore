@@ -16,7 +16,8 @@
 import abc
 import ast
 
-from .symbol_tree import SymbolTree
+from ..symbol_tree import SymbolTree
+from ..node.node_manager import NodeManager
 
 
 class Parser(abc.ABC):
@@ -34,12 +35,13 @@ class Parser(abc.ABC):
         return type(None)
 
     @abc.abstractmethod
-    def process(self, stree: SymbolTree, node: ast.AST):
+    def process(self, stree: SymbolTree, node: ast.AST, node_manager: NodeManager):
         """
         Parse input ast node and add parse result into SymbolTree.
 
         Args:
              stree (SymbolTree): current symbol_tree
              node (ast.AST): node who is tried to be parsed
+             node_manager (NodeManager): NodeManager those asts belong to.
         """
         raise NotImplementedError

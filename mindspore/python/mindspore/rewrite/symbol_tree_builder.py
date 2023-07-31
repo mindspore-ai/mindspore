@@ -19,44 +19,9 @@ import inspect
 
 from mindspore.nn import Cell
 from .symbol_tree import SymbolTree
-from .parser_register import ParserRegister
-from .parser import Parser
+from .parsers.parser_register import ParserRegister
+from .parsers.parser import Parser
 from .ast_transformers import FlattenRecursiveStmt
-
-
-class FunctionSymbolTreeBuilder:
-    """Create function SymbolTree"""
-    def __init__(self, network: Cell, ast_root):
-        self._origin_net = network
-        self._ast_root: ast.Module = ast_root
-        self._root_tree: Optional[SymbolTree] = None
-
-    @staticmethod
-    def _ast_transform(ast_root: ast.AST) -> ast.AST:
-        """
-        Optimize ast before parse.
-
-        Args:
-             ast_root (ast.AST): An instance of ast to be optimized.
-
-        Returns:
-             An instance of ast been optimized.
-        """
-        transform_list = [FlattenRecursiveStmt()]
-        for transformer in transform_list:
-            ast_root = transformer.transform(ast_root)
-        return ast_root
-
-    def build(self) -> SymbolTree:
-        """
-        Build SymbolTree.
-
-        Returns:
-             An instance of SymbolTree.
-        """
-        self._root_tree: SymbolTree = SymbolTree(self._origin_net, self._ast_root)
-        self._root_tree.finish_build()
-        return self._root_tree
 
 
 class SymbolTreeBuilder:
@@ -78,7 +43,7 @@ class SymbolTreeBuilder:
             self._jit_config_dict = network.jit_config_dict
 
     @staticmethod
-    def _ast_transform(ast_root: ast.AST) -> ast.AST:
+    def ast_transform(ast_root: ast.AST) -> ast.AST:
         """
         Optimize ast before parse.
 
@@ -88,9 +53,7 @@ class SymbolTreeBuilder:
         Returns:
              An instance of ast been optimized.
         """
-        transform_list = [FlattenRecursiveStmt()]
-        for transformer in transform_list:
-            ast_root = transformer.transform(ast_root)
+        ast_root = FlattenRecursiveStmt().transform(ast_root, ["construct"])
         return ast_root
 
     def build(self) -> SymbolTree:
@@ -101,12 +64,12 @@ class SymbolTreeBuilder:
              An instance of SymbolTree.
         """
 
-        self._ast_root = SymbolTreeBuilder._ast_transform(self._ast_root)
+        self._ast_root = SymbolTreeBuilder.ast_transform(self._ast_root)
         if not isinstance(self._ast_root, ast.Module):
             raise RuntimeError("ast_root should be a ast.Module")
         self._root_tree: SymbolTree = SymbolTree(self._origin_net, self._ast_root)
         parser: Parser = ParserRegister.instance().get_parser(ast.Module)
-        parser.process(self._root_tree, self._ast_root)
+        parser.process(self._root_tree, self._ast_root, None)
         ast.fix_missing_locations(self._root_tree.get_module_ast())
         self._root_tree.finish_build()
         return self._root_tree

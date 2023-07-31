@@ -22,11 +22,11 @@ import astunparse
 
 from mindspore import log as logger
 from ..symbol_tree import SymbolTree
-from ..parser import Parser
-from ..parser_register import ParserRegister, reg_parser
+from .parser import Parser
+from .parser_register import ParserRegister, reg_parser
 from ..ast_helpers import AstFinder
 from ..common import error_str
-
+from ..node.node_manager import NodeManager
 
 class ModuleParser(Parser):
     """Parse ast.Module to SymbolTrees."""
@@ -125,7 +125,7 @@ class ModuleParser(Parser):
         """Parse target type"""
         return ast.Module
 
-    def process(self, stree: SymbolTree, node: ast.Module):
+    def process(self, stree: SymbolTree, node: ast.Module, node_manager: NodeManager):
         """Process ast.ClassDef nodes in ast.Module."""
         ModuleParser._save_imports(stree)
         class_ast = ModuleParser._find_class(node)
@@ -133,7 +133,7 @@ class ModuleParser(Parser):
         for body in node.body:
             if isinstance(body, ast.ClassDef):
                 parser: Parser = ParserRegister.instance().get_parser(ast.ClassDef)
-                parser.process(stree, body)
+                parser.process(stree, body, stree)
             else:
                 logger.info(f"For MindSpore Rewrite, in module parser, Ignoring unsupported "
                             f"node({astunparse.unparse(body)}) in ast.Module.")

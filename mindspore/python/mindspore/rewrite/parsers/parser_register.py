@@ -45,7 +45,7 @@ class ParserRegister:
             parser (Parser): An instance of Parser to be registered.
         """
         if isinstance(parser, Parser):
-            ParserRegister.instance()._parsers[parser.target()] = parser
+            ParserRegister.instance().get_parsers()[parser.target()] = parser
 
     def get_parser(self, ast_type: type) -> Optional[Parser]:
         """
