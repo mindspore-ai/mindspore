@@ -17,7 +17,7 @@ mindspore.ops.fractional_max_pool3d
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为int，则代表池化核的深度，高和宽。如果为tuple，其值必须包含三个正int值分别表示池化核的深度，高和宽。取值必须为正int。
         - **output_size** (Union[int, tuple[int]]，可选) - 目标输出大小。如果是int，则表示输出目标的深、高和宽。如果是tuple，其值必须包含三个int值分别表示目标输出的深、高和宽。默认值： ``None`` 。
         - **output_ratio** (Union[float, tuple[float]]，可选) - 目标输出shape与输入shape的比率。通过输入shape和 `output_ratio` 确定输出shape。支持数据类型：float16、float32、double，数值范围（0，1）。默认值： ``None`` 。
-        - **return_indices** (bool，可选) - 是否返回最大值的的索引值。默认值： ``False`` 。
+        - **return_indices** (bool，可选) - 是否返回最大值的索引值。默认值： ``False`` 。
         - **_random_samples** (Tensor，可选) - 随机步长。支持的数据类型：float16、float32、double。shape为 :math:`(N, C, 3)` 或 :math:`(1, C, 3)` 的Tensor。数值范围[0, 1)。默认值： ``None`` ， `_random_samples` 的值由区间[0, 1)上的均匀分布随机生成。
 
     返回：

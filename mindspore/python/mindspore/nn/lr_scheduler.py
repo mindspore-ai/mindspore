@@ -331,8 +331,10 @@ class PolynomialLR(LRScheduler):
     The polynomial formula for learning rate calculation is as follows:
 
     .. math::
-        factor = (\frac{1.0 - \frac{last\_epoch}{total\_iters}}{1.0 - \frac{last\_epoch - 1.0}{total_iters}})^{power}
-        lr = lr \times factor
+        \begin{split}
+        &factor = (\frac{1.0 - \frac{last\_epoch}{total\_iters}}{1.0 - \frac{last\_epoch - 1.0}{total_iters}})^{power}\\
+        &lr = lr \times factor
+        \end{split}
 
     .. warning::
         This is an experimental lr scheduler module that is subject to change.

@@ -8,8 +8,10 @@ mindspore.nn.PolynomialLR
     学习率计算的多项式公式如下：
 
     .. math::
-        factor = (\frac{1.0 - \frac{last\_epoch}{total\_iters}}{1.0 - \frac{last\_epoch - 1.0}{total_iters}})^{power}
-        lr = lr \times factor
+        \begin{split}
+        &factor = (\frac{1.0 - \frac{last\_epoch}{total\_iters}}{1.0 - \frac{last\_epoch - 1.0}{total_iters}})^{power}\\
+        &lr = lr \times factor
+        \end{split}
 
     .. warning::
         这是一个实验性的动态学习率接口，需要和 `实验性优化器 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.nn.html#%E5%AE%9E%E9%AA%8C%E6%80%A7%E4%BC%98%E5%8C%96%E5%99%A8>`_ 下的接口配合使用。
