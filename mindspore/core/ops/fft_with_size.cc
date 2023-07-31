@@ -91,6 +91,7 @@ std::set<TypePtr> get_input_types(std::unordered_map<TypePtr, TypePtr> types) {
 
 abstract::ShapePtr FFTWithSizeInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kDimNum = 2;
   const int64_t kSignalRankMin = 1, kSignalRankMax = 3;
@@ -106,7 +107,8 @@ abstract::ShapePtr FFTWithSizeInferShape(const PrimitivePtr &primitive,
   auto real = GetValue<bool>(real_attr);
   auto inverse = GetValue<bool>(inverse_attr);
   auto norm = GetValue<std::string>(norm_attr);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x->BuildShape())[kShape];
   if (std::any_of(x_shape.begin(), x_shape.end(), [](int64_t dim) { return dim < 0; })) {
     // if dynamic shape, we just return vector of -1 with x_shape.size()
     std::vector<int64_t> y_shape(x_shape.size(), -1);
@@ -171,9 +173,12 @@ abstract::ShapePtr FFTWithSizeInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr FFTWithSizeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   const std::string prim_name = prim->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto input_type = TypeIdToType(input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element()->type_id());
+  auto tensor = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  auto tensor_type = tensor->BuildType()->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(tensor_type);
+  auto input_type = TypeIdToType(tensor_type->element()->type_id());
   MS_EXCEPTION_IF_NULL(input_type);
   auto real_attr = prim->GetAttr("real");
   auto inverse_attr = prim->GetAttr("inverse");

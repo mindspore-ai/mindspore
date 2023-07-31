@@ -54,6 +54,7 @@ bool RollGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
 bool RollGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Roll>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   kernel_name_ = kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
@@ -71,6 +72,8 @@ bool RollGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 int RollGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &others) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {

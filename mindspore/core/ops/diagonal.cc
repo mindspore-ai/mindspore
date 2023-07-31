@@ -34,7 +34,8 @@ abstract::ShapePtr DiagonalInferShape(const PrimitivePtr &primitive, const std::
   const int64_t dyn_shape = abstract::Shape::kShapeDimAny;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x->BuildShape())[kShape];
   auto x_rank = x_shape.size();
   auto offset = GetValue<int64_t>(primitive->GetAttr("offset"));
   auto dim1 = GetValue<int64_t>(primitive->GetAttr("dim1"));
@@ -75,7 +76,9 @@ abstract::ShapePtr DiagonalInferShape(const PrimitivePtr &primitive, const std::
 
 TypePtr DiagonalInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto x_dtype = input_args[0]->BuildType();
+  auto prim_name = primitive->name();
+  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto x_dtype = x->BuildType();
   return CheckAndConvertUtils::CheckTensorTypeValid("input type", x_dtype, common_valid_types, primitive->name());
 }
 }  // namespace

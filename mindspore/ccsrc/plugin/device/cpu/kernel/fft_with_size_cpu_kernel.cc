@@ -97,6 +97,8 @@ bool FFTWithSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 int FFTWithSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
@@ -139,6 +141,8 @@ inline Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> GetFlatShape(const std:
     for (size_t j = x_dims - static_cast<size_t>(signal_ndim), i = 1; j < x_dims; j++, i++) {
       tensor_shape[i] = x_shape[j];
     }
+  } else {
+    MS_LOG(EXCEPTION) << "x_dims must not be less than signal_ndim.";
   }
   return tensor_shape;
 }
@@ -162,7 +166,7 @@ bool FFTWithSizeCompute(T1 *input_x, T2 *output_y, bool onesided, std::string no
           temp_tensor_shape[signal_ndim] = (temp_tensor_shape[signal_ndim] - 1) * kRealFFTSideNum;
         } else {
           if (checked_signal_size.back() / kRealFFTSideNum + 1 == temp_tensor_shape[signal_ndim]) {
-            temp_tensor_shape[(size_t)signal_ndim] = checked_signal_size.back();
+            temp_tensor_shape[static_cast<size_t>(signal_ndim)] = checked_signal_size.back();
           }
         }
         if (temp_tensor_shape.back() == tensor_shape.back()) {
@@ -250,6 +254,8 @@ bool FFTWithSizeCompute(T1 *input_x, T2 *output_y, bool onesided, std::string no
 template <typename T1, typename T2>
 bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   std::vector<int64_t> checked_signal_size(raw_checked_signal_size_.begin(), raw_checked_signal_size_.end());
   const int64_t choose = FFTWithSize_choose(real_, inverse_);
   auto p_x = reinterpret_cast<T1 *>(inputs[0]->addr);

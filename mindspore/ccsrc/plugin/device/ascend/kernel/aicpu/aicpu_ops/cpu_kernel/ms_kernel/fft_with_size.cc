@@ -45,6 +45,7 @@ namespace aicpu {
 uint32_t FFTWithSizeCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check FFTWithSize params failed.");
   Tensor *input = ctx.Input(0);
+  KERNEL_CHECK_NULLPTR(input, KERNEL_STATUS_INNER_ERROR, "[%s] get input[%u] failed.", ctx.GetOpType().c_str(), 0);
   KERNEL_CHECK_NULLPTR(input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input0 data failed.");
   auto input_x_Shape = input->GetTensorShape();
   KERNEL_CHECK_NULLPTR(input_x_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input_x_Shape failed.")
