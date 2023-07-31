@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
 
-#include "minddata/dataset/kernels/image/random_affine_op.h"
+#include <algorithm>
 
+#include "minddata/dataset/kernels/image/random_affine_op.h"
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -144,6 +144,7 @@ std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
 }
 
 Status RandomAffineOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["degrees"] = degrees_;
   args["translate"] = translate_range_;
@@ -156,6 +157,7 @@ Status RandomAffineOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomAffineOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "degrees", kRandomAffineOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "translate", kRandomAffineOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "scale", kRandomAffineOperation));
@@ -166,7 +168,7 @@ Status RandomAffineOperation::from_json(nlohmann::json op_params, std::shared_pt
   std::vector<float_t> translate_range = op_params["translate"];
   std::vector<float_t> scale_range = op_params["scale"];
   std::vector<float_t> shear_ranges = op_params["shear"];
-  InterpolationMode interpolation = static_cast<InterpolationMode>(op_params["resample"]);
+  auto interpolation = static_cast<InterpolationMode>(op_params["resample"]);
   std::vector<uint8_t> fill_value = op_params["fill_value"];
   *operation = std::make_shared<vision::RandomAffineOperation>(degrees, translate_range, scale_range, shear_ranges,
                                                                interpolation, fill_value);

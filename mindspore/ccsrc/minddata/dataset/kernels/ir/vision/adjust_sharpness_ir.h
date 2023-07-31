@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class AdjustSharpnessOperation : public TensorOperation {
  public:
   explicit AdjustSharpnessOperation(float sharpness_factor);
 
-  ~AdjustSharpnessOperation() = default;
+  ~AdjustSharpnessOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
+
+#include <algorithm>
+
 #include "minddata/dataset/kernels/image/slice_patches_op.h"
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
@@ -48,6 +50,7 @@ std::shared_ptr<TensorOp> SlicePatchesOperation::Build() {
 }
 
 Status SlicePatchesOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["num_height"] = num_height_;
   args["num_width"] = num_width_;
@@ -58,13 +61,14 @@ Status SlicePatchesOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status SlicePatchesOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_height", kSlicePatchesOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_width", kSlicePatchesOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "slice_mode", kSlicePatchesOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kSlicePatchesOperation));
   int32_t num_height = op_params["num_height"];
   int32_t num_width = op_params["num_width"];
-  SliceMode slice_mode = static_cast<SliceMode>(op_params["slice_mode"]);
+  auto slice_mode = static_cast<SliceMode>(op_params["slice_mode"]);
   uint8_t fill_value = op_params["fill_value"];
   *operation = std::make_shared<vision::SlicePatchesOperation>(num_height, num_width, slice_mode, fill_value);
   return Status::OK();

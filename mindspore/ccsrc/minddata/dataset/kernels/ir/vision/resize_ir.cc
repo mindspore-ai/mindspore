@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 #include "minddata/dataset/kernels/ir/vision/resize_ir.h"
 
 #include "minddata/dataset/kernels/image/resize_op.h"
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -62,6 +61,7 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
 }
 
 Status ResizeOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["size"] = size_;
   args["interpolation"] = interpolation_;
@@ -70,10 +70,11 @@ Status ResizeOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status ResizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kResizeOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "interpolation", kResizeOperation));
   std::vector<int32_t> size = op_params["size"];
-  InterpolationMode interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
+  auto interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
   *operation = std::make_shared<vision::ResizeOperation>(size, interpolation);
   return Status::OK();
 }

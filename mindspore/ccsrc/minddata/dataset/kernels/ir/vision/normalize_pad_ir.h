@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kNormalizePadOperation[] = "NormalizePad";
 
 class NormalizePadOperation : public TensorOperation {
@@ -39,7 +37,7 @@ class NormalizePadOperation : public TensorOperation {
   NormalizePadOperation(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype,
                         bool is_hwc);
 
-  ~NormalizePadOperation();
+  ~NormalizePadOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

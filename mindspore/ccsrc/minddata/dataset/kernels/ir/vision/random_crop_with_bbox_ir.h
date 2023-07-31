@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kRandomCropWithBBoxOperation[] = "RandomCropWithBBox";
 
 class RandomCropWithBBoxOperation : public TensorOperation {
@@ -39,7 +37,7 @@ class RandomCropWithBBoxOperation : public TensorOperation {
   RandomCropWithBBoxOperation(const std::vector<int32_t> &size, const std::vector<int32_t> &padding, bool pad_if_needed,
                               const std::vector<uint8_t> &fill_value, BorderType padding_mode);
 
-  ~RandomCropWithBBoxOperation();
+  ~RandomCropWithBBoxOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -58,7 +56,6 @@ class RandomCropWithBBoxOperation : public TensorOperation {
   std::vector<uint8_t> fill_value_;
   BorderType padding_mode_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

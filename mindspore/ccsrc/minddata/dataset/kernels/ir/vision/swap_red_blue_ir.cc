@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,12 @@
 #include "minddata/dataset/kernels/image/swap_red_blue_op.h"
 #endif
 
-#include "minddata/dataset/kernels/ir/validators.h"
-
 namespace mindspore {
 namespace dataset {
 namespace vision {
 #if !defined(ENABLE_ANDROID) || defined(ENABLE_MINDDATA_PYTHON)
 // SwapRedBlueOperation.
-SwapRedBlueOperation::SwapRedBlueOperation() {}
+SwapRedBlueOperation::SwapRedBlueOperation() = default;
 
 SwapRedBlueOperation::~SwapRedBlueOperation() = default;
 
@@ -40,6 +38,7 @@ std::shared_ptr<TensorOp> SwapRedBlueOperation::Build() {
 }
 
 Status SwapRedBlueOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   *operation = std::make_shared<vision::SwapRedBlueOperation>();
   return Status::OK();
 }

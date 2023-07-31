@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_PY_FUNC_OP_H_
 
 #include <memory>
-#include <vector>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -29,13 +29,15 @@ namespace mindspore {
 namespace dataset {
 class PyFuncOp : public TensorOp {
  public:
-  explicit PyFuncOp(py::function func) : py_func_ptr_(std::move(func)) { output_type_ = DataType::DE_UNKNOWN; }
+  explicit PyFuncOp(py::function func) : py_func_ptr_(std::move(func)), output_type_(DataType::DE_UNKNOWN) {}
+
   explicit PyFuncOp(py::function func, DataType::Type output_type)
       : py_func_ptr_(std::move(func)), output_type_(output_type) {}
 
   ~PyFuncOp() override = default;
 
   uint32_t NumInput() override { return 0; }
+
   uint32_t NumOutput() override { return 0; }
 
   // Compute function for n-n mapping.
@@ -48,7 +50,9 @@ class PyFuncOp : public TensorOp {
   /// \param[output] The TensorRow output
   /// \return Status
   Status CastOutput(const py::object &ret_py_obj, TensorRow *output);
+
   std::string Name() const override { return kPyFuncOp; }
+
   Status to_json(nlohmann::json *out_json) override;
 
   static Status from_json(nlohmann::json op_params, std::vector<std::shared_ptr<TensorOperation>> *result);
@@ -63,5 +67,4 @@ class PyFuncOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_PY_FUNC_OP_H_

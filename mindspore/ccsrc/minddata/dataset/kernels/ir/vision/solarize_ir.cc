@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "minddata/dataset/kernels/ir/vision/solarize_ir.h"
 
 #include "minddata/dataset/kernels/image/solarize_op.h"
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -31,16 +30,16 @@ SolarizeOperation::~SolarizeOperation() = default;
 
 Status SolarizeOperation::ValidateParams() {
   constexpr size_t kThresholdSize = 2;
-  constexpr float kThresholdMax = 255;
+  constexpr float kThresholdMax = 255.0;
 
   if (threshold_.size() != kThresholdSize) {
     std::string err_msg =
       "Solarize: threshold must be a vector of two values, got: " + std::to_string(threshold_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  for (size_t i = 0; i < threshold_.size(); ++i) {
-    if (threshold_[i] < 0 || threshold_[i] > kThresholdMax) {
-      std::string err_msg = "Solarize: threshold has to be between 0 and 255, got:" + std::to_string(threshold_[i]);
+  for (float threshold_value : threshold_) {
+    if (threshold_value < 0 || threshold_value > kThresholdMax) {
+      std::string err_msg = "Solarize: threshold has to be between 0 and 255, got:" + std::to_string(threshold_value);
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }

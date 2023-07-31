@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 #include "minddata/dataset/kernels/ir/vision/resize_preserve_ar_ir.h"
 
 #include "minddata/dataset/kernels/image/resize_preserve_ar_op.h"
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -46,6 +44,7 @@ std::shared_ptr<TensorOp> ResizePreserveAROperation::Build() {
 }
 
 Status ResizePreserveAROperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["height"] = height_;
   args["width"] = width_;
@@ -55,6 +54,7 @@ Status ResizePreserveAROperation::to_json(nlohmann::json *out_json) {
 }
 
 Status ResizePreserveAROperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "height", kResizePreserveAROperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "width", kResizePreserveAROperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "img_orientation", kResizePreserveAROperation));

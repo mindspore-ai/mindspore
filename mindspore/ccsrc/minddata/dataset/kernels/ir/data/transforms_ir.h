@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Transform operations for performing data transformation.
 namespace transforms {
-
 // Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kComposeOperation[] = "Compose";
 constexpr char kConcatenateOperation[] = "Concatenate";
@@ -52,7 +50,7 @@ class ComposeOperation : public TensorOperation {
  public:
   explicit ComposeOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms);
 
-  ~ComposeOperation() = default;
+  ~ComposeOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -60,22 +58,29 @@ class ComposeOperation : public TensorOperation {
 
   std::string Name() const override { return kComposeOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(const nlohmann::json &op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
 };
 
 class ConcatenateOperation : public TensorOperation {
  public:
-  explicit ConcatenateOperation(int8_t axis, const std::shared_ptr<Tensor> &prepend,
-                                const std::shared_ptr<Tensor> &append);
+  ConcatenateOperation(int8_t axis, const std::shared_ptr<Tensor> &prepend, const std::shared_ptr<Tensor> &append);
 
-  ~ConcatenateOperation() = default;
+  ~ConcatenateOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
   std::string Name() const override { return kConcatenateOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(const nlohmann::json &op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   int8_t axis_;
@@ -87,20 +92,22 @@ class DuplicateOperation : public TensorOperation {
  public:
   DuplicateOperation() = default;
 
-  ~DuplicateOperation() = default;
+  ~DuplicateOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
   std::string Name() const override { return kDuplicateOperation; }
+
+  static Status from_json(const nlohmann::json &op_params, std::shared_ptr<TensorOperation> *operation);
 };
 
 class FillOperation : public TensorOperation {
  public:
   explicit FillOperation(const std::shared_ptr<Tensor> &fill_value);
 
-  ~FillOperation() = default;
+  ~FillOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -118,15 +125,19 @@ class FillOperation : public TensorOperation {
 
 class MaskOperation : public TensorOperation {
  public:
-  explicit MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, const DataType &dtype);
+  MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, const DataType &dtype);
 
-  ~MaskOperation() = default;
+  ~MaskOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
   std::string Name() const override { return kMaskOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(const nlohmann::json &op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   RelationalOp op_;
@@ -136,9 +147,9 @@ class MaskOperation : public TensorOperation {
 
 class OneHotOperation : public TensorOperation {
  public:
-  explicit OneHotOperation(int32_t num_classes, double smoothing_rate = 0);
+  explicit OneHotOperation(int32_t num_classes, double smoothing_rate = 0.0);
 
-  ~OneHotOperation() = default;
+  ~OneHotOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -157,15 +168,19 @@ class OneHotOperation : public TensorOperation {
 
 class PadEndOperation : public TensorOperation {
  public:
-  explicit PadEndOperation(const TensorShape &pad_shape, const std::shared_ptr<Tensor> &pad_value);
+  PadEndOperation(const TensorShape &pad_shape, const std::shared_ptr<Tensor> &pad_value);
 
-  ~PadEndOperation() = default;
+  ~PadEndOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
   std::string Name() const override { return kPadEndOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   TensorShape pad_shape_;
@@ -176,7 +191,7 @@ class PreBuiltOperation : public TensorOperation {
  public:
   explicit PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op);
 
-  ~PreBuiltOperation() = default;
+  ~PreBuiltOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -192,15 +207,19 @@ class PreBuiltOperation : public TensorOperation {
 
 class RandomApplyOperation : public TensorOperation {
  public:
-  explicit RandomApplyOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms, double prob);
+  RandomApplyOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms, double prob);
 
-  ~RandomApplyOperation() = default;
+  ~RandomApplyOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomApplyOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
@@ -211,13 +230,17 @@ class RandomChoiceOperation : public TensorOperation {
  public:
   explicit RandomChoiceOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms);
 
-  ~RandomChoiceOperation() = default;
+  ~RandomChoiceOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomChoiceOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
@@ -227,7 +250,7 @@ class SliceOperation : public TensorOperation {
  public:
   explicit SliceOperation(const std::vector<SliceOption> &slice_input);
 
-  ~SliceOperation() = default;
+  ~SliceOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -241,10 +264,11 @@ class SliceOperation : public TensorOperation {
 
 class TypeCastOperation : public TensorOperation {
  public:
-  explicit TypeCastOperation(const DataType &data_type);     // Used for C++ API
+  explicit TypeCastOperation(const DataType &data_type);  // Used for C++ API
+
   explicit TypeCastOperation(const std::string &data_type);  // Used for Pybind
 
-  ~TypeCastOperation() = default;
+  ~TypeCastOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -265,13 +289,15 @@ class UniqueOperation : public TensorOperation {
  public:
   UniqueOperation() = default;
 
-  ~UniqueOperation() = default;
+  ~UniqueOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
   std::string Name() const override { return kUniqueOperation; }
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 };
 
 class PluginOperation : public TensorOperation {
@@ -279,7 +305,7 @@ class PluginOperation : public TensorOperation {
   explicit PluginOperation(const std::string &lib_path, const std::string &func_name, const std::string &user_args)
       : lib_path_(lib_path), func_name_(func_name), user_args_(user_args) {}
 
-  ~PluginOperation() = default;
+  ~PluginOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -287,14 +313,16 @@ class PluginOperation : public TensorOperation {
 
   std::string Name() const override { return kPluginOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::string lib_path_;
   std::string func_name_;
   std::string user_args_;
 };
-
 #endif
-
 }  // namespace transforms
 }  // namespace dataset
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -41,17 +40,18 @@ Status MixUpBatchOperation::ValidateParams() {
 std::shared_ptr<TensorOp> MixUpBatchOperation::Build() { return std::make_shared<MixUpBatchOp>(alpha_); }
 
 Status MixUpBatchOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   (*out_json)["alpha"] = alpha_;
   return Status::OK();
 }
 
 Status MixUpBatchOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "alpha", kMixUpBatchOperation));
   float alpha = op_params["alpha"];
   *operation = std::make_shared<vision::MixUpBatchOperation>(alpha);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

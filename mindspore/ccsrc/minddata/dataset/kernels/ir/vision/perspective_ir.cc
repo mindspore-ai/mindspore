@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 #include "minddata/dataset/kernels/ir/vision/perspective_ir.h"
 
 #include "minddata/dataset/kernels/image/perspective_op.h"
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -66,6 +65,7 @@ std::shared_ptr<TensorOp> PerspectiveOperation::Build() {
 }
 
 Status PerspectiveOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["start_points"] = start_points_;
   args["end_points"] = end_points_;
@@ -75,12 +75,13 @@ Status PerspectiveOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status PerspectiveOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "start_points", kPerspectiveOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "end_points", kPerspectiveOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "interpolation", kPerspectiveOperation));
   std::vector<std::vector<int32_t>> start_points = op_params["start_points"];
   std::vector<std::vector<int32_t>> end_points = op_params["end_points"];
-  InterpolationMode interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
+  auto interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
   *operation = std::make_shared<vision::PerspectiveOperation>(start_points, end_points, interpolation);
   return Status::OK();
 }

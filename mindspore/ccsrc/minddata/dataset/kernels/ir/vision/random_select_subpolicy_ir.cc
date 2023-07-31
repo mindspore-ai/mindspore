@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/random_select_subpolicy_ir.h"
+
+#include <algorithm>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/kernels/image/random_select_subpolicy_op.h"
 #endif
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -69,11 +68,12 @@ Status RandomSelectSubpolicyOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> RandomSelectSubpolicyOperation::Build() {
   std::vector<Subpolicy> policy_tensor_ops;
-  for (int32_t i = 0; i < policy_.size(); i++) {
+  for (auto &sub_policy : policy_) {
     Subpolicy sub_policy_tensor_ops;
-    for (int32_t j = 0; j < policy_[i].size(); j++) {
-      sub_policy_tensor_ops.push_back(std::make_pair(policy_[i][j].first->Build(), policy_[i][j].second));
-    }
+    (void)std::transform(sub_policy.begin(), sub_policy.end(), std::back_inserter(sub_policy_tensor_ops),
+                         [](const auto &op_pair) -> std::pair<std::shared_ptr<TensorOp>, double> {
+                           return std::make_pair(op_pair.first->Build(), op_pair.second);
+                         });
     policy_tensor_ops.push_back(sub_policy_tensor_ops);
   }
   std::shared_ptr<RandomSelectSubpolicyOp> tensor_op = std::make_shared<RandomSelectSubpolicyOp>(policy_tensor_ops);
@@ -81,16 +81,17 @@ std::shared_ptr<TensorOp> RandomSelectSubpolicyOperation::Build() {
 }
 
 Status RandomSelectSubpolicyOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   auto policy_tensor_ops = nlohmann::json::array();
-  for (int32_t i = 0; i < policy_.size(); i++) {
+  for (auto &sub_policy : policy_) {
     auto sub_policy_tensor_ops = nlohmann::json::array();
-    for (int32_t j = 0; j < policy_[i].size(); j++) {
+    for (auto &op_pair : sub_policy) {
       nlohmann::json policy, args;
-      auto tensor_op = policy_[i][j].first;
+      auto tensor_op = op_pair.first;
       RETURN_IF_NOT_OK(tensor_op->to_json(&args));
       policy["tensor_op"]["tensor_op_params"] = args;
       policy["tensor_op"]["tensor_op_name"] = tensor_op->Name();
-      policy["prob"] = policy_[i][j].second;
+      policy["prob"] = op_pair.second;
       sub_policy_tensor_ops.push_back(policy);
     }
     policy_tensor_ops.push_back(sub_policy_tensor_ops);
@@ -101,11 +102,12 @@ Status RandomSelectSubpolicyOperation::to_json(nlohmann::json *out_json) {
 
 Status RandomSelectSubpolicyOperation::from_json(nlohmann::json op_params,
                                                  std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "policy", kRandomSelectSubpolicyOperation));
   nlohmann::json policy_json = op_params["policy"];
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy;
   std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> policy_items;
-  for (nlohmann::json item : policy_json) {
+  for (const nlohmann::json &item : policy_json) {
     for (nlohmann::json item_pair : item) {
       RETURN_IF_NOT_OK(ValidateParamInJson(item_pair, "prob", kRandomSelectSubpolicyOperation));
       RETURN_IF_NOT_OK(ValidateParamInJson(item_pair, "tensor_op", kRandomSelectSubpolicyOperation));

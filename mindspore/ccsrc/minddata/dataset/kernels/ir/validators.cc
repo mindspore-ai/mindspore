@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/kernels/ir/validators.h"
 
 namespace mindspore {
 namespace dataset {
 /* ####################################### Validator Functions ############################################ */
-Status ValidateProbability(const std::string &op_name, const double probability) {
+Status ValidateProbability(const std::string &op_name, double probability) {
   if (probability < 0.0 || probability > 1.0) {
     std::string err_msg = op_name + ": probability must be between 0.0 and 1.0, got: " + std::to_string(probability);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -43,7 +44,8 @@ Status ValidateFloatScalarNonNegative(const std::string &op_name, const std::str
 }
 
 Status ValidateVectorFillvalue(const std::string &op_name, const std::vector<uint8_t> &fill_value) {
-  if (fill_value.empty() || (fill_value.size() != 1 && fill_value.size() != size_three)) {
+  const size_t kMaxFillValueSize = 3;
+  if (fill_value.empty() || (fill_value.size() != 1 && fill_value.size() != kMaxFillValueSize)) {
     std::string err_msg =
       op_name + ": fill_value expecting size 1 or 3, got fill_value.size(): " + std::to_string(fill_value.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -55,15 +57,15 @@ Status ValidateVectorFillvalue(const std::string &op_name, const std::vector<uin
 
 Status ValidateVectorColorAttribute(const std::string &op_name, const std::string &attr_name,
                                     const std::vector<float> &attr, const std::vector<float> &range) {
-  if (attr.empty() || attr.size() > size_two) {
+  const size_t kMaxAttrSize = 2;
+  if (attr.empty() || attr.size() > kMaxAttrSize) {
     std::string err_msg = op_name + ":" + attr_name + " expecting size 1 or 2, but got: " + std::to_string(attr.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (auto &attr_val : attr) {
     RETURN_IF_NOT_OK(ValidateScalar(op_name, attr_name, attr_val, range, false, false));
   }
-  constexpr size_t attr_size_two = 2;
-  if (attr.size() == attr_size_two && (attr[0] > attr[1])) {
+  if (attr.size() == kMaxAttrSize && (attr[0] > attr[1])) {
     std::string err_msg = op_name + ":" + attr_name +
                           " lower bound must be less or equal to upper bound, got lb: " + std::to_string(attr[0]) +
                           ", ub: " + std::to_string(attr[1]);
@@ -75,11 +77,11 @@ Status ValidateVectorColorAttribute(const std::string &op_name, const std::strin
 
 Status ValidateVectorMeanStd(const std::string &op_name, const std::vector<float> &mean,
                              const std::vector<float> &std) {
-  if (mean.size() == 0) {
+  if (mean.empty()) {
     std::string err_msg = op_name + ": mean expecting non-empty vector";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (std.size() == 0) {
+  if (std.empty()) {
     std::string err_msg = op_name + ": std expecting non-empty vector";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -110,7 +112,9 @@ Status ValidateVectorOdd(const std::string &op_name, const std::string &vec_name
 }
 
 Status ValidateVectorPadding(const std::string &op_name, const std::vector<int32_t> &padding) {
-  if (padding.empty() || padding.size() == size_three || padding.size() > size_four) {
+  const size_t kDefaultPaddingSize = 2;
+  const size_t kMaxPaddingSize = 4;
+  if (padding.size() != 1 && padding.size() != kDefaultPaddingSize && padding.size() != kMaxPaddingSize) {
     std::string err_msg = op_name + ": padding expecting size 1, 2 or 4, got size: " + std::to_string(padding.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -140,7 +144,8 @@ Status ValidateVectorNonNegative(const std::string &op_name, const std::string &
 }
 
 Status ValidateVectorSigma(const std::string &op_name, const std::vector<float> &sigma) {
-  if (sigma.empty() || sigma.size() > size_two) {
+  const size_t kMaxSigmaSize = 2;
+  if (sigma.empty() || sigma.size() > kMaxSigmaSize) {
     std::string err_msg = op_name + ": sigma expecting size 2, got sigma.size(): " + std::to_string(sigma.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -152,7 +157,8 @@ Status ValidateVectorSigma(const std::string &op_name, const std::vector<float> 
 }
 
 Status ValidateVectorSize(const std::string &op_name, const std::vector<int32_t> &size) {
-  if (size.empty() || size.size() > size_two) {
+  const size_t kMaxSizeSize = 2;
+  if (size.empty() || size.size() > kMaxSizeSize) {
     std::string err_msg = op_name + ": size expecting size 2, got size.size(): " + std::to_string(size.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -164,7 +170,8 @@ Status ValidateVectorSize(const std::string &op_name, const std::vector<int32_t>
 }
 
 Status ValidateVectorScale(const std::string &op_name, const std::vector<float> &scale) {
-  if (scale.size() != size_two) {
+  const size_t kScaleSize = 2;
+  if (scale.size() != kScaleSize) {
     std::string err_msg = op_name + ": scale expecting size 2, got scale.size(): " + std::to_string(scale.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -180,7 +187,8 @@ Status ValidateVectorScale(const std::string &op_name, const std::vector<float> 
 }
 
 Status ValidateVectorRatio(const std::string &op_name, const std::vector<float> &ratio) {
-  if (ratio.size() != size_two) {
+  const size_t kRatioSize = 2;
+  if (ratio.size() != kRatioSize) {
     std::string err_msg = op_name + ": ratio expecting size 2, got ratio.size(): " + std::to_string(ratio.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ std::shared_ptr<TensorOp> CenterCropOperation::Build() {
   int32_t crop_width = size_[0];
 
   // User has specified crop_width.
-  constexpr size_t size_two = 2;
-  if (size_.size() == size_two) {
+  constexpr size_t kSizeSize = 2;
+  if (size_.size() == kSizeSize) {
     crop_width = size_[1];
   }
 

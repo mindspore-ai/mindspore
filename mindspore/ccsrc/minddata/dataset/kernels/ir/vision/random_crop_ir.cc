@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@
 
 #include <algorithm>
 
-#include "minddata/dataset/kernels/ir/validators.h"
-#include "minddata/dataset/util/validators.h"
-
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #endif
+#include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -116,6 +115,7 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
 }
 
 Status RandomCropOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["size"] = size_;
   args["padding"] = padding_;
@@ -127,6 +127,7 @@ Status RandomCropOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kRandomCropOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "padding", kRandomCropOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "pad_if_needed", kRandomCropOperation));
@@ -136,11 +137,10 @@ Status RandomCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<
   std::vector<int32_t> padding = op_params["padding"];
   bool pad_if_needed = op_params["pad_if_needed"];
   std::vector<uint8_t> fill_value = op_params["fill_value"];
-  BorderType padding_mode = static_cast<BorderType>(op_params["padding_mode"]);
+  auto padding_mode = static_cast<BorderType>(op_params["padding_mode"]);
   *operation = std::make_shared<vision::RandomCropOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

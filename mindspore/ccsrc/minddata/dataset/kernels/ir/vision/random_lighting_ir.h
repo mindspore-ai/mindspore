@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class RandomLightingOperation : public TensorOperation {
  public:
   explicit RandomLightingOperation(float alpha);
 
-  ~RandomLightingOperation();
+  ~RandomLightingOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -45,6 +45,8 @@ class RandomLightingOperation : public TensorOperation {
   std::string Name() const override;
 
   Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   float alpha_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/auto_augment_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -56,6 +55,7 @@ std::shared_ptr<TensorOp> AutoAugmentOperation::Build() {
 }
 
 Status AutoAugmentOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["policy"] = policy_;
   args["interpolation"] = interpolation_;
@@ -65,6 +65,7 @@ Status AutoAugmentOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status AutoAugmentOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "policy", kAutoAugmentOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "interpolation", kAutoAugmentOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kAutoAugmentOperation));

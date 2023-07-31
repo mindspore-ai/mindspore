@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
-
 #include "minddata/dataset/kernels/ir/vision/random_crop_decode_resize_ir.h"
+
+#include <algorithm>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -68,6 +67,7 @@ RandomCropDecodeResizeOperation::RandomCropDecodeResizeOperation(const RandomRes
     : RandomResizedCropOperation(base) {}
 
 Status RandomCropDecodeResizeOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["size"] = size_;
   args["scale"] = scale_;
@@ -80,6 +80,7 @@ Status RandomCropDecodeResizeOperation::to_json(nlohmann::json *out_json) {
 
 Status RandomCropDecodeResizeOperation::from_json(nlohmann::json op_params,
                                                   std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kRandomCropDecodeResizeOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "scale", kRandomCropDecodeResizeOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "ratio", kRandomCropDecodeResizeOperation));
@@ -88,13 +89,12 @@ Status RandomCropDecodeResizeOperation::from_json(nlohmann::json op_params,
   std::vector<int32_t> size = op_params["size"];
   std::vector<float> scale = op_params["scale"];
   std::vector<float> ratio = op_params["ratio"];
-  InterpolationMode interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
+  auto interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
   int32_t max_attempts = op_params["max_attempts"];
   *operation =
     std::make_shared<vision::RandomCropDecodeResizeOperation>(size, scale, ratio, interpolation, max_attempts);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

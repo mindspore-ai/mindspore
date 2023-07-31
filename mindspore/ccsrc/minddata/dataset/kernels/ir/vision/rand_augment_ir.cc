@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ Status RandAugmentOperation::ValidateParams() {
 std::string RandAugmentOperation::Name() const { return kRandAugmentOperation; }
 
 Status RandAugmentOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["num_ops"] = num_ops_;
   args["magnitude"] = magnitude_;
@@ -75,6 +76,7 @@ Status RandAugmentOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandAugmentOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_ops", kRandAugmentOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "magnitude", kRandAugmentOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_magnitude_bins", kRandAugmentOperation));

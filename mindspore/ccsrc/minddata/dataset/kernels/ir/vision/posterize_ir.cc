@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/posterize_op.h"
 #endif
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -48,17 +47,18 @@ std::shared_ptr<TensorOp> PosterizeOperation::Build() {
 }
 
 Status PosterizeOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   (*out_json)["bits"] = bits_;
   return Status::OK();
 }
 
 Status PosterizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "bits", kPosterizeOperation));
   uint8_t bits_ = op_params["bits"];
   *operation = std::make_shared<vision::PosterizeOperation>(bits_);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

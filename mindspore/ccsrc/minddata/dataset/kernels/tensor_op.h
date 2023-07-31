@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // base class
 constexpr char kTensorOp[] = "TensorOp";
 
@@ -277,7 +276,7 @@ class TensorOp {
 
   // Returns true oif the TensorOp produces deterministic result.
   // @return true/false
-  bool Deterministic() { return is_deterministic_; }
+  bool Deterministic() const { return is_deterministic_; }
 
   // Function to determine the number of inputs the TensorOp can take. 0: means undefined.
   // @return uint32_t
@@ -312,5 +311,4 @@ class TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_TENSOR_OP_H_

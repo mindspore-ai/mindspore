@@ -30,16 +30,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kRgbToBgrOperation[] = "RgbToBgr";
 
 class RgbToBgrOperation : public TensorOperation {
  public:
   RgbToBgrOperation();
 
-  ~RgbToBgrOperation();
+  ~RgbToBgrOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -49,7 +47,6 @@ class RgbToBgrOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

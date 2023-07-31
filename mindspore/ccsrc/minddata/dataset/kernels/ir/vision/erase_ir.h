@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,10 @@ constexpr char kEraseOperation[] = "Erase";
 
 class EraseOperation : public TensorOperation {
  public:
-  explicit EraseOperation(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value,
-                          bool inplace);
+  EraseOperation(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value,
+                 bool inplace);
 
-  ~EraseOperation();
+  ~EraseOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

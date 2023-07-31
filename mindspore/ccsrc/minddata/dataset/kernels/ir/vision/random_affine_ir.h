@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kRandomAffineOperation[] = "RandomAffine";
 
 class RandomAffineOperation : public TensorOperation {
@@ -40,7 +38,7 @@ class RandomAffineOperation : public TensorOperation {
                         const std::vector<float_t> &scale_range, const std::vector<float_t> &shear_ranges,
                         InterpolationMode interpolation, const std::vector<uint8_t> &fill_value);
 
-  ~RandomAffineOperation();
+  ~RandomAffineOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -60,7 +58,6 @@ class RandomAffineOperation : public TensorOperation {
   InterpolationMode interpolation_;
   std::vector<uint8_t> fill_value_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

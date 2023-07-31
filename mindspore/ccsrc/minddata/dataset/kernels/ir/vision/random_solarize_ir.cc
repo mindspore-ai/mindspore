@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/random_solarize_ir.h"
+
+#include <algorithm>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 #endif
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -47,10 +46,10 @@ Status RandomSolarizeOperation::ValidateParams() {
       "RandomSolarize: threshold must be a vector of two values, got: " + std::to_string(threshold_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  for (size_t i = 0; i < threshold_.size(); ++i) {
-    if (threshold_[i] < 0 || threshold_[i] > kThresholdMax) {
+  for (auto threshold_value : threshold_) {
+    if (threshold_value < 0 || threshold_value > kThresholdMax) {
       std::string err_msg =
-        "RandomSolarize: threshold has to be between 0 and 255, got:" + std::to_string(threshold_[i]);
+        "RandomSolarize: threshold has to be between 0 and 255, got:" + std::to_string(threshold_value);
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
@@ -67,17 +66,18 @@ std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
 }
 
 Status RandomSolarizeOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   (*out_json)["threshold"] = threshold_;
   return Status::OK();
 }
 
 Status RandomSolarizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "threshold", kRandomSolarizeOperation));
   std::vector<uint8_t> threshold = op_params["threshold"];
   *operation = std::make_shared<vision::RandomSolarizeOperation>(threshold);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

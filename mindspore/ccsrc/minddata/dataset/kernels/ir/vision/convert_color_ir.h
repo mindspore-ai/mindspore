@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,16 +30,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kConvertColorOperation[] = "ConvertColor";
 
 class ConvertColorOperation : public TensorOperation {
  public:
   explicit ConvertColorOperation(ConvertMode convert_mode);
 
-  ~ConvertColorOperation();
+  ~ConvertColorOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -54,7 +52,6 @@ class ConvertColorOperation : public TensorOperation {
  private:
   ConvertMode convert_mode_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

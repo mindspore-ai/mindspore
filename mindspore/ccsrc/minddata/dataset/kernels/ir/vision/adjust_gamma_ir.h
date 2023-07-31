@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,16 +30,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kAdjustGammaOperation[] = "AdjustGamma";
 
 class AdjustGammaOperation : public TensorOperation {
  public:
-  explicit AdjustGammaOperation(float gamma, float gain);
+  AdjustGammaOperation(float gamma, float gain);
 
-  ~AdjustGammaOperation() = default;
+  ~AdjustGammaOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -55,7 +53,6 @@ class AdjustGammaOperation : public TensorOperation {
   float gamma_;
   float gain_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

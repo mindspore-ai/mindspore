@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,16 +30,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kRandomAdjustSharpnessOperation[] = "RandomAdjustSharpness";
 
 class RandomAdjustSharpnessOperation : public TensorOperation {
  public:
   RandomAdjustSharpnessOperation(float degree, float prob);
 
-  ~RandomAdjustSharpnessOperation();
+  ~RandomAdjustSharpnessOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -55,9 +53,7 @@ class RandomAdjustSharpnessOperation : public TensorOperation {
   float degree_;
   float probability_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_RANDOM_ADJUST_SHARPNESS_IR_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 #include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -46,6 +45,7 @@ std::shared_ptr<TensorOp> BoundingBoxAugmentOperation::Build() {
 }
 
 Status BoundingBoxAugmentOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args, transform_args;
   nlohmann::json op_item;
   RETURN_IF_NOT_OK(transform_->to_json(&transform_args));
@@ -58,6 +58,7 @@ Status BoundingBoxAugmentOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status BoundingBoxAugmentOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "transform", kBoundingBoxAugmentOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "ratio", kBoundingBoxAugmentOperation));
   std::vector<std::shared_ptr<TensorOperation>> transforms;

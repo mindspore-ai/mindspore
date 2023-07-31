@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace dataset {
 namespace vision {
 constexpr int sigma_size = 2;
 
-GaussianBlurOperation::GaussianBlurOperation(const std::vector<int32_t> kernel_size, const std::vector<float> sigma)
+GaussianBlurOperation::GaussianBlurOperation(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma)
     : kernel_size_(kernel_size), sigma_(sigma) {}
 
 GaussianBlurOperation::~GaussianBlurOperation() = default;
@@ -46,18 +46,19 @@ std::shared_ptr<TensorOp> GaussianBlurOperation::Build() {
     kernel_y = kernel_size_[1];
   }
 
-  float sigma_x = sigma_[0] <= 0 ? kernel_x * 0.15 + 0.35 : sigma_[0];
+  float sigma_x = sigma_[0] <= 0.0 ? static_cast<float>(kernel_x) * 0.15F + 0.35F : sigma_[0];
   float sigma_y = sigma_x;
 
   // User has specified sigma_y.
   if (sigma_.size() == sigma_size) {
-    sigma_y = sigma_[1] <= 0 ? kernel_y * 0.15 + 0.35 : sigma_[1];
+    sigma_y = sigma_[1] <= 0.0 ? static_cast<float>(kernel_y) * 0.15F + 0.35F : sigma_[1];
   }
   std::shared_ptr<GaussianBlurOp> tensor_op = std::make_shared<GaussianBlurOp>(kernel_x, kernel_y, sigma_x, sigma_y);
   return tensor_op;
 }
 
 Status GaussianBlurOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["kernel_size"] = kernel_size_;
   args["sigma"] = sigma_;
@@ -66,6 +67,7 @@ Status GaussianBlurOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status GaussianBlurOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "kernel_size", kGaussianBlurOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "sigma", kGaussianBlurOperation));
   std::vector<int32_t> kernel_size = op_params["kernel_size"];

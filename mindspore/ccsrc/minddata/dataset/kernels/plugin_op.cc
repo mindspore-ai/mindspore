@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ Status PluginOp::PluginToTensorRow(const std::vector<plugin::Tensor> &in_row, Te
   out_row->reserve(in_row.size());
   for (const auto &tensor : in_row) {
     std::shared_ptr<Tensor> output;
-    DataType tp = DataType(tensor.type_);
+    auto tp = DataType(tensor.type_);
     CHECK_FAIL_RETURN_UNEXPECTED(tp.IsNumeric() && tp != DataType::DE_UNKNOWN,
                                  "Input datatype should be numeric, got Unsupported type: " + tensor.type_);
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(tensor.shape_), tp, tensor.buffer_.data(), &output));
@@ -65,6 +65,7 @@ Status PluginOp::TensorRowToPlugin(const TensorRow &in_row, std::vector<plugin::
 }
 
 Status PluginOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
   // Compute should quit if init fails. Error code has already been logged, no need to repeat
   RETURN_IF_NOT_OK(init_code_);
   std::vector<plugin::Tensor> in_row, out_row;

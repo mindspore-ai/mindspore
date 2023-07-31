@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
+
+#include <algorithm>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -64,7 +64,7 @@ Status UniformAugOperation::to_json(nlohmann::json *out_json) {
   CHECK_FAIL_RETURN_UNEXPECTED(out_json != nullptr, "parameter out_json is nullptr");
   nlohmann::json args;
   std::vector<nlohmann::json> transforms;
-  for (auto op : transforms_) {
+  for (const auto &op : transforms_) {
     nlohmann::json op_item, op_args;
     RETURN_IF_NOT_OK(op->to_json(&op_args));
     op_item["tensor_op_params"] = op_args;
@@ -78,6 +78,7 @@ Status UniformAugOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status UniformAugOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "transforms", kUniformAugOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_ops", kUniformAugOperation));
   std::vector<std::shared_ptr<TensorOperation>> transforms = {};

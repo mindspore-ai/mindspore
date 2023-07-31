@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
+
+#include <algorithm>
 
 #if !defined(ENABLE_ANDROID) || defined(ENABLE_MINDDATA_PYTHON)
 #include "minddata/dataset/kernels/image/pad_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -97,6 +97,7 @@ std::shared_ptr<TensorOp> PadOperation::Build() {
 }
 
 Status PadOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["padding"] = padding_;
   args["fill_value"] = fill_value_;
@@ -106,12 +107,13 @@ Status PadOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status PadOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "padding", kPadOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kPadOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "padding_mode", kPadOperation));
   std::vector<int32_t> padding = op_params["padding"];
   std::vector<uint8_t> fill_value = op_params["fill_value"];
-  BorderType padding_mode = static_cast<BorderType>(op_params["padding_mode"]);
+  auto padding_mode = static_cast<BorderType>(op_params["padding_mode"]);
   *operation = std::make_shared<vision::PadOperation>(padding, fill_value, padding_mode);
   return Status::OK();
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/trivial_augment_wide_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -53,6 +52,7 @@ std::shared_ptr<TensorOp> TrivialAugmentWideOperation::Build() {
 }
 
 Status TrivialAugmentWideOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["num_magnitude_bins"] = num_magnitude_bins_;
   args["interpolation"] = interpolation_;
@@ -62,6 +62,7 @@ Status TrivialAugmentWideOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status TrivialAugmentWideOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_magnitude_bins", kTrivialAugmentWideOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "interpolation", kTrivialAugmentWideOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kTrivialAugmentWideOperation));

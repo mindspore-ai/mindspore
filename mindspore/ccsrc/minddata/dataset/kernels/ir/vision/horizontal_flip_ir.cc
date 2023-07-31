@@ -23,9 +23,8 @@ namespace mindspore {
 namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
-
 // VerticalFlipOperation
-HorizontalFlipOperation::HorizontalFlipOperation() {}
+HorizontalFlipOperation::HorizontalFlipOperation() = default;
 
 HorizontalFlipOperation::~HorizontalFlipOperation() = default;
 
@@ -39,6 +38,7 @@ std::shared_ptr<TensorOp> HorizontalFlipOperation::Build() {
 }
 
 Status HorizontalFlipOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   *operation = std::make_shared<vision::HorizontalFlipOperation>();
   return Status::OK();
 }

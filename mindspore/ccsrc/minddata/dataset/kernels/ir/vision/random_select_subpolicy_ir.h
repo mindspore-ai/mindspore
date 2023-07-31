@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kRandomSelectSubpolicyOperation[] = "RandomSelectSubpolicy";
 
 class RandomSelectSubpolicyOperation : public TensorOperation {
@@ -40,7 +38,7 @@ class RandomSelectSubpolicyOperation : public TensorOperation {
   explicit RandomSelectSubpolicyOperation(
     const std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> &policy);
 
-  ~RandomSelectSubpolicyOperation();
+  ~RandomSelectSubpolicyOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -55,7 +53,6 @@ class RandomSelectSubpolicyOperation : public TensorOperation {
  private:
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
