@@ -34,7 +34,6 @@ class OptimizeIRPassLib;
 namespace pipeline {
 using PassItem = std::pair<std::string, std::function<bool(ResourcePtr)>>;
 
-extern std::vector<PassItem> kGePasses;
 extern std::vector<PassItem> kVmPasses;
 extern std::vector<PassItem> kInlinePasses;
 extern std::vector<PassItem> kPynativePasses;
@@ -52,7 +51,6 @@ bool PackExpandPass(const ResourcePtr &resource);
 void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &resource);
 bool EliminateSpecialOpOptPass(const ResourcePtr &resource);
-bool ConvertListToTupleForExportPass(const ResourcePtr &resource);
 bool ME_EXPORT AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource);
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource,

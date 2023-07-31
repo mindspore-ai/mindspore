@@ -705,8 +705,8 @@ class BeforeOptARewriter : public BaseRewriter {
 class AfterOptARewriter : public BaseRewriter {
  public:
   using ThisClass = AfterOptARewriter;
-  AfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager, bool vm_pipeline)
-      : BaseRewriter(root_graph, manager), vm_pipeline_(vm_pipeline) {}
+  AfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
+      : BaseRewriter(root_graph, manager) {}
   ~AfterOptARewriter() override = default;
 
  protected:
@@ -1756,7 +1756,7 @@ class AfterOptARewriter : public BaseRewriter {
       }
       return ConvertNoneToPyExecute(fg);
     }
-    if (vm_pipeline_ && fallback::GetJitSyntaxLevel() == kLax) {
+    if (fallback::GetJitSyntaxLevel() == kLax) {
       if (value->isa<Type>()) {
         return ConvertTypeToPyExecute(fg, value_node, value->cast<TypePtr>());
       } else if (value->isa<parse::ClassType>()) {
@@ -1816,7 +1816,7 @@ class AfterOptARewriter : public BaseRewriter {
         continue;
       }
       const auto &value = value_node->value();
-      if (vm_pipeline_ && fallback::GetJitSyntaxLevel() == kLax) {
+      if (fallback::GetJitSyntaxLevel() == kLax) {
         // Not convert the 'type' used by Cast primitive.
         if (value->isa<Type>() && IsPrimitiveCNode(cnode, prim::kPrimCast)) {
           continue;
@@ -2055,188 +2055,6 @@ class AfterOptARewriter : public BaseRewriter {
     // AbstractSequence, AbstractDict, AbstractRowTensor --> AbstractTuple.
     return ConvertToAbstractTuple(abs, 0);
   }
-
- private:
-  bool vm_pipeline_{true};
-};
-
-// ===========================================================================
-// ExportRewriter convert List to Tuple, used for export.
-// ===========================================================================
-class ExportRewriter : public BaseRewriter {
- public:
-  using ThisClass = ExportRewriter;
-  ExportRewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
-      : BaseRewriter(root_graph, manager) {}
-  ~ExportRewriter() override = default;
-
- protected:
-  // From:
-  //   MakeList(arg1, arg2, ...)
-  // To:
-  //   MakeTuple(arg1, arg2, ...)
-  AnfNodePtr ConvertMakeListToMakeTuple(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-
-    std::vector<AnfNodePtr> inputs;
-    inputs.reserve(node->size());
-    (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    // Inputs of node should be [make_list, item1, item2, ...], so offset by 1 to get items;
-    (void)inputs.insert(inputs.cend(), node->inputs().cbegin() + 1, node->inputs().cend());
-    return node->func_graph()->NewCNode(std::move(inputs));
-  }
-
-  // From:
-  //   list_getitem(list, key)
-  // To:
-  //   TupleGetItem(list, key)
-  AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-
-    // Inputs should be [list_getitem, list, item]
-    constexpr size_t expect_input_size = 3;
-    CheckInputsSize(node, expect_input_size);
-    constexpr size_t data_index = 1;
-    constexpr size_t cons_index = 2;
-    const auto &inputs = node->inputs();
-    auto &data = inputs[data_index];
-    auto &key = inputs[cons_index];
-    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, key});
-  }
-
-  // From:
-  //   ListSetItem(list, index, item)
-  // To:
-  //   TupleSetItem(list, index, item)
-  AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-
-    // Inputs should be [list_setitem, list, index, item]
-    const size_t expect_inputs_size = 4;
-    CheckInputsSize(node, expect_inputs_size);
-
-    const size_t data_index = 1;
-    const size_t cons_index = 2;
-    const size_t value_index = 3;
-    const auto &inputs = node->inputs();
-    auto &data = inputs[data_index];
-    auto &key = inputs[cons_index];
-    auto &value = inputs[value_index];
-    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, key, value});
-  }
-
-  using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &);
-  using ConverterMap = mindspore::HashMap<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
-  static inline const ConverterMap converters_{
-    {prim::kPrimMakeList, &ThisClass::ConvertMakeListToMakeTuple},
-    {prim::kPrimListGetItem, &ThisClass::ConvertListGetItemToTupleGetItem},
-    {prim::kPrimListSetItem, &ThisClass::ConvertListSetItemToTupleSetItem},
-  };
-  AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode) override {
-    // Get primitive from cnode.
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (prim == nullptr) {
-      return nullptr;
-    }
-    // Find cnode converter by primitive.
-    auto iter = converters_.find(prim);
-    if (iter == converters_.end()) {
-      return nullptr;
-    }
-    // Call converter.
-    return (this->*(iter->second))(cnode);
-  }
-
-  static ValuePtr ConvertValueSequenceToValueTuple(const ValuePtr &value, size_t depth, bool *need_convert) {
-    MS_EXCEPTION_IF_NULL(need_convert);
-    MS_EXCEPTION_IF_NULL(value);
-    if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(INTERNAL_EXCEPTION) << "List nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
-    }
-
-    if (value->isa<ValueSequence>()) {
-      std::vector<ValuePtr> elements;
-      auto value_seq = value->cast<ValueSequencePtr>();
-      (void)std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(elements),
-                           [&](const ValuePtr &value) -> ValuePtr {
-                             bool is_convert = false;
-                             auto convert_value = ConvertValueSequenceToValueTuple(value, depth + 1, &is_convert);
-                             *need_convert |= is_convert;
-                             return convert_value;
-                           });
-      *need_convert |= value->isa<ValueList>();
-      if (*need_convert) {
-        return std::make_shared<ValueTuple>(elements);
-      }
-    }
-    return value;
-  }
-
-  AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
-    bool need_convert = false;
-    auto convert_value = ConvertValueSequenceToValueTuple(value, 0, &need_convert);
-    if (need_convert) {
-      return std::make_shared<ValueNode>(convert_value);
-    }
-    return nullptr;
-  }
-
-  // AbstractList --> AbstractTuple.
-  static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
-    if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(INTERNAL_EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
-                                 << " levels.";
-    }
-    // AbstractList --> AbstractTuple.
-    auto abs_seq = abs->cast<AbstractSequencePtr>();
-    if (abs_seq != nullptr) {
-      if (abs_seq->dynamic_len() && abs_seq->isa<AbstractList>()) {
-        auto converted_abs_tuple = std::make_shared<AbstractTuple>(abs_seq->elements(), abs_seq->sequence_nodes());
-        converted_abs_tuple->set_dynamic_len(true);
-        converted_abs_tuple->set_dynamic_len_element_abs(abs_seq->dynamic_len_element_abs());
-        return converted_abs_tuple;
-      }
-      const auto &seq_elements = abs_seq->elements();
-      // First we check if elements should be converted,
-      // changed_elements maps old element to new element.
-      mindspore::HashMap<AbstractBasePtr, AbstractBasePtr> changed_elements;
-      for (const auto &element : seq_elements) {
-        auto new_element = ConvertToAbstractTuple(element, depth + 1);
-        if (new_element != nullptr) {
-          (void)changed_elements.emplace(element, new_element);
-        }
-      }
-      if (changed_elements.empty()) {
-        if (abs->isa<AbstractTuple>()) {
-          // If no elements changed and it is an AbstractTuple, do not convert.
-          return nullptr;
-        }
-        // If no elements changed but it is not an AbstractTuple, convert it by copy elements.
-        return std::make_shared<AbstractTuple>(seq_elements);
-      }
-      // Always make new AbstractTuple when elements changed.
-      std::vector<AbstractBasePtr> elements;
-      elements.reserve(seq_elements.size());
-      for (const auto &element : seq_elements) {
-        auto iter = changed_elements.find(element);
-        if (iter != changed_elements.end()) {
-          (void)elements.emplace_back(iter->second);
-        } else {
-          (void)elements.emplace_back(element);
-        }
-      }
-      return std::make_shared<AbstractTuple>(std::move(elements));
-    }
-    return nullptr;
-  }
-
-  AbstractBasePtr ConvertAbstract(const AbstractBasePtr &abs) override {
-    // AbstractList --> AbstractTuple.
-    return ConvertToAbstractTuple(abs, 0);
-  }
 };
 }  // namespace
 
@@ -2247,13 +2065,13 @@ bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &man
   return rewriter.Execute();
 }
 
-bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource, bool vm_pipeline) {
+bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(resource);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
-  AfterOptARewriter rewriter(root, manager, vm_pipeline);
+  AfterOptARewriter rewriter(root, manager);
   bool change = rewriter.Execute();
   if (rewriter.need_renormalized()) {
     abstract::AbstractBasePtrList new_args_spec;
@@ -2262,16 +2080,6 @@ bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &re
     (void)pipeline::Renormalize(resource, root, new_args_spec);
   }
   return change;
-}
-
-bool RewriterForExport(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(root);
-  MS_EXCEPTION_IF_NULL(resource);
-  auto manager = resource->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  manager->AddFuncGraph(root);
-  ExportRewriter rewriter(root, manager);
-  return rewriter.Execute();
 }
 
 bool CheckNeedConvertList(const AbstractBasePtr &abs) {
