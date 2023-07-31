@@ -126,38 +126,11 @@ _fallback_unsupported_python_builtin_type = (
 )
 
 _modules_from_mindspore = (
-    "mindspore",           # https://gitee.com/mindspore/mindspore
-    "msadapter",           # https://openi.pcl.ac.cn/OpenI/MSAdapter
-    "mindocr",             # https://github.com/mindspore-lab/mindocr
-    "mindyolo",            # https://github.com/mindspore-lab/mindyolo
-    "mindnlp",             # https://github.com/mindspore-lab/mindnlp
-    "mindcv",              # https://github.com/mindspore-lab/mindcv
-    "mindspore_rec",       # https://github.com/mindspore-lab/mindrec
-    "mindaudio",           # https://github.com/mindspore-lab/mindaudio
-    "mindone",             # https://github.com/mindspore-lab/mindone
-    "mindspore_rl",        # https://github.com/mindspore-lab/mindrl
-    "mindformers",         # https://github.com/mindspore-lab/mindformers
-    "mindpet",             # https://github.com/mindspore-lab/mindpet
-    "mindpose",            # https://github.com/mindspore-lab/mindpose
-    "mindface",            # https://github.com/mindspore-lab/mindface
-    "mindsearch",          # https://github.com/mindspore-lab/mindsearch
-    "mindinsight",         # https://gitee.com/mindspore/mindinsight
-    "mindelec",            # https://gitee.com/mindspore/mindscience
-    "mindflow",            # https://gitee.com/mindspore/mindscience
-    "mindsponge",          # https://gitee.com/mindspore/mindscience
-    "mindearth",           # https://gitee.com/mindspore/mindscience
-    "sciai",               # https://gitee.com/mindspore/mindscience
-    "mindquantum",         # https://gitee.com/mindspore/mindquantum
-    "mindarmour",          # https://gitee.com/mindspore/mindarmour
-    "mindpandas",          # https://gitee.com/mindspore/mindpandas
-    "mindvision",          # https://gitee.com/mindspore/vision
-    "mindspore_gl",        # https://gitee.com/mindspore/graphlearning
-    "mindspore_federated", # https://gitee.com/mindspore/federated
-    "mindspore_gs",        # https://gitee.com/mindspore/golden-stick
-    "mindspore_serving",   # https://gitee.com/mindspore/serving
-    "mindspore_xai",       # https://gitee.com/mindspore/xai
-    "mindspore_hub",       # https://gitee.com/mindspore/hub
-    "ringmo_framework",    # https://gitee.com/mindspore/ringmo-framework
+    "mindspore", "msadapter", "mindocr", "mindyolo", "mindnlp", "mindcv", "mindspore_rec", "mindaudio", "mindone",
+    "mindspore_rl", "mindformers", "mindpet", "mindpose", "mindface", "mindsearch", "mindinsight", "mindelec",
+    "mindflow", "mindsponge", "mindearth", "sciai", "mindquantum", "mindarmour", "mindpandas", "mindvision",
+    "mindspore_gl", "mindspore_federated", "mindspore_gs", "mindspore_serving", "mindspore_xai", "mindspore_hub",
+    "ringmo_framework",
 )
 
 _global_params = {}
