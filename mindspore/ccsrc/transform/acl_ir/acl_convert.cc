@@ -179,8 +179,11 @@ void AttrHelper<ConvertType>::ConvertListAttr(const ValuePtr &value, AclConverte
   MS_EXCEPTION_IF_NULL(acl_converter);
   const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
   ShapeVector shape;
-  TypePtr type_ptr;
+  TypePtr type_ptr = nullptr;
   GetValueSequenceDataTypeAndShape(value_sequence, &type_ptr, &shape);
+  if (type_ptr == nullptr) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(type_ptr);
   TypeId type_id = type_ptr->type_id();
   if (param != nullptr) {
@@ -224,7 +227,8 @@ void AttrHelper<ConvertType>::GetValueSequenceDataTypeAndShape(const ValuePtrLis
   MS_EXCEPTION_IF_NULL(data_type);
   MS_EXCEPTION_IF_NULL(shape);
   if (value_sequence.size() == 0) {
-    MS_LOG(EXCEPTION) << "value sequence is empty, failed to get data type";
+    MS_LOG(WARNING) << "value sequence is empty, failed to get data type";
+    return;
   }
   (void)shape->push_back(value_sequence.size());
   auto val = value_sequence[0];
