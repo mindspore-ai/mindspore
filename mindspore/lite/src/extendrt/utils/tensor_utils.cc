@@ -112,11 +112,14 @@ std::vector<mindspore::tensor::Tensor> TensorUtils::MSTensorToTensor(const std::
     auto data_type = ms_tensor.DataType();
     auto type_id = static_cast<mindspore::TypeId>(data_type);
     auto shape = ms_tensor.Shape();
-    auto data = const_cast<void *>(ms_tensor.Data().get());
+    void *data = nullptr;
+    auto device_address = ms_tensor.GetDeviceData();
+    if (device_address == nullptr) {
+      data = const_cast<void *>(ms_tensor.Data().get());
+    }
     auto data_size = ms_tensor.DataSize();
     auto ref_tensor_data = std::make_shared<TensorRefData>(data, ms_tensor.ElementNum(), data_size, shape.size());
     mindspore::tensor::Tensor tensor(type_id, shape, ref_tensor_data);
-    auto device_address = ms_tensor.GetDeviceData();
     if (device_address != nullptr) {
       auto lite_device_address = std::make_shared<LiteDeviceAddress>(device_address, ms_tensor.DataSize());
       tensor.set_device_address(lite_device_address);

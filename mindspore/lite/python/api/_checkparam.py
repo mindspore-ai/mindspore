@@ -75,3 +75,14 @@ def check_config_info(config_info_name, config_info, enable_none=False):
             raise TypeError(f"{config_info_name} val must be str, but got "
                             f"{type(config_info[key])} at key {key}.")
     return config_info
+
+
+def check_tensor_input_param(shape=None, device=None):
+    if shape is not None:
+        if not isinstance(shape, (list, tuple)):
+            raise TypeError(f"shape must be list or tuple, but got {type(shape)}.")
+        for i, element in enumerate(shape):
+            if not isinstance(element, int):
+                raise TypeError(f"shape element must be int, but got {type(element)} at index {i}.")
+    if device is not None and not isinstance(device, str):
+        raise TypeError(f"device must be str, but got {type(device)}.")

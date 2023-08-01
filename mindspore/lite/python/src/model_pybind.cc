@@ -44,13 +44,17 @@ std::vector<MSTensor> MSTensorPtrToMSTensor(const std::vector<MSTensorPtr> &tens
   return tensors;
 }
 
-std::vector<MSTensorPtr> PyModelPredict(Model *model, const std::vector<MSTensorPtr> &inputs_ptr) {
+std::vector<MSTensorPtr> PyModelPredict(Model *model, const std::vector<MSTensorPtr> &inputs_ptr,
+                                        const std::vector<MSTensorPtr> &outputs_ptr) {
   if (model == nullptr) {
     MS_LOG(ERROR) << "Model object cannot be nullptr";
     return {};
   }
   std::vector<MSTensor> inputs = MSTensorPtrToMSTensor(inputs_ptr);
   std::vector<MSTensor> outputs;
+  if (!outputs_ptr.empty()) {
+    outputs = MSTensorPtrToMSTensor(outputs_ptr);
+  }
   if (!model->Predict(inputs, &outputs).IsOk()) {
     return {};
   }

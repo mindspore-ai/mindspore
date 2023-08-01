@@ -28,6 +28,7 @@
 #include "common/mutable_tensor_impl.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
+#include "extendrt/kernel/ascend/plugin/ascend_allocator_plugin.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -39,6 +40,10 @@ class TensorNumpyImpl : public MutableTensorImpl {
     {
       py::gil_scoped_acquire acquire;
       { buffer_ = py::buffer_info(); }
+    }
+    if (device_data_ != nullptr) {
+      MS_LOG(INFO) << "free device data in tensor numpy impl.";
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_);
     }
   }
   const std::vector<int64_t> &Shape() const override { return ms_shape_; }
@@ -70,8 +75,10 @@ class TensorNumpyImpl : public MutableTensorImpl {
   int64_t ElementNum() const override { return buffer_.size; }
   size_t DataSize() const override { return buffer_.size * buffer_.itemsize; }
 
-  void SetDeviceData(void *data) override { MS_LOG(ERROR) << "Cannot call SetDeviceData for numpy tensor"; }
-  void *GetDeviceData() override { return nullptr; }
+  void SetDeviceData(void *data) override { device_data_ = data; }
+
+  void *GetDeviceData() override { return device_data_; }
+
   bool IsConst() const override { return false; }
   void SetIsConst(bool is_const) { MS_LOG(ERROR) << "Cannot call SetIsConst for numpy tensor"; }
 
@@ -142,6 +149,7 @@ class TensorNumpyImpl : public MutableTensorImpl {
 
   py::buffer_info buffer_;
   std::vector<int64_t> ms_shape_;
+  void *device_data_ = nullptr;
 };
 }  // namespace mindspore
 

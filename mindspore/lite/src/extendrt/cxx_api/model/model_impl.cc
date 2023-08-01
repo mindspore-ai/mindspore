@@ -356,6 +356,11 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     return kLiteError;
   }
   UpdateProvider();
+  auto status = UpdateSharingWorkspaceConfig(model_buff, model_size, model_path);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed.";
+    return kLiteError;
+  }
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Create session failed.";
@@ -659,11 +664,11 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     MSTensor session_output(session_outputs[i]);
     auto &execute_output = outputs->at(i);
     session_output.SetShape(execute_output.Shape());
-    if (session_output.Data().get() != execute_output.Data().get()) {
-      session_output.SetData(execute_output.MutableData(), false);
-    }
     if (session_output.GetDeviceData() != execute_output.GetDeviceData()) {
       session_output.SetDeviceData(execute_output.GetDeviceData());
+    }
+    if (execute_output.GetDeviceData() == nullptr && session_output.Data().get() != execute_output.Data().get()) {
+      session_output.SetData(execute_output.MutableData(), false);
     }
   }
   return kSuccess;

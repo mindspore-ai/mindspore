@@ -330,7 +330,7 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
     auto &kernel_input = kernel_args_.inputs[i];
-    if (input.Size() != kernel_input->GetSizeInBytes()) {
+    if (input.Size() < kernel_input->GetSizeInBytes()) {
       MS_LOG(ERROR) << "Byte size of input " << i << " != the size expected, given size " << input.Size()
                     << ", expected size " << kernel_input->GetSizeInBytes()
                     << ", input shape: " << kernel_input->GetShapeVector();

@@ -29,6 +29,7 @@
 #include "include/backend/device_address.h"
 #include "common/utils.h"
 #include "common/mutable_tensor_impl.h"
+#include "src/extendrt/kernel/ascend/plugin/ascend_allocator_plugin.h"
 
 namespace mindspore {
 class TensorDefaultImpl : public MutableTensorImpl {
@@ -57,6 +58,11 @@ class TensorDefaultImpl : public MutableTensorImpl {
   ~TensorDefaultImpl() {
     if (own_data_ && data_ != nullptr && data_ != buffer_.Data()) {
       free(const_cast<void *>(data_));
+    }
+    if (device_data_ != nullptr) {
+      MS_LOG(INFO) << "free device data in tensor default impl.";
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_);
+      device_data_ = nullptr;
     }
   }
   void SetShape(const std::vector<int64_t> &shape) override { shape_ = shape; }

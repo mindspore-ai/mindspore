@@ -155,6 +155,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_flow_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/thread_pool_reuse_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/kernel/ascend/plugin/ascend_allocator_plugin.cc
         )
 
 file(GLOB FORMAT_PASS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/format_pass/*.cc")
@@ -164,6 +165,7 @@ if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
     set(LITE_SRC
             ${LITE_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/kernel/ascend/plugin/ascend_allocator_plugin.cc
             )
 endif()
 

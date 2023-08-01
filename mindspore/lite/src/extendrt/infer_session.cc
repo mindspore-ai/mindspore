@@ -21,6 +21,7 @@
 #include "extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 #include "extendrt/delegate/plugin/litert_executor_plugin.h"
 #include "extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
+#include "extendrt/kernel/ascend/plugin/ascend_allocator_plugin.h"
 
 namespace mindspore {
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context,
@@ -32,9 +33,7 @@ std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<
 }
 
 void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
-  if (!context) {
-    return;
-  }
+  MS_CHECK_TRUE_RET_VOID(context != nullptr);
   constexpr auto default_gpu_provider = "tensorrt";
   constexpr auto default_cpu_provider = "litert";
   constexpr auto default_npu_provider = "ge";
@@ -62,6 +61,10 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
       auto ascend_device = device_info->Cast<AscendDeviceInfo>();
       if (!ascend_device) {
         continue;
+      }
+      if (!kernel::AscendAllocatorPlugin::GetInstance().Register()) {
+        MS_LOG(ERROR) << "failed register ascend allocator plugin.";
+        return;
       }
       auto provider = ascend_device->GetProvider();
       if (provider == default_npu_provider) {

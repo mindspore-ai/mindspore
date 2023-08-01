@@ -167,6 +167,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc
         ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
+        ${SRC_DIR}/extendrt/kernel/ascend/plugin/ascend_allocator_plugin.cc
 )
 
 if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)

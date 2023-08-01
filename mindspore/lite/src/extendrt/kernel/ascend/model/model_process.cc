@@ -887,9 +887,9 @@ bool ModelProcess::CheckOutputTensors(const std::vector<KernelTensorPtr> &output
         return false;
       }
     } else if (host_data != nullptr && host_data->addr != nullptr) {
-      if (host_data->size != info.buffer_size) {
+      if (host_data->size < info.buffer_size) {
         MS_LOG(ERROR) << "Output " << i << " host data size not match, required size " << info.buffer_size
-                      << ", given count " << tensor->GetData()->size;
+                      << ", given count " << host_data->size;
         return false;
       }
     } else {
@@ -1106,7 +1106,7 @@ bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
     }
     auto host_data = output->GetHostData();
     if (host_data && host_data->addr && !is_run_on_device_) {
-      if (host_data->size != output_info.buffer_size) {
+      if (host_data->size < output_info.buffer_size) {
         MS_LOG(ERROR) << "Specified output host data size " << host_data->size << " != execute output data size "
                       << output_info.buffer_size << ", output shape: " << output_info.dims;
         return false;

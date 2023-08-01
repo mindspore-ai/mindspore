@@ -15,7 +15,7 @@
 """
 BaseModel.
 """
-from mindspore_lite.tensor import Tensor
+from mindspore_lite.tensor import Tensor, TensorMeta
 
 
 class BaseModel:
@@ -35,25 +35,52 @@ class BaseModel:
             inputs.append(Tensor(_tensor))
         return inputs
 
-    def predict(self, inputs):
+    def get_outputs(self):
+        """
+        Obtains all output TensorMeta of the model.
+        """
+        outputs_metadata = []
+        for _tensor in self._model.get_outputs():
+            out_tensor = Tensor(_tensor)
+            output_meta = TensorMeta()
+            output_meta.name = out_tensor.name
+            output_meta.dtype = out_tensor.dtype
+            output_meta.shape = out_tensor.shape
+            output_meta.format = out_tensor.format
+            output_meta.element_num = out_tensor.element_num
+            output_meta.data_size = out_tensor.data_size
+            outputs_metadata.append(output_meta)
+        return tuple(outputs_metadata)
+
+    def predict(self, inputs, outputs=None):
         """
         Inference model.
         """
         if not isinstance(inputs, list):
             raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
         _inputs = []
+        _outputs = []
         for i, element in enumerate(inputs):
             if not isinstance(element, Tensor):
                 raise TypeError(f"inputs element must be Tensor, but got "
                                 f"{type(element)} at index {i}.")
             # pylint: disable=protected-access
             _inputs.append(element._tensor)
-        outputs = self._model.predict(_inputs)
-        if not outputs:
+        if outputs is not None:
+            if not isinstance(outputs, list):
+                raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
+            for i, element in enumerate(outputs):
+                if not isinstance(element, Tensor):
+                    raise TypeError(f"inputs element must be Tensor, but got "
+                                    f"{type(element)} at index {i}.")
+                # pylint: disable=protected-access
+                _outputs.append(element._tensor)
+        predict_result = self._model.predict(_inputs, _outputs)
+        if predict_result is None:
             raise RuntimeError(f"predict failed!")
         predict_outputs = []
-        for output in outputs:
-            predict_outputs.append(Tensor(output))
+        for output_tensor in predict_result:
+            predict_outputs.append(Tensor(output_tensor))
         return predict_outputs
 
     def resize(self, inputs, dims):
