@@ -236,11 +236,9 @@ config模块能够设置或获取数据处理的全局配置参数。
     mindspore.dataset.BatchInfo
     mindspore.dataset.DatasetCache
     mindspore.dataset.DSCallback
-    mindspore.dataset.SamplingStrategy
     mindspore.dataset.Schema
     mindspore.dataset.Shuffle
     mindspore.dataset.WaitedDSCallback
-    mindspore.dataset.OutputFormat
     mindspore.dataset.compare
     mindspore.dataset.debug.DebugHook
     mindspore.dataset.deserialize
