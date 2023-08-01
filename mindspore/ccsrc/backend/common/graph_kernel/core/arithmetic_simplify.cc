@@ -31,6 +31,7 @@
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/model/node.h"
 #include "backend/common/graph_kernel/model/op_node.h"
 #include "backend/common/graph_kernel/model/graph_builder.h"
 
@@ -796,7 +797,10 @@ bool ArithmeticSimplify::DoConstantFold(const inner::LiteGraphPtr &litegraph) {
   return changed;
 }
 
-bool ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
+bool ResetOutputs(const inner::LiteGraphPtr &litegraph) {
+  /** If after arithmetic transformation and constant folding, an output of subgraph is just a Tensor or Parameter,
+   * insert Reshape/BroadcastTo and reset the output to this op.
+   */
   auto &outputs = litegraph->GetOutputs();
   for (size_t i = 0; i < outputs.size(); i++) {
     MS_EXCEPTION_IF_NULL(outputs[i]);
@@ -806,7 +810,8 @@ bool ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
         return false;
       }
       inner::GraphBuilder gb;
-      auto op_ptr = gb.BroadcastTo(outputs[i], outputs[i]->shape);
+      auto output_shape = outputs[i]->As<inner::ConstTensorNode>()->data()->shape();
+      auto op_ptr = gb.BroadcastTo(outputs[i], output_shape);
       litegraph->SetOutput(i, op_ptr);
     } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
       if (IsDynamic(out_shape)) {
@@ -843,7 +848,7 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       if (!change_anf_graph) {
         continue;
       }
-      if (!ReorganizeEmptyGraph(lg)) {
+      if (!ResetOutputs(lg)) {
         continue;
       }
       auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(lg, Callback::Instance());
