@@ -34,7 +34,7 @@ mindspore.ops.kl_div
         - **reduction** (str) - 指定输出结果的计算方式，可选值为 ``'mean'`` 、 ``'batchmean'`` 、 ``'none'`` 或 ``'sum'`` 。默认值： ``'mean'`` 。
 
     返回：
-        Tensor或标量。如果 `reduction` 为 'none' ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
+        Tensor或标量。如果 `reduction` 为 ``'none'`` ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
 
     异常：
         - **TypeError** - `reduction` 不是str。

@@ -39,4 +39,4 @@ mindspore.ops.multilabel_margin_loss
         - **TypeError** - 当 `target` 数据类型不是int32时。
         - **ValueError** - 当 `input` 的数据维度不是以下其中之一时：1、2。
         - **ValueError** - 当 `input` 和 `target` 的shape不相同时。
-        - **ValueError** - 当 `reduction` 的值不是以下其中之一时：'none'、 'mean'、 'sum'。
+        - **ValueError** - 当 `reduction` 的值不是以下其中之一时： ``'none'`` 、  ``'mean'`` 、 ``'sum'`` 。

@@ -2606,7 +2606,7 @@ class MultilabelMarginLossGrad(Primitive):
         TypeError: If dtype of `y_grad` is not the same as `x`.
         ValueError: If length of shape of `x` is neither 1 nor 2.
         ValueError: If shape of `x` is not the same as `target`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If shape of `y_grad` is not the same as forward output `y`.
 
     Supported Platforms:

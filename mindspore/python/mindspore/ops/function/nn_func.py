@@ -1209,7 +1209,7 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Scalar, if `reduction` is 'none', it's a tensor with the same shape and type as input `logits`.
+        Tensor or Scalar, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `logits`.
         Otherwise, the output is a scalar.
 
     Raises:
@@ -1217,7 +1217,7 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
         TypeError: If data type of input `logits`, `label`, `weight`, `pos_weight` is neither float16 nor float32.
         TypeError: If data type of input `reduction` is not string.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
-        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1823,7 +1823,7 @@ def kl_div(logits, labels, reduction='mean'):
             Its value must be one of ``'none'`` , ``'mean'`` , ``'batchmean'`` or ``'sum'`` . Default: ``'mean'`` .
 
     Returns:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
+        Tensor or Scalar, if `reduction` is ``'none'``, then output is a tensor and has the same shape as `logits`.
         Otherwise, it is a scalar.
 
     Raises:
@@ -3676,7 +3676,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
       where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, N is the batch size,
       :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
-      If reduction is not 'none' (default 'mean'), then
+      If `reduction` is not ``None`` (default ``'mean'`` ), then
 
       .. math::
 
@@ -3698,7 +3698,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
       where :math:`x` is the inputs, :math:`y` is the target, :math:`w` is the weight, N is the batch size,
       :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of classes.
 
-      If reduction is not 'none' (default 'mean'), then
+      If `reduction` is not ``None`` (default ``'mean'`` ), then
 
       .. math::
 
@@ -3801,7 +3801,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
     N is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of
     classes.
 
-    If reduction is not 'none' (default 'mean'), then
+    If `reduction` is not ``None`` (default 'mean'), then
 
     .. math::
 
@@ -3921,7 +3921,7 @@ def l1_loss(input, target, reduction='mean'):
     r"""
     Calculate the mean absolute error between the `input` value and the `target` value.
 
-    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, `reduction` is set to "none" ,
+    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, `reduction` is set to ``"none"``,
     then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
 
     The formula is as follows:
@@ -3952,13 +3952,13 @@ def l1_loss(input, target, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `input`.
+        Tensor or Scalar, if `reduction` is ``"none"``, return a Tensor with same shape and dtype as `input`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If `target` is not a Tensor.
-        ValueError: If `reduction` is not one of "none", "mean" or "sum".
+        ValueError: If `reduction` is not one of ``"none"``, ``"mean"`` or ``"sum"``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4022,12 +4022,12 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `input`.
+        Tensor, if `reduction` is ``'none'``, then output is a tensor with the same shape as `input`.
         Otherwise, the shape of output tensor is :math:`(1,)`.
 
     Raises:
         TypeError: If `beta` is not a float.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         TypeError: If dtype of `input` or `target` is not one of float16, float32, float64.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `input` is not the same as `target`.
@@ -4453,12 +4453,12 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Scalar, if `reduction` is "none", its shape is the same as `target`.
+        Tensor or Scalar, if `reduction` is ``"none"``, its shape is the same as `target`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `margin` is not a float.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If `margin` is not in range [-1, 1].
 
     Supported Platforms:
@@ -4935,7 +4935,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         TypeError: If `targets` is not a Tensor.
         TypeError: If `margin` is not a float or int.
         ValueError: If `targets` does not have the same shape as `inputs` or they could not broadcast to each other.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5533,8 +5533,9 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
     Calculates the error between the predicted value and the target value,
     which has the best of both the loss of l1 and the loss of mse.
 
-    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the reduction parameter is set to "none"
-    then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction. The formula is as follows:
+    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the `reduction` parameter
+    is set to ``"none"`` then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
+    The formula is as follows:
 
     .. math::
         \ell(x, y) = L = \{l_1,\dots,l_N\}^\top
@@ -5574,14 +5575,14 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
             The value must be greater than zero. Default: ``1.0`` .
 
     Returns:
-        Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `input`.
+        Tensor or Scalar, if `reduction` is ``"none"``, return a Tensor with same shape and dtype as `input`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `input` or `target` is not a Tensor.
         TypeError: If dtype of `delta` is neither float nor int.
         ValueError: If `delta` is less than or equal to 0.
-        ValueError: If `reduction` is not one of "none", "mean", "sum".
+        ValueError: If `reduction` is not one of ``"none"``, ``"mean"``, ``"sum"``.
         ValueError: If `input` and `target` have different shapes and cannot be broadcasted to each other.
 
     Supported Platforms:
@@ -5848,7 +5849,7 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     Raises:
         TypeError: If `logits`, `labels` or `weight` is not a Tensor.
         TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.
-        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
         ValueError: If shape of `labels` is not the same as `logits` or `weight` (if given).
 
     Supported Platforms:
@@ -6264,7 +6265,7 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor. If `reduction` is 'none', returns a Tensor with the same shape as `target`.
+        Tensor. If `reduction` is ``'none'``, returns a Tensor with the same shape as `target`.
         Otherwise, it is a scalar.
 
     Raises:
@@ -6336,8 +6337,9 @@ def multilabel_margin_loss(input, target, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        - **outputs** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
-          is :math:`(N)`. Otherwise, a scalar value will be returned.
+        - **outputs** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss.
+          If `reduction` is ``"none"``, its shape is :math:`(N)`.
+          Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `input` or `target` is not a Tensor.
@@ -6345,7 +6347,7 @@ def multilabel_margin_loss(input, target, reduction='mean'):
         TypeError: If dtype of `target` is not int32.
         ValueError: If length of shape of `input` is neither 1 nor 2.
         ValueError: If shape of `input` is not the same as `target`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -6399,7 +6401,7 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor, the data type is the same as input, if the reduction is 'none',
+        Tensor, the data type is the same as input, if the `reduction` is ``'none'``,
         its shape is :math:`(N)` , otherwise it is zero.
 
     Raises:
@@ -6905,7 +6907,7 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
+        Tensor. If `reduction` is ``"none"``, its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `anchor` or `positive` or 'negative' is not a Tensor.
@@ -6918,7 +6920,7 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
             same time.
         ValueError: If the dimension of input `anchor` or `positive` or `negative` is bigger than or equal to 8.
         ValueError: If shape of `anchor`, `positive` and `negative` cannot broadcast.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``GPU``

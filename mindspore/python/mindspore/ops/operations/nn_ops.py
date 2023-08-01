@@ -1491,7 +1491,7 @@ class Conv2D(Primitive):
         - **x** (Tensor) - Input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or
           :math:`(N, H_{in}, W_{in}, C_{in}, )` depending on `data_format` .
         - **weight** (Tensor) - The convolutional kernel value, it should has shape
-          :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})` 。
+          :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})` .
 
     Outputs:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`
@@ -1503,9 +1503,9 @@ class Conv2D(Primitive):
         TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
         TypeError: If `out_channel` or `group` is not an int.
         ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
-        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
+        ValueError: If `pad_mode` is not one of ``'same'``, ``'valid'`` or ``'pad'``.
         ValueError: If `pad` is a tuple whose length is not equal to 4.
-        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
+        ValueError: If `pad_mode` it not equal to ``'pad'`` and `pad` is not equal to ``(0, 0, 0, 0)``.
         ValueError: If `data_format` is neither ``'NHWC'`` nor ``'NCHW'`` .
 
     Supported Platforms:
@@ -2909,8 +2909,9 @@ class NLLLoss(Primitive):
     Outputs:
         Tuple of 2 tensors composed with `loss` and `total_weight`.
 
-        - **loss** (Tensor) - When `reduction` is 'none' and `logits` is a 2D tensor, the `loss` shape is :math:`(N,)`.
-          Otherwise, the `loss` is a scalar. The data type is the same with `input's`.
+        - **loss** (Tensor) - When `reduction` is ``'none'`` and `logits` is a 2D tensor,
+          the `loss` shape is :math:`(N,)`. Otherwise, the `loss` is a scalar.
+          The data type is the same with `input's`.
         - **total_weight** (Tensor) - The `total_weight` is a scalar. The data type is the same with `weight's`.
 
     Raises:
@@ -3275,7 +3276,7 @@ class MultiMarginLoss(Primitive):
           support float16, float32 or float64.
 
     Outputs:
-        Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
+        Tensor, When `reduction` is ``'none'``, the shape is :math:`(N,)`.
         Otherwise, it is a scalar. Has the same data type with `inputs`.
 
     Supported Platforms:
@@ -3330,7 +3331,7 @@ class SoftMarginLoss(Primitive):
         - **labels** (Tensor) - Ground truth data, with the same type and shape as `logits`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
+        Tensor or Scalar, if `reduction` is ``"none"``, its shape is the same as `logits`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -4552,7 +4553,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
           Data type must be float16 or float32.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', it's a tensor with the same shape and type as input `logits`.
+        Tensor or Scalar, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `logits`.
         Otherwise, the output is a scalar.
 
     Raises:
@@ -4560,7 +4561,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         TypeError: If data type of any input is neither float16 nor float32.
         TypeError: If data type of `reduction` is not string.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
-        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5751,7 +5752,7 @@ class KLDivLoss(Primitive):
         - **labels** (Tensor) - The label Tensor which has the same shape and data type as `logits`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
+        Tensor or Scalar, if `reduction` is ``'none'``, then output is a tensor and has the same shape as `logits`.
         Otherwise it is a scalar.
 
     Raises:
@@ -5846,7 +5847,7 @@ class BinaryCrossEntropy(Primitive):
 
     Raises:
         TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.
-        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
         ValueError: If shape of `labels` is not the same as `logits` or `weight` (if given).
         TypeError: If `logits`, `labels` or `weight` is not a Tensor.
 
@@ -9552,7 +9553,7 @@ class MultilabelMarginLoss(Primitive):
           label targets padded by -1.
 
     Outputs:
-        - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
+        - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is ``"none"``, its shape
           is :math:`(N)`. Otherwise, a scalar value will be returned.
         - **is_target** (Tensor) - Output tensor for backward input, with the same shape as `target`,
           data type must be int32.
@@ -10332,7 +10333,7 @@ class TripletMarginLoss(Primitive):
         - **margin** (Tensor) - Make a margin between the positive pair and the negative pair.
 
     Outputs:
-        Union[Tensor, Scalar], if `reduction` is "none", its shape is :math:`(N)`.
+        Union[Tensor, Scalar], if `reduction` is ``"none"``, its shape is :math:`(N)`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -10349,7 +10350,7 @@ class TripletMarginLoss(Primitive):
           is bigger than or equal to 8.
         ValueError: If length of shape of `margin` is not 0.
         ValueError: If shape of `x`, `positive` and `negative` cannot broadcast.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``GPU``

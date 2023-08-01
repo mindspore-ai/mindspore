@@ -40,6 +40,6 @@ mindspore.ops.BinaryCrossEntropy
 
     异常：
         - **TypeError** - `logits` 、 `labels` 及 `weight` 的数据类型既不是float16，也不是float32。
-        - **ValueError** - `reduction` 不为'none'、'mean'或'sum'。
+        - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。
         - **ValueError** - `labels` 的shape与 `logits` 或  `weight` 不同。
         - **TypeError** - `logits` 、 `labels` 或 `weight` 不是Tensor。

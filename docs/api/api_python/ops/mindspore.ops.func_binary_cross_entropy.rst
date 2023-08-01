@@ -34,10 +34,10 @@ mindspore.ops.binary_cross_entropy
           - ``"sum"``：计算输出元素的总和。
 
     返回：
-        Tensor或Scalar，如果 `reduction` 为 'none' ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
+        Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
 
     异常：
         - **TypeError** - 输入 `logits` ， `labels` ， `weight` 不为Tensor。
         - **TypeError** - 输入 `logits` ， `labels` ， `weight` 的数据类型既不是float16也不是float32。
-        - **ValueError** - `reduction` 不为 'none' 、 'mean' 或 'sum' 。
+        - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'``  或 ``'sum'`` 。
         - **ValueError** - `labels` 的shape大小与 `logits` 或者 `weight` 不相同。

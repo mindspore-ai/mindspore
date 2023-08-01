@@ -17,7 +17,7 @@ mindspore.nn.optim_ex.Optimizer
         - **TypeError** - `parameters` 的元素不是Parameter或字典。
         - **TypeError** - `weight_decay` 不是float或int。
         - **ValueError** - `weight_decay` 小于0。
-        - **ValueError** - `learning_rate` 是一个Tensor，但是其shape大于1.
+        - **ValueError** - `learning_rate` 是一个Tensor，但是其shape大于1。
 
     .. py:method:: add_param_group(group_id, param_group)
 

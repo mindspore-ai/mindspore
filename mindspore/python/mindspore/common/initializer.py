@@ -582,7 +582,7 @@ class Orthogonal(Initializer):
     If the dimension is greater than 2, the trailing dimensions will be flattened.
 
     Args:
-         gain (float): An optional scaling factor. Default: ``1.`` .
+         gain (float): An optional scaling factor. Default: ``1.0`` .
 
     Raises:
         ValueError: If the dimension of input tensor is less than 2.

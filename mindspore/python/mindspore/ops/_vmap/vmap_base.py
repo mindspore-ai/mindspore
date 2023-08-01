@@ -250,7 +250,7 @@ def vmap_monad_rule(prim, axis_size):
 def _bdim_at_any(x, src, dst, axis_size):
     """
     Moves source axes of an array to the dst axis, and other axes remain in their original order. If the source axes
-    is 'None', broadcasts the array at dst axis with axis_size.
+    is ``None``, broadcasts the array at dst axis with axis_size.
 
     Args:
         x (Tensor or Scalar): The input tensor or scalar. The data type should be one of the following types: float16,
@@ -272,7 +272,7 @@ def _bdim_at_any(x, src, dst, axis_size):
 def _bdim_at_front(x, src, axis_size):
     """
     Moves source axes of an array to the foremost, and other axes remain in their original order. If the source axes
-    is 'None', broadcasts the array at foremost axis with axis_size.
+    is ``None``, broadcasts the array at foremost axis with axis_size.
 
     Args:
         x (Tensor or Scalar): The input tensor or scalar. The data type should be one of the following types: float16,
@@ -289,7 +289,7 @@ def _bdim_at_front(x, src, axis_size):
 def _bdim_at_back(x, src, axis_size):
     """
     Moves source axes of an array to the last, and other axes remain in their original order. If the source axes
-    is 'None', broadcasts the array at foremost axis with axis_size.
+    is ``None``, broadcasts the array at foremost axis with axis_size.
 
     Args:
         x (Tensor or Scalar): The input tensor or scalar. The data type should be one of the following types: float16,
