@@ -1337,7 +1337,7 @@ class Cell(Cell_):
         for cell_name, cell in cells:
             params = cell._params.items()
             for par_name, par in params:
-                if par.inited_param is not None:
+                if par is not None and par.inited_param is not None:
                     par = par.inited_param
                 if par is not None and id(par) not in params_set:
                     params_set.add(id(par))
