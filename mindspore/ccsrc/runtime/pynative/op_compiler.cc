@@ -126,6 +126,7 @@ void CacheForGraphValueNodes(const OpCompilerInfoPtr &op_compiler_info,
   MS_EXCEPTION_IF_NULL(graph);
   const auto &value_nodes = graph->graph_value_nodes();
   for (auto &value_node : value_nodes) {
+    MS_EXCEPTION_IF_NULL(value_node);
     if (!AnfAlgo::OutputAddrExist(value_node, 0, false)) {
       continue;
     }
@@ -212,6 +213,8 @@ OpCompiler &OpCompiler::GetInstance() {
 KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                                const device::DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
   KernelGraphPtr graph;
   if (op_run_info->op_prim->name() == "PackFunc") {
     auto recent_graph = op_run_info->op_prim->GetAttr("recent_graph");
@@ -351,6 +354,7 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
   }
   // Kernel build
   auto kernel_executor = device_context->GetKernelExecutor(is_dynamic);
+  MS_EXCEPTION_IF_NULL(kernel_executor);
   kernel_executor->CreateKernel(node_to_build);
 
   for (const auto &graph : graphs) {
@@ -365,6 +369,7 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
 std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim,
                                          const std::string &graph_info) {
   std::string ascend_special_info = graph_info;
+  MS_EXCEPTION_IF_NULL(op_prim);
   auto op_name = op_prim->name();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -399,6 +404,7 @@ std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
   auto op_infer_opt = abstract::GetPrimitiveInferImpl(op_prim);
   if (op_infer_opt.has_value()) {
     auto op_infer = op_infer_opt.value().Get();
+    MS_EXCEPTION_IF_NULL(op_infer);
     if (op_infer != nullptr) {
       depend_list = op_infer->GetValueDependArgIndices();
     }
@@ -435,6 +441,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
       if (element.first == kAttrInputNames || element.first == kAttrOutputNames) {
         return;
       }
+      MS_EXCEPTION_IF_NULL(element.second);
       graph_info.append(element.second->ToString());
     });
   }

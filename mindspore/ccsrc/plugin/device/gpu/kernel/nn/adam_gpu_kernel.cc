@@ -20,6 +20,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kAdamInputsNum = 10;
+constexpr size_t kAdamOutputsNum = 3;
 constexpr size_t kIndexVar = 0;
 constexpr size_t kIndexM = 1;
 constexpr size_t kIndexV = 2;
@@ -68,6 +70,7 @@ int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     return ret;
   }
   input_elements_ = 0;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
 
   std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();
   std::vector<int64_t> beta1_power_shape = inputs[kIndexBeta1Power]->GetShapeVector();

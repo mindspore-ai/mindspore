@@ -22,6 +22,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kSparseApplyCenteredRMSPropInputsNum = 10;
+constexpr size_t kSparseApplyCenteredRMSPropOutputsNum = 1;
 constexpr size_t kVarIndex = 0;
 constexpr size_t kMgIndex = 1;
 constexpr size_t kMsIndex = 2;
@@ -169,6 +170,8 @@ template <typename T, typename S>
 bool SparseApplyCenteredRMSPropGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                           const std::vector<AddressPtr> &workspace,
                                                           const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyCenteredRMSPropInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyCenteredRMSPropOutputsNum, kernel_name_);
   auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
   auto mg = reinterpret_cast<T *>(inputs[kMgIndex]->addr);
   auto ms = reinterpret_cast<T *>(inputs[kMsIndex]->addr);

@@ -44,6 +44,9 @@ constexpr size_t kStepIndex = 7;
 bool ApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
+  if (inputs.empty()) {
+    MS_EXCEPTION(ValueError) << "ApplyAdagradDA input is empty";
+  }
   dtype_ = inputs[0]->GetDtype();
   batch_rank_ = base_operator->get_batch_rank();
   return true;
@@ -56,6 +59,7 @@ int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (ret != 0) {
     return ret;
   }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kLRIndex]->GetShapeVector();
 
@@ -119,6 +123,7 @@ T max(T num1, T num2) {
 
 template <typename T>
 void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
   auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
   auto *gradient_accumulator = reinterpret_cast<T *>(inputs[kAccIndex]->addr);
   auto *gradient_squared_accumulator = reinterpret_cast<T *>(inputs[kSquarAccIndex]->addr);

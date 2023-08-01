@@ -42,6 +42,7 @@ void OpExecutor::ClearResources() {
   std::unique_lock<std::mutex> lock(build_mutex_);
   // Set the build task failed, and no need to run op_run_tasks.
   for (auto &build_task : op_build_tasks_) {
+    MS_EXCEPTION_IF_NULL(build_task);
     build_task->SetBuildReady(false);
   }
   op_build_tasks_.clear();

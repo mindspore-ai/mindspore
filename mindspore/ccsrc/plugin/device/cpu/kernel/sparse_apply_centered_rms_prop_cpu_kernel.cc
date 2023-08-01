@@ -99,6 +99,7 @@ int SparseApplyCenteredRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_o
     Grad_no,
     Indices_no
   };
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyCenteredRMSPropInputsNum, kernel_name_);
   auto var_shape = inputs[Var_no]->GetShapeVector();
   auto mg_shape = inputs[Mg_no]->GetShapeVector();
   auto ms_shape = inputs[Ms_no]->GetShapeVector();

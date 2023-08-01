@@ -45,6 +45,9 @@ namespace ops {
 namespace {
 abstract::TupleShapePtr ApplyAdagradV2InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
+  const int64_t input_num = 4;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                           primitive->name());
   auto var_shape = input_args[kInputIndex0]->BuildShape();
   auto accum_shape = input_args[kInputIndex1]->BuildShape();
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
@@ -65,6 +68,7 @@ abstract::TupleShapePtr ApplyAdagradV2InferShape(const PrimitivePtr &primitive,
                                              primitive->name());
   }
   // var, accum and grad must have the same shape
+  MS_EXCEPTION_IF_NULL(grad_shape_ptr);
   if (grad_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape, accum_shape});
   }
@@ -82,6 +86,9 @@ abstract::TupleShapePtr ApplyAdagradV2InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape, accum_shape});
 }
 TuplePtr ApplyAdagradV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  const int64_t input_num = 4;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                           prim->name());
   auto var_type = input_args[kInputIndex0]->BuildType();
   auto accum_type = input_args[kInputIndex1]->BuildType();
   auto lr_type = input_args[kInputIndex2]->BuildType();
