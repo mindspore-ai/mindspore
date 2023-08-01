@@ -67,7 +67,7 @@ std::shared_ptr<ConverterPara> ParseGraphKernelConfigs(const ConfigInfos &maps) 
   for (const auto &item : gk_map) {
     oss << "--" << item.first << "=" << item.second << " ";
   }
-  param->device = "Ascend";
+  param->device = GetSocVersion();
   param->graphKernelParam.graph_kernel_flags = oss.str();
   return param;
 }

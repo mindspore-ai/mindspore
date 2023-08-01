@@ -224,7 +224,10 @@ lite::STATUS GraphKernelOptimize(const FuncGraphPtr &func_graph, const std::shar
     if (param->graphKernelParam.graph_kernel_flags.empty()) {
       return lite::RET_OK;
     }
-
+    if (param->device.find("Ascend910B") != std::string::npos) {
+      MS_LOG(WARNING) << "Graphkernel optimization does not support Ascend910B, skip graphkernel optimization.";
+      return lite::RET_OK;
+    }
     std::map<std::string, std::string> jit_config;
     jit_config["graph_kernel_flags"] =
       graphkernel::UpdateFlags(param->device, param->graphKernelParam.graph_kernel_flags);

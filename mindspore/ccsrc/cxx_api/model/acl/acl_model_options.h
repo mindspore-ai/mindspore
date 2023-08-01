@@ -42,6 +42,7 @@ class MS_API AclModelOptions {
   std::string GetOmFilePath() const { return om_file_path_; }
   void SetAoeMode(const std::string &aoe_mode) noexcept { aoe_mode_ = aoe_mode; }
   std::string GetAoeMode() const { return aoe_mode_; }
+  std::string GetSocVersion() const { return soc_version_; }
   void SetDumpModelName(const std::string &name) noexcept { dump_model_name_ = name; }
   std::string GetDumpModelName() const { return dump_model_name_; }
   std::string GetInputShape() const { return input_shape_; }
