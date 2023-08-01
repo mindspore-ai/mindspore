@@ -38,20 +38,41 @@ struct BmmParams {
   TypePtr out_type;
 };
 
-class TestBmm : public TestOps, public testing::WithParamInterface<BmmParams> {};
+struct BmmShapes {
+  bool transpose_a;
+  bool transpose_b;
+  ShapeVector x_shape;
+  ShapeVector y_shape;
+  bool is_success;
+  ShapeVector out_shape;
+};
+
+struct BmmTypes {
+  TypePtr x_type;
+  TypePtr y_type;
+  bool is_success;
+  TypePtr out_type;
+  TypePtr cast_type;
+};
+
+class TestBmm : public TestOps, public testing::WithParamInterface<std::tuple<BmmShapes, BmmTypes>> {};
 
 TEST_P(TestBmm, bmm) {
-  const auto &param = GetParam();
+  const auto &shape_param = std::get<0>(GetParam());
+  const auto &type_param = std::get<1>(GetParam());
   auto prim = std::make_shared<Primitive>(kNameBatchMatMul);
   ASSERT_NE(prim, nullptr);
-  prim->set_attr("transpose_a", MakeValue<bool>(param.transpose_a));
-  prim->set_attr("transpose_b", MakeValue<bool>(param.transpose_b));
-  auto x = abstract::MakeAbstract(std::make_shared<abstract::Shape>(param.x_shape), param.x_type);
-  auto y = abstract::MakeAbstract(std::make_shared<abstract::Shape>(param.y_shape), param.y_type);
+  prim->set_attr("transpose_a", MakeValue<bool>(shape_param.transpose_a));
+  prim->set_attr("transpose_b", MakeValue<bool>(shape_param.transpose_b));
+  if (type_param.cast_type != nullptr) {
+    prim->set_attr("cast_type", type_param.cast_type);
+  }
+  auto x = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape_param.x_shape), type_param.x_type);
+  auto y = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape_param.y_shape), type_param.y_type);
   ASSERT_NE(x, nullptr);
   ASSERT_NE(y, nullptr);
-  if (param.is_success) {
-    auto expect = abstract::MakeAbstract(std::make_shared<abstract::Shape>(param.out_shape), param.out_type);
+  if (shape_param.is_success && type_param.is_success) {
+    auto expect = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape_param.out_shape), type_param.out_type);
     auto out_abstract = BatchMatmulInfer(nullptr, prim, {x, y});
     ASSERT_NE(out_abstract, nullptr);
     ASSERT_TRUE(*out_abstract == *expect);
@@ -62,31 +83,37 @@ TEST_P(TestBmm, bmm) {
 
 INSTANTIATE_TEST_CASE_P(
   TestBmm, TestBmm,
-  testing::Values(BmmParams{false, false, {1, 3}, kFloat32, {3, 1}, kFloat32, true, {1, 1}, kFloat32},
-                  BmmParams{false, false, {3, 1, 3}, kFloat32, {3, 3, 1}, kFloat32, true, {3, 1, 1}, kFloat32},
-                  BmmParams{true, false, {3, 3, 1}, kFloat32, {3, 3, 1}, kFloat32, true, {3, 1, 1}, kFloat32},
-                  BmmParams{false, true, {3, 1, 3}, kFloat32, {3, 1, 3}, kFloat32, true, {3, 1, 1}, kFloat32},
-                  BmmParams{true, true, {3, 1, 3}, kFloat32, {3, 3, 1}, kFloat32, true, {3, 3, 3}, kFloat32},
-                  BmmParams{false, false, {3, 1, 2, 4}, kFloat32, {3, 4, 2}, kFloat32, true, {3, 3, 2, 2}, kFloat32},
-                  BmmParams{false, false, {1, 3, 2, 4}, kFloat32, {3, 1, 4, 2}, kFloat32, true, {3, 3, 2, 2}, kFloat32},
-                  BmmParams{false, false, {3, 2, 4}, kFloat32, {4, 2}, kFloat32, true, {3, 2, 2}, kFloat32},
-                  BmmParams{false, false, {2, 4}, kFloat32, {2, 2, 4, 2}, kFloat32, true, {2, 2, 2, 2}, kFloat32},
-                  BmmParams{false,
-                            false,
-                            {6, 1, 8, 6, 1, 4},
-                            kFloat32,
-                            {6, 4, 1, 1, 8, 1, 4, 6},
-                            kFloat32,
-                            true,
-                            {6, 4, 6, 1, 8, 6, 1, 6},
-                            kFloat32},
-                  BmmParams{false, false, {1, 3}, kFloat32, {2, 1}, kFloat32, false},
-                  BmmParams{false, false, {3, 1, 3}, kFloat32, {3, 2, 1}, kFloat32, false},
-                  BmmParams{true, false, {3, 2, 1}, kFloat32, {3, 3, 1}, kFloat32, false},
-                  BmmParams{false, true, {3, 1, 3}, kFloat32, {3, 1, 2}, kFloat32, false},
-                  BmmParams{true, true, {3, 1, 3}, kFloat32, {3, 3, 2}, kFloat32, false},
-                  BmmParams{false, false, {1}, kFloat32, {1}, kFloat32, false},
-                  BmmParams{false, false, {4, 1, 3}, kFloat32, {4, 3, 1}, kFloat16, false}));
+  testing::Combine(testing::ValuesIn({
+                     BmmShapes{false, false, {1, 3}, {3, 1}, true, {1, 1}},
+                     BmmShapes{false, false, {3, 1, 3}, {3, 3, 1}, true, {3, 1, 1}},
+                     BmmShapes{true, false, {3, 3, 1}, {3, 3, 1}, true, {3, 1, 1}},
+                     BmmShapes{false, true, {3, 1, 3}, {3, 1, 3}, true, {3, 1, 1}},
+                     BmmShapes{true, true, {3, 1, 3}, {3, 3, 1}, true, {3, 3, 3}},
+                     BmmShapes{false, false, {3, 1, 2, 4}, {3, 4, 2}, true, {3, 3, 2, 2}},
+                     BmmShapes{false, false, {1, 3, 2, 4}, {3, 1, 4, 2}, true, {3, 3, 2, 2}},
+                     BmmShapes{false, false, {3, 2, 4}, {4, 2}, true, {3, 2, 2}},
+                     BmmShapes{false, false, {2, 4}, {2, 2, 4, 2}, true, {2, 2, 2, 2}},
+                     BmmShapes{
+                       false, false, {6, 1, 8, 6, 1, 4}, {6, 4, 1, 1, 8, 1, 4, 6}, true, {6, 4, 6, 1, 8, 6, 1, 6}},
+                     BmmShapes{false, false, {1, 3}, {2, 1}, false},        // 3 != 2
+                     BmmShapes{false, false, {3, 1, 3}, {3, 2, 1}, false},  // 3 != 2
+                     BmmShapes{true, false, {3, 2, 1}, {3, 3, 1}, false},   // 3 != 2
+                     BmmShapes{false, true, {3, 1, 3}, {3, 1, 2}, false},
+                     BmmShapes{true, true, {3, 1, 3}, {3, 3, 2}, false},  // 1 != 2
+                     BmmShapes{false, false, {1}, {1}, false},            // rank must be >= 2
+                   }),
+                   testing::ValuesIn({
+                     BmmTypes{kFloat32, kFloat32, true, kFloat32},
+                     BmmTypes{kFloat16, kFloat16, true, kFloat16},
+                     BmmTypes{kInt32, kInt32, true, kInt32},
+                     BmmTypes{kInt8, kInt8, true, kInt32},                    // int8 * int8 = int32
+                     BmmTypes{kInt8, kInt8, true, kInt16, kInt16},            // cast_type = int16
+                     BmmTypes{kFloat16, kFloat16, true, kFloat32, kFloat32},  // cast_type = fp32
+                     BmmTypes{kFloat32, kFloat32, true, kFloat16, kFloat16},  // cast_type = fp16
+                     BmmTypes{kFloat16, kFloat32, false},
+                     BmmTypes{kInt32, kFloat32, false},
+                     BmmTypes{kInt32, kInt8, false},
+                   })));
 
 /// Feature: BatchMatmul infer
 /// Description: primitive has no attr "transpose_a"
