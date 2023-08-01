@@ -311,7 +311,7 @@ bool EmbeddingCacheTableManager::WaitForWarmUpHostCacheComplete() {
   return status ? complete_future->get() : status;
 }
 
-tensor::TensorPtr generate_key_tensor_ptr(tensor::TensorPtr tensor_ptr) {
+tensor::TensorPtr generate_key_tensor_ptr(const tensor::TensorPtr &tensor_ptr) {
   auto &vec = tensor_ptr->shape();
   auto cel_num = static_cast<int>(vec[0]);
   std::vector<int32_t> key_vec(cel_num);
