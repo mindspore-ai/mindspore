@@ -651,7 +651,7 @@ def _check_axis_type(axis, type_int=True, type_tuple=True, type_list=True, ops_n
     raise TypeError(f"For {ops_name}, the axis should be {type_str}, but got {type(axis)}.")
 
 
-def one_hot(indices, depth, on_value, off_value, axis=-1):
+def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
     r"""
     Computes a one-hot tensor.
 
@@ -665,12 +665,12 @@ def one_hot(indices, depth, on_value, off_value, axis=-1):
         indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
             Data type must be uint8, int32 or int64.
         depth(int): A scalar defining the depth of the one-hot dimension.
-        on_value(Union[Tensor, int, float]): A value to fill in output when `indices[j] = i`.
+        on_value(Union[Tensor, int, float], optional): A value to fill in output when `indices[j] = i`.
             Support uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64,
-            bool, complex64, complex128.
-        off_value(Union[Tensor, int, float]): A value to fill in output when `indices[j] != i`.
-            Has the same data type as `on_value`.
-        axis(int): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
+            bool, complex64, complex128. Default: ``1`` .
+        off_value(Union[Tensor, int, float], optional): A value to fill in output when `indices[j] != i`.
+            Has the same data type as `on_value`. Default: ``0`` .
+        axis(int, optional): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
             the output shape will be :math:`(N, C, depth)`, If `axis` is 0,
             the output shape will be :math:`(depth, N, C)`.
             Default: ``-1`` .
