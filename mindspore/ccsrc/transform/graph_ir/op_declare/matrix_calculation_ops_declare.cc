@@ -167,8 +167,8 @@ REG_ADPT_DESC(DiagPartD, kNameDiagPartD, ADPT_DESC(DiagPartD))
 
 // BatchMatMul
 INPUT_MAP(BatchMatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
-ATTR_MAP(BatchMatMul) = {{"transpose_x1", ATTR_DESC(adj_x1, AnyTraits<bool>())},
-                         {"transpose_x2", ATTR_DESC(adj_x2, AnyTraits<bool>())}};
+ATTR_MAP(BatchMatMul) = {{"transpose_a", ATTR_DESC(adj_x1, AnyTraits<bool>())},
+                         {"transpose_b", ATTR_DESC(adj_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(BatchMatMul) = {{0, OUTPUT_DESC(y)}};
 
 // BatchMatMul->BatchMatMulV2
