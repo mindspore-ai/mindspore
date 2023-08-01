@@ -13,7 +13,9 @@ file(GLOB_RECURSE ASCEND_SRC ${CMAKE_CURRENT_SOURCE_DIR}
         "model/*.cc"
         "profiling/*.cc"
         )
-set(ASCEND_SRC ${ASCEND_SRC} ${TOP_DIR}/mindspore/lite/src/litert/kernel/ascend/src/acl_mem_manager.cc)
+set(ASCEND_SRC ${ASCEND_SRC} ${TOP_DIR}/mindspore/lite/src/litert/kernel/ascend/src/acl_mem_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/model/acl_allocator.cc
+        )
 
 add_library(ascend_kernel_plugin SHARED ${ASCEND_SRC})
 add_dependencies(ascend_kernel_plugin fbs_inner_src)

@@ -17,6 +17,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
 
     set(MSLITE_KERNEL_PLUGIN
         ${MSLITE_KERNEL_PLUGIN}
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_allocator_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_kernel_plugin.cc)
 
     set(MSLITE_EXTEND_NNACL_KERNEL_LIB_SRC
