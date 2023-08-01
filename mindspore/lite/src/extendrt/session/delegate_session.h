@@ -39,19 +39,20 @@ struct DelegateGraphInfo {
 class GraphSinkSession : public InferSession {
  public:
   GraphSinkSession() = default;
-  explicit GraphSinkSession(std::shared_ptr<LiteGraphExecutor> graph_executor) : graph_executor_(graph_executor) {}
+  explicit GraphSinkSession(std::shared_ptr<device::GraphExecutor> graph_executor) {
+    graph_executor_ = std::dynamic_pointer_cast<mindspore::LiteGraphExecutor>(graph_executor);
+  }
   ~GraphSinkSession() override;
 
   Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;
   Status CompileGraph(const void *model_data, size_t data_size, uint32_t *graph_id) override;
-  Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
-                  std::vector<lite::Tensor *> *outputs) override;
-  Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
                   const MSKernelCallBack &before, const MSKernelCallBack &after) override;
-
-  Status Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                  std::vector<tensor::Tensor> *outputs) override;
+  Status Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                 const std::vector<std::vector<int64_t>> &dims) override;
 
   std::vector<MutableTensorImplPtr> GetOutputs(uint32_t graph_id) override;
@@ -63,7 +64,11 @@ class GraphSinkSession : public InferSession {
   void SetConfigInfo(ConfigInfos config_infos) { config_infos_ = config_infos; }
 
  private:
-  Status InitGraphInfo(uint32_t graph_id, DelegateGraphInfo *graph_info_ptr);
+  Status InitGraphInfo(DelegateGraphInfo *graph_info_ptr, uint32_t graph_id);
+  Status InitGraphInputsOutputs(const FuncGraphPtr &graph, DelegateGraphInfo *graph_info);
+  Status UpdateGraphInputsOutputs(uint32_t graph_id, DelegateGraphInfo *graph_info);
+  void UpdateDataFlowGraphInputsOutputs(DelegateGraphInfo *graph_info_ptr, const std::vector<tensor::Tensor> &inputs,
+                                        const std::vector<tensor::Tensor> &outputs);
 
   std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;

@@ -19,54 +19,40 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <tuple>
+
 #include "src/extendrt/infer_session.h"
-#include "mindspore/ccsrc/kernel/framework_utils.h"
+#include "src/litert/lite_session.h"
 
 namespace mindspore {
-/// \brief Single Op Session implementation, used in Ascend Device Context.
-class SingleOpInferSession : public InferSession {
+class LiteInferSession : public InferSession {
  public:
-  SingleOpInferSession() = default;
-  ~SingleOpInferSession() override = default;
+  LiteInferSession() = default;
+  explicit LiteInferSession(const std::shared_ptr<Context> &context) : context_(context) {}
+  virtual ~LiteInferSession() = default;
   Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) override;
-  Status AscendInit(const std::shared_ptr<Context> &context);
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;
-  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
-                  const MSKernelCallBack &before, const MSKernelCallBack &after) override;
   Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                   std::vector<tensor::Tensor> *outputs) override;
-  Status Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                const std::vector<std::vector<int64_t>> &dims) override;
   std::vector<MutableTensorImplPtr> GetOutputs(uint32_t graph_id) override;
   std::vector<MutableTensorImplPtr> GetInputs(uint32_t graph_id) override;
   std::vector<std::string> GetOutputNames(uint32_t graph_id) override;
   std::vector<std::string> GetInputNames(uint32_t graph_id) override;
   MutableTensorImplPtr GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) override;
   MutableTensorImplPtr GetInputByTensorName(uint32_t graph_id, const std::string &name) override;
-  void SetConfigInfo(const ConfigInfos &config_infos) { config_infos_ = config_infos; }
-  void SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr &op);
 
- protected:
-  Status OnNewInputShapes(const std::vector<ShapeVector> &new_shapes);
-  Status BuildCustomAscendKernel(const CNodePtr &node);
-  std::tuple<kernel::KernelModPtr, kernel::KernelArgs> BuildCustomAscendKernelImpl(const CNodePtr &node);
-  Status InitInputOutputInfos(const FuncGraphPtr &graph);
-  void SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs);
-  Status InitInputOutputData(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs);
+ private:
+  std::shared_ptr<lite::LiteSession> CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context);
+  std::vector<MSTensor> GetLiteSessionOutputs();
+  void ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors);
+  std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
+                                     bool verify_size);
+  std::vector<std::string> ConvertToTensorNames(const std::vector<mindspore::lite::Tensor *> &lite_tensors);
+  std::vector<tensor::TensorPtr> ConvertToTensors(const std::vector<mindspore::lite::Tensor *> &lite_tensors);
 
-  std::vector<MutableTensorImplPtr> inputs_;
-  std::vector<std::string> input_names_;
-  std::vector<MutableTensorImplPtr> outputs_;
-  std::vector<std::string> output_names_;
-  uint32_t device_id_ = 0;
-  bool dyn_outshape_ = false;
-
-  kernel::KernelModPtr kernel_mod_ = nullptr;
-  kernel::KernelArgs kernel_args_;
-  ConfigInfos config_infos_;
-  bool is_multi_model_sharing_mem_prepare_ = false;
+ private:
+  std::shared_ptr<lite::LiteSession> lite_session_;
+  std::shared_ptr<Context> context_;
 };
 }  // namespace mindspore
 
