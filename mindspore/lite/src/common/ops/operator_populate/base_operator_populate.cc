@@ -22,7 +22,7 @@
 #include "nnacl/scatter_nd_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/gather_parameter.h"
-#include "nnacl/fp32/gatherNd_fp32.h"
+#include "nnacl/gather_nd_parameter.h"
 #include "nnacl/reshape_parameter.h"
 #include "ops/adam.h"
 #include "ops/assert.h"

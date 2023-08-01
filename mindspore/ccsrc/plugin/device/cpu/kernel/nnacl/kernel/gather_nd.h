@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef NNACL_FP32_GATHERND_FP32_H_
-#define NNACL_FP32_GATHERND_FP32_H_
+#ifndef NNACL_KERNEL_GATHER_ND_H_
+#define NNACL_KERNEL_GATHER_ND_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int GatherNd(const void *input, void *output, const int32_t *in_offset, int area, int count, int data_type_len);
-#ifdef __cplusplus
-}
-#endif
+typedef struct {
+  KernelBase base_;
+  int *in_offset_;
+  int count_;
+  int area_;
+  int thread_stride_;
+  void *in_ptr_;
+  void *out_ptr_;
+} GatherNdStruct;
 
-#endif  // NNACL_FP32_GATHERND_FP32_H_
+KernelBase *CreateGatherNd(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_GATHER_ND_H_

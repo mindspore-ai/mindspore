@@ -34,6 +34,7 @@
 #include "nnacl/kernel/fullconnection.h"
 #include "nnacl/kernel/gather.h"
 #include "nnacl/kernel/gather_d.h"
+#include "nnacl/kernel/gather_nd.h"
 #include "nnacl/kernel/group_norm.h"
 #include "nnacl/kernel/log_softmax.h"
 #include "nnacl/kernel/local_response_norm.h"
@@ -101,6 +102,7 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_FusedBatchNorm][REGIST_DT(kNumberTypeFloat16)] = CreateFusedBatchNorm;
   creators[PrimType_Gather][REGIST_DT(kNumberTypeFloat16)] = CreateGather;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeFloat16)] = CreateGatherD;
+  creators[PrimType_GatherNd][REGIST_DT(kNumberTypeFloat16)] = CreateGatherNd;
   creators[PrimType_Greater][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_GreaterEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_Less][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
@@ -205,6 +207,9 @@ void InitVSKernelA(KernelCreator **creators) {
   creators[PrimType_Gather][REGIST_DT(kNumberTypeBool)] = CreateGather;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeFloat32)] = CreateGatherD;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeInt32)] = CreateGatherD;
+  creators[PrimType_GatherNd][REGIST_DT(kNumberTypeBool)] = CreateGatherNd;
+  creators[PrimType_GatherNd][REGIST_DT(kNumberTypeInt32)] = CreateGatherNd;
+  creators[PrimType_GatherNd][REGIST_DT(kNumberTypeFloat32)] = CreateGatherNd;
   creators[PrimType_Greater][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
   creators[PrimType_Greater][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_GreaterEqual][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;

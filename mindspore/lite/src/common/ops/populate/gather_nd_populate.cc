@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/populate/populate_register.h"
-#include "nnacl/fp32/gatherNd_fp32.h"
+#include "nnacl/gather_nd_parameter.h"
 using mindspore::schema::PrimitiveType_GatherNd;
 
 namespace mindspore {
