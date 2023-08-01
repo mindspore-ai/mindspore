@@ -43,6 +43,8 @@ struct AclTensorInfo {
   aclDataType data_type;
   std::vector<int64_t> dims;
   std::string name;
+  aclTensorDesc *dynamic_acl_tensor_desc = nullptr;
+  aclDataBuffer *dynamic_acl_data_buffer = nullptr;
 };
 
 class ModelProcess {
@@ -95,7 +97,8 @@ class ModelProcess {
   bool ResizeDynamicInputShape(const std::vector<ShapeVector> &new_shapes);
   bool ResizeDynamicInputShapeRange(const std::vector<ShapeVector> &new_shapes);
   bool ResizeDynamicBatchAndImageSize(const std::vector<ShapeVector> &new_shapes);
-  void FreeResource(std::vector<AclTensorInfo> acl_tensor_info);
+  void FreeResourceInput(std::vector<AclTensorInfo> acl_tensor_info);
+  void FreeResourceOutput(std::vector<AclTensorInfo> acl_tensor_info);
 
   AclModelOptionsPtr options_;
   uint32_t model_id_ = UINT32_MAX;

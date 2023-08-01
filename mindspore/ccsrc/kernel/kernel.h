@@ -185,7 +185,12 @@ class BACKEND_EXPORT KernelTensor {
     meta_type_ = kObjectTypeList;
     meta_ = info;
   }
-  void SetDynOutput(std::unique_ptr<uint8_t[]> &&new_buffer) { dyn_output_data_ = std::move(new_buffer); }
+  void SetDynOutput(std::unique_ptr<uint8_t[]> &&new_buffer) {
+    if (dyn_output_data_ != nullptr) {
+      dyn_output_data_.reset();
+    }
+    dyn_output_data_ = std::move(new_buffer);
+  }
   uint8_t *GetDynOutput() const { return dyn_output_data_.get(); }
   // deprecated field for dynamic shape
   const ShapeVector &GetDeviceShapeAdaptively() const;

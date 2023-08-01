@@ -425,6 +425,7 @@ bool ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, 
     if (data_mem_buffer != nullptr) {
       free_data_buffer(*data_mem_buffer);
     }
+    aclDestroyDataBuffer(data_buffer);
     return false;
   }
   ret = aclmdlAddDatasetBuffer(dataset, data_buffer);
@@ -445,6 +446,9 @@ void ModelProcess::DestroyInputsBuffer() {
       aclrtFree(item.device_data);
     } else {
       aclrtFreeHost(item.device_data);
+    }
+    if (item.dynamic_acl_tensor_desc != nullptr) {
+      aclDestroyTensorDesc(item.dynamic_acl_tensor_desc);
     }
   }
   input_infos_.clear();
@@ -683,8 +687,13 @@ bool ModelProcess::ResizeDynamicInputShape(const std::vector<ShapeVector> &new_s
   MS_LOG(INFO) << "Start to resize dynamic input shape";
   // If it is not the first time to resize input shape, the old addr need to be free
   ResetInputSize(new_shapes);
+  FreeResourceInput(input_infos_);
   if (is_dynamic_resize_input_) {
-    FreeResource(input_infos_);
+    inputs_ = aclmdlCreateDataset();
+    if (inputs_ == nullptr) {
+      MS_LOG(ERROR) << "Create input dataset failed";
+      return false;
+    }
   }
   for (size_t i = 0; i < new_shapes.size(); ++i) {
     if (is_dynamic_resize_input_) {
@@ -704,11 +713,14 @@ bool ModelProcess::ResizeDynamicInputShape(const std::vector<ShapeVector> &new_s
       input_infos_[i].device_data = data_buf;
       input_infos_[i].data_type = data_type;
       input_infos_[i].name = input_name;
+      auto data_buffer = aclmdlGetDatasetBuffer(inputs_, i);
+      input_infos_[i].dynamic_acl_data_buffer = data_buffer;
     }
 
     aclTensorDesc *input_desc =
       aclCreateTensorDesc(ACL_FLOAT, new_shapes[i].size(), &new_shapes[i][0], ACL_FORMAT_NCHW);
     auto ret = aclmdlSetDatasetTensorDesc(inputs_, input_desc, i);
+    input_infos_[i].dynamic_acl_tensor_desc = input_desc;
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Acl set dataset tensor desc failed";
       return false;
@@ -1077,13 +1089,37 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
   }
   // The device_data is malloced by acl, user need to free the addr
   if (is_dynamic_output_) {
-    FreeResource(output_infos_);
+    FreeResourceOutput(output_infos_);
   }
   MS_LOG(INFO) << "Execute model success";
   return true;
 }
 
-void ModelProcess::FreeResource(std::vector<AclTensorInfo> acl_tensor_info) {
+void ModelProcess::FreeResourceInput(std::vector<AclTensorInfo> acl_tensor_info) {
+  for (const auto &item : acl_tensor_info) {
+    if (item.dynamic_acl_tensor_desc != nullptr) {
+      aclDestroyTensorDesc(item.dynamic_acl_tensor_desc);
+    }
+    if (is_dynamic_resize_input_) {
+      if (item.device_data != nullptr) {
+        if (!is_run_on_device_) {
+          aclrtFree(item.device_data);
+        } else {
+          aclrtFreeHost(item.device_data);
+        }
+      }
+      if (item.dynamic_acl_data_buffer != nullptr) {
+        aclDestroyDataBuffer(item.dynamic_acl_data_buffer);
+      }
+    }
+  }
+  if (is_dynamic_resize_input_) {
+    aclmdlDestroyDataset(inputs_);
+    inputs_ = nullptr;
+  }
+}
+
+void ModelProcess::FreeResourceOutput(std::vector<AclTensorInfo> acl_tensor_info) {
   for (const auto &item : acl_tensor_info) {
     if (item.device_data != nullptr) {
       if (!is_run_on_device_) {
@@ -1091,6 +1127,12 @@ void ModelProcess::FreeResource(std::vector<AclTensorInfo> acl_tensor_info) {
       } else {
         aclrtFreeHost(item.device_data);
       }
+    }
+    if (item.dynamic_acl_data_buffer != nullptr) {
+      aclDestroyDataBuffer(item.dynamic_acl_data_buffer);
+    }
+    if (item.dynamic_acl_tensor_desc != nullptr) {
+      aclDestroyTensorDesc(item.dynamic_acl_tensor_desc);
     }
   }
 }
