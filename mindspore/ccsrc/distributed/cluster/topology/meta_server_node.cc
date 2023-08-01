@@ -159,8 +159,8 @@ MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
     const auto &result = (*message_handlers_[name])(message->Body());
     if (result.length() > 0) {
       auto rt_msg = CreateMessage(meta_server_addr_.GetUrl(), name, result);
-      MS_EXCEPTION_IF_NULL(rt_msg);
       delete message;
+      MS_EXCEPTION_IF_NULL(rt_msg);
       return rt_msg.release();
     } else {
       delete message;

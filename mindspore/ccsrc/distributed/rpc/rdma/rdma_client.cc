@@ -79,6 +79,7 @@ bool RDMAClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
 }
 
 bool RDMAClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send_bytes) {
+  MS_EXCEPTION_IF_NULL(urpc_allocator_);
   MS_EXCEPTION_IF_NULL(msg);
   size_t msg_size = msg->size;
   void *msg_buf = msg->data;
@@ -87,6 +88,7 @@ bool RDMAClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send
   void *urpc_msg_buf = urpc_allocator_->alloc(msg_size);
   MS_EXCEPTION_IF_NULL(urpc_msg_buf);
   if (memcpy_s(urpc_msg_buf, msg_size, msg_buf, msg_size) != EOK) {
+    urpc_allocator_->free(urpc_msg_buf);
     MS_LOG(EXCEPTION) << "Failed to memcpy_s data to urpc_msg_buf with size " << msg_size;
   }
   struct urpc_sgl sgl;
@@ -101,13 +103,15 @@ bool RDMAClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send
   send_wr.req = &sgl;
   struct urpc_sgl rsp_sgl = {0};
   send_wr.sync.rsp = &rsp_sgl;
+  auto rsp_data = reinterpret_cast<char *>(rsp_sgl.sge[0].addr);
 
   MS_LOG(DEBUG) << "Start sending message to server with func_id: " << send_wr.func_id;
   if (urpc_send_request_func(urpc_session_, &send_wr, nullptr) < 0) {
     MS_LOG(ERROR) << "Failed to send request for function call: " << send_wr.func_id;
+    urpc_allocator_->free(rsp_data);
+    urpc_allocator_->free(urpc_msg_buf);
     return false;
   }
-  auto rsp_data = reinterpret_cast<char *>(rsp_sgl.sge[0].addr);
   MS_LOG(DEBUG) << "Sending success. Server response message is " << rsp_data;
 
   // Release URPC memory.
@@ -117,6 +121,7 @@ bool RDMAClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send
 }
 
 void RDMAClient::SendAsync(std::unique_ptr<MessageBase> &&msg) {
+  MS_EXCEPTION_IF_NULL(urpc_allocator_);
   MS_EXCEPTION_IF_NULL(msg);
   size_t msg_size = msg->size;
   void *msg_buf = msg->data;
@@ -125,6 +130,7 @@ void RDMAClient::SendAsync(std::unique_ptr<MessageBase> &&msg) {
   void *urpc_msg_buf = urpc_allocator_->alloc(msg_size);
   MS_EXCEPTION_IF_NULL(urpc_msg_buf);
   if (memcpy_s(urpc_msg_buf, msg_size, msg_buf, msg_size) != EOK) {
+    urpc_allocator_->free(urpc_msg_buf);
     MS_LOG(EXCEPTION) << "Failed to memcpy_s data to urpc_msg_buf with size " << msg_size;
   }
   struct urpc_sgl sgl;
@@ -149,6 +155,7 @@ void RDMAClient::SendAsync(std::unique_ptr<MessageBase> &&msg) {
   send_wr.async.cb_arg = &cb_arg_;
 
   if (urpc_send_request_func(urpc_session_, &send_wr, nullptr) < 0) {
+    urpc_allocator_->free(urpc_msg_buf);
     MS_LOG(EXCEPTION) << "Failed to send request to server.";
     return;
   }
