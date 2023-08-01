@@ -24,6 +24,8 @@ const char *kOutputPrefixName = nullptr;
 const char *kWeightPrefixName = nullptr;
 const char *kBufferPrefixName = nullptr;
 const char *kBufferPrefixNameAdd = nullptr;
+const char *kShapePrefixName = nullptr;
+const char *kOffsetPrefixName = nullptr;
 
 char *ModifyPrefixName(char *name, int model_index, const std::string &prefix) {
   if (name != nullptr) {
@@ -57,6 +59,8 @@ void FreeGlobalVariable() {
   Free(kWeightPrefixName);
   Free(kBufferPrefixName);
   Free(kBufferPrefixNameAdd);
+  Free(kShapePrefixName);
+  Free(kOffsetPrefixName);
 }
 
 void InitGlobalVariable(int model_index) {
@@ -65,5 +69,7 @@ void InitGlobalVariable(int model_index) {
   kWeightPrefixName = ModifyPrefixName(const_cast<char *>(kWeightPrefixName), model_index, "_weight");
   kBufferPrefixName = ModifyPrefixName(const_cast<char *>(kBufferPrefixName), model_index, "_buffer");
   kBufferPrefixNameAdd = ModifyPrefixName(const_cast<char *>(kBufferPrefixNameAdd), model_index, "_buffer + ");
+  kShapePrefixName = ModifyPrefixName(const_cast<char *>(kShapePrefixName), model_index, "_shape");
+  kOffsetPrefixName = ModifyPrefixName(const_cast<char *>(kOffsetPrefixName), model_index, "_offset");
 }
 }  // namespace mindspore::lite::micro
