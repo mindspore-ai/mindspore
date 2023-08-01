@@ -53,6 +53,7 @@ class RollingCpuKernelFunc : public DeprecatedCpuKernelFunc {
   S Var(const T *input_addr, const size_t *ids, size_t start, size_t end) const {
     // float for division
     float n = SizeToFloat(end - start);
+    MS_EXCEPTION_IF_CHECK_FAIL(n > 1, "Divisor n must be lager than 1.");
     T sum1 = 0;
     for (size_t x = start; x < end; ++x) {
       sum1 += input_addr[ids[x]];
@@ -211,6 +212,9 @@ template <typename T, typename S>
 bool RollingCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspace,
                                          const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto workspace_addr = reinterpret_cast<size_t *>(workspace[0]->addr);
   auto output_addr = reinterpret_cast<S *>(outputs[0]->addr);

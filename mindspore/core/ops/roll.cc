@@ -47,11 +47,14 @@ abstract::ShapePtr RollInferShape(const PrimitivePtr &primitive, const std::vect
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
                                            prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x->BuildShape())[kShape];
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
 TypePtr RollInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_CHECK_FAIL(!input_args.empty(), "input_args must not be empty.");
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

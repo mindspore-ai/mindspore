@@ -98,6 +98,7 @@ FFTVariety GetFFTVariety(const bool &is_inverse, const bool &is_real) {
 
 bool FFTWithSizeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
   // Get attribute
   auto kernel_ptr = std::dynamic_pointer_cast<ops::FFTWithSize>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
@@ -174,6 +175,7 @@ bool FFTWithSizeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
       return false;
   }
+  MS_EXCEPTION_IF_NULL(inputs[0]);
   data_type_bytes_ = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
   return true;
 }

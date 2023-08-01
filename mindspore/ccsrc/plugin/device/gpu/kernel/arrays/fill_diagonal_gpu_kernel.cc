@@ -19,15 +19,19 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-const size_t kInputDimIndex0 = 0;
-const size_t kInputNull = 0;
-const size_t kInputDimIndex1 = 1;
-const int64_t kInputMinDim = 2;
+constexpr size_t kDiagonalInputsNum = 1;
+constexpr size_t kDiagonalOutputsNum = 1;
+constexpr size_t kInputDimIndex0 = 0;
+constexpr size_t kInputNull = 0;
+constexpr size_t kInputDimIndex1 = 1;
+constexpr int64_t kInputMinDim = 2;
 }  // namespace
 
 bool FillDiagonalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagonalInputsNum, kernel_name_);
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::FillDiagonal>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr_, false);
   kernel_name_ = kernel_ptr_->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -57,6 +61,7 @@ bool FillDiagonalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
 int FillDiagonalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs,
                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagonalInputsNum, kernel_name_);
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just
     // return do nothing.

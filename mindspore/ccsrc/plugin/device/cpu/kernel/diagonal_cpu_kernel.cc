@@ -55,6 +55,9 @@ class PositionIterator {
   }
 
   bool is_end() const {
+    if (pos_.empty() || shape_.empty()) {
+      return true;
+    }
     if (pos_[0] != shape_[0]) {
       return false;
     }
@@ -89,19 +92,11 @@ std::vector<T> construct_stride(std::vector<T> t_shape) {
   }
   return t_stride;
 }
-
-template <typename T>
-T get_data(int64_t basepos, int64_t offset, int64_t *ar, T *dptr) {
-  if (offset >= 0) {
-    return dptr[basepos + offset * ar[1]];
-  } else {
-    return dptr[basepos - offset * ar[0]];
-  }
-}
 }  // namespace
 
 bool DiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For 'Diagonal', it got empty inputs or outputs, which is invalid.";
@@ -125,6 +120,8 @@ bool DiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
 int DiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs,
                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagonalInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagonalOutputsNum, kernel_name_);
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
@@ -193,14 +190,15 @@ bool DiagonalCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
       for (int i = 0; i < dsize; i++) {
         int64_t base_pos2 = i * (x_stride[dim1_] + x_stride[dim2_]);
         int64_t arr[N2] = {x_stride[dim1_], x_stride[dim2_]};
-        output[outbase_pos + i] = get_data(base_pos1 + base_pos2, offset_, arr, input);
+        output[outbase_pos + i] = offset_ >= 0 ? input[base_pos1 + base_pos2 + offset_ * arr[1]]
+                                               : input[base_pos1 + base_pos2 - offset_ * arr[0]];
       }
     }
   } else {
     for (int i = 0; i < dsize; i++) {
       int64_t base_pos = i * (x_stride[dim1_] + x_stride[dim2_]);
       int64_t arr[N2] = {x_stride[dim1_], x_stride[dim2_]};
-      output[i] = get_data(base_pos, offset_, arr, input);
+      output[i] = offset_ >= 0 ? input[base_pos + offset_ * arr[1]] : input[base_pos - offset_ * arr[0]];
     }
   }
   return true;
