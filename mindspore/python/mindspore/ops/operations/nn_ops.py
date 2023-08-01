@@ -4362,19 +4362,24 @@ class LSTM(Primitive):
         bidirectional (bool): Specifies whether it is a bidirectional LSTM.
         dropout (float): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. The range of dropout is [0.0, 1.0].
+        proj_size (int): If `proj_size` > 0, a projection of the corresponding size will be used,
+            which is only supported on CPU now. Default: ``0`` .
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, input\_size)` or
           :math:`(batch\_size, seq\_len, input\_size)`.
-        - **h** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
+        - **h** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, real\_hidden\_size)`.
         - **c** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
         - **w** (Tensor) - A weight Tensor.
+
+        where:
+            :math:`real\_hidden\_size = proj\_size if proj\_size > 0 else hidden\_size`.
 
     Outputs:
         Tuple, a tuple contains (`output`, `h_n`, `c_n`, `reserve`, `state`).
 
-        - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)`.
-        - **h_n** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
+        - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * real\_hidden\_size)`.
+        - **h_n** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, real\_hidden\_size)`.
         - **c_n** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
         - **reserve** (Tensor) - Tensor of shape :math:`(r, 1)`.
         - **state** (Tensor) - Random number generator state and its shape is :math:`(s, 1)`.
@@ -4384,6 +4389,7 @@ class LSTM(Primitive):
         TypeError: If `has_bias` or `bidirectional` is not a bool.
         TypeError: If `dropout` is not a float.
         ValueError: If `dropout` is not in range [0.0, 1.0].
+        ValueError: If `proj_size` is not in range [0, `hidden_size`).
 
     Supported Platforms:
         ``GPU`` ``CPU``
