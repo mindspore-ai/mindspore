@@ -43,6 +43,7 @@
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "transform/graph_ir/op_adapter.h"
@@ -486,6 +487,12 @@ void DfGraphConvertor::SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broa
   this->broadcast_graph_ = broadcast_graph;
 }
 
+bool DfGraphConvertor::NodeInputKeepUpdate(const AnfNodePtr &node) {
+  std::vector<PrimitivePtr> vec{prim::kPrimAssign, prim::kPrimKVCacheMgr};
+  return std::any_of(vec.begin(), vec.end(),
+                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
+}
+
 void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   int index = 0;
   std::vector<Operator> init_input;
@@ -522,7 +529,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     if (user_it != node_users.end()) {
       auto &users = user_it->second;
       for (auto &user_node : users) {
-        if (user_node.first && IsPrimitiveCNode(user_node.first, prim::kPrimAssign)) {
+        if (user_node.first && NodeInputKeepUpdate(user_node.first)) {
           will_be_update = true;
         }
       }
