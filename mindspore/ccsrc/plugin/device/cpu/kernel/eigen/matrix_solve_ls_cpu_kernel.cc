@@ -378,6 +378,10 @@ int MatrixSolveLsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  MS_EXCEPTION_IF_NULL(inputs[kMatrixInputIndex]);
+  MS_EXCEPTION_IF_NULL(inputs[kRhsInputIndex]);
+  MS_EXCEPTION_IF_NULL(inputs[kL2InputIndex]);
+  MS_EXCEPTION_IF_NULL(outputs[kOutputIndex]);
   matrix_shape_ = inputs[kMatrixInputIndex]->GetShapeVector();
   rhs_shape_ = inputs[kRhsInputIndex]->GetShapeVector();
   l2_shape_ = inputs[kL2InputIndex]->GetShapeVector();
@@ -430,6 +434,8 @@ bool MatrixSolveLsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   if (LaunchKernelAcessCheck() != true) {
     return kMatrixSolveLsComputeFailed;
   }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
 
   if (qr_chole_) {
     if (matrix_dtype_ == kNumberTypeComplex64) {

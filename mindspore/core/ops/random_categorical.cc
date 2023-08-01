@@ -97,6 +97,8 @@ int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputsNum = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto logits_shape_ptr = input_args[kInputIndex0]->BuildShape();
   if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape_ptr)[kShape])) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -123,7 +125,10 @@ abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr RandomCategoricalInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
+  const int64_t kInputsNum = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, prim_name);
   const std::set<TypePtr> valid_logits_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTypeValid("logits", input_args[kInputIndex0]->BuildType(), valid_logits_types,
                                              prim_name);

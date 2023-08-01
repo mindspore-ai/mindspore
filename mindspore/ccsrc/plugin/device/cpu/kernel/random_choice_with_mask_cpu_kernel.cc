@@ -84,6 +84,8 @@ void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num
 bool RandomChoiceWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
   kernel_name_ = base_operator->GetPrim()->name();
   batch_rank_ = base_operator->get_batch_rank();
   constexpr size_t input_num = 1;
@@ -105,6 +107,7 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   auto x_shape = inputs[kIndex0]->GetShapeVector();
   if (x_shape[0] == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_

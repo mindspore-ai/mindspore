@@ -46,9 +46,13 @@ uint32_t MatrixSolveLsCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 
   auto shapea = matrix->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(shapea, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapea is null.");
   auto shapeb = b->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(shapeb, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapeb is null.");
   auto shapel2 = l2->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(shapel2, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapel2 is null.");
   auto shapex = x->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(shapex, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapex is null.");
   auto dims = shapea->GetDims();
 
   if (ctx.Input(1)->GetTensorShape()->GetDims() == 1) {

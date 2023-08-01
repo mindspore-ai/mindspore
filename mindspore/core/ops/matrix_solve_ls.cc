@@ -44,6 +44,8 @@ abstract::ShapePtr MatrixSolveLsInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto rhs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
@@ -100,6 +102,8 @@ TypePtr MatrixSolveLsInferType(const PrimitivePtr &primitive, const std::vector<
   MS_EXCEPTION_IF_NULL(primitive);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   const std::set<TypePtr> l2_valid_types = {kFloat64};
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto matrix_type = input_args[0]->BuildType();
   auto rhs_type = input_args[1]->BuildType();
   auto l2_type = input_args[2]->BuildType();
