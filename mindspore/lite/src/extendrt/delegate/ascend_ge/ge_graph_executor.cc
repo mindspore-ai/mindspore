@@ -371,14 +371,26 @@ transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &an
     return nullptr;
   }
   auto &ge_options = *ge_options_ptr;
+  GetGeGraphOptions(anf_graph, &ge_options);
+
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
   auto param = ParseGraphKernelConfigs(config_infos_);
-  if (GraphKernelOptimize(anf_graph, param) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Run graphkernel optimization failed.";
-    return nullptr;
+  if (param != nullptr) {
+    auto rank_id = common::GetEnv("RANK_ID");
+    if (rank_id.empty()) {
+      auto ascend_device_info = GeUtils::GetAscendDeviceInfo(context_);
+      if (ascend_device_info != nullptr) {
+        auto rank_id_value = ascend_device_info->GetRankID();
+        common::SetEnv("RANK_ID", std::to_string(rank_id_value).c_str());
+      }
+    }
+    if (GraphKernelOptimize(anf_graph, param) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Run graphkernel optimization failed.";
+      return nullptr;
+    }
   }
 #endif
-  GetGeGraphOptions(anf_graph, &ge_options);
+
   if (!UpdateGraphInputs(anf_graph)) {
     MS_LOG(ERROR) << "Failed to update graph inputs";
     return nullptr;

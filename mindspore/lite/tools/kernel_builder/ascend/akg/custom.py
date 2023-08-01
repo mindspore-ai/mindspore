@@ -729,6 +729,8 @@ def op_select_format(*args, **kwags):
     info_path = args[-1]
     desc = update_akg_info(args, info_path)
     supported_io_type, supported_io_format = search_supported_types_formats(desc)
+    if not supported_io_type or not supported_io_format:
+        raise RuntimeError("Select format failed for info: {}".format(info_path))
     input_num = len(desc["input_desc"])
     output_num = len(desc["output_desc"])
     param_list = []
@@ -764,6 +766,7 @@ def custom(*args, **kwags):
     compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
     compile_result = subprocess.run([sys.executable, compiler, real_info_path], text=True, check=False,
                                     capture_output=True, env=my_env)
-    if compile_result.returncode:
-        raise RuntimeError("Compile {} failed! {}, {}".format(kernel_name, compile_result.stdout.strip(),
-                                                              compile_result.stderr.strip()))
+    json_path = os.path.join(my_env["MS_COMPILER_CACHE_PATH"], my_env["KERNEL_META_DIR"], kernel_name + ".json")
+    if compile_result.returncode or not os.path.exists(json_path):
+        raise RuntimeError("Compile {} failed! Detailed compile message: {}, {}"
+                           .format(kernel_name, compile_result.stdout.strip(), compile_result.stderr.strip()))
