@@ -39,6 +39,7 @@ from mindspore.nn.layer.channel_shuffle import ChannelShuffle
 from mindspore.nn.layer.thor_layer import DenseThor, Conv2dThor, EmbeddingThor, EmbeddingLookupThor
 from mindspore.nn.layer.padding import ConstantPad1d, ConstantPad2d, ConstantPad3d, ReflectionPad1d, \
     ReflectionPad2d, ReflectionPad3d, ZeroPad2d, ReplicationPad1d, ReplicationPad2d, ReplicationPad3d
+from mindspore.nn.layer.flash_attention import FlashAttention
 
 __all__ = []
 __all__.extend(activation.__all__)
@@ -58,3 +59,4 @@ __all__.extend(timedistributed.__all__)
 __all__.extend(thor_layer.__all__)
 __all__.extend(padding.__all__)
 __all__.extend(channel_shuffle.__all__)
+__all__.extend(flash_attention.__all__)

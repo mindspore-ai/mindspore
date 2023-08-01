@@ -50,13 +50,13 @@ class FlashAttentionPrimitiveInfo : public OperatorInfo {
   Status InferMirrorOps() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   size_t qkv_dim_sz = 4;
-  size_t dim_mask_dim_sz = 1;
   size_t attn_mask_dim_sz = 3;
   size_t dropout_mask_dim_sz = 4;
   size_t alibi_mask_dim_sz = 4;
 
-  bool alibi_mask_valid = false;
-  constexpr static int DROPOUT_MASK_INPUT_INDEX = 5;
+  bool alibi_mask_valid_ = false;
+  bool dropout_mask_valid_ = false;
+  constexpr static int DROPOUT_MASK_INPUT_INDEX = 4;
 };
 }  // namespace parallel
 }  // namespace mindspore
