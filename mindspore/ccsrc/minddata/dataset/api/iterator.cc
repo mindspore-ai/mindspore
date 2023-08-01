@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,6 +141,7 @@ Status PullIterator::GetNextRow(MSTensorVec *const row) {
 // for the tree, the reason why this is the case is due to the fact that PullBasedIterator does not need
 // to instantiate threads for each op. As such, the call to the consumer will by pass the execution tree.
 Status PullIterator::BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds, int32_t num_epochs) {
+  RETURN_UNEXPECTED_IF_NULL(ds);
   if (pull_consumer_ == nullptr) {
     pull_consumer_ = std::make_unique<PullBasedIteratorConsumer>();
   }

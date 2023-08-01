@@ -285,6 +285,8 @@ Status Mag(const std::shared_ptr<Tensor> &abs_0, const std::shared_ptr<Tensor> &
 template <typename T>
 Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, float rate,
                    const std::shared_ptr<Tensor> &phase_advance) {
+  RETURN_UNEXPECTED_IF_NULL(input);
+  RETURN_UNEXPECTED_IF_NULL(output);
   // pack <..., freq, time, complex>
   TensorShape input_shape = input->shape();
   TensorShape toShape({input->Size() / (input_shape[-1] * input_shape[-2] * input_shape[-3]), input_shape[-3],
@@ -358,6 +360,8 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
 
 Status TimeStretch(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
                    int32_t n_freq) {
+  RETURN_UNEXPECTED_IF_NULL(input);
+  RETURN_UNEXPECTED_IF_NULL(output);
   std::shared_ptr<Tensor> phase_advance;
   switch (input->type().value()) {
     case DataType::DE_FLOAT32:
@@ -399,7 +403,7 @@ Status PhaseVocoder(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 
 Status Dct(std::shared_ptr<Tensor> *output, int n_mfcc, int n_mels, NormMode norm) {
   TensorShape dct_shape({n_mels, n_mfcc});
-  Tensor::CreateEmpty(dct_shape, DataType(DataType::DE_FLOAT32), output);
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(dct_shape, DataType(DataType::DE_FLOAT32), output));
   auto iter = (*output)->begin<float>();
   const float sqrt_2 = 1 / sqrt(2.0f);
   auto sqrt_2_n_mels = static_cast<float>(sqrt(2.0 / n_mels));
@@ -669,6 +673,12 @@ Status FadeIn(std::shared_ptr<Tensor> *output, int32_t fade_in_len, FadeShape fa
         // Compute the scale factor of the half_sine function, sin((*in_iter) * PI - PI / 2.0) / 2.0 + 0.5
         *iter = static_cast<T>(std::sin((*iter) * PI - PI / 2.0) / 2.0 + 0.5);
         break;
+      default:
+        MS_LOG(EXCEPTION)
+          << "The fade_shape parameter only supports these types [FadeShape::kLinear, FadeShape::kExponential, "
+             "FadeShape::kLogarithmic, FadeShape::kQuarterSine, FadeShape::kHalfSine], but got "
+          << fade_shape << " .";
+        break;
     }
   }
   return Status::OK();
@@ -700,6 +710,12 @@ Status FadeOut(std::shared_ptr<Tensor> *output, int32_t fade_out_len, FadeShape 
       case FadeShape::kHalfSine:
         // Compute the scale factor of the half_sine function
         *iter = static_cast<T>(std::sin((*iter) * PI + PI / 2.0) / 2.0 + 0.5);
+        break;
+      default:
+        MS_LOG(EXCEPTION)
+          << "The fade_shape parameter only supports these types [FadeShape::kLinear, FadeShape::kExponential, "
+             "FadeShape::kLogarithmic, FadeShape::kQuarterSine, FadeShape::kHalfSine], but got "
+          << fade_shape << " .";
         break;
     }
   }
