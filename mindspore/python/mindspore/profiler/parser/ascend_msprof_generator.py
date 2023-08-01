@@ -179,7 +179,7 @@ class AscendMsprofDataGenerator:
             if index >= len(header)-1:
                 break
 
-        for i in range(index, len(header), 2):
+        for i in range(len(self.steptrace_name), len(header), 2):
             name = f'hccl_{i}'
             self.steptrace_name[name] = {'index': i, 'dtype': (name, float)}
             self.steptrace_name[f'{name} duration'] = {'index': i+1, 'dtype': (f'{name} duration', float)}
