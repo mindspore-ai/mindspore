@@ -50,6 +50,7 @@ void RunnerConfig::SetContext(const std::shared_ptr<Context> &context) {
     MS_LOG(ERROR) << "Runner config data is nullptr.";
     return;
   }
+  MS_CHECK_TRUE_RET_VOID(context != nullptr);
   data_->context = context;
 }
 

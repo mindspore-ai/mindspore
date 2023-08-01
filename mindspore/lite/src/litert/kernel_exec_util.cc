@@ -276,6 +276,7 @@ KernelExec *KernelExecUtil::FindInKernelForInTensor(const KernelExec *kernel, li
 }
 
 std::vector<KernelExec *> KernelExecUtil::FindOutKernelsForOutTensor(const KernelExec *kernel, lite::Tensor *tensor) {
+  MS_CHECK_TRUE_RET(kernel != nullptr, {});
   std::vector<KernelExec *> out_kernels;
   for (auto out_kernel : kernel->out_kernels()) {
     if (lite::IsContain(out_kernel->in_tensors(), tensor)) {
@@ -286,6 +287,7 @@ std::vector<KernelExec *> KernelExecUtil::FindOutKernelsForOutTensor(const Kerne
 }
 
 KernelExec *KernelExecUtil::FindInKernelForTensorInSubGraph(lite::Tensor *tensor, SubGraphKernel *graph) {
+  MS_CHECK_TRUE_RET(graph != nullptr, nullptr);
   auto iter = std::find_if(graph->nodes().begin(), graph->nodes().end(),
                            [&tensor](const auto &node) { return lite::IsContain(node->out_tensors(), tensor); });
   if (iter != graph->nodes().end()) {
@@ -296,6 +298,7 @@ KernelExec *KernelExecUtil::FindInKernelForTensorInSubGraph(lite::Tensor *tensor
 
 std::vector<KernelExec *> KernelExecUtil::FindOutKernelsForTensorInSubGraph(lite::Tensor *tensor,
                                                                             SubGraphKernel *graph) {
+  MS_CHECK_TRUE_RET(graph != nullptr, {});
   std::vector<KernelExec *> out_kernels(graph->nodes().size());
   auto iter = std::copy_if(graph->nodes().begin(), graph->nodes().end(), out_kernels.begin(),
                            [&tensor](const auto &node) { return lite::IsContain(node->in_tensors(), tensor); });
@@ -330,6 +333,7 @@ int KernelExecUtil::SetKernelTensorDataType(const kernel::KernelExec *kernel) {
 }
 
 bool KernelExecUtil::IsOutputSubGraph(const KernelExec *subgraph_kernel) {
+  MS_CHECK_TRUE_RET(subgraph_kernel != nullptr, false);
   return !subgraph_kernel->out_tensors().empty() &&
          std::all_of(subgraph_kernel->out_tensors().begin(), subgraph_kernel->out_tensors().end(),
                      [](lite::Tensor *tensor) { return tensor->IsGraphOutput(); });
@@ -416,6 +420,7 @@ SubGraphKernel *KernelExecUtil::CreateSubGraphKernel(const std::vector<KernelExe
 
 int KernelExecUtil::ReplaceSubGraphNodesInTensor(KernelExec *kernel, const lite::Tensor *old_tensor,
                                                  lite::Tensor *new_tensor) {
+  CHECK_NULL_RETURN(kernel);
   int ref_count = 0;
   /* set op input for calculate */
   if (kernel->desc().arch == kDelegate) {
@@ -435,12 +440,14 @@ int KernelExecUtil::ReplaceSubGraphNodesInTensor(KernelExec *kernel, const lite:
       }
     }
   }
+  CHECK_NULL_RETURN(new_tensor);
   new_tensor->set_init_ref_count(ref_count);
   return RET_OK;
 }
 
 int KernelExecUtil::ReplaceSubGraphNodesOutTensor(KernelExec *kernel, const lite::Tensor *old_tensor,
                                                   lite::Tensor *new_tensor) {
+  CHECK_NULL_RETURN(kernel);
   int ref_count = 0;
   /* set op output for calculate */
   if (kernel->desc().arch == kDelegate) {
@@ -460,6 +467,7 @@ int KernelExecUtil::ReplaceSubGraphNodesOutTensor(KernelExec *kernel, const lite
       }
     }
   }
+  CHECK_NULL_RETURN(new_tensor);
   new_tensor->set_init_ref_count(ref_count);
   return RET_OK;
 }
@@ -483,6 +491,9 @@ SubGraphKernel *KernelExecUtil::BelongToWhichSubGraph(const std::vector<KernelEx
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 bool KernelExecUtil::IsSwitchTypeCall(KernelExec *kernel) {
+  if (kernel == nullptr) {
+    return false;
+  }
   if (kernel->desc().arch == kDelegate) {
     return false;
   }
@@ -545,6 +556,9 @@ bool KernelExecUtil::IsTailCallSubGraph(KernelExec *kernel) {
 }
 
 std::vector<KernelExec *> KernelExecUtil::GetCallInputPartials(const KernelExec *call_node) {
+  if (call_node == nullptr) {
+    return {};
+  }
   if (call_node->type() != schema::PrimitiveType_Call) {
     MS_LOG(ERROR) << "input node is not call node.";
     return {};
@@ -602,6 +616,9 @@ std::vector<KernelExec *> KernelExecUtil::GetCallInputPartialsCorrespondingOutpu
 }
 
 KernelExec *KernelExecUtil::GetPartialOutputCall(const KernelExec *partial_node) {
+  if (partial_node == nullptr) {
+    return nullptr;
+  }
   if (partial_node->type() != schema::PrimitiveType_PartialFusion) {
     MS_LOG(ERROR) << "input node is not partial node.";
     return nullptr;
