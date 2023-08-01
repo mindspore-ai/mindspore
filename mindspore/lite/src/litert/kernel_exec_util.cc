@@ -32,6 +32,54 @@ namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
+int KernelExecUtil::TopologicalSortNodes(std::vector<KernelExec *> *nodes, std::vector<KernelExec *> in_nodes) {
+  auto old_nodes = *nodes;
+  if (in_nodes.empty()) {
+    in_nodes = KernelExecUtil::SubgraphInputNodes(old_nodes);
+  }
+  nodes->clear();
+  nodes->reserve(old_nodes.size());
+  std::queue<KernelExec *> kernel_queue;
+  for (auto kernel : in_nodes) {
+    if (std::all_of(kernel->in_kernels().begin(), kernel->in_kernels().end(),
+                    [&](KernelExec *in_kernel) { return (!lite::IsContain(old_nodes, in_kernel)); })) {
+      kernel_queue.push(kernel);
+    }
+  }
+
+  while (!kernel_queue.empty()) {
+    auto cur_kernel = kernel_queue.front();
+    (void)nodes->emplace_back(cur_kernel);
+    kernel_queue.pop();
+    if (cur_kernel == nullptr) {
+      MS_LOG(ERROR) << "TopologicalSortKernels failed, nullptr in nodes.";
+      return lite::RET_NULL_PTR;
+    }
+    auto next_kernels = cur_kernel->out_kernels();
+    for (auto next_kernel : next_kernels) {
+      if (!lite::IsContain(old_nodes, next_kernel)) {
+        continue;
+      }
+      if (lite::IsContain(*nodes, next_kernel)) {
+        MS_LOG(ERROR) << "TopologicalSortKernels failed, loop exist.";
+        return lite::RET_ERROR;
+      }
+      auto in_kernels = next_kernel->in_kernels();
+      if (std::all_of(in_kernels.begin(), in_kernels.end(), [&](KernelExec *in_kernel) {
+            return lite::IsContain(*nodes, in_kernel) || (!lite::IsContain(old_nodes, in_kernel));
+          })) {
+        kernel_queue.push(next_kernel);
+      }
+    }
+  }
+  if (nodes->size() != old_nodes.size()) {
+    MS_LOG(ERROR) << "TopologicalSortKernels failed, kernels size before sort: " << old_nodes.size()
+                  << ", kernels size after sort: " << nodes->size();
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
 std::set<lite::Tensor *> KernelExecUtil::AllOutTensor(const std::vector<KernelExec *> &kernels) {
   std::set<lite::Tensor *> all_out_tensors{};
   for (const auto &kernel_in_subgraph : kernels) {
@@ -154,42 +202,6 @@ std::vector<lite::Tensor *> KernelExecUtil::SubgraphOutputTensors(const std::vec
     }
   }
   return output_tensors;
-}
-
-int KernelExecUtil::TopologicalSortKernels(std::vector<KernelExec *> *kernels) {
-  auto old_kernels = *kernels;
-  kernels->clear();
-  std::queue<KernelExec *> kernel_queue;
-  for (auto kernel : old_kernels) {
-    if (kernel->in_kernels().empty()) {
-      kernel_queue.push(kernel);
-      kernels->emplace_back(kernel);
-    }
-  }
-  while (!kernel_queue.empty()) {
-    auto cur_kernel = kernel_queue.front();
-    kernel_queue.pop();
-    MS_ASSERT(cur_kernel != nullptr);
-    auto next_kernels = cur_kernel->out_kernels();
-    for (auto next_kernel : next_kernels) {
-      auto in_kernels = next_kernel->in_kernels();
-      if (lite::IsContain(*kernels, const_cast<KernelExec *>(next_kernel))) {
-        MS_LOG(ERROR) << "TopologicalSortKernels failed, loop exist";
-        return RET_ERROR;
-      }
-      if (std::all_of(in_kernels.begin(), in_kernels.end(), [&](const KernelExec *in_kernel) {
-            return lite::IsContain(*kernels, const_cast<KernelExec *>(in_kernel));
-          })) {
-        kernel_queue.push(next_kernel);
-      }
-    }
-  }
-  if (kernels->size() != old_kernels.size()) {
-    MS_LOG(ERROR) << "TopologicalSortKernels failed, kernels size before sort: " << old_kernels.size()
-                  << ", kernels size after sort: " << kernels->size();
-    return RET_ERROR;
-  }
-  return RET_OK;
 }
 
 void KernelExecUtil::InitTensorInitRefCount(const std::vector<KernelExec *> &kernels) {

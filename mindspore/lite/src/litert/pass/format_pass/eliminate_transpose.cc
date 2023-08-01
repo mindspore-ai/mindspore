@@ -117,50 +117,20 @@ int DoPreFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, st
                 const TransInfoPair &pre_trans) {
   for (size_t i = 0; i < kernel->in_tensors().size(); i++) {
     auto in_tensor = kernel->in_tensors().at(i);
-    auto in_kernel = kernel::KernelExecUtil::FindInKernelForInTensor(kernel, in_tensor);
-    if (in_kernel == nullptr) {
-      if (in_tensor->data() == nullptr) {
-        // graph input, insert an opposite transpose
-        auto ret = InsertPreTranspose(subgraph, kernel, all_tensors,
-                                      TransInfoPair(pre_trans.dst_format_, pre_trans.src_format_), i);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Insert previous transpose kernel for op: " << kernel->name() << " input tensor " << i
-                        << " failed.";
-          return RET_ERROR;
-        }
-      } else {
-        auto ret = PackConstData(in_tensor, pre_trans);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Pack tensor " << in_tensor->tensor_name() << " data failed.";
-          return RET_ERROR;
-        }
+    if (in_tensor->IsConst()) {
+      auto ret = PackConstData(in_tensor, pre_trans);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Pack tensor " << in_tensor->tensor_name() << " data failed.";
+        return RET_ERROR;
       }
-    } else {
-      TransInfoPair in_kernel_trans;
-      auto ret = GetTransposeInfo(in_kernel, &in_kernel_trans);
-      if (ret != RET_OK || !IsSameTranspose(pre_trans, in_kernel_trans)) {
-        // not a transpose kernel that can be fused, insert an opposite transpose
-        ret = InsertPreTranspose(subgraph, kernel, all_tensors,
-                                 TransInfoPair(pre_trans.dst_format_, pre_trans.src_format_), i);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Insert previous transpose kernel for op: " << kernel->name() << " input tensor " << i
-                        << " failed.";
-          return RET_ERROR;
-        }
-      } else {
-        auto pre_in_kernel = kernel::KernelExecUtil::FindInKernelForInTensor(in_kernel, in_kernel->in_tensors().at(0));
-        subgraph->UpdateInOutKernels(pre_in_kernel, {kernel}, in_kernel, in_kernel);
-        ret = subgraph->UpdateInOutTensors(pre_in_kernel, {kernel}, in_kernel->in_tensors().at(0), in_tensor, true);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Update tensor failed when removing kernel " << in_kernel->name();
-          return RET_ERROR;
-        }
-
-        if (in_kernel->out_kernels().empty() && !IsContain(subgraph->out_tensors(), in_kernel->out_tensors().at(0))) {
-          subgraph->DropNode(in_kernel);
-          delete in_kernel;
-        }
-      }
+      continue;
+    }
+    auto ret =
+      InsertPreTranspose(subgraph, kernel, all_tensors, TransInfoPair(pre_trans.dst_format_, pre_trans.src_format_), i);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Insert pre transpose for " << kernel->name() << "(index: " << i
+                    << ") while eliminating transposes crossing kernel failed";
+      return RET_ERROR;
     }
   }
   return RET_OK;
@@ -180,14 +150,16 @@ int DoPostFusion(kernel::SubGraphKernel *subgraph, const kernel::KernelExec *ker
         (void)to_deletes.emplace_back(out_kernel);
         continue;
       }
-      auto in_tensor_of_out_kernel_idx = out_kernel->FindInTensorIndex(tensor);
-      ret =
-        InsertPreTranspose(subgraph, out_kernel, all_tensors,
-                           TransInfoPair(post_trans.dst_format_, post_trans.src_format_), in_tensor_of_out_kernel_idx);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Insert pre transpose kernel for op: " << out_kernel->name() << " input tensor "
-                      << in_tensor_of_out_kernel_idx << " failed.";
-        return RET_ERROR;
+      auto in_tensor_of_out_kernel_idxes = out_kernel->FindAllInTensorIndex(tensor);
+      for (auto &in_tensor_of_out_kernel_idx : in_tensor_of_out_kernel_idxes) {
+        ret = InsertPreTranspose(subgraph, out_kernel, all_tensors,
+                                 TransInfoPair(post_trans.dst_format_, post_trans.src_format_),
+                                 in_tensor_of_out_kernel_idx);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Insert pre transpose kernel for op: " << out_kernel->name() << " input tensor "
+                        << in_tensor_of_out_kernel_idx << " failed.";
+          return RET_ERROR;
+        }
       }
     }
     for (auto &to_delete : to_deletes) {
@@ -209,11 +181,17 @@ int EliminateTranspose::EliminateForSingleKernel(kernel::SubGraphKernel *subgrap
     CHECK_NULL_RETURN(kernel);
     TransInfoPair pre_trans;
     TransInfoPair post_trans;
-    if (!transpose_strategy_.CheckFusion(kernel, &pre_trans, &post_trans)) {
+    if (!transpose_strategy_.CrossKernelFusionPreCheck(kernel, &pre_trans, &post_trans)) {
       (void)kernel_iter++;
       continue;
     }
-    auto ret = transpose_strategy_.ChangeKernelAxis(kernel, post_trans);
+    auto ret = TransposeStrategy::TryTransKernelAxis(kernel, post_trans);
+    if (ret == RET_NO_CHANGE) {
+      // Some kernel can not be fusion although CrossKernelFusionPreCheck is successful. For example, whether crop can
+      // transpose axis depend on axis attribute of crop primitive.
+      (void)kernel_iter++;
+      continue;
+    }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Change kernel axis " << kernel->name() << " failed.";
       return RET_ERROR;
@@ -305,8 +283,10 @@ int EliminateTranspose::HorizontalTransposeFusionPass(kernel::SubGraphKernel *su
         post->AddInKernel(reserve_kernel);
         reserve_kernel->AddOutKernel(post);
 
-        auto input_index = post->FindInTensorIndex(to_delete->out_tensors().at(0));
-        post->set_in_tensor(reserve_tensor, input_index);
+        auto input_indexes = post->FindAllInTensorIndex(to_delete->out_tensors().at(0));
+        for (auto &input_index : input_indexes) {
+          post->set_in_tensor(reserve_tensor, input_index);
+        }
       }
       subgraph->DropNode(to_delete);
       delete to_delete;

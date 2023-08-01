@@ -28,9 +28,9 @@ class MS_API KernelExecUtil {
  public:
   static std::vector<KernelExec *> SubgraphInputNodes(const std::vector<KernelExec *> &kernels);
   static std::vector<KernelExec *> SubgraphOutputNodes(const std::vector<KernelExec *> &kernels);
+  static int TopologicalSortNodes(std::vector<KernelExec *> *nodes, std::vector<KernelExec *> in_nodes = {});
   static std::vector<lite::Tensor *> SubgraphInputTensors(const std::vector<KernelExec *> &kernels);
   static std::vector<lite::Tensor *> SubgraphOutputTensors(const std::vector<KernelExec *> &kernels);
-  static int TopologicalSortKernels(std::vector<KernelExec *> *kernels);
   static void InitTensorInitRefCount(const std::vector<KernelExec *> &kernels);
   static bool IsSwitchTypeCall(KernelExec *kernel);
   static bool IsNonTailCall(const KernelExec *node);

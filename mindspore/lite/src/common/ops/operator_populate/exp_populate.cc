@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/fp32/exp_fp32.h"
 #include "ops/exp.h"
 #include "ops/fusion/exp_fusion.h"
@@ -33,29 +34,9 @@ OpParameter *PopulateExpOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
 
-  auto attr_base = base_operator->GetPrim()->GetAttr(kBase);
-  if (attr_base == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kBase << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  param->base_ = GetValue<float>(attr_base);
-
-  auto attr_scale = base_operator->GetPrim()->GetAttr(kScale);
-  if (attr_scale == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kScale << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  param->scale_ = GetValue<float>(attr_scale);
-
-  auto attr_shift = base_operator->GetPrim()->GetAttr(kShift);
-  if (attr_shift == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kShift << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  param->shift_ = GetValue<float>(attr_shift);
+  param->base_ = GetAttrWithDefault<float>(base_operator, kBase, -1.0);
+  param->scale_ = GetAttrWithDefault<float>(base_operator, kScale, 1.0);
+  param->shift_ = GetAttrWithDefault<float>(base_operator, kShift, 0.0);
   return reinterpret_cast<OpParameter *>(param);
 }
 

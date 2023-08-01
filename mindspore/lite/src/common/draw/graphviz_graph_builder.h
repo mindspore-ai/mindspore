@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_COMMON_DRAWER_GRAPHVIZ_GRAPH_BUILDER_H_
-#define MINDSPORE_LITE_SRC_COMMON_DRAWER_GRAPHVIZ_GRAPH_BUILDER_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_DRAW_GRAPHVIZ_GRAPH_BUILDER_H_
+#define MINDSPORE_LITE_SRC_COMMON_DRAW_GRAPHVIZ_GRAPH_BUILDER_H_
 
 #include <utility>
 #include <vector>
@@ -34,7 +34,7 @@ class GVGraphBuilder {
   std::shared_ptr<GVGraph> Build(const std::shared_ptr<AdapterGraph> &graph);
 
   void AppendGraphInputNode(const lite::Tensor &tensor);
-  int AppendWeightNode(const lite::Tensor &tensor, const std::string &id, const std::string &label);
+  void AppendWeightNode(const lite::Tensor &tensor, const std::string &id, const std::string &label);
   int AppendComputeNode(const AdapterNode &node);
   int AppendGraphOutputNode(const std::vector<lite::Tensor *> &out_tensors);
 
@@ -50,4 +50,4 @@ class GVGraphBuilder {
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_COMMON_DRAWER_GRAPHVIZ_GRAPH_BUILDER_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_DRAW_GRAPHVIZ_GRAPH_BUILDER_H_

@@ -90,6 +90,7 @@ class GVNode {
   std::string label_;
   int type_;
   std::string prefix_;
+  std::string color_ = "white";
   size_t input_size_{0};
   size_t output_size_{0};
   std::string shape_;

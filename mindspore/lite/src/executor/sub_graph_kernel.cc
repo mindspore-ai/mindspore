@@ -28,36 +28,12 @@
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
 #include "src/litert/kernel_exec_util.h"
-#include "src/executor/sub_graph_kernel_adapter_graph.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_ERR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
-
-void SubGraphKernel::Draw(const std::string &path, const std::string &file_name,
-                          const std::vector<schema::PrimitiveType> &mark_types) const {
-  Draw(path, file_name, [&mark_types](const KernelExec &kernel) { return lite::IsContain(mark_types, kernel.type()); });
-}
-
-void SubGraphKernel::Draw(const std::string &path, const std::string &file_name, const lite::MarkFilter &filter) const {
-#ifndef ENABLE_DUMP
-  MS_LOG(INFO) << "Dump is not enabled, please set env 'export MSLITE_ENABLE_DUMP=on' to enable dump.";
-#else
-  auto gv_graph = lite::CreateGVGraph(this, filter);
-  if (gv_graph == nullptr) {
-    MS_LOG(ERROR) << "Create gv_graph failed.";
-    return;
-  }
-  auto write_path = lite::WriteStrToFile(path, file_name, gv_graph->Code());
-  if (write_path.empty()) {
-    MS_LOG(ERROR) << "Save dot to file failed.";
-  } else {
-    MS_LOG(INFO) << "Save dot to " << write_path << " successfully.";
-  }
-#endif
-}
 
 std::string SubGraphKernel::ToString() const {
   std::ostringstream oss;
@@ -140,7 +116,8 @@ int SubGraphKernel::ReSize() {
                    << "flag set to false.";
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, type: "
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()));
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
+                    << ", name: " << kernel->name();
       return RET_INFER_ERR;
     }
     if (ret == RET_OK) {
@@ -189,44 +166,11 @@ void SubGraphKernel::InitOutTensorInitRefCount(const std::vector<KernelExec *> *
 
 int SubGraphKernel::TopologicalSortNodes() {
   in_nodes_ = kernel::KernelExecUtil::SubgraphInputNodes(nodes_);
-  auto old_nodes = nodes_;
-  nodes_.clear();
-  std::queue<KernelExec *> kernel_queue;
-  for (auto kernel : in_nodes_) {
-    if (std::all_of(kernel->in_kernels().begin(), kernel->in_kernels().end(),
-                    [&](KernelExec *in_kernel) { return (!lite::IsContain(old_nodes, in_kernel)); })) {
-      kernel_queue.push(kernel);
-    }
+  auto ret = KernelExecUtil::TopologicalSortNodes(&nodes_, in_nodes_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "TopologicalSortNodes failed";
   }
-
-  while (!kernel_queue.empty()) {
-    auto cur_kernel = kernel_queue.front();
-    (void)nodes_.emplace_back(cur_kernel);
-    kernel_queue.pop();
-    CHECK_NULL_RETURN(cur_kernel);
-    auto next_kernels = cur_kernel->out_kernels();
-    for (auto next_kernel : next_kernels) {
-      if (!lite::IsContain(old_nodes, next_kernel)) {
-        continue;
-      }
-      if (lite::IsContain(nodes_, const_cast<KernelExec *>(next_kernel))) {
-        MS_LOG(ERROR) << "TopologicalSortKernels failed, loop exist";
-        return RET_ERROR;
-      }
-      auto in_kernels = next_kernel->in_kernels();
-      if (std::all_of(in_kernels.begin(), in_kernels.end(), [&](KernelExec *in_kernel) {
-            return lite::IsContain(nodes_, in_kernel) || (!lite::IsContain(old_nodes, in_kernel));
-          })) {
-        kernel_queue.push(next_kernel);
-      }
-    }
-  }
-  if (nodes_.size() != old_nodes.size()) {
-    MS_LOG(ERROR) << "TopologicalSortKernels failed, kernels size before sort: " << old_nodes.size()
-                  << ", kernels size after sort: " << nodes_.size();
-    return RET_ERROR;
-  }
-  return RET_OK;
+  return ret;
 }
 
 void SubGraphKernel::InsertInEdge(KernelExec *kernel, KernelExec *replace_kernel, const size_t &tensor_index) {
@@ -235,7 +179,10 @@ void SubGraphKernel::InsertInEdge(KernelExec *kernel, KernelExec *replace_kernel
   if (in_kernel != nullptr) {
     in_kernel->RemoveOutKernel(kernel);  // Assume there is only one tensor between in_kernel and kernel.
     in_kernel->AddOutKernel(replace_kernel);
-    kernel->RemoveInKernel(in_kernel);
+    auto in_tensors = kernel->in_tensors();
+    if (std::count(in_tensors.begin(), in_tensors.end(), in_tensors[tensor_index]) == 1) {
+      kernel->RemoveInKernel(in_kernel);
+    }
     replace_kernel->AddInKernel(in_kernel);
   }
   replace_kernel->AddOutKernel(kernel);
@@ -297,6 +244,8 @@ void SubGraphKernel::UpdateInOutKernels(KernelExec *in_kernel, std::vector<Kerne
 
   // update subgraph output node
   if (lite::IsContain(out_nodes_, out_pre_kernel) && in_kernel != nullptr) {
+    in_post_kernel->RemoveInKernel(in_kernel);
+    in_kernel->RemoveOutKernel(in_post_kernel);
     out_nodes_.push_back(in_kernel);
     if (out_pre_kernel->in_kernels().empty() && !lite::IsContain(in_nodes_, out_pre_kernel)) {
       (void)lite::VectorErase(&out_nodes_, out_pre_kernel);
@@ -306,15 +255,17 @@ void SubGraphKernel::UpdateInOutKernels(KernelExec *in_kernel, std::vector<Kerne
 
 // Update tensor according to the subgraph.
 // Because the model input must be subgraph input, and the model output must be subgraph output.
-int SubGraphKernel::UpdateInOutTensors(KernelExec *in_kernel, std::vector<KernelExec *> out_kernels,
+int SubGraphKernel::UpdateInOutTensors(KernelExec *in_kernel, const std::vector<KernelExec *> &out_kernels,
                                        lite::Tensor *in_tensor, lite::Tensor *out_tensor, bool keep_input) {
   auto reserve_input = (keep_input && !lite::IsContain(out_tensors(), out_tensor)) ||
                        (!keep_input && lite::IsContain(in_tensors(), in_tensor));
   if (reserve_input) {
     for (const auto &post_kernel : out_kernels) {
       CHECK_NULL_RETURN(post_kernel);
-      auto index = post_kernel->FindInTensorIndex(out_tensor);
-      post_kernel->set_in_tensor(in_tensor, index);
+      auto indexes = post_kernel->FindAllInTensorIndex(out_tensor);
+      for (auto &index : indexes) {
+        post_kernel->set_in_tensor(in_tensor, index);
+      }
     }
   } else {
     CHECK_NULL_RETURN(in_kernel);
@@ -323,8 +274,10 @@ int SubGraphKernel::UpdateInOutTensors(KernelExec *in_kernel, std::vector<Kernel
 
     for (const auto &out_kernel : in_kernel->out_kernels()) {
       if (lite::IsContain(out_kernel->in_tensors(), in_tensor)) {
-        auto input_index = out_kernel->FindInTensorIndex(in_tensor);
-        out_kernel->set_in_tensor(out_tensor, input_index);
+        auto input_indexes = out_kernel->FindAllInTensorIndex(in_tensor);
+        for (auto input_index : input_indexes) {
+          out_kernel->set_in_tensor(out_tensor, input_index);
+        }
       }
     }
   }

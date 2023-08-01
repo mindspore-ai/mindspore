@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_EXECUTOR_SUB_GRAPH_KERNEL_ADAPTER_GRAPH_H_
-#define MINDSPORE_LITE_SRC_EXECUTOR_SUB_GRAPH_KERNEL_ADAPTER_GRAPH_H_
-#ifdef ENABLE_DUMP
+#ifdef ENABLE_DRAW
+#ifndef MINDSPORE_LITE_SRC_COMMON_DRAW_ADAPTER_GRAPHS_SUB_GRAPH_KERNEL_ADAPTER_GRAPH_H_
+#define MINDSPORE_LITE_SRC_COMMON_DRAW_ADAPTER_GRAPHS_SUB_GRAPH_KERNEL_ADAPTER_GRAPH_H_
 
 #include <utility>
 #include <vector>
@@ -28,9 +28,10 @@
 #include "src/common/draw/adapter_graph.h"
 #include "src/common/draw/graphviz_graph_builder.h"
 #include "include/errorcode.h"
+#include "src/litert/kernel_exec_util.h"
 #include "src/executor/kernel_exec.h"
 #include "src/executor/sub_graph_kernel.h"
-#include "src/executor/drawer_mark_filter.h"
+#include "src/common/draw/adapter_graphs/drawer_mark_filter.h"
 
 namespace mindspore::lite {
 class KernelExecAdapterNode : public AdapterNode {
@@ -73,8 +74,14 @@ class SubGraphKernelAdapterGraph : public AdapterGraph {
   static std::shared_ptr<SubGraphKernelAdapterGraph> Create(const kernel::SubGraphKernel *graph,
                                                             const MarkFilter &mark_filter = nullptr) {
     auto adapter_graph = std::make_shared<SubGraphKernelAdapterGraph>(graph);
-    for (auto kernel : graph->immutable_nodes()) {
-      adapter_graph->nodes_.emplace_back(new KernelExecAdapterNode(kernel, mark_filter));
+    auto nodes = graph->immutable_nodes();
+    auto ret = kernel::KernelExecUtil::TopologicalSortNodes(&nodes);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "TopologicalSortNodes failed";
+      return nullptr;
+    }
+    for (auto node : nodes) {
+      adapter_graph->nodes_.emplace_back(new KernelExecAdapterNode(node, mark_filter));
     }
     return adapter_graph;
   }
@@ -114,5 +121,5 @@ std::shared_ptr<GVGraph> CreateGVGraph(const kernel::SubGraphKernel *graph, cons
 }
 }  // namespace mindspore::lite
 
+#endif  // MINDSPORE_LITE_SRC_COMMON_DRAW_ADAPTER_GRAPHS_SUB_GRAPH_KERNEL_ADAPTER_GRAPH_H_
 #endif
-#endif  // MINDSPORE_LITE_SRC_EXECUTOR_SUB_GRAPH_KERNEL_ADAPTER_GRAPH_H_

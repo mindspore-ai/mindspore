@@ -48,7 +48,8 @@ int TransposeBaseCPUKernel::ReSize() {
     MS_LOG(ERROR) << "Do transpose reset failed.";
     return ret;
   }
-  is_valid_ = in_tensors_[FIRST_INPUT]->shape().size() == static_cast<size_t>(param_->num_axes_);
+  is_valid_ = in_tensors_[FIRST_INPUT]->shape().size() == static_cast<size_t>(param_->num_axes_) &&
+              in_tensors_[FIRST_INPUT]->shape().size() == param_->perm_size_;
   if (!is_valid_) {
     return RET_OK;
   }

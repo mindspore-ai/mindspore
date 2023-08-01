@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-#include "nnacl/infer/partial_infer.h"
+#include "nnacl/infer/invalid_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int PartialInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int InvalidInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
-  return NNACL_OK;
+  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (check_ret != NNACL_OK) {
+    return check_ret;
+  }
+  return NNACL_INFER_INVALID;
 }
 
-REG_INFER(Partial, PrimType_PartialFusion, PartialInferShape)
+REG_INFER(PartialFusion, PrimType_PartialFusion, InvalidInferShape)
+REG_INFER(Switch, PrimType_Switch, InvalidInferShape)
+REG_INFER(Call, PrimType_Call, InvalidInferShape)
+REG_INFER(SwitchLayer, PrimType_SwitchLayer, InvalidInferShape)

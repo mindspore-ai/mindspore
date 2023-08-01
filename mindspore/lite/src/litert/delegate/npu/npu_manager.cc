@@ -142,7 +142,7 @@ int NPUManager::StoreCache(const std::string &cache_om_name,
   if (cache_dir_.empty()) {
     return RET_OK;
   }
-  if (CreateDir(&cache_dir_) != RET_OK) {
+  if (CreateDir(cache_dir_) != RET_OK) {
     MS_LOG(ERROR) << "Create cache_file folder failed.";
     return RET_ERROR;
   }

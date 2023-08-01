@@ -59,6 +59,7 @@ int ResetTransposeStatus(TransposeStruct *transpose) {
   transpose->num_axes_ = 0;
   if (transpose->base_.in_size_ == C2NUM) {
     transpose->num_axes_ = GetElementNum(transpose->base_.in_[SECOND_INPUT]);
+    transpose->perm_size_ = transpose->base_.in_[SECOND_INPUT]->shape_[0];
   }
 
   TensorC *in_tensor = transpose->base_.in_[FIRST_INPUT];
@@ -281,8 +282,8 @@ int TransposeResize(struct KernelBase *self) {
   if (ret != NNACL_OK) {
     return ret;
   }
-
-  transpose->is_valid_ = (int)transpose->base_.in_[FIRST_INPUT]->shape_size_ == transpose->num_axes_;
+  transpose->is_valid_ = (int)transpose->base_.in_[FIRST_INPUT]->shape_size_ == transpose->num_axes_ &&
+                         (int)transpose->base_.in_[FIRST_INPUT]->shape_size_ == transpose->perm_size_;
   if (!transpose->is_valid_) {
     return NNACL_OK;
   }
@@ -312,6 +313,23 @@ int TransposeResize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
+int TransposePrepare(struct KernelBase *self) {
+  int ret = DefaultPrepare1In1Out(self);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+  TransposeStruct *transpose = (TransposeStruct *)self;
+  TransposeParameter *param = (TransposeParameter *)transpose->base_.param_;
+  if (param->perm_size_ > INT32_MAX) {
+    return NNACL_TRANSPOSE_PERM_DIMS_INVALID;
+  }
+  transpose->perm_size_ = (int)param->perm_size_;
+  for (int i = 0; i < transpose->perm_size_; i++) {
+    transpose->perm_[i] = param->perm_[i];
+  }
+  return NNACL_OK;
+}
+
 KernelBase *CreateTranspose(OpParameter *param, int data_type) {
   TransposeStruct *transpose = (TransposeStruct *)malloc(sizeof(TransposeStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(transpose);
@@ -319,7 +337,7 @@ KernelBase *CreateTranspose(OpParameter *param, int data_type) {
   transpose->optimize_ = TransposeDimsFp32;
   transpose->compute_ = DoTransposeFp32;
   transpose->base_.Release = DefaultRelease;
-  transpose->base_.Prepare = DefaultPrepare1In1Out;
+  transpose->base_.Prepare = TransposePrepare;
   transpose->base_.Resize = TransposeResize;
   transpose->base_.Compute = TransposeCompute;
 #ifdef ENABLE_FP16

@@ -146,10 +146,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
 
     add_subdirectory(${LITE_DIR}/src/executor unified_executor)
 
-    # add_dependencies(mindspore-extendrt lite-unified-executor)
-    # target_link_libraries(mindspore-extendrt lite-unified-executor)
-    # target_link_libraries(mindspore-extendrt_static lite-unified-executor)
-
     if(NOT PLATFORM_ARM)
         add_dependencies(mindspore-extendrt _mindspore_cpu_kernel_mod_depend_obj
                 mindspore-lite-proto mindspore::dnnl)
@@ -209,6 +205,11 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     if(MSLITE_ENABLE_CONVERTER)
         add_subdirectory(convert)
         target_link_libraries(mindspore-extendrt -Wl,--no-as-needed mindspore_converter)
+    endif()
+
+    if(MSLITE_EXPORT_COMPUTE_IR)
+        target_link_libraries(mindspore-extendrt mindspore_lite_drawer)
+        target_link_libraries(mindspore-extendrt_static mindspore_lite_drawer)
     endif()
 
     set(TEST_CLOUD_INFER off)

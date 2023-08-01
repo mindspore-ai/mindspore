@@ -100,7 +100,6 @@
 #include "nnacl/infer/non_max_suppression_infer.h"
 #include "nnacl/infer/one_hot_infer.h"
 #include "nnacl/infer/pad_infer.h"
-#include "nnacl/infer/partial_infer.h"
 #include "nnacl/infer/pooling_grad_infer.h"
 #include "nnacl/infer/pooling_infer.h"
 #include "nnacl/infer/power_infer.h"
@@ -122,6 +121,7 @@
 #include "nnacl/infer/scatter_nd_update_infer.h"
 #include "nnacl/infer/select_infer.h"
 #include "nnacl/infer/sgd_infer.h"
+#include "nnacl/infer/invalid_infer.h"
 #ifndef RUNTIME_PASS_CLIP
 #include "nnacl/infer/shape_fusion_infer.h"
 #endif
@@ -199,7 +199,7 @@ void RegAllInferFunc1() {
   g_infer_func[PrimType_BinaryCrossEntropy] = BinaryCrossEntropyInferShape;
   g_infer_func[PrimType_BinaryCrossEntropyGrad] = CommonInferShape;
   g_infer_func[PrimType_BroadcastTo] = BroadcastToInferShape;
-  g_infer_func[PrimType_Call] = NULL;
+  g_infer_func[PrimType_Call] = InvalidInferShape;
   g_infer_func[PrimType_Cast] = CastInferShape;
   g_infer_func[PrimType_Ceil] = CommonInferShape;
   g_infer_func[PrimType_Clip] = CommonInferShape;
@@ -295,7 +295,7 @@ void RegAllInferFunc3() {
   g_infer_func[PrimType_MaximumGrad] = MaxMinGradInferShape;
   g_infer_func[PrimType_MaxPoolFusion] = PoolingInferShape;
   g_infer_func[PrimType_MaxPoolGrad] = PoolingGradInferShape;
-  g_infer_func[PrimType_Merge] = NULL;
+  g_infer_func[PrimType_SwitchLayer] = InvalidInferShape;
   g_infer_func[PrimType_Mfcc] = MfccInferShape;
   g_infer_func[PrimType_MIN] = NULL;
   g_infer_func[PrimType_Minimum] = ArithmeticInferShape;
@@ -313,7 +313,7 @@ void RegAllInferFunc3() {
   g_infer_func[PrimType_OneHot] = OneHotInferShape;
   g_infer_func[PrimType_OnesLike] = NULL;
   g_infer_func[PrimType_PadFusion] = PadInferShape;
-  g_infer_func[PrimType_PartialFusion] = PartialInferShape;
+  g_infer_func[PrimType_PartialFusion] = InvalidInferShape;
   g_infer_func[PrimType_PowerGrad] = CommonGradInferShape;
   g_infer_func[PrimType_PowFusion] = PowerInferShape;
   g_infer_func[PrimType_PReLUFusion] = CommonInferShape;
@@ -381,7 +381,7 @@ void RegAllInferFunc4() {
 }
 
 void RegAllInferFunc5() {
-  g_infer_func[PrimType_Switch] = NULL;
+  g_infer_func[PrimType_Switch] = InvalidInferShape;
 #ifdef MSLITE_ENABLE_CONTROLFLOW
   g_infer_func[PrimType_TensorArray] = TensorArrayInferShape;
   g_infer_func[PrimType_TensorArrayRead] = TensorArrayReadInferShape;

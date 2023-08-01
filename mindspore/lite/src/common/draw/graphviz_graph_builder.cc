@@ -76,14 +76,14 @@ std::shared_ptr<GVGraph> GVGraphBuilder::Build(const std::shared_ptr<AdapterGrap
     auto node_label = GetNodeLabel(*node);
     for (size_t i = 0; i < node->InputSize(); i++) {
       auto in_tensor = node->GetInput(i);
-      if (in_tensor->IsConst()) {
+      if (GetBelongingGVNode(in_tensor).first == nullptr) {
+        if (!in_tensor->IsConst()) {
+          MS_LOG(WARNING) << "The " << i << "th input of " << node->GetName()
+                          << " is neither a const tensor nor an output of other node. Treat it as a weight node.";
+        }
         auto tensor_id = node_id + "_in_" + std::to_string(i);
         auto tensor_label = node_label + "_in_" + std::to_string(i);
-        auto ret = this->AppendWeightNode(*in_tensor, tensor_id, tensor_label);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Create and append " << i << "th  weight node of " << node->GetName() << " failed.";
-          return nullptr;
-        }
+        AppendWeightNode(*in_tensor, tensor_id, tensor_label);
       }
     }
     auto ret = this->AppendComputeNode(*node);
@@ -166,16 +166,11 @@ std::string TensorDataString(const lite::Tensor &tensor) {
 }
 }  // namespace
 
-int GVGraphBuilder::AppendWeightNode(const lite::Tensor &tensor, const std::string &id, const std::string &label) {
-  if (MS_UNLIKELY(!tensor.IsConst())) {
-    MS_LOG(ERROR) << "Input `tensor` is not a const tensor.";
-    return RET_ERROR;
-  }
+void GVGraphBuilder::AppendWeightNode(const lite::Tensor &tensor, const std::string &id, const std::string &label) {
   auto gv_node = lite::GVNode::CreateWeight(id, label + TensorDataString(tensor), {id}, {GetTensorInfo(tensor)});
   MS_ASSERT(gv_node != nullptr);
   gv_graph_->AppendNode(gv_node);
   AppendOutTensorMap(&tensor, gv_node, 0);
-  return RET_OK;
 }
 
 int GVGraphBuilder::AppendComputeNode(const AdapterNode &node) {

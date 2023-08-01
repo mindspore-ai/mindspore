@@ -28,7 +28,6 @@
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "src/litert/cpu_info.h"
-#include "src/executor/drawer_mark_filter.h"
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 #include "nnacl/constant_of_shape_parameter.h"
 #endif
@@ -140,7 +139,7 @@ class SubGraphKernel : public KernelExec {
   void UpdateInOutKernels(KernelExec *in_kernel, std::vector<KernelExec *> out_kernels, KernelExec *in_post_kernel,
                           KernelExec *out_pre_kernel);
 
-  int UpdateInOutTensors(KernelExec *in_kernel, std::vector<KernelExec *> out_kernels, lite::Tensor *in_tensor,
+  int UpdateInOutTensors(KernelExec *in_kernel, const std::vector<KernelExec *> &out_kernels, lite::Tensor *in_tensor,
                          lite::Tensor *out_tensor, bool keep_input);
 
   int DeleteSingleWayNode(KernelExec *kernel, bool keep_input);
@@ -150,10 +149,6 @@ class SubGraphKernel : public KernelExec {
   inline void SetGraphChanged(bool flag) { graph_changed_ = flag; }
 
   int SubGraphSplitByOperator(KernelsArray *out_kernels);
-
-  void Draw(const std::string &path, const std::string &file_name,
-            const std::vector<schema::PrimitiveType> &mark_types = {}) const;
-  void Draw(const std::string &path, const std::string &file_name, const lite::MarkFilter &filter) const;
 
  protected:
   std::vector<KernelExec *> nodes_{};

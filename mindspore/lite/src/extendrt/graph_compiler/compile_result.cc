@@ -28,7 +28,6 @@
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "src/common/file_utils.h"
-#include "src/extendrt/graph_compiler/compile_result_adapter_graph.h"
 
 namespace mindspore {
 namespace lite {
@@ -127,19 +126,9 @@ CompileNode *CompileNode::Create(CNodePtr cnode) {
   return node;
 }
 
-void CompileNode::AppendInputTensor(InferTensor *tensor) {
-  if (tensor->tensor_name().empty()) {
-    tensor->set_tensor_name(this->name_ + "_in_" + std::to_string(this->inputs_.size()));
-  }
-  this->inputs_.emplace_back(tensor);
-}
+void CompileNode::AppendInputTensor(InferTensor *tensor) { this->inputs_.emplace_back(tensor); }
 
-void CompileNode::AppendOutputTensor(InferTensor *tensor) {
-  if (tensor->tensor_name().empty()) {
-    tensor->set_tensor_name(this->name_ + "_out_" + std::to_string(this->outputs_.size()));
-  }
-  this->outputs_.emplace_back(tensor);
-}
+void CompileNode::AppendOutputTensor(InferTensor *tensor) { this->outputs_.emplace_back(tensor); }
 
 std::string CompileNode::Dump(int indent) const {
   constexpr int kNumberTwo = 2;
@@ -248,15 +237,7 @@ StatusCode CompileResult::AppendTensor(InferTensor *tensor) {
     MS_LOG(ERROR) << "Input tensor is nullptr";
     return kLiteInputParamInvalid;
   }
-  const auto &tensor_name = tensor->tensor_name();
-  auto iter = tensor_map_.find(tensor_name);
-  if (iter != tensor_map_.end()) {
-    MS_LOG(ERROR) << "Duplicated tensor name : " << tensor_name;
-    return kLiteError;
-  }
   tensors_.emplace_back(tensor);
-  tensor_map_[tensor_name] = tensor;
-
   return kSuccess;
 }
 
@@ -267,10 +248,6 @@ StatusCode CompileResult::AppendInputTensor(InferTensor *tensor, bool is_borrow)
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "Input tensor is nullptr";
     return kLiteInputParamInvalid;
-  }
-  if (tensor->tensor_name().empty()) {
-    MS_LOG(ERROR) << "Input tensor has no name";
-    return kLiteError;
   }
   inputs_.emplace_back(tensor);
   if (!is_borrow) {
@@ -394,24 +371,6 @@ CompileResult::~CompileResult() {
     delete (node);
   }
   arg_nodes_.clear();
-}
-
-void CompileResult::Draw(const std::string &path, const std::string &file_name) const {
-#ifndef ENABLE_DUMP
-  MS_LOG(INFO) << "Dump is not enabled, please set env 'export MSLITE_ENABLE_DUMP=on' to enable dump.";
-#else
-  auto gv_graph = lite::CreateGVGraph(this);
-  if (gv_graph == nullptr) {
-    MS_LOG(ERROR) << "Create gv_graph failed.";
-    return;
-  }
-  auto write_path = lite::WriteStrToFile(path, file_name, gv_graph->Code());
-  if (write_path.empty()) {
-    MS_LOG(ERROR) << "Save dot to file failed.";
-  } else {
-    MS_LOG(INFO) << "Save dot to " << write_path << " successfully.";
-  }
-#endif
 }
 }  // namespace lite
 }  // namespace mindspore

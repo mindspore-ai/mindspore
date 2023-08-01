@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_NNACL_INVALID_INFER_H
+#define MINDSPORE_NNACL_INVALID_INFER_H
 
-#ifndef MINDSPORE_LITE_SRC_EXECUTOR_DRAWER_MARK_FILTER_H_
-#define MINDSPORE_LITE_SRC_EXECUTOR_DRAWER_MARK_FILTER_H_
+#include "nnacl/infer/common_infer.h"
 
-#include <functional>
-#include "src/executor/kernel_exec.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-namespace mindspore::lite {
-using MarkFilter = std::function<bool(const kernel::KernelExec &)>;
-}  // namespace mindspore::lite
+int InvalidInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                      OpParameter *parameter);
 
-#endif  // MINDSPORE_LITE_SRC_EXECUTOR_DRAWER_MARK_FILTER_H_
+#ifdef __cplusplus
+}
+#endif
+#endif  // MINDSPORE_NNACL_INVALID_INFER_H
