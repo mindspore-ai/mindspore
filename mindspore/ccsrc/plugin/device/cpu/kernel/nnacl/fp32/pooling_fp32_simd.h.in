@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,45 @@ static inline int MaxPoolingBatch@SIMD_INSTRUCTION@(int ci, const float *src_pla
     SIMD_ST_F32(dst_c_ptr, tmp_max);
   }
   return ci;
+}
+
+static inline int MaxPooling3D@SIMD_INSTRUCTION@(int c_idx, const float *src_batch_ptr, int channel, float *out,
+  int d_start, int d_end, int h_start, int h_end, int w_start, int w_end, int d_stride, int h_stride) {
+  for (int block_max_size = channel - BLOCK_NUM + 1; c_idx < block_max_size; c_idx += BLOCK_NUM) {
+    const float *src_c_ptr = src_batch_ptr + c_idx;
+    float *dst_c_ptr = out + c_idx;
+    SIMD_F32 tmp_max = SIMD_MOV_F32(-FLT_MAX);
+    for (int dd = d_start; dd < d_end; ++dd) {
+      for (int hh = h_start; hh < h_end; ++hh) {
+        for (int ww = w_start; ww < w_end; ++ww) {
+          const float *input = src_c_ptr + dd * d_stride + hh * h_stride + ww * channel;
+          tmp_max = SIMD_MAX_F32(SIMD_LD_F32(input), tmp_max);
+        }
+      }
+    }
+    SIMD_ST_F32(dst_c_ptr, tmp_max);
+  }
+  return c_idx;
+}
+
+static inline int AvgPooling3D@SIMD_INSTRUCTION@(int c_idx, const float *src_batch_ptr, int channel, float *out,
+  int d_start, int d_end, int h_start, int h_end, int w_start, int w_end, int d_stride, int h_stride, int divisor) {
+  for (int block_max_size = channel - BLOCK_NUM + 1; c_idx < block_max_size; c_idx += BLOCK_NUM) {
+    const float *src_c_ptr = src_batch_ptr + c_idx;
+    float *dst_c_ptr = out + c_idx;
+    SIMD_F32 tmp_avg = SIMD_SET0_F32;
+    for (int dd = d_start; dd < d_end; ++dd) {
+      for (int hh = h_start; hh < h_end; ++hh) {
+        for (int ww = w_start; ww < w_end; ++ww) {
+          const float *input = src_c_ptr + dd * d_stride + hh * h_stride + ww * channel;
+          tmp_avg = SIMD_ADD_F32(SIMD_LD_F32(input), tmp_avg);
+        }
+      }
+    }
+    tmp_avg = SIMD_DIV_F32(tmp_avg, SIMD_MOV_F32(divisor));
+    SIMD_ST_F32(dst_c_ptr, tmp_avg);
+  }
+  return c_idx;
 }
 
 @SIMD_INSTRUCTION_END@

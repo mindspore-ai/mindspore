@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+static inline void transpose_tail(const float *from, float *to, int j_start, int j_end, int i_start, int i_end,
+                                  int j_stride, int i_stride) {
+  // write consecutively
+  for (int j = j_start; j < j_end; j++) {
+    for (int i = i_start; i < i_end; i++) {
+      to[j * j_stride + i] = from[i * i_stride + j];
+    }
+  }
+}
+void TransposeFp32(const void *src, void *dst, int batches, int channel, int plane, int start, int end);
 void PackHWCToWHC(const float *src, float *dst, int height, int width, int channel);
 void PackNHWCToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNCHWToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int channel);

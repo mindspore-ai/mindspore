@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -632,4 +632,155 @@ int MaxPoolingFromNC4HW4ToNHWC(const float *input_ptr, float *output_ptr, const 
     }
   }
   return NNACL_OK;
+}
+
+void MaxPooling3D_NDHWC(const float *input_ptr, float *output_ptr, const Pooling3DParameter *pooling_param,
+                        const Pooling3DComputeParam *pooling_args, int start, int end) {
+  // Access structure members in declaration order
+  int in_size_w = pooling_args->pooling_compute_param_.input_w_;
+  int in_size_h = pooling_args->pooling_compute_param_.input_h_;
+  int batch = pooling_args->pooling_compute_param_.input_batch_;
+  int channel = pooling_args->pooling_compute_param_.input_channel_;
+  int out_size_w = pooling_args->pooling_compute_param_.output_w_;
+  int out_size_h = pooling_args->pooling_compute_param_.output_h_;
+  int in_size_d = pooling_args->input_d_;
+  int out_size_d = pooling_args->output_d_;
+
+  int kernel_w = pooling_param->pooling_parameter_.window_w_;
+  int kernel_h = pooling_param->pooling_parameter_.window_h_;
+  int stride_w = pooling_param->pooling_parameter_.stride_w_;
+  int stride_h = pooling_param->pooling_parameter_.stride_h_;
+  int pad_l_h = pooling_param->pooling_parameter_.pad_u_;
+  int pad_l_w = pooling_param->pooling_parameter_.pad_l_;
+  int kernel_d = pooling_param->window_d_;
+  int stride_d = pooling_param->stride_d_;
+  int pad_l_d = pooling_param->pad_f_;
+
+  int n_stride = in_size_d * in_size_h * in_size_w * channel;
+  int d_stride = in_size_h * in_size_w * channel;
+  int h_stride = in_size_w * channel;
+
+  int n = 0, d = 0, h = 0, w = 0;
+  const int parallel_dims = 4;  // parallel on N/D/H/W four dims
+  offset_to_index_init(start, parallel_dims * VA_ARG_TUPLE_LEN, &w, out_size_w, &h, out_size_h, &d, out_size_d, &n,
+                       batch);
+
+  for (int i = start; i < end; i++) {
+    int d_start = d * stride_d - pad_l_d;
+    int d_end = MSMIN(d_start + kernel_d, in_size_d);
+    d_start = MSMAX(d_start, 0);
+    int h_start = h * stride_h - pad_l_h;
+    int h_end = MSMIN(h_start + kernel_h, in_size_h);
+    h_start = MSMAX(h_start, 0);
+    int w_start = w * stride_w - pad_l_w;
+    int w_end = MSMIN(w_start + kernel_w, in_size_w);
+    w_start = MSMAX(w_start, 0);
+
+    const float *src_batch_ptr = input_ptr + n * n_stride;
+    float *out = output_ptr + i * channel;
+    int c_idx = 0;
+    SIMD_RUN_NO_SCALAR(MaxPooling3D, c_idx, src_batch_ptr, channel, out, d_start, d_end, h_start, h_end, w_start, w_end,
+                       d_stride, h_stride);
+    for (; c_idx < channel; ++c_idx) {
+      const float *src_c_ptr = src_batch_ptr + c_idx;
+      float *dst_c_ptr = out + c_idx;
+      float tmp_max = -FLT_MAX;
+      for (int dd = d_start; dd < d_end; ++dd) {
+        for (int hh = h_start; hh < h_end; ++hh) {
+          for (int ww = w_start; ww < w_end; ++ww) {
+            const float *input = src_c_ptr + dd * d_stride + hh * h_stride + ww * channel;
+            tmp_max = MSMAX(input[0], tmp_max);
+          }
+        }
+      }
+      dst_c_ptr[0] = tmp_max;
+    }
+    offset_to_index_step(parallel_dims * 2, &w, out_size_w, &h, out_size_h, &d, out_size_d, &n, batch);
+  }
+}
+
+void AvgPooling3D_NDHWC(const float *input_ptr, float *output_ptr, const Pooling3DParameter *pooling_param,
+                        const Pooling3DComputeParam *pooling_args, int start, int end) {
+  // Access structure members in declaration order
+  int in_size_w = pooling_args->pooling_compute_param_.input_w_;
+  int in_size_h = pooling_args->pooling_compute_param_.input_h_;
+  int batch = pooling_args->pooling_compute_param_.input_batch_;
+  int channel = pooling_args->pooling_compute_param_.input_channel_;
+  int out_size_w = pooling_args->pooling_compute_param_.output_w_;
+  int out_size_h = pooling_args->pooling_compute_param_.output_h_;
+  int in_size_d = pooling_args->input_d_;
+  int out_size_d = pooling_args->output_d_;
+
+  int kernel_w = pooling_param->pooling_parameter_.window_w_;
+  int kernel_h = pooling_param->pooling_parameter_.window_h_;
+  int stride_w = pooling_param->pooling_parameter_.stride_w_;
+  int stride_h = pooling_param->pooling_parameter_.stride_h_;
+  int pad_l_h = pooling_param->pooling_parameter_.pad_u_;
+  int pad_r_h = pooling_param->pooling_parameter_.pad_d_;
+  int pad_l_w = pooling_param->pooling_parameter_.pad_l_;
+  int pad_r_w = pooling_param->pooling_parameter_.pad_r_;
+  int kernel_d = pooling_param->window_d_;
+  int stride_d = pooling_param->stride_d_;
+  int pad_l_d = pooling_param->pad_f_;
+  int pad_r_d = pooling_param->pad_b_;
+  bool count_include_pad = pooling_param->count_include_pad_;
+  int divisor = pooling_param->divisor_override_;
+
+  int n_stride = in_size_d * in_size_h * in_size_w * channel;
+  int d_stride = in_size_h * in_size_w * channel;
+  int h_stride = in_size_w * channel;
+
+  const int d_max = in_size_d + pad_r_d;
+  const int h_max = in_size_h + pad_r_h;
+  const int w_max = in_size_w + pad_r_w;
+
+  int n = 0, d = 0, h = 0, w = 0;
+  const int parallel_dims = 4;  // parallel on N/D/H/W four dims
+  offset_to_index_init(start, parallel_dims * VA_ARG_TUPLE_LEN, &w, out_size_w, &h, out_size_h, &d, out_size_d, &n,
+                       batch);
+
+  for (int i = start; i < end; i++) {
+    int d_start = d * stride_d - pad_l_d;
+    int d_end = MSMIN(d_start + kernel_d, d_max);
+    int d_start2 = MSMAX(d_start, 0);
+    int d_end2 = MSMIN(d_end, in_size_d);
+    int h_start = h * stride_h - pad_l_h;
+    int h_end = MSMIN(h_start + kernel_h, h_max);
+    int h_start2 = MSMAX(h_start, 0);
+    int h_end2 = MSMIN(h_end, in_size_h);
+    int w_start = w * stride_w - pad_l_w;
+    int w_end = MSMIN(w_start + kernel_w, w_max);
+    int w_start2 = MSMAX(w_start, 0);
+    int w_end2 = MSMIN(w_end, in_size_w);
+
+    const float *src_batch_ptr = input_ptr + n * n_stride;
+    float *out = output_ptr + i * channel;
+
+    if (pooling_param->divisor_override_ == 0) {
+      if (count_include_pad) {
+        divisor = (d_end - d_start) * (h_end - h_start) * (w_end - w_start);
+      } else {
+        divisor = (d_end2 - d_start2) * (h_end2 - h_start2) * (w_end2 - w_start2);
+      }
+    }
+
+    int c_idx = 0;
+    SIMD_RUN_NO_SCALAR(AvgPooling3D, c_idx, src_batch_ptr, channel, out, d_start2, d_end2, h_start2, h_end2, w_start2,
+                       w_end2, d_stride, h_stride, divisor);
+    for (; c_idx < channel; ++c_idx) {
+      const float *src_c_ptr = src_batch_ptr + c_idx;
+      float *dst_c_ptr = out + c_idx;
+      float tmp_avg = 0;
+      for (int dd = d_start2; dd < d_end2; ++dd) {
+        for (int hh = h_start2; hh < h_end2; ++hh) {
+          for (int ww = w_start2; ww < w_end2; ++ww) {
+            const float *input = src_c_ptr + dd * d_stride + hh * h_stride + ww * channel;
+            tmp_avg = tmp_avg + input[0];
+          }
+        }
+      }
+      dst_c_ptr[0] = tmp_avg / (float)divisor;
+    }
+    offset_to_index_step(parallel_dims * 2, &w, out_size_w, &h, out_size_h, &d, out_size_d, &n, batch);
+  }
 }

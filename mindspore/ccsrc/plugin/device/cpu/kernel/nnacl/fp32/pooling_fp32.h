@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@ int AvgPoolingFromNC4HW4ToNHWC(const float *input_ptr, float *output_ptr, const 
                                const PoolingComputeParam *pooling_args, int task_id, int thread_num);
 int MaxPoolingFromNC4HW4ToNHWC(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param,
                                const PoolingComputeParam *pooling_args, int task_id, int thread_num);
+void MaxPooling3D_NDHWC(const float *input_ptr, float *output_ptr, const Pooling3DParameter *pooling_param,
+                        const Pooling3DComputeParam *pooling_args, int start, int end);
+void AvgPooling3D_NDHWC(const float *input_ptr, float *output_ptr, const Pooling3DParameter *pooling_param,
+                        const Pooling3DComputeParam *pooling_args, int start, int end);
 #ifdef __cplusplus
 }
 #endif

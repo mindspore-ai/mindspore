@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,35 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_UTILS_CPU_UTILS_H_
 
 #include <cmath>
+#include <utility>
 
 #include "mindspore/core/base/float16.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+inline T offset_to_index_init(T offset) {
+  return offset;
+}
+
+template <typename T, typename... Args>
+inline T offset_to_index_init(T offset, T *x, const T &X, Args &&... args) {
+  offset = offset_to_index_init(offset, std::forward<Args>(args)...);
+  *x = offset % X;
+  return offset / X;
+}
+
+inline bool offset_to_index_step() { return true; }
+
+template <typename T, typename... Args>
+inline bool offset_to_index_step(T *x, const T &X, Args &&... args) {
+  if (offset_to_index_step(std::forward<Args>(args)...)) {
+    *x = ((*x + 1) == X) ? 0 : (*x + 1);
+    return *x == 0;
+  }
+  return false;
+}
+
 // compatible with MSVC
 template <typename T>
 inline bool IsNan(T x) {

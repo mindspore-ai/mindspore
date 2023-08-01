@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -389,16 +389,17 @@ def avg_pool3d_forward_functional(nptype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_avg_pool3d_forward_float32_functional():
+@pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
+def test_avg_pool3d_forward_float32_functional(dtype):
     """
     Feature: test avg_pool3d forward.
     Description: test float32 inputs.
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    avg_pool3d_forward_functional(np.float32)
+    avg_pool3d_forward_functional(dtype)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    avg_pool3d_forward_functional(np.float32)
+    avg_pool3d_forward_functional(dtype)
 
 
 @pytest.mark.level0
@@ -417,4 +418,23 @@ def test_avgpool_cpu_dynamic_shape():
     x = np.random.randn(2, 32, 9, 9)
     output = net(Tensor(x, msdtype.float32))
     expect_out_shape = (2, 32, 4, 4)
+    assert output.asnumpy().shape == expect_out_shape
+
+
+@pytest.mark.parametrize("dtype", [msdtype.float32, msdtype.float16, msdtype.float64])
+def test_avgpool3d_cpu_dynamic_shape(dtype):
+    """
+    Feature: test dynamic shape of avgpool.
+    Description: test the dynamic shape output of avgpool.
+    Expectation: correct output shape.
+    """
+
+    x_dyn = Tensor(shape=[None, 32, None, None, None], dtype=dtype)
+    net = AvgPool(dim=3, kernel_size=2, strides=2, pad_mode="VALID")
+    net.set_inputs(x_dyn)
+    x = np.random.randn(2, 32, 9, 9, 9)
+    print("x: ", x.shape)
+    output = net(Tensor(x, dtype))
+    print("output: ", output.asnumpy().shape)
+    expect_out_shape = (2, 32, 4, 4, 4)
     assert output.asnumpy().shape == expect_out_shape
