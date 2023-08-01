@@ -443,15 +443,18 @@ void MsContext::CheckReadStatus(MsCtxParam param, const T &value) const {
 
 // Reset ms context. Only called in child process after fork occurs.
 void MsContext::ResetContext() {
-  MS_LOG(DEBUG) << "Reset context.";
+  MS_LOG(DEBUG) << "Reset context after fork.";
   // configs can be modified again.
   params_read_status_ = std::vector<bool>(
     static_cast<size_t>(MsCtxParam::NUM_BOOL_PARAMS + MsCtxParam::NUM_UINT32_PARAMS + MsCtxParam::NUM_INT_PARAMS +
                         MsCtxParam::NUM_FLOAT_PARAMS + MsCtxParam::NUM_STRING_PARAMS),
     false);
-  // set device_target to 'CPU' as default.
-  MS_LOG(INFO) << "Process " << getpid() << " config changed: 'device_target' is reset to 'CPU'.";
-  SetDeviceTargetFromUser("CPU");
+  std::string device_target_ = get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target_ != kCPUDevice) {
+    // set device_target to 'CPU' as default.
+    MS_LOG(INFO) << "Process " << getpid() << " config changed: 'device_target' is reset to 'CPU'.";
+    SetDeviceTargetFromUser("CPU");
+  }
 }
 
 bool MsContext::EnableAoeOnline() const {

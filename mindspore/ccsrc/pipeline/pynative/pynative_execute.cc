@@ -273,6 +273,16 @@ void PyNativeExecutor::SetDynamicInput(const py::object &cell) const {
   MS_LOG(INFO) << "Set dynamic shape by set inputs";
 }
 
+void PyNativeExecutor::ReinitAfterFork() {
+  MS_LOG(INFO) << "fork event detected in child process, PyNativeExecutor resources will be reinitialized.";
+  // reset ms context after fork
+  MsContext::GetInstance()->ResetContext();
+  // clear op cache after fork
+  OpCompiler::GetInstance().ClearAllCache();
+  // Reset ForwardExecuteor resources
+  forward_executor_->ClearRes();
+}
+
 void RegPyNativeExecutor(const py::module *m) {
   stub::RegStubNodes(m);
 
