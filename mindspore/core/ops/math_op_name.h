@@ -22,6 +22,7 @@ namespace mindspore {
 constexpr auto kAbsOpName = "Abs";
 constexpr auto kReduceStdOpName = "ReduceStd";
 constexpr auto kLogOpName = "Log";
+constexpr auto kLogGradOpName = "LogGrad";
 constexpr auto kLogitOpName = "Logit";
 constexpr auto kLogitGradOpName = "LogitGrad";
 constexpr auto kAddOpName = "Add";
@@ -58,6 +59,7 @@ constexpr auto kMatrixTriangularSolveOpName = "MatrixTriangularSolve";
 constexpr auto kSelfAdjointEigOpName = "SelfAdjointEig";
 constexpr auto kBernoulliOpName = "Bernoulli";
 constexpr auto kNegOpName = "Neg";
+constexpr auto kNegGradOpName = "NegGrad";
 constexpr auto kSincOpName = "Sinc";
 constexpr auto kCosOpName = "Cos";
 constexpr auto kSquareOpName = "Square";
