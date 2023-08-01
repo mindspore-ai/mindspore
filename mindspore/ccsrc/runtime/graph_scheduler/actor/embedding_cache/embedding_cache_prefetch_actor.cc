@@ -101,7 +101,7 @@ void GenerateDistributionParallel(size_t size, T *output, Args... args) {
   std::random_device rd;
   const std::uint64_t seed = rd();
 
-  // 1. Compute total thread number need to parallelly generate distribution and the size of new numbers that each
+  // 1. Compute total thread number need to parallel generate distribution and the size of new numbers that each
   // thread need to generate.
   // Once calculation of the normal distribution may produce two random values, so each thread should be responsible for
   // producing an even number of random numbers, except for the last thread.
@@ -218,6 +218,7 @@ void EmbeddingCachePrefetchActor::IncreaseGraphStep(const std::string &channel_n
         !error_info_.empty() ? error_info_ : "Embedding cache prefetch actor is finalized abnormally.";
       MS_LOG(EXCEPTION) << error_info;
     }
+    distributed::EmbeddingCacheTableManager::GetInstance().WaitForWarmUpHostCacheComplete();
     MS_LOG(INFO) << "Graph running waiting embedding table init end.";
   }
   graph_step_++;
@@ -623,16 +624,15 @@ bool EmbeddingCachePrefetchActor::PullEembeddingsFromRemote(int32_t param_key, c
   return true;
 }
 
-bool EmbeddingCachePrefetchActor::PushEmbeddingsToRemote(int32_t param_key, const int *ids, size_t ids_num,
-                                                         const float *embeddings, size_t embeddings_len) {
-  MS_ERROR_IF_NULL(ids);
-  MS_ERROR_IF_NULL(embeddings);
-
+bool EmbeddingCachePrefetchActor::DoPushEmbeddingsToRemote(int32_t param_key, const int *ids, size_t ids_num,
+                                                           const float *embeddings, size_t embeddings_len) {
+  MS_LOG(DEBUG) << "Enter DoPushEmbeddingsToRemote - param_key : " << param_key << ", ids : " << ids
+                << ", ids_num : " << ids_num << ", embeddings : " << embeddings
+                << ", embeddings_len : " << embeddings_len << ".";
   if (ids_num == 0) {
-    MS_LOG(WARNING) << "The ids number is 0";
-    return true;
+    MS_LOG(ERROR) << "Invalidate ids num : 0.";
+    return false;
   }
-
   std::vector<std::vector<int>> slice_ids_list(server_num_);
   std::vector<std::vector<float>> slice_embeddings_list(server_num_);
   // 1. Partition ids end embeddings by remote embedding slice bound.
@@ -654,7 +654,44 @@ bool EmbeddingCachePrefetchActor::PushEmbeddingsToRemote(int32_t param_key, cons
                    slice_ids.size() * sizeof(int), slice_embeddings.data(), slice_embeddings.size() * sizeof(float)),
       "Send ids and embeddings to server failed.");
   }
+  MS_LOG(DEBUG) << "Exit DoPushEmbeddingsToRemote.";
+  return true;
+}
 
+bool EmbeddingCachePrefetchActor::PushEmbeddingsToRemote(int32_t param_key, const int *ids, size_t ids_num,
+                                                         const float *embeddings, size_t embeddings_len) {
+  MS_EXCEPTION_IF_NULL(ids);
+  MS_EXCEPTION_IF_NULL(embeddings);
+  MS_EXCEPTION_IF_CHECK_FAIL(ids_num != 0, "The ids_num is 0.");
+
+  const auto ids_boundary = ids + ids_num;
+  const auto embeddings_boundary = embeddings + embeddings_len / sizeof(float);
+  MS_LOG(DEBUG) << "Enter PushEmbeddingsToRemote - param_key : " << param_key << ", ids : " << ids
+                << ", ids_num : " << ids_num << ", embeddings : " << embeddings
+                << ", embeddings_len : " << embeddings_len << ", ids_boundary : " << ids_boundary
+                << ", embeddings_boundary : " << embeddings_boundary << ".";
+  const size_t embeddings_num = embeddings_len / sizeof(float);
+  const size_t embeddings_dim = embeddings_num / ids_num;
+  MS_EXCEPTION_IF_CHECK_FAIL(embeddings_dim != 0, "The embeddings_dim is 0.");
+  // Max batch size : 128Mb.
+  const size_t max_batch_size = 1 << 27;
+  const size_t batch_num = max_batch_size / embeddings_dim;
+  MS_EXCEPTION_IF_CHECK_FAIL(batch_num != 0, "The batch_num is 0.");
+  size_t batch_size = ids_num / batch_num;
+  size_t batch_remainder = ids_num % batch_num;
+  if (batch_remainder != 0) {
+    batch_size++;
+  }
+  MS_LOG(DEBUG) << "batch_size : " << batch_size << ", batch_num << : " << batch_num
+                << ", batch_remainder : " << batch_remainder << ".";
+  for (size_t count = 0; count != batch_size; count++) {
+    auto batch_ids = ids + batch_num * count;
+    size_t batch_ids_num = (count != batch_size - 1) ? batch_num : batch_remainder;
+    auto batch_embeddings = embeddings + batch_num * count * embeddings_dim;
+    size_t batch_embeddings_len = batch_ids_num * embeddings_dim * sizeof(float);
+    (void)DoPushEmbeddingsToRemote(param_key, batch_ids, batch_ids_num, batch_embeddings, batch_embeddings_len);
+  }
+  MS_LOG(DEBUG) << "Exit PushEmbeddingsToRemote.";
   return true;
 }
 

@@ -59,6 +59,8 @@ from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices, _is_in_auto_parallel_mode
 from mindspore.parallel._parallel_serialization import _convert_to_list, _convert_to_layout, _build_searched_strategy, \
     _restore_group_info_list
+from mindspore.parallel._ps_context import _set_checkpoint_load_status, _store_warm_up_ptr_by_tensor, \
+    _store_warm_up_ptr_by_tensor_list, _cache_enable
 from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
     split_mindir
@@ -427,7 +429,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                 continue
             if choice_func is not None and not choice_func(param.name):
                 continue
-            param_dict[param.name] = param
+            # Add suffix for cache_enabled parameter, and then parameter can carry key info.
+            # Notice that suffix needs be removed when loading into net.
+            if param.cache_enable:
+                param_dict[param.name + ".__param_key__" + str(param.key)] = param
+            else:
+                param_dict[param.name] = param
         param_list = []
         if append_dict and "random_op" in append_dict:
             phase = 'train' + '.' + str(save_obj.create_time) + '.' + str(id(save_obj)) + '.' + save_obj.arguments_key
@@ -979,8 +986,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                     choice_func is not None and not choice_func(element.tag):
                 continue
             if element.tensor.ByteSize() == 0:
-                _load_map_parameter(checkpoint_list, element, element_id,
-                                    map_data_list, map_shape_list, parameter_dict)
+                _load_map_parameter(checkpoint_list, element, element_id, map_data_list, map_shape_list, parameter_dict)
                 if element.tag in parameter_dict:
                     map_data_list = [[], [], []]
                     map_shape_list = [0, 0, 0]
@@ -1024,8 +1030,12 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         raise ValueError(f"The loaded parameter dict is empty after filter or specify, please check whether "
                          f"'filter_prefix' or 'specify_prefix' are set correctly.")
 
+    if _warm_up_host_cache_enabled(parameter_dict):
+        (is_worker, net_dict, warm_up_dict) = _warm_up_host_cache(parameter_dict, net)
     if net is not None:
         load_param_into_net(net, parameter_dict, strict_load)
+    if _warm_up_host_cache_enabled(parameter_dict):
+        _warm_up_host_cache_post_process(is_worker, net_dict, warm_up_dict)
 
     return parameter_dict
 
@@ -1061,7 +1071,7 @@ def _load_map_parameter(checkpoint_list, element, element_id, map_data_list,
 
 
 def _check_ckpt_file_name(ckpt_file_name):
-    """Check function load_checkpoint's cket_file_name."""
+    """Check function load_checkpoint's ckpt_file_name."""
     if not isinstance(ckpt_file_name, str):
         raise TypeError("For 'load_checkpoint', the argument 'ckpt_file_name' must be string, "
                         "but got {}.".format(type(ckpt_file_name)))
@@ -1219,6 +1229,9 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
             if isinstance(param, MapParameter):
                 param.import_data(parameter_dict[param.name])
                 continue
+            # Add has attr protection when load server checkpoint file on worker.
+            if not hasattr(parameter_dict[param.name], "data"):
+                continue
             new_param = copy.deepcopy(parameter_dict[param.name])
             _update_param(param, new_param, strict_load)
             ckpt_not_load.remove(param.name)
@@ -1242,6 +1255,68 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         for param_name in param_not_load:
             logger.warning("{} is not loaded.".format(param_name))
     return param_not_load, ckpt_not_load
+
+
+def _warm_up_host_cache_enabled(parameter_dict):
+    """Warm up host cache enabled."""
+    if _cache_enable():
+        return True
+    for key in parameter_dict.keys():
+        if key.find(".__param_key__") != -1:
+            raise ValueError("Parameter cache is not enabled, but checkpoint is config with cache enabled."
+                             " Please enable parameter cache and retry.")
+    return False
+
+
+def _warm_up_host_cache(parameter_dict, net):
+    """Warm up host cache."""
+    ms_role = os.getenv("MS_ROLE")
+    is_worker = ms_role == "MS_WORKER"
+    warm_up_dict = {}
+    if is_worker:
+        net.init_parameters_data()
+        net_dict = {}
+        for name, value in net.parameters_and_names():
+            net_dict[name] = value
+        for param_name, value in parameter_dict.items():
+            pos = param_name.find(".__param_key__")
+            if pos != -1:
+                net_param_name = param_name[:pos]
+                warm_up_dict[param_name] = net_param_name
+                net_value = None
+                if net_param_name not in net_dict:
+                    logger.warning("net param name : %s is not in net", net_param_name)
+                else:
+                    net_value = net_dict.get(net_param_name, None)
+                pos += len(".__param_key__")
+                param_key = int(param_name[pos:])
+                value_is_map_parameter = isinstance(value, list) and len(value) == 3
+                if value_is_map_parameter and (net_value is None or isinstance(net_value, Parameter)):
+                    key_tensor = Tensor.from_numpy(value[0])
+                    value_tensor = Tensor.from_numpy(value[1])
+                    status_tensor = Tensor.from_numpy(value[2])
+                    _store_warm_up_ptr_by_tensor_list(param_key, key_tensor, value_tensor, status_tensor)
+                elif not isinstance(value, list) and isinstance(net_value, Parameter):
+                    _store_warm_up_ptr_by_tensor(param_key, value)
+                else:
+                    logger.warning("Unknown matches parameter type %s and net_value %s", type(value), type(net_value))
+    else:
+        for param_name, value in parameter_dict.items():
+            pos = param_name.find(".__param_key__")
+            if pos != -1:
+                net_param_name = param_name[:pos]
+                warm_up_dict[param_name] = net_param_name
+    for key, value in warm_up_dict.items():
+        parameter_dict[value] = parameter_dict[key]
+        parameter_dict.pop(key)
+    return (is_worker, parameter_dict, warm_up_dict)
+
+
+def _warm_up_host_cache_post_process(is_worker, net_dict, warm_up_dict):
+    """Warm up host cache post process."""
+    if is_worker:
+        net_dict.update(warm_up_dict)
+    _set_checkpoint_load_status(True)
 
 
 def _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_load):

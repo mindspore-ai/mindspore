@@ -67,7 +67,9 @@ bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_ste
       host_to_device_index[statistics_info_->host_to_device_size_ - 1] = index;
 
       // This feature id has never been seen before, so it's value is initialized using the local random generator.
-      if (initialized_ids_.find(id) == initialized_ids_.end()) {
+      // Initialize with random value when checkpoint has not been loaded.
+      if (!embedding_cache_table_manager.checkpoint_load_status() &&
+          initialized_ids_.find(id) == initialized_ids_.end()) {
         int *new_id_index = embedding_cache_table_manager.embedding_host_cache_->new_id_index.get();
         MS_ERROR_IF_NULL(new_id_index);
         new_id_index[statistics_info_->new_id_size_++] = index;

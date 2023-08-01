@@ -22,6 +22,7 @@
 #include <memory>
 #include "include/backend/distributed/ps/constants.h"
 #include "include/backend/visible.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace ps {
@@ -122,6 +123,13 @@ class BACKEND_EXPORT PSContext {
 
   // Whether distributed MindRT is enabled.
   bool enable_distributed_mindrt() const;
+
+  void set_checkpoint_load_status(bool status);
+
+  int32_t StoreWarmUpPtrByTensor(int32_t param_key, const tensor::TensorPtr &tensor_ptr);
+
+  int32_t StoreWarmUpPtrByTensorList(int32_t param_key, const tensor::TensorPtr &key_ptr,
+                                     const tensor::TensorPtr &value_ptr, const tensor::TensorPtr &status_ptr);
 
  private:
   PSContext();
