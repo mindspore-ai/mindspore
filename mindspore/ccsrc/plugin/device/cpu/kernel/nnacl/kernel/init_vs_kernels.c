@@ -26,6 +26,7 @@
 #include "nnacl/kernel/clip.h"
 #include "nnacl/kernel/concat.h"
 #include "nnacl/kernel/crop.h"
+#include "nnacl/kernel/crop_and_resize.h"
 #include "nnacl/kernel/exp.h"
 #include "nnacl/kernel/depth_to_space.h"
 #include "nnacl/kernel/fill.h"
@@ -173,6 +174,7 @@ void InitVSKernelA(KernelCreator **creators) {
   creators[PrimType_Concat][REGIST_DT(kNumberTypeFloat32)] = CreateConcat;
   creators[PrimType_Crop][REGIST_DT(kNumberTypeInt32)] = CreateCrop;
   creators[PrimType_Crop][REGIST_DT(kNumberTypeFloat32)] = CreateCrop;
+  creators[PrimType_CropAndResize][REGIST_DT(kNumberTypeFloat32)] = CreateCropAndResize;
   creators[PrimType_DepthToSpace][REGIST_DT(kNumberTypeFloat32)] = CreateDepthToSpace;
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;

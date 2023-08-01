@@ -50,7 +50,7 @@ int PrepareCropAndResizeBilinear(const int32_t *input_shape, const float *boxes,
                                  int32_t *x_rights, float *y_bottom_weights, float *x_left_weights);
 
 int CropAndResizeBilinear(const float *input_data, float *output_data, const int32_t *box_idx, const float *boxes,
-                          const CropAndResizeParameter *param, const int32_t *input_shape, const int32_t *output_shape,
+                          float extrapolation_value, const int32_t *input_shape, const int32_t *output_shape,
                           const int32_t *y_bottoms, const int32_t *y_tops, const int32_t *x_lefts,
                           const int32_t *x_rights, const float *y_bottom_weights, const float *x_left_weights,
                           float *line0, float *line1, const int h_begin, const int h_end);
