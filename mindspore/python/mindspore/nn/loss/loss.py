@@ -51,7 +51,7 @@ class LossBase(Cell):
             - ``'sum'``: the output elements will be summed.
 
     Raises:
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -184,7 +184,7 @@ class L1Loss(LossBase):
     .. math::
         \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
 
-    where :math:`N` is the batch size. If `reduction` is not 'none', then:
+    where :math:`N` is the batch size. If `reduction` is not ``'none'``, then:
 
     .. math::
         \ell(x, y) =
@@ -211,7 +211,7 @@ class L1Loss(LossBase):
         Tensor, data type is float.
 
     Raises:
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If `logits` and `labels` have different shapes and cannot be broadcasted to each other.
 
     Supported Platforms:
@@ -257,7 +257,7 @@ class MSELoss(LossBase):
     .. math::
         \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with} \quad l_n = (x_n - y_n)^2.
 
-    where :math:`N` is the batch size. If `reduction` is not 'none', then:
+    where :math:`N` is the batch size. If `reduction` is not ``'none'``, then:
 
     .. math::
         \ell(x, y) =
@@ -281,11 +281,11 @@ class MSELoss(LossBase):
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, loss of type float, the shape is zero if `reduction` is 'mean' or 'sum',
+        Tensor, loss of type float, the shape is zero if `reduction` is ``'mean'`` or ``'sum'`` .,
         while the shape of output is the broadcasted shape if `reduction` is 'none'.
 
     Raises:
-        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
         ValueError: If `logits` and `labels` have different shapes and cannot be broadcasted.
 
     Supported Platforms:
@@ -400,7 +400,7 @@ class MAELoss(LossBase):
     .. math::
         \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
 
-    where :math:`N` is the batch size. If `reduction` is not 'none', then:
+    where :math:`N` is the batch size. If `reduction` is not ``'none'``, then:
 
     .. math::
         \ell(x, y) =
@@ -425,11 +425,11 @@ class MAELoss(LossBase):
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, weighted loss float tensor, the shape is zero if `reduction` is 'mean' or 'sum',
+        Tensor, weighted loss float tensor, the shape is zero if `reduction` is ``'mean'`` or ``'sum'`` .,
         while the shape of output is the broadcasted shape if `reduction` is 'none'.
 
     Raises:
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -494,7 +494,7 @@ class MarginRankingLoss(LossBase):
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_2, x_3, ..., x_R)`.
 
     Outputs:
-        Tensor or Scalar. if `reduction` is "none", its shape is the same as `labels`.
+        Tensor or Scalar. if `reduction` is ``"none"``, its shape is the same as `labels`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -504,7 +504,7 @@ class MarginRankingLoss(LossBase):
         TypeError: If the types of `input1` and `target` are inconsistent.
         ValueError: If the shape of `input1` and `input2` are inconsistent.
         ValueError: If the shape of `input1` and `target` are inconsistent.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` , ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -590,12 +590,12 @@ class SmoothL1Loss(LossBase):
         - **labels** (Tensor) - Ground truth data, same shape and dtype as the `logits`.
 
     Outputs:
-        Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `logits`.
+        Tensor, if `reduction` is ``'none'``, then output is a tensor with the same shape as `logits`.
         Otherwise the shape of output tensor is :math:`()`.
 
     Raises:
         TypeError: If `beta` is not a float.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         TypeError: If `logits` or `labels` are not Tensor.
         TypeError: If dtype of `logits` or `labels` is neither float16 not float32.
         TypeError: If dtype of `logits` is not the same as `labels`.
@@ -654,14 +654,14 @@ class SoftMarginLoss(LossBase):
         - **labels** (Tensor) - Ground truth data, with the same type and shape as `logits`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
+        Tensor or Scalar, if `reduction` is ``"none"``, its shape is the same as `logits`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `logits` or `labels` is not a Tensor.
         TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
         ValueError: If shape of `logits` is not the same as `labels`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -733,7 +733,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
         TypeError: If `sparse` is not a bool.
         TypeError: If `sparse` is True and dtype of `labels` is neither int32 not int64.
         TypeError: If `sparse` is False and dtype of `labels` is neither float16 not float32.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1005,13 +1005,13 @@ class SampledSoftmaxLoss(LossBase):
         - **logits** (Tensor) - Tensor of shape :math:`(N, dim)`. The forward activations of the input network.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor with shape :math:`(N,)`.
+        Tensor or Scalar, if `reduction` is ``'none'``, then output is a tensor with shape :math:`(N,)`.
         Otherwise, the output is a scalar.
 
     Raises:
         TypeError: If `sampled_values` is not a list or tuple.
         TypeError: If dtype of `labels` is neither int32 not int64.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If `num_sampled` or `num_true` is greater than `num_classes`.
         ValueError: If length of `sampled_values` is not equal to 3.
 
@@ -1257,7 +1257,7 @@ class TripletMarginWithDistanceLoss(LossBase):
           with the same type and shape as `x`.
 
     Outputs:
-        Union[Tensor, Scalar], if `reduction` is 'none', its shape is :math:`(N)`.
+        Union[Tensor, Scalar], if `reduction` is ``'none'``, its shape is :math:`(N)`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -1266,7 +1266,7 @@ class TripletMarginWithDistanceLoss(LossBase):
         ValueError: If dimensions of input `x`, `positive` and `negative` are less than or equal to 1 at the same time.
         ValueError: If length of shape of `margin` is not 0.
         ValueError: If shape of `x`, `positive` and `negative` cannot broadcast.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1361,7 +1361,7 @@ class PoissonNLLLoss(LossBase):
         - **target** (Tensor) - The label Tensor which has the same shape as `input`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input`.
+        Tensor or Scalar, if `reduction` is ``'none'``, then output is a tensor and has the same shape as `input`.
         Otherwise it is a scalar.
 
     Raises:
@@ -1452,7 +1452,7 @@ class MultiLabelSoftMarginLoss(LossBase):
         - **target** (Tensor) - The label target Tensor which has the same shape as `x`.
 
     Outputs:
-        Tensor, the data type is the same as x, if the reduction is 'none', its shape is (N), otherwise it is zero.
+        Tensor, the data type is the same as x, if the reduction is ``'none'``, its shape is (N), otherwise it is zero.
 
     Raises:
         ValueError: If the rank of `x` or `target` is not 2.
@@ -1517,7 +1517,7 @@ class MultiMarginLoss(LossBase):
           value of target should be non-negative, less than C. `target` is :math:`y` in the above formula.
 
     Outputs:
-        Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
+        Tensor, When `reduction` is ``'none'``, the shape is :math:`(N,)`.
         Otherwise, it is a scalar. Has the same data type with `x`.
 
     Raises:
@@ -1611,12 +1611,12 @@ class BCELoss(LossBase):
           of additional dimensions. The same shape and data type as `logits`.
 
     Outputs:
-        Tensor, has the same dtype as `logits`. if `reduction` is 'none', then it has the same shape as `logits`.
+        Tensor, has the same dtype as `logits`. if `reduction` is ``'none'``, then it has the same shape as `logits`.
         Otherwise, it is a scalar Tensor.
 
     Raises:
         TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 not float32.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If shape of `logits` is not the same as `labels` or `weight` (if given).
 
     Supported Platforms:
@@ -1691,12 +1691,12 @@ class CosineEmbeddingLoss(LossBase):
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `labels` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is "none", its shape is the same as `labels`.
+        Tensor or Scalar, if `reduction` is ``"none"``, its shape is the same as `labels`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `margin` is not a float.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If `margin` is not in range [-1, 1].
 
     Supported Platforms:
@@ -1786,7 +1786,7 @@ class MultilabelMarginLoss(LossBase):
           label targets padded by -1.
 
     Outputs:
-        - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
+        - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is ``"none"``, its shape
           is :math:`(N)`. Otherwise, a scalar value will be returned.
 
     Raises:
@@ -1795,7 +1795,7 @@ class MultilabelMarginLoss(LossBase):
         TypeError: If dtype of `target` is not int32.
         ValueError: If length of shape of `x` is neither 1 nor 2.
         ValueError: If shape of `x` is not the same as `target`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -1865,7 +1865,7 @@ class BCEWithLogitsLoss(LossBase):
           of additional dimensions. The same shape and data type as `logits`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', its shape is the same as `logits`.
+        Tensor or Scalar, if `reduction` is ``'none'``, its shape is the same as `logits`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -1875,7 +1875,7 @@ class BCEWithLogitsLoss(LossBase):
         TypeError: If data type of `weight` or `pos_weight` is neither float16 nor float32.
         TypeError: If data type of `reduction` is not string.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend``  ``GPU``  ``CPU``
@@ -1989,7 +1989,7 @@ class FocalLoss(LossBase):
           range [-:math:`C`, :math:`C`). Where :math:`C` is the number of classes in logits.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
+        Tensor or Scalar, if `reduction` is ``"none"``, its shape is the same as `logits`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -1997,7 +1997,7 @@ class FocalLoss(LossBase):
         TypeError: If `weight` is not a Tensor.
         ValueError: If `labels` dim is different from `logits`.
         ValueError: If `labels` channel is not 1 and `labels` shape is different from `logits`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend``
@@ -2091,7 +2091,7 @@ class HuberLoss(LossBase):
             delta * (|x_n - y_n| - 0.5 * delta), & \text{otherwise. }
         \end{cases}
 
-    where :math:`N` is the batch size. If `reduction` is not "none", then:
+    where :math:`N` is the batch size. If `reduction` is not ``"none"``, then:
 
     .. math::
         \ell(x, y) =
@@ -2118,7 +2118,7 @@ class HuberLoss(LossBase):
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `logits`.
+        Tensor or Scalar, if `reduction` is ``"none"``, return a Tensor with same shape and dtype as `logits`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -2126,7 +2126,7 @@ class HuberLoss(LossBase):
         TypeError: If data type of `logits` or `labels` are not the same.
         TypeError: If dtype of `delta` is neither float nor int.
         ValueError: If `delta` is less than or equal to 0.
-        ValueError: If `reduction` is not one of "none", "mean", "sum".
+        ValueError: If `reduction` is not one of ``"none"``, ``"mean"``, ``"sum"``.
         ValueError: If `logits` and `labels` have different shapes and cannot be broadcasted to each other.
 
     Supported Platforms:
@@ -2215,7 +2215,7 @@ class TripletMarginLoss(LossBase):
           Default: ``1.0`` .
 
     Outputs:
-        Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
+        Tensor. If `reduction` is ``"none"``, its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `x` or `positive` or 'negative' is not a Tensor.
@@ -2227,7 +2227,7 @@ class TripletMarginLoss(LossBase):
         ValueError: If the dimension of input `x` or `positive` or `negative` is bigger than or equal to 8.
         ValueError: If length of shape of `margin` is not 0.
         ValueError: If shape of `x`, `positive` and `negative` cannot broadcast.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``GPU``
@@ -2289,7 +2289,7 @@ class NLLLoss(LossBase):
     :math:`N` is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index,
     where :math:`C` is the number of classes.
 
-    If `reduction` is not 'none' (default 'mean'), then
+    If `reduction` is not ``'none'`` (default 'mean'), then
 
     .. math::
 
@@ -2324,7 +2324,7 @@ class NLLLoss(LossBase):
         TypeError: If `weight` is not a Tensor.
         TypeError: If `ignore_index` is not an int.
         TypeError: If the data type of `weight` is not float16 or float32.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         TypeError: If `logits` is not a Tensor.
         TypeError: If `labels` is not a Tensor.
 
@@ -2410,7 +2410,7 @@ class CrossEntropyLoss(LossBase):
       where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
       N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
 
-      If reduction is not 'none' (default 'mean'), then
+      If reduction is not ``'none'`` (default 'mean'), then
 
       .. math::
 
@@ -2432,7 +2432,7 @@ class CrossEntropyLoss(LossBase):
       where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
       N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
 
-      If reduction is not 'none' (default 'mean'), then
+      If reduction is not ``'none'`` (default 'mean'), then
 
       .. math::
 
@@ -2473,7 +2473,7 @@ class CrossEntropyLoss(LossBase):
         TypeError: If `weight` is not a Tensor.
         TypeError: If `ignore_index` is not an int.
         TypeError: If the data type of `weight` is not float16 or float32.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         TypeError: If `label_smoothing` is not a float.
         TypeError: If `logits` is not a Tensor.
         TypeError: If `labels` is not a Tensor.
@@ -2647,7 +2647,7 @@ class CTCLoss(LossBase):
         TypeError: If `zero_infinity` is not a bool, `reduction` is not string.
         TypeError: If the dtype of `log_probs` is not float or double.
         TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
-        ValueError: If `reduction` is not "none", "mean" or "sum".
+        ValueError: If `reduction` is not ``"none"``, ``"mean"`` or ``"sum"``.
         ValueError: If the value of `blank` is not in range [0, C). C is number of classes of `log_probs` .
         ValueError: If the shape of `log_probs` is :math:`(T, C)`, the dimension of `targets` is not 1 or 2.
         ValueError: If the shape of `log_probs` is :math:`(T, C)`, the first dimension of 2-D `target` is not 1.
@@ -2758,7 +2758,7 @@ class GaussianNLLLoss(LossBase):
         TypeError: If `full` is not a bool.
         TypeError: If `eps` is not a float.
         ValueError: If `eps` is not a float within (0, inf).
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2847,7 +2847,7 @@ class HingeEmbeddingLoss(LossBase):
         TypeError: If `labels` is not a Tensor.
         TypeError: If `margin` is not a float or int.
         ValueError: If `labels` does not have the same shape as `logits` or they could not broadcast to each other.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

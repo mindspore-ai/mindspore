@@ -32,6 +32,6 @@ mindspore.nn.SampledSoftmaxLoss
     异常：
         - **TypeError** - `sampled_values` 不是list或tuple。
         - **TypeError** - `labels` 的数据类型既不是int32，也不是int64。
-        - **ValueError** - `reduction` 不为'none'、'mean'或'sum'。
+        - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。
         - **ValueError** - `num_sampled` 或 `num_true` 大于 `num_classes` 。
         - **ValueError** - `sampled_values` 的长度不等于3。

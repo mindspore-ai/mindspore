@@ -27,7 +27,7 @@ class CosineSimilarity(Metric):
 
     Args:
         similarity (str): 'dot' or 'cosine'. Default: ``'cosine'`` .
-        reduction (str): 'none', 'sum', 'mean' (all along dim -1). Default: ``'none'`` .
+        reduction (str): ``'none'``, 'sum', ``'mean'`` (all along dim -1). Default: ``'none'`` .
         zero_diagonal (bool): If True,  diagonals of results will be set to zero. Default: ``True`` .
 
     Supported Platforms:

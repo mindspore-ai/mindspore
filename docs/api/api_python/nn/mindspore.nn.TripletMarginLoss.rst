@@ -52,4 +52,4 @@ mindspore.nn.TripletMarginLoss
         - **ValueError** - `x` 、 `positive` 或 `negative` 的维度大于等于8。
         - **ValueError** - `margin` 的shape长度不为0。
         - **ValueError** - `x` 、 `positive` 和 `negative` 三者之间的shape无法广播。
-        - **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
+        - **ValueError** - `reduction` 不为 ``"mean"`` 、 ``"sum"`` 或 ``"none"`` 。

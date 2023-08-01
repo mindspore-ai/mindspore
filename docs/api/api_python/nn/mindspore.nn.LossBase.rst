@@ -15,7 +15,7 @@ mindspore.nn.LossBase
           - ``"sum"``：计算输出元素的总和。
 
     异常：
-        - **ValueError** - `reduction` 不为'none'、'mean'或'sum'。
+        - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。
 
     .. py:method:: get_axis(x)
 

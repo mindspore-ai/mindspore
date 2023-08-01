@@ -42,5 +42,5 @@ mindspore.nn.BCELoss
 
     异常：
         - **TypeError** - `logits` 的数据类型，`labels` 或 `weight` （如果给定）既不是float16，也不是float32。
-        - **ValueError** - `reduction` 不为'none'、'mean'或'sum'。
+        - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。
         - **ValueError** - `logits` 的shape与 `labels` 或 `weight` （如果给定）不同。
