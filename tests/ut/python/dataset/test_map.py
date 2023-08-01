@@ -513,6 +513,79 @@ def test_map_multiprocessing_with_fixed_handle():
             assert lsof == new_lsof
 
 
+def test_map_multiprocessing_with_in_out_rowsize_exception():
+    """
+    Feature: Map op
+    Description: map with multiprocessing and max_rowsize with in rowsize & out rowsize exception
+    Expectation: success
+    """
+
+    dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+    def long_running_op(col1, col2):
+        data1 = np.ones([3, 65, 65], dtype=np.float64)
+        data2 = np.ones([3, 60, 60], dtype=np.float64)
+        return data1, data2
+
+    with pytest.raises(TypeError) as info:
+        dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                              python_multiprocessing=True, num_parallel_workers=2, max_rowsize=(12, 20))
+    assert " is not of type " in str(info.value)
+
+    with pytest.raises(TypeError) as info:
+        dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                              python_multiprocessing=True, num_parallel_workers=2, max_rowsize="16")
+    assert " is not of type " in str(info.value)
+
+    with pytest.raises(TypeError) as info:
+        dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                              python_multiprocessing=True, num_parallel_workers=2, max_rowsize=20.5)
+    assert " is not of type " in str(info.value)
+
+    with pytest.raises(ValueError) as info:
+        dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                              python_multiprocessing=True, num_parallel_workers=2, max_rowsize=-8)
+    assert "is not within the required interval of " in str(info.value)
+
+    with pytest.raises(TypeError) as info:
+        dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                              python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[12.4, 20])
+    assert " is not of type " in str(info.value)
+
+    with pytest.raises(ValueError) as info:
+        dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                              python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[-8, 20])
+    assert "is not within the required interval of " in str(info.value)
+
+
+def test_map_multiprocessing_with_in_out_rowsize():
+    """
+    Feature: Map op
+    Description: map with multiprocessing and max_rowsize with in rowsize & out rowsize
+    Expectation: success
+    """
+
+    dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+    def long_running_op(col1, col2):
+        data1 = np.ones([3, 65, 65], dtype=np.float64)
+        data2 = np.ones([3, 60, 60], dtype=np.float64)
+        return data1, data2
+
+    dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                          python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[12, 20])
+
+    assert dataset.get_dataset_size() == 791
+
+    for _ in range(3):
+        count = 0
+        for item in dataset.create_tuple_iterator(output_numpy=True, num_epochs=1):
+            print("count: {}, type: {}, shape: {}".format(count, item[0].dtype, item[0].shape))
+            assert item[0].dtype == np.float64
+            assert item[0].shape == (3, 65, 65)
+            assert len(item) == 2
+            count += 1
+        assert count == 791
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -526,3 +599,5 @@ if __name__ == '__main__':
     test_map_just_exchange_columns()
     test_map_multiprocessing_without_thread()
     test_map_multiprocessing_with_fixed_handle()
+    test_map_multiprocessing_with_in_out_rowsize()
+    test_map_multiprocessing_with_in_out_rowsize_exception()

@@ -193,7 +193,7 @@ PYBIND_REGISTER(MapNode, 2, ([](const py::module *m) {
                   (void)py::class_<MapNode, DatasetNode, std::shared_ptr<MapNode>>(*m, "MapNode", "to create a MapNode")
                     .def(py::init([](const std::shared_ptr<DatasetNode> &self, const py::list &operations,
                                      const py::list &input_columns, const py::list &output_columns,
-                                     std::vector<std::shared_ptr<PyDSCallback>> &py_callbacks, int64_t max_rowsize,
+                                     std::vector<std::shared_ptr<PyDSCallback>> &py_callbacks,
                                      const ManualOffloadMode &offload,
                                      std::shared_ptr<PythonMultiprocessingRuntime> &python_mp) {
                       auto map = std::make_shared<MapNode>(
