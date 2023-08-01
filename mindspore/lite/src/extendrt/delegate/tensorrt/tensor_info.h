@@ -22,15 +22,15 @@
 #include <memory>
 #include "include/api/kernel.h"
 #include "core/ir/tensor.h"
-#include "src/litert/cxx_api/tensor/tensor_impl.h"
 
 namespace mindspore::lite {
+class TensorInfoImpl;
 class TensorInfo {
  public:
   TensorInfo() = default;
-  explicit TensorInfo(const std::string &name, mindspore::DataType type, const std::vector<int64_t> &shape,
-                      mindspore::Format format, const void *data, size_t data_len,
-                      const mindspore::tensor::TensorPtr &tensor_val);
+  TensorInfo(const std::string &name, mindspore::DataType type, const std::vector<int64_t> &shape,
+             mindspore::Format format, const void *data, size_t data_len,
+             const mindspore::tensor::TensorPtr &tensor_val);
   ~TensorInfo() = default;
 
   std::string Name() const;
@@ -47,7 +47,6 @@ class TensorInfo {
   void SetShape(const std::vector<int64_t> &shape);
   void SetDataType(const mindspore::DataType data_type);
   void SetData(const void *data, size_t data_len);
-  lite::Tensor *LiteTensor() const;
 
   size_t item_size() const;
 
@@ -57,8 +56,7 @@ class TensorInfo {
   bool operator<(const TensorInfo &other) const;
 
  private:
-  std::shared_ptr<LiteTensorImpl> impl_ = nullptr;
-  mindspore::tensor::TensorPtr tensor_val_ = nullptr;
+  std::shared_ptr<TensorInfoImpl> impl_ = nullptr;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSOR_INFO_H_

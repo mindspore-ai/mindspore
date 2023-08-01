@@ -248,11 +248,11 @@ std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::
   return tensors;
 }
 
-void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
+int MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
   MS_ASSERT(src_tensor != dst_tensor);
   if (src_tensor->data() == dst_tensor->data()) {
     MS_LOG(DEBUG) << "no need to move data.";
-    return;
+    return RET_OK;
   }
   dst_tensor->FreeData();
   dst_tensor->ResetRefCount();
@@ -260,12 +260,6 @@ void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
 
   if (src_tensor->data() != nullptr) {
     dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
-    if (src_tensor->allocator() == nullptr) {
-      src_tensor->set_data(nullptr);
-    }
-  }
-  if (src_tensor->device_data() != nullptr) {
-    dst_tensor->set_device_data(src_tensor->device_data());
   }
 
   if (src_tensor->data() == dst_tensor->data() && src_tensor->IsConst()) {
@@ -274,6 +268,7 @@ void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
     dst_tensor->set_own_data(src_tensor->own_data());
   }
   src_tensor->DecRefCount();
+  return RET_OK;
 }
 
 int MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
@@ -287,7 +282,7 @@ int MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
     ret =
       MoveTensorListTensorData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
   } else {
-    MoveCommonTensorData(dst_tensor, src_tensor);
+    ret = MoveCommonTensorData(dst_tensor, src_tensor);
   }
   return ret;
 }

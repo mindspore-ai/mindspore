@@ -23,8 +23,6 @@
 #include "runtime/hardware/device_context.h"
 #include "tools/common/func_graph_subgraph.h"
 #include "kernel/kernel.h"
-#include "src/extendrt/session/lite_graph_executor.h"
-
 namespace mindspore {
 // Graph sink delegate, the whole FuncGraph as a node to execute.
 class GraphSinkDelegate : public IDelegate<FuncGraph, CNode, kernel::KernelMod> {
@@ -45,13 +43,13 @@ class GraphExecutorDelegate : public GraphSinkDelegate {
  public:
   explicit GraphExecutorDelegate(const std::vector<mindspore::MSTensor> &inputs,
                                  const std::vector<mindspore::MSTensor> &outputs,
-                                 std::shared_ptr<LiteGraphExecutor> executor)
+                                 std::shared_ptr<device::GraphExecutor> executor)
       : GraphSinkDelegate(inputs, outputs), executor_(executor) {}
   virtual ~GraphExecutorDelegate() = default;
   std::shared_ptr<kernel::KernelMod> CreateKernel(const std::shared_ptr<CNode> &node) override;
 
  private:
-  const std::shared_ptr<LiteGraphExecutor> executor_;
+  const std::shared_ptr<device::GraphExecutor> executor_;
 };
 }  // namespace mindspore
 #endif

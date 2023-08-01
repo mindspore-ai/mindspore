@@ -126,14 +126,7 @@ class LiteTensorImpl : public MutableTensorImpl {
     return lite_shape_;
   }
 
-  std::shared_ptr<mindspore::MSTensor::Impl> Clone() const override {
-    auto impl = LiteTensorImpl::CreateTensorImpl(Name(), DataType(), Shape(), nullptr, 0);
-    if (impl == nullptr) {
-      MS_LOG(ERROR) << "Allocate tensor impl failed.";
-      return nullptr;
-    }
-    return impl;
-  }
+  std::shared_ptr<mindspore::MSTensor::Impl> Clone() const override { return nullptr; }
 
   void SetShape(const std::vector<int64_t> &shape) override {
     if (lite_tensor_ == nullptr) {
@@ -199,14 +192,6 @@ class LiteTensorImpl : public MutableTensorImpl {
       return false;
     }
     return lite_tensor_->IsConst();
-  }
-
-  void SetCategory(lite::Category category) {
-    if (lite_tensor_ == nullptr) {
-      MS_LOG(ERROR) << "Invalid tensor.";
-      return;
-    }
-    lite_tensor_->set_category(category);
   }
 
   size_t DataSize() const override {

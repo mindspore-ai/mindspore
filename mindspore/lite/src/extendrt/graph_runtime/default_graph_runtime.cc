@@ -20,7 +20,6 @@
 #include "extendrt/utils/tensor_utils.h"
 #include "extendrt/execution_plan.h"
 #include "executor/sub_graph_kernel.h"
-#include "src/common/tensor_util.h"
 
 namespace mindspore {
 using ExecutionPlan = mindspore::infer::abstract::ExecutionPlan;
@@ -104,14 +103,7 @@ Status DefaultGraphRuntime::Execute(const std::vector<infer::abstract::Tensor *>
     return kLiteError;
   }
   MS_LOG(DEBUG) << "DefaultGraphRuntime::Execute Execute Execution Plan End";
-  auto execution_outputs = execution_plan_->GetOutputs();
-  if (execution_outputs.size() != outputs.size()) {
-    MS_LOG(ERROR) << "outputs size error.";
-    return kLiteError;
-  }
-  for (size_t i = 0; i < outputs.size(); i++) {
-    MoveCommonTensorData(outputs[i], execution_outputs[i]);
-  }
+
   MS_LOG(INFO) << "DefaultGraphRuntime::Execute End";
   return kSuccess;
 }

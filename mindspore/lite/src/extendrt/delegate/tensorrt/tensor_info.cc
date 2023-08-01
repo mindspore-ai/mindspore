@@ -22,48 +22,60 @@
 #include "include/api/kernel.h"
 #include "src/common/utils.h"
 #include "src/extendrt/utils/tensor_default_impl.h"
-#include "src/tensor.h"
 
 namespace mindspore::lite {
-TensorInfo::TensorInfo(const std::string &name, mindspore::DataType type, const std::vector<int64_t> &shape,
-                       mindspore::Format format, const void *data, size_t data_len,
-                       const mindspore::tensor::TensorPtr &tensor_val)
-    : tensor_val_(tensor_val) {
-  impl_ = LiteTensorImpl::CreateTensorImpl(name, type, shape, nullptr, 0);
-  if ((impl_ == nullptr) || (impl_->lite_tensor() == nullptr)) {
-    MS_LOG(ERROR) << "Create tensor failed.";
-  } else {
-    impl_->SetFormat(format);
-    if (impl_->DataSize() != data_len) {
-      MS_LOG_INFO << "Tensor expect data size " << impl_->DataSize() << " != data len " << data_len
-                  << ", shape: " << impl_->Shape() << ", dtype: " << impl_->DataType();
-    }
-    impl_->SetData(const_cast<void *>(data), false);
-    if (data != nullptr) {
-      impl_->SetCategory(shape.empty() ? CONST_SCALAR : CONST_TENSOR);
+class TensorInfoImpl {
+ public:
+  TensorInfoImpl() {}
+  TensorInfoImpl(const std::string &name, mindspore::DataType type, const std::vector<int64_t> &shape,
+                 mindspore::Format format, const void *data, size_t data_len,
+                 const mindspore::tensor::TensorPtr &tensor_val)
+      : tensor_impl_(name, type, shape), tensor_val_(tensor_val) {
+    tensor_impl_.SetFormat(format);
+    auto is_const = (data != nullptr);
+    tensor_impl_.SetIsConst(is_const);
+    SetData(data, data_len);
+  }
+
+  size_t item_size() const { return DataTypeSize(static_cast<enum TypeId>(tensor_impl_.DataType())); }
+  void SetData(const void *data, size_t data_len) {
+    if (data != nullptr && data_len != 0) {
+      if (tensor_impl_.DataSize() != data_len) {
+        MS_LOG_INFO << "Tensor expect data size " << tensor_impl_.DataSize() << " != data len " << data_len
+                    << ", shape: " << tensor_impl_.Shape() << ", dtype: " << tensor_impl_.DataType();
+      }
+      tensor_impl_.SetData(const_cast<void *>(data), false);
     }
   }
+  TensorDefaultImpl tensor_impl_;
+  mindspore::tensor::TensorPtr tensor_val_ = nullptr;
+};
+
+TensorInfo::TensorInfo(const std::string &name, mindspore::DataType type, const std::vector<int64_t> &shape,
+                       mindspore::Format format, const void *data, size_t data_len,
+                       const mindspore::tensor::TensorPtr &tensor_val) {
+  impl_ = std::make_shared<TensorInfoImpl>(name, type, shape, format, data, data_len, tensor_val);
 }
 
 std::string TensorInfo::Name() const {
   if (impl_ == nullptr) {
     return "";
   }
-  return impl_->Name();
+  return impl_->tensor_impl_.Name();
 }
 
 mindspore::DataType TensorInfo::DataType() const {
   if (impl_ == nullptr) {
     return mindspore::DataType::kTypeUnknown;
   }
-  return impl_->DataType();
+  return impl_->tensor_impl_.DataType();
 }
 
 mindspore::Format TensorInfo::format() const {
   if (impl_ == nullptr) {
     return DEFAULT_FORMAT;
   }
-  return impl_->Format();
+  return impl_->tensor_impl_.Format();
 }
 
 const std::vector<int64_t> &TensorInfo::Shape() const {
@@ -71,83 +83,70 @@ const std::vector<int64_t> &TensorInfo::Shape() const {
   if (impl_ == nullptr) {
     return empty_shape;
   }
-  return impl_->Shape();
+  return impl_->tensor_impl_.Shape();
 }
 
 const void *TensorInfo::Data() const {
   if (impl_ == nullptr) {
     return nullptr;
   }
-  return impl_->MutableData();
+  return impl_->tensor_impl_.Data().get();
 }
 
 void *TensorInfo::MutableData() {
   if (impl_ == nullptr) {
     return nullptr;
   }
-  return impl_->MutableData();
+  return const_cast<void *>(impl_->tensor_impl_.MutableData());
 }
 
 size_t TensorInfo::DataSize() const {
   if (impl_ == nullptr) {
     return 0;
   }
-  return ElementNum() * DataTypeSize(static_cast<enum TypeId>(impl_->DataType()));
-}
-
-lite::Tensor *TensorInfo::LiteTensor() const {
-  if (impl_ == nullptr) {
-    return nullptr;
-  }
-  return impl_->lite_tensor();
+  return ElementNum() * item_size();
 }
 
 bool TensorInfo::IsConst() const {
   if (impl_ == nullptr) {
     return 0;
   }
-  return impl_->IsConst();
+  return impl_->tensor_impl_.IsConst();
 }
 
 size_t TensorInfo::item_size() const {
   if (impl_ == nullptr) {
     return 0;
   }
-  return DataTypeSize(static_cast<enum TypeId>(impl_->DataType()));
+  return impl_->item_size();
 }
 
 void TensorInfo::SetShape(const std::vector<int64_t> &shape) {
   if (impl_ == nullptr) {
     return;
   }
-  impl_->SetShape(shape);
+  impl_->tensor_impl_.SetShape(shape);
 }
 
 void TensorInfo::SetDataType(const mindspore::DataType data_type) {
   if (impl_ == nullptr) {
     return;
   }
-  impl_->SetDataType(data_type);
+  impl_->tensor_impl_.SetDataType(data_type);
 }
 
 void TensorInfo::SetData(const void *data, size_t data_len) {
   if (impl_ == nullptr) {
     return;
   }
-  if (data != nullptr && data_len != 0) {
-    if (impl_->DataSize() != data_len) {
-      MS_LOG_WARNING << "Tensor expect data size " << impl_->DataSize() << " != data len " << data_len
-                     << ", shape: " << impl_->Shape() << ", dtype: " << impl_->DataType();
-    }
-    impl_->SetData(const_cast<void *>(data), false);
-  }
+  impl_->SetData(data, data_len);
 }
 
 int64_t TensorInfo::ElementNum() const {
   if (impl_ == nullptr) {
     return 0;
   }
-  return impl_->ElementNum();
+  return impl_->tensor_impl_.ElementNum();
 }
 
 TensorInfo &TensorInfo::operator=(const TensorInfo &other) {
