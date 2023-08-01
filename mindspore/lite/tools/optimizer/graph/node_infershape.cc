@@ -104,6 +104,13 @@ static const std::unordered_set<PrimitivePtr> kNNACLToOpsInfer = {
   prim::kPrimZerosLike,
   // format op
   prim::kPrimResize,
+  // compare op
+  prim::kPrimEqual,
+  prim::kPrimGreater,
+  prim::kPrimGreaterEqual,
+  prim::kPrimLess,
+  prim::kPrimLessEqual,
+  prim::kPrimNotEqual,
 
   prim::kPrimActivation,
   prim::kPrimActivationGrad,
