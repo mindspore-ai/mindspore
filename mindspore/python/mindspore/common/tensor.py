@@ -358,10 +358,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return self
 
     def __abs__(self):
-        data = abs(self.asnumpy())
-        if isinstance(data, np.number):
-            data = np.array(data)
-        return Tensor(data)
+        self._init_check()
+        return tensor_operator_registry.get('abs')()(self)
 
     def __add__(self, other):
         return tensor_operator_registry.get('__add__')(self, other)
