@@ -30,6 +30,7 @@
 #include "runtime/pynative/async/async_queue.h"
 #include "runtime/pynative/async/async_hqueue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
+#include "pipeline/pynative/grad/dynamic_shape.h"
 #include "pipeline/jit/ps/resource.h"
 namespace mindspore {
 namespace pynative {
@@ -38,31 +39,6 @@ class ForwardExecutor;
 using ForwardExecutorPtr = std::shared_ptr<ForwardExecutor>;
 using ForwardExecutorWeakPtr = std::weak_ptr<ForwardExecutor>;
 
-struct NodeInfo {
-  NodeInfo() = default;
-  explicit NodeInfo(const TensorGradType &grad_type, size_t op_index = 0, ValuePtr value = nullptr)
-      : grad_type(grad_type), op_index(op_index), value(value) {}
-  TensorGradType grad_type;
-  size_t op_index;
-  ValuePtr value;
-};
-using NodeInfoPtr = std::shared_ptr<NodeInfo>;
-
-struct DynamicDetectNodeInfo {
-  DynamicDetectNodeInfo(const PrimitivePtr &op_prim, const abstract::AbstractBasePtrList &input_abs,
-                        const abstract::AbstractBasePtr &out_abs)
-      : op_prim(op_prim), input_abs(input_abs), out_abs(out_abs) {}
-  PrimitivePtr op_prim{nullptr};
-  abstract::AbstractBasePtrList input_abs{};
-  abstract::AbstractBasePtr out_abs{nullptr};
-  bool is_graph_node{false};
-  std::vector<std::pair<std::string, NodeInfo>> inputs;
-  std::string graph_phase;
-};
-using DynamicDetectNodeInfoPtr = std::shared_ptr<DynamicDetectNodeInfo>;
-using CellIdWithDynamicNodesMap =
-  mindspore::HashMap<std::string, mindspore::HashMap<std::string, std::vector<DynamicDetectNodeInfoPtr>>>;
-
 class GradExecutor {
  public:
   GradExecutor() = default;
@@ -70,6 +46,7 @@ class GradExecutor {
   explicit GradExecutor(const ForwardExecutorPtr &forward_executor = nullptr)
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
         jit_(std::make_shared<Jit>()),
+        dynamic_shape_(std::make_shared<DynamicShape>()),
         async_executor_(std::make_shared<AsyncHqueue>("grad_queue")) {}
 
   void Init();
@@ -91,6 +68,10 @@ class GradExecutor {
   inline TopCellInfoPtr top_cell() const {
     MS_EXCEPTION_IF_NULL(top_cell_);
     return top_cell_;
+  }
+  inline DynamicShapePtr dynamic_shape() const {
+    MS_EXCEPTION_IF_NULL(dynamic_shape_);
+    return dynamic_shape_;
   }
   inline JitPtr jit() const {
     MS_EXCEPTION_IF_NULL(jit_);
@@ -137,7 +118,6 @@ class GradExecutor {
   void AsyncClearTopCell();
   void AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell);
   void WorkerJoin() { async_executor_->WorkerJoin(); }
-  void CheckGraphDynamic(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node) const;
   void SaveDynamicInputsCells(const py::object &cell);
   void SetTopCellDynamicAttr(const py::object &cell);
   bool use_dynamic_shape_process() const {
@@ -227,11 +207,8 @@ class GradExecutor {
   AnfNodePtr GetValueSequenceInput(const ValuePtr &v) const;
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
-  bool IsNeedSaveDynamicDetectNodes(const TopCellInfoPtr &top_cell, bool use_dynamic_shape_process);
-  void SaveDynamicDetectNodeInfoInFirstTime(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node,
-                                            size_t node_idx) const;
-  bool IsGraphDynamic(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node, size_t node_idx) const;
-  void DispatchGradQueueTask(const std::function<void(void)> task) const;
+  void DispatchGradQueueTask(std::function<void(void)> task) const;
+
   bool init_{false};
   bool grad_flag_{false};
   bool enable_grad_{true};
@@ -257,12 +234,11 @@ class GradExecutor {
   mindspore::OrderedMap<std::string, TopCellInfoPtr> already_run_top_cell_;
   ForwardExecutorWeakPtr forward_executor_;
   JitPtr jit_;
+  DynamicShapePtr dynamic_shape_{nullptr};
   AsyncHqueuePtr async_executor_;
-  mutable CellIdWithDynamicNodesMap cell_id_with_dynamic_detect_nodes_;
   std::set<std::string> dynamic_inputs_cells_;
   std::vector<TopCellInfoPtr> need_gc_top_cell_list_;
   bool forward_use_dynamic_shape_process_{false};
-  mutable std::mutex async_mutex_;
 };
 }  // namespace pynative
 }  // namespace mindspore
