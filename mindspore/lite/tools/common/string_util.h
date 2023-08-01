@@ -46,7 +46,7 @@ bool ConvertDoubleVector(const std::string &str, std::vector<double> *value);
 
 size_t Hex2ByteArray(const std::string &hex_str, unsigned char *byte_array, size_t max_len);
 
-bool IsUnsignedNumber(const std::string &item);
+bool IsNumber(const std::string &item);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_COMMON_STRING_UTIL_H_

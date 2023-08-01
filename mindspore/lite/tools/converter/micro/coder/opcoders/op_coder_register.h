@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,15 +65,19 @@ class OpCoderFactory {
   static OpCoderFactory *GetInstance();
 
   int RegistOpCoder(Target target, TypeId data_type, schema::PrimitiveType operator_type,
-                    const std::string &builtin_custom_type, const CoderCreatorFunc &creator_func);
+                    const std::string &builtin_custom_type, const CoderCreatorFunc &creator_func, bool dynamic);
 
-  CoderCreatorFunc FindOpCoder(const CoderKey &key);
+  CoderCreatorFunc FindOpCoder(const CoderKey &key, bool dynamic = false);
 
-  ~OpCoderFactory() { opcoder_sets_.clear(); }
+  ~OpCoderFactory() {
+    static_opcoder_sets_.clear();
+    dynamic_opcoder_sets_.clear();
+  }
 
  private:
   // target || data type || primitive type
-  std::map<CoderKey, CoderCreatorFunc> opcoder_sets_;
+  std::map<CoderKey, CoderCreatorFunc> static_opcoder_sets_;
+  std::map<CoderKey, CoderCreatorFunc> dynamic_opcoder_sets_;
 };
 
 class OpCoderRegister {
@@ -81,13 +85,17 @@ class OpCoderRegister {
   OpCoderRegister() = delete;
 
   OpCoderRegister(Target target, TypeId data_type, schema::PrimitiveType operator_type,
-                  const std::string &builtin_custom_type, const CoderCreatorFunc &creator_func);
+                  const std::string &builtin_custom_type, const CoderCreatorFunc &creator_func, bool dynamic = false);
 
   ~OpCoderRegister() = default;
 };
-#define REG_OPERATOR_CODER(target, data_type, operator_type, creator_func)                                   \
-  static OpCoderRegister g_##target##data_type##operator_type##Creator(target, data_type, operator_type, "", \
-                                                                       creator_func);
+#define REG_OPERATOR_CODER(target, data_type, operator_type, creator_func)                                         \
+  static OpCoderRegister g_##target##data_type##operator_type##StaticCreator(target, data_type, operator_type, "", \
+                                                                             creator_func);
+
+#define REG_DYNAMIC_OPERATOR_CODER(target, data_type, operator_type, creator_func)                                  \
+  static OpCoderRegister g_##target##data_type##operator_type##DynamicCreator(target, data_type, operator_type, "", \
+                                                                              creator_func, true);
 
 #define REG_BUILIN_CUSTOM_CODER(target, data_type, custom_type, creator_func) \
   static OpCoderRegister g_##target##data_type##operator_type##Creator(       \

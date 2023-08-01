@@ -56,6 +56,7 @@
 #include "nnacl/kernel/batch_norm.h"
 #include "nnacl/kernel/tile.h"
 #include "nnacl/kernel/slice.h"
+#include "coder/opcoders/nnacl/dynamic_parameter/transpose_dynamic_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -92,6 +93,8 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const UnstackParameter &param);
   void CodeStruct(const std::string &name, const FillStruct &param);
   void CodeStruct(const std::string &name, const SliceStruct &param);
+  void CodeStruct(const std::string &name, const TransposeParameter &transpose_param,
+                  const TransposeDynamicParameter &dynamic_transpose_param);
   void CodeStruct(const std::string &name, const int *list, int size);
   void CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor);
 

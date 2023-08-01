@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,33 +37,38 @@ OpCoderFactory *OpCoderFactory::GetInstance() {
 }
 
 int OpCoderFactory::RegistOpCoder(Target target, TypeId data_type, schema::PrimitiveType operator_type,
-                                  const std::string &builtin_custom_type, const CoderCreatorFunc &creator_func) {
+                                  const std::string &builtin_custom_type, const CoderCreatorFunc &creator_func,
+                                  bool dynamic) {
+  auto &opcoder_sets = dynamic ? dynamic_opcoder_sets_ : static_opcoder_sets_;
   // check key
   CoderKey key(target, data_type, operator_type, builtin_custom_type);
   // insert pair to registry
-  if (this->opcoder_sets_.find(key) != this->opcoder_sets_.end()) {
+  if (opcoder_sets.find(key) != opcoder_sets.end()) {
     MS_LOG(ERROR) << "coder already exist: " << key.ToString();
     return RET_ERROR;
   }
-  this->opcoder_sets_.insert(std::pair<CoderKey, CoderCreatorFunc>(key, creator_func));
+  opcoder_sets.insert(std::pair<CoderKey, CoderCreatorFunc>(key, creator_func));
   return RET_OK;
 }
 
-CoderCreatorFunc OpCoderFactory::FindOpCoder(const CoderKey &key) {
-  auto iterator = this->opcoder_sets_.find(key);
-  if (iterator != this->opcoder_sets_.end()) {
+CoderCreatorFunc OpCoderFactory::FindOpCoder(const CoderKey &key, bool dynamic) {
+  const auto &opcoder_sets = dynamic ? dynamic_opcoder_sets_ : static_opcoder_sets_;
+  auto iterator = opcoder_sets.find(key);
+  if (iterator != opcoder_sets.end()) {
     return iterator->second;
   }
   // matching kAllTargets
-  iterator = this->opcoder_sets_.find(key.AllKey());
-  if (iterator != this->opcoder_sets_.end()) {
+  iterator = opcoder_sets.find(key.AllKey());
+  if (iterator != opcoder_sets.end()) {
     return iterator->second;
   }
   return nullptr;
 }
 
 OpCoderRegister::OpCoderRegister(Target target, TypeId data_type, schema::PrimitiveType operator_type,
-                                 const std::string &builtin_custom_type, const CoderCreatorFunc &creatorFunc) {
-  OpCoderFactory::GetInstance()->RegistOpCoder(target, data_type, operator_type, builtin_custom_type, creatorFunc);
+                                 const std::string &builtin_custom_type, const CoderCreatorFunc &creatorFunc,
+                                 bool dynamic) {
+  OpCoderFactory::GetInstance()->RegistOpCoder(target, data_type, operator_type, builtin_custom_type, creatorFunc,
+                                               dynamic);
 }
 }  // namespace mindspore::lite::micro

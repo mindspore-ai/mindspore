@@ -102,9 +102,10 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
   code << "\t\tconst int *index_data = (const int *)" << input1_data << ";\n";
   code << "\t\tint8_t *int8_out = (int8_t *)" << output_data << ";\n";
   code << "\t\tint8_out += " << std::to_string(start * byte_out_stride) << ";\n";
+  code << "\t\tint error_index = -1;\n";
   // call the op function
   code.CodeFunction("Gather", "int8_in", count, byte_inner_size, limit, "index_data", indices_element_size, "int8_out",
-                    byte_out_stride);
+                    byte_out_stride, "&error_index");
   context->AppendCode(code.str());
   return RET_OK;
 }
