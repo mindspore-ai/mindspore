@@ -173,7 +173,6 @@ const char PYTHON_PARSE_METHOD[] = "__parse_method__";
 const char PYTHON_FUNC_GRAPH_FLAGS[] = "_func_graph_flags";
 
 // Define the parse constant.
-const int64_t MAX_COMPARISON_OPS_SUPPORTED = 1;
 const char CUSTOM_BPROP_NAME[] = "bprop";
 const char STAGE_NAME[] = "_pipeline_stage";
 

@@ -1907,32 +1907,73 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
 
 // Process comparison expression : a == b. a > b  etc.
 AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object &node) {
-  return ParseCompareInner(block, node);
-}
-
-AnfNodePtr Parser::ParseCompareInner(const FunctionBlockPtr &block, const py::object &node, bool force_interpret) {
   MS_LOG(DEBUG) << "Process ast Compare";
 
-  // For python comparison ,there may be if x>y>5 ,
-  // Which there is two ops , but we only support one now
   py::list ops = python_adapter::GetPyObjAttr(node, "ops");
-  if (ops.size() != MAX_COMPARISON_OPS_SUPPORTED) {
-    MS_EXCEPTION(NotSupportError) << "Only support comparison with 1 operator, but got " << ops.size() << ", which is "
-                                  << py::str(ops);
-  }
-
   py::object left = python_adapter::GetPyObjAttr(node, "left");
   py::list comparators = python_adapter::GetPyObjAttr(node, "comparators");
-  if (comparators.empty()) {
-    MS_EXCEPTION(ValueError) << "Comparators can't be empty.";
+  if (ops.size() == 0) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse ast Compare failed, found no ops.";
   }
+  if (comparators.size() == 0) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse ast Compare failed, found no comparators.";
+  }
+  if (ops.size() != comparators.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse ast Compare failed, length of ops and comparators not equal, len of ops: "
+                               << ops.size() << " and length of comparators: " << comparators.size();
+  }
+
+  auto first_left = left;
+  auto first_right = comparators[0];
+  auto first_op = ops[0];
+  auto first_compare_node = ParseSingleCompare(block, first_left, first_right, first_op);
+  auto interpret_without_internal =
+    (first_compare_node->interpret() || IsPrimitiveCNode(first_compare_node, prim::kPrimPyInterpret)) &&
+    !first_compare_node->interpret_internal_type();
+  if (interpret_without_internal) {
+    return HandleInterpret(block, first_compare_node, node, false);
+  }
+  if (ops.size() == 1) {
+    // For single compare, such as x < y.
+    return first_compare_node;
+  }
+
+  // For multiple compare, such as x < y <= z,
+  // convert it to x < y and y <= z.
+  std::vector<AnfNodePtr> compare_nodes = {first_compare_node};
+  for (size_t i = 1; i < ops.size(); ++i) {
+    auto cur_left = comparators[i - 1];
+    auto cur_right = comparators[i];
+    auto cur_op = ops[i];
+    auto cur_compare_node = ParseSingleCompare(block, cur_left, cur_right, cur_op);
+    interpret_without_internal =
+      (cur_compare_node->interpret() || IsPrimitiveCNode(cur_compare_node, prim::kPrimPyInterpret)) &&
+      !cur_compare_node->interpret_internal_type();
+    if (interpret_without_internal) {
+      return HandleInterpret(block, cur_compare_node, node, false);
+    }
+    (void)compare_nodes.emplace_back(cur_compare_node);
+  }
+
+  AnfNodePtr ret_node = compare_nodes[0];
+  for (size_t i = 1; i < compare_nodes.size(); ++i) {
+    ret_node = ConnectSingleCompare(block, ret_node, compare_nodes[i]);
+  }
+
+  return ret_node;
+}
+
+AnfNodePtr Parser::ParseSingleCompare(const FunctionBlockPtr &block, const py::object &left, const py::object &right,
+                                      const py::object &compare_op) {
+  MS_LOG(DEBUG) << "Process ast Compare with single comparators";
+
   AnfNodePtr left_node = ParseExprNode(block, left);
-  left_node = HandleInterpret(block, left_node, left, force_interpret);
-  AnfNodePtr right_node = ParseExprNode(block, comparators[0]);
-  right_node = HandleInterpret(block, right_node, comparators[0], force_interpret);
+  left_node = HandleInterpret(block, left_node, left, false);
+  AnfNodePtr right_node = ParseExprNode(block, right);
+  right_node = HandleInterpret(block, right_node, right, false);
 
   MS_EXCEPTION_IF_NULL(block);
-  const auto &ns = block->GetAstOpNameSpace(ops[0]);
+  const auto &ns = block->GetAstOpNameSpace(compare_op);
   auto op_node = block->MakeResolveAstOpNameSpace(ns);
   constexpr size_t op_str_index = 2;
   std::string op_str = py::str(ns[op_str_index]);
@@ -1940,14 +1981,51 @@ AnfNodePtr Parser::ParseCompareInner(const FunctionBlockPtr &block, const py::ob
   MS_EXCEPTION_IF_NULL(block->func_graph());
   AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
   UpdateInterpretForUserNode(new_node, {left_node, right_node});
-  new_node = HandleInterpret(block, new_node, node, force_interpret);
 
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(left_node, left);
-  std::string right_str = GetExprStr(right_node, comparators[0]);
+  std::string right_str = GetExprStr(right_node, right);
   auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
+}
+
+AnfNodePtr Parser::ConnectSingleCompare(const FunctionBlockPtr &block, const AnfNodePtr &left_node,
+                                        const AnfNodePtr &right_node) {
+  // Connect two compare result with 'and'.
+  MS_LOG(DEBUG) << "Connect single compare node.";
+
+  MS_EXCEPTION_IF_NULL(left_node);
+  MS_EXCEPTION_IF_NULL(right_node);
+  FunctionBlockPtr true_block = nullptr;
+  FunctionBlockPtr false_block = nullptr;
+  auto block_fg = block->func_graph();
+  MS_EXCEPTION_IF_NULL(block_fg);
+  {
+    TraceGuard guard(std::make_shared<TraceIfExpTrueBranch>(block_fg->debug_info()));
+    true_block = MakeFunctionBlock(*this);
+  }
+  {
+    TraceGuard guard(std::make_shared<TraceIfExpFalseBranch>(block_fg->debug_info()));
+    false_block = MakeFunctionBlock(*this);
+  }
+  MakeConditionBlocks(block, true_block, false_block);
+  MS_EXCEPTION_IF_NULL(true_block->func_graph());
+  MS_EXCEPTION_IF_NULL(false_block->func_graph());
+  true_block->func_graph()->set_output(right_node);
+  TraceGuard trace_guard(std::make_shared<TraceCopy>(left_node->debug_info()));
+  false_block->func_graph()->set_output(left_node);
+
+  AnfNodePtr cond_node = block->ForceToCondNode(left_node);
+
+  auto switch_app =
+    block_fg->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), cond_node, NewValueNode(true_block->func_graph()),
+                               NewValueNode(false_block->func_graph())});
+
+  std::vector<AnfNodePtr> call_graph_nodes{switch_app};
+  auto switch_app_call = block_fg->NewCNodeInOrder(std::move(call_graph_nodes));
+  UpdateInterpretForUserNode(switch_app_call, {left_node, right_node});
+  return switch_app_call;
 }
 
 AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, AstSubType mode) {
