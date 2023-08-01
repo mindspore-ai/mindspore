@@ -16,8 +16,10 @@
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/fp32/exp_fp32.h"
 #include "ops/exp.h"
+#include "ops/fusion/exp_fusion.h"
 using mindspore::ops::kBase;
 using mindspore::ops::kNameExp;
+using mindspore::ops::kNameExpFusion;
 using mindspore::ops::kScale;
 using mindspore::ops::kShift;
 using mindspore::schema::PrimitiveType_ExpFusion;
@@ -58,5 +60,6 @@ OpParameter *PopulateExpOpParameter(const BaseOperatorPtr &base_operator) {
 }
 
 REG_OPERATOR_POPULATE(kNameExp, PrimitiveType_ExpFusion, PopulateExpOpParameter)
+REG_OPERATOR_POPULATE(kNameExpFusion, PrimitiveType_ExpFusion, PopulateExpOpParameter)
 }  // namespace lite
 }  // namespace mindspore

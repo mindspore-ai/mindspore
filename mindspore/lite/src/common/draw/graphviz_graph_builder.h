@@ -34,7 +34,7 @@ class GVGraphBuilder {
   std::shared_ptr<GVGraph> Build(const std::shared_ptr<AdapterGraph> &graph);
 
   void AppendGraphInputNode(const lite::Tensor &tensor);
-  int AppendWeightNode(const lite::Tensor &tensor, const std::string &name);
+  int AppendWeightNode(const lite::Tensor &tensor, const std::string &id, const std::string &label);
   int AppendComputeNode(const AdapterNode &node);
   int AppendGraphOutputNode(const std::vector<lite::Tensor *> &out_tensors);
 

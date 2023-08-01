@@ -69,7 +69,7 @@ int InsertTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Te
     std::string type_name = schema::EnumNamePrimitiveType(kernel->type());
     auto find_result = cloud_format_kernel_list.find(type_name);
     if (find_result == cloud_format_kernel_list.end()) {
-      MS_LOG(INFO) << "Kernel(" << kernel->name() << ") has different format" << FormatEnumToString(kernel_format)
+      MS_LOG(INFO) << "Kernel(" << kernel->name() << ") has different format(" << FormatEnumToString(kernel_format)
                    << ") with graph format(" << FormatEnumToString(format_) << "), but not in insert-transpose white "
                    << "list and will not insert transpose kernel, type name: " << type_name;
       continue;

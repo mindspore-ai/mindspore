@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/scale_parameter.h"
 #include "ops/fusion/scale_fusion.h"
 using mindspore::ops::kNameScaleFusion;
@@ -35,7 +36,8 @@ OpParameter *PopulateScaleOpParameter(const BaseOperatorPtr &base_operator) {
   auto axis = op->get_axis();
   CHECK_LESS_RETURN_RET(INT32_MAX, axis, nullptr, param);
   param->axis_ = static_cast<int>(axis);
-  param->activation_type_ = op->get_activation_type();
+  param->activation_type_ = static_cast<ActivationType>(
+    GetAttrWithDefault<int64_t>(base_operator, ops::kActivation, ActivationType::NO_ACTIVATION));
   return reinterpret_cast<OpParameter *>(param);
 }
 

@@ -489,7 +489,7 @@ bool TensorAdapter::SetDTAndShapeFromAbTensorToLiteTensor(const AbstractBasePtr 
                  [](const auto &shape) { return static_cast<int32_t>(shape); });
   tensor->set_data_type(data_type);
   tensor->set_shape(int32_shape);
-  tensor->set_format(NHWC);
+  tensor->set_format(NCHW);
   return true;
 }
 

@@ -14,61 +14,47 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "nnacl/arg_min_max_parameter.h"
 #include "ops/arg_max.h"
+#include "ops/fusion/arg_max_fusion.h"
+#include "ops/arg_min.h"
+#include "ops/fusion/arg_min_fusion.h"
 using mindspore::ops::kAxis;
 using mindspore::ops::kKeepDims;
 using mindspore::ops::kNameArgMax;
+using mindspore::ops::kNameArgMaxFusion;
+using mindspore::ops::kNameArgMin;
+using mindspore::ops::kNameArgMinFusion;
 using mindspore::ops::kOutMaxValue;
 using mindspore::ops::kTopK;
 using mindspore::schema::PrimitiveType_ArgMaxFusion;
+using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateArgMaxOpParameter(const BaseOperatorPtr &base_operator) {
+OpParameter *PopulateArgMinMaxOpParameter(const BaseOperatorPtr &base_operator) {
   auto param = reinterpret_cast<ArgMinMaxParameter *>(PopulateOpParameter<ArgMinMaxParameter>(base_operator));
   if (param == nullptr) {
     MS_LOG(ERROR) << "new ArgMinMaxParameter failed.";
     return nullptr;
   }
 
-  auto attr_axis = base_operator->GetPrim()->GetAttr(kAxis);
-  if (attr_axis == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kAxis << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  auto axis = GetValue<int64_t>(attr_axis);
+  auto axis = GetAttrWithDefault<int64_t>(base_operator, kAxis, 0);
   CHECK_LESS_RETURN_RET(INT32_MAX, axis, nullptr, param);
-  param->axis_ = axis;
-
-  auto attr_topk = base_operator->GetPrim()->GetAttr(kTopK);
-  if (attr_topk == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kTopK << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  param->topk_ = GetValue<int32_t>(attr_topk);
-
-  auto attr_out_value = base_operator->GetPrim()->GetAttr(kOutMaxValue);
-  if (attr_out_value == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kOutMaxValue << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  param->out_value_ = GetValue<bool>(attr_out_value);
-
-  auto attr_keep_dims = base_operator->GetPrim()->GetAttr(kKeepDims);
-  if (attr_keep_dims == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kKeepDims << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  param->keep_dims_ = GetValue<bool>(attr_keep_dims);
+  param->axis_ = static_cast<int32_t>(axis);
+  auto topk = GetAttrWithDefault<int64_t>(base_operator, kTopK, 1);
+  CHECK_LESS_RETURN_RET(INT32_MAX, topk, nullptr, param);
+  param->topk_ = static_cast<int32_t>(topk);
+  param->out_value_ = GetAttrWithDefault<bool>(base_operator, kOutMaxValue, false);
+  param->keep_dims_ = GetAttrWithDefault<bool>(base_operator, kKeepDims, false);
   return reinterpret_cast<OpParameter *>(param);
 }
 
-REG_OPERATOR_POPULATE(kNameArgMax, PrimitiveType_ArgMaxFusion, PopulateArgMaxOpParameter)
+REG_OPERATOR_POPULATE(kNameArgMax, PrimitiveType_ArgMaxFusion, PopulateArgMinMaxOpParameter)
+REG_OPERATOR_POPULATE(kNameArgMaxFusion, PrimitiveType_ArgMaxFusion, PopulateArgMinMaxOpParameter)
+REG_OPERATOR_POPULATE(kNameArgMin, PrimitiveType_ArgMinFusion, PopulateArgMinMaxOpParameter)
+REG_OPERATOR_POPULATE(kNameArgMinFusion, PrimitiveType_ArgMinFusion, PopulateArgMinMaxOpParameter)
 }  // namespace lite
 }  // namespace mindspore

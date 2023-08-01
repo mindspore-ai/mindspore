@@ -407,7 +407,11 @@ StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr
                                                            std::vector<std::unique_ptr<InferTensor>> *results,
                                                            Format format) {
   if (results == nullptr) {
-    MS_LOG(ERROR) << "Result is nullptr.";
+    MS_LOG(ERROR) << "Input `results` is nullptr.";
+    return kLiteInputParamInvalid;
+  }
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Input `abstract` is nullptr.";
     return kLiteInputParamInvalid;
   }
   results->clear();

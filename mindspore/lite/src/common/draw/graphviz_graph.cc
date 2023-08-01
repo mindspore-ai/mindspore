@@ -49,36 +49,37 @@ std::string Edge::Code() const {
   return oss.str();
 }
 
-GVNode *GVNode::CreateCNode(const std::string &name, size_t input_size, const std::vector<std::string> &output_names,
-                            const std::vector<std::string> &output_infos, bool highlight) {
-  auto node = new GVNode(name, name, kNodeTypeCNode, input_size, output_names.size(), highlight);
+GVNode *GVNode::CreateCNode(const std::string &id, const std::string &label, size_t input_size,
+                            const std::vector<std::string> &output_names, const std::vector<std::string> &output_infos,
+                            bool highlight) {
+  auto node = new GVNode(id, label, kNodeTypeCNode, input_size, output_names.size(), highlight);
   node->prefix_ = "Node_";
   node->shape_ = "plaintext";
   node->Init(output_names, output_infos);
   return node;
 }
 
-GVNode *GVNode::CreateInput(const std::string &name, const std::vector<std::string> &output_names,
+GVNode *GVNode::CreateInput(const std::string &id, const std::vector<std::string> &output_names,
                             const std::vector<std::string> &output_infos, bool highlight) {
-  auto node = new GVNode(name, name, kNodeTypeInput, 0, output_names.size(), highlight);
+  auto node = new GVNode(id, id, kNodeTypeInput, 0, output_names.size(), highlight);
   node->prefix_ = "Input_";
   node->shape_ = "egg";
   node->Init(output_names, output_infos);
   return node;
 }
 
-GVNode *GVNode::CreateOutput(const std::string &name, size_t input_size, bool highlight) {
-  auto node = new GVNode(name, name, kNodeTypeOutput, input_size, 0, highlight);
+GVNode *GVNode::CreateOutput(const std::string &id, size_t input_size, bool highlight) {
+  auto node = new GVNode(id, id, kNodeTypeOutput, input_size, 0, highlight);
   node->prefix_ = "Output_";
   node->shape_ = "egg";
   node->Init({}, {});
   return node;
 }
 
-GVNode *GVNode::CreateWeight(const std::string &name, const std::string &content,
+GVNode *GVNode::CreateWeight(const std::string &id, const std::string &label,
                              const std::vector<std::string> &output_names, const std::vector<std::string> &output_infos,
                              bool highlight) {
-  auto node = new GVNode(name, content, kNodeTypeWeight, 0, output_names.size(), highlight);
+  auto node = new GVNode(id, label, kNodeTypeWeight, 0, output_names.size(), highlight);
   node->prefix_ = "Weight_";
   node->shape_ = "octagon";
   node->Init(output_names, output_infos);
@@ -142,7 +143,7 @@ std::string GVNode::Code() const {
       oss << "<td align='center' colspan='" << input_cols << "' port='I" << i << "'>I" << i << "</td>";
     }
     oss << "</tr>" << std::endl;
-    oss << indent << "<tr><td align='center' colspan='" << cols << "' bgcolor='" << bgcolor << "'>" << name_
+    oss << indent << "<tr><td align='center' colspan='" << cols << "' bgcolor='" << bgcolor << "'>" << label_
         << "</td></tr>" << std::endl;
     oss << indent << "<tr>";
     auto output_cols = output_size_ == 0 ? 0 : cols / output_size_;
@@ -152,11 +153,11 @@ std::string GVNode::Code() const {
     oss << "</tr>" << std::endl;
     oss << indent << "</table>>";
   } else {
-    oss << "\"" << content_ << "\"";
+    oss << "\"" << label_ << "\"";
   }
   auto label = oss.str();
   oss.str("");
-  oss << prefix_ << name_ << " [shape=" << shape_;
+  oss << prefix_ << id_ << " [shape=" << shape_;
   oss << ", label=" << label << "];";
   return oss.str();
 }
