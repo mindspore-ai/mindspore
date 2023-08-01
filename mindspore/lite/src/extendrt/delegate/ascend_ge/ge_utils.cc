@@ -23,6 +23,7 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "mindspore/core/ops/op_name.h"
 #include "src/common/common.h"
+#include "runtime/dev.h"
 
 namespace mindspore {
 static std::string AdjustCnodeName(const PrimitivePtr &prim) {
@@ -126,4 +127,21 @@ std::shared_ptr<AscendDeviceInfo> GeUtils::GetAscendDeviceInfo(const std::shared
   auto ascend_device_info = (*itr)->Cast<AscendDeviceInfo>();
   return ascend_device_info;
 }
+
+std::string GetSocVersion() {
+  // Get default soc version.
+  static std::string version;
+  if (version.empty()) {
+    const int kSocVersionLen = 50;
+    char soc_version[kSocVersionLen] = {0};
+    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "GetSocVersion failed.";
+      return "";
+    }
+    version = soc_version;
+  }
+  return version;
+}
+
 }  // namespace mindspore
