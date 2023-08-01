@@ -83,67 +83,87 @@ void CheckNLLLossGradShapeValid(const std::string &prim_name, const ShapeVector 
     CheckAndConvertUtils::Check("weight shape", w_shape[0], kEqual, x_shape[1], prim_name);
   }
 }
-}  // namespace
 
-class NLLLossGradInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    auto prim_name = primitive->name();
+BaseShapePtr NLLLossGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
 
-    // Check valid.
-    const size_t x_idx = 0;
-    const size_t t_idx = 2;
-    const size_t w_idx = 3;
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, x_idx);
-    auto x = input_args[x_idx]->BuildShape();
-    MS_EXCEPTION_IF_NULL(x);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, t_idx);
-    auto t = input_args[t_idx]->BuildShape();
-    MS_EXCEPTION_IF_NULL(t);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, w_idx);
-    auto w = input_args[w_idx]->BuildShape();
-    MS_EXCEPTION_IF_NULL(w);
+  // Check valid.
+  const size_t x_idx = 0;
+  const size_t t_idx = 2;
+  const size_t w_idx = 3;
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, x_idx);
+  auto x = input_args[x_idx]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, t_idx);
+  auto t = input_args[t_idx]->BuildShape();
+  MS_EXCEPTION_IF_NULL(t);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, w_idx);
+  auto w = input_args[w_idx]->BuildShape();
+  MS_EXCEPTION_IF_NULL(w);
 
-    auto x_shape = x->cast<abstract::ShapePtr>();
-    MS_EXCEPTION_IF_NULL(x_shape);
+  auto x_shape = x->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(x_shape);
 
-    if (x->IsDynamic() || t->IsDynamic() || w->IsDynamic()) {
-      return x_shape;
-    }
-
-    auto t_shape = t->cast<abstract::ShapePtr>();
-    MS_EXCEPTION_IF_NULL(t_shape);
-    auto w_shape = w->cast<abstract::ShapePtr>();
-    MS_EXCEPTION_IF_NULL(w_shape);
-
-    CheckNLLLossGradShapeValid(prim_name, x_shape->shape(), t_shape->shape(), w_shape->shape());
-
+  if (x->IsDynamic() || t->IsDynamic() || w->IsDynamic()) {
     return x_shape;
   }
 
+  auto t_shape = t->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(t_shape);
+  auto w_shape = w->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(w_shape);
+
+  CheckNLLLossGradShapeValid(prim_name, x_shape->shape(), t_shape->shape(), w_shape->shape());
+
+  return x_shape;
+}
+
+TypePtr NLLLossGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t input_num = 5;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  // check
+  std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  auto x_dtype = input_args[kInputIndex0]->BuildType();
+  auto y_grad_dtype = input_args[kInputIndex1]->BuildType();
+  auto t_dtype = input_args[kInputIndex2]->BuildType();
+  auto w_dtype = input_args[kInputIndex3]->BuildType();
+  auto tw_dtype = input_args[kInputIndex4]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("logits", x_dtype, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("loss's grad", y_grad_dtype, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels", t_dtype, {kInt32, kInt64}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("weight", w_dtype, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("total_weight", tw_dtype, valid_types, prim_name);
+  CheckAndConvertUtils::Check("weight dtype", std::vector<TypeId>{tw_dtype->type_id()}, kEqual,
+                              std::vector<TypeId>{w_dtype->type_id()}, prim_name);
+  return x_dtype;
+}
+}  // namespace
+
+class AGNLLLossGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return NLLLossGradInferShape(primitive, input_args);
+  }
+
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
-    const int64_t input_num = 5;
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-    // check
-    std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-    auto x_dtype = input_args[kInputIndex0]->BuildType();
-    auto y_grad_dtype = input_args[kInputIndex1]->BuildType();
-    auto t_dtype = input_args[kInputIndex2]->BuildType();
-    auto w_dtype = input_args[kInputIndex3]->BuildType();
-    auto tw_dtype = input_args[kInputIndex4]->BuildType();
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("logits", x_dtype, valid_types, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("loss's grad", y_grad_dtype, valid_types, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("labels", t_dtype, {kInt32, kInt64}, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("weight", w_dtype, valid_types, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("total_weight", tw_dtype, valid_types, prim_name);
-    CheckAndConvertUtils::Check("weight dtype", std::vector<TypeId>{tw_dtype->type_id()}, kEqual,
-                                std::vector<TypeId>{w_dtype->type_id()}, prim_name);
-    return x_dtype;
+    return NLLLossGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NLLLossGradInfer(engine, primitive, input_args);
   }
 };
+
+AbstractBasePtr NLLLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto infer_type = NLLLossGradInferType(primitive, input_args);
+  auto infer_shape = NLLLossGradInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
 
 void NLLLossGrad::Init(const Reduction &reduction, const int64_t ignore_index) {
   set_reduction(reduction);
@@ -176,6 +196,6 @@ void NLLLossGrad::set_ignore_index(const int64_t ignore_index) {
 int64_t NLLLossGrad::get_ignore_index() const { return GetValue<int64_t>(GetAttr(kIgnoreIndex)); }
 
 MIND_API_OPERATOR_IMPL(NLLLossGrad, BaseOperator);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(NLLLossGrad, prim::kPrimNLLLossGrad, NLLLossGradInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NLLLossGrad, prim::kPrimNLLLossGrad, AGNLLLossGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore
