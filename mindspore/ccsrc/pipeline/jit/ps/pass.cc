@@ -148,16 +148,7 @@ bool RewriterAfterOptAPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::RewriterAfterOptA(func_graph, resource, true);
-  UpdateArgsSpec(func_graph, resource);
-  return true;
-}
-
-bool RewriterAfterOptAPassGe(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::RewriterAfterOptA(func_graph, resource, false);
+  (void)opt::RewriterAfterOptA(func_graph, resource);
   UpdateArgsSpec(func_graph, resource);
   return true;
 }
@@ -176,25 +167,6 @@ bool OrderPyExecuteAfterRewriterPass(const ResourcePtr &resource) {
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   (void)opt::OrderPyExecuteAfterRewriter(func_graph, resource);
-  UpdateArgsSpec(func_graph, resource);
-  return true;
-}
-
-bool ConvertListToTupleForExportPass(const ResourcePtr &resource) {
-  auto jit_syntax_level = fallback::GetJitSyntaxLevel();
-  if (jit_syntax_level == kStrict) {
-    return true;
-  } else if (jit_syntax_level == kLax) {
-    // Throw exception later.
-    MS_LOG(INFO) << "Not allow to export when set JIT syntax level to Lax.";
-    return true;
-  }
-
-  // When phase is export, and set level kCompatible, do rewriter firstly.
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::RewriterForExport(func_graph, resource);
   UpdateArgsSpec(func_graph, resource);
   return true;
 }

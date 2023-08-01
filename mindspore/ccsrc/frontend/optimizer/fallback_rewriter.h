@@ -30,9 +30,8 @@ namespace mindspore {
 namespace opt {
 // Remove the class type from graphs
 bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
-bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource, bool vm_pipeline);
+bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
-bool RewriterForExport(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 bool ConvertPyExecuteListInput(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 }  // namespace opt
 }  // namespace mindspore
