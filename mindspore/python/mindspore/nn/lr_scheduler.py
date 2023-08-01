@@ -13,17 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """LRScheduler."""
+from collections import Counter
 from mindspore import ops
-from mindspore import log as logger
 from mindspore.nn.optim_ex.optimizer import Optimizer
 from mindspore.common.api import jit_class
-from mindspore.common.parameter import Parameter
-from mindspore.common import Tensor
-import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from mindspore import _checkparam as Validator
 
-__all__ = ['StepLR', 'LinearLR', 'LRScheduler', 'ExponentialLR', 'PolynomialLR', 'ChainedScheduler']
+__all__ = ['StepLR', 'LinearLR', 'LRScheduler', 'ExponentialLR', 'PolynomialLR', 'ChainedScheduler',
+           'MultiplicativeLR', 'ConstantLR', 'MultiStepLR', 'LambdaLR']
 
 
 @jit_class
@@ -59,13 +57,20 @@ class LRScheduler:
             raise ValueError("Invalid last_epoch: {}".format(last_epoch))
         Validator.check_value_type("verbose", verbose, [bool])
 
+        if last_epoch == -1:
+            for group in optimizer.param_groups:
+                group['initial_lr'] = group['lr'].value()
+        else:
+            for i, group in enumerate(optimizer.param_groups):
+                if 'initial_lr' not in group:
+                    raise KeyError(f"param 'initial_lr' is not specified "
+                                   f"in param_groups[{i}] when resuming an optimizer")
+        self.base_lrs = [group['initial_lr'] for group in optimizer.param_groups]
         self.optimizer = optimizer
         self._last_lr = []
         self.groups_num = len(optimizer.param_groups)
         self.verbose = verbose
-        self.last_epoch = Parameter(Tensor(last_epoch, dtype=mstype.float32),
-                                    name='last_epoch_' + self.__class__.__name__)
-        self.increase_tensor = Tensor(1, mstype.int32)
+        self.last_epoch = last_epoch
         self.assignadd = ops.AssignAdd()
         self.step()
 
@@ -84,7 +89,7 @@ class LRScheduler:
         Display the current learning rate.
         """
         if is_verbose:
-            logger.info(f"Adjusting learning rate of group {group} to {lr.value()}.")
+            print('Adjusting learning rate of group %s to %s.'%(group, lr.value()))
 
     def get_last_lr(self):
         """
@@ -96,7 +101,7 @@ class LRScheduler:
         """
         Get the current learning rate and change the learning rate.
         """
-        self.assignadd(self.last_epoch, self.increase_tensor)
+        self.last_epoch += 1
         values = self._get_lr()
         for i in range(self.groups_num):
             lr = values[i]
@@ -126,7 +131,7 @@ class StepLR(LRScheduler):
         optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
         step_size (int): Period of learning rate decay.
         gamma (float, optional): Multiplicative factor of learning rate decay.
-            Default: ``0.1``.
+            Default: ``0.5``.
         last_epoch (int, optional): The index of last epoch. Default: ``-1``.
         verbose (bool, optional): If ``True``, prints a message to stdout for
             each update. Default: ``False``.
@@ -171,8 +176,7 @@ class StepLR(LRScheduler):
         super(StepLR, self).__init__(optimizer, last_epoch, verbose)
 
     def _get_lr(self):
-        if (self.last_epoch == Tensor(0, mstype.float32)) or (
-                self.last_epoch % self.step_size != Tensor(0, mstype.float32)):
+        if (self.last_epoch == 0) or (self.last_epoch % self.step_size != 0):
             return self._count_lr()
         return self._count_lr(self.gamma)
 
@@ -245,7 +249,6 @@ class LinearLR(LRScheduler):
 
     def __init__(self, optimizer, start_factor=1.0 / 3, end_factor=1.0, total_iters=5, last_epoch=-1,
                  verbose=False):
-
         if start_factor > 1.0 or start_factor <= 0:
             raise ValueError('Starting multiplicative factor expected to be greater than 0 and less or equal to 1.')
 
@@ -258,7 +261,7 @@ class LinearLR(LRScheduler):
         super(LinearLR, self).__init__(optimizer, last_epoch, verbose)
 
     def _get_lr(self):
-        if self.last_epoch == Tensor(0, mstype.float32):
+        if self.last_epoch == 0:
             return self._count_lr(self.start_factor)
 
         if self.last_epoch > self.total_iters:
@@ -315,7 +318,7 @@ class ExponentialLR(LRScheduler):
         super(ExponentialLR, self).__init__(optimizer, last_epoch, verbose)
 
     def _get_lr(self):
-        if self.last_epoch == Tensor(0, mstype.float32):
+        if self.last_epoch == 0:
             return self._count_lr()
         return self._count_lr(self.gamma)
 
@@ -381,7 +384,7 @@ class PolynomialLR(LRScheduler):
         super(PolynomialLR, self).__init__(optimizer, last_epoch, verbose)
 
     def _get_lr(self):
-        if self.last_epoch == Tensor(0, mstype.float32) or self.last_epoch > self.total_iters:
+        if self.last_epoch == 0 or self.last_epoch > self.total_iters:
             return self._count_lr()
         factor = ((1.0 - self.last_epoch / self.total_iters) / (
             1.0 - (self.last_epoch - 1) / self.total_iters)) ** self.power
@@ -448,3 +451,221 @@ class ChainedScheduler:
         Return last computed learning rate by current scheduler.
         """
         return self._last_lr
+
+
+@jit_class
+class LambdaLR(LRScheduler):
+    """Sets the learning rate of each parameter group to the initial lr
+    times a given function. When last_epoch=-1, sets initial lr as lr.
+
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+
+    Args:
+        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        lr_lambda (Union(function, list)): A function which computes a multiplicative
+            factor given an integer parameter epoch, or a list of such
+            functions, one for each group in `optimizer.param_groups`.
+        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        verbose (bool, optional): If ``True``, prints a message to stdout for
+            each update. Default: ``False``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import nn
+        >>> net = nn.Dense(2, 3)
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
+        >>> lmbda = lambda epoch: 0.9 ** epoch
+        >>> scheduler = nn.LambdaLR(optimizer, lr_lambda=[lmbda])
+        >>> for i in range(3):
+        >>>     scheduler.step()
+        >>>     current_lr = scheduler.get_last_lr()
+        >>>     print(current_lr)
+        [Tensor(shape=[], dtype=Float32, value= 0.009)]
+        [Tensor(shape=[], dtype=Float32, value= 0.0081)]
+        [Tensor(shape=[], dtype=Float32, value= 0.00729)]
+    """
+    def __init__(self, optimizer, lr_lambda, last_epoch=-1, verbose=False):
+        if not isinstance(lr_lambda, list) and not isinstance(lr_lambda, tuple):
+            self.lr_lambdas = [lr_lambda] * len(optimizer.param_groups)
+        else:
+            if len(lr_lambda) != len(optimizer.param_groups):
+                raise ValueError("Expected {} lr_lambdas, but got {}".format(
+                    len(optimizer.param_groups), len(lr_lambda)))
+            self.lr_lambdas = list(lr_lambda)
+        super(LambdaLR, self).__init__(optimizer, last_epoch, verbose)
+
+    def _get_lr(self):
+        return [base_lr * lmbda(self.last_epoch)
+                for lmbda, base_lr in zip(self.lr_lambdas, self.base_lrs)]
+
+
+class MultiplicativeLR(LRScheduler):
+    """Multiply the learning rate of each parameter group by the factor given
+    in the specified function. When last_epoch=-1, sets initial lr as lr.
+
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+
+    Args:
+        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        lr_lambda (Union(function, list)): A function which computes a multiplicative
+            factor given an integer parameter epoch, or a list of such
+            functions, one for each group in optimizer.param_groups.
+        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        verbose (bool, optional): If ``True``, prints a message to stdout for
+            each update. Default: ``False``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import nn
+        >>> net = nn.Dense(2, 3)
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
+        >>> lmbda = lambda epoch: 0.95
+        >>> scheduler = nn.MultiplicativeLR(optimizer, lr_lambda=lmbda)
+        >>> for i in range(3):
+        >>>     scheduler.step()
+        >>>     current_lr = scheduler.get_last_lr()
+        >>>     print(current_lr)
+        [Tensor(shape=[], dtype=Float32, value= 0.0095)]
+        [Tensor(shape=[], dtype=Float32, value= 0.009025)]
+        [Tensor(shape=[], dtype=Float32, value= 0.00857375)]
+    """
+
+    def __init__(self, optimizer, lr_lambda, last_epoch=-1, verbose=False):
+        if not isinstance(lr_lambda, list) and not isinstance(lr_lambda, tuple):
+            self.lr_lambdas = [lr_lambda] * len(optimizer.param_groups)
+        else:
+            if len(lr_lambda) != len(optimizer.param_groups):
+                raise ValueError("Expected {} lr_lambdas, but got {}".format(
+                    len(optimizer.param_groups), len(lr_lambda)))
+            self.lr_lambdas = list(lr_lambda)
+        super(MultiplicativeLR, self).__init__(optimizer, last_epoch, verbose)
+
+    def _get_lr(self):
+        if self.last_epoch > 0:
+            return [group['lr'] * lmbda(self.last_epoch)
+                    for lmbda, group in zip(self.lr_lambdas, self.optimizer.param_groups)]
+        return self._count_lr()
+
+
+class MultiStepLR(LRScheduler):
+    """Multiply the learning rate of each parameter group by gamma once the
+    number of epoch reaches one of the milestones. Notice that such change can
+    happen simultaneously with other changes to the learning rate from outside
+    this scheduler. When last_epoch=-1, sets initial lr as lr.
+
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+
+    Args:
+        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        milestones (list): List of epoch indices, must be increasing. When epoch/step reach the milestone,
+            multiply the learning rate of each parameter group by `gamma`.
+        gamma (float, optional): Multiplicative factor of learning rate decay.
+            Default: ``0.1``.
+        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        verbose (bool, optional): Whether to print learning rate. Default: ``False``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import nn
+        >>> net = nn.Dense(2, 3)
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.05)
+        >>> # Assuming optimizer uses lr = 0.05 for all groups
+        >>> # lr = 0.05     if epoch < 2
+        >>> # lr = 0.005    if 2 <= epoch < 4
+        >>> # lr = 0.0005   if epoch >= 4
+        >>> scheduler = nn.MultiStepLR(optimizer, milestones=[2,4], gamma=0.1)
+        >>> for i in range(6):
+        >>>     scheduler.step()
+        >>>     current_lr = scheduler.get_last_lr()
+        >>>     print(current_lr)
+        [Tensor(shape=[], dtype=Float32, value= 0.05)]
+        [Tensor(shape=[], dtype=Float32, value= 0.005)]
+        [Tensor(shape=[], dtype=Float32, value= 0.005)]
+        [Tensor(shape=[], dtype=Float32, value= 0.0005)]
+        [Tensor(shape=[], dtype=Float32, value= 0.0005)]
+        [Tensor(shape=[], dtype=Float32, value= 0.0005)]
+    """
+
+    def __init__(self, optimizer, milestones, gamma=0.1, last_epoch=-1, verbose=False):
+        self.milestones = Counter(milestones)
+        self.gamma = gamma
+        super(MultiStepLR, self).__init__(optimizer, last_epoch, verbose)
+
+    def _get_lr(self):
+        if self.last_epoch not in self.milestones:
+            return self._count_lr()
+        return self._count_lr(self.gamma ** self.milestones[self.last_epoch])
+
+
+class ConstantLR(LRScheduler):
+    """Decays the learning rate of each parameter group by a small constant factor until the
+    number of epoch reaches a pre-defined milestone: total_iters. Notice that such decay can
+    happen simultaneously with other changes to the learning rate from outside this scheduler.
+    When last_epoch=-1, sets initial lr as lr.
+
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `Experimental Optimizer
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
+
+    Args:
+        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        factor (float, optional): The factor number multiplied learning rate. Default: ``1./3``.
+        total_iters (int, optional): The number of steps that the scheduler decays the learning rate,
+            when the epoch/step reach `total_iters`, restore the learning rate. Default: ``5``.
+        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        verbose (bool, optional): If ``True``, prints a message to stdout for
+            each update. Default: ``False``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import nn
+        >>> net = nn.Dense(2, 3)
+        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.05)
+        >>> # Assuming optimizer uses lr = 0.05 for all groups
+        >>> # lr = 0.025   if epoch <4
+        >>> # lr = 0.05    if epoch >= 4
+        >>> scheduler = nn.ConstantLR(optimizer, factor=0.5, total_iters=4)
+        >>> for i in range(6):
+        >>>     scheduler.step()
+        >>>     current_lr = scheduler.get_last_lr()
+        >>>     print(current_lr)
+        [Tensor(shape=[], dtype=Float32, value= 0.025)]
+        [Tensor(shape=[], dtype=Float32, value= 0.025)]
+        [Tensor(shape=[], dtype=Float32, value= 0.025)]
+        [Tensor(shape=[], dtype=Float32, value= 0.05)]
+        [Tensor(shape=[], dtype=Float32, value= 0.05)]
+        [Tensor(shape=[], dtype=Float32, value= 0.05)]
+    """
+
+    def __init__(self, optimizer, factor=1.0 / 3, total_iters=5, last_epoch=-1, verbose=False):
+        if factor > 1.0 or factor < 0:
+            raise ValueError('Constant multiplicative factor expected to be between 0 and 1.')
+
+        self.factor = factor
+        self.total_iters = total_iters
+        super(ConstantLR, self).__init__(optimizer, last_epoch, verbose)
+
+    def _get_lr(self):
+        if self.last_epoch == 0:
+            return self._count_lr(self.factor)
+        if self.last_epoch != self.total_iters:
+            return self._count_lr()
+        return self._count_lr(1.0 / self.factor)

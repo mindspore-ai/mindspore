@@ -11,6 +11,6 @@ mindspore.nn.StepLR
     参数：
         - **optimizer** (:class:`mindspore.nn.optim_ex.Optimizer`) - 优化器实例。
         - **step_size** (int) - 学习率衰减的周期。
-        - **gamma** (float，可选) -  学习率衰减的乘法因子。默认值: ``0.1``。
+        - **gamma** (float，可选) -  学习率衰减的乘法因子。默认值: ``0.5``。
         - **last_epoch** (int，可选) - epoch/step数。默认值： ``-1``。
         - **verbose** (bool，可选) - 是否打印学习率。默认值： ``False``。
