@@ -194,6 +194,7 @@ class Adadelta(Optimizer):
         grads = self.gradients_centralization(grads)
         grads = self.scale_grad(grads)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
         if self.is_group_lr:
             success = self.map_reverse(F.partial(_adadelta_opt, self.opt, self.rho, self.epsilon), lr, params,
                                        self.accum, self.accum_update, grads)

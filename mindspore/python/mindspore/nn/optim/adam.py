@@ -918,6 +918,7 @@ class Adam(Optimizer):
         gradients = self.scale_grad(gradients)
         gradients = self._grad_sparse_indices_deduplicate(gradients)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
 
         beta1_power = self.beta1_power * self.beta1
         self.beta1_power = beta1_power
@@ -1109,6 +1110,7 @@ class AdamWeightDecay(Optimizer):
         gradients = self.flatten_gradients(gradients)
         weight_decay = self.get_weight_decay()
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
 
         if self.use_fused_opt:
             if self.is_group:
@@ -1330,6 +1332,7 @@ class AdamOffload(Optimizer):
         gradients = self.decay_weight(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
 
         beta1_power = self.beta1_power * self.beta1
         self.beta1_power = beta1_power

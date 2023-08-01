@@ -209,6 +209,7 @@ class ProximalAdagrad(Optimizer):
         grads = self.scale_grad(grads)
         grads = self._grad_sparse_indices_deduplicate(grads)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
         if self.is_group_lr:
             success = self.map_reverse(F.partial(_proximal_ada_grad_opt, self.opt, self.sparse_opt, self.l1, self.l2),
                                        lr, grads, params, accum)

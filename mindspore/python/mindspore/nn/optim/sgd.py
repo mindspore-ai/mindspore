@@ -210,6 +210,7 @@ class SGD(Optimizer):
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
         if self.is_group_lr:
             success = self.hyper_map_reverse(F.partial(_sgd_opt, self.momentum),
                                              lr, gradients, params, accum, stat, self.opt)
