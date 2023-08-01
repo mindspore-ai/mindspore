@@ -1263,7 +1263,7 @@ def _warm_up_host_cache_enabled(parameter_dict):
         return True
     for key in parameter_dict.keys():
         if key.find(".__param_key__") != -1:
-            raise ValueError("Parameter cache is not enabled, but checkpoint is config with cache enabled."
+            raise ValueError("Parameter cache is not enabled, but configuration of checkpoint is cache enabled."
                              " Please enable parameter cache and retry.")
     return False
 
