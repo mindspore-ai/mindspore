@@ -113,9 +113,20 @@ static const std::unordered_set<PrimitivePtr> kNNACLToOpsInfer = {
   prim::kPrimNotEqual,
 
   prim::kPrimActivation,
-  prim::kPrimActivationGrad,
   prim::kPrimArgMaxFusion,
   prim::kPrimArgMinFusion,
+  prim::kPrimGLU,
+  // grad op
+  prim::kPrimActivationGrad,
+  prim::kPrimAbsGrad,
+  prim::kPrimBinaryCrossEntropyGrad,
+  prim::kPrimLogGrad,
+  prim::kPrimMaximumGrad,
+  prim::kPrimMinimumGrad,
+  prim::kPrimNegGrad,
+  prim::kPrimRsqrtGrad,
+  prim::kPrimSqrtGrad,
+  prim::kPrimSmoothL1LossGrad,
 };
 
 namespace {
