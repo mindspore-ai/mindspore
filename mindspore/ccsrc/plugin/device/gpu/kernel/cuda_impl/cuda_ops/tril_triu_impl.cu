@@ -49,7 +49,7 @@ template <>
 __global__ void Triu(const size_t size, const Complex<float> *input, const int diagonal, const int64_t matrix_row,
                      const int64_t matrix_col, Complex<float> *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    int matrix_size = matrix_row * matrix_col;
+    size_t matrix_size = matrix_row * matrix_col;
     int row = pos % matrix_size / matrix_col;
     int col = pos % matrix_size % matrix_col;
     float rs_real = row + diagonal <= col ? input[pos].real() : static_cast<float>(0.0);

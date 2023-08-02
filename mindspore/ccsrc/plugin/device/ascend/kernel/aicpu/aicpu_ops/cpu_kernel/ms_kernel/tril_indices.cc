@@ -41,6 +41,7 @@ const char *kTrilIndices = "TrilIndices";
 
 namespace aicpu {
 uint32_t TrilIndicesCpuKernel::Compute(CpuKernelContext &ctx) {
+  KERNEL_HANDLE_ERROR(TrilIndicesAttrOutputCheck(ctx), "Tril Indices check params failed.");
   Tensor *output = ctx.Output(0);
   KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed.")
   auto data_type = ctx.Output(0)->GetDataType();
@@ -56,6 +57,7 @@ uint32_t TrilIndicesCpuKernel::Compute(CpuKernelContext &ctx) {
 
 template <typename T>
 uint32_t TrilIndicesCpuKernel::DoCompute(CpuKernelContext &ctx) {
+  KERNEL_HANDLE_ERROR(TrilIndicesAttrOutputCheck(ctx), "Tril Indices check params failed.");
   AttrValue *row_ptr = ctx.GetAttr("row");
   AttrValue *col_ptr = ctx.GetAttr("col");
   AttrValue *offset_ptr = ctx.GetAttr("offset");
@@ -86,6 +88,19 @@ uint32_t TrilIndicesCpuKernel::DoCompute(CpuKernelContext &ctx) {
       c = 0;
     }
   }
+  return KERNEL_STATUS_OK;
+}
+
+uint32_t TrilIndicesCpuKernel::TrilIndicesAttrOutputCheck(CpuKernelContext &ctx) {
+  auto row_ptr = ctx.GetAttr("row");
+  auto col_ptr = ctx.GetAttr("col");
+  KERNEL_CHECK_NULLPTR(row_ptr, KERNEL_STATUS_PARAM_INVALID, "Get row attr failed.")
+  KERNEL_CHECK_NULLPTR(col_ptr, KERNEL_STATUS_PARAM_INVALID, "Get col attr failed.")
+
+  auto output = ctx.Output(0);
+  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
+  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  KERNEL_CHECK_NULLPTR(output->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get output shape failed.")
   return KERNEL_STATUS_OK;
 }
 

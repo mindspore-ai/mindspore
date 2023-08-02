@@ -20,7 +20,9 @@ namespace mindspore {
 namespace kernel {
 bool TriuIndicesGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::TriuIndices>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr_);
   kernel_name_ = kernel_ptr_->name();
   if (outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty outputs, which is invalid.";
@@ -43,6 +45,7 @@ bool TriuIndicesGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 int TriuIndicesGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   ResetResource();
   auto ret = KRET_OK;
   size_t tensor_size = 0;
@@ -70,6 +73,7 @@ template <typename T>
 bool TriuIndicesGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &workspace,
                                            const std::vector<AddressPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   if (triu_size_ > 0) {
     auto m_first_row = offset_ > 0 ? std::max<int64_t>(col_ - offset_, 0) : col_;

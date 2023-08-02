@@ -43,15 +43,26 @@ const int32_t minDims = 2;
 
 namespace aicpu {
 uint32_t TrilCpuKernel::ValidParam(CpuKernelContext &ctx) {
+  auto input = ctx.Input(0);
+  KERNEL_CHECK_NULLPTR(input, KERNEL_STATUS_PARAM_INVALID, "Get input failed")
+  KERNEL_CHECK_NULLPTR(input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed")
+
+  auto output = ctx.Output(0);
+  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
+  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+
   auto input_shape = ctx.Input(0)->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(input_shape, KERNEL_STATUS_PARAM_INVALID, "Get input shape failed.")
   auto output_shape = ctx.Output(0)->GetTensorShape();
+  KERNEL_CHECK_NULLPTR(output_shape, KERNEL_STATUS_PARAM_INVALID, "Get output shape failed.")
+
   auto input_dims = input_shape->GetDims();
 
   KERNEL_CHECK_FALSE(input_dims >= minDims, KERNEL_STATUS_PARAM_INVALID,
                      "Input must be at least rank 2, but got rank [%d]", input_shape->GetDims());
 
-  auto input_data_type = ctx.Input(0)->GetDataType();
-  auto output_data_type = ctx.Output(0)->GetDataType();
+  auto input_data_type = input->GetDataType();
+  auto output_data_type = output->GetDataType();
   KERNEL_CHECK_FALSE(input_data_type == output_data_type, KERNEL_STATUS_PARAM_INVALID,
                      "The data type of input [%s] need be same with output [%s].", DTypeStr(input_data_type).c_str(),
                      DTypeStr(output_data_type).c_str())
@@ -124,6 +135,7 @@ uint32_t TrilCpuKernel::DoCompute(CpuKernelContext &ctx) {
     }
     if (max_core_num == 0) {
       KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      return KERNEL_STATUS_INNER_ERROR;
     }
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, matrixs_num, matrixs_num / max_core_num, shard_tril);
     if (ret != KERNEL_STATUS_OK) {

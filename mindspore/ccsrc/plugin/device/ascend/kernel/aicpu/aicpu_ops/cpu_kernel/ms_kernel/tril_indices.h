@@ -34,6 +34,8 @@ class TrilIndicesCpuKernel : public CpuKernel {
   template <typename T>
   uint32_t DoCompute(CpuKernelContext &ctx);
 
+  uint32_t TrilIndicesAttrOutputCheck(CpuKernelContext &ctx);
+
   int32_t offset = 0;
 };
 }  // namespace aicpu

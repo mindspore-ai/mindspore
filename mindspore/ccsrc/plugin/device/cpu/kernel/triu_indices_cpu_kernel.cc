@@ -56,6 +56,7 @@ template <typename T>
 bool TriuIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   auto offset1_ = offset_ - 1;
   auto m_first_row = offset1_ > 0 ? std::min<int64_t>(col_, 1 + offset1_) : row_ + offset1_ > 0;
   auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col_, row_ + offset1_));
@@ -67,7 +68,7 @@ bool TriuIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     tril_size += diff_row * col_;
   }
   auto triu_size = row_ * col_ - tril_size;
-  auto *output_addr = static_cast<T *>(outputs[0]->addr);
+  auto *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
   int64_t i = 0;
   int64_t c = std::max<int64_t>(0, offset_), r = 0;
   while (i < SizeToLong(triu_size)) {
