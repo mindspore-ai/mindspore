@@ -48,8 +48,9 @@ REG_ADPT_DESC(DiagD, prim::kPrimDiagD->name(), ADPT_DESC(Diag))
 INPUT_MAP(Fill) = {{1, INPUT_DESC(dims)}, {2, INPUT_DESC(value)}};
 ATTR_MAP(Fill) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Fill) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Fill, kNameFillV1, ADPT_DESC(Fill))
-REG_ADPT_DESC(FillV2, "Fill", ADPT_DESC(Fill))
+REG_ADPT_DESC(Fill, kFillOpName, ADPT_DESC(Fill))
+REG_ADPT_DESC(FillV1, kNameFillV1, ADPT_DESC(Fill))
+REG_ADPT_DESC(FillV2, kFillV2OpName, ADPT_DESC(Fill))
 
 // PadV3
 INPUT_MAP(PadV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}, {3, INPUT_DESC(constant_values)}};
