@@ -24,6 +24,7 @@
 #include "transform/graph_ir/op_adapter_desc.h"
 #include "transform/graph_ir/transform_util.h"
 #include "transform/graph_ir/graph_builder.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace transform {
@@ -389,6 +390,15 @@ Status RunGraphWithStreamAsync(const std::shared_ptr<GraphRunner> &runner, const
 
 transform::Status CompileDatasetGraph(const DatasetGraphParam &param, const std::string &phase) {
   return BuildDatasetGraph(param, phase);
+}
+
+bool ConvertCheck(const AnfNodePtr &node) {
+  if (!node->cast<CNodePtr>() || !AnfUtils::IsRealKernel(node)) {
+    return true;
+  }
+  PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(node);
+  auto &adapter_map = OpAdapterMap::get();
+  return adapter_map.find(prim->name()) != adapter_map.end();
 }
 }  // namespace transform
 }  // namespace mindspore

@@ -83,6 +83,7 @@ BACKEND_EXPORT void BuildGraph(const std::string &name, const DfGraphConvertorPt
 void GenerateBroadcastGraph(const DfGraphConvertorPtr &converter, const TensorOrderMap &tensors);
 BACKEND_EXPORT void GenerateCheckpointGraph(const DfGraphConvertorPtr &converter);
 BACKEND_EXPORT int ErrCode(const DfGraphConvertorPtr &converter);
+BACKEND_EXPORT bool ConvertCheck(const AnfNodePtr &node);
 
 BACKEND_EXPORT DfGraphPtr GetComputeGraph(const DfGraphConvertorPtr &converter);
 BACKEND_EXPORT DfGraphPtr GetInitGraph(const DfGraphConvertorPtr &converter);
