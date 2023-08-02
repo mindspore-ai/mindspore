@@ -12,9 +12,6 @@ mindspore.nn.MultiheadAttention
 
     如果query、key和value相同，则上述即为自注意力机制的计算过程。
 
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
-
     参数：
         - **embed_dim** (int) - 模型的总维数。
         - **num_heads** (int) - 并行注意力头的数量。`num_heads` 需要能够被 `embed_dim` 整除（每个头的维数为 `embed_dim // num_heads`）。
@@ -25,20 +22,21 @@ mindspore.nn.MultiheadAttention
         - **kdim** (int) - key的总特征数。默认值： ``None`` （即 `kdim=embed_dim`）。
         - **vdim** (int) - value的总特征数。默认值：``None`` （即 `vdim=embed_dim`）。
         - **batch_first** (bool) - 如果为 ``True``，则输入输出Tensor的shape为 :math:`(batch, seq, feature)` ，否则shape为 :math:`(seq, batch, feature)` 。 默认值： ``False`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameter的数据类型。默认值： ``mstype.float32`` 。
 
     输入：
         - **query** (Tensor) - Query矩阵。当输入非Batch数据时，Shape为： :math:`(L, E_q)` 。当输入Batch数据，参数 `batch_first=False` 时，Shape为 :math:`(L, N, E_q)` ，
           当 `batch_first=True` 时，Shape为 :math:`(N, L, E_q)`。其中， :math:`L` 为目标序列的长度， :math:`N` 为batch size，:math:`E_q` 为Query矩阵的维数 `embed_dim`。
-          注意力机制通过Query与Key-Value运算以生成最终输出。详情请见："Attention Is All You Need"。
+          数据类型：float16、float32或者float64。注意力机制通过Query与Key-Value运算以生成最终输出。详情请见："Attention Is All You Need"。
         - **key** (Tensor) - Key矩阵。当输入非Batch数据时，Shape为： :math:`(S, E_k)` 。当输入Batch数据，参数 `batch_first=False` 时，Shape为 :math:`(S, N, E_k)` ，
-          当 `batch_first=True` 时，Shape为 :math:`(N, S, E_k)`。其中， :math:`S` 为源序列的长度， :math:`N` 为batch size，:math:`E_k` 为Key矩阵的维数 `kdim`。详情请见："Attention Is All You Need"。
+          当 `batch_first=True` 时，Shape为 :math:`(N, S, E_k)`。其中， :math:`S` 为源序列的长度， :math:`N` 为batch size，:math:`E_k` 为Key矩阵的维数 `kdim`。数据类型：float16、float32或者float64。详情请见："Attention Is All You Need"。
         - **value** (Tensor) - Value矩阵。当输入非Batch数据时，Shape为： :math:`(S, E_v)` 。当输入Batch数据，参数 `batch_first=False` 时，Shape为 :math:`(S, N, E_v)` ，
-          当 `batch_first=True` 时，Shape为 :math:`(N, S, E_v)`。其中， :math:`S` 为源序列的长度， :math:`N` 为batch size，:math:`E_v` 为Key矩阵的维数 `vdim`。详情请见："Attention Is All You Need"。
+          当 `batch_first=True` 时，Shape为 :math:`(N, S, E_v)`。其中， :math:`S` 为源序列的长度， :math:`N` 为batch size，:math:`E_v` 为Key矩阵的维数 `vdim`。数据类型：float16、float32或者float64。详情请见："Attention Is All You Need"。
         - **key_padding_mask** (Tensor, optional) - 如果指定此值，则表示Shape为 :math:`(N, S)`的掩码将被用于 `key`。当输入非Batch数据时，Shape为： :math:`(S)` 。
-          如果输入Tensor为Bool类型，则 `key` 中对应为 ``True`` 的位置将在Attention计算时被忽略。如果输入Tensor为Float类型，则将直接与 `key` 相加。默认值：``None``。
+          如果输入Tensor为Bool类型，则 `key` 中对应为 ``True`` 的位置将在Attention计算时被忽略。如果输入Tensor为Float类型，则将直接与 `key` 相加。Float支持数据类型：float16、float32或者float64。默认值：``None``。
         - **need_weights** (bool) - 是否需要返回 `attn_output_weights`，如果为 ``True``，则输出包含 `attn_output_weights`。默认值：``True``。
         - **attn_mask** (Tensor, optional) - 如果指定此值，则表示Shape为 :math:`(L, S)` 或 :math:`(N\cdot\text{num_heads}, L, S)` 的掩码将被用于Attention计算。其中 :math:`N` 为batch size，
-          :math:`L` 为目标序列长度，:math:`S` 为源序列长度。如果输入为2维矩阵，则将自动沿batch维广播至3维矩阵。若为3维矩阵，则允许沿batch维使用不同的掩码。如果输入Tensor为Bool类型，则值为 ``True`` 对应位置允许被注意力计算。如果输入Tensor为Float类型，则将直接与注意力权重相加。默认值：``None``。
+          :math:`L` 为目标序列长度，:math:`S` 为源序列长度。如果输入为2维矩阵，则将自动沿batch维广播至3维矩阵。若为3维矩阵，则允许沿batch维使用不同的掩码。如果输入Tensor为Bool类型，则值为 ``True`` 对应位置允许被注意力计算。如果输入Tensor为Float类型，则将直接与注意力权重相加。Float支持数据类型：float16、float32或者float64。默认值：``None``。
         - **average_attn_weights** (bool) - 如果为 ``True``， 则返回值 `attn_weights` 为注意力头的平均值。如果为 ``False``，则 ``attn_weights`` 分别返回每个注意力头的值。
           本参数仅在 `need_weights=True` 时生效。默认值： ``True`` 。
 

@@ -533,6 +533,7 @@ class Dense(Cell):
         activation (Union[str, Cell, Primitive, None]): activate function applied to the output of the fully connected
             layer. Both activation name, e.g. 'relu', and mindspore activation function, e.g. mindspore.ops.ReLU(),
             are supported. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
@@ -571,7 +572,8 @@ class Dense(Cell):
                  weight_init=None,
                  bias_init=None,
                  has_bias=True,
-                 activation=None):
+                 activation=None,
+                 dtype=mstype.float32):
         """Initialize Dense."""
         super(Dense, self).__init__()
         self.in_channels = Validator.check_positive_int(
@@ -593,7 +595,7 @@ class Dense(Cell):
         if weight_init is None:
             weight_init = HeUniform(math.sqrt(5))
         self.weight = Parameter(initializer(
-            weight_init, [out_channels, in_channels]), name="weight")
+            weight_init, [out_channels, in_channels], dtype=dtype), name="weight")
 
         self.bias = None
         if self.has_bias:
@@ -606,7 +608,7 @@ class Dense(Cell):
                 bound = 1 / math.sqrt(in_channels)
                 bias_init = Uniform(scale=bound)
             self.bias = Parameter(initializer(
-                bias_init, [out_channels]), name="bias")
+                bias_init, [out_channels], dtype=dtype), name="bias")
             self.bias_add = P.BiasAdd()
 
         self.matmul = P.MatMul(transpose_b=True)

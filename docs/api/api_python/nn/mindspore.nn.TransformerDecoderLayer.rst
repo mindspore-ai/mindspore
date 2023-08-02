@@ -5,9 +5,6 @@ mindspore.nn.TransformerDecoderLayer
 
     Transformer的解码器层。Transformer解码器的单层实现，包括Self Attention层、MultiheadAttention层和FeedForward层。
 
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
-
     参数：
         - **d_model** (int) - 输入的特征数。
         - **nhead** (int) - 注意力头的数量。
@@ -17,14 +14,15 @@ mindspore.nn.TransformerDecoderLayer
         - **layer_norm_eps** (float) - LayerNorm层的eps值，默认值：``1e-5``。
         - **batch_first** (bool) - 如果为 ``True`` 则输入输出Shape为 :math:`(batch, seq, feature)` ，反之，Shape为 :math:`(seq, batch, feature)` 。默认值： ``False``。
         - **norm_first** (bool) - 如果为 ``True``， 则LayerNorm层位于Self Attention层、MultiheadAttention层和FeedForward层之前，反之，位于其后。默认值： ``False``。
+        - **dtype** (:class:`mindspore.dtype`) - Parameter的数据类型。默认值： ``mstype.float32`` 。
 
     输入：
-        - **tgt** (Tensor) - 目标序列。
-        - **memory** (Tensor) - TransformerEncoder的最后一层输出序列。
-        - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。默认值：``None``。
-        - **memory_mask** (Tensor, 可选) - memory序列的掩码矩阵。默认值：``None``。
-        - **tgt_key_padding_mask** (Tensor, 可选) - 目标序列Key矩阵的掩码矩阵。默认值：``None``。
-        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵∂。默认值：``None``。
+        - **tgt** (Tensor) - 目标序列。如果目标序列没有batch，shape是:math:`(T, E)` ；否则如果 batch_first=False，则shape为 :math:`(T, N, E)` ，如果batch_first=True，则shape为 :math:`(T, N, E)`。 :math:`(T)` 是目标序列的长度。数据类型：float16、float32或者float64。
+        - **memory** (Tensor) - TransformerEncoder的最后一层输出序列。数据类型：float16、float32或者float64。
+        - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。shape是 :math:`(T, T)` 或 :math:`(N*num_heads, T, T)` 。数据类型：float16、float32或者float64。默认值：``None``。
+        - **memory_mask** (Tensor, 可选) - memory序列的掩码矩阵。shape是 :math:`(T, S)` 。数据类型：float16、float32或者float64。默认值：``None``。
+        - **tgt_key_padding_mask** (Tensor, 可选) - 目标序列Key矩阵的掩码矩阵。shape是 :math:`(T)` 。数据类型：float16、float32或者float64。默认值：``None``。
+        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵∂。hape是 :math:`(S)` 。数据类型：float16、float32或者float64。默认值：``None``。
 
     输出：
         Tensor。

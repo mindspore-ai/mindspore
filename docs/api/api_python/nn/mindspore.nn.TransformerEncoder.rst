@@ -5,18 +5,15 @@ mindspore.nn.TransformerEncoder
 
     Transformer编码器模块，多层 `TransformerEncoderLayer` 的堆叠，包括MultiheadAttention层和FeedForward层。可以使用此模块构造BERT(https://arxiv.org/abs/1810.04805)模型。
 
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
-
     参数：
         - **encoder_layer** (Cell) - TransformerEncoderLayer()的实例。
         - **num_layers** (int) - 编码器层数。
         - **norm** (Cell, 可选) - 自定义LayerNorm层。 默认值： ``None`` 。
 
     输入：
-        - **src** (Tensor) - 源序列。
-        - **src_mask** (Tensor, 可选) - 源序列的掩码矩阵。默认值：``None``。
-        - **src_key_padding_mask** (Tensor, 可选) - 源序列Key矩阵的掩码矩阵。默认值：``None``。
+        - **src** (Tensor) - 源序列。如果源序列没有batch，shape是:math:`(S, E)` ；否则如果 batch_first=False，则shape为 :math:`(S, N, E)` ，如果batch_first=True，则shape为 :math:`(S, N, E)`。 :math:`(S)` 是源序列的长度, :math:`(N)` 是batch个数， :math:`(E)` 是特性个数。数据类型：float16、float32或者float64。
+        - **src_mask** (Tensor, 可选) - 源序列的掩码矩阵。shape是 :math:`(S, S)` 或 :math:`(N*num_heads, S, S)` 。数据类型：float16、float32或者float64。默认值：``None``。
+        - **src_key_padding_mask** (Tensor, 可选) - 源序列Key矩阵的掩码矩阵。shape是 :math:`(S)` 。数据类型：float16、float32或者float64。默认值：``None``。
 
     输出：
         Tensor。
