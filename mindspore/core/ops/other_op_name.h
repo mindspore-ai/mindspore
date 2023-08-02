@@ -45,6 +45,7 @@ constexpr auto kReservoirReplayBufferPushOpName = "ReservoirReplayBufferPush";
 constexpr auto kReservoirReplayBufferSampleOpName = "ReservoirReplayBufferSample";
 constexpr auto kAllGatherOpName = "AllGather";
 constexpr auto kAllReduceOpName = "AllReduce";
+constexpr auto kReduceOpName = "Reduce";
 constexpr auto kReduceScatterOpName = "ReduceScatter";
 constexpr auto kAllToAllvOpName = "AllToAllv";
 }  // namespace mindspore

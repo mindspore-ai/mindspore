@@ -76,7 +76,8 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (op_name != kAllGatherOpName && op_name != kAllReduceOpName && op_name != kBroadcastOpName &&
       op_name != kReduceScatterOpName && op_name != kSendOpName && op_name != kReceiveOpName &&
-      op_name != kAllToAllvOpName && op_name != kMuxReceiveOpName && op_name != kMuxSendOpName) {
+      op_name != kAllToAllvOpName && op_name != kMuxReceiveOpName && op_name != kMuxSendOpName &&
+      op_name != kReduceOpName) {
     MS_LOG(DEBUG) << "Hccl does not have op [" << op_name << "]";
     return;
   }

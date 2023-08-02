@@ -92,7 +92,6 @@ GVAR_DEF(PrimitivePtr, kPrimMinimumGradGrad, std::make_shared<Primitive>("Minimu
 GVAR_DEF(PrimitivePtr, kPrimMaximumGradGrad, std::make_shared<Primitive>("MaximumGradGrad"));
 GVAR_DEF(PrimitivePtr, kPrimMedian, std::make_shared<Primitive>(kMedianOpName));
 GVAR_DEF(PrimitivePtr, kPrimMedianGrad, std::make_shared<Primitive>(kMedianGradOpName));
-GVAR_DEF(PrimitivePtr, kPrimReduce, std::make_shared<Primitive>("Reduce"));
 GVAR_DEF(PrimitivePtr, kPrimReduceMean, std::make_shared<Primitive>(kReduceMeanOpName));
 GVAR_DEF(PrimitivePtr, kPrimReduceMeanD, std::make_shared<Primitive>(kReduceMeanDOpName));
 GVAR_DEF(PrimitivePtr, kPrimReduceSum, std::make_shared<Primitive>(kReduceSumOpName));

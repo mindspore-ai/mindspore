@@ -145,6 +145,7 @@ constexpr auto kRankID = "RANK_ID";
 
 constexpr auto kHcomOpTypeAllToAllV = "HcomAllToAllV";
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
+constexpr auto kHcomOpTypeReduce = "HcomReduce";
 constexpr auto kHcomOpTypeAllGather = "HcomAllGather";
 constexpr auto kHcomOpTypeBroadcast = "HcomBroadcast";
 constexpr auto kHcomOpTypeSend = "HcomSend";

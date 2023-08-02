@@ -37,6 +37,7 @@ bool IsCommOps(const AnfNodePtr &node) {
   static const PrimitiveSet kCommunicationOpsPrim = {prim::kPrimSend,
                                                      prim::kPrimReceive,
                                                      prim::kPrimAllReduce,
+                                                     prim::kPrimReduce,
                                                      prim::kPrimAllGather,
                                                      prim::kPrimReduceScatter,
                                                      prim::kPrimAllToAll,
