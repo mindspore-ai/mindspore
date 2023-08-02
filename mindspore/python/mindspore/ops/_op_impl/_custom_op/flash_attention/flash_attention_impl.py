@@ -37,31 +37,28 @@ cus_flash_atten_op_info = TBERegOp("FlashAttentionPrimitive") \
     .input(0, "q", False, "required", "all") \
     .input(1, "k", False, "required", "all") \
     .input(2, "v", False, "required", "all") \
-    .input(3, "dim_mask", False, "required", "all") \
-    .input(4, "attn_mask", False, "optional", "all") \
-    .input(5, "dropout_mask", False, "optional", "all") \
-    .input(6, "alibi_mask", False, "optional", "all") \
+    .input(3, "attn_mask", False, "optional", "all") \
+    .input(4, "dropout_mask", False, "optional", "all") \
+    .input(5, "alibi_mask", False, "optional", "all") \
     .output(0, "y", False, "required", "all") \
     .output(1, "l", False, "required", "all") \
     .output(2, "m", False, "required", "all") \
-    .dtype_format(DataType.F16_Default,
+    .dtype_format(DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
                   DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.I8_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
                   DataType.F16_Default,
                   DataType.F16_Default) \
-    .dtype_format(DataType.F16_Default,
+    .dtype_format(DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
                   DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.I8_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
                   DataType.F32_Default,
                   DataType.F16_Default) \
     .get_op_info()
@@ -69,9 +66,9 @@ cus_flash_atten_op_info = TBERegOp("FlashAttentionPrimitive") \
 
 # Binding kernel info with the kernel implementation.
 @op_info_register(cus_flash_atten_op_info)
-def flash_attention_impl(query, key, value, dim_mask, attn_mask, dropout_mask, alibi_mask, y, l,
+def flash_attention_impl(query, key, value, attn_mask, dropout_mask, alibi_mask, y, l,
                          m, prev_block_num, next_block_num, high_precision, tiling_stgy_name):
-    flash_attention(query, key, value, dim_mask, attn_mask, dropout_mask, alibi_mask,
+    flash_attention(query, key, value, attn_mask, dropout_mask, alibi_mask,
                     y, l, m, prev_block_num, next_block_num,
                     high_precision=high_precision,
                     kernel_name=KERNEL_NAME,
@@ -98,50 +95,47 @@ cus_flash_atten_grad_op_info = TBERegOp("FlashAttentionGradPrimitive") \
     .input(4, "do", False, "required", "all") \
     .input(5, "l", False, "required", "all") \
     .input(6, "m", False, "required", "all") \
-    .input(7, "dim_mask", False, "required", "all") \
-    .input(8, "attn_mask", False, "optional", "all") \
-    .input(9, "dropout_mask", False, "optional", "all") \
-    .input(10, "alibi_mask", False, "optional", "all") \
+    .input(7, "attn_mask", False, "optional", "all") \
+    .input(8, "dropout_mask", False, "optional", "all") \
+    .input(9, "alibi_mask", False, "optional", "all") \
     .output(0, "dq", False, "required", "all") \
     .output(1, "dk", False, "required", "all") \
     .output(2, "dv", False, "required", "all") \
-    .dtype_format(DataType.F16_Default,
+    .dtype_format(DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
                   DataType.F16_Default,
                   DataType.F16_Default,
+                  DataType.F16_FracNZ,
                   DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.I8_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
+                  DataType.F16_FracNZ,
+                  DataType.F32_FracNZ,
+                  DataType.F32_FracNZ,
+                  DataType.F32_FracNZ,) \
+    .dtype_format(DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
+                  DataType.F16_FracNZ,
                   DataType.F32_Default,
-                  DataType.F32_Default,
-                  DataType.F32_Default) \
-    .dtype_format(DataType.F16_Default,
                   DataType.F16_Default,
+                  DataType.F16_FracNZ,
                   DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F32_Default,
-                  DataType.F16_Default,
-                  DataType.I8_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F16_Default,
-                  DataType.F32_Default,
-                  DataType.F32_Default,
-                  DataType.F32_Default) \
+                  DataType.F16_FracNZ,
+                  DataType.F32_FracNZ,
+                  DataType.F32_FracNZ,
+                  DataType.F32_FracNZ) \
     .get_op_info()
 
 
 # Binding kernel info with the kernel implementation.
 @op_info_register(cus_flash_atten_grad_op_info)
-def flash_attention_grad_impl(q, k, v, o, dout, l, m, dim_mask, attn_mask, dropout_mask, alibi_mask,
+def flash_attention_grad_impl(q, k, v, o, dout, l, m, attn_mask, dropout_mask, alibi_mask,
                               dq, dk, dv, prev_block_num, next_block_num,
                               high_precision, tiling_stgy_name="sparse"):
-    flash_attention_grad(q, k, v, o, dout, l, m, dim_mask, attn_mask, dropout_mask, alibi_mask,
+    flash_attention_grad(q, k, v, o, dout, l, m, attn_mask, dropout_mask, alibi_mask,
                          dq, dk, dv, prev_block_num, next_block_num,
                          high_precision=high_precision,
                          kernel_name=GRAD_KERNEL_NAME,

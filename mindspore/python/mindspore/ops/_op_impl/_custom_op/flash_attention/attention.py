@@ -25,7 +25,6 @@ from tbe.common.platform import get_soc_spec
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import FP16
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import FP32
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import GM
-from mindspore.ops._op_impl._custom_op.flash_attention.constants import INT8
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import MASK_FILL_VALUE
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import UB
 from mindspore.ops._op_impl._custom_op.flash_attention.tik_ops_utils import TikOpsUtils
@@ -37,7 +36,7 @@ from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.sparse_ti
 class FlashAttention(metaclass=ABCMeta):
     """The base class of FlashAttention"""
 
-    def __init__(self, q, k, v, dim_mask, attn_mask, dropout_mask, alibi_mask, kernel_name,
+    def __init__(self, q, k, v, attn_mask, dropout_mask, alibi_mask, kernel_name,
                  tiling_stgy_cls,
                  prev_block_num=65536,
                  next_block_num=65536,
@@ -48,7 +47,6 @@ class FlashAttention(metaclass=ABCMeta):
         :param q: with shape: (B, h, N, d)
         :param k: with shape: (B, h, N, d)
         :param v: with shape: (B, h, N, d)
-        :param dim_mask: with shape: (x, ) x equals length last dim that not padded to 16.
         :param attn_mask: with shape: (1, N, N) or (B, N, N)
         :param dropout_mask: with shape: (B, h, N, N)
         :param alibi_mask: with shape: (B, h, 1, N)
@@ -66,19 +64,25 @@ class FlashAttention(metaclass=ABCMeta):
                                            src_stride=0,
                                            dst_stride=0)
         self.tik_ops_utils = TikOpsUtils(self.tik_instance)
-        self.parser_input_shape(alibi_mask, attn_mask, dim_mask, dropout_mask, k, q, v)
-
-        batch_size, h, Nq, d = self.q_shape
+        self.parse_input_shape(alibi_mask, attn_mask, dropout_mask, k, q, v)
+        # NZ
+        _, _, N1, M1, M0, N0 = self.q_shape
+        self.M1 = M1
+        self.N1 = N1
+        self.M0 = M0
+        self.N0 = N0
+        self.d = N1 * N0
+        # ND
+        batch_size, h, Nq, actual_d = self.q_ori_shape
         self.head_num = h
-        self.B, self.Nq, self.d = batch_size * h, Nq, d
-        self.N = self.k_shape[2]
+        self.B, self.Nq = batch_size * h, Nq
+        self.N = self.k_ori_shape[2]
+        self.actual_d = actual_d
 
         self.l_shape = [batch_size, h, self.Nq]
         self.m_shape = [batch_size, h, self.Nq]
-        self.O_shape = [batch_size, h, self.Nq, self.d]
-        self.actual_d = self.dim_mask_shape[0]
+        self.O_shape = self.q_shape
 
-        self.K0 = 16
         self.prev_block_num = prev_block_num
         self.next_block_num = next_block_num
         self.high_precision = high_precision
@@ -86,7 +90,6 @@ class FlashAttention(metaclass=ABCMeta):
             self.precision_type = FP32
         else:
             self.precision_type = FP16
-
         if tiling_stgy_cls is None:
             self.tiling_stgy = SparseTiling(self.Nq, self.N, self.d)
         else:
@@ -105,9 +108,10 @@ class FlashAttention(metaclass=ABCMeta):
         self.drop_mask_gm = None
         self.alibi_mask_gm = None
 
+    # ND get offset
     @staticmethod
-    def get_gm_offset(batch_start, batch_idx, h, w, block_h, block_idx):
-        gm_offset = (batch_start + batch_idx) * h * w + block_idx * block_h * w
+    def get_l_m_gm_offset(batch_start, batch_idx, h, block_h, block_idx):
+        gm_offset = (batch_start + batch_idx) * h + block_idx * block_h
         return gm_offset
 
     @staticmethod
@@ -135,6 +139,11 @@ class FlashAttention(metaclass=ABCMeta):
     @abstractmethod
     def collect_outputs(self):
         raise NotImplementedError
+
+    # NZ get offset
+    def get_gm_offset(self, batch_start, batch_idx, h, w, block_h, block_idx):
+        gm_offset = (batch_start + batch_idx) * h * w + block_idx * block_h * self.N0
+        return gm_offset
 
     def get_core_bath_info(self):
         """
@@ -198,45 +207,33 @@ class FlashAttention(metaclass=ABCMeta):
 
     def get_attn_mask_gm_offset(self, batch_start, batch_idx, h, w, block_h, block_h_idx, block_w, block_w_idx):
         if self.att_mask_shape[0] == 1:
-            gm_offset = block_h_idx * (w * block_h) + block_w_idx * block_w
+            gm_offset = block_w_idx * (h * block_w) + block_h_idx * block_h * self.N0
         else:
             gm_offset = ((batch_start + batch_idx) // self.head_num) * h * w \
-                        + block_h_idx * (w * block_h) + block_w_idx * block_w
+                        + block_w_idx * (h * block_w) + block_h_idx * block_h * self.N0
         return gm_offset
 
-    def parser_input_shape(self, alibi_mask, attn_mask, dim_mask, dropout_mask, k, q, v):
+    def parse_input_shape(self, alibi_mask, attn_mask, dropout_mask, k, q, v):
         """parser input shape"""
         self.has_attn_mask = False
         self.has_drop_mask = False
         self.has_alibi_mask = False
-        if isinstance(q, dict):
-            self.q_shape = q["shape"]
-            self.k_shape = k["shape"]
-            self.v_shape = v["shape"]
-            self.dim_mask_shape = dim_mask["shape"]
-            if attn_mask is not None:
-                self.has_attn_mask = True
-                self.att_mask_shape = attn_mask["shape"]
-            if dropout_mask is not None:
-                self.has_drop_mask = True
-                self.drop_mask_shape = dropout_mask["shape"]
-            if alibi_mask is not None:
-                self.has_alibi_mask = True
-                self.alibi_mask_shape = alibi_mask["shape"]
-        else:
-            self.q_shape = q.shape
-            self.k_shape = k.shape
-            self.v_shape = v.shape
-            self.dim_mask_shape = dim_mask.shape
-            if attn_mask is not None:
-                self.has_attn_mask = True
-                self.att_mask_shape = attn_mask.shape
-            if dropout_mask is not None:
-                self.has_drop_mask = True
-                self.drop_mask_shape = dropout_mask.shape
-            if alibi_mask is not None:
-                self.has_alibi_mask = True
-                self.alibi_mask_shape = alibi_mask.shape
+        # NZ
+        self.q_shape = q["shape"]
+        self.k_shape = k["shape"]
+        self.v_shape = v["shape"]
+        # ND
+        self.q_ori_shape = q["ori_shape"]
+        self.k_ori_shape = k["ori_shape"]
+        if attn_mask is not None:
+            self.has_attn_mask = True
+            self.att_mask_shape = attn_mask["shape"]
+        if dropout_mask is not None:
+            self.has_drop_mask = True
+            self.drop_mask_shape = dropout_mask["shape"]
+        if alibi_mask is not None:
+            self.has_alibi_mask = True
+            self.alibi_mask_shape = alibi_mask["shape"]
 
     def define_inputs_outputs(self):
         self.define_common_inputs()
@@ -263,8 +260,6 @@ class FlashAttention(metaclass=ABCMeta):
         self.Q_gm = self.tik_instance.Tensor(FP16, self.q_shape, name="Q_gm", scope=GM)
         self.K_gm = self.tik_instance.Tensor(FP16, self.k_shape, name="K_gm", scope=GM)
         self.V_gm = self.tik_instance.Tensor(FP16, self.v_shape, name="V_gm", scope=GM)
-        self.dim_mask_gm = self.tik_instance.Tensor(INT8, self.dim_mask_shape, name="mask_gm",
-                                                    scope=GM)
         if self.has_attn_mask:
             self.att_mask_gm = self.tik_instance.Tensor(FP16, self.att_mask_shape,
                                                         name="att_mask_gm", scope=GM)
@@ -285,29 +280,38 @@ class FlashAttention(metaclass=ABCMeta):
             alibi_mask_ub_broadcast = self.tik_ops_utils.broadcast_row(alibi_mask_ub, (m_aligned, n_aligned))
             self.tik_instance.h_add(Sij_ub, Sij_ub, alibi_mask_ub_broadcast)
 
-    def do_att_mask(self, Sij_ub, attn_mask_gm_offset, q_blk_height, kv_blk_height,
+    def do_att_mask(self, Sij_ub_N1MN0, attn_mask_gm_offset, q_blk_height, kv_blk_height,
                     q_blk_h_aligned, kv_blk_h_aligned):
         """load attn mask from gm to ub, then mul it by MASK_FILL_VALUE and add Sij"""
         with self.tik_instance.new_stmt_scope(disable_sync=False):
-            att_mask_ub = self.tik_instance.Tensor(FP16, (q_blk_h_aligned, kv_blk_h_aligned),
+            att_mask_ub = self.tik_instance.Tensor(FP16, (kv_blk_h_aligned // self.N0, q_blk_h_aligned, self.N0),
                                                    scope=UB, name="att_mask_ub")
             self.tik_instance.data_move(att_mask_ub, self.att_mask_gm[attn_mask_gm_offset], 0,
-                                        q_blk_height, kv_blk_height // 16, (self.N - kv_blk_height) // 16, 0)
+                                        kv_blk_height // self.N0, q_blk_height * self.N0 // 16,
+                                        (self.Nq - q_blk_height) * self.N0 // 16, 0)
             self.tik_instance.h_mul(att_mask_ub, att_mask_ub, MASK_FILL_VALUE)
-            self.tik_instance.h_add(Sij_ub, Sij_ub, att_mask_ub)
+            self.tik_instance.h_add(Sij_ub_N1MN0, Sij_ub_N1MN0, att_mask_ub)
 
     def do_dropout_mask(self, Pij_ub, dropout_mask_gm_offset, kv_blk_h_aligned, kv_blk_height,
-                        q_blk_h_aligned, q_blk_height, precision_type=FP16):
+                        q_blk_h_aligned, q_blk_height, precision_type=FP16, workspace=None):
         """load drop mask from gm to ub, then mul it by Pij"""
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             dropout_mask_ub = self.tik_instance.Tensor(FP16, (q_blk_h_aligned, kv_blk_h_aligned),
                                                        scope=UB, name="drop_mask_ub")
             self.tik_instance.data_move(dropout_mask_ub, self.drop_mask_gm[dropout_mask_gm_offset], 0,
                                         q_blk_height, kv_blk_height // 16, (self.N - kv_blk_height) // 16, 0)
+            dropout_mask_ub = dropout_mask_ub.reshape((kv_blk_height // self.N0, q_blk_height, self.N0))
             if precision_type == FP32:
-                dropout_mask_ub_fp32 = self.tik_instance.Tensor(FP32, (q_blk_h_aligned, kv_blk_h_aligned),
+                dropout_mask_ub_fp32 = self.tik_instance.Tensor(FP32,
+                                                                (kv_blk_h_aligned // self.N0, q_blk_h_aligned, self.N0),
                                                                 scope=UB, name="dropout_mask_ub_fp32")
                 self.tik_instance.h_cast(dropout_mask_ub_fp32, dropout_mask_ub, "none")
-                self.tik_instance.h_mul(Pij_ub, Pij_ub, dropout_mask_ub_fp32)
+                if workspace is None:
+                    self.tik_instance.h_mul(Pij_ub, Pij_ub, dropout_mask_ub_fp32)
+                else:
+                    self.tik_instance.h_mul(workspace, Pij_ub, dropout_mask_ub_fp32)
             else:
-                self.tik_instance.h_mul(Pij_ub, Pij_ub, dropout_mask_ub)
+                if workspace is None:
+                    self.tik_instance.h_mul(Pij_ub, Pij_ub, dropout_mask_ub)
+                else:
+                    self.tik_instance.h_mul(workspace, Pij_ub, dropout_mask_ub)

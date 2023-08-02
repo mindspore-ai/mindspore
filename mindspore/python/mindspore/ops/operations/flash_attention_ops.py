@@ -14,7 +14,7 @@
 # ============================================================================
 """flash attention primitive"""
 import mindspore.ops as ops
-from mindspore import dtype as mstype
+import mindspore.common.dtype as mstype
 from mindspore.ops import PrimitiveWithInfer
 from mindspore.ops import prim_attr_register
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
@@ -29,16 +29,16 @@ class FlashAttentionGradPrimitive(PrimitiveWithInfer):
         # pylint: disable=unused-import
         from mindspore.ops._op_impl._custom_op.flash_attention.flash_attention_impl import flash_attention_grad_impl
         self.init_prim_io_names(
-            inputs=["q", "k", "v", "o", "do", "l", "m", "dim_mask", "attn_mask", "dropout_mask", "alibi_mask"],
+            inputs=["q", "k", "v", "o", "do", "l", "m", "attn_mask", "dropout_mask", "alibi_mask"],
             outputs=["dq", "dk", "dv"]
         )
 
     def infer_shape(self, q_shape, k_shape, v_shape, o_shape, do_shape, l_shape, m_shape,
-                    dim_mask_shape, att_mask_shape, dropout_mask_shape, alibi_mask_shape):
+                    att_mask_shape, dropout_mask_shape, alibi_mask_shape):
         return q_shape, k_shape, v_shape
 
     def infer_dtype(self, q_dtype, k_dtype, v_dtype, o_dytpe, do_dtype, l_dtype, m_dtype,
-                    dim_mask_dtype, attn_mask_dtype, dropout_mask_dtype, alibi_mask_type):
+                    attn_mask_dtype, dropout_mask_dtype, alibi_mask_type):
         return mstype.float32, mstype.float32, mstype.float32
 
 
@@ -52,7 +52,7 @@ class FlashAttentionPrimitive(PrimitiveWithInfer):
         # pylint: disable=unused-import
         from mindspore.ops._op_impl._custom_op.flash_attention.flash_attention_impl import flash_attention_impl
         self.init_prim_io_names(
-            inputs=["q", "k", "v", "dim_mask", "attn_mask", "dropout_mask", "alibi_mask"],
+            inputs=["q", "k", "v", "attn_mask", "dropout_mask", "alibi_mask"],
             outputs=["y", "l", "m"]
         )
         self.prev_block_num = prev_block_num
@@ -60,7 +60,7 @@ class FlashAttentionPrimitive(PrimitiveWithInfer):
         self.high_precision = high_precision
         self.tiling_stgy_name = tiling_stgy_name
 
-    def infer_shape(self, q_shape, k_shape, v_shape, dim_mask_shape, attn_mask_shape=None,
+    def infer_shape(self, q_shape, k_shape, v_shape, attn_mask_shape=None,
                     dropout_mask_shape=None, alibi_mask_shape=None):
         """infer shape"""
         b, h, N, _ = q_shape
@@ -68,7 +68,7 @@ class FlashAttentionPrimitive(PrimitiveWithInfer):
         m_shape = (b, h, N)
         return q_shape, l_shape, m_shape
 
-    def infer_dtype(self, q_dtype, k_dtype, v_dtype, dim_mask_dtype, attn_mask_dtype=None,
+    def infer_dtype(self, q_dtype, k_dtype, v_dtype, attn_mask_dtype=None,
                     dropout_mask_dtype=None, alibi_mask_type=None):
         """infer type"""
         l_dtype = mstype.float16
@@ -84,14 +84,14 @@ class FlashAttentionPrimitive(PrimitiveWithInfer):
         flash_attention_grad.add_prim_attr("high_precision", self.high_precision)
         flash_attention_grad.add_prim_attr("tiling_stgy_name", self.tiling_stgy_name)
 
-        def bprop(q, k, v, dim_mask, attn_mask, dropout_mask, alibi_mask, out, douts):
+        def bprop(q, k, v, attn_mask, dropout_mask, alibi_mask, out, douts):
             o, l, m = out
             dout, _, _ = douts
-            dq, dk, dv = flash_attention_grad(q, k, v, o, dout, l, m, dim_mask, attn_mask, dropout_mask, alibi_mask)
+            dq, dk, dv = flash_attention_grad(q, k, v, o, dout, l, m, attn_mask, dropout_mask, alibi_mask)
             dq = ops.cast(dq, mstype.float16)
             dk = ops.cast(dk, mstype.float16)
             dv = ops.cast(dv, mstype.float16)
-            return dq, dk, dv, zeros_like(dim_mask), zeros_like(attn_mask), \
-                zeros_like(dropout_mask), zeros_like(alibi_mask)
+            return dq, dk, dv, zeros_like(attn_mask), \
+                   zeros_like(dropout_mask), zeros_like(alibi_mask)
 
         return bprop

@@ -17,11 +17,10 @@ A FlashAttention Layer.
 """
 import math
 
+import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
-from mindspore.common import dtype as mstype
 from mindspore import ops
 from mindspore.nn.cell import Cell
-import mindspore.numpy as mnp
 from mindspore.ops.operations.flash_attention_ops import FlashAttentionPrimitive
 
 __all__ = ['FlashAttention']
@@ -104,7 +103,6 @@ class FlashAttention(Cell):
         self.flash_attention.add_prim_attr("primitive_target", "Ascend")
 
         self.scale_factor = Tensor([1. / math.sqrt(head_dim)], dtype=mstype.float16)
-        self.dim_mask = Tensor([1 for _ in range(head_dim)], dtype=mstype.int8)
         self.scale_mul = ops.Mul().shard(((dp, mp, 1, 1), (1,)))
 
         self.dropout_rate = dropout_rate
@@ -123,19 +121,14 @@ class FlashAttention(Cell):
                                   such as MatMul. Default: None.
         :return:
         """
-        if in_strategy is not None:
-            shard_stgy = list(in_strategy)
-            shard_stgy.insert(3, (1,))  # dim_mask
-            shard_stgy = tuple(shard_stgy)
-        else:
+        if in_strategy is None:
             # default: dp=1, mp=1, construct inputs only contain q, k, v
-            shard_stgy = (
+            in_strategy = (
                 (1, 1, 1, 1),
                 (1, 1, 1, 1),
                 (1, 1, 1, 1),
-                (1,),  # dim_mask
             )
-        self.flash_attention.shard(shard_stgy)
+        self.flash_attention.shard(in_strategy)
 
     def construct(self, q, k, v, attn_mask=None, alibi_mask=None):
         """FlashAttention forward
@@ -164,13 +157,5 @@ class FlashAttention(Cell):
         if head_dim > 304:
             raise ValueError(
                 "the head_dim must be less than 304, otherwise the ub would be OOM.")
-        if head_dim % 16 != 0:
-            padding_size = 16 - head_dim % 16
-            q = mnp.pad(q, ((0, 0), (0, 0), (0, 0), (0, padding_size)), constant_values=0)
-            k = mnp.pad(k, ((0, 0), (0, 0), (0, 0), (0, padding_size)), constant_values=0)
-            v = mnp.pad(v, ((0, 0), (0, 0), (0, 0), (0, padding_size)), constant_values=0)
-            o, _, _ = self.flash_attention(q, k, v, self.dim_mask, attn_mask, drop_mask, alibi_mask)
-            o = ops.slice(o, [0, 0, 0, 0], [bsz, head_num, seq_len, head_dim])
-        else:
-            o, _, _ = self.flash_attention(q, k, v, self.dim_mask, attn_mask, drop_mask, alibi_mask)
+        o, _, _ = self.flash_attention(q, k, v, attn_mask, drop_mask, alibi_mask)
         return o
