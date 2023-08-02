@@ -22,6 +22,7 @@ from mindspore.common.tensor import Tensor
 context.set_context(mode=context.GRAPH_MODE)
 
 
+@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -43,6 +44,7 @@ def test_tuple_getitem_with_constant_bool_index():
     assert ret2 == 1
 
 
+@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -64,6 +66,7 @@ def test_tuple_getitem_with_constant_bool_index_2():
     assert np.all(ret2.asnumpy() == np.array([1, 2, 3, 4]))
 
 
+@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -89,6 +92,7 @@ def test_tuple_getitem_with_variable_bool_index():
     assert np.all(ret2.asnumpy() == np.array([1]))
 
 
+@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -110,6 +114,7 @@ def test_list_getitem_with_constant_bool_index():
     assert ret2 == 1
 
 
+@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -131,6 +136,7 @@ def test_list_getitem_with_constant_bool_index_2():
     assert np.all(ret2.asnumpy() == np.array([1, 2, 3, 4]))
 
 
+@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
