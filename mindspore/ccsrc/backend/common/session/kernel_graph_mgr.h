@@ -139,6 +139,9 @@ class BACKEND_EXPORT KernelGraphMgr {
   mindspore::HashSet<AnfNodePtr> need_flatten_;
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> need_flatten_tuple_map_;
   static GraphId graph_sum_;
+  // record all graphs's backend params unique name to its weak_ptr
+  // graph can come from different frontend graph
+  static mindspore::HashMap<std::string, std::weak_ptr<AnfNode>> name_to_params_;
 };
 }  // namespace session
 }  // namespace mindspore
