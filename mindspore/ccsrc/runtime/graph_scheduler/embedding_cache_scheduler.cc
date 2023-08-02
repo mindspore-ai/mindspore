@@ -65,7 +65,7 @@ void FinalizeEmbeddingCachePrefetch(const std::string &exception) {
 }
 
 void GetFirstEmbeddingCacheTableInfo(const KernelGraph &graph, AnfNodePtr *const first_cache_input_index,
-                                     size_t *const first_cache_size) {
+                                     size_t *output_idx, size_t *const first_cache_size) {
   MS_EXCEPTION_IF_NULL(first_cache_input_index);
   MS_EXCEPTION_IF_NULL(first_cache_size);
   for (const auto &kernel : graph.execution_order()) {
@@ -111,6 +111,7 @@ void GetFirstEmbeddingCacheTableInfo(const KernelGraph &graph, AnfNodePtr *const
           "mode.");
       }
     }
+    *output_idx = input_index.second;
     *first_cache_input_index = cnode;
     *first_cache_size = size;
     MS_LOG(INFO) << "The input index of the first EmbeddingLookup cache is from " << cnode->fullname_with_scope()
@@ -146,10 +147,20 @@ void CheckSparseModeForEmbeddingCache(const CNodePtr &node) {
   }
 }
 
+bool ShouldCheckSparseMode(const std::string &param_name, const std::string &kernel_name, bool is_sparse_gather) {
+  if (embedding_cache_table_manager.IsEmbeddingCacheTable(param_name)) {
+    if (kernel_name == kSparseGatherV2OpName || is_sparse_gather) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
   AnfNodePtr first_cache_input_index = nullptr;
   size_t first_cache_size = 0;
-  GetFirstEmbeddingCacheTableInfo(graph, &first_cache_input_index, &first_cache_size);
+  size_t output_idx = 0;
+  GetFirstEmbeddingCacheTableInfo(graph, &first_cache_input_index, &output_idx, &first_cache_size);
   MS_EXCEPTION_IF_NULL(first_cache_input_index);
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
@@ -172,8 +183,7 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
     if (kernel_name == kGatherV2OpName && common::AnfAlgo::HasNodeAttr(kAttrIsSparse, kernel)) {
       is_sparse_gather = common::AnfAlgo::GetNodeAttr<bool>(kernel, kAttrIsSparse);
     }
-    if (embedding_cache_table_manager.IsEmbeddingCacheTable(param_name) &&
-        (kernel_name == kSparseGatherV2OpName || is_sparse_gather)) {
+    if (ShouldCheckSparseMode(param_name, kernel_name, is_sparse_gather)) {
       CheckSparseModeForEmbeddingCache(kernel);
     }
     while (input_index.first->isa<CNode>() &&
@@ -186,7 +196,7 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
                    ? common::AnfAlgo::GetOutputOfGraphkernel(input_index)
                    : input_index.first;
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode == first_cache_input_index) {
+    if (cnode == first_cache_input_index && input_index.second == output_idx) {
       if (!embedding_cache_table_manager.IsEmbeddingCacheTable(param_name)) {
         MS_LOG(ERROR) << "The EmbeddingLookup(" << kernel->fullname_with_scope() << ") doesn't enable cache.";
         FinalizeEmbeddingCachePrefetch(
@@ -206,7 +216,8 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
       FinalizeEmbeddingCachePrefetch(
         "The EmbeddingLookup whose input index isn't from dataset doesn't support cache in parameter server training "
         "mode.");
-    } else if (cnode->isa<CNode>() && (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName)) {
+    } else if (cnode->isa<CNode>() && (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) &&
+               (input_index.second == output_idx)) {
       MS_LOG(ERROR) << "The EmbeddingLookup kernel(" << kernel->fullname_with_scope() << ") doesn't enable cache.";
       FinalizeEmbeddingCachePrefetch(
         "All EmbeddingLookup kernels whose input indices are from dataset must enable cache at the same time.");
