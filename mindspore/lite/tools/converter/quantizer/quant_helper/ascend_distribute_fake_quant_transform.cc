@@ -301,6 +301,11 @@ int AscendDistributeFakeQuantTransform::SetInputQuantParam(const FuncGraphPtr &f
     MS_CHECK_TRUE_MSG(cnode_primitive != nullptr, RET_NULL_PTR, "Primitive is nullptr.");
     cnode_primitive->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant::QUANT_ALL)));
 
+    // support quant param holder
+    auto quant_param_holder = GetCNodeQuantHolder(cnode);
+    CHECK_NULL_RETURN(quant_param_holder);
+    quant_param_holder->set_quant_type(quant::QUANT_ALL);
+
     MS_LOG(INFO) << "Remove FakeQuant Node: " << pre_cnode->fullname_with_scope();
     bool success = manager->Replace(input_node, input_cnode->input(kInputIndex + kPrimOffset));
     if (!success) {
@@ -321,7 +326,7 @@ int AscendDistributeFakeQuantTransform::InsertAscendQuantDeQuantNode(const FuncG
   // Insert QuantDtypeCast for matmul
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     lite::quant::QuantType curr_quant_type;
-    if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
+    if (GetQuantTypeNew(cnode, &curr_quant_type) != RET_OK) {
       MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
       return RET_ERROR;
     }
@@ -329,14 +334,14 @@ int AscendDistributeFakeQuantTransform::InsertAscendQuantDeQuantNode(const FuncG
       continue;
     }
     lite::quant::InsertQuantNodeManager insert_node_manager;
-    auto ret = insert_node_manager.InsertAscendQuantNode(func_graph, cnode);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Insert AscendQuant node failed, cnode name: " << cnode->fullname_with_scope();
-      return ret;
-    }
-    ret = insert_node_manager.InsertAscendDeQuantNode(func_graph, cnode);
+    auto ret = insert_node_manager.InsertAscendDeQuantNode(func_graph, cnode);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert AscendDeQuant node failed, cnode name: " << cnode->fullname_with_scope();
+      return ret;
+    }
+    ret = insert_node_manager.InsertAscendQuantNode(func_graph, cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Insert AscendQuant node failed, cnode name: " << cnode->fullname_with_scope();
       return ret;
     }
     ret = UpdateDataType(cnode, kNumberTypeInt32);
