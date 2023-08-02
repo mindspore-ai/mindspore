@@ -56,12 +56,8 @@ def test_no_return():
 
 
 class TestCompare(nn.Cell):
-    def __init__(self):
-        super(TestCompare, self).__init__()
-        self.m = 1
-
-    def construct(self, x, y):
-        return x > y > 10
+    def construct(self, x, y, z):
+        return x > y > z
 
 
 @pytest.mark.level1
@@ -75,13 +71,12 @@ def test_compare():
     Description: test compare
     Expectation: No exception
     """
-    with pytest.raises(RuntimeError) as err:
-        net = TestCompare()
-        x = Tensor(np.ones([2, 2], np.float))
-        y = Tensor(np.zeros([2, 2], np.float))
-        ret = net(x, y)
-        print(ret)
-    assert "Only support comparison with 1 operator, but got 2" in str(err)
+    net = TestCompare()
+    x = Tensor([3])
+    y = Tensor([2])
+    z = Tensor([1])
+    ret = net(x, y, z)
+    assert ret
 
 
 class TestMemberChange(nn.Cell):
