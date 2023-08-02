@@ -79,6 +79,7 @@ enum class ProfilerEvent {
   kPyNativeDeviceTask,
   kPyNativeBpropTask,
   // PyNative inner Event
+  kPyNativeGilAcquire,
   kPyNativeCast,
   kPyNativeInfer,
   kPyNativeOpCompile,
@@ -122,12 +123,24 @@ class COMMON_EXPORT ProfilerRecorder {
   ProfilerRecorder(ProfilerModule module, ProfilerEvent event, const std::string &op_name, bool is_inner_event = false);
   ~ProfilerRecorder();
 
+  struct Data {
+    Data(ProfilerModule module, ProfilerEvent event, std::string op_name, uint64_t start_time, bool is_inner_event)
+        : module_(module),
+          event_(event),
+          op_name_(std::move(op_name)),
+          start_time_(start_time),
+          is_inner_event_(is_inner_event) {}
+    ProfilerModule module_;
+    ProfilerEvent event_;
+    std::string op_name_;
+    uint64_t start_time_;
+    bool is_inner_event_;
+  };
+
+  inline static const std::string kNoName{};
+
  private:
-  ProfilerModule module_{ProfilerModule::kDefault};
-  ProfilerEvent event_{ProfilerEvent::kDefault};
-  std::string op_name_{};
-  uint64_t start_time_{0L};
-  bool is_inner_event_{false};
+  std::unique_ptr<Data> data_{nullptr};
 };
 
 class COMMON_EXPORT ProfilerStageRecorder {

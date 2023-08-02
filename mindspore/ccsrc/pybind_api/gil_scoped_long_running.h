@@ -22,6 +22,7 @@
 #include "pybind11/pybind11.h"
 
 #include "include/common/utils/scoped_long_running.h"
+#include "include/common/profiler.h"
 
 namespace py = pybind11;
 
@@ -47,7 +48,11 @@ class GilReleaseWithCheck {
     }
   }
 
-  ~GilReleaseWithCheck() { release_ = nullptr; }
+  ~GilReleaseWithCheck() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeGilAcquire,
+                                       runtime::ProfilerRecorder::kNoName, false);
+    release_ = nullptr;
+  }
 
  private:
   std::unique_ptr<py::gil_scoped_release> release_;

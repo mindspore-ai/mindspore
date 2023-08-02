@@ -138,7 +138,8 @@ void TopCellInfo::ClearParamGradInfo() {
 
 void TopCellInfo::Clear() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
-                                     runtime::ProfilerEvent::kPyNativeGradClearTopCell, std::string(), true);
+                                     runtime::ProfilerEvent::kPyNativeGradClearTopCell,
+                                     runtime::ProfilerRecorder::kNoName, true);
   MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
   auto_grad_cell_ptr_ = nullptr;
   hook_changed_ = false;

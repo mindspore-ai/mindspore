@@ -89,6 +89,7 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},
   {ProfilerEvent::kPyNativeDeviceTask, "DeviceTask"},
   {ProfilerEvent::kPyNativeBpropTask, "BpropTask"},
+  {ProfilerEvent::kPyNativeGilAcquire, "AcquireGil"},
   {ProfilerEvent::kPyNativeCast, "PyNativeCast"},
   {ProfilerEvent::kPyNativeInfer, "PyNativeInfer"},
   {ProfilerEvent::kPyNativeOpCompile, "OpCompile"},
@@ -114,19 +115,17 @@ ProfilerRecorder::ProfilerRecorder(ProfilerModule module, ProfilerEvent event, c
   if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
     return;
   }
-  module_ = module;
-  event_ = event;
-  op_name_ = ProfilerAnalyzer::GetInstance().GetBriefName(op_name);
-  start_time_ = ProfilerAnalyzer::GetInstance().GetTimeStamp();
-  is_inner_event_ = is_inner_event;
+  data_ = std::make_unique<Data>(module, event, ProfilerAnalyzer::GetInstance().GetBriefName(op_name),
+                                 ProfilerAnalyzer::GetInstance().GetTimeStamp(), is_inner_event);
 }
 
 ProfilerRecorder::~ProfilerRecorder() {
   if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
     return;
   }
-  ProfilerAnalyzer::GetInstance().RecordData(std::make_shared<ProfilerData>(
-    module_, event_, op_name_, is_inner_event_, start_time_, ProfilerAnalyzer::GetInstance().GetTimeStamp()));
+  ProfilerAnalyzer::GetInstance().RecordData(
+    std::make_shared<ProfilerData>(data_->module_, data_->event_, data_->op_name_, data_->is_inner_event_,
+                                   data_->start_time_, ProfilerAnalyzer::GetInstance().GetTimeStamp()));
 }
 
 ProfilerStageRecorder::ProfilerStageRecorder(ProfilerStage stage) {
