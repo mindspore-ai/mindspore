@@ -31,6 +31,23 @@
 
 namespace mindspore {
 namespace expander {
+void UpdateRecomputeScope(const FuncGraphPtr &fg, const py::object &obj) {
+  py::object scope_str =
+    python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_SCOPE_NAME, obj);
+  if (!py::isinstance<py::none>(scope_str)) {
+    auto scope_name = py::cast<std::string>(scope_str);
+    if (scope_name.find("recompute_") == 0) {
+      parse::UpdateRecomputeScope(fg);
+    }
+  }
+}
+
+void UpdateFuncGraphFlags(const FuncGraphPtr &fg, const py::object &obj) {
+  parse::data_converter::SetFuncGraphByCellObj(fg, obj);
+  parse::UpdateFuncGraphFlags(obj, fg, true);
+  UpdateRecomputeScope(fg, obj);
+}
+
 namespace {
 AbstractBasePtr GetAbstract(const AnfNodePtr &node) {
   const auto &abs = node->abstract();
@@ -140,16 +157,10 @@ py::object PackExpander::BeginGraph(const abstract::AbstractBasePtrList &inputs)
   return outputs;
 }
 
-void PackExpander::UpdateFuncGraphFlags(const py::object &obj) {
-  parse::data_converter::SetFuncGraphByCellObj(graphs_.top(), obj);
-  parse::UpdateFuncGraphFlags(obj, graphs_.top(), true);
-}
-
-py::object PackExpander::BeginFuncGraph(const py::object &obj, const py::args &inputs) {
+py::object PackExpander::BeginSubGraph(const py::object &obj, const py::args &inputs) {
   auto up_graph = graphs_.top();
   auto graph = std::make_shared<FuncGraph>();
   graphs_.push(graph);
-  UpdateFuncGraphFlags(obj);
   AnfNodePtrList node_inputs = {NewValueNode(graph)};
   auto args = py::cast<py::tuple>(inputs);
   py::tuple outputs(inputs.size());
@@ -173,18 +184,11 @@ FuncGraphPtr PackExpander::EndGraph(const py::object &output) {
   return graph;
 }
 
-py::object PackExpander::EndFuncGraph(const py::object &obj, const py::object &output) {
+py::object PackExpander::EndSubGraph(const py::object &obj, const py::object &output) {
   auto func_node = func_graph_node_.top();
   func_graph_node_.pop();
   auto fg = EndGraph(output);
-  py::object scope_str =
-    python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_SCOPE_NAME, obj);
-  if (!py::isinstance<py::none>(scope_str)) {
-    auto scope_name = py::cast<std::string>(scope_str);
-    if (scope_name.find("recompute_") == 0) {
-      parse::UpdateRecomputeScope(fg);
-    }
-  }
+  UpdateFuncGraphFlags(fg, obj);
   func_node->set_abstract(fg->output()->abstract());
   return ConvertCNodeToPython(func_node);
 }
@@ -366,8 +370,8 @@ void RegPackExpanderPy(const py::module *m) {
   (void)py::class_<PackExpander, std::shared_ptr<PackExpander>>(*m, "PackExpander")
     .def_static("get_instance", &PackExpander::Instance, "PackExpander get_instance.")
     .def("emit", &PackExpander::Emit, "emit op in current graph")
-    .def("begin_subgraph", &PackExpander::BeginFuncGraph, "begin subgraph in current graph")
-    .def("end_subgraph", &PackExpander::EndFuncGraph, "end subgraph in current graph")
+    .def("begin_subgraph", &PackExpander::BeginSubGraph, "begin subgraph in current graph")
+    .def("end_subgraph", &PackExpander::EndSubGraph, "end subgraph in current graph")
     .def("set_mixed_precision", &PackExpander::SetMixedPrecision, "set mixed precision by python cell.")
     .def("recover_mixed_precision", &PackExpander::RecoverMixedPrecision, "recover mixed precision.");
 }

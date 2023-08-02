@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPERATOR_PACK_FUNC_H_
 
 #include <vector>
+#include <set>
 
 #include "ir/anf.h"
 #include "abstract/abstract_value.h"
@@ -28,6 +29,8 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
 void ClearAllCache();
 bool IsPackGraph(const FuncGraphPtr &fg);
 void GetPackGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *parameters);
+void GetSubPackGraphParams(const FuncGraphPtr &fg, const FuncGraphPtr &g, std::vector<AnfNodePtr> *parameters,
+                           std::set<const AnfNode *> *memo);
 FuncGraphPtr UpdateReusingGraphForPack(const FuncGraphPtr &reusing_graph, const std::vector<AnfNodePtr> &parameters);
 }  // namespace expander
 }  // namespace mindspore
