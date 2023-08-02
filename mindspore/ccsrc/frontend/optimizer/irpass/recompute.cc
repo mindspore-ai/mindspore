@@ -447,6 +447,15 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
     }
   }
 }
+
+void AddDuplicatedAttr(const FuncGraphPtr &k_fg) {
+  for (const auto &node : k_fg->nodes()) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    node->cast_ptr<CNode>()->AddAttr(kAttrDuplicated, MakeValue(true));
+  }
+}
 }  // namespace
 
 bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
@@ -504,6 +513,8 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
     if (change && recompute_cell) {
       k_fg_caller_cnode->set_user_data("primal_fg_caller", new_primal);
     }
+    // Add duplicated attr to help debugging.
+    AddDuplicatedAttr(k_fg);
     if (HasRecomputedInput(k_fg_caller_cnode)) {
       continue;
     }
@@ -512,6 +523,7 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
     AddDependNodes(manager, fg, k_fg_caller_cnode);
   }
   if (changed) {
+    all_node = TopoSort(root->get_return(), SuccDeeperSimple, AlwaysInclude);
     for (const auto &node : all_node) {
       if (WithRecomputedScope(node)) {
         node->cast<CNodePtr>()->AddAttr(kAttrNeedCseAfterRecompute, MakeValue(true));
