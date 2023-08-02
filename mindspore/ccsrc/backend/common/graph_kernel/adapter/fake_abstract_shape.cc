@@ -33,6 +33,7 @@ class FakeAbstractShape {
       {kOpFormat_NCHW, NchwAbstractShape},
       {kOpFormat_NHWC, NhwcAbstractShape},
       {kOpFormat_FRAC_NZ, FractalNzAbstractShape},
+      {kOpFormat_NC1HWC0, Nc1hwc0AbstractShape},
     };
     if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
       return device_shape;
@@ -93,6 +94,26 @@ class FakeAbstractShape {
     shape.push_back(m);
     shape.push_back(n);
 
+    return shape;
+  }
+  static ShapeVector Nc1hwc0AbstractShape(const ShapeVector &device_shape) {
+    if (device_shape.size() == 1 && (device_shape[0] == 1 || static_cast<size_t>(device_shape[0]) % kCubeSize == 0)) {
+      return device_shape;
+    }
+    constexpr size_t nc1hwc0_size = 5;
+    if (device_shape.size() != nc1hwc0_size) {
+      MS_LOG(EXCEPTION) << "Shape size of NC1HWC0 should == 5, but got " << device_shape.size();
+    }
+    ShapeVector shape;
+    constexpr size_t index_n = 0;
+    constexpr size_t index_c1 = 1;
+    constexpr size_t index_h = 2;
+    constexpr size_t index_w = 3;
+    constexpr size_t index_c0 = 4;
+    shape.push_back(device_shape[index_n]);
+    shape.push_back(device_shape[index_c1] * device_shape[index_c0]);
+    shape.push_back(device_shape[index_h]);
+    shape.push_back(device_shape[index_w]);
     return shape;
   }
 };
