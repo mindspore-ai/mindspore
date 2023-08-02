@@ -118,11 +118,6 @@ def _tuple_getitem_by_number(data, number_index):
     Outputs:
         Type, is the same as the element type of data.
     """
-    if isinstance(number_index, bool):
-        if number_index:
-            number_index = 1
-        else:
-            number_index = 0
     return F.tuple_getitem(data, number_index)
 
 
@@ -179,11 +174,6 @@ def _list_getitem_by_number(data, number_index):
     Outputs:
         Type is the same as the element type of data.
     """
-    if isinstance(number_index, bool):
-        if number_index:
-            number_index = 1
-        else:
-            number_index = 0
     return F.list_getitem(data, number_index)
 
 
