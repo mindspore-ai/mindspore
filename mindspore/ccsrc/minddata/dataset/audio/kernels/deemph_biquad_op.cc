@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ Status DeemphBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
     central_freq = 5356;  // central_freq value from SoX
     width_slope = 0.479;  // width_slope value from SoX
     gain = -9.62;         // gain value from SoX
+  } else {
+    RETURN_STATUS_UNEXPECTED(
+      "The sample_rate parameter only supports 44100 or 48000, but got: " + std::to_string(sample_rate_) + ".");
   }
 
   double w0 = 2 * PI * central_freq / sample_rate_;

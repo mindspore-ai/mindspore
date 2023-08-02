@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,6 +115,7 @@ Status ShardWriter::OpenDataFiles(bool append, bool overwrite) {
       // open the mindrecord file to write
       fs->open(whole_path.value().data(), std::ios::out | std::ios::in | std::ios::binary | std::ios::trunc);
       if (!fs->good()) {
+        fs->close();
         RETURN_STATUS_UNEXPECTED_MR(
           "Invalid file, failed to open files for writing mindrecord files. Please check file path, permission and "
           "open file limit: " +
@@ -737,8 +738,8 @@ Status ShardWriter::WriteByShard(int shard_id, int start_row, int end_row,
   vector<std::pair<int, int>> rows_in_group;
   std::shared_ptr<Page> last_raw_page = nullptr;
   std::shared_ptr<Page> last_blob_page = nullptr;
-  SetLastRawPage(shard_id, last_raw_page);
-  SetLastBlobPage(shard_id, last_blob_page);
+  RETURN_IF_NOT_OK_MR(SetLastRawPage(shard_id, last_raw_page));
+  RETURN_IF_NOT_OK_MR(SetLastBlobPage(shard_id, last_blob_page));
 
   RETURN_IF_NOT_OK_MR(CutRowGroup(start_row, end_row, blob_data, rows_in_group, last_raw_page, last_blob_page));
   RETURN_IF_NOT_OK_MR(AppendBlobPage(shard_id, blob_data, rows_in_group, last_blob_page));
@@ -906,7 +907,7 @@ Status ShardWriter::ShiftRawPage(const int &shard_id, const std::vector<std::pai
   (void)shard_header_->AddPage(std::make_shared<Page>(page));
 
   // Reset: last raw page
-  SetLastRawPage(shard_id, last_raw_page);
+  RETURN_IF_NOT_OK_MR(SetLastRawPage(shard_id, last_raw_page));
   return Status::OK();
 }
 
@@ -939,7 +940,7 @@ Status ShardWriter::EmptyRawPage(const int &shard_id, std::shared_ptr<Page> &las
   auto page_type_id = last_raw_page ? last_raw_page->GetPageID() : -1;
   auto page = Page(++page_id, shard_id, kPageTypeRaw, ++page_type_id, 0, 0, row_group_ids, 0);
   RETURN_IF_NOT_OK_MR(shard_header_->AddPage(std::make_shared<Page>(page)));
-  SetLastRawPage(shard_id, last_raw_page);
+  RETURN_IF_NOT_OK_MR(SetLastRawPage(shard_id, last_raw_page));
   return Status::OK();
 }
 
@@ -1158,6 +1159,9 @@ Status ShardWriter::SetBlobDataSize(const std::vector<std::vector<uint8_t>> &blo
 Status ShardWriter::SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page) {
   // Get last raw page
   auto last_raw_page_id = shard_header_->GetLastPageIdByType(shard_id, kPageTypeRaw);
+  if (last_raw_page_id == -1) {
+    return Status::OK();
+  }
   CHECK_FAIL_RETURN_SYNTAX_ERROR_MR(last_raw_page_id >= 0, "[Internal ERROR] 'last_raw_page_id': " +
                                                              std::to_string(last_raw_page_id) + " should be positive.");
   RETURN_IF_NOT_OK_MR(shard_header_->GetPage(shard_id, last_raw_page_id, &last_raw_page));
@@ -1167,6 +1171,9 @@ Status ShardWriter::SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &l
 Status ShardWriter::SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &last_blob_page) {
   // Get last blob page
   auto last_blob_page_id = shard_header_->GetLastPageIdByType(shard_id, kPageTypeBlob);
+  if (last_blob_page_id == -1) {
+    return Status::OK();
+  }
   CHECK_FAIL_RETURN_SYNTAX_ERROR_MR(
     last_blob_page_id >= 0,
     "[Internal ERROR] 'last_blob_page_id': " + std::to_string(last_blob_page_id) + " should be positive.");

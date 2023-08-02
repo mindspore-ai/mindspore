@@ -376,7 +376,7 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
     }
   }
   // unpack batch
-  Tensor::CreateFromVector(out_vect, input_shape, &out);
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_vect, input_shape, &out));
   *output = out;
   delete[] m_px;
   delete[] m_py;
@@ -652,7 +652,8 @@ Status MelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     size_t offset = mat_res_size * c;
     int ret_code =
       memcpy_s(reinterpret_cast<void *>(out_in + offset), mat_res_size, mat_res.eval().data(), mat_res_size);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into std::vector.");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK,
+                                 "Failed to copy data into std::vector, ret code: " + std::to_string(ret_code) + ".");
   }
 
   return Status::OK();

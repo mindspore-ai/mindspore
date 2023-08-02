@@ -481,13 +481,15 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       if (input->type() != DataType::DE_FLOAT64) {
         // tensor float 32
         auto mask_val = static_cast<float>(mask_value);
-        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
-                                     "MaskAlongAxis: mask failed, memory copy error.");
+        auto ret_code = memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size);
+        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "MaskAlongAxis: mask failed, memory copy error, ret code: " +
+                                                        std::to_string(ret_code) + ".");
       } else {
         // tensor float 64
         auto mask_val = static_cast<double>(mask_value);
-        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
-                                     "MaskAlongAxis: mask failed, memory copy error.");
+        auto ret_code = memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size);
+        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "MaskAlongAxis: mask failed, memory copy error, ret code: " +
+                                                        std::to_string(ret_code) + ".");
       }
     }
   } else {
@@ -499,13 +501,15 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       if (input->type() != DataType::DE_FLOAT64) {
         // tensor float 32
         auto mask_val = static_cast<float>(mask_value);
-        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
-                                     "MaskAlongAxis: mask failed, memory copy error.");
+        auto ret_code = memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size);
+        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "MaskAlongAxis: mask failed, memory copy error, ret code: " +
+                                                        std::to_string(ret_code) + ".");
       } else {
         // tensor float 64
         auto mask_val = static_cast<double>(mask_value);
-        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
-                                     "MaskAlongAxis: mask failed, memory copy error.");
+        auto ret_code = memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size);
+        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "MaskAlongAxis: mask failed, memory copy error. ret code: " +
+                                                        std::to_string(ret_code) + ".");
       }
     }
   }

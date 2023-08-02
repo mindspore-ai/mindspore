@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ Status ShardDistributedSample::PreExecute(ShardTaskList &tasks) {
   } else {
     tasks = task_;
   }
-  if (shuffle_ == true) {
+  if (shuffle_) {
     shuffle_op_->SetShardSampleCount(GetShardSampleCount());
     shuffle_op_->UpdateShuffleMode(GetShuffleMode());
     RETURN_IF_NOT_OK_MR((*shuffle_op_)(tasks));
