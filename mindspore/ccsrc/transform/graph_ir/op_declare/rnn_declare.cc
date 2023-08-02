@@ -169,4 +169,18 @@ ATTR_MAP(GRUV2HiddenGradCell) = {{"t_state", ATTR_DESC(t_state, AnyTraits<int64_
                                  {"gate_order", ATTR_DESC(gate_order, AnyTraits<std::string>())}};
 OUTPUT_MAP(GRUV2HiddenGradCell) = {{0, OUTPUT_DESC(dh_prev)}, {1, OUTPUT_DESC(dgate_h)}, {2, OUTPUT_DESC(dnt_x)}};
 REG_ADPT_DESC(GRUV2HiddenGradCell, kNameGRUV2HiddenGradCell, ADPT_DESC(GRUV2HiddenGradCell))
+
+// CommonGRU
+INPUT_MAP(CommonGRU) = {
+  {1, INPUT_DESC(x)},        {2, INPUT_DESC(w)}, {3, INPUT_DESC(r)}, {4, INPUT_DESC(b)}, {5, INPUT_DESC(sequence_lens)},
+  {6, INPUT_DESC(initial_h)}};
+ATTR_MAP(CommonGRU) = {{"activation_alpha", ATTR_DESC(activation_alpha, AnyTraits<std::vector<float>>())},
+                       {"activation_beta", ATTR_DESC(activation_beta, AnyTraits<std::vector<float>>())},
+                       {"activations", ATTR_DESC(activations, AnyTraits<std::vector<std::string>>())},
+                       {"clip", ATTR_DESC(clip, AnyTraits<float>())},
+                       {"direction", ATTR_DESC(direction, AnyTraits<std::string>())},
+                       {"hidden_size", ATTR_DESC(hidden_size, AnyTraits<int64_t>())},
+                       {"linear_before_reset", ATTR_DESC(linear_before_reset, AnyTraits<int64_t>())}};
+OUTPUT_MAP(CommonGRU) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(y_h)}};
+REG_ADPT_DESC(CommonGRU, kNameCommonGRU, ADPT_DESC(CommonGRU))
 }  // namespace mindspore::transform
