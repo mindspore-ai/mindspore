@@ -250,7 +250,7 @@ OUTPUT_MAP(Conv3DTranspose) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv3DTranspose, kConv3DTransposeDOpName, ADPT_DESC(Conv3DTranspose))
 
 // Conv3DBackpropFilter
-INPUT_MAP(Conv3DBackpropFilter) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter_size)}, {3, INPUT_DESC(out_backprop)}};
+INPUT_MAP(Conv3DBackpropFilter) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(out_backprop)}, {3, INPUT_DESC(filter_size)}};
 ATTR_INPUT_MAP(Conv3DBackpropFilter) = {{"filter_size", "filter_size"}};
 ATTR_MAP(Conv3DBackpropFilter) = {
   {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
