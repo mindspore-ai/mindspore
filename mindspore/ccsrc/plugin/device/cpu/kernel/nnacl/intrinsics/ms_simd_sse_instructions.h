@@ -92,6 +92,7 @@
 #define MS_CMPLT128_F32(src1, src2) _mm_cmplt_ps(src1, src2)
 #define MS_CMPLE128_F32(src1, src2) _mm_cmple_ps(src1, src2)
 #define MS_CMPGT128_F32(src1, src2) _mm_cmpgt_ps(src1, src2)
+#define MS_CMPEQ128_F32(src1, src2) _mm_cmpeq_ps(src1, src2)
 #define MS_CMPGT128_EPI32(src1, src2) _mm_cmpgt_epi32(src1, src2)
 #define MS_BLEND128_F32(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
 #define MS_BLEND128_EPI32(src1, src2, src3) _mm_blendv_epi8(src1, src2, src3)
@@ -230,6 +231,12 @@ static inline MS_FLOAT32X4 MS128_LOG_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 tmp1 = MS_MUL128_F32(square, MS_ADD128_F32(MS_MUL128_F32(square, tmp), data4));
   MS_FLOAT32X4 res =
     MS_ADD128_F32(MS_MUL128_F32(ln2, expsPD), MS_MUL128_F32(MS_MUL128_F32(div, MS_ADD128_F32(tmp1, data5)), data6));
+  // if (src == 0) res = -inf;
+  // if (src < 0) res = nan;
+  MS_FLOAT32X4 mask = MS_CMPEQ128_F32(src, MS_MOV128_F32(0.0f));
+  res = MS_BLEND128_F32(res, MS_MOV128_F32(-INFINITY), mask);
+  mask = MS_CMPLT128_F32(src, MS_MOV128_F32(0.0f));
+  res = MS_BLEND128_F32(res, MS_MOV128_F32(NAN), mask);
   return res;
 }
 
