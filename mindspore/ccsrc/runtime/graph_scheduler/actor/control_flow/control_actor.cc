@@ -607,6 +607,8 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, total_size, addr_list[0]->format(), addr_list[0]->type_id(), total_shape);
   MS_EXCEPTION_IF_NULL(new_device_tensor);
+
+  MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
   if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
                                                 GetAID().Name(), new_device_tensor->GetSize());
@@ -628,6 +630,7 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
     new_device_tensor->GetMutablePtr(), addr_list[0]->GetSize(), addr_list[0]->format(), addr_list[0]->type_id(),
     shape);
   MS_EXCEPTION_IF_NULL(tmp_device_tensor);
+  MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
   for (size_t i = 0; i < addr_list.size(); ++i) {
     if (!tmp_device_tensor->SyncDeviceToDevice(addr_list[i])) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");

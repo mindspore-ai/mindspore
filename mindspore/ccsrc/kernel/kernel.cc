@@ -154,6 +154,9 @@ ShapeVector GetSequenceFlattenShape(const abstract::AbstractBasePtr &abs) {
     return flatten_shp;
   }
   auto tensor_shp_ptr = seq_abs->elements()[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(tensor_shp_ptr);
+  MS_LOG(DEBUG) << "tensor shape:" << tensor_shp_ptr->ToString() << " for abstract:" << abs->ToString();
+  MS_EXCEPTION_IF_NULL(tensor_shp_ptr->cast<abstract::ShapePtr>());
   auto shape = tensor_shp_ptr->cast<abstract::ShapePtr>()->shape();
   (void)flatten_shp.insert(flatten_shp.end(), shape.begin(), shape.end());
   return flatten_shp;
@@ -308,6 +311,7 @@ int KernelMod::Resize(const std::vector<KernelTensorPtr> &inputs, const std::vec
 int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                       const std::vector<KernelTensorPtr> &outputs,
                       const std::map<uint32_t, tensor::TensorPtr> & /* inputsOnHost */) {
+  MS_LOG(DEBUG) << "Resize start for operator:" << base_operator->name();
   auto ret = KRET_OK;
   workspace_size_list_.clear();
   input_size_list_.clear();
@@ -364,6 +368,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
     }
     (void)output_size_list_.emplace_back(tensor_size);
   }
+  MS_LOG(DEBUG) << "Resize end for operator:" << base_operator->name();
   return static_cast<int>(ret);
 }
 

@@ -969,7 +969,7 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
     auto split_tensor = std::make_shared<tensor::Tensor>(tensor_type_id, split_tensor_shape);
     auto split_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
       nullptr, split_tensor_size, device_tensor->format(), device_tensor->type_id(), split_tensor_shape);
-
+    MS_LOG(DEBUG) << "Create device tensor:" << split_device_tensor << " type:" << device_tensor->type_id();
     // Copy data from origin tensor to the split tensor.
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo("Split tuple outputs", device::AllocatorType::kOther);
     if (!device_context->device_res_manager_->AllocateMemory(split_device_tensor.get())) {

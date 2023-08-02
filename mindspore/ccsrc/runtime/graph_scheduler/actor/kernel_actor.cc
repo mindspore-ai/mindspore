@@ -510,6 +510,8 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   if (copy_input_device_tensors_[input_data_index] == nullptr) {
     copy_input_device_tensors_[input_data_index] = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
       nullptr, real_input_info->size_, real_input_info->format_, real_input_info->type_id_, real_input_info->shape_);
+    MS_LOG(DEBUG) << "Create device tensor:" << copy_input_device_tensors_[input_data_index]
+                  << " type:" << copy_input_device_tensors_[input_data_index]->type_id();
   }
   auto &new_device_tensor = copy_input_device_tensors_[input_data_index];
   MS_EXCEPTION_IF_NULL(new_device_tensor);

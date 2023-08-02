@@ -127,6 +127,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
         }
         auto new_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(
           dev_ptr_list[index], old_size, old_dev_addr->format(), old_dev_addr->type_id(), old_dev_addr->host_shape());
+        MS_LOG(DEBUG) << "Create device tensor:" << new_dev_addr << " type:" << new_dev_addr->type_id();
         (void)new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());
         device_context->device_res_manager_->FreeMemory(old_dev_addr.get());
       }
@@ -337,6 +338,7 @@ void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor,
     // The static reference count is decremented to zero to free memory, and reset to the original count.
     device_tensor->DecreaseRefCount();
     if (device_tensor->ref_count() == 0) {
+      MS_LOG(DEBUG) << "ref count for device address:" << device_tensor << " to zero, free memory by actor:" << op_name;
       device_tensor->ResetRefCount();
       device_tensor->ClearUserData();
       if (device_tensor->GetPtr() != nullptr) {

@@ -238,7 +238,9 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
                                    size_t from_output_index, size_t to_input_index, const AnfNodePtr &from_kernel) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
-
+  MS_LOG(DEBUG) << "Add data arrow from actor:" << from_actor->GetAID() << " index:" << from_output_index
+                << " to actor:" << to_actor->GetAID() << " to index:" << to_input_index
+                << " from kernel:" << (from_kernel == nullptr ? "null" : from_kernel->fullname_with_scope());
   // Check the data arrow legitimacy.
   if (IsControlFlowActor(to_actor->type()) && (from_actor->type() == KernelTransformType::kKernelActor) &&
       (to_actor->type() != KernelTransformType::kExitActor)) {
@@ -261,6 +263,7 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
 
   // Ignore the input address that is not used in the kernel launch.
   if (IsIgnoredInputAddress(to_actor, to_input_index)) {
+    MS_LOG(DEBUG) << "Ignored input to actor:" << to_actor->GetAID() << " to index:" << to_input_index;
     return;
   }
 
@@ -306,14 +309,8 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
     (void)from_actor->output_data_nodes_.insert(from_actor->output_data_nodes_.begin(), from_kernel);
     to_actor->input_datas_num_++;
     (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), result_arrow.get()));
-    if (from_actor->type() == KernelTransformType::kAnyTypeKernelActor) {
-      if (from_actor->device_contexts().empty() || from_actor->device_contexts()[0] == nullptr) {
-        MS_LOG(EXCEPTION) << "Failed to get device context for actor:" << from_actor->GetAID();
-      }
-      to_actor->device_contexts_[output_position] = from_actor->device_contexts()[0];
-      return;
-    }
   }
+
   if (!AnfAlgo::OutputAddrExist(from_kernel, from_output_index, false)) {
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << from_kernel->DebugString()
                                << " device address does not exist";
@@ -325,6 +322,13 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
   device_tensor->SetNodeIndex(from_kernel, from_output_index);
   // The device tensor of graph out need be taken over by host tensor, so set the max reference count.
   UpdateRefCount(device_tensor.get(), true);
+
+  MS_LOG(DEBUG) << "Add result arrow from actor:" << (from_actor != nullptr ? from_actor->GetAID().Name() : "null")
+                << " to actor:" << to_actor->GetAID() << " from kernel"
+                << (from_kernel == nullptr ? "null" : from_kernel->DebugString()) << " device address:" << device_tensor
+                << " original ref count:" << device_tensor->original_ref_count()
+                << " ref count:" << device_tensor->ref_count()
+                << " dynamic ref count:" << device_tensor->dynamic_ref_count();
 
   // Set the device contexts of to_actor.
   if (output_position >= to_actor->device_contexts_.size()) {

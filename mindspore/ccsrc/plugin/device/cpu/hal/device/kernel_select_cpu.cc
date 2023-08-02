@@ -400,11 +400,25 @@ void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
   GetOutputFormat(kernel_node, &output_formats);
   SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
 
-  // Set kernel object types only support the unfold tuple.
-  if (common::AnfAlgo::HasDynamicTupleInput(kernel_node)) {
-    MS_LOG(EXCEPTION) << op_name << "doesn't support the dynamic tuple.";
-  }
+  // Dynamic kernel support dynamic len tuple, and set kernel object type to TUPLE.
   auto input_object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
+  if (kernel_node->isa<CNode>()) {
+    const auto &cnode = kernel_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    for (size_t i = 0; i < input_object_types.size(); ++i) {
+      auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
+      MS_EXCEPTION_IF_NULL(input_node);
+      const std::vector<PrimitivePtr> need_handled_prims = {prim::kPrimMakeTuple, prim::kPrimTupleGetItem};
+      auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false, need_handled_prims).first;
+      if (real_input_node->abstract() != nullptr && real_input_node->abstract()->isa<abstract::AbstractSequence>() &&
+          real_input_node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+        MS_LOG(INFO) << "Change kernel object type from:" << input_object_types[i]
+                     << " for input:" << real_input_node->DebugString() << " of cnode:" << cnode->DebugString();
+        input_object_types[i] = kernel::KernelObjectType::TUPLE;
+      }
+    }
+  }
+
   auto output_object_types =
     kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
   kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);

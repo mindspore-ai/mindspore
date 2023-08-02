@@ -164,7 +164,7 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
     IntToLong(host_ptr, ptr_, size / sizeof(int64_t));
   } else {
     MS_LOG(ERROR) << "Types not match. Device type: " << TypeIdLabel(type_id_) << ", host type: " << TypeIdLabel(type)
-                  << "!";
+                  << " device_address:" << this << " !";
     return false;
   }
   return true;
