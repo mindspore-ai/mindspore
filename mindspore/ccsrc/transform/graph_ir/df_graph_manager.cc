@@ -71,13 +71,14 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
     return Status::INVALID_ARGUMENT;
   }
 
-  auto &compile_cache_context = CompileCacheContext::GetInstance();
-  std::string compile_cache_dep_files_hash = compile_cache_context.CompileCacheDepFilesHash();
-
   int id = GenerateId();
   OptionMap new_options = options;
-  auto ge_graph_key = compile_cache_dep_files_hash + "_" + name;
-  new_options.insert_or_assign("ge.graph_key", ge_graph_key);
+  auto &compile_cache_context = CompileCacheContext::GetInstance();
+  auto compile_cache_dep_files_hash = compile_cache_context.CompileCacheDepFilesHash();
+  if (CompileCacheEnable() && !compile_cache_dep_files_hash.empty()) {
+    auto ge_graph_key = compile_cache_dep_files_hash + "_" + std::to_string(id);
+    new_options.insert_or_assign(kGeGraphKey, ge_graph_key);
+  }
 
   DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, new_options);
   auto ret = graphs_.emplace(name, wrap_ptr);

@@ -26,7 +26,6 @@
 #include "include/backend/kernel_graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "runtime/dev.h"
-
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -129,6 +128,45 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
                  << ", Graph name: " << graph->ToString();
     (void)option->insert(std::make_pair("ge.exec.inputReuseMemIndexes", "0"));
   }
+}
+
+bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  auto graph_name = GetGraphName(anf_graph);
+  if (!common::IsEnableRefMode()) {
+    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(anf_graph);
+    if (kg != nullptr) {
+      graph_name = kg->GetFuncGraph()->ToString();
+    }
+  }
+  std::string init_graph = "init_subgraph." + graph_name;
+  std::string checkpoint_name = "save." + graph_name;
+  ShapeArray shape_array;
+  bool dynamic_shape_inputs = false;
+  auto options = GetComputeGraphOptions(shape_array, dynamic_shape_inputs);
+  GetComputeGraphReuseOptions(anf_graph, &options);
+  MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
+  if (transform::AddGraph(graph_name, transform::GenFakeGraph(anf_graph->ToString()), options) !=
+      transform::Status::SUCCESS) {
+    return false;
+  }
+  if (transform::AddGraph(init_graph, transform::GenFakeGraph("init")) != transform::Status::SUCCESS) {
+    return false;
+  }
+  if (transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GenFakeGraph("broadcast")) != transform::Status::SUCCESS) {
+    return false;
+  }
+
+  if (!common::IsEnableRefMode()) {
+    transform::Status ret = transform::AddGraph(checkpoint_name, transform::GenFakeGraph("checkpoint"));
+    if (ret == transform::Status::SUCCESS) {
+      transform::SetAnfGraph(checkpoint_name, anf_graph);
+    } else {
+      return false;
+    }
+  }
+  transform::AddOptimizeGraph(graph_name);
+  return true;
 }
 
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {

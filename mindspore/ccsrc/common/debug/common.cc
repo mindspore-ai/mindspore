@@ -28,7 +28,6 @@
 #include "utils/log_adapter.h"
 #include "utils/file_utils.h"
 #include "include/common/utils/utils.h"
-#include "include/common/utils/compile_cache_context.h"
 
 namespace mindspore {
 bool Common::NeedMapping(const std::string &origin_name) {
@@ -374,15 +373,6 @@ std::string Common::GetCompilerCachePath() {
   }
   const std::string compile_cache_dir = user_defined_path + "rank_" + rank_id_str + "/";
   return compile_cache_dir;
-}
-
-std::string Common::GetAndCreateCompilerCacheDir() {
-  if (!CompileCacheEnable()) {
-    return "";
-  }
-  std::string compiler_cache_path = GetCompilerCachePath();
-  (void)FileUtils::CreateNotExistDirs(compiler_cache_path, true);
-  return compiler_cache_path;
 }
 
 std::string Common::GetKernelMetaTempDir() {

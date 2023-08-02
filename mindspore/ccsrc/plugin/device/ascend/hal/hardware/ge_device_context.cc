@@ -35,6 +35,8 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "runtime/config.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "include/common/utils/compile_cache_context.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -301,10 +303,11 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     MS_LOG(INFO) << "Use AICPU, make sure aicpu lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
   }
 
-  auto env_compiler_cache_dir = Common::GetAndCreateCompilerCacheDir();
-  if (!env_compiler_cache_dir.empty()) {
-    (*ge_options)["ge.graph_compiler_cache_dir"] = env_compiler_cache_dir;
-    MS_LOG(INFO) << "Use MS front compile cache path, GE graph compile cache path:" << env_compiler_cache_dir;
+  if (CompileCacheEnable()) {
+    auto ge_cache_path = Common::GetCompilerCachePath() + kGeCache;
+    (void)FileUtils::CreateNotExistDirs(ge_cache_path, true);
+    (*ge_options)[kGeGraphCompilerCacheDir] = ge_cache_path;
+    MS_LOG(INFO) << "Use GE graph compile cache, GE graph compile cache dir:" << ge_cache_path;
   }
 
   auto proto_lib_path = common::GetEnv("OPTION_PROTO_LIB_PATH");

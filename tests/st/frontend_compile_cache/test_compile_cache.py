@@ -71,7 +71,7 @@ def exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache
     return loss
 
 
-def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_file_name_second):
+def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_file_name_second, use_ge=False):
     # Clear compile cache folder and log files
     if os.path.exists(cache_path):
         shutil.rmtree(cache_path)
@@ -84,7 +84,10 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     assert not os.path.exists(log_file_name_second)
 
     # First run without compile cache
-    cmd_first = f"GLOG_v=2 python " + file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
+    cmd_first = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
+    if use_ge:
+        cmd_first = f"export GLOG_v=2; export MS_ENABLE_GE=1; export MS_GE_TRAIN=1; python " + file_name + " '" +\
+                    cache_path + "' > " + log_file_name_first + " 2>&1"
     subprocess.check_output(cmd_first, shell=True)
     assert os.path.exists(log_file_name_first)
     assert os.path.exists(cache_path)
@@ -99,10 +102,14 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     array_first = np.array([float(x) for x in nums_first])
     shape_first = re.findall(match_num, match_output_first[1])
     array_shape_first = np.array([int(x) for x in shape_first])
+    exec_shell = f"unset_MS_ENABLE_GE; unset MS_GE_TRAIN"
+    os.system(exec_shell)
 
     # Second run with compile cache
-    cmd_second = f"GLOG_v=2 python " + file_name + " '" + cache_path + "' > " + log_file_name_second + \
-                 " 2>&1"
+    cmd_second = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
+    if use_ge:
+        cmd_second = f"export GLOG_v=2; export MS_ENABLE_GE=1; export MS_GE_TRAIN=1; python " + file_name + " '" +\
+                     cache_path + "' > " + log_file_name_second + " 2>&1"
     subprocess.check_output(cmd_second, shell=True)
     assert os.path.exists(log_file_name_second)
     with open(log_file_name_second, "r") as f_second:
@@ -117,6 +124,8 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     array_second = np.array([float(x) for x in nums_second])
     shape_second = re.findall(match_num, match_output_second[1])
     array_shape_second = np.array([int(x) for x in shape_second])
+    exec_shell = f"unset_MS_ENABLE_GE; unset MS_GE_TRAIN"
+    os.system(exec_shell)
 
     assert np.allclose(array_first, array_second, 0.0001, 0.0001)
     assert (array_shape_first == array_shape_second).all()
@@ -421,3 +430,16 @@ def test_compile_cache_pipeline_parallel_and_recompute():
     loss_second = exec_model_and_check_result(cur_model_path, dataset_path, config_path,
                                               cache_path, check_context)
     assert np.allclose(loss_first, loss_second, 0.1, 0.1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_compile_cache_lenet_ge():
+    """
+    Feature: Compile cache.
+    Description: Test whether the ge compile cache function can run successfully.
+    Expectation: success.
+    """
+    run_twice_with_same_network("run_lenet.py", "./lenet", "lenet_first.txt", "lenet_second.txt", True)

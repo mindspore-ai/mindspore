@@ -51,6 +51,7 @@
 #include "ops/nn_op_name.h"
 #include "ops/array_ops.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "include/common/utils/compile_cache_context.h"
 
 namespace mindspore {
 namespace device {
@@ -373,6 +374,32 @@ std::string RemoveSuffix(const std::string &str, const std::string &suffix) {
   }
   return str;
 }
+
+bool BuildFakeGraph(const FuncGraphPtr &anf_graph) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+#ifdef ENABLE_DUMP_IR
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(kIntroductory)) {
+    if (context->CanDump(kFully)) {
+      draw::Draw("anf_graph.dot", anf_graph);  // for debug
+    }
+    DumpIR("anf_graph.ir", anf_graph, true);
+  }
+#endif
+  (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
+  if (!AddFakeGraph(anf_graph)) {
+    MS_LOG(ERROR) << "Add fake graph failed";
+    return false;
+  }
+  GeDeviceResManager::CreateSessionAndGraphRunner(IsGeTrain());
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    MS_LOG(ERROR) << "Can not found GraphRunner";
+    return false;
+  }
+  return true;
+}
 }  // namespace
 
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
@@ -674,9 +701,20 @@ void GeGraphExecutor::PreprocessBeforeRun(const KernelGraphPtr &graph) {
 bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
                                    const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
-  AscendGraphOptimization::GetInstance().OptimizeGEGraph(graph);
+  MS_LOG(WARNING) << "ge graph executor compile graph " << graph->ToString();
   std::map<std::string, ShapeVector> m_origin_shape;
-  (void)BuildDFGraph(graph, GetParams(graph, &m_origin_shape), false);
+  const auto &tensor_order_map = GetParams(graph, &m_origin_shape);
+  auto &compile_cache_context = CompileCacheContext::GetInstance();
+  auto use_compile_cache = compile_cache_context.UseCompileCache();
+  if (use_compile_cache) {
+    MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+    if (!BuildFakeGraph(graph)) {
+      return false;
+    }
+  } else {
+    AscendGraphOptimization::GetInstance().OptimizeGEGraph(graph);
+    (void)BuildDFGraph(graph, tensor_order_map, false);
+  }
   SetDynamicShapeAttr(graph);
   transform::RunOptions run_options;
   run_options.name = GetGraphName(graph);
@@ -724,9 +762,19 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     MS_EXCEPTION_IF_NULL(graph);
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     MS_EXCEPTION_IF_NULL(kg);
-    AscendGraphOptimization::GetInstance().OptimizeGEGraph(kg);
     std::map<std::string, ShapeVector> m_origin_shape;
-    (void)BuildDFGraph(kg, GetParams(kg, &m_origin_shape), false);
+    const auto &tensor_order_map = GetParams(graph, &m_origin_shape);
+    auto &compile_cache_context = CompileCacheContext::GetInstance();
+    auto use_compile_cache = compile_cache_context.UseCompileCache();
+    if (use_compile_cache) {
+      MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+      if (!BuildFakeGraph(graph)) {
+        return false;
+      }
+    } else {
+      AscendGraphOptimization::GetInstance().OptimizeGEGraph(kg);
+      (void)BuildDFGraph(kg, tensor_order_map, false);
+    }
     SetDynamicShapeAttr(kg);
     AllocInputHostMemory(kg);
     AllocOutputHostMemory(kg);
