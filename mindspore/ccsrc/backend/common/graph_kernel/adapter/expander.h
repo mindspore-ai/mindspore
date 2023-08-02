@@ -22,10 +22,10 @@
 #include <nlohmann/json.hpp>
 
 namespace mindspore::graphkernel {
-class PyExpander : public DefaultExpander {
+class PyExpander : public LitegraphExpander {
  public:
-  explicit PyExpander(const CallbackPtr &cb) : DefaultExpander(cb) {}
-  virtual ~PyExpander() = default;
+  explicit PyExpander(const CallbackPtr &cb) : LitegraphExpander(cb) {}
+  ~PyExpander() override = default;
 
  protected:
   virtual bool CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);

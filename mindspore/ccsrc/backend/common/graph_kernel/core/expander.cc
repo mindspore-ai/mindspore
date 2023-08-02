@@ -23,6 +23,8 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 #include "backend/common/graph_kernel/expanders/op_desc_registry.h"
+#include "backend/common/graph_kernel/expander/base/ir_builder.h"
+#include "backend/common/graph_kernel/expander/mindir_adapter/mindir_emitter.h"
 
 namespace mindspore::graphkernel {
 ExpanderPtr WrapExpander(const ExpanderPtr &base, const ExpanderCreatorFuncList &deco_creators) {
@@ -57,7 +59,6 @@ AnfNodePtr DependValueDeco::Run(const AnfNodePtr &node) {
 }
 
 AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
-  MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope();
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto new_fg = ExpandToGraph(cnode);
@@ -72,7 +73,37 @@ AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
 }
 
 FuncGraphPtr DefaultExpander::ExpandToGraph(const CNodePtr &node) {
-  auto op_desc = expanders::OpDescFactory::Instance().GetOp(AnfUtils::GetCNodeName(node));
+  auto name = AnfUtils::GetCNodeName(node);
+  auto ib = expander::IrBuilderRegistry::Instance().GetOp(name);
+  if (ib == nullptr) {
+    MS_LOG(INFO) << "irbuilder not found: " << node->fullname_with_scope();
+    return nullptr;
+  }
+  MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope() << " by MetaExpander";
+  auto fg = std::make_shared<FuncGraph>();
+  auto scope = std::make_shared<Scope>(node->scope()->name() + "/expand_" + name);
+  auto e = std::make_shared<expander::MindirEmitter>(fg, cb_->IsUseDeviceInfo(), scope);
+  auto inputs = e->Inputs(node);
+  ib->Init(e, &inputs, &GetCNodePrimitive(node)->attrs(), cb_->GetProcessor(node));
+  auto outputs = ib->Expand();
+  if (outputs.empty()) {
+    return nullptr;
+  }
+  if (outputs.size() > 1) {
+    fg->set_output(e->MakeTuple(outputs)->as<AnfNodePtr>());
+  } else {
+    fg->set_output(outputs[0]->as<AnfNodePtr>());
+  }
+  return fg;
+}
+
+FuncGraphPtr LitegraphExpander::ExpandToGraph(const CNodePtr &node) {
+  auto name = AnfUtils::GetCNodeName(node);
+  if (expander::IrBuilderRegistry::Instance().HasOp(name)) {
+    return DefaultExpander::ExpandToGraph(node);
+  }
+  MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope() << " by LitegraphExpander";
+  auto op_desc = expanders::OpDescFactory::Instance().GetOp(name);
   if (op_desc == nullptr) {
     MS_LOG(INFO) << "expander not found " << node->fullname_with_scope();
     return nullptr;

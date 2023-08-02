@@ -248,7 +248,7 @@ bool GraphKernelExpanderLite::CanExpand(const CNodePtr &node) const {
 }
 
 ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
-  auto expander = std::make_shared<DefaultExpander>(Callback::Instance());
+  auto expander = std::make_shared<LitegraphExpander>(Callback::Instance());
   ExpanderCreatorFuncList decos = {InferValueDeco::Creator};
   std::map<std::string, ExpanderCreatorFuncList> creators = {
     {prim::kPrimReduceFusion->name(), {DependValueDeco::GetCreator({1}), FixFormatDeco::Creator}},
