@@ -443,6 +443,8 @@ if(PLATFORM_ARM64)
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
                                 ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../set_env.bash DESTINATION
+                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -690,6 +692,8 @@ elseif(PLATFORM_ARM32)
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
                                 ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../set_env.bash DESTINATION
+                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -888,6 +892,8 @@ else()
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
+                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../set_env.bash DESTINATION
                                 ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)

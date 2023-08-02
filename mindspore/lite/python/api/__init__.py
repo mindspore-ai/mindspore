@@ -33,15 +33,22 @@ if os.getenv('MSLITE_ENABLE_CLOUD_INFERENCE') == "on":
     from mindspore_lite import lite_infer
 
 
-def install_custom_kernels():
+def install_custom_kernels(install_path=None):
     """install  mindspore lite custom kernels"""
     custom_kernel_path = os.path.join(__path__[0], "custom_kernels/")
     if os.path.exists(custom_kernel_path):
         ascend_custom_kernel_path = custom_kernel_path + "ascend/"
         install_script_path = ascend_custom_kernel_path + "install.sh"
-        cmd_str = "bash " + install_script_path
+        if not install_path is None:
+            cmd_str = "bash " + install_script_path + " --install-path=" + install_path
+        else:
+            cmd_str = "bash " + install_script_path
         out = os.popen(cmd_str).read()
         logging.info(out)
+        if not install_path is None:
+            env_str = install_path + "/mslite"
+            print(f"using requirements: when custom module install finished or before you run the custom module,"
+                  f" execute the command [ source {env_str}/bin/set_env.bash ] to set the environment path.")
     else:
         logging.error("no custom kernel %s", custom_kernel_path)
 
