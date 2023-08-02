@@ -86,6 +86,7 @@ static bool RegAllOpFromFile() {
     MS_LOG(ERROR) << "Find op info file failed.";
     return false;
   }
+  kernel::OpLib::GetOpInfoMap().clear();
   std::string line;
   while (getline(file, line)) {
     if (!line.empty()) {
