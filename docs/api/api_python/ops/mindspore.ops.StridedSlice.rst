@@ -16,8 +16,8 @@
 
     输入：
         - **input_x** (Tensor) - 需要切片处理的输入Tensor。
-        - **begin** (tuple[int]) - 指定开始切片的索引。仅支持大于或等于0的int值。
-        - **end** (tuple[int]) - 指定结束切片的索引。仅支持大于0的int值。
+        - **begin** (tuple[int]) - 指定开始切片的索引。
+        - **end** (tuple[int]) - 指定结束切片的索引。
         - **strides** (tuple[int]) - 指定各维度切片的步长。输入为一个tuple，仅支持int值。`strides` 的元素必须非零。可能为负值，这会导致反向切片。
 
     输出：
