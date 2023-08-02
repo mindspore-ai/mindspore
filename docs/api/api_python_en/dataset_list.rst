@@ -401,6 +401,13 @@ Others
     :exclude-members: to_c_type, to_python_type
     :members:
 
+{% elif "mindspore.dataset.transforms" in fullname and objname[0].istitle() %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: infer_value, infer_shape, infer_dtype
+    :members:
+
 {% elif objname[0].istitle() %}
 
 {{ fullname | underline }}
