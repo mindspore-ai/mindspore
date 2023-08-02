@@ -100,8 +100,32 @@ class ConvolutionCudnnGpuKernel : public AbstractConvolutionGpuKernel {
   bool LaunchFilterGrad(const ConvolutionArgs &conv_args, const void *dy_addr, const void *input_addr, void *dw_addr,
                         const std::vector<AddressPtr> &workspace, void *stream_ptr) override;
 
-  void CalPadList(ConvolutionArgs *conv_args, const ShapeVector &input_shape, const ShapeVector &filter_shape,
-                  int h_index, int w_index) {
+  void CalInputGradPadList(ConvolutionArgs *conv_args, const ShapeVector &input_shape, const ShapeVector &filter_shape,
+                           int h_index, int w_index) {
+    if (conv_args->pad_list[kTop2DPadIndex] == -1 || conv_args->pad_list[kBottom2DPadIndex] == -1) {
+      int pad_needed_h =
+        (static_cast<int>(std::ceil((input_shape[h_index] * 1.0) / conv_args->stride[kHeight2DStrideIndex])) - 1) *
+          conv_args->stride[kHeight2DStrideIndex] +
+        conv_args->dilation[h_index] * (filter_shape[h_index] - 1) + 1 - input_shape[h_index];
+      auto pad_needed_h_final = std::max(0, pad_needed_h);
+      conv_args->pad_list[kTop2DPadIndex] =
+        static_cast<int>(std::floor(pad_needed_h_final * 1.0 / kConv2dSymmetricCoef));
+      conv_args->pad_list[kBottom2DPadIndex] = pad_needed_h_final - conv_args->pad_list[kTop2DPadIndex];
+    }
+    if (conv_args->pad_list[kLeft2DPadIndex] == -1 || conv_args->pad_list[kRight2DPadIndex] == -1) {
+      int pad_needed_w =
+        (static_cast<int>(std::ceil((input_shape[w_index] * 1.0) / conv_args->stride[kWidth2DStrideIndex])) - 1) *
+          conv_args->stride[kWidth2DStrideIndex] +
+        conv_args->dilation[w_index] * (filter_shape[w_index] - 1) + 1 - input_shape[w_index];
+      auto pad_needed_w_final = std::max(0, pad_needed_w);
+      conv_args->pad_list[kLeft2DPadIndex] =
+        static_cast<int>(std::floor(pad_needed_w_final * 1.0 / kConv2dSymmetricCoef));
+      conv_args->pad_list[kRight2DPadIndex] = pad_needed_w_final - conv_args->pad_list[kLeft2DPadIndex];
+    }
+  }
+
+  void CalFilterGradPadList(ConvolutionArgs *conv_args, const ShapeVector &input_shape, const ShapeVector &filter_shape,
+                            int h_index, int w_index) {
     auto pad_list = conv_args->pad_list;
     if (pad_list[kTop2DPadIndex] == -1 || pad_list[kBottom2DPadIndex] == -1) {
       int pad_needed_h = (static_cast<int>(std::ceil((input_shape[h_index] * 1.0) / conv_args->stride[kIndex2])) - 1) *
@@ -177,11 +201,6 @@ class ConvolutionCudnnGpuKernel : public AbstractConvolutionGpuKernel {
       real_desc = tensor0_desc_;
     }
 
-    std::vector<int> padA_vec(padA, padA + kConv2dDimSize);
-    std::vector<int> strideA_vec(strideA, strideA + kConv2dDimSize);
-    std::vector<int> dilaA_vec(dilaA, dilaA + kConv2dDimSize);
-    PrintConvolutionArgs(*conv_args);
-
     SetConvolutionMathType(conv_desc_, cudnn_data_type_);
     forward_algo_ = SelectForwardAlgorithm(cudnn_handle_, cudnn_data_type_, real_desc, filter_desc_, conv_desc_,
                                            tensor1_desc_, conv_args->group);
@@ -233,7 +252,7 @@ class ConvolutionCudnnGpuKernel : public AbstractConvolutionGpuKernel {
     SetNCHW(input_shape, &conv_args->batch_size, &conv_args->in_channel, &conv_args->in_height, &conv_args->in_width,
             conv_args->data_format);
     Set4DDesc(conv_args, dy_shape, input_shape, filter_shape);
-    CalPadList(conv_args, input_shape, filter_shape, h_index, w_index);
+    CalInputGradPadList(conv_args, input_shape, filter_shape, h_index, w_index);
 
     conv_args->pad_height = conv_args->pad_list[kTop2DPadIndex];
     conv_args->pad_width = conv_args->pad_list[kLeft2DPadIndex];
@@ -309,7 +328,7 @@ class ConvolutionCudnnGpuKernel : public AbstractConvolutionGpuKernel {
     SetNCHW(input_shape, &conv_args->batch_size, &conv_args->in_channel, &conv_args->in_height, &conv_args->in_width,
             conv_args->data_format);
     Set4DDesc(conv_args, dy_shape, input_shape, filter_shape);
-    CalPadList(conv_args, input_shape, filter_shape, h_index, w_index);
+    CalFilterGradPadList(conv_args, input_shape, filter_shape, h_index, w_index);
 
     conv_args->use_pad =
       !(conv_args->pad_height % kConv2dSymmetricCoef == 0 && conv_args->pad_width % kConv2dSymmetricCoef == 0);
@@ -606,7 +625,6 @@ bool ConvolutionCudnnGpuKernel<T>::LaunchForward(const ConvolutionArgs &conv_arg
                               tensor1_desc_, output_addr),
       "cudnnConvolutionForward failed");
   }
-
   return true;
 }
 

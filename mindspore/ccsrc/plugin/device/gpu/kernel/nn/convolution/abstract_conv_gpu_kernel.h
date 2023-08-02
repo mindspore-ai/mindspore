@@ -147,7 +147,9 @@ static bool InitialAttributes(ConvolutionArgs *conv_args, const BaseOperatorPtr 
   if (data_format == kOpFormat_DEFAULT) {
     data_format = kOpFormat_NCHW;
   }
-
+  if (data_format_attr == kOpFormat_NHWC) {
+    data_format = kOpFormat_NHWC;
+  }
   auto stride_attr = GetValue<std::vector<int64_t>>(prim->GetAttr("stride"));
   if (stride_attr.size() != kConv2dInputDimSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of 'stride' must be 4, but got "
@@ -205,6 +207,9 @@ static bool MatchDepthWiseGpuKernel(const ConvolutionArgs &conv_args) {
     return false;
   }
   if (stride[kIndex0] != 1 || stride[kIndex1] != 1) {
+    return false;
+  }
+  if (conv_args.data_format == kOpFormat_NCHW && conv_args.data_type == "Float32") {
     return false;
   }
   return true;

@@ -50,6 +50,12 @@ bool Conv2dInputGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  const auto &inplace_algo_attr = prim->GetAttr("inplace_algo");
+  auto inplace_algo_value = inplace_algo_attr == nullptr ? "cover" : GetValue<std::string>(inplace_algo_attr);
+  conv_args_.beta = inplace_algo_value == "cover" ? 0 : 1;
+
   return InitialAttributes(&conv_args_, base_operator, inputs);
 }
 

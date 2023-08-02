@@ -126,6 +126,36 @@ std::string GetArrayText(const T *values, const size_t len) {
 constexpr size_t CONV2D_DIM_SIZE = 2;
 constexpr size_t CONV2D_INPUT_DIM = 4;
 
+static std::string GetCudnnDataTypeStr(cudnnDataType_t computeType) {
+  if (computeType == CUDNN_DATA_FLOAT) {
+    return "Float32";
+  } else if (computeType == CUDNN_DATA_HALF) {
+    return "Half";
+  } else {
+    return "";
+  }
+}
+
+static std::string GetCudnnModeStr(cudnnConvolutionMode_t mode) {
+  if (mode == CUDNN_CONVOLUTION) {
+    return "CUDNN_CONVOLUTION";
+  } else if (mode == CUDNN_CROSS_CORRELATION) {
+    return "CUDNN_CROSS_CORRELATION";
+  } else {
+    return "";
+  }
+}
+
+static std::string GetCudnnDataFormatStr(cudnnTensorFormat_t format) {
+  if (format == CUDNN_TENSOR_NCHW) {
+    return "NCHW";
+  } else if (format == CUDNN_TENSOR_NHWC) {
+    return "NHWC";
+  } else {
+    return "";
+  }
+}
+
 // get conv_desc info
 static std::ostream &operator<<(std::ostream &os, const cudnnConvolutionDescriptor_t conv_desc) {
   int arrayLength;
@@ -139,8 +169,8 @@ static std::ostream &operator<<(std::ostream &os, const cudnnConvolutionDescript
                                       "cudnnGetConvolutionNdDescriptor failed");
 
   os << "padA = " << GetArrayText(padA, arrayLength) << ", strideA = " << GetArrayText(strideA, arrayLength)
-     << ", dilationA = " << GetArrayText(dilationA, arrayLength) << ", computeType = " << computeType;
-
+     << ", dilationA = " << GetArrayText(dilationA, arrayLength)
+     << ", computeType = " << GetCudnnDataTypeStr(computeType) << ", computeMode = " << GetCudnnModeStr(mode);
   return os;
 }
 
@@ -167,7 +197,7 @@ static std::ostream &operator<<(std::ostream &os, const cudnnFilterDescriptor_t 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnGetFilterNdDescriptor(dw_desc, CONV2D_INPUT_DIM, &dataType, &format, &nbDims, filterDimA),
     "cudnnGetFilterNdDescriptor failed");
-  os << "filterDimA = " << GetArrayText(filterDimA, nbDims) << ", format = " << format;
+  os << "filterDimA = " << GetArrayText(filterDimA, nbDims) << ", computeFormat = " << GetCudnnDataFormatStr(format);
 
   return os;
 }
