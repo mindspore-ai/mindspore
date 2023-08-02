@@ -218,6 +218,11 @@ bool CollectiveManager::GetLocalGroupRankAndSize(const std::vector<uint32_t> &gr
 bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
                                                  const std::vector<uint32_t> &group_ranks) {
   MS_LOG(WARNING) << "Start to create communication group: " << group_name << " " << group_ranks;
+  if (std::find(group_ranks.begin(), group_ranks.end(), global_rank_id_) == group_ranks.end()) {
+    MS_LOG(WARNING) << "This rank: " << global_rank_id_ << " is not in the group ranks: " << group_ranks
+                    << ". This may cause some exception when initializing the group.";
+  }
+
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
   if (!need_host_collective_) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateDeviceCommunicationGroup(group_name, group_ranks),
@@ -332,6 +337,14 @@ uint32_t CollectiveManager::GetGroupRankFromWorldRank(uint32_t global_rank, cons
   BY_PASS_SCHED_RANK_ID;
   MS_EXCEPTION_IF_NULL(comm_lib_instance_);
   return comm_lib_instance_->GetGroupRankFromWorldRank(global_rank, group_name);
+}
+
+std::vector<uint32_t> CollectiveManager::GetGroupRanks(const std::string &group_name) {
+  const auto &group = comm_lib_instance_->GetGroup(group_name);
+  if (group == nullptr) {
+    MS_LOG(EXCEPTION) << "Group " << group_name << " doesn't include this rank " << global_rank_id_ << " process.";
+  }
+  return group->group_ranks();
 }
 
 bool CollectiveManager::Finalize() {

@@ -15,6 +15,7 @@
 """comm_helper"""
 
 import os
+import glob
 import ctypes
 
 import sys
@@ -25,6 +26,7 @@ from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _i
                                            _get_ps_context
 from mindspore import log as logger
 from mindspore._c_expression import CollectiveManager, set_cluster_exit_with_exception, MSContext
+from mindspore.common._utils import load_lib
 
 HCCL_LIB = 'libhccl_plugin.so'
 
@@ -102,7 +104,7 @@ class GlobalComm:
     """
     World communication information. The GlobalComm is a global class. The members contain:
 
-    - ``BACKEND`` : The communication library used, using HCCL/NCCL.
+    - ``BACKEND`` : The communication library used, using HCCL/NCCL/MCCL.
     - ``WORLD_COMM_GROUP`` : Global communication domain.
     """
     BACKEND = DEFAULT_BACKEND
@@ -179,6 +181,60 @@ def check_parameter_available(func):
             group = GlobalComm.WORLD_COMM_GROUP
         return func(*args, **kargs)
     return wrapper
+
+
+def _is_available():
+    """
+    Returns `True` if distributed module is available.
+
+    Note:
+        Always returns `True` because MindSpore always has distributed ability on all platforms.
+    """
+    return True
+
+
+def _is_initialized():
+    """
+    Checks if distributed module is successfully initialized.
+    """
+    return CollectiveManager.get_instance().initialized()
+
+
+def _get_backend():
+    """
+    Returns the backend of communication process groups.
+
+    Note:
+        Only one communication backend is supported by MindSpore for each process.
+        It should be one of `hccl`/`nccl`/`mccl`.
+    """
+    return GlobalComm.BACKEND
+
+
+def _is_hccl_available():
+    """
+    Checks if `hccl` backend is available.
+    """
+    return _HCCL_TEST_AVAILABLE
+
+
+def _is_nccl_available():
+    """
+    Checks if `nccl` backend is available.
+    """
+    base_dir = os.path.dirname(os.path.realpath(__file__))
+    lib_path = os.path.join(base_dir, "../lib/plugin/gpu*/libnvidia_collective.so")
+    file_paths = glob.glob(lib_path)
+    return all(list(load_lib(f) for f in file_paths))
+
+
+def _is_mpi_available():
+    """
+    Checks if OpenMPI's library is available.
+    """
+    base_dir = os.path.dirname(os.path.realpath(__file__))
+    lib_path = os.path.join(base_dir, "../lib/libmpi_collective.so")
+    return load_lib(lib_path)
 
 
 @check_parameter_available
@@ -318,6 +374,20 @@ def _get_group_rank_from_world_rank_helper(world_rank_id, group):
         return hccl.get_group_rank_from_world_rank(world_rank_id, group)
     group_rank_id = CollectiveManager.get_instance().get_group_rank_from_world_rank(world_rank_id, group)
     return group_rank_id
+
+
+@check_parameter_available
+def _get_group_ranks(group):
+    """
+    The Helper to do get_group_ranks.
+
+    Args:
+        group (str): The communication group.
+
+    Returns:
+        List. The ranks of specified group.
+    """
+    return CollectiveManager.get_instance().get_group_ranks(group)
 
 
 @check_parameter_available

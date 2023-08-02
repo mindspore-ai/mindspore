@@ -18,9 +18,11 @@
 
 import os
 import math
+import ctypes
 import functools
 
 import mindspore
+from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched
 
@@ -103,3 +105,14 @@ def ones_like(x):
 def zeros_like(x):
     """Implement `zeroslike`."""
     return mindspore.ops.composite.zeros_like(x)
+
+
+def load_lib(lib_path):
+    """load specified library."""
+    try:
+        ctypes.CDLL(lib_path)
+    # pylint: disable=broad-except
+    except Exception:
+        logger.warning(f'Loading {lib_path} lib error.')
+        return False
+    return True
