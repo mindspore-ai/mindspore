@@ -228,4 +228,10 @@ INPUT_MAP(MatrixDiagV3) = {{1, INPUT_DESC(x)},
 ATTR_MAP(MatrixDiagV3) = {{"align", ATTR_DESC(align, AnyTraits<std::string>())}};
 OUTPUT_MAP(MatrixDiagV3) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixDiagV3, kNameMatrixDiagV3, ADPT_DESC(MatrixDiagV3))
+
+// Tril
+INPUT_MAP(Tril) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Tril) = {{"diagonal", ATTR_DESC(diagonal, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Tril) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Tril, kNameTril, ADPT_DESC(Tril))
 }  // namespace mindspore::transform
