@@ -32,5 +32,7 @@ class GeUtils {
   static Status AdaptGraph(const FuncGraphPtr &func_graph);
   static std::shared_ptr<AscendDeviceInfo> GetAscendDeviceInfo(const std::shared_ptr<mindspore::Context> &context);
 };
+
+std::string GetSocVersion();
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_GE_GE_UTILS_H_
