@@ -959,3 +959,89 @@ def test_return_different_size_dict_in_if_else():
         dict_net(x, Tensor(-1))
     except TypeError as e:
         assert "Cannot join the return values of different branches, perhaps you need to make them equal." in str(e)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_get_item_with_string_input():
+    """
+    Feature: Support string as the input of top network.
+    Description: Get the element with the string input.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(x, input_str):
+        a = {'a': x}
+        return a[input_str]
+
+    x = Tensor(2)
+    out = dict_net(x, "a")
+    assert out == x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_get_item_with_string_input_grad():
+    """
+    Feature: Support string as the input of top network.
+    Description: Get the gradient for getting the element with the string input.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(x, input_str):
+        a = {'a': x}
+        return a[input_str]
+
+    x = Tensor(2)
+    out = ops.grad(dict_net, grad_position=(0, 1))(x, "a")
+    assert out == Tensor(1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_dict_with_string_input():
+    """
+    Feature: Support string as the input of top network.
+    Description: Return dict with the string input.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(x, input_str):
+        return {input_str: x}
+
+    x = Tensor(2)
+    out = dict_net(x, "a")
+    assert out == {"a": x}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_dict_with_string_input_grad():
+    """
+    Feature: Support string as the input of top network.
+    Description: Get the gradient for returning dict with the string input..
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(x, input_str):
+        return {input_str: x}
+
+    x = Tensor(2)
+    out = ops.grad(dict_net, grad_position=(0, 1))(x, "a")
+    assert out == Tensor(1)

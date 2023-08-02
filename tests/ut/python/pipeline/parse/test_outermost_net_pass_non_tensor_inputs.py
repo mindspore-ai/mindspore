@@ -85,6 +85,7 @@ def test_grad_first_input_net(mode):
     Description: Normal input type.
     Expectation: No exception.
     """
+
     class FirstInputTensorNet(nn.Cell):
         def construct(self, tensor_a, tuple_a, list_b, tensor_b, tensor_c, dict_c):
             return tensor_a + tuple_a[0] - list_b[1][1]["y"] + tensor_b - tensor_c + dict_c["y"]
@@ -92,26 +93,6 @@ def test_grad_first_input_net(mode):
     context.set_context(mode=mode)
     grad_fist_input_tensor_net = GradNet1(FirstInputTensorNet(), get_all=False)
     grad_fist_input_tensor_net(tensor_z, tuple_arg, list_arg, tensor_w, tensor_y, dict_arg)
-
-
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
-def test_net_inputs_including_str(mode):
-    """
-    Feature: Input type with back propagate.
-    Description: String input type.
-    Expectation: No exception.
-    """
-    context.set_context(mode=mode)
-    with pytest.raises(TypeError) as err:
-        grad_all_inputs_net(tuple_arg, STRING_INPUT, list_arg, tensor_w, SCALAR_NUM, dict_arg, flag_0)
-    print('err: ', str(err.value))
-    # network is 'GradNet.construct' in GraphMode.
-    # network is 'FirstInputTupleNet.construct' in PynativeMode.
-    assert "The inputs types of the outermost network" in str(err.value)
-    assert "support bool, int, float, None, Tensor, " \
-           "Parameter, mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
-           "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but the 2nd arg type is <class 'str'>, value is 'ok'" in str(err.value)
 
 
 # Support the Parameter as outermost input.
