@@ -297,10 +297,9 @@ GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::s
     MS_LOG(ERROR) << "The Me Tensor data type size is wrong, type size is: " << type_size;
     return nullptr;
   }
-  size_t elements_num = IntToSize(tensor->ElementsNum());
 
   // get tensor buff size
-  size_t data_buff_size = elements_num * type_size;
+  size_t data_buff_size = tensor->Size();
   if (data_buff_size == 0) {
     MS_LOG(INFO) << "The Me Tensor data buff size is 0.";
   }
