@@ -19,6 +19,7 @@
 #include <utility>
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "nnacl/errorcode.h"
 #include "nnacl/gather_parameter.h"
 #include "nnacl/base/gather_base.h"
 #include "include/common/thread_pool.h"
@@ -134,8 +135,13 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
       int count = SizeToInt(end - start);
       const int8_t *in = input_ptr + start * limit * byte_inner_size;
       int8_t *out = output_ptr + start * byte_out_stride;
-      int ret = Gather(in, count, byte_inner_size, limit, indice_ptr, indices_element_size, out, byte_out_stride);
-      if (ret != 0) {
+      int error_index = 0;
+      int ret =
+        Gather(in, count, byte_inner_size, limit, indice_ptr, indices_element_size, out, byte_out_stride, &error_index);
+      if (ret == NNACL_GATHER_INDICES_VALUE_INVALID) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'input_indices' should be in the range [" << 0 << ", "
+                          << limit << "), but got " << error_index << ", error_code[" << ret << "]";
+      } else if (ret == NNACL_NULL_PTR) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', error_code[" << ret << "]";
       }
     };

@@ -12,7 +12,7 @@ mindspore.ops.gather
     其中，params代表输入 `input_params` ，indices代表要切片的索引 `input_indices` 。
 
     .. note::
-        1. input_indices的值必须在 `[0, input_param.shape[axis])` 范围内，超出该范围结果未定义。
+        1. input_indices的值必须在 `[0, input_param.shape[axis])` 范围内。CPU平台越界访问将会抛出异常，GPU与Ascend平台越界访问结果未定义。
         2. Ascend平台上，input_params的数据类型当前不能是 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
 
     参数：
