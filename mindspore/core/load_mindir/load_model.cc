@@ -341,6 +341,7 @@ class MSANFModelParser {
   void SetMindIRDecMode(const std::string &dec_mode) { mindir_dec_mode_ = dec_mode; }
 
  private:
+  void TrytoBuildCNodeAbstract();
   bool BuildPrimitiveNode(const mind_ir::PrimitiveProto &primitive_proto);
   abstract::AbstractBasePtr BuildAbstractFunction(const mind_ir::AttributeProto &attr_proto);
   void CorrectFuncGraph(const FuncGraphPtr &root);
@@ -413,6 +414,7 @@ class MSANFModelParser {
   bool little_endian_ = common::IsLittleByteOrder();
   std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;
   bool is_kernel_graph_{false};
+  std::list<std::pair<const CNodePtr, const mind_ir::AttributeProto *>> node_abstract_protos_;
 };
 
 ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto) {
@@ -1830,7 +1832,7 @@ void MSANFModelParser::SetCNodeAbstract(const mind_ir::AttributeProto &attr_prot
   if (cnode_ptr->abstract() == nullptr) {
     MS_LOG(INFO) << "Failed to Build CNode abstract from proto. CNode: " << cnode_ptr->ToString()
                  << " attr_proto: " << attr_proto.DebugString();
-    abstract_valid_ = false;
+    node_abstract_protos_.push_back(std::pair(cnode_ptr, &attr_proto));
   }
 }
 
@@ -1946,7 +1948,6 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
 bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
                                            const mind_ir::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  MS_LOG(DEBUG) << "The node size: " << importProto.node_size();
   CNodePtr cnode_ptr = nullptr;
   for (int i = 0; i < importProto.node_size(); ++i) {
     const mind_ir::NodeProto &node_proto = importProto.node(i);
@@ -2012,12 +2013,11 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
     MS_LOG(ERROR) << "Import map parameters for graph failed!";
     return false;
   }
-  if (ImportNodesForGraph(output_graph, import_proto)) {
-    MS_LOG(DEBUG) << "Success to parse graph: " << output_graph->ToString() << ": " << output_graph.get();
-    return true;
+  if (!ImportNodesForGraph(output_graph, import_proto)) {
+    MS_LOG(ERROR) << "Import nodes for graph failed! " << import_proto.has_name();
+    return false;
   }
-  MS_LOG(ERROR) << "Failed to parse nodes. ";
-  return false;
+  return true;
 }
 
 bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph,
@@ -2051,6 +2051,22 @@ bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph
   return true;
 }
 
+void MSANFModelParser::TrytoBuildCNodeAbstract() {
+  std::map<CNodePtr, int> visited_times;
+  constexpr int kMaxCount = 3;
+  while (!node_abstract_protos_.empty()) {
+    auto &item = node_abstract_protos_.front();
+    auto &count = visited_times[item.first];
+    if (count++ > kMaxCount) {
+      abstract_valid_ = false;
+      MS_LOG(ERROR) << "Parse CNode: " << item.first->ToString() << " abstract error: " << item.second->DebugString();
+    } else {
+      SetCNodeAbstract(*(item.second), item.first);
+    }
+    node_abstract_protos_.pop_front();
+  }
+}
+
 FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
                                      const std::map<std::string, ValuePtr> &weights,
                                      mindspore::HashMap<std::string, AnfNodePtr> *name_to_node) {
@@ -2060,16 +2076,13 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
   if (name_to_node) {
     anfnode_build_map_ = *name_to_node;
   }
-
-  FuncGraphPtr dstGraph = std::make_shared<FuncGraph>();
-
   for (int i = 0; i < model_proto.primitives_size(); ++i) {
     if (!BuildPrimitiveNode(model_proto.primitives(i))) {
       MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << model_proto.primitives(i).DebugString();
       return nullptr;
     }
   }
-
+  FuncGraphPtr dstGraph = std::make_shared<FuncGraph>();
   const mind_ir::GraphProto &graphBuild = model_proto.graph();
 
   // Forward declare FuncGraph name
@@ -2088,8 +2101,6 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
       MS_LOG(ERROR) << "There is a duplication function graph name: " << graph_proto.name();
       return nullptr;
     }
-    auto debug_info = graph->debug_info();
-    debug_info->set_name(graph_proto.name());
     anfnode_build_map_[graph_proto.name()] = NewValueNodeWithAbstract(graph);
   }
 
@@ -2105,7 +2116,6 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
       return nullptr;
     }
   }
-
   MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graphBuild.name() << ": " << dstGraph.get();
   top_graph_ = dstGraph;
   for (int i = 0; i < model_proto.functions_size(); ++i) {
@@ -2117,12 +2127,12 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
     }
     MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_proto.name() << ": " << graph.get();
   }
+  TrytoBuildCNodeAbstract();
   if (name_to_node) {
     *name_to_node = anfnode_build_map_;
   }
   // Release resource
   anfnode_build_map_.clear();
-
   // Correct the null abstract for compatibility with previous versions.
   if (!abstract_valid_ && weights.empty()) {
     CorrectFuncGraph(dstGraph);
@@ -2145,7 +2155,6 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
     GraphDebugInfoPtr debug_info_ptr = graph->debug_info();
     MS_EXCEPTION_IF_NULL(debug_info_ptr);
     debug_info_ptr->set_name(proto.name());
-
     if (!BuildAttrForFuncGraph(graph, proto)) {
       MS_LOG(ERROR) << "Build attribute for graph fail!";
     }
@@ -2213,6 +2222,7 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
       MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_build.name();
     }
   }
+  TrytoBuildCNodeAbstract();
   if (name_to_node) {
     *name_to_node = anfnode_build_map_;
   }
@@ -2271,10 +2281,12 @@ AnfNodePtr MSANFModelParser::GetAnfNode(const std::string &node_name) {
   if (it == anfnode_build_map_.end()) {
     return nullptr;
   }
+
+  // The FunctionGraph node can't been shared.
   FuncGraphPtr func_graph_ptr = GetValueNode<FuncGraphPtr>(it->second);
   if (func_graph_ptr != nullptr) {
     auto node = NewValueNode(func_graph_ptr);
-    node->set_abstract(it->second->abstract());
+    node->set_abstract(func_graph_ptr->ToAbstract());
     return node;
   } else {
     return it->second;
@@ -2328,14 +2340,17 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
     case mind_ir::AttributeProto_AttributeType_FUNCGRAPHCLOSURE: {
       auto func_node = GetAnfNode(attr_proto.s());
       if (func_node == nullptr) {
-        MS_LOG(WARNING) << "Failed to get function graph closure: " << attr_proto.DebugString();
-        return nullptr;
+        FuncGraphPtr dummy_graph = std::make_shared<FuncGraph>();
+        MS_LOG(DEBUG) << "Failed to get function graph closure: " << attr_proto.DebugString();
+        return dummy_graph->ToAbstract();
       }
       return func_node->abstract();
     }
     case mind_ir::AttributeProto_AttributeType_PARTIALCLOSURE: {
       auto anf_node = GetAnfNode(attr_proto.s());
-      MS_EXCEPTION_IF_NULL(anf_node);
+      if (anf_node == nullptr) {
+        return nullptr;
+      }
       auto partial_node = anf_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(partial_node);
       AbstractBasePtrList args_spec_list;
@@ -2353,12 +2368,16 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
       if (op_node->abstract() != nullptr) {
         fn = op_node->abstract()->cast<abstract::AbstractFuncAtomPtr>();
         if (fn == nullptr) {
-          MS_LOG(ERROR) << "Can't get the abstract of partial node: " << op_node->ToString();
-          return nullptr;
+          MS_LOG(DEBUG) << "Can't get the abstract of partial node: " << op_node->ToString();
+          FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(op_node);
+          MS_EXCEPTION_IF_NULL(fg);
+          fn = fg->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>();
         }
       } else {
-        MS_LOG(WARNING) << "Can't get the abstract of partial node: " << op_node->ToString();
-        return nullptr;
+        MS_LOG(DEBUG) << "Can't get the abstract of partial node: " << op_node->ToString();
+        FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(op_node);
+        MS_EXCEPTION_IF_NULL(fg);
+        fn = fg->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>();
       }
       return std::make_shared<abstract::PartialAbstractClosure>(fn, args_spec_list, partial_node);
     }
