@@ -104,6 +104,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {LOG_SOFTMAX, OperatorType::kRecSoftmax},
   {CHOLESKY, OperatorType::kRecSoftmax},
   {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmaxCrossEntropyWithLogits},
+  {CUM_SUM, OperatorType::kRecCum},
   {SQRT, OperatorType::kRecElmWiseOp},
   {NEG, OperatorType::kRecElmWiseOp},
   {POW, OperatorType::kRecElmWiseOp},
@@ -182,6 +183,9 @@ OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInf
                                    Graph::NodeType NewTensor);
 
 TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                             const size_t iter_input_tensors, Graph::NodeType NewTensor);
+
+TensorParam Complete4DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                              const size_t iter_input_tensors, Graph::NodeType NewTensor);
 
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
