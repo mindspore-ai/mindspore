@@ -20,6 +20,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -41,10 +42,10 @@ const AnfNodePtr SqueezeAxisGe::Process(const FuncGraphPtr &graph, const AnfNode
                              "Squeeze node axis attr error, squeeze node: " + squeeze_cnode->DebugString() +
                                ", axis value: " + axis_value->ToString());
   auto &value_sequence = axis_value->cast<ValueSequencePtr>()->value();
+  std::vector<int64_t> axis;
   if (value_sequence.empty()) {
     auto shape_vec = common::AnfAlgo::GetOutputInferShape(squeeze_cnode->input(1), 0);
     const auto dim = shape_vec.size();
-    std::vector<int64_t> axis;
     for (size_t i = 0; i < dim; ++i) {
       if (shape_vec[i] != 1) {
         continue;
@@ -52,7 +53,16 @@ const AnfNodePtr SqueezeAxisGe::Process(const FuncGraphPtr &graph, const AnfNode
       (void)axis.emplace_back(i);
     }
     prim->set_attr(kAttrAxis, MakeValue(axis));
+    return node;
   }
+
+  auto axis_size = value_sequence.size();
+  for (const auto &value : value_sequence) {
+    auto axis_data = AnfUtils::GetIntValue(value);
+    auto real_idx = (axis_data < 0) ? axis_data + axis_size : axis_data;
+    (void)axis.emplace_back(real_idx);
+  }
+  prim->set_attr(kAttrAxis, MakeValue(axis));
   return node;
 }
 }  // namespace opt
