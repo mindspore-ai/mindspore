@@ -615,7 +615,7 @@ py::object GeneratePyObj(const abstract::AbstractBasePtr &abs) {
 void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj) {
   // Nested attach list object to corresponding abstract list.
   // Do not consider dictionary yet.
-  if (!abs->isa<abstract::AbstractSequence>()) {
+  if (!abs->isa<abstract::AbstractSequence>() || abs->isa<abstract::AbstractNamedTuple>()) {
     return;
   }
   if (abs->isa<abstract::AbstractList>()) {

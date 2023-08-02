@@ -1472,17 +1472,18 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
   }
   if (value->isa<ValueSequence>() && anf_node != nullptr) {
     auto abs = value->ToAbstract();
-    auto sequence_abs = abs->cast<AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(sequence_abs);
+    MS_EXCEPTION_IF_NULL(abs);
     // Attach corresponding python sequence object to AbstractSequence.
     py::object py_list_obj = fallback::HasPySeqObject(anf_node) ? *fallback::GetPySeqObject<AnfNode, py::list>(anf_node)
                                                                 : ValueToPyData(value);
-    fallback::AttachListObjToAbs(sequence_abs, py_list_obj);
+    fallback::AttachListObjToAbs(abs, py_list_obj);
     MS_LOG(DEBUG) << "Attach python list object " << fallback::GetPyObjectPtrStr(py_list_obj)
                   << " to new abstract: " << abs->ToString();
     // Set sequence node for new AbstractSequence.
     static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
+      auto sequence_abs = abs->cast<AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(sequence_abs);
       SetSequenceNodeElementsUseFlags(anf_node, std::make_shared<std::vector<bool>>(sequence_abs->elements().size()));
       std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
       (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(anf_node));
