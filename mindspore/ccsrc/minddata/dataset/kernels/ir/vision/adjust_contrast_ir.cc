@@ -40,6 +40,7 @@ std::shared_ptr<TensorOp> AdjustContrastOperation::Build() {
 }
 
 Status AdjustContrastOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["contrast_factor"] = contrast_factor_;
   *out_json = args;
@@ -47,6 +48,7 @@ Status AdjustContrastOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status AdjustContrastOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "contrast_factor", kAdjustContrastOperation));
   float contrast_factor = op_params["contrast_factor"];
   *operation = std::make_shared<vision::AdjustContrastOperation>(contrast_factor);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ std::shared_ptr<TensorOp> PadToSizeOperation::Build() {
 }
 
 Status PadToSizeOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["size"] = size_;
   args["offset"] = offset_;
@@ -72,6 +73,7 @@ Status PadToSizeOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status PadToSizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kPadToSizeOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "offset", kPadToSizeOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kPadToSizeOperation));
@@ -79,7 +81,7 @@ Status PadToSizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<T
   std::vector<int32_t> size = op_params["size"];
   std::vector<int32_t> offset = op_params["offset"];
   std::vector<uint8_t> fill_value = op_params["fill_value"];
-  BorderType padding_mode = static_cast<BorderType>(op_params["padding_mode"]);
+  auto padding_mode = static_cast<BorderType>(op_params["padding_mode"]);
   *operation = std::make_shared<vision::PadToSizeOperation>(size, offset, fill_value, padding_mode);
   return Status::OK();
 }

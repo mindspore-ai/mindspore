@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/random_rotation_ir.h"
+
+#include <algorithm>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -57,19 +57,19 @@ Status RandomRotationOperation::ValidateParams() {
       "RandomRotation: degrees must be a vector of one or two values, got: " + std::to_string(degrees_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if ((degrees_.size() == size_two) && (degrees_[dimension_one] < degrees_[dimension_zero])) {
+  if (degrees_.size() == size_two && degrees_[dimension_one] < degrees_[dimension_zero]) {
     std::string err_msg = "RandomRotation: degrees must be in the format of (min, max), got: (" +
                           std::to_string(degrees_[dimension_zero]) + ", " + std::to_string(degrees_[dimension_one]) +
                           ")";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  } else if ((degrees_.size() == size_one) && (degrees_[dimension_zero] < 0)) {
+  } else if (degrees_.size() == size_one && degrees_[dimension_zero] < 0.0) {
     std::string err_msg =
       "RandomRotation: if degrees only has one value, it must be greater than or equal to 0, got: " +
       std::to_string(degrees_[dimension_zero]);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // center
-  if (center_.size() != 0 && center_.size() != size_two) {
+  if (!center_.empty() && center_.size() != size_two) {
     std::string err_msg =
       "RandomRotation: center must be a vector of two values or empty, got: " + std::to_string(center_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -113,6 +113,7 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
 }
 
 Status RandomRotationOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["degrees"] = degrees_;
   args["resample"] = interpolation_mode_;
@@ -124,20 +125,20 @@ Status RandomRotationOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomRotationOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "degrees", kRandomRotationOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "resample", kRandomRotationOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "expand", kRandomRotationOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "center", kRandomRotationOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kRandomRotationOperation));
   std::vector<float> degrees = op_params["degrees"];
-  InterpolationMode resample = static_cast<InterpolationMode>(op_params["resample"]);
+  auto resample = static_cast<InterpolationMode>(op_params["resample"]);
   bool expand = op_params["expand"];
   std::vector<float> center = op_params["center"];
   std::vector<uint8_t> fill_value = op_params["fill_value"];
   *operation = std::make_shared<vision::RandomRotationOperation>(degrees, resample, expand, center, fill_value);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

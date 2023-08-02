@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/tensor_op.h"
+
 #include <memory>
 #include <vector>
 
@@ -25,10 +26,9 @@ namespace dataset {
 Status TensorOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   if (!OneToOne()) {
-    return Status(StatusCode::kMDUnexpectedError, "Wrong Compute() function is called. This is not 1-1 TensorOp.");
+    RETURN_STATUS_UNEXPECTED("Wrong Compute() function is called. This is not 1-1 TensorOp.");
   } else {
-    return Status(StatusCode::kMDUnexpectedError,
-                  "Is this TensorOp 1-1? If yes, please implement this Compute() in the derived class.");
+    RETURN_STATUS_UNEXPECTED("Is this TensorOp 1-1? If yes, please implement this Compute() in the derived class.");
   }
 }
 
@@ -43,21 +43,19 @@ Status TensorOp::Compute(const TensorRow &input, TensorRow *output) {
     return Compute(input[0], &(*output)[0]);
   }
 
-  return Status(StatusCode::kMDUnexpectedError,
-                "Is this TensorOp oneToOne? If no, please implement this Compute() in the derived class.");
+  RETURN_STATUS_UNEXPECTED("Is this TensorOp oneToOne? If no, please implement this Compute() in the derived class.");
 }
 
 Status TensorOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::shared_ptr<DeviceTensor> *output) {
   IO_CHECK(input, output);
-  return Status(StatusCode::kMDUnexpectedError,
-                "Wrong Compute() function is called. This is a function for operators which can be executed by"
-                "different device. If so, please implement it in the derived class.");
+  RETURN_STATUS_UNEXPECTED(
+    "Wrong Compute() function is called. This is a function for operators which can be executed by"
+    "different device. If so, please implement it in the derived class.");
 }
 
 Status TensorOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   if (inputs.size() != NumInput()) {
-    return Status(StatusCode::kMDUnexpectedError,
-                  "The size of the input argument vector does not match the number of inputs");
+    RETURN_STATUS_UNEXPECTED("The size of the input argument vector does not match the number of inputs");
   }
   outputs = inputs;
   return Status::OK();
@@ -65,17 +63,14 @@ Status TensorOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
 
 Status TensorOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   if (inputs.size() != NumInput()) {
-    return Status(StatusCode::kMDUnexpectedError,
-                  "The size of the input argument vector does not match the number of inputs");
+    RETURN_STATUS_UNEXPECTED("The size of the input argument vector does not match the number of inputs");
   }
   outputs = inputs;
   return Status::OK();
 }
 
 Status TensorOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
-  return Status(StatusCode::kMDUnexpectedError,
-                "This is a CPU operator which doesn't have Ascend Resource. Please verify your context");
+  RETURN_STATUS_UNEXPECTED("This is a CPU operator which doesn't have Ascend Resource. Please verify your context");
 }
-
 }  // namespace dataset
 }  // namespace mindspore

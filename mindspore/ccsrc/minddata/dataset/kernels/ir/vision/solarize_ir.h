@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class SolarizeOperation : public TensorOperation {
  public:
   explicit SolarizeOperation(const std::vector<float> &threshold);
 
-  ~SolarizeOperation();
+  ~SolarizeOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

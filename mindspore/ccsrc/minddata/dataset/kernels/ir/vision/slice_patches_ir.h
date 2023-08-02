@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kSlicePatchesOperation[] = "SlicePatches";
 
 class SlicePatchesOperation : public TensorOperation {
  public:
   SlicePatchesOperation(int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value);
 
-  ~SlicePatchesOperation();
+  ~SlicePatchesOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -56,7 +54,6 @@ class SlicePatchesOperation : public TensorOperation {
   SliceMode slice_mode_;
   uint8_t fill_value_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

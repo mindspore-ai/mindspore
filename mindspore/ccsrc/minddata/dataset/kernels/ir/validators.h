@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,10 @@
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 #include "minddata/dataset/util/status.h"
 
-constexpr int64_t size_two = 2;
-constexpr int64_t size_three = 3;
-constexpr int64_t size_four = 4;
-
 namespace mindspore {
 namespace dataset {
 // Helper function to validate probability
-Status ValidateProbability(const std::string &op_name, const double probability);
+Status ValidateProbability(const std::string &op_name, double probability);
 
 // Helper function to positive int scalar
 Status ValidateIntScalarPositive(const std::string &op_name, const std::string &scalar_name, int32_t scalar);
@@ -50,7 +46,8 @@ Status ValidateFloatScalarNonNegative(const std::string &op_name, const std::str
 template <typename T>
 Status ValidateScalar(const std::string &op_name, const std::string &scalar_name, const T scalar,
                       const std::vector<T> &range, bool left_open_interval = false, bool right_open_interval = false) {
-  if (range.empty() || range.size() > size_two) {
+  const size_t kRangeSize = 2;
+  if (range.empty() || range.size() > kRangeSize) {
     std::string err_msg = op_name + ": expecting range size 1 or 2, but got: " + std::to_string(range.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_SYNTAX_ERROR(err_msg);
@@ -62,7 +59,7 @@ Status ValidateScalar(const std::string &op_name, const std::string &scalar_name
     MS_LOG(ERROR) << err_msg;
     RETURN_SYNTAX_ERROR(err_msg);
   }
-  if (range.size() == size_two) {
+  if (range.size() == kRangeSize) {
     if ((right_open_interval && scalar >= range[1]) || (!right_open_interval && scalar > range[1])) {
       std::string left_bracket = left_open_interval ? "(" : "[";
       std::string right_bracket = right_open_interval ? ")" : "]";
@@ -128,7 +125,7 @@ Status ValidateVectorTransforms(const std::string &op_name,
                                 const std::vector<std::shared_ptr<TensorOperation>> &transforms);
 
 // Helper function to compare float value
-bool CmpFloat(const float a, const float b, float epsilon = 0.0000000001f);
+bool CmpFloat(float a, float b, float epsilon = 0.0000000001F);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VALIDATORS_H_

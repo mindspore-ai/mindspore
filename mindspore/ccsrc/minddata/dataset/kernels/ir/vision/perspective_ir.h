@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,16 +35,16 @@ constexpr char kPerspectiveOperation[] = "Perspective";
 
 class PerspectiveOperation : public TensorOperation {
  public:
-  explicit PerspectiveOperation(const std::vector<std::vector<int32_t>> &start_points,
-                                const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
+  PerspectiveOperation(const std::vector<std::vector<int32_t>> &start_points,
+                       const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
 
-  ~PerspectiveOperation();
+  ~PerspectiveOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
-  std::string Name() const { return kPerspectiveOperation; }
+  std::string Name() const override { return kPerspectiveOperation; }
 
   Status to_json(nlohmann::json *out_json) override;
 

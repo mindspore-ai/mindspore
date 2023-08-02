@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kCutMixBatchOperation[] = "CutMixBatch";
 
 class CutMixBatchOperation : public TensorOperation {
  public:
-  explicit CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha, float prob);
+  CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha, float prob);
 
-  ~CutMixBatchOperation();
+  ~CutMixBatchOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -54,7 +52,6 @@ class CutMixBatchOperation : public TensorOperation {
   float prob_;
   ImageBatchFormat image_batch_format_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

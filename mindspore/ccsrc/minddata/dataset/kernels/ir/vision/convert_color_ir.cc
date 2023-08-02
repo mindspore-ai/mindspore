@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/convert_color_ir.h"
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/convert_color_op.h"
 #endif
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -49,6 +46,7 @@ std::shared_ptr<TensorOp> ConvertColorOperation::Build() {
 }
 
 Status ConvertColorOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["convert_mode"] = convert_mode_;
   *out_json = args;
@@ -56,12 +54,12 @@ Status ConvertColorOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status ConvertColorOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "convert_mode", kConvertColorOperation));
-  ConvertMode convert_mode = static_cast<ConvertMode>(op_params["convert_mode"]);
+  auto convert_mode = static_cast<ConvertMode>(op_params["convert_mode"]);
   *operation = std::make_shared<vision::ConvertColorOperation>(convert_mode);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

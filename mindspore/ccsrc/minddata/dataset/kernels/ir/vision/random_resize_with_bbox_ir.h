@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kRandomResizeWithBBoxOperation[] = "RandomResizeWithBBox";
 
 class RandomResizeWithBBoxOperation : public TensorOperation {
  public:
   explicit RandomResizeWithBBoxOperation(const std::vector<int32_t> &size);
 
-  ~RandomResizeWithBBoxOperation();
+  ~RandomResizeWithBBoxOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -53,7 +51,6 @@ class RandomResizeWithBBoxOperation : public TensorOperation {
  private:
   std::vector<int32_t> size_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

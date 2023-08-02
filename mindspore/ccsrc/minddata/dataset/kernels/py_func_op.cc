@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace dataset {
 Status ConvertNumpyToTensor(const py::object &py_obj, TensorRow *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   std::shared_ptr<Tensor> out;
   // Python object like bool, int, float, list or tuple can also be converted
   // to a NumPy array by the following cast, but the data type will be unknown
@@ -36,7 +37,8 @@ Status ConvertNumpyToTensor(const py::object &py_obj, TensorRow *output) {
   return Status::OK();
 }
 
-Status ConvertPythonToTensor(py::object py_obj, TensorRow *output) {
+Status ConvertPythonToTensor(const py::object &py_obj, TensorRow *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   // Python objects such as dictionary are converted to a tensor
   // Note that the tensor will hold a reference to the python object while
   // the python object will be kept alive in Python layer.
@@ -48,15 +50,13 @@ Status ConvertPythonToTensor(py::object py_obj, TensorRow *output) {
 
 Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  Status ret = Status(StatusCode::kSuccess, "PyFunc Call Succeed");
   {
     RETURN_IF_NOT_OK(CollectOpInfoStart(this->Name(), "AcquireGIL"));
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     RETURN_IF_NOT_OK(CollectOpInfoEnd(this->Name(), "AcquireGIL"));
     if (Py_IsInitialized() == 0) {
-      ret = Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
-      goto ComputeReturn;
+      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
     }
     try {
       // Transform input tensor vector into numpy array vector
@@ -101,7 +101,9 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
             if (ret_py_ele.is_none()) {
               MS_LOG(INFO) << "Expected pyfunc to return NumPy array(s) or Python dict(s), but got None. "
                               "If python_multiprocessing is True, it may be due to pyfunc execution timeout.";
-              goto TimeoutError;
+              return STATUS_ERROR(StatusCode::kMDTimeOut,
+                                  "Expect pyfunc to return numpy array(s), but got None. If python_multiprocessing is "
+                                  "True, it maybe due to pyfunc execution timeout.");
             } else if (py::isinstance<py::dict>(ret_py_ele)) {
               RETURN_IF_NOT_OK(ConvertPythonToTensor(ret_py_ele, output));
             } else {
@@ -119,21 +121,14 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
         }
       }
     } catch (const py::error_already_set &e) {
-      ret = Status(StatusCode::kMDPyFuncException, e.what());
+      return Status(StatusCode::kMDPyFuncException, e.what());
     }
   }
-
-ComputeReturn:
-  return ret;
-
-TimeoutError:
-  ret = STATUS_ERROR(StatusCode::kMDTimeOut,
-                     "Expect pyfunc to return numpy array(s), but got None. If python_multiprocessing is "
-                     "True, it maybe due to pyfunc execution timeout.");
-  goto ComputeReturn;
+  return Status::OK();
 }
 
 Status PyFuncOp::CastOutput(const py::object &ret_py_obj, TensorRow *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   try {
     std::shared_ptr<Tensor> out;
     switch (output_type_) {
@@ -149,12 +144,13 @@ Status PyFuncOp::CastOutput(const py::object &ret_py_obj, TensorRow *output) {
     }
     output->push_back(out);
   } catch (const std::exception &e) {
-    return Status(StatusCode::kMDUnexpectedError, e.what());
+    RETURN_STATUS_UNEXPECTED(e.what());
   }
   return Status::OK();
 }
 
 Status PyFuncOp::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   {
     py::gil_scoped_acquire gil_acquire;
@@ -167,6 +163,7 @@ Status PyFuncOp::to_json(nlohmann::json *out_json) {
 }
 
 Status PyFuncOp::from_json(nlohmann::json json_obj, std::vector<std::shared_ptr<TensorOperation>> *result) {
+  RETURN_UNEXPECTED_IF_NULL(result);
   std::vector<std::shared_ptr<TensorOperation>> output;
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "tensor_op_name", kPyFuncOp));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "tensor_op_params", kPyFuncOp));
@@ -185,7 +182,7 @@ Status PyFuncOp::from_json(nlohmann::json json_obj, std::vector<std::shared_ptr<
 bool PyFuncOp::IsRandom() {
   bool random = true;
   if (py::hasattr(py_func_ptr_, "random") &&
-      static_cast<bool>(py::reinterpret_borrow<py::bool_>(py_func_ptr_.attr("random"))) == false) {
+      !static_cast<bool>(py::reinterpret_borrow<py::bool_>(py_func_ptr_.attr("random")))) {
     random = false;
   }
   return random;

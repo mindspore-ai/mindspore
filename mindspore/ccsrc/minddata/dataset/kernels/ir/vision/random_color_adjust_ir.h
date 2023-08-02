@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kRandomColorAdjustOperation[] = "RandomColorAdjust";
 
 class RandomColorAdjustOperation : public TensorOperation {
@@ -39,7 +37,7 @@ class RandomColorAdjustOperation : public TensorOperation {
   RandomColorAdjustOperation(const std::vector<float> &brightness, const std::vector<float> &contrast,
                              const std::vector<float> &saturation, const std::vector<float> &hue);
 
-  ~RandomColorAdjustOperation();
+  ~RandomColorAdjustOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -57,7 +55,6 @@ class RandomColorAdjustOperation : public TensorOperation {
   std::vector<float> saturation_;
   std::vector<float> hue_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

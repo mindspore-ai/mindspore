@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,18 +30,16 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kRandomResizedCropWithBBoxOperation[] = "RandomResizedCropWithBBox";
 
 class RandomResizedCropWithBBoxOperation : public TensorOperation {
  public:
-  explicit RandomResizedCropWithBBoxOperation(const std::vector<int32_t> &size, const std::vector<float> &scale,
-                                              const std::vector<float> &ratio, InterpolationMode interpolation,
-                                              int32_t max_attempts);
+  RandomResizedCropWithBBoxOperation(const std::vector<int32_t> &size, const std::vector<float> &scale,
+                                     const std::vector<float> &ratio, InterpolationMode interpolation,
+                                     int32_t max_attempts);
 
-  ~RandomResizedCropWithBBoxOperation();
+  ~RandomResizedCropWithBBoxOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -60,7 +58,6 @@ class RandomResizedCropWithBBoxOperation : public TensorOperation {
   InterpolationMode interpolation_;
   int32_t max_attempts_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

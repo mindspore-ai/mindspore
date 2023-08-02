@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kRandomResizedCropOperation[] = "RandomResizedCrop";
 
 class RandomResizedCropOperation : public TensorOperation {
@@ -40,12 +38,12 @@ class RandomResizedCropOperation : public TensorOperation {
                              const std::vector<float> &ratio, InterpolationMode interpolation, int32_t max_attempts);
 
   /// \brief default copy constructor
-  explicit RandomResizedCropOperation(const RandomResizedCropOperation &);
+  RandomResizedCropOperation(const RandomResizedCropOperation &);
 
   // Copy assignment operator
   RandomResizedCropOperation &operator=(const RandomResizedCropOperation &) = default;
 
-  ~RandomResizedCropOperation();
+  ~RandomResizedCropOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -64,7 +62,6 @@ class RandomResizedCropOperation : public TensorOperation {
   InterpolationMode interpolation_;
   int32_t max_attempts_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

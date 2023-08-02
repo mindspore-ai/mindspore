@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 #include "minddata/dataset/kernels/ir/vision/crop_ir.h"
 
 #include "minddata/dataset/kernels/image/crop_op.h"
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -35,8 +34,8 @@ Status CropOperation::ValidateParams() {
   // we don't check the coordinates here because we don't have access to image dimensions
   RETURN_IF_NOT_OK(ValidateVectorSize("Crop", size_));
 
-  constexpr size_t size_two = 2;
-  if (coordinates_.size() != size_two) {
+  constexpr size_t kSizeSize = 2;
+  if (coordinates_.size() != kSizeSize) {
     std::string err_msg = "Crop: 'coordinates' must be a vector of two values.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -63,12 +62,14 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
 }
 
 Status CropOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   (*out_json)["coordinates"] = coordinates_;
   (*out_json)["size"] = size_;
   return Status::OK();
 }
 
 Status CropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "coordinates", kCropOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kCropOperation));
   std::vector<int32_t> coordinates = op_params["coordinates"];

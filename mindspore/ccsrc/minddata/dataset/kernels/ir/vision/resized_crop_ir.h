@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class ResizedCropOperation : public TensorOperation {
   ResizedCropOperation(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
                        InterpolationMode interpolation);
 
-  ~ResizedCropOperation();
+  ~ResizedCropOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -60,5 +60,4 @@ class ResizedCropOperation : public TensorOperation {
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_RESIZED_CROP_IR_H_

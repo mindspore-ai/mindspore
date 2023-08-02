@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kGaussianBlurOperation[] = "GaussianBlur";
 
 class GaussianBlurOperation : public TensorOperation {
  public:
-  GaussianBlurOperation(const std::vector<int32_t> kernel_size, const std::vector<float> sigma);
+  GaussianBlurOperation(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma);
 
-  ~GaussianBlurOperation();
+  ~GaussianBlurOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

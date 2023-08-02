@@ -48,7 +48,9 @@ Status PhaseVocoderOperation::to_json(nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["rate"] = rate_;
-  RETURN_IF_NOT_OK(phase_advance_->to_json(&args));
+  nlohmann::json phase_advance;
+  RETURN_IF_NOT_OK(phase_advance_->to_json(&phase_advance));
+  args["phase_advance"] = phase_advance;
   *out_json = args;
   return Status::OK();
 }

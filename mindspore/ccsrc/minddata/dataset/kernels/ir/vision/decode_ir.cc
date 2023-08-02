@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
 
 #include "minddata/dataset/kernels/image/decode_op.h"
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -35,10 +33,13 @@ Status DecodeOperation::ValidateParams() { return Status::OK(); }
 std::shared_ptr<TensorOp> DecodeOperation::Build() { return std::make_shared<DecodeOp>(rgb_); }
 
 Status DecodeOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   (*out_json)["rgb"] = rgb_;
   return Status::OK();
 }
+
 Status DecodeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "rgb", kDecodeOperation));
   bool rgb = op_params["rgb"];
   *operation = std::make_shared<vision::DecodeOperation>(rgb);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/random_color_ir.h"
 
+#include <vector>
+
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_color_op.h"
-
 #endif
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -37,7 +35,7 @@ RandomColorOperation::~RandomColorOperation() = default;
 std::string RandomColorOperation::Name() const { return kRandomColorOperation; }
 
 Status RandomColorOperation::ValidateParams() {
-  if (t_lb_ < 0 || t_ub_ < 0) {
+  if (t_lb_ < 0.0 || t_ub_ < 0.0) {
     std::string err_msg =
       "RandomColor: lower bound or upper bound must be greater than or equal to 0, got 'degree'(t_lb): " +
       std::to_string(t_lb_) + ", 'degree'(t_ub): " + std::to_string(t_ub_);
@@ -58,11 +56,13 @@ std::shared_ptr<TensorOp> RandomColorOperation::Build() {
 }
 
 Status RandomColorOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   (*out_json)["degrees"] = std::vector<float>{t_lb_, t_ub_};
   return Status::OK();
 }
 
 Status RandomColorOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "degrees", kRandomColorOperation));
   std::vector<float> degrees = op_params["degrees"];
   CHECK_FAIL_RETURN_UNEXPECTED(degrees.size() == 2, "The number of degrees should be 2");
@@ -71,7 +71,6 @@ Status RandomColorOperation::from_json(nlohmann::json op_params, std::shared_ptr
   *operation = std::make_shared<vision::RandomColorOperation>(t_lb, t_ub);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

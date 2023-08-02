@@ -28,16 +28,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kDecodeOperation[] = "Decode";
 
 class DecodeOperation : public TensorOperation {
  public:
   explicit DecodeOperation(bool rgb);
 
-  ~DecodeOperation();
+  ~DecodeOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -52,7 +50,6 @@ class DecodeOperation : public TensorOperation {
  private:
   bool rgb_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

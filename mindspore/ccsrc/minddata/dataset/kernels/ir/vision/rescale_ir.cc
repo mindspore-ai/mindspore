@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@
 #if !defined(ENABLE_ANDROID) || defined(ENABLE_MINDDATA_PYTHON)
 #include "minddata/dataset/kernels/image/rescale_op.h"
 #endif
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -34,7 +32,7 @@ RescaleOperation::~RescaleOperation() = default;
 std::string RescaleOperation::Name() const { return kRescaleOperation; }
 
 Status RescaleOperation::ValidateParams() {
-  if (rescale_ < 0) {
+  if (rescale_ < 0.0) {
     std::string err_msg = "Rescale: rescale must be greater than or equal to 0, got: " + std::to_string(rescale_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -47,6 +45,7 @@ std::shared_ptr<TensorOp> RescaleOperation::Build() {
 }
 
 Status RescaleOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["rescale"] = rescale_;
   args["shift"] = shift_;
@@ -55,6 +54,7 @@ Status RescaleOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RescaleOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "rescale", kRescaleOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "shift", kRescaleOperation));
   float rescale = op_params["rescale"];
@@ -62,7 +62,6 @@ Status RescaleOperation::from_json(nlohmann::json op_params, std::shared_ptr<Ten
   *operation = std::make_shared<vision::RescaleOperation>(rescale, shift);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

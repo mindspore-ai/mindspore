@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ std::shared_ptr<TensorOp> AdjustBrightnessOperation::Build() {
 }
 
 Status AdjustBrightnessOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["brightness_factor"] = brightness_factor_;
   *out_json = args;
@@ -47,6 +48,7 @@ Status AdjustBrightnessOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status AdjustBrightnessOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "brightness_factor", kAdjustBrightnessOperation));
   float brightness_factor = op_params["brightness_factor"];
   *operation = std::make_shared<vision::AdjustBrightnessOperation>(brightness_factor);

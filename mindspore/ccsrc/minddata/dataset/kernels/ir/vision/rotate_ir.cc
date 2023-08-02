@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace vision {
 // RotateOperation
 RotateOperation::RotateOperation(FixRotationAngle angle)
     : angle_id_(static_cast<uint64_t>(angle)),
-      degrees_(0),
+      degrees_(0.0),
       interpolation_mode_(InterpolationMode::kLinear),
       expand_(false),
       center_({}),
@@ -54,7 +54,7 @@ Status RotateOperation::ValidateParams() {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // center
-  if (center_.size() != 0 && center_.size() != 2) {
+  if (!center_.empty() && center_.size() != 2) {
     std::string err_msg =
       "Rotate: center must be a vector of two values or empty, got: " + std::to_string(center_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -94,6 +94,7 @@ std::shared_ptr<TensorOp> RotateOperation::Build() {
 }
 
 Status RotateOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
 #ifndef ENABLE_ANDROID
   args["degree"] = degrees_;
@@ -109,6 +110,7 @@ Status RotateOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RotateOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
 #ifndef ENABLE_ANDROID
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "degree", kRotateOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "resample", kRotateOperation));
@@ -116,7 +118,7 @@ Status RotateOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "center", kRotateOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kRotateOperation));
   float degrees = op_params["degree"];
-  InterpolationMode resample = static_cast<InterpolationMode>(op_params["resample"]);
+  auto resample = static_cast<InterpolationMode>(op_params["resample"]);
   bool expand = op_params["expand"];
   std::vector<float> center = op_params["center"];
   std::vector<uint8_t> fill_value = op_params["fill_value"];

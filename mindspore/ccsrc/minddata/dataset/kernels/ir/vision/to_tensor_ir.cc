@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 #include "minddata/dataset/kernels/ir/vision/to_tensor_ir.h"
 
 #include "minddata/dataset/kernels/image/to_tensor_op.h"
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -45,6 +43,7 @@ Status ToTensorOperation::ValidateParams() {
 std::shared_ptr<TensorOp> ToTensorOperation::Build() { return std::make_shared<ToTensorOp>(output_type_); }
 
 Status ToTensorOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["output_type"] = output_type_.ToString();
   *out_json = args;

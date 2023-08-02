@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/random_posterize_ir.h"
+
+#include <algorithm>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_posterize_op.h"
 #endif
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -73,17 +72,18 @@ std::shared_ptr<TensorOp> RandomPosterizeOperation::Build() {
 }
 
 Status RandomPosterizeOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   (*out_json)["bits"] = bit_range_;
   return Status::OK();
 }
 
 Status RandomPosterizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "bits", kRandomPosterizeOperation));
   std::vector<uint8_t> bit_range = op_params["bits"];
   *operation = std::make_shared<vision::RandomPosterizeOperation>(bit_range);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

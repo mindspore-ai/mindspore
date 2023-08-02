@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_adjust_sharpness_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -46,6 +45,7 @@ std::shared_ptr<TensorOp> RandomAdjustSharpnessOperation::Build() {
 }
 
 Status RandomAdjustSharpnessOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["degree"] = degree_;
   args["prob"] = probability_;
@@ -55,6 +55,7 @@ Status RandomAdjustSharpnessOperation::to_json(nlohmann::json *out_json) {
 
 Status RandomAdjustSharpnessOperation::from_json(nlohmann::json op_params,
                                                  std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "degree", kRandomAdjustSharpnessOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "prob", kRandomAdjustSharpnessOperation));
   float degree = op_params["degree"];
@@ -62,7 +63,6 @@ Status RandomAdjustSharpnessOperation::from_json(nlohmann::json op_params,
   *operation = std::make_shared<vision::RandomAdjustSharpnessOperation>(degree, prob);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

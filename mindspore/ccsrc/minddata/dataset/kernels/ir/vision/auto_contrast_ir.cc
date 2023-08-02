@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
+
+#include <algorithm>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #endif
-
-#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -37,8 +36,8 @@ AutoContrastOperation::~AutoContrastOperation() = default;
 std::string AutoContrastOperation::Name() const { return kAutoContrastOperation; }
 
 Status AutoContrastOperation::ValidateParams() {
-  constexpr int64_t max_cutoff = 100;
-  if (cutoff_ < 0 || cutoff_ > max_cutoff) {
+  constexpr float kMaxCutOff = 100.0;
+  if (cutoff_ < 0.0 || cutoff_ > kMaxCutOff) {
     std::string err_msg = "AutoContrast: 'cutoff' has to be between 0 and 100, got: " + std::to_string(cutoff_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -60,6 +59,7 @@ std::shared_ptr<TensorOp> AutoContrastOperation::Build() {
 }
 
 Status AutoContrastOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["cutoff"] = cutoff_;
   args["ignore"] = ignore_;
@@ -68,6 +68,7 @@ Status AutoContrastOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status AutoContrastOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "cutoff", kAutoContrastOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "ignore", kAutoContrastOperation));
   float cutoff = op_params["cutoff"];
@@ -75,7 +76,6 @@ Status AutoContrastOperation::from_json(nlohmann::json op_params, std::shared_pt
   *operation = std::make_shared<vision::AutoContrastOperation>(cutoff, ignore);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

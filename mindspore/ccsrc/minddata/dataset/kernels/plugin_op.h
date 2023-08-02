@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,26 @@
  */
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_PLUGIN_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_PLUGIN_OP_H_
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "minddata/dataset/plugin/include/shared_include.h"
-
-#include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
+#include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/plugin/include/shared_include.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
 // a generalized plugin for TensorOp
 class PluginOp : public TensorOp {
  public:
   PluginOp(const std::string &lib_path, const std::string &func_name, const std::string &user_args);
 
-  ~PluginOp() = default;
+  ~PluginOp() override = default;
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
@@ -55,8 +54,6 @@ class PluginOp : public TensorOp {
   std::string func_name_;
   std::string user_args_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_PLUGIN_OP_H_

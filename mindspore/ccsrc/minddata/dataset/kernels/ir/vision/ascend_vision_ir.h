@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Transform operations for computer vision
 namespace vision {
-
 // Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kDvppCropJpegOperation[] = "DvppCropJpeg";
 constexpr char kDvppDecodeResizeOperation[] = "DvppDecodeResize";
@@ -50,7 +48,7 @@ class DvppCropJpegOperation : public TensorOperation {
  public:
   explicit DvppCropJpegOperation(const std::vector<uint32_t> &resize);
 
-  ~DvppCropJpegOperation() = default;
+  ~DvppCropJpegOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -70,7 +68,7 @@ class DvppDecodeResizeOperation : public TensorOperation {
  public:
   explicit DvppDecodeResizeOperation(const std::vector<uint32_t> &resize);
 
-  ~DvppDecodeResizeOperation() = default;
+  ~DvppDecodeResizeOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -88,9 +86,9 @@ class DvppDecodeResizeOperation : public TensorOperation {
 
 class DvppDecodeResizeCropOperation : public TensorOperation {
  public:
-  explicit DvppDecodeResizeCropOperation(const std::vector<uint32_t> &crop, const std::vector<uint32_t> &resize);
+  DvppDecodeResizeCropOperation(const std::vector<uint32_t> &crop, const std::vector<uint32_t> &resize);
 
-  ~DvppDecodeResizeCropOperation() = default;
+  ~DvppDecodeResizeCropOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -109,13 +107,15 @@ class DvppDecodeResizeCropOperation : public TensorOperation {
 
 class DvppDecodeJpegOperation : public TensorOperation {
  public:
-  ~DvppDecodeJpegOperation() = default;
+  ~DvppDecodeJpegOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
   std::string Name() const override { return kDvppDecodeJpegOperation; }
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 };
 
 class DvppDecodeVideoOperation : public TensorOperation {
@@ -123,7 +123,7 @@ class DvppDecodeVideoOperation : public TensorOperation {
   DvppDecodeVideoOperation(const std::vector<uint32_t> &size, VdecStreamFormat type, VdecOutputFormat out_format,
                            const std::string &output);
 
-  ~DvppDecodeVideoOperation() = default;
+  ~DvppDecodeVideoOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -138,28 +138,28 @@ class DvppDecodeVideoOperation : public TensorOperation {
  private:
   std::vector<uint32_t> size_;
   VdecOutputFormat format_;
-
   VdecStreamFormat en_type_;
-
   std::string output_;
 };
 
 class DvppDecodePngOperation : public TensorOperation {
  public:
-  ~DvppDecodePngOperation() = default;
+  ~DvppDecodePngOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
 
   std::string Name() const override { return kDvppDecodePngOperation; }
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 };
 
 class DvppNormalizeOperation : public TensorOperation {
  public:
-  explicit DvppNormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std);
+  DvppNormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std);
 
-  ~DvppNormalizeOperation() = default;
+  ~DvppNormalizeOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -180,7 +180,7 @@ class DvppResizeJpegOperation : public TensorOperation {
  public:
   explicit DvppResizeJpegOperation(const std::vector<uint32_t> &resize);
 
-  ~DvppResizeJpegOperation() = default;
+  ~DvppResizeJpegOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -195,9 +195,7 @@ class DvppResizeJpegOperation : public TensorOperation {
  private:
   std::vector<uint32_t> resize_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_ASCEND_VISION_IR_H_

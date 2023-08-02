@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_lighting_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -43,9 +43,18 @@ std::shared_ptr<TensorOp> RandomLightingOperation::Build() {
 }
 
 Status RandomLightingOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["alpha"] = alpha_;
   *out_json = args;
+  return Status::OK();
+}
+
+Status RandomLightingOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "alpha", kRandomLightingOperation));
+  float alpha = op_params["alpha"];
+  *operation = std::make_shared<vision::RandomLightingOperation>(alpha);
   return Status::OK();
 }
 #endif

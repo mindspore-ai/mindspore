@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/cutmix_batch_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -50,6 +49,7 @@ std::shared_ptr<TensorOp> CutMixBatchOperation::Build() {
 }
 
 Status CutMixBatchOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["image_batch_format"] = image_batch_format_;
   args["alpha"] = alpha_;
@@ -59,16 +59,16 @@ Status CutMixBatchOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status CutMixBatchOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "image_batch_format", kCutMixBatchOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "alpha", kCutMixBatchOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "prob", kCutMixBatchOperation));
-  ImageBatchFormat image_batch = static_cast<ImageBatchFormat>(op_params["image_batch_format"]);
+  auto image_batch = static_cast<ImageBatchFormat>(op_params["image_batch_format"]);
   float alpha = op_params["alpha"];
   float prob = op_params["prob"];
   *operation = std::make_shared<vision::CutMixBatchOperation>(image_batch, alpha, prob);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

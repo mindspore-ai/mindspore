@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ std::shared_ptr<TensorOp> ResizedCropOperation::Build() {
 }
 
 Status ResizedCropOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["top"] = top_;
   args["left"] = left_;
@@ -71,6 +72,7 @@ Status ResizedCropOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status ResizedCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "top", kResizedCropOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "left", kResizedCropOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "height", kResizedCropOperation));
@@ -82,12 +84,11 @@ Status ResizedCropOperation::from_json(nlohmann::json op_params, std::shared_ptr
   int32_t height = op_params["height"];
   int32_t width = op_params["width"];
   std::vector<int32_t> size = op_params["size"];
-  InterpolationMode interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
+  auto interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
 
   *operation = std::make_shared<ResizedCropOperation>(top, left, height, width, size, interpolation);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/random_crop_with_bbox_ir.h"
+
+#include <algorithm>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_crop_with_bbox_op.h"
 #endif
-
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -116,6 +116,7 @@ std::shared_ptr<TensorOp> RandomCropWithBBoxOperation::Build() {
 }
 
 Status RandomCropWithBBoxOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["size"] = size_;
   args["padding"] = padding_;
@@ -127,6 +128,7 @@ Status RandomCropWithBBoxOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomCropWithBBoxOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kRandomCropWithBBoxOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "padding", kRandomCropWithBBoxOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "pad_if_needed", kRandomCropWithBBoxOperation));
@@ -136,12 +138,11 @@ Status RandomCropWithBBoxOperation::from_json(nlohmann::json op_params, std::sha
   std::vector<int32_t> padding = op_params["padding"];
   bool pad_if_needed = op_params["pad_if_needed"];
   std::vector<uint8_t> fill_value = op_params["fill_value"];
-  BorderType padding_mode = static_cast<BorderType>(op_params["padding_mode"]);
+  auto padding_mode = static_cast<BorderType>(op_params["padding_mode"]);
   *operation =
     std::make_shared<vision::RandomCropWithBBoxOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
   return Status::OK();
 }
-
 #endif
 }  // namespace vision
 }  // namespace dataset

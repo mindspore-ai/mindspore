@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_BOUNDING_BOX_AUGMENT_IR_H__
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_BOUNDING_BOX_AUGMENT_IR_H__
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_BOUNDING_BOX_AUGMENT_IR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_BOUNDING_BOX_AUGMENT_IR_H_
 
 #include <map>
 #include <memory>
@@ -29,16 +29,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 constexpr char kBoundingBoxAugmentOperation[] = "BoundingBoxAugment";
 
 class BoundingBoxAugmentOperation : public TensorOperation {
  public:
-  explicit BoundingBoxAugmentOperation(const std::shared_ptr<TensorOperation> &transform, float ratio);
+  BoundingBoxAugmentOperation(const std::shared_ptr<TensorOperation> &transform, float ratio);
 
-  ~BoundingBoxAugmentOperation();
+  ~BoundingBoxAugmentOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -54,8 +52,7 @@ class BoundingBoxAugmentOperation : public TensorOperation {
   std::shared_ptr<TensorOperation> transform_;
   float ratio_;
 };
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_BOUNDING_BOX_AUGMENT_IR_H__
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_BOUNDING_BOX_AUGMENT_IR_H_
