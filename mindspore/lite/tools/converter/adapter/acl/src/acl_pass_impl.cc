@@ -765,12 +765,7 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
     MS_LOG(ERROR) << "Om data is nullptr.";
     return lite::RET_ERROR;
   }
-  auto ret = SetAclModelOptions(func_graph);
-  if (ret != lite::RET_OK) {
-    MS_LOG(ERROR) << "Set acl model options error!";
-    return lite::RET_ERROR;
-  }
-  ret = SetGraphInputShape(func_graph);
+  auto ret = SetGraphInputShape(func_graph);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Failed to set graph input shape";
     return lite::RET_ERROR;
@@ -1296,12 +1291,18 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   if (param_->ascendQuantParam.mode == lite::quant::AscendQuantMode::GE) {
     return true;
   }
+
+  auto ret = SetAclModelOptions(func_graph);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Set acl model options error!";
+    return false;
+  }
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
-  if (param_->device.find("Ascend") != std::string::npos) {
-    if (GraphKernelOptimize(func_graph, param_) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Run graphkernel optimization failed.";
-      return false;
-    }
+  auto soc_version = this->options_->GetSocVersion();
+  param_->device = soc_version;
+  if (GraphKernelOptimize(func_graph, param_) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Run graphkernel optimization failed.";
+    return false;
   }
 #endif
 
