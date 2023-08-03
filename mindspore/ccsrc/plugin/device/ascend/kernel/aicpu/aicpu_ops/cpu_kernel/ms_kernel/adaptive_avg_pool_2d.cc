@@ -114,8 +114,8 @@ template <typename SCALAR_T>
 uint32_t AdaptiveAvgPool2dOutTemplate(CpuKernelContext &ctx) {
   Tensor &input = *(ctx.Input(kFirstInputIndex));
   auto input_shape_ptr = input.GetTensorShape();
-  int32_t input_dims = input_shape_ptr->GetDims();
   KERNEL_CHECK_NULLPTR(input_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input 0 shape failed.");
+  int32_t input_dims = input_shape_ptr->GetDims();
 
   KERNEL_CHECK_FALSE((input_dims == kthree || input_dims == kfour), KERNEL_STATUS_PARAM_INVALID,
                      "Non-empty [3D] or [4D] (batch mode) tensor expected for input 0.");

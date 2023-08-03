@@ -76,9 +76,10 @@ int AdaptiveMaxPool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
     }
   }
 
-  for (size_t k = 0; k < shape_size; k++) {
+  const size_t output_shape_size = output_shape.size();
+  for (size_t k = 0; k < output_shape_size; k++) {
     output_size_ *= output_shape[k];
-    if (k >= shape_size - kHWSize) {
+    if (k >= output_shape_size - kHWSize) {
       output_stride_ *= output_shape[k];
     }
   }

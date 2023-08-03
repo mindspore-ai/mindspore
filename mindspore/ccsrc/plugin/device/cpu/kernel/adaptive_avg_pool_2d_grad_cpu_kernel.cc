@@ -75,7 +75,9 @@ int AdaptiveAvgPool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   dtype_ = inputs[kIndex0]->GetDtype();
   grad_output_dim_sizes = inputs[kIndex0]->GetShapeVector();
   grad_input_dim_sizes = outputs[kIndex0]->GetShapeVector();
-  orig_input_shape_dims = inputs[kIndex1]->GetShapeVector()[0];
+  auto input_1_shape = inputs[kIndex1]->GetShapeVector();
+  MS_EXCEPTION_IF_ZERO("second input dims", input_1_shape.size());
+  orig_input_shape_dims = input_1_shape[0];
   return KRET_OK;
 }
 

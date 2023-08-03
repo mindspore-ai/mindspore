@@ -203,6 +203,8 @@ uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCheck(CpuKernelCon
                      "Input grad dimensions must be same as input dimensions")
   KERNEL_CHECK_FALSE(input_argmax->GetTensorShape()->GetDims() == dim_num, KERNEL_STATUS_PARAM_INVALID,
                      "Input indice dimensions must be same as input dimensions")
+  KERNEL_CHECK_FALSE(output->GetTensorShape()->GetDims() == dim_num, KERNEL_STATUS_PARAM_INVALID,
+                     "output dimensions must be same as input dimensions")
   KERNEL_CHECK_FALSE(input_argmax->GetTensorShape()->GetDimSizes() == input_grad->GetTensorShape()->GetDimSizes(),
                      KERNEL_STATUS_PARAM_INVALID, "Input grad shape must be same as input argmax")
   KERNEL_LOG_DEBUG(
@@ -232,6 +234,7 @@ uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCompute(CpuKernelC
   const int64_t output_stride = output_shape.cend()[-1] * output_shape.cend()[-2] * output_shape.cend()[-3];
   const int64_t argmax_stride = argmax_shape.cend()[-1] * argmax_shape.cend()[-2] * argmax_shape.cend()[-3];
 
+  KERNEL_CHECK_FALSE(argmax_stride == 0, KERNEL_STATUS_PARAM_INVALID, "argmax shape can not contain 0.")
   auto shard_adaptive_max_pool_3d_grad = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; ++i) {
       output[input_argmax[i] + i / argmax_stride * output_stride] += static_cast<T2>(input_grad[i]);

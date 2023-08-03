@@ -25,6 +25,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t k3D = 3;
+constexpr size_t k4D = 4;
 constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kIdx1st = 0;
@@ -72,7 +73,13 @@ int AdaptiveAvgPool2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   dtype_ = inputs[kIndex0]->GetDtype();
   input_dim_sizes_ = inputs[kIndex0]->GetShapeVector();
+  size_t input_dims = input_dim_sizes_.size();
+  if (input_dims != k3D && input_dims != k4D) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimensions of input should be 3 or 4, but got "
+                      << input_dims;
+  }
   auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveAvgPool2D>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   output_size_data_ = kernel_ptr->get_output_size();
   return KRET_OK;
 }

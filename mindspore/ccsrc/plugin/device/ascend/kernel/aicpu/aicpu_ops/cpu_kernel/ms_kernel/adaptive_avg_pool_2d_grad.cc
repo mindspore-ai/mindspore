@@ -21,6 +21,9 @@
 
 namespace {
 const char *kAdaptiveAvgPool2dGrad = "AdaptiveAvgPool2DGrad";
+constexpr size_t k3D = 3;
+constexpr size_t k4D = 4;
+
 template <typename SCALAR_T>
 struct AdaptiveCalcArgs {
   SCALAR_T *input_data = nullptr;
@@ -138,6 +141,10 @@ uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
   auto orig_input_shape_data = reinterpret_cast<int64_t *>(ctx.Input(1)->GetData());
   auto orig_input_shape_rank = ctx.Input(1)->NumElements();
   std::vector<int64_t> orig_input_size(orig_input_shape_data, orig_input_shape_data + orig_input_shape_rank);
+  KERNEL_CHECK_FALSE(
+    (orig_input_shape_rank == k3D || orig_input_shape_rank == k4D), KERNEL_STATUS_PARAM_INVALID,
+    "AdaptiveAvgPool2DGrad: internal error, the second input shape rank should be 3 or 4, but got [%lld].",
+    orig_input_shape_rank);
 
   int dim_w = orig_input_size.size() == 4 ? 3 : 2;
   int dim_h = orig_input_size.size() == 4 ? 2 : 1;

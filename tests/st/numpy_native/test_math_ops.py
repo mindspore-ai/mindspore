@@ -1235,7 +1235,7 @@ def onp_exp(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_exp():
-    run_unary_test(mnp_exp, onp_exp, test_case, error=5)
+    run_unary_test(mnp_exp, onp_exp, test_case, error=4)
 
 
 def mnp_expm1(x):
