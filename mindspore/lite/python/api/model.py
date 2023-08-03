@@ -17,6 +17,7 @@ Model API.
 """
 from __future__ import absolute_import
 import os
+import logging
 from enum import Enum
 
 from mindspore_lite._checkparam import check_isinstance
@@ -75,6 +76,23 @@ model_type_cxx_py_map = {
 }
 
 
+def set_env(func):
+    """set env for Ascend custom opp"""
+    def warpper(*args, **kwargs):
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        mslite_ascend_custom_kernel_path = current_path + "/custom_kernels/ascend/packages/vendors/mslite"
+        if os.path.exists(mslite_ascend_custom_kernel_path):
+            if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
+                os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_custom_kernel_path + ":" + \
+                                                    os.environ['ASCEND_CUSTOM_OPP_PATH']
+            else:
+                os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_custom_kernel_path
+        else:
+            logging.warning("mslite custom kernel path not found")
+        return func(*args, **kwargs)
+    return warpper
+
+
 class Model(BaseModel):
     """
     The `Model` class defines a MindSpore Lite's model, facilitating computational graph management.
@@ -94,6 +112,7 @@ class Model(BaseModel):
         res = f"model_path: {self.model_path_}."
         return res
 
+    @set_env
     def build_from_file(self, model_path, model_type, context=None, config_path=""):
         """
         Load and build a model from file.
