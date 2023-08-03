@@ -65,15 +65,6 @@
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
 #include "frontend/optimizer/irpass/convert_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/recompute.h"
-#include "frontend/optimizer/irpass/bprop_mindir/get_constexpr_ops.h"
-#include "frontend/optimizer/irpass/bprop_mindir/get_class_type.h"
-#include "frontend/optimizer/irpass/bprop_mindir/get_meta_fg.h"
-#include "frontend/optimizer/irpass/bprop_mindir/get_primal_attr.h"
-#include "frontend/optimizer/irpass/bprop_mindir/get_sub_func_graph.h"
-#include "frontend/optimizer/irpass/bprop_mindir/class_type_resolve.h"
-#include "frontend/optimizer/irpass/bprop_mindir/do_signature_resolve.h"
-#include "frontend/optimizer/irpass/bprop_mindir/resolve_node_resolve.h"
-#include "frontend/optimizer/irpass/bprop_mindir/reslove_primitive_attr.h"
 
 namespace mindspore {
 namespace opt {
@@ -302,31 +293,6 @@ ResolveIRPassLib::ResolveIRPassLib() {
 
 MetaUnpackPrepareLib::MetaUnpackPrepareLib() {
   meta_unpack_prepare_ = MakeSubstitution(std::make_shared<MetaFgVarPrepare>(), "meta_unpack_prepare", IsCNode);
-}
-
-BpropMindIRPassLib::BpropMindIRPassLib() {
-  get_constexpr_ops_ =
-    MakeSubstitution(std::make_shared<GetConstexprOps>(), "get_constexpr_ops", IsValueNode<prim::DoSignaturePrimitive>);
-
-  get_class_type_ = MakeSubstitution(std::make_shared<GetClassType>(), "get_class_type", IsValueNode<MindIRClassType>);
-
-  get_meta_fg_ = MakeSubstitution(std::make_shared<GetMetaFg>(), "get_meta_fg", IsValueNode<MindIRMetaFuncGraph>);
-
-  get_primal_attr_ = MakeSubstitution(std::make_shared<GetPrimalAttr>(), "get_primal_attr", {prim::kPrimGetAttr});
-
-  get_sub_func_graph_ =
-    MakeSubstitution(std::make_shared<GetSubFuncGraph>(), "get_sub_func_graph", {prim::kPrimResolve});
-
-  class_type_resolve_ = MakeSubstitution(std::make_shared<ClassTypeResolve>(), "class_type_resolve", IsVNode);
-
-  do_signature_resolve_ =
-    MakeSubstitution(std::make_shared<DoSignatureResolve>(), "do_signature_resolve", IsCNodeDoSignature);
-
-  resolve_node_resolve_ =
-    MakeSubstitution(std::make_shared<ResolveNodeResolve>(), "resolve_node_resolve", {prim::kPrimResolve});
-
-  reslove_primitive_attr_ =
-    MakeSubstitution(std::make_shared<ReslovePrimitiveAttr>(), "resolve_primitive_attr_", IsCNode);
 }
 }  // namespace irpass
 }  // namespace opt
