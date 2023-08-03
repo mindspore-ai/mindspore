@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
 
@@ -31,10 +30,6 @@ class MIND_API ReciprocalGrad : public BaseOperator {
   MIND_API_BASE_MEMBER(ReciprocalGrad);
   ReciprocalGrad() : BaseOperator(kNameReciprocalGrad) {}
 };
-
-MIND_API abstract::AbstractBasePtr ReciprocalGradInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

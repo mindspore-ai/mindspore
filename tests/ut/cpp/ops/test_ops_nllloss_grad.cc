@@ -24,6 +24,7 @@
 #include "abstract/abstract_value.h"
 #include "utils/ms_context.h"
 #include "ops/test_ops.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -60,11 +61,11 @@ TEST_P(TestNLLLossGrad, dyn_shape) {
   auto prim = std::make_shared<Primitive>(kNameNLLLossGrad);
   if (param.is_success) {
     auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
-    auto out_abstract = NLLLossGradInfer(nullptr, prim, {x, dy, label, weight, total_weight});
+    auto out_abstract = opt::CppInferShapeAndType(prim, {x, dy, label, weight, total_weight});
     ASSERT_NE(out_abstract, nullptr);
     ASSERT_TRUE(*out_abstract == *expect);
   } else {
-    ASSERT_ANY_THROW(NLLLossGradInfer(nullptr, prim, {x, dy, label, weight, total_weight}));
+    ASSERT_ANY_THROW(opt::CppInferShapeAndType(prim, {x, dy, label, weight, total_weight}));
   }
 }
 

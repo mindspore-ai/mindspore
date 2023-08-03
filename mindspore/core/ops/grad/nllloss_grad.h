@@ -54,10 +54,6 @@ class MIND_API NLLLossGrad : public BaseOperator {
   /// \return ignore_index.
   int64_t get_ignore_index() const;
 };
-
-MIND_API abstract::AbstractBasePtr NLLLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
-
 }  // namespace ops
 }  // namespace mindspore
 

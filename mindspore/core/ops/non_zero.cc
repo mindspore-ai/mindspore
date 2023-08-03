@@ -50,7 +50,8 @@ abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::v
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   // support dynamic rank
   if (IsDynamicRank(x_shape_map[kShape])) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    return std::make_shared<abstract::Shape>(
+      ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny}));
   }
 
   auto x_shape = x_shape_map[kMaxShape].empty() ? x_shape_map[kShape] : x_shape_map[kMaxShape];

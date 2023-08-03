@@ -24,6 +24,7 @@
 #include "abstract/abstract_value.h"
 #include "utils/ms_context.h"
 #include "ops/test_ops.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -46,7 +47,7 @@ TEST_P(TestReciprocalGrad, dyn_shape) {
  ASSERT_NE(x, nullptr);
  ASSERT_NE(dy, nullptr);
  auto prim = std::make_shared<Primitive>(kNameReciprocalGrad);
- auto out_abstract = ReciprocalGradInfer(nullptr, prim, {x, dy});
+ auto out_abstract = opt::CppInferShapeAndType(prim, {x, dy});
  ASSERT_NE(out_abstract, nullptr);
  ASSERT_TRUE(*out_abstract == *expect);
 }

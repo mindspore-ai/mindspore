@@ -41,6 +41,7 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -112,6 +113,20 @@ abstract::ShapePtr RangeCheckAndInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const auto prim_name = primitive->name();
+
+  ShapeVector out_shape = {};
+  auto start_shape_map =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto limit_shape_map =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto delta_shape_map =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  if (IsDynamicRank(start_shape_map) || IsDynamicRank(limit_shape_map) || IsDynamicRank(delta_shape_map) ||
+      IsDynamicShape(start_shape_map) || IsDynamicShape(limit_shape_map) || IsDynamicShape(delta_shape_map)) {
+    (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
   std::vector<int64_t> valid_shape{};
   auto start_shape = input_args[kInputIndex0]->BuildShape();
   auto limit_shape = input_args[kInputIndex1]->BuildShape();
@@ -153,7 +168,6 @@ abstract::ShapePtr RangeCheckAndInferShape(const PrimitivePtr &primitive,
     }
   }
 
-  ShapeVector out_shape = {};
   if (is_compile) {
     (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::Shape>(out_shape);
