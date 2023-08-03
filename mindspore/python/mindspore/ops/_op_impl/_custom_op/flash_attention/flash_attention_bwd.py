@@ -31,14 +31,14 @@ class FlashAttentionBwd(FlashAttention):
     `FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness <https://arxiv.org/pdf/2205.14135.pdf>`
     """
 
-    def __init__(self, query, key, value, output, dO, rowsum, rowmax, dim_mask, attn_mask, dropout_mask, alibi_mask,
+    def __init__(self, query, key, value, output, dO, rowsum, rowmax, attn_mask, dropout_mask, alibi_mask,
                  prev_block_num,
                  next_block_num,
                  high_precision,
                  kernel_name,
                  tiling_stgy: TilingStrategy,
                  disable_debug):
-        super().__init__(query, key, value, dim_mask, attn_mask, dropout_mask, alibi_mask, kernel_name,
+        super().__init__(query, key, value, attn_mask, dropout_mask, alibi_mask, kernel_name,
                          tiling_stgy, prev_block_num, next_block_num, high_precision, disable_debug)
 
         if isinstance(query, dict):
@@ -76,7 +76,7 @@ class FlashAttentionBwd(FlashAttention):
         """
         input_gm_list = [
             self.Q_gm, self.K_gm, self.V_gm, self.O_gm, self.dO_gm, self.l_gm,
-            self.m_gm, self.dim_mask_gm
+            self.m_gm
         ]
         if self.has_attn_mask:
             input_gm_list.append(self.att_mask_gm)
@@ -91,10 +91,9 @@ class FlashAttentionBwd(FlashAttention):
         """Refer to Algorithm 4 line11-14 in FlashAttention implement Pij computation"""
         m_aligned = self.tik_ops_utils.up_align_to_K0(m)
         n_aligned = self.tik_ops_utils.up_align_to_K0(n)
-        # Sij <- Qi * KjT
-        Sij_ub = self.tik_ops_utils.matmul_compute(Qi_l1_K1MK0_ed, KjT_l1_K1NK0_ed, m, k, n)
-        if self.has_drop_mask:
-            Pij_drop_ed_ub = self.tik_instance.Tensor(FP16, (m_aligned, n_aligned), name="Pij_drop_ed_ub", scope=UB)
+        Sij_ub = self.tik_ops_utils.matmul_compute(Qi_l1_K1MK0_ed, KjT_l1_K1NK0_ed, m, k, n, N1MN0_to_MN=False)
+        Pij_drop_ed_ub = self.tik_instance.Tensor(FP16, (n_aligned // self.N0, m_aligned, self.N0),
+                                                  name="Pij_drop_ed_ub", scope=UB)
 
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             if self.has_alibi_mask:
@@ -107,35 +106,42 @@ class FlashAttentionBwd(FlashAttention):
             mi_ub = self.tik_instance.Tensor(FP16, (m_aligned,), name="mi_ub", scope=UB)
             self.tik_ops_utils.move_vector_from_gm_to_ub(li_ub, self.l_gm, lm_gm_offset, m)
             self.tik_ops_utils.move_vector_from_gm_to_ub(mi_ub, self.m_gm, lm_gm_offset, m)
+            n1 = n_aligned // self.N0
             with self.tik_instance.new_stmt_scope(disable_sync=False):
-                broadcast_mi_ub = self.tik_ops_utils.broadcast(mi_ub, (m_aligned, n_aligned))
-                self.tik_instance.h_sub(Sij_ub, Sij_ub, broadcast_mi_ub)
+                broadcast_mi_ub = self.tik_ops_utils.broadcast(mi_ub, (m, self.N0))
+                broadcast_mi_ub = broadcast_mi_ub.reshape((1, m, self.N0))
+                for idx in range(n1):
+                    self.tik_instance.h_sub(Sij_ub[idx, :, :], Sij_ub[idx, :, :], broadcast_mi_ub)
             li_rec_ub = self.tik_ops_utils.calc_vec_rec(li_ub, m)
             with self.tik_instance.new_stmt_scope(disable_sync=False):
                 if self.high_precision:
-                    Sij_ub_fp32 = self.tik_instance.Tensor(FP32, (m_aligned, n_aligned), name="Sij_ub_fp32", scope=UB)
+                    # fp16 -> fp32
+                    Sij_ub_fp32 = self.tik_instance.Tensor(FP32, (n_aligned // self.N0, m_aligned, self.N0),
+                                                           name="Sij_ub_fp32", scope=UB)
                     self.tik_instance.h_cast(Sij_ub_fp32, Sij_ub, "none")
                     self.tik_instance.h_exp(Sij_ub_fp32, Sij_ub_fp32)
-                    with self.tik_instance.for_range(0, m) as idx:
-                        cur_row_sum_rec = self.tik_instance.Scalar(FP32, name="cur_row_sum_rec",
-                                                                   init_value=li_rec_ub[idx])
-                        self.tik_instance.h_mul(Sij_ub_fp32[idx, :], Sij_ub_fp32[idx, :], cur_row_sum_rec)
+                    cur_row_sum_rec = self.tik_instance.Tensor(FP32, (m_aligned, self.N0), name="cur_row_sum_rec",
+                                                               scope=UB)
+                    for i in range(m_aligned):
+                        src_scalar = self.tik_instance.Scalar(init_value=li_rec_ub[i], dtype=FP32)
+                        self.tik_instance.h_duplicate(cur_row_sum_rec[i, :], src_scalar)
+                    cur_row_sum_rec = cur_row_sum_rec.reshape((1, m_aligned, self.N0))
+                    with self.tik_instance.for_range(0, n_aligned // self.N0) as idx:
+                        self.tik_instance.h_mul(Sij_ub_fp32[idx, :, :], Sij_ub_fp32[idx, :, :], cur_row_sum_rec)
+                    # fp32 -> fp16
                     self.tik_instance.h_cast(Sij_ub, Sij_ub_fp32, "none")
                 else:
                     self.tik_instance.h_exp(Sij_ub, Sij_ub)
-                    broadcast_li_rec_ub = self.tik_ops_utils.broadcast(li_rec_ub, (m_aligned, n_aligned))
-                    self.tik_instance.h_mul(Sij_ub, Sij_ub, broadcast_li_rec_ub)
+                    broadcast_li_rec_ub = self.tik_ops_utils.broadcast(li_rec_ub, (m_aligned, self.N0))
+                    broadcast_li_rec_ub = broadcast_li_rec_ub.reshape((1, m_aligned, self.N0))
+                    for idx in range(n1):
+                        self.tik_instance.h_mul(Sij_ub[idx, :, :], Sij_ub[idx, :, :], broadcast_li_rec_ub)
 
-            # dropout_mask
             if self.has_drop_mask:
-                with self.tik_instance.new_stmt_scope(disable_sync=False):
-                    dropout_mask_ub = self.tik_instance.Tensor(FP16, (m_aligned, n_aligned),
-                                                               scope=UB, name="drop_mask_ub")
-                    self.tik_instance.data_move(dropout_mask_ub, self.drop_mask_gm[dropout_mask_gm_offset], 0,
-                                                m_aligned, n_aligned // 16, (self.N - n_aligned) // 16, 0)
-                    self.tik_instance.h_mul(Pij_drop_ed_ub, Sij_ub, dropout_mask_ub)
+                self.do_dropout_mask(Sij_ub, dropout_mask_gm_offset, n_aligned, n, m_aligned, m,
+                                     workspace=Pij_drop_ed_ub)
             else:
-                Pij_drop_ed_ub = Sij_ub
+                self.cont_data_mv_1_bust(dst=Pij_drop_ed_ub, src=Sij_ub, burst=m_aligned * n_aligned // 16)
 
         return Sij_ub, Pij_drop_ed_ub
 
@@ -143,13 +149,17 @@ class FlashAttentionBwd(FlashAttention):
         """Refer to Algorithm 4 line19 in FlashAttention implement Di computation"""
         q_blk_height_aligned = self.tik_ops_utils.up_align_to_K0(q_blk_height)
         with self.tik_instance.new_stmt_scope(disable_sync=False):
-            Oi_ub = self.tik_instance.Tensor(FP16, (q_blk_height_aligned, self.d), name="Oi_ub", scope=UB)
-            self.cont_data_mv_1_bust(dst=Oi_ub, src=self.O_gm[qo_gm_offset],
-                                     burst=q_blk_height * self.d // 16)
+            Oi_ub = self.tik_instance.Tensor(FP16, (self.d // self.N0, q_blk_height_aligned, self.N0),
+                                             scope=UB, name="Oi_ub")
+            self.tik_instance.data_move(dst=Oi_ub, src=self.O_gm[qo_gm_offset],
+                                        sid=0, nburst=self.N1, burst=q_blk_height * self.N0 // 16,
+                                        src_stride=(self.Nq - q_blk_height) * self.N0 // 16, dst_stride=0)
             self.tik_instance.h_mul(Oi_ub, dOi_ub, Oi_ub)
-            dOi_Oi_l1 = self.tik_instance.Tensor(FP16, (q_blk_height_aligned, self.d), name="dOi_Oi_l1", scope=L1)
-            dOi_Oi_l1_K1MK0_ed = self.tik_ops_utils.MK_TO_K1MK0(Oi_ub, workspace_tensor=dOi_Oi_l1)
-            self.tik_ops_utils.row_sum_cube_impl(dOi_Oi_l1_K1MK0_ed, Di_ub, q_blk_height,
+            dOi_Oi_l1 = self.tik_instance.Tensor(FP16, (self.d // self.N0, q_blk_height_aligned, self.N0),
+                                                 name="dOi_Oi_l1", scope=L1)
+
+            self.cont_data_mv_1_bust(dst=dOi_Oi_l1, src=Oi_ub, burst=q_blk_height_aligned * self.d // 16)
+            self.tik_ops_utils.row_sum_cube_impl(dOi_Oi_l1, Di_ub, q_blk_height,
                                                  self.actual_d, precision_type=FP16)
 
     def compute_dSij(self, Pij_ub, dOi_l1_K1MK0_ed, VjT_K1NK0_ed, Di_ub, kv_blk_height, q_blk_height,
@@ -157,7 +167,7 @@ class FlashAttentionBwd(FlashAttention):
         """Refer to Algorithm 4 line20 in FlashAttention implement dSij computation"""
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             dPij_ub = self.tik_ops_utils.matmul_compute(dOi_l1_K1MK0_ed, VjT_K1NK0_ed,
-                                                        q_blk_height, self.actual_d, kv_blk_height)
+                                                        q_blk_height, self.actual_d, kv_blk_height, N1MN0_to_MN=False)
             q_blk_height_aligned = self.tik_ops_utils.up_align_to_K0(q_blk_height)
             kv_blk_height_aligned = self.tik_ops_utils.up_align_to_K0(kv_blk_height)
             # dropout_mask
@@ -166,8 +176,11 @@ class FlashAttentionBwd(FlashAttention):
                                      q_blk_height_aligned, q_blk_height)
             # dPij - Di
             with self.tik_instance.new_stmt_scope(disable_sync=False):
-                broadcast_Di_ub = self.tik_ops_utils.broadcast(Di_ub, (q_blk_height_aligned, kv_blk_height_aligned))
-                self.tik_instance.h_sub(dPij_ub, dPij_ub, broadcast_Di_ub)
+                broadcast_Di_ub = self.tik_ops_utils.broadcast(Di_ub, (q_blk_height_aligned, self.N0))
+                broadcast_Di_ub = broadcast_Di_ub.reshape((1, q_blk_height_aligned, self.N0))
+                n1 = kv_blk_height_aligned // self.N0
+                for idx in range(n1):
+                    self.tik_instance.h_sub(dPij_ub[idx, :, :], dPij_ub[idx, :, :], broadcast_Di_ub)
             self.tik_instance.h_mul(Pij_ub, Pij_ub, dPij_ub)
         return Pij_ub
 
@@ -181,10 +194,12 @@ class FlashAttentionBwd(FlashAttention):
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             PijT_Oi_ub = self.tik_ops_utils.matmul_compute(PijT_l1_K1MK0_ed, dOi_l1_K1NK0_ed,
                                                            kv_blk_height, q_blk_height,
-                                                           self.actual_d, precision_type=FP32)
+                                                           self.actual_d, N1MN0_to_MN=False,
+                                                           precision_type=FP32)
             self.tik_instance.set_atomic_add(1)
-            self.cont_data_mv_1_bust(dst=self.dV_gm[kv_gm_offset], src=PijT_Oi_ub,
-                                     burst=kv_blk_height * self.d // 8)
+            self.tik_instance.data_move(dst=self.dV_gm[kv_gm_offset], src=PijT_Oi_ub, sid=0,
+                                        nburst=self.N1, burst=kv_blk_height * self.N0 // 8,
+                                        src_stride=0, dst_stride=(self.Nq - kv_blk_height) * self.N0 // 8)
             self.tik_instance.set_atomic_add(0)
 
     def update_dQi(self,
@@ -197,10 +212,11 @@ class FlashAttentionBwd(FlashAttention):
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             dSij_Kj_ub = self.tik_ops_utils.matmul_compute(dSij_l1_K1MK0_ed, Kj_l1_K1NK0_ed,
                                                            q_blk_height, kv_blk_height,
-                                                           self.actual_d, precision_type=FP32)
+                                                           self.actual_d, N1MN0_to_MN=False, precision_type=FP32)
             self.tik_instance.set_atomic_add(1)
-            self.cont_data_mv_1_bust(dst=self.dQ_gm[qo_gm_offset], src=dSij_Kj_ub,
-                                     burst=q_blk_height * self.d // 8)
+            self.tik_instance.data_move(dst=self.dQ_gm[qo_gm_offset], src=dSij_Kj_ub, sid=0,
+                                        nburst=self.d // self.N0, burst=q_blk_height * self.N0 // 8,
+                                        src_stride=0, dst_stride=(self.Nq - q_blk_height) * self.N0 // 8)
             self.tik_instance.set_atomic_add(0)
 
     def update_dKj(self,
@@ -213,10 +229,11 @@ class FlashAttentionBwd(FlashAttention):
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             dSijT_Qi_ub = self.tik_ops_utils.matmul_compute(dSijT_l1_K1MK0_ed, Qi_l1_K1NK0_ed,
                                                             kv_blk_height, q_blk_height,
-                                                            self.actual_d, precision_type=FP32)
+                                                            self.actual_d, N1MN0_to_MN=False, precision_type=FP32)
             self.tik_instance.set_atomic_add(1)
-            self.cont_data_mv_1_bust(dst=self.dK_gm[kv_gm_offset], src=dSijT_Qi_ub,
-                                     burst=kv_blk_height * self.d // 8)
+            self.tik_instance.data_move(dst=self.dK_gm[kv_gm_offset], src=dSijT_Qi_ub, sid=0,
+                                        nburst=self.d // self.N0, burst=kv_blk_height * self.N0 // 8,
+                                        src_stride=0, dst_stride=(self.Nq - kv_blk_height) * self.N0 // 8)
             self.tik_instance.set_atomic_add(0)
 
     def compute_in_each_kv_block(self, batch_start, batch_idx, kv_blk_idx, kv_blk_height,
@@ -225,23 +242,34 @@ class FlashAttentionBwd(FlashAttention):
         kv_blk_height_aligned = self.tik_ops_utils.up_align_to_K0(kv_blk_height)
         kv_gm_offset = self.get_gm_offset(batch_start, batch_idx, self.N, self.d,
                                           self.Bc, kv_blk_idx)
-        Kj_l1_1 = self.tik_instance.Tensor(FP16, (kv_blk_height_aligned, self.d), name="Kj_l1_1",
-                                           scope=L1)
+        # load KjT
+        Kj_l1_1_K1MK0 = self.tik_instance.Tensor(FP16, (self.d // self.N0, kv_blk_height_aligned, self.N0),
+                                                 name="Kj_l1_1_K1MK0",
+                                                 scope=L1)
+        self.tik_instance.data_move(dst=Kj_l1_1_K1MK0, src=self.K_gm[kv_gm_offset],
+                                    sid=0, nburst=self.N1, burst=kv_blk_height_aligned * self.N0 // 16,
+                                    src_stride=(self.N - kv_blk_height_aligned) * self.N0 // 16, dst_stride=0)
+
+        # load Kj
         Kj_l1_2 = self.tik_instance.Tensor(FP16, (kv_blk_height_aligned, self.d), name="Kj_l1_2",
                                            scope=L1)
         with self.tik_instance.new_stmt_scope(disable_sync=False):
-            Kj_ub = self.tik_instance.Tensor(FP16, (kv_blk_height_aligned, self.d), name="Kj_ub", scope=UB)
-            self.cont_data_mv_1_bust(dst=Kj_ub, src=self.K_gm[kv_gm_offset],
-                                     burst=kv_blk_height * self.d // 16)
-            KjT_l1_K1NK0_ed = self.tik_ops_utils.MK_TO_K1MK0(Kj_ub, workspace_tensor=Kj_l1_1)
-            Kj_l1_K1NK0_ed = self.tik_ops_utils.KN_TO_K1NK0(Kj_ub, workspace_tensor=Kj_l1_2)
+            Kj_ub = self.tik_instance.Tensor(FP16, (self.d // self.N0, kv_blk_height_aligned, self.N0),
+                                             name="Kj_ub", scope=UB)
+            self.tik_instance.data_move(dst=Kj_ub, src=self.K_gm[kv_gm_offset],
+                                        sid=0, nburst=self.N1, burst=kv_blk_height_aligned * self.N0 // 16,
+                                        src_stride=(self.N - kv_blk_height_aligned) * self.N0 // 16, dst_stride=0)
+            # (N1, K, N0) -> (K, N)
+            Kj_ub = self.tik_ops_utils.N1MN0_TO_MN(Kj_ub)
+            # (K, N) -> (K1, N, K0)
+            Kj_l1_2_K1NK0_ed = self.tik_ops_utils.KN_TO_K1NK0(Kj_ub, workspace_tensor=Kj_l1_2)
 
-        Vj_l1 = self.tik_instance.Tensor(FP16, (kv_blk_height_aligned, self.d), name="Vj_l1", scope=L1)
-        with self.tik_instance.new_stmt_scope(disable_sync=False):
-            Vj_ub = self.tik_instance.Tensor(FP16, (kv_blk_height_aligned, self.d), name="Vj_ub", scope=UB)
-            self.cont_data_mv_1_bust(dst=Vj_ub, src=self.V_gm[kv_gm_offset],
-                                     burst=kv_blk_height * self.d // 16)
-            VjT_l1_K1NK0_ed = self.tik_ops_utils.MK_TO_K1MK0(Vj_ub, workspace_tensor=Vj_l1)
+        # load VjT
+        Vj_l1 = self.tik_instance.Tensor(FP16, (self.d // self.N0, kv_blk_height_aligned, self.N0), name="Vj_l1",
+                                         scope=L1)
+        self.tik_instance.data_move(dst=Vj_l1, src=self.V_gm[kv_gm_offset],
+                                    sid=0, nburst=self.N1, burst=kv_blk_height_aligned * self.N0 // 16,
+                                    src_stride=(self.N - kv_blk_height_aligned) * self.N0 // 16, dst_stride=0)
 
         tr_start_s = self.tik_instance.Scalar("int32", name="tr_start_s")
         tr_end_s = self.tik_instance.Scalar("int32", name="tr_end_s")
@@ -251,9 +279,9 @@ class FlashAttentionBwd(FlashAttention):
             with self.tik_instance.if_scope(tik.all(kv_blk_idx - self.next_block_num <= q_blk_idx,
                                                     q_blk_idx <= kv_blk_idx + self.prev_block_num)):
                 with self.tik_instance.if_scope(q_blk_idx != self.Tr - 1):
-                    self.compute_in_each_q_block(KjT_l1_K1NK0_ed,
-                                                 Kj_l1_K1NK0_ed,
-                                                 VjT_l1_K1NK0_ed,
+                    self.compute_in_each_q_block(Kj_l1_1_K1MK0,
+                                                 Kj_l1_2_K1NK0_ed,
+                                                 Vj_l1,
                                                  batch_idx,
                                                  batch_start,
                                                  kv_gm_offset,
@@ -262,9 +290,9 @@ class FlashAttentionBwd(FlashAttention):
                                                  kv_blk_idx,
                                                  q_blk_idx)
                 with self.tik_instance.else_scope():
-                    self.compute_in_each_q_block(KjT_l1_K1NK0_ed,
-                                                 Kj_l1_K1NK0_ed,
-                                                 VjT_l1_K1NK0_ed,
+                    self.compute_in_each_q_block(Kj_l1_1_K1MK0,
+                                                 Kj_l1_2_K1NK0_ed,
+                                                 Vj_l1,
                                                  batch_idx,
                                                  batch_start,
                                                  kv_gm_offset,
@@ -280,19 +308,28 @@ class FlashAttentionBwd(FlashAttention):
         kv_blk_height_alig = self.tik_ops_utils.up_align_to_K0(kv_blk_height)
         q_blk_height_alig = self.tik_ops_utils.up_align_to_K0(q_blk_height)
 
-        Qi_l1_left = self.tik_instance.Tensor(FP16, (q_blk_height_alig, self.d), name="Qi_l1_left",
-                                              scope=L1)  # for Qi*KjT (算法11行)
-        Qi_l1_right = self.tik_instance.Tensor(FP16, (q_blk_height_alig, self.d), name="Qi_l1_right",
-                                               scope=L1)  # for dSijT*Qi (算法22行)
         qo_gm_offset = self.get_gm_offset(batch_start, batch_idx, self.Nq, self.d, self.Br, q_blk_idx)
+        Qi_l1_K1MK0 = self.tik_instance.Tensor(FP16, (self.d // self.N0, q_blk_height_alig, self.N0),
+                                               name="Qi_l1_K1MK0",
+                                               scope=L1)
+        self.tik_instance.data_move(dst=Qi_l1_K1MK0, src=self.Q_gm[qo_gm_offset],
+                                    sid=0, nburst=self.N1, burst=q_blk_height_alig * self.N0 // 16,
+                                    src_stride=(self.Nq - q_blk_height_alig) * self.N0 // 16, dst_stride=0)
+
+        Qi_l1_right = self.tik_instance.Tensor(FP16, (q_blk_height_alig, self.d), name="Qi_l1_right",
+                                               scope=L1)
         with self.tik_instance.new_stmt_scope(disable_sync=False):
-            Qi_ub = self.tik_instance.Tensor(FP16, (q_blk_height_alig, self.d), name="Qi_ub", scope=UB)
-            self.cont_data_mv_1_bust(dst=Qi_ub, src=self.Q_gm[qo_gm_offset],
-                                     burst=q_blk_height * self.d // 16)
-            Qi_l1_K1MK0_ed = self.tik_ops_utils.MK_TO_K1MK0(Qi_ub, workspace_tensor=Qi_l1_left)
+            Qi_ub = self.tik_instance.Tensor(FP16, (self.d // self.N0, q_blk_height_alig, self.N0),
+                                             name="Qi_ub", scope=UB)
+            self.tik_instance.data_move(dst=Qi_ub, src=self.Q_gm[qo_gm_offset],
+                                        sid=0, nburst=self.N1, burst=q_blk_height_alig * self.N0 // 16,
+                                        src_stride=(self.N - q_blk_height_alig) * self.N0 // 16, dst_stride=0)
+            # (N1, K, N0) -> (K, N)
+            Qi_ub = self.tik_ops_utils.N1MN0_TO_MN(Qi_ub)
+            # (K, N) -> (K1, N, K0)
             Qi_l1_K1NK0_ed = self.tik_ops_utils.KN_TO_K1NK0(Qi_ub, workspace_tensor=Qi_l1_right)
 
-        lm_gm_offset = self.get_gm_offset(batch_start, batch_idx, self.Nq, 1, self.Br, q_blk_idx)
+        lm_gm_offset = self.get_l_m_gm_offset(batch_start, batch_idx, self.Nq, self.Br, q_blk_idx)
         attn_mask_gm_offset, dropout_mask_gm_offset, alibi_mask_gm_offset = None, None, None
         if self.has_attn_mask:
             attn_mask_gm_offset = self.get_attn_mask_gm_offset(batch_start, batch_idx, self.Nq, self.N,
@@ -302,41 +339,55 @@ class FlashAttentionBwd(FlashAttention):
                                                                   self.Br, q_blk_idx, self.Bc, kv_blk_idx)
         if self.has_alibi_mask:
             alibi_mask_gm_offset = self.get_alibi_gm_offset(batch_start, batch_idx, self.N, self.Bc, kv_blk_idx)
-        Pij_ub, Pij_drop_ed_ub = self.compute_Pij(Qi_l1_K1MK0_ed, KjT_l1_K1NK0_ed,
+        Pij_ub, Pij_drop_ed_ub = self.compute_Pij(Qi_l1_K1MK0, KjT_l1_K1NK0_ed,
                                                   q_blk_height, self.actual_d, kv_blk_height,
                                                   lm_gm_offset, attn_mask_gm_offset,
                                                   dropout_mask_gm_offset, alibi_mask_gm_offset)
 
         dOi_l1_right = self.tik_instance.Tensor(FP16, (q_blk_height_alig, self.d), name="dOi_l1_right",
                                                 scope=L1)
-        dOi_l1_left = self.tik_instance.Tensor(FP16, (q_blk_height_alig, self.d), name="dOi_l1_left",
-                                               scope=L1)
         Di_ub = self.tik_instance.Tensor(FP16, (q_blk_height_alig,), name="Di_ub", scope=UB)
         with self.tik_instance.new_stmt_scope(disable_sync=False):
-            dOi_ub = self.tik_instance.Tensor(FP16, (q_blk_height_alig, self.d), name="dOi_ub", scope=UB)
-            self.cont_data_mv_1_bust(dst=dOi_ub, src=self.dO_gm[qo_gm_offset],
-                                     burst=q_blk_height * self.d // 16)
-            self.compute_Di(Di_ub, dOi_ub, qo_gm_offset, q_blk_height)
-            dOi_l1_K1NK0_ed = self.tik_ops_utils.KN_TO_K1NK0(dOi_ub, workspace_tensor=dOi_l1_right)
-            dOi_l1_K1MK0_ed = self.tik_ops_utils.MK_TO_K1MK0(dOi_ub, workspace_tensor=dOi_l1_left)
+            dOi_ub = self.tik_instance.Tensor(FP16, (self.d // self.N0, q_blk_height_alig, self.N0),
+                                              name="dOi_ub", scope=UB)
+            self.tik_instance.data_move(dst=dOi_ub, src=self.dO_gm[qo_gm_offset],
+                                        sid=0, nburst=self.N1, burst=q_blk_height_alig * self.N0 // 16,
+                                        src_stride=(self.Nq - q_blk_height_alig) * self.N0 // 16, dst_stride=0)
 
+            self.compute_Di(Di_ub, dOi_ub, qo_gm_offset, q_blk_height)
+            # (N1, K, N0) -> (K, N)
+            dOi_ub = self.tik_ops_utils.N1MN0_TO_MN(dOi_ub)
+            # (K, N) -> (K1, N, K0)
+            dOi_l1_K1NK0_ed = self.tik_ops_utils.KN_TO_K1NK0(dOi_ub, workspace_tensor=dOi_l1_right)
+
+        dOi_l1_K1MK0 = self.tik_instance.Tensor(FP16, (self.d // self.N0, q_blk_height_alig, self.N0),
+                                                name="dOi_l1_K1MK0",
+                                                scope=L1)
+
+        self.tik_instance.data_move(dst=dOi_l1_K1MK0, src=self.dO_gm[qo_gm_offset],
+                                    sid=0, nburst=self.N1, burst=q_blk_height_alig * self.N0 // 16,
+                                    src_stride=(self.Nq - q_blk_height_alig) * self.N0 // 16, dst_stride=0)
         Pij_l1 = self.tik_instance.Tensor(FP16, (q_blk_height_alig, kv_blk_height_alig), name="Pij_l1", scope=L1)
+        Pij_drop_ed_ub = self.tik_ops_utils.N1MN0_TO_MN(Pij_drop_ed_ub)
         PijT_l1_K1MK0_ed = self.tik_ops_utils.KN_TO_K1NK0(Pij_drop_ed_ub, workspace_tensor=Pij_l1)
         self.update_dVj(PijT_l1_K1MK0_ed, dOi_l1_K1NK0_ed,
                         kv_gm_offset, kv_blk_height, q_blk_height)
-        dSij_l1_1 = self.tik_instance.Tensor(FP16, (q_blk_height_alig, kv_blk_height_alig),
-                                             name="dSij_l1_1", scope=L1)
+        # (L1: 512K)
+        dSij_l1_K1MK0_ed = self.tik_instance.Tensor(FP16, (kv_blk_height_alig // self.N0, q_blk_height_alig, self.N0),
+                                                    name="dSij_l1_1", scope=L1)
         dSij_l1_2 = self.tik_instance.Tensor(FP16, (q_blk_height_alig, kv_blk_height_alig),
                                              name="dSij_l1_2", scope=L1)
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             dSij_ub = self.compute_dSij(Pij_ub,
-                                        dOi_l1_K1MK0_ed,
+                                        dOi_l1_K1MK0,
                                         VjT_l1_K1NK0_ed,
                                         Di_ub,
                                         kv_blk_height,
                                         q_blk_height,
                                         dropout_mask_gm_offset)
-            dSij_l1_K1MK0_ed = self.tik_ops_utils.MK_TO_K1MK0(dSij_ub, workspace_tensor=dSij_l1_1)
+            self.cont_data_mv_1_bust(dst=dSij_l1_K1MK0_ed, src=dSij_ub,
+                                     burst=kv_blk_height_alig * q_blk_height_alig // 16)
+            dSij_ub = self.tik_ops_utils.N1MN0_TO_MN(dSij_ub)
             dSijT_l1_K1MK0_ed = self.tik_ops_utils.KN_TO_K1NK0(dSij_ub, workspace_tensor=dSij_l1_2)
         self.update_dQi(dSij_l1_K1MK0_ed, Kj_l1_K1NK0_ed,
                         qo_gm_offset, q_blk_height, kv_blk_height)
@@ -358,10 +409,11 @@ class FlashAttentionBwd(FlashAttention):
         """collect all output gm tensors into output_gm_list,
         the output list should keep order with the para order in Primitive and init
         """
-        return [self.dQ_gm, self.dK_gm, self.dV_gm]
+        output_gm_list = [self.dQ_gm, self.dK_gm, self.dV_gm]
+        return output_gm_list
 
 
-def flash_attention_grad(Query, Key, Value, Output, dO, rowsum, rowmax, dim_mask, attn_mask, dropout_mask, alibi_mask,
+def flash_attention_grad(Query, Key, Value, Output, dO, rowsum, rowmax, attn_mask, dropout_mask, alibi_mask,
                          dq, dk, dv,
                          prev_block_num=65536,
                          next_block_num=65536,
@@ -381,7 +433,6 @@ def flash_attention_grad(Query, Key, Value, Output, dO, rowsum, rowmax, dim_mask
     dO: dict. shape and dtype of input, only support float16
     rowsum: dict. shape and dtype of input, only support float16
     rowmax: dict. shape and dtype of input, only support float16
-    dim_mask: dict. shape and dtype of input, only support int8
     dropout_mask: dict. shape and dtype of input, only support float16
     dropout_mask: dict. shape and dtype of input, only support float16
     alibi_mask: dict. shape and dtype of input, only support float16
@@ -398,7 +449,7 @@ def flash_attention_grad(Query, Key, Value, Output, dO, rowsum, rowmax, dim_mask
     -------
     tik_instance
     """
-    fa_grad = FlashAttentionBwd(Query, Key, Value, Output, dO, rowsum, rowmax, dim_mask, attn_mask, dropout_mask,
+    fa_grad = FlashAttentionBwd(Query, Key, Value, Output, dO, rowsum, rowmax, attn_mask, dropout_mask,
                                 alibi_mask, prev_block_num=prev_block_num,
                                 next_block_num=next_block_num,
                                 high_precision=high_precision,
