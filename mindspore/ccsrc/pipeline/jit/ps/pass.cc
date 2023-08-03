@@ -1040,15 +1040,15 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"comp_comm_scheduling", CompCommSchedulingPass},
                                    {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
                                    {"comm_op_add_attrs", CommOpAddAttrs},
-                                   {"process_send_recv_for_ge", ProcessSendRecvForGE},
                                    {"add_comm_op_reuse_tag", AddCommOpReusePass},
                                    {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
                                    {"grouped_pairwise_exchange_alltoall", GroupedPairwiseExchangeAllToAllPass},
                                    {"overlap_recompute_and_grad_model_parallel", OverlapRecomputeAndGradModelParallel},
                                    {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},
                                    {"split_layernorm_comm", SplitLayerNormCommFpPass},
-                                   // The pass cache hccl group, so the hccl group should be created before the pass
                                    {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
+                                   {"process_send_recv_for_ge", ProcessSendRecvForGE},
+                                   // The pass cache hccl group, so the hccl group should be created before the pass
                                    {"handle_group_info", HandleGroupInfoPass}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
