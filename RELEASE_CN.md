@@ -2,6 +2,349 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.1.0 Release Notes
+
+### 主要特性和增强
+
+#### FrontEnd
+
+- [BETA] JIT Fallback支持变量场景：静态图模式下，支持返回Dict类型和Scalar类型，支持对非Parameter类型对象进行属性设置， 支持List的部分就地修改操作，完善支持NumPy等第三方库，支持用户自定义类的相关操作，支持Python基础运算符、内置函数使用更多数据类型，兼容控制流、副作用、自动微分等功能。具体用法请参考[静态图语法支持](https://www.mindspore.cn/docs/zh-CN/r2.1/note/static_graph_syntax_support.html)。
+- [BETA] 静态图模式下，优化控制流场景中使用未定义变量的报错。使用if、while、for控制流分支内定义的变量，需在控制流之前初始化定义变量。
+- [STABLE] 新增ReWrite功能，支持基于自定义规则修改网络结构，提供对多个网络进行批量修改的能力。
+- [BETA] 新增optim_ex优化器模块，扩展现有功能，支持全量优化器参数分组策略的设置、支持运行中通过赋值的方式修改参数等功能。
+- [STABLE] 优化MindSpore与PyTorch的API映射表，详细介绍API在功能、参数、输入、输出和特定场景等方面的差异。
+
+#### PyNative
+
+- 优化动态图模式下动态shape场景的性能。
+
+#### DataSet
+
+- [STABLE] 优化MindRecord数据文件的内存结构，加载百TB级别数据训练可降低60%内存占用。
+- [STABLE] 支持单线程执行数据处理Pipeline，以便用户在数据Pipeline中添加代码对数据处理功能进行调试。
+- [STABLE] 优化了TFRecordDataset的性能，对数据集加载性能提升60%+；优化了batch的性能，对于batch数较大的使用场景性能提升30%。
+- [STABLE] 优化API文档[mindspore.dataset](https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore.dataset.html) 和 [mindspore.dataset.transforms](https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore.dataset.transforms.html)的Example示例，并新增了四篇样例库展示数据增强的效果，分别是：[使用数据Pipeline加载 & 处理数据集](https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore.dataset.html#%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86pipeline%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B)、[视觉变换样例库](https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore.dataset.transforms.html#%E6%A0%B7%E4%BE%8B%E5%BA%93)、[文本变换样例库](https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore.dataset.transforms.html#%E6%A0%B7%E4%BE%8B%E5%BA%93-1)、[音频变换样例库](https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore.dataset.transforms.html#%E6%A0%B7%E4%BE%8B%E5%BA%93-2)
+
+#### AutoParallel
+
+- [STABLE] 支持训练过程将参数或者中间结果offload到CPU或NVMe，用户通过配置context开启自动offload功能，扩大可训练模型规模。
+
+- [STABLE] 自动并行能力增强：
+
+  1. 典型网络自动策略性能不低于默认配置的90%；
+
+  2. 支持3D混合并行训练：自动算子级策略生成结合手动配置pipeline切分。
+
+#### Runtime
+
+- [STABLE] 升级OpenMPI版本至4.1.4。
+- [STABLE] 升级NCCL版本至2.16.5。
+- [STABLE] 动态组网场景下单节点内多卡rank连续分配。
+- [STABLE] 动态组网场景下用户无需在脚本中对Scheduler角色进行适配，Scheduler与Worker脚本可保持完全一致。
+
+#### Ascend
+
+- [STABLE] 算子执行发生AIC Error时日志支持输出辅助AIC Error定位的维测信息，信息包括算子task名字、stream id、输入输出及workspace地址等。
+- [STABLE] 针对算子输出为空Tensor的场景为CANN算子提供默认的处理机制，即跳过其算子执行。
+- [STABLE] 在图模式网络模型执行失败时补充相关定位信息，即在rank_${id}/exec_order/目录下产生csv文件，记录每个task的task id和stream id。
+
+#### Profiler
+
+- [STABLE] Profiler支持收集Host侧各个阶段耗时数据。
+- [BETA] Profiler支持收集Host侧各个阶段内存数据。
+- [BETA] Profiler支持收集数据处理算子耗时。
+
+### API变更
+
+- `mindspore.dataset.GraphData`、`mindspore.dataset.Graph`、`mindspore.dataset.InMemoryGraphDataset`、`mindspore.dataset.ArgoverseDataset`不再进行功能演进并废弃。使用[MindSpore Graph Learning](https://gitee.com/mindspore/graphlearning)进行相关功能替换。对于Model仓库使用到此API的相关网络进行替换时，GCN请参考[Graph Learning GCN](https://gitee.com/mindspore/graphlearning/tree/master/model_zoo/gcn)，GAT请参考[Graph Learning GAT](https://gitee.com/mindspore/graphlearning/tree/master/model_zoo/gat)。
+- `mindspore.set_context`新增`jit_syntax_level`选项，用于设置JIT语法支持级别，请参考[set_context](https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore/mindspore.set_context.html)。
+- 变更了`model.infer_predict_layout`接口，接口新增参数skip_backend_compile，默认值为False。当用户希望跳过后端编译流程获取参数切分策略时可选择设置为True。
+
+#### 算子
+
+- 新增算子原语`mindspore.ops.ApplyAdamWithAmsgradV2`，推荐通过接口`mindspore.nn.Adam`调用。
+- 新增算子原语`mindspore.ops.UpsampleTrilinear3D`，推荐通过接口`mindspore.ops.interpolate`调用。
+- 新增算子原语`mindspore.ops.UpsampleNearest3D`，推荐通过接口`mindspore.ops.interpolate`调用。
+
+#### 接口弃用
+
+- 弃用算子原语`mindspore.ops.ScatterNonAliasingAdd`，推荐使用算子原语`mindspore.ops.TensorScatterAdd`替换。
+
+#### 非兼容性接口变更
+
+- 接口名称：`mindspore.nn.Dense`、`mindspore.nn.Conv1d`、`mindspore.nn.Conv1dTranspose`、`mindspore.nn.Conv2d`、`mindspore.nn.Conv2dTranspose`、`mindspore.nn.Conv3d`、`mindspore.nn.Conv3dTranspose`
+
+  变更内容：变更了初始化参数策略。weight_init默认值由"normal"改为None，bias_init默认值由"zeros"改为None。
+
+  说明：权重默认初始化方法由使用"normal"改为在内部使用HeUniform初始化。偏差默认初始化方法由"zeros"改为在内部使用Uniform初始化。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Dense(in_channels,
+                     out_channels,
+                     weight_init='normal',
+                     bias_init='zeros',
+                     has_bias=True,
+                     activation=None)
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Dense(in_channels,
+                     out_channels,
+                     weight_init=None,
+                     bias_init=None,
+                     has_bias=True,
+                     activation=None)
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv1d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init='normal',
+                      bias_init='zeros')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv1d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init=None,
+                      bias_init=None)
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv1dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               dilation=1,
+                               group=1,
+                               has_bias=False,
+                               weight_init='normal',
+                               bias_init='zeros')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv1dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               dilation=1,
+                               group=1,
+                               has_bias=False,
+                               weight_init=None,
+                               bias_init=None)
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv2d(in_channels,
+                      out_channels, kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init='normal',
+                      bias_init='zeros',
+                      data_format='NCHW')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv2d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init=None,
+                      bias_init=None,
+                      data_format='NCHW')
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv2dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               output_padding=0,
+                               dilation=1,
+                               group=1,
+                               has_bias=False,
+                               weight_init='normal',
+                               bias_init='zeros')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv2dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               output_padding=0,
+                               dilation=1,
+                               group=1,
+                               has_bias=False,
+                               weight_init=None,
+                               bias_init=None)
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv3d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init='normal',
+                      bias_init='zeros',
+                      data_format='NCDHW')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv3d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init=None,
+                      bias_init=None,
+                      data_format='NCDHW')
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv3dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               dilation=1,
+                               group=1,
+                               output_padding=0,
+                               has_bias=False,
+                               weight_init='normal',
+                               bias_init='zeros',
+                               data_format='NCDHW')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv3dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               dilation=1,
+                               group=1,
+                               output_padding=0,
+                               has_bias=False,
+                               weight_init=None,
+                               bias_init=None,
+                               data_format='NCDHW')
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+### Bug fixes
+
+- [I6TKLW] 修复了昇腾平台上MobileNetV2网络性能劣化的问题。
+- [I7CP5H] 修复了昇腾平台上ASR网络训练失败的问题。
+- [I6QYCD] 修复了昇腾平台上BERT-Large-Boost网络在pynative模式下训练失败的问题。
+- [I7I3EZ] 修复了由于Pillow 10.0.0版本变更枚举接口导致run_check()失败的问题。若在低版本MindSpore遇到，则安装10.0.0以下版本Pillow避免此问题。
+- [I7IZ8K] 修复了assignsub接口在PyNative下的精度问题。
+- [I7HGY0] 修复了函数式编程，在PyNative模式数据下沉场景，loss不收敛的问题。
+- [I7J4N3] 修复了Profiler动态Shape模式下生成Step Trace失败的问题。
+- [I7J4N3] 修复了MindInsight并行策略视图展示暂无数据的问题。
+- [I79YY4] 修复了PyNative模式下高阶微分时的SiLU算子错误。
+- [I6NQJQ] 修复了PyNative模式下ScatterUpdate算子动态shape场景下执行概率性失败的问题。
+- [I6Y4G5] 修复了Graph模式下Conv3D算子动态Shape场景下执行失败的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+alashkari,anzhengqi,archer2049,B.L.LAN,baihuawei,bichaoyang,BJ-WANG,Bokai Li,Brian-K,caifubi,caiyimeng,cathwong,changzherui,ChenDonYY,chenfei_mindspore,chengang,chengbin,chenhaozhe,chenjianping,chenkang,chenweifeng,chuht,chujinjin,davidanugraha,DavidFFFan,DeshiChen,douzhixing,emmmmtang,Erpim,Ethan,fangwenyi,fangzehua,fangzhou0329,fary86,fengyixing,gaoshuanglong,Gaoxiong,gaoyong10,gengdongjie,gongdaguo1,Greatpan,GuoZhibin,guozhijian,hangq,hanhuifeng,haozhang,hedongdong,Henry Shi,heterogeneous_to_backoff_2_0,huangbingjian,huanghui,huangxinjing,hujiahui8,hujingsong,huoxinyou,jachua,jiahongQian,jianghui58,jiangzhenguang,jiaorui,jiaoy1224,jijiarong,jjfeing,JoeyLin,json,JuiceZ,jxl,kairui_kou,KevinYi,kisnwang,KXiong,laiyongqiang,lanzhineng,liangchenghui,liangzelang,LiangZhibo,lianliguang,lichen,ligan,lijunbin,limingqi107,ling,linqingke,liubuyu,liuchao,liuchuting,liujunzhu,liuluobin,liutongtong9,liuyang811,lixiao,liyan2022,liyejun,liyuxia,looop5,luochao60,luojianing,luoyang,luoyuan,lyqlola,maning202007,maoyaomin,Margaret_wangrui,mayadong,MaZhiming,melody,mengyuanli,michaelzhu_70ab,Mohammad Motallebi,moran,NaCN,nomindcarry,OwenSec,panfengfeng,panshaowu,panzhihui,pkuliuliu,qinzheng,qiuzhongya,qujianwei,r1chardf1d0,Renyuan Zhang,RobinGrosman,shaojunsong,shenwei41,Soaringfish,tangdezhi_123,tanghuikang,tan-wei-cheng,TinaMengtingZhang,TronZhang,TuDouNi,VectorSL,wang_ziqi,wanghenchang,wangnan39,wangpingan,wangshaocong,wangshengnan123,wangtongyu6,weichaoran,wind-zyx,wqx,wtcheng,wujueying,wYann,XianglongZeng,xiaohanzhang,xiaotianci,xiaoyao,XinDu,xulei,xumengjuan1,xupan,xwkgch,yanghaoran,yangluhang,yangruoqi713,yangshuo,yangsijia,yangzhenzhang,yanzhenxiang2020,Yanzhi_YI,yao_yf,yefeng,yeyunpeng2020,Yi_zhang95,yide12,YijieChen,YingLai Lin,YingtongHu,youshu,yuchaojie,yuedongli,YuJianfeng,zangqx,ZengZitao,zhangbuxue,zhangdanyang,zhangdong,zhangfanghe,zhangqi,zhangqinghua,zhangyanhui,zhangyinxia,zhangyongxian,zhangzhaoju,zhanzhan,zhengzuohe,ZhidanLiu,zhixinaa,zhoufeng,zhouyaqiang0,zhuguodong,zhupuxu,zhuyuxiao,zichun_ye,zjun,zlq2020,zong_shuai,ZPaC,zuochuanyong,zyli2020,陈宇,范吉斌,冯一航,胡彬,宦晓玲,黄勇,雷元哲,李良灿,李林杰,刘崇鸣,刘力力,刘勇琪,吕浩宇,吕昱峰（Nate.River）,没有窗户的小巷,沈竞兴,十六夜,王程浩,王禹程,王振邦,徐安越,徐永飞,杨旭华,于振华,俞涵,张清华,张澍坤,张栩浩,张学同,赵英灼,周超,周洪叶,朱家兴
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore Lite 2.1.0 Release Notes
+
+### 主要特性和增强
+
+#### MindSpore Lite云侧推理
+
+- [STABLE] 支持Ascend硬件后端单卡大模型以及单机多卡分布式大模型高性能推理。
+- [STABLE] Python API Ascend后端支持多模型共享工作空间（Workspace）内存。
+- [STABLE] [通过ModelGroup新增支持多模型共享权重](https://mindspore.cn/lite/docs/zh-CN/r2.1/use/cloud_infer/runtime_cpp.html#%E5%A4%9A%E6%A8%A1%E5%9E%8B%E5%85%B1%E4%BA%AB%E6%9D%83%E9%87%8D)，比如大模型场景下全量模型和增量模型共享权重。
+
+#### API
+
+新增ModelGroup [Python](https://www.mindspore.cn/lite/api/zh-CN/r2.1/mindspore_lite/mindspore_lite.ModelGroup.html#mindspore_lite.ModelGroup)和[C++](https://mindspore.cn/lite/api/zh-CN/r2.1/api_cpp/mindspore.html#modelgroup)接口，接口定义如下：
+
+```python
+class ModelGroup
+    def __init__(self, flags=ModelGroupFlag.SHARE_WORKSPACE)
+    def add_model(self, models)
+    def cal_max_size_of_workspace(self, model_type, context)
+```
+
+```C++
+// class ModelGroup
+ModelGroup(ModelGroupFlag flags = ModelGroupFlag::kShareWorkspace);
+Status AddModel(const std::vector<std::string> &model_path_list);
+Status AddModel(const std::vector<std::pair<const void *, size_t>> &model_buff_list);
+Status AddModel(const std::vector &model_list);
+Status AddModel(const std::vector &model_list);
+```
+
 ## MindSpore 2.0.0 Release Notes
 
 ### 主要特性和增强
