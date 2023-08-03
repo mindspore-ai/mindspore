@@ -741,8 +741,6 @@ def fill(type, shape, value):  # pylint: disable=redefined-outer-name
          [0. 0. 0.]
          [0. 0. 0.]]
     """
-    if isinstance(shape, tuple):
-        shape = tuple_to_tensor_(shape, mstype.int32)
     value = cast_(value, type)
     return _get_cache_prim(P.FillV2)()(shape, value)
 

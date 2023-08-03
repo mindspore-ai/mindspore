@@ -68,9 +68,10 @@ def test_two_matmul():
             self.matmul3 = P.MatMul().shard(strategy3)
             self.diag = P.Diag()
             self.fillv2 = P.FillV2()
+            self.diag_value = self.fillv2((128,), Tensor(1.0, mstype.float32))
 
         def construct(self, x, y):
-            fill = self.diag(self.fillv2((128,), Tensor(1.0, mstype.float32)))
+            fill = self.diag(self.diag_value)
             out1 = self.matmul1(fill, x)
             out2 = self.matmul2(y, fill)
             out = self.matmul3(out1, out2)
@@ -122,9 +123,10 @@ def test_two_matmul1():
             self.matmul3 = P.MatMul().shard(strategy3)
             self.diag = P.Diag()
             self.fillv2 = P.FillV2()
+            self.diag_value = self.fillv2((128,), Tensor(1.0, mstype.float32))
 
         def construct(self, x, y):
-            fill = self.diag(self.fillv2((128,), Tensor(1.0, mstype.float32)))
+            fill = self.diag(self.diag_value)
             out1 = self.matmul1(fill, x)
             out2 = self.matmul2(fill, y)
             out = self.matmul3(out1, out2)

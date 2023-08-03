@@ -1805,16 +1805,19 @@ class FillV2(PrimitiveWithCheck):
         """Initialize FillV2"""
         self.init_prim_io_names(inputs=['shape', 'value'], outputs=['y'])
 
+    def check_elim(self, dims, x):
+        if x is None or (not isinstance(x, (Tensor, Tensor_))) or (x.shape != ()) or\
+            dims is None or (isinstance(dims, (tuple, list)) and dims) or\
+            isinstance(dims, (Tensor, Tensor_)):
+            return (False, None)
+        return (True, x)
+
     def infer_value(self, dims, x):
-        if dims is None or x is None or \
-            (isinstance(dims, (tuple, list)) and None in dims):
+        if x is None or dims is None or\
+            (isinstance(dims, (tuple, list)) and dims) or\
+            isinstance(dims, (Tensor, Tensor_)):
             return None
-        if isinstance(dims, (Tensor, Tensor_)):
-            dims = dims.asnumpy()
-        if isinstance(x, (Tensor, Tensor_)):
-            x = x.asnumpy()
-        ret = np.full(dims, x)
-        return Tensor(ret)
+        return x
 
 
 class Ones(Primitive):

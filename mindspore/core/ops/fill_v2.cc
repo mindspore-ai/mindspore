@@ -79,7 +79,7 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
                                                  output_shape[i], kGreaterEqual, kDimZero, prim_name);
       }
     }
-    output_shape = GetShapeValue(primitive, input_args[0]);
+
     return std::make_shared<abstract::Shape>(output_shape);
   }
 
