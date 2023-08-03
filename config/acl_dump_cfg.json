@@ -1,0 +1,9 @@
+{
+  "dump": {
+    "dump_list": [],
+    "dump_path": "/tmp/acl_data_dump",
+    "dump_mode": "all",
+    "dump_op_switch": "on"
+  }
+}
+
