@@ -1147,7 +1147,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     return out
 
 
-def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reduction='mean'):
+def binary_cross_entropy_with_logits(logits, label, weight=None, pos_weight=None, reduction='mean'):
     r"""
     Adds sigmoid activation function to input `logits`, and uses the given logits to compute binary cross entropy
     between the logits and the label.
@@ -1196,11 +1196,12 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
         logits (Tensor): Input logits. Data type must be float16 or float32.
         label (Tensor): Ground truth label, has the same shape as `logits`.
           Data type must be float16 or float32.
-        weight (Tensor): A rescaling weight applied to the loss of each batch element. It can be
+        weight (Tensor, optional): A rescaling weight applied to the loss of each batch element. It can be
           broadcast to a tensor with shape of `logits`. Data type must be float16 or float32.
-        pos_weight (Tensor): A weight of positive examples. Must be a vector with length equal to the
+          Default: ``None``, `weight` is a Tensor whose value is ``1``.
+        pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
           number of classes. It can be broadcast to a tensor with shape of `logits`.
-          Data type must be float16 or float32.
+          Data type must be float16 or float32. Default: ``None``, `pos_weight` is a Tensor whose value is ``1``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
@@ -1235,6 +1236,10 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
         0.3463612
     """
 
+    if weight is None:
+        weight = ops.ones_like(logits)
+    if pos_weight is None:
+        pos_weight = ops.ones_like(logits)
     bce_with_logits_loss_op = _get_cache_prim(NN_OPS.BCEWithLogitsLoss)(reduction)
     return bce_with_logits_loss_op(logits, label, weight, pos_weight)
 
