@@ -47,7 +47,7 @@ bool InsertDependForAllGatherParallel(
     auto all_gather_node = (nodes_iter++)->second;
     auto allgather_succ_nodes = (succ_iter++)->second;
     auto allgather_second_succ_nodes = (second_succ_iter++)->second;
-    for (size_t j = 1; i < all_gather_node.size(); j++) {
+    for (size_t j = 1; j < all_gather_node.size(); j++) {
       MS_EXCEPTION_IF_NULL(all_gather_node[j]);
       if (allgather_second_succ_nodes[j] == nullptr || allgather_succ_nodes[j] == nullptr) {
         MS_LOG(DEBUG) << "AllGather has no successor node or second successor node, AllGather name: "
@@ -83,6 +83,8 @@ bool InsertDependForAllGatherParallel(
                                             common::AnfAlgo::GetInputNode(succ_cnode, 0), another_input};
       auto new_input_depend = graph->NewCNode(new_inputs);
       new_input_depend->set_abstract(succ_cnode->abstract());
+      MS_LOG(DEBUG) << "Insert Depend node: " << new_input_depend->fullname_with_scope()
+                    << ", for AllGather: " << all_gather_node[j]->fullname_with_scope();
       common::AnfAlgo::SetNodeInput(succ_cnode, new_input_depend, 0);
       changed = true;
     }
@@ -182,10 +184,9 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
       changed = true;
     }
   }
-  changed = changed ||
-            InsertDependForAllGatherParallel(graph, all_gather_node, allgather_succ_nodes, allgather_second_succ_nodes);
 
-  return changed;
+  return InsertDependForAllGatherParallel(graph, all_gather_node, allgather_succ_nodes, allgather_second_succ_nodes) ||
+         changed;
 }
 }  // namespace opt
 }  // namespace mindspore
