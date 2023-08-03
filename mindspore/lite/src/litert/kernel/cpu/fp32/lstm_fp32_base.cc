@@ -73,8 +73,8 @@ int LstmFp32BaseCPUKernel::ReSize() {
   lstm_param_->hidden_size_ = c_init_shape.back();
   lstm_param_->output_size_ = h_init_shape.back();
 
-  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? C2NUM * lstm_param_->batch_ * lstm_param_->hidden_size_
-                                                          : lstm_param_->batch_ * lstm_param_->hidden_size_;
+  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? C2NUM * lstm_param_->batch_ * lstm_param_->output_size_
+                                                          : lstm_param_->batch_ * lstm_param_->output_size_;
   weight_segment_num_ = lstm_param_->bidirectional_ ? C2NUM * kGateNum : kGateNum;
 
 #ifdef ENABLE_AVX
@@ -105,9 +105,12 @@ int LstmFp32BaseCPUKernel::ReSize() {
   lstm_param_->state_row_align_ = lstm_param_->batch_ == 1 ? 1 : UP_ROUND(lstm_param_->batch_, state_row_tile_);
 #ifdef ENABLE_AVX
   lstm_param_->state_col_align_ = UP_ROUND(lstm_param_->hidden_size_, state_col_tile_);
+  lstm_param_->proj_col_align_ = UP_ROUND(lstm_param_->output_size_, state_col_tile_);
 #else
   lstm_param_->state_col_align_ =
     lstm_param_->batch_ == 1 ? lstm_param_->hidden_size_ : UP_ROUND(lstm_param_->hidden_size_, state_col_tile_);
+  lstm_param_->proj_col_align_ =
+    lstm_param_->batch_ == 1 ? lstm_param_->output_size_ : UP_ROUND(lstm_param_->output_size_, state_col_tile_);
 #endif
   return RET_OK;
 }
@@ -241,8 +244,8 @@ int LstmFp32BaseCPUKernel::MallocRunBuffer(bool is_double) {
   }
 
   segment = 0;
-  if (!(in_tensors_.size() > kMindirInputTensorNum)) {
-    segment = lstm_param_->batch_ * lstm_param_->hidden_size_;
+  if (in_tensors_.size() == kMindirInputTensorNum) {
+    segment = lstm_param_->batch_ * lstm_param_->output_size_;
   }
   segments.push_back(segment);
   whole_size += segment * scale;
@@ -375,22 +378,20 @@ void LstmFp32BaseCPUKernel::LstmBackwardLoop(float *buffer[]) {
   auto *output = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   auto *hidden_state = reinterpret_cast<float *>(out_tensors_.at(1)->data());
   auto *cell_state = reinterpret_cast<float *>(out_tensors_.at(C2NUM)->data());
-  const float *backward_weight_h = weight_h_ptr_ + kGateNum * lstm_param_->state_col_align_ * lstm_param_->hidden_size_;
+  const float *backward_weight_h = weight_h_ptr_ + kGateNum * lstm_param_->state_col_align_ * lstm_param_->output_size_;
   const float *backward_state_bias = state_bias_ + kGateNum * lstm_param_->state_col_align_;
-  float *backward_output = output + lstm_param_->batch_ * lstm_param_->hidden_size_;
+  float *backward_output = output + lstm_param_->batch_ * lstm_param_->output_size_;
   if (in_tensors_.size() == kMindirInputTensorNum) {
-    backward_output = output + lstm_param_->hidden_size_;
+    backward_output = output + lstm_param_->output_size_;
   }
   float *backward_cell_state = cell_state + lstm_param_->batch_ * lstm_param_->hidden_size_;
-  float *backward_hidden_state = hidden_state + lstm_param_->batch_ * lstm_param_->hidden_size_;
+  float *backward_hidden_state = hidden_state + lstm_param_->batch_ * lstm_param_->output_size_;
   float *intermediate_states = nullptr;
   if (intermediate_states_) {
-    intermediate_states = intermediate_states_ + lstm_param_->batch_ * lstm_param_->hidden_size_;
+    intermediate_states = intermediate_states_ + lstm_param_->batch_ * lstm_param_->output_size_;
   }
   float *backward_weight_project =
-    weight_project_ptr_
-      ? weight_project_ptr_ + lstm_param_->hidden_size_ * UP_ROUND(lstm_param_->output_size_, col_tile_)
-      : nullptr;
+    weight_project_ptr_ ? weight_project_ptr_ + lstm_param_->hidden_size_ * lstm_param_->proj_col_align_ : nullptr;
   LstmUnidirectional(backward_output, backward_weight_h, backward_state_bias, backward_hidden_state,
                      backward_cell_state, backward_weight_project, intermediate_states, buffer, true);
 }

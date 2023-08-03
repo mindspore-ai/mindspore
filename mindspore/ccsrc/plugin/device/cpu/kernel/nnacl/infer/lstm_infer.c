@@ -17,7 +17,7 @@
 #include "nnacl/infer/lstm_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-static const int no_of_recorde_values = 6;
+static const int no_of_recorde_values = 5;
 
 int CheckInputShapeValid(const TensorC *const *inputs, size_t inputs_size, const LstmParameter *parameter) {
   if (inputs_size < C6NUM) {
@@ -143,7 +143,8 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     const size_t intermediate_states_shape_size = 1;
     int batch_size = input->shape_[SECOND_INPUT];
     int seq_len = input->shape_[FIRST_INPUT];
-    intermediate_states_shape[FIRST_INPUT] = no_of_recorde_values * batch_size * hidden_size * seq_len * dir_multiplier;
+    intermediate_states_shape[FIRST_INPUT] =
+      batch_size * seq_len * dir_multiplier * (out_size + no_of_recorde_values * hidden_size);
     SetShapeArray(outputs[FOURTH_INPUT], intermediate_states_shape, intermediate_states_shape_size);
     SetShapeArray(outputs[FIFTH_INPUT], state_shape, state_shape_size);
   }

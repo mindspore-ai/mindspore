@@ -175,11 +175,11 @@ void LstmMindirFp32CPUKernel::LstmUnidirectional(float *output, const float *wei
     // Sequence, Batch, DirMul, Hidden
     LstmStepUnit(tmp, input_gate_t, forget_gate_t, cell_gate_t, output_gate_t, weight_h, state_bias, weight_project,
                  hidden_state, cell_state, buffer, lstm_param_);
-    int seq_offset = real_t * lstm_param_->batch_ * dir_mult * lstm_param_->hidden_size_;
+    int seq_offset = real_t * lstm_param_->batch_ * dir_mult * lstm_param_->output_size_;
     for (int b = 0; b < lstm_param_->batch_; b++) {
-      int batch_offset = b * dir_mult * lstm_param_->hidden_size_;
+      int batch_offset = b * dir_mult * lstm_param_->output_size_;
       float *output_ptr = output + seq_offset + batch_offset;
-      memcpy(output_ptr, tmp + b * lstm_param_->hidden_size_, lstm_param_->hidden_size_ * sizeof(float));
+      memcpy(output_ptr, tmp + b * lstm_param_->output_size_, lstm_param_->output_size_ * sizeof(float));
     }
     if (intermediate_states) {
       RecordStates(hidden_state, cell_state, input_gate_t, output_gate_t, forget_gate_t, cell_gate_t,
@@ -192,15 +192,20 @@ void LstmMindirFp32CPUKernel::RecordStates(const float *hidden_state, float *cel
                                            const float *output_gate, float *forget_gate, const float *cell_gate,
                                            float *intermediate_states, int step) {
   float *states = intermediate_states;
+  auto hidden_size = lstm_param_->batch_ * lstm_param_->output_size_;
   auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
   if (state_size < 0) {
     MS_LOG(ERROR) << "state size should be greater than or equal to zero.";
     return;
   }
-  auto stride = step * lstm_param_->output_step_;
-  auto seq_stride = lstm_param_->seq_len_ * lstm_param_->output_step_;
-  memcpy(states + stride, hidden_state, state_size * sizeof(float));
-  stride += seq_stride;
+  auto hidden_stride = step * lstm_param_->output_step_;
+  auto hidden_seq_stride = lstm_param_->seq_len_ * lstm_param_->output_step_;
+  auto other_output_step = lstm_param_->bidirectional_ ? C2NUM * lstm_param_->batch_ * lstm_param_->hidden_size_
+                                                       : lstm_param_->batch_ * lstm_param_->hidden_size_;
+  auto stride = step * other_output_step;
+  auto seq_stride = lstm_param_->seq_len_ * other_output_step;
+  memcpy(states + hidden_stride, hidden_state, hidden_size * sizeof(float));
+  stride += hidden_seq_stride;
   memcpy(states + stride, cell_state, state_size * sizeof(float));
   stride += seq_stride;
   memcpy(states + stride, input_gate, state_size * sizeof(float));

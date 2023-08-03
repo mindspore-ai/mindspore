@@ -114,8 +114,8 @@ int LstmFP32Coder::InitParam() {
   auto weight_h = input_tensors_.at(THIRD_INPUT);
   std::vector<int> h_shape = weight_h->shape();
   lstm_param_->output_size_ = h_shape.back();
-  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? kTwo * lstm_param_->batch_ * lstm_param_->hidden_size_
-                                                          : lstm_param_->batch_ * lstm_param_->hidden_size_;
+  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? kTwo * lstm_param_->batch_ * lstm_param_->output_size_
+                                                          : lstm_param_->batch_ * lstm_param_->output_size_;
   weight_batch_ = lstm_param_->bidirectional_ ? kEight : kFour;
 
   if (input_tensor_->data_type() == kNumberTypeFloat32) {
@@ -129,6 +129,11 @@ int LstmFP32Coder::InitParam() {
   is_vec_ = lstm_param_->batch_ == 1;
   lstm_param_->state_row_align_ = is_vec_ ? lstm_param_->batch_ : UP_ROUND(lstm_param_->batch_, row_tile_);
   lstm_param_->state_col_align_ = is_vec_ ? lstm_param_->hidden_size_ : UP_ROUND(lstm_param_->hidden_size_, col_tile_);
+  if (target_ == kARM64) {
+    lstm_param_->proj_col_align_ = UP_ROUND(lstm_param_->output_size_, col_tile_);
+  } else {
+    lstm_param_->proj_col_align_ = is_vec_ ? lstm_param_->output_size_ : UP_ROUND(lstm_param_->output_size_, col_tile_);
+  }
   return RET_OK;
 }
 

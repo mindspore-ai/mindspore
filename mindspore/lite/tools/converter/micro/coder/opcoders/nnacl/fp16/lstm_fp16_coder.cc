@@ -144,9 +144,12 @@ int LstmFP16Coder::InitProjectWeight(CoderContext *const context) {
 }
 
 int LstmFP16Coder::MallocRunBuffer(CoderContext *const context) {
-  buffer_fp16_[FIRST_INPUT] = allocator_->Malloc(
-    data_type_, lstm_param_->input_row_align_ * lstm_param_->input_size_ * DataTypeSize(data_type_), kWorkspace);
-  MS_CHECK_PTR(buffer_fp16_[FIRST_INPUT]);
+  bool need_pack = target_ != kARM64 || (lstm_param_->batch_ * lstm_param_->seq_len_ != 1);
+  if (need_pack) {
+    buffer_fp16_[FIRST_INPUT] = allocator_->Malloc(
+      data_type_, lstm_param_->input_row_align_ * lstm_param_->input_size_ * DataTypeSize(data_type_), kWorkspace);
+    MS_CHECK_PTR(buffer_fp16_[FIRST_INPUT]);
+  }
   buffer_fp16_[SECOND_INPUT] = allocator_->Malloc(
     data_type_,
     kFour * lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * DataTypeSize(data_type_),

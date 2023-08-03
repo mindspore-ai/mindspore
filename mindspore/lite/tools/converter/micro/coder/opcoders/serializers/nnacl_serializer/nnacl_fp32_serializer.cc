@@ -127,7 +127,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const LstmParamete
                  lstm_parameter.seq_len_, lstm_parameter.batch_, lstm_parameter.output_step_,
                  lstm_parameter.bidirectional_, lstm_parameter.zoneout_cell_, lstm_parameter.zoneout_hidden_,
                  lstm_parameter.input_row_align_, lstm_parameter.input_col_align_, lstm_parameter.state_row_align_,
-                 lstm_parameter.state_col_align_, lstm_parameter.has_bias_);
+                 lstm_parameter.state_col_align_, lstm_parameter.proj_col_align_, lstm_parameter.has_bias_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const DeQuantArg &de_quant_arg) {
