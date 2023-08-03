@@ -400,7 +400,6 @@ Linear Algebraic Functions
     mindspore.ops.cond
     mindspore.ops.batch_dot
     mindspore.ops.dot
-    mindspore.ops.eig
     mindspore.ops.eigvals
     mindspore.ops.inner
     mindspore.ops.inverse
@@ -428,7 +427,6 @@ Linear Algebraic Functions
     mindspore.ops.vecdot
     mindspore.ops.logdet
     mindspore.ops.slogdet
-    mindspore.ops.qr
     mindspore.ops.trace
     mindspore.ops.vander
 

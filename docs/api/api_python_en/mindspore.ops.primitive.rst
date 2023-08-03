@@ -472,7 +472,6 @@ Array Operation
     mindspore.ops.DepthToSpace
     mindspore.ops.Diag
     mindspore.ops.DType
-    mindspore.ops.Eig
     mindspore.ops.ExpandDims
     mindspore.ops.FillDiagonal
     mindspore.ops.FillV2
@@ -517,7 +516,6 @@ Array Operation
     mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
-    mindspore.ops.Qr
     mindspore.ops.RandomShuffle
     mindspore.ops.Range
     mindspore.ops.Rank
