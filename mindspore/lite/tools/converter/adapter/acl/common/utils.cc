@@ -18,6 +18,7 @@
 #include <functional>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/common/node_util.h"
 #include "base/base_ref.h"
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"
@@ -274,7 +275,7 @@ STATUS DelRedundantParameter(const FuncGraphPtr &func_graph) {
   auto parameters = func_graph->parameters();
   for (auto &parameter : parameters) {
     CHECK_NULL_RETURN(parameter);
-    if (std::find(nodes.begin(), nodes.end(), parameter) == nodes.end()) {
+    if (std::find(nodes.begin(), nodes.end(), parameter) == nodes.end() && !lite::IsGraphInput(parameter)) {
       func_graph->DropNode(parameter);
     }
   }
