@@ -139,35 +139,37 @@ void DumpAclString(const aclDataType data_type, const ShapeVector &ori_shape, co
 }  // namespace
 
 template <typename ConvertType>
+template <typename T>
 void AttrHelper<ConvertType>::ConvertValueToRealType(const ValuePtr &value, const std::string &attr_name,
-                                                     AclConverter *acl_converter, TensorParams *param) {
+                                                     T trans_struct) {
   MS_EXCEPTION_IF_NULL(value);
-  MS_EXCEPTION_IF_NULL(acl_converter);
   attr_name_ = attr_name;
 
   auto sub_converter = static_cast<ConvertType *>(this);
   // Set datatype
-  if (param != nullptr && value->isa<Scalar>()) {
-    auto scalar_type = value->type();
-    MS_EXCEPTION_IF_NULL(scalar_type);
-    TypeId scalar_type_id = scalar_type->type_id();
-    param->data_type = scalar_type_id;
+  if (value->isa<Scalar>()) {
+    if constexpr (std::is_same<T, TensorParams *>::value) {
+      auto scalar_type = value->type();
+      MS_EXCEPTION_IF_NULL(scalar_type);
+      TypeId scalar_type_id = scalar_type->type_id();
+      trans_struct->data_type = scalar_type_id;
+    }
   }
 
   if (value->isa<BoolImm>()) {
-    sub_converter->ConvertValue(value, AttrDeclType<bool>(), acl_converter, param);
+    sub_converter->ConvertValue(value, AttrDeclType<bool>(), trans_struct);
   } else if (value->isa<Int64Imm>()) {
-    sub_converter->ConvertValue(value, AttrDeclType<int64_t>(), acl_converter, param);
+    sub_converter->ConvertValue(value, AttrDeclType<int64_t>(), trans_struct);
   } else if (value->isa<Int32Imm>()) {
-    sub_converter->ConvertValue(value, AttrDeclType<int32_t>(), acl_converter, param);
+    sub_converter->ConvertValue(value, AttrDeclType<int32_t>(), trans_struct);
   } else if (value->isa<FP32Imm>()) {
-    sub_converter->ConvertValue(value, AttrDeclType<float>(), acl_converter, param);
+    sub_converter->ConvertValue(value, AttrDeclType<float>(), trans_struct);
   } else if (value->isa<StringImm>()) {
-    sub_converter->ConvertValue(value, AttrDeclType<std::string>(), acl_converter, param);
+    sub_converter->ConvertValue(value, AttrDeclType<std::string>(), trans_struct);
   } else if (value->isa<GeDataTypeImm>()) {
-    sub_converter->ConvertValue(value, AttrDeclType<::ge::DataType>(), acl_converter, param);
+    sub_converter->ConvertValue(value, AttrDeclType<::ge::DataType>(), trans_struct);
   } else if (value->isa<ValueSequence>()) {
-    ConvertListAttr(value, acl_converter, param);
+    ConvertListAttr(value, trans_struct);
   } else {
     MS_LOG(EXCEPTION) << "Currently not support to Add the attr '" << attr_name << "' with value: " << value->ToString()
                       << ", perhaps you should add more supported type.";
@@ -175,8 +177,8 @@ void AttrHelper<ConvertType>::ConvertValueToRealType(const ValuePtr &value, cons
 }
 
 template <typename ConvertType>
-void AttrHelper<ConvertType>::ConvertListAttr(const ValuePtr &value, AclConverter *acl_converter, TensorParams *param) {
-  MS_EXCEPTION_IF_NULL(acl_converter);
+template <typename T>
+void AttrHelper<ConvertType>::ConvertListAttr(const ValuePtr &value, T trans_struct) {
   const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
   ShapeVector shape;
   TypePtr type_ptr = nullptr;
@@ -186,34 +188,33 @@ void AttrHelper<ConvertType>::ConvertListAttr(const ValuePtr &value, AclConverte
   }
   MS_EXCEPTION_IF_NULL(type_ptr);
   TypeId type_id = type_ptr->type_id();
-  if (param != nullptr) {
-    param->data_type = type_id;
-    param->ori_shape = shape;
-    param->dev_shape = shape;
+  if constexpr (std::is_same<T, TensorParams *>::value) {
+    trans_struct->data_type = type_id;
+    trans_struct->ori_shape = shape;
+    trans_struct->dev_shape = shape;
   }
 
   auto sub_converter = static_cast<ConvertType *>(this);
   if (shape.size() > 1) {
     if (type_id == TypeId::kNumberTypeInt64) {
-      sub_converter->ConvertValue(value, AttrDeclType<std::vector<std::vector<int64_t>>>(), shape, acl_converter,
-                                  param);
+      sub_converter->ConvertValue(value, AttrDeclType<std::vector<std::vector<int64_t>>>(), shape, trans_struct);
     } else {
       MS_LOG(EXCEPTION) << "Currently not support to convert input with value: " << value->ToString()
                         << ", perhaps you should add more supported type: " << TypeIdToString(type_id);
     }
   } else {
     if (type_id == TypeId::kNumberTypeBool) {
-      sub_converter->ConvertValue(value, AttrDeclType<std::vector<uint8_t>>(), acl_converter, param);
+      sub_converter->ConvertValue(value, AttrDeclType<std::vector<uint8_t>>(), trans_struct);
     } else if (type_id == TypeId::kNumberTypeFloat) {
-      sub_converter->ConvertValue(value, AttrDeclType<std::vector<float>>(), acl_converter, param);
+      sub_converter->ConvertValue(value, AttrDeclType<std::vector<float>>(), trans_struct);
     } else if (type_id == TypeId::kNumberTypeFloat32) {
-      sub_converter->ConvertValue(value, AttrDeclType<std::vector<float>>(), acl_converter, param);
+      sub_converter->ConvertValue(value, AttrDeclType<std::vector<float>>(), trans_struct);
     } else if (type_id == TypeId::kNumberTypeInt32) {
-      sub_converter->ConvertValue(value, AttrDeclType<std::vector<int32_t>>(), acl_converter, param);
+      sub_converter->ConvertValue(value, AttrDeclType<std::vector<int32_t>>(), trans_struct);
     } else if (type_id == TypeId::kNumberTypeInt64) {
-      sub_converter->ConvertValue(value, AttrDeclType<std::vector<int64_t>>(), acl_converter, param);
+      sub_converter->ConvertValue(value, AttrDeclType<std::vector<int64_t>>(), trans_struct);
     } else if (type_id == TypeId::kObjectTypeString) {
-      sub_converter->ConvertValue(value, AttrDeclType<std::vector<std::string>>(), acl_converter, param);
+      sub_converter->ConvertValue(value, AttrDeclType<std::vector<std::string>>(), trans_struct);
     } else {
       MS_LOG(EXCEPTION) << "Currently not support to convert input with value: " << value->ToString()
                         << ", perhaps you should add more supported type: " << TypeIdToString(type_id);
@@ -413,7 +414,7 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
 
     AttrToInputConverter attr_coverter;
     TensorParams new_params;
-    attr_coverter.ConvertValueToRealType(iter->second, ms_attr_name, this, &new_params);
+    attr_coverter.ConvertValueToRealType(iter->second, ms_attr_name, &new_params);
     auto input_tensor = attr_coverter.GetTensor();
     inputs_on_host->emplace(input_idx, input_tensor);
     AclDumpString dump_str;
