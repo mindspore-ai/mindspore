@@ -773,7 +773,7 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
   // call interface of cloud
   ModelConverter model_converter;
   model_converter.set_options(options_);
-  *om_data = model_converter.LoadMindIR(func_graph);
+  *om_data = model_converter.LoadMindIRV2(func_graph);
   if (om_data->Data() == nullptr || om_data->DataSize() == 0) {
     MS_LOG(ERROR) << "Model converter load mindir failed.";
     return lite::RET_ERROR;
