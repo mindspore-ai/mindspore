@@ -764,6 +764,29 @@ size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   return indexes.front();
 }
 
+size_t GetListGetItemOutIndex(const CNodePtr &list_get_item) {
+  if (list_get_item == nullptr || list_get_item->size() != kInputSizeThree) {
+    MS_LOG(ERROR) << "The node list_get_item is invalid.";
+    return SIZE_MAX;
+  }
+  auto output_index_value_node = list_get_item->input(kInputIndexTwo);
+  if (output_index_value_node == nullptr) {
+    MS_LOG(ERROR) << "The node list_get_item is invalid.";
+    return SIZE_MAX;
+  }
+  auto value_node = output_index_value_node->cast<ValueNodePtr>();
+  if (value_node == nullptr) {
+    MS_LOG(ERROR) << "The node list_get_item is invalid.";
+    return SIZE_MAX;
+  }
+  auto indexes = CastToInt(value_node->value());
+  if (indexes.empty()) {
+    MS_LOG(ERROR) << "The node list_get_item is invalid.";
+    return SIZE_MAX;
+  }
+  return indexes.front();
+}
+
 STATUS TransFilterFormat(const tensor::TensorPtr &tensor, schema::Format src_format, schema::Format dst_format) {
   MS_CHECK_TRUE_RET(tensor != nullptr, RET_ERROR);
   std::unordered_map<TypeId, std::function<STATUS(const tensor::TensorPtr &, schema::Format, schema::Format)>>

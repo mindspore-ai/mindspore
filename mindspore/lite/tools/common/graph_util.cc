@@ -41,30 +41,46 @@ const int kZeroPointGap = 128;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
-constexpr size_t kTupleGetItemInputSize = 3;
+constexpr size_t kSequenceCodeGetItemInputSize = 3;
 constexpr size_t kSecondIndex = 1;
 constexpr size_t kInvalidSize = SIZE_MAX;
 constexpr auto kMakeTuple = "MakeTuple";
+constexpr auto kMakeList = "make_list";
 constexpr size_t kEncMaxLen = 16;
 }  // namespace
 
-static STATUS GetAbstractfromTupleGetItem(const CNodePtr &cnode, AbstractBasePtr *abstract, size_t *idx) {
+static STATUS GetAbstractfromSequenceCodeGetItem(const CNodePtr &cnode, AbstractBasePtr *abstract, size_t *idx) {
   MS_CHECK_TRUE_MSG(abstract != nullptr, lite::RET_ERROR, "Abstract is nullptr.");
   MS_CHECK_TRUE_MSG(idx != nullptr, lite::RET_ERROR, "idx is nullptr.");
-  auto tuple_inputs = cnode->inputs();
-  MS_CHECK_TRUE_MSG(tuple_inputs.size() == kTupleGetItemInputSize, lite::RET_ERROR, "The node must have 3 inputs!");
-  auto get_item_input_cnode = tuple_inputs.at(kSecondIndex);
+  auto SequenceCode_inputs = cnode->inputs();
+  MS_CHECK_TRUE_MSG(SequenceCode_inputs.size() == kSequenceCodeGetItemInputSize, lite::RET_ERROR,
+                    "The node must have 3 inputs!");
+  auto get_item_input_cnode = SequenceCode_inputs.at(kSecondIndex);
   MS_CHECK_TRUE_MSG(get_item_input_cnode != nullptr, lite::RET_ERROR, "input node is nullptr.");
-  *idx = opt::GetTupleGetItemOutIndex(cnode);
-  if (!mindspore::utils::isa<mindspore::abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
-    MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple, cnode name: "
-                  << get_item_input_cnode->fullname_with_scope();
-    return lite::RET_ERROR;
+
+  AbstractBasePtrList abstract_list;
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
+    *idx = opt::GetTupleGetItemOutIndex(cnode);
+    if (!mindspore::utils::isa<mindspore::abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
+      MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple, cnode name: "
+                    << get_item_input_cnode->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+    auto input_node_abstract = utils::cast<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract());
+    abstract_list = input_node_abstract->elements();
+  } else {
+    *idx = opt::GetListGetItemOutIndex(cnode);
+    if (!mindspore::utils::isa<mindspore::abstract::AbstractListPtr>(get_item_input_cnode->abstract())) {
+      MS_LOG(ERROR) << "ListGetItem's abstract is not AbstractTuple, cnode name: "
+                    << get_item_input_cnode->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+    auto input_node_abstract = utils::cast<abstract::AbstractListPtr>(get_item_input_cnode->abstract());
+    abstract_list = input_node_abstract->elements();
   }
-  auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract());
-  auto abstract_list = abstract_tuple->elements();
+
   if (abstract_list.size() <= *idx) {
-    MS_LOG(ERROR) << "AbstractTuple's size is smaller than expect";
+    MS_LOG(ERROR) << "Abstract's size is smaller than expect";
     return lite::RET_ERROR;
   }
   *abstract = abstract_list[*idx];
@@ -93,10 +109,11 @@ STATUS GetShapeVectorAndIdxFromCNode(const CNodePtr &cnode, std::vector<int64_t>
   MS_CHECK_TRUE_MSG(shape_vector != nullptr, lite::RET_ERROR, "shape is nullptr");
 
   AbstractBasePtr cnode_abstract = nullptr;
-  if (opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
-    // idx is only used when cnode is type of kPrimTupleGetItem.
+  if ((opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) ||
+      (opt::CheckPrimitiveType(cnode, prim::kPrimListGetItem))) {
+    // idx is only used when cnode is type of kPrimTupleGetItem or kPrimListGetItem.
     MS_CHECK_TRUE_MSG(idx != nullptr, lite::RET_ERROR, "idx is nullptr");
-    if (GetAbstractfromTupleGetItem(cnode, &cnode_abstract, idx) != lite::RET_OK) {
+    if (GetAbstractfromSequenceCodeGetItem(cnode, &cnode_abstract, idx) != lite::RET_OK) {
       MS_LOG(ERROR) << "Get abstract from tuple get item failed.";
       return lite::RET_ERROR;
     }
@@ -173,7 +190,7 @@ static STATUS TraceOutput(const AnfNodePtr &node, std::vector<std::pair<AnfNodeP
   std::string name = GetCNodeFuncName(cnode);
   iter++;
   MS_LOG(INFO) << "Func name of cnode " << name << " ,trace iter: " << iter;
-  if (name == kMakeTuple) {
+  if ((name == kMakeTuple) || (name == kMakeList)) {
     for (size_t i = 1; i < cnode->inputs().size(); ++i) {
       auto make_tuple_input = cnode->input(i);
       if (opt::CheckPrimitiveType(make_tuple_input, prim::kPrimUpdateState) ||

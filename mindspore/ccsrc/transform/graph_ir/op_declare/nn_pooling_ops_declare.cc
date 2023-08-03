@@ -282,4 +282,10 @@ ATTR_MAP(Dilation2DBackpropInput) = {
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(Dilation2DBackpropInput) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Dilation2DBackpropInput, kNameDilation2DBackpropInput, ADPT_DESC(Dilation2DBackpropInput))
+
+// AdaptiveAvgPool2D
+INPUT_MAP(AdaptiveAvgPool2d) = {{1, INPUT_DESC(x)}};
+OUTPUT_MAP(AdaptiveAvgPool2d) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(AdaptiveAvgPool2d) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
+REG_ADPT_DESC(AdaptiveAvgPool2d, kAdaptiveAvgPool2DOpName, ADPT_DESC(AdaptiveAvgPool2d))
 }  // namespace mindspore::transform
