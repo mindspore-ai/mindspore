@@ -84,13 +84,13 @@ KernelDumper::~KernelDumper() {
 }
 
 void KernelDumper::OpLoadDumpInfo(const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
   auto stream = AscendStreamMng::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
   if (stream == nullptr) {
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   }
   if (DumpJsonParser::GetInstance().op_debug_mode() > 0) {
     auto rt_ret = rtStreamSynchronize(stream);
-    dumper_mutex_.unlock();
     if (rt_ret != ACL_ERROR_RT_AICORE_OVER_FLOW) {
       return;
     }
@@ -134,17 +134,7 @@ void KernelDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_i
   dump_info->set_flag(kAicpuLoadFlag);
 
   auto input_ctrl_tensors = kernel_graph_->device_loop_control_tensors();
-  if (input_ctrl_tensors.size() > 0) {
-    const auto &current_step_tensor = input_ctrl_tensors[kCurLoopCountName];
-    const auto &current_epoch_tensor = input_ctrl_tensors[kCurEpochCountName];
-    const auto &steps_per_epoch_tensor = input_ctrl_tensors[kConstLoopNumInEpochName];
-    void *current_step = current_step_tensor->device_address()->GetMutablePtr();
-    void *current_epoch = current_epoch_tensor->device_address()->GetMutablePtr();
-    void *steps_per_epoch = steps_per_epoch_tensor->device_address()->GetMutablePtr();
-    dump_info->set_step_id_addr(reinterpret_cast<uint64_t>(current_epoch));
-    dump_info->set_loop_cond_addr(reinterpret_cast<uint64_t>(current_step));
-    dump_info->set_iterations_per_loop_addr(reinterpret_cast<uint64_t>(steps_per_epoch));
-  }
+  SetdeviceLoopcontrolTensors(input_ctrl_tensors, dump_info);
 }
 
 void KernelDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info,
@@ -157,17 +147,7 @@ void KernelDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_i
   dump_info->set_flag(kAicpuLoadFlag);
 
   auto input_ctrl_tensors = task_info->device_loop_control_tensors();
-  if (input_ctrl_tensors.size() > 0) {
-    const auto &current_step_tensor = input_ctrl_tensors[kCurLoopCountName];
-    const auto &current_epoch_tensor = input_ctrl_tensors[kCurEpochCountName];
-    const auto &steps_per_epoch_tensor = input_ctrl_tensors[kConstLoopNumInEpochName];
-    void *current_step = current_step_tensor->device_address()->GetMutablePtr();
-    void *current_epoch = current_epoch_tensor->device_address()->GetMutablePtr();
-    void *steps_per_epoch = steps_per_epoch_tensor->device_address()->GetMutablePtr();
-    dump_info->set_step_id_addr(reinterpret_cast<uint64_t>(current_epoch));
-    dump_info->set_loop_cond_addr(reinterpret_cast<uint64_t>(current_step));
-    dump_info->set_iterations_per_loop_addr(reinterpret_cast<uint64_t>(steps_per_epoch));
-  }
+  SetdeviceLoopcontrolTensors(input_ctrl_tensors, dump_info);
 }
 
 void KernelDumper::Init() {
@@ -223,6 +203,7 @@ void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info
     MS_LOG(WARNING) << "HCCL operator is not supported overflow detection!";
     return;
   }
+  MS_EXCEPTION_IF_NULL(task_info);
   auto ori_name = task_info->op_name();
   auto idx = ori_name.rfind("_");
   auto op_name = ori_name.substr(0, idx);
@@ -240,7 +221,11 @@ void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info
   dump_task->set_end_graph(false);
   uint32_t task_id_rt = 0;
   uint32_t stream_id_rt = 0;
-  (void)rtGetTaskIdAndStreamID(&task_id_rt, &stream_id_rt);
+  rtError_t rt_ret = rtGetTaskIdAndStreamID(&task_id_rt, &stream_id_rt);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "[KernelDumper] rtGetTaskIdAndStreamID failed, rt_ret = " << rt_ret;
+    return;
+  }
   MS_LOG(INFO) << "[KernelDumper] Get from rtGetTaskIdAndStreamID, task_id:" << task_id_rt
                << " stream_id:" << stream_id_rt;
   dump_task->set_task_id(task_id_rt);
@@ -257,6 +242,7 @@ void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info
 }
 
 void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const rtStream_t &stream_) {
+  MS_EXCEPTION_IF_NULL(stream_);
   std::string proto_msg;
   const size_t proto_size = op_mapping_info.ByteSizeLong();
   const bool ret = op_mapping_info.SerializeToString(&proto_msg);
@@ -317,7 +303,11 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
 
 void KernelDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) {
   dump_task->set_end_graph(false);
-  (void)rtGetTaskIdAndStreamID(&task_id_, &stream_id_);
+  rtError_t rt_ret = rtGetTaskIdAndStreamID(&task_id_, &stream_id_);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "[KernelDumper] rtGetTaskIdAndStreamID failed, rt_ret = " << rt_ret;
+    return;
+  }
   dump_task->set_task_id(task_id_);
   dump_task->set_stream_id(stream_id_);
   MS_EXCEPTION_IF_NULL(dump_task->mutable_op());
@@ -461,22 +451,12 @@ void KernelDumper::SetOpMappingInfoRegister(NotNull<aicpu::dump::OpMappingInfo *
   dump_info->set_dump_step(iteration_);
   dump_info->set_flag(kAicpuLoadFlag);
 
+  MS_EXCEPTION_IF_NULL(kernel);
   FuncGraphPtr f_graph = kernel->func_graph();
   auto kernel_graph_ = f_graph->cast<KernelGraphPtr>();
 
   auto input_ctrl_tensors = kernel_graph_->device_loop_control_tensors();
-  if (input_ctrl_tensors.size() > 0) {
-    const auto &current_step_tensor = input_ctrl_tensors[kCurLoopCountName];
-    const auto &current_epoch_tensor = input_ctrl_tensors[kCurEpochCountName];
-    const auto &steps_per_epoch_tensor = input_ctrl_tensors[kConstLoopNumInEpochName];
-
-    void *current_step = current_step_tensor->device_address()->GetMutablePtr();
-    void *current_epoch = current_epoch_tensor->device_address()->GetMutablePtr();
-    void *steps_per_epoch = steps_per_epoch_tensor->device_address()->GetMutablePtr();
-    dump_info->set_step_id_addr(reinterpret_cast<uint64_t>(current_epoch));
-    dump_info->set_loop_cond_addr(reinterpret_cast<uint64_t>(current_step));
-    dump_info->set_iterations_per_loop_addr(reinterpret_cast<uint64_t>(steps_per_epoch));
-  }
+  SetdeviceLoopcontrolTensors(input_ctrl_tensors, dump_info);
 }
 
 #ifndef ENABLE_SECURITY
@@ -488,8 +468,15 @@ void KernelDumper::MallocP2PDebugMem(const void *const op_debug_addr) {
     MS_LOG(EXCEPTION) << "[KernelDumper] Call rt api rtGetRtCapability failed, ret = " << rt_ret;
   }
   auto memory_type = (value == static_cast<int64_t>(RT_CAPABILITY_SUPPORT)) ? RT_MEMORY_TS : RT_MEMORY_HBM;
-  (void)rtMalloc(&p2p_debug_addr_, kDebugP2pSize, memory_type, 0);
-  (void)rtMemcpy(p2p_debug_addr_, sizeof(uint64_t), &debug_addrs_tmp, sizeof(uint64_t), RT_MEMCPY_HOST_TO_DEVICE);
+  rt_ret = rtMalloc(&p2p_debug_addr_, kDebugP2pSize, memory_type, 0);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "[KernelDumper] Call rtMalloc failed, ret = " << rt_ret;
+    return;
+  }
+  rt_ret = rtMemcpy(p2p_debug_addr_, sizeof(uint64_t), &debug_addrs_tmp, sizeof(uint64_t), RT_MEMCPY_HOST_TO_DEVICE);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "[KernelDumper] Call rtMemcpy failed, ret = " << rt_ret;
+  }
 }
 
 void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {
@@ -501,7 +488,8 @@ void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {
   if (op_debug_mode == kNoOverflow) {
     return;
   }
-  dumper_mutex_.lock();
+  MS_EXCEPTION_IF_NULL(kernel);
+  std::lock_guard<std::mutex> lock(dumper_mutex_);
   auto stream = AscendStreamMng::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
   if (stream == nullptr) {
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
