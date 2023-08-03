@@ -17,10 +17,9 @@ A FlashAttention Layer.
 """
 import math
 
-import mindspore.numpy as mnp
-from mindspore import ops
-from mindspore.common import dtype as mstype
+import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
+from mindspore import ops
 from mindspore.nn.cell import Cell
 from mindspore.ops._op_impl._custom_op.flash_attention.flash_attention_impl import get_flash_attention
 
@@ -136,38 +135,35 @@ class FlashAttention(Cell):
                                   such as MatMul. Default: None.
         :return:
         """
-        if in_strategy is not None:
-            shard_stgy = list(in_strategy)
-            shard_stgy.insert(3, (1,))  # dim_mask
-            shard_stgy = tuple(shard_stgy)
-        else:
+        if in_strategy is None:
             # default: dp=1, mp=1, construct inputs only contain query, key, value
-            shard_stgy = (
+            in_strategy = (
                 (1, 1, 1, 1),
                 (1, 1, 1, 1),
                 (1, 1, 1, 1),
-                (1,),  # dim_mask
             )
-        self.flash_attention.shard(shard_stgy)
-        dp = shard_stgy[0][0]
-        mp = shard_stgy[0][1]
+        self.flash_attention.shard(in_strategy)
+        dp = in_strategy[0][0]
+        mp = in_strategy[0][1]
         self.flash_attention.add_prim_attr("dev_matrix_shape", [dp, mp, 1, 1])
         inputs_tensor_map = [
             [3, 2, 1, 0],
             [3, 2, 1, 0],
             [3, 2, 1, 0],
-            [-1]
         ]
         if self.have_attention_mask_batch:
             inputs_tensor_map.append([3, 1, 0])
         else:
             inputs_tensor_map.append([-1, 1, 0])
 
+        input_empty_args_num = 2
         # dropout_mask
         if self.dropout_rate > 1e-5:
+            input_empty_args_num -= 1
             inputs_tensor_map.append([3, 2, 1, 0])
 
         if self.alibi:
+            input_empty_args_num -= 1
             inputs_tensor_map.append([3, 2, 1, 0])
 
         self.flash_attention.add_prim_attr("inputs_tensor_map", inputs_tensor_map)
@@ -178,7 +174,7 @@ class FlashAttention(Cell):
             [3, 2, 1]  # M
         ])
         self.flash_attention.add_prim_attr("as_loss_divisor", 0)
-        self.flash_attention.add_prim_attr("empty_mirror_ops", 1)
+        self.flash_attention.add_prim_attr("empty_mirror_ops", input_empty_args_num)
 
     def construct(self, query, key, value, attn_mask=None, alibi_mask=None):
         """FlashAttention forward
@@ -211,13 +207,5 @@ class FlashAttention(Cell):
         if head_dim > 304:
             raise ValueError(
                 "the head_dim must be less than 304, otherwise the ub would be OOM.")
-        if head_dim % 16 != 0:
-            padding_size = 16 - head_dim % 16
-            query = mnp.pad(query, ((0, 0), (0, 0), (0, 0), (0, padding_size)), constant_values=0)
-            key = mnp.pad(key, ((0, 0), (0, 0), (0, 0), (0, padding_size)), constant_values=0)
-            value = mnp.pad(value, ((0, 0), (0, 0), (0, 0), (0, padding_size)), constant_values=0)
-            output, _, _ = self.flash_attention(query, key, value, self.dim_mask, attn_mask, drop_mask, alibi_mask)
-            output = ops.slice(output, [0, 0, 0, 0], [bsz, head_num, seq_len, head_dim])
-        else:
-            output, _, _ = self.flash_attention(query, key, value, self.dim_mask, attn_mask, drop_mask, alibi_mask)
+        output, _, _ = self.flash_attention(query, key, value, attn_mask, drop_mask, alibi_mask)
         return output
