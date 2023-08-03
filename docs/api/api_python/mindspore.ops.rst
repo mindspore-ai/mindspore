@@ -392,7 +392,6 @@ Reduction函数
     mindspore.ops.cholesky_solve
     mindspore.ops.batch_dot
     mindspore.ops.dot
-    mindspore.ops.eig
     mindspore.ops.inner
     mindspore.ops.inverse
     mindspore.ops.geqrf
@@ -416,7 +415,6 @@ Reduction函数
     mindspore.ops.tensor_dot
     mindspore.ops.logdet
     mindspore.ops.slogdet
-    mindspore.ops.qr
     mindspore.ops.trace
 
 谱函数

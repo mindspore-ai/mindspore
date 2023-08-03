@@ -244,7 +244,6 @@
     mindspore.Tensor.pow
     mindspore.Tensor.prod
     mindspore.Tensor.ptp
-    mindspore.Tensor.qr
     mindspore.Tensor.rad2deg
     mindspore.Tensor.random_categorical
     mindspore.Tensor.ravel
