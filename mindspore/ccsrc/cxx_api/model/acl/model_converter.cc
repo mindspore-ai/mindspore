@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,9 +255,36 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
   return buffer_ret;
 }
 
+Buffer ModelConverter::LoadMindIRV2(const FuncGraphPtr &func_graph) {
+  Buffer buffer_ret;
+  auto df_graph = ConvertFuncGraphToAIR(func_graph);
+  if (df_graph == nullptr) {
+    MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
+    return buffer_ret;
+  }
+  ge::Model model;
+  ge::Buffer model_data;
+  model.SetGraph(::ge::GraphUtilsEx::GetComputeGraph(*df_graph));
+  auto ge_ret = model.Save(model_data);
+  if (ge_ret != ge::SUCCESS) {
+    MS_LOG(ERROR) << "Save ge model to buffer failed.";
+    return buffer_ret;
+  }
+  buffer_ret = LoadAscendIRInner(model_data.data(), model_data.size());
+  if (buffer_ret.DataSize() == 0) {
+    MS_LOG(ERROR) << "Convert model from MindIR to OM failed";
+    return buffer_ret;
+  }
+  return buffer_ret;
+}
+
 Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
+  return LoadAscendIRInner(static_cast<const uint8_t *>(model_data.Data()), model_data.DataSize());
+}
+
+Buffer ModelConverter::LoadAscendIRInner(const uint8_t *data, size_t len) {
   ge::Model load_model = ge::Model("loadmodel", "version2");
-  ge::Status ret = ge::Model::Load(static_cast<const uint8_t *>(model_data.Data()), model_data.DataSize(), load_model);
+  ge::Status ret = ge::Model::Load(data, len, load_model);
   if (ret != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Load AscendIR failed, ret = " << ret;
     return Buffer();
