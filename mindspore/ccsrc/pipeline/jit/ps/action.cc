@@ -447,6 +447,9 @@ void GetTrainableParameters(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *par
         parameters->push_back(item);
       }
     }
+    if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on" && expander::IsPackGraph(g)) {
+      expander::GetSubPackGraphParams(fg, g, parameters, &memo);
+    }
   }
   MS_LOG(DEBUG) << fg->ToString() << ", parameters: " << parameters->size();
 }

@@ -58,15 +58,14 @@ class PackExpander {
 
   py::object BeginGraph(const abstract::AbstractBasePtrList &inputs);
   FuncGraphPtr EndGraph(const py::object &output);
-  py::object BeginFuncGraph(const py::object &obj, const py::args &inputs);
-  py::object EndFuncGraph(const py::object &obj, const py::object &output);
+  py::object BeginSubGraph(const py::object &obj, const py::args &inputs);
+  py::object EndSubGraph(const py::object &obj, const py::object &output);
 
   py::object Emit(const py::object &prim, const py::args &inputs) const;
   static bool is_pynative_mode;
 
   bool SetMixedPrecision(const py::object &obj);
   void RecoverMixedPrecision();
-  void UpdateFuncGraphFlags(const py::object &obj);
 
  private:
   AnfNodePtr EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const;
@@ -76,13 +75,13 @@ class PackExpander {
   py::object ConvertAbstractToParameter(const AbstractBasePtr &abs) const;
   void SetMixedPrecisionFlagToGraph() const;
 
-  bool reuse_{false};
   std::stack<FuncGraphPtr> graphs_;
   std::stack<AnfNodePtr> func_graph_node_;
   std::stack<MixedPrecisionType> mix_precision_types_;
 };
 
 void RegPackExpanderPy(const py::module *m);
+void UpdateFuncGraphFlags(const FuncGraphPtr &fg, const py::object &obj);
 }  // namespace expander
 }  // namespace mindspore
 

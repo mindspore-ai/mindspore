@@ -19,6 +19,8 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <utility>
+#include <set>
 
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
@@ -75,6 +77,25 @@ void GenerateTopGraphParams(const py::object &obj, std::vector<AnfNodePtr> *para
 
 void GetPackGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *parameters) {
   return GenerateTopGraphParams(GetPackFuncPrimitive(fg)->GetPyObj().attr("cell_obj"), parameters);
+}
+
+void GetSubPackGraphParams(const FuncGraphPtr &fg, const FuncGraphPtr &g, std::vector<AnfNodePtr> *parameters,
+                           std::set<const AnfNode *> *memo) {
+  std::vector<AnfNodePtr> p;
+  GetPackGraphParams(g, &p);
+  for (auto &item : p) {
+    if (item->cast<ParameterPtr>()->has_default() && memo->emplace(item.get()).second) {
+      g->add_parameter_obj_node(item);
+      auto pack_node = g->get_return()->input(1)->cast_ptr<CNode>();
+      pack_node->add_input(item);
+      auto &node_users = fg->manager()->node_users();
+      auto &users_node = node_users[item];
+      users_node.add(std::make_pair(g->get_return()->input(1), static_cast<int>(pack_node->inputs().size() - 1)));
+      parameters->push_back(item);
+    }
+  }
+  auto prim_py = GetPackFuncPrimitive(g);
+  prim_py->AddAttr("reuse", MakeValue(True));
 }
 
 namespace {
@@ -210,11 +231,11 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
     py::object expand_func = prim_py->GetPyObj().attr("__expand__");
     py::object inputs = expander->BeginGraph(new_abs_list);
     py::object cell_obj = prim_py->GetPyObj().attr("cell_obj");
-    if (!cell_obj.is_none()) {
-      expander->UpdateFuncGraphFlags(cell_obj);
-    }
     py::object output = expand_func(inputs);
     graph = expander->EndGraph(output);
+    if (!cell_obj.is_none()) {
+      UpdateFuncGraphFlags(graph, cell_obj);
+    }
     if (reuse) {
       graph = PostProcessForReuseGraph(graph, prim_py);
     }
