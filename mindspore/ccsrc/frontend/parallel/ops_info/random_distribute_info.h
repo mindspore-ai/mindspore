@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_UNIFORM_REAL_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_UNIFORM_REAL_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RANDOM_DISTRIBUTE_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RANDOM_DISTRIBUTE_INFO_H_
 
 #include <string>
 #include <memory>
@@ -29,12 +29,12 @@
 
 namespace mindspore {
 namespace parallel {
-class UniformRealInfo : public OperatorInfo {
+class RandomDistributeInfo : public OperatorInfo {
  public:
-  UniformRealInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                  const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<UniformRealCost>()) {}
-  ~UniformRealInfo() override = default;
+  RandomDistributeInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                       const PrimitiveAttrs &attrs)
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<RandomDistributeCost>()) {}
+  ~RandomDistributeInfo() override = default;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
@@ -48,6 +48,7 @@ class UniformRealInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferMirrorOps() override;
 
  private:
   void ResetInputsShape();
@@ -59,4 +60,4 @@ class UniformRealInfo : public OperatorInfo {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_UNIFORM_REAL_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RANDOM_DISTRIBUTE_INFO_H_
