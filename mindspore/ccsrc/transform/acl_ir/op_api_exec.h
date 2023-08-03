@@ -65,57 +65,58 @@ auto call(Function f, Tuple t) {
 
 // Async execute
 // TODO(OpApi): sync exec and move to acl_util run.
-#define EXEC_NPU_CMD(aclnn_api, acl_stream, ...)                                                             \
-  do {                                                                                                       \
-    static const auto get_workspace_size_func_ptr = GetOpApiFunc(#aclnn_api "GetWorkspaceSize");             \
-    if (get_workspace_size_func_ptr == nullptr) {                                                            \
-      MS_LOG(EXCEPTION) << #aclnn_api "GetWorkspaceSize"                                                     \
-                        << " not in " << GetOpApiLibName() << ", please check!";                             \
-    }                                                                                                        \
-    static const auto op_api_func = GetOpApiFunc(#aclnn_api);                                                \
-    if (op_api_func == nullptr) {                                                                            \
-      MS_LOG(EXCEPTION) << #aclnn_api << " not in " << GetOpApiLibName() << ", please check!";               \
-    }                                                                                                        \
-    uint64_t workspace_size = 0;                                                                             \
-    uint64_t *workspace_size_addr = &workspace_size;                                                         \
-    aclOpExecutor *executor = nullptr;                                                                       \
-    aclOpExecutor **executor_addr = &executor;                                                               \
-    auto init_mem_func = OpApiDefaultResource::GetInstance().init_mem_func();                                \
-    auto uninit_mem_func = OpApiDefaultResource::GetInstance().uninit_mem_func();                            \
-    if (init_mem_func) {                                                                                     \
-      init_mem_func(nullptr, false);                                                                         \
-    }                                                                                                        \
-    auto converted_params = ConvertTypes(__VA_ARGS__, workspace_size_addr, executor_addr);                   \
-    static auto get_workspace_size_func = ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr); \
-    auto workspace_status = call(get_workspace_size_func, converted_params);                                 \
-    if (workspace_status != 0) {                                                                             \
-      MS_LOG(EXCEPTION) << #aclnn_api << " not in " << GetOpApiLibName() << ", please check!";               \
-    }                                                                                                        \
-    void *workspace_addr = nullptr;                                                                          \
-    if (workspace_size != 0) {                                                                               \
-      workspace_addr = OpApiDefaultResource::GetInstance().AllocWorkspace(workspace_size);                   \
-    }                                                                                                        \
-    auto acl_call = [converted_params, workspace_addr, workspace_size, acl_stream, executor]() -> int {      \
-      using RunApiFunc = int (*)(void *, uint64_t, aclOpExecutor *, const aclrtStream);                      \
-      auto run_api_func = reinterpret_cast<RunApiFunc>(op_api_func);                                         \
-      auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                     \
-      if (api_ret != 0) {                                                                                    \
-        MS_LOG(EXCEPTION) << "call " #aclnn_api " failed, detail:" << aclGetRecentErrMsg();                  \
-      }                                                                                                      \
-      ReleaseConvertTypes(converted_params);                                                                 \
-      auto release_mem_func = OpApiDefaultResource::GetInstance().release_mem_func();                        \
-      if (release_mem_func) {                                                                                \
-        release_mem_func(nullptr, false);                                                                    \
-      }                                                                                                      \
-      return api_ret;                                                                                        \
-    };                                                                                                       \
-    auto call_ret = acl_call();                                                                              \
-    if (call_ret != 0) {                                                                                     \
-      MS_LOG(EXCEPTION) << #aclnn_api << " exec failed!" << aclGetRecentErrMsg();                            \
-    }                                                                                                        \
-    if (uninit_mem_func) {                                                                                   \
-      uninit_mem_func(nullptr, false);                                                                       \
-    }                                                                                                        \
+#define EXEC_NPU_CMD(aclnn_api, acl_stream, ...)                                                            \
+  do {                                                                                                      \
+    static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(#aclnn_api "GetWorkspaceSize"); \
+    if (get_workspace_size_func_ptr == nullptr) {                                                           \
+      MS_LOG(EXCEPTION) << #aclnn_api "GetWorkspaceSize"                                                    \
+                        << " not in " << transform::GetOpApiLibName() << ", please check!";                 \
+    }                                                                                                       \
+    static const auto op_api_func = transform::GetOpApiFunc(#aclnn_api);                                    \
+    if (op_api_func == nullptr) {                                                                           \
+      MS_LOG(EXCEPTION) << #aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";   \
+    }                                                                                                       \
+    uint64_t workspace_size = 0;                                                                            \
+    uint64_t *workspace_size_addr = &workspace_size;                                                        \
+    transform::aclOpExecutor *executor = nullptr;                                                           \
+    transform::aclOpExecutor **executor_addr = &executor;                                                   \
+    auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                    \
+    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();                \
+    if (init_mem_func) {                                                                                    \
+      init_mem_func(nullptr, false);                                                                        \
+    }                                                                                                       \
+    auto converted_params = transform::ConvertTypes(__VA_ARGS__, workspace_size_addr, executor_addr);       \
+    static auto get_workspace_size_func =                                                                   \
+      transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                         \
+    auto workspace_status = call(get_workspace_size_func, converted_params);                                \
+    if (workspace_status != 0) {                                                                            \
+      MS_LOG(EXCEPTION) << #aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";   \
+    }                                                                                                       \
+    void *workspace_addr = nullptr;                                                                         \
+    if (workspace_size != 0) {                                                                              \
+      workspace_addr = transform::OpApiDefaultResource::GetInstance().AllocWorkspace(workspace_size);       \
+    }                                                                                                       \
+    auto acl_call = [&converted_params, workspace_addr, &workspace_size, acl_stream, executor]() -> int {   \
+      using RunApiFunc = int (*)(void *, uint64_t, transform::aclOpExecutor *, const aclrtStream);          \
+      auto run_api_func = reinterpret_cast<RunApiFunc>(op_api_func);                                        \
+      auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                    \
+      if (api_ret != 0) {                                                                                   \
+        MS_LOG(EXCEPTION) << "call " #aclnn_api " failed, detail:" << aclGetRecentErrMsg();                 \
+      }                                                                                                     \
+      transform::ReleaseConvertTypes(converted_params);                                                     \
+      auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();            \
+      if (release_mem_func) {                                                                               \
+        release_mem_func(nullptr, false);                                                                   \
+      }                                                                                                     \
+      return api_ret;                                                                                       \
+    };                                                                                                      \
+    auto call_ret = acl_call();                                                                             \
+    if (call_ret != 0) {                                                                                    \
+      MS_LOG(EXCEPTION) << #aclnn_api << " exec failed!" << aclGetRecentErrMsg();                           \
+    }                                                                                                       \
+    if (uninit_mem_func) {                                                                                  \
+      uninit_mem_func(nullptr, false);                                                                      \
+    }                                                                                                       \
   } while (false)
 }  // namespace mindspore::transform
 

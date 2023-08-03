@@ -33,6 +33,7 @@
 #include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_build.h"
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
+#include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "include/transform/graph_ir/types.h"
@@ -74,6 +75,10 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
     }
     case KernelType::ACL_KERNEL: {
       kernel_mod_ptr = kernel::AclOpBuild(anf_node);
+      break;
+    }
+    case KernelType::OPAPI_KERNEL: {
+      kernel_mod_ptr = kernel::AclnnOpBuild(anf_node);
       break;
     }
     default: {

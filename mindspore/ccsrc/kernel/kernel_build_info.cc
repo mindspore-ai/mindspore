@@ -46,7 +46,8 @@ std::string KernelTypeLabel(const KernelType &kernel_type) {
                                                         {KernelType::CPU_KERNEL, "CPU_KERNEL"},
                                                         {KernelType::GPU_KERNEL, "GPU_KERNEL"},
                                                         {KernelType::BISHENG_KERNEL, "BISHENG_KERNEL"},
-                                                        {KernelType::ACL_KERNEL, "ACL_KERNEL"}};
+                                                        {KernelType::ACL_KERNEL, "ACL_KERNEL"},
+                                                        {KernelType::OPAPI_KERNEL, "OPAPI_KERNEL"}};
   if (trans_map.find(kernel_type) == trans_map.end()) {
     return "UNKNOWN_KERNEL_TYPE";
   }

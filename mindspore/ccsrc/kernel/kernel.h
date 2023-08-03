@@ -56,6 +56,7 @@ enum KernelType : int {
   GPU_KERNEL,
   BISHENG_KERNEL,
   ACL_KERNEL,
+  OPAPI_KERNEL,
 };
 namespace kernel {
 // Backend processor

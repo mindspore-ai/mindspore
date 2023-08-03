@@ -1321,7 +1321,7 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
   }
 
-  ret = rtSetDevice(UintToInt(device_id));
+  ret = aclrtSetDevice(UintToInt(device_id));
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }

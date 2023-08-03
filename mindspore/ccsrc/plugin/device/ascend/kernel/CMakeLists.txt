@@ -6,6 +6,7 @@ file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "kernel_query.cc"
         "ascend_kernel_mod.cc"
         "acl/*.cc"
+        "opapi/*.cc"
         "tbe/*.cc"
         "host/*.cc"
         "aicpu/*.cc"
