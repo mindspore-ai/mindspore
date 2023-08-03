@@ -2291,7 +2291,7 @@ class Cell(Cell_):
             args = expander.begin_subgraph(self, *args)
             args = [_convert_tensor(a) for a in args]
             output = self._run_construct(args, kwargs)
-            ret = expander.end_subgraph(output)
+            ret = expander.end_subgraph(self, output)
             output = _convert_tensor(ret)
         else:
             with _SetMixedPrecision(self):
