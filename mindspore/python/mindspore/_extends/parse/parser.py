@@ -853,8 +853,6 @@ class ThirdPartyLibraryChecker:
     4. Third-party libraries have 'site-packages' in their installation path.
     """
     def __init__(self):
-        self.jit_modules = self.get_jit_modules()
-        self.jit_ignore_modules = self.get_jit_ignore_modules()
         self.user_workspace_dir = self.get_top_level_module_path(os.getcwd())
         self.python_builtin_dir = os.path.abspath(os.path.dirname(os.__file__))
 
@@ -903,11 +901,13 @@ class ThirdPartyLibraryChecker:
         """Check if module is a third-party library."""
         module_leftmost_name = module.__name__.split('.')[0]
         # Modules in jit_ignore_modules are treated as third-party libraries, such as sys.builtin_module_names.
-        if module_leftmost_name in self.jit_ignore_modules:
+        jit_ignore_modules = self.get_jit_ignore_modules()
+        if module_leftmost_name in jit_ignore_modules:
             logger.debug(f"Found third-party module '{module_leftmost_name}' in jit_ignore_modules.")
             return True
         # Modules in jit_modules require jit and they are considered to be in user workspace.
-        if module_leftmost_name in self.jit_modules:
+        jit_modules = self.get_jit_modules()
+        if module_leftmost_name in jit_modules:
             logger.debug(f"Found user-defined module '{module_leftmost_name}' in jit_modules.")
             return False
         # A modules without __file__ attribute is considered to be in user workspace.
