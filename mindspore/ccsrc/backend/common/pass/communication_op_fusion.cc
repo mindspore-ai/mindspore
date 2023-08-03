@@ -466,13 +466,16 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
       if (kernel_graph->IsInternalOutput(communication_op_node_item, 0)) {
         kernel_graph->ReplaceInternalOutput(communication_op_node_item, new_communication_op, 0, LongToSize(offset));
       }
-      if (parallel::ParallelContext::GetInstance()->get_frontend_scheduling()) {
+      if (common::GetEnv("MS_ENABLE_FRONTEND_SCHEDULING_OPTIMIZATION") == "1") {
         auto &users = manager->node_users()[communication_op_node_item];
         for (auto &node : users) {
           auto cnode = node.first->cast<CNodePtr>();
           if (cnode->HasAttr("comp_comm_scheduling_depend")) {
             MS_LOG(INFO) << "Start EdgeRemove: AllReduce to comp_comm_scheduling_depend";
-            std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), cnode->input(2)->cast<CNodePtr>()};
+            if (cnode->size() <= 1 || !common::AnfAlgo::IsCommunicationOp(cnode->input(1))) {
+              MS_LOG(INTERNAL_EXCEPTION) << "Input 1 of Cnode doesn't exist or is not a communication node!";
+            }
+            std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), cnode->input(1)->cast<CNodePtr>()};
             auto depend_node = cnode->func_graph()->NewCNode(depend_inputs);
             depend_node->set_abstract(cnode->input(1)->cast<CNodePtr>()->abstract()->Clone());
             depend_node->AddAttr("comp_comm_scheduling_depend", MakeValue(true));

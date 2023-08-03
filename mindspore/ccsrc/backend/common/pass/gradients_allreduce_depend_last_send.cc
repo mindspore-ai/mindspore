@@ -34,6 +34,9 @@ bool GradientsAllReduceDependLastSend::Run(const FuncGraphPtr &graph) {
   if (split_stage_num <= 1) {
     return false;
   }
+  if (common::GetEnv("MS_ENABLE_FRONTEND_SCHEDULING_OPTIMIZATION") == "1") {
+    return false;
+  }
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   std::vector<CNodePtr> addn_list;
   CNodePtr last_send;
