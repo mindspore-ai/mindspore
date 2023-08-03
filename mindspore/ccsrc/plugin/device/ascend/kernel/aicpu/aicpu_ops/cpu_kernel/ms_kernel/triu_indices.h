@@ -34,6 +34,8 @@ class TriuIndicesCpuKernel : public CpuKernel {
   template <typename T>
   uint32_t DoCompute(CpuKernelContext &ctx);
 
+  uint32_t TriuIndicesAttrOutputCheck(CpuKernelContext &ctx);
+
   int32_t offset = 0;
   int32_t offset1 = 0;
 };

@@ -42,6 +42,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr TriuIndicesInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto row_ptr = primitive->GetAttr("row");
   MS_EXCEPTION_IF_NULL(row_ptr);
   auto col_ptr = primitive->GetAttr("col");
@@ -72,6 +73,7 @@ abstract::ShapePtr TriuIndicesInferShape(const PrimitivePtr &primitive, const st
 }
 
 TypePtr TriuIndicesInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto dtype_attr = primitive->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_attr);
   auto infer_type = dtype_attr->cast<TypePtr>();

@@ -56,6 +56,7 @@ template <typename T>
 bool TrilIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   auto m_first_row = offset_ > 0 ? std::min<int64_t>(col_, 1 + offset_) : row_ + offset_ > 0;
   auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col_, row_ + offset_));
   auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row_, row_ + offset_));
@@ -65,7 +66,7 @@ bool TrilIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   if (diff_row > 0) {
     tril_size += diff_row * col_;
   }
-  auto *output_addr = static_cast<T *>(outputs[0]->addr);
+  auto *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
   int64_t i = 0;
   int64_t r = std::max<int64_t>(0, -offset_), c = 0;
   while (i < SizeToLong(tril_size)) {

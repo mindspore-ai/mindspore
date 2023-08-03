@@ -22,7 +22,9 @@ constexpr size_t kColindex = 1;
 constexpr size_t kRowindex = 2;
 bool TrilGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Tril>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr_);
   kernel_name_ = kernel_ptr_->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -37,13 +39,16 @@ bool TrilGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   }
   kernel_func_ = func_list_[index].second;
   diagonal_ = kernel_ptr_->get_diagonal();
-  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  auto attr_dtype = kernel_attr.GetInputAttr(kIndex0);
+  unit_size_ = abstract::TypeIdSize(attr_dtype.dtype);
   return true;
 }
 
 int TrilGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -84,6 +89,8 @@ int TrilGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 template <typename T>
 bool TrilGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   auto status = CalTril(input_elements_, input, diagonal_, matrix_row_, matrix_col_, output, device_id_,
