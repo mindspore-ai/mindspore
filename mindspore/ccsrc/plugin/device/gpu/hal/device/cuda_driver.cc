@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,6 +198,11 @@ bool CudaDriver::SyncStream(const CudaDeviceStream &stream) {
   auto ret = cudaStreamSynchronize((cudaStream_t)stream);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaStreamSynchronize failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    if (ret != cudaErrorNotReady && common::GetEnv("CUDA_LAUNCH_BLOCKING") != "1") {
+      MS_LOG(ERROR) << "The kernel name and backtrace in log might be incorrect, since CUDA error might be "
+                    << "asynchronously reported at some other function call. Please exporting CUDA_LAUNCH_BLOCKING=1 "
+                    << "for more accurate error positioning.";
+    }
     return false;
   }
   return true;

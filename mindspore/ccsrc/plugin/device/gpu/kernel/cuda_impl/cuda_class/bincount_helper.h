@@ -125,7 +125,7 @@ class BincountHelperGpuKernel : public GpuKernelHelperBase {
 
     auto status = CalBincount(array_ptr, size_ptr, weight_ptr, bins_ptr, has_weights_, threads_size, bins_shape_[0],
                               device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

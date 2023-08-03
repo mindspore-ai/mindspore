@@ -149,7 +149,7 @@ class SegmentOpsHelperGpuKernel : public GpuKernelHelperBase {
     auto status =
       CalSegmentCombination(input_addr, output_addr, seg_id_addr, seg_pos_addr, Segment_ops_op_type_, inner_size_,
                             outer_size_, outer_class_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

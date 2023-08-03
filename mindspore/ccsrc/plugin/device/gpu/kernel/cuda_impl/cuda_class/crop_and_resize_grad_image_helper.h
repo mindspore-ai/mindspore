@@ -196,7 +196,7 @@ class CropAndResizeGradImageHelperGpuKernel : public GpuKernelHelperBase {
     auto status = CalCropAndResizeGradImage(
       size, grads_ptr, boxes_ptr, box_in_ptr, num_boxes_, image_batch_, image_height_, image_width_, crop_height_,
       crop_width_, depth_, method2kernel, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

@@ -211,7 +211,7 @@ class FractionalMaxPool3DWithFixedKsizeHelperGpuKernel : public GpuKernelHelperB
                                                        outputH_, outputW_, inputN_, inputC_, inputD_, inputH_, inputW_,
                                                        kernelsizeD_, kernelsizeH_, kernelsizeW_, outer_size, device_id_,
                                                        reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

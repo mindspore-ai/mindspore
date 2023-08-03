@@ -114,7 +114,7 @@ class RaggedRangeHelperGpuKernel : public GpuKernelHelperBase {
     auto status = CalRaggedRange(starts_addr, limits_addr, deltas_addr, rt_nested_splits_addr, rt_dense_values_addr,
                                  range_sizes_addr, nrows, broadcast_starts_, broadcast_limits_, broadcast_deltas_,
                                  device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

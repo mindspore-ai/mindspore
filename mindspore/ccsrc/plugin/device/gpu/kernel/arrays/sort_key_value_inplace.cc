@@ -92,7 +92,7 @@ bool SegSort(const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices
                     << key_slice_size;
       return false;
   }
-  CHECK_CUDA_STATUS(status, "FastSort_SegSort");
+  CHECK_CUDA_STATUS(status, "SegSort called by FastSort");
   return true;
 #undef HANDLE_CASE
 }
@@ -140,7 +140,7 @@ bool InitIndexBySlice(const TensorLayoutHelper &t, int64_t axis, K *data, cudaSt
   SimplifyBroadcastToShape(in_size, out_size, &simplified_inp_shape, &simplified_out_shape);
   auto status =
     BroadcastTo<K>(simplified_inp_shape, simplified_out_shape, slice_data_device, data, GET_CTX_DEVICE_ID, cuda_stream);
-  CHECK_CUDA_STATUS(status, "FastSort_InitIndexBySlice");
+  CHECK_CUDA_STATUS(status, "InitIndexBySlice called by FastSort");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(slice_data_device), "Free slice data failed.");
   return true;
 }

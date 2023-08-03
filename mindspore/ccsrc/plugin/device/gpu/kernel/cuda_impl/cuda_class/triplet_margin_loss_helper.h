@@ -235,7 +235,7 @@ class TripletMarginLossHelperGpuKernel : public GpuKernelHelperBase {
                                        anchor_shape_ptr, dst_shape_ptr, outer_size, inner_size, bound_list_ptr, bound_,
                                        shape_size_, margin_ptr, attr_ptr_->p, attr_ptr_->eps, reduction_, swap_,
                                        need_broadcast_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

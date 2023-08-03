@@ -199,7 +199,7 @@ class FractionalMaxPoolGradWithFixedKsizeHelperGpuKernel : public GpuKernelHelpe
     auto status = CalFractionalmaxpoolgradwithfixedksize(
       origin_input_ptr, out_backprop_ptr, argmax_ptr, output_ptr, outputH_, outputW_, inputN_, inputC_, inputH_,
       inputW_, outer_size, out_backprop_size, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

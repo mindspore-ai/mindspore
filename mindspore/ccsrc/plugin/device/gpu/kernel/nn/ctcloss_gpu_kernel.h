@@ -196,9 +196,7 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     cudaError_t status = cudaErrorNotReady;
     status = CalculateMaxSequence(sequence_length, max_labels_length, batch, stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch CalculateMaxSequence in GPU kernel CTCLoss failed.";
-    }
+    CHECK_CUDA_STATUS(status, "CalculateMaxSequence called by " + kernel_name_);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(&max_sequence, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
@@ -208,15 +206,11 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
                         << "but got x[0]: " << max_time << ", max_sequence: " << max_sequence;
     }
     status = InnerSoftMax(probs, softmax_probs, sequence_length, max_time, batch, numclass, stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch InnerSoftMax in GPU kernel CTCLoss failed.";
-    }
+    CHECK_CUDA_STATUS(status, "InnerSoftMax called by " + kernel_name_);
     MemsetForWS(label_value_pcr, cum_labels_length, label_squence_length, costs, grads, stream);
     status = CalculatePreLength(label_squence_length, precum_labels_length, cum_labels_length, max_labels_length,
                                 label_indices, batch, label_size_ / sizeof(int), stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch CalculatePreLength in GPU kernel CTCLoss failed.";
-    }
+    CHECK_CUDA_STATUS(status, "CalculatePreLength called by " + kernel_name_);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(&batch_label, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
@@ -227,15 +221,11 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     }
     status = GenLabelValue(label_value_sp, label_indices, label_values, label_squence_length, cum_labels_length,
                            max_labels_length, label_size_ / sizeof(int), numclass - 1, batch, stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch GenLabelValue in GPU kernel CTCLoss failed.";
-    }
+    CHECK_CUDA_STATUS(status, "GenLabelValue called by " + kernel_name_);
     if (preprocess_collapse_repeated_) {
       status = GenLabelValuePCR(label_value_sp, label_value_pcr, label_squence_length, cum_labels_length,
                                 max_labels_length, batch, stream);
-      if (status != cudaSuccess) {
-        MS_LOG(EXCEPTION) << "Launch GenLabelValuePCR in GPU kernel CTCLoss failed.";
-      }
+      CHECK_CUDA_STATUS(status, "GenLabelValuePCR called by " + kernel_name_);
     }
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(&max_labels_length_host, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
@@ -263,28 +253,20 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
       status = GenLabelWithBlank(label_value_sp, label_value_with_blank, label_squence_length, precum_labels_length,
                                  cum_labels_length, batch, numclass - 1, stream);
     }
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch GenLabelWithBlank in GPU kernel CTCLoss failed.";
-    }
+    CHECK_CUDA_STATUS(status, "GenLabelWithBlank called by " + kernel_name_);
 
     status = CalculateFwdVar(log_alpha_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_,
                              batch, SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
                              ignore_longer_outputs_than_inputs_, stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch CalculateFwdVar in GPU kernel CTCLoss failed.";
-    }
+    CHECK_CUDA_STATUS(status, "CalculateFwdVar called by " + kernel_name_);
     status = CalculateBwdVar(log_beta_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_,
                              batch, SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
                              ignore_longer_outputs_than_inputs_, stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch CalculateBwdVar in GPU kernel CTCLoss failed.";
-    }
+    CHECK_CUDA_STATUS(status, "CalculateBwdVar called by " + kernel_name_);
     status = CTCLoss(log_alpha_b, log_beta_b, softmax_probs, label_value_with_blank, batch, SOffSet, max_time, numclass,
                      sequence_length, label_squence_length, cum_labels_length, costs, grads, prob_num,
                      ignore_longer_outputs_than_inputs_, stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch CTCLoss in GPU kernel CTCLoss failed.";
-    }
+    CHECK_CUDA_STATUS(status, kernel_name_);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     FreeMem(label_value_with_blank, log_alpha_b, log_beta_b);
   }

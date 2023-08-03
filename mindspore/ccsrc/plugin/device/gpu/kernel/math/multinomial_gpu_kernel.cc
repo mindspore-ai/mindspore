@@ -96,16 +96,12 @@ void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
       rng_seed = static_cast<int>(rd());
     }
     status = InitRandState(rng_seed, distributions_, rand_state_, stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch GPU kernel InitRandState failed.";
-    }
+    CHECK_CUDA_STATUS(status, "InitRandState called by " + kernel_name_);
     rand_state_init_ = true;
   }
 
   status = Multinomial(distributions_, categories_, probs_addr, rand_state_, num_sample_addr, output_addr, stream);
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel Multinomial failed.";
-  }
+  CHECK_CUDA_STATUS(status, kernel_name_);
 }
 
 std::vector<std::pair<KernelAttr, MultinomialGpuKernelMod::LaunchFunc>> MultinomialGpuKernelMod::func_list_ = {

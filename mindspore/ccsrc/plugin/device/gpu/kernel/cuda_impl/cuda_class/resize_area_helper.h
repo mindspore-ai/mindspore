@@ -108,7 +108,7 @@ class ResizeAreaHelperGpuKernel : public GpuKernelHelperBase {
     auto status =
       CalResizeArea(image_ptr, x_interps, y_interps, output_ptr, batch_size_, channels_, out_height_, out_width_,
                     in_height_, in_width_, align_corners_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

@@ -106,7 +106,11 @@ __global__ void MultinomialKernel(int row, int col, T *probs, curandState *state
   accum_probs[shm_base_index] = probs[probs_base_index];
   for (int i = 1; i < col; i++) {
     probs_base_index++;
-    accum_probs[shm_base_index + i] = accum_probs[shm_base_index + i - 1] + static_cast<float>(probs[probs_base_index]);
+    float prob = static_cast<float>(probs[probs_base_index]);
+    CUDA_KERNEL_ASSERT(prob >= 0);
+    CUDA_KERNEL_ASSERT(!isnan(prob));
+    CUDA_KERNEL_ASSERT(!isinf(prob));
+    accum_probs[shm_base_index + i] = accum_probs[shm_base_index + i - 1] + prob;
   }
   __syncthreads();
 

@@ -136,7 +136,7 @@ class ResizeBicubicGradHelperGpuKernel : public GpuKernelHelperBase {
     auto status = CalResizeBicubicGrad(input_grad_ptr, batch_, channel_, input_grad_height_, input_grad_width_,
                                        origin_height_, origin_width_, h_scale_, w_scale_, work_ptr, output_ptr,
                                        half_pixel_centers_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

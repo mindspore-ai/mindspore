@@ -112,9 +112,7 @@ void LayerNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 
   auto status =
     LayerNormGrad(input_row_, input_col_, param_dim_, epsilon_, dy, x, mean, var, gamma, dx, dg, db, cuda_stream_);
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel LayerNormGrad failed.";
-  }
+  CHECK_CUDA_STATUS(status, kernel_name_);
 }
 
 std::vector<std::pair<KernelAttr, LayerNormGradGpuKernelMod::KernelFunc>> LayerNormGradGpuKernelMod::func_list_ = {

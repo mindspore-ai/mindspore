@@ -28,9 +28,7 @@ void ApplyGradientDescentKernelMod::LaunchKernel(const std::vector<kernel::Addre
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   auto status =
     CalApplyGradientDescent(input_size_, var, alpha, delta, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
-  }
+  CHECK_CUDA_STATUS(status, kernel_name_);
 }
 
 std::vector<std::pair<KernelAttr, ApplyGradientDescentKernelMod::LaunchFunc>>

@@ -117,7 +117,7 @@ class EmbeddingLookupHelperGpuKernel : public GpuKernelHelperBase {
     auto status = CalEmbeddingLookup(input_params_addr, input_indices_addr, output_addr, dims_[kIndex0], dims_[kIndex1],
                                      dims_[kIndex2], input_dim1_, static_cast<int64_t>(offset_),
                                      reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

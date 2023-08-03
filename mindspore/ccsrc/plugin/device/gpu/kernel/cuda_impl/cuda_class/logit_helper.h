@@ -83,7 +83,7 @@ class LogitHelperGpuKernel : public GpuKernelHelperBase {
     // call cuda kernel
     auto status = CalLogit(input_ptr, static_cast<T>(static_cast<T>(1.0) - static_cast<T>(eps_)), eps_, output_ptr,
                            input_size_list_[0] / sizeof(T), device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

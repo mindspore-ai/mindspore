@@ -202,20 +202,14 @@ void TagEnvironment::StepKernelProfiling(const int *action, float *state, float 
     cudaMemcpyAsync(agent_state_device, &agent_state, sizeof(AgentState), cudaMemcpyHostToDevice, stream),
     "cudaMemcpy failed.");
   auto status = AgentStateCopy(env_num_, agent_num_, agent_state_device, agent_state_device_, stream);
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
-  }
+  CHECK_CUDA_STATUS(status, "AgentStateCopy called by TagEnvironment");
   // Warmup
   status =
     StepBindBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done, stream);
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
-  }
+  CHECK_CUDA_STATUS(status, "StepBindBlock called by TagEnvironment");
   status = StepCrossBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done,
                           team_reward, distance, stream);
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
-  }
+  CHECK_CUDA_STATUS(status, "StepCrossBlock called by TagEnvironment");
 
   // Collect profiling info
   device::gpu::CudaDeviceStream start = nullptr;
@@ -228,9 +222,7 @@ void TagEnvironment::StepKernelProfiling(const int *action, float *state, float 
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::RecordEvent(start, stream), "Failed to record event to stream.");
   status =
     StepBindBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done, stream);
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
-  }
+  CHECK_CUDA_STATUS(status, "StepBindBlock called by TagEnvironment");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::RecordEvent(end, stream), "Failed to record event to stream.");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::SyncEvent(start), "Failed to sync event.");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::SyncEvent(end), "Failed to sync event.");
@@ -239,9 +231,7 @@ void TagEnvironment::StepKernelProfiling(const int *action, float *state, float 
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::RecordEvent(start, stream), "Failed to record event to stream.");
   status = StepCrossBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done,
                           team_reward, distance, stream);
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
-  }
+  CHECK_CUDA_STATUS(status, "StepCrossBlock called by TagEnvironment");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::RecordEvent(end, stream), "Failed to record event to stream.");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::SyncEvent(start), "Failed to sync event.");
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::SyncEvent(end), "Failed to sync event.");
