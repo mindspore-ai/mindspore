@@ -39,6 +39,7 @@
 #include "src/common/common.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_one_branch_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_concat_fusion.h"
+#include "tools/optimizer/fusion/kv_cache_mgr_load_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_assign_fusion.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 
@@ -57,6 +58,7 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   if (param->ascendGeOptionCfg.plugin_custom_ops == "All") {
     fusions.push_back(std::make_shared<opt::KVCacheMgrOneBranchFusion>());
     fusions.push_back(std::make_shared<opt::KVCacheMgrConcatFusion>());
+    fusions.push_back(std::make_shared<opt::KVCacheMgrLoadFusion>());
     fusions.push_back(std::make_shared<opt::KVCacheMgrAssignFusion>());
   } else {
     MS_LOG(INFO) << "custom op fusion not used.";
