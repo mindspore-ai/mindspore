@@ -72,9 +72,12 @@ class MatMul : public MatMulBase {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status CheckOutputStrategy(const StrategyPtr &out_strategy) override;
+  Status InferOutputTensorMap() override;
+  Status CheckLayoutConfig() override;
 
  private:
   void CheckPCLMatMul(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
+  Status CheckInputStrategy(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
 };
 
 class MatMulInfo : public MatMul {

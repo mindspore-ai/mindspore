@@ -189,15 +189,7 @@ void MatMul::CheckPCLMatMul(const Shape &mat_a_strategy, const Shape &mat_b_stra
   }
 }
 
-Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    return FAILED;
-  }
-
-  Strategies stra = strategy->GetInputDim();
-  Dimensions mat_a_strategy = stra.at(0);
-  Dimensions mat_b_strategy = stra.at(1);
-
+Status MatMul::CheckInputStrategy(const Shape &mat_a_strategy, const Shape &mat_b_strategy) {
   size_t mat_a_size = mat_a_strategy.size();
   size_t mat_b_size = mat_b_strategy.size();
   if ((mat_a_size != mat_a_dimension_) || (mat_b_size != mat_b_dimension_)) {
@@ -216,7 +208,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
     if (!transpose_b_ &&
         (mat_a_strategy.at(SECOND_FROM_END(mat_a_size)) != mat_b_strategy.at(SECOND_FROM_END(mat_b_size)))) {
       // for example: mat_a_strategy:[2,4,16,8], mat_b_strategy:[4,16,32], [16] in the example
-      MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
+      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << mat_a_strategy << " and mat_b " << mat_b_strategy
                     << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
                     << ", the shard num of first input's row is " << mat_a_strategy.at(SECOND_FROM_END(mat_a_size))
                     << ", but the shard num of second input's row is "
@@ -224,7 +216,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     } else if (transpose_b_ && (mat_a_strategy.at(SECOND_FROM_END(mat_a_size)) != mat_b_strategy.back())) {
       // for example: mat_a_strategy:[2,4,16,8], mat_b_strategy:[4,32,16], [16] in the example
-      MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
+      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << mat_a_strategy << " and mat_b " << mat_b_strategy
                     << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
                     << ", the shard num of first input's row is " << mat_a_strategy.at(SECOND_FROM_END(mat_a_size))
                     << ", but the shard num of second input's column is " << mat_b_strategy.back();
@@ -233,7 +225,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
   } else {
     if (!transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.at(SECOND_FROM_END(mat_b_size)))) {
       // for example: mat_a_strategy:[2,4,8,16], mat_b_strategy:[4,16,32], [16] in the example
-      MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
+      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << mat_a_strategy << " and mat_b " << mat_b_strategy
                     << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
                     << ", the shard num of first input's column is " << mat_a_strategy.back()
                     << ", but the shard num of second input's row is "
@@ -241,7 +233,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     } else if (transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.back())) {
       // for example: mat_a_strategy:[2,4,8,16], mat_b_strategy:[4,32,16], [16] in the example
-      MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
+      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << mat_a_strategy << " and mat_b " << mat_b_strategy
                     << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
                     << ", the shard num of first input's column is " << mat_a_strategy.back()
                     << ", but the shard num of second input's column is " << mat_b_strategy.back();
@@ -260,8 +252,19 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
   }
-
   return SUCCESS;
+}
+
+Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+    return FAILED;
+  }
+
+  Strategies stra = strategy->GetInputDim();
+  Dimensions mat_a_strategy = stra.at(0);
+  Dimensions mat_b_strategy = stra.at(1);
+
+  return CheckInputStrategy(mat_a_strategy, mat_b_strategy);
 }
 
 Status MatMul::CheckOutputStrategy(const StrategyPtr &out_strategy) {
@@ -339,6 +342,10 @@ Status MatMulBase::InferForwardCommunication() {
   if (candidate_flag_) {
     return SUCCESS;
   }
+
+  if (is_layout_config_) {
+    return SUCCESS;
+  }
   forward_op_.clear();
   size_t dimension = origin_dev_matrix_shape_.size();
   size_t relevant_dimension_index = SECOND_FROM_END(dimension);
@@ -372,6 +379,52 @@ Status MatMulBase::InferForwardCommunication() {
 
   forward_op_.push_back(op);
   MS_LOG(INFO) << name_ << ": The group name of forward communication is " << group_list[0].name();
+  return SUCCESS;
+}
+
+Status MatMul::InferOutputTensorMap() {
+  Shape mat_a_map = inputs_tensor_map_[0];
+  Shape mat_b_map = inputs_tensor_map_[1];
+
+  if (transpose_a_ || transpose_b_) {
+    MS_LOG(ERROR) << name_ << ": config layout can not support transpose_a or transpose_b";
+    return FAILED;
+  }
+
+  if (mat_a_map.size() != mat_b_map.size()) {
+    MS_LOG(ERROR) << name_ << ": config layout can not support broadcast";
+    return FAILED;
+  }
+
+  Shape mat_a_batch_map(mat_a_map.cbegin(), mat_a_map.cbegin() + mat_a_map.size() - 2);
+  Shape mat_b_batch_map(mat_b_map.cbegin(), mat_b_map.cbegin() + mat_b_map.size() - 2);
+
+  if (mat_a_batch_map.size() != mat_b_batch_map.size()) {
+    MS_LOG(ERROR) << name_ << ": config layout can not support broadcast";
+    return FAILED;
+  }
+
+  int64_t relevant_dim_map = mat_a_map[mat_a_map.size() - 1];
+  if (relevant_dim_map != MAP_NONE) {
+    MS_LOG(ERROR) << name_ << ": config layout can not support shard relevant dimension";
+    return FAILED;
+  }
+
+  Shape output_map = mat_a_batch_map;
+  output_map.push_back(mat_a_map[mat_a_map.size() - 2]);
+  output_map.push_back(mat_b_map[mat_b_map.size() - 1]);
+  outputs_tensor_map_.push_back(output_map);
+  MS_LOG(INFO) << name_ << ": the input tensor map is " << inputs_tensor_map_ << ", the output tensor map is "
+               << output_map;
+  return SUCCESS;
+}
+
+Status MatMul::CheckLayoutConfig() {
+  if (CheckInputStrategy(strategy_from_layout_[0], strategy_from_layout_[1]) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": invalid layout config, the dev matrix is " << dev_matrix_shape_
+                  << ", and input tensor map is " << inputs_tensor_map_;
+    return FAILED;
+  }
   return SUCCESS;
 }
 
