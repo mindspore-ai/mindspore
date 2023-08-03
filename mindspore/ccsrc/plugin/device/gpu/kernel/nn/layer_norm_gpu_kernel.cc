@@ -106,9 +106,7 @@ void LayerNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   auto status =
     LayerNorm(input_row_, input_col_, param_dim_, epsilon_, x, gamma, beta, y, mean, variance, cuda_stream_);
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel LayerNorm failed.";
-  }
+  CHECK_CUDA_STATUS(status, kernel_name_);
 }
 
 std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormGpuKernelMod::func_list_ = {

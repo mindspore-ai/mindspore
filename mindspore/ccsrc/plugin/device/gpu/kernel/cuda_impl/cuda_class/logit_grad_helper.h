@@ -90,7 +90,7 @@ class LogitGradHelperGpuKernel : public GpuKernelHelperBase {
     // call cuda kernel
     auto status = CalLogitGrad(input_grad_ptr, input_x_ptr, eps_, output_dx_ptr, input_size_list_[0] / sizeof(T),
                                device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

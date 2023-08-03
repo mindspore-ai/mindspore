@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ import pytest
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
-import mindspore.context as context
-import mindspore.nn as nn
+from mindspore import context
+from mindspore import nn
 import mindspore as ms
 from mindspore import Tensor
 
@@ -36,11 +36,47 @@ class Net(nn.Cell):
     def construct(self, x):
         return C.multinomial(x, self.sample, self.replacement, self.seed)
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_multinomial_exception1():
+    """
+    Feature: test Multinomial exception case.
+    Description: test Multinomial exception case and GPU kernel exception handling feature.
+    Expectation: success.
+    """
+    x = Tensor(np.array([0.9, np.inf, 0.2, 0]).astype(np.float32))
+    net = Net(2, True)
+    try:
+        net(x)
+    except RuntimeError:
+        assert True
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_multinomial__exception2():
+    """
+    Feature: test Multinomial exception case.
+    Description: test Multinomial exception case and GPU kernel exception handling feature.
+    Expectation: success.
+    """
+    x = Tensor(np.array([9, np.nan, 2, 1]).astype(np.float32))
+    net = Net(2, True)
+    try:
+        net(x)
+    except RuntimeError:
+        assert True
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_multinomial():
+    """
+    Feature: test Multinomial common call.
+    Description: test Multinomial common call.
+    Expectation: success.
+    """
     x0 = Tensor(np.array([0.9, 0.2]).astype(np.float32))
     x1 = Tensor(np.array([[0.9, 0.2], [0.9, 0.2]]).astype(np.float32))
     net0 = Net(1, True, 20)
@@ -52,7 +88,6 @@ def test_multinomial():
     assert out0.asnumpy().shape == (1,)
     assert out1.asnumpy().shape == (2,)
     assert out2.asnumpy().shape == (2, 6)
-
 
 class BatchedMultinomial(nn.Cell):
     def __init__(self):

@@ -147,7 +147,7 @@ class UniqueConsecutiveHelperGpuKernel : public UniqueConsecutiveHelperBase {
                                        s_sorted_index, s_range_data, t_indices_data, dev_input_shape, dev_input_axis,
                                        t_output_ptr, s_output_index, s_output_counts,
                                        reinterpret_cast<cudaStream_t>(cuda_stream), &post_output_size_);
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

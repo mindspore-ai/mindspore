@@ -105,7 +105,7 @@ class SpaceToBatchNDHelperGpuKernel : public GpuKernelHelperBase {
     auto status = CalSpaceToBatchND(input_ptr, paddings_start.data(), block_shape_.data(), input_shape_.data(),
                                     input_shape_size, stride.data(), on_stride.data(), off_set, input_size_,
                                     output_size_, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

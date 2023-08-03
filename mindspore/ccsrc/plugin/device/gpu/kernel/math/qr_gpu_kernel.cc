@@ -159,14 +159,10 @@ void QrGpuKernelMod::LaunchQr(T *d_input, T *d_A, T *d_tau, T *d_output_q, T *d_
           d_output_q + batch * m_ * p_, d_output_r + batch * m_ * n_);
     auto status =
       CalTranspose(m_ * n_, d_output_r + batch * m_ * n_, info, kNum2, d_output_r_t + batch * m_ * n_, stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch CalTranspose in GPU kernel Qr failed.";
-    }
+    CHECK_CUDA_STATUS(status, kernel_name_);
     status =
       CalTriu(p_ * n_, d_output_r_t + batch * m_ * n_, 0, p_, n_, output_r + batch * p_ * n_, device_id_, stream);
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch CalTriu in GPU kernel Qr failed.";
-    }
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 }
 

@@ -101,7 +101,7 @@ bool ReservoirReplayBuffer::Sample(const size_t &batch_size, const std::vector<A
     auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
     rand_state_ = static_cast<curandState *>(allocator.AllocTensorMem(sizeof(curandState) * batch_size));
     status = RandInit(batch_size, seed_, rand_state_, stream);
-    CHECK_CUDA_STATUS(status, "RandInit_Sample");
+    CHECK_CUDA_STATUS(status, "RandInit called by Sample");
   }
 
   if (!indices_) {
@@ -111,12 +111,12 @@ bool ReservoirReplayBuffer::Sample(const size_t &batch_size, const std::vector<A
 
   size_t valid_size = std::min(total_, capacity_);
   status = RandomGenUniform(batch_size, rand_state_, valid_size, indices_, stream);
-  CHECK_CUDA_STATUS(status, "RandInit_RandomGenUniform");
+  CHECK_CUDA_STATUS(status, "RandomGenUniform called by Sample");
 
   for (size_t i = 0; i < schema_.size(); i++) {
     auto output_addr = static_cast<uint8_t *>(transition[i]->addr);
     status = FifoSlice(fifo_replay_buffer_[i], indices_, output_addr, batch_size, schema_[i], stream);
-    CHECK_CUDA_STATUS(status, "RandInit_FifoSlice");
+    CHECK_CUDA_STATUS(status, "FifoSlice called by Sample");
   }
 
   return true;

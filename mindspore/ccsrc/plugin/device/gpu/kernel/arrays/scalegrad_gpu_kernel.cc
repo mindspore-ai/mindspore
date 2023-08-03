@@ -55,9 +55,7 @@ void ScaleGradGpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr>
     status = ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_float, output_addr,
                              reinterpret_cast<cudaStream_t>(stream_ptr));
   }
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch GPU kernel ScaleGrad failed.";
-  }
+  CHECK_CUDA_STATUS(status, kernel_name_);
 }
 
 bool ScaleGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

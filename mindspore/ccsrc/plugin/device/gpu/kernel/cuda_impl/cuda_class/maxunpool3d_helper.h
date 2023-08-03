@@ -107,7 +107,7 @@ class MaxUnpool3DHelperGpuKernel : public GpuKernelHelperBase {
     }
     auto status = CalMaxUnpool3D(input_ptr, indices, input_shape_, output_shape_, output_ptr, outer_size, thread_size,
                                  data_format_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 
@@ -226,7 +226,7 @@ class MaxUnpool3DGradHelperGpuKernel : public GpuKernelHelperBase {
     }
     auto status = CalMaxUnpool3DGrad(grad, indices, backprop_input_shape_, grad_shape_, output_ptr, outer_size,
                                      grad_data_format_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

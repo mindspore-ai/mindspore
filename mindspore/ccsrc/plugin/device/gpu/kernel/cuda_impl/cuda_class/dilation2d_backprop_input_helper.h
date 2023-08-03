@@ -150,7 +150,7 @@ class Dilation2DBackpropInputHelperGpuKernel : public GpuKernelHelperBase {
     auto status = CalDilation2DBackpropInput(
       input_ptr, filter, out_backprop, output_ptr, i_input_shape_, i_filter_shape_, i_out_backprop_shape_,
       i_output_shape_, stride_, dilation_, pads, outer_size, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

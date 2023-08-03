@@ -151,7 +151,7 @@ class GcdLcmHelperGpuKernel : public GpuKernelHelperBase {
                     << kernel_name_;
       return -1;
     }
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

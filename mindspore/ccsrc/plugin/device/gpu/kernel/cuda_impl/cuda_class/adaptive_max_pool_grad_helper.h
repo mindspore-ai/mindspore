@@ -91,7 +91,7 @@ class AdaptiveMaxPoolGradHelperGpuKernel : public GpuKernelHelperBase {
                                             static_cast<int64_t>(1), [=](int64_t a, int64_t b) { return a * b; });
       status = CalAdaptiveMaxPool3DGrad(dy_ptr, index_ptr, output_stride, argmax_stride, batch, dx_ptr, device_id_,
                                         reinterpret_cast<cudaStream_t>(cuda_stream));
-      CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+      CHECK_CUDA_STATUS(status, kernel_name_);
       return 0;
     }
     // call cuda kernel
@@ -111,7 +111,7 @@ class AdaptiveMaxPoolGradHelperGpuKernel : public GpuKernelHelperBase {
 
     status = CalAdaptiveMaxPool2DGrad(dy_ptr, index_ptr, n, c, in_h, in_w, out_h, out_w, dx_ptr, device_id_,
                                       reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

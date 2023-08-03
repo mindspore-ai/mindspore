@@ -175,7 +175,7 @@ class NonMaxSuppressionV3HelperGpuKernel : public GpuKernelHelperBase {
     auto status =
       DoNms(num_input, count, num_keep, scores, input_ptr, iou_host, score_host, index_buff, max_host, b_size, sel_mask,
             sel_boxes, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream), &post_output_size_);
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

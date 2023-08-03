@@ -28,9 +28,7 @@ void MomentumGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   S *momentum = GetDeviceAddress<S>(inputs, kIndex4);
   auto status = MomentumUpdateVariable(inputs[kIndex0]->size / sizeof(T), variable, accumulation, learning_rate,
                                        gradient, momentum, use_nesterov_, reinterpret_cast<cudaStream_t>(stream_ptr));
-  if (status != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Launch MomentumGpuKernel failed.";
-  }
+  CHECK_CUDA_STATUS(status, kernel_name_);
 }
 
 std::vector<std::pair<KernelAttr, MomentumGpuKernelMod::LaunchFunc>> MomentumGpuKernelMod::func_list_ = {

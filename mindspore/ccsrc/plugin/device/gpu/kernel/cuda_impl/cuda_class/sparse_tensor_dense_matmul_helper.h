@@ -120,7 +120,7 @@ class SparseTensorDenseMatmulHelperGpuKernel : public GpuKernelHelperBase {
     }
     auto status = CalSparseTensorDenseMatmul(values_size_, out_dim_1, b_rows, b_cols, indices, values, dense, output,
                                              adj_st_, adj_dt_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
   void SetKernelParam(const GpuKernelAttrBasePtr &kernel_attr) override {

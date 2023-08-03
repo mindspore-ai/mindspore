@@ -95,7 +95,7 @@ class ListDiffHelperGpuKernel : public GpuKernelHelperBase {
     auto status =
       CalListDiff(num_elements_x_, num_elements_y_, x_ptr, y_ptr, out_ptr, idx_ptr, workspace_y_ptr, worksapce_xidx_ptr,
                   worksapce_flag_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream), &post_output_size_);
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

@@ -103,7 +103,7 @@ class NthElementHelperGpuKernel : public GpuKernelHelperBase {
     const size_t slice_size = input_shape_[input_shape_.size() - 1];
     auto status = CalNthElement(slices_number, slice_size, input_ptr, input_n, output_ptr, reverse_, device_id_,
                                 reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

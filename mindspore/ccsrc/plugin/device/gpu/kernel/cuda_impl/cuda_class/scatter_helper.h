@@ -114,7 +114,7 @@ class ScatterHelperGpuKernel : public GpuKernelHelperBase {
     // call cuda kernel
     cudaError_t status = Scatter(scatter_type_, size_limit, inner_size_, indices_size_, indices, updates, input,
                                  device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     status = (cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
                               reinterpret_cast<cudaStream_t>(cuda_stream)));
     if (status != cudaSuccess) {

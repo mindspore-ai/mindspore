@@ -178,14 +178,10 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     auto status =
       BatchEye(batch_ * split_dim_ * split_dim_, split_dim_, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch BatchEye in GPU kernel SplitMatrix failed.";
-    }
+    CHECK_CUDA_STATUS(status, "_BatchEye called by " + kernel_name_);
     status = MatrixSplit(batch_ * split_dim_ * split_dim_, split_dim_, width_, input1_addr, d_batch_input_addr,
                          reinterpret_cast<cudaStream_t>(stream_ptr));
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch MatrixSplit in GPU kernel SplitMatrix failed.";
-    }
+    CHECK_CUDA_STATUS(status, "MatrixSplit called by " + kernel_name_);
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(T *) * batch_,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),

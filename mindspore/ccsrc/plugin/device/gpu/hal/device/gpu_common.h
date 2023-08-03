@@ -26,6 +26,7 @@
 #include <sstream>
 #include "utils/log_adapter.h"
 #include "utils/trace_base.h"
+#include "utils/ms_utils.h"
 #include "include/curand.h"
 
 namespace mindspore {
@@ -93,22 +94,21 @@ namespace gpu {
     }                                                                                    \
   } while (0);
 
-#define CHECK_CUDA_STATUS(status, kernel_name)                                                                     \
-  do {                                                                                                             \
-    if (status != cudaSuccess) {                                                                                   \
-      MS_LOG(ERROR) << "For `" << kernel_name << "`, the cuda Kernel fails to run, the error number is " << status \
-                    << ", which means " << cudaGetErrorString(status) << ".";                                      \
-      return false;                                                                                                \
-    }                                                                                                              \
-  } while (0);
-
-#define CHECK_CUDA_STATUS_WITH_RET(status, kernel_name, ret)                                                       \
-  do {                                                                                                             \
-    if (status != cudaSuccess) {                                                                                   \
-      MS_LOG(ERROR) << "For `" << kernel_name << "`, the cuda Kernel fails to run, the error number is " << status \
-                    << ", which means " << cudaGetErrorString(status) << ".";                                      \
-      return ret;                                                                                                  \
-    }                                                                                                              \
+#define CHECK_CUDA_STATUS(status, kernel_name)                                                                 \
+  do {                                                                                                         \
+    if (status != cudaSuccess) {                                                                               \
+      if (status != cudaErrorNotReady && mindspore::common::GetEnv("CUDA_LAUNCH_BLOCKING") != "1") {           \
+        MS_LOG(EXCEPTION)                                                                                      \
+          << "The cuda Kernel fails to run, the error number is " << status << ", which means "                \
+          << cudaGetErrorString(status) << ". But the name of failed kernel is uncertain and the "             \
+          << "backtrace of error might be incorrect, since CUDA error might be asynchronously reported "       \
+          << "at some other function call. Please exporting CUDA_LAUNCH_BLOCKING=1 for more accurate "         \
+          << "error positioning.";                                                                             \
+      } else {                                                                                                 \
+        MS_LOG(EXCEPTION) << "For `" << kernel_name << "`, the cuda Kernel fails to run, the error number is " \
+                          << status << ", which means " << cudaGetErrorString(status) << ".";                  \
+      }                                                                                                        \
+    }                                                                                                          \
   } while (0);
 
 #define CHECK_CUDA_RET_WITH_EXCEPT(node, expression, message)                                           \

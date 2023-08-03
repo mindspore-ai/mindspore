@@ -262,7 +262,7 @@ class FractionalPoolHelperGpuKernel : public GpuKernelHelperBase {
                                     output_shape_, overlapping_, outer_size, device_id_,
                                     reinterpret_cast<cudaStream_t>(cuda_stream));
     }
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 
@@ -442,7 +442,7 @@ class FractionalPoolGradHelperGpuKernel : public GpuKernelHelperBase {
         CalFractionalmaxpoolgrad(orig_input_ptr, orig_output_ptr, out_backprop_ptr, row_pooling_sequence,
                                  col_pooling_sequence, output_ptr, out_backprop_shape_, output_shape_, overlapping_,
                                  backprop_size, outer_size, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-      CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+      CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
       int64_t *orig_input_ptr = nullptr;
       T *out_backprop_ptr = nullptr;

@@ -237,7 +237,7 @@ class ScaleAndTranslateHelperGpuKernel : public GpuKernelHelperBase {
                            image_width_, depth_, output_height_, output_width_, kernel_type_, antialias, radius_,
                            input_shape_ptr, size_ptr, spans_size_ptr, forward_starts_ptr, forward_weights_ptr,
                            intermediate_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

@@ -140,7 +140,7 @@ class SliceHelperGpuKernel : public GpuKernelHelperBase {
       default:
         MS_LOG(EXCEPTION) << "gpu Slice operator does not support inputs with rank >= " << input_rank << ".";
     }
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

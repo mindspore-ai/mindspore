@@ -48,9 +48,7 @@ void BinaryCrossEntropyGradGpuKernelMod::LaunchKernel(const std::vector<AddressP
   if (input_size_ > 0) {
     auto status = BinaryCrossEntropyLossGrad(input_size_, reduction_, input_x, input_y, weight, dloss, dx,
                                              reinterpret_cast<cudaStream_t>(stream_ptr));
-    if (status != cudaSuccess) {
-      MS_LOG(EXCEPTION) << "Launch GPU kernel BinaryCrossEntropyLoss failed.";
-    }
+    CHECK_CUDA_STATUS(status, kernel_name_);
   }
 }
 

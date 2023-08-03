@@ -126,7 +126,7 @@ class HypotHelperGpuKernel : public GpuKernelHelperBase {
       status = CalHypot(output_num_, inputx_ptr, inputy_ptr, output_ptr, device_id_,
                         reinterpret_cast<cudaStream_t>(cuda_stream));
     }
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
 

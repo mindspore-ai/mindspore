@@ -88,7 +88,7 @@ class UniqueHelperGpuKernel : public GpuKernelHelperBase {
 
     auto status = CalUnique(t_input_ptr, num_elements_, s_input_index, s_sorted_index, t_output_ptr, s_output_index,
                             reinterpret_cast<cudaStream_t>(cuda_stream), &post_output_size_);
-    CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+    CHECK_CUDA_STATUS(status, kernel_name_);
     return 0;
   }
   TensorInfo GetOutputTensorInfo() override {

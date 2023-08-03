@@ -153,7 +153,7 @@ bool SparseAddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   auto status = SparseAddmm(input_indices, input_values, input_values_num_, mat2, mat3, mat2_col_, alpha, beta, output,
                             output_row_, output_col_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 

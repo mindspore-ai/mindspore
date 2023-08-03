@@ -92,7 +92,7 @@ class UniqueWithPadHelperGpuKernel : public GpuKernelHelperBase {
     for (size_t i = 0; i < batch_size_; i++) {
       auto status = CalUniqueWithPad(t_input_ptr, input_size_, s_input_index, s_sorted_index, t_output_ptr,
                                      s_output_index, reinterpret_cast<cudaStream_t>(cuda_stream), t_pad_num_ptr);
-      CHECK_CUDA_STATUS_WITH_RET(status, kernel_name_, -1);
+      CHECK_CUDA_STATUS(status, kernel_name_);
       t_input_ptr += input_size_;
       t_pad_num_ptr++;
       t_output_ptr += input_size_;
