@@ -4201,6 +4201,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('div')(self, value, rounding_mode=rounding_mode)
 
+    def eq(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.eq`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('equal')(self, other)
+
     def equal(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.equal`.

@@ -442,6 +442,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"cumprod", std::string("cumprod")},                                // cumprod()
        {"div", std::string("div")},                                        // div()
        {"divide", std::string("div")},                                     // divide()
+       {"eq", std::string("eq")},                                          // eq()
        {"equal", std::string("equal")},                                    // equal()
        {"expm1", std::string("expm1")},                                    // expm1()
        {"eig", std::string("eig")},                                        // eig()

@@ -109,6 +109,7 @@ mindspore.Tensor
     mindspore.Tensor.dsplit
     mindspore.Tensor.dtype
     mindspore.Tensor.eigvals
+    mindspore.Tensor.eq
     mindspore.Tensor.equal
     mindspore.Tensor.erf
     mindspore.Tensor.erfc
