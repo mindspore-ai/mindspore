@@ -56,8 +56,8 @@ class PackExpander {
   PackExpander() = default;
   ~PackExpander() = default;
 
-  py::object BeginGraph(const abstract::AbstractBasePtrList &inputs);
-  FuncGraphPtr EndGraph(const py::object &output);
+  py::object BeginGraph(const py::object &obj, const abstract::AbstractBasePtrList &inputs);
+  FuncGraphPtr EndGraph(const py::object &obj, const py::object &output);
   py::object BeginSubGraph(const py::object &obj, const py::args &inputs);
   py::object EndSubGraph(const py::object &obj, const py::object &output);
 
@@ -81,7 +81,6 @@ class PackExpander {
 };
 
 void RegPackExpanderPy(const py::module *m);
-void UpdateFuncGraphFlags(const FuncGraphPtr &fg, const py::object &obj);
 }  // namespace expander
 }  // namespace mindspore
 

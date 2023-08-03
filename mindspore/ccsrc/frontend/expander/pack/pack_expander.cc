@@ -18,6 +18,7 @@
 #include <utility>
 #include <algorithm>
 #include <string>
+#include <unordered_map>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "ir/tensor.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -31,6 +32,7 @@
 
 namespace mindspore {
 namespace expander {
+namespace {
 void UpdateRecomputeScope(const FuncGraphPtr &fg, const py::object &obj) {
   py::object scope_str =
     python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_SCOPE_NAME, obj);
@@ -42,13 +44,36 @@ void UpdateRecomputeScope(const FuncGraphPtr &fg, const py::object &obj) {
   }
 }
 
-void UpdateFuncGraphFlags(const FuncGraphPtr &fg, const py::object &obj) {
-  parse::data_converter::SetFuncGraphByCellObj(fg, obj);
-  parse::UpdateFuncGraphFlags(obj, fg, true);
-  UpdateRecomputeScope(fg, obj);
+void GraphDropout(const FuncGraphPtr &fg) {
+  auto nodes = fg->TopoSort(fg->get_return());
+  std::unordered_map<AnfNodePtr, bool> node_map;
+  auto order_list = fg->order_list();
+  for (auto &node : nodes) {
+    if (node->isa<CNode>()) {
+      node_map[node] = true;
+    }
+  }
+  for (auto &node : order_list) {
+    if (node->isa<CNode>() && node != fg->get_return() && node_map.find(node) == node_map.end()) {
+      fg->DropNode(node);
+    }
+  }
 }
 
-namespace {
+void UpdateFuncGraphInBegin(const FuncGraphPtr &fg, const py::object &obj) {
+  if (!obj.is_none()) {
+    parse::data_converter::SetFuncGraphByCellObj(fg, obj);
+    parse::UpdateFuncGraphFlags(obj, fg, true);
+  }
+}
+
+void UpdateFuncGraphInEnd(const FuncGraphPtr &fg, const py::object &obj) {
+  if (!obj.is_none()) {
+    UpdateRecomputeScope(fg, obj);
+  }
+  GraphDropout(fg);
+}
+
 AbstractBasePtr GetAbstract(const AnfNodePtr &node) {
   const auto &abs = node->abstract();
   if (abs == nullptr) {
@@ -147,9 +172,10 @@ py::object PackNode::GetValue() const {
   return py::none();
 }
 
-py::object PackExpander::BeginGraph(const abstract::AbstractBasePtrList &inputs) {
+py::object PackExpander::BeginGraph(const py::object &obj, const abstract::AbstractBasePtrList &inputs) {
   py::tuple outputs(inputs.size());
   auto graph = std::make_shared<FuncGraph>();
+  UpdateFuncGraphInBegin(graph, obj);
   graphs_.push(graph);
   for (size_t i = 0; i < inputs.size(); ++i) {
     outputs[i] = ConvertAbstractToParameter(inputs[i]);
@@ -160,6 +186,7 @@ py::object PackExpander::BeginGraph(const abstract::AbstractBasePtrList &inputs)
 py::object PackExpander::BeginSubGraph(const py::object &obj, const py::args &inputs) {
   auto up_graph = graphs_.top();
   auto graph = std::make_shared<FuncGraph>();
+  UpdateFuncGraphInBegin(graph, obj);
   graphs_.push(graph);
   AnfNodePtrList node_inputs = {NewValueNode(graph)};
   auto args = py::cast<py::tuple>(inputs);
@@ -175,20 +202,20 @@ py::object PackExpander::BeginSubGraph(const py::object &obj, const py::args &in
   return outputs;
 }
 
-FuncGraphPtr PackExpander::EndGraph(const py::object &output) {
+FuncGraphPtr PackExpander::EndGraph(const py::object &obj, const py::object &output) {
   auto node = ConvertInput(output);
   MS_EXCEPTION_IF_NULL(node);
   auto graph = graphs_.top();
   graphs_.pop();
   graph->set_output(node);
+  UpdateFuncGraphInEnd(graph, obj);
   return graph;
 }
 
 py::object PackExpander::EndSubGraph(const py::object &obj, const py::object &output) {
   auto func_node = func_graph_node_.top();
   func_graph_node_.pop();
-  auto fg = EndGraph(output);
-  UpdateFuncGraphFlags(fg, obj);
+  auto fg = EndGraph(obj, output);
   func_node->set_abstract(fg->output()->abstract());
   return ConvertCNodeToPython(func_node);
 }
