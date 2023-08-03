@@ -16,12 +16,10 @@
 #include "nnacl/fp16/where_fp16.h"
 #include "nnacl/common_func.h"
 
-void WhereWithTripleInputsFp16(const bool *condition, const float16_t *x, const float16_t *y, float16_t *output,
-                               const WhereParameter *param, int task_id) {
-  if (param->op_parameter_.thread_num_ == 0) {
-    return;
-  }
-  int stride = UP_DIV(param->max_num_, param->op_parameter_.thread_num_);
+void WhereWithTripleInputsFp16(const float16_t *x, const float16_t *y, float16_t *output, const WhereArgs *param,
+                               int task_id, int thread_num) {
+  const bool *condition = param->condition_;
+  int stride = UP_DIV(param->max_num_, thread_num);
   int begin = task_id * stride;
   int end = MSMIN(begin + stride, param->max_num_);
 

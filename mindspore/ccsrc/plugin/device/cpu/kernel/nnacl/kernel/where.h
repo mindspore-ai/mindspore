@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NNACL_WHERE_PARAMETER_H_
-#define NNACL_WHERE_PARAMETER_H_
+
+#ifndef NNACL_KERNEL_WHERE_H_
+#define NNACL_KERNEL_WHERE_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-typedef struct WhereParameter {
-  OpParameter op_parameter_;
-} WhereParameter;
+typedef struct WhereArgs {
+  int condition_num_;
+  int x_num_;
+  int y_num_;
+  int max_num_;
+  int rank_;
+  bool *condition_;
+} WhereArgs;
 
-#endif  // NNACL_WHERE_PARAMETER_H_
+typedef struct WhereStruct {
+  KernelBase base_;
+  WhereArgs args_;
+  int data_type_;
+  void *x_;
+  void *y_;
+  void *output_;
+} WhereStruct;
+
+KernelBase *CreateWhere(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_WHERE_H_

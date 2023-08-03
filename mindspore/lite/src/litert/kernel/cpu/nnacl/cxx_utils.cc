@@ -25,7 +25,7 @@
 
 namespace mindspore::nnacl {
 void *DefaultAllocatorMalloc(void *allocator, size_t sz) {
-  if (allocator == nullptr || sz == 0) {
+  if (allocator == nullptr) {
     MS_LOG(ERROR) << "in param invalid";
     return nullptr;
   }

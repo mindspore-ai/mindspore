@@ -15,7 +15,6 @@
  */
 
 #include "nnacl/kernel/reverse.h"
-#include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/tensor_c_utils.h"
 #include "nnacl/reverse_parameter.h"
 #include "nnacl/fp32/reverse_fp32.h"
