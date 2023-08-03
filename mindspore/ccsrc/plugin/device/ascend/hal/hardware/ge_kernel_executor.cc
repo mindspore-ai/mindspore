@@ -288,9 +288,9 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
                                       return item->IsSimilarityKernelBuildInfo(*build_info);
                                     });
       if (!find_valid) {
-        MS_LOG(EXCEPTION) << "Invalid Kernel Build Info! Kernel type: " << kernel::KernelTypeLabel(kernel_type)
-                          << ", node: " << kernel->fullname_with_scope()
-                          << KernelSelectDebugString(build_info, kernel_info_list);
+        MS_EXCEPTION(TypeError) << "Invalid Kernel Build Info! Kernel type: " << kernel::KernelTypeLabel(kernel_type)
+                                << ", node: " << kernel->fullname_with_scope()
+                                << KernelSelectDebugString(build_info, kernel_info_list);
       }
     }
   }
