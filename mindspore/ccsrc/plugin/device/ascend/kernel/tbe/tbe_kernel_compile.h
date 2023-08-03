@@ -23,6 +23,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <atomic>
 #include "ir/anf.h"
 #include "kernel/kernel.h"
 #include "kernel/kernel_fusion.h"
@@ -129,10 +130,29 @@ class TbeKernelCompileManager {
   void DistributeCompileTask(const std::vector<CNodePtr> &node_list, const std::string &job_type);
   void DistributePreBuildTask(const std::vector<CNodePtr> &node_list);
 
+  void WakeUp();
+  void StartAutoSleep();
+  void InitServerProcess();
+  void FinalizeServerProcess();
+
+  std::thread auto_sleep_thread_;  // activate when status_ == kCountingDown
+  std::recursive_mutex sleep_mutex_;
+  enum Status {
+    kWorking,
+    kSleep,
+    kCountingDown,
+  } status_ = kSleep;
+  void SetStatus(Status status);
+
+  nlohmann::json init_json_;
+  nlohmann::json finalize_json_;
+  int64_t time_count_ = 0;
+  static constexpr int64_t kTimeoutSec = 20;
+
   // init flag
-  static bool tbe_init_flag_;
+  bool tbe_init_flag_ = false;
   // tune flag
-  static bool is_tune_flag_;
+  bool is_tune_flag_ = false;
   // single op had build
   std::set<std::string> single_processed_kernels_;
   // single op had pre build
@@ -166,5 +186,4 @@ class TbeKernelCompileManager {
 }  // namespace ascend
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_TBE_KERNEL_COMPILE_H_

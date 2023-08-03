@@ -76,6 +76,7 @@ class BACKEND_EXPORT KernelBuildClient {
       init_ = false;
     }
   }
+  bool IsOpen() const { return init_; }
 
   // Send a request and fetch its response
   std::string SendRequest(const std::string &data) {

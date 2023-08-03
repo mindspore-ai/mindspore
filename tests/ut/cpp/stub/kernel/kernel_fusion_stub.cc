@@ -24,7 +24,6 @@ bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann
   return true;
 }
 TbeKernelCompileManager::~TbeKernelCompileManager() {}
-bool TbeKernelCompileManager::tbe_init_flag_ = true;
 
 void TbeKernelCompileManager::TbeInitialize() {}
 // pre build
