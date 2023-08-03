@@ -2,6 +2,353 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.1.0 Release Notes
+
+### Major Features and Improvements
+
+#### FrontEnd
+
+- [BETA] JIT Fallback supports variable scenarios. In static graph mode, JIT Fallback supports return of Dict type and Scalar type, supports property setting of non-Parameter type objects, supports partial in-place modification operations of List, and supports third-party libraries such as NumPy. Moreover, it supports related operations of user-defined classes and supports Python basic operators and built-in functions to use more data types. It is compatible with features like control flow, side effects, automatic differentiation. For more details, please refer to [Static Graph Syntax Support](https://www.mindspore.cn/docs/en/r2.1/note/static_graph_syntax_support.html).
+
+- [BETA] In static graph mode, the error message of using undefined variables in the control flow scene is optimized. When using variables defined in if, while, and for control flow branches, the variables need to be initialized and defined before the control flow.
+
+- [STABLE] Add module ReWrite, support the ability to modify multiple network in batches based on customized rules.
+
+- [BETA] Add optim_ex module for optimizers, extend the current functionality, support parameter grouping for every parameter in the optimizer, and support parameter modification by assignment while training.
+
+- [STABLE] Optimize PyTorch and MindSpore API Mapping Table, specify the differences between APIs among functionality, parameter, input, output and specialized cases.
+
+#### PyNative
+
+- Optimize the performance of dynamic shape scenes in PyNative mode.
+
+#### DataSet
+
+- [STABLE] Optimize the memory structure of MindRecord data files. Memory consumption can be reduced 60% when loading 100TB+ data for training.
+- [STABLE] Support single-thread execution of data processing pipeline, and users can add code in the data pipeline for debugging.
+- [STABLE] Optimize the performance of TFRecordDataset to improve the performance of dataset loading by 60%+. Optimize the performance of batch to improve the performance by 30% for the scenarios with large number of batch.
+- [STABLE] Optimize API documentation of [mindspore.dataset](https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore.dataset.html) and [mindspore.dataset.transforms](https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/mindspore.dataset.transforms.html). Four new sample libraries have been added to show the effect of data enhancement, namely: [Load & Process Datasets Using Data Pipeline](https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.dataset.html#quick-start-of-dataset-pipeline), [Visual Transformation Sample Library](https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.dataset.transforms.html#module-mindspore.dataset.vision), [Text Transform Sample Library](https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.dataset.transforms.html#module-mindspore.dataset.text), [Audio Transform Sample Library](https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore.dataset.transforms.html#module-mindspore.dataset.audio)
+
+#### AutoParallel
+
+- [STABLE] Support offload parameters or intermediate activations to the CPU or NVMe storage during training process. Users can enable this offload feature by configuring context to scale up the trainable model size.
+
+- [STABLE] Enhanced automatic parallel capability including:
+
+  1. Performance of automatic strategy for typical networks is no less than 90% of default configuration.
+
+  2. Support 3D hybrid parallel training: automatic operator-level strategy generation combined with manual configured pipeline partition.
+
+#### Runtime
+
+- [STABLE] Upgrade OpenMPI version to 4.1.4.
+- [STABLE] Upgrade NCCL version to 2.16.5.
+- [STABLE] Assign rank id continuously in same node when using dynamic cluster to launch distributed jobs.
+- [STABLE] No adaptation code is required for Scheduler node. The script of Scheduler could be identical to that of Worker.
+
+#### Ascend
+
+- [STABLE] Support dump assisted debug information for operator AIC Error scenario. The information includes the operator task name, stream ID, input/output/workspace address and so on.
+- [STABLE] Provide default processing mechanism, which skips its execution,  for CANN operators for empty Tensor output scenarios.
+- [STABLE] Supplement debug information when network model fails to execute in graph mode. The debug information will saved in a CSV file in rank_${id}/exec_order/, recording the task ID and stream ID of each task.
+
+#### Profiler
+
+- [STABLE] The Profiler supports the collection of time-consuming data from all phases on the Host side.
+- [BETA] The Profiler supports the collection of memory data from all phases on the Host side.
+- [BETA] The Profiler supports the collection of data processing operator time consumption.
+
+### API Change
+
+- `mindspore.dataset.GraphData`, `mindspore.dataset.Graph`, `mindspore.dataset.InMemoryGraphDataset`, `mindspore.dataset. ArgoverseDataset` are no longer evolved and are deprecated. Use [MindSpore Graph Learning](https://gitee.com/mindspore/graphlearning) for related functional replacements. When replacing networks in Model repositories that use this API, please refer to [GCN](https://gitee.com/mindspore/graphlearning/tree/master/model_zoo/gcn) for GCN and [GAT](https://gitee.com/mindspore/graphlearning/tree/master/model_zoo/gat).
+- `mindspore.set_context` adds `jit_syntax_level` option, which is used to set JIT syntax support level. For more details, please refer to [set_context](https://www.mindspore.cn/docs/en/r2.1/api_python/mindspore/mindspore.set_context.html).
+- Change the `model.infer_predict_layout` interface, which has a new parameter skip_backend_compile with a default value of False. Set to True when the user wants to skip the backend compilation process to get the parameter slicing strategy.
+
+#### Operators
+
+- Add operator primitive for `mindspore.ops.ApplyAdamWithAmsgradV2`. It is recommended to call this operator through API `mindspore.nn.Adam`.
+- Add operator primitive for `mindspore.ops.UpsampleTrilinear3D`. It is recommended to call this operator through API `mindspore.ops.interpolate`.
+- Add operator primitive for `mindspore.ops.UpsampleNearest3D`. It is recommended to call this operator through API `mindspore.ops.interpolate`.
+
+#### API Deprecation
+
+- Deprecate operator primitive `mindspore.ops.ScatterNonAliasingAdd`. It is recommended to use operator primitive `mindspore.ops.TensorScatterAdd` as a replacement.
+
+#### Backwards Incompatible Change
+
+- Interface name: `mindspore.nn.Dense`, `mindspore.nn.Conv1d`, `mindspore.nn.Conv1dTranspose`, `mindspore.nn.Conv2d`, `mindspore.nn.Conv2dTranspose`, `mindspore.nn.Conv3d`, `mindspore.nn.Conv3dTranspose`
+
+  Changes: Change initialization parameter strategy. The default value of weight_init is changed from "normal" to None, and the default value of bias_init is changed from "zeros" to None.
+
+  Description: The default initialization method for weights has been changed from "normal" to internal HeUniform initialization. The default initialization method of bias is changed from "zeros" to internal Uniform initialization.
+
+  <table>
+  <tr>
+  <td style="text-align:center"> Original interface </td> <td style="text-align:center"> v2.1 interface </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Dense(in_channels,
+                     out_channels,
+                     weight_init='normal',
+                     bias_init='zeros',
+                     has_bias=True,
+                     activation=None)
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Dense(in_channels,
+                     out_channels,
+                     weight_init=None,
+                     bias_init=None,
+                     has_bias=True,
+                     activation=None)
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv1d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init='normal',
+                      bias_init='zeros')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv1d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init=None,
+                      bias_init=None)
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv1dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               dilation=1,
+                               group=1,
+                               has_bias=False,
+                               weight_init='normal',
+                               bias_init='zeros')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv1dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               dilation=1,
+                               group=1,
+                               has_bias=False,
+                               weight_init=None,
+                               bias_init=None)
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv2d(in_channels,
+                      out_channels, kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init='normal',
+                      bias_init='zeros',
+                      data_format='NCHW')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv2d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init=None,
+                      bias_init=None,
+                      data_format='NCHW')
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv2dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               output_padding=0,
+                               dilation=1,
+                               group=1,
+                               has_bias=False,
+                               weight_init='normal',
+                               bias_init='zeros')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv2dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               output_padding=0,
+                               dilation=1,
+                               group=1,
+                               has_bias=False,
+                               weight_init=None,
+                               bias_init=None)
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv3d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init='normal',
+                      bias_init='zeros',
+                      data_format='NCDHW')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv3d(in_channels,
+                      out_channels,
+                      kernel_size,
+                      stride=1,
+                      pad_mode='same',
+                      padding=0,
+                      dilation=1,
+                      group=1,
+                      has_bias=False,
+                      weight_init=None,
+                      bias_init=None,
+                      data_format='NCDHW')
+  </pre>
+  </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.nn.Conv3dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               dilation=1,
+                               group=1,
+                               output_padding=0,
+                               has_bias=False,
+                               weight_init='normal',
+                               bias_init='zeros',
+                               data_format='NCDHW')
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.nn.Conv3dTranspose(in_channels,
+                               out_channels,
+                               kernel_size,
+                               stride=1,
+                               pad_mode='same',
+                               padding=0,
+                               dilation=1,
+                               group=1,
+                               output_padding=0,
+                               has_bias=False,
+                               weight_init=None,
+                               bias_init=None,
+                               data_format='NCDHW')
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+### Bug Fixes
+
+- [I6TKLW] Fix the issue of MobileNetV2 network performance degradation on the Ascend platform.
+- [I7CP5H] Fix the issue where ASR network training failed on the Ascend platform.
+- [I6QYCD] Fix the issue where the BERT-Large-Boost network fails to train in pynative mode on the Ascend platform.
+- [I7I3EZ] Fix the issue that caused run_check() failure due to changes to the enumeration interface in Pillow version 10.0.0. If encountered in a lower version of MindSpore, install versions of Pillow below 10.0.0 to avoid this issue.
+- [I7IZ8K] Fix accuracy issues with the assignsub interface in PyNative mode.
+- [I7HGY0] Fix the issue that the loss of the functional programming does not converge in the PyNative data_sink mode.
+- [I7J4N3] Fix the issue that the generation of Step Trace failed in Profiler dynamic Shape mode
+- [I7J4N3] Fix the issue that there is no data displayed in the MindInsight parallel strategy view.
+- [I79YY4] Fix SiLU operator error when high-order differential in PyNative mode.
+- [I6NQJQ] Fix the issue of probabilistic failure in dynamic shape scenarios of the ScatterUpdate operator in PyNative mode.
+- [I6Y4G5] Fix the issue of failure in dynamic Shape scenarios of the Conv3D operator in Graph mode.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+alashkari,anzhengqi,archer2049,B.L.LAN,baihuawei,bichaoyang,BJ-WANG,Bokai Li,Brian-K,caifubi,caiyimeng,cathwong,changzherui,ChenDonYY,chenfei_mindspore,chengang,chengbin,chenhaozhe,chenjianping,chenkang,chenweifeng,chuht,chujinjin,davidanugraha,DavidFFFan,DeshiChen,douzhixing,emmmmtang,Erpim,Ethan,fangwenyi,fangzehua,fangzhou0329,fary86,fengyixing,gaoshuanglong,Gaoxiong,gaoyong10,gengdongjie,gongdaguo1,Greatpan,GuoZhibin,guozhijian,hangq,hanhuifeng,haozhang,hedongdong,Henry Shi,heterogeneous_to_backoff_2_0,huangbingjian,huanghui,huangxinjing,hujiahui8,hujingsong,huoxinyou,jachua,jiahongQian,jianghui58,jiangzhenguang,jiaorui,jiaoy1224,jijiarong,jjfeing,JoeyLin,json,JuiceZ,jxl,kairui_kou,KevinYi,kisnwang,KXiong,laiyongqiang,lanzhineng,liangchenghui,liangzelang,LiangZhibo,lianliguang,lichen,ligan,lijunbin,limingqi107,ling,linqingke,liubuyu,liuchao,liuchuting,liujunzhu,liuluobin,liutongtong9,liuyang811,lixiao,liyan2022,liyejun,liyuxia,looop5,luochao60,luojianing,luoyang,luoyuan,lyqlola,maning202007,maoyaomin,Margaret_wangrui,mayadong,MaZhiming,melody,mengyuanli,michaelzhu_70ab,Mohammad Motallebi,moran,NaCN,nomindcarry,OwenSec,panfengfeng,panshaowu,panzhihui,pkuliuliu,qinzheng,qiuzhongya,qujianwei,r1chardf1d0,Renyuan Zhang,RobinGrosman,shaojunsong,shenwei41,Soaringfish,tangdezhi_123,tanghuikang,tan-wei-cheng,TinaMengtingZhang,TronZhang,TuDouNi,VectorSL,wang_ziqi,wanghenchang,wangnan39,wangpingan,wangshaocong,wangshengnan123,wangtongyu6,weichaoran,wind-zyx,wqx,wtcheng,wujueying,wYann,XianglongZeng,xiaohanzhang,xiaotianci,xiaoyao,XinDu,xulei,xumengjuan1,xupan,xwkgch,yanghaoran,yangluhang,yangruoqi713,yangshuo,yangsijia,yangzhenzhang,yanzhenxiang2020,Yanzhi_YI,yao_yf,yefeng,yeyunpeng2020,Yi_zhang95,yide12,YijieChen,YingLai Lin,YingtongHu,youshu,yuchaojie,yuedongli,YuJianfeng,zangqx,ZengZitao,zhangbuxue,zhangdanyang,zhangdong,zhangfanghe,zhangqi,zhangqinghua,zhangyanhui,zhangyinxia,zhangyongxian,zhangzhaoju,zhanzhan,zhengzuohe,ZhidanLiu,zhixinaa,zhoufeng,zhouyaqiang0,zhuguodong,zhupuxu,zhuyuxiao,zichun_ye,zjun,zlq2020,zong_shuai,ZPaC,zuochuanyong,zyli2020,陈宇,范吉斌,冯一航,胡彬,宦晓玲,黄勇,雷元哲,李良灿,李林杰,刘崇鸣,刘力力,刘勇琪,吕浩宇,吕昱峰（Nate.River）,没有窗户的小巷,沈竞兴,十六夜,王程浩,王禹程,王振邦,徐安越,徐永飞,杨旭华,于振华,俞涵,张清华,张澍坤,张栩浩,张学同,赵英灼,周超,周洪叶,朱家兴
+
+Contributions of any kind are welcome!
+
+## MindSpore Lite 2.1.0 Release Notes
+
+### Major Features and Improvements
+
+### MindSpore Lite Cloud Inference
+
+- [STABLE] Supports high-performance inference for single-device large model and single-node multi-device distributed large model at Ascend backend.
+- [STABLE] Python API Ascend backend supports multiple models sharing workspace memory.
+- [STABLE] [The weights can be shared by multiple models through ModelGroup](https://mindspore.cn/lite/docs/en/r2.1/use/cloud_infer/runtime_cpp.html#multiple-models-sharing-weights). For example, weights can be shared between full models and incremental models in the large model scenario.
+
+#### API
+
+The [Python](https://www.mindspore.cn/lite/api/en/r2.1/mindspore_lite/mindspore_lite.ModelGroup.html) and [C++](https://mindspore.cn/lite/api/en/r2.1/generate/classmindspore_ModelGroup.html) ModelGroup interface is added. The interface definition is as follows:
+
+```python
+class ModelGroup
+    def __init__(self, flags=ModelGroupFlag.SHARE_WORKSPACE)
+    def add_model(self, models)
+    def cal_max_size_of_workspace(self, model_type, context)
+```
+
+```C++
+// class ModelGroup
+ModelGroup(ModelGroupFlag flags = ModelGroupFlag::kShareWorkspace);
+Status AddModel(const std::vector<std::string> &model_path_list);
+Status AddModel(const std::vector<std::pair<const void *, size_t>> &model_buff_list);
+Status AddModel(const std::vector &model_list);
+Status AddModel(const std::vector &model_list);
+```
+
 ## MindSpore 2.0.0 Release Notes
 
 ### Major Features and Improvements
