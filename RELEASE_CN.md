@@ -861,7 +861,6 @@ alashkari,anzhengqi,archer2049,B.L.LAN,baihuawei,bichaoyang,BJ-WANG,Bokai Li,Bri
 - [BETA] `mindspore.ops.Cummin` 新增算子原语。
 - [BETA] `mindspore.ops.Diag` 新增算子原语。
 - [BETA] `mindspore.ops.Digamma` 新增算子原语。
-- [BETA] `mindspore.ops.Eig` 新增算子原语。
 - [BETA] `mindspore.ops.Expand` 新增算子原语。
 - [BETA] `mindspore.ops.Fmax` 新增算子原语。
 - [BETA] `mindspore.ops.Gcd` 新增算子原语。
@@ -895,7 +894,6 @@ alashkari,anzhengqi,archer2049,B.L.LAN,baihuawei,bichaoyang,BJ-WANG,Bokai Li,Bri
 - [BETA] `mindspore.ops.NextAfter` 新增算子原语。
 - [BETA] `mindspore.ops.Orgqr` 新增算子原语。
 - [BETA] `mindspore.ops.Polygamma` 新增算子原语。
-- [BETA] `mindspore.ops.Qr` 新增算子原语。
 - [BETA] `mindspore.ops.ResizeBilinearV2` 新增算子原语。
 - [BETA] `mindspore.ops.RightShift` 新增算子原语。
 - [BETA] `mindspore.ops.ScatterNdDiv` 新增算子原语。
@@ -1723,7 +1721,6 @@ alashkari,anzhengqi,archer2049,B.L.LAN,baihuawei,bichaoyang,BJ-WANG,Bokai Li,Bri
 - [STABLE] `mindspore.ops.CompareAndBitpack` 新增算子原语。
 - [STABLE] `mindspore.ops.Complex` 新增算子原语。
 - [STABLE] `mindspore.ops.DataFormatVecPermute` 新增算子原语。
-- [STABLE] `mindspore.ops.Eig` 新增算子原语。
 - [STABLE] `mindspore.ops.EuclideanNorm` 新增算子原语。
 - [STABLE] `mindspore.ops.Expand` 新增算子原语。
 - [STABLE] `mindspore.ops.ExtractGlimpse` 新增算子原语。
