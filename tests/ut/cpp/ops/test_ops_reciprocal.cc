@@ -24,6 +24,7 @@
 #include "abstract/abstract_value.h"
 #include "utils/ms_context.h"
 #include "ops/test_ops.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,7 +36,7 @@ TEST_P(TestReciprocal, dyn_shape) {
   auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
   ASSERT_NE(x, nullptr);
   auto prim = std::make_shared<Primitive>(kNameReciprocal);
-  auto out_abstract = ReciprocalInfer(nullptr, prim, {x});
+  auto out_abstract = opt::CppInferShapeAndType(prim, {x});
   ASSERT_NE(out_abstract, nullptr);
   ASSERT_TRUE(*out_abstract == *expect);
 }

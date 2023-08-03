@@ -23,6 +23,7 @@
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -38,7 +39,7 @@ TEST_P(TestRealDiv, dyn_shape) {
   auto real_div_op = std::make_shared<RealDiv>();
   real_div_op->Init();
   auto prim = std::make_shared<Primitive>(kNameRealDiv);
-  auto out_abstract = RealDivInfer(nullptr, prim, {x, y});
+  auto out_abstract = opt::CppInferShapeAndType(prim, {x, y});
   ASSERT_NE(out_abstract, nullptr);
   ASSERT_TRUE(*out_abstract == *expect);
 }

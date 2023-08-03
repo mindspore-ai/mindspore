@@ -23,6 +23,7 @@
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -38,7 +39,7 @@ TEST_P(TestNextAfter, dyn_shape) {
   auto next_after_op = std::make_shared<NextAfter>();
   next_after_op->Init();
   auto prim = std::make_shared<Primitive>(kNameNextAfter);
-  auto out_abstract = NextAfterInfer(nullptr, prim, {x, y});
+  auto out_abstract = opt::CppInferShapeAndType(prim, {x, y});
   ASSERT_NE(out_abstract, nullptr);
   ASSERT_TRUE(*out_abstract == *expect);
 }
