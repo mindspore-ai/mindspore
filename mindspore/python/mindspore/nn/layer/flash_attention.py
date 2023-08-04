@@ -156,11 +156,14 @@ class FlashAttention(Cell):
         else:
             inputs_tensor_map.append([-1, 1, 0])
 
+        input_empty_args_num = 2
         # dropout_mask
         if self.dropout_rate > 1e-5:
+            input_empty_args_num -= 1
             inputs_tensor_map.append([3, 2, 1, 0])
 
         if self.alibi:
+            input_empty_args_num -= 1
             inputs_tensor_map.append([3, 2, 1, 0])
 
         self.flash_attention.add_prim_attr("inputs_tensor_map", inputs_tensor_map)
@@ -171,7 +174,7 @@ class FlashAttention(Cell):
             [3, 2, 1]  # M
         ])
         self.flash_attention.add_prim_attr("as_loss_divisor", 0)
-        self.flash_attention.add_prim_attr("empty_mirror_ops", 1)
+        self.flash_attention.add_prim_attr("empty_mirror_ops", input_empty_args_num)
 
     def construct(self, query, key, value, attn_mask=None, alibi_mask=None):
         """FlashAttention forward
