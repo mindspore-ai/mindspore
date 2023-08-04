@@ -177,7 +177,7 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 
   if (common::AnfAlgo::IsDynamicShape(data_kernel_)) {
     ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelUpdate, GetAID().Name());
-    AnfAlgo::UpdateInternalParameterShape(internal_parameters_, data_kernel_);
+    AnfAlgo::UpdateInternalParameterShape(internal_parameters_);
   }
   PostRun(context);
 }

@@ -1659,6 +1659,12 @@ bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
 
 bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  auto graph = FetchKernelGraph(node.get());
+  // The graph run mode does not have kernelmod.
+  if ((graph == nullptr) || graph->is_graph_run_mode()) {
+    return true;
+  }
+
   auto kernel_mod = GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   return kernel_mod->IsNeedRetrieveOutputShape();
@@ -1678,22 +1684,23 @@ void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_
 }
 
 void AnfRuntimeAlgorithm::UpdateInternalParameterShape(
-  const std::map<size_t, std::vector<AnfNodeWeakPtr>> &internal_parameters, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
+  const std::map<KernelWithIndex, std::vector<AnfNodeWeakPtr>> &internal_parameters) {
   for (auto &internal_parameter_iter : internal_parameters) {
+    auto &node = internal_parameter_iter.first.first;
+    MS_EXCEPTION_IF_NULL(node);
     for (auto &internal_parameter_weakptr : internal_parameter_iter.second) {
       auto internal_parameter = internal_parameter_weakptr.lock();
       MS_EXCEPTION_IF_NULL(internal_parameter);
       if (common::AnfAlgo::IsDynamicSequence(internal_parameter)) {
-        const auto &shapes = BaseShapeToShapeVector(cnode->Shape());
-        std::vector<TypeId> types =
-          std::vector(shapes.size(), common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first));
+        const auto &shapes = BaseShapeToShapeVector(node->Shape());
+        std::vector<TypeId> types = std::vector(
+          shapes.size(), common::AnfAlgo::GetOutputInferDataType(node, internal_parameter_iter.first.second));
         common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, internal_parameter);
         continue;
       }
       common::AnfAlgo::SetOutputInferTypeAndShape(
-        {common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first)},
-        {common::AnfAlgo::GetOutputInferShape(cnode, internal_parameter_iter.first)}, internal_parameter.get());
+        {common::AnfAlgo::GetOutputInferDataType(node, internal_parameter_iter.first.second)},
+        {common::AnfAlgo::GetOutputInferShape(node, internal_parameter_iter.first.second)}, internal_parameter.get());
     }
   }
 }

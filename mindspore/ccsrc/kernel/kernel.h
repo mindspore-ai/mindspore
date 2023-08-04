@@ -259,7 +259,6 @@ class BACKEND_EXPORT KernelMod {
   }
   // Some kernels, e.g., Shape/Reshape, don't use some input addresses in the kernel launch.
   virtual std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const { return {}; }
-  virtual bool IsLaunchIgnoredInputAddress(size_t input_index) const { return false; }
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
   void set_is_monad(bool is_monad) { is_monad_ = is_monad; }

@@ -86,7 +86,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
       auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());
       AnfAlgo::UpdateOutputAddrSize(kernel_info, base_node);
       // Update the shape of internal parameter.
-      AnfAlgo::UpdateInternalParameterShape(internal_parameters_, base_node);
+      AnfAlgo::UpdateInternalParameterShape(internal_parameters_);
     }
   } catch (const std::exception &e) {
     if (strategy_ == GraphExecutionStrategy::kPipeline) {
