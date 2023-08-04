@@ -1894,9 +1894,15 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     bool is_third_party_side_effect =
       ast_->CallParserObjMethod(PYTHON_PARSE_CHECK_THIRD_PARTY_LIBRARY_SIDE_EFFECT, name_id, attr_str).cast<bool>();
     if (is_third_party_side_effect) {
-      auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(attr_cnode->cast<CNodePtr>(), "getattr");
-      MS_LOG(DEBUG) << "pyexecute_node:" << pyexecute_node->DebugString();
-      return pyexecute_node;
+      std::string script_text = name_id + "." + attr_str;
+      auto interpret_node = MakeInterpretNode(block, attr_cnode, script_text);
+      // Record the flag for side effect operate.
+      auto interpret_cnode = interpret_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(interpret_cnode);
+      const auto &prim = GetValueNode<PrimitivePtr>(interpret_cnode->input(0));
+      MS_EXCEPTION_IF_NULL(prim);
+      prim->set_attr("need_convert", MakeValue(true));
+      return interpret_node;
     }
   }
   return attr_cnode;

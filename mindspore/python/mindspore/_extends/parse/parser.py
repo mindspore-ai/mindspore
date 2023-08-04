@@ -1192,11 +1192,12 @@ class Parser:
             "json": {"load", "loads", "dump", "dumps"},
             "pickle": {"load", "loads", "dump", "dumps"},
             "h5py": {"File", "Group", "Dataset"},
-            "os": {"listdir", "isfile", "exists", "isdir", "mkdir", "remove", "rmdir", "symlink"},
+            "os": {"listdir", "isfile", "exists", "isdir", "mkdir", "remove", "rmdir", "symlink", "rename"},
             "shutil": {"copy", "copy2", "copytree", "move", "rmtree"},
             "pathlib": {"Path", "mkdir", "rmdir", "unlink", "rename", "symlink_to"},
             "glob": {"glob", "iglob"},
-            "zipfile": {"zipfile", "ZipFile", "write", "extractall"}}
+            "zipfile": {"zipfile", "ZipFile", "write", "extractall"},
+            "troubleshooter": {"save", "load"}}
         if var in self.global_namespace:
             logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}.")
             value = self.global_namespace[var]

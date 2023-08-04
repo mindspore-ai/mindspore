@@ -2282,8 +2282,16 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     non_const_err_ = false;
     const std::string &script = script_obj->script();
     py::tuple params = MakeParameters(args_abs_list, script);
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_EXCEPTION_IF_NULL(prim);
+    bool need_convert = false;
+    if (prim->GetAttr("need_convert") != nullptr) {
+      need_convert = GetValue<bool>(prim->GetAttr("need_convert"));
+    }
     // Would convert PyInterpret to PyExecute then.
-    if (non_const_err_ || fallback::GetJitAnnotationSideEffectFromComment(node)) {
+    if (non_const_err_ || need_convert || fallback::GetJitAnnotationSideEffectFromComment(node)) {
       // Make abstract by type and shape.
       AbstractBasePtr res = nullptr;
       // Support Tensor annotation type. Add list and tuple here later.
