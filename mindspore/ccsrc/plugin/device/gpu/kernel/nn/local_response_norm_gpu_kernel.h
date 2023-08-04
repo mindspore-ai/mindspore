@@ -62,30 +62,25 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
     auto y = GetDeviceAddress<T>(outputs, 0);
     const float alpha = 1;
     const float beta = 0;
-    const size_t kValue4 = 4;
     if (use_native_) {
-      std::vector<int64_t> to_nhwc_axis = {0, 2, 3, 1};
-      std::vector<int64_t> to_nchw_axis = {0, 3, 1, 2};
       T *ws_x = GetDeviceAddress<T>(workspace, 0);
       T *ws_y = GetDeviceAddress<T>(workspace, 1);
       float *ws_scale = GetDeviceAddress<float>(workspace, 2);
-      TransposeInfo InInfo;
-      TransposeInfo OutInfo;
-      for (size_t i = 0; i < kValue4; ++i) {
-        InInfo.shape[i] = static_cast<int>(input_shape_[i]);
-        InInfo.perm[i] = static_cast<int>(to_nhwc_axis[i]);
-        OutInfo.shape[i] = static_cast<int>(transpose_shape_[i]);
-        OutInfo.perm[i] = static_cast<int>(to_nchw_axis[i]);
-      }
-      auto status = CalNCHW2NHWCInterface(num_elements_, kValue4, x, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_x,
-                                          reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_STATUS(status, kernel_name_);
+
+      TransposeInfo InInfo, OutInfo;
+      InInfo.input_shape = input_shape_;
+      InInfo.perm = std::vector<int32_t>{0, 2, 3, 1};
+      InInfo.input_shape = transpose_shape_;
+      InInfo.perm = std::vector<int32_t>{0, 3, 1, 2};
+
+      auto status = CalTranspose<T, true>(num_elements_, x, InInfo, ws_x, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
       status = CalLocalResponseNormNHWC(ws_x, depth_radius_, bias_, alpha_, beta_, transpose_shape_[3], num_elements_,
                                         ws_scale, ws_y, reinterpret_cast<cudaStream_t>(stream_ptr));
+
       CHECK_CUDA_STATUS(status, kernel_name_);
-      status = CalNHWC2NCHWInterface(num_elements_, kValue4, ws_y, &transpose_shape_[0], &to_nchw_axis[0], OutInfo, y,
-                                     reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_STATUS(status, kernel_name_);
+      CalTranspose<T, true>(num_elements_, ws_y, OutInfo, y, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnLRNCrossChannelForward(handle_, norm_desc_, lrn_mode_, &alpha, x_desc_, x, &beta, y_desc_, y),

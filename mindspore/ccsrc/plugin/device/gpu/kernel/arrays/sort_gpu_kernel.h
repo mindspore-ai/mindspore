@@ -60,9 +60,9 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
     }
 
     input_rank_ = input_shape_.size();
-    if (input_rank_ > TRANSPOSE_MAX_DIMENSION || input_rank_ < 1) {
+    if (input_rank_ > transpose_max_dimension || input_rank_ < 1) {
       MS_LOG(ERROR) << "For '" << kernel_name << "', the dimension of input cannot be greater than "
-                    << TRANSPOSE_MAX_DIMENSION << ", or less than 1"
+                    << transpose_max_dimension << ", or less than 1"
                     << ", but got " << input_rank_;
       return KRET_RESIZE_FAILED;
     }

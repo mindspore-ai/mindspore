@@ -56,16 +56,10 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
     T *dev_transpose_work = GetDeviceAddress<T>(workspace, kDim1);
 
     TransposeInfo info, work_info;
-    constexpr size_t shape_2d = 2;
-    size_t host_transpose_shape[shape_2d] = {m_, n_};
-    size_t host_wk_transpose_shape[shape_2d] = {n_, m_};
-    size_t host_transpose_axis[shape_2d] = {1, 0};
-    for (size_t i = 0; i < shape_2d; ++i) {
-      info.shape[i] = static_cast<int>(host_transpose_shape[i]);
-      info.perm[i] = static_cast<int>(host_transpose_axis[i]);
-      work_info.shape[i] = static_cast<int>(host_wk_transpose_shape[i]);
-      work_info.perm[i] = static_cast<int>(host_transpose_axis[i]);
-    }
+    info.input_shape = std::vector<int64_t>{m_, n_};
+    info.perm = std::vector<int32_t>{1, 0};
+    work_info.input_shape = std::vector<int64_t>{n_, m_};
+    work_info.perm = std::vector<int32_t>{1, 0};
 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(batch_output_addr, batch_input_addr, batch_size_ * m_ * n_ * unit_size_, cudaMemcpyDeviceToDevice,
@@ -90,8 +84,8 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
       T *output_addr = batch_output_addr + batch * m_ * n_;
       int *permutation_addr = batch_permutation_addr + batch * k_ * k_;
       int *piv_output_addr = batch_piv_output_addr + batch * k_;
-      auto s1 = CalTranspose(m_ * n_, output_addr, info, shape_2d, dev_transpose_work,
-                             reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto s1 = CalTranspose<T, false>(m_ * n_, output_addr, info, dev_transpose_work,
+                                       reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(s1, "Transpose called by " + kernel_name_);
 
       // 6.lu factorization according to cuSolver api, outputs have been written to input's matrix.
@@ -108,8 +102,8 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
       } else {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
       }
-      auto s2 = CalTranspose(m_ * n_, dev_transpose_work, work_info, shape_2d, output_addr,
-                             reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto s2 = CalTranspose<T, false>(m_ * n_, dev_transpose_work, work_info, output_addr,
+                                       reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(s2, "Transpose called by " + kernel_name_);
       std::vector<int> host_permuted(k_, 0);
       std::vector<int> host_pivots(k_, 0);
@@ -249,8 +243,8 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
   size_t lu_row_{0};
   size_t lu_col_{0};
   size_t k_{0};
-  size_t m_{0};
-  size_t n_{0};
+  int64_t m_{0};
+  int64_t n_{0};
   size_t lda_{0};
   size_t ldb_{0};
   int lwork_{0};

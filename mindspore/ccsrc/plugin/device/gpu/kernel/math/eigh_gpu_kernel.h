@@ -136,15 +136,11 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
     }
 
     if (compute_eigen_vectors_) {
-      size_t input_shape[kShape2dDims] = {m_, m_};
-      int input_axis[kShape2dDims] = {1, 0};
       TransposeInfo info;
-      for (size_t i = 0; i < kShape2dDims; ++i) {
-        info.shape[i] = static_cast<int>(input_shape[i]);
-        info.perm[i] = input_axis[i];
-      }
+      info.input_shape = std::vector<int64_t>{m_, m_};
+      info.perm = std::vector<int32_t>{1, 0};
       auto status =
-        CalTranspose(m_ * m_, w_v_addr, info, kShape2dDims, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+        CalTranspose<T, false>(m_ * m_, w_v_addr, info, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
     }
 
@@ -173,7 +169,7 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  size_t m_{1};
+  int64_t m_{1};
   TypeId dtype_{kNumberTypeFloat32};
   cusolverDnHandle_t cusolver_handle_{nullptr};
   cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;

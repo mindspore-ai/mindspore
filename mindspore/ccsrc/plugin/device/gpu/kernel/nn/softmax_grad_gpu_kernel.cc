@@ -106,25 +106,24 @@ bool SoftmaxGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
     TransposeInfo x_info, y_info;
     for (size_t i = 0; i < shape_size_; ++i) {
-      x_info.shape[i] = static_cast<int>(input_shape_[i]);
-      x_info.perm[i] = static_cast<int>(transpose_axis_[i]);
-      y_info.shape[i] = static_cast<int>(transpose_shape_[i]);
-      y_info.perm[i] = static_cast<int>(transpose_axis_[i]);
+      x_info.input_shape.push_back(static_cast<int64_t>(input_shape_[i]));
+      x_info.perm.push_back(static_cast<int32_t>(transpose_axis_[i]));
+      y_info.input_shape.push_back(static_cast<int64_t>(transpose_shape_[i]));
+      y_info.perm.push_back(static_cast<int32_t>(transpose_axis_[i]));
     }
 
     size_t size = input_size_ / sizeof(T);
-    auto s1 =
-      CalTranspose(size, y_addr, x_info, shape_size_, transpose_y_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto s1 = CalTranspose<T, true>(size, y_addr, x_info, transpose_y_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(s1, "Transpose called by " + kernel_name_);
     auto s2 =
-      CalTranspose(size, dy_addr, x_info, shape_size_, transpose_dy_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CalTranspose<T, true>(size, dy_addr, x_info, transpose_dy_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(s2, "Transpose called by " + kernel_name_);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSoftmaxBackward(cudnn_handle_, algo_, mode_, &alpha, y_desc_, transpose_y_addr, y_desc_, transpose_dy_addr,
                            &beta, y_desc_, transpose_dx_addr),
       kernel_name_ + "cudnnSoftmaxBackward failed");
     auto s3 =
-      CalTranspose(size, transpose_dx_addr, y_info, shape_size_, dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CalTranspose<T, true>(size, transpose_dx_addr, y_info, dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(s3, "Transpose called by " + kernel_name_);
   }
   return true;

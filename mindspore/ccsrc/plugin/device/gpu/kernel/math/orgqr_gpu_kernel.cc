@@ -195,20 +195,20 @@ bool OrgqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 
   TransposeInfo x_info, y_info;
   for (size_t i = 0; i < input_x_dims_; ++i) {
-    x_info.shape[i] = static_cast<int>(transpose_input_x_shape_[i]);
-    x_info.perm[i] = static_cast<int>(transpose_input_x_axis_[i]);
-    y_info.shape[i] = static_cast<int>(transpose_output_y_shape_[i]);
-    y_info.perm[i] = static_cast<int>(transpose_input_x_axis_[i]);
+    x_info.input_shape.push_back(static_cast<int64_t>(transpose_input_x_shape_[i]));
+    x_info.perm.push_back(static_cast<int32_t>(transpose_input_x_axis_[i]));
+    y_info.input_shape.push_back(static_cast<int64_t>(transpose_output_y_shape_[i]));
+    y_info.perm.push_back(static_cast<int32_t>(transpose_input_x_axis_[i]));
   }
 
-  auto s1 = CalTranspose(batch_size_ * m_ * n_, input_x, x_info, input_x_dims_, d_input_x,
-                         reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto s1 = CalTranspose<T, true>(batch_size_ * m_ * n_, input_x, x_info, d_input_x,
+                                  reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(s1, "Transpose called by " + kernel_name_);
 
   LaunchOrgqr(d_input_x, input_tau, d_output_y, dev_info);
 
-  auto s2 = CalTranspose(batch_size_ * m_ * n_, d_output_y, y_info, input_x_dims_, output_y,
-                         reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto s2 = CalTranspose<T, true>(batch_size_ * m_ * n_, d_output_y, y_info, output_y,
+                                  reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(s2, "Transpose called by " + kernel_name_);
 
   return true;
