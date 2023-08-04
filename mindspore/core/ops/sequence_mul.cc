@@ -60,6 +60,10 @@ AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::
   }
 
   if (scalar_abs->BuildValue() == kValueAny) {
+    if (CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(input_args)) {
+      // Sequence ops with nested or irregular sequence input should be convert to PyExecute node.
+      return std::make_shared<abstract::AbstractAny>();
+    }
     auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();
     ret->CheckAndConvertToDynamicLenSequence();
     return ret;
