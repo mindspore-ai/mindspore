@@ -45,6 +45,8 @@ class ArithmeticBase : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferOutputTensorMap() override;
+  Status CheckLayoutConfig() override;
   Shapes InferExpandShape();
 };
 
