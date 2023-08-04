@@ -78,6 +78,9 @@ class OnnxNodeParser {
   static const onnx::TensorProto *GetConstantTensorData(const onnx::GraphProto &onnx_graph,
                                                         const std::string &input_name);
 
+  static STATUS SetDataTypeAndValue(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, size_t data_count,
+                                    int *type);
+
  protected:
   static mindspore::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
 
