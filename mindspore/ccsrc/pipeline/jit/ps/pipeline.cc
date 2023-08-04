@@ -231,8 +231,8 @@ bool CheckArgValid(const py::handle &arg) {
   }
 
   return IsStubTensor(arg) || py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg) ||
-         py::isinstance<py::none>(arg) || py::isinstance<Number>(arg) || py::isinstance<Tensor>(arg) ||
-         py::isinstance<CSRTensor>(arg) || py::isinstance<COOTensor>(arg);
+         py::isinstance<py::none>(arg) || py::isinstance<Number>(arg) || py::isinstance<py::str>(arg) ||
+         py::isinstance<Tensor>(arg) || py::isinstance<CSRTensor>(arg) || py::isinstance<COOTensor>(arg);
 }
 
 std::string GetCompileExceptionInfo() {
