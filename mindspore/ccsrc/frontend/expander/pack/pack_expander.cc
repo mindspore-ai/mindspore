@@ -154,6 +154,12 @@ py::object PackExpander::BeginGraph(const abstract::AbstractBasePtrList &inputs)
   for (size_t i = 0; i < inputs.size(); ++i) {
     outputs[i] = ConvertAbstractToParameter(inputs[i]);
   }
+  if (is_pynative_mode) {
+    // only in pynative, for parse::ResolveParameterObj need
+    parse::Parser::UpdateTopFuncGraph(graph);
+    (void)std::for_each(graph->parameters().begin(), graph->parameters().end(),
+                        [](const AnfNodePtr &param) { param->cast<ParameterPtr>()->set_is_top_graph_param(true); });
+  }
   return outputs;
 }
 
@@ -317,7 +323,7 @@ AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
   } else if (IsPackTensor(arg)) {
     py::object node = py::getattr(arg, stub::PY_ATTR_STUB);
     return node.cast<std::shared_ptr<PackNode>>()->Get();
-  } else if (py::hasattr(arg, "__parameter__") && py::isinstance<tensor::MetaTensor>(arg) && !is_pynative_mode) {
+  } else if (py::hasattr(arg, "__parameter__") && py::isinstance<tensor::MetaTensor>(arg)) {
     return parse::ResolveParameterObj(graphs_.top(), arg);
   } else {
     auto val = parse::data_converter::PyDataToValue(arg);

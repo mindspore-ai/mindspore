@@ -197,13 +197,22 @@ def trace(fn):
 
     @functools.wraps(fn)
     def _trace_wrap(*args, **kwargs):
-        args, kwargs = _handle_func_args(fn, *args, **kwargs)
-        obj = None
-
         if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
             obj, args = args[0], args[1:]
-        key = f"{id(obj)}_{id(fn)}"
+            pack_func_name = fn.__name__ + "pack"
+            pack_func = getattr(obj, pack_func_name, None)
+            if pack_func is None:
+                pack_func = PackFunc(fn, f"{id(obj)}_{id(fn)}", obj, True)
+                setattr(obj, pack_func_name, pack_func)
+        else:
+            # Similar processing has been done in the __call__ of Cell,
+            # so only when obj is None, there is need to do `_handle_func_args`.
+            args, kwargs = _handle_func_args(fn, *args, **kwargs)
+            pack_func = getattr(fn, "pack", None)
+            if pack_func is None:
+                pack_func = PackFunc(fn, f"{id(fn)}", None, True)
+                setattr(fn, "pack", pack_func)
+        return pack_func(*args, **kwargs)
 
-        return PackFunc(fn, key, obj, True)(*args, **kwargs)
     _trace_wrap.pack_fn = fn
     return _trace_wrap

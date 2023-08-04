@@ -21,7 +21,7 @@
 #include <string>
 #include <utility>
 #include <set>
-
+#include <algorithm>
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -31,6 +31,8 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/core/ops/packfunc.h"
 #include "pipeline/jit/ps/parse/parse.h"
+#include "pipeline/pynative/predict_out_type_map.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace expander {
@@ -199,16 +201,76 @@ FuncGraphPtr PostProcessForReuseGraph(const FuncGraphPtr &graph, const Primitive
   ReorderParamsForReuseGraph(fg, prim_py);
   return fg;
 }
+
+size_t GetSizeByAbstract(const AbstractBasePtr &abs) {
+  if (!abs->isa<abstract::AbstractSequence>()) {
+    return 1;
+  }
+  auto tuple_abstract = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_abstract);
+  return tuple_abstract->elements().size();
+}
+
+void SetOutputNum(const PrimitivePyPtr &prim_py, const AnfNodePtr &out_node) {
+  if (prim_py->HasAttr("output_num")) {
+    return;
+  }
+  // If the output node is a variable output such as IdentityN op, it cannot be set the 'output_num'.
+  auto cnode = out_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<AnfNodePtr> output_nodes;
+  if (IsPrimitive(cnode, prim::kPrimMakeTuple)) {
+    size_t tuple_input_num = cnode->size() - 1;
+    for (size_t j = 0; j < tuple_input_num; ++j) {
+      if (auto node = common::AnfAlgo::VisitKernel(cnode, j).first; node->isa<CNode>()) {
+        output_nodes.push_back(node);
+      }
+    }
+  } else {
+    if (auto node = common::AnfAlgo::VisitKernel(cnode, 0).first; node->isa<CNode>()) {
+      output_nodes.push_back(node);
+    }
+  }
+  auto output_num_is_fixed = [](const TypePtr &type) -> bool {
+    return type == kTensorType || (type->isa<Tuple>() && type != kTuple);
+  };
+  for (const auto &node : output_nodes) {
+    const auto &node_prim = GetCNodePrimitive(node);
+    MS_EXCEPTION_IF_NULL(node_prim);
+    auto op_name = node_prim->name();
+    auto out_type = pynative::PredictOutTypeByName(op_name);
+    if (!output_num_is_fixed(out_type)) {
+      MS_LOG_DEBUG << "For " << op_name << ", the number of outputs is not fixed.";
+      return;
+    }
+  }
+  py::object add_prim_func = prim_py->GetPyObj().attr("add_prim_attr");
+  add_prim_func("output_num", GetSizeByAbstract(out_node->abstract()));
+}
 }  // namespace
+
 using PackGraphMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
                                         abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 
-static std::unordered_map<std::string, PackGraphMap> pack_graph_cache;
-void ClearAllCache() { pack_graph_cache.clear(); }
+// GraphMode needs to clear the PackCache after compilation, but PyNativeMode needs to keep the PackCache.
+static std::unordered_map<std::string, PackGraphMap> pynative_pack_cache;
+static std::unordered_map<std::string, PackGraphMap> graph_pack_cache;
+
+void ClearCompileAllCache() { graph_pack_cache.clear(); }
+
+void ClearAllCache() {
+  graph_pack_cache.clear();
+  pynative_pack_cache.clear();
+}
 
 FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list) {
+  if (IsAbstractDynamicShape(abs_list)) {
+    MS_LOG(WARNING) << "Dynamic shape operator is not fully supported in trace graph capturing. Please check the "
+                       "dump-ir to confirm its correctness.";
+  }
   auto key = GetValue<std::string>(prim->GetAttr("unique_key"));
   PackExpander::is_pynative_mode = GetValue<bool>(prim->GetAttr("is_pynative_mode"));
+  auto &pack_graph_cache = PackExpander::is_pynative_mode ? pynative_pack_cache : graph_pack_cache;
   auto &graph_map = pack_graph_cache[key];
   auto it = graph_map.find(abs_list);
   if (it != graph_map.end()) {
@@ -240,6 +302,18 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
       graph = PostProcessForReuseGraph(graph, prim_py);
     }
     graph_map[abs_list] = graph;
+    MS_EXCEPTION_IF_NULL(graph);
+    if (PackExpander::is_pynative_mode) {
+      auto output_node = graph->output();
+      auto abs = output_node->abstract();
+      if (!IsAbstractOutputTensor(abs)) {
+        MS_EXCEPTION(ValueError)
+          << "The output of trace captured graph should be one or more flattened Tensor, bug get "
+          << abs->BuildType()->ToString() << ".";
+      }
+      // In order to be able to get the specific output type in PredictOutputType
+      SetOutputNum(prim_py, output_node);
+    }
   }
   static const bool dump_result = (common::GetEnv("MS_DEV_DUMP_PACK") == "on");
   if (dump_result) {
@@ -263,26 +337,12 @@ class PackFuncInfer : public abstract::OpInferBase {
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    if (IsAbstractDynamicShape(input_args)) {
-      MS_LOG(WARNING) << "Dynamic shape operator is not fully supported in trace graph capturing. Please check the "
-                         "dump-ir to confirm its correctness.";
-    }
     auto graph = ExpandPackFunc(primitive, input_args);
-    MS_EXCEPTION_IF_NULL(graph);
-    // the python primitive object may be used in different places with different inputs, so we
-    // cannot save the graph in graph mode. But for pynative mode, this primitive is inferred
-    // in forward thread sequentially and deep copied to backend runtime, so we can save graph
-    // in attr to save performance.
-    auto abs = graph->output()->abstract();
+    // Infer under pynative directly calls the ExpandPackFunc
     if (PackExpander::is_pynative_mode) {
-      primitive->set_attr("recent_graph", graph);
-      if (!IsAbstractOutputTensor(abs)) {
-        MS_EXCEPTION(ValueError)
-          << "The output of trace captured graph should be one or more flattened Tensor, bug get "
-          << abs->BuildType()->ToString() << ".";
-      }
+      return nullptr;
     }
-    return abs;
+    return graph->output()->abstract();
   }
 };
 }  // namespace expander

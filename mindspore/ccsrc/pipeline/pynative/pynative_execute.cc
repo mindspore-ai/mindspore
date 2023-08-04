@@ -100,7 +100,7 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   StoreAsyncStatus(op_run_info);
   const auto &op_name = op_run_info->base_op_run_info.op_name;
   // 1. get top_type from Primitive::PredictOutputType
-  auto top_type = PredictOutTypeByName(op_name);
+  auto top_type = PredictOutType(op_run_info);
   // 2. if disable PyTraceAsync, return after infer(half-asynchronous) or run(synchronous mode)
   if (!forward_executor()->EnablePipeline(op_name)) {
     // Wait for async task finish
