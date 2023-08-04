@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/optimizer/opt.h"
 #include "include/common/pybind_api/api_register.h"
+#include "include/common/fallback.h"
+#include "pipeline/jit/ps/fallback.h"
+#include "mindspore/core/utils/ms_context.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -43,6 +46,25 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
   // output: tuple of items of input iterated on every input
   if (args_abs_list.empty()) {
     MS_LOG(EXCEPTION) << "The zip operator must have at least 1 argument, but the size of arguments is 0.";
+  }
+
+  FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
+  ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+  bool has_any = std::any_of(args_abs_list.begin(), args_abs_list.end(),
+                             [](const AbstractBasePtr &abs) { return fallback::ContainsSequenceAnyType(abs); });
+  if (allow_fallback_runtime && has_any) {
+    std::vector<AnfNodePtr> make_tuple_inputs;
+    make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+    for (size_t idx = 0; idx < args_abs_list.size(); idx++) {
+      (void)make_tuple_inputs.emplace_back(ret_graph->add_parameter());
+    }
+    auto make_tuple = ret_graph->NewCNode(make_tuple_inputs);
+    auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(make_tuple, "zip");
+    MS_LOG(DEBUG) << "Convert: " << make_tuple->DebugString() << " -> " << pyexecute_node->DebugString();
+    ret_graph->set_output(pyexecute_node);
+    return ret_graph;
   }
 
   for (size_t idx = 0; idx < args_abs_list.size(); idx++) {
@@ -71,8 +93,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
     args_abs_list.begin(), args_abs_list.end(), [](const AbstractBasePtr &x, const AbstractBasePtr &y) {
       return (x->cast<AbstractSequencePtr>()->size() < y->cast<AbstractSequencePtr>()->size());
     });
-  FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
-  ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+
   for (size_t idx = 0; idx < args_abs_list.size(); idx++) {
     (void)ret_graph->add_parameter();
   }
