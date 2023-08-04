@@ -37,6 +37,12 @@ bool CumProdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   auto kernel_ptr = std::dynamic_pointer_cast<ops::CumProd>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   kernel_name_ = kernel_ptr->name();
+
+  if (inputs[kIndex0] == nullptr || inputs[kIndex1] == nullptr) {
+    MS_LOG(ERROR) << "Inputs have nullptr, please check inputs";
+    return false;
+  }
+
   dtype_ = inputs[kIndex0]->GetDtype();
   exclusive_ = kernel_ptr->GetExclusive();
   reverse_ = kernel_ptr->GetReverse();
@@ -249,8 +255,8 @@ bool CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   }
   Reshape();
   if (dims_[kDimSize1] == 0) {
-    MS_LOG(ERROR) << "Invalid zero value. Please check resize input data.";
-    return false;
+    MS_LOG(INFO) << "Input tensor is empty. Please check input data.";
+    return true;
   }
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
