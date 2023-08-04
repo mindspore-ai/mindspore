@@ -39,7 +39,7 @@ class GkDropout : public OpDesc {
       mask = gb.Cast(mask, input_x->type);
     }
 
-    auto new_mask = gb.LessEqual(input_mask, keep_prob_tensor);
+    auto new_mask = gb.LessEqual(mask, keep_prob_tensor);
     new_mask = gb.Cast(new_mask, input_x->type);
     auto result = gb.Mul(r_keep_prob_tensor, input_x);
     result = gb.Mul(result, new_mask);
