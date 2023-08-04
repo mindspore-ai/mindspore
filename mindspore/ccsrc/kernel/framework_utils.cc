@@ -31,6 +31,7 @@
 #include "ops/math_op_name.h"
 #include "ops/random_op_name.h"
 #include "ops/image_op_name.h"
+#include "ops/nn_op_name.h"
 #include "ops/nn_ops.h"
 #include "ops/sequence_ops.h"
 #include "utils/file_utils.h"
@@ -1218,6 +1219,8 @@ static const mindspore::HashMap<std::string, std::set<int64_t>> try_get_value_in
   {kUpsampleNearest3DOpName, ShapeSet{1}},
   {kUpsampleTrilinear3DGradOpName, ShapeSet{2}},
   {kUpsampleNearest3DGradOpName, ShapeSet{2}},
+  {kPadV3OpName, ShapeSet{1}},
+  {kPadV3GradOpName, ShapeSet{1}},
 };
 
 std::set<int64_t> GetShapeSetFromResizeMap(const CNodePtr &node) {
