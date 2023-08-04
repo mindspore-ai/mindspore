@@ -29,17 +29,10 @@ class DynamicAkgCpuKernelBuilder : public DynamicAkgKernelBuilder {
   DynamicAkgCpuKernelBuilder() = default;
   ~DynamicAkgCpuKernelBuilder() = default;
 
-  kernel::KernelBuildClient *GetClient() override { return nullptr; }
+  kernel::KernelBuildClient *GetClient() override { return &(kernel::AkgV2KernelBuildClient::Instance()); }
   void SetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
-                    const AnfNodePtr &anf_node) override {
-    return;
-  };
-  bool ParallelBuild(const std::vector<JsonNodePair> &build_args) override;
+                    const AnfNodePtr &anf_node) override;
   void SaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
-
- private:
-  void SetCpuKernelModByName(const string &kernel_name, const GraphKernelJsonGenerator &json_generator,
-                             const AnfNodePtr &anf_node) const;
 };
 
 REG_GRAPH_KERNEL_BUILDER(kCPUDevice, true, DynamicAkgCpuKernelBuilder);

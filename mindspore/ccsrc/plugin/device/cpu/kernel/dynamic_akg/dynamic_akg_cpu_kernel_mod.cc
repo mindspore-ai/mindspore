@@ -67,7 +67,7 @@ void DynamicAkgCpuKernelManager::GetFunctionAndKernelName(const std::string &fn,
                                                           std::string *fn_so, std::string *fn_kernel) const {
   auto config_path = GetCompilerCachePath();
   auto dso_path = config_path + std::string(kAkgKernelMeta);
-  (void)dso_path.append(fn + "_dyn.so");
+  (void)dso_path.append(fn + ".so");
   if (!Common::FileExists(dso_path)) {
     MS_EXCEPTION(UnknownError) << "Get Dynamic AKG kernel failed, kernel path is[" << dso_path << "].";
   }
@@ -121,6 +121,17 @@ DynamicAkgCpuKernelMod::DynamicAkgCpuKernelMod(const std::string &kernel_name) {
   launch_func_ = kernel_manager_->GetFunction(kernel_name_);
 }
 
+DynamicAkgCpuKernelMod::DynamicAkgCpuKernelMod(const KernelPackPtr &kernel_pack) {
+  if (kernel_pack != nullptr) {
+    auto js = kernel_pack->GetJson();
+    if (js != nullptr) {
+      auto parsed_js = nlohmann::json::parse(js->contents, js->contents + js->len);
+      kernel_name_ = parsed_js["kernelName"];
+      launch_func_ = kernel_manager_->GetFunction(kernel_name_);
+    }
+  }
+}
+
 bool DynamicAkgCpuKernelMod::Init(const BaseOperatorPtr & /* base_operator */,
                                   const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs) {
@@ -167,6 +178,11 @@ bool DynamicAkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
 
   if (is_dynamic_) {
     MS_LOG(INFO) << "The kernel mod deals with dynamic shape inputs.";
+
+    auto max_length_iter = std::max_element(
+      shape_list_.begin(), shape_list_.end(),
+      [](const std::vector<int64_t> &a, const std::vector<int64_t> &b) { return a.size() < b.size(); });
+    size_t max_length = max_length_iter->size();
     std::vector<std::vector<int64_t>> arg_size_vec;
     arg_size_vec.reserve(ndims_.size());
     for (size_t i = 0; i < ndims_.size(); i++) {
@@ -178,6 +194,7 @@ bool DynamicAkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
         strides_[j] = strides_[j + 1] * shape_list_[i][j + 1];
       }
       (void)arg_size.insert(arg_size.end(), strides_.begin(), strides_.end());
+      (void)arg_size.insert(arg_size.end(), 2 * (max_length - shape_list_[i].size()), 0);
       arg_size_vec.push_back(arg_size);
     }
 

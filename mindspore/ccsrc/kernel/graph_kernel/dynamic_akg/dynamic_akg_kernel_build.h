@@ -31,6 +31,7 @@ class BACKEND_EXPORT DynamicAkgKernelBuilder : public GraphKernelBuilder {
   virtual ~DynamicAkgKernelBuilder() = default;
 
   bool SingleOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) override;
+  bool ParallelBuild(const std::vector<JsonNodePair> &build_args) override;
 };
 }  // namespace kernel
 }  // namespace mindspore

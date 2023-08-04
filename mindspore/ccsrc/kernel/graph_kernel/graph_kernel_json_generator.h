@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GRAPH_KERNEL_JSON_GENERATOR_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GRAPH_KERNEL_JSON_GENERATOR_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_GRAPH_KERNEL_GRAPH_KERNEL_JSON_GENERATOR_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_GRAPH_KERNEL_GRAPH_KERNEL_JSON_GENERATOR_H_
 #include <map>
 #include <memory>
 #include <string>
@@ -80,7 +80,7 @@ class GraphKernelJsonGenerator {
   std::string kernel_json_str() const { return kernel_json_.dump(); }
   const std::vector<size_t> &input_size_list() const { return input_size_list_; }
   const std::vector<size_t> &output_size_list() const { return output_size_list_; }
-  std::map<std::string, AnfNodePtr> address_node_map() { return address_node_map_; }
+  std::map<std::string, AnfNodePtr> address_node_map() const { return address_node_map_; }
 
  private:
   bool GenerateSingleKernelJson(const AnfNodePtr &anf_node, nlohmann::json *node_json);
@@ -132,4 +132,4 @@ class GraphKernelJsonGenerator {
   CallbackPtr cb_;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GRAPH_KERNEL_JSON_GENERATOR_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_GRAPH_KERNEL_GRAPH_KERNEL_JSON_GENERATOR_H_

@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-void DynamicAkgCpuKernelBuilder::SetCpuKernelModByName(const string &kernel_name,
-                                                       const GraphKernelJsonGenerator &json_generator,
-                                                       const AnfNodePtr &anf_node) const {
-  auto kernel_mod_ptr = std::make_shared<DynamicAkgCpuKernelMod>(kernel_name);
+void DynamicAkgCpuKernelBuilder::SetKernelMod(const KernelPackPtr &kernel_pack,
+                                              const GraphKernelJsonGenerator &json_generator,
+                                              const AnfNodePtr &anf_node) {
+  auto kernel_mod_ptr = std::make_shared<DynamicAkgCpuKernelMod>(kernel_pack);
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
 
@@ -48,15 +48,5 @@ void DynamicAkgCpuKernelBuilder::SaveJsonInfo(const string &kernel_name, const s
   kernel::SaveJsonInfo(kernel_name, kernel_json, kernel_meta_path);
 }
 
-bool DynamicAkgCpuKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &json_and_node) {
-  for (const auto &[json_generator, anf_node] : json_and_node) {
-    auto kernel_name = json_generator.kernel_name();
-    auto kernel_json = json_generator.kernel_json_str();
-    SaveJsonInfo(kernel_name, kernel_json);
-    SetCpuKernelModByName(kernel_name, json_generator, anf_node);
-    MS_LOG(DEBUG) << "Akg set " << kernel_name << " kernel with dynamic shape support successfully!";
-  }
-  return true;
-}
 }  // namespace kernel
 }  // namespace mindspore

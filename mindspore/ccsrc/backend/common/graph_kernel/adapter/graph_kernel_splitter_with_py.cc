@@ -157,7 +157,7 @@ class SplitNodesDecoder {
 
       std::string ptr_address = op_desc[kJsonKeyPtrAddress];
       if (address_node_map.count(ptr_address) == 0) {
-        MS_LOG(ERROR) << "Decode failed, ptr_address not found in map.";
+        MS_LOG(ERROR) << "Decode failed, ptr_address not found in map: " << ptr_address;
         return false;
       }
       auto node = address_node_map.at(ptr_address)->cast<CNodePtr>();
@@ -180,226 +180,211 @@ class SplitNodesDecoder {
   }
 };
 
-class CostModelSplitSchemer : public SplitSchemer {
- public:
-  virtual ~CostModelSplitSchemer() = default;
-  bool Split(const FuncGraphPtr &func_graph) override {
-    if (!func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-      MS_EXCEPTION(NotSupportError) << "func_graph must be a GraphKernel node.";
-    }
-    func_graph_ = func_graph;
-    this->Run();
-    return !split_plan_.empty();
-  }
-
- protected:
-  virtual bool SplitByCostModel() {
-    // Use an address map to record the anf node address when converting to json,
-    // it will recover the original node after split.
-    std::map<std::string, AnfNodePtr> address_node_map;
-
-    // convert anf-ir to json
-    nlohmann::json json_desc;
-    DumpOption dump_option;
-    dump_option.is_before_select_kernel = false;
-    dump_option.save_ptr_address = true;
-    if (!AnfToJsonDesc(topo_valid_nodes_, dump_option, &json_desc, &address_node_map)) {
-      MS_LOG(ERROR) << "Collect json desc failed.";
-      return false;
-    }
-    // set the "node_name" for tracing split result.
-    std::string node_name = json_desc["op"];
-    func_graph_->set_attr(kAttrNodeName, MakeValue(node_name));
-
-    // call costmodel split function.
-    auto json_desc_str = json_desc.dump();
-    auto flags_str = GraphKernelFlags::GetInstance().DumpAllFlags();
-    MS_LOG(DEBUG) << "CallPyFn: [" << kGraphKernelSplitFunc << "] with input json: " << json_desc_str
-                  << ". flag: " << flags_str;
-    auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelSplitFunc, json_desc_str, flags_str);
-    if (py::isinstance<py::none>(ret)) {
-      MS_LOG(ERROR) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
-                    << json_desc_str << ". flag: " << flags_str;
-      return false;
-    }
-    std::string split_graphs_str = py::cast<std::string>(ret);
-    if (split_graphs_str.empty()) {
-      MS_LOG(ERROR) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
-                    << json_desc_str << ". flag: " << flags_str;
-      return false;
-    }
-
-    if (!DecodeJson(split_graphs_str, address_node_map)) {
-      MS_LOG(ERROR) << "Failed to decode split graphs. input json:\n" << split_graphs_str;
-      return false;
-    }
-
-    if (split_plan_.size() > 1 && GraphKernelFlags::GetInstance().enable_recompute_fusion) {
-      RemoveHangingNodes();
-    }
-    return true;
-  }
-
-  void RemoveHangingNodes() {
-    auto todo = TopoSort(func_graph_->get_return());
-    std::set<AnfNodePtr> new_all_nodes(todo.begin(), todo.end());
-    std::vector<size_t> empty_groups;
-    for (size_t i = 0; i < split_plan_.size(); i++) {
-      for (int j = SizeToInt(split_plan_[i].size()) - 1; j >= 0; j--) {
-        if (new_all_nodes.count(split_plan_[i][j]) == 0) {
-          MS_LOG(INFO) << "Recompute remove hanging node " << split_plan_[i][j]->fullname_with_scope();
-          (void)split_plan_[i].erase(split_plan_[i].begin() + j);
-        }
-      }
-      if (split_plan_[i].empty()) {
-        empty_groups.push_back(i);
-      }
-    }
-    if (!empty_groups.empty()) {
-      MS_LOG(INFO) << "Recompute remove empty groups " << empty_groups;
-      std::reverse(empty_groups.begin(), empty_groups.end());
-      for (auto i : empty_groups) {
-        (void)split_plan_.erase(split_plan_.begin() + i);
-        (void)need_inline_.erase(need_inline_.begin() + i);
-      }
-    }
-  }
-
-  virtual bool DecodeJson(const std::string &json_desc, const std::map<std::string, AnfNodePtr> &address_node_map) {
-    auto kernel_json = nlohmann::json::parse(json_desc);
-    std::vector<nlohmann::json> graph_descs = kernel_json[kJsonKeyGraphDesc];
-    std::vector<std::string> graph_modes = kernel_json[kJsonKeyGraphMode];
-    if (graph_modes.size() != graph_descs.size()) {
-      MS_LOG(ERROR) << "Size of graph_mode " << graph_modes.size() << " mismatch graph_desc " << graph_descs.size();
-      return false;
-    }
-
-    // recover json to anfnode.
-    split_plan_.clear();
-    for (const auto &graph_desc : graph_descs) {
-      AnfNodePtrList res_graph;
-      if (!SplitNodesDecoder().DecodeSplitNodes(graph_desc, address_node_map, &res_graph)) {
-        MS_LOG(ERROR) << "Failed decode sub graph, " << graph_desc;
-        return false;
-      }
-      (void)split_plan_.emplace_back(std::move(res_graph));
-    }
-
-    // ops to be inlined.
-    need_inline_.clear();
-    (void)std::transform(graph_modes.begin(), graph_modes.end(), std::back_inserter(need_inline_),
-                         [](const std::string &mode) { return mode == "basic" ? 1 : 0; });
-    return true;
-  }
-
-  virtual void Run() {
-    auto mng = func_graph_->manager();
-    if (mng == nullptr) {
-      mng = Manage(func_graph_, true);
-      func_graph_->set_manager(mng);
-    }
-    GetValidKernelNodes();
-    // call CostModel to get a split plan.
-    if (!SplitByCostModel() || split_plan_.size() != need_inline_.size() || split_plan_.empty()) {
-      split_plan_.clear();
-      need_inline_.clear();
-      return;
-    } else if (split_plan_.size() == 1 && !NeedInline(0)) {
-      // In this case, the CostModel decided to keep the whole graph unchanged.
-      split_plan_.clear();
-      need_inline_.clear();
-      return;
-    } else {
-      MS_LOG(DEBUG) << "CostModel split succeeded. The kernel is split to " << split_plan_.size() << " parts.";
-    }
-    MapNodeGroup();
-    GroupReturnNode();
-    GroupVirtualNodes();
-  }
-
-  virtual bool IsValidKernelNode(const AnfNodePtr &node) const {
-    if (!node->isa<CNode>()) {
-      return false;
-    }
-    if (AnfUtils::IsRealKernel(node)) {
-      return true;
-    }
+bool SplitByJsonSchemer::SplitByJsonStr(const std::map<std::string, AnfNodePtr> &address_node_map,
+                                        std::string split_graphs_str) {
+  if (!DecodeJson(split_graphs_str, address_node_map)) {
+    MS_LOG(ERROR) << "Failed to decode split graphs. input json:\n" << split_graphs_str;
     return false;
   }
 
-  virtual void GetValidKernelNodes() {
-    topo_all_nodes_ = TopoSort(func_graph_->get_return());
-    topo_valid_nodes_.clear();
-    (void)std::copy_if(topo_all_nodes_.begin(), topo_all_nodes_.end(), std::back_inserter(topo_valid_nodes_),
-                       [this](const AnfNodePtr &node) { return IsValidKernelNode(node); });
+  if (split_plan_.size() > 1 && GraphKernelFlags::GetInstance().enable_recompute_fusion) {
+    RemoveHangingNodes();
   }
+  return true;
+}
 
-  void MapNodeGroup() {
-    node_group_.clear();
-    for (size_t i = 0; i < split_plan_.size(); ++i) {
-      for (const auto &node : split_plan_[i]) {
-        node_group_[node] = i;
+void SplitByJsonSchemer::RemoveHangingNodes() {
+  auto todo = TopoSort(func_graph_->get_return());
+  std::set<AnfNodePtr> new_all_nodes(todo.begin(), todo.end());
+  std::vector<size_t> empty_groups;
+  for (size_t i = 0; i < split_plan_.size(); i++) {
+    for (int j = SizeToInt(split_plan_[i].size()) - 1; j >= 0; j--) {
+      if (new_all_nodes.count(split_plan_[i][j]) == 0) {
+        MS_LOG(INFO) << "Recompute remove hanging node " << split_plan_[i][j]->fullname_with_scope();
+        (void)split_plan_[i].erase(split_plan_[i].begin() + j);
       }
     }
-  }
-
-  // group the return node and last MakeTuple node (if exists).
-  virtual void GroupReturnNode() {
-    AnfNodePtrList outputs;
-    kernel::GetFuncGraphOutputNodes(func_graph_, &outputs);
-    auto ret_node = func_graph_->get_return();
-    auto output = func_graph_->output();
-    MS_EXCEPTION_IF_NULL(output);
-
-    if (IsValidKernelNode(output)) {
-      auto group_id = node_group_[output];
-      node_group_[ret_node] = group_id;
-      (void)split_plan_[group_id].emplace_back(ret_node);
-      return;
-    }
-    // assign the make_tuple node to a new group.
-    if (common::AnfAlgo::CheckPrimitiveType(output, prim::kPrimMakeTuple)) {
-      auto group_id = split_plan_.size();
-      (void)split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
-      (void)need_inline_.emplace_back(1);
-      node_group_[output] = group_id;
-      node_group_[ret_node] = group_id;
-      return;
+    if (split_plan_[i].empty()) {
+      empty_groups.push_back(i);
     }
   }
-
-  // assign virtual node to the same group of its input.
-  virtual void GroupVirtualNodes() {
-    for (const auto &node : topo_all_nodes_) {
-      if (node_group_.count(node) != 0) {
-        continue;
-      }
-      auto cnode = node->cast<CNodePtr>();
-      if (cnode == nullptr) {
-        continue;
-      }
-      bool found = false;
-      for (const auto &input : cnode->inputs()) {
-        auto iter = node_group_.find(input);
-        if (iter != node_group_.end()) {
-          auto group_id = iter->second;
-          node_group_[node] = group_id;
-          (void)split_plan_[group_id].emplace_back(node);
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        MS_LOG(WARNING) << cnode->fullname_with_scope() << " is ungrouped.";
-      }
+  if (!empty_groups.empty()) {
+    MS_LOG(INFO) << "Recompute remove empty groups " << empty_groups;
+    std::reverse(empty_groups.begin(), empty_groups.end());
+    for (auto i : empty_groups) {
+      (void)split_plan_.erase(split_plan_.begin() + i);
+      (void)need_inline_.erase(need_inline_.begin() + i);
     }
   }
+}
 
-  std::shared_ptr<FuncGraph> func_graph_;
-  AnfNodePtrList topo_all_nodes_;
-  AnfNodePtrList topo_valid_nodes_;
-  mindspore::HashMap<AnfNodePtr, size_t> node_group_;
-};
+bool SplitByJsonSchemer::DecodeJson(const std::string &json_desc,
+                                    const std::map<std::string, AnfNodePtr> &address_node_map) {
+  auto kernel_json = nlohmann::json::parse(json_desc);
+  std::vector<nlohmann::json> graph_descs = kernel_json[kJsonKeyGraphDesc];
+  std::vector<std::string> graph_modes = kernel_json[kJsonKeyGraphMode];
+  if (graph_modes.size() != graph_descs.size()) {
+    MS_LOG(ERROR) << "Size of graph_mode " << graph_modes.size() << " mismatch graph_desc " << graph_descs.size();
+    return false;
+  }
+
+  // recover json to anfnode.
+  split_plan_.clear();
+  for (const auto &graph_desc : graph_descs) {
+    AnfNodePtrList res_graph;
+    if (!SplitNodesDecoder().DecodeSplitNodes(graph_desc, address_node_map, &res_graph)) {
+      MS_LOG(ERROR) << "Failed decode sub graph, " << graph_desc;
+      return false;
+    }
+    (void)split_plan_.emplace_back(std::move(res_graph));
+  }
+
+  // ops to be inlined.
+  need_inline_.clear();
+  (void)std::transform(graph_modes.begin(), graph_modes.end(), std::back_inserter(need_inline_),
+                       [](const std::string &mode) { return mode == "basic" ? 1 : 0; });
+  return true;
+}
+
+void SplitByJsonSchemer::Run() {
+  auto mng = func_graph_->manager();
+  if (mng == nullptr) {
+    mng = Manage(func_graph_, true);
+    func_graph_->set_manager(mng);
+  }
+  GetValidKernelNodes();
+  // call CostModel to get a split plan.
+  if (!SplitByCostModel() || split_plan_.size() != need_inline_.size() || split_plan_.empty()) {
+    split_plan_.clear();
+    need_inline_.clear();
+    return;
+  } else if (split_plan_.size() == 1 && !NeedInline(0)) {
+    // In this case, the CostModel decided to keep the whole graph unchanged.
+    split_plan_.clear();
+    need_inline_.clear();
+    return;
+  } else {
+    MS_LOG(DEBUG) << "CostModel split succeeded. The kernel is split to " << split_plan_.size() << " parts.";
+  }
+  MapNodeGroup();
+  GroupReturnNode();
+  GroupVirtualNodes();
+}
+
+bool SplitByJsonSchemer::IsValidKernelNode(const AnfNodePtr &node) const {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  if (AnfUtils::IsRealKernel(node)) {
+    return true;
+  }
+  return false;
+}
+
+void SplitByJsonSchemer::GetValidKernelNodes() {
+  topo_all_nodes_ = TopoSort(func_graph_->get_return());
+  topo_valid_nodes_.clear();
+  (void)std::copy_if(topo_all_nodes_.begin(), topo_all_nodes_.end(), std::back_inserter(topo_valid_nodes_),
+                     [this](const AnfNodePtr &node) { return IsValidKernelNode(node); });
+}
+
+void SplitByJsonSchemer::MapNodeGroup() {
+  node_group_.clear();
+  for (size_t i = 0; i < split_plan_.size(); ++i) {
+    for (const auto &node : split_plan_[i]) {
+      node_group_[node] = i;
+    }
+  }
+}
+
+// group the return node and last MakeTuple node (if exists).
+void SplitByJsonSchemer::GroupReturnNode() {
+  AnfNodePtrList outputs;
+  kernel::GetFuncGraphOutputNodes(func_graph_, &outputs);
+  auto ret_node = func_graph_->get_return();
+  auto output = func_graph_->output();
+  MS_EXCEPTION_IF_NULL(output);
+
+  if (IsValidKernelNode(output)) {
+    auto group_id = node_group_[output];
+    node_group_[ret_node] = group_id;
+    (void)split_plan_[group_id].emplace_back(ret_node);
+    return;
+  }
+  // assign the make_tuple node to a new group.
+  if (common::AnfAlgo::CheckPrimitiveType(output, prim::kPrimMakeTuple)) {
+    auto group_id = split_plan_.size();
+    (void)split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
+    (void)need_inline_.emplace_back(1);
+    node_group_[output] = group_id;
+    node_group_[ret_node] = group_id;
+    return;
+  }
+}
+
+// assign virtual node to the same group of its input.
+void SplitByJsonSchemer::GroupVirtualNodes() {
+  for (const auto &node : topo_all_nodes_) {
+    if (node_group_.count(node) != 0) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      continue;
+    }
+    bool found = false;
+    for (const auto &input : cnode->inputs()) {
+      auto iter = node_group_.find(input);
+      if (iter != node_group_.end()) {
+        auto group_id = iter->second;
+        node_group_[node] = group_id;
+        (void)split_plan_[group_id].emplace_back(node);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      MS_LOG(WARNING) << cnode->fullname_with_scope() << " is ungrouped.";
+    }
+  }
+}
+
+bool CostModelSplitSchemer::SplitByCostModel() {
+  // Use an address map to record the anf node address when converting to json,
+  // it will recover the original node after split.
+  std::map<std::string, AnfNodePtr> address_node_map;
+
+  // convert anf-ir to json
+  nlohmann::json json_desc;
+  DumpOption dump_option;
+  dump_option.is_before_select_kernel = false;
+  dump_option.save_ptr_address = true;
+  if (!AnfToJsonDesc(topo_valid_nodes_, dump_option, &json_desc, &address_node_map)) {
+    MS_LOG(ERROR) << "Collect json desc failed.";
+    return false;
+  }
+  // set the "node_name" for tracing split result.
+  std::string node_name = json_desc["op"];
+  func_graph_->set_attr(kAttrNodeName, MakeValue(node_name));
+  // call costmodel split function.
+  auto json_desc_str = json_desc.dump();
+  auto flags_str = GraphKernelFlags::GetInstance().DumpAllFlags();
+  MS_LOG(DEBUG) << "CallPyFn: [" << kGraphKernelSplitFunc << "] with input json: " << json_desc_str
+                << ". flag: " << flags_str;
+  auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelSplitFunc, json_desc_str, flags_str);
+  if (py::isinstance<py::none>(ret)) {
+    MS_LOG(ERROR) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
+                  << json_desc_str << ". flag: " << flags_str;
+    return false;
+  }
+  std::string split_graphs_str = py::cast<std::string>(ret);
+  if (split_graphs_str.empty()) {
+    MS_LOG(ERROR) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
+                  << json_desc_str << ". flag: " << flags_str;
+    return false;
+  }
+  return SplitByJsonStr(address_node_map, split_graphs_str);
+}
 
 std::shared_ptr<SplitSchemer> GraphKernelSplitterWithPy::GetSplitSchema(const std::string &processor) {
   if (processor != kCPUDevice && processor != kAscendDevice) {

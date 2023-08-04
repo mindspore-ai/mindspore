@@ -610,7 +610,7 @@ void GraphKernelJsonGenerator::SaveNodeAddress(const AnfNodePtr &anf_node, nlohm
   if (dump_option_.save_ptr_address) {
     std::ostringstream get_the_address;
     get_the_address << anf_node.get();
-    auto address = get_the_address.str();
+    auto address = anf_node->UniqueName();
     (*node_json)[kJsonKeyPtrAddress] = address;
     address_node_map_[address] = anf_node;
   }

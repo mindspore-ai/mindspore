@@ -315,9 +315,9 @@ KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &pro
   return kernel_pack;
 }
 
-void KernelMeta::Initialize() {
+void KernelMeta::Initialize(const std::string &backend) {
   auto config_path = GetCompilerCachePath();
-  kernel_meta_path_ = config_path + std::string(kAkgKernelMeta);
+  kernel_meta_path_ = config_path + backend + std::string(kKernelMetaSuffix);
   (void)(FileUtils::CreateNotExistDirs(kernel_meta_path_, true));
   initialized_ = true;
 }

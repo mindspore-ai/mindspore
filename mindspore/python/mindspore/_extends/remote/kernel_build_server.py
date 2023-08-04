@@ -15,7 +15,7 @@
 """kernel build server"""
 import os
 from mindspore import log as logger
-from mindspore._extends.parallel_compile.akg_compiler.akg_process import create_akg_parallel_process
+from mindspore._extends.parallel_compile.akg_compiler.akg_process import create_akg_parallel_process, create_akg_v2_parallel_process
 
 
 class Messager:
@@ -124,8 +124,8 @@ class Messager:
         raise NotImplementedError
 
 
-class AkgBuilder():
-    """Akg building wrapper"""
+class AkgBuilderBase():
+    """Base Class for kernel compiler building wrapper"""
 
     def __init__(self, platform):
         self.platform = platform
@@ -133,8 +133,9 @@ class AkgBuilder():
         self.akg_processor = None
 
     def create(self, process_num, waitime):
-        """ Create akg processor"""
-        self.akg_processor = create_akg_parallel_process(process_num, waitime, self.platform)
+        """ Create compiler processor"""
+        del process_num, waitime
+        raise NotImplementedError
 
     def accept_json(self, json):
         """ Accept json"""
@@ -145,7 +146,7 @@ class AkgBuilder():
         return self.akg_processor.compile(self.attrs)
 
     def handle(self, messager, arg):
-        """Handle message about akg"""
+        """Handle message about compiler"""
         if arg == 'AKG/START':
             messager.send_ack()
             process_num_str = messager.get_message()
@@ -172,7 +173,23 @@ class AkgBuilder():
                     messager.send_ack(False)
                     break
         else:
-            raise RuntimeError("Unknown message type: %s" % arg)
+            raise RuntimeError(f"Unknown message type: {arg}")
+
+
+class AkgBuilder(AkgBuilderBase):
+    """Akg building wrapper"""
+
+    def create(self, process_num, waitime):
+        """ Create akg processor"""
+        self.akg_processor = create_akg_parallel_process(process_num, waitime, self.platform)
+
+
+class AkgV2Builder(AkgBuilderBase):
+    """Akg V2 building wrapper"""
+
+    def create(self, process_num, waitime):
+        """ Create akg v2 processor"""
+        self.akg_processor = create_akg_v2_parallel_process(process_num, waitime, self.platform)
 
 
 def get_logger():

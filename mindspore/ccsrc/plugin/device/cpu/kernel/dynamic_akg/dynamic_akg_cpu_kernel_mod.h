@@ -40,6 +40,7 @@ using DynamicAkgCpuKernelManagerPtr = std::shared_ptr<DynamicAkgCpuKernelManager
 class DynamicAkgCpuKernelMod : public CpuKernelMod {
  public:
   explicit DynamicAkgCpuKernelMod(const std::string &kernel_name);
+  explicit DynamicAkgCpuKernelMod(const KernelPackPtr &kernel_pack);
   ~DynamicAkgCpuKernelMod() = default;
 
   bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,

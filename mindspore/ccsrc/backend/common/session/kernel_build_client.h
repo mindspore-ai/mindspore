@@ -43,10 +43,10 @@ class BACKEND_EXPORT KernelBuildClient {
  public:
   // Send Finish request to server
   constexpr inline static auto kFinish = "FINISH";
-  constexpr inline static auto kAkgStart = "AKG/START";
-  constexpr inline static auto kAkgData = "AKG/DATA";
-  constexpr inline static auto kAkgAttr = "AKG/ATTR";
-  constexpr inline static auto kAkgWait = "AKG/WAIT";
+  constexpr inline static auto kCompilerStart = "AKG/START";
+  constexpr inline static auto kCompilerData = "AKG/DATA";
+  constexpr inline static auto kCompilerAttr = "AKG/ATTR";
+  constexpr inline static auto kCompilerWait = "AKG/WAIT";
   // Receive the response from server
   constexpr inline static auto kAck = "ACK";
   constexpr inline static auto kErr = "ERR";
@@ -120,11 +120,11 @@ class BACKEND_EXPORT KernelBuildClient {
     return res;
   }
 
-  // Run AKG building.
-  bool AkgStart(int process_num, int wait_time);
-  bool AkgSendAttr(const std::string &attr);
-  bool AkgSendData(const std::vector<std::string> &jsons);
-  bool AkgWait();
+  // Run Kernel Compiler building.
+  bool CompilerStart(int process_num, int wait_time);
+  bool CompilerSendAttr(const std::string &attr);
+  bool CompilerSendData(const std::vector<std::string> &jsons);
+  bool CompilerWait();
 
  protected:
   KernelBuildClient() : init_(false), dp_(std::make_shared<DuplexPipe>()) {}
@@ -281,6 +281,43 @@ class BACKEND_EXPORT AkgKernelBuildClient : public KernelBuildClient {
 
  private:
   AkgKernelBuildClient() { Open(); }
+};
+
+class BACKEND_EXPORT AkgV2KernelBuildClient : public KernelBuildClient {
+ public:
+  // Server configure
+  constexpr inline static auto kGetPathScript =
+    "-c "
+    "\""
+    "import pkgutil;"
+    "path = pkgutil"
+    ".get_loader(\\\"mindspore._extends.remote.kernel_build_server_akg_v2\\\")"  // Server module name
+    ".get_filename();"
+    "print('[~]' + path)"
+    "\"";
+
+  constexpr inline static auto kServerScript = "kernel_build_server_akg_v2.py";
+
+  static AkgV2KernelBuildClient &Instance();
+
+  std::string GetEnv() override { return GetPyExe(); }
+
+  std::string GetScript() override {
+    auto env = GetPyExe();
+    return GetScriptFilePath(env, kGetPathScript, kServerScript);
+  }
+
+  AkgV2KernelBuildClient(const AkgV2KernelBuildClient &) = delete;
+  AkgV2KernelBuildClient &operator=(const AkgV2KernelBuildClient &) = delete;
+
+  AkgV2KernelBuildClient(AkgV2KernelBuildClient &&) = delete;
+  AkgV2KernelBuildClient &operator=(AkgV2KernelBuildClient &&) = delete;
+
+ protected:
+  ~AkgV2KernelBuildClient() override { Close(); }
+
+ private:
+  AkgV2KernelBuildClient() { Open(); }
 };
 }  // namespace kernel
 }  // namespace mindspore
