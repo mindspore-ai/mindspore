@@ -984,8 +984,8 @@ def infer_out_shape(*shapes):
     def _check(items, max_size, shapes):
         for item in items:
             if item not in (1, max_size):
-                raise ValueError(f'For Tensor, the dimension on each axis must be 1 or the max on the axis' \
-                                 f'to support broadcast, but got shapes {shapes,}')
+                raise ValueError(f'For Tensor, the dimension on each axis must be 1 or the max value on the axis' \
+                                 f'to support broadcasting, but got shapes {shapes,}')
     shape_out = ()
     max_len = max([len(it) for it in shapes])
     for i in range(max_len):
@@ -1269,7 +1269,7 @@ def check_input_data(*data, data_class):
             if not ret:
                 data_class_str = tuple(i.__name__ if hasattr(i, '__name__') else i for i in data_class) if isinstance(
                     data_class, (tuple, list)) else (data_class if data_class is None else data_class.__name__)
-                raise TypeError(f'The type of input data must be in the Union({data_class_str}, ' \
+                raise TypeError(f'The types of input data must be in the Union({data_class_str}, ' \
                                 f'tuple[{data_class_str}], list[{data_class_str}], dict[{data_class_str}]), ' \
                                 f'but got type {item if item is None else type(item).__name__}.')
 
