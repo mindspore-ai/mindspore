@@ -154,7 +154,7 @@ def value_update(transfer_types, args, data, value):
         if transfer_type == ValueTransferType.kByPass:
             continue
         if transfer_type == ValueTransferType.kNumberToTensor:
-            value = F.fill(F.dtype(data), (), value)
+            value = F.cast(value, F.dtype(data))
         elif transfer_type == ValueTransferType.kHandleSequenceValue:
             op_type, index = arg
             if op_type == const_utils.SET_ITEM_BY_ONE_TENSOR:
@@ -1190,7 +1190,7 @@ def tensor_setitem_by_tensor_with_tensor(data, index, value_tensor):
 
 
 def tensor_setitem_by_tensor_with_number(data, index, value):
-    value = F.fill(F.dtype(data), (), value)
+    value = F.cast(value, F.dtype(data))
     return tensor_setitem_by_tensor_with_tensor(data, index, value)
 
 
@@ -1221,13 +1221,13 @@ def _tensor_setitem_by_bool_tensor_with_sequence(data, index, value):
 
 def tensor_setitem_by_slice_with_number(data, input_slice, value):
     """Givens a scalar assign to tensor by slice"""
-    value = F.fill(F.dtype(data), (), value)
+    value = F.cast(value, F.dtype(data))
     return tensor_setitem_by_slice_with_tensor(data, input_slice, value)
 
 
 def tensor_setitem_by_tuple_with_number(data, tuple_index, value):
     """Assigns the tensor by tuple with number value."""
-    value = F.fill(F.dtype(data), (), value)
+    value = F.cast(value, F.dtype(data))
     return tensor_setitem_by_tuple_with_tensor(data, tuple_index, value)
 
 
@@ -1351,7 +1351,7 @@ def tensor_setitem_by_tuple_with_sequence(data, tuple_index, value):
 
 def tensor_setitem_by_number_with_number(data, index, value):
     """Assigns the tensor by number with number value."""
-    value = F.fill(F.dtype(data), (), value)
+    value = F.cast(value, F.dtype(data))
     return tensor_setitem_by_number_with_tensor(data, index, value)
 
 
@@ -1386,7 +1386,7 @@ def tensor_setitem_by_ellipsis_with_number(data, value):
     data_shape = F.shape(data)
     data_dtype = F.dtype(data)
     if F.is_sequence_value_unknown(data_shape):
-        value = F.fill(F.dtype(data), (), value)
+        value = F.cast(value, F.dtype(data))
         return tensor_setitem_by_ellipsis_with_tensor(data, value)
     return F.fill(data_dtype, data_shape, value)
 
