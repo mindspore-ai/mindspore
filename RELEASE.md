@@ -323,7 +323,7 @@ Contributions of any kind are welcome!
 
 ### Major Features and Improvements
 
-### MindSpore Lite Cloud Inference
+#### MindSpore Lite Cloud Inference
 
 - [STABLE] Supports high-performance inference for single-device large model and single-node multi-device distributed large model at Ascend backend.
 - [STABLE] Python API Ascend backend supports multiple models sharing workspace memory.
