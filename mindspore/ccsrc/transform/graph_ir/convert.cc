@@ -2230,7 +2230,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     return;
   }
 
-  MS_LOG(INFO) << "Set op input for node: " << node->ToString();
+  MS_LOG(INFO) << "Set op input for node: " << node->fullname_with_scope();
   if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     SetMakeTupleInput(adpt, node);
     return;
@@ -2278,10 +2278,14 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   // Set input from attr.
   const auto &primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
+  const auto monad_size = std::count_if(inputs.begin() + kIndex1, inputs.end(), [](const AnfNodePtr &input) {
+    return input->isa<ValueNode>() && HasAbstractMonad(input);
+  });
   const auto &attr_input_map = adpt->getAttrInputMap();
   const auto &input_map = adpt->getInputMap();
-  if (input_map.size() != attr_input_map.size() + input_size - kIndex1) {
-    MS_LOG(DEBUG) << "For node: " << node->DebugString() << ", the size of real input:" << input_size - kIndex1
+  if (input_map.size() != attr_input_map.size() + input_size - monad_size - kIndex1) {
+    MS_LOG(DEBUG) << "For node: " << node->DebugString()
+                  << ", the size of real input:" << input_size - monad_size - kIndex1
                   << " + the size of attr_input_map: " << attr_input_map.size()
                   << " != the size of input_map:" << input_map.size()
                   << ", so do not convert input from attr any more.";
