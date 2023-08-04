@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ class MS_API ModelConverter {
   ~ModelConverter() = default;
 
   Buffer LoadMindIR(const FuncGraphPtr &func_graph);
+  Buffer LoadMindIRV2(const FuncGraphPtr &func_graph);
 
   void set_options(const std::weak_ptr<AclModelOptions> &options) { options_ = options; }
 
@@ -41,6 +42,7 @@ class MS_API ModelConverter {
   Buffer BuildAirModel(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &init_options,
                        const std::map<std::string, std::string> &build_options) const;
   Buffer LoadAscendIRInner(const Buffer &model_data);
+  Buffer LoadAscendIRInner(const uint8_t *data, size_t len);
   Status SaveModel(const ge::ModelBufferData &model) const;
 
   std::weak_ptr<AclModelOptions> options_;
