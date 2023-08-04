@@ -124,7 +124,6 @@ package_data = {
         'lib/*.dylib*',
         '.commit_id',
         'config/*',
-        'ops/bprop_mindir/*',
         'include/*',
         'include/*/*',
         'include/*/*/*',

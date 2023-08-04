@@ -259,19 +259,6 @@ bool ContainsParameterConstants(const ValuePtr &value) {
   return abs->isa<abstract::AbstractRefTensor>();
 }
 
-bool LoadedFromMindir(const AnfNodePtr &origin_node, const py::object &obj, const ValuePtr &convert_result) {
-  if (common::GetEnv("MS_DEV_EXPORT_BPROP_MINDIR") == "1" && IsPrimitiveCNode(origin_node, prim::kPrimResolve)) {
-    auto name_space = GetValueNode<NameSpacePtr>(origin_node->cast<CNodePtr>()->input(1));
-    MS_EXCEPTION_IF_NULL(name_space);
-    auto obj_type = data_converter::GetObjType(obj);
-    if (obj_type == RESOLVE_TYPE_FUNCTION && convert_result->isa<FuncGraph>() &&
-        name_space->module() != RESOLVE_NAMESPACE_NAME_COMMON_OPS) {
-      return true;
-    }
-  }
-  return false;
-}
-
 AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
@@ -290,10 +277,6 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
       << "The Parameter in obj '" << py::str(obj)
       << "' with nested structure is resolved to a constant because we only support single Parameter or tuple/list "
          "Parameters. Or do you want to use Tensor instead?";
-  }
-  // For the bprop which is loaded from mindir file, the sub function should be resolved after loading.
-  if (LoadedFromMindir(origin_node, obj, convert_result)) {
-    return origin_node;
   }
 
   bool interpret_without_internal =

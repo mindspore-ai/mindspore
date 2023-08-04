@@ -186,21 +186,6 @@ class MetaUnpackPrepareLib {
   SubstitutionPtr meta_unpack_prepare_;
 };
 
-class BpropMindIRPassLib {
- public:
-  BpropMindIRPassLib();
-  ~BpropMindIRPassLib() = default;
-  SubstitutionPtr get_constexpr_ops_;
-  SubstitutionPtr get_class_type_;
-  SubstitutionPtr get_meta_fg_;
-  SubstitutionPtr get_primal_attr_;
-  SubstitutionPtr get_sub_func_graph_;
-  SubstitutionPtr class_type_resolve_;
-  SubstitutionPtr do_signature_resolve_;
-  SubstitutionPtr resolve_node_resolve_;
-  SubstitutionPtr reslove_primitive_attr_;
-};
-
 // predicate functions
 inline bool IsNode(const AnfNodePtr &) { return true; }
 
