@@ -94,6 +94,8 @@ void ContextPyBind(const py::module &m) {
     .def("get_thread_num", &Context::GetThreadNum)
     .def("set_inter_op_parallel_num", &Context::SetInterOpParallelNum)
     .def("get_inter_op_parallel_num", &Context::GetInterOpParallelNum)
+    .def("set_group_info_file", &Context::SetGroupInfoFile)
+    .def("get_group_info_file", &Context::GetGroupInfoFile)
     .def("set_thread_affinity_mode", py::overload_cast<int>(&Context::SetThreadAffinity))
     .def("get_thread_affinity_mode", &Context::GetThreadAffinityMode)
     .def("set_thread_affinity_core_list", py::overload_cast<const std::vector<int> &>(&Context::SetThreadAffinity))

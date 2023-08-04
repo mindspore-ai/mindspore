@@ -205,6 +205,8 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const
 
 FuncGraphPtr SplitMindIR(const std::string &file_name);
 
+FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num, size_t rank_id);
+
 // init and exec dataset sub graph
 bool ME_EXPORT InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
                                const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,

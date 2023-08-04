@@ -500,7 +500,7 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
   }
 }
 
-void SliceTensorObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor_layout) {
+void SliceTensorObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor_layout, size_t rank_id) {
   auto param = parameter->default_param();
   MS_EXCEPTION_IF_NULL(param);
   auto p_tensor = param->cast<tensor::TensorPtr>();
@@ -530,13 +530,14 @@ void SliceTensorObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor
   py::tuple layout =
     py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group);
 
-  MS_LOG(INFO) << "origin p_tensor:" << p_tensor->name() << p_tensor->Size();
+  MS_LOG(INFO) << "origin p_tensor:" << p_tensor->name() << p_tensor->Size() << p_tensor->shape();
   auto tensor_py = python_adapter::CastToPyObj(p_tensor);
   // Call Python _slice_tensor Fn to slice python tensor obj
-  auto new_tensor_py = python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_TENSOR_FN_NAME, tensor_py, layout);
+  auto new_tensor_py =
+    python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_TENSOR_FN_NAME, tensor_py, layout, rank_id);
   MS_LOG(INFO) << "Success Call Python _slice_parameter Fn to slice python parameter obj";
   auto new_tensor = new_tensor_py.cast<tensor::TensorPtr>();
-  MS_LOG(INFO) << "new p_tensor:" << new_tensor->name() << new_tensor->Size();
+  MS_LOG(INFO) << "new p_tensor:" << new_tensor->name() << new_tensor->Size() << new_tensor->shape();
   parameter->set_default_param(new_tensor);
 }
 

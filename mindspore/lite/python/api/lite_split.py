@@ -144,7 +144,7 @@ def split_ir(file_name, device_num):
     assert rank_size in [2, 4, 8]
     os.environ["RANK_SIZE"] = str(rank_size)
 
-    _mindspore.set_context(mode=_mindspore.GRAPH_MODE, save_graphs=True)
+    _mindspore.set_context(mode=_mindspore.GRAPH_MODE, device_target='Ascend', save_graphs=True)
     _mindspore.communication.init(backend_name="hccl")
     _mindspore.export_split_mindir(file_name)
 
