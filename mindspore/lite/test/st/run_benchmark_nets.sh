@@ -220,3 +220,13 @@ if [[ $backend == "all" || $backend == "import_ms_and_mslite" ]]; then
       exit 1
     fi
 fi
+
+# two whl in release_path
+if [[ $backend == "all" || $backend == "plugin_custom_ops" ]]; then
+    sh $cur_path/scripts/run_plugin_custom_ops.sh -r $release_path -m $models_path -e $backend -l $level
+    plugin_custom_ops=$?
+    if [[ plugin_custom_ops -ne 0 ]]; then
+      echo "Run mslite ascend plugin custom ops failed"
+      exit 1
+    fi
+fi
