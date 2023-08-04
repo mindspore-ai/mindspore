@@ -29,6 +29,11 @@
 #include "ops/custom.h"
 
 namespace mindspore::opt {
+namespace {
+constexpr size_t kNumInputSize1 = 1;
+constexpr size_t kNumInputSize2 = 2;
+constexpr size_t kNumInputSize3 = 3;
+}  // namespace
 bool FlashAttentionFusion::InitVar() const {
   input_0_batchmm_qk_ = std::make_shared<Var>();  // tensor Q / sqrt(d)
   MS_CHECK_TRUE_RET(input_0_batchmm_qk_ != nullptr, false);
@@ -315,12 +320,19 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodePart2(const std::string &
   auto fa_prim_c = flash_attention_prim->GetPrim();
   auto matmul_2 = node->cast<CNodePtr>();
   node_names.push_back(matmul_2->fullname_with_scope());
+  MS_CHECK_TRUE_RET(matmul_2->inputs().size() < kNumInputSize3, nullptr);
   auto cast_2 = matmul_2->input(1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(cast_2 != nullptr, nullptr);
   node_names.push_back(cast_2->fullname_with_scope());
+
+  MS_CHECK_TRUE_RET(cast_2->inputs().size() < kNumInputSize2, nullptr);
   auto softmax = cast_2->input(1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(softmax != nullptr, nullptr);
   node_names.push_back(softmax->fullname_with_scope());
+
   CNodePtr cnode = nullptr;
   if (pattern_name == "FlashAttentionPatten2") {
+    MS_CHECK_TRUE_RET(softmax->inputs().size() < kNumInputSize2, nullptr);
     cnode = softmax->input(1)->cast<CNodePtr>();
   } else if (pattern_name == "FlashAttentionPatten3") {
     cnode = softmax;
@@ -328,20 +340,28 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodePart2(const std::string &
     MS_LOG(ERROR) << "pattern name is wrong, name is: " << pattern_name;
     return nullptr;
   }
+  MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
   node_names.push_back(cnode->fullname_with_scope());
+  MS_CHECK_TRUE_RET(cnode->inputs().size() < kNumInputSize2, nullptr);
   auto mul = cnode->input(1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(mul != nullptr, nullptr);
   node_names.push_back(mul->fullname_with_scope());
+  MS_CHECK_TRUE_RET(mul->inputs().size() < kNumInputSize2, nullptr);
   auto matmul_1 = mul->input(1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(matmul_1 != nullptr, nullptr);
   node_names.push_back(matmul_1->fullname_with_scope());
-  auto transpose = matmul_1->input(2)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(matmul_1->inputs().size() < kNumInputSize3, nullptr);
+  auto transpose = matmul_1->input(kNumInputSize2)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(transpose != nullptr, nullptr);
   node_names.push_back(transpose->fullname_with_scope());
   if (!CheckNeedFusion(node_names)) {
-    MS_LOG(WARNING) << "not fusion this FlashAttention op.";
+    MS_LOG(INFO) << "not fusion this FlashAttention op.";
     return nullptr;
   }
   auto q = matmul_1->input(1);
+  MS_CHECK_TRUE_RET(transpose->inputs().size() < kNumInputSize2, nullptr);
   auto k = transpose->input(1);
-  auto v = matmul_2->input(2);
+  auto v = matmul_2->input(kNumInputSize2);
   MS_LOG(INFO) << "q name: " << q->fullname_with_scope() << " , k name: " << k->fullname_with_scope()
                << " , v name: " << v->fullname_with_scope();
   auto flash_attention_cnode = func_graph->NewCNode(fa_prim_c, {q, k, v});
@@ -374,11 +394,11 @@ AnfNodePtr FlashAttentionFusion::Process(const std::string &patten_name, const F
     auto manager = Manage(func_graph);
     auto flash_attention_node = CreateFlashAttentionNodePart2(patten_name, func_graph, node, equiv);
     if (flash_attention_node == nullptr) {
-      MS_LOG(WARNING) << "flash attention op not fusion.";
+      MS_LOG(INFO) << "flash attention op not fusion.";
       return node;
     }
-    MS_LOG(ERROR) << "=========== " << node->fullname_with_scope() << " ============";
     manager->Replace(node, flash_attention_node);
+    MS_LOG(INFO) << "flash attention fusion node name: " << node->fullname_with_scope();
     return flash_attention_node;
   }
   // check batchmm_sv transpose_a == false, transpose_b == false
@@ -395,7 +415,7 @@ AnfNodePtr FlashAttentionFusion::Process(const std::string &patten_name, const F
   MS_CHECK_FALSE_MSG(softmax_cnode == nullptr, nullptr, "node is not cnode.");
   auto add_cnode = softmax_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_FALSE_MSG(add_cnode == nullptr, nullptr, "node is not cnode.");
-  auto cast2_cnode = add_cnode->input(2)->cast<CNodePtr>();
+  auto cast2_cnode = add_cnode->input(kNumInputSize2)->cast<CNodePtr>();
   MS_CHECK_FALSE_MSG(cast2_cnode == nullptr, nullptr, "node is not cnode.");
   auto batchmm_qk_cnode = cast2_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_FALSE_MSG(batchmm_qk_cnode == nullptr, nullptr, "node is not cnode.");
