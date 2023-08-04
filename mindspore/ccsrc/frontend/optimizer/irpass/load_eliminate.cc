@@ -36,12 +36,11 @@ namespace mindspore::opt::irpass {
 // load2 = load(para1, u3)        # load1 replaced by para1
 // u4 = UpdateState(u3, load2)
 AnfNodePtr LoadEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
-  auto load_node = dyn_cast<CNode>(node);
-  if (load_node == nullptr || load_node->inputs().empty()) {
+  auto load_cnode = dyn_cast<CNode>(node);
+  if (load_cnode == nullptr || load_cnode->inputs().empty()) {
     MS_LOG(WARNING) << "LoadEliminater encounter invalid node: " << node->DebugString();
     return nullptr;
   }
-  auto load_cnode = load_node->cast<CNodePtr>();
   constexpr size_t kFirstInputIndex = 1;
   constexpr size_t kSecondInputIndex = 2;
   auto &input_load = load_cnode->input(kFirstInputIndex);

@@ -399,7 +399,18 @@ class SideEffectFinder {
   // Gets branch graph from a switch cnode at given input index.
   FuncGraphPtr GetSwitchBranch(const CNodePtr &cnode, size_t index) const {
     MS_EXCEPTION_IF_NULL(cnode);
-    return GetValueNode<FuncGraphPtr>(cnode->inputs().at(index));
+    const auto &branch_node = cnode->inputs().at(index);
+    AnfNodePtr branch_fg_node = branch_node;
+    if (IsPrimitiveCNode(branch_node, prim::kPrimPartial)) {
+      auto branch_abs = branch_node->abstract();
+      constexpr auto recursive_level = 2;
+      MS_LOG(DEBUG) << "branch_node: " << branch_node->DebugString(recursive_level)
+                    << ", abstract: " << (branch_abs != nullptr ? branch_abs->ToString() : "null");
+      auto branch_cnode = branch_node->cast_ptr<CNode>();
+      branch_fg_node = branch_cnode->input(1);
+      MS_LOG(DEBUG) << "branch_fg_node: " << branch_fg_node->DebugString(recursive_level);
+    }
+    return GetValueNode<FuncGraphPtr>(branch_fg_node);
   }
 
   // Gets branch graphs from a switch cnode.
@@ -423,7 +434,8 @@ class SideEffectFinder {
       (void)branches.emplace_back(false_branch);
     }
     if (branches.empty()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch: " << cnode->DebugString();
+      constexpr auto recursive_level = 2;
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch: " << cnode->DebugString(recursive_level);
     }
     return branches;
   }
@@ -484,15 +496,38 @@ class SideEffectFinder {
 
   void CheckAndFixSwitchCall(const CNodePtr &caller, const FuncGraphVector &branches) const {
     MS_EXCEPTION_IF_NULL(caller);
-    const auto caller_input_size = caller->inputs().size();
-    for (auto &branch : branches) {
+    const auto caller_input_size = caller->inputs().size() - 1;
+    for (size_t i = 0; i < branches.size(); ++i) {
+      const auto &branch = branches[i];
       MS_EXCEPTION_IF_NULL(branch);
-      if (caller_input_size != branch->parameters().size() + 1) {
+
+      // Get partial branch input size.
+      size_t extra_input_size = 0;
+      const auto &switch_node = caller->input(0);
+      if (!IsPrimitiveCNode(switch_node, prim::kPrimSwitch)) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Not switch CNode, " << switch_node->DebugString();
+      }
+      const auto &switch_cnode = dyn_cast<CNode>(switch_node);
+      constexpr auto ignore_switch_and_cond_count = 2;
+      const auto &branch_node = switch_cnode->input(i + ignore_switch_and_cond_count);
+      if (IsPrimitiveCNode(branch_node, prim::kPrimPartial)) {
+        const auto &branch_cnode = branch_node->cast_ptr<CNode>();
+        constexpr auto ignore_partial_and_fg_count = 2;
+        extra_input_size = branch_cnode->inputs().size() - ignore_partial_and_fg_count;
+      }
+
+      // Check inputs size.
+      if (caller_input_size + extra_input_size != branch->parameters().size()) {
         // Fix branch if number of parameter mismatch.
         FixSwitchBranch(caller, branch);
         // The number of parameter should matched after fix.
-        if (caller_input_size != branch->parameters().size() + 1) {
-          MS_LOG(INTERNAL_EXCEPTION) << "Fix switch branch parameters failed! " << caller->DebugString();
+        if (caller_input_size + extra_input_size != branch->parameters().size()) {
+          constexpr auto recursive_count = 2;
+          MS_LOG(INTERNAL_EXCEPTION) << "Fix switch branch parameters failed! " << caller->DebugString(recursive_count)
+                                     << ", branch: " << branch->ToString()
+                                     << ", branch node: " << branch_node->DebugString(recursive_count)
+                                     << ", size: " << caller_input_size << " + " << extra_input_size << " not equal to "
+                                     << branch->parameters().size();
         }
       }
     }

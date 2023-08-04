@@ -161,7 +161,7 @@ bool CNode::IsApply(const PrimitivePtr &value) const {
 }
 
 void CNode::add_input(const AnfNodePtr &input) {
-  inputs_.push_back(input);
+  (void)inputs_.emplace_back(input);
   input_tensor_num_ = -1;
 }
 
@@ -388,7 +388,7 @@ bool Parameter::operator==(const AnfNode &other) const {
   if (!other.isa<Parameter>()) {
     return false;
   }
-  auto p = static_cast<const Parameter &>(other);
+  auto &p = static_cast<const Parameter &>(other);
   if (name_.length() > 0 && p.name_.length() > 0) {
     return p.name_ == name_;
   }
@@ -492,7 +492,7 @@ bool ValueNode::operator==(const AnfNode &other) const {
   if (!other.isa<ValueNode>()) {
     return false;
   }
-  auto v = static_cast<const ValueNode &>(other);
+  auto &v = static_cast<const ValueNode &>(other);
   return *v.value() == *value();
 }
 

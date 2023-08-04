@@ -72,7 +72,7 @@ class SymbolicKeyInstance : public Value {
 
   bool operator==(const Value &other) const override {
     if (other.isa<SymbolicKeyInstance>()) {
-      auto other_ = static_cast<const SymbolicKeyInstance &>(other);
+      auto &other_ = static_cast<const SymbolicKeyInstance &>(other);
       return *this == other_;
     } else {
       return false;

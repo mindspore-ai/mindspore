@@ -34,7 +34,7 @@ AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
   return abs_base;
 }
 
-void SetVariableFlag(const AbstractBasePtr abs) {
+void SetVariableFlag(const AbstractBasePtr &abs) {
   if (abs->isa<abstract::AbstractFunction>()) {
     const auto &func_abs = abs->cast<abstract::AbstractFunctionPtr>();
     MS_EXCEPTION_IF_NULL(func_abs);
@@ -75,34 +75,34 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
                       << ".";
   }
 
-  auto cond = args_abs_list[0];
-  auto tb = args_abs_list[1];
-  auto fb = args_abs_list[2];
-  MS_EXCEPTION_IF_NULL(cond);
+  auto cond_abstract = args_abs_list[0];
+  auto true_branch = args_abs_list[1];
+  auto false_branch = args_abs_list[2];
+  MS_EXCEPTION_IF_NULL(cond_abstract);
 
-  ValuePtr v = cond->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(v);
+  ValuePtr cond_value = cond_abstract->GetValueTrack();
+  MS_EXCEPTION_IF_NULL(cond_value);
   // If the value of condition is ValueAny or the abstract of condition is AbstractTensor,
   // keeps both true and false branch.
-  if (v->isa<ValueAny>() || cond->isa<AbstractTensor>()) {
-    if (cond->isa<AbstractTensor>()) {
-      CheckTensorCondValid(cond);
+  if (cond_value->isa<ValueAny>() || cond_abstract->isa<AbstractTensor>()) {
+    if (cond_abstract->isa<AbstractTensor>()) {
+      CheckTensorCondValid(cond_abstract);
     }
-    MS_EXCEPTION_IF_NULL(tb);
+    MS_EXCEPTION_IF_NULL(true_branch);
     // Need record two func_graph
-    SetVariableFlag(tb);
-    SetVariableFlag(fb);
-    return tb->Join(fb);
+    SetVariableFlag(true_branch);
+    SetVariableFlag(false_branch);
+    return true_branch->Join(false_branch);
   }
 
-  if (v->isa<Scalar>()) {
-    if (v->cast<ScalarPtr>()->IsOne()) {
-      return tb;
+  if (cond_value->isa<Scalar>()) {
+    if (cond_value->cast<ScalarPtr>()->IsOne()) {
+      return true_branch;
     } else {
-      return fb;
+      return false_branch;
     }
   }
-  MS_LOG(EXCEPTION) << "Not support this condition value: " << cond->GetValueTrack()->ToString();
+  MS_LOG(EXCEPTION) << "Not support this condition value: " << cond_value->ToString();
 }
 
 AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

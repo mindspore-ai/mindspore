@@ -28,50 +28,52 @@
 
 namespace mindspore {
 template <typename T>
-std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
-  out << "[const vector][";
-  size_t last = v.size() - 1;
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
+  os << "[const vector]{";
+  size_t last_index = v.size() - 1;
   for (size_t i = 0; i < v.size(); ++i) {
-    out << v[i];
-    if (i != last) {
-      out << ", ";
-    }
-  }
-  out << "]";
-  return out;
-}
-
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::list<T> &vec) {
-  bool begin = true;
-  os << "[const list][";
-  for (auto &item : vec) {
-    if (!begin) {
+    os << "[" << i << "]:{";
+    os << v[i];
+    os << "}";
+    if (i != last_index) {
       os << ", ";
-    } else {
-      begin = false;
     }
-    os << item;
   }
-  os << "]";
-
+  os << "}";
   return os;
 }
 
 template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::initializer_list<T> &vec) {
-  bool begin = true;
-  os << "[";
-  for (auto &item : vec) {
-    if (!begin) {
+std::ostream &operator<<(std::ostream &os, const std::list<T> &v) {
+  os << "[const list]{";
+  size_t i = 0;
+  size_t last_index = v.size() - 1;
+  for (auto it = v.begin(); it != v.end(); ++it, ++i) {
+    os << "[" << i << "]:{";
+    os << *it;
+    os << "}";
+    if (i != last_index) {
       os << ", ";
-    } else {
-      begin = false;
     }
-    os << item;
   }
-  os << "]";
+  os << "}";
+  return os;
+}
 
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::initializer_list<T> &v) {
+  os << "[const initializer_list]{";
+  size_t i = 0;
+  size_t last_index = v.size() - 1;
+  for (auto it = v.begin(); it != v.end(); ++it, ++i) {
+    os << "[" << i << "]:{";
+    os << *it;
+    os << "}";
+    if (i != last_index) {
+      os << ", ";
+    }
+  }
+  os << "}";
   return os;
 }
 

@@ -32,7 +32,7 @@ GeDataTypeImm::GeDataTypeImm(::ge::DataType v) : IntegerImm(kInt32), v_(v) {
 }
 bool GeDataTypeImm::operator==(const Value &other) const {
   if (other.isa<GeDataTypeImm>()) {
-    auto other_ = static_cast<const GeDataTypeImm &>(other);
+    auto &other_ = static_cast<const GeDataTypeImm &>(other);
     return *this == other_;
   } else {
     return false;

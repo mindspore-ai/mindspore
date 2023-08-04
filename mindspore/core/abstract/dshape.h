@@ -287,7 +287,7 @@ class MS_CORE_API SequenceShape : public BaseShape {
     if (tid() != other.tid()) {
       return false;
     }
-    auto other_shapes = static_cast<const T &>(other).p_shapes_;
+    auto &other_shapes = static_cast<const T &>(other).p_shapes_;
     if (other_shapes.size() != p_shapes_.size()) {
       return false;
     }

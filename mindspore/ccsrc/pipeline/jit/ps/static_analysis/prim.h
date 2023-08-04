@@ -169,6 +169,32 @@ class MixedPrecisionCastEvaluator final : public Evaluator {
   PrimitivePtr prim_;
 };
 
+class SwitchEvaluator final : public Evaluator {
+ public:
+  SwitchEvaluator() : Evaluator("SwitchEvaluator") {}
+  ~SwitchEvaluator() override = default;
+  MS_DECLARE_PARENT(SwitchEvaluator, Evaluator);
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) override;
+
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
+    MS_LOG(INTERNAL_EXCEPTION) << "Eval() should not be called, Run() method should be called";
+  }
+};
+
+class SwitchLayerEvaluator final : public Evaluator {
+ public:
+  SwitchLayerEvaluator() : Evaluator("SwitchLayerEvaluator") {}
+  ~SwitchLayerEvaluator() override = default;
+  MS_DECLARE_PARENT(SwitchLayerEvaluator, Evaluator);
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) override;
+
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
+    MS_LOG(INTERNAL_EXCEPTION) << "Eval() should not be called, Run() method should be called";
+  }
+};
+
 class ConstexprEvaluator : public TransitionPrimEvaluator {
  public:
   explicit ConstexprEvaluator(const PrimitivePyPtr primitive)

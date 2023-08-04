@@ -293,7 +293,12 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the AbstractFuncAtom that this PartialAbstractClosure corresponding to.
   ///
   /// \return The AbstractFuncAtom that this PartialAbstractClosure corresponding to.
-  AbstractFunctionPtr fn() { return fn_; }
+  AbstractFuncAtomPtr fn() { return fn_; }
+
+  /// \brief Set the AbstractFuncAtom that this PartialAbstractClosure corresponding to.
+  ///
+  /// \param[in] fn The AbstractFuncAtom that this PartialAbstractClosure corresponding to.
+  void set_fn(const AbstractFuncAtomPtr &fn) { fn_ = fn; }
 
   /// \brief Get the pre-provided arguments.
   ///

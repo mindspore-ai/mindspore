@@ -186,7 +186,14 @@ class MetaUnpackPrepareLib {
   SubstitutionPtr meta_unpack_prepare_;
 };
 
-// predicate functions
+class GradPartialPassLib {
+ public:
+  GradPartialPassLib();
+  ~GradPartialPassLib() = default;
+  SubstitutionPtr grad_partial_transform_;
+};
+
+// Predicate functions
 inline bool IsNode(const AnfNodePtr &) { return true; }
 
 inline bool IsCNode(const AnfNodePtr &node) {

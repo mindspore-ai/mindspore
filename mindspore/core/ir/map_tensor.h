@@ -118,7 +118,7 @@ class MS_CORE_API MapTensor final : public Tensor {
     if (!other.isa<MapTensor>()) {
       return false;
     }
-    auto other_ = static_cast<const MapTensor &>(other);
+    auto &other_ = static_cast<const MapTensor &>(other);
     return *this == other_;
   }
 

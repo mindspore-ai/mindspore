@@ -87,7 +87,7 @@ abstract::AbstractBasePtr Primitive::ToAbstract() {
 
 bool Primitive::operator==(const Value &other) const {
   if (other.isa<Primitive>()) {
-    auto other_prim = static_cast<const Primitive &>(other);
+    auto &other_prim = static_cast<const Primitive &>(other);
     return *this == other_prim;
   } else {
     return false;

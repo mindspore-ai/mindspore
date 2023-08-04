@@ -34,7 +34,7 @@ Cell::Cell(const std::string &name) : Named(name), id_(MakeId()) {}
 
 bool Cell::operator==(const Value &other) const {
   if (other.isa<Cell>()) {
-    auto other_prim = static_cast<const Cell &>(other);
+    auto &other_prim = static_cast<const Cell &>(other);
     return *this == other_prim;
   } else {
     return false;

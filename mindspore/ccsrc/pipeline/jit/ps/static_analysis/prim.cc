@@ -198,10 +198,10 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   MS_EXCEPTION_IF_NULL(prim_);
   auto unpack_graph = prim_->cast_ptr<prim::UnpackGraphPrimitive>();
   MS_EXCEPTION_IF_NULL(unpack_graph);
-  auto out_node = out_conf->node()->cast_ptr<CNode>();
-  MS_EXCEPTION_IF_NULL(out_node);
-  const auto &out_node_inputs = out_node->inputs();
-  if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+  auto out_cnode = out_conf->node()->cast_ptr<CNode>();
+  MS_EXCEPTION_IF_NULL(out_cnode);
+  const auto &out_node_inputs = out_cnode->inputs();
+  if (out_cnode->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "UnpackGraphPrimitive"
                       << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
                       << ", inputs size " << out_node_inputs.size();
@@ -214,7 +214,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                          MS_EXCEPTION_IF_NULL(eval_result);
                          return eval_result->abstract();
                        });
-  // get the forward graph
+  // Get the forward graph
   if (args_abs_list.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "args_abs_list can't be empty.";
   }
@@ -224,30 +224,39 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
     MS_LOG(INTERNAL_EXCEPTION) << "UnpackGraphPrimitive arg0 must be AbstractFunction, but "
                                << args_abs_list[0]->ToString();
   }
-  auto real_fn = fn->cast_ptr<FuncGraphAbstractClosure>();
+  AbstractBasePtrList graph_specialize_args_without_sens;
+  FuncGraphAbstractClosure *real_fn = nullptr;
+  // If it's Partial closure.
+  const auto &partial_fn_abs = fn->cast_ptr<PartialAbstractClosure>();
+  if (partial_fn_abs != nullptr) {
+    const auto &partial_fn = partial_fn_abs->fn();
+    MS_EXCEPTION_IF_NULL(partial_fn);
+    real_fn = partial_fn->cast_ptr<FuncGraphAbstractClosure>();
+  } else {
+    real_fn = fn->cast_ptr<FuncGraphAbstractClosure>();
+  }
   MS_EXCEPTION_IF_NULL(real_fn);
   FuncGraphPtr forward_graph = real_fn->func_graph();
   MS_EXCEPTION_IF_NULL(forward_graph);
   AbstractBasePtrList graph_specialize_args =
     GetUnpackGraphSpecArgsList(args_abs_list, unpack_graph->need_unpack_args());
-  AbstractBasePtrList graph_specialize_args_without_sens;
   if (unpack_graph->with_sens_in_args() && graph_specialize_args.empty()) {
     MS_EXCEPTION(ValueError) << "Grad with sens, but the sens is not provided.";
   }
   (void)std::transform(graph_specialize_args.begin(),
                        graph_specialize_args.end() - (unpack_graph->with_sens_in_args() ? 1 : 0),
                        std::back_inserter(graph_specialize_args_without_sens), [](AbstractBasePtr abs) { return abs; });
-  auto new_graph = forward_graph->GenerateFuncGraph(graph_specialize_args_without_sens);
+  MS_LOG(DEBUG) << "graph_specialize_args_without_sens size: " << graph_specialize_args_without_sens.size();
+  auto new_forward_graph = forward_graph->GenerateFuncGraph(graph_specialize_args_without_sens);
   MS_EXCEPTION_IF_NULL(engine->func_graph_manager());
-  engine->func_graph_manager()->AddFuncGraph(new_graph);
+  engine->func_graph_manager()->AddFuncGraph(new_forward_graph);
   ScopePtr scope = kDefaultScope;
   if (out_conf != nullptr) {
     scope = out_conf->node()->scope();
   }
   ScopeGuard scope_guard(scope);
-  AnfNodePtr new_vnode = NewValueNode(new_graph);
-  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_vnode, out_conf->context(), out_conf->func_graph());
-
+  AnfNodePtr new_node = NewValueNode(new_forward_graph);
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
   return engine->ForwardConfig(out_conf, fn_conf);
 }
 
@@ -354,6 +363,148 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
     new_cnode->CloneCNodeInfo(out_node);
   }
   return engine->ForwardConfig(out_conf, fn_conf);
+}
+
+namespace {
+void CheckTensorCondValid(const AbstractBasePtr &cond) {
+  // Tensor condition must be one element or dynamic shape.
+  auto base_shape = cond->BuildShape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  ShapeVector cond_shape = base_shape->cast<ShapePtr>()->shape();
+  if (cond_shape.empty()) {
+    return;
+  }
+  constexpr auto num_one = 1;
+  for (size_t i = 0; i < cond_shape.size(); i++) {
+    if (cond_shape[i] != num_one && cond_shape[i] != Shape::kShapeDimAny && cond_shape[i] != Shape::kShapeRankAny) {
+      MS_LOG(ERROR) << "The condition value of control flow can be a tensor with one element, "
+                    << "but got tensor with shape " << base_shape->ToString();
+      MS_EXCEPTION(ValueError) << "The truth value of an array with more than one element is ambiguous.";
+    }
+  }
+}
+
+void SetVariableFlag(const AbstractBasePtr &abs) {
+  if (abs->isa<abstract::AbstractFunction>()) {
+    const auto &func_abs = abs->cast<abstract::AbstractFunctionPtr>();
+    MS_EXCEPTION_IF_NULL(func_abs);
+    auto closure_abs = func_abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+    if (closure_abs) {
+      auto func = closure_abs->func_graph();
+      MS_EXCEPTION_IF_NULL(func);
+      func->set_is_tensor_condition_branch(true);
+      MS_LOG(DEBUG) << "Set is_tensor_condition_branch for func_graph:" << func->ToString();
+    }
+  }
+}
+}  // namespace
+
+EvalResultPtr SwitchEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                   const AnfNodeConfigPtr &out_conf) {
+  MS_EXCEPTION_IF_NULL(engine);
+  AbstractBasePtrList args_abs_list;
+  MS_EXCEPTION_IF_NULL(out_conf);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
+  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
+  }
+  auto out_node = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(out_node);
+  const auto &out_node_inputs = out_node->inputs();
+  if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+    MS_LOG(EXCEPTION) << "For 'Switch',"
+                      << " the args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
+                      << ", inputs size " << out_node_inputs.size();
+  }
+
+  // Inputs: condition, true branch, false branch
+  constexpr auto switch_input_size = 3;
+  if (args_conf_list.size() != switch_input_size) {
+    MS_LOG(EXCEPTION) << "Switch evaluator requires 3 parameters, while the input size is " << args_abs_list.size()
+                      << ".";
+  }
+
+  auto eval_func = [](const ConfigPtr &conf) -> AbstractBasePtr {
+    MS_EXCEPTION_IF_NULL(conf);
+    const auto &eval_result = conf->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(eval_result);
+    auto abs = eval_result->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    return abs;
+  };
+
+  auto cond_abstract = eval_func(args_conf_list[0]);
+  ValuePtr cond_value = cond_abstract->GetValueTrack();
+  MS_EXCEPTION_IF_NULL(cond_value);
+  // If the value of condition is ValueAny or the abstract of condition is AbstractTensor,
+  // keeps both true and false branch.
+  if (cond_value->isa<ValueAny>() || cond_abstract->isa<AbstractTensor>()) {
+    if (cond_abstract->isa<AbstractTensor>()) {
+      CheckTensorCondValid(cond_abstract);
+    }
+    auto true_branch = eval_func(args_conf_list[1]);
+    // Need record two func_graph
+    constexpr auto false_branch_index = 2;
+    auto false_branch = eval_func(args_conf_list[false_branch_index]);
+    SetVariableFlag(true_branch);
+    SetVariableFlag(false_branch);
+    auto res_abs = true_branch->Join(false_branch);
+    auto eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>());
+    return eval_result;
+  }
+
+  if (cond_value->isa<Scalar>()) {
+    AbstractBasePtr res_abs = nullptr;
+    if (cond_value->cast<ScalarPtr>()->IsOne()) {
+      const auto &true_branch = eval_func(args_conf_list[1]);
+      res_abs = true_branch;
+    } else {
+      constexpr auto false_branch_index = 2;
+      auto false_branch = eval_func(args_conf_list[false_branch_index]);
+      res_abs = false_branch;
+    }
+    auto eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>());
+    return eval_result;
+  }
+  MS_LOG(EXCEPTION) << "Not support this condition value: " << cond_abstract->GetValueTrack()->ToString();
+}
+
+EvalResultPtr SwitchLayerEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                        const AnfNodeConfigPtr &out_conf) {
+  MS_EXCEPTION_IF_NULL(engine);
+  AbstractBasePtrList args_abs_list;
+  MS_EXCEPTION_IF_NULL(out_conf);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
+  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
+  }
+  auto out_node = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(out_node);
+  const auto &out_node_inputs = out_node->inputs();
+  if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+    MS_LOG(EXCEPTION) << "For 'SwitchLayer',"
+                      << " the args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
+                      << ", inputs size " << out_node_inputs.size();
+  }
+
+  // Inputs: condition, true branch, false branch
+  constexpr auto switch_input_size = 3;
+  if (args_conf_list.size() != switch_input_size) {
+    MS_LOG(EXCEPTION) << "SwitchLayer evaluator requires 3 parameters, while the input size is " << args_abs_list.size()
+                      << ".";
+  }
+  auto eval_func = [](const ConfigPtr &conf) -> AbstractBasePtr {
+    MS_EXCEPTION_IF_NULL(conf);
+    const auto &eval_result = conf->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(eval_result);
+    auto abs = eval_result->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    return abs;
+  };
+  auto cond_abstract = eval_func(args_conf_list[0]);
+  ValuePtr cond_value = cond_abstract->GetValueTrack();
+  MS_EXCEPTION_IF_NULL(cond_value);
+  MS_LOG(EXCEPTION) << "Not support this condition value: " << cond_value->ToString();
 }
 
 namespace {
@@ -2953,6 +3104,7 @@ class PartialEvaluator : public Evaluator {
 
     auto res = AbstractFunction::MakeAbstractFunction(partial_funcs_list);
     auto eval_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+    MS_LOG(DEBUG) << "args_abs_list: " << args_abs_list << ", eval_result: " << eval_result->abstract()->ToString();
     evaluator_cache_mgr_->SetValue(args_abs_list, eval_result);
     return eval_result;
   }
@@ -3313,11 +3465,11 @@ PrimitiveToImplMap &GetUniformPrimitiveToImplMap() {
   return uniform_prim_implement_map;
 }
 
-PrimEvaluatorMap PrimEvaluatorConstructors = PrimEvaluatorMap();
+PrimEvaluatorMap prim_evaluator_constructors = PrimEvaluatorMap();
 std::mutex PrimEvaluatorConstructorMutex;
 
 void InitPrimEvaluatorConstructors() {
-  PrimEvaluatorMap &constructor = PrimEvaluatorConstructors;
+  PrimEvaluatorMap &constructor = prim_evaluator_constructors;
 
   for (const auto &iter : GetPrimitiveInferMap()) {
     constructor[iter.first] = InitStandardPrimEvaluator(iter.first, iter.second);
@@ -3344,7 +3496,7 @@ void InitPrimEvaluatorConstructors() {
 }
 
 void InitBuiltinPrimEvaluatorConstructors() {
-  PrimEvaluatorMap &constructor = PrimEvaluatorConstructors;
+  PrimEvaluatorMap &constructor = prim_evaluator_constructors;
   constructor[prim::kPrimInnerAbs] = std::make_shared<InnerAbsEvaluator>();
   constructor[prim::kPrimInnerRound] = std::make_shared<InnerRoundEvaluator>();
   constructor[prim::kPrimInnerLen] = std::make_shared<InnerLenEvaluator>();
@@ -3352,7 +3504,7 @@ void InitBuiltinPrimEvaluatorConstructors() {
 }  // namespace
 
 void ClearPrimEvaluatorMap() {
-  PrimEvaluatorConstructors.clear();
+  prim_evaluator_constructors.clear();
   GetFrontendPrimitiveInferMapPtr()->clear();
   GetUniformPrimitiveToImplMap().clear();
 }
@@ -3383,7 +3535,7 @@ bool IsInWhiteList(const PrimitivePtr &primitive) {
 }
 
 PrimEvaluatorMap &GetPrimEvaluatorConstructors() {
-  PrimEvaluatorMap &constructor = PrimEvaluatorConstructors;
+  PrimEvaluatorMap &constructor = prim_evaluator_constructors;
   if (!constructor.empty()) {
     return constructor;
   }

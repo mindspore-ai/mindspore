@@ -42,7 +42,7 @@ bool ValueSequence::erase(size_t idx) {
 
 bool BoolImm::operator==(const Value &other) const {
   if (other.isa<BoolImm>()) {
-    auto other_ = static_cast<const BoolImm &>(other);
+    auto &other_ = static_cast<const BoolImm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -52,7 +52,7 @@ bool BoolImm::operator==(const BoolImm &other) const { return v_ == other.v_; }
 
 bool Int8Imm::operator==(const Value &other) const {
   if (other.isa<Int8Imm>()) {
-    auto other_ = static_cast<const Int8Imm &>(other);
+    auto &other_ = static_cast<const Int8Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -61,7 +61,7 @@ bool Int8Imm::operator==(const Value &other) const {
 bool Int8Imm::operator==(const Int8Imm &other) const { return v_ == other.v_; }
 bool Int16Imm::operator==(const Value &other) const {
   if (other.isa<Int16Imm>()) {
-    auto other_ = static_cast<const Int16Imm &>(other);
+    auto &other_ = static_cast<const Int16Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -70,7 +70,7 @@ bool Int16Imm::operator==(const Value &other) const {
 bool Int16Imm::operator==(const Int16Imm &other) const { return v_ == other.v_; }
 bool Int32Imm::operator==(const Value &other) const {
   if (other.isa<Int32Imm>()) {
-    auto other_ = static_cast<const Int32Imm &>(other);
+    auto &other_ = static_cast<const Int32Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -79,7 +79,7 @@ bool Int32Imm::operator==(const Value &other) const {
 bool Int32Imm::operator==(const Int32Imm &other) const { return v_ == other.v_; }
 bool Int64Imm::operator==(const Value &other) const {
   if (other.isa<Int64Imm>()) {
-    auto other_ = static_cast<const Int64Imm &>(other);
+    auto &other_ = static_cast<const Int64Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -88,7 +88,7 @@ bool Int64Imm::operator==(const Value &other) const {
 bool Int64Imm::operator==(const Int64Imm &other) const { return v_ == other.v_; }
 bool UInt8Imm::operator==(const Value &other) const {
   if (other.isa<UInt8Imm>()) {
-    auto other_ = static_cast<const UInt8Imm &>(other);
+    auto &other_ = static_cast<const UInt8Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -97,7 +97,7 @@ bool UInt8Imm::operator==(const Value &other) const {
 bool UInt8Imm::operator==(const UInt8Imm &other) const { return v_ == other.v_; }
 bool UInt16Imm::operator==(const Value &other) const {
   if (other.isa<UInt16Imm>()) {
-    auto other_ = static_cast<const UInt16Imm &>(other);
+    auto &other_ = static_cast<const UInt16Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -106,7 +106,7 @@ bool UInt16Imm::operator==(const Value &other) const {
 bool UInt16Imm::operator==(const UInt16Imm &other) const { return v_ == other.v_; }
 bool UInt32Imm::operator==(const Value &other) const {
   if (other.isa<UInt32Imm>()) {
-    auto other_ = static_cast<const UInt32Imm &>(other);
+    auto &other_ = static_cast<const UInt32Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -115,7 +115,7 @@ bool UInt32Imm::operator==(const Value &other) const {
 bool UInt32Imm::operator==(const UInt32Imm &other) const { return v_ == other.v_; }
 bool UInt64Imm::operator==(const Value &other) const {
   if (other.isa<UInt64Imm>()) {
-    auto other_ = static_cast<const UInt64Imm &>(other);
+    auto &other_ = static_cast<const UInt64Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -125,7 +125,7 @@ bool UInt64Imm::operator==(const UInt64Imm &other) const { return v_ == other.v_
 
 bool FP32Imm::operator==(const Value &other) const {
   if (other.isa<FP32Imm>()) {
-    auto other_ = static_cast<const FP32Imm &>(other);
+    auto &other_ = static_cast<const FP32Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -139,7 +139,7 @@ bool FP32Imm::operator==(const FP32Imm &other) const {
 }
 bool FP64Imm::operator==(const Value &other) const {
   if (other.isa<FP64Imm>()) {
-    auto other_ = static_cast<const FP64Imm &>(other);
+    auto &other_ = static_cast<const FP64Imm &>(other);
     return *this == other_;
   } else {
     return false;
@@ -147,7 +147,7 @@ bool FP64Imm::operator==(const Value &other) const {
 }
 bool ValueSequence::operator==(const Value &other) const {
   if (other.isa<ValueSequence>()) {
-    auto other_ = static_cast<const ValueSequence &>(other);
+    auto &other_ = static_cast<const ValueSequence &>(other);
     return *this == other_;
   } else {
     return false;
@@ -193,7 +193,7 @@ bool FP64Imm::operator==(const FP64Imm &other) const {
 }
 bool StringImm::operator==(const Value &other) const {
   if (other.isa<StringImm>()) {
-    auto other_ = static_cast<const StringImm &>(other);
+    auto &other_ = static_cast<const StringImm &>(other);
     return *this == other_;
   }
   return false;
@@ -205,7 +205,7 @@ bool ValueAny::operator==(const Value &other) const { return other.isa<ValueAny>
 
 bool ValueProblem::operator==(const Value &other) const {
   if (other.isa<ValueProblem>()) {
-    auto other_ = static_cast<const ValueProblem &>(other);
+    auto &other_ = static_cast<const ValueProblem &>(other);
     return err_type_ == other_.err_type_;
   }
   return false;
@@ -222,7 +222,7 @@ std::size_t ValueSlice::hash() const {
 
 bool ValueSlice::operator==(const Value &other) const {
   if (other.isa<ValueSlice>()) {
-    auto other_ = static_cast<const ValueSlice &>(other);
+    auto &other_ = static_cast<const ValueSlice &>(other);
     return *this == other_;
   } else {
     return false;
@@ -256,7 +256,7 @@ std::size_t KeywordArg::hash() const {
 
 bool KeywordArg::operator==(const Value &other) const {
   if (other.isa<KeywordArg>()) {
-    auto other_ = static_cast<const KeywordArg &>(other);
+    auto &other_ = static_cast<const KeywordArg &>(other);
     return *this == other_;
   } else {
     return false;
@@ -286,7 +286,7 @@ const ValuePtr ValueDictionary::operator[](const ValuePtr &key) const {
 
 bool ValueDictionary::operator==(const Value &other) const {
   if (other.isa<ValueDictionary>()) {
-    auto other_ = static_cast<const ValueDictionary &>(other);
+    auto &other_ = static_cast<const ValueDictionary &>(other);
     return *this == other_;
   } else {
     return false;

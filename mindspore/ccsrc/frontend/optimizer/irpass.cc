@@ -65,6 +65,7 @@
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
 #include "frontend/optimizer/irpass/convert_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/recompute.h"
+#include "frontend/optimizer/irpass/grad_partial_transform.h"
 
 namespace mindspore {
 namespace opt {
@@ -293,6 +294,11 @@ ResolveIRPassLib::ResolveIRPassLib() {
 
 MetaUnpackPrepareLib::MetaUnpackPrepareLib() {
   meta_unpack_prepare_ = MakeSubstitution(std::make_shared<MetaFgVarPrepare>(), "meta_unpack_prepare", IsCNode);
+}
+
+GradPartialPassLib::GradPartialPassLib() {
+  grad_partial_transform_ =
+    MakeSubstitution(std::make_shared<GradPartialTransform>(), "grad_partial_transform", IsCNode);
 }
 }  // namespace irpass
 }  // namespace opt

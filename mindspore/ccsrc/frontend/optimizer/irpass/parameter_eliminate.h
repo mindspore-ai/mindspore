@@ -36,8 +36,9 @@ namespace irpass {
 static inline void CheckSwitchCallValid(const CNodePtr &switch_call) {
   if (switch_call->inputs().size() > 1) {
     // Means call switch(arg1, ...) has args.
-    MS_LOG(INTERNAL_EXCEPTION) << "After switch_call_monad_eliminater pass, the call switch node should "
-                               << "not has args. The call_switch_cnode is:" << switch_call->DebugString();
+    constexpr auto recursive_count = 2;
+    MS_LOG(INTERNAL_EXCEPTION) << "After switch_call_monad_eliminater pass, the call switch node should not has args."
+                               << " The call_switch_cnode is: " << switch_call->DebugString(recursive_count);
   }
 }
 
@@ -55,7 +56,7 @@ static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
     auto index = fg_caller_and_index->second;
     // If index != 0, the caller is a indirect caller, can't erase the parameter of graph.
     // Because in this situation ValueNode<FuncGraph> is a input of Return or of MakeTuple.
-    MS_LOG(DEBUG) << "index:" << index;
+    MS_LOG(DEBUG) << "index: " << index;
     // Process has partial func_graph with Primitive
     // %1 = Partial(func_graph, arg1, arg2, ...)
     if (index == 1 && IsPrimitiveCNode(caller_cnode, prim::kPrimPartial)) {
@@ -187,7 +188,7 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
           (void)unused_parameter_indexes.erase(i);
         }
       }
-      MS_LOG(DEBUG) << "Erase parameter:" << param_i->DebugString() << ", index:" << i;
+      MS_LOG(DEBUG) << "Erase parameter: " << param_i->DebugString() << ", index: " << i;
     }
   }
   manager->SetParameters(fg, new_parameters);
@@ -210,7 +211,7 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
     if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
       (void)new_args.emplace_back(caller->input(i + arg_start_index));
     } else {
-      MS_LOG(DEBUG) << "Erase arg:" << caller->input(i + arg_start_index)->DebugString();
+      MS_LOG(DEBUG) << "Erase arg: " << caller->input(i + arg_start_index)->DebugString();
     }
   }
   // Remove any Args which may be packed into VarArgs if VarArgs is not used in called FuncGraph;
@@ -302,6 +303,7 @@ class ParameterEliminator {
       const auto &[unused_parameter_indexes, only_return_parameter_indexes] =
         EraseUnusedParameters(fg, eliminate_only_returned_parameter_);
       for (auto caller : callers) {
+        MS_LOG(DEBUG) << "caller: " << caller->DebugString();
         // Replace the getitem CNodes with the arguments.
         if (eliminate_only_returned_parameter_) {
           AdjustGetItemCall(caller, only_return_parameter_indexes);
