@@ -20,6 +20,7 @@
 #include "src/common/log_util.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "ops/op_utils.h"
+#include "ops/argmax_with_value.h"
 
 namespace mindspore {
 namespace lite {
@@ -39,6 +40,21 @@ STATUS ArgMaxFusionMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Input size of argmax must be " << kNameInputNum << " real size: " << cnode->size();
     return lite::RET_ERROR;
   }
+  // ArgMaxV2 doesn't have keep_dims attr, replace by ArgMaxWithValue
+  auto keep_dims_ptr = src_prim->GetAttr(ops::kKeepDims);
+  if (keep_dims_ptr != nullptr) {
+    auto keep_dims = GetValue<bool>(keep_dims_ptr);
+    if (keep_dims) {
+      auto argmax = std::make_shared<ops::ArgMaxWithValue>();
+      CHECK_NULL_RETURN(argmax);
+      auto dst_prim = argmax->GetPrim();
+      CHECK_NULL_RETURN(dst_prim);
+      dst_prim->SetAttrs(src_prim->attrs());
+      value_node->set_value(dst_prim);
+      return lite::RET_OK;
+    }
+  }
+
   auto dst_prim = std::make_shared<acl::ArgMaxV2>();
   CHECK_NULL_RETURN(dst_prim);
   dst_prim->AddAttr("output_type", TypeIdToType(kNumberTypeInt32));
