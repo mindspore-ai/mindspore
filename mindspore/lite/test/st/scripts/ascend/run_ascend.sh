@@ -187,5 +187,5 @@ else
   scp ${user_name}@${device_ip}:${benchmark_test_path}/run_benchmark_result.txt ${run_benchmark_result_file} || exit 1
 fi
 echo "Run in ${backend} ended"
-Print_Converter_Result ${run_ascend_result_file}
+cat ${run_ascend_result_file}
 exit ${Run_ascend_status}

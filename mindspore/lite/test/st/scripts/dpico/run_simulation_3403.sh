@@ -1,8 +1,10 @@
 #!/bin/bash
+source ./scripts/base_functions.sh
 
 function Run_Convert_MODELS() {
   framework=$1
   models_3403_cfg=$2
+  local elapsed_time ret
   while read line; do
       dpico_line_info=${line}
       if [[ $dpico_line_info == \#* || $dpico_line_info == "" ]]; then
@@ -30,19 +32,25 @@ function Run_Convert_MODELS() {
       echo ${model_name} >> "${run_converter_log_file}"
       if [[ ${framework} == 'CAFFE' ]]; then
         echo './converter_lite --inputDataFormat=NCHW --fmk='${framework}' --inputShape='${input_shape} '--modelFile='${models_path}'/'${model_location}'/model/'${model_name}.prototxt' --weightFile='${models_path}'/'${model_location}'/model/'${model_name}.caffemodel' --configFile='${ms_config_file}' --outputFile='${om_generated_path}'/'${model_name}'' >> "${run_converter_log_file}"
+        elapsed_time=$(date +%s.%N)
         ./converter_lite --inputDataFormat=NCHW --inputShape=${input_shape} --fmk=${framework} --modelFile=${models_path}/${model_location}/model/${model_name}.prototxt --weightFile=${models_path}/${model_location}/model/${model_name}.caffemodel --configFile=${ms_config_file} --outputFile=${om_generated_path}/${model_name}
-        if [ $? = 0 ]; then
-            converter_result='converter CAFFE '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            converter_result='converter CAFFE '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
-            converter_result='converter CAFFE '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};exit 1
+            converter_result='converter CAFFE '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> ${run_converter_result_file};exit 1
         fi
       elif [[ ${framework} == 'ONNX' ]]; then
         echo './converter_lite --inputDataFormat=NCHW --fmk='${framework}' --inputShape='${input_shape} '--modelFile='${models_path}'/'${model_location}'/models/'${model_name}' --configFile='${ms_config_file}' --outputFile='${om_generated_path}'/'${model_name}'' >> "${run_converter_log_file}"
+        elapsed_time=$(date +%s.%N)
         ./converter_lite --inputDataFormat=NCHW --inputShape=${input_shape} --fmk=${framework} --modelFile=${models_path}/${model_location}/models/${model_name} --configFile=${ms_config_file} --outputFile=${om_generated_path}/${model_name}
-        if [ $? = 0 ]; then
-            converter_result='converter ONNX '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            converter_result='converter ONNX '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
-            converter_result='converter ONNX '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};exit 1
+            converter_result='converter ONNX '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> ${run_converter_result_file};exit 1
         fi
       else
         echo "unsupported framework"; return 1
@@ -59,11 +67,14 @@ function Run_Convert_MODELS() {
         sed -i '1 i\[model] '${models_path}/${model_location}/models/${model_name} ./${model_name}_atc.cfg
       fi
       sed -i '$a \[instruction_name] '${om_generated_path}/${model_name}_atc ./${model_name}_atc.cfg
+      elapsed_time=$(date +%s.%N)
       ./atc ./${model_name}_atc.cfg
-      if [ $? = 0 ]; then
-          converter_result='atc '${framework}' '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+      ret=$?
+      elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+      if [ ${ret} = 0 ]; then
+          converter_result='atc '${framework}' '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> ${run_converter_result_file}
       else
-          converter_result='atc '${framework}' '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}; exit 1
+          converter_result='atc '${framework}' '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> ${run_converter_result_file}; exit 1
       fi
   done < ${models_3403_cfg}
 }
@@ -107,6 +118,7 @@ function Run_Converter() {
 }
 
 function Run_Func_Sim() {
+  local elapsed_time ret
   models_3403_cfg=$1
   while read line; do
       dpico_line_info=${line}
@@ -129,13 +141,23 @@ function Run_Func_Sim() {
       fi
       # generate dump files
       rm -rf ${om_generated_path}/dump_output
+      elapsed_time=$(date +%s.%N)
       ./func_sim -m ./${model_name}_lib_original.om -i ${input_files} -a
-      if [ $? -ne 0 ]; then
-        simulation_3403_result='func_sim '${model_name}' failed';echo ${simulation_3403_result} >> ${run_simulation_result_file}; exit 1
+      ret=$?
+      elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+      if [ ${ret} -ne 0 ]; then
+        simulation_3403_result='func_sim '${model_name}' '${elapsed_time}' failed';echo ${simulation_3403_result} >> ${run_simulation_result_file}; exit 1
+      else
+        simulation_3403_result='func_sim '${model_name}' '${elapsed_time}' pass';echo ${simulation_3403_result} >> ${run_simulation_result_file}
       fi
+      elapsed_time=$(date +%s.%N)
       ./func_sim -m ./${model_name}_atc_original.om -i ${input_files} -a
-      if [ $? -ne 0 ]; then
-        simulation_3403_result='func_sim '${model_name}' failed';echo ${simulation_3403_result} >> ${run_simulation_result_file}; exit 1
+      ret=$?
+      elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+      if [ ${ret} -ne 0 ]; then
+        simulation_3403_result='func_sim '${model_name}' '${elapsed_time}' failed';echo ${simulation_3403_result} >> ${run_simulation_result_file}; exit 1
+      else
+        simulation_3403_result='func_sim '${model_name}' '${elapsed_time}' pass';echo ${simulation_3403_result} >> ${run_simulation_result_file}
       fi
 
       # compare dump files
@@ -146,15 +168,17 @@ function Run_Func_Sim() {
       if [[ $lib_files_cnt -ne $atc_files_cnt ]]; then
         echo "generated report files is not equal"; exit 1
       fi
+      elapsed_time=$(date +%s.%N)
       is_file_equal=1
       for i in $(seq 0 $input_num)
       do
         cmp -s ./dump_output/*lib*/batch_0/layer/*report_0_${i}_*.float ./dump_output/*atc*/batch_0/layer/*report_0_${i}_*.float || is_file_equal=0 && break
       done
+      elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
       if [[ ${is_file_equal} == 1 ]]; then
-        simulation_3403_result='simulation '${model_name}' pass';echo ${simulation_3403_result} >> ${run_simulation_result_file}
+        simulation_3403_result='simulation_cmp '${model_name}' '${elapsed_time}' pass';echo ${simulation_3403_result} >> ${run_simulation_result_file}
       else
-        simulation_3403_result='simulation '${model_name}' failed';echo ${simulation_3403_result} >> ${run_simulation_result_file}; exit 1
+        simulation_3403_result='simulation_cmp '${model_name}' '${elapsed_time}' failed';echo ${simulation_3403_result} >> ${run_simulation_result_file}; exit 1
       fi
   done < ${models_3403_cfg}
 }
@@ -212,20 +236,6 @@ while getopts "r:m:e:l:" opt; do
     esac
 done
 
-# Print start msg after run testcase
-function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-}
-
-function Print_Converter_Result() {
-    MS_PRINT_TESTCASE_END_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-15s %-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
-    done < ${run_converter_result_file}
-    MS_PRINT_TESTCASE_END_MSG
-}
-
 # get sdk path
 if [ "${HISI_SDK_PATH}" ]; then
     hisi_sdk=${HISI_SDK_PATH}
@@ -272,11 +282,11 @@ wait ${Run_converter_PID}
 Run_converter_status=$?
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter for dpico models success"
-    Print_Converter_Result
+    Print_Converter_Result ${run_converter_result_file}
 else
     echo "Run converter for dpico models failed"
     cat ${run_converter_log_file}
-    Print_Converter_Result
+    Print_Converter_Result ${run_converter_result_file}
     exit 1
 fi
 
@@ -302,9 +312,7 @@ if [[ $backend == "all" || $backend == "simulation_sd3403" ]]; then
         echo "Run_simulation_3403 success"
         isFailed=0
     fi
-    MS_PRINT_TESTCASE_END_MSG
-    cat ${run_simulation_result_file}
-    MS_PRINT_TESTCASE_END_MSG
+    Print_Benchmark_Result ${run_simulation_result_file}
 fi
 
 if [[ $isFailed == 1 ]]; then

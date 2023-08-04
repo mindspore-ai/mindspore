@@ -15,6 +15,7 @@ function Run_Converter() {
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
 
+    local elapsed_time ret
     # Convert nnie models:
     while read line; do
         nnie_line_info=${line}
@@ -48,13 +49,16 @@ function Run_Converter() {
 
         echo ${model_name} >> "${run_converter_log_file}"
         echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_location}'/model/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_location}'/model/'${model_name}'.caffemodel --configFile='${ms_config_file}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
+        elapsed_time=$(date +%s.%N)
         ./converter_lite --inputDataFormat=NCHW --fmk=CAFFE --modelFile=${models_path}/${model_location}/model/${model_name}.prototxt --weightFile=${models_path}/${model_location}/model/${model_name}.caffemodel --configFile=${ms_config_file} --outputFile=${ms_models_path}/${model_name}
-        if [ $? = 0 ]; then
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
             rm -rf ${x86_path}/mindspore-lite-${version}-linux-x64/${model_name}
-            converter_result='converter CAFFE '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+            converter_result='converter CAFFE '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
             rm -rf ${x86_path}/mindspore-lite-${version}-linux-x64/${model_name}
-            converter_result='converter CAFFE '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};
+            converter_result='converter CAFFE '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> ${run_converter_result_file};
             return 1;
         fi
         cp ${micro_config0_path}/himix200.toolchain.cmake ${ms_models_path}/${model_name}/ || exit 1
@@ -82,7 +86,7 @@ int benchmark(int argc, const char \*\*argv) {/g"  benchmark/benchmark.c
 }\n" >> benchmark/benchmark.c
         mkdir build && cd build
         tar -zxf ${arm32_path}/mindspore-lite-${version}-linux-aarch32.tar.gz -C ${arm32_path} || exit 1
-        cmake -DCMAKE_TOOLCHAIN_FILE=../himix200.toolchain.cmake -DPLATFORM_ARM32=ON -DPKG_PATH=${arm32_path}/mindspore-lite-${version}-linux-aarch32 -DHI35XX_SDK_PATH=${HI35XX_SDK_PATH} .. >> ${run_converter_result_file}
+        cmake -DCMAKE_TOOLCHAIN_FILE=../himix200.toolchain.cmake -DPLATFORM_ARM32=ON -DPKG_PATH=${arm32_path}/mindspore-lite-${version}-linux-aarch32 -DHI35XX_SDK_PATH=${HI35XX_SDK_PATH} .. >> ${run_converter_log_file}
         make || return 1
     done < ${models_nnie_config}
     return 0
@@ -97,15 +101,19 @@ function Run_Hi3516() {
   # copy related files to benchmark_test
   cp -a ./providers/Hi3516D/libmicro_nnie.so ${benchmark_test_path}/libmicro_nnie.so || exit 1
 
+  local elapsed_time ret
   # cp files to nfs shared folder
   echo "start push files to hi3516"
   echo ${device_ip}
   scp -r ${benchmark_test_path} root@${device_ip}:/user/nnie/benchmark_test/ || exit 1
+  elapsed_time=$(date +%s.%N)
   ssh root@${device_ip} "cd /user/nnie/benchmark_test/benchmark_micro; sh run_benchmark_nnie_micro.sh"
-  if [ $? = 0 ]; then
-    run_result='hi3516: micro pass'; echo ${run_result} >> ${run_benchmark_result_file};
+  ret=$?
+  elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+  if [ ${ret} = 0 ]; then
+    run_result='hi3516: micro '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file};
   else
-    run_result='hi3516: micro failed'; echo ${run_result} >> ${run_benchmark_result_file}; exit 1
+    run_result='hi3516: micro '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; exit 1
   fi
 }
 
@@ -222,6 +230,9 @@ if [[ $backend == "all" || $backend == "arm32_3516D" ]]; then
         isFailed=0
     fi
 fi
+
+echo "Run_nnie_micro is ended"
+Print_Benchmark_Result $run_benchmark_result_file
 
 if [[ $isFailed == 1 ]]; then
     exit 1

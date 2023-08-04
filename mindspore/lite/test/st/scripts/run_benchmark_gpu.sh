@@ -68,6 +68,7 @@ function Run_gpu() {
 }
 
 function Run_mindrt_parallel() {
+    local elapsed_time ret
     while read line; do
         model_name=${line}
         if [[ $model_name == \#* ]]; then
@@ -91,12 +92,14 @@ function Run_mindrt_parallel() {
 
         echo './benchmark --enableParallel=true --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> adb_run_cmd.txt
         echo './benchmark --enableParallel=true --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> "${run_parallel_log_file}"
-
+        elapsed_time=$(date +%s.%N)
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
-        if [ $? = 0 ]; then
-            run_result='mindrt_parallel_CPU_CPU: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='mindrt_parallel_CPU_CPU: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='mindrt_parallel_CPU_CPU: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='mindrt_parallel_CPU_CPU: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
             if [[ $gpu_fail_not_return != "ON" ]]; then
                 return 1
             fi
@@ -108,12 +111,14 @@ function Run_mindrt_parallel() {
 
         echo './benchmark --enableParallel=true --device=GPU --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> adb_run_cmd.txt
         echo './benchmark --enableParallel=true --device=GPU --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> "${run_parallel_log_file}"
-
+        elapsed_time=$(date +%s.%N)
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
-        if [ $? = 0 ]; then
-            run_result='mindrt_parallel_CPU_GPU: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='mindrt_parallel_CPU_GPU: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='mindrt_parallel_CPU_GPU: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='mindrt_parallel_CPU_GPU: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
             if [[ $gpu_fail_not_return != "ON" ]]; then
                 return 1
             fi

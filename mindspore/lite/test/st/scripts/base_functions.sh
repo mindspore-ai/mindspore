@@ -12,7 +12,7 @@ function Convert() {
   fail=0
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
         quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size save_type \
-        input_format
+        input_format elapsed_time ret
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
@@ -163,6 +163,7 @@ function Convert() {
         # start running converter
         echo "Convert ${model_name} ${quant_type} ......"
         echo ${model_name} >> "$4"
+        elapsed_time=$(date +%s.%N)
         if [[ ${cfg_file_name} =~ "_cloud" ]]; then
             echo "./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes} --fp16=${fp16_weight}\
@@ -183,8 +184,10 @@ function Convert() {
               --configFile=${config_file} --trainModel=${train_model} >> "$4"
             
         fi
-        if [ $? = 0 ]; then
-            converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            converter_result='converter '${model_type}''${quant_type}' '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> $5
             local model_size
             if [[ ${infix_str} != "" ]]; then
               output_file=${output_file}${infix_str}
@@ -201,17 +204,17 @@ function Convert() {
             if [[ -n ${calib_size} ]];then
               if [ ${model_size} -gt ${calib_final_size} ]; then
                 echo "${output_file} " model size is " ${model_size} " and calib size is " ${calib_size}"
-                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}' failed';echo ${converter_result} >> $5
+                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}' '${elapsed_time}' failed';echo ${converter_result} >> $5
                 rm -rf ${output_file}
                 if [[ $6 != "ON" ]]; then
                   fail=1
                 fi
               else
-                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}' pass';echo ${converter_result} >> $5
+                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}' '${elapsed_time}' pass';echo ${converter_result} >> $5
               fi
             fi
         else
-            converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+            converter_result='converter '${model_type}''${quant_type}' '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> $5
             if [[ $6 != "ON" ]]; then
               fail=1
             fi
@@ -267,7 +270,7 @@ function Run_Benchmark() {
   # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:failNotReturn;
   local cfg_file_list cfg_file_name line_info model_info spec_acc_limit model_name input_num input_shapes spec_threads \
         extra_info benchmark_mode infix mode model_file ms_model_type input_files output_file data_path threads acc_limit enableFp16 \
-        run_result cfg_file input_data_mode enableGLTexture
+        run_result cfg_file input_data_mode enableGLTexture elapsed_time ret
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     cfg_file_name=${cfg_file##*/}
@@ -402,6 +405,7 @@ function Run_Benchmark() {
       fi
       # start running benchmark
       echo "---------------------------------------------------------" >> "$4"
+      elapsed_time=$(date +%s.%N)
       if [[ ${benchmark_mode} = "calib" || ${benchmark_mode} = "calib+loop" ]]; then
         echo "$6 $7 ${mode} run calib: ${model_name}, accuracy limit:${acc_limit}" >> "$4"
         if [[ $6 == "arm64" || $6 == "arm32" ]]; then
@@ -423,19 +427,20 @@ function Run_Benchmark() {
             echo 'MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads}' --modelType='${ms_model_type} >> "$4"
             MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} --modelType=${ms_model_type} >> "$4"
           fi
-
         fi
-        if [ $? = 0 ]; then
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
           if [[ ${extra_info} =~ "parallel_predict" ]]; then
-            run_result="$6_$7_${mode}: ${model_file##*/} parallel_pass"; echo ${run_result} >> $5
+            run_result="$6_$7_${mode}: ${model_file##*/} ${elapsed_time} parallel_pass"; echo ${run_result} >> $5
           else
-            run_result="$6_$7_${mode}: ${model_file##*/} pass"; echo ${run_result} >> $5
+            run_result="$6_$7_${mode}: ${model_file##*/} ${elapsed_time} pass"; echo ${run_result} >> $5
           fi
         else
           if [[ ${extra_info} =~ "parallel_predict" ]]; then
-            run_result="$6_$7_${mode}: ${model_file##*/} parallel_failed"; echo ${run_result} >> $5
+            run_result="$6_$7_${mode}: ${model_file##*/} ${elapsed_time} parallel_failed"; echo ${run_result} >> $5
           else
-            run_result="$6_$7_${mode}: ${model_file##*/} failed"; echo ${run_result} >> $5
+            run_result="$6_$7_${mode}: ${model_file##*/} ${elapsed_time} failed"; echo ${run_result} >> $5
           fi
           if [[ $9 != "ON" ]]; then
               return 1
@@ -443,6 +448,7 @@ function Run_Benchmark() {
         fi
       fi
       # run benchmark without clib data recurrently for guarding the repeated graph execution scene
+      elapsed_time=$(date +%s.%N)
       if [[ ${benchmark_mode} = "loop" || ${benchmark_mode} = "calib+loop" ]]; then
         echo "$6 $7 ${mode} run loop: ${model_name}" >> "$4"
         if [[ ! ${extra_info} =~ "input_dependent" ]]; then
@@ -468,16 +474,19 @@ function Run_Benchmark() {
             ./benchmark --enableParallelPredict=${use_parallel_predict} --inDataFile=${input_files} --modelFile=${model_file} --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} >> "$4"
           fi
         fi
-        if [ $? = 0 ]; then
-            run_result="$6_$7_${mode}_loop: ${model_file##*/} pass"; echo ${run_result} >> $5
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result="$6_$7_${mode}_loop: ${model_file##*/} ${elapsed_time} pass"; echo ${run_result} >> $5
         else
-            run_result="$6_$7_${mode}_loop: ${model_file##*/} failed"; echo ${run_result} >> $5
+            run_result="$6_$7_${mode}_loop: ${model_file##*/} ${elapsed_time} failed"; echo ${run_result} >> $5
             if [[ $9 != "ON" ]]; then
                 return 1
             fi
         fi
       fi
       # run benchmark with enable gl_texture
+      elapsed_time=$(date +%s.%N)
       if [[ ${input_data_mode} == "opengl" ]]; then
         echo "$6 $7 ${mode} run gl texture: ${model_name}, accuracy limit:${acc_limit}" >> "$4"
         if [[ $6 == "arm64" ]]; then
@@ -495,10 +504,12 @@ function Run_Benchmark() {
           echo 'MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> "$4"
           MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} >> "$4"
         fi
-        if [ $? = 0 ]; then
-          run_result="$6_$7_${mode}: ${model_file##*/} pass"; echo ${run_result} >> $5
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+          run_result="$6_$7_${mode}: ${model_file##*/} ${elapsed_time} pass"; echo ${run_result} >> $5
         else
-          run_result="$6_$7_${mode}: ${model_file##*/} failed"; echo ${run_result} >> $5
+          run_result="$6_$7_${mode}: ${model_file##*/} ${elapsed_time} failed"; echo ${run_result} >> $5
           if [[ $9 != "ON" ]]; then
               return 1
           fi
@@ -522,30 +533,34 @@ function Exist_File_In_Path() {
 # Print start msg before run testcase
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""
-    echo -e "----------------------------------------------------------------------------------------------------------------------------------------"
-    echo -e "env                    Testcase                                                                                                Result   "
-    echo -e "---                    --------                                                                                                ------   "
+    echo -e "--------------------------------------------------------------------------------------------------------------------------------------------"
+    echo -e "env                      Testcase                                                                                            Time    Result "
+    echo -e "---                      --------                                                                                            ----    ------ "
 }
 
 # Print start msg after run testcase
 function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "----------------------------------------------------------------------------------------------------------------------------------------"
+    echo -e "------------------------------------------------------------------------------------------------------------------------------------------------------"
 }
 
 function Print_Converter_Result() {
     MS_PRINT_TESTCASE_END_MSG
+    echo "CONVERTER RESULT PRINT BEGIN"
     while read line; do
         arr=("${line}")
-        printf "%-15s %-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
+        printf "%-15s %-20s %-100s %-8s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]} ${arr[4]}
     done < $1
+    echo "CONVERTER RESULT PRINT END"
     MS_PRINT_TESTCASE_END_MSG
 }
 
 function Print_Benchmark_Result() {
     MS_PRINT_TESTCASE_START_MSG
+    echo "BENCHMARK RESULT PRINT BEGIN"
     while read line; do
         arr=("${line}")
-        printf "%-25s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+        printf "%-25s %-100s %-8s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
     done < $1
+    echo "BENCHMARK RESULT PRINT END"
     MS_PRINT_TESTCASE_END_MSG
 }
