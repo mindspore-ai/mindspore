@@ -56,7 +56,7 @@ void HandleFullySplitParameters(const FuncGraphPtr &root);
 void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root);
 void HandleAdaFactorOpt(const FuncGraphPtr &root);
 void AutoParallelPostProcess(const FuncGraphPtr &root);
-void SliceTensorObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor_layout);
+void SliceTensorObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor_layout, size_t rank_id = 0);
 // Init the parameters for graph which not specified by shard under PyNative mode.
 void InitPynativeNoShardParams(const FuncGraphPtr &root);
 void InitCompileCacheParams(const pipeline::ResourcePtr &resource);

@@ -56,6 +56,7 @@ class GroupManager {
   ~GroupManager() = default;
 
   Status CreateGroup(const std::string &group_name, const std::vector<Device> &devices, Group *const group);
+  Status CreateGlobalGroup(const std::string &group_name, const std::vector<Device> &devices, Group *const group);
   Status DestroyGroup(Group *const group);
   Status DestroyAllGroups();
   Status GetRankID(const std::string &name, uint32_t *const rank_id);

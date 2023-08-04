@@ -115,7 +115,7 @@ std::string MirrorOpName();
 StrategyPtr ExtractStrategy(const ValuePtr &stra);
 ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth);
 std::vector<std::pair<AnfNodePtr, int>> FuncGraphNodeUsers(const std::pair<AnfNodePtr, int> &node_pair);
-Status ParallelInit();
+Status ParallelInit(size_t rank_id = 0, const size_t devices = 0);
 std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph,
                                     size_t max_depth);
 std::pair<std::shared_ptr<AnfNode>, int> BFSParallelCareNode(const AnfNodePtr &node_ptr,
