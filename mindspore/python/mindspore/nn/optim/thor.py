@@ -653,6 +653,7 @@ class ThorGpu(Optimizer):
             gradients = self.hyper_map(F.partial(apply_decay, self.weight_decay), self.decay_flags, params, gradients)
         gradients = clip_gradient(self.enable_clip_grad, gradients)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
         success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum, lr), gradients, params, moments)
         return success
 
@@ -1304,5 +1305,6 @@ class ThorAscend(Optimizer):
             gradients = self.hyper_map(F.partial(apply_decay, self.weight_decay), self.decay_flags, params, gradients)
         gradients = clip_gradient(self.enable_clip_grad, gradients)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
         success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum, lr), gradients, params, moments)
         return success

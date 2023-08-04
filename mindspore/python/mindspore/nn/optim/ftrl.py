@@ -359,6 +359,7 @@ class FTRL(Optimizer):
         grads = self.scale_grad(grads)
         grads = self._grad_sparse_indices_deduplicate(grads)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
 
         if self.use_dist_optimizer:
             success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,

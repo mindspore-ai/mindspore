@@ -220,6 +220,7 @@ class Momentum(Optimizer):
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
         if self.use_dist_optimizer:
             if self.is_group_lr:
                 success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum),

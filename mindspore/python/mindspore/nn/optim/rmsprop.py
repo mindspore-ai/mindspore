@@ -236,6 +236,7 @@ class RMSProp(Optimizer):
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
         if self.centered:
             if self.is_group_lr:
                 success = self.hyper_map_reverse(F.partial(_centered_rmsprop_opt, self.opt, self.decay, self.epsilon,

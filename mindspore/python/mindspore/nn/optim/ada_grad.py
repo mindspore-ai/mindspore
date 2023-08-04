@@ -205,6 +205,7 @@ class Adagrad(Optimizer):
         grads = self.gradients_centralization(grads)
         grads = self.scale_grad(grads)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
         if self.is_group_lr:
             success = self.map_reverse(F.partial(_ada_grad_opt, self.opt), lr, params, accum,
                                        grads)

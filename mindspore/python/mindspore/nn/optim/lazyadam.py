@@ -445,6 +445,7 @@ class LazyAdam(Optimizer):
         gradients = self.scale_grad(gradients)
         gradients = self._grad_sparse_indices_deduplicate(gradients)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
 
         beta1_power = self.beta1_power * self.beta1
         self.beta1_power = beta1_power

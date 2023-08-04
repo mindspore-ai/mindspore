@@ -204,6 +204,7 @@ class AdaMax(Optimizer):
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
 
         self.beta1_power *= self.beta1
 
