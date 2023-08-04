@@ -230,6 +230,8 @@ class OperatorInfo {
   bool is_last_node_ = false;
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
+  virtual Status InferOutputTensorMap() { return SUCCESS; }
+  virtual Status CheckLayoutConfig() { return SUCCESS; }
   virtual Status InferForwardCommunication() = 0;
   virtual Status GetAttrs() = 0;
   virtual Status InferDevMatrixShape() = 0;
@@ -297,6 +299,8 @@ class OperatorInfo {
   RankList stage_device_list_;  // the device list in this stage
   int64_t stage_device_size_ = 0;
   bool infer_attrs_completed_ = false;
+  bool is_layout_config_ = false;
+  Shapes strategy_from_layout_;
 
   bool is_auto_parallel_ = false;  // false: semi_auto_parallel; true: auto_parallel
   // 'corrected_input_indices_' used to store the indices of input that have ALREADY been corrected.
@@ -342,6 +346,8 @@ class OperatorInfo {
   OperatorCostPtr operator_cost_;
   std::vector<TypePtr> outputs_type_;
   int64_t swc_index_ = -1;
+  Status GetLayoutConfig();
+  Status CheckLayoutConfigBase();
 };
 
 Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy);

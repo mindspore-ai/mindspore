@@ -46,6 +46,7 @@ class TransposeInfo : public OperatorInfo {
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferOutputTensorMap() override;
   Status GetAttrs() override;
 
  private:
