@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback """
-import pytest
-import numpy as np
-
-import mindspore.nn as nn
 import mindspore.common.dtype as mstype
+import mindspore.nn as nn
 from mindspore import Tensor, jit, context
+from mindspore import ops, tensor
+
+import numpy as np
+import pytest
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -67,14 +68,15 @@ def test_np_tensor_list():
     Description: support Basic method of Tensor list.
     Expectation: No exception.
     """
+
     @jit
     def np_tensor_list():
         a = Tensor(np.array(4), mstype.int32)
         b = Tensor(np.array(5), mstype.int32)
         c = Tensor(np.array(6), mstype.int32)
         tensor_list = [a, b]
-        for tensor in tensor_list:
-            print(tensor)
+        for x in tensor_list:
+            print(x)
         tensor_list.append(tensor_list[-1] + c)
         return tensor_list
 
@@ -120,6 +122,7 @@ def test_fallback_tensor_compare_with_variable():
     Description: Test ms.Tensor() in graph mode.
     Expectation: No exception.
     """
+
     @jit
     def foo(x):
         while x > Tensor([0]):
@@ -141,13 +144,14 @@ def test_np_tensor_add():
     Description: support Tensor add.
     Expectation: No exception.
     """
+
     @jit
     def np_tensor_add():
         a = Tensor(np.array(4))
         b = Tensor(np.array(5))
         tensor_list = [a, b]
-        for tensor in tensor_list:
-            print(tensor)
+        for x in tensor_list:
+            print(x)
         x = 6
         np_x = np.array(x)
         c = Tensor(np_x)
@@ -158,3 +162,51 @@ def test_np_tensor_add():
     tensor_list = np_tensor_add()
     print("tensor_list:", tensor_list)
     assert tensor_list[-1] == 11
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_user_define_bprop_using_fallback():
+    """
+    Feature: Fallback feature
+    Description: user define bprop support jit fallback.
+    Expectation: No exception.
+    """
+    class TestBpropCell(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.const_value = 1
+
+        def construct(self, x):
+            x = x * self.const_value
+            x = x.asnumpy()
+            x = (x + x) * x
+            return tensor(x, mstype.float32)
+
+        def bprop(self, x, out, dout):
+            x = dout.asnumpy()
+            x = 2 * (x * x) * (np.log(x) + 1)
+            return (tensor(x, mstype.float32),)
+
+    class TestCell(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.user_define_bprop = TestBpropCell()
+
+        def construct(self, x):
+            x = 2 * x
+            x = self.user_define_bprop(x)
+            x = x + 1
+            x = 2 * x
+            return x
+
+    test_cell = TestCell()
+    input_x = Tensor([1, 2, 3, 4], mstype.float32)
+    graph_output = ops.grad(test_cell)(input_x)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = ops.grad(test_cell)(input_x)
+    context.set_context(mode=context.GRAPH_MODE)
+
+    assert np.allclose(graph_output.asnumpy(), pynative_out.asnumpy())
