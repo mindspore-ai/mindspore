@@ -65,19 +65,19 @@ __device__ void MultiplyDevice(const float a, const half b, half *out) {
 }
 
 template <typename T, typename S>
-__global__ void Divide(const T *numerator, const S *denominator, T *result) {
+__device__ void Divide(const T *numerator, const S *denominator, T *result) {
   result[0] = numerator[0] / denominator[0];
 }
 
 template <>
-__global__ void Divide(const float *numerator, const half *denominator, float *result) {
+__device__ void Divide(const float *numerator, const half *denominator, float *result) {
   float denom_float = __half2float(denominator[0]);
 
   result[0] = numerator[0] / denom_float;
 }
 
 template <>
-__global__ void Divide(const half *numerator, const float *denominator, half *result) {
+__device__ void Divide(const half *numerator, const float *denominator, half *result) {
   float numer_float = __half2float(numerator[0]);
 
   float result_float = numer_float / denominator[0];
@@ -269,7 +269,8 @@ __global__ void NLLLossNativeKernel(const T *logits, const int32_t *labels, cons
 
 template <unsigned int BlockDimX, typename T, typename S, unsigned int sharedSize0, unsigned int sharedSize1>
 __global__ void NLLLossReduceKernel(const T *logits, const int32_t *labels, const S *weights, T *loss, S *total_weight,
-                                    unsigned int label_size, unsigned int num_classes, int32_t ignore_index) {
+                                    unsigned int label_size, unsigned int num_classes, int32_t ignore_index,
+                                    bool mean) {
   unsigned int tid = threadIdx.x;
   const S one = static_cast<S>(1);
   __shared__ T shared_loss[sharedSize0];
@@ -295,6 +296,10 @@ __global__ void NLLLossReduceKernel(const T *logits, const int32_t *labels, cons
   }
   __syncthreads();
   BinaryReduce<BlockDimX>(loss, total_weight, shared_loss, shared_total_weight, tid);
+  if (mean && tid == 0) {
+    __syncthreads();
+    Divide(loss, total_weight, loss);
+  }
 }
 
 template <typename T>
@@ -492,13 +497,11 @@ cudaError_t NLLLoss(const T *logits, const int32_t *labels, const S *weights, T 
     NLLLossNativeKernel<Threads, T, S, sharedSize><<<GET_BLOCKS(label_size), Threads, 0, stream>>>(
       logits, labels, weights, loss, total_weight, label_size, num_classes, ignore_index);
   } else {
+    bool mean = (reduction == ReductionMode::kMean);
     const unsigned int sharedSize0 = Threads * sizeof(T) + 1;
     const unsigned int sharedSize1 = Threads * sizeof(S) + 1;
     NLLLossReduceKernel<Threads, T, S, sharedSize0, sharedSize1><<<GET_BLOCKS(label_size), Threads, 0, stream>>>(
-      logits, labels, weights, loss, total_weight, label_size, num_classes, ignore_index);
-    if (reduction == ReductionMode::kMean) {
-      Divide<<<1, 1, 0, stream>>>(loss, total_weight, loss);
-    }
+      logits, labels, weights, loss, total_weight, label_size, num_classes, ignore_index, mean);
   }
   cudaStreamSynchronize(stream);
   return GetCudaStatus();
