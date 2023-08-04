@@ -6,7 +6,7 @@ mindspore.save_checkpoint
     将网络权重保存到checkpoint文件中。
 
     参数：
-        - **save_obj** (Union[Cell, list]) - Cell对象或者数据列表（列表的每个元素为字典类型，比如[{"name": param_name, "data": param_data},…]，`param_name` 的类型必须是str，`param_data` 的类型必须是Parameter或者Tensor）。
+        - **save_obj** (Union[Cell, list, dict]) - 待保存的对象。数据类型可为 :class:`mindspore.nn.Cell` 、list或dict。若为list，可以是 `Cell.trainable_params()` 的返回值，或元素为dict的列表（如[{"name": param_name, "data": param_data},…]，`param_name` 的类型必须是str，`param_data` 的类型必须是Parameter或者Tensor）；若为dict，可以是 `mindspore.load_checkpoint()` 的返回值。
         - **ckpt_file_name** (str) - checkpoint文件名称。如果文件已存在，将会覆盖原有文件。
         - **integrated_save** (bool) - 在并行场景下是否合并保存拆分的Tensor。默认值： ``True`` 。
         - **async_save** (bool) - 是否异步执行保存checkpoint文件。默认值： ``False`` 。
@@ -19,7 +19,7 @@ mindspore.save_checkpoint
           - incremental (bool): 是否可以增量导出MapParameter的检查点。
 
     异常：
-        - **TypeError** - 如果参数 `save_obj` 类型不为 `nn.Cell` 或者list。
+        - **TypeError** - 如果参数 `save_obj` 类型不为 :class:`mindspore.nn.Cell` 、list或者dict。
         - **TypeError** - 如果参数 `integrated_save` 或 `async_save` 不是bool类型。
         - **TypeError** - 如果参数 `ckpt_file_name` 不是字符串类型。
 
