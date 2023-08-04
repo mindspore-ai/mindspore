@@ -16,7 +16,7 @@
 
 #include "src/extendrt/kernel/cuda/batchtospace.h"
 #include <memory>
-#include "nnacl/batch_to_space.h"
+#include "nnacl/batch_to_space_parameter.h"
 
 namespace mindspore::kernel {
 int BatchtoSpaceCudaKernel::Prepare() {

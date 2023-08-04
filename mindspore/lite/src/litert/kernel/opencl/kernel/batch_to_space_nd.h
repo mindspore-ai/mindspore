@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/litert/kernel/opencl/opencl_kernel.h"
-#include "nnacl/batch_to_space.h"
+#include "nnacl/batch_to_space_parameter.h"
 
 namespace mindspore::kernel {
 class BatchToSpaceNDOpenCLKernel : public OpenCLKernel {
