@@ -595,9 +595,14 @@ class Dataset:
                   multi-threading mode. If `per_batch_map` is a CPU bound task, it is recommended to use
                   multi-processing mode. Default: ``False`` , use python multi-threading mode.
 
-                - max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to
-                  copy data between processes. This is only used if `python_multiprocessing` is set to ``True``.
-                  Default: ``16`` .
+                - max_rowsize(Union[int, list[int]], optional): Maximum size of row in MB that is used for shared memory
+                  allocation to copy data between processes, the total occupied shared memory will increase as
+                  ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. This is only
+                  used if python_multiprocessing is set to True. If it is an int value, it represents
+                  ``input_columns`` and ``output_columns`` use this value as the unit to create shared memory.
+                  If it is a list, the first element represents the ``input_columns`` use this value as the unit to
+                  create shared memory, and the second element represents ``output_columns`` use this value as the unit
+                  to create shared memory. Default: 16.
 
         Returns:
             BatchDataset, dataset batched.
@@ -881,9 +886,14 @@ class Dataset:
                 - python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes.
                   This option could be beneficial if the Python operation is computational heavy. Default: ``False``.
 
-                - max_rowsize (int, optional): Maximum size of row in MB that is used for shared memory allocation to
-                  copy data between processes.  This is only used if `python_multiprocessing` is set to ``True``.
-                  Default: ``16``.
+                - max_rowsize (Union[int, list[int]], optional): Maximum size of row in MB that is used for shared
+                  memory allocation to copy data between processes, the total occupied shared memory will increase as
+                  ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. This is only
+                  used if python_multiprocessing is set to True. If it is an int value, it represents
+                  ``input_columns`` and ``output_columns`` use this value as the unit to create shared memory.
+                  If it is a list, the first element represents the ``input_columns`` use this value as the unit to
+                  create shared memory, and the second element represents ``output_columns`` use this value as the unit
+                  to create shared memory. Default: 16.
 
                 - cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
                   Default: ``None``, which means no cache is used.
@@ -2457,7 +2467,7 @@ class BucketBatchByLengthDataset(UnionBaseDataset):
                                            self.pad_to_bucket_boundary, self.drop_remainder)
 
 
-def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
+def _check_shm_usage(num_worker, queue_size, in_rowsize, out_rowsize):
     """
     Check sufficient shared memory is available for shared memory queues
     when training in parallel mode.
@@ -2469,8 +2479,8 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
         # on the ascend server is 8.
         if device_num > 1:
             device_num = min(device_num, 8)
-        shm_estimate_usage = device_num * num_worker * num_queues * \
-                             (queue_size + 2) * max_rowsize * 1024 * 1024
+        shm_estimate_usage = device_num * num_worker * \
+                             (queue_size + 2) * (in_rowsize + out_rowsize) * 1024 * 1024
         try:
             shm_available = psutil.disk_usage('/dev/shm').free
             if shm_estimate_usage >= threshold_ratio * shm_available:
@@ -2509,8 +2519,14 @@ class BatchDataset(UnionBaseDataset):
             len(output_columns). The size of this list must match the number of output
             columns of the last operation. Default: ``None``, output columns will have the same
             name as the input columns, i.e., the columns will be replaced.
-        max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-            data between processes.  This is only used if python_multiprocessing is set to True. Default: 16.
+        max_rowsize(Union[int, list[int]], optional): Maximum size of row in MB that is used for shared memory
+            allocation to copy data between processes, the total occupied shared memory will increase as
+            ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. This is only
+            used if python_multiprocessing is set to True. If it is an int value, it represents
+            ``input_columns`` and ``output_columns`` use this value as the unit to create shared memory.
+            If it is a list, the first element represents the ``input_columns`` use this value as the unit to
+            create shared memory, and the second element represents ``output_columns`` use this value as the unit
+            to create shared memory. Default: 16.
 
     """
 
@@ -2536,7 +2552,10 @@ class BatchDataset(UnionBaseDataset):
 
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
-        self.max_rowsize = max_rowsize
+        if isinstance(max_rowsize, int):
+            self.max_rowsize = [max_rowsize * self.batch_size] * 2
+        else:
+            self.max_rowsize = [max_rowsize[0] * self.batch_size, max_rowsize[1] * self.batch_size]
 
     def __del__(self):
         if hasattr(self, "process_pool") and self.process_pool is not None:
@@ -2606,7 +2625,7 @@ class BatchDataset(UnionBaseDataset):
                 self.num_parallel_workers = get_num_parallel_workers()
 
             self.process_pool = _PythonMultiprocessing(str(self), self.num_parallel_workers, [self.per_batch_map],
-                                                       self.max_rowsize * self.batch_size)
+                                                       self.max_rowsize)
             # Wrap per_batch_map into _PythonCallable
             self.per_batch_map = _PythonCallable(self.per_batch_map, 0, self.process_pool)
         else:
@@ -2946,8 +2965,8 @@ class Pipe:
         self.shared_memory = shared_memory
         self.eof = multiprocessing.Event()
         if self.shared_memory:
-            self.in_queue = _SharedQueue(1, warning_ctl, max_rowsize=max_rowsize)
-            self.res_queue = _SharedQueue(1, warning_ctl, max_rowsize=max_rowsize)
+            self.in_queue = _SharedQueue(1, warning_ctl, max_rowsize=max_rowsize[0])
+            self.res_queue = _SharedQueue(1, warning_ctl, max_rowsize=max_rowsize[1])
         else:
             self.in_queue = _Queue(1)
             self.res_queue = _Queue(1)
@@ -3136,12 +3155,12 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             self.origin_hook(ex_type, value, tb)
             self.mp_pool_exit_preprocess()
 
-    def __init__(self, op_name, num_parallel_workers, operations, max_row_size=16):
+    def __init__(self, op_name, num_parallel_workers, operations, max_rowsize=16):
         super(_PythonMultiprocessing, self).__init__()
         self.op_name = op_name
         self.num_parallel_workers = num_parallel_workers
         self.operations = operations
-        self.max_row_size = max_row_size
+        self.max_rowsize = max_rowsize
 
         self.workers = None
         self.pids = None
@@ -3332,7 +3351,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
         """
         if get_enable_shared_mem():
-            self.check_shared_memory()
+            _check_shm_usage(self.num_parallel_workers, 1, self.max_rowsize[0], self.max_rowsize[1])
 
         if self.workers is not None:
             raise Exception("Pool was already created, close it first.")
@@ -3344,7 +3363,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.workers = []
         self.warning_ctl = multiprocessing.Value('i', 0)
         for i in range(self.num_parallel_workers):
-            worker = _MPWorker(self.operations, self.warning_ctl, self.max_row_size, i + get_seed())
+            worker = _MPWorker(self.operations, self.warning_ctl, self.max_rowsize, i + get_seed())
             worker.start()
             self.workers.append(worker)
 
@@ -3405,12 +3424,6 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
     def is_mp_enabled(self):
         return self.workers is not None
-
-    def check_shared_memory(self):
-        """
-        Check if there is enough shared memory in the system.
-        """
-        _check_shm_usage(self.num_parallel_workers, 1, self.max_row_size, 2)
 
     def execute(self, idx, *args):
         """
@@ -3520,8 +3533,13 @@ class MapDataset(UnionBaseDataset):
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             Default: ``None``, which means no cache is used.
         callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called. Default: ``None``.
-        max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-            data between processes. This is only used if python_multiprocessing is set to True. Default: 16.
+        max_rowsize(Union[int, list[int]], optional): Maximum size of row in MB that is used for shared memory
+            allocation to copy data between processes, the total occupied shared memory will increase as
+            ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. This is only
+            used if python_multiprocessing is set to True. If it is an int value, it represents ``input_columns`` and
+            ``output_columns`` use this value as the unit to create shared memory. If it is a list, the first element
+            represents the ``input_columns`` use this value as the unit to create shared memory, and the second element
+            represents ``output_columns`` use this value as the unit to create shared memory. Default: 16.
         offload (bool, optional): Flag to indicate whether offload is used. Default: ``None``.
     """
 
@@ -3552,7 +3570,10 @@ class MapDataset(UnionBaseDataset):
         self.process_pool = None
 
         self.callbacks = to_list(callbacks)
-        self.max_rowsize = max_rowsize
+        if isinstance(max_rowsize, int):
+            self.max_rowsize = [max_rowsize] * 2
+        else:
+            self.max_rowsize = max_rowsize
         self.offload = offload
 
     def parse(self, children=None):
@@ -3590,7 +3611,7 @@ class MapDataset(UnionBaseDataset):
 
         callbacks = [cb.create_runtime_obj() for cb in self.callbacks]
         return cde.MapNode(children[0], self.operations, self.input_columns, self.output_columns,
-                           callbacks, self.max_rowsize, OffloadToManualOffloadMode.get(self.offload), self.process_pool)
+                           callbacks, OffloadToManualOffloadMode.get(self.offload), self.process_pool)
 
     def __deepcopy__(self, memodict):
         return self.__safe_deepcopy__(memodict, exclude=("operations", "callbacks", "__transfer_dataset__"))

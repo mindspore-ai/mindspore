@@ -200,7 +200,10 @@ class SamplerFn:
         queue_size = max(2, queue_size)
 
         if multi_process and get_enable_shared_mem():
-            _check_shm_usage(num_worker, queue_size, max_rowsize)
+            # generator dataset use idx_queue and res_queue to transfer data between main and subprocess
+            # idx_queue is used multiprocess.Queue which is not shared memory, so it's size is 0.
+            # res_queue is used shared memory, so it' size is max_rowsize which is defined by user.
+            _check_shm_usage(num_worker, queue_size, 0, max_rowsize)
         self.count = multiprocessing.Value('i', 0)
         for _ in range(num_worker):
             if multi_process is True:
@@ -620,9 +623,10 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             Random accessible input is required.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy. Default: ``True``.
-        max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-            data between processes. This is only used if `python_multiprocessing` is set to ``True``.
-            Default: ``6`` MB.
+        max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory
+            allocation to copy data between processes, the total occupied shared memory will increase as
+            ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. This is only
+            used if python_multiprocessing is set to True. Default: 16.
 
     Raises:
         RuntimeError: If source raises an exception during execution.

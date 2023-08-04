@@ -1307,8 +1307,8 @@ def check_batch(method):
         if num_parallel_workers is not None:
             check_num_parallel_workers(num_parallel_workers)
         type_check(drop_remainder, (bool,), "drop_remainder")
-        type_check(max_rowsize, (int,), "max_rowsize")
-        check_pos_int32(max_rowsize, "max_rowsize")
+
+        check_max_rowsize(max_rowsize)
 
         if (input_columns is not None) and (per_batch_map is None):
             # input_columns must be None when per_batch_map is not set
@@ -1403,6 +1403,20 @@ def get_map_kwargs_from_dict(param_dict):
     return python_multiprocessing, max_rowsize, cache, callbacks, offload
 
 
+def check_max_rowsize(max_rowsize):
+    """check the max_rowsize"""
+    type_check(max_rowsize, (int, list), "max_rowsize")
+    if isinstance(max_rowsize, int):
+        type_check(max_rowsize, (int,), "max_rowsize")
+        check_pos_int32(max_rowsize, "max_rowsize")
+    elif isinstance(max_rowsize, list) and len(max_rowsize) == 2:
+        for index, value in enumerate(max_rowsize):
+            type_check(value, (int,), "max_rowsize[{}]".format(index))
+            check_pos_int32(value, "max_rowsizei[{}]".format(index))
+    else:
+        raise TypeError("max_rowsize should be a single integer or a list[in_rowsize, out_rowsize] of length 2.")
+
+
 def check_map(method):
     """check the input arguments of map."""
 
@@ -1458,8 +1472,7 @@ def check_map(method):
             check_num_parallel_workers(num_parallel_workers)
         type_check(python_multiprocessing, (bool,), "python_multiprocessing")
         check_cache_option(cache)
-        type_check(max_rowsize, (int,), "max_rowsize")
-        check_pos_int32(max_rowsize, "max_rowsize")
+        check_max_rowsize(max_rowsize)
         if offload is not None:
             type_check(offload, (bool,), "offload")
 

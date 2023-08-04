@@ -30,7 +30,7 @@ mindspore.dataset.Dataset.map
         - **\*\*kwargs** - 其他参数。
 
           - python_multiprocessing (bool, 可选) - 启用Python多进程模式加速map操作。当传入的 `operations` 计算量很大时，开启此选项可能会有较好效果。默认值： ``False`` 。
-          - max_rowsize (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间，仅当 `python_multiprocessing` 为 ``True`` 时，该选项有效。默认值： ``16`` ，单位为MB。
+          - max_rowsize (Union[int, list[int]], 可选) - 指定在多进程之间复制数据时，共享内存分配的基本单位，总占用的共享内存会随着 ``num_parallel_workers`` 和 :func:`mindspore.dataset.config.set_prefetch_size` 增加而变大，仅当 `python_multiprocessing` 为 ``True`` 时，该选项有效。如果是int值，代表 ``input_columns`` 和 ``output_columns`` 均使用该值为单位创建共享内存；如果是列表，第一个元素代表 ``input_columns`` 使用该值为单位创建共享内存，第二个元素代表 ``output_columns`` 使用该值为单位创建共享内存。默认值： ``16`` ，单位为MB。
           - cache (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
           - callbacks (DSCallback, list[DSCallback], 可选) - 要调用的Dataset回调函数列表。默认值： ``None`` 。
           - offload (bool, 可选) - 是否进行异构硬件加速，详情请阅读 `数据准备异构加速 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/dataset_offload.html>`_ 。默认值： ``None`` 。

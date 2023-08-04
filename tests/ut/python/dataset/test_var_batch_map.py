@@ -13,7 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """ Test batch variations including per_batch_map """
+import os
+import subprocess
+import time
 import numpy as np
+import psutil
 import pytest
 
 import mindspore.dataset as ds
@@ -662,6 +666,114 @@ def test_exceptions_2():
     assert "expects: 4 rows returned from 'per_batch_map', got: 2" in test_exceptions_config(4, 4, ["num"], shrink_copy)
 
 
+class FakeData:
+    def __init__(self):
+        self.input_ids = np.ones((128, 128), dtype=np.int32)
+        self.input_mask = np.ones((128, 128), dtype=np.int32)
+
+    def __getitem__(self, index):
+        return self.input_ids, self.input_mask
+
+    def __len__(self):
+        return 120
+
+
+def test_batch_multiprocessing_with_in_out_rowsize_exception():
+    """
+    Feature: Batch op
+    Description: batch with multiprocessing and max_rowsize with in rowsize & out rowsize exception
+    Expectation: success
+    """
+
+    dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+    def long_running_op(col1, col2):
+        data1 = np.ones([3, 65, 65], dtype=np.float64)
+        data2 = np.ones([3, 60, 60], dtype=np.float64)
+        return data1, data2
+
+    dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"])
+
+    def batch_func(col1, col2, BatchInfo):
+        return col1, col2
+
+    with pytest.raises(TypeError) as info:
+        dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
+                                python_multiprocessing=True, num_parallel_workers=2, max_rowsize=(12, 20))
+    assert " is not of type " in str(info.value)
+
+    with pytest.raises(TypeError) as info:
+        dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
+                                python_multiprocessing=True, num_parallel_workers=2, max_rowsize="16")
+    assert " is not of type " in str(info.value)
+
+    with pytest.raises(TypeError) as info:
+        dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
+                                python_multiprocessing=True, num_parallel_workers=2, max_rowsize=20.5)
+    assert " is not of type " in str(info.value)
+
+    with pytest.raises(ValueError) as info:
+        dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
+                                python_multiprocessing=True, num_parallel_workers=2, max_rowsize=-8)
+    assert "is not within the required interval of " in str(info.value)
+
+    with pytest.raises(TypeError) as info:
+        dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
+                                python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[12.4, 20])
+    assert " is not of type " in str(info.value)
+
+    with pytest.raises(ValueError) as info:
+        dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
+                                python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[-8, 20])
+    assert "is not within the required interval of " in str(info.value)
+
+
+def test_batch_multiprocessing_with_in_out_rowsize():
+    """
+    Feature: Batch op
+    Description: batch with multiprocessing and max_rowsize with in rowsize & out rowsize
+    Expectation: success
+    """
+
+    dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+    def long_running_op(col1, col2):
+        data1 = np.ones([3, 65, 65], dtype=np.float64)
+        data2 = np.ones([3, 60, 60], dtype=np.float64)
+        return data1, data2
+
+    dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"])
+
+    def batch_func(col1, col2, BatchInfo):
+        return col1, col2
+
+    dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
+                            python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[12, 20])
+
+    assert dataset.get_dataset_size() == 30
+
+    fds = 0
+    for i in range(5):
+        count = 0
+        for item in dataset.create_tuple_iterator(output_numpy=True, num_epochs=1):
+            print("count: {}, type: {}, shape: {}".format(count, item[0].dtype, item[0].shape))
+            assert item[0].dtype == np.float64
+            assert item[0].shape == (4, 3, 65, 65)
+            assert len(item) == 2
+            count += 1
+        assert count == 30
+
+        # wait for the fds handle to be released automatic
+        time.sleep(1)
+
+        i += 1
+        if i == 1:
+            fds = psutil.Process(os.getpid()).num_fds()
+            lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
+        elif i > 1:
+            assert fds == psutil.Process(os.getpid()).num_fds()
+            new_lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
+            assert lsof == new_lsof
+
+
 if __name__ == '__main__':
     logger.info("Running test_var_batch_map.py test_batch_corner_cases() function")
     test_batch_corner_cases()
@@ -695,3 +807,7 @@ if __name__ == '__main__':
 
     logger.info("Running test_var_batch_map.py test_exceptions_2() function")
     test_exceptions_2()
+
+    test_batch_multiprocessing_with_in_out_rowsize()
+
+    test_batch_multiprocessing_with_in_out_rowsize_exception()
