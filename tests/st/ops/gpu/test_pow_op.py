@@ -35,10 +35,30 @@ class Net(Cell):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_real_datatypes():
+def test_int_neg_exp():
     """
-    Feature: Support various real datatypes。
-    Description: Input various types of real numbers input Pow op. Test whether it supports.
+    Feature: Support negative exponent when inputs are int datatypes。
+    Description: Input signed int numbers to Pow op. Test whether it supports negative exponents.
+    Expectation: Output of Pow op match to expectations. (numpy.power not support negative exponents)
+    """
+    int_datatypes = (np.int8, np.int16, np.int32, np.int64)
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = Net()
+    for datatype in int_datatypes:
+        base = Tensor(np.array([[2, 2], [-3, 3], [-1, -1], [0, 0]], datatype))
+        exp = Tensor(np.array([-1, -2], datatype))
+        out = net(base, exp).asnumpy()
+        expect = np.array([[0, 0], [0, 0], [-1, 1], [0, 0]])
+        assert np.allclose(out, expect)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_int_real_datatypes():
+    """
+    Feature: Support various int and real datatypes。
+    Description: Input various types of int and real numbers to Pow op. Test whether it supports.
     Expectation: Output of Pow op match to numpy.power.
     """
     real_datatypes = (np.uint8, np.uint16, np.uint32, np.uint64,
