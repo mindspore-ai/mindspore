@@ -306,7 +306,7 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     int64_t w_out = abstract::Shape::kShapeDimAny;
     int64_t h_out = abstract::Shape::kShapeDimAny;
 
-    int64_t group = primitive->GetAttr(kGroup)->cast<Int64ImmPtr>()->value();
+    int64_t group = GetValue<int64_t>(primitive->GetAttr(kGroup));
     CaculateShape(x_shape, kernel_size, stride, dilation, pad_mode, &pad_list, &output_padding, &d_out, &h_out, &w_out);
     primitive->set_attr(kPadList, MakeValue(pad_list));
     primitive->set_attr(kOutputPadding, MakeValue(output_padding));

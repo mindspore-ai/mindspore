@@ -193,7 +193,7 @@ inline std::vector<int64_t> Conv3DCheckAttrIntOrTuple(const std::string &attrnam
     (void)std::transform(it_start, it_start + SizeToLong(num_element), std::back_inserter(result),
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   } else {
-    int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+    int64_t attr_val = GetValue<int64_t>(attr);
     (void)result.insert(result.begin(), num_element, attr_val);
   }
   return result;
@@ -262,7 +262,7 @@ class Conv3DInfer : public abstract::OpInferBase {
     uint64_t d_axis = 2;
     uint64_t h_axis = 3;
     uint64_t w_axis = 4;
-    int64_t group = primitive->GetAttr(kGroup)->cast<Int64ImmPtr>()->value();
+    int64_t group = GetValue<int64_t>(primitive->GetAttr(kGroup));
     if ((x_shape[c_axis] != abstract::Shape::kShapeDimAny) && (w_shape[c_axis] != abstract::Shape::kShapeDimAny) &&
         ((x_shape[c_axis] / group) != w_shape[c_axis])) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -271,7 +271,7 @@ class Conv3DInfer : public abstract::OpInferBase {
                                << w_shape[c_axis] << ", but got 'C_in' of input 'x' shape: " << x_shape[c_axis]
                                << ", and 'group': " << group << ".";
     }
-    int64_t out_channel = primitive->GetAttr(kOutChannel)->cast<Int64ImmPtr>()->value();
+    int64_t out_channel = GetValue<int64_t>(primitive->GetAttr(kOutChannel));
     if ((w_shape[n_axis] != abstract::Shape::kShapeDimAny) && (w_shape[n_axis] != out_channel)) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'w_shape[" << n_axis
                                << "]' must be equal to 'out_channel', but got 'w_shape[" << n_axis
