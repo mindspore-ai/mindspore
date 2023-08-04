@@ -126,22 +126,19 @@ int ConvolutionDepthwiseSWFP16Coder::DoCode(CoderContext *const context) {
     packed_input_ = reinterpret_cast<float16 *>(allocator_->Malloc(data_type_, pack_input_size_, kWorkspace));
     MS_CHECK_PTR(packed_input_);
     auto packed_input_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(packed_input_);
-    code.CodeFunction("memset", packed_input_str, "0", pack_input_size_);
     code.CodeFunction("PackNHWCToNHWC8Fp16", input_ptr_, packed_input_str, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
-  }
-  auto packed_input_str = (need_align) ? MemoryAllocator::GetInstance()->GetRuntimeAddr(packed_input_) : input_ptr_;
-  code.CodeFunction("ConvDwC8Fp16", output_ptr_, packed_input_str, packed_weight_str, bias_data_str, "&conv_parameter",
-                    "&sliding_parameter", kDefaultTaskId);
-
-  if (need_align) {
-    auto C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
     pack_output_size_ = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C8NUM * C8 *
                         DataTypeSize(data_type_);
     packed_output_ = reinterpret_cast<float16 *>(allocator_->Malloc(data_type_, pack_output_size_, kWorkspace));
     MS_CHECK_PTR(packed_output_);
-    auto packed_output_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(packed_output_);
-    code.CodeFunction("memset", packed_output_str, "0", pack_output_size_);
+  }
+  auto packed_input_str = (need_align) ? MemoryAllocator::GetInstance()->GetRuntimeAddr(packed_input_) : input_ptr_;
+  auto packed_output_str = (need_align) ? MemoryAllocator::GetInstance()->GetRuntimeAddr(packed_output_) : output_ptr_;
+  code.CodeFunction("ConvDwC8Fp16", packed_output_str, packed_input_str, packed_weight_str, bias_data_str,
+                    "&conv_parameter", "&sliding_parameter", kDefaultTaskId);
+
+  if (need_align) {
     code.CodeFunction("PackNHWC8ToNHWCFp16", packed_output_str, output_ptr_, conv_param_->output_batch_,
                       conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   }

@@ -552,11 +552,6 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
   ofs << "    if (cur_type == expect_type) {\n"
       << "      memcpy(outputs[i], buffer[i], buffer_size[i]);\n"
       << "      continue;\n"
-      << "    }\n"
-      << "    int shape_size = micro_tensor->ndim;\n"
-      << "    int num = 1;\n"
-      << "    for (int i = 0; i < shape_size; ++i) {\n"
-      << "      num *= micro_tensor->shape[i];\n"
       << "    }\n";
   ofs << "    int type_trans_mode = TypeTransMode_MAX;\n"
          "    if (expect_type == kMSDataTypeNumberTypeFloat16 && cur_type == kMSDataTypeNumberTypeFloat32) {\n"
@@ -568,6 +563,11 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
       << "      return kMSStatusLiteNotSupport;\n"
       << "    }\n";
   ofs << "#ifdef ENABLE_FP16\n"
+      << "    int shape_size = micro_tensor->ndim;\n"
+      << "    int num = 1;\n"
+      << "    for (int i = 0; i < shape_size; ++i) {\n"
+      << "      num *= micro_tensor->shape[i];\n"
+      << "    }\n"
       << "    if (type_trans_mode == TypeTransMode_FP32_TO_FP16) {\n"
       << "      Fp32CastToFp16((float *)(buffer[i]), (float16_t *)&outputs, num);\n"
       << "      type_changed[i] = true;\n"
