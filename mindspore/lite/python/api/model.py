@@ -114,7 +114,7 @@ class Model(BaseModel):
         return res
 
     @set_env
-    def build_from_file(self, model_path, model_type, context=None, config_path=""):
+    def build_from_file(self, model_path, model_type, context=None, config_path="", config_dict: dict = None):
         """
         Load and build a model from file.
 
@@ -150,6 +150,24 @@ class Model(BaseModel):
                           input_shape=input_Name: [input_dim] (Model input dimension, for dynamic shape)
                           dynamic_Dims=[min_dim~max_dim] (dynamic dimension range of model input, for dynamic shape)
                           opt_Dims=[opt_dim] (the optimal input dimension of the model, for dynamic shape)
+
+            config_dict (dict, optional): When you set config in this dict, the priority is higher than the
+                configuration items in config_path.
+
+                Set rank table file for inference. The content of the configuration file is as follows:
+
+                .. code-block::
+
+                    [ascend_context]
+                    rank_table_file=[path_a](storage initial path of the rank table file)
+
+                When set
+
+                .. code-block::
+
+                    config_dict = {"ascend_context" : {"rank_table_file" : "path_b"}}
+
+                The the path_b from the config_dict will be used to compile the model.
 
         Raises:
             TypeError: `model_path` is not a str.
@@ -195,6 +213,14 @@ class Model(BaseModel):
             ret = self._model.load_config(config_path)
             if not ret.IsOk():
                 raise RuntimeError(f"load configuration failed! Error is {ret.ToString()}")
+
+        if config_dict:
+            for key, value in config_dict.items():
+                ret = self._model.update_config(key, value)
+                if not ret.IsOk():
+                    raise RuntimeError(f"update configuration failed! Error is {ret.ToString()}."
+                                       f"Setcion is {key}, config is {value}")
+
         ret = self._model.build_from_file(self.model_path_, model_type_, context._context._inner_context)
         if not ret.IsOk():
             raise RuntimeError(f"build_from_file failed! Error is {ret.ToString()}")

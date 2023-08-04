@@ -71,6 +71,21 @@ Status PyModelResize(Model *model, const std::vector<MSTensorPtr> &inputs_ptr,
   return model->Resize(inputs, new_shapes);
 }
 
+Status PyModelUpdateConfig(Model *model, const std::string &key, const std::map<std::string, std::string> &value) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return kLiteError;
+  }
+  for (auto &item : value) {
+    if (model->UpdateConfig(key, item).IsError()) {
+      MS_LOG(ERROR) << "Update config failed, section: " << key << ", config name: " << item.first
+                    << ", config value: " << item.second;
+      return kLiteError;
+    }
+  }
+  return kSuccess;
+}
+
 std::vector<MSTensorPtr> PyModelGetInputs(Model *model) {
   if (model == nullptr) {
     MS_LOG(ERROR) << "Model object cannot be nullptr";
@@ -139,6 +154,7 @@ void ModelPyBind(const py::module &m) {
          py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &, const Key &,
                            const std::string &, const std::string &>(&Model::Build))
     .def("load_config", py::overload_cast<const std::string &>(&Model::LoadConfig))
+    .def("update_config", &PyModelUpdateConfig)
     .def("resize", &PyModelResize)
     .def("predict", &PyModelPredict, py::call_guard<py::gil_scoped_release>())
     .def("get_inputs", &PyModelGetInputs)
