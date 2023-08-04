@@ -235,6 +235,28 @@ public class ModelTest {
         context.free();
     }
 
+    @Test
+    public void testExportWeight() {
+        String modelFile = "../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_train.ms";
+        Graph g = new Graph();
+        assertTrue(g.load(modelFile));
+        MSContext context = new MSContext();
+        context.init(1, 1);
+        context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
+        TrainCfg cfg = new TrainCfg();
+        cfg.init();
+        Model liteModel = new Model();
+        boolean isSuccess = liteModel.build(g, context, cfg);
+        assertTrue(isSuccess);
+        String weightFile = "../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_train_weights";
+        List<String> weightNames = new ArrayList<>();
+        weightNames.add("conv2.weight");
+        isSuccess = liteModel.exportWeightsCollaborateWithMicro(weightFile, true, false, weightNames);
+        assertTrue(isSuccess);
+        liteModel.free();
+        context.free();
+    }
+
 
     @Test
     public void testFeatureMap() {

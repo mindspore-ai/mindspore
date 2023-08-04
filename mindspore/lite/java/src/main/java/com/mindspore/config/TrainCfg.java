@@ -27,7 +27,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public class TrainCfg {
-    private static final Logger LOGGER = Logger.getLogger(Version.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(TrainCfg.class.toString());
 
     static {
         try {

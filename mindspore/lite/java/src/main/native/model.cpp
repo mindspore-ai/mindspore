@@ -623,10 +623,45 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_export(JNIEnv *en
     quant_type = static_cast<mindspore::QuantizationType>(quantization_type);
   } else {
     MS_LOG(ERROR) << "Invalid quantization_type : " << quantization_type;
-    return (jlong) nullptr;
+    return (jboolean) false;
   }
   auto ret = mindspore::Serialization::ExportModel(*lite_model_ptr, mindspore::kMindIR, model_path, quant_type,
                                                    export_inference_only, output_tensor_names);
+  return (jboolean)(ret.IsOk());
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_exportWeightsCollaborateWithMicro(JNIEnv *env,
+         jobject thiz, jlong model_ptr, jstring weight_file, jboolean is_inference, jboolean enable_fp16,
+         jobjectArray weight_names) {
+  auto *model_pointer = reinterpret_cast<void *>(model_ptr);
+  if (model_pointer == nullptr) {
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
+    return (jboolean) false;
+  }
+  auto *lite_model_ptr = static_cast<mindspore::Model *>(model_pointer);
+  std::vector<std::string> changeable_weight_names;
+  auto size = static_cast<int>(env->GetArrayLength(weight_names));
+  for (int i = 0; i < size; i++) {
+    auto weight_name_jstr = static_cast<jstring>(env->GetObjectArrayElement(weight_names, i));
+    if (weight_name_jstr == nullptr) {
+      MS_LOG(ERROR) << "weight_name_jstr is nullptr";
+      return (jboolean) false;
+    }
+    auto weight_name = env->GetStringUTFChars(weight_name_jstr, JNI_FALSE);
+    if (weight_name == nullptr) {
+      MS_LOG(ERROR) << "GetStringUTFChars failed.";
+      env->DeleteLocalRef(weight_name_jstr);
+      return (jboolean) false;
+    }
+    changeable_weight_names.emplace_back(weight_name);
+    env->ReleaseStringUTFChars(weight_name_jstr, weight_name);
+    env->DeleteLocalRef(weight_name_jstr);
+  }
+  auto weight_path = env->GetStringUTFChars(weight_file, JNI_FALSE);
+  auto ret = mindspore::Serialization::ExportWeightsCollaborateWithMicro(*lite_model_ptr, mindspore::kMindIR,
+                                                                         weight_path, is_inference, enable_fp16,
+                                                                         changeable_weight_names);
+  env->ReleaseStringUTFChars(weight_file, weight_path);
   return (jboolean)(ret.IsOk());
 }
 
