@@ -3591,6 +3591,9 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
     _lower = Tensor(lower, mstype.float32)
     _upper = Tensor(upper, mstype.float32)
     _size = input.shape
+    if ops.is_sequence_value_unknown(_size):
+        dyn_shape = _get_cache_prim(P.TensorShape)()
+        _size = dyn_shape(input)
     sign_matrix = _get_cache_prim(P.Sign)()(input)
     negative_filter = sign_matrix.clip(None, 0)
     positive_filter = sign_matrix.clip(0, None)

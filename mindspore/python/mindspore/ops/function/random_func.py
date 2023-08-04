@@ -1351,7 +1351,9 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         n_dist = 1
         if len(shape(input)) > 1:
             n_dist = shape(input)[-2]
-        random_uniform = _get_cache_prim(P.UniformReal)(seed1, seed2)((n_dist * shape(input)[-1],))
+        random_uniform_real = P.UniformReal(seed1, seed2)
+        random_cache_op = _set_prim_op_user_data(random_uniform_real, "random_cache", False)
+        random_uniform = random_cache_op((n_dist * shape(input)[-1],))
         if n_dist != 1:
             random_uniform = reshape(random_uniform, (n_dist, shape(input)[-1]))
         real_div = _get_cache_prim(P.RealDiv)()
