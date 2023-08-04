@@ -632,6 +632,7 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
                                             return res;
                                           }),
     std::make_shared<ByTypeDataConverter<py::dict>>(ConvertDict),
+    std::make_shared<ByAttrDataConverter>(PYTHON_CELL_AS_DICT, ConvertDict),
     std::make_shared<ByTypeDataConverter<py::slice>>(ConvertSlice),
     std::make_shared<ByAttrDataConverter>(PYTHON_CELL_AS_LIST, ConvertCellList),
     std::make_shared<ByTypeDataConverter<Cell>>(ConvertCellObjToFuncGraph),

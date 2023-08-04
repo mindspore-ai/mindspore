@@ -30,6 +30,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.nn.CellDict
     mindspore.nn.CellList
     mindspore.nn.SequentialCell
 

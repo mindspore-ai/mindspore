@@ -15,12 +15,12 @@
 """container"""
 from __future__ import absolute_import
 
-from collections import OrderedDict
+from collections import OrderedDict, abc
 from abc import abstractmethod
 
 from mindspore.nn.cell import Cell
 
-__all__ = ['SequentialCell', 'CellList']
+__all__ = ['SequentialCell', 'CellList', 'CellDict']
 
 
 def _valid_index(cell_num, index, op_name=None):
@@ -467,6 +467,203 @@ class CellList(_CellListBase, Cell):
         self.requires_grad = flag
         for cell in self._cells.values():
             cell.set_grad(flag)
+
+    def construct(self, *inputs):
+        raise NotImplementedError
+
+
+class _CellDictBase:
+    """
+    An interface for base the Cell as dict.
+
+    The sequential Cell may be iterated using the construct method using for-in statement.
+    But there are some scenarios that the construct method built-in does not fit.
+    For convenience, we provide an interface that indicates the sequential
+    Cell may be interpreted as dict of Cells, so it can be accessed using
+    key when a sequential Cell instantiate is accessed by key,
+    it will be interpreted as a dict of Cells.
+    """
+    def __init__(self):
+        """Initialize _CellDictBase."""
+        self.__cell_as_dict__ = True
+
+    @abstractmethod
+    def __len__(self):
+        pass
+
+    @abstractmethod
+    def __getitem__(self, index):
+        pass
+
+    def construct(self):
+        raise NotImplementedError
+
+
+class CellDict(_CellDictBase, Cell):
+    """
+    Holds Cells in a dictionary. For more details about `Cell` , please refer to :class:`mindspore.nn.Cell` .
+
+    `CellDict` can be used like a regular Python dictionary.
+
+    Args:
+        args (iterable, optional): An iterable of key-value pairs of type(string, Cell) or
+                                   a mapping(dictionary) from string to Cell.
+                                   The key of type string is used to search corresponding Cell in the CellDict.
+        kwargs (dict): Reserved for keyword argument to be expanded.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import collections
+        >>> from collections import OrderedDict
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
+        >>>
+        >>> cell_dict = nn.CellDict({'conv': nn.Conv2d(10, 6, 5),
+        >>>                          'relu': nn.ReLU(),
+        >>>                          'max_pool2d': nn.MaxPool2d(kernel_size=4, stride=4)})
+        >>> print(len(cell_dict))
+        3
+        >>> cell_dict.clear()
+        >>> print(len(cell_dict))
+        0
+        >>> ordered_cells = OrderedDict([('conv', nn.Conv2d(10, 6, 5, pad_mode='valid')),
+        >>>                              ('relu', nn.ReLU()),
+        >>>                              ('max_pool2d', nn.MaxPool2d(kernel_size=4, stride=4))])
+        >>> cell_dict.update(ordered_cells)
+        >>> x = Tensor(np.ones([1, 10, 6, 10]), ms.float32)
+        >>> for cell in cell_dict.values():
+        >>>     x = cell(x)
+        >>> print(x.shape)
+        (1, 6, 1, 1)
+        >>> x = Tensor(np.ones([1, 10, 6, 10]), ms.float32)
+        >>> for item in cell_dict.items():
+        >>>     x = item[0](x)
+        >>> print(x.shape)
+        (1, 6, 1, 1)
+        >>> print(cell_dict.keys())
+        odict_keys(['conv', 'relu', 'max_pool2d'])
+        >>> pop_cell = cell_dict.pop('conv')
+        >>> x = Tensor(np.ones([1, 10, 6, 5]), ms.float32)
+        >>> x = pop_cell(x)
+        >>> print(x.shape)
+        (1, 6, 2, 1)
+        >>> print(len(cell_dict))
+        2
+    """
+    def __init__(self, *args, **kwargs):
+        """Initialize CellDict."""
+        auto_prefix = kwargs["auto_preifx"] if "auto_prefix" in kwargs.keys() else True
+        _CellDictBase.__init__(self)
+        Cell.__init__(self, auto_prefix)
+        if len(args) == 1:
+            self.update(args[0])
+
+    def __getitem__(self, key):
+        self._validate_key_type(key)
+        return self._cells[key]
+
+    def __setitem__(self, key, cell):
+        self._validate_key_type(key)
+        self._update_cell_para_name(key, cell)
+        self._cells[key] = cell
+
+    def __delitem__(self, key):
+        self._validate_key_type(key)
+        del self._cells[key]
+
+    def __len__(self):
+        return len(self._cells)
+
+    def __iter__(self):
+        return iter(self._cells)
+
+    def __contains__(self, key):
+        return key in self._cells
+
+    def _validate_key_type(self, key):
+        cls_name = self.__class__.__name__
+        if not isinstance(key, str):
+            raise TypeError(f"For '{cls_name}', the type of key should be string "
+                            f"but got {type(key).__name__}.")
+
+    def _update_cell_para_name(self, key, cell):
+        if self._auto_prefix:
+            prefix, _ = _get_prefix_and_index(self._cells)
+            cell.update_parameters_name(prefix + key + ".")
+
+    def clear(self):
+        """
+        Remove all Cells from the CellDict.
+        """
+        return self._cells.clear()
+
+    def pop(self, key):
+        """
+        Remove key from the CellDict and return its cell.
+
+        Args:
+            key (string): key to pop from the CellDict.
+
+        Raises:
+            TypeError: If the key is not string.
+            KeyError: If the key not exist in CellDict when attempt to access cell.
+        """
+        self._validate_key_type(key)
+        value = self[key]
+        del self[key]
+        return value
+
+    def keys(self):
+        """
+        Return an iterable of the CellDict keys.
+        """
+        return self._cells.keys()
+
+    def values(self):
+        """
+        Return an iterable of the CellDict values.
+        """
+        return self._cells.values()
+
+    def items(self):
+        """
+        Return an iterable of the CellDict key-value pairs.
+        """
+        return self._cells.items()
+
+    def update(self, cells):
+        """
+        Update the CellDict by overwriting the existing keys with the key-value pairs from a mapping or an iterable.
+
+        Args:
+            cells (iterable): An iterable of key-value pairs of type(string, Cell) or
+                              a mapping(dictionary) from string to Cell.
+
+        Note:
+            If the `cells` is a CellDict, an OrderedDict or an iterable containing key-value pairs,
+            the order of newly added elements is maintained.
+        """
+        if not isinstance(cells, abc.Iterable):
+            raise TypeError("CellDict.update() should be called with an "
+                            "iterable of key-value pairs, but got " +
+                            type(cells).__name__)
+        if isinstance(cells, (OrderedDict, CellDict, abc.Mapping)):
+            for key, cell in cells.items():
+                self[key] = cell
+        else:
+            for id, k_v in enumerate(cells):
+                if not isinstance(k_v, abc.Iterable):
+                    raise TypeError("CellDict update sequence element "
+                                    "#" + str(id) + " should be Iterable; but got " +
+                                    type(k_v).__name__)
+                if len(k_v) != 2:
+                    raise ValueError("CellDict update sequence element "
+                                     "#" + str(id) + ", length should be 2; but has length " +
+                                     "str(len(k_v))")
+                self[k_v[0]] = k_v[1]
 
     def construct(self, *inputs):
         raise NotImplementedError
