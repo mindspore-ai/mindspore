@@ -51,8 +51,7 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
       auto api_graph = api::MakeShared<api::FuncGraph>(func_graph);
       MS_CHECK_TRUE_RET(api_graph != nullptr, false);
       if (!pass_outer->Execute(api_graph)) {
-        MS_LOG(WARNING) << "run pass failed, pass name is " << pass_name;
-        return false;
+        MS_LOG(INFO) << "Execute this pass without modifying the graph, pass name: " << pass_name;
       }
       continue;
     }
@@ -62,8 +61,7 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
       return false;
     }
     if (!pass_builtin->Run(func_graph)) {
-      MS_LOG(WARNING) << "run pass failed, pass name is " << pass_name;
-      return false;
+      MS_LOG(INFO) << "Execute this pass without modifying the graph, pass name: " << pass_name;
     }
   }
   return true;

@@ -166,6 +166,7 @@ class ConfigFileParser {
   int ParseAscendQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseDynamicQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseGraphKernelString(const std::map<std::string, std::map<std::string, std::string>> &maps);
+  STATUS ParseCustomPattern(const std::shared_ptr<mindspore::ConverterPara> &param, std::string custom_pattern_str);
 
  private:
   DataPreProcessString data_pre_process_string_;

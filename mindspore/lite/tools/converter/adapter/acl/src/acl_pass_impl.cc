@@ -83,6 +83,7 @@ constexpr auto kRemoveRedundantOpPass = "RemoveRedundantOpPass";
 constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr auto kRemoveUnusedAddNodePass = "RemoveUnusedAddNodePass";
 constexpr auto kScalarOpPass = "ScalarOpPass";
+constexpr auto kCustomOpFusionForFlashAttention = "FlashAttentionFusion";
 constexpr auto kFuncType = "func_type";
 constexpr auto kUniqueName = "uniq_name";
 constexpr size_t kDependInputNum = 3;
@@ -558,6 +559,10 @@ STATUS AclPassImpl::AdjustInvalidCnodeName(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
+  if (!lite::RunOptimizerPass(func_graph, {kRemoveUnusedAddNodePass, kCustomOpFusionForFlashAttention})) {
+    MS_LOG(ERROR) << "OptimizeGraph failed.";
+    return RET_ERROR;
+  }
   auto status = AdjustInvalidCnodeName(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "AdjustInvalidCnodeName failed.";

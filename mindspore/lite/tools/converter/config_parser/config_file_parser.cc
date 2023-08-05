@@ -207,6 +207,37 @@ void SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
   }
 }
 
+typedef std::vector<std::string> vector;
+STATUS ConfigFileParser::ParseCustomPattern(const std::shared_ptr<mindspore::ConverterPara> &param,
+                                            std::string custom_pattern_str) {
+  std::vector<std::string> custom_pattern_strs = mindspore::lite::SplitStringToVector(custom_pattern_str, ";");
+  for (auto custom_pattern : custom_pattern_strs) {
+    std::vector<std::string> item = mindspore::lite::SplitStringToVector(custom_pattern, ":");
+    if (item.size() != 3) {
+      return RET_ERROR;
+    }
+    std::string op_type = item[0];
+    vector names_list = mindspore::lite::SplitStringToVector(item[1], ",");
+    std::string status = item[2];
+    if (status == "enable") {
+      if (param->aclModelOptionCfgParam.enable_custom_fusion_pattern.find(op_type) !=
+          param->aclModelOptionCfgParam.enable_custom_fusion_pattern.end()) {
+        return RET_ERROR;
+      }
+      param->aclModelOptionCfgParam.enable_custom_fusion_pattern[op_type] = names_list;
+    } else if (status == "disable") {
+      if (param->aclModelOptionCfgParam.disable_custom_fusion_pattern.find(op_type) !=
+          param->aclModelOptionCfgParam.disable_custom_fusion_pattern.end()) {
+        return RET_ERROR;
+      }
+      param->aclModelOptionCfgParam.disable_custom_fusion_pattern[op_type] = names_list;
+    } else {
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::ConverterPara> &param,
                                             const std::map<std::string, std::string> &ascend_map) {
   std::string ascend_string = "";
@@ -231,6 +262,21 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
     param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
   } else if (!(ascend_string = FindInAscendMap(kEnableCustomOp, ascend_map)).empty()) {
     param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
+  }
+  auto acl_plugin_custom_ops_string = FindInAscendMap(kPluginCustomOps, ascend_map);
+  if (!acl_plugin_custom_ops_string.empty()) {
+    param->aclModelOptionCfgParam.plugin_custom_ops = acl_plugin_custom_ops_string;
+  }
+  auto custom_fusion_pattern_str = FindInAscendMap("custom_fusion_pattern", ascend_map);
+  if (!custom_fusion_pattern_str.empty()) {
+    auto status = ParseCustomPattern(param, custom_fusion_pattern_str);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "custom fusion pattern wrong, eg:\n"
+                       "custom_fusion_pattern=Fusion_op_type:node_name_1,node_name_2:enable\n"
+                       "or: "
+                       "custom_fusion_pattern=Fusion_op_type:node_name_1,node_name_2:disable";
+      return;
+    }
   }
 
   auto it = ascend_map.find("input_shape");
