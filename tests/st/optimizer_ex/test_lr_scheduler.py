@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 from mindspore import nn
 import mindspore as ms
+from mindspore.experimental import optim
 
 
 class Net(nn.Cell):
@@ -50,8 +51,8 @@ def test_exponential_lr(mode):
     """
     ms.set_context(mode=mode)
     net = Net()
-    optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
-    scheduler = nn.ExponentialLR(optimizer, gamma=0.5)
+    optimizer = optim.Adam(net.trainable_params(), 0.01)
+    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     expect_list = [[0.005], [0.0025], [0.00125], [0.000625], [0.0003125]]
     for i in range(5):
         scheduler.step()
@@ -75,8 +76,8 @@ def test_polynomial_lr(mode):
     """
     ms.set_context(mode=mode)
     net = Net()
-    optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
-    scheduler = nn.PolynomialLR(optimizer)
+    optimizer = optim.Adam(net.trainable_params(), 0.01)
+    scheduler = optim.lr_scheduler.PolynomialLR(optimizer)
     expect_list = [[0.008], [0.006], [0.004], [0.002], [0], [0]]
     for i in range(6):
         scheduler.step()
@@ -100,10 +101,10 @@ def test_chained_scheduler(mode):
     """
     ms.set_context(mode=mode)
     net = Net()
-    optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
-    scheduler1 = nn.PolynomialLR(optimizer)
-    scheduler2 = nn.ExponentialLR(optimizer, gamma=0.5)
-    scheduler = nn.ChainedScheduler([scheduler1, scheduler2])
+    optimizer = optim.Adam(net.trainable_params(), 0.01)
+    scheduler1 = optim.lr_scheduler.PolynomialLR(optimizer)
+    scheduler2 = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
+    scheduler = optim.lr_scheduler.ChainedScheduler([scheduler1, scheduler2])
     expect_list = [[0.004], [0.0015], [0.0005], [0.000125], [0], [0]]
     for i in range(6):
         scheduler.step()
@@ -132,11 +133,11 @@ def test_lambdalr_scheduler(mode):
     no_dense_params = list(filter(lambda x: 'dens' not in x.name, net.trainable_params()))
     group_params = [{'params': dense_params},
                     {'params': no_dense_params, 'lr': 1.}]
-    optimizer = nn.optim_ex.Adam(group_params, 0.1)
+    optimizer = optim.Adam(group_params, 0.1)
 
     lambda1 = lambda epoch: epoch // 3
     lambda2 = lambda epoch: 0.9 ** epoch
-    scheduler = nn.LambdaLR(optimizer, lr_lambda=[lambda1, lambda2])
+    scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=[lambda1, lambda2])
 
     expect_list = [[0.0, 0.9], [0.0, 0.81], [0.1, 0.729],
                    [0.1, 0.6561], [0.1, 0.59049], [0.2, 0.531441]]
@@ -163,9 +164,9 @@ def test_multiplicative_lr(mode):
     """
     ms.set_context(mode=mode)
     net = Net()
-    optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.1)
+    optimizer = optim.Adam(net.trainable_params(), 0.1)
     lmbda = lambda epoch: 0.9
-    scheduler = nn.MultiplicativeLR(optimizer, lr_lambda=lmbda)
+    scheduler = optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lmbda)
     expect_list = [[0.09], [0.081], [0.0729], [0.06561], [0.059049], [0.0531441]]
     for i in range(6):
         scheduler.step()
@@ -189,8 +190,8 @@ def test_multistep_lr(mode):
     """
     ms.set_context(mode=mode)
     net = Net()
-    optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.1)
-    scheduler = nn.MultiStepLR(optimizer, milestones=[2, 4], gamma=0.1)
+    optimizer = optim.Adam(net.trainable_params(), 0.1)
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[2, 4], gamma=0.1)
     expect_list = [[0.1], [0.01], [0.01], [0.001], [0.001]]
     for i in range(5):
         scheduler.step()
@@ -214,8 +215,8 @@ def test_constant_lr(mode):
     """
     ms.set_context(mode=mode)
     net = Net()
-    optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.1)
-    scheduler = nn.ConstantLR(optimizer, factor=0.5, total_iters=4)
+    optimizer = optim.Adam(net.trainable_params(), 0.1)
+    scheduler = optim.lr_scheduler.ConstantLR(optimizer, factor=0.5, total_iters=4)
     expect_list = [[0.05], [0.05], [0.05], [0.1], [0.1]]
     for i in range(5):
         scheduler.step()

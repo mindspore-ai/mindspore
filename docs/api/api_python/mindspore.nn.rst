@@ -305,19 +305,6 @@ Dropout层
     mindspore.nn.SGD
     mindspore.nn.thor
 
-实验性优化器
-------------
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.optim_ex.Optimizer
-    mindspore.nn.optim_ex.Adam
-    mindspore.nn.optim_ex.AdamW
-    mindspore.nn.optim_ex.SGD
-
 动态学习率
 -----------
 
@@ -382,53 +369,6 @@ Dynamic LR函数
     mindspore.nn.piecewise_constant_lr
     mindspore.nn.polynomial_decay_lr
     mindspore.nn.warmup_lr
-
-LRScheduler类
-^^^^^^^^^^^^^^^^
-
-本模块中的动态学习率都是LRScheduler的子类，此模块仅与mindspore.nn.optim_ex下的优化器配合使用，使用时将优化器实例传递给LRScheduler类。在训练过程中，LRScheduler子类通过调用 `step` 方法进行学习率的动态改变。
-
-.. code-block::
-
-    import mindspore
-    from mindspore import nn
-    # Define the network structure of LeNet5. Refer to
-    # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-    net = LeNet5()
-    loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
-    optimizer = nn.optim_ex.Adam(net.trainable_params(), lr=0.05)
-    scheduler = nn.StepLR(optimizer, step_size=2, gamma=0.1)
-    def forward_fn(data, label):
-        logits = net(data)
-        loss = loss_fn(logits, label)
-        return loss, logits
-    grad_fn = mindspore.value_and_grad(forward_fn, None, optimizer.parameters, has_aux=True)
-    def train_step(data, label):
-        (loss, _), grads = grad_fn(data, label)
-        optimizer(grads)
-        return loss
-    for epoch in range(6):
-        # Create the dataset taking MNIST as an example. Refer to
-        # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
-        for data, label in create_dataset(need_download=False):
-            train_step(data, label)
-        scheduler.step()
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.ChainedScheduler
-    mindspore.nn.ConstantLR
-    mindspore.nn.ExponentialLR
-    mindspore.nn.LambdaLR
-    mindspore.nn.LinearLR
-    mindspore.nn.LRScheduler
-    mindspore.nn.MultiplicativeLR
-    mindspore.nn.MultiStepLR
-    mindspore.nn.PolynomialLR
-    mindspore.nn.StepLR
 
 图像处理层
 -----------

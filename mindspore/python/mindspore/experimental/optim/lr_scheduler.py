@@ -15,7 +15,7 @@
 """LRScheduler."""
 from collections import Counter
 from mindspore import ops
-from mindspore.nn.optim_ex.optimizer import Optimizer
+from mindspore.experimental.optim.optimizer import Optimizer
 from mindspore.common.api import jit_class
 from mindspore.ops import functional as F
 from mindspore import _checkparam as Validator
@@ -35,7 +35,7 @@ class LRScheduler:
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): The optimizer instance.
+        optimizer (:class:`mindspore.experimental.optim.Optimizer`): The optimizer instance.
         last_epoch (int, optional): The epoch/step number. Default: ``-1``.
         verbose (bool, optional): Whether to print lr information. Default: ``False``.
 
@@ -128,7 +128,7 @@ class StepLR(LRScheduler):
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         step_size (int): Period of learning rate decay.
         gamma (float, optional): Multiplicative factor of learning rate decay.
             Default: ``0.5``.
@@ -142,16 +142,17 @@ class StepLR(LRScheduler):
     Examples:
         >>> import mindspore
         >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
-        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), lr=0.05)
+        >>> optimizer = optim.Adam(net.trainable_params(), lr=0.05)
         >>> # Assuming optimizer uses lr = 0.05 for all groups
         >>> # lr = 0.05     if epoch < 2
         >>> # lr = 0.005    if 2 <= epoch < 4
         >>> # lr = 0.0005   if 4 <= epoch < 6
-        >>> scheduler = nn.StepLR(optimizer, step_size=2, gamma=0.1)
+        >>> scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
         >>> def forward_fn(data, label):
         ...     logits = net(data)
         ...     loss = loss_fn(logits, label)
@@ -194,7 +195,7 @@ class LinearLR(LRScheduler):
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         start_factor (float, optional): The number we multiply learning rate in the first epoch.
             The multiplication factor changes towards `end_factor` in the following epochs.
             Default: ``1.0 /3``.
@@ -215,20 +216,20 @@ class LinearLR(LRScheduler):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore.nn import LinearLR
         >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
-        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), lr=0.05)
+        >>> optimizer = optim.Adam(net.trainable_params(), lr=0.05)
         >>> # Assuming optimizer uses lr = 0.05 for all groups
         >>> # lr = 0.025    if epoch == 0
         >>> # lr = 0.03125  if epoch == 1
         >>> # lr = 0.0375   if epoch == 2
         >>> # lr = 0.04375  if epoch == 3
         >>> # lr = 0.05    if epoch >= 4
-        >>> scheduler = LinearLR(optimizer, start_factor=0.5, total_iters=4)
+        >>> scheduler = optim.lr_scheduler.LinearLR(optimizer, start_factor=0.5, total_iters=4)
         >>> def forward_fn(data, label):
         ...     logits = net(data)
         ...     loss = loss_fn(logits, label)
@@ -285,7 +286,7 @@ class ExponentialLR(LRScheduler):
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         gamma (float): Learning rate scaling factor.
         last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
         verbose (bool, optional): If ``True``, prints a message to stdout for each update. Default: ``False``.
@@ -295,6 +296,7 @@ class ExponentialLR(LRScheduler):
 
     Examples:
         >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
@@ -302,8 +304,8 @@ class ExponentialLR(LRScheduler):
         >>>     def construct(self, x):
         >>>         return self.fc(x)
         >>> net = Net()
-        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
-        >>> scheduler = nn.ExponentialLR(optimizer, gamma=0.5)
+        >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
+        >>> scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
         >>> for i in range(3):
         >>>     scheduler.step()
         >>>     current_lr = scheduler.get_last_lr()
@@ -345,7 +347,7 @@ class PolynomialLR(LRScheduler):
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         total_iters (int, optional): The number of iterations adjusting learning rate by polynomial fitting.
             Default: ``5``.
         power (float, optional): Power of polynomial. Default: ``1.0``.
@@ -357,6 +359,7 @@ class PolynomialLR(LRScheduler):
 
     Examples:
         >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
@@ -364,8 +367,8 @@ class PolynomialLR(LRScheduler):
         >>>     def construct(self, x):
         >>>         return self.fc(x)
         >>> net = Net()
-        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
-        >>> scheduler = nn.PolynomialLR(optimizer)
+        >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
+        >>> scheduler = optim.lr_scheduler.PolynomialLR(optimizer)
         >>> for i in range(6):
         >>>     scheduler.step()
         >>>     current_lr = scheduler.get_last_lr()
@@ -403,13 +406,14 @@ class ChainedScheduler:
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        schedulers (list[:class:`mindspore.nn.LRScheduler`]): List of learning rate schedulers.
+        schedulers (list[:class:`mindspore.experimental.optim.Optimizer`]): List of learning rate schedulers.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
@@ -417,10 +421,10 @@ class ChainedScheduler:
         >>>     def construct(self, x):
         >>>         return self.fc(x)
         >>> net = Net()
-        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
-        >>> scheduler1 = nn.PolynomialLR(optimizer)
-        >>> scheduler2 = nn.ExponentialLR(optimizer, gamma=0.5)
-        >>> scheduler = nn.ChainedScheduler([scheduler1, scheduler2])
+        >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
+        >>> scheduler1 = optim.lr_scheduler.PolynomialLR(optimizer)
+        >>> scheduler2 = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
+        >>> scheduler = optim.lr_scheduler.ChainedScheduler([scheduler1, scheduler2])
         >>> for i in range(6):
         >>>     scheduler.step()
         >>>     current_lr = scheduler.get_last_lr()
@@ -477,10 +481,11 @@ class LambdaLR(LRScheduler):
 
     Examples:
         >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
         >>> net = nn.Dense(2, 3)
-        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
+        >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
         >>> lmbda = lambda epoch: 0.9 ** epoch
-        >>> scheduler = nn.LambdaLR(optimizer, lr_lambda=[lmbda])
+        >>> scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=[lmbda])
         >>> for i in range(3):
         >>>     scheduler.step()
         >>>     current_lr = scheduler.get_last_lr()
@@ -527,10 +532,11 @@ class MultiplicativeLR(LRScheduler):
 
     Examples:
         >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
         >>> net = nn.Dense(2, 3)
-        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.01)
+        >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
         >>> lmbda = lambda epoch: 0.95
-        >>> scheduler = nn.MultiplicativeLR(optimizer, lr_lambda=lmbda)
+        >>> scheduler = optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lmbda)
         >>> for i in range(3):
         >>>     scheduler.step()
         >>>     current_lr = scheduler.get_last_lr()
@@ -582,13 +588,14 @@ class MultiStepLR(LRScheduler):
 
     Examples:
         >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
         >>> net = nn.Dense(2, 3)
-        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.05)
+        >>> optimizer = optim.Adam(net.trainable_params(), 0.05)
         >>> # Assuming optimizer uses lr = 0.05 for all groups
         >>> # lr = 0.05     if epoch < 2
         >>> # lr = 0.005    if 2 <= epoch < 4
         >>> # lr = 0.0005   if epoch >= 4
-        >>> scheduler = nn.MultiStepLR(optimizer, milestones=[2,4], gamma=0.1)
+        >>> scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[2,4], gamma=0.1)
         >>> for i in range(6):
         >>>     scheduler.step()
         >>>     current_lr = scheduler.get_last_lr()
@@ -637,12 +644,13 @@ class ConstantLR(LRScheduler):
 
     Examples:
         >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
         >>> net = nn.Dense(2, 3)
-        >>> optimizer = nn.optim_ex.Adam(net.trainable_params(), 0.05)
+        >>> optimizer = optim.Adam(net.trainable_params(), 0.05)
         >>> # Assuming optimizer uses lr = 0.05 for all groups
         >>> # lr = 0.025   if epoch <4
         >>> # lr = 0.05    if epoch >= 4
-        >>> scheduler = nn.ConstantLR(optimizer, factor=0.5, total_iters=4)
+        >>> scheduler = optim.lr_scheduler.ConstantLR(optimizer, factor=0.5, total_iters=4)
         >>> for i in range(6):
         >>>     scheduler.step()
         >>>     current_lr = scheduler.get_last_lr()
