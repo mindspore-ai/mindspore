@@ -21,7 +21,7 @@ from enum import Enum
 import numpy
 
 from mindspore_lite.lib import _c_lite_wrapper
-from mindspore_lite._checkparam import check_tensor_input_param
+from mindspore_lite._checkparam import check_tensor_input_param, check_isinstance
 
 __all__ = ['TensorMeta', 'DataType', 'Format', 'Tensor']
 
@@ -326,12 +326,31 @@ class Tensor:
     def __init__(self, tensor=None, shape=None, dtype=None, device=None):
         # check shape, dtype and device
         check_tensor_input_param(shape, device)
-        if dtype is not None and not isinstance(dtype, DataType):
-            raise TypeError(f"dtype must be DataType, but got {type(dtype)}.")
+        device_type = ""
+        device_id = -1
+        if device is not None:
+            device_type = device.split(":")[0]
+            if len(device.split(":")) == 2:
+                device_id = int(device.split(":")[1])
+        check_isinstance("dtype", dtype, DataType, True)
         if tensor is not None:
             # use tensor to init tensor
             if isinstance(tensor, _c_lite_wrapper.TensorBind):
                 self._tensor = tensor
+            elif isinstance(tensor, Tensor):
+                tensor_shape = tensor.shape
+                if shape is not None and list(shape) != list(tensor_shape):
+                    raise TypeError(
+                        f"user set shape is not equal numpy shape, user's shape: {shape}, "
+                        f"tensor shape is: {tensor_shape}.")
+                tensor_dtype = tensor.dtype
+                if dtype is not None and tensor_dtype != dtype:
+                    raise TypeError(
+                        f"user set dtype is not equal tensor dtype, user's dtype: {dtype}, "
+                        f"tensor dtype is: {tensor_dtype}.")
+                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(tensor.dtype), tensor.shape,
+                                                             device_type, device_id)
+                self._tensor.set_data_from_numpy(tensor.get_data_to_numpy())
             # use numpy to init tensor
             elif isinstance(tensor, numpy.ndarray):
                 numpy_shape = tensor.shape
@@ -341,28 +360,24 @@ class Tensor:
                 ms_dtype = numpy_data_type_map.get(numpy_dtype.type)
                 if shape is not None and list(shape) != list(numpy_shape):
                     raise TypeError(
-                        f"user set shape is not equal numpy shape, user shape: {shape}, numpy shape is: {numpy_shape}.")
+                        f"user set shape is not equal numpy shape, user shape: {shape}, "
+                        f"numpy shape is: {numpy_shape}.")
                 if dtype is not None and ms_dtype != dtype:
                     raise TypeError(
-                        f"user set dtype is not equal numpy dtype, user shape: {dtype}, numpy shape is: {numpy_dtype}.")
-                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(ms_dtype), numpy_shape)
+                        f"user set dtype is not equal numpy dtype, user dtype: {dtype}, "
+                        f"numpy dtype is: {numpy_dtype}.")
+                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(ms_dtype), numpy_shape,
+                                                             device_type, device_id)
                 self.set_data_from_numpy(tensor)
             else:
                 raise TypeError(
                     f"tensor must be MindSpore Lite's Tensor._tensor or numpy ndarray, but got {type(tensor)}.")
         else:
-            # has not tensor, init by shape and dtype.
             if dtype is not None and shape is not None:
-                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(dtype), shape)
-                if device is not None:
-                    self._tensor.create_device_buffer(device)
-                else:
-                    numpy_zero_data = numpy.zeros(shape, dtype=ms_to_numpy_data_type_map.get(dtype))
-                    self.set_data_from_numpy(numpy_zero_data)
-            elif device is None and dtype is None and shape is None:
-                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(DataType.FLOAT32), ())
+                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(dtype), shape, device_type,
+                                                             device_id)
             else:
-                raise TypeError("please check tensor, dtype, shape and device.")
+                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(DataType.FLOAT32), (), "", -1)
 
     def __str__(self):
         res = f"name: {self.name},\n" \
@@ -595,20 +610,3 @@ class Tensor:
             str, the device type of the Tensor.
         """
         return self._tensor.get_tensor_device_type()
-
-    @device.setter
-    def device(self, device):
-        """
-        Set device for the Tensor.
-
-        Args:
-            device (str): The device type of the Tensor.
-
-        Raises:
-            TypeError: `device` is not a str.
-        """
-        if not isinstance(device, str):
-            raise TypeError(f"dtype must be str, but got {type(device)}.")
-        ret = self._tensor.create_device_buffer(device)
-        if not ret:
-            raise RuntimeError(f"MSTensor set device data failed.")

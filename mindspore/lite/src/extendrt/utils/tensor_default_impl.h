@@ -59,7 +59,7 @@ class TensorDefaultImpl : public MutableTensorImpl {
     if (own_data_ && data_ != nullptr && data_ != buffer_.Data()) {
       free(const_cast<void *>(data_));
     }
-    if (device_data_ != nullptr) {
+    if (device_data_ != nullptr && own_data_) {
       MS_LOG(INFO) << "free device data in tensor default impl.";
       kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_);
       device_data_ = nullptr;
@@ -84,7 +84,23 @@ class TensorDefaultImpl : public MutableTensorImpl {
 
   size_t DataSize() const override { return ElementNum() * lite::DataTypeSize(static_cast<enum TypeId>(type_)); }
 
-  void SetDeviceData(void *data) override { device_data_ = data; }
+  std::string GetDevice() const override { return device_; }
+
+  int GetDeviceId() const override { return device_id_; }
+
+  void SetDeviceId(int device_id) override { device_id_ = device_id; }
+
+  void SetDevice(const std::string &device) override { device_ = device; }
+
+  void SetDeviceData(void *data) override {
+    if (own_data_ && device_data_ != nullptr) {
+      MS_LOG(INFO) << "tensor has own device data, now release device data and set new device data.";
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_);
+    }
+    device_data_ = data;
+    own_data_ = false;
+  }
+
   void *GetDeviceData() override { return device_data_; }
   bool IsConst() const override { return is_const_; }
   void SetIsConst(bool is_const) { is_const_ = is_const; }
@@ -126,6 +142,9 @@ class TensorDefaultImpl : public MutableTensorImpl {
   std::shared_ptr<Allocator> allocator_ = nullptr;
   std::vector<QuantParam> quant_param_;
   void *device_data_ = nullptr;
+
+  std::string device_ = "";
+  int device_id_ = -1;
 
   mutable Buffer buffer_;
   mutable const void *data_ = nullptr;

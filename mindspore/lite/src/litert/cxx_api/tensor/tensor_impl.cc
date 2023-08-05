@@ -25,7 +25,9 @@
 #include "src/litert/cxx_api/tensor_utils.h"
 #include "src/tensor.h"
 #include "src/common/string_utils.h"
-
+#ifdef ENABLE_CLOUD_INFERENCE
+#include "src/extendrt/kernel/ascend/plugin/ascend_allocator_plugin.h"
+#endif
 namespace mindspore {
 using mindspore::lite::RET_OK;
 
@@ -82,7 +84,14 @@ void LiteTensorImpl::SetDeviceData(void *data) {
     MS_LOG(ERROR) << "Invalid tensor.";
     return;
   }
+#ifdef ENABLE_CLOUD_INFERENCE
+  if (GetDeviceData() != nullptr && own_data_) {
+    MS_LOG(INFO) << "free device data in tensor impl.";
+    kernel::AscendAllocatorPlugin::GetInstance().Free(GetDeviceData());
+  }
+#endif
   lite_tensor_->set_device_data(data);
+  own_data_ = false;
 }
 
 void *LiteTensorImpl::GetDeviceData() {

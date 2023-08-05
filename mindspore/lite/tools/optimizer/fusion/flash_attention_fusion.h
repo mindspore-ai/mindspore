@@ -26,6 +26,20 @@
 
 namespace mindspore {
 namespace opt {
+/*
+ *
+ * --------------------------------------------------------------------------------------------------------
+ *  Pattern 1: [vae_decoder\vae_encoder]            |   Pattern 2: [controlNet\Unet]
+ *    transpose input[0] is input[K] -> transpose   |     transpose input[0] is input[K] -> transpose
+ *      matmul  input[0] is input[Q] ->   matmul    |       matmul  input[0] is input[Q] ->   matmul
+ *                                         mul      |                                          mul
+ *                                        cast      |                                        softMax
+ *                                       softMax    |                                         cast
+ *                                        cast      |       matmul  input[0] is input[V] ->  matmul
+ *      matmul  input[0] is input[V] ->  matmul     |
+ * --------------------------------------------------------------------------------------------------------
+ *
+ */
 class FlashAttentionFusion : public MultiplePatternProcessPass {
  public:
   explicit FlashAttentionFusion(const std::string &plugin_custom_ops = "",

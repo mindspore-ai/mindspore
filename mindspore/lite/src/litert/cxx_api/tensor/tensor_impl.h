@@ -47,7 +47,7 @@ class LiteTensorImpl : public MutableTensorImpl {
       return;
     }
 #if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)
-    if (GetDeviceData() != nullptr) {
+    if (GetDeviceData() != nullptr && own_data_) {
       MS_LOG(INFO) << "free device data in tensor impl.";
       kernel::AscendAllocatorPlugin::GetInstance().Free(GetDeviceData());
       SetDeviceData(nullptr);
@@ -135,6 +135,24 @@ class LiteTensorImpl : public MutableTensorImpl {
     std::transform(shape.begin(), shape.end(), lite_shape_.begin(), [](int c) { return static_cast<int64_t>(c); });
     return lite_shape_;
   }
+
+  std::string GetDevice() const override { return lite_tensor_->get_device(); }
+
+  void SetDevice(const std::string &device) override {
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)
+    void *device_data = GetDeviceData();
+    if (device_data != nullptr && own_data_) {
+      MS_LOG(INFO) << "free device data in tensor impl.";
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data);
+    }
+#endif
+    lite_tensor_->set_device(device);
+    own_data_ = false;
+  }
+
+  int GetDeviceId() const override { return lite_tensor_->get_device_id(); }
+
+  void SetDeviceId(int device_id) override { lite_tensor_->set_device_id(device_id); }
 
   std::shared_ptr<mindspore::MSTensor::Impl> Clone() const override { return nullptr; }
 

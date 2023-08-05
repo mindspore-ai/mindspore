@@ -38,6 +38,10 @@ class MutableTensorImpl : public MSTensor::Impl {
   virtual void SetQuantParams(const std::vector<QuantParam> &quant_param) = 0;
   virtual void SetDeviceData(void *data) = 0;
   virtual void *GetDeviceData() = 0;
+  virtual std::string GetDevice() const = 0;
+  virtual int GetDeviceId() const = 0;
+  virtual void SetDeviceId(int device_id) = 0;
+  virtual void SetDevice(const std::string &device) = 0;
   virtual int64_t ElementNum() const {
     const auto &shape = Shape();
     int64_t ele_num = 1;

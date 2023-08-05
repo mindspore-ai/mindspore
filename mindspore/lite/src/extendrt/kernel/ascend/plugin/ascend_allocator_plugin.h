@@ -25,10 +25,13 @@ class AscendAllocatorPluginImpl {
   AscendAllocatorPluginImpl() = default;
   virtual ~AscendAllocatorPluginImpl() = default;
 
-  virtual void *Malloc(size_t size) = 0;
+  virtual int GetCurrentDeviceId() = 0;
+  virtual void *Malloc(size_t size, int device_id = -1) = 0;
   virtual void Free(void *device_data) = 0;
   virtual Status CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size) = 0;
   virtual Status CopyHostDataToDevice(void *host_data, void *device_data, size_t data_size) = 0;
+  virtual Status CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t data_size, int src_device_id,
+                                        int dst_device_id) = 0;
 };
 
 class MS_API AscendAllocatorPlugin {
@@ -36,10 +39,13 @@ class MS_API AscendAllocatorPlugin {
   static AscendAllocatorPlugin &GetInstance();
   bool Register();
 
-  void *Malloc(size_t size);
+  int GetCurrentDeviceId();
+  void *Malloc(size_t size, int device_id = -1);
   void Free(void *device_data);
   Status CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size);
   Status CopyHostDataToDevice(void *host_data, void *device_data, size_t data_size);
+  Status CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t data_size, int src_device_id,
+                                int dst_device_id);
 
  private:
   AscendAllocatorPlugin();
