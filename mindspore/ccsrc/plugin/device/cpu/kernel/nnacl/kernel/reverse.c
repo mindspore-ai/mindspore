@@ -154,6 +154,7 @@ int ReverseResize(KernelBase *self) {
 KernelBase *CreateReverse(OpParameter *param, int data_type) {
   ReverseStruct *reverse = (ReverseStruct *)malloc(sizeof(ReverseStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(reverse);
+  memset(reverse, 0, sizeof(ReverseStruct));
   reverse->base_.Release = ReverseRelease;
   reverse->base_.Prepare = ReversePrepare;
   reverse->base_.Resize = ReverseResize;
