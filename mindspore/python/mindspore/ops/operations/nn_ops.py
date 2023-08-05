@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -7315,6 +7315,7 @@ class Dropout(PrimitiveWithCheck):
         self.seed0 = validator.check_value_type("Seed0", Seed0, [int], self.name)
         self.seed1 = validator.check_value_type("Seed1", Seed1, [int], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0, 1, validator.INC_RIGHT, "keep_prob", self.name)
+        self.add_prim_attr("side_effect_hidden", True)
 
     def check_shape(self, x_shape):
         validator.check_int(len(x_shape), 1, validator.GE, "x_shape", self.name)

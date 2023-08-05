@@ -1,6 +1,5 @@
 /**
- * Copyright 2021 Jilin University
- * Copyright (c) Huawei Technologies Co., Ltd. 2020-2021. All rights reserved.
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,9 @@
 #ifndef AI_CPU_RANDOM_UTILS_H_
 #define AI_CPU_RANDOM_UTILS_H_
 #include <cstdint>
+#include <string>
+#include "common/kernel_base.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 namespace random {
@@ -39,6 +41,14 @@ void BoxMullerFloat(const uint32_t &x0, const uint32_t &x1, float *f0, float *f1
 // under the unit normal distribution.
 void BoxMullerDouble(const uint32_t &x0, const uint32_t &x1, const uint32_t &x2, const uint32_t &x3, double *d0,
                      double *d1);
+
+// Get random generator seed for random ops
+uint64_t GetSeed(const uint64_t &global_seed, const uint64_t &ops_seed);
+
+// Get random generator for random ops which bases CpuKernel
+uint64_t GetCpuKernelRandomStates(const CpuKernelContext &ctx, const uint32_t &counts_index,
+                                  const uint32_t &states_index, const uint64_t &seed, const uint64_t &seed2,
+                                  const std::string &kernel_name, uint32_t *kernel_ret);
 }  // namespace random
 }  // namespace aicpu
 

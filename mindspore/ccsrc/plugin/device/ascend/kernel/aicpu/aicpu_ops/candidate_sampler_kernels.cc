@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-#include "candidate_sampler_kernels.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_ops/candidate_sampler_kernels.h"
 #include <algorithm>
 #include "range_sampler.h"
+#include "common/random_utils.h"
 
 namespace aicpu {
+namespace {
+const uint32_t kCountsIndex = 1;
+const uint32_t kStatesIndex = 2;
+}  // namespace
 
 uint32_t CandidateSamplerKernel::ParseKernelParam() {
-  ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> nodedef_attrs = node_def_.attrs();
-  num_true_ = nodedef_attrs["num_true"].i();
-  num_sampled_ = nodedef_attrs["num_sampled"].i();
-  unique_ = nodedef_attrs["unique"].b();
-  range_max_ = nodedef_attrs["range_max"].i();
-  seed_ = nodedef_attrs["seed"].i();
+  ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
+  num_true_ = attrs["num_true"].i();
+  num_sampled_ = attrs["num_sampled"].i();
+  unique_ = attrs["unique"].b();
+  range_max_ = attrs["range_max"].i();
+  seed_ = attrs["seed"].i();
 
   // input0: true_classes
   ::aicpuops::Tensor x_tensor = node_def_.inputs(0);
@@ -78,24 +83,32 @@ uint32_t CandidateSamplerKernel::DoComputeForEachType() {
   std::vector<float> true_expected_count(batch_size * num_true_);
   std::vector<float> sampled_expected_count(num_sampled_);
 
-  set_sampler(new RangeSamplerType(range_max_));
-
-  if (unique_ && num_sampled_ > sampler_->range()) {
-    AICPU_LOGE("Sampler's range is too small.");
+  // get random generator seed
+  uint32_t kernel_ret = 0;
+  uint64_t rng_seed = random::GetKernelBaseRandomStates(io_addrs_, kCountsIndex, kStatesIndex,
+                                                        static_cast<uint64_t>(seed_), 0, kernel_name_, &kernel_ret);
+  if (kernel_ret != kAicpuKernelStateSucess) {
     return kAicpuKernelStateFailed;
   }
 
-  sampler_->SampleBatchGetExpectedCount(unique_, seed_, sampled_candidate, sampled_expected_count, true_candidate,
+  set_sampler(new RangeSamplerType(range_max_));
+
+  if (unique_ && num_sampled_ > sampler_->range()) {
+    AICPU_LOGE("For AICPU ops ", kernel_name_, ", the sampler's range is too small.");
+    return kAicpuKernelStateFailed;
+  }
+
+  sampler_->SampleBatchGetExpectedCount(unique_, rng_seed, sampled_candidate, sampled_expected_count, true_candidate,
                                         true_expected_count);
 
   std::transform(sampled_candidate.begin(), sampled_candidate.end(), sampled_candidate_raw.begin(),
                  [&](int64_t x) { return static_cast<T>(x); });
   int true_count_size = batch_size * num_true_ * sizeof(float);
-  int ret1 = memcpy_s(reinterpret_cast<void *>(io_addrs_[1]), num_sampled_ * sizeof(T),
+  int ret1 = memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), num_sampled_ * sizeof(T),
                       (void *)&sampled_candidate_raw.front(), sampled_candidate_raw.size() * sizeof(T));
-  int ret2 = memcpy_s(reinterpret_cast<void *>(io_addrs_[2]), true_count_size, (void *)&true_expected_count.front(),
+  int ret2 = memcpy_s(reinterpret_cast<void *>(io_addrs_[4]), true_count_size, (void *)&true_expected_count.front(),
                       true_count_size);
-  int ret3 = memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), num_sampled_ * sizeof(float),
+  int ret3 = memcpy_s(reinterpret_cast<void *>(io_addrs_[5]), num_sampled_ * sizeof(float),
                       (void *)&sampled_expected_count.front(), sampled_expected_count.size() * sizeof(float));
   if (ret1 < 0 || ret2 < 0 || ret3 < 0) {
     AICPU_LOGE("memcpy_s failed!");

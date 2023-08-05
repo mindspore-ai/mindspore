@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_AICPU_OPS_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
-#define AICPU_AICPU_OPS_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
 
-#include <random>
+#ifndef AI_CPU_COMMON_RANDOM_UTILS_H_
+#define AI_CPU_COMMON_RANDOM_UTILS_H_
 #include <vector>
+#include <string>
+#include <cstdint>
 #include "common/kernel_base.h"
 
 namespace aicpu {
-class RandomChoiceWithMaskKernel : public KernelBase {
- public:
-  RandomChoiceWithMaskKernel() : KernelBase("RandomChoiceWithMask"), count_(0), seed_(0), seed2_(0) {}
-  ~RandomChoiceWithMaskKernel() = default;
+namespace random {
+// Get random generator seed for random ops
+uint64_t GetSeed(const uint64_t &global_seed, const uint64_t &ops_seed);
 
- protected:
-  int64_t count_;
-  uint64_t seed_;
-  uint64_t seed2_;
-  std::mt19937 rng_;
-  std::vector<int64_t> dims_;
-  uint32_t DoCompute() override;
-  uint32_t ParseKernelParam() override;
-  void UpdateOutputShapeValue(int64_t non_zero_num, int64_t output_length);
-};
+// Get random generator for random ops which bases KernelBase
+uint64_t GetKernelBaseRandomStates(const std::vector<uintptr_t> &ioAddrs, const uint32_t &counts_index,
+                                   const uint32_t &states_index, const uint64_t &seed, const uint64_t &seed2,
+                                   const std::string &kernel_name, uint32_t *kernel_ret);
+}  // namespace random
 }  // namespace aicpu
-#endif  // AICPU_AICPU_OPS_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
+
+#endif

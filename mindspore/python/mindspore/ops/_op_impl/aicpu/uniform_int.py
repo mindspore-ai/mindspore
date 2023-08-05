@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ uniform_int_op_info = AiCPURegOp("UniformInt") \
     .input(0, "shape", "required") \
     .input(1, "a", "required") \
     .input(2, "b", "required") \
-    .input(3, "seed", "required") \
-    .input(4, "seed2", "required") \
+    .input(3, "counts", "required") \
+    .input(4, "states", "required") \
     .output(0, "output", "required") \
     .attr("seed", "int") \
     .attr("seed2", "int") \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I64_Default,
-                  DataType.I64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I32_Default) \
     .get_op_info()
 
 @op_info_register(uniform_int_op_info)

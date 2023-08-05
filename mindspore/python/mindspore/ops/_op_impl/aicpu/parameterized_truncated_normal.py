@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,21 +22,29 @@ parameterized_truncated_normal_op_info = AiCPURegOp("ParameterizedTruncatedNorma
     .input(2, "stdevs", "required") \
     .input(3, "min", "required") \
     .input(4, "max", "required") \
+    .input(5, "counts", "required") \
+    .input(6, "states", "required") \
     .output(0, "y", "required") \
     .attr("seed", "int")\
     .attr("seed2", "int")\
     .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+                  DataType.F16_Default, DataType.F16_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.F16_Default) \
     .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+                  DataType.F32_Default, DataType.F32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.F32_Default) \
     .dtype_format(DataType.I32_Default, DataType.F64_Default, DataType.F64_Default,
-                  DataType.F64_Default, DataType.F64_Default, DataType.F64_Default) \
+                  DataType.F64_Default, DataType.F64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.F64_Default) \
     .dtype_format(DataType.I64_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+                  DataType.F16_Default, DataType.F16_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.F16_Default) \
     .dtype_format(DataType.I64_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+                  DataType.F32_Default, DataType.F32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.F32_Default) \
     .dtype_format(DataType.I64_Default, DataType.F64_Default, DataType.F64_Default,
-                  DataType.F64_Default, DataType.F64_Default, DataType.F64_Default) \
+                  DataType.F64_Default, DataType.F64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.F64_Default) \
     .get_op_info()
 
 

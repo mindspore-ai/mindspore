@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,6 @@ namespace {
 abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
@@ -190,6 +188,9 @@ bool UniformCandidateSampler::get_remove_accidental_hits() const {
 abstract::AbstractBasePtr UniformCandidateSamplerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim,
                                                        const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
+  auto op_name = prim->name();
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   return abstract::MakeAbstract(UCSInferShape(prim, input_args), UCSInferType(prim, input_args));
 }
 

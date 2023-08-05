@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,22 @@
 #include <string>
 #include "securec/include/securec.h"
 #include "proto/aicpu_tensor.pb.h"
-#include "google/protobuf/stubs/common.h"
-#include "./kernel_base.h"
-#include "./kernel_errcode.h"
-#include "./kernel_log.h"
+#include "common/kernel_base.h"
+#include "common/kernel_errcode.h"
+#include "common/kernel_log.h"
+#include "common/random_utils.h"
 
 namespace aicpu {
+namespace {
+const uint32_t kCountsIndex = 1;
+const uint32_t kStatesIndex = 2;
+}  // namespace
 template <typename Scalar>
 void RandomShuffleKernel::IndexShuffle(const size_t &size, void *data) {
   Scalar *perm = reinterpret_cast<Scalar *>(data);
   for (size_t i = size - 1; i > 0; --i) {
     std::uniform_int_distribution<size_t> dist(0, i);
-    size_t rng = dist(generator_);
+    size_t rng = dist(rng_);
     Scalar tmp = perm[i];
     perm[i] = perm[rng];
     perm[rng] = tmp;
@@ -41,13 +45,13 @@ uint32_t RandomShuffleKernel::ScalarShuffle() {
   // Copy input to output, then shuffle output.
   const size_t &input_size = block_num_ * block_size_ * sizeof(Scalar);
   auto ret =
-    memcpy_s(reinterpret_cast<void *>(io_addrs_[1]), input_size, reinterpret_cast<void *>(io_addrs_[0]), input_size);
+    memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), input_size, reinterpret_cast<void *>(io_addrs_[0]), input_size);
   if (ret != EOK) {
     AICPU_LOGE("memcpy_s() failed: %d.", ret);
     return kAicpuKernelStateInternalError;
   }
 
-  IndexShuffle<Scalar>(block_num_, reinterpret_cast<void *>(io_addrs_[1]));
+  IndexShuffle<Scalar>(block_num_, reinterpret_cast<void *>(io_addrs_[3]));
   return kAicpuKernelStateSucess;
 }
 
@@ -61,7 +65,7 @@ uint32_t RandomShuffleKernel::TensorShuffle() {
 
   const size_t &size = block_size_ * data_size_;
   for (size_t i = 0; i < block_num_; i++) {
-    auto output_offset = reinterpret_cast<uint8_t *>(io_addrs_[1]) + i * size;
+    auto output_offset = reinterpret_cast<uint8_t *>(io_addrs_[3]) + i * size;
     auto input_offset = reinterpret_cast<uint8_t *>(io_addrs_[0]) + permutation[i] * size;
     auto ret = memcpy_s(reinterpret_cast<void *>(output_offset), size, reinterpret_cast<void *>(input_offset), size);
     if (ret != EOK) {
@@ -75,15 +79,12 @@ uint32_t RandomShuffleKernel::TensorShuffle() {
 
 uint32_t RandomShuffleKernel::ParseKernelParam() {
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
-  int64_t seed1 = attrs["seed"].i();
-  int64_t seed2 = attrs["seed2"].i();
-  std::random_device rd;
-  int64_t seed = (seed2 != 0) ? seed2 : (seed1 != 0) ? seed1 : rd();
-  generator_.seed(static_cast<uint64_t>(seed));
+  seed_ = static_cast<uint64_t>(attrs["seed"].i());
+  seed2_ = static_cast<uint64_t>(attrs["seed2"].i());
 
   const size_t &num_input = node_def_.inputs_size();
-  if (num_input != 1) {
-    AICPU_LOGE("For RandomShuffle: input num should be 1.");
+  if (num_input != 3) {
+    AICPU_LOGE("For RandomShuffle: input num should be 3.");
     return kAicpuKernelStateInvalid;
   }
 
@@ -110,13 +111,22 @@ uint32_t RandomShuffleKernel::ParseKernelParam() {
 uint32_t RandomShuffleKernel::DoCompute() {
   if (block_num_ == 1) {
     const size_t size_in_bytes = block_size_ * data_size_;
-    auto ret = memcpy_s(reinterpret_cast<void *>(io_addrs_[1]), size_in_bytes, reinterpret_cast<void *>(io_addrs_[0]),
+    auto ret = memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), size_in_bytes, reinterpret_cast<void *>(io_addrs_[0]),
                         size_in_bytes);
     if (ret != EOK) {
       AICPU_LOGE("memcpy_s() failed: %d.", ret);
       return kAicpuKernelStateInternalError;
     }
   }
+
+  // get random generator seed
+  uint32_t kernel_ret = 0;
+  uint64_t rng_seed = random::GetKernelBaseRandomStates(io_addrs_, kCountsIndex, kStatesIndex, seed_, seed2_,
+                                                        "RandomShuffle", &kernel_ret);
+  if (kernel_ret != kAicpuKernelStateSucess) {
+    return kAicpuKernelStateFailed;
+  }
+  rng_.seed(rng_seed);
 
   const size_t &block_size_in_bytes = block_size_ * data_size_;
   switch (block_size_in_bytes) {

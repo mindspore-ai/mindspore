@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,7 @@ class MultinomialCpuKernel : public CpuKernel {
  private:
   // use map for 2 template parameter functions
   void SetMap();
-  std::map<
-    int, std::map<int, std::function<void(Tensor *, Tensor *, Tensor *, Tensor *, Tensor *, const CpuKernelContext &)>>>
-    calls_;
+  std::map<int, std::map<int, std::function<void(Tensor *, Tensor *, Tensor *, const CpuKernelContext &)>>> calls_;
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_MULTINOMIAL_H_

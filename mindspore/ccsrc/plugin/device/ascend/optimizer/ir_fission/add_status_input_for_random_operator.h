@@ -23,7 +23,21 @@
 #include "ops/random_op_name.h"
 
 namespace mindspore::opt {
-inline const std::set<std::string> kRandomNodeWhiteList = {kDropoutGenMaskOpName, kMultinomialOpName};
+inline const std::set<std::string> kRandomNodeWhiteList = {kDropoutGenMaskOpName,
+                                                           kMultinomialOpName,
+                                                           kParameterizedTruncatedNormalOpName,
+                                                           kRandomCategoricalOpName,
+                                                           kRandomChoiceWithMaskOpName,
+                                                           kRandomPoissonOpName,
+                                                           kRandomShuffleOpName,
+                                                           kStandardLaplaceOpName,
+                                                           kStandardNormalOpName,
+                                                           kTruncatedNormalOpName,
+                                                           kUniformOpName,
+                                                           kUniformIntOpName,
+                                                           kUniformRealOpName,
+                                                           kUniformCandidateSamplerOpName,
+                                                           kLogUniformCandidateSamplerOpName};
 
 class AddStatusInputForRandomOperator : public Pass {
  public:

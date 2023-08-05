@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ multinomial_op_info = AiCPURegOp("Multinomial") \
     .fusion_type("OPAQUE") \
     .input(0, "input", "required") \
     .input(1, "num_sample", "required") \
-    .input(2, "count", "required") \
-    .input(3, "state", "required") \
+    .input(2, "counts", "required") \
+    .input(3, "states", "required") \
     .output(0, "output", "required") \
     .attr("dtype", "Type") \
     .attr("seed", "int") \

@@ -19,19 +19,21 @@
 
 namespace mindspore {
 // Random
-constexpr auto kStandardNormalOpName = "StandardNormal";
-constexpr auto kRandomCategoricalOpName = "RandomCategorical";
-constexpr auto kRandomGammaGradOpName = "RandomGammaGrad";
-constexpr auto kUniformOpName = "Uniform";
-constexpr auto kStandardLaplaceOpName = "StandardLaplace";
 constexpr auto kMultinomialOpName = "Multinomial";
 constexpr auto kMultinomialWithReplacementOpName = "MultinomialWithReplacement";
 constexpr auto kNonDeterministicIntsOpName = "NonDeterministicInts";
 constexpr auto kParameterizedTruncatedNormalOpName = "ParameterizedTruncatedNormal";
+constexpr auto kRandomCategoricalOpName = "RandomCategorical";
 constexpr auto kRandomChoiceWithMaskOpName = "RandomChoiceWithMask";
+constexpr auto kRandomGammaGradOpName = "RandomGammaGrad";
 constexpr auto kRandomPoissonOpName = "RandomPoisson";
 constexpr auto kRandomShuffleOpName = "RandomShuffle";
+constexpr auto kStandardNormalOpName = "StandardNormal";
+constexpr auto kStandardLaplaceOpName = "StandardLaplace";
 constexpr auto kTruncatedNormalOpName = "TruncatedNormal";
+constexpr auto kUniformOpName = "Uniform";
+constexpr auto kUniformIntOpName = "UniformInt";
+constexpr auto kUniformRealOpName = "UniformReal";
 constexpr auto kUniformCandidateSamplerOpName = "UniformCandidateSampler";
 constexpr auto kLogUniformCandidateSamplerOpName = "LogUniformCandidateSampler";
 }  // namespace mindspore

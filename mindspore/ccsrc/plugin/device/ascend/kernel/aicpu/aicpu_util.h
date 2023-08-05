@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,6 +236,12 @@ constexpr auto kDeformableOffsets = "DeformableOffsets";
 constexpr auto kDeformableOffsetsGrad = "DeformableOffsetsGrad";
 constexpr auto kAffineGrid = "AffineGrid";
 constexpr auto kSTFT = "STFT";
+constexpr auto kRandomCategorical = "RandomCategorical";
+constexpr auto kStandardNormal = "StandardNormal";
+constexpr auto kUniformInt = "UniformInt";
+constexpr auto kUniformReal = "UniformReal";
+constexpr auto kStandardLaplace = "StandardLaplace";
+constexpr auto kLogUniformCandidateSampler = "LogUniformCandidateSampler";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedFill,
@@ -315,7 +321,13 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
 const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
+                                              kRandomCategorical,
                                               kRandomChoiceWithMask,
+                                              kStandardNormal,
+                                              kStandardLaplace,
+                                              kUniformInt,
+                                              kUniformReal,
+                                              kLogUniformCandidateSampler,
                                               kEnvironCreate,
                                               kEnvironSet,
                                               kEnvironGet,
@@ -342,7 +354,6 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kReshape,
                                               kFlatten,
                                               kSqueeze,
-                                              kUniform,
                                               kUniformCandidateSampler,
                                               kExpandDims,
                                               kCast};

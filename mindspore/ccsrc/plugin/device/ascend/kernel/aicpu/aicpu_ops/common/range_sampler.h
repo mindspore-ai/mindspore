@@ -34,11 +34,11 @@ class RangeSampler {
 
   void SampleBatch(bool unique, std::vector<int64_t> &batch) const;
 
-  void SampleBatchGetExpectedCount(bool unique, int64_t seed, std::vector<int64_t> &batch,
+  void SampleBatchGetExpectedCount(bool unique, uint64_t seed, std::vector<int64_t> &batch,
                                    std::vector<float> &batch_expected_count, std::vector<int64_t> extras,
                                    std::vector<float> &extras_expected_count) const;
 
-  virtual void SampleBatchGetExpectedCountAvoid(bool unique, int64_t seed, std::vector<int64_t> &batch,
+  virtual void SampleBatchGetExpectedCountAvoid(bool unique, uint64_t seed, std::vector<int64_t> &batch,
                                                 std::vector<float> &batch_expected_count, std::vector<int64_t> extras,
                                                 std::vector<float> &extras_expected_count,
                                                 std::vector<int64_t> avoided_values) const;
@@ -47,7 +47,7 @@ class RangeSampler {
 
  protected:
   const int64_t range_;
-  mutable std::mt19937 rnd_;
+  mutable std::mt19937 rng_;
 };
 
 class UniformSampler : public RangeSampler {
