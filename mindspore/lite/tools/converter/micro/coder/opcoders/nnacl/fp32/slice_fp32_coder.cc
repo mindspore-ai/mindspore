@@ -52,6 +52,7 @@ int SliceFP32Coder::Prepare(CoderContext *const context) {
   auto size = reinterpret_cast<int32_t *>(size_tensor->data());
   CHECK_NULL_RETURN(size);
 
+  slice_struct_.data_type_size_ = static_cast<int>(lite::DataTypeSize(input_tensor_->data_type()));
   slice_struct_.param_length_ = static_cast<int>(input_tensor_->shape().size());
   if (slice_struct_.param_length_ > DIMENSION_8D) {
     MS_LOG(ERROR) << "input dimension num should <= " << DIMENSION_8D;
