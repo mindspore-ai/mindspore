@@ -39,7 +39,8 @@ struct InferPrimitive {
 
 class BaseKernel : public IKernel<ops::BaseOperator> {
  public:
-  BaseKernel(InferPrimitive primitive, const InferContext *ctx) : primitive_(std::move(primitive)), context_(ctx) {
+  BaseKernel(InferPrimitive primitive, std::shared_ptr<kernel::InferContext> *ctx)
+      : primitive_(std::move(primitive)), context_(ctx) {
     type_ = PrimitiveType(primitive_.cnode->type_name());
   }
 
@@ -72,7 +73,7 @@ class BaseKernel : public IKernel<ops::BaseOperator> {
   PrimitiveType type_;
   std::vector<InferTensor *> in_tensors_;
   std::vector<InferTensor *> out_tensors_;
-  const InferContext *context_ = nullptr;
+  std::shared_ptr<kernel::InferContext> *context_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_EXTENDRT_KERNEL_H_

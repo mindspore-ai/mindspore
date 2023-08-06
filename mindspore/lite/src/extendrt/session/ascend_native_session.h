@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_BISHENG_SESSION_H_
-#define MINDSPORE_LITE_EXTENDRT_SESSION_BISHENG_SESSION_H_
+#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_ASCEND_NATIVE_SESSION_H_
+#define MINDSPORE_LITE_EXTENDRT_SESSION_ASCEND_NATIVE_SESSION_H_
 
 #include <utility>
 #include <vector>
@@ -24,16 +24,19 @@
 
 #include "extendrt/infer_session.h"
 #include "extendrt/delegate/type.h"
+#include "extendrt/delegate/ascend_native/delegate.h"
+#include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 #include "infer/kernel.h"
 #include "infer/tensor.h"
 #include "infer/context.h"
 
 namespace mindspore {
-class BishengSession : public InferSession {
+class AscendNativeSession : public InferSession {
  public:
-  BishengSession() = default;
-  explicit BishengSession(std::shared_ptr<mindspore::ExtendDelegate> delegate) : delegate_(std::move(delegate)) {}
-  ~BishengSession() override = default;
+  AscendNativeSession() = default;
+  explicit AscendNativeSession(std::shared_ptr<mindspore::AscendNativeDelegate> delegate)
+      : delegate_(std::move(delegate)) {}
+  ~AscendNativeSession() override = default;
 
   Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
@@ -57,13 +60,26 @@ class BishengSession : public InferSession {
                          const std::vector<std::shared_ptr<kernel::BaseKernel>> &kernels);
   Status FindGraphOutputs(const std::vector<AnfNodePtr> &node_list, const AnfNodePtr &graph_output,
                           const std::vector<std::shared_ptr<kernel::BaseKernel>> &kernels);
+  Status MoveDataFromHostToDevice(void *sd, bool s_fp16, void *dd, bool d_fp16, size_t elem_num);
+  Status MoveDataFromDeviceToHost(void *sd, bool s_fp16, void *dd, bool d_fp16, size_t elem_num);
+  void *MallocDevice(size_t size);
+  void FreeDevice(void *ptr);
 
-  std::shared_ptr<mindspore::ExtendDelegate> delegate_;
+  Status RefDataFromOuter(const std::vector<tensor::Tensor> &outer_tensors);
+  void ResetTensorData(const std::vector<void *> &old_data, const std::vector<lite::Tensor *> &tensors);
+  std::vector<mindspore::tensor::Tensor> LiteTensorToTensor();
+  void InitializeTensorRefrenceCnt();
+  Status AllocTensors();
+  Status AllocateGraphTensors();
+
+  std::shared_ptr<mindspore::AscendNativeDelegate> delegate_;
   std::vector<std::shared_ptr<kernel::BaseKernel>> kernels_;
   std::vector<infer::abstract::Tensor *> inputs_;
   std::vector<infer::abstract::Tensor *> outputs_;
   std::shared_ptr<infer::abstract::Context> context_;
+  size_t mem_size_ = 0;
+  void *memory_base_addr_ = nullptr;
+  void *ascend_native_stream_ = nullptr;
 };
 }  // namespace mindspore
-
-#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_BISHENG_SESSION_H_
+#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_ASCEND_NATIVE_SESSION_H_

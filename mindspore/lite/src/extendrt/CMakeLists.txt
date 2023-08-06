@@ -33,6 +33,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/lite_kernel_mod.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/default_kernel_lib.cc)
 
+    file(GLOB DELEGATE_OPS ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ops/*.cc)
+
     set(MSLITE_EXTEND_RUNTIME_SRC
         ${MSLITE_KERNEL_PLUGIN}
         ${MSLITE_EXTEND_NNACL_KERNEL_LIB_SRC}
@@ -61,6 +63,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/litert_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/ascend_ge_executor_plugin.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/ascend_native_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/litert/func_graph_reuse_manager.cc
@@ -78,7 +81,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result_builder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/anfnode_tensor_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/infershape_helper.cc
+        ${DELEGATE_OPS}
         )
+
     if(MSLITE_ENABLE_BFC_MEMORY)
         set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
@@ -87,8 +92,23 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     endif()
     if(MSLITE_ENABLE_ACL)
         set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-                ${CMAKE_CURRENT_SOURCE_DIR}/session/bisheng_session.cc
-                )
+            ${CMAKE_CURRENT_SOURCE_DIR}/../train/opt_allocator.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/base_kernel.cc
+        )
+        if(MSLITE_ASCEND_TARGET)
+            set(ASCEND_NATIVE_PLUGIN
+                ${CMAKE_CURRENT_SOURCE_DIR}/session/ascend_native_session.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/ascend_native_registration_factory.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/ascend_native_add_kernel.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/ascend_native_matmul_kernel.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/ascend_native_layernorm_kernel.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/ascend_native_gather_kernel.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/ascend_native_composite_kernel.cc
+                ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/ascend_native_copy_kernel.cc
+            )
+                add_library(ascend_native_plugin SHARED ${ASCEND_NATIVE_PLUGIN})
+                target_link_libraries(ascend_native_plugin ascend_native_kernels_impl ascend_native_mid)
+        endif()
     endif()
 
     include(${LITE_DIR}/cmake/ccsrc_extendrt.cmake)
@@ -157,8 +177,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         include_directories(${TOP_DIR}/graphengine/910/inc/external)
         add_subdirectory(kernel/ascend)
         add_subdirectory(delegate/ascend_ge)
-        add_subdirectory(delegate/bisheng)
-        target_link_libraries(mindspore-extendrt ascend_bisheng_plugin)
+        if(MSLITE_ASCEND_TARGET)
+            add_subdirectory(delegate/ascend_native)
+        endif()
     endif()
 
     if(SUPPORT_CUDA)

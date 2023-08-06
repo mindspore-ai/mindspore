@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
-#define MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
 
 #include <memory>
-#include <vector>
+#include "extendrt/delegate/ascend_native/ascend_native_plugin_impl.h"
 
 namespace mindspore {
-enum SessionType {
-  kDefaultSession = 0,
-  kSingleOpSession,
-  kLiteInferSession,
-  kDelegateSession,
-  kAscendNativeSession,
-  kMemoryOffloadSession,
-  kNoneSession
-};
+
+AscendNativeExecutorPluginImpl *CreateAscendNativeExecutorPluginImpl() { return new AscendNativeExecutorPluginImpl(); }
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_

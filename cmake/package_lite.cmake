@@ -29,6 +29,7 @@ set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
 set(MINDSPORE_LITE_EXTENDRT_LIB_NAME libmindspore-lite)
 set(MINDSPORE_CORE_LIB_NAME libmindspore_core)
 set(MINDSPORE_GE_LITERT_LIB_NAME libmsplugin-ge-litert)
+set(MINDSPORE_LITE_ASCEND_NATIVE_PLUGIN libascend_native_plugin)
 set(MINDSPORE_LITE_EXECUTOR_LIB_NAME liblite-unified-executor)
 set(BENCHMARK_NAME benchmark)
 set(MSLITE_NNIE_LIB_NAME libmslite_nnie)
@@ -898,6 +899,12 @@ else()
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
                                 ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(MSLITE_ASCEND_TARGET)
+                install(TARGETS ascend_native_plugin
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(TARGETS ascend_native_kernels_impl
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../set_env.bash DESTINATION
                                 ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
