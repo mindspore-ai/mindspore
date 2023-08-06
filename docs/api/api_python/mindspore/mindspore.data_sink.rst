@@ -6,14 +6,7 @@ mindspore.data_sink
     对输入的函数封装生成一个新的函数。
 
     .. note::
-        使用数据下沉时，数据集将自动循环，此时仅需考虑训练总步数(total_step)以及每次下沉的步数(sink_size)，下面为按轮次(epochs)训练切换为数据下沉的计算公式：
-
-        total_step = epochs * dataset_size
-
-        train_sink_step = total_step / sink_size
-
-        在使用 `mindspore.data_sink` 进行函数变换后，需执行 `train_sink_step` 步进行训练。
-
+        使用数据下沉时，数据集将自动循环发送，此时仅需考虑每次下沉的步数 `sink_size` ， `sink_size` 默认为 ``1`` ，代表每个epoch将数据全部下沉，若 `sink_size` 大于1，则每个epoch下沉数据量为 `sink_size` 的数据集。
 
     参数：
         - **fn** (Function) - 将与数据集一起运行的函数。
