@@ -311,6 +311,44 @@ def test_model_build_from_file_config_path_not_exist_error():
                               config_path="test.cfg")
     assert "config_path does not exist" in str(raise_info.value)
 
+def test_model_build_from_file_config_dict_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        model = mslite.Model()
+        model.build_from_file(model_path="mobilenetv2.ms", model_type=mslite.ModelType.MINDIR_LITE,
+                              config_dict="test.cfg")
+    assert "config_dict must be dict" in str(raise_info.value)
+
+def test_model_build_from_file_config_dict_key_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        model = mslite.Model()
+        dict_0 = {5: {"1": "2"}}
+        model.build_from_file(model_path="mobilenetv2.ms", model_type=mslite.ModelType.MINDIR_LITE,
+                              config_dict=dict_0)
+    assert "config_dict_key must be str" in str(raise_info.value)
+
+def test_model_build_from_file_config_dict_value_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        model = mslite.Model()
+        dict_1 = {"5": "6"}
+        model.build_from_file(model_path="mobilenetv2.ms", model_type=mslite.ModelType.MINDIR_LITE,
+                              config_dict=dict_1)
+    assert "config_dict_value must be dict" in str(raise_info.value)
+
+def test_model_build_from_file_config_dict_value_key_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        model = mslite.Model()
+        dict_2 = {"5": {3: "2"}}
+        model.build_from_file(model_path="mobilenetv2.ms", model_type=mslite.ModelType.MINDIR_LITE,
+                              config_dict=dict_2)
+    assert "config_dict_value_key must be str" in str(raise_info.value)
+
+def test_model_build_from_file_config_dict_value_value_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        model = mslite.Model()
+        dict_3 = {"5": {"1": 2}}
+        model.build_from_file(model_path="mobilenetv2.ms", model_type=mslite.ModelType.MINDIR_LITE,
+                              config_dict=dict_3)
+    assert "config_dict_value_value must be str" in str(raise_info.value)
 
 def get_model():
     context = mslite.Context()
