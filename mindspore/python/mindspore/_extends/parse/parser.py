@@ -24,6 +24,7 @@ import re
 import hashlib
 import inspect
 import types
+from typing import NamedTuple
 from textwrap import dedent
 import numpy
 
@@ -583,6 +584,7 @@ def get_obj_defined_from_obj_type(obj_type):
         "List": list,
         "Tuple": tuple,
         "Dictionary": dict,
+        "NamedTuple": NamedTuple,
     }
 
     return obj_type_defined_map.get(obj_type)

@@ -1138,6 +1138,27 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
 };
 using AbstractListPtr = std::shared_ptr<AbstractList>;
 
+/// \brief Class AbstractNamedTuple describes a namedtuple node's abstract value.
+class MS_CORE_API AbstractNamedTuple : public AbstractTuple {
+ public:
+  /// \brief Constructor of AbstractTuple.
+  ///
+  /// \param[in] values  A List of data in namedtuple.
+  /// \param[in] keys A list of label in namedtuple.
+  explicit AbstractNamedTuple(const AbstractBasePtrList &values, const AbstractBasePtrList &keys)
+      : AbstractTuple(values), keys_(keys) {}
+
+  /// \brief Destructor of  AbstractNamedTuple.
+  ~AbstractNamedTuple() override = default;
+  MS_DECLARE_PARENT(AbstractNamedTuple, AbstractTuple)
+
+  const AbstractBasePtrList &key() const { return keys_; }
+
+ private:
+  AbstractBasePtrList keys_;
+};
+using AbstractNamedTuplePtr = std::shared_ptr<AbstractNamedTuple>;
+
 /// \brief Class AbstractDictionary describes a dictionary node's abstract value.
 class MS_CORE_API AbstractDictionary final : public AbstractBase {
  public:

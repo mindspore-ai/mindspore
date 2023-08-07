@@ -51,6 +51,20 @@ abstract::AbstractBasePtr ValueList::ToAbstract() {
   return std::make_shared<abstract::AbstractList>(a_list);
 }
 
+abstract::AbstractBasePtr ValueNamedTuple::ToAbstract() {
+  abstract::AbstractBasePtrList a_list;
+  (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(a_list), [](const ValuePtr &ele) {
+    MS_EXCEPTION_IF_NULL(ele);
+    return ele->ToAbstract();
+  });
+  abstract::AbstractBasePtrList b_list;
+  (void)std::transform(keys_.begin(), keys_.end(), std::back_inserter(b_list), [](const ValuePtr &key) {
+    MS_EXCEPTION_IF_NULL(key);
+    return key->ToAbstract();
+  });
+  return std::make_shared<abstract::AbstractNamedTuple>(a_list, b_list);
+}
+
 abstract::AbstractBasePtr ValueSlice::ToAbstract() {
   MS_EXCEPTION_IF_NULL(start_);
   MS_EXCEPTION_IF_NULL(stop_);

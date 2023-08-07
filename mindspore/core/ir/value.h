@@ -190,6 +190,27 @@ ValuePtr MakeValue(const T &vec) {
   return std::make_shared<ValueTuple>(list);
 }
 
+class MS_CORE_API ValueNamedTuple : public ValueTuple {
+ public:
+  /// \brief Constructor of ValueNamedTuple.
+  ///
+  /// \param[in] elements Define the elements of the object.
+  explicit ValueNamedTuple(const std::vector<ValuePtr> &keys, const std::vector<ValuePtr> &values)
+      : ValueTuple(values), keys_(keys) {}
+
+  /// \brief Destructor of ValueNamedTuple.
+  ~ValueNamedTuple() override = default;
+  MS_DECLARE_PARENT(ValueNamedTuple, ValueTuple)
+  // \brief Get abstract of the ValueNamedTuple object.
+  //
+  // \return The abstract of the ValueNamedTuple object.
+  abstract::AbstractBasePtr ToAbstract() override;
+
+ private:
+  std::vector<ValuePtr> keys_;
+};
+using ValueNamedTuplePtr = std::shared_ptr<ValueNamedTuple>;
+
 /// \brief ValueSlice defines a Value class whose type is Slice.
 class MS_CORE_API ValueSlice : public Value {
  public:

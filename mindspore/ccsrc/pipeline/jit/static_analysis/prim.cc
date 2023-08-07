@@ -1649,6 +1649,8 @@ void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name, c
   std::string data_type_str = TypeIdLabel(NormalizeTypeId(data_type->type_id()));
   if (data_args->isa<AbstractRefTensor>()) {
     data_type_str = "Parameter";
+  } else if (data_args->isa<AbstractNamedTuple>()) {
+    data_type_str = "NamedTuple";
   }
   py::module mod1 = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   py::object obj_define = python_adapter::CallPyModFn(mod1, parse::PYTHON_MOD_GET_OBJ_DEFINED, data_type_str);
@@ -1682,6 +1684,23 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   MS_EXCEPTION_IF_NULL(item_value);
   TypePtr data_type = data_args->BuildType();
   MS_EXCEPTION_IF_NULL(data_type);
+  // Handle NameTuple: getattr(XX, item_value) -> ValueNode().
+  if (data_args->isa<AbstractNamedTuple>()) {
+    auto named_tuple = data_args->cast<AbstractNamedTuplePtr>();
+    const auto &keys = named_tuple->key();
+    for (size_t it = 0; it < keys.size(); ++it) {
+      auto key_value = keys[it]->BuildValue();
+      MS_EXCEPTION_IF_NULL(key_value);
+      if (*item_value == *key_value) {
+        auto getattr_node = NewValueNode(named_tuple->elements()[it]->BuildValue());
+        auto eng = out_conf->engine();
+        MS_EXCEPTION_IF_NULL(eng);
+        auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
+        return eng->ForwardConfig(out_conf, fn_conf);
+      }
+    }
+  }
+
   // The method maybe a Primitive or Composite
   if (!item_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
