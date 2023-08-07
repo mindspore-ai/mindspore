@@ -117,6 +117,7 @@ void HcclAdapter::InitPlugin() {
   single_op_hccl_get_rank_size_ = DlsymFuncObj(HcclGetRankSize, plugin_handle_);
   launch_hccl_broadcast_ = DlsymFuncObj(HcclBroadcast, plugin_handle_);
   launch_hccl_all_reduce_ = DlsymFuncObj(HcclAllReduce, plugin_handle_);
+  launch_hccl_reduce_ = DlsymFuncObj(HcclReduce, plugin_handle_);
   launch_hccl_reduce_scatter_ = DlsymFuncObj(HcclReduceScatter, plugin_handle_);
   launch_hccl_all_gather_ = DlsymFuncObj(HcclAllGather, plugin_handle_);
   launch_hccl_send_ = DlsymFuncObj(HcclSend, plugin_handle_);
@@ -149,6 +150,7 @@ void HcclAdapter::FinalizePlugin() {
   finalize_hccl_comm_ = nullptr;
   launch_hccl_broadcast_ = nullptr;
   launch_hccl_all_reduce_ = nullptr;
+  launch_hccl_reduce_ = nullptr;
   launch_hccl_reduce_scatter_ = nullptr;
   launch_hccl_all_gather_ = nullptr;
   launch_hccl_send_ = nullptr;
@@ -365,6 +367,14 @@ HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t c
   CHECK_SYMBOL_NULL(launch_hccl_all_reduce_);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_reduce_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
+}
+
+HcclResult HcclAdapter::HcclReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
+                                   HcclReduceOp op, uint32_t root, const aclrtStream stream, HcclComm hccl_comm) const {
+  CheckExcutionMode();
+  CHECK_SYMBOL_NULL(launch_hccl_reduce_);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
+  return launch_hccl_reduce_(send_buf, recv_buf, count, dataType, op, root, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,

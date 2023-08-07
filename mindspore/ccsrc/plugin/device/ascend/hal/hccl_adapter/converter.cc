@@ -37,6 +37,7 @@ namespace {
 static constexpr char kGeOpNameHcclSend[] = "HcomSend";
 static constexpr char kGeOpNameHcclReceive[] = "HcomReceive";
 static constexpr char kGeOpNameHcclAllRudece[] = "HcomAllReduce";
+static constexpr char kGeOpNameHcclRudece[] = "HcomReduce";
 static constexpr char kGeOpNameHcclAllGather[] = "HcomAllGather";
 static constexpr char kGeOpNameHcclBroadcast[] = "HcomBroadcast";
 static constexpr char kGeOpNameHcclReduceScatter[] = "HcomReduceScatter";

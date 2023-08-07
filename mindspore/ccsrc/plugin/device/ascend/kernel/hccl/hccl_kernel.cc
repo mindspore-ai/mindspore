@@ -37,6 +37,7 @@ using AscendCollectiveCommLib = mindspore::device::ascend::AscendCollectiveCommL
 namespace {
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
   {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
+  {mindspore::kReduceOpName, mindspore::kHcomOpTypeReduce},
   {mindspore::kAllGatherOpName, mindspore::kHcomOpTypeAllGather},
   {mindspore::kBroadcastOpName, mindspore::kHcomOpTypeBroadcast},
   {mindspore::kSendOpName, mindspore::kHcomOpTypeSend},
@@ -136,7 +137,7 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
       return false;
     }
   }
-  if (op_name_ == kAllReduceOpName || op_name_ == kReduceScatterOpName) {
+  if (op_name_ == kAllReduceOpName || op_name_ == kReduceScatterOpName || op_name_ == kReduceOpName) {
     if (!HcomUtil::GetHcomOperationType(anf_node, &op_type_)) {
       MS_LOG(ERROR) << "GetHcomOperationType fail!";
       return false;

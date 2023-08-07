@@ -47,6 +47,8 @@ PLUGIN_METHOD(GetAllKernelBuilder, void, OpsKernelBuilderMap *);
 
 ORIGIN_METHOD(HcclBroadcast, HcclResult, void *, uint64_t, HcclDataType, uint32_t, HcclComm, aclrtStream);
 ORIGIN_METHOD(HcclAllReduce, HcclResult, void *, void *, uint64_t, HcclDataType, HcclReduceOp, HcclComm, aclrtStream);
+ORIGIN_METHOD(HcclReduce, HcclResult, void *, void *, uint64_t, HcclDataType, HcclReduceOp, uint32_t, HcclComm,
+              aclrtStream);
 ORIGIN_METHOD(HcclReduceScatter, HcclResult, void *, void *, uint64_t, HcclDataType, HcclReduceOp, HcclComm,
               aclrtStream);
 ORIGIN_METHOD(HcclAllGather, HcclResult, void *, void *, uint64_t, HcclDataType, HcclComm, aclrtStream);
