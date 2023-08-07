@@ -211,6 +211,33 @@ ValuePtr ConvertTuple(const py::object &obj, bool use_signature) {
   return std::make_shared<ValueTuple>(value_list);
 }
 
+bool IsNamedTuple(const py::object &obj) { return py::hasattr(obj, "_fields") && py::isinstance<py::tuple>(obj); }
+
+ValuePtr ConvertNamedTuple(const py::object &obj, bool use_signature) {
+  MS_LOG(DEBUG) << "Converting python NamedTuple";
+  if (!py::hasattr(obj, "_asdict")) {
+    return nullptr;
+  }
+  auto asdict_fn = obj.attr("_asdict");
+  auto asdict_obj = asdict_fn();
+  auto dict_values = asdict_obj.cast<py::dict>();
+  std::vector<ValuePtr> keys;
+  std::vector<ValuePtr> values;
+  for (auto item : dict_values) {
+    ValuePtr key = nullptr;
+    ValuePtr value = nullptr;
+    bool success = ConvertData(py::cast<py::object>(item.first), &key, use_signature) &&
+                   ConvertData(py::cast<py::object>(item.second), &value, use_signature);
+    if (!success) {
+      return nullptr;
+    }
+    MS_LOG(DEBUG) << key->ToString() << ", " << value->ToString();
+    keys.push_back(key);
+    values.push_back(value);
+  }
+  return std::make_shared<ValueNamedTuple>(keys, values);
+}
+
 ValuePtr ConvertStubTuple(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python tuple";
   auto tuple = obj.cast<py::tuple>();
@@ -606,6 +633,7 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
   static const std::vector<DataConverterPtr> data_converters{
     // AdapterTensor needs to be processed before Tensor because it inherits from Tensor.
     std::make_shared<ByFuncDataConverter>(IsStubTensor, ConvertStubTensor),
+    std::make_shared<ByFuncDataConverter>(IsNamedTuple, ConvertNamedTuple),
     std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
     std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertTuple),
     std::make_shared<ByTypeDataConverter<py::list>>(ConvertList),

@@ -14,7 +14,8 @@
 # ============================================================================
 """ test jit forbidden api in graph mode. """
 import pytest
-
+from typing import NamedTuple
+from collections import namedtuple
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, Parameter, ops
@@ -60,6 +61,52 @@ def test_int_invalid_attr():
     with pytest.raises(AttributeError) as err_info:
         ShapeNet()(1)
     assert "'Int' object has no attribute 'shape'" in str(err_info.value)
+
+
+def test_namedtuple_invalid_attr1():
+    """
+    Feature: namedtuple.__getattr__(XX).
+    Description: Get invalid attr from namedtuple object, expect raise exception.
+    Expectation: AttributeError exception raise.
+    """
+    class Data(NamedTuple):
+        label1: Tensor
+        label2: Tensor
+
+    class NamedTupleNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, data):
+            label3 = data.label3
+            return label3
+
+    data = Data(1, 2)
+    with pytest.raises(AttributeError) as err_info:
+        NamedTupleNet()(data)
+    assert "'NamedTuple' object has no attribute 'label3'" in str(err_info.value)
+
+
+def test_namedtuple_invalid_attr2():
+    """
+    Feature: namedtuple.__getattr__(XX).
+    Description: Get invalid attr from namedtuple object, expect raise exception.
+    Expectation: AttributeError exception raise.
+    """
+    class NamedTupleNet(nn.Cell):
+        def __init__(self, data):
+            super().__init__()
+            self.data = data
+
+        def construct(self):
+            label3 = self.data.label3
+            return label3
+
+    Data = namedtuple('User', ['label1', 'label2'])
+    data = Data(label1=1, label2=2)
+    with pytest.raises(AttributeError) as err_info:
+        NamedTupleNet(data)()
+    assert "'NamedTuple' object has no attribute 'label3'" in str(err_info.value)
 
 
 def test_create_parameter_instance():
