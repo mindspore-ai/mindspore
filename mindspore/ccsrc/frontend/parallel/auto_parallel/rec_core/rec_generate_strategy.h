@@ -174,6 +174,8 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
                                           Dimensions basic_stra);
 Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                            Dimensions s);
+Dimensions PrepareTransposeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
+                                         size_t outgoing_op_index);
 Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops,
                                              size_t outgoing_op_index, size_t iter_op_inputs);
 }  // namespace parallel

@@ -292,10 +292,13 @@ size_t CostBatchMatMul::getBatchDimsSize(const OperatorRec &op) {
 }
 
 double CostBatchMatMul::cost(Axis a, const Graph::NodeType &node) {
-  if (static_cast<double>(getBatchDimsSize(node.apply)) - 1 == 0) {
-    MS_LOG(EXCEPTION) << "divisor cannot be 0!";
+  double mc_ratio;
+  size_t batch_dims_size = getBatchDimsSize(node.apply);
+  if (batch_dims_size == 1) {
+    mc_ratio = static_cast<double>(NUMBER_ASCEND_CORES);
+  } else {
+    mc_ratio = std::max(NUMBER_ASCEND_CORES / static_cast<double>(batch_dims_size) - 1, 0.0);
   }
-  double mc_ratio = std::max(NUMBER_ASCEND_CORES / static_cast<double>(getBatchDimsSize(node.apply)) - 1, 0.0);
   double min_size = minNodeSize(node);
 
   switch (a) {

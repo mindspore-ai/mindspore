@@ -1320,6 +1320,9 @@ Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<O
   if (ops[iter_ops]->type() == ONEHOT) {
     return s;
   }
+  if (ops[iter_ops]->type() == TRANSPOSE) {
+    return s;
+  }
   if (ops[incoming_op_index]->type() == STRIDED_SLICE) {
     return s;
   }
@@ -1643,12 +1646,23 @@ Dimensions PrepareReduceInputStrategy(const std::vector<std::shared_ptr<Operator
   return s;
 }
 
+Dimensions PrepareTransposeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
+                                         size_t outgoing_op_index) {
+  Dimensions s;
+  auto permutation = GetValue<std::vector<int64_t>>(ops[i_ops]->input_value().at(1));
+  auto strategy = ops[outgoing_op_index]->selected_strategy();
+  // The strategies are assigned according to the order in permutation (user defined).
+  for (size_t i = 0; i < permutation.size(); i++) {
+    s.push_back(strategy->GetInputDim()[0][LongToSize(permutation[i])]);
+  }
+  return s;
+}
+
 Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops,
                                              size_t outgoing_op_index, size_t iter_op_inputs) {
   Dimensions s;
   // Propagation not implemented for these operators
-  if (ops[iter_ops]->type() == TRANSPOSE || ops[iter_ops]->type() == ARGMAXWITHVALUE ||
-      ops[iter_ops]->type() == ARGMINWITHVALUE) {
+  if (ops[iter_ops]->type() == ARGMAXWITHVALUE || ops[iter_ops]->type() == ARGMINWITHVALUE) {
     return s;
   }
 
@@ -1664,6 +1678,9 @@ Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<O
       return s;
     } else if (type == REDUCE_MEAN || type == REDUCE_MAX || type == REDUCE_MIN || type == REDUCE_SUM) {
       s = PrepareReduceInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
+    } else if (type == TRANSPOSE) {
+      s = PrepareTransposeInputStrategy(ops, iter_ops, outgoing_op_index);
+      return s;
     } else {
       for (size_t k = 0; k < ops[iter_ops]->outputs_shape()[0].size(); ++k) {
         s.push_back(ops[outgoing_op_index]->selected_strategy()->GetInputDim()[iter_op_inputs][k]);
