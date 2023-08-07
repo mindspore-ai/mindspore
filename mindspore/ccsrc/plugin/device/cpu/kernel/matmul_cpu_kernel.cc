@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/matmul_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/eigen/matmul_double_cpu_kernel_func.h"
-#include "plugin/device/cpu/kernel/mkldnn/matmul_cpu_kernel_func.h"
+#include "plugin/device/cpu/kernel/matmul_cpu_kernel_func.h"
 #include <utility>
 #include <algorithm>
 #include <functional>
