@@ -92,9 +92,8 @@ class FlashAttentionBwd(FlashAttention):
         m_aligned = self.tik_ops_utils.up_align_to_K0(m)
         n_aligned = self.tik_ops_utils.up_align_to_K0(n)
         Sij_ub = self.tik_ops_utils.matmul_compute(Qi_l1_K1MK0_ed, KjT_l1_K1NK0_ed, m, k, n, N1MN0_to_MN=False)
-        if self.has_drop_mask:
-            Pij_drop_ed_ub = self.tik_instance.Tensor(FP16, (n_aligned // self.N0, m_aligned, self.N0),
-                                                      name="Pij_drop_ed_ub", scope=UB)
+        Pij_drop_ed_ub = self.tik_instance.Tensor(FP16, (n_aligned // self.N0, m_aligned, self.N0),
+                                                  name="Pij_drop_ed_ub", scope=UB)
 
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             if self.has_alibi_mask:
@@ -142,7 +141,7 @@ class FlashAttentionBwd(FlashAttention):
                 self.do_dropout_mask(Sij_ub, dropout_mask_gm_offset, n_aligned, n, m_aligned, m,
                                      workspace=Pij_drop_ed_ub)
             else:
-                Pij_drop_ed_ub = Sij_ub
+                self.cont_data_mv_1_bust(dst=Pij_drop_ed_ub, src=Sij_ub, burst=m_aligned * n_aligned // 16)
 
         return Sij_ub, Pij_drop_ed_ub
 

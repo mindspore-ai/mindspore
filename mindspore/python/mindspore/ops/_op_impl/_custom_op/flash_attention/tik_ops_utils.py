@@ -332,18 +332,17 @@ class TikOpsUtils:
         K1, M, K0 = matrix_l1_K1MK0_ed.shape
         K = K1 * K0
 
-        # 构造全一右矩阵，由于cube无法处理shape=(n, 1)，所以shape=(n, 16)，全一矩阵不需分形
-        right_all_one_matrix_ub = self.tik_instance.Tensor(
-            FP16, (K, 16), name="right_all_one_matrix_ub", scope=UB
-        )
-        self.tik_instance.h_duplicate(right_all_one_matrix_ub, 1.0)
-        right_all_one_matrix_l1 = self.tik_instance.Tensor(
-            FP16, (K1 * K0, 16), name="right_all_one_matrix_l1", scope=L1
-        )
-        self.cont_data_mv_1_bust(dst=right_all_one_matrix_l1, src=right_all_one_matrix_ub, burst=K)
-
         # 调用matmul实现rowsum，结果shape=(m, 16)，取每行的第一个数
         with self.tik_instance.new_stmt_scope(disable_sync=False):
+            # 构造全一右矩阵，由于cube无法处理shape=(n, 1)，所以shape=(n, 16)，全一矩阵不需分形
+            right_all_one_matrix_ub = self.tik_instance.Tensor(
+                FP16, (K, 16), name="right_all_one_matrix_ub", scope=UB
+            )
+            self.tik_instance.h_duplicate(right_all_one_matrix_ub, 1.0)
+            right_all_one_matrix_l1 = self.tik_instance.Tensor(
+                FP16, (K1 * K0, 16), name="right_all_one_matrix_l1", scope=L1
+            )
+            self.cont_data_mv_1_bust(dst=right_all_one_matrix_l1, src=right_all_one_matrix_ub, burst=K)
             row_sum_ub_N1MN0 = self.matmul_compute(matrix_l1_K1MK0_ed, right_all_one_matrix_l1, m, k, 16,
                                                    N1MN0_to_MN=False, precision_type=precision_type)
             row_sum_ub_MN_ed = row_sum_ub_N1MN0.reshape((M, 16))
