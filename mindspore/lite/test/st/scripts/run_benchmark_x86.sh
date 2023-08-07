@@ -18,6 +18,7 @@ function Run_Converter() {
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
 
+    local elapsed_time ret
     # Convert TFLite parallel_split models:
     if [[ $backend == "x86-all" || $backend == "x86_tflite" ]]; then
       while read line; do
@@ -29,31 +30,40 @@ function Run_Converter() {
           echo ${model_name} >> "${run_converter_log_file}"
           echo 'convert mode name: '${model_name}' begin.'
           echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_1_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_1_parallel_split.config' >> "${run_converter_log_file}"
+          elapsed_time=$(date +%s.%N)
           ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_1_parallel_split --configFile=${models_path}/offline_parallel_split/1_1_parallel_split.config
-          if [ $? = 0 ]; then
-              converter_result='converter 1_1_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+          ret=$?
+          elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+          if [ ${ret} = 0 ]; then
+              converter_result='converter 1_1_parallel_split '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> ${run_converter_result_file}
           else
-              converter_result='converter 1_1_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+              converter_result='converter 1_1_parallel_split '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> ${run_converter_result_file}
               if [[ $x86_fail_not_return != "ON" ]]; then
                   return 1
               fi
           fi
           echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_2_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_2_parallel_split.config' >> "${run_converter_log_file}"
+          elapsed_time=$(date +%s.%N)
           ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_2_parallel_split --configFile=${models_path}/offline_parallel_split/1_2_parallel_split.config
-          if [ $? = 0 ]; then
-              converter_result='converter 1_2_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+          ret=$?
+          elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+          if [ ${ret} = 0 ]; then
+              converter_result='converter 1_2_parallel_split '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> ${run_converter_result_file}
           else
-              converter_result='converter 1_2_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+              converter_result='converter 1_2_parallel_split '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> ${run_converter_result_file}
               if [[ $x86_fail_not_return != "ON" ]]; then
                   return 1
               fi
           fi
           echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_3_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_3_parallel_split.config' >> "${run_converter_log_file}"
+          elapsed_time=$(date +%s.%N)
           ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_3_parallel_split --configFile=${models_path}/offline_parallel_split/1_3_parallel_split.config
-          if [ $? = 0 ]; then
-              converter_result='converter 1_3_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+          ret=$?
+          elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+          if [ ${ret} = 0 ]; then
+              converter_result='converter 1_3_parallel_split '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> ${run_converter_result_file}
           else
-              converter_result='converter 1_3_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+              converter_result='converter 1_3_parallel_split '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> ${run_converter_result_file}
               if [[ $x86_fail_not_return != "ON" ]]; then
                   return 1
               fi
@@ -133,6 +143,7 @@ function Run_x86_java() {
     javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
 
     count=0
+    local elapsed_time ret
     # Run tflite converted models:
     while read line; do
         # only run top5.
@@ -147,12 +158,15 @@ function Run_x86_java() {
         echo $LD_LIBRARY_PATH >> "${run_x86_java_log_file}"
         echo ${model_name} >> "${run_x86_java_log_file}"
         echo "java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
+        elapsed_time=$(date +%s.%N)
         java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1 >> ${run_x86_java_log_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
         cat ${run_x86_java_log_file}
-        if [ $? = 0 ]; then
-          run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        if [ ${ret} = 0 ]; then
+          run_result='x86_java: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-          run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+          run_result='x86_java: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
           if [[ $x86_fail_not_return != "ON" ]]; then
             return 1
           fi
@@ -170,6 +184,7 @@ function Run_x86_parallel_split() {
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../runtime/lib:../runtime/third_party/glog
     cp ../tools/benchmark/benchmark ./ || exit 1
 
+    local elapsed_time ret
     # Run tflite parallel split converted models:
     while read line; do
         model_name=${line%;*}
@@ -180,33 +195,42 @@ function Run_x86_parallel_split() {
         fi
         echo ${model_name} >> "${run_x86_log_file}"
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_1_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        elapsed_time=$(date +%s.%N)
         ./benchmark --modelFile=${ms_models_path}/${model_name}_1_1_parallel_split.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86_Parallel_Split: '${model_name}_1_1_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='x86_Parallel_Split: '${model_name}_1_1_parallel_split' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_Parallel_Split: '${model_name}_1_1_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_Parallel_Split: '${model_name}_1_1_parallel_split' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
             if [[ $x86_fail_not_return != "ON" ]]; then
                 return 1
             fi
         fi
 
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_2_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        elapsed_time=$(date +%s.%N)
         ./benchmark --modelFile=${ms_models_path}/${model_name}_1_2_parallel_split.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86_Parallel_Split: '${model_name}_1_2_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='x86_Parallel_Split: '${model_name}_1_2_parallel_split' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_Parallel_Split: '${model_name}_1_2_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_Parallel_Split: '${model_name}_1_2_parallel_split' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
             if [[ $x86_fail_not_return != "ON" ]]; then
                 return 1
             fi
         fi
 
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_3_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        elapsed_time=$(date +%s.%N)
         ./benchmark --modelFile=${ms_models_path}/${model_name}_1_3_parallel_split.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86_Parallel_Split: '${model_name}_1_3_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='x86_Parallel_Split: '${model_name}_1_3_parallel_split' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_Parallel_Split: '${model_name}_1_3_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_Parallel_Split: '${model_name}_1_3_parallel_split' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
             if [[ $x86_fail_not_return != "ON" ]]; then
                 return 1
             fi

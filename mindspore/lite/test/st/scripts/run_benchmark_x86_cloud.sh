@@ -5,6 +5,7 @@ echo "Running mslite test script : run_benchmark_x86_cloud.sh"
 
 # Run on x86 java platform:
 function Run_x86_java() {
+    local elapsed_time ret
     cd ${x86_path} || exit 1
     mkdir java || exit 1
     cp ${x86_path}/mindspore-lite-${version}-linux-x64.tar.gz ./java/ || exit 1
@@ -24,13 +25,16 @@ function Run_x86_java() {
         echo $LD_LIBRARY_PATH >> "${run_x86_java_log_file}"
         echo ${model_name} >> "${run_x86_java_log_file}"
         echo "java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
+        elapsed_time=$(date +%s.%N)
         java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.mindir ${models_path}/input_output/input/${model_name}.bin ${models_path}/input_output/output/${model_name}.out 1 "Runner" >> ${run_x86_java_log_file}
-        if [ $? = 0 ]; then
-            run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_java_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='x86_java: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_java_result_file}
         else
-            run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_java_result_file}
+            run_result='x86_java: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_java_result_file}
             cat ${run_x86_java_log_file}
-            cat ${run_java_result_file}
+            Print_Benchmark_Result ${run_java_result_file}
             exit 1
         fi
         sleep 1
@@ -248,7 +252,7 @@ if [[ $backend == "all" || $backend == "x86_cloud_onnx" ]]; then
     echo "Run_java_status failed"
     isFailed=1
   fi
-  cat ${run_java_result_file}
+  Print_Benchmark_Result ${run_java_result_file}
 fi
 
 

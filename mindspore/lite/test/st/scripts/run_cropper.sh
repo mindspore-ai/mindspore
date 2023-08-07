@@ -2,14 +2,17 @@
 
 function Print_Cropper_Result() {
     echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-    while read line; do
+   echo "CROPPER RESULT PRINT BEGIN"
+   while read line; do
         arr=("${line}")
-        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+        printf "%-25s %-100s %-8s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[2]}
     done < "${run_cropper_result}"
+    echo "CROPPER RESULT PRINT END"
     echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
 }
 
 function Run_cropper() {
+    local elapsed_time ret
     cd ${arm64_path} || exit 1
     tar -zxf mindspore-lite-${version}-android-aarch64.tar.gz || exit 1
     cd mindspore-lite-${version}-android-aarch64 || exit 1
@@ -44,14 +47,17 @@ function Run_cropper() {
         model_name=`echo ${line}|awk -F ' ' '{print $1}'`
 
         echo "./cropper/cropper --packageFile=./libmindspore-lite.a --configFile=./cropper/cropper_mapping_npu.cfg --modelFile=${ms_models_path}/${model_name}.ms --outputFile=./libmindspore-lite-${model_name}.a"
+        elapsed_time=$(date +%s.%N)
          ./cropper/cropper --packageFile=./libmindspore-lite.a --configFile=./cropper/cropper_mapping_npu.cfg --modelFile=${ms_models_path}/${model_name}.ms --outputFile=./libmindspore-lite-${model_name}.a
-
-        if [ $? = 0 ]; then
-            run_result='cropper_lib: '${line}' pass'; echo ${run_result} >> "${run_cropper_result}"
+         ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='cropper_lib: '${line}' '${elapsed_time}' pass'; echo ${run_result} >> "${run_cropper_result}"
         else
-            run_result='cropper_lib: '${line}' failed'; echo ${run_result} >> "${run_cropper_result}"; return 1
+            run_result='cropper_lib: '${line}' '${elapsed_time}' failed'; echo ${run_result} >> "${run_cropper_result}"; return 1
         fi
 
+        elapsed_time=$(date +%s.%N)
        "${ANDROID_NDK}"/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ -Wl,--whole-archive ./libmindspore-lite-${model_name}.a \
        -Wl,--no-whole-archive --target=aarch64-none-linux-android21 \
        --gcc-toolchain="${ANDROID_NDK}"/toolchains/llvm/prebuilt/linux-x86_64 \
@@ -67,11 +73,12 @@ function Run_cropper() {
        -Wl,-z,noexecstack \
        -L "${cropper_test_path}" -lhiai -lhiai_ir -lhiai_ir_build \
        -shared -Wl,-soname,libmindspore-lite.so -o libmindspore-lite.so -llog -ldl -latomic -lm
-        
-        if [ $? = 0 ]; then
-            run_result='link_lib_to_so: '${line}' pass'; echo ${run_result} >> "${run_cropper_result}"
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='link_lib_to_so: '${line}' '${elapsed_time}' pass'; echo ${run_result} >> "${run_cropper_result}"
         else
-            run_result='link_lib_to_so: '${line}' failed'; echo ${run_result} >> "${run_cropper_result}"; return 1
+            run_result='link_lib_to_so: '${line}' '${elapsed_time}' failed'; echo ${run_result} >> "${run_cropper_result}"; return 1
         fi
         adb -s ${device_id} push "${cropper_test_path}"/libmindspore-lite.so /data/local/tmp/cropper_test > adb_push_log.txt
 
@@ -79,11 +86,14 @@ function Run_cropper() {
         echo 'cd  /data/local/tmp/cropper_test' > adb_run_cmd.txt
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/cropper_test;./benchmark --device=GPU --modelFile=/data/local/tmp/benchmark_test/'${model_name}'.ms --loopCount=1 --warmUpLoopCount=0' >> "${run_cropper_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/cropper_test;./benchmark --device=GPU --modelFile=/data/local/tmp/benchmark_test/'${model_name}'.ms --loopCount=1 --warmUpLoopCount=0' >> adb_run_cmd.txt
+        elapsed_time=$(date +%s.%N)
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_cropper_log_file}"
-        if [ $? = 0 ]; then
-            run_result='run_benchmark: '${model_name}' pass'; echo ${run_result} >> "${run_cropper_result}"
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='run_benchmark: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> "${run_cropper_result}"
         else
-            run_result='run_benchmark: '${model_name}' failed'; echo ${run_result} >> "${run_cropper_result}"; return 1
+            run_result='run_benchmark: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> "${run_cropper_result}"; return 1
         fi
     done < ${cropper_config}
 }

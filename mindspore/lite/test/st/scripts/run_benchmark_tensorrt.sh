@@ -24,6 +24,7 @@ function Run_Converter() {
 }
 
 function Run_TensorRT_Mpirun() {
+  local elapsed_time ret
   source /etc/profile.tensorrt8.5.1
   cd ${x86_path}/tensorrt || exit 1
   tar -zxf ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
@@ -45,11 +46,14 @@ function Run_TensorRT_Mpirun() {
   input_files=${inpath}'/dis_matmul_.mindir.ms.bin'
   output_file=${outpath}'/dis_matmul_.mindir.ms.out'
   echo 'mpirun -np 2 ./benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --device=GPU' >> "${run_tensorrt_mpirun_log_file}"
+  elapsed_time=$(date +%s.%N)
   mpirun -np 2 ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --device=GPU >> ${run_tensorrt_mpirun_log_file}
-  if [ $? = 0 ]; then
-      run_result='TensorRT_Server: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+  ret=$?
+  elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+  if [ ${ret} = 0 ]; then
+      run_result='TensorRT_Server: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
   else
-      run_result='TensorRT_Server: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+      run_result='TensorRT_Server: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
   fi
 
 
@@ -97,7 +101,7 @@ function Run_TensorRT() {
 
     local line_info model_info spec_acc_limit model_name input_num input_shapes \
             mode model_file input_files output_file data_path acc_limit enableFp16 \
-            run_result spec_cosine_limit
+            run_result spec_cosine_limit elapsed_time ret
     # Prepare the config file list
     local tensorrt_cfg_file_list=("$models_tensorrt_config" "$models_nvgpu_posttraining_config")
     for cfg_file in ${tensorrt_cfg_file_list[*]}; do
@@ -171,48 +175,17 @@ function Run_TensorRT() {
 
             # different tensorrt run mode use different cuda command
             echo 'CUDA_VISIBLE_DEVICES='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --configFile='${config_file_path}' --cosineDistanceThreshold=${cosine_limit} --device=GPU' >> "${run_tensorrt_log_file}"
+            elapsed_time=$(date +%s.%N)
             CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --cosineDistanceThreshold=${cosine_limit} --device=GPU >> ${run_tensorrt_log_file}
-            CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --cosineDistanceThreshold=${cosine_limit} --device=GPU >> ${run_tensorrt_log_file}
-
-            if [ $? = 0 ]; then
-                run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            ret=$?
+            elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+            if [ ${ret} = 0 ]; then
+                run_result='TensorRT: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
             else
-                run_result='TensorRT: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+                run_result='TensorRT: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
             fi
 
         done < ${cfg_file}
-    done
-}
-
-# Print start msg before run testcase
-function MS_PRINT_TESTCASE_START_MSG() {
-    echo ""
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-    echo -e "env                    Testcase                                                                                           Result   "
-    echo -e "---                    --------                                                                                           ------   "
-}
-
-# Print start msg after run testcase
-function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-}
-
-function Print_Benchmark_Result() {
-    MS_PRINT_TESTCASE_START_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
-    done < $1
-    MS_PRINT_TESTCASE_END_MSG
-}
-
-function Kill_Pid() {
-    ## kill previous pid
-    whoami=$(whoami)
-    IFS=" " read -r -a pids <<< "$(ps -ef | grep benchmark | grep ${whoami} | awk -F ' ' '{print $2}')"
-    for pid in ${pids[*]}; do
-        echo "killing previous user pid ${pid} for ${whoami}"
-        kill -9 ${pid}
     done
 }
 

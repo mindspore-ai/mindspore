@@ -11,6 +11,7 @@ function Run_Export(){
         echo "CLOUD_MODEL_ZOO is not defined - exiting export models"
         exit 1
     fi
+    local elapsed_time ret
     # Export mindspore train models:
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
@@ -20,6 +21,7 @@ function Run_Export(){
         fi
         echo ${model_name}'_train_export.py' >> "${export_log_file}"
         echo 'exporting' ${model_name}
+        elapsed_time=$(date +%s.%N)
         if [ -n "$docker_image" ]; then
           echo 'docker run --user '"$(id -u):$(id -g)"' --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true '${docker_image}' python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
           docker run --user "$(id -u):$(id -g)" --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true "${docker_image}" python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
@@ -27,10 +29,12 @@ function Run_Export(){
           echo 'CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
           CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
         fi
-        if [ $? = 0 ]; then
-            export_result='export mindspore '${model_name}'_train_export pass';echo ${export_result} >> ${export_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            export_result='export mindspore '${model_name}'_train_export '${elapsed_time}' pass';echo ${export_result} >> ${export_result_file}
         else
-            export_result='export mindspore '${model_name}'_train_export failed';echo ${export_result} >> ${export_result_file}
+            export_result='export mindspore '${model_name}'_train_export '${elapsed_time}' failed';echo ${export_result} >> ${export_result_file}
         fi
     done < ${models_ms_train_config}
 }
@@ -60,6 +64,7 @@ function Run_Converter() {
     max_parallel_jobs=6
     for ((i = 0; i < ${max_parallel_jobs}; i++)); do echo; done >&6
 
+    local elapsed_time ret
     # Convert mindspore train models:
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
@@ -86,12 +91,15 @@ function Run_Converter() {
         read -u6
         {
           echo ${model_name} >> "${run_converter_log_file}"
+          elapsed_time=$(date +%s.%N)
           echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_prefix}'.mindir --outputFile='${ms_models_path}'/'${model_name}' --trainModel=true' ${WEIGHT_QUANT} >> "${run_converter_log_file}"
           ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} --trainModel=true ${no_opt} ${WEIGHT_QUANT}
-          if [ $? = 0 ]; then
-              converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+          ret=$?
+          elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+          if [ ${ret} = 0 ]; then
+              converter_result='converter mindspore '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> ${run_converter_result_file}
           else
-              converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+              converter_result='converter mindspore '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> ${run_converter_result_file}
               echo '1' > ${fail_status_file}
           fi
           # If Transfer sesstion convert backbone model
@@ -100,11 +108,14 @@ function Run_Converter() {
               model_name=${line_array[0]}'_bb'
               echo ${model_name} >> "${run_converter_log_file}"
               echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}'.mindir --outputFile='${ms_models_path}'/'${model_name} ${WEIGHT_QUANT} >> "${run_converter_log_file}"
+              elapsed_time=$(date +%s.%N)
               ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} ${WEIGHT_QUANT}
-              if [ $? = 0 ]; then
-                  converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+              ret=$?
+              elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+              if [ ${ret} = 0 ]; then
+                  converter_result='converter mindspore '${model_name}' '${elapsed_time}' pass';echo ${converter_result} >> ${run_converter_result_file}
               else
-                  converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+                  converter_result='converter mindspore '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> ${run_converter_result_file}
                   echo '1' > ${fail_status_file}
               fi
           fi
@@ -180,7 +191,7 @@ function parse_line() {
             ;;
           "noarm32")
             if [[ $1 == "arm32" ]]; then
-               run_result=$1': '${model_name}' irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
+               run_result=$1': '${model_name}'_irrelevant 0.00 pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
                ret=1
             fi
             ;;
@@ -228,6 +239,7 @@ function Run_x86() {
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${x86_path}/mindspore-lite-${version}-linux-x64/runtime/lib:${x86_path}/mindspore-lite-${version}-linux-x64/runtime/third_party/libjpeg-turbo/lib
     # Run mindspore converted train models:
     local fail=0
+    local elapsed_time ret
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
         if [[ ${line_array[0]} == \#* || ${line_array[0]} == "" ]]; then
@@ -271,6 +283,7 @@ function Run_x86() {
             --inputShapes=${inputShapes} \
             --lossName=${loss_name}  \
             --unifiedApi=${do_api}" >> ${run_x86_log_file}
+        elapsed_time=$(date +%s.%N)
         ${run_valgrind} ./tools/benchmark_train/benchmark_train \
             --modelFile=${model_file} \
             --bbModelFile=${bb_model_file} \
@@ -282,10 +295,12 @@ function Run_x86() {
             --inputShapes=${inputShapes} \
             --lossName=${loss_name} \
             --unifiedApi=${do_api} >> "${run_x86_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86'${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='x86'${log_suffix}': '${model_name}''${suffix_print}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result='x86'${log_suffix}': '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86'${log_suffix}': '${model_name}''${suffix_print}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
             fail=1
         fi
     done < ${models_ms_train_config}
@@ -296,7 +311,8 @@ function Run_x86() {
 # Gets two parameters
 function Run_arm() {
     # $1:platform(arm64/arm32)
-    local arm_path process_unit version_arm run_arm_log_file adb_cmd_run_file adb_push_log_file adb_cmd_file adb_cmd
+    local arm_path process_unit version_arm run_arm_log_file adb_cmd_run_file adb_push_log_file adb_cmd_file adb_cmd \
+          elapsed_time ret
     if [ "$1" == "arm64" ]; then
         arm_path=${arm64_path}
         process_unit="aarch64"
@@ -421,12 +437,15 @@ ENDM
 )
         echo "${adb_cmd}" >> ${run_arm_log_file}
         echo "${adb_cmd}" >> ${adb_cmd_run_file}
+        elapsed_time=$(date +%s.%N)
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
         # TODO: change to arm_type
-        if [ $? = 0 ]; then
-            run_result=$1${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+        if [ ${ret} = 0 ]; then
+            run_result=$1${log_suffix}': '${model_name}''${suffix_print}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result=$1${log_suffix}': '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
+            run_result=$1${log_suffix}': '${model_name}''${suffix_print}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
             fail=1
         fi
     done < ${models_ms_train_config}
@@ -467,6 +486,7 @@ function Run_CodeExamples() {
       cd -
     fi
 
+    local elapsed_time ret
     if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen_and_train" || $backend == "arm64_train" ]]; then
 
       should_run_example "unified_api"
@@ -480,18 +500,21 @@ function Run_CodeExamples() {
         cd ${basepath}/../../examples/train_lenet_cpp || exit 1
         chmod 777 ./prepare_and_run.sh
         chmod 777 ./*/*.sh
+        elapsed_time=$(date +%s.%N)
         ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 ${expression_flag} >> ${run_code_examples_log_file}
-        if [ "$?" != "0" ]; then
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ "${ret}" != "0" ]; then
           echo "Unified API prepare_and_run.sh failed"
           exit 1
         fi
         accurate=$(tail -20 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
         if [ $accurate -eq 1 ]; then
           echo "Unified API Trained and reached accuracy" >> ${run_code_examples_log_file}
-          echo 'code_examples: train_lenet_cpp pass' >> ${run_benchmark_train_result_file}
+          echo 'code_examples: train_lenet_cpp '${elapsed_time}' pass' >> ${run_benchmark_train_result_file}
         else
           echo "Unified API demo failure" >> ${run_code_examples_log_file}
-          echo 'code_examples: train_lenet_cpp failed' >> ${run_benchmark_train_result_file}
+          echo 'code_examples: train_lenet_cpp '${elapsed_time}' failed' >> ${run_benchmark_train_result_file}
           fail=1
         fi
         rm -rf package*/dataset
@@ -499,15 +522,6 @@ function Run_CodeExamples() {
       fi
     fi
     return ${fail}
-}
-
-function Print_Result() {
-    MS_PRINT_TESTCASE_END_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-15s %-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
-    done < $1
-    MS_PRINT_TESTCASE_END_MSG
 }
 
 # Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
@@ -623,7 +637,7 @@ if [[ $enable_export == 1 ]]; then
     echo ' ' > ${export_result_file}
     # Run export
     Run_Export
-    Print_Result ${export_result_file}
+    Print_Converter_Result ${export_result_file}
 fi
 
 # Write converter result to temp file
@@ -643,11 +657,11 @@ Run_converter_status=$?
 # Check converter result and return value
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
-    Print_Result ${run_converter_result_file}
+    Print_Converter_Result ${run_converter_result_file}
 else
     echo "Run converter failed"
     cat ${run_converter_log_file}
-    Print_Result ${run_converter_result_file}
+    Print_Converter_Result ${run_converter_result_file}
     exit 1
 fi
 

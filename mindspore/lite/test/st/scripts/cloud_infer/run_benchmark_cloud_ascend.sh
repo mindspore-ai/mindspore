@@ -42,7 +42,7 @@ function Run_Benchmark() {
 
     local line_info model_info spec_acc_limit model_name input_num input_shapes \
             mode model_file input_files output_file data_path acc_limit enableFp16 \
-            run_result
+            run_result elapsed_time ret
 
     while read line; do
         line_info=${line}
@@ -113,12 +113,14 @@ function Run_Benchmark() {
 
         # different tensorrt run mode use different cuda command
         echo './benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${ascend_device} >> "${run_ascend_log_file}"
+        elapsed_time=$(date +%s.%N)
         ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device} >> ${run_ascend_log_file}
-
-        if [ $? = 0 ]; then
-            run_result=${backend}': '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result=${backend}': '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result=${backend}': '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result=${backend}': '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
 
     done < ${models_ascend_config}

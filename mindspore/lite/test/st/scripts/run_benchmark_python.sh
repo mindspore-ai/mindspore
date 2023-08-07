@@ -29,6 +29,7 @@ function Run_python_ST() {
   cd ${base_path}/python/ || exit 1
   run_python_log=./run_python_log.txt
   result_python_log=./result_python_log.txt
+  local elapsed_time
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
       line_info=${line}
@@ -51,27 +52,41 @@ function Run_python_ST() {
         done
       fi
       model_file=${model_path}'/'${model_name}${suffix}
+      elapsed_time=$(date +%s.%N)
       python test_inference_cloud.py ${model_file} ${input_files} ${input_shapes} ${target} >> ${run_python_log}
       Run_python_st_status=$?
+      elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
       if [[ ${Run_python_st_status} != 0 ]];then
-        echo "run python model name:     ${model_name}                    failed." >> ${result_python_log}
+        echo "RunPythonModel:     ${model_name} ${elapsed_time} failed" >> ${result_python_log}
         cat ${run_python_log}
-        cat ${result_python_log}
         echo "Run_python_st_status failed"
+      fi
+      if [[ ${Run_python_st_status} != 0 ]]; then
+        echo "-----------------------------------------------------------------------------------------"
+        Print_Benchmark_Result ${result_python_log}
+        echo "-----------------------------------------------------------------------------------------"
         exit 1
       fi
-      echo "run python model name:     ${model_name}                    pass." >> ${result_python_log}
+      echo "RunPythonModel: ${model_name} ${elapsed_time} pass" >> ${result_python_log}
     done < ${cfg_file}
   done
-  cat ${result_python_log}
   echo "-----------------------------------------------------------------------------------------"
 
+  elapsed_time=$(date +%s.%N)
   python test_inference_cloud_nocofig.py ${model_hiai_path} ${target} >> ${run_python_log}
   Run_python_st_status=$?
+  elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
   if [[ ${Run_python_st_status} != 0 ]];then
-    echo "run python test_inference_cloud_nocofig failed." >> ${result_python_log}
+    echo "RunPython test_inference_cloud_nocofig ${elapsed_time} failed" >> ${result_python_log}
     cat ${run_python_log}
-    cat ${result_python_log}
+  else
+    echo "RunPython test_inference_cloud_nocofig ${elapsed_time} pass" >> ${result_python_log}
+  fi
+  echo "-----------------------------------------------------------------------------------------"
+  Print_Benchmark_Result ${result_python_log}
+  echo "-----------------------------------------------------------------------------------------"
+
+  if [[ ${Run_python_st_status} != 0 ]];then
     echo "Run_python_st_status failed"
     exit 1
   fi

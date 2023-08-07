@@ -36,7 +36,7 @@ function Run_TensorRT() {
 
     local line_info model_info spec_acc_limit model_name input_num input_shapes \
             mode model_file input_files output_file data_path acc_limit enableFp16 \
-            run_result
+            run_result elapsed_time ret
     # Prepare the config file list
     for cfg_file in ${models_server_inference_cfg_file_list[*]}; do
         cfg_file_name=${cfg_file##*/}
@@ -97,38 +97,18 @@ function Run_TensorRT() {
                 enableFp16="true"
             fi
             echo 'CUDA_VISIBLE_DEVICES='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --enableParallelPredict=true --device=GPU'
+            elapsed_time=$(date +%s.%N)
             CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --enableParallelPredict=true --device=GPU
-
-            if [ $? = 0 ]; then
-                run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            ret=$?
+            elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+            if [ ${ret} = 0 ]; then
+                run_result='TensorRT: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
             else
-                run_result='TensorRT: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+                run_result='TensorRT: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
             fi
 
         done < ${cfg_file}
     done
-}
-
-# Print start msg before run testcase
-function MS_PRINT_TESTCASE_START_MSG() {
-    echo ""
-    echo -e "-------------------------------------------------------------------------------------------------------------------------"
-    echo -e "env                    Testcase                                                                                 Result   "
-    echo -e "---                    --------                                                                                 ------   "
-}
-
-# Print start msg after run testcase
-function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "-------------------------------------------------------------------------------------------------------------------------"
-}
-
-function Print_Benchmark_Result() {
-    MS_PRINT_TESTCASE_START_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
-    done < $1
-    MS_PRINT_TESTCASE_END_MSG
 }
 
 # Example:sh run_benchmark_gpu.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
