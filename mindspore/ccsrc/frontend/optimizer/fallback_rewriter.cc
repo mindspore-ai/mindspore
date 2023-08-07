@@ -46,6 +46,7 @@
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "utils/hash_map.h"
 #include "utils/anf_utils.h"
+#include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 
 namespace mindspore {
@@ -1655,6 +1656,9 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr},
     {prim::kPrimPrint, &ThisClass::ConvertPrint}};
 
+  static inline const HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> convert_seq_prims_{prim::kPrimInSequence,
+                                                                                                prim::kPrimSequenceMul};
+
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
   AnfNodePtr ConvertNoneToPyExecute(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
@@ -1837,6 +1841,56 @@ class AfterOptARewriter : public BaseRewriter {
     }
   }
 
+  AnfNodePtr ConvertSequenceOps(const CNodePtr &cnode) const {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    const auto &inputs = cnode->inputs();
+    std::vector<AbstractBasePtr> inputs_abs;
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      inputs_abs.push_back(inputs[i]->abstract());
+    }
+    auto output_abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(output_abs);
+    // Only sequence ops with nested sequence input or irregular input (element with different shape/type)
+    // or the output abstract of sequence node is AbstractAny should be converted to PyExecute node.
+    if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
+        !output_abs->isa<abstract::AbstractAny>()) {
+      return nullptr;
+    }
+
+    auto prim = GetValueNode<PrimitivePtr>(inputs[0]);
+    MS_EXCEPTION_IF_NULL(prim);
+    const auto prim_name = prim->name();
+
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    const std::string seq_ops_dir = "__import__('mindspore').ops.operations._sequence_ops.";
+    const std::string input_prefix = "__internal_input_";
+
+    std::stringstream script_buffer;
+    script_buffer << seq_ops_dir << prim_name << "()(";
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      auto cur_input_str = input_prefix + std::to_string(i - 1) + "__";
+      script_buffer << cur_input_str << ",";
+      (void)key_value_names_list.emplace_back(NewValueNode(cur_input_str));
+      (void)key_value_list.emplace_back(inputs[i]);
+    }
+    script_buffer << ")";
+    const std::string &script = script_buffer.str();
+    auto script_node = NewValueNode(std::make_shared<StringImm>(script));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res =
+      fallback::CreatePyExecuteCNode(fg, script_node, key_value_name_tuple, key_value_tuple, cnode->debug_info());
+    MS_LOG(DEBUG) << "Convert sequence node: " << cnode->DebugString() << " to " << res->DebugString();
+    return res;
+  }
+
   AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode) override {
     // Get primitive from cnode.
     const auto &prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -1847,11 +1901,14 @@ class AfterOptARewriter : public BaseRewriter {
 
     // Find cnode converter by primitive.
     auto iter = converters_.find(prim);
-    if (iter == converters_.end()) {
-      return nullptr;
+    if (iter != converters_.end()) {
+      // Call converter.
+      return (this->*(iter->second))(cnode);
     }
-    // Call converter.
-    return (this->*(iter->second))(cnode);
+    if (convert_seq_prims_.find(prim) != convert_seq_prims_.end()) {
+      return ConvertSequenceOps(cnode);
+    }
+    return nullptr;
   }
 
   AnfNodePtr ValueListConvertPyExecute(const FuncGraphPtr &func_graph, const ValueNodePtr &value_node,

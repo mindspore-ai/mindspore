@@ -223,6 +223,9 @@ class InSequence(Primitive):
         """Initialize ListAppend"""
         self.init_prim_io_names(inputs=['element', 'input_data'], outputs=['output_data'])
 
+    def __call__(self, target, sequence):
+        return target in sequence
+
 
 class SequenceSliceSetItem(Primitive):
     r"""
@@ -593,6 +596,9 @@ class SequenceMul(Primitive):
     def __init__(self):
         """Initialize SequenceMul"""
         self.init_prim_io_names(inputs=['sequence', 'scalar'], outputs=['output_data'])
+
+    def __call__(self, sequence, scalar):
+        return sequence * scalar
 
 
 class SequenceZerosLike(Primitive):

@@ -46,6 +46,10 @@ AbstractBasePtr InSequenceInferInner(const PrimitivePtr &primitive, const std::v
   constexpr size_t seq_index = 1;
   constexpr size_t element_index = 0;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
+  if (CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(input_args)) {
+    // Sequence ops with nested or irregular sequence input should be convert to PyExecute node.
+    return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
+  }
   auto second_abs = input_args[seq_index];
   if (second_abs->isa<abstract::AbstractTensor>()) {
     auto shape = second_abs->BuildShape()->cast<abstract::ShapePtr>();

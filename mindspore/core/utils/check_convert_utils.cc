@@ -390,6 +390,80 @@ void CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(const std::vector<Abstr
   }
 }
 
+bool CheckElementAbstractUnSupport(const AbstractBasePtr abs) {
+  if (abs == nullptr) {
+    return false;
+  }
+  if (abs->isa<abstract::AbstractSequence>() && !abs->isa<abstract::AbstractSparseTensor>()) {
+    return true;
+  }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    return true;
+  }
+  if (abs->isa<abstract::AbstractAny>()) {
+    return true;
+  }
+  return false;
+}
+
+bool CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(const std::vector<AbstractBasePtr> &abs_list) {
+  // Check input abs has nested sequence, or irregular sequence,
+  // such as sequence contains elements with different shape or type.
+  for (auto abs : abs_list) {
+    if (abs == nullptr) {
+      continue;
+    }
+    if (abs->isa<abstract::AbstractDictionary>()) {
+      return true;
+    }
+    if (!abs->isa<abstract::AbstractSequence>() || abs->isa<abstract::AbstractSparseTensor>()) {
+      continue;
+    }
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    if (abs_seq->dynamic_len()) {
+      if (CheckElementAbstractUnSupport(abs_seq->dynamic_len_element_abs())) {
+        return true;
+      }
+      continue;
+    }
+    const auto &elements = abs_seq->elements();
+    if (elements.size() == 0) {
+      continue;
+    }
+    auto first_element = elements[0];
+    MS_EXCEPTION_IF_NULL(first_element);
+    if (CheckElementAbstractUnSupport(first_element)) {
+      return true;
+    }
+    auto first_element_shape = first_element->BuildShape();
+    MS_EXCEPTION_IF_NULL(first_element_shape);
+    auto first_element_type = first_element->BuildType();
+    MS_EXCEPTION_IF_NULL(first_element_type);
+    auto first_element_type_id = first_element_type->generic_type_id();
+    for (size_t i = 1; i < elements.size(); ++i) {
+      auto cur_element = elements[i];
+      MS_EXCEPTION_IF_NULL(cur_element);
+      auto cur_element_type = cur_element->BuildType();
+      MS_EXCEPTION_IF_NULL(cur_element_type);
+      auto cur_element_type_id = cur_element_type->generic_type_id();
+      if (first_element_type_id != cur_element_type_id) {
+        return true;
+      }
+      auto cur_element_shape = cur_element->BuildShape();
+      MS_EXCEPTION_IF_NULL(cur_element_shape);
+      if (*first_element_shape != *cur_element_shape) {
+        return true;
+      }
+      try {
+        (void)first_element->Join(cur_element);
+      } catch (std::exception &) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 abstract::AbstractSequencePtr CheckAndConvertUtils::BroadenAllSequenceElements(
   const abstract::AbstractSequencePtr &sequence) {
   MS_EXCEPTION_IF_NULL(sequence);
