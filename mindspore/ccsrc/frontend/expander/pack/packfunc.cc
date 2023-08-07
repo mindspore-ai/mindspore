@@ -86,14 +86,17 @@ void GetSubPackGraphParams(const FuncGraphPtr &fg, const FuncGraphPtr &g, std::v
   std::vector<AnfNodePtr> p;
   GetPackGraphParams(g, &p);
   for (auto &item : p) {
-    if (item->cast<ParameterPtr>()->has_default() && memo->emplace(item.get()).second) {
-      g->add_parameter_obj_node(item);
-      auto pack_node = g->get_return()->input(1)->cast_ptr<CNode>();
+    if (item->cast<ParameterPtr>()->has_default()) {
+      auto node = g->get_return()->input(kIndex1);
+      auto pack_node = node->cast<CNodePtr>();
       pack_node->add_input(item);
-      auto &node_users = fg->manager()->node_users();
-      auto &users_node = node_users[item];
-      users_node.add(std::make_pair(g->get_return()->input(1), static_cast<int>(pack_node->inputs().size() - 1)));
-      parameters->push_back(item);
+      if (memo->emplace(item.get()).second) {
+        g->add_parameter_obj_node(item);
+        auto &node_users = fg->manager()->node_users();
+        auto &users_node = node_users[item];
+        users_node.add({node, SizeToInt(pack_node->size() - 1)});
+        (void)parameters->emplace_back(item);
+      }
     }
   }
   auto prim_py = GetPackFuncPrimitive(g);
@@ -290,14 +293,11 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
   FuncGraphPtr graph;
   {
     py::gil_scoped_acquire acquire;
-    py::object expand_func = prim_py->GetPyObj().attr("__expand__");
-    py::object inputs = expander->BeginGraph(new_abs_list);
     py::object cell_obj = prim_py->GetPyObj().attr("cell_obj");
+    py::object expand_func = prim_py->GetPyObj().attr("__expand__");
+    py::object inputs = expander->BeginGraph(cell_obj, new_abs_list);
     py::object output = expand_func(inputs);
-    graph = expander->EndGraph(output);
-    if (!cell_obj.is_none()) {
-      UpdateFuncGraphFlags(graph, cell_obj);
-    }
+    graph = expander->EndGraph(cell_obj, output);
     if (reuse) {
       graph = PostProcessForReuseGraph(graph, prim_py);
     }

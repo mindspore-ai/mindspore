@@ -2285,7 +2285,8 @@ class Cell(Cell_):
     def _run_tracefunc(self, *args, **kwargs):
         """ Run Packed Cell in Pack."""
         args = self._mixed_precision_cast(args)
-        if hasattr(self, "bprop") or hasattr(self, "_pipeline_stage") or self.get_flags():
+        if not PackFunc.current.is_pynative_mode or hasattr(self, "bprop") \
+                or hasattr(self, "_pipeline_stage") or self.get_flags():
             expander = PackExpander.get_instance()
             args = expander.begin_subgraph(self, *args)
             args = [_convert_tensor(a) for a in args]

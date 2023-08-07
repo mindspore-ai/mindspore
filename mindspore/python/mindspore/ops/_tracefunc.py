@@ -64,6 +64,7 @@ class PackFunc(Primitive):
     """pack function with lazy expander"""
 
     expander = PackExpander.get_instance()
+    current = None
 
     def __init__(self, fun, unique_key, cell_obj, is_pynative_mode=False):
         super(PackFunc, self).__init__(self.__class__.__name__)
@@ -82,16 +83,20 @@ class PackFunc(Primitive):
         return super().__call__(*args)
 
     def __expand__(self, args):
+        old = PackFunc.current
+        PackFunc.current = self
         if self.cell_obj:
             args = (self.cell_obj, *args)
             with _SetMixedPrecision(self.cell_obj):
                 ret = self._run_op(args)
-            return ret
-        return self._run_op(args)
+        else:
+            ret = self._run_op(args)
+        PackFunc.current = old
+        return ret
 
     @staticmethod
     def is_tracing():
-        return _RunOpHook.current and _RunOpHook.current.hook is PackFunc._trace_run_op
+        return PackFunc.current is not None
 
     @staticmethod
     def _trace_run_op(obj, args):
