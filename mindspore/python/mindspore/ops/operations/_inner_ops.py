@@ -505,7 +505,7 @@ class Receive(PrimitiveWithInfer):
 
 class Reduce(PrimitiveWithInfer):
     """
-    Reduce tensor across the processes in the specified communication group.
+    Reduces tensor across the processes in the specified communication group.
 
     Note:
         Only process with destination rank receives the reduced output.
@@ -561,6 +561,49 @@ class Reduce(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         return x_dtype
+
+
+class Barrier(PrimitiveWithInfer):
+    """
+    Synchronizes all processes in the specified group.
+
+    Note:
+        After calling this collective operator,
+        this process will be blocked until all other processes in the group call this operator.
+
+    Args:
+        group (str, optional): The communication group to work on.
+            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+
+    Examples:
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> # Launch 4 processes.
+        >>> init()
+        >>> class BarrierNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.barrier = ops.Barrier()
+        >>>
+        >>>     def construct(self):
+        >>>         self.barrier()
+        >>> net = BarrierNet()
+        >>> net()
+    """
+
+    @prim_attr_register
+    def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
+        self.group = group
+        self.add_prim_attr("side_effect_mem", True)
+
+    def infer_shape(self):
+        return [1]
+
+    def infer_dtype(self):
+        return mstype.float32
 
 
 class MatrixSetDiag(PrimitiveWithInfer):

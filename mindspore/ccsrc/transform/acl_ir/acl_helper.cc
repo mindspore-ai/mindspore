@@ -32,9 +32,9 @@
 namespace mindspore {
 namespace transform {
 namespace {
-static const std::set<std::string> kHcomOps = {kHcomOpTypeAllReduce,     kHcomOpTypeReduce,   kHcomOpTypeAllGather,
-                                               kHcomOpTypeBroadcast,     kHcomOpTypeSend,     kHcomOpTypeReceive,
-                                               kHcomOpTypeReduceScatter, kHcomOpTypeAllToAllV};
+static const std::set<std::string> kHcomOps = {kHcomOpTypeAllReduce,     kHcomOpTypeReduce,    kHcomOpTypeAllGather,
+                                               kHcomOpTypeBroadcast,     kHcomOpTypeSend,      kHcomOpTypeReceive,
+                                               kHcomOpTypeReduceScatter, kHcomOpTypeAllToAllV, kHcomOpTypeBarrier};
 
 static const HashMap<GeDataType, TypeId> kGeTypeToMsType = {{GeDataType::DT_BOOL, kNumberTypeBool},
                                                             {GeDataType::DT_INT8, kNumberTypeInt8},

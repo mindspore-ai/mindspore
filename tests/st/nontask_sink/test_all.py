@@ -44,3 +44,17 @@ def test_hccl_reduce():
     """
     return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_reduce.py")
     assert return_code == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_hccl_barrier():
+    """
+    Feature: mpi run 8P case of 'Barrier' communication operator.
+    Description: mpi run 8P case of 'Barrier' communication operator.
+    Expectation: success
+    """
+    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_barrier.py")
+    assert return_code == 0

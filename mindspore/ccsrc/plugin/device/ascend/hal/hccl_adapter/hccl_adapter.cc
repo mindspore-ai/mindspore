@@ -122,6 +122,7 @@ void HcclAdapter::InitPlugin() {
   launch_hccl_all_gather_ = DlsymFuncObj(HcclAllGather, plugin_handle_);
   launch_hccl_send_ = DlsymFuncObj(HcclSend, plugin_handle_);
   launch_hccl_recv_ = DlsymFuncObj(HcclRecv, plugin_handle_);
+  launch_hccl_barrier_ = DlsymFuncObj(HcclBarrier, plugin_handle_);
   hccl_create_group_ = DlsymFuncObj(HcomCreateGroup, plugin_handle_);
   hccl_destroy_group_ = DlsymFuncObj(HcomDestroyGroup, plugin_handle_);
   hccl_get_rank_id_ = DlsymFuncObj(HcomGetRankId, plugin_handle_);
@@ -155,6 +156,7 @@ void HcclAdapter::FinalizePlugin() {
   launch_hccl_all_gather_ = nullptr;
   launch_hccl_send_ = nullptr;
   launch_hccl_recv_ = nullptr;
+  launch_hccl_barrier_ = nullptr;
   hccl_create_group_ = nullptr;
   hccl_destroy_group_ = nullptr;
   hccl_get_rank_id_ = nullptr;
@@ -407,6 +409,13 @@ HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType da
   CHECK_SYMBOL_NULL(launch_hccl_recv_);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_recv_(recv_buf, count, dataType, srcRank, hccl_comm, stream);
+}
+
+HcclResult HcclAdapter::HcclBarrier(const aclrtStream stream, HcclComm hccl_comm) const {
+  CheckExcutionMode();
+  CHECK_SYMBOL_NULL(launch_hccl_barrier_);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
+  return launch_hccl_barrier_(hccl_comm, stream);
 }
 
 bool HcclAdapter::InitKernelInfoStore(const std::map<std::string, std::string> options) {

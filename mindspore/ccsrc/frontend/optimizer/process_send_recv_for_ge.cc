@@ -33,18 +33,11 @@ constexpr const char kNodeCloseFollowing[] = "node_close_following";
 constexpr const char kNodeWithoutOutput[] = "node_without_output";
 
 bool IsCommOps(const AnfNodePtr &node) {
-  static const PrimitiveSet kCommunicationOpsPrim = {prim::kPrimSend,
-                                                     prim::kPrimReceive,
-                                                     prim::kPrimAllReduce,
-                                                     prim::kPrimReduce,
-                                                     prim::kPrimAllGather,
-                                                     prim::kPrimReduceScatter,
-                                                     prim::kPrimAllToAll,
-                                                     prim::kPrimAllSwap,
-                                                     prim::kPrimAllToAllv,
-                                                     prim::kPrimNeighborExchange,
-                                                     prim::kPrimNeighborExchangeV2,
-                                                     prim::kPrimNeighborExchangeV2Grad};
+  static const PrimitiveSet kCommunicationOpsPrim = {
+    prim::kPrimSend,      prim::kPrimReceive,          prim::kPrimAllReduce,          prim::kPrimReduce,
+    prim::kPrimAllGather, prim::kPrimReduceScatter,    prim::kPrimAllToAll,           prim::kPrimAllSwap,
+    prim::kPrimAllToAllv, prim::kPrimNeighborExchange, prim::kPrimNeighborExchangeV2, prim::kPrimNeighborExchangeV2Grad,
+    prim::kPrimBarrier};
   return IsOneOfPrimitiveCNode(node, kCommunicationOpsPrim);
 }
 
