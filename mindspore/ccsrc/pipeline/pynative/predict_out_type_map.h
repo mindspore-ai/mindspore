@@ -18,11 +18,13 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "utils/hash_map.h"
 #include "ops/base_operator.h"
 #include "base/base.h"
 #include "ir/dtype.h"
+#include "pipeline/pynative/base.h"
 
 namespace mindspore {
 namespace pynative {
@@ -284,20 +286,9 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"sequence_len", kTypeNone},
                                                        {"tuple_setitem", kTypeNone}};
 
-static TypePtr PredictOutTypeByName(const std::string &op_name) {
-  static PredictOutTypeMap ops_map;
-  const auto iter = ops_map.find(op_name);
-  if (iter != ops_map.end()) {
-    return iter->second;
-  }
-  static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-  if (operator_fns.find(op_name) == operator_fns.end()) {
-    return ops_map[op_name] = kTypeNone;
-  }
-  const auto pre_iter = out_type_prediction.find(op_name);
-  auto type = pre_iter == out_type_prediction.end() ? kTensorType : pre_iter->second;
-  return ops_map[op_name] = type;
-}
+TypePtr PredictOutTypeByName(const std::string &op_name);
+
+TypePtr PredictOutType(const FrontendOpRunInfoPtr &op_run_info);
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PREDICTOUTTYPEMAP_H_

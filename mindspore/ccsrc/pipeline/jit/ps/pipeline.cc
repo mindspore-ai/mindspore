@@ -949,7 +949,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();
-  expander::ClearAllCache();
+  expander::ClearCompileAllCache();
   MS_LOG(INFO) << "Clean compile resource end";
 }
 

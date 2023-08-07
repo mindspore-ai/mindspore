@@ -21,6 +21,8 @@
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/profiler.h"
 #include "ops/nn_op_name.h"
+#include "ops/framework_op_name.h"
+#include "frontend/expander/pack/packfunc.h"
 
 namespace mindspore {
 namespace pynative {
@@ -87,6 +89,27 @@ std::optional<abstract::StandardPrimitiveImplReg> GetPyNativePrimitiveInferImpl(
 
   return abstract::GetPrimitiveInferImpl(primitive);
 }
+
+void AddWeightsToInput(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &graph) {
+  const auto &original_params = graph->parameters();
+  size_t params_size = original_params.size();
+  for (size_t i = op_run_info->input_size; i < params_size; ++i) {
+    // Must weight param
+    const auto &param = original_params[i]->cast<ParameterPtr>();
+    const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(original_params[i]);
+    MS_EXCEPTION_IF_NULL(tensor_value);
+    (void)op_run_info->op_grad_info->input_value.emplace_back(tensor_value);
+    op_run_info->input_value_id.push_back(PyNativeAlgo::Common::GetIdByValue(tensor_value));
+    if (op_run_info->requires_grad) {
+      (void)op_run_info->op_grad_info->input_value_grad_type.emplace_back(
+        PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, nullptr));
+    }
+    (void)op_run_info->op_grad_info->input_abs.emplace_back(param->abstract());
+    MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
+                  << tensor_value->ToString() << ". Its name is: " << param->name();
+  }
+  op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
+}
 }  // namespace
 
 void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const {
@@ -127,6 +150,15 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   // Call Cpp infer
   op_run_info->base_op_run_info.abstract =
     eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
+  if (op_run_info->base_op_run_info.abstract == nullptr) {
+    if (prim->name() == kPackFuncOpName) {
+      const auto &func_graph = expander::ExpandPackFunc(prim, op_run_info->op_grad_info->input_abs);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      op_run_info->base_op_run_info.abstract = func_graph->output()->abstract();
+      prim->set_attr("recent_graph", func_graph);
+      AddWeightsToInput(op_run_info, func_graph);
+    }
+  }
   MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   prim->EndRecordAddAttr();
 }

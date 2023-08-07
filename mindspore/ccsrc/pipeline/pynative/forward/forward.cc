@@ -105,7 +105,7 @@ void UpdateOutputStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
   if (!success) {
     const auto &op_name = op_run_info->base_op_run_info.op_name;
     MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is "
-                            << PredictOutTypeByName(op_name) << ", infer type is " << abs->BuildType()
+                            << PredictOutType(op_run_info) << ", infer type is " << abs->BuildType()
                             << ", the name of operator is [" << op_name
                             << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
   }

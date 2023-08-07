@@ -27,6 +27,7 @@ namespace mindspore {
 namespace expander {
 FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list);
 void ClearAllCache();
+void ClearCompileAllCache();
 bool IsPackGraph(const FuncGraphPtr &fg);
 void GetPackGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *parameters);
 void GetSubPackGraphParams(const FuncGraphPtr &fg, const FuncGraphPtr &g, std::vector<AnfNodePtr> *parameters,
