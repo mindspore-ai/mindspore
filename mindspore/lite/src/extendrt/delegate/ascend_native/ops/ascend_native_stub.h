@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_BISHENG_DELEGATE_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_BISHENG_DELEGATE_H_
 
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_OPS_ASCEND_NATIVE_STUB_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_OPS_ASCEND_NATIVE_STUB_H_
+#include <string>
+#include <vector>
+#include <map>
 #include <memory>
 
-#include "extendrt/delegate/type.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
-class BishengDelegate : public ExtendDelegate {
+namespace ops {
+constexpr auto kNameAscendNativeStub = "AscendNativeStub";
+/// \brief Custom defined user-defined operator prototype.
+class MIND_API AscendNativeStub : public BaseOperator {
  public:
-  BishengDelegate() = default;
-  virtual ~BishengDelegate() = default;
-
-  void ReplaceNodes(const std::shared_ptr<FuncGraph> &graph) override;
-
-  bool IsDelegateNode(const std::shared_ptr<AnfNode> &node) override;
-
-  std::shared_ptr<kernel::BaseKernel> CreateKernel(const std::shared_ptr<AnfNode> &node) override;
+  MIND_API_BASE_MEMBER(AscendNativeStub);
+  /// \brief Constructor.
+  AscendNativeStub() : BaseOperator(kNameAscendNativeStub) {}
 };
+}  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_BISHENG_DELEGATE_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_OPS_ASCEND_NATIVE_STUB_H_

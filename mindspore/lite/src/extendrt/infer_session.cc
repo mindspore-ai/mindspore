@@ -21,8 +21,28 @@
 #include "extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 #include "extendrt/delegate/plugin/litert_executor_plugin.h"
 #include "extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
+#include "extendrt/delegate/plugin/ascend_native_executor_plugin.h"
 
 namespace mindspore {
+namespace {
+void AscendPluginRegistration(const std::shared_ptr<AscendDeviceInfo> &ascend_device) {
+  constexpr auto default_npu_provider = "ge";
+  constexpr auto default_ascend_native_provider = "ascend_native";
+  auto provider = ascend_device->GetProvider();
+  if (provider == default_npu_provider) {
+    if (!lite::AscendGeExecutorPlugin::GetInstance().Register()) {
+      MS_LOG_WARNING << "Failed to register AscendGe plugin";
+      return;
+    }
+  }
+  if (provider == default_ascend_native_provider) {
+    if (!lite::AscendNativeExecutorPlugin::GetInstance().Register()) {
+      MS_LOG_WARNING << "Failed to register Ascend Native plugin";
+      return;
+    }
+  }
+}
+}  // namespace
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context,
                                                           const ConfigInfos &config_info) {
   HandleContext(context);
@@ -37,7 +57,7 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
   }
   constexpr auto default_gpu_provider = "tensorrt";
   constexpr auto default_cpu_provider = "litert";
-  constexpr auto default_npu_provider = "ge";
+
   auto device_infos = context->MutableDeviceInfo();
   for (auto &device_info : device_infos) {
     if (!device_info) {
@@ -63,13 +83,8 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
       if (!ascend_device) {
         continue;
       }
-      auto provider = ascend_device->GetProvider();
-      if (provider == default_npu_provider) {
-        if (!lite::AscendGeExecutorPlugin::GetInstance().Register()) {
-          MS_LOG_WARNING << "Failed to register AscendGe plugin";
-          return;
-        }
-      }
+      AscendPluginRegistration(ascend_device);
+      continue;
     }
     if (device_info->GetDeviceType() == kCPU) {
       auto cpu_device = device_info->Cast<CPUDeviceInfo>();
@@ -103,8 +118,8 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
         if (device_context->GetProvider() == "ge") {
           return kDelegateSession;
         }
-        if (device_context->GetProvider() == "bisheng") {
-          return kBishengSession;
+        if (device_context->GetProvider() == "ascend_native") {
+          return kAscendNativeSession;
         }
         return kSingleOpSession;
       }

@@ -13,21 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "extendrt/delegate/bisheng/delegate.h"
-
-namespace mindspore {
-void BishengDelegate::ReplaceNodes(const std::shared_ptr<FuncGraph> &graph) {
-  // need to implementation
-}
-
-bool BishengDelegate::IsDelegateNode(const std::shared_ptr<AnfNode> &node) {
-  // need to implementation
-  return true;
-}
-
-std::shared_ptr<kernel::BaseKernel> BishengDelegate::CreateKernel(const std::shared_ptr<AnfNode> &node) {
-  // need to implementation
-  return nullptr;
-}
-}  // namespace mindspore
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_ADD_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_ADD_H_
+namespace mindspore::ascend_native {
+void AddFp32(void *x1, void *x2, void *y, uint64_t elem_num, void *q);
+void AddFp16(void *x1, void *x2, void *y, uint64_t elem_num, void *q);
+}  // namespace mindspore::ascend_native
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_ADD_H_
