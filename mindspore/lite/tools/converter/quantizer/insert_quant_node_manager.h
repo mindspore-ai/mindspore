@@ -26,6 +26,7 @@
 #include "ir/func_graph.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "ops/dynamic_quant.h"
+#include "mindspore/ccsrc/frontend/parallel/strategy.h"
 
 namespace mindspore::lite::quant {
 class InsertQuantNodeManager {
@@ -124,6 +125,14 @@ class InsertQuantNodeManager {
   CNodePtr NewAddNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1, const AnfNodePtr &input_2);
 
   CNodePtr NewAscendAntiQuantCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, int dst_type);
+
+  int SetParallelStrategy(const CNodePtr &cnode, std::vector<std::vector<int64_t>> in_strategy);
+
+  std::vector<std::vector<int64_t>> ExtractStrategy(const ValuePtr &stra);
+
+  std::vector<std::vector<int64_t>> GetAddMulNodeParallelStrategy(ShapeVector weight_shape,
+                                                                  std::vector<int64_t> weight_strategy, int axis,
+                                                                  bool per_channel);
 
   template <typename T>
   void Transpose2Dim(const T *in_data, T *out_data, const int *strides, const int *perm, const int *output_shape) {
