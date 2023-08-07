@@ -215,6 +215,13 @@ class Model(BaseModel):
                 raise RuntimeError(f"load configuration failed! Error is {ret.ToString()}")
 
         if config_dict:
+            check_isinstance("config_dict", config_dict, dict)
+            for k, v in config_dict.items():
+                check_isinstance("config_dict_key", k, str)
+                check_isinstance("config_dict_value", v, dict)
+                for v_k, v_v in v.items():
+                    check_isinstance("config_dict_value_key", v_k, str)
+                    check_isinstance("config_dict_value_value", v_v, str)
             for key, value in config_dict.items():
                 ret = self._model.update_config(key, value)
                 if not ret.IsOk():
