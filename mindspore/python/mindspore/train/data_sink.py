@@ -130,16 +130,10 @@ def data_sink(fn, dataset, sink_size=1, jit_config=None, input_signature=None):
     A wrapper function to generate a function for the input function.
 
     Note:
-        When using data sinking, the dataset will automatically cycle. At this time,
-        only the total number of training steps (total_step) and the number of steps for each sinking (sink_size)
-        need to be considered. When switching from training by rounds (epochs) to data sinking,
-        the formula is as follows:
-
-        total_step = epochs * dataset_size
-
-        train_sink_step = total_step / sink_size
-
-        After transforming from `mindspore.data_sink`, you need to execute `train_sink_step` step for training.
+        When using data sinking, the dataset will be automatically sent in a loop, and only the step size of sinking
+        `sink_size` needs to be considered. The default value of `sink_size` is ``1``, which means that all data will
+        be sunk every epoch. If `sink_size` is greater than 1, the amount of data sunk per epoch will be the dataset
+        with a size of `sink_size`.
 
     Args:
         fn (Function): The Python function that will be run with dataset.
