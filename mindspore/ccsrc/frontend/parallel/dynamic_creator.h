@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,16 @@
 
 namespace mindspore {
 namespace parallel {
-#define REGISTER(className)                                                                                  \
-  OperatorInfoPtr objectCreator##className(std::string name, Shapes in, Shapes out, PrimitiveAttrs &attrs) { \
-    return std::make_shared<className>(name, in, out, attrs);                                                \
-  }                                                                                                          \
-  RegisterAction className##Register(#className, reinterpret_cast<CreatFn>(objectCreator##className));
+#define REGISTER2(opName, className)                                                                      \
+  OperatorInfoPtr objectCreator##opName(std::string name, Shapes in, Shapes out, PrimitiveAttrs &attrs) { \
+    return std::make_shared<className>(name, in, out, attrs);                                             \
+  }                                                                                                       \
+  RegisterAction opName##Register(#opName, reinterpret_cast<CreatFn>(objectCreator##opName));
 
 typedef OperatorInfoPtr (*CreatFn)(const std::string &name, const Shapes &shape_in, const Shapes shape_out,
                                    const PrimitiveAttrs &attrs);
+
+#define REGISTER(className) REGISTER2(className, className)
 
 class DynCreator {
  public:
