@@ -51,6 +51,7 @@ constexpr size_t kInt32Mask = 31;
 constexpr int kLastFisrtIndex = -1;
 constexpr int kLastSecondIndex = -2;
 const char *ATTR_NO_NEED_CONSTANT_FOLDING = "no_need_constant_folding";
+constexpr char IN_STRATEGY[] = "in_strategy";
 }  // namespace
 int InsertQuantNodeManager::SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node,
                                                 const CNodePtr &cast_cnode) {
@@ -753,6 +754,72 @@ int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph,
   return RET_OK;
 }
 
+int InsertQuantNodeManager::SetParallelStrategy(const CNodePtr &cnode, std::vector<std::vector<int64_t>> in_strategy) {
+  auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
+  CHECK_NULL_RETURN(primitive);
+  primitive->AddAttr(IN_STRATEGY, MakeValue(in_strategy));
+  return RET_OK;
+}
+
+std::vector<std::vector<int64_t>> InsertQuantNodeManager::ExtractStrategy(const ValuePtr &stra) {
+  if (stra == nullptr) {
+    return {};
+  }
+
+  auto var = stra->cast<ValueTuplePtr>();
+  if (var == nullptr) {
+    return {};
+  }
+  std::vector<std::vector<int64_t>> strategy;
+  MS_LOG(INFO) << "Extract information: strategy " << stra->ToString();
+  if (var->size() > 0) {
+    std::vector<ValuePtr> elements = var->value();
+    for (uint64_t index = 0; index < elements.size(); ++index) {
+      std::vector<int64_t> dim;
+      if (elements[index]->isa<ValueSequence>()) {
+        auto value_tuple = elements[index]->cast<ValueTuplePtr>();
+        std::vector<ValuePtr> value_vector = value_tuple->value();
+        (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
+                             [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+        strategy.push_back(dim);
+      } else {
+        MS_LOG(EXCEPTION) << "Failure: Strategy's format is wrong! Need ValueSequence";
+      }
+    }
+    if (strategy.empty()) {
+      MS_LOG(EXCEPTION) << "ExtractStrategy: failed to extract strategy";
+    }
+  }
+
+  return strategy;
+}
+
+std::vector<std::vector<int64_t>> InsertQuantNodeManager::GetAddMulNodeParallelStrategy(
+  ShapeVector weight_shape, std::vector<int64_t> weight_strategy, int axis, bool per_channel) {
+  std::vector<std::vector<int64_t>> add_mul_in_strategy;
+  std::vector<int64_t> in_strategy_1 = weight_strategy;
+  add_mul_in_strategy.push_back(in_strategy_1);
+  std::vector<int64_t> in_strategy_2;
+
+  // if perlayer quant, the input2 strategy is set to 1.
+  // if perchannel quant, the input2 strategy is set by axis, the axis dim is set by matmul input strategy,
+  // the other dim is set to 1.
+  if (per_channel) {
+    for (size_t i = 0; i < weight_shape.size(); i++) {
+      if (i == static_cast<size_t>(axis) && i < weight_strategy.size()) {
+        in_strategy_2.push_back(weight_strategy.at(i));
+      } else {
+        in_strategy_2.push_back(1);
+      }
+    }
+  } else {
+    in_strategy_2.push_back(1);
+  }
+
+  add_mul_in_strategy.push_back(in_strategy_2);
+  return add_mul_in_strategy;
+}
+
 int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                       size_t input_index, TypeId src_dtype, TypeId dst_dtype, int axis,
                                                       AscendBackend ascend_backend) {
@@ -762,6 +829,12 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
   auto input_node = cnode->input(input_index);
   auto manager = func_graph->manager();
   CHECK_NULL_RETURN(manager);
+  std::vector<std::vector<int64_t>> cnode_in_strategy;
+  if (primitive->HasAttr(IN_STRATEGY)) {
+    cnode_in_strategy = ExtractStrategy(primitive->GetAttr(IN_STRATEGY));
+    CHECK_LESS_RETURN(cnode_in_strategy.size(), input_index);
+    MS_LOG(INFO) << "cnode: " << cnode->fullname_with_scope() << " in strategy is " << cnode_in_strategy;
+  }
   if (!input_node->isa<mindspore::Parameter>()) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " input " << input_index << " is not parameter node.";
     return RET_ERROR;
@@ -792,11 +865,23 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
   }
 
   CHECK_NULL_RETURN(cast_cnode);
+  // cast node do not need to set parallel strategy, antiquant node need set parallel strategy
+  if (primitive->HasAttr(IN_STRATEGY) && ascend_backend == ASCEND910B) {
+    std::vector<std::vector<int64_t>> cast_in_strategy;
+    std::vector<int64_t> in_strategy_1 = cnode_in_strategy[input_index - kPrimOffset];
+    cast_in_strategy.push_back(in_strategy_1);
+    auto ret = SetParallelStrategy(cast_cnode, cast_in_strategy);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Fail to set cnode parallel strategy, cnode: " << cast_cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
+  }
+
   ParameterPtr scales_node;
   ParameterPtr zps_node;
   auto ret = CalculateScaleZPNode(func_graph, cnode, input_index, &scales_node, &zps_node, src_dtype, dst_dtype, axis);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Fail to Remove node: " << input_node->fullname_with_scope() << " quant param";
+    MS_LOG(ERROR) << "Fail to calculate scale & zero_point node: " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
 
@@ -805,6 +890,30 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
 
   auto mul_cnode = NewMulNode(func_graph, add_cnode, scales_node);
   CHECK_NULL_RETURN(mul_cnode);
+
+  if (primitive->HasAttr(IN_STRATEGY)) {
+    ShapeVector weight_shape;
+    if (opt::FetchShapeFromAbstract(input_node->abstract(), &weight_shape) != lite::RET_OK) {
+      MS_LOG(ERROR) << "fetch shape failed." << input_node->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+    std::vector<int64_t> weight_strategy = cnode_in_strategy[input_index - kPrimOffset];
+    bool per_channel = input_quant_params.size() > 1;
+    auto add_mul_in_strategy = GetAddMulNodeParallelStrategy(weight_shape, weight_strategy, axis, per_channel);
+
+    // add_cnode & mul_cnode set parallel strategy
+    ret = SetParallelStrategy(add_cnode, add_mul_in_strategy);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Fail to set add cnode parallel strategy, cnode: " << add_cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
+    ret = SetParallelStrategy(mul_cnode, add_mul_in_strategy);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Fail to set mul cnode parallel strategy, cnode: " << mul_cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
+  }
+
   auto node_map = manager->node_users();
 
   // Remove QuantParam
@@ -969,8 +1078,7 @@ CNodePtr InsertQuantNodeManager::NewCastNode(const FuncGraphPtr &func_graph, con
   TypePtr type_ptr = TypeIdToType(TypeId(dst_type));
   prim->AddAttr(ops::kDstType, type_ptr);
   prim->AddAttr(ATTR_NO_NEED_CONSTANT_FOLDING, MakeValue(true));
-  auto dtype_node = opt::BuildIntValueParameterNode(func_graph, dst_type, input_node->fullname_with_scope() + "-dtype");
-  std::vector<AnfNodePtr> cast_op_inputs = {NewValueNode(prim), input_node, dtype_node};
+  std::vector<AnfNodePtr> cast_op_inputs = {NewValueNode(prim), input_node};
   auto cast_cnode = func_graph->NewCNode(cast_op_inputs);
   cast_cnode->set_fullname_with_scope(input_node->fullname_with_scope() + "-Cast");
   cast_cnode->set_abstract(input_node->abstract()->Clone());
