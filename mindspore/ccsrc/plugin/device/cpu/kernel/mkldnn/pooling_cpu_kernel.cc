@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,13 +193,9 @@ void PoolingCpuKernelMod::ReComputeDivisor(T *dst) {
 std::vector<KernelAttr> PoolingCpuKernelMod::GetOpSupport() {
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
     {kMaxPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-    {kMaxPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
     {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
     {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)}},
-    {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}},
-    {kAvgPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-    {kAvgPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}},
-    {kAvgPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)}}};
+    {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}}};
   auto iter = support_list_map.find(kernel_type_);
   if (iter == support_list_map.end()) {
     MS_LOG(EXCEPTION) << "Does not support " << kernel_type_ << "!";
@@ -256,13 +252,9 @@ bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   return true;
 }
 
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool3D,
-                                 []() { return std::make_shared<PoolingCpuKernelMod>(kMaxPool3DOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool,
                                  []() { return std::make_shared<PoolingCpuKernelMod>(kMaxPoolOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool,
                                  []() { return std::make_shared<PoolingCpuKernelMod>(kAvgPoolOpName); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool3D,
-                                 []() { return std::make_shared<PoolingCpuKernelMod>(kAvgPool3DOpName); });
 }  // namespace kernel
 }  // namespace mindspore

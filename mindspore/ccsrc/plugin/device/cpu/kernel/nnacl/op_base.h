@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #ifndef NNACL_OP_BASE_H_
 #define NNACL_OP_BASE_H_
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -760,5 +761,34 @@ typedef enum CalFixedMultiplierMode {
   Method_SinglePrecision,
   Method_DoublePrecision
 } CalFixedMultiplierMode;
+
+#define VA_ARG_TUPLE_LEN 2
+static inline void offset_to_index_init(int offset, int cnt, ...) {
+  va_list valist;
+  va_start(valist, cnt);
+  int start = offset;
+  for (int i = 0; i < cnt; i += VA_ARG_TUPLE_LEN) {
+    int *x = va_arg(valist, int *);
+    int X = va_arg(valist, int);
+
+    *x = start % X;
+    start = start / X;
+  }
+  va_end(valist);
+}
+
+static inline void offset_to_index_step(int cnt, ...) {
+  va_list valist;
+  int flag = 1;
+  va_start(valist, cnt);
+  for (int i = 0; i < cnt; i += VA_ARG_TUPLE_LEN) {
+    int *x = va_arg(valist, int *);
+    int X = va_arg(valist, int);
+    if (flag) {
+      *x = (++*x != X) ? (flag = 0, *x) : (flag = 1, 0);
+    }
+  }
+  va_end(valist);
+}
 
 #endif  // NNACL_OP_BASE_H_

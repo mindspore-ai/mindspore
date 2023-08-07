@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@
 
 namespace mindspore {
 namespace ops {
+constexpr size_t kMaxPool3DPadDims = 6;
+
 MIND_API_OPERATOR_IMPL(MaxPool3D, BaseOperator);
 
 void MaxPool3D::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
@@ -212,6 +214,36 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
   return output_shape;
 }
 
+void GetPadsByPadding(const PrimitivePtr &primitive, int64_t in_d, int64_t in_h, int64_t in_w, int64_t kernel_d,
+                      int64_t kernel_h, int64_t kernel_w, int64_t stride_d, int64_t stride_h, int64_t stride_w,
+                      const int64_t &pad_mode, const std::vector<int64_t> &padding, std::vector<int64_t> *pad_list) {
+  MS_EXCEPTION_IF_NULL(pad_list);
+  if (pad_mode == PadMode::VALID) {
+    (void)pad_list->insert(pad_list->begin(), kMaxPool3DPadDims, 0);
+  } else if (pad_mode == PadMode::SAME) {
+    if (stride_d == 0 || stride_h == 0 || stride_w == 0) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', stride_d or stride_h or stride_w must be non-zero, but got stride_d: " << stride_d
+                               << ", stride_h: " << stride_h << ", stride_w: " << stride_w << ".";
+    }
+    int64_t tail_d = in_d % stride_d;
+    int64_t tail_h = in_h % stride_h;
+    int64_t tail_w = in_w % stride_w;
+    int64_t pad_d = std::max((tail_d > 0 ? kernel_d - tail_d : kernel_d - stride_d), (int64_t)0);
+    int64_t pad_h = std::max((tail_h > 0 ? kernel_h - tail_h : kernel_h - stride_h), (int64_t)0);
+    int64_t pad_w = std::max((tail_w > 0 ? kernel_w - tail_w : kernel_w - stride_w), (int64_t)0);
+    constexpr int twice = 2;
+    pad_list->push_back(static_cast<int64_t>(std::floor(pad_d / twice)));
+    pad_list->push_back(pad_d - pad_list->at(0));
+    pad_list->push_back(static_cast<int64_t>(std::floor(pad_h / twice)));
+    pad_list->push_back(pad_h - pad_list->at(kInputIndex2));
+    pad_list->push_back(static_cast<int64_t>(std::floor(pad_w / twice)));
+    pad_list->push_back(pad_w - pad_list->at(kInputIndex4));
+  } else if (pad_mode == PadMode::PAD) {
+    pad_list->assign(padding.begin(), padding.end());
+  }
+}
+
 abstract::ShapePtr MaxPool3DInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t k5DInputDims = 5;
   MS_EXCEPTION_IF_NULL(primitive);
@@ -237,8 +269,12 @@ abstract::ShapePtr MaxPool3DInferShape(const PrimitivePtr &primitive, const std:
   auto stride_h = strides[kInputIndex3];
   auto stride_w = strides[kInputIndex4];
 
+  std::vector<int64_t> new_pad_list;
+  GetPadsByPadding(primitive, in_shape[kInputIndex2], in_shape[kInputIndex3], in_shape[kInputIndex4], kernel_d,
+                   kernel_h, kernel_w, stride_d, stride_h, stride_w, pad_mode, pad_list, &new_pad_list);
+  primitive->set_attr(kPadList, MakeValue(new_pad_list));
   std::vector<int64_t> out_shape = GetOutputShape(primitive, in_shape, kernel_d, kernel_h, kernel_w, stride_d, stride_h,
-                                                  stride_w, pad_list, ceil_mode, pad_mode);
+                                                  stride_w, new_pad_list, ceil_mode, pad_mode);
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', output shape's all elements must be positive, but got shape: " << out_shape << ".";

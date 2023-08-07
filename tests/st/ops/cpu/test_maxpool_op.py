@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -121,14 +121,15 @@ def test_maxpool2d_same():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_maxpool3d_1():
+@pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
+def test_maxpool3d_1(dtype):
     """
     Feature: test maxpool3d op.
     Description: including forward and backward.
     Expectation: expect correct forward and backward result.
     """
     x_shape = (1, 3, 2, 3, 4)
-    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
+    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(dtype)
     maxpool = MaxPool(dim=3, kernel_size=(2, 2, 3), strides=1, pad_mode='VALID')
     actual_output = maxpool(x)
     expect_output = np.array([[[[[18, 19],
@@ -166,14 +167,15 @@ def test_maxpool3d_1():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_maxpool3d_2():
+@pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
+def test_maxpool3d_2(dtype):
     """
     Feature: test maxpool3d op.
     Description: including forward and backward.
     Expectation: expect correct forward and backward result.
     """
     x_shape = (1, 3, 2, 3, 4)
-    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
+    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(dtype)
     maxpool = MaxPool(dim=3, kernel_size=2, strides=1, pad_mode='VALID')
     actual_output = maxpool(x)
     expect_output = np.array([[[[[17, 18, 19],
@@ -211,14 +213,15 @@ def test_maxpool3d_2():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_maxpool3d_3():
+@pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
+def test_maxpool3d_3(dtype):
     """
     Feature: test maxpool3d op.
     Description: including forward and backward.
     Expectation: expect correct forward and backward result.
     """
     x_shape = (1, 3, 2, 3, 4)
-    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
+    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(dtype)
     maxpool = MaxPool(dim=3, kernel_size=2, strides=3, pad_mode='VALID')
     actual_output = maxpool(x)
     expect_output = np.array([[[[[17]]],
@@ -253,14 +256,15 @@ def test_maxpool3d_3():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_maxpool3d_4():
+@pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
+def test_maxpool3d_4(dtype):
     """
     Feature: test maxpool3d op.
     Description: including forward and backward.
     Expectation: expect correct forward and backward result.
     """
     x_shape = (1, 3, 2, 3, 4)
-    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
+    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(dtype)
     maxpool = MaxPool(dim=3, kernel_size=(2, 2, 3), strides=1, pad_mode='SAME')
     actual_output = maxpool(x)
     expect_output = np.array([[[[[17, 18, 19, 19],

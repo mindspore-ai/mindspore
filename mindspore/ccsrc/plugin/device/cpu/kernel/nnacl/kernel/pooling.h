@@ -36,6 +36,13 @@ typedef struct PoolingComputeParam {
   float maxf;
 } PoolingComputeParam;
 
+typedef struct Pooling3DComputeParam {
+  PoolingComputeParam pooling_compute_param_;
+  int input_d_;
+  int output_d_;
+  int window_d_;
+} Pooling3DComputeParam;
+
 typedef struct PoolingStruct {
   KernelBase base_;
   PoolingComputeParam compute_;
