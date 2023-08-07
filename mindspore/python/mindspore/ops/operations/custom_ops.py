@@ -620,7 +620,7 @@ class Custom(ops.PrimitiveWithInfer):
                     raise TypeError(
                         "{}, the legal path for the file is {}, but the file is {}".format(
                             self.log_prefix, legal_path, file_path))
-            if not file_path.endswith("so"):
+            if file_path.endswith(("cu", "cpp", "cc")):
                 file_path = _compile_aot(file_path)
                 self.func = file_path + ":" + file_name_list[1]
 

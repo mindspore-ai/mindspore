@@ -127,32 +127,24 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     const auto &exec_info = GetValue<std::string>(base_operator->GetPrim()->GetAttr("func_name"));
     if (auto pos = exec_info.find(":"); pos != std::string::npos) {
       auto path = exec_info.substr(0, pos);
+      if (base_operator->GetPrim()->HasAttr("path_from_env") &&
+          GetValue<bool>(base_operator->GetPrim()->GetAttr("path_from_env"))) {
+        const char *path_in_env = std::getenv(path.c_str());
+        if (path_in_env == nullptr) {
+          MS_LOG(WARNING) << "For '" << kernel_name_ << "' on GPU, the attr path_from_env is set but the env var ["
+                          << path << "] is empty. Use [" << path << "] as the path to the library instead.";
+
+        } else {
+          path = std::string(path_in_env);
+        }
+      }
       auto real_path = FileUtils::GetRealPath(path.c_str());
       if (!real_path.has_value()) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on GPU, couldn't find the AOT binary file: " << path;
       }
       file_path_ = real_path.value();
       func_name_ = exec_info.substr(pos + 1);
-
-      constexpr auto kWhiteList = "MS_CUSTOM_AOT_WHITE_LIST";
-      const char *value = std::getenv(kWhiteList);
-      if (value == nullptr) {
-        MS_LOG(WARNING) << "For '" << kernel_name_ << "' on GPU, no white list is set and it might cause problems. "
-                        << "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST";
-      } else {
-        auto white_list = FileUtils::GetRealPath(value);
-        if (!white_list.has_value()) {
-          MS_LOG(EXCEPTION) << "Illegal white list path in MS_CUSTOM_AOT_WHITE_LIST: " << std::string(value);
-        }
-        constexpr auto kKernelMeta = "akg_kernel_meta";
-        if (file_path_.find(white_list.value()) == std::string::npos &&
-            file_path_.find(kKernelMeta) == std::string::npos) {
-          MS_LOG(EXCEPTION)
-            << "For '" << kernel_name_
-            << "' on GPU, the file is not place in the legal path file defined by MS_CUSTOM_AOT_WHITE_LIST: "
-            << white_list.value() << ". The file path is: " << file_path_;
-        }
-      }
+      PathChecking();
     } else {
       MS_LOG(EXCEPTION)
         << "For '" << kernel_name_ << "' on GPU, user defined function path '" << exec_info
@@ -279,6 +271,32 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
   std::vector<const char *> type_pointer_list_;
 
   AotExtraImpl attrs_;
+
+  void PathChecking() {
+    constexpr auto kWhiteList = "MS_CUSTOM_AOT_WHITE_LIST";
+    const char *value = std::getenv(kWhiteList);
+    if (value == nullptr) {
+      static bool print_gpu_warning_once = true;
+      if (print_gpu_warning_once) {
+        MS_LOG(WARNING) << "For '" << kernel_name_ << "' on GPU, no white list is set and it might cause problems. "
+                        << "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST.";
+        print_gpu_warning_once = false;
+      }
+    } else {
+      auto white_list = FileUtils::GetRealPath(value);
+      if (!white_list.has_value()) {
+        MS_LOG(EXCEPTION) << "Illegal white list path in MS_CUSTOM_AOT_WHITE_LIST: " << std::string(value);
+      }
+      constexpr auto kKernelMeta = "akg_kernel_meta";
+      if (file_path_.find(white_list.value()) == std::string::npos &&
+          file_path_.find(kKernelMeta) == std::string::npos) {
+        MS_LOG(EXCEPTION)
+          << "For '" << kernel_name_
+          << "' on GPU, the file is not place in the legal path file defined by MS_CUSTOM_AOT_WHITE_LIST: "
+          << white_list.value() << ". The file path is: " << file_path_;
+      }
+    }
+  }
 };
 }  // namespace kernel
 }  // namespace mindspore

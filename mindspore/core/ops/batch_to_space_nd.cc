@@ -83,11 +83,12 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
     CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, crops_sum, prim_name);
     out_shape[i + offset] = x_block_prod - crops_sum;
   }
-  if (out_shape[0] % block_shape_prod != 0) {
+  if (block_shape_prod <= 0 || out_shape[0] % block_shape_prod != 0) {
     MS_EXCEPTION(ValueError)
       << "For '" << prim_name
       << "', the first dim of 'input_x' must be divisible by 'block_shape_prod'. But got first dim of 'input_x': "
-      << out_shape[0] << ", 'block_shape_prod' with value: " << block_shape_prod << ".";
+      << out_shape[0] << ", 'block_shape_prod' as the product of block shapes with value: " << block_shape_prod
+      << ", and block shapes being: " << block_shape << ".";
   }
   out_shape[0] /= block_shape_prod;
   return std::make_shared<abstract::Shape>(out_shape);
