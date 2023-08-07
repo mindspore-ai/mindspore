@@ -109,6 +109,7 @@ void *AscendAllocatorPlugin::Malloc(size_t size, int device_id) {
     return nullptr;
   }
   if (ascend_allocator_plugin_impl_ == nullptr) {
+    MS_LOG(ERROR) << "ascend_allocator_plugin_impl_ is nullptr.";
     return nullptr;
   }
   auto device_data = ascend_allocator_plugin_impl_->Malloc(size, device_id);
@@ -124,10 +125,11 @@ void AscendAllocatorPlugin::Free(void *device_data) {
     return;
   }
   if (ascend_allocator_plugin_impl_ == nullptr) {
+    MS_LOG(ERROR) << "ascend_allocator_plugin_impl_ is nullptr.";
     return;
   }
   if (device_data == nullptr) {
-    MS_LOG(INFO) << "device data is nullptr.";
+    MS_LOG(ERROR) << "device data is nullptr.";
     return;
   }
   ascend_allocator_plugin_impl_->Free(device_data);

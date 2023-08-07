@@ -42,7 +42,7 @@ int AclAllocator::GetCurrentDeviceId() {
   int32_t current_device_id;
   auto ret = aclrtGetDevice(&current_device_id);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "GetDeviceCount failed.";
+    MS_LOG(INFO) << "GetDeviceCount failed.";
     return -1;
   }
   return current_device_id;
@@ -54,6 +54,14 @@ void *AclAllocator::Malloc(size_t size, int device_id) {
     return nullptr;
   }
   int32_t current_device_id = GetCurrentDeviceId();
+  if (current_device_id == -1) {
+    auto ret = aclrtSetDevice(0);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclrt Set device failed.";
+      return nullptr;
+    }
+    current_device_id = 0;
+  }
   if (device_id == -1) {
     device_id = current_device_id;
   }

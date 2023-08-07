@@ -203,6 +203,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, const MSTensor &tensor, const std::vector<char> &device,
                                  int device_id) noexcept {
 #ifdef ENABLE_CLOUD_INFERENCE
+  kernel::AscendAllocatorPlugin::GetInstance().Register();
   auto dst_device_type = CharToString(device);
   if (!dst_device_type.empty() && dst_device_type != "ascend") {
     MS_LOG(ERROR) << "only support create ascend device tensor.";
