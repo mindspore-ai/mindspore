@@ -207,7 +207,6 @@ void SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
   }
 }
 
-typedef std::vector<std::string> vector;
 STATUS ConfigFileParser::ParseCustomPattern(const std::shared_ptr<mindspore::ConverterPara> &param,
                                             std::string custom_pattern_str) {
   std::vector<std::string> custom_pattern_strs = mindspore::lite::SplitStringToVector(custom_pattern_str, ";");
@@ -217,7 +216,7 @@ STATUS ConfigFileParser::ParseCustomPattern(const std::shared_ptr<mindspore::Con
       return RET_ERROR;
     }
     std::string op_type = item[0];
-    vector names_list = mindspore::lite::SplitStringToVector(item[1], ",");
+    auto names_list = mindspore::lite::SplitStringToVector(item[1], ",");
     std::string status = item[2];
     if (status == "enable") {
       if (param->aclModelOptionCfgParam.enable_custom_fusion_pattern.find(op_type) !=

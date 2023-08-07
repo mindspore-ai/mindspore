@@ -86,7 +86,23 @@ bool AscendAllocatorPlugin::Register() {
 #endif
   return true;
 }
-void *AscendAllocatorPlugin::Malloc(size_t size) {
+
+int AscendAllocatorPlugin::GetCurrentDeviceId() {
+#if !defined(_WIN32)
+  if (!is_registered_) {
+    MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
+    return -1;
+  }
+  if (ascend_allocator_plugin_impl_ == nullptr) {
+    return -1;
+  }
+  auto device_data = ascend_allocator_plugin_impl_->GetCurrentDeviceId();
+  return device_data;
+#endif
+  return -1;
+}
+
+void *AscendAllocatorPlugin::Malloc(size_t size, int device_id) {
 #if !defined(_WIN32)
   if (!is_registered_) {
     MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
@@ -95,7 +111,8 @@ void *AscendAllocatorPlugin::Malloc(size_t size) {
   if (ascend_allocator_plugin_impl_ == nullptr) {
     return nullptr;
   }
-  return ascend_allocator_plugin_impl_->Malloc(size);
+  auto device_data = ascend_allocator_plugin_impl_->Malloc(size, device_id);
+  return device_data;
 #endif
   return nullptr;
 }
@@ -132,6 +149,26 @@ Status AscendAllocatorPlugin::CopyDeviceDataToHost(void *device_data, void *host
     return kLiteMemoryFailed;
   }
   return ascend_allocator_plugin_impl_->CopyDeviceDataToHost(device_data, host_data, data_size);
+#endif
+  return kSuccess;
+}
+
+Status AscendAllocatorPlugin::CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t data_size,
+                                                     int src_device_id, int dst_device_id) {
+#if !defined(_WIN32)
+  if (!is_registered_) {
+    MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
+    return kLiteMemoryFailed;
+  }
+  if (dst_device == nullptr || src_device == nullptr) {
+    MS_LOG(INFO) << "device data is nullptr.";
+    return kLiteMemoryFailed;
+  }
+  if (ascend_allocator_plugin_impl_ == nullptr) {
+    return kLiteMemoryFailed;
+  }
+  return ascend_allocator_plugin_impl_->CopyDeviceDataToDevice(src_device, dst_device, data_size, src_device_id,
+                                                               dst_device_id);
 #endif
   return kSuccess;
 }

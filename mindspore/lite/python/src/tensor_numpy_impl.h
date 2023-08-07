@@ -91,6 +91,14 @@ class TensorNumpyImpl : public MutableTensorImpl {
 
   void SetData(void *data, bool own_data) override { MS_LOG(ERROR) << "Cannot call SetData for numpy tensor"; }
 
+  int GetDeviceId() const override { return device_id_; }
+
+  void SetDeviceId(int device_id) override { device_id_ = device_id; }
+
+  std::string GetDevice() const override { return device_; }
+
+  void SetDevice(const std::string &device) override { device_ = device; }
+
   void *MutableData() override { return buffer_.ptr; }
 
   std::shared_ptr<Impl> Clone() const override {
@@ -150,6 +158,8 @@ class TensorNumpyImpl : public MutableTensorImpl {
   py::buffer_info buffer_;
   std::vector<int64_t> ms_shape_;
   void *device_data_ = nullptr;
+  std::string device_ = "";
+  int device_id_ = -1;
 };
 }  // namespace mindspore
 

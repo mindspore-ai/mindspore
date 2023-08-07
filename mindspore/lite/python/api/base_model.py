@@ -76,7 +76,7 @@ class BaseModel:
                 # pylint: disable=protected-access
                 _outputs.append(element._tensor)
         predict_result = self._model.predict(_inputs, _outputs)
-        if predict_result is None:
+        if predict_result is None or len(predict_result) == 0:
             raise RuntimeError(f"predict failed!")
         predict_outputs = []
         for output_tensor in predict_result:
