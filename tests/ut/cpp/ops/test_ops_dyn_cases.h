@@ -24,5 +24,15 @@ extern testing::internal::ValueArray<
   EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams,
   EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams>
   EltwiseDynShapeTestCases;
+extern testing::internal::ValueArray<BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
+                                     BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
+                                     BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
+                                     BroadcastOpShapeParams>
+  BroadcastOpShapeScalarTensorCases;
+extern testing::internal::ValueArray<BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
+                                     BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
+                                     BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
+                                     BroadcastOpShapeParams>
+  BroadcastOpShapeTensorTensorCases;
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_TESTS_UT_CPP_OPS_TEST_OPS_DYN_CASES_H_
