@@ -461,12 +461,8 @@ TensorRTOp *TensorRTExecutor::FindTensorRTOp(const CNodePtr &cnode, const BaseOp
   auto node_type = base_operator->name();
   auto &plugin_factory = TensorRTRegistrationFactory::Get();
   if (node_type == ops::kNameCustom) {
-    auto custom_node = std::dynamic_pointer_cast<ops::Custom>(base_operator);
-    auto attrs = custom_node->get_attr();
-    if (attrs.find("unique_name") != attrs.end()) {
-      auto unique_name = attrs.at("unique_name");
-      node_type =
-        std::string(static_cast<const char *>(static_cast<const void *>(unique_name.data())), unique_name.size());
+    if (common::AnfAlgo::HasNodeAttr("unique_name", cnode)) {
+      node_type = common::AnfAlgo::GetNodeAttr<std::string>(cnode, "unique_name");
     }
   }
   if (plugin_factory.HasKey(node_type)) {

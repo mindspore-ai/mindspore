@@ -7,9 +7,11 @@ function Convert() {
   mkfifo ${fifo_file}
   exec 6<>${fifo_file}
   rm -f ${fifo_file}
+  # To mark weather converter_lite failed or not. 
+  fail_file="fail.txt"
+  touch $fail_file
   max_converter_jobs=6
   for ((i = 0; i < ${max_converter_jobs}; i++)); do echo; done >&6
-  fail=0
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
         quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size save_type \
         input_format elapsed_time ret
@@ -40,6 +42,7 @@ function Convert() {
         cfg_file_name=${cfg_file##*/}
         quant_config_path="${cfg_file%/*}/quant"
         ascend_config_path="${cfg_file%/*}/"
+        graph_kernel_config_path="${cfg_file%/*}/graph_kernel"
         case $model_type in
           pb)
             model_fmk="TF"
@@ -126,6 +129,18 @@ function Convert() {
           fi
         fi
 
+        if [[ ${cfg_file_name} =~ "_graph_kernel" ]]; then
+          save_type="MINDIR"
+          config_file="${graph_kernel_config_path}/graph_kernel_cpu.cfg"
+          if [[ ${cfg_file_name} =~ "_gpu" ]]; then
+            config_file="${graph_kernel_config_path}/graph_kernel_gpu.cfg"
+            optimize="gpu_oriented"
+          elif [[ ${cfg_file_name} =~ "_ascend" ]]; then
+            config_file="${graph_kernel_config_path}/graph_kernel_ascend.cfg"
+            optimize="ascend_oriented"
+          fi
+        fi
+
         if [[ ${cfg_file_name} =~ "posttraining" || ${cfg_file_name} =~ "posttraining_cloud" ]]; then
           quant_type="PostTraining"
           output_file=${output_file}"_posttraining"
@@ -190,7 +205,7 @@ function Convert() {
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
               --configFile=${config_file} --saveType=${save_type} --optimize=${optimize} \
-              --inputDataFormat=${input_format} >> "$4" 
+              --inputDataFormat=${input_format} &>> "$4" 
         else
             echo "./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes} --fp16=${fp16_weight}\
@@ -198,7 +213,7 @@ function Convert() {
 
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
-              --configFile=${config_file} --trainModel=${train_model} >> "$4"
+              --configFile=${config_file} --trainModel=${train_model} &>> "$4"
             
         fi
         ret=$?
@@ -224,7 +239,7 @@ function Convert() {
                 converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}' '${elapsed_time}' failed';echo ${converter_result} >> $5
                 rm -rf ${output_file}
                 if [[ $6 != "ON" ]]; then
-                  fail=1
+                  echo 1 > $fail_file
                 fi
               else
                 converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}' '${elapsed_time}' pass';echo ${converter_result} >> $5
@@ -233,7 +248,7 @@ function Convert() {
         else
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' '${elapsed_time}' failed';echo ${converter_result} >> $5
             if [[ $6 != "ON" ]]; then
-              fail=1
+              echo 1 > $fail_file
             fi
         fi
         echo >&6
@@ -242,6 +257,10 @@ function Convert() {
   done
   wait
   exec 6>&-
+  fail=0
+  if [ -s $fail_file ]; then
+    fail=1
+  fi
   return ${fail}
 }
 

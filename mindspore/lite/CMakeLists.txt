@@ -3,6 +3,7 @@ project(Lite)
 
 set(BUILD_LITE "on")
 add_compile_definitions(BUILD_LITE)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/secure_option.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/compile_link_option.cmake)

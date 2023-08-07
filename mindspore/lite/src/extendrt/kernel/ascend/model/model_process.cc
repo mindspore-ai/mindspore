@@ -1056,7 +1056,7 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
   }
 
   if (acl_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Execute Model Failed, ret = " << acl_ret;
+    MS_LOG(ERROR) << "Execute Model Failed, ret = " << acl_ret << ", detail:" << aclGetRecentErrMsg();
     return false;
   }
   if (is_dynamic_output_) {

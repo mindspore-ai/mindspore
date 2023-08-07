@@ -100,11 +100,15 @@ AnfNodePtr GpuKernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, cons
   ifile >> json_info;
   auto process = json_info.at(kJsonKeyProcess).get<string>();
   custom_attrs[kJsonKeyProcess] = std::vector<uint8_t>(process.begin(), process.end());
-  auto target_info = json_info.at(kJsonKeyTargetInfo);
-  auto compute_capability = target_info.at(kJsonKeyComputeCapability).get<string>();
-  custom_attrs[kJsonKeyComputeCapability] = std::vector<uint8_t>(compute_capability.begin(), compute_capability.end());
-  auto sm_count = target_info.at(kJsonKeySmCount).get<std::string>();
-  custom_attrs[kJsonKeySmCount] = std::vector<uint8_t>(sm_count.begin(), sm_count.end());
+  if (json_info.find(kJsonKeyTargetInfo) != json_info.end()) {
+    auto target_info = json_info.at(kJsonKeyTargetInfo);
+    auto compute_capability = target_info.at(kJsonKeyComputeCapability).get<string>();
+    custom_attrs[kJsonKeyComputeCapability] =
+      std::vector<uint8_t>(compute_capability.begin(), compute_capability.end());
+    auto sm_count = target_info.at(kJsonKeySmCount).get<int>();
+    auto sm_count_str = std::to_string(sm_count);
+    custom_attrs[kJsonKeySmCount] = std::vector<uint8_t>(sm_count_str.begin(), sm_count_str.end());
+  }
   op->set_attr(custom_attrs);
   return custom_cnode;
 }

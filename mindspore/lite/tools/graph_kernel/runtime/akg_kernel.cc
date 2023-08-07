@@ -69,10 +69,10 @@ class AkgCallBack {
 
 int AkgKernel::CheckAkgKernelInfo() {
   std::string current_arch;
-#if defined(ENABLE_ARM)
-  current_arch = "arm";
-#elif defined(ENABLE_ARM64)
+#if defined(ENABLE_ARM64)
   current_arch = "aarch64";
+#elif defined(ENABLE_ARM)
+  current_arch = "arm";
 #else
   current_arch = "x86_64";
 #endif
