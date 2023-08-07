@@ -4,7 +4,10 @@ endif()
 
 if(ENABLE_GPU)
     file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
-    file(GLOB_RECURSE _AKG_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "akg/*.cc")
+    file(GLOB_RECURSE _AKG_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "akg/*.cc"
+        "dynamic_akg/*.cc"
+    )
     list(REMOVE_ITEM GPU_SRC_LIST ${_AKG_SRC_LIST})
     list(REMOVE_ITEM GPU_SRC_LIST "nccl/nccl_collective_gpu_kernel.cc")
     list(REMOVE_ITEM GPU_SRC_LIST "nccl/nccl_p2p_gpu_kernel.cc")
@@ -42,6 +45,7 @@ endif()
 if(ENABLE_AKG AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND ENABLE_GPU)
     file(GLOB_RECURSE AKG_GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "akg/*.cc"
+        "dynamic_akg/*.cc"
     )
 endif()
 

@@ -157,6 +157,9 @@ bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
     if (common::AnfAlgo::IsDynamicShape(node)) {
       return true;
     }
+  } else if (common::AnfAlgo::IsDynamicRankNode(node)) {
+    // dynamic rank node is disabled with enable_dynamic_shape_fusion to be true
+    return true;
   }
 
   // the "skip" is used by inplace node.
