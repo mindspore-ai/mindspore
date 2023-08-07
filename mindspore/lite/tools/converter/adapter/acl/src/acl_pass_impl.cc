@@ -625,11 +625,13 @@ std::string AclPassImpl::AdjustCnodeName(const PrimitivePtr &prim) {
   return name;
 }
 
-STATUS AclPassImpl::RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
+STATUS AclPassImpl::RunPrimitiveMapper(const FuncGraphPtr &func_graph, bool is_ptq_mindir) {
   MS_LOG(INFO) << "Deparser graph start.";
   MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graph, &all_func_graphs);
+  const std::set<PrimitivePtr> support_ptq_mindir_types = {prim::kPrimQuantDTypeCast, prim::kPrimAddFusion,
+                                                           prim::kPrimMulFusion};
   for (auto graph : all_func_graphs) {
     auto node_list = TopoSort(graph->get_return());
     for (auto &node : node_list) {
@@ -637,6 +639,9 @@ STATUS AclPassImpl::RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
         continue;
       }
       auto cnode = node->cast<CNodePtr>();
+      if (is_ptq_mindir && !lite::quant::CheckNodeInSet(cnode, support_ptq_mindir_types)) {
+        continue;
+      }
       MS_CHECK_TRUE_MSG(cnode != nullptr, lite::RET_ERROR, "cnode is nullptr.");
       auto prim = GetCNodePrimitive(cnode);
       CHECK_NULL_RETURN(prim);
@@ -695,11 +700,21 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
-  if (!(is_ptq_quant_ || param_->ascendQuantParam.mode != lite::quant::NONE) && fmk_type_ == converter::kFmkTypeMs) {
+  bool ascend_quant = param_->ascendQuantParam.mode != lite::quant::NONE || is_ptq_quant_;
+  if (ascend_quant && fmk_type_ == converter::kFmkTypeMs) {
+    MS_LOG(INFO) << "only run Ascend quant primitive mapper";
+    if (RunPrimitiveMapper(func_graph, true) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Run mapper primitive failed.";
+      return lite::RET_ERROR;
+    }
+    return lite::RET_OK;
+  }
+
+  if (!ascend_quant && fmk_type_ == converter::kFmkTypeMs) {
     MapperForOrgMindIR(func_graph);
     return lite::RET_OK;
   }
-  if (RunPrimitiveMapper(func_graph) != lite::RET_OK) {
+  if (RunPrimitiveMapper(func_graph, false) != lite::RET_OK) {
     MS_LOG(ERROR) << "Run mapper primitive failed.";
     return lite::RET_ERROR;
   }

@@ -63,7 +63,7 @@ class AclPassImpl {
 
  private:
   /* map func graph */
-  STATUS RunPrimitiveMapper(const FuncGraphPtr &func_graph);
+  STATUS RunPrimitiveMapper(const FuncGraphPtr &func_graph, bool is_ptq_mindir = false);
   std::string AdjustCnodeName(const PrimitivePtr &prim);
 
  private:
