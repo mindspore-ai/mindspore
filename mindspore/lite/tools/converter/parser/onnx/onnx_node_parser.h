@@ -78,6 +78,10 @@ class OnnxNodeParser {
   static const onnx::TensorProto *GetConstantTensorData(const onnx::GraphProto &onnx_graph,
                                                         const std::string &input_name);
 
+  static void SetOnnxModelFile(const std::string model_file) { model_file_ = model_file; }
+
+  static std::string GetOnnxModelFile() { return model_file_; }
+
   static STATUS SetDataTypeAndValue(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, size_t data_count,
                                     int *type);
 
@@ -101,6 +105,7 @@ class OnnxNodeParser {
 
  private:
   static int64_t opset_version_;
+  static inline std::string model_file_ = "";
 };
 }  // namespace lite
 }  // namespace mindspore
