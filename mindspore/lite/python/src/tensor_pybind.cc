@@ -129,6 +129,17 @@ MSTensorPtr create_tensor(DataType data_type, const std::vector<int64_t> &shape,
   return MSTensorPtr(tensor);
 }
 
+std::shared_ptr<MSTensor> create_tensor_by_tensor(const MSTensor &tensor, const std::string &device_type,
+                                                  int device_id) {
+  auto new_tensor = mindspore::MSTensor::CreateTensor("", tensor, device_type, device_id);
+  if (new_tensor == nullptr) {
+    MS_LOG(ERROR) << "create tensor failed.";
+    return nullptr;
+  }
+  new_tensor->SetFormat(tensor.format());
+  return MSTensorPtr(new_tensor);
+}
+
 std::string GetPyTypeFormat(DataType data_type) {
   switch (data_type) {
     case DataType::kNumberTypeFloat32:
@@ -191,18 +202,20 @@ bool SetTensorNumpyData(const MSTensorPtr &tensor_ptr, const py::array &input) {
   auto tensor_impl = std::make_shared<TensorNumpyImpl>(tensor.Name(), std::move(py_buffer_info), tensor.Shape());
   tensor_impl->SetDevice(tensor.GetDevice());
   tensor_impl->SetDeviceId(tensor.GetDeviceId());
-  tensor = MSTensor(tensor_impl);
+  auto numpy_tensor = MSTensor(tensor_impl);
 #ifdef ENABLE_CLOUD_INFERENCE
   if (tensor.GetDeviceData() != nullptr) {
     MS_LOG(INFO) << "device tensor data ptr is not nullptr, need copy host data to device data.";
-    auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToHost(
-      tensor.GetDeviceData(), tensor.MutableData(), tensor.DataSize());
+    auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyHostDataToDevice(
+      numpy_tensor.MutableData(), tensor.GetDeviceData(), tensor.DataSize());
     if (status != kSuccess) {
       MS_LOG(ERROR) << "tensor has device data, then copy host data to device failed.";
       return false;
     }
+    numpy_tensor.SetDeviceData(tensor.GetDeviceData());
   }
 #endif
+  tensor = numpy_tensor;
   return true;
 }
 

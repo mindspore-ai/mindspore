@@ -31,6 +31,8 @@ void ModelGroupPyBind(const py::module &m);
 void TensorPyBind(const py::module &m);
 std::shared_ptr<MSTensor> create_tensor(DataType data_type, const std::vector<int64_t> &shape,
                                         const std::string &device_type, int device_id);
+std::shared_ptr<MSTensor> create_tensor_by_tensor(const MSTensor &tensor, const std::string &device_type,
+                                                  int device_id);
 
 PYBIND11_MODULE(_c_lite_wrapper, m) {
   m.doc() = "MindSpore Lite";
@@ -46,5 +48,6 @@ PYBIND11_MODULE(_c_lite_wrapper, m) {
   ModelGroupPyBind(m);
   TensorPyBind(m);
   m.def("create_tensor", &create_tensor);
+  m.def("create_tensor_by_tensor", &create_tensor_by_tensor);
 }
 }  // namespace mindspore::lite
