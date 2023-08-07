@@ -1080,6 +1080,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       }
       std::pair<AnfNodePtr, int64_t> node_pair = std::make_pair(node, SizeToLong(i));
       g_RefMap[parameters[0]] = node_pair;
+      MS_LOG(INFO) << "Find parameter by ref key node" << node_pair.first;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
                ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == concat_size))) {
@@ -1088,7 +1089,12 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
         MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
         continue;
       }
-      input_shapes = GetNodeShape(input);
+
+      if (IsPrimitiveCNode(input, prim::kPrimShape)) {
+        input_shapes = GetNodeShape(input->cast<CNodePtr>()->input(1));
+      } else {
+        input_shapes = GetNodeShape(input);
+      }
     } else {
       continue;
     }
@@ -1240,6 +1246,7 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto attrs = prim->attrs();
   OperatorInfoPtr op_info = OperatorInstance(prim, attrs, shape_list);
   MS_EXCEPTION_IF_NULL(op_info);
+  MS_LOG(INFO) << "shape_list.size(): " << shape_list.size();
 
   // When the 'inputs' contains numerical values for some operators, these values should be extracted from
   // ANF graph
@@ -1679,7 +1686,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
   return param_names;
 }
 
-Status ParallelInit() {
+Status ParallelInit(size_t rank_id, const size_t devices) {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
 
@@ -1689,9 +1696,20 @@ Status ParallelInit() {
                   << split_stage_num;
     return FAILED;
   }
-  auto comm_info = GetCommInfo();
-  int64_t device_num = comm_info.device_num;
-  int64_t global_rank = comm_info.global_rank;
+  int64_t device_num;
+  int64_t global_rank;
+  std::string backend;
+  if (devices == 0) {
+    auto comm_info = GetCommInfo();
+    device_num = comm_info.device_num;
+    global_rank = comm_info.global_rank;
+    backend = comm_info.communication_backend;
+  } else {
+    device_num = devices;
+    global_rank = rank_id;
+    backend = HCCL_BACKEND;
+  }
+
   if ((device_num <= 0) || (device_num > MAX_DEVICE_NUM)) {
     MS_LOG(ERROR) << "The context configuration parameter 'device_num' must be positive, "
                      "but got the value of device_num: "
@@ -1727,13 +1745,15 @@ Status ParallelInit() {
     return FAILED;
   }
 
-  if (!InitDevice(device_num, global_rank, comm_info.communication_backend, stages)) {
+  if (!InitDevice(device_num, global_rank, backend, stages)) {
     MS_LOG(ERROR) << "Init device failed";
     return FAILED;
   }
 
-  MS_LOG(INFO) << "The parallel context: device_num: " << device_num << ", global_rank: " << global_rank
-               << ", communication_backend: " << comm_info.communication_backend
+  MS_LOG(INFO) << "The parallel context: device_num: " << device_num << ", global_rank: "
+               << global_rank
+               //               << ", communication_backend: " << comm_info.communication_backend
+               << ", communication_backend: " << HCCL_BACKEND
                << ", gradients_mean: " << ParallelContext::GetInstance()->gradients_mean()
                << ", gradient_fp32_sync: " << ParallelContext::GetInstance()->gradient_fp32_sync();
   return SUCCESS;

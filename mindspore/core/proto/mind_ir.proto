@@ -187,7 +187,7 @@ message TensorProto {
     optional string location = 1;
     optional int64 offset = 2;
     optional int64 length = 3;
-    optional string checksum = 4;
+    //optional string checksum = 4;
   }
   message QuantParamProto {
     required string quant_algo_name = 1;

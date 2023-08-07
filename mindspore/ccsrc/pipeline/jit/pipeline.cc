@@ -45,6 +45,7 @@
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/parallel/pass/handle_group_info.h"
+#include "frontend/parallel/step_assigned_parallel.h"
 #include "frontend/expander/pack/packfunc.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/convert_utils.h"
@@ -1982,6 +1983,79 @@ FuncGraphPtr SplitMindIR(const std::string &file_name) {
 
   parallel::HandleGroupInfo();
 
+  return func_graph;
+}
+
+FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num, size_t rank_id) {
+  MS_LOG(INFO) << "Start split dynamic mindir for transformer network";
+  FuncGraphPtr func_graph = nullptr;
+  MindIRLoader mindir_loader;
+  func_graph = mindir_loader.LoadMindIR(file_name);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Load MindIR file failed. Please check model file.";
+    return nullptr;
+  }
+#ifdef ENABLE_DUMP_IR
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(kIntroductory)) {
+    DumpIR("load.ir", func_graph);
+  }
+#endif
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  parallel_context->Reset();
+  parallel_context->set_parallel_mode(parallel::kAutoParallel);
+  parallel_context->set_strategy_search_mode(parallel::kRecursiveProgramming);
+  parallel_context->set_direct_split(true);
+  parallel_context->set_full_batch(true);
+  parallel_context->set_group_ckpt_save_file("group_info");
+
+  FuncGraphManagerPtr func_graph_manager = func_graph->manager();
+
+  MS_LOG(INFO) << "func_graph_manager is not null";
+  if (func_graph_manager == nullptr) {
+    std::vector<FuncGraphPtr> graphs{func_graph};
+    func_graph_manager = std::make_shared<FuncGraphManager>(graphs);
+    func_graph_manager->AddFuncGraph(func_graph);
+  }
+  pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
+  resource->set_manager(func_graph_manager);
+  resource->set_func_graph(func_graph);
+
+  // Get the parameters items and add the value to args_abs.
+
+  auto inputs = func_graph->get_inputs();
+  for (std::size_t i = 0; i < inputs.size(); i++) {
+    auto input = inputs[i]->abstract();
+    (void)parallel::ExtendInputArgsAbstractShape(input, i);
+  }
+
+  auto res = parallel::StepAssignedParallel(func_graph, func_graph_manager, device_num, rank_id);
+  if (!res) {
+    MS_LOG(ERROR) << "StepAssignedParallel failed. Please check.";
+    return nullptr;
+  }
+  resource->set_is_load(False);
+  resource->set_manager(func_graph_manager);
+  resource->set_func_graph(func_graph);
+  auto params = func_graph->parameters();
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(params.begin(), params.end(), std::back_inserter(args_abs_list),
+                       [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
+  func_graph = pipeline::Renormalize(resource, func_graph, args_abs_list);
+
+  parallel::HandleGroupInfo();
+  DumpIR("Renormalize.ir", func_graph);
+  MindIRExporter mindir_exporter;
+  res = mindir_exporter.ExportProto(func_graph, "split_net", nullptr);
+  if (!res) {
+    MS_LOG(ERROR) << "Export MindIR file failed failed. Please check.";
+    return nullptr;
+  }
+
+  func_graph = mindir_loader.LoadMindIR("split_net_graph.mindir");
   return func_graph;
 }
 

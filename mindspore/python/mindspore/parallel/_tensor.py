@@ -17,7 +17,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 import numpy as np
-
 from mindspore.common.tensor import Tensor
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore._c_expression import TensorTransform
@@ -41,7 +40,7 @@ def _get_tensor_strategy(dev_mat, tensor_map):
         if dim == -1:
             tensor_strategy.append(1)
         else:
-            tensor_strategy.append(dev_mat[-dim-1])
+            tensor_strategy.append(dev_mat[-dim - 1])
     return tensor_strategy
 
 
@@ -198,7 +197,7 @@ def _get_slice_index(dev_mat, tensor_map, opt_shard_group):
     return tensor_slice_index
 
 
-def _load_tensor(tensor, dev_mat, tensor_map):
+def _load_tensor(tensor, dev_mat, tensor_map, rank_id=-1):
     """
     Get the tensor slice of the local device by the device matrix and the tensor map
 
@@ -216,7 +215,10 @@ def _load_tensor(tensor, dev_mat, tensor_map):
         >>> tensor_map = [1, -1]
         >>> tensor_slice = _load_tensor(tensor, dev_mat, tensor_map)
     """
-    rank = get_rank()
+    if rank_id == -1:
+        rank = get_rank()
+    else:
+        rank = rank_id
     tensor_strategy = _get_tensor_strategy(dev_mat, tensor_map)
     tensor_slice_index = _get_tensor_slice_index(dev_mat, tensor_strategy, tensor_map, rank)
     np_tensor = tensor.asnumpy()
@@ -225,7 +227,7 @@ def _load_tensor(tensor, dev_mat, tensor_map):
     return np_tensor_slice
 
 
-def _load_tensor_by_layout(tensor, layout):
+def _load_tensor_by_layout(tensor, layout, rank_id):
     """
     Load tensor by layout.
 
@@ -252,7 +254,7 @@ def _load_tensor_by_layout(tensor, layout):
     group = layout[5]
     if uniform_split == 0:
         raise RuntimeError("The load tensor only support uniform split now")
-    tensor_slice = _load_tensor(tensor, dev_mat, tensor_map)
+    tensor_slice = _load_tensor(tensor, dev_mat, tensor_map, rank_id)
     if group:
         # get a totally shard tensor slice for parallel optimizer
         rank = get_rank(group)
@@ -313,7 +315,6 @@ def _reshape_param_data(param_data, dev_mat, tensor_map):
         tensor_slices_new = tensor_slices_new_inner
 
     return Tensor(tensor_slices_new[0])
-
 
 
 def _extract_layout_item(layout_item):
@@ -541,6 +542,7 @@ def _check_operator(operator):
 
 def _apply_operator(operator_name):
     """apply transform operator"""
+
     def _apply_reshape_operator(numpy_data, reshape_op):
         """
         Apply reshape operator.
@@ -597,8 +599,8 @@ def _apply_operator(operator_name):
             raise ValueError("The slice operator information is wrong.")
         shape_size = len(slice_op[1]) // 3
         begin = slice_op[1][:shape_size]
-        end = slice_op[1][shape_size:shape_size*2]
-        stride = slice_op[1][shape_size*2:]
+        end = slice_op[1][shape_size:shape_size * 2]
+        stride = slice_op[1][shape_size * 2:]
         slice_index = []
         for begin_i, end_i, strides_i in zip(begin, end, stride):
             s = slice(begin_i, end_i, strides_i)
@@ -637,8 +639,8 @@ def _reshape_param_data_with_weight(param_data, dev_mat, field_size):
     for i in range(len(tensor_slices[0][0])):
         tensor_slices_new = np.array(tensor_slices[0][:, i]).reshape(field_size, -1)
         for j in range(1, device_count):
-            tensor_slices_new = np.concatenate((tensor_slices_new,\
-                                   np.array(tensor_slices[j][:, i]).reshape(field_size, -1)), axis=1)
+            tensor_slices_new = np.concatenate((tensor_slices_new, \
+                                                np.array(tensor_slices[j][:, i]).reshape(field_size, -1)), axis=1)
         tensor_slices_col.append(tensor_slices_new)
     new_tensor = np.array(tensor_slices_col[0]).reshape(-1, 1)
     for i in range(1, len(tensor_slices_col)):

@@ -100,13 +100,14 @@ def _slice_parameter(parameter, phase, layout):
         parameter.sliced = True
         return
     if not parameter.sliced:
-        new_tensor = _load_tensor_by_layout(parameter, layout)
+        rank = get_rank()
+        new_tensor = _load_tensor_by_layout(parameter, layout, rank)
         parameter.set_data(new_tensor, True)
 
 
-def _slice_tensor(tensor, layout):
+def _slice_tensor(tensor, layout, rank_id):
     """Slice python tensor obj according to the layout."""
-    new_tensor = _load_tensor_by_layout(tensor, layout)
+    new_tensor = _load_tensor_by_layout(tensor, layout, rank_id)
     return new_tensor
 
 

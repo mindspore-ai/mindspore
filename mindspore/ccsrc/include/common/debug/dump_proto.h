@@ -231,6 +231,7 @@ class COMMON_EXPORT MindIRExporter {
 
   bool ExportProto(const FuncGraphPtr &func_graph, const std::string &file_path,
                    const FuncGraphPtr &param_layout_fg = nullptr);
+  bool IsSystemLittleEndidan() const;
   bool PreProcSaveTogether(const FuncGraphPtr &func_graph);
   bool SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file);
 

@@ -138,6 +138,7 @@ Status OperatorInfo::CheckStrategyByVector(const Shapes &stra, const Shapes &inp
     Shape sub_input_shape = inputs_shape.at(i);
     size_t strategy_len = sub_strategy.size();
     size_t inputs_len = sub_input_shape.size();
+    MS_LOG(INFO) << "Compare: sub_input_shape:" << sub_input_shape << " sub_strategy: " << sub_strategy;
     if (strategy_len != inputs_len) {
       MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy len: " << strategy_len
                     << " is not equal to inputs len: " << inputs_len << ", index: " << i;
@@ -153,7 +154,7 @@ Status OperatorInfo::CheckStrategyByVector(const Shapes &stra, const Shapes &inp
       }
 
       int64_t shape_value = sub_input_shape.at(j);
-      if ((shape_value % strategy_value) != 0) {
+      if (shape_value != -1 && (shape_value % strategy_value) != 0) {
         MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
                       << " cannot be divisible by strategy value " << strategy_value;
         return FAILED;
@@ -639,7 +640,7 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
   }
 
   Group g;
-  if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
+  if (g_device_manager->CreateGroup(group_devices, &g, is_assigned_parallel_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Create communication group by tensor_map failed, the rank_list is: " << group_devices
                   << ", the input strategy is " << strategy_->GetInputDim()
                   << ", the full_name of node is: " << cnode_->fullname_with_scope();
@@ -684,7 +685,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
       group_devices.begin() + index / optimizer_weight_shard_size * optimizer_weight_shard_size,
       group_devices.begin() + (index / optimizer_weight_shard_size + 1) * optimizer_weight_shard_size);
     Group allgather_group;
-    if (g_device_manager->CreateGroup(new_group_devices, &allgather_group) != SUCCESS) {
+    if (g_device_manager->CreateGroup(new_group_devices, &allgather_group, is_assigned_parallel_) != SUCCESS) {
       MS_LOG(ERROR) << name_
                     << ": Create communication group for allgather in optimizer parallel failed,"
                        " the rank_list is: "
@@ -705,7 +706,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
       return FAILED;
     }
     Group mirror_group;
-    if (g_device_manager->CreateGroup(mirror_group_devices, &mirror_group) != SUCCESS) {
+    if (g_device_manager->CreateGroup(mirror_group_devices, &mirror_group, is_assigned_parallel_) != SUCCESS) {
       MS_LOG(ERROR) << name_
                     << ": Create communication group for mirror in optimizer parallel failed,"
                        " the rank_list is: "
@@ -720,7 +721,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
     // fully use opt shard
     // create allgather group
     Group allgather_group;
-    if (g_device_manager->CreateGroup(group_devices, &allgather_group) != SUCCESS) {
+    if (g_device_manager->CreateGroup(group_devices, &allgather_group, is_assigned_parallel_) != SUCCESS) {
       MS_LOG(ERROR) << name_
                     << ": Create communication group for allgather in optimizer parallel failed,"
                        " the rank_list is: "
@@ -772,7 +773,7 @@ Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
     return SUCCESS;
   }
   Group g;
-  if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
+  if (g_device_manager->CreateGroup(group_devices, &g, is_assigned_parallel_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Create communication group by dim failed, the rank_list is: " << group_devices
                   << ", the input strategy is " << strategy_->GetInputDim()
                   << ", the full_name of node is: " << cnode_->fullname_with_scope();
