@@ -302,16 +302,25 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   NodePtr dx, dw, db;
   ShapeVector dout_2d_shape = {-1, dout->shape().back()};
+  ShapeVector x_shape = dout->shape();
+  if (w->shape().back() == -2) {
+    x_shape.back() = -1;
+  } else {
+    x_shape.back() = w->shape().back();
+  }
   dout = ib->Reshape(dout, dout_2d_shape);
   dx = ib->MatMul(dout, w, false, false);
-  auto x_shape = x->shape();
   if (x_shape.size() != 2) {
     dx = ib->Reshape(dx, x_shape);
-    ShapeVector x_2d_shape = {-1, x_shape.back()};
+    int64_t first_dim = 1;
+    for (size_t i = 0; i < x_shape.size() - 1; ++i) {
+      first_dim *= x_shape[i];
+    }
+    ShapeVector x_2d_shape = {first_dim, x_shape.back()};
     x = ib->Reshape(x, x_2d_shape);
   }
   dw = ib->MatMul(dout, x, true, false);
-  db = ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue("NCHW")}});
+  db = ib->ReduceSum(dout, ShapeVector{0});
   return {dx, dw, db};
 });
 

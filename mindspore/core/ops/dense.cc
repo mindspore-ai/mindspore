@@ -77,12 +77,17 @@ class DenseInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(ret_shape);
     }
 
+    if (IsDynamic(x_shp) || IsDynamic(w_shp)) {
+      ShapeVector ret_shape{abstract::Shape::kShapeRankAny};
+      return std::make_shared<abstract::Shape>(ret_shape);
+    }
+
     const size_t W_SHAPE_SIZE = 2;
     if (w_shp.size() != W_SHAPE_SIZE) {
       MS_EXCEPTION(ValueError) << "The size of w should be equal to 2.";
     }
     if (x_shp.size() < W_SHAPE_SIZE) {
-      MS_EXCEPTION(ValueError) << "The size of x should be larger than 2.";
+      MS_EXCEPTION(ValueError) << "The size of x should be larger than 1.";
     }
 
     ValuePtr has_bias_ptr = primitive->GetAttr("has_bias");
@@ -124,11 +129,12 @@ class DenseInfer : public abstract::OpInferBase {
     auto x_type_id = x_type->type_id();
     auto w_type_id = w_type->type_id();
     if (x_type_id != w_type_id) {
-      MS_EXCEPTION(TypeError) << "The type of `x` and `w` must be same, but got " << x_type_id << " and " << w_type_id;
+      MS_EXCEPTION(TypeError) << "The type of `x` and `w` must be same, but got " << x_type->ToString() << " and "
+                              << w_type->ToString();
     }
     if (x_type_id != TypeId::kNumberTypeFloat16 && x_type_id != TypeId::kNumberTypeFloat32 &&
         x_type_id != TypeId::kNumberTypeFloat64) {
-      MS_EXCEPTION(TypeError) << "The type of `x` must be float16, float32 or float64, but got " << x_type_id;
+      MS_EXCEPTION(TypeError) << "The type of `x` must be float16, float32 or float64, but got " << x_type->ToString();
     }
     ValuePtr has_bias_ptr = primitive->GetAttr("has_bias");
     bool has_bias = GetValue<bool>(has_bias_ptr);
@@ -137,8 +143,8 @@ class DenseInfer : public abstract::OpInferBase {
       TypePtr b_type = b->element()->GetTypeTrack();
       auto b_type_id = b_type->type_id();
       if (x_type_id != b_type_id) {
-        MS_EXCEPTION(TypeError) << "The type of `x` and `b` must be same, but got " << x_type_id << " and "
-                                << b_type_id;
+        MS_EXCEPTION(TypeError) << "The type of `x` and `b` must be same, but got " << x_type->ToString() << " and "
+                                << b_type->ToString();
       }
     }
     if (primitive->HasAttr("cast_type")) {

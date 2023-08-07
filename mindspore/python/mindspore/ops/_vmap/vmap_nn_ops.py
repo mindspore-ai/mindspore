@@ -2000,6 +2000,58 @@ def get_sparse_apply_ftrl_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Dense)
+def get_dense_vmap_rule(prim, axis_size):
+    """VmapRule for `Dense` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    has_bias = prim.has_bias
+    batch_matmul = P.BatchMatMul(transpose_b=True)
+
+    @_primexpr
+    def get_start_mid_end(x_shape):
+        start = x_shape[0]
+        mid = 1
+        for shp in x_shape[1:-1]:
+            mid *= shp
+        end = x_shape[-1]
+        return start, mid, end
+
+    def vmap_rule(x_bdim, w_bdim, b_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, w_bdim, b_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        w, w_dim = w_bdim
+        b, b_dim = b_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        w = _bdim_at_front(w, w_dim, axis_size)
+        if has_bias:
+            b = _bdim_at_front(b, b_dim, axis_size)
+
+        x_shape = x.shape
+        start, mid, end = get_start_mid_end(x_shape)
+
+        x = x.reshape(start, mid, end)
+
+        out = batch_matmul(x, w)
+        out_shape = tuple(x_shape[:-1]) + (out.shape[-1],)
+        out = out.reshape(out_shape)
+
+        if has_bias:
+            b_shape = b.shape
+            b_shape = (start,) + (1,) * (len(out_shape) - 2) + (b_shape[-1],)
+            b = b.reshape(b_shape)
+
+            out = out + b
+
+        return out, 0
+
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)
