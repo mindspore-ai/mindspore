@@ -16,40 +16,51 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
 #include "ops/test_ops.h"
-#include "ops/elu.h"
+#include "ops/grad/einsum_grad.h"
 #include "ops/test_ops_dyn_cases.h"
 #include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace ops {
-class TestElu : public TestOps,
-                public testing::WithParamInterface<std::tuple<EltwiseOpShapeParams, EltwiseOpTypeParams>> {};
+class TestEinsumGrad : public TestOps,
+                       public testing::WithParamInterface<std::tuple<EltwiseOpShapeParams, EltwiseOpTypeParams>> {};
 
-TEST_P(TestElu, dyn_shape) {
+TEST_P(TestEinsumGrad, dyn_shape) {
   const auto &shape_param = std::get<0>(GetParam());
   const auto &dtype_param = std::get<1>(GetParam());
   auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape);
   ASSERT_NE(x, nullptr);
-  auto prim = std::make_shared<Primitive>(kNameElu);
-  auto out_abstract = opt::CppInferShapeAndType(prim, {x});
+  auto d_out = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{0});
+  ASSERT_NE(d_out, nullptr);
+  auto expect = std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape);
+  ASSERT_NE(expect, nullptr);
+  auto prim = std::make_shared<Primitive>(kNameEinsumGrad);
+  auto out_abstract = opt::CppInferShapeAndType(prim, {x, d_out});
   ASSERT_NE(out_abstract, nullptr);
   ASSERT_TRUE(*out_abstract == *expect);
 }
 
-auto EluOpTypeCases = testing::ValuesIn({
+auto EinsumGradOpTypeCases = testing::ValuesIn({
+  EltwiseOpTypeParams{kBool, kBool},
+  EltwiseOpTypeParams{kInt8, kInt8},
+  EltwiseOpTypeParams{kInt16, kInt16},
+  EltwiseOpTypeParams{kInt32, kInt32},
+  EltwiseOpTypeParams{kInt64, kInt64},
+  EltwiseOpTypeParams{kUInt8, kUInt8},
+  EltwiseOpTypeParams{kUInt16, kUInt16},
+  EltwiseOpTypeParams{kUInt32, kUInt32},
+  EltwiseOpTypeParams{kUInt64, kUInt64},
   EltwiseOpTypeParams{kFloat16, kFloat16},
   EltwiseOpTypeParams{kFloat32, kFloat32},
   EltwiseOpTypeParams{kFloat64, kFloat64},
+  EltwiseOpTypeParams{kComplex64, kComplex64},
+  EltwiseOpTypeParams{kComplex128, kComplex128},
 });
 
-INSTANTIATE_TEST_CASE_P(TestElu, TestElu, testing::Combine(EltwiseDynShapeTestCases, EluOpTypeCases));
+INSTANTIATE_TEST_CASE_P(TestEinsumGrad, TestEinsumGrad,
+                        testing::Combine(EltwiseDynShapeTestCases, EinsumGradOpTypeCases));
 }  // namespace ops
 }  // namespace mindspore

@@ -25,24 +25,31 @@
 #include "ops/test_ops.h"
 #include "ops/erfinv.h"
 #include "ops/test_ops_dyn_cases.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace ops {
-class TestErfinv : public TestOps, public testing::WithParamInterface<EltwiseOpParams> {};
+class TestErfinv : public TestOps,
+                   public testing::WithParamInterface<std::tuple<EltwiseOpShapeParams, EltwiseOpTypeParams>> {};
 
 TEST_P(TestErfinv, dyn_shape) {
-  const auto &param = GetParam();
-  auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
+  const auto &shape_param = std::get<0>(GetParam());
+  const auto &dtype_param = std::get<1>(GetParam());
+  auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
+  auto expect = std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape);
   ASSERT_NE(x, nullptr);
   auto prim = std::make_shared<Primitive>(kNameErfinv);
-  auto out_abstract = ErfinvInfer(nullptr, prim, {x});
+  auto out_abstract = opt::CppInferShapeAndType(prim, {x});
   ASSERT_NE(out_abstract, nullptr);
   ASSERT_TRUE(*out_abstract == *expect);
 }
 
-INSTANTIATE_TEST_CASE_P(TestErfinv_fp16, TestErfinv, EltwiseDynTestCase_Float16);
-INSTANTIATE_TEST_CASE_P(TestErfinv_fp32, TestErfinv, EltwiseDynTestCase_Float32);
-INSTANTIATE_TEST_CASE_P(TestErfinv_fp64, TestErfinv, EltwiseDynTestCase_Float64);
+auto ErfinvOpTypeCases = testing::ValuesIn({
+  EltwiseOpTypeParams{kFloat16, kFloat16},
+  EltwiseOpTypeParams{kFloat32, kFloat32},
+  EltwiseOpTypeParams{kFloat64, kFloat64},
+});
+
+INSTANTIATE_TEST_CASE_P(TestErfinv, TestErfinv, testing::Combine(EltwiseDynShapeTestCases, ErfinvOpTypeCases));
 }  // namespace ops
 }  // namespace mindspore

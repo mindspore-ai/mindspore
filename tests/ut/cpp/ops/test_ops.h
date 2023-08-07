@@ -57,5 +57,28 @@ struct BroadcastOpParams {
   ShapeVector out_shape;
   TypePtr out_type;
 };
+
+struct EltwiseOpShapeParams {
+  ShapeVector x_shape;
+  ShapeVector out_shape;
+};
+
+struct EltwiseOpTypeParams {
+  TypePtr x_type;
+  TypePtr out_type;
+};
+
+struct BroadcastOpShapeParams {
+  ShapeVector x_shape;
+  ShapeVector y_shape;
+  ShapeVector out_shape;
+};
+
+struct BroadcastOpTypeParams {
+  TypePtr x_type;
+  TypePtr y_type;
+  TypePtr out_type;
+};
+
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_TESTS_UT_CPP_OPS_TEST_OPS_H_

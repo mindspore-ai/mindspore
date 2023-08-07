@@ -25,35 +25,42 @@
 #include "ops/test_ops.h"
 #include "ops/exp.h"
 #include "ops/test_ops_dyn_cases.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace ops {
-class TestExp : public TestOps, public testing::WithParamInterface<EltwiseOpParams> {};
+class TestExp : public TestOps,
+                public testing::WithParamInterface<std::tuple<EltwiseOpShapeParams, EltwiseOpTypeParams>> {};
 
 TEST_P(TestExp, dyn_shape) {
-  const auto &param = GetParam();
-  auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
+  const auto &shape_param = std::get<0>(GetParam());
+  const auto &dtype_param = std::get<1>(GetParam());
+  auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
+  auto expect = std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape);
   ASSERT_NE(x, nullptr);
   auto prim = std::make_shared<Primitive>(kNameExp);
-  auto out_abstract = ExpInfer(nullptr, prim, {x});
+  auto out_abstract = opt::CppInferShapeAndType(prim, {x});
   ASSERT_NE(out_abstract, nullptr);
   ASSERT_TRUE(*out_abstract == *expect);
 }
 
-INSTANTIATE_TEST_CASE_P(TestExp_int8, TestExp, EltwiseDynTestCase_Int8);
-INSTANTIATE_TEST_CASE_P(TestExp_int16, TestExp, EltwiseDynTestCase_Int16);
-INSTANTIATE_TEST_CASE_P(TestExp_int32, TestExp, EltwiseDynTestCase_Int32);
-INSTANTIATE_TEST_CASE_P(TestExp_int64, TestExp, EltwiseDynTestCase_Int64);
-INSTANTIATE_TEST_CASE_P(TestExp_uint8, TestExp, EltwiseDynTestCase_UInt8);
-INSTANTIATE_TEST_CASE_P(TestExp_uint16, TestExp, EltwiseDynTestCase_UInt16);
-INSTANTIATE_TEST_CASE_P(TestExp_uint32, TestExp, EltwiseDynTestCase_UInt32);
-INSTANTIATE_TEST_CASE_P(TestExp_uint64, TestExp, EltwiseDynTestCase_UInt64);
-INSTANTIATE_TEST_CASE_P(TestExp_fp16, TestExp, EltwiseDynTestCase_Float16);
-INSTANTIATE_TEST_CASE_P(TestExp_fp32, TestExp, EltwiseDynTestCase_Float32);
-INSTANTIATE_TEST_CASE_P(TestExp_fp64, TestExp, EltwiseDynTestCase_Float64);
-INSTANTIATE_TEST_CASE_P(TestExp_complex64, TestExp, EltwiseDynTestCase_Complex64);
-INSTANTIATE_TEST_CASE_P(TestExp_complex128, TestExp, EltwiseDynTestCase_Complex128);
-INSTANTIATE_TEST_CASE_P(TestExp_bool, TestExp, EltwiseDynTestCase_Bool);
+auto ExpOpTypeCases = testing::ValuesIn({
+  EltwiseOpTypeParams{kBool, kBool},
+  EltwiseOpTypeParams{kInt8, kInt8},
+  EltwiseOpTypeParams{kInt16, kInt16},
+  EltwiseOpTypeParams{kInt32, kInt32},
+  EltwiseOpTypeParams{kInt64, kInt64},
+  EltwiseOpTypeParams{kUInt8, kUInt8},
+  EltwiseOpTypeParams{kUInt16, kUInt16},
+  EltwiseOpTypeParams{kUInt32, kUInt32},
+  EltwiseOpTypeParams{kUInt64, kUInt64},
+  EltwiseOpTypeParams{kFloat16, kFloat16},
+  EltwiseOpTypeParams{kFloat32, kFloat32},
+  EltwiseOpTypeParams{kFloat64, kFloat64},
+  EltwiseOpTypeParams{kComplex64, kComplex64},
+  EltwiseOpTypeParams{kComplex128, kComplex128},
+});
+
+INSTANTIATE_TEST_CASE_P(TestExp, TestExp, testing::Combine(EltwiseDynShapeTestCases, ExpOpTypeCases));
 }  // namespace ops
 }  // namespace mindspore

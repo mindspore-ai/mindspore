@@ -16,40 +16,39 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
 #include "ops/test_ops.h"
-#include "ops/elu.h"
+#include "ops/grad/elu_grad.h"
 #include "ops/test_ops_dyn_cases.h"
 #include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace ops {
-class TestElu : public TestOps,
-                public testing::WithParamInterface<std::tuple<EltwiseOpShapeParams, EltwiseOpTypeParams>> {};
+class TestEluGrad : public TestOps,
+                    public testing::WithParamInterface<std::tuple<EltwiseOpShapeParams, EltwiseOpTypeParams>> {};
 
-TEST_P(TestElu, dyn_shape) {
+TEST_P(TestEluGrad, dyn_shape) {
   const auto &shape_param = std::get<0>(GetParam());
   const auto &dtype_param = std::get<1>(GetParam());
+  auto y_backprop = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{-2});
+  ASSERT_NE(y_backprop, nullptr);
   auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape);
   ASSERT_NE(x, nullptr);
-  auto prim = std::make_shared<Primitive>(kNameElu);
-  auto out_abstract = opt::CppInferShapeAndType(prim, {x});
+  auto expect = std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape);
+  ASSERT_NE(expect, nullptr);
+  auto prim = std::make_shared<Primitive>(kNameEluGrad);
+  auto out_abstract = opt::CppInferShapeAndType(prim, {y_backprop, x});
   ASSERT_NE(out_abstract, nullptr);
   ASSERT_TRUE(*out_abstract == *expect);
 }
 
-auto EluOpTypeCases = testing::ValuesIn({
+auto EluGradOpTypeCases = testing::ValuesIn({
   EltwiseOpTypeParams{kFloat16, kFloat16},
   EltwiseOpTypeParams{kFloat32, kFloat32},
   EltwiseOpTypeParams{kFloat64, kFloat64},
 });
 
-INSTANTIATE_TEST_CASE_P(TestElu, TestElu, testing::Combine(EltwiseDynShapeTestCases, EluOpTypeCases));
+INSTANTIATE_TEST_CASE_P(TestEluGrad, TestEluGrad, testing::Combine(EltwiseDynShapeTestCases, EluGradOpTypeCases));
 }  // namespace ops
 }  // namespace mindspore
