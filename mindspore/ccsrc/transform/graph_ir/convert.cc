@@ -266,6 +266,23 @@ bool HasSubgraph(const std::shared_ptr<AnfGraph> &func_graph) {
 }
 }  // namespace
 
+DfGraphPtr GenExampleGraph(const std::string &name) {
+  MS_LOG(INFO) << "Gen fake graph name is " << name;
+  auto graph = std::make_shared<DfGraph>(name);
+  auto shape_data = std::vector<int64_t>({1, 1, 1, 1});
+  GeTensorDesc desc_data(ge::Shape(shape_data), ge::FORMAT_ND, ge::DT_FLOAT16);
+  auto data = ge::op::Data("data");
+  data.set_attr_index(0);
+  data.update_input_desc_x(desc_data);
+  data.update_output_desc_y(desc_data);
+  auto add = ge::op::Add("add").set_input_x1(data).set_input_x2(data);
+  std::vector<Operator> inputs{data};
+  std::vector<Operator> outputs{add};
+  graph->SetInputs(inputs);
+  graph->SetOutputs(outputs);
+  return graph;
+}
+
 // ---------------implement of DfGraphConvertor-------------
 
 bool IsDynamicShapeNode(const AnfNodePtr node) {

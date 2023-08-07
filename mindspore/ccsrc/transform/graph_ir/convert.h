@@ -82,6 +82,8 @@ class GeOpConvertor {
   static std::map<int, std::string> GetAclDynamicOutputNames(const AnfNodePtr &node);
 };
 
+DfGraphPtr GenExampleGraph(const std::string &name);
+
 class DfGraphConvertor {
  public:
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph, const std::string &phase_prefix)

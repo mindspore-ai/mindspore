@@ -288,6 +288,9 @@ std::string GetSharedName(const FuncGraphPtr &fg) {
 
 std::string CompileCacheManager::GetCachedSharedName() {
   std::string queue_name("");
+  if (!CompileCacheEnable()) {
+    return queue_name;
+  }
   std::string queue_name_cache_path = GetQueueNameCachePath();
   std::ifstream fin(queue_name_cache_path);
   if (!fin) {
@@ -324,6 +327,8 @@ void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraph
 
 void CompileCacheManager::InitCompileCacheHash(const py::list &compile_cache_dep_files) {
   compile_cache_dep_files_hash_ = GetCompileDepFilesHash(compile_cache_dep_files);
+  auto &context = CompileCacheContext::GetInstance();
+  context.SetCompileCacheDepFilesHash(compile_cache_dep_files_hash_);
 }
 
 bool CompileCacheManager::CheckDepFilesHashConsistency() {

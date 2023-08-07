@@ -570,6 +570,9 @@ constexpr auto kRefInOutMap = "ref_in_out_map";
 constexpr auto kRetryIntervalMilliSeconds = 500;
 constexpr auto kSummaryNodes = "summary_nodes";
 constexpr auto kSummaryNodeExist = "summary_node_exist";
+constexpr auto kGeCache = "ge_cache";
+constexpr auto kGeGraphKey = "ge.graph_key";
+constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
 
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);

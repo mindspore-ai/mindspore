@@ -349,6 +349,8 @@ int ErrCode(const DfGraphConvertorPtr &converter) {
   return converter->ErrCode();
 }
 
+DfGraphPtr GenFakeGraph(const std::string &name) { return GenExampleGraph(name); }
+
 DfGraphPtr GetComputeGraph(const DfGraphConvertorPtr &converter) {
   MS_EXCEPTION_IF_NULL(converter);
   return converter->GetComputeGraph();
