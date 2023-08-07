@@ -33,6 +33,16 @@ class LayerNormGrad : public OpDesc {
   ~LayerNormGrad() = default;
 
  protected:
+  bool CheckInputs() override {
+    if (processor_ != "aicore") {
+      auto dtype = inputs_info_[0].type;
+      if (std::any_of(inputs_info_.begin(), inputs_info_.end(), [&dtype](auto &info) { return info.type != dtype; })) {
+        MS_LOG(INFO) << "Inputs of LayerNormGrad are not all same, LayerNormGrad would not expand";
+        return false;
+      }
+    }
+    return true;
+  }
   NodePtrList Expand(const NodePtrList &inputs) override {
     auto x = inputs[0];
     auto dy = inputs[1];
@@ -61,16 +71,25 @@ class LayerNormGrad : public OpDesc {
       begin_norm_axis += ori_shape_x.size();
     }
     auto begin_params_axis = GetValue<int64_t>(attrs_["begin_params_axis"]);
-    if (begin_norm_axis < 0) {
-      begin_norm_axis += ori_shape_x.size();
+    if (begin_params_axis < 0) {
+      begin_params_axis += ori_shape_x.size();
     }
 
     auto norm_axis = ShapeVector();
+    if (ori_shape_x.size() - begin_norm_axis < 0) {
+      MS_LOG(INFO) << "begin_norm_axis should be less than or equal to the dimension of x, but got begin_norm_axis: "
+                   << begin_norm_axis << ", the dimension of x: " << ori_shape_x.size();
+      return {};
+    }
     norm_axis.reserve(ori_shape_x.size() - begin_norm_axis);
     for (int64_t i = begin_norm_axis; i < static_cast<int64_t>(ori_shape_x.size()); ++i) {
       norm_axis.emplace_back(i);
     }
     auto param_axis = ShapeVector();
+    if (begin_params_axis < 0) {
+      MS_LOG(INFO) << "begin_param_axis should be greater than or euqal to 0, but is: " << begin_params_axis;
+      return {};
+    }
     param_axis.reserve(begin_params_axis);
     for (int64_t i = 0; i < static_cast<int64_t>(begin_params_axis); ++i) {
       param_axis.emplace_back(i);
