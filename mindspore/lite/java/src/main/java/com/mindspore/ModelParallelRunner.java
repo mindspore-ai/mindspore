@@ -18,6 +18,7 @@ package com.mindspore;
 
 import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.RunnerConfig;
+import com.mindspore.config.DataType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,8 +117,10 @@ public class ModelParallelRunner {
                 return false;
             }
             long[] inputsPtrArray = new long[inputs.size()];
+            Object[] bufferArray = new Object[inputs.size()];
             for (int i = 0; i < inputs.size(); i++) {
                 inputsPtrArray[i] = inputs.get(i).getMSTensorPtr();
+                bufferArray[i] = this.getTensorBuffer(inputs.get(i));
             }
             if(outputs.size() != 0){
                 long[] outputsPtrArray = new long[outputs.size()];
@@ -127,13 +130,18 @@ public class ModelParallelRunner {
                     }
                     outputsPtrArray[i] = outputs.get(i).getMSTensorPtr();
                 }
-                boolean ret = predictWithOutput(modelParallelRunnerPtr, inputsPtrArray, outputsPtrArray);
+                boolean ret = predictWithOutputZeroCopy(modelParallelRunnerPtr,
+                                                        inputsPtrArray,
+                                                        bufferArray,
+                                                        outputsPtrArray);
                 if (!ret) {
                     return false;
                 }
                 return true;
             }
-            List<Long> outputPtrs = predict(modelParallelRunnerPtr, inputsPtrArray);
+            List<Long> outputPtrs = predictZeroCopy(modelParallelRunnerPtr,
+                                                    inputsPtrArray,
+                                                    bufferArray);
             if (outputPtrs.isEmpty()) {
                 return false;
             }
@@ -219,11 +227,42 @@ public class ModelParallelRunner {
         }
     }
 
+    /**
+    * get buffer based on tensor dataType
+    **/
+    private Object getTensorBuffer(MSTensor tensor) {
+        int dataType = tensor.getDataType();
+        Object ret = null;
+        switch(dataType) {
+            case DataType.kNumberTypeFloat32:
+            case DataType.kNumberTypeFloat16:
+                ret = tensor.getFloatData();
+                break;
+            case DataType.kNumberTypeInt32:
+                ret = tensor.getIntData();
+                break;
+            case DataType.kNumberTypeInt64:
+                ret = tensor.getLongData();
+                break;
+            default:
+                return ret;
+        }
+        if (ret == null) {
+            return tensor.getByteData();
+        }
+        return ret;
+    }
+
     private native long init(String modelPath, long runnerConfigPtr);
 
-    private native List<Long> predict(long modelParallelRunnerPtr, long[] inputs);
+    private native List<Long> predictZeroCopy(long modelParallelRunnerPtr,
+                                              long[] inputs,
+                                              Object[] buffer);
 
-    private native boolean predictWithOutput(long modelParallelRunnerPtr, long[] inputs, long[] outputs);
+    private native boolean predictWithOutputZeroCopy(long modelParallelRunnerPtr,
+                                                     long[] inputs,
+                                                     Object[] buffer,
+                                                     long[] outputs);
 
     private native List<Long> getInputs(long modelParallelRunnerPtr);
 
