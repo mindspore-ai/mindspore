@@ -63,7 +63,7 @@ from mindspore.parallel._ps_context import _set_checkpoint_load_status, _store_w
     _store_warm_up_ptr_by_tensor_list, _cache_enable
 from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
-    split_mindir
+    split_mindir, split_dynamic_mindir
 from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
@@ -711,7 +711,7 @@ def load(file_name, **kwargs):
     return graph
 
 
-def export_split_mindir(file_name):
+def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True):
     """
     Auto Split MindIR.
 
@@ -719,6 +719,9 @@ def export_split_mindir(file_name):
 
     Args:
         file_name (str): MindIR file name.
+        device_num (int): device number.
+        rank_id (int): rank id.
+        dynamic (bool): Indicates whether the model is a dynamic shape mindir model.
 
     Raises:
         ValueError: MindIR file does not exist or `file_name` is not a string.
@@ -726,11 +729,9 @@ def export_split_mindir(file_name):
 
     Examples:
         >>> import mindspore as ms
-        >>> from mindspore.communication import init
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>>
-        >>> init(backend_name="hccl")
-        >>> ms.export_split_mindir("net.mindir")
+        >>> ms.export_split_mindir("net.mindir", device_num=8, rank_id=0)
 
     """
     if not isinstance(file_name, str):
@@ -745,8 +746,11 @@ def export_split_mindir(file_name):
     file_name = os.path.abspath(file_name)
 
     logger.info("Execute the process of export and split mindir.")
-
-    graph = split_mindir(file_name)
+    dynamic = True
+    if dynamic:
+        graph = split_dynamic_mindir(file_name, device_num, rank_id)
+    else:
+        graph = split_mindir(file_name)
 
     if graph is None:
         if _is_cipher_file(file_name):
@@ -2519,7 +2523,8 @@ def _merge_and_split(sliced_params, train_strategy, predict_strategy):
         return merged_param
     param_name = merged_param.name
     tensor_layout = predict_strategy[param_name]
-    split_tensor = _load_tensor(merged_param.data, tensor_layout[0], tensor_layout[1])
+    rank = get_rank()
+    split_tensor = _load_tensor(merged_param.data, tensor_layout[0], tensor_layout[1], rank)
     requires_grad = merged_param.requires_grad
     layerwise_parallel = merged_param.layerwise_parallel
     split_param = Parameter(split_tensor, param_name, requires_grad, layerwise_parallel)

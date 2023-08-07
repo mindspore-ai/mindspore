@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace prim {
+
 // linalg
 GVAR_DEF(PrimitivePtr, kPrimGeqrf, std::make_shared<Primitive>("Geqrf"));
 GVAR_DEF(PrimitivePtr, kPrimLU, std::make_shared<Primitive>("LU"));

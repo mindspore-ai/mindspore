@@ -218,6 +218,7 @@ class OperatorInfo {
   Status CreateGroupForOptShard(TensorLayout *tensor_layout, std::vector<Group> *groups);
   virtual void ReplaceNodeInputOrAttrs() {}
   void set_auto_parallel(bool is_auto_parallel) { is_auto_parallel_ = is_auto_parallel; }
+  void set_assigned_parallel(bool is_assigned_parallel) { is_assigned_parallel_ = is_assigned_parallel; }
   bool repeated_num_in_dev_matrix_right() const { return repeated_num_in_dev_matrix_right_; }
   void set_repeated_num_in_dev_matrix_right(bool is_right) { repeated_num_in_dev_matrix_right_ = is_right; }
 
@@ -302,7 +303,8 @@ class OperatorInfo {
   bool is_layout_config_ = false;
   Shapes strategy_from_layout_;
 
-  bool is_auto_parallel_ = false;  // false: semi_auto_parallel; true: auto_parallel
+  bool is_auto_parallel_ = false;      // false: semi_auto_parallel; true: auto_parallel
+  bool is_assigned_parallel_ = false;  // false: origin parallel; true: dynamic_shape parallel
   // 'corrected_input_indices_' used to store the indices of input that have ALREADY been corrected.
   std::vector<size_t> corrected_input_indices_;
   // Given a parallelization strategy, there is a cost.

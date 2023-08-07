@@ -17,6 +17,7 @@
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
 #include <iostream>
 #include <utility>
+#include "utils/ms_utils.h"
 #include "ir/value.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/status.h"
@@ -112,7 +113,7 @@ bool TensorLayout::TensorShapeDimensionIsDividedBySplitDeviceDimension() const {
         MS_LOG(ERROR) << "GetSliceNumByTensorDimensionIndex is 0";
         return false;
       }
-      if (tensor_shape_.GetDimByIdx(i) % divisor != 0) {
+      if (tensor_shape_.GetDimByIdx(i) != -1 && tensor_shape_.GetDimByIdx(i) % divisor != 0) {
         return false;
       }
     }
@@ -323,7 +324,9 @@ Arrangement TensorLayout::slice_shape() const {
   for (size_t index = 0; index < tensor_map_.GetDimSize(); index++) {
     int64_t dim = tensor_map_.GetDimByIdx(index);
     int64_t num = tensor_shape_.GetDimByIdx(index);
-    if (dim == -1) {
+    MS_LOG(INFO) << "dim is : " << dim << "num is :" << num;
+    if (dim == -1 || num == -1) {
+      MS_LOG(INFO) << "This is dynamic shape";
       shape.push_back(num);
     } else {
       int64_t divisor = device_arrangement_.GetDimByReverseIdx(LongToUlong(dim));

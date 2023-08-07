@@ -1772,7 +1772,6 @@ bool MindIRExporter::ExportProto(const FuncGraphPtr &func_graph, const std::stri
   }
 
   // Serialize to protobuf using unique parameter name label.
-  common::SetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID", "1", 0);
   // Do preprocess on func_graph and check conditions for saving together.
   bool ret = PreProcSaveTogether(func_graph);
   if (!ret) {
@@ -1906,6 +1905,7 @@ bool MindIRExporter::SplitSave() {
       external_local = "data_" + std::to_string(index);
       data_fs_->close();
       delete data_fs_;
+      data_fs_ = nullptr;
 
       if (!ChangeParaDataFile(external_local)) {
         MS_LOG(ERROR) << "change parameter data file failed.";
@@ -1914,9 +1914,10 @@ bool MindIRExporter::SplitSave() {
       parameter_size = OFFSET / PARA_ROUND;
     }
     std::string external_local_data = model_name_ + "_variables/" + external_local;
-    *(param_proto.mutable_external_data()->mutable_location()) = external_local_data;
+    param_proto.mutable_external_data()->set_location(external_local_data);
     param_proto.mutable_external_data()->set_length(data_length);
     param_proto.mutable_external_data()->set_offset(offset);
+
     data_fs_->write(static_cast<const char *>(data->data_c()), data_length);
     auto append_data = new char[append_size];
     if (append_data == nullptr) {
@@ -1975,13 +1976,15 @@ bool MindIRExporter::ChangeParaDataFile(const std::string &file) {
     return false;
   }
   char front_info[OFFSET]{0};
-  if (common::IsLittleByteOrder()) {
-    front_info[0] = '1';
-  } else {
-    front_info[0] = '0';
-  }
+  front_info[0] = IsSystemLittleEndidan();
   (void)data_fs_->write(front_info, OFFSET);
   return true;
+}
+
+bool MindIRExporter::IsSystemLittleEndidan() const {
+  int check = 0x01;
+  auto address = reinterpret_cast<char *>(&check);
+  return *address == 0x01;
 }
 
 bool MindIRExporter::PreProcSaveTogether(const FuncGraphPtr &func_graph) {
@@ -2041,7 +2044,7 @@ bool MindIRExporter::IfSaveTogether(bool *save_together) {
   if (data_total > TOTAL_SAVE) {
     *save_together = false;
   } else {
-    *save_together = true;
+    *save_together = false;
   }
   return true;
 }
@@ -2067,7 +2070,6 @@ bool MindIRExporter::UpdateParamCount(const FuncGraphPtr &func_graph) {
   reorder_param.reserve(func_graph->parameters().size());
   for (const auto &node : func_graph->parameters()) {
     auto param_node = node->cast<ParameterPtr>();
-    MS_LOG(INFO) << "The parameters() in func graph should be all Parameter Node. " << node->DebugString();
     if (param_node == nullptr) {
       MS_LOG(ERROR) << "The parameters() in func graph should be all Parameter Node. but got " << node->DebugString();
       return false;

@@ -30,24 +30,26 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {mindspore::kTupleGetI
   "array_getitem", "tuple_setitem", "Depend", "list_setitem", "array_setitem", "dict_getitem",
   "list_append", "list_map", "list_reduce", "tuple_reversed", "tile_shape", "tuple_div", "tuple_to_array",
   "make_dict", "make_slice", "string_eq", "VirtualLoss", "Return", "env_getitem", "TensorShape", "ScalarToTensor",
-  "partial", "env_setitem", "env_getitem", "env_add", "Shape", "ScalarSub", "ScalarAdd",
-  "dot", "im2col", "col2im", "im2col_v1", "state_setitem", "ScalarSummary",
+  "partial", "env_setitem", "env_getitem", "env_add", "Shape", "ScalarSub", "ScalarAdd", "FillV2",
+  "dot", "im2col", "col2im", "im2col_v1", "state_setitem", "ScalarSummary", "ScalarFloordiv", "ScalarCast",
   "ImageSummary", "TensorSummary", "Debug", "HistogramSummary", "col2im_v1", "resolve", "BroadcastGradientArgs",
   "InvertPermutation", "DropoutGenMask", "StatelessDropOutGenMask", "embed", "create_instance", "RefToEmbed",
   "StopGradient", "UpdateState", "Load", "Switch", "Print", "call_instance", "TensorMove", "DType"};
 #else
 static const std::set<std::string> PARALLEL_BLACK_LIST_ = {mindspore::kTupleGetItemOpName, "J", "list_getitem",
   "array_getitem", "tuple_setitem", "Depend", "list_setitem", "array_setitem", "dict_getitem",
+  "ScalarFloordiv", "ScalarCast",
   "list_append", "list_map", "list_reduce", "tuple_reversed", "tile_shape", "tuple_div", "tuple_to_array",
   "make_dict", "make_slice", "string_eq", "VirtualLoss", "Return", "env_getitem", "TensorShape", "ScalarToTensor",
-  "identity", "partial", "env_setitem", "env_getitem", "env_add", "Shape", "ScalarSub", "ScalarAdd",
+  "identity", "partial", "env_setitem", "env_getitem", "env_add", "Shape", "ScalarSub", "ScalarAdd", "FillV2",
   "dot", "im2col", "col2im", "im2col_v1", "state_setitem", "Debug", "col2im_v1", "resolve", "BroadcastGradientArgs",
   "InvertPermutation", "DropoutGenMask", "StatelessDropOutGenMask", "embed", "create_instance", "RefToEmbed",
   "StopGradient", "UpdateState", "Load", "Switch", "Print", "call_instance", "TensorMove", "DType"};
 #endif
 static const std::set<PrimitivePtr> ALLGATHER_NODE_LIST_ = {prim::kPrimAllGather, prim::kPrimMiniStepAllGather,
                                                             prim::kPrimMicroStepAllGather};
-static const std::set<PrimitivePtr> TRIVIAL_NODE_LIST_ = {prim::kPrimCast, prim::kPrimDepend};
+static const std::set<PrimitivePtr> TRIVIAL_NODE_LIST_ = {prim::kPrimCast, prim::kPrimDepend,
+                                                            std::make_shared<Primitive>("AscendAntiQuant")};
 // clang-format on
 
 bool IsInParallelBlackList(const PrimitivePtr &prim) {

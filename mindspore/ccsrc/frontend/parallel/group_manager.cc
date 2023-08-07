@@ -165,12 +165,25 @@ Status CreateGroups(const std::vector<std::pair<std::string, std::vector<uint32_
   return SUCCESS;
 }
 #endif
+
+Status GroupManager::CreateGlobalGroup(const std::string &group_name, const std::vector<Device> &devices,
+                                       Group *const group) {
+  auto iter = groups_.find(world_group_);
+  if (iter == groups_.end()) {
+    (void)group->Init(world_group_, devices);
+    groups_[world_group_] = *group;
+  } else {
+    *group = iter->second;
+  }
+  MS_LOG(INFO) << "It is world group " << world_group_ << ", no need to create it.";
+  return Status::SUCCESS;
+}
+
 Status GroupManager::CreateGroup(const std::string &group_name, const std::vector<Device> &devices,
                                  mindspore::parallel::Group *const group) {
   // it is simple to use size to determine whether it is a world group
   uint32_t world_size = 0;
   (void)CommManager::GetInstance().GetRankSize(world_group_, &world_size);
-
   if (devices.size() == world_size) {
     auto iter = groups_.find(world_group_);
     if (iter == groups_.end()) {

@@ -244,6 +244,9 @@ PYBIND11_MODULE(_c_expression, m) {
               py::arg("decrypt") = py::none(), py::arg("obfuscated") = py::bool_(false), "Load model as Graph.");
   (void)m.def("split_mindir", &mindspore::pipeline::SplitMindIR, py::arg("file_name"),
               "Split single mindir to distributed mindir");
+  (void)m.def("split_dynamic_mindir", &mindspore::pipeline::SplitDynamicMindIR, py::arg("file_name"),
+              py::arg("device_num") = py::int_(8), py::arg("rank_id") = py::int_(0),
+              "Split single mindir to distributed mindir");
   (void)m.def("dynamic_obfuscate_mindir", &mindspore::pipeline::DynamicObfuscateMindIR, py::arg("file_name"),
               py::arg("obf_ratio"), py::arg("branch_control_input") = py::int_(0), py::arg("dec_key") = nullptr,
               py::arg("key_len") = py::int_(0), py::arg("dec_mode") = py::str("AES-GCM"),
