@@ -1622,7 +1622,12 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
 
     Raises:
         TypeError: If `seq_dim` or `batch_dim` is not an int.
-        ValueError: If value of `batch_dim` is equal to or greater than length of shape of input.
+        ValueError: If :math:`len(seq_lengths) != x.shape[batch_dim]`.
+        ValueError: If :math:`batch_dim == seq_dim`.
+        ValueError: If :math:`seq_dim < 0` or :math:`seq_dim >= len(x.shape)`.
+        ValueError: If :math:`batch_dim < 0` or :math:`batch_dim >= len(x.shape)`.
+        RuntimeError: If any value of `seq_lengths` is less than 0.
+        RuntimeError: If any value of `seq_lengths` is larger than `x.shape[seq_dim]`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

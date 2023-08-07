@@ -174,6 +174,7 @@ constexpr auto kReduceMinDOpName = "ReduceMinD";
 constexpr auto kReduceProdOpName = "ReduceProd";
 constexpr auto kReduceProdDOpName = "ReduceProdD";
 constexpr auto kReduceSumOpName = "ReduceSum";
+constexpr auto kReverseSequenceOpName = "ReverseSequence";
 constexpr auto kRsqrtGradOpName = "RsqrtGrad";
 constexpr auto kSqrtGradOpName = "SqrtGrad";
 constexpr auto kRsqrtOpName = "Rsqrt";

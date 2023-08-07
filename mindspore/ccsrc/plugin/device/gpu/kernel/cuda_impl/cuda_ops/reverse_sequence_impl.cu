@@ -61,6 +61,13 @@ template <typename T, typename S>
 __global__ void ReverseSequence(const size_t size, const T *input, const S *seq_len, const int64_t batch_dim,
                                 const int64_t seq_dim, size_t *cur_pos_arr, const size_t *input_shape_ptr,
                                 size_t *input_shape_cum_ptr, size_t shape_size, T *output) {
+  // check sequence length
+  size_t max_seq_length = input_shape_ptr[seq_dim];
+  size_t seq_length_size = input_shape_ptr[batch_dim];
+  for (size_t idx = blockIdx.x * blockDim.x + threadIdx.x; idx < seq_length_size; idx += blockDim.x * gridDim.x) {
+    CUDA_KERNEL_ASSERT(seq_len[idx] >= 0 && seq_len[idx] <= max_seq_length);
+  }
+
   // calculate which thread this is out of total across all blocks for accessing respective cur_pos_arr memory
   size_t cur_thread_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
   cur_thread_idx = cur_thread_idx * shape_size;
