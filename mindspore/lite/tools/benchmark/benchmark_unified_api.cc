@@ -597,12 +597,27 @@ void Convert2Float32(float *__restrict out, const uint16_t in) {
   *(out) = static_cast<float>(t1);
 }
 
+namespace {
+template <typename T>
+bool VectorValueCompare(const std::vector<T> &vec1, const std::vector<T> &vec2) {
+  if (vec1.size() != vec2.size()) {
+    return false;
+  }
+  for (auto &ele : vec1) {
+    if (!IsContain(vec2, ele)) {
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 int BenchmarkUnifiedApi::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
   float total_bias = 0;
   int total_size = 0;
   // check the output tensor name.
-  if (this->benchmark_tensor_names_ != ms_model_.GetOutputTensorNames()) {
+  if (!VectorValueCompare(this->benchmark_tensor_names_, ms_model_.GetOutputTensorNames())) {
     MS_LOG(ERROR) << "The output tensor name is wrong.";
     return RET_ERROR;
   }
