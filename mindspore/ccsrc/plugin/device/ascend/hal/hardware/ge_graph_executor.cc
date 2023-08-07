@@ -936,9 +936,15 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
     auto output_addr = AnfAlgo::GetMutableOutputAddr(kv.first, 0, false);
     MS_EXCEPTION_IF_NULL(output_addr);
     if (output_addr->GetMutablePtr() == nullptr) {
-      MS_LOG(EXCEPTION) << "Input " << kv.first->fullname_with_scope()
-                        << " address is nullptr, kernel graph: " << kernel_graph->ToString() << ", "
-                        << kv.first->DebugString();
+      // alloc static memory for unused inputs
+      // error in ge when set nullptr into ge tensor
+      std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kv.first, 0));
+      size_t type_size = GetTypeByte(TypeIdToType(common::AnfAlgo::GetOutputInferDataType(kv.first, 0)));
+      size_t memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
+      MS_EXCEPTION_IF_NULL(ResManager());
+      auto memory = ResManager()->AllocateMemory(memory_size);
+      output_addr->set_ptr(memory);
+      output_addr->SetSize(memory_size);
     }
     if (kv.second >= ge_inputs.size()) {
       MS_LOG(EXCEPTION) << kv.first->DebugString() << ", index: " << kv.second << " is greater than "
