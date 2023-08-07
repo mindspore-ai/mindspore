@@ -42,6 +42,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -97,7 +98,11 @@ class NLLLossInfer : public abstract::OpInferBase {
       reduction_is_none = reduction == Reduction::NONE;
     }
     if (reduction_is_none) {
-      loss_shape.push_back(logits_shape[kInputIndex0]);
+      if (IsDynamicRank(logits_shape)) {
+        loss_shape.push_back(abstract::Shape::kShapeDimAny);
+      } else {
+        loss_shape.push_back(logits_shape[kInputIndex0]);
+      }
     }
     abstract::ShapePtr loss_shape_ptr = std::make_shared<abstract::Shape>(loss_shape);
     abstract::ShapePtr total_weight_shape_ptr = std::make_shared<abstract::Shape>(total_weight_shape);
