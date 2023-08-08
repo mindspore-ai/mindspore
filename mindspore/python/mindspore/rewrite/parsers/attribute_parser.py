@@ -47,6 +47,9 @@ class AttributeParser(Parser):
         if not isinstance(node, ast.Attribute):
             raise TypeError(error_str(f"Attribute parser only supports parsing ast.Attribute type nodes, but got "
                                       f"'{type(node).__name__}'", father_node=node))
+        if not isinstance(node.value, (ast.Name, ast.Attribute)):
+            raise RuntimeError(error_str(f"Attribute parser only supports (ast.Attribute, ast.Name) as value of "
+                                         f"ast.Attribute, but got '{type(node).__name__}'", father_node=node))
         parser = ParserRegister.instance().get_parser(type(node.value))
         value = parser.process(stree, node.value)
 

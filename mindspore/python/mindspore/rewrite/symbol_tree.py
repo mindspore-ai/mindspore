@@ -175,7 +175,7 @@ class SymbolTree(Observer, Observable):
         self._init_func_ast: Optional[ast.FunctionDef] = None
         self._deleted_field = {}
         self._deleted_node = []
-        self._external_func_ast = []
+        self._external_ast = []
         self._father_class_ast = []
 
         # head node is always point to the first node(in source code order) of SymbolTree
@@ -400,9 +400,9 @@ class SymbolTree(Observer, Observable):
         """Get _import_asts"""
         return self._import_asts
 
-    def get_external_func_ast(self):
-        """Get _external_func_ast"""
-        return self._external_func_ast
+    def get_external_ast(self):
+        """Get _external_ast"""
+        return self._external_ast
 
     def get_father_class_ast(self):
         """Get _father_class_ast"""
@@ -974,11 +974,14 @@ class SymbolTree(Observer, Observable):
 
         # Add father class asts into code_bodies
         for body in reversed(stree.get_father_class_ast()):
-            if not self.check_body_exist(body, code_bodies):
-                code_bodies.insert(insert_pos, body)
+            if self.check_body_exist(body, code_bodies):
+                # remove exist ast in old position, then insert ast to upper position
+                exist_ast = AstClassFinder(ast.Module(body=code_bodies)).find_all(body.name)[0]
+                code_bodies.remove(exist_ast)
+            code_bodies.insert(insert_pos, body)
 
-        # Add external function asts into code_bodies
-        for body in stree.get_external_func_ast():
+        # Add external asts into code_bodies
+        for body in stree.get_external_ast():
             if not self.check_body_exist(body, code_bodies):
                 code_bodies.insert(insert_pos, body)
                 insert_pos += 1
