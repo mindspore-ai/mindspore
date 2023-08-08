@@ -38,4 +38,4 @@ mindspore.ops.NeighborExchangeV2
     
     教程样例：
         - `分布式集合通信原语 - NeighborExchangeV2
-          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/ops/communicate_ops.html#NeighborExchangeV2>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/ops/communicate_ops.html#neighborexchangev2>`_

@@ -43,4 +43,4 @@ mindspore.ops.AlltoAll
     
     教程样例：
         - `分布式集合通信原语 - AlltoAll
-          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/ops/communicate_ops.html#AlltoAll>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.1/api_python/samples/ops/communicate_ops.html#alltoall>`_
