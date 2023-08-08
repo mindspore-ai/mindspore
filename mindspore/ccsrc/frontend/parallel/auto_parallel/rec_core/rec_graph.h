@@ -58,6 +58,7 @@ enum OperatorType {
   kRecArgWithValue,
   kRecUnsortedSegmentOp,
   kRecBatchMatMul,
+  kRecFlatten,
   kRecCum
 };
 
