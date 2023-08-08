@@ -356,7 +356,7 @@ def test_celldict_items_method(mode):
 class TestUpdateMethodNet(nn.Cell):
     def __init__(self):
         super(TestUpdateMethodNet, self).__init__()
-        self.cell_dict = nn.CellDict([['conv', nn.Conv2d(10, 16, 5, pad_mode='valid')],
+        self.cell_dict = nn.CellDict([['conv', nn.Conv2d(10, 16, 5, pad_mode='same')],
                                       ['relu', nn.ReLU()],
                                       ['max_pool2d', nn.MaxPool2d(kernel_size=4, stride=4)]]
                                      )
@@ -375,7 +375,7 @@ class TestUpdateMethodNet(nn.Cell):
 
         # 用OrderDict更新CellDict
         self.cell_dict.clear()
-        cell_order_dict = OrderedDict([('conv', nn.Conv2d(10, 6, 5, pad_mode='valid')),
+        cell_order_dict = OrderedDict([('conv', nn.Conv2d(10, 6, 5, pad_mode='same')),
                                        ('relu', nn.ReLU()),
                                        ('max_pool2d', nn.MaxPool2d(kernel_size=4, stride=4))]
                                       )
@@ -386,7 +386,7 @@ class TestUpdateMethodNet(nn.Cell):
 
         # 用CellDict更新CellDict
         self.cell_dict.clear()
-        cell_dict = nn.CellDict([['conv', nn.Conv2d(10, 6, 5, pad_mode='valid')],
+        cell_dict = nn.CellDict([['conv', nn.Conv2d(10, 6, 5, pad_mode='same')],
                                  ['relu', nn.ReLU()],
                                  ['max_pool2d', nn.MaxPool2d(kernel_size=4, stride=4)]]
                                 )
@@ -402,6 +402,8 @@ class TestUpdateMethodNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_celldict_update_method(mode):
@@ -422,7 +424,7 @@ def test_celldict_update_method(mode):
     expect_dense_output = dense_op2(expect_dense_output)
     expect_dense_output = dense_op3(expect_dense_output)
 
-    conv2d_op = nn.Conv2d(10, 6, 5, pad_mode='valid')
+    conv2d_op = nn.Conv2d(10, 6, 5, pad_mode='same')
     relu_op = nn.ReLU()
     maxpool2d_op = nn.MaxPool2d(kernel_size=4, stride=4)
     expect_output = y
