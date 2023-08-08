@@ -109,6 +109,9 @@ set(CORE_SRC_LIST
         ${CMAKE_CURRENT_SOURCE_DIR}/abstract/utils.cc
         )
 add_library(mindspore_core SHARED ${CORE_OBJECT_LIST})
+if(ENABLE_GEN_CODE)
+    add_dependencies(mindspore_core generated_code)
+endif()
 if(ENABLE_NATIVE_PROTOBUF)
     target_link_libraries(mindspore_core PRIVATE ${PROTOBUF_LIB})
 elseif(NOT TARGET_AOS_ARM)

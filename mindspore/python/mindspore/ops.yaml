@@ -1,0 +1,87 @@
+#see blow example first when you want to define an operator
+##operator sample_op
+# sample_op:
+#     args:
+#         input_x: 
+#             dtype: tensor
+#         bias: 
+#             dtype: tensor, tuple[int]
+#         data_format: 
+#             dtype: str
+#             #mark it if this is a primitive init arg.
+#             init: "NCHW"
+#     returns:
+#         output_x: 
+#             dtype: tensor
+#     #if func_name is not set, operator name will be use as operator function name. 
+#     func_name: _example_ 
+# 
+#operator args support one or multiple kind of below dtype:
+#bool, int, float, tensor, str,
+#tuple[bool], tuple[int], tuple[float], tuple[tensor], tuple[str]
+#list[bool], list[int], list[float], list[tensor], list[str]
+
+#operator bias_add
+bias_add:
+    args:
+        input_x: 
+            dtype: tensor
+        bias: 
+            dtype: tensor
+        data_format: 
+            dtype: str
+            init: "NCHW"
+    returns:
+        output_x: 
+            dtype: tensor
+    #if func_name is not set, operator name will be use as operator function name.
+    func_name: _bias_add  
+
+#operator batch_norm
+batch_norm:
+    args:
+        input_x: 
+            dtype: tensor
+        running_mean: 
+            dtype: tensor
+        running_var: 
+            dtype: tensor
+        weight: 
+            dtype: tensor
+        bias: 
+            dtype: tensor
+        training: 
+            dtype: bool
+            init: False
+        momentum:
+            dtype: float
+            init: 0.1
+        eps: 
+            dtype: float
+            init: 1e-5
+    returns:
+        output_x: 
+            dtype: tensor
+
+#operator avg_pool
+avg_pool:
+    args:
+        x:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            init: 1
+            type_cast: int
+        strides:
+            dtype: tuple[int]
+            init: 1
+            type_cast: int
+        pad_mode:
+            dtype: str
+            init: "valid"
+        data_format:
+            dtype: str
+            init: "NCHW"
+    returns:
+        output: 
+            dtype: tensor

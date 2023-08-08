@@ -13,6 +13,15 @@ include(${CMAKE_SOURCE_DIR}/cmake/options.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/check_requirements.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/ascend_variables.cmake)
 
+#generate code
+if(DEFINED ENV{ENABLE_GEN_CODE})
+    set(ENABLE_GEN_CODE $ENV{ENABLE_GEN_CODE})
+endif()
+if(ENABLE_GEN_CODE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_GEN_CODE")
+    include(${CMAKE_SOURCE_DIR}/cmake/gencode.cmake)
+endif()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     if(NOT ENABLE_GLIBCXX)
