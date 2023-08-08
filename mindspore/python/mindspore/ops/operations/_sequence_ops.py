@@ -294,6 +294,9 @@ class SequenceAdd(Primitive):
         """Initialize SequenceAdd"""
         self.init_prim_io_names(inputs=['input_1', 'input_2'], outputs=['output_data'])
 
+    def __call__(self, x, y):
+        return x + y
+
 
 class SequenceAddOffset(Primitive):
     r"""
@@ -539,6 +542,9 @@ class SequenceCount(Primitive):
         """Initialize SequenceCount"""
         self.init_prim_io_names(inputs=['sequence', 'target'], outputs=['output_data'])
 
+    def __call__(self, sequence, target):
+        return sequence.count(target)
+
 
 class SequenceIndex(Primitive):
     r"""
@@ -568,6 +574,9 @@ class SequenceIndex(Primitive):
     def __init__(self):
         """Initialize SequenceIndex"""
         self.init_prim_io_names(inputs=['sequence', 'target', 'start', 'end'], outputs=['output_data'])
+
+    def __call__(self, sequence, target, start=None, end=None):
+        return sequence.index(target, start, end)
 
 
 class SequenceMul(Primitive):
@@ -952,6 +961,9 @@ class tuple_greater_than(Primitive):
         self.init_prim_io_names(
             inputs=['input_0', 'input_1'], outputs=['output_data'])
 
+    def __call__(self, x, y):
+        return x > y
+
 
 class tuple_greater_equal(Primitive):
     r"""
@@ -979,6 +991,9 @@ class tuple_greater_equal(Primitive):
         """Initialize tuple_greater_equal"""
         self.init_prim_io_names(
             inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+    def __call__(self, x, y):
+        return x >= y
 
 
 class list_greater_than(Primitive):
@@ -1008,6 +1023,9 @@ class list_greater_than(Primitive):
         self.init_prim_io_names(
             inputs=['input_0', 'input_1'], outputs=['output_data'])
 
+    def __call__(self, x, y):
+        return x > y
+
 
 class list_greater_equal(Primitive):
     r"""
@@ -1035,6 +1053,9 @@ class list_greater_equal(Primitive):
         """Initialize list_greater_equal"""
         self.init_prim_io_names(
             inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+    def __call__(self, x, y):
+        return x >= y
 
 
 class tuple_lt(Primitive):
@@ -1064,6 +1085,9 @@ class tuple_lt(Primitive):
         self.init_prim_io_names(
             inputs=['input_0', 'input_1'], outputs=['output_data'])
 
+    def __call__(self, x, y):
+        return x < y
+
 
 class list_lt(Primitive):
     r"""
@@ -1091,6 +1115,9 @@ class list_lt(Primitive):
         """Initialize list_lt"""
         self.init_prim_io_names(
             inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+    def __call__(self, x, y):
+        return x < y
 
 
 class tuple_le(Primitive):
@@ -1120,6 +1147,9 @@ class tuple_le(Primitive):
         self.init_prim_io_names(
             inputs=['input_0', 'input_1'], outputs=['output_data'])
 
+    def __call__(self, x, y):
+        return x <= y
+
 
 class list_le(Primitive):
     r"""
@@ -1147,3 +1177,6 @@ class list_le(Primitive):
         """Initialize list_le"""
         self.init_prim_io_names(
             inputs=['input_0', 'input_1'], outputs=['output_data'])
+
+    def __call__(self, x, y):
+        return x <= y
