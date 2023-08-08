@@ -180,10 +180,9 @@ def test_ms_syntax_operator_logic_int_and_str():
     Description: test logic and operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="The inputs types of the outermost network"):
-        net = LogicAnd()
-        ret = net(1, "cba")
-        print(ret)
+    net = LogicAnd()
+    ret = net(1, "cba")
+    assert ret == "cba"
 
 
 @pytest.mark.level1

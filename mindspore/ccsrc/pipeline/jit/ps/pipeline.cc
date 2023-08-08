@@ -453,7 +453,7 @@ void CheckArgsValid(const py::object &source, const py::tuple &args) {
     if (!CheckArgValid(args[i])) {
       MS_EXCEPTION(TypeError)
         << "The inputs types of the outermost network " << obj_desc
-        << " support bool, int, float, None, Tensor, Parameter, "
+        << " support bool, int, float, None, Tensor, Parameter, string, "
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
            "and tuple or list containing only these types, and dict whose values are these types, but the "
         << ToOrdinal(i + 1) << " arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.\n"

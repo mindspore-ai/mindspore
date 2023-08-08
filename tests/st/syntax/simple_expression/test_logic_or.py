@@ -161,10 +161,9 @@ def test_ms_syntax_operator_logic_int_or_str():
     Description: test logic or operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="The inputs types of the outermost network"):
-        net = LogicOr()
-        ret = net(1, "cba")
-        print(ret)
+    net = LogicOr()
+    ret = net(1, "cba")
+    assert ret == 1
 
 
 @pytest.mark.level1
