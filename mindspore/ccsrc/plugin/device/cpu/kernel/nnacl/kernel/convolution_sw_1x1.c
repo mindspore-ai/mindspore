@@ -60,7 +60,17 @@ int ConvolutionSW1x1Resize(KernelBase *self) {
   sw_1x1->matmul_->base_.out_ = self->out_;
   sw_1x1->matmul_->base_.out_size_ = self->out_size_;
   sw_1x1->matmul_->base_.workspace_ = self->workspace_;
-  return sw_1x1->matmul_->base_.Resize(&sw_1x1->matmul_->base_);
+
+  int ret = ConvSW1x1InitParam(sw_1x1);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+
+  ret = sw_1x1->matmul_->base_.Resize(&sw_1x1->matmul_->base_);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+  return NNACL_OK;
 }
 
 int ConvolutionSW1x1Prepare(KernelBase *self) {
@@ -84,7 +94,7 @@ int ConvolutionSW1x1Prepare(KernelBase *self) {
   sw_1x1->matmul_->base_.thread_nr_ = self->thread_nr_;
   sw_1x1->matmul_->base_.env_ = self->env_;
 
-  return ConvSW1x1InitParam(sw_1x1);
+  return NNACL_OK;
 }
 
 int ConvolutionSW1x1Release(KernelBase *self) {
