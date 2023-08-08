@@ -34,10 +34,6 @@ class CsvToMR:
     """
     A class to transform from csv to MindRecord.
 
-    Note:
-        For details about Examples, please refer to `Converting CSV Dataset <https://
-        www.mindspore.cn/tutorials/en/r2.0/advanced/dataset/record.html#converting-csv-dataset>`_ .
-
     Args:
         source (str): The file path of csv.
         destination (str): The MindRecord file path to transform into, ensure that the directory is created in advance

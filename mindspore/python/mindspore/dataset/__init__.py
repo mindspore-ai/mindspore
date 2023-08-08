@@ -70,7 +70,7 @@ The specific steps are as follows:
   iterator, which can output the preprocessed data cyclically.
 
 The data processing pipeline example is as follows. Please refer to
-`datasets_example.py <https://gitee.com/mindspore/mindspore/tree/r2.0/docs/api/api_python_en/datasets_example.py>`_
+`datasets_example.py <https://gitee.com/mindspore/mindspore/blob/r2.0/docs/api/api_python_en/datasets_example.py>`_
 for complete example.
 
 .. code-block::
