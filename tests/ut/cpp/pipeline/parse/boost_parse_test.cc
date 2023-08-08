@@ -30,15 +30,23 @@ class TestBoostParse : public UT::Common {
 
   virtual void TearDown();
 
-  void CheckHasFalseBranch(const FuncGraphPtr &func_graph) {
+  void CheckHasFalseBranch(const FuncGraphPtr &func_graph, bool folded = true) {
     auto manager = Manage(func_graph);
     EXPECT_TRUE(manager != nullptr);
+    bool has_false_branch = false;
     for (auto &fg : manager->func_graphs()) {
       if (fg->debug_info() != nullptr && fg->debug_info()->trace_info() != nullptr) {
         auto symbol = fg->debug_info()->trace_info()->symbol();
         // ✓ or ↓
-        EXPECT_TRUE(symbol == "\u2713" || symbol == "\u2193");
+        if (folded) {
+          EXPECT_TRUE(symbol == "\u2713" || symbol == "\u2193");
+        } else if (symbol == "\u2717") {
+          has_false_branch = true;
+        }
       }
+    }
+    if (!folded) {
+      EXPECT_EQ(has_false_branch, true);
     }
   }
 
@@ -52,7 +60,7 @@ void TestBoostParse::TearDown() {}
 
 // Feature: Boost parse.
 // Description: Parse the network witch has "if var:" statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestIfName) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_if_name", "if_name");
   CheckHasFalseBranch(func_graph);
@@ -60,7 +68,7 @@ TEST_F(TestBoostParse, TestIfName) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has UnaryOp statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestUnaryOp) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_unary_op", "if_not_name");
   CheckHasFalseBranch(func_graph);
@@ -68,7 +76,7 @@ TEST_F(TestBoostParse, TestUnaryOp) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has comparison statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestIsNone) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "is_none");
   CheckHasFalseBranch(func_graph);
@@ -76,7 +84,7 @@ TEST_F(TestBoostParse, TestIsNone) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has comparison statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestIsNotNone) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "is_not_none");
   CheckHasFalseBranch(func_graph);
@@ -84,23 +92,47 @@ TEST_F(TestBoostParse, TestIsNotNone) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has comparison statement.
-// Expectation:The false branch should be folded.
-TEST_F(TestBoostParse, TestEqual) {
-  FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "equal");
+// Expectation: The false branch should be folded.
+TEST_F(TestBoostParse, TestEqualNum) {
+  FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "equal_num");
   CheckHasFalseBranch(func_graph);
 }
 
 // Feature: Boost parse.
 // Description: Parse the network witch has comparison statement.
-// Expectation:The false branch should be folded.
-TEST_F(TestBoostParse, TestNotEqual) {
-  FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "not_equal");
+// Expectation: The false branch should be folded.
+TEST_F(TestBoostParse, TestEqualStr) {
+  FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "equal_str");
   CheckHasFalseBranch(func_graph);
 }
 
 // Feature: Boost parse.
 // Description: Parse the network witch has comparison statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should not be folded.
+TEST_F(TestBoostParse, TestEqualTensor) {
+  FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "equal_tensor");
+  CheckHasFalseBranch(func_graph, false);
+}
+
+// Feature: Boost parse.
+// Description: Parse the network witch has comparison statement.
+// Expectation: The false branch should be folded.
+TEST_F(TestBoostParse, TestNotEqualNum1) {
+  FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "not_equal_num1");
+  CheckHasFalseBranch(func_graph);
+}
+
+// Feature: Boost parse.
+// Description: Parse the network witch has comparison statement.
+// Expectation: The false branch should be folded.
+TEST_F(TestBoostParse, TestNotEqualNum2) {
+  FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "not_equal_num2");
+  CheckHasFalseBranch(func_graph);
+}
+
+// Feature: Boost parse.
+// Description: Parse the network witch has comparison statement.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestGreater) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "greater");
   CheckHasFalseBranch(func_graph);
@@ -108,7 +140,7 @@ TEST_F(TestBoostParse, TestGreater) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has comparison statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestGreaterEqual) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "greater_equal");
   CheckHasFalseBranch(func_graph);
@@ -116,7 +148,7 @@ TEST_F(TestBoostParse, TestGreaterEqual) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has comparison statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestLess) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "less");
   CheckHasFalseBranch(func_graph);
@@ -124,7 +156,7 @@ TEST_F(TestBoostParse, TestLess) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has comparison statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestLessEqual) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "less_equal");
   CheckHasFalseBranch(func_graph);
@@ -132,7 +164,7 @@ TEST_F(TestBoostParse, TestLessEqual) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has BoolOp statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestBoolOpNameOrEqual) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_bool_op", "name_or_equal");
   CheckHasFalseBranch(func_graph);
@@ -140,7 +172,7 @@ TEST_F(TestBoostParse, TestBoolOpNameOrEqual) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has BoolOp statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestBoolOpUnaryOpOrEqual) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_bool_op", "unary_op_or_equal");
   CheckHasFalseBranch(func_graph);
@@ -148,7 +180,7 @@ TEST_F(TestBoostParse, TestBoolOpUnaryOpOrEqual) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has BoolOp statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestBoolOpNameAndEqual) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_bool_op", "name_and_equal");
   CheckHasFalseBranch(func_graph);
@@ -156,7 +188,7 @@ TEST_F(TestBoostParse, TestBoolOpNameAndEqual) {
 
 // Feature: Boost parse.
 // Description: Parse the network witch has BoolOp statement.
-// Expectation:The false branch should be folded.
+// Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestBoolOpUnaryOpAndEqual) {
   FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_bool_op", "unary_op_and_equal");
   CheckHasFalseBranch(func_graph);
