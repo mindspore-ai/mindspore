@@ -218,6 +218,7 @@
 #include "plugin/device/ascend/optimizer/ge/all_to_all_v_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/expand_dims_for_batchnorm.h"
 #include "plugin/device/ascend/optimizer/ge/expander_fallback.h"
+#include "plugin/device/ascend/optimizer/ge/dropout_gen_mask_depend.h"
 
 namespace mindspore {
 namespace opt {
@@ -645,6 +646,7 @@ void AscendBackendOptimizeGE(const std::shared_ptr<session::KernelGraph> &kernel
   opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
   opt_ge_pm->AddPass(std::make_shared<opt::ExpandDimsForBatchNorm>());
+  opt_ge_pm->AddPass(std::make_shared<opt::DropoutGenMaskDepend>());
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
