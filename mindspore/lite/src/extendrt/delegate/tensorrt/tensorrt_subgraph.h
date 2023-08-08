@@ -58,6 +58,8 @@ class TensorRTSubGraph {
 
   void SetSerializePath(const std::string &path) { serialize_file_path_ = std::move(path); }
 
+  int VSLPreExectute(const std::vector<tensor::Tensor> &inputs, int i, bool sync, const std::string &tensor_name);
+
   std::vector<TensorInfo> &inputs() { return inputs_; }
 
   std::vector<TensorInfo> &outputs() { return outputs_; }

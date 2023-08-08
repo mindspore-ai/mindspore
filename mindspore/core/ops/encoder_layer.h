@@ -54,10 +54,13 @@ class MIND_API EncoderLayer : public BaseOperator {
   /// \param[in] use_past Define use_past.
   /// \param[in] query_layer Define query_layer.
   /// \param[in] moe Define moe.
+  /// \param[in] embedding_layer Define embedding_layer.
+
   void Init(int64_t head_num, int64_t head_size, float eps_layernorm1, float eps_layernorm2, float eps_layernorm3,
             int64_t ffn_hidden_size, int64_t expert_num, int64_t expert_offset_id, float capacity_factor,
             bool position_bias, bool post_layernorm, float scale = 1.0f, ActType act_type = ActType::ActType_Gelu,
-            bool layer_norm = false, bool use_past = false, bool query_layer = false, bool moe = false);
+            bool layer_norm = false, bool use_past = false, bool query_layer = false, bool moe = false,
+            bool embedding_layer = false);
   void set_head_num(int64_t head_num);
   void set_head_size(int64_t head_size);
   void set_post_layernorm(bool post_layernorm);
@@ -75,6 +78,8 @@ class MIND_API EncoderLayer : public BaseOperator {
   void set_use_past(bool use_past);
   void set_query_layer(bool query_layer);
   void set_moe(bool moe);
+  void set_embedding_layer(bool embedding_layer);
+
   int64_t get_head_num() const;
   int64_t get_head_size() const;
   bool get_post_layernorm() const;
@@ -92,6 +97,7 @@ class MIND_API EncoderLayer : public BaseOperator {
   bool get_use_past() const;
   bool get_query_layer() const;
   bool get_moe() const;
+  bool get_embedding_layer() const;
 };
 }  // namespace ops
 }  // namespace mindspore

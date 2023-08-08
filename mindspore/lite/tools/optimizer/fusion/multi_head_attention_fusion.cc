@@ -494,7 +494,7 @@ VectorRef MultiHeadAttentionFusion::DefineMPPatternSwin(bool flag) const {
   return matmul3;
 }
 
-VectorRef MultiHeadAttentionFusion::DefineMPPatternPanguDistributed(bool alpha) const {
+VectorRef MultiHeadAttentionFusion::DefineMPPatternPanguDistributed(bool alpha, bool multi_batch) const {
   bool k_div = (alpha) ? true : false;
   auto q_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
   MS_CHECK_TRUE_RET(q_transpose != nullptr, {});
@@ -507,46 +507,19 @@ VectorRef MultiHeadAttentionFusion::DefineMPPatternPanguDistributed(bool alpha) 
   auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion), "is_matmul1");
   MS_CHECK_TRUE_RET(is_matmul1 != nullptr, {});
   auto matmul1 = VectorRef({is_matmul1, q_embedding, k_embedding});
-  auto is_reshape1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "is_reshape1");
-  MS_CHECK_TRUE_RET(is_reshape1 != nullptr, {});
-  auto var_reshape1 = std::make_shared<Var>("var_reshape1");
-  MS_CHECK_TRUE_RET(var_reshape1 != nullptr, {});
-  auto reshape1 = VectorRef({is_reshape1, matmul1, var_reshape1});
-  auto is_all_gather = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAllGather), "is_all_gather");
-  MS_CHECK_TRUE_RET(is_all_gather != nullptr, {});
-  auto all_gather = VectorRef({is_all_gather, reshape1});
-  auto is_reshape2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "is_reshape2");
-  MS_CHECK_TRUE_RET(is_reshape2 != nullptr, {});
-  auto var_reshape2 = std::make_shared<Var>("var_reshape2");
-  MS_CHECK_TRUE_RET(var_reshape2 != nullptr, {});
-  auto reshape2 = VectorRef({is_reshape2, all_gather, var_reshape2});
   auto is_add = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion), "is_add");
   MS_CHECK_TRUE_RET(is_add != nullptr, {});
   auto mask = DefineMask(mask_);
   MS_CHECK_TRUE_RET(!mask.empty(), {});
-  auto add = VectorRef({is_add, mask, reshape2});
+  auto add = VectorRef({is_add, mask, matmul1});
   auto is_reshape3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "is_reshape3");
   MS_CHECK_TRUE_RET(is_reshape3 != nullptr, {});
   auto var_reshape3 = std::make_shared<Var>("var_reshape3");
   MS_CHECK_TRUE_RET(var_reshape3 != nullptr, {});
   auto reshape3 = VectorRef({is_reshape3, add, var_reshape3});
-  auto is_stride_slice = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice), "is_stride_slice");
-  MS_CHECK_TRUE_RET(is_stride_slice != nullptr, {});
-  auto var_stride_slice1 = std::make_shared<Var>("var_stride_slice1");
-  MS_CHECK_TRUE_RET(var_stride_slice1 != nullptr, {});
-  auto var_stride_slice2 = std::make_shared<Var>("var_stride_slice2");
-  MS_CHECK_TRUE_RET(var_stride_slice2 != nullptr, {});
-  auto var_stride_slice3 = std::make_shared<Var>("var_stride_slice3");
-  MS_CHECK_TRUE_RET(var_stride_slice3 != nullptr, {});
-  auto strid_slice = VectorRef({is_stride_slice, reshape3, var_stride_slice1, var_stride_slice2, var_stride_slice3});
-  auto is_reshape4 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "is_reshape4");
-  MS_CHECK_TRUE_RET(is_reshape4 != nullptr, {});
-  auto var_reshape4 = std::make_shared<Var>("var_reshape4");
-  MS_CHECK_TRUE_RET(var_reshape4 != nullptr, {});
-  auto reshape4 = VectorRef({is_reshape4, strid_slice, var_reshape4});
   auto is_softmax = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax), "is_softmax");
   MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
-  auto softmax = VectorRef({is_softmax, reshape4});
+  auto softmax = VectorRef({is_softmax, reshape3});
   auto is_reshape5 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "is_reshape5");
   MS_CHECK_TRUE_RET(is_reshape5 != nullptr, {});
   auto var_reshape5 = std::make_shared<Var>("var_reshape5");
@@ -672,6 +645,7 @@ std::unordered_map<std::string, VectorRef> MultiHeadAttentionFusion::DefinePatte
   patterns[kMPAWithMaskPatternName] = DefineMPWithMaskPattern();
   patterns[kMPAPatternName] = DefineMPWithMaskPattern(false);
   patterns[kPatternNameSigmaDistributedUsePast] = DefineMPPatternPanguDistributed(false);
+  patterns[kPatternNameSigmaDistributedUsePastMB] = DefineMPPatternPanguDistributed(false, true);
   patterns[kPatternNameAlphaDistributedUsePast] = DefineMPPatternPanguDistributed(true);
   patterns[kMPAWithMaskPatternNamePA] = DefineMPWithMaskPatternPA();
   patterns[kMPAPatternNamePA] = DefineMPWithMaskPatternPA(false);
@@ -719,21 +693,16 @@ AnfNodePtr MultiHeadAttentionFusion::Process(const std::string &pattern_name, co
     return nullptr;
   }
   scale_ = 0.0f;
-  if ((pattern_name == kMPAWithMaskPatternName) || (pattern_name == kMPAWithMaskPatternNamePA) ||
-      (pattern_name == kMPAWithMaskPatternNameT5) || (pattern_name == kMPAWithMaskPatternNameT5New) ||
-      (pattern_name == kMPAWithMaskTransposePatternNameT5New) || (pattern_name == kMPAWithMaskPatternNameT5New2) ||
-      (pattern_name == kPatternNameSigmaDistributedUsePast) || (pattern_name == kPatternNameAlphaDistributedUsePast)) {
-    if (pattern_name == kMPAWithMaskPatternNameT5New || pattern_name == kMPAWithMaskTransposePatternNameT5New ||
-        pattern_name == kMPAWithMaskPatternNameT5New2) {
-      t5_x_ = true;
-      scale_ = 1.0f;
-    }
-    return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node, true);
-  }
+  bool mask = true;
   if (pattern_name == kMPAPatternName || pattern_name == kMPAPatternNameSwin1 || pattern_name == kMPAPatternNameSwin2 ||
       pattern_name == kMPAPatternNamePA)
-    return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node, false);
-  return nullptr;
+    mask = false;
+  if (pattern_name == kMPAWithMaskPatternNameT5New || pattern_name == kMPAWithMaskTransposePatternNameT5New ||
+      pattern_name == kMPAWithMaskPatternNameT5New2) {
+    t5_x_ = true;
+    scale_ = 1.0f;
+  }
+  return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node, mask);
 }
 
 std::shared_ptr<ops::Attention> MultiHeadAttentionFusion::BuildAttentionPrim(const EquivPtr &equiv) const {
@@ -795,7 +764,8 @@ STATUS MultiHeadAttentionFusion::AdjustOtherGetItems(const FuncGraphPtr &func_gr
     for (auto &snode : transpose_users) {
       if (CheckPrimitiveType(snode.first, prim::kPrimTranspose) ||
           CheckPrimitiveType(snode.first, prim::kPrimMulFusion) ||
-          CheckPrimitiveType(snode.first, prim::kPrimReshape)) {
+          CheckPrimitiveType(snode.first, prim::kPrimReshape) ||
+          CheckPrimitiveType(snode.first, prim::kPrimAllGather)) {
         manager->SetEdge(snode.first, snode.second, get_item);
       }
     }
@@ -993,7 +963,6 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
     }
   }
   AnfNodePtr vnode, knode;
-  vnode = nullptr;
   knode = utils::cast<AnfNodePtr>((*equiv)[k_transpose_]);
   auto it_vnode = (*equiv).find(v_transpose_);
   if (it_vnode != (*equiv).end() && !t5_x_) vnode = utils::cast<AnfNodePtr>(it_vnode->second);

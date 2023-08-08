@@ -69,6 +69,10 @@ void EncoderLayer::set_act_type(ActType act_type) {
 void EncoderLayer::set_use_past(bool use_past) { (void)this->AddAttr(kUsePast, api::MakeValue(use_past)); }
 void EncoderLayer::set_query_layer(bool query_layer) { (void)this->AddAttr(kQueryLayer, api::MakeValue(query_layer)); }
 void EncoderLayer::set_moe(bool moe) { (void)this->AddAttr(kMoe, api::MakeValue(moe)); }
+void EncoderLayer::set_embedding_layer(bool embedding_layer) {
+  (void)this->AddAttr(kEmbeddingLayer, api::MakeValue(embedding_layer));
+}
+
 int64_t EncoderLayer::get_head_num() const {
   auto value_ptr = this->GetAttr(kNumHeads);
   return GetValue<int64_t>(value_ptr);
@@ -157,10 +161,17 @@ bool EncoderLayer::get_moe() const {
   return GetValue<bool>(value_ptr);
 }
 
+bool EncoderLayer::get_embedding_layer() const {
+  auto value_ptr = this->GetAttr(kEmbeddingLayer);
+  if (value_ptr == nullptr) {
+    return false;
+  }
+  return GetValue<bool>(value_ptr);
+}
 void EncoderLayer::Init(int64_t head_num, int64_t head_size, float eps_layernorm1, float eps_layernorm2,
                         float eps_layernorm3, int64_t ffn_hidden_size, int64_t expert_num, int64_t expert_offset_id,
                         float capacity_factor, bool position_bias, bool post_layernorm, float scale, ActType act_type,
-                        bool layer_norm, bool use_past, bool query_layer, bool moe) {
+                        bool layer_norm, bool use_past, bool query_layer, bool moe, bool embedding_layer) {
   this->set_head_num(head_num);
   this->set_head_size(head_size);
   this->set_post_layernorm(post_layernorm);
@@ -178,6 +189,7 @@ void EncoderLayer::Init(int64_t head_num, int64_t head_size, float eps_layernorm
   this->set_use_past(use_past);
   this->set_query_layer(query_layer);
   this->set_moe(moe);
+  this->set_embedding_layer(embedding_layer);
 }
 REGISTER_PRIMITIVE_C(kNameEncoderLayer, EncoderLayer);
 }  // namespace mindspore::ops

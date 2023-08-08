@@ -402,6 +402,7 @@ constexpr auto kPositionBias2 = "position_bias2";
 constexpr auto kLayerNorm = "layer_norm";
 constexpr auto kScale1 = "scale1";
 constexpr auto kScale2 = "scale2";
+constexpr auto kEmbeddingLayer = "embedding_layer";
 constexpr auto KExclusive = "exclusive";
 constexpr auto KReverse = "reverse";
 constexpr auto KComputeEigenvectors = "compute_eigenvectors";

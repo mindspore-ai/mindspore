@@ -90,7 +90,6 @@
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/optimizer/graph/dump_graph.h"
 #include "tools/optimizer/graph/eliminate_redundant_cast_pass.h"
-#include "tools/optimizer/fisson/use_past_embedding.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "tools/optimizer/parallel/spliter.h"
@@ -323,7 +322,6 @@ std::vector<opt::PassPtr> InitFusions(const std::shared_ptr<ConverterPara> &para
     fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
     fusions.push_back(std::make_shared<opt::EncoderLayerFusion>());
     fusions.push_back(std::make_shared<opt::DecoderLayerFusion>());
-    fusions.push_back(std::make_shared<opt::UsePastEmbedding>());
   }
   return fusions;
 }
@@ -347,11 +345,6 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
     if (param->fusion_blacklists.find(pass_name) != param->fusion_blacklists.end()) {
       MS_LOG(INFO) << "Disable fusion: " << pass_name;
       continue;
-    }
-    if (param->optimize_transformer) {
-      if (pass_name == "ConstFoldPass") {
-        continue;
-      }
     }
     fusion_pm->AddPass(pass_ptr);
   }
@@ -671,12 +664,10 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
     return RET_ERROR;
   }
 
-  if (!param->optimize_transformer) {
-    status = RunConstFoldPass(old_graph, param);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run const fold pass failed.";
-      return RET_ERROR;
-    }
+  status = RunConstFoldPass(old_graph, param);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run const fold pass failed.";
+    return RET_ERROR;
   }
 
   if (!RunEliminateRedundantPass(old_graph, param)) {

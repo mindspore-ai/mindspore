@@ -356,6 +356,7 @@ int TensorRTExecutor::ParseTransformerProfile() {
   auto &transformer_context = transformer_context_it->second;
   int encoder_input = -1;
   int decoder_input = -1;
+  std::string optimize_transformer = "";
   try {
     encoder_input = std::stoi(ProfileParser::GetOption(transformer_context, lite::kEncoderInputKey, "-1").c_str());
   } catch (...) {
@@ -377,6 +378,8 @@ int TensorRTExecutor::ParseTransformerProfile() {
     MS_LOG(ERROR) << "The value of ffn_f16 must be true or false.";
     return RET_ERROR;
   }
+  optimize_transformer = ProfileParser::GetOption(transformer_context, lite::kOptimizeTransformer, "");
+  runtime_->SetTransformerOptimize(optimize_transformer);
   return RET_OK;
 }
 

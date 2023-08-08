@@ -234,8 +234,8 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream, cublasHandle_t cublas
 
   MS_LOG(INFO) << GetRankID() << " tensorrt subgraph stream: " << stream_;
 
-  // config setMaxWorkspaceSize to 2047 MB for max limit
-  constexpr size_t kWorkspaceSize = 2047 * (1 << 20);
+  // config setMaxWorkspaceSize to 2100 MB for max limit
+  constexpr size_t kWorkspaceSize = static_cast<size_t>(2100) * (1 << 20);
   config_->setMaxWorkspaceSize(kWorkspaceSize);
   return RET_OK;
 }
@@ -720,6 +720,51 @@ int TensorRTSubGraph::OnNewInputShapes(const std::vector<ShapeVector> &new_shape
   return RET_OK;
 }
 
+int TensorRTSubGraph::VSLPreExectute(const std::vector<tensor::Tensor> &inputs, int i, bool sync,
+                                     const std::string &tensor_name) {
+  constexpr int input_ids_idx = 0;
+  constexpr int expert_ids_idx = C1NUM;
+  constexpr int attn_mask_idx = C2NUM;
+  constexpr int pos_ids_idx = C3NUM;
+  constexpr int current_idx_idx = C4NUM;
+  if (i == input_ids_idx || i == expert_ids_idx || i == pos_ids_idx) {
+    int *in_ptr = static_cast<int *>(inputs[i].data_ptr()->data());
+    int batch = inputs[trt_in_tensor_name_.size() - C1NUM].ElementsNum();
+    int seq = inputs[0].ElementsNum() / batch;
+    int export_num = (i != expert_ids_idx) ? C1NUM : inputs[i].ElementsNum() / (batch * seq);
+    bool incremental_mode =
+      (static_cast<const int32_t *>(inputs[pos_ids_idx].data().const_data())[0] != 0) ? true : false;
+    size_t h_token = 0;
+    for (int k = 0; k < batch; k++) {
+      int actual_seq_len =
+        (incremental_mode)
+          ? C1NUM
+          : (static_cast<const int32_t *>(inputs[trt_in_tensor_name_.size() - C1NUM].data().const_data())[k] + C1NUM);
+      int batch_valid = static_cast<const int32_t *>(inputs[trt_in_tensor_name_.size() - C1NUM].data().const_data())[k];
+      h_token += (batch_valid == -1) ? 0 : actual_seq_len;
+    }
+    for (int j = 0; j < export_num; j++) {
+      size_t h_token_idx = 0;
+      for (int k = 0; k < batch; k++) {
+        int actual_seq_len =
+          (incremental_mode)
+            ? C1NUM
+            : (static_cast<const int32_t *>(inputs[trt_in_tensor_name_.size() - C1NUM].data().const_data())[k] + C1NUM);
+        for (int l = 0; l < actual_seq_len; l++) {
+          in_ptr[j * h_token + h_token_idx + l] =
+            static_cast<int *>(inputs[i].data_ptr()->data())[j * batch * seq + k * seq + l];
+        }
+        h_token_idx += actual_seq_len;
+      }
+    }
+    return runtime_->GetAllocator()->SyncMemHostToDevice(inputs[i], tensor_name, sync,
+                                                         h_token * export_num * sizeof(int));
+  } else if (i != attn_mask_idx && i != current_idx_idx) {
+    return runtime_->GetAllocator()->SyncMemHostToDevice(inputs[i], tensor_name, sync);
+  }
+  return RET_OK;
+}
+
 int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs, const std::vector<tensor::Tensor> &outputs,
                                  bool sync) {
   if (inputs_.size() != inputs.size()) {
@@ -749,7 +794,11 @@ int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs, cons
         MS_LOG(ERROR) << "realloc for input tensor device memory failed.";
         return RET_ERROR;
       }
-      ret = runtime_->GetAllocator()->SyncMemHostToDevice(inputs[i], trt_tensor_name, sync);
+      if (runtime_->IsTransformerOptimizeSigma()) {
+        ret = VSLPreExectute(inputs, i, sync, trt_tensor_name);
+      } else {
+        ret = runtime_->GetAllocator()->SyncMemHostToDevice(inputs[i], trt_tensor_name, sync);
+      }
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "sync mem from host to device failed for " << trt_tensor_name;
         return RET_ERROR;
@@ -787,7 +836,7 @@ int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs, cons
     tensor_bindings_[index] = device_ptr;
   }
   return RET_OK;
-}
+}  // namespace mindspore::lite
 
 int TensorRTSubGraph::PostExecute(std::vector<tensor::Tensor> *outputs, bool sync) {
   if (!outputs->empty() && outputs->size() != outputs_.size()) {

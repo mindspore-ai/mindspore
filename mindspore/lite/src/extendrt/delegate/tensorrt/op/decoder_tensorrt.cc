@@ -31,6 +31,11 @@
 #include "src/fastertransformer/kernels/layernorm_kernels.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 
+#include "mindspore/core/ops/op_name.h"
+#include "src/fastertransformer/layers/ms_layers/decoder.h"
+#include "src/fastertransformer/layers/ms_layers/BaseLayer.h"
+#include "src/fastertransformer/layers/ms_layers/attention.h"
+#include "src/fastertransformer/layers/ms_layers/ffn.h"
 namespace mindspore::lite {
 namespace {
 constexpr std::size_t kTwo = 2;
@@ -109,7 +114,8 @@ int DecoderTensorRT::AddVsl(int encoder_input_idx, int decoder_input_idx, int in
     inputTensors[input_number] = vsl_output_tensor;
   } else {
     nvinfer1::ILayer *encoder_vsl_layer = ctx->network()->getLayer(runtime_->GetVslEncoderPluginId());
-    inputTensors[input_number] = encoder_vsl_layer->getOutput(0);
+    nvinfer1::ITensor *vsl_output_tensor = encoder_vsl_layer->getOutput(0);
+    inputTensors[input_number] = vsl_output_tensor;
   }
   if (runtime_->GetVslDecoderPluginId() == -1) {
     auto vsl_plugin = std::make_shared<VslCompressPlugin>(name, device_id_);
@@ -128,51 +134,15 @@ int DecoderTensorRT::AddVsl(int encoder_input_idx, int decoder_input_idx, int in
     inputTensors[input_number + 1] = vsl_output_tensor;
   } else {
     nvinfer1::ILayer *decoder_vsl_layer = ctx->network()->getLayer(runtime_->GetVslDecoderPluginId());
-    inputTensors[input_number + 1] = decoder_vsl_layer->getOutput(0);
+    nvinfer1::ITensor *vsl_output_tensor = decoder_vsl_layer->getOutput(0);
+    inputTensors[input_number + 1] = vsl_output_tensor;
   }
-  return RET_OK;
-}
-int DecoderTensorRT::InitParam(fastertransformer::decoderParamRun *params) {
-  auto decoder_op = AsOps<ops::DecoderLayer>();
-  if (decoder_op == nullptr) {
-    MS_LOG(ERROR) << "op action convert failed";
-    return RET_ERROR;
-  }
-  cublasHandle_t cublas_handle = GetCublasHandle();
-  params->common_param.eft = false;
-  params->common_param.cublas_handle = cublas_handle;
-  params->common_param.head_num = decoder_op->get_head_num();
-  params->common_param.head_size = decoder_op->get_head_size();
-  params->common_param.hidden_size = params->common_param.head_num * params->common_param.head_size;
-  params->decoder.layernorm_post = decoder_op->get_post_layernorm();
-  params->decoder.eps1 = decoder_op->get_eps_layernorm1();
-  params->decoder.eps2 = decoder_op->get_eps_layernorm2();
-  params->decoder.eps3 = decoder_op->get_eps_layernorm3();
-  params->decoder.eps4 = decoder_op->get_eps_layernorm4();
-  params->ffn_param.ffn_param.ffn_hidden_size = decoder_op->get_ffn_hidden_size();
-  params->ffn_param.ffn_param.ffn_fp16 = runtime_->GetTransformerFfnFp16();
-  params->ffn_param.ffn_param.act_type = (fastertransformer::ActType)(decoder_op->get_act_type());
-  params->attn1.attn.position_bias = decoder_op->get_position_bias1();
-  params->ffn_param.ffn_param.ffn_bias = !params->attn1.attn.position_bias;
-  params->attn1.attn.qkv_bias = !params->attn1.attn.position_bias;
-  params->attn1.attn.projection_bias = !params->attn1.attn.position_bias;
-  params->attn1.attn.is_cross = false;
-  params->attn1.attn.scale = decoder_op->get_scale1();
-  params->attn1.attn.mask = true;
-  params->attn2.attn.position_bias = decoder_op->get_position_bias2();
-  params->attn2.attn.qkv_bias = !params->attn2.attn.position_bias;
-  params->attn2.attn.projection_bias = !params->attn2.attn.position_bias;
-  params->attn2.attn.is_cross = true;
-  params->attn2.attn.scale = decoder_op->get_scale2();
-  params->attn2.attn.mask = true;
-  params->decoder.has_beta = !params->attn1.attn.position_bias;
-  params->decoder.is_layernorm = decoder_op->get_layer_norm();
   return RET_OK;
 }
 
-void DecoderTensorRT::CastFfnTensors(fastertransformer::decoderParamRun *params, TensorRTContext *ctx) {
-  size_t start_fp16 = (params->attn1.attn.position_bias) ? C13NUM : C18NUM;
-  size_t end_fp16 = (params->attn1.attn.position_bias) ? C16NUM : C22NUM;
+void DecoderTensorRT::CastFfnTensors(std::shared_ptr<mindspore::ops::DecoderLayer> decoder_op, TensorRTContext *ctx) {
+  size_t start_fp16 = (decoder_op->get_position_bias1()) ? C13NUM : C18NUM;
+  size_t end_fp16 = (decoder_op->get_position_bias1()) ? C16NUM : C22NUM;
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     auto in_tensor = input(ctx, i);
     if (in_tensors_[i].IsConst() || in_tensor.trt_tensor_ == nullptr) {
@@ -192,11 +162,13 @@ int DecoderTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
-  fastertransformer::decoderParamRun params;
-  if (InitParam(&params) != RET_OK) {
-    MS_LOG(ERROR) << "Init param in decoder tensorrt failed.";
+  auto decoder_op = AsOps<ops::DecoderLayer>();
+  if (decoder_op == nullptr) {
+    MS_LOG(ERROR) << "op action convert failed";
     return RET_ERROR;
   }
+  cublasHandle_t cublas_handle = GetCublasHandle();
+  bool eft = false;
   int encoder_input_idx = runtime_->GetTransformerEncoderInputIdx();
   int decoder_input_idx = runtime_->GetTransformerDecoderInputIdx();
   if ((encoder_input_idx != -1 && decoder_input_idx == -1) || (encoder_input_idx == -1 && decoder_input_idx != -1)) {
@@ -204,7 +176,7 @@ int DecoderTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   if (IsWeightInputHanledInner()) {
-    CastFfnTensors(&params, ctx);
+    CastFfnTensors(decoder_op, ctx);
   }
   nvinfer1::ITensor *input_tensor = input(ctx, 0).trt_tensor_;
   const int input_number = inputs().size();
@@ -214,13 +186,16 @@ int DecoderTensorRT::AddInnerOp(TensorRTContext *ctx) {
     inputTensors[i] = input(ctx, i).trt_tensor_;
   }
   if (encoder_input_idx != -1 && decoder_input_idx != -1) {
-    params.common_param.eft = true;
+    eft = true;
     AddVsl(encoder_input_idx, decoder_input_idx, input_number, ctx, inputTensors, input_tensor->getName());
   }
   auto compute_type = runtime_->GetRuntimePrecisionMode();
-  auto plugin = std::make_shared<DecoderPlugin>(input_tensor->getName(), compute_type, params, device_id_);
+  auto plugin = std::make_shared<DecoderPlugin>(
+    input_tensor->getName(), compute_type, decoder_op, cublas_handle, eft,
+    (runtime_->GetTransformerFfnFp16() && runtime_->GetRuntimePrecisionMode() == RuntimePrecisionMode_FP32),
+    device_id_);
   nvinfer1::IPluginV2Layer *decoder_layer =
-    ctx->network()->addPluginV2(inputTensors, input_number + vsl_input_number, *plugin);
+    ctx->network()->addPluginV2(inputTensors, (input_number + vsl_input_number), *plugin);
   if (decoder_layer == nullptr) {
     MS_LOG(ERROR) << "add decoder op failed for TensorRT.";
     return RET_ERROR;
@@ -254,49 +229,85 @@ template <typename T>
 int DecoderPlugin::RunCudaDecoder(const nvinfer1::PluginTensorDesc *inputDesc,
                                   const nvinfer1::PluginTensorDesc *outputDesc, const void *const *inputs,
                                   void *const *outputs, void *workspace, cudaStream_t stream, cublasGemmAlgo_t algoId) {
-  params_.common_param.algo = algoId;
-  params_.common_param.stream = stream;
-  void *inputs_forward[num_of_inputs_];
+  decoder_layer_->SetWSOffset(0);
+  decoder_layer_->SetAlgo(algoId);
+  std::vector<void *> inputs_forward;
   for (int i = 0; i < num_of_inputs_; i++) {
-    inputs_forward[i] = const_cast<void *>(inputs[i]);
+    inputs_forward.push_back(const_cast<void *>(inputs[i]));
   }
-  void *outputs_forward[] = {outputs[0]};
-  fastertransformer::forwardDecoder<T>(inputs_forward, num_of_inputs_, outputs_forward, num_of_outputs_, &params_,
-                                       workspace);
+  std::vector<void *> outputs_forward = {const_cast<void *>(outputs[0])};
+  decoder_layer_->forward(inputs_forward, outputs_forward, workspace, cublas_handle_, stream);
   return RET_OK;
 }
 
 bool DecoderPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                               int nbOutputs) noexcept {
   auto type = (compute_type_ == RuntimePrecisionMode_FP16) ? nvinfer1::DataType::kHALF : nvinfer1::DataType::kFLOAT;
-  if (params_.common_param.eft && (pos == nbInputs - 1 || pos == nbInputs - C2NUM)) {
-    bool res = (tensorsDesc[pos].type == nvinfer1::DataType::kINT32) ? true : false;
-    return res;
+  if (eft_ && (pos == nbInputs - 1 || pos == nbInputs - C2NUM)) {
+    return ((tensorsDesc[pos].type == nvinfer1::DataType::kINT32) &&
+            (tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR));
   }
-  bool res = (tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR) && (tensorsDesc[pos].type == type);
-  return res;
+  return (tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR) && (tensorsDesc[pos].type == type);
 }
 
+template <typename T>
+int DecoderPlugin::InitDecoder(size_t batch_size, size_t src_seq_len, size_t tgt_seq_len) {
+  size_t h_token_num = batch_size * src_seq_len;
+  size_t h_token_num2 = batch_size * tgt_seq_len;
+  size_t head_num = decoder_op_->get_head_num();
+  size_t head_size = decoder_op_->get_head_size();
+  fastertransformer::FfnBase::ActType act_type;
+  if (decoder_op_->get_act_type() == ActType::ActType_Gelu) {
+    act_type = fastertransformer::FfnBase::ActType::Gelu;
+  } else if (decoder_op_->get_act_type() == ActType::ActType_Relu) {
+    act_type = fastertransformer::FfnBase::ActType::Relu;
+  } else {
+    act_type = static_cast<fastertransformer::FfnBase::ActType>(decoder_op_->get_act_type());
+  }
+  size_t hidden_size = head_num * head_size;
+  decoder_layer_ = std::make_shared<fastertransformer::Decoder<T>>(batch_size, src_seq_len, tgt_seq_len, head_num,
+                                                                   head_size, hidden_size);
+  decoder_layer_->SetFfnParam(ffn_fp16_, decoder_op_->get_ffn_hidden_size(), act_type,
+                              !decoder_op_->get_position_bias1());
+  decoder_layer_->SetIsLayerNorm(decoder_op_->get_layer_norm(), decoder_op_->get_eps_layernorm4());
+  decoder_layer_->SetT5(decoder_op_->get_position_bias1());
+  decoder_layer_->SetVSL(eft_);
+  decoder_layer_->SetEps(decoder_op_->get_eps_layernorm1(), decoder_op_->get_eps_layernorm2(),
+                         decoder_op_->get_eps_layernorm3(), decoder_op_->get_eps_layernorm4());
+  decoder_layer_->SetScaleAttn(decoder_op_->get_scale1());
+  decoder_layer_->SetHTokenNum(h_token_num, h_token_num2);
+  decoder_layer_->SetLayerNormPost(decoder_op_->get_post_layernorm());
+  decoder_layer_->SetAlgo(CUBLAS_GEMM_DEFAULT_TENSOR_OP);
+  return RET_OK;
+}
 void DecoderPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
                                     const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {
   const int request_batch_size = static_cast<const int>(in[0].desc.dims.d[0]);
   const int request_src_seq_len = static_cast<const int>(in[0].desc.dims.d[1]);
-  const int request_tgt_seq_len = params_.attn1.attn.position_bias
+  const int request_tgt_seq_len = decoder_op_->get_position_bias1()
                                     ? static_cast<const int>(in[C10NUM].desc.dims.d[C2NUM])
                                     : static_cast<const int>(in[C14NUM].desc.dims.d[C2NUM]);
-  params_.common_param.batch_size = request_batch_size;
-  params_.common_param.src_seq_len = request_src_seq_len;
-  params_.common_param.tgt_seq_len = request_tgt_seq_len;
   num_of_inputs_ = nbInputs;
   num_of_outputs_ = nbOutputs;
+  int result;
+  if (compute_type_ == RuntimePrecisionMode_FP16) {
+    result = InitDecoder<half>(request_batch_size, request_src_seq_len, request_tgt_seq_len);
+  } else {
+    result = InitDecoder<float>(request_batch_size, request_src_seq_len, request_tgt_seq_len);
+  }
+  if (result != RET_OK) {
+    MS_LOG(ERROR) << "Init decoder_layer in decoder tensorrt failed.";
+  }
+  workspace_size_ = decoder_layer_->GetWorkspaceSize();
 }
+
 size_t DecoderPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int nbInputs,
                                        const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept {
-  if (compute_type_ == RuntimePrecisionMode_FP16) {
-    return fastertransformer::GetDecoderLayerWorkspaceSize<half>(&params_);
-  } else {
-    return fastertransformer::GetDecoderLayerWorkspaceSize<float>(&params_);
+  if (workspace_size_ != 0) {
+    return workspace_size_;
   }
+  size_t workspace_size = decoder_layer_->GetWorkspaceSize();
+  return workspace_size;
 }
 
 nvinfer1::DimsExprs DecoderPlugin::getOutputDimensions(int32_t index, const nvinfer1::DimsExprs *inputs,
@@ -320,19 +331,18 @@ nvinfer1::IPluginV2DynamicExt *DecoderPlugin::clone() const noexcept {
     return nullptr;
   }
   plugin->setPluginNamespace(name_space_.c_str());
-  plugin->params_.attn1.common_param = &plugin->params_.common_param;
-  plugin->params_.attn2.common_param = &plugin->params_.common_param;
-  plugin->params_.ffn_param.common_param = &plugin->params_.common_param;
   return plugin;
 }
 
 size_t DecoderPlugin::getSerializationSize() const noexcept {
-  return sizeof(int) + sizeof(fastertransformer::decoderParamRun);
+  return sizeof(int) + sizeof(bool) + sizeof(bool) + sizeof(mindspore::ops::DecoderLayer);
 }
 
 void DecoderPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &compute_type_, sizeof(int));
-  SerializeValue(&buffer, &params_, sizeof(fastertransformer::decoderParamRun));
+  SerializeValue(&buffer, decoder_op_.get(), sizeof(mindspore::ops::DecoderLayer));
+  SerializeValue(&buffer, &eft_, sizeof(bool));
+  SerializeValue(&buffer, &ffn_fp16_, sizeof(bool));
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameDecoderLayer, DecoderTensorRT)
 }  // namespace mindspore::lite

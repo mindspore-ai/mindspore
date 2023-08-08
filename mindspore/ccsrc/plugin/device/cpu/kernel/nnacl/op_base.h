@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_OP_BASE_H_
-#define NNACL_OP_BASE_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_OP_BASE_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_OP_BASE_H_
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -703,7 +703,8 @@ typedef enum ActType {
   ActType_Sign = 17,
   ActType_Swish = 18,
   ActType_Gelu = 19,
-  ActType_Unknown = 20
+  ActType_FastGelu = 20,
+  ActType_Unknown = 21
 } ActType;
 typedef enum PadType { Pad_pad, Pad_same, Pad_valid } PadType;
 typedef enum EltwiseType { Eltwise_PROD, Eltwise_SUM, Eltwise_MAXIMUM, Eltwise_UNKNOWN } EltwiseType;
@@ -791,4 +792,4 @@ static inline void offset_to_index_step(int cnt, ...) {
   va_end(valist);
 }
 
-#endif  // NNACL_OP_BASE_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_OP_BASE_H_

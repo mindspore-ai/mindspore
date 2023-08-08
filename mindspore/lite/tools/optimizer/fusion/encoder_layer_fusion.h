@@ -56,7 +56,7 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   const std::string kPatternEncoderLayerNormT5Pre = "PatternEncoderLayerNormT5Pre";
   const std::string kPatternQueryLayerUsePast = "PatternQueryLayerUsePast";
   const std::string kPatternSigmaDistributed = "PatternSigmaDistributed";
-  const std::string kPatternSigmaDistributedFirstScale = "PatternSigmaDistributedFirstScale";
+  const std::string kPatternSigmaDistributedEmbedding = "PatternSigmaDistributedEmbedding";
   const std::string kPatternSigmaMoeDistributed = "PatternSigmaMoeDistributed";
   const std::string kPatternSigmaMoeWithLastLayerNormDistributed = "PatternSigmaMoeWithLastLayerNormDistributed";
   const std::string kPatternSigmaWithLastLayerNormDistributed = "PatternSigmaWithLastLayerNormDistributed";
@@ -69,16 +69,31 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   const std::string kPatternSigmaMoeWithLastLayerNorm = "PatternSigmaMoeWithLastLayerNorm";
   const std::string kPatternSigmaWithLastLayerNorm = "PatternSigmaWithLastLayerNorm";
   const std::string kPatternSigmaQueryLayerMoe = "PatternSigmaQueryLayerMoe";
+  const std::string kPatternSigmaDistributedMB = "PatternSigmaDistributedMB";
+  const std::string kPatternSigmaDistributedEmbeddingMB = "PatternSigmaDistributedEmbeddingMB";
+  const std::string kPatternSigmaMoeWithLastLayerNormDistributedMB = "PatternSigmaMoeWithLastLayerNormDistributedMB";
+  const std::string kPatternSigmaWithLastLayerNormDistributedMB = "PatternSigmaWithLastLayerNormMB";
+  const std::string kPatternSigmaQueryLayerDistributedMB = "PatternSigmaQueryLayerDistributedMB";
+  const std::string kPatternSigmaMoeDistributedMB = "PatternSigmaMoeDistributedMB";
+  const std::string kPatternSigmaDistributedMBGELU = "PatternSigmaDistributedMBGELU";
+  const std::string kPatternSigmaDistributedEmbeddingMBGELU = "PatternSigmaDistributedEmbeddingMBGELU";
+  const std::string kPatternSigmaMoeWithLastLayerNormDistributedMBGELU =
+    "PatternSigmaMoeWithLastLayerNormDistributedMBGELU";
+  const std::string kPatternSigmaWithLastLayerNormDistributedMBGELU = "PatternSigmaWithLastLayerNormMBGELU";
+  const std::string kPatternSigmaQueryLayerDistributedMBGELU = "PatternSigmaQueryLayerDistributedMBGELU";
+  const std::string kPatternSigmaMoeDistributedMBGELU = "PatternSigmaMoeDistributedMBGELU";
+  const std::string kPatternSigmaDistributedMBFirst = "PatternSigmaMoeDistributedMBFirst";
+  const std::string kPatternSigmaFirst = "kPatternSigmaFirsts";
+
   VectorRef DefinePatternEncoderLayer(bool post_layernorm, bool layernorm_fusion, bool is_position_bias_, bool mask,
                                       bool is_layer_norm) const;
   VectorRef DefinePatternEncoderSigma(bool moe, bool use_past, bool distributed, bool is_layer_norm, bool query_layer,
-                                      bool first_norm_scale) const;
+                                      bool multi_batch, bool first_encoder, bool gelu) const;
 
   VectorRef DefinePatternEncoderAlpha(bool moe, bool distributed, bool is_layer_norm, bool query_layer,
                                       bool use_past) const;
   VectorRef getTuple(bool post_layernorm, bool layernorm_fusion, bool is_position_bias) const;
-  VectorRef DefineLayerNorm(bool is_position_bias, BaseRef input, VarPtr gamma, VarPtr beta, VarPtr eps,
-                            bool sigma) const;
+  VectorRef DefineLayerNorm(bool is_position_bias, BaseRef input, VarPtr gamma, VarPtr beta, VarPtr eps) const;
   CNodePtr CreateMaskedEncoderLayerFusionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                               const AnfNodePtr &node, bool post_layernorm, bool mask) const;
   AnfNodePtr GetAttribute(const FuncGraphPtr &func_graph, const EquivPtr &equiv, VarPtr node_name) const;
@@ -90,26 +105,33 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
                                                 int64_t ffn_hidden_size, int64_t expert_num, int64_t expert_offset,
                                                 float capacity_factor) const;
   VectorRef DefinePatternInitReset(VectorRef input, bool is_value_reset = false, bool is_key_reset = false) const;
+  VectorRef DefinePatternMultiBatch(VectorRef input) const;
   BaseRef DefineBatchValidLength(const BaseRef &input) const;
-  VectorRef DefinePatternMoERouter() const;
-  VectorRef DefinePatternMoE(VectorRef input_layernorm) const;
-  VectorRef DefinePatternSigmaFfn(BaseRef input) const;
+  VectorRef DefinePatternMoERouter(VectorRef input_layernorm) const;
+  VectorRef DefinePatternMoE(VectorRef input_layernorm, bool multi_batch, bool gelu) const;
+  VectorRef DefinePatternSigmaFfn(BaseRef input, bool gelu) const;
   VectorRef DefinePatternMoETopKRouter(VectorRef input) const;
-  VectorRef DefinePatternMoEFfn(VectorRef input_deppend, VectorRef input_reshape) const;
-  VectorRef DefineDependKV(VectorRef input_layernorm, VectorRef deppend_v_input, bool is_distributed) const;
+  VectorRef DefinePatternMoEFfn(VectorRef input_reshape, bool gelu) const;
+  VectorRef DefineDependKV(VectorRef input_layernorm, VectorRef deppend_v_input, bool moe) const;
   VectorRef DefineFfn(VectorRef input) const;
-  void InitAttributes(AnfNodePtr input, AnfNodePtr begin_expert_ids, AnfNodePtr weight_m,
-                      AnfNodePtr expert_capacity_node, int *ffn_hidden_size, int *expert_num, int *expert_offset,
-                      float *capacity_factor) const;
+  VectorRef DefineFirstEncoder() const;
+  lite::STATUS InitAttributes(AnfNodePtr k_past, AnfNodePtr begin_expert_ids, AnfNodePtr weight_m,
+                              AnfNodePtr expert_capacity_node, int *ffn_hidden_size, int *expert_num,
+                              int *expert_offset, float *capacity_factor) const;
   void InitParams(bool post_layernorm, bool layernorm_fusion, bool is_position_bias, bool mask, bool is_layer_norm,
                   bool use_past, bool query_layer, bool sigma, bool distributed, bool moe) const;
   bool IsUsePast(const std::string &pattern_name) const;
+  bool IsUsePastMB(const std::string &pattern_name) const;
+  bool IsUsePastAlpha(const std::string &pattern_name) const;
   bool IsLastLayerNorm(const std::string &pattern_name) const;
   bool IsLayerNormFusion(const std::string &pattern_name) const;
   bool IsMoe(const std::string &pattern_name) const;
+  bool IsFastGelu(const std::string &pattern_name) const;
+  bool IsQueryLayer(const std::string &pattern_name) const;
 
  protected:
   mutable VarPtr input_{nullptr};
+  mutable VarPtr expert_ids_input_{nullptr};
   mutable VarPtr expert_ids_{nullptr};
   mutable VarPtr expert_capacity_{nullptr};
   mutable VarPtr begin_expert_ids_{nullptr};
@@ -146,6 +168,12 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   mutable VarPtr batch_valid_length_{nullptr};
   mutable VarPtr embedding_table_{nullptr};
   mutable VarPtr weight_router_{nullptr};
+
+  mutable VarPtr position_ids_{nullptr};
+  mutable VarPtr embedding_table_input_{nullptr};
+  mutable VarPtr current_index_{nullptr};
+  mutable VarPtr embedding_table_pos_{nullptr};
+
   mutable bool is_position_bias_{false};
   mutable bool is_post_layernorm_{false};
   mutable bool is_layernorm_fusion_{false};
@@ -155,6 +183,8 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   mutable bool is_sigma_{false};
   mutable bool is_moe_{false};
   mutable bool is_distributed_{false};
+  mutable bool is_fast_gelu_{false};
+  mutable bool is_embedding_layer_{false};
 };
 }  // namespace opt
 }  // namespace mindspore
