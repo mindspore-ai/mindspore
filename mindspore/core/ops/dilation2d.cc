@@ -71,6 +71,9 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
   auto x_shape = x_shape_map[kShape];
   auto filter_shape = filter_shape_map[kShape];
   const uint64_t n_axis = 0;
+  if (x_shape.size() <= n_axis) {
+    MS_EXCEPTION(ValueError) << "x_shape size must be positive integer, but got " << x_shape.size();
+  }
   ShapeVector output_shape = {x_shape[n_axis], -1, -1, -1};
   if (IsDynamic(x_shape) || IsDynamic(filter_shape)) {
     return std::make_shared<abstract::Shape>(output_shape);
