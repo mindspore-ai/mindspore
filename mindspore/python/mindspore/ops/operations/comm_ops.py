@@ -174,7 +174,7 @@ class AllReduce(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - AllReduce
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#AllReduce>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#allreduce>`_
 
     """
 
@@ -263,7 +263,7 @@ class AllGather(PrimitiveWithInfer):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - AllGather
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#AllGather>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#allgather>`_
 
     """
 
@@ -486,7 +486,7 @@ class ReduceScatter(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - ReduceScatter
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#ReduceScatter>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#reducescatter>`_
 
     """
 
@@ -623,7 +623,7 @@ class Broadcast(PrimitiveWithInfer):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - Broadcast
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#Broadcast>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#broadcast>`_
 
     """
 
@@ -713,7 +713,7 @@ class NeighborExchange(Primitive):
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.primitive.html#communication-operator>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
@@ -766,7 +766,7 @@ class NeighborExchange(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - NeighborExchange
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#NeighborExchange>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#neighborexchange>`_
 
     """
 
@@ -865,7 +865,7 @@ class AlltoAll(PrimitiveWithInfer):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - AlltoAll
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#AlltoAll>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#alltoall>`_
 
     """
 
@@ -989,7 +989,7 @@ class NeighborExchangeV2(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - NeighborExchangeV2
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#NeighborExchangeV2>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#neighborexchangev2>`_
 
     """
 

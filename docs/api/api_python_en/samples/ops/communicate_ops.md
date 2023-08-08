@@ -1,6 +1,6 @@
 # Distributed Set Communication Primitives
 
-<a href="https://gitee.com/mindspore/mindspore/tree/master/docs/api/api_python_en/samples/ops/communicate_ops.md" target="_blank"><img src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source_en.png"></a>
+<a href="https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python_en/samples/ops/communicate_ops.md" target="_blank"><img src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source_en.png"></a>
 
 Distributed training involves communication operations such as `AllReduce`, `ReduceScatter`, `AllGather` and `Broadcast` for data transfer, and we will explain their meaning and sample code in the following sections.
 
