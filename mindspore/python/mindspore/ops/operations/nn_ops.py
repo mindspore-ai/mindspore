@@ -4414,7 +4414,7 @@ class LSTM(Primitive):
             :math:`real\_hidden\_size = proj\_size if proj\_size > 0 else hidden\_size`.
 
     Outputs:
-        Tuple, a tuple contains (`output`, `h_n`, `c_n`, `reserve`, `state`).
+        Tuple, a tuple contains `(output, h_n, c_n, reserve, state)`.
 
         - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * real\_hidden\_size)`.
         - **h_n** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, real\_hidden\_size)`.

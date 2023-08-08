@@ -26,7 +26,7 @@ mindspore.ops.LSTM
             :math:`real\_hidden\_size = proj\_size if proj\_size > 0 else hidden\_size`。
 
     输出：
-        tuple，tuple包含( `output` , `h\_n` , `c\_n` , `reserve` , `state` )。
+        tuple，tuple包含 `(output, h\_n, c\_n, reserve, state)` 。
 
         - **output** (Tensor) - shape为 :math:`(seq\_len, batch\_size, num\_directions * real\_hidden\_size)` 的Tensor。
         - **h_n** (Tensor) - shape为 :math:`(num\_directions * num\_layers, batch\_size, real\_hidden\_size)` 的Tensor。

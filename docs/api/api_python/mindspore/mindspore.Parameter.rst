@@ -32,7 +32,7 @@
         克隆参数。
 
         参数：
-            - **init** (Union[Tensor, str, numbers.Number]) - 初始化参数的形状和数据类型。如果 `init` 是 `Tensor` 或 `numbers.Number` ，则克隆一个具有相同数值、形状和数据类型的新参数。如果 `init` 是 `str` ，则 `init` 将继承 `Initializer` 模块中对应的同名的类。例如，如果 `init` 是 'same'，则克隆一个具有相同数据、形状和数据类型的新参数。默认值： 'same'。
+            - **init** (Union[Tensor, str, numbers.Number]) - 初始化参数的形状和数据类型。如果 `init` 是 `Tensor` 或 `numbers.Number` ，则克隆一个具有相同数值、形状和数据类型的新参数。如果 `init` 是 `str` ，则 `init` 将继承 `Initializer` 模块中对应的同名的类。例如，如果 `init` 是 ``'same'`` ，则克隆一个具有相同数据、形状和数据类型的新参数。默认值： ``'same'`` 。
 
         返回：
             Parameter，返回克隆的新参数。
@@ -61,7 +61,7 @@
         初始化参数的数据。
 
         参数：
-            - **layout** (Union[None, tuple]) - 参数的layout信息。layout[dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group]：默认值： ``None`` 。仅在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 模式下 `layout` 不是 ``None`` 。
+            - **layout** (Union[None, tuple]) - 参数的layout信息。layout[dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group]。默认值： ``None`` 。仅在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 模式下 `layout` 不是 ``None`` 。
 
               - **dev_mat** (list(int)) - 该参数的设备矩阵。
               - **tensor_map** (list(int)) - 该参数的张量映射。
@@ -97,7 +97,7 @@
 
         获取此参数的逐层并行状态（bool）。
 
-        在 `DATA_PARALLEL` 和 `HYBRID_PARALLEL` 模式下，如果 `layerwise_parallel` 为True，则广播和gradients通信将不会应用到参数。
+        在 `DATA_PARALLEL` 和 `HYBRID_PARALLEL` 模式下，如果 `layerwise_parallel` 为 ``True`` ，则广播和gradients通信将不会应用到参数。
 
     .. py:method:: name
         :property:
@@ -133,7 +133,7 @@
 
         参数：
             - **data** (Union[Tensor, int, float]) - 新数据。
-            - **slice_shape** (bool) - 如果 `slice_shape` 设为True，则不检查 `data` 和当前参数shape的一致性。默认值： ``False`` 。
+            - **slice_shape** (bool) - 如果 `slice_shape` 设为 ``True`` ，则不检查 `data` 和当前参数shape的一致性。默认值： ``False`` 。
 
         返回：
             完成数据设置的新参数。
