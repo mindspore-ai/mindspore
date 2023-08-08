@@ -243,11 +243,6 @@ class ExpandDims(PrimitiveWithCheck):
         >>> print(output)
         [[[2. 2.]
           [2. 2.]]]
-        >>> input_tensor = Tensor(2.1+2j, mindspore.complex64)
-        >>> expand_dims = ops.ExpandDims()
-        >>> output = expand_dims(input_tensor, 0)
-        >>> print(output)
-        [2.1+2.j]
     """
 
     @prim_attr_register

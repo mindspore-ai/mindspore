@@ -5404,7 +5404,8 @@ class ACos(Primitive):
     Refer to :func:`mindspore.ops.acos` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input Tensor.
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and dtype as `x`.
@@ -5421,10 +5422,6 @@ class ACos(Primitive):
         >>> output = acos(x)
         >>> print(output)
         [0.737726  1.5307857 1.2661036 0.9764105]
-        >>> x = Tensor(0.5)
-        >>> output = acos(x)
-        >>> print(output)
-        1.0471978
     """
 
     @prim_attr_register
@@ -5468,7 +5465,8 @@ class Asin(Primitive):
         Complex64 and complex128 are not supported on Ascend currently.
 
     Inputs:
-        - **x** (Tensor) - The input Tensor.
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and dtype as `x`.
@@ -5485,10 +5483,6 @@ class Asin(Primitive):
         >>> output = asin(x)
         >>> print(output)
         [0.8330704  0.04001067 0.30469266 0.5943858 ]
-        >>> x = Tensor(0.12)
-        >>> output = asin(x)
-        >>> print(output)
-        0.12028988
     """
 
     @prim_attr_register
@@ -5791,8 +5785,9 @@ class Atan2(_MathBinaryOp):
     Refer to :func:`mindspore.ops.atan2` for more details.
 
     Inputs:
-        - **x** (Tensor, Number.number) - The input tensor or scalar.
-        - **y** (Tensor, Number.number) - The input tensor or scalar. It has the same shape with `x` or
+        - **x** (Tensor) - The input tensor with shape
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **y** (Tensor) - The input tensor. It has the same shape with `x` or
           its shape is able to broadcast with `x`.
 
     Outputs:

@@ -2858,16 +2858,17 @@ def atan2(input, other):
         - At least one of the `input` and `other` args is Tensor.
 
     Args:
-        input (Tensor, Number.number): The input tensor or scalar.
+        input (Tensor): The input tensor with shape
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
             The data type should be one of the following types: float16, float32, float64
-        other (Tensor, Number.number): The input tensor or scalar. It has the same shape with `input` or
+        other (Tensor): The input tensor. It has the same shape with `input` or
             its shape is able to broadcast with `input`.
 
     Returns:
-        Tensor or scalar, the shape is the same as the one after broadcasting, and the data type is same as `input`.
+        Tensor, the shape is the same as the one after broadcasting, and the data type is same as `input`.
 
     Raises:
-        TypeError: If `input` or `other` is not a Tensor or scalar.
+        TypeError: If `input` or `other` is not a Tensor.
         RuntimeError: If the data type of `input` and `other` conversion of Parameter is required
                       when data type conversion of Parameter is not supported.
 

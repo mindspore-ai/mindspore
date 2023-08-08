@@ -12,12 +12,12 @@ mindspore.ops.atan2
         - 参数 `input` 和 `other` 中至少有一个为Tensor。
 
     参数：
-        - **input** (Tensor, Number.number) - 输入Tensor或常数。
-        - **other** (Tensor, Number.number) - 输入Tensor或常数，shape与 `input` 相同，或能与 `input` 的shape广播。
+        - **input** (Tensor) - 输入Tensor，shape为 :math:`(N,*)` 其中 :math:`*` 表示任意数量的附加维度。
+        - **other** (Tensor) - 输入Tensor，shape与 `input` 相同，或能与 `input` 的shape广播。
 
     返回：
-        Tensor或常数，与广播后的输入shape相同，和 `input` 数据类型相同。
+        Tensor，与广播后的输入shape相同，和 `input` 数据类型相同。
 
     异常：
-        - **TypeError** - `input` 或 `other` 不是Tensor或常数。
+        - **TypeError** - `input` 或 `other` 不是Tensor。
         - **RuntimeError** - `input` 与 `other` 之间的数据类型转换不被支持。
