@@ -2479,7 +2479,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
 
   py::tuple MakeParameters(const AbstractBasePtrList &args_abs_list, const std::string &script) const {
     constexpr int params_size = 3;
-    if (params_size != args_abs_list.size()) {
+    auto args_size = std::count_if(args_abs_list.begin(), args_abs_list.end(),
+                                   [](const AbstractBasePtr &arg) -> bool { return !arg->isa<AbstractMonad>(); });
+    if (params_size != args_size) {
       MS_LOG(INTERNAL_EXCEPTION) << "Unexpected params_size: " << params_size
                                  << ", not equal to arguments.size: " << args_abs_list.size();
     }
