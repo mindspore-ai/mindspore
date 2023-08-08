@@ -20,7 +20,7 @@ from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_ro
 from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
-    MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
+    MCCL_WORLD_COMM_GROUP, DEVICE_TO_BACKEND, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
     _check_mpi_envs, _set_elegant_exit_handle
 from mindspore._c_expression import init_hccl, finalize_hccl, init_cluster, MSContext, ms_ctx_param
 
@@ -102,9 +102,10 @@ def init(backend_name=None):
         - The full name of MCCL is MindSpore Collective Communication Library.
 
     Args:
-        backend_name (str): Backend, using HCCL/NCCL/MCCL. HCCL should be used for Ascend hardware platforms and
-                            NCCL for GPU hardware platforms. If not set, inference is automatically made based on the
-                            hardware platform type (device_target). Default: ``None`` .
+        backend_name (str): Backend, using HCCL/NCCL/MCCL. HCCL should be used for Ascend hardware platforms,
+                            NCCL for GPU hardware platforms and MCCL for CPU hardware platforms.
+                            If not set, inference is automatically made based on the hardware
+                            platform type (device_target). Default: ``None`` .
 
     Raises:
         TypeError: If `backend_name` is not a string.
@@ -158,8 +159,8 @@ def init(backend_name=None):
                 _set_elegant_exit_handle()
                 return
         if device_target != "Ascend":
-            raise RuntimeError("For 'init', the argument  'backend_name' should be 'Ascend' to init hccl, "
-                               "but got {}".format(device_target))
+            raise RuntimeError("For 'init', the argument 'backend_name' should be '{}' to init '{}', "
+                               "but got 'hccl'.".format(DEVICE_TO_BACKEND[device_target], device_target))
         if not host_init:
             _check_parallel_envs()
         GlobalComm.BACKEND = Backend("hccl")
@@ -167,8 +168,8 @@ def init(backend_name=None):
         GlobalComm.WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
     elif backend_name == "nccl":
         if device_target != "GPU":
-            raise RuntimeError("For 'init', the argument 'backend_name' should be 'GPU' to init nccl, "
-                               "but got '{}'".format(device_target))
+            raise RuntimeError("For 'init', the argument 'backend_name' should be '{}' to init '{}', "
+                               "but got 'nccl'.".format(DEVICE_TO_BACKEND[device_target], device_target))
         init_cluster()
         GlobalComm.BACKEND = Backend("nccl")
         GlobalComm.WORLD_COMM_GROUP = NCCL_WORLD_COMM_GROUP
@@ -177,8 +178,8 @@ def init(backend_name=None):
         GlobalComm.BACKEND = Backend("mccl")
         GlobalComm.WORLD_COMM_GROUP = MCCL_WORLD_COMM_GROUP
     else:
-        raise TypeError("For 'init', the argument 'backend_name' must be one of 'hccl', 'nccl' and 'mccl', "
-                        "but got 'backend_name' : {}".format(backend_name))
+        raise RuntimeError("For 'init', the argument 'backend_name' must be one of 'hccl', 'nccl' and 'mccl', "
+                           "but got 'backend_name' : {}".format(backend_name))
 
     GlobalComm.INITED = True
     _set_elegant_exit_handle()

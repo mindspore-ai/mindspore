@@ -59,6 +59,11 @@ HCCL_WORLD_COMM_GROUP = "hccl_world_group"
 NCCL_WORLD_COMM_GROUP = "nccl_world_group"
 MCCL_WORLD_COMM_GROUP = "mccl_world_group"
 
+DEVICE_TO_BACKEND = {
+    "Ascend": "hccl",
+    "GPU": "nccl",
+    "CPU": "mccl"
+}
 
 class Backend:
     """
