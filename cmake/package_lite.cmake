@@ -1075,7 +1075,7 @@ else()
     endif()
 endif()
 
-if(MSLITE_ENABLE_KERNEL_EXECUTOR)
+if(COMPILE_KERNEL_EXECUTOR STREQUAL "Linux")
     install(FILES
             ${TOP_DIR}/mindspore/core/ops/abs.h
             ${TOP_DIR}/mindspore/core/ops/batch_norm.h
@@ -1132,6 +1132,10 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
     install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
         RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
+elseif(COMPILE_KERNEL_EXECUTOR STREQUAL "Android")
+    install(FILES ${TOP_DIR}/mindspore/lite/src/litert/cxx_api/kernel_executor/kernel_executor.h DESTINATION
+            ${RUNTIME_INC_DIR}/api COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(TARGETS kernel_executor DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
