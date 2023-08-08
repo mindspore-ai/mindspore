@@ -163,10 +163,9 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
     common::AnfAlgo::SetNodeInput(next_cnode, new_input, 0);
     changed = true;
   }
-  changed = changed ||
-            InsertDependForAllGatherParallel(graph, all_gather_node, allgather_succ_nodes, allgather_second_succ_nodes);
 
-  return changed;
+  return InsertDependForAllGatherParallel(graph, all_gather_node, allgather_succ_nodes, allgather_second_succ_nodes) ||
+         changed;
 }
 }  // namespace opt
 }  // namespace mindspore
