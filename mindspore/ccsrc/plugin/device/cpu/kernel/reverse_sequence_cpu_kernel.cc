@@ -87,6 +87,17 @@ void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
                                                const std::vector<kernel::AddressPtr> &outputs) {
   auto input0 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto input1 = reinterpret_cast<S *>(inputs[kIndex1]->addr);
+
+  // check sequence length
+  int64_t max_seq_length = input0_shape_[seq_dim_];
+  size_t seq_length_size = LongToSize(input0_shape_[batch_dim_]);
+  for (size_t i = 0; i < seq_length_size; ++i) {
+    auto seq_length = *(input1 + i);
+    if (seq_length < 0 || seq_length > max_seq_length) {
+      MS_EXCEPTION(RuntimeError) << "Invalid seq_lengths[" << i << "]: " << seq_length;
+    }
+  }
+
   auto output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   auto ret = memcpy_s(output, IntToSize(total_data_size_), input0, IntToSize(total_data_size_));
   if (ret != EOK) {
@@ -102,9 +113,6 @@ void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
         const T *in_batch = in + batch * input_stride_[batch_dim_];
         T *out_batch = out + batch * output_stride_[batch_dim_];
         auto seq_length = *(input1 + batch);
-        if (seq_length > input0_shape_[seq_dim_]) {
-          return;
-        }
         for (int n = 0; n < seq_length; ++n) {
           const T *in_seq = in_batch + (seq_length - 1 - n) * input_stride_[seq_dim_];
           T *out_seq = out_batch + n * output_stride_[seq_dim_];
