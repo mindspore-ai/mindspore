@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 int Gather(const void *input, int64_t outer_size, int64_t byte_inner_size, int64_t limit, const int *indices,
-           int64_t index_num, void *output, int64_t byte_out_stride);
+           int64_t index_num, void *output, int64_t byte_out_stride, int *error_index);
 #ifdef __cplusplus
 }
 #endif

@@ -190,7 +190,7 @@ def test_gather_vmap_indices_outofbound():
     """
     Feature: gather vmap test on cpu.
     Description: test the rightness of vmap gather when indices out of bound.
-    Expectation: use vmap rule's result equal to manually batched.
+    Expectation: raise out of bound runtime error.
     """
 
     x = Tensor(np.array([[[1, 2, 3],
@@ -201,13 +201,9 @@ def test_gather_vmap_indices_outofbound():
     indices = Tensor(np.array([[0, 2], [2, 0]]).astype(np.int32))
     axis = 0
 
-    outputs = vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
-
-    expect = np.array([[[1, 2, 3],
-                        [0, 0, 0]],
-                       [[0, 0, 0],
-                        [7, 8, 9]]]).astype(np.float32)
-    assert np.allclose(outputs.asnumpy(), expect)
+    with pytest.raises(RuntimeError) as info:
+        vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
+    assert "For 'Gather', the 'input_indices' should be in the range" in str(info.value)
 
 
 @pytest.mark.level0
@@ -315,3 +311,23 @@ def test_gather_tensor(data_type):
 
     assert out.shape == y_expect.shape
     np.allclose(out.asnumpy(), y_expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
+def test_gather_tensor_out_of_bound(data_type):
+    """
+    Feature: Gather
+    Description: test out of bound cases for Gather on cpu
+    Expectation: raise out of bound runtime error
+    """
+    x = np.array([1, 2, 3, 4, 5, 6, 7]).astype(data_type)
+    input_indices = Tensor(np.array([0, 100, 4, 2, 6], dtype=np.int))
+    axis = 0
+
+    graph_table_tensor = Tensor(x)
+    with pytest.raises(RuntimeError) as info:
+        graph_table_tensor.gather(input_indices, axis)
+    assert "For 'Gather', the 'input_indices' should be in the range" in str(info.value)

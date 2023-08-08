@@ -17,8 +17,8 @@
 #include "nnacl/base/gather_base.h"
 
 int Gather(const void *input, int64_t outer_size, int64_t byte_inner_size, int64_t limit, const int *indices,
-           int64_t index_num, void *output, int64_t byte_out_stride) {
-  if (input == NULL || output == NULL || indices == NULL) {
+           int64_t index_num, void *output, int64_t byte_out_stride, int *error_index) {
+  if (input == NULL || output == NULL || indices == NULL || error_index == NULL) {
     return NNACL_NULL_PTR;
   }
   const int8_t *int8_in = (int8_t *)input;
@@ -30,7 +30,8 @@ int Gather(const void *input, int64_t outer_size, int64_t byte_inner_size, int64
       int index = indices[i];
       index = index < 0 ? index + limit : index;
       if (index < 0 || index >= limit) {
-        memset(int8_out_m, 0, byte_inner_size);
+        *error_index = index;
+        return NNACL_GATHER_INDICES_VALUE_INVALID;
       } else {
         memcpy(int8_out_m, int8_in + index * byte_inner_size, byte_inner_size);
       }
