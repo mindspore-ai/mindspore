@@ -787,6 +787,8 @@ bool ExistSummaryNode(const KernelGraph *graph) {
 #endif
 
 GraphId KernelGraphMgr::graph_sum_ = 0;
+HashMap<std::string, std::weak_ptr<AnfNode>> KernelGraphMgr::name_to_params_ =
+  HashMap<std::string, std::weak_ptr<AnfNode>>();
 
 ValueNodePtr KernelGraphMgr::CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(anf);
@@ -1898,13 +1900,15 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
 void HandleGraphInputsOutputs(const nlohmann::json &graph_json, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &context = CompileCacheContext::GetInstance();
-  const auto &inputs_json = graph_json[kInputs];
-  auto mutable_inputs = graph->MutableInputs();
-  for (const auto &name : inputs_json) {
-    AnfNodePtr node = context.FindBackNodeByBackName(name);
-    MS_EXCEPTION_IF_NULL(node);
-    context.InsertBackNameToBackNode(name, node);
-    mutable_inputs->push_back(node);
+  if (graph_json.contains(kInputs)) {
+    const auto &inputs_json = graph_json[kInputs];
+    auto mutable_inputs = graph->MutableInputs();
+    for (const auto &name : inputs_json) {
+      AnfNodePtr node = context.FindBackNodeByBackName(name);
+      MS_EXCEPTION_IF_NULL(node);
+      context.InsertBackNameToBackNode(name, node);
+      mutable_inputs->push_back(node);
+    }
   }
   if (graph_json.contains(kParameters)) {
     const auto &parameters_json = graph_json[kParameters];
@@ -2148,9 +2152,14 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
   if (!load_json_success) {
     MS_LOG(EXCEPTION) << "Load json file " << json_path << " failed.";
   }
+  mindspore::HashMap<std::string, AnfNodePtr> name_to_node;
+  std::for_each(name_to_params_.begin(), name_to_params_.end(), [&name_to_node](const auto &ele) {
+    if (!ele.second.expired()) {
+      name_to_node[ele.first] = ele.second.lock();
+    }
+  });
   // construct kernel graph and its params that exist correspond frontend param
   MS_LOG(DEBUG) << "Construct kernel graph and its params that exist correspond frontend param.";
-  mindspore::HashMap<std::string, AnfNodePtr> name_to_node;
   for (size_t i = 0; i < model_json.size(); i++) {
     auto kernel_graph = NewKernelGraph();
     all_out_graph->push_back(kernel_graph);
@@ -2159,22 +2168,26 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
       MS_LOG(EXCEPTION) << "Load graph " << graph_name << " from json failed.";
     }
     auto &graph_json = model_json[graph_name];
+    if (!graph_json.contains(kCorrespondFrontendGraph)) {
+      continue;
+    }
     const auto &front_graph_name = graph_json[kCorrespondFrontendGraph];
     const auto &front_graph_node = context.FindFrontNodeByFrontName(front_graph_name);
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(front_graph_node);
     MS_EXCEPTION_IF_NULL(fg);
     front_backend_graph_map_[fg.get()] = kernel_graph;
-    const auto &backend_param_to_frontend_param_index = graph_json[kBackendParamToFrontendParamIndex];
-    const auto &frontend_graph_params = fg->parameters();
-
-    for (const auto &[param_unique_name, index] : backend_param_to_frontend_param_index.items()) {
-      const auto front_param = frontend_graph_params.at(index);
-      MS_EXCEPTION_IF_NULL(front_param);
-      MS_LOG(DEBUG) << "Start create new node, old node = " << front_param->DebugString()
-                    << ", new node = " << param_unique_name;
-      auto new_parameter = CreateNewParameter(front_param, kernel_graph.get());
-      kernel_graph->FrontBackendMapAdd(front_param, new_parameter);
-      name_to_node[param_unique_name] = new_parameter;
+    if (graph_json.contains(kBackendParamToFrontendParamIndex)) {
+      const auto &backend_param_to_frontend_param_index = graph_json[kBackendParamToFrontendParamIndex];
+      const auto &frontend_graph_params = fg->parameters();
+      for (const auto &[param_unique_name, index] : backend_param_to_frontend_param_index.items()) {
+        const auto front_param = frontend_graph_params.at(index);
+        MS_EXCEPTION_IF_NULL(front_param);
+        MS_LOG(DEBUG) << "Start create new node, old node = " << front_param->DebugString()
+                      << ", new node = " << param_unique_name;
+        auto new_parameter = CreateNewParameter(front_param, kernel_graph.get());
+        kernel_graph->FrontBackendMapAdd(front_param, new_parameter);
+        name_to_node[param_unique_name] = new_parameter;
+      }
     }
   }
 
@@ -2191,6 +2204,13 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
   if (!mindir_loader.LoadMindIR(real_path.value(), graphs_for_load, &name_to_node)) {
     MS_LOG(EXCEPTION) << "Load mindir from " << real_path.value() << " failed.";
   }
+  std::for_each(name_to_node.begin(), name_to_node.end(), [](const auto &ele) {
+    auto node = ele.second;
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->template isa<Parameter>()) {
+      name_to_params_[ele.first] = std::weak_ptr<AnfNode>(node);
+    }
+  });
   context.SetBackNameToBackNode(name_to_node);
   // the value of attr "shared_name" will changed every time, so reset GetNext shared_name
   ResetGetNextSharedName(all_out_graph->front());
