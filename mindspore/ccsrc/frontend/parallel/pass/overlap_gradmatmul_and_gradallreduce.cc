@@ -29,13 +29,36 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/comm_manager.h"
+#include "ops/sequence_ops.h"
 
 namespace mindspore {
 namespace parallel {
 namespace {
+using Pattern = std::vector<std::pair<PrimitivePtr, int64_t>>;
+
 bool IsForwardNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   return !(cnode->HasPrimalAttr(kPrimalAttrForwardUniqueId) || cnode->HasAttr(kAttrDuplicated));
+}
+
+bool IsCellReuseForwardGraph(const FuncGraphPtr &graph) { return graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE); }
+
+FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph) {
+  AnfNodePtr node = forward_graph->get_return();
+  Pattern patterns = {{prim::kPrimReturn, kIndex1}, {prim::kPrimMakeTuple, kIndex2}, {prim::kPrimPartial, kIndex1}};
+  for (const auto &pattern : patterns) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!IsPrimitiveCNode(cnode, pattern.first)) {
+      return nullptr;
+    }
+    auto prev_node_index = pattern.second;
+    if (prev_node_index >= SizeToLong(cnode->inputs().size())) {
+      return nullptr;
+    }
+    node = cnode->input(prev_node_index);
+  }
+  return GetValueNode<FuncGraphPtr>(node);
 }
 
 void ExtractForwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
@@ -73,7 +96,7 @@ void ExtractForwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
 void ExtractBackwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
                           const std::vector<std::string> &forward_comm_node_unique_id_list,
                           const std::vector<std::string> &forward_matmul_unique_id_list,
-                          std::vector<CNodePtr> *back_comm_node_list, std::vector<CNodePtr> *back_matmul_list) {
+                          std::vector<CNodePtr> *backward_comm_node_list, std::vector<CNodePtr> *backward_matmul_list) {
   for (auto &node : origin_nodes_topological) {
     if (!node->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
       continue;
@@ -93,18 +116,19 @@ void ExtractBackwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
     }
     auto pre_cnode = pre_node->cast<CNodePtr>();
     if (!pre_cnode->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
-      (*back_matmul_list).push_back(matmul_cnode);
+      (*backward_matmul_list).push_back(matmul_cnode);
       continue;
     }
     auto pre_cnode_forward_comm_unique_id =
       GetValue<std::string>(pre_cnode->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
     if (std::find(forward_comm_node_unique_id_list.begin(), forward_comm_node_unique_id_list.end(),
                   pre_cnode_forward_comm_unique_id) != forward_comm_node_unique_id_list.end()) {
-      (*back_comm_node_list).push_back(pre_cnode);
+      (*backward_comm_node_list).push_back(pre_cnode);
     }
   }
   std::sort(
-    back_comm_node_list->begin(), back_comm_node_list->end(), [&](const CNodePtr &cnode1, const CNodePtr &cnode2) {
+    backward_comm_node_list->begin(), backward_comm_node_list->end(),
+    [&](const CNodePtr &cnode1, const CNodePtr &cnode2) {
       auto id1 = GetValue<std::string>(cnode1->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
       auto id2 = GetValue<std::string>(cnode2->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
       size_t index1 = std::find(forward_comm_node_unique_id_list.begin(), forward_comm_node_unique_id_list.end(), id1) -
@@ -113,15 +137,16 @@ void ExtractBackwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
                       forward_comm_node_unique_id_list.begin();
       return index1 > index2;
     });
-  std::sort(back_matmul_list->begin(), back_matmul_list->end(), [&](const CNodePtr &cnode1, const CNodePtr &cnode2) {
-    auto id1 = GetValue<std::string>(cnode1->GetPrimalAttr(kPrimalAttrForwardUniqueId));
-    auto id2 = GetValue<std::string>(cnode2->GetPrimalAttr(kPrimalAttrForwardUniqueId));
-    size_t index1 = std::find(forward_matmul_unique_id_list.begin(), forward_matmul_unique_id_list.end(), id1) -
-                    forward_matmul_unique_id_list.begin();
-    size_t index2 = std::find(forward_matmul_unique_id_list.begin(), forward_matmul_unique_id_list.end(), id2) -
-                    forward_matmul_unique_id_list.begin();
-    return index1 > index2;
-  });
+  std::sort(
+    backward_matmul_list->begin(), backward_matmul_list->end(), [&](const CNodePtr &cnode1, const CNodePtr &cnode2) {
+      auto id1 = GetValue<std::string>(cnode1->GetPrimalAttr(kPrimalAttrForwardUniqueId));
+      auto id2 = GetValue<std::string>(cnode2->GetPrimalAttr(kPrimalAttrForwardUniqueId));
+      size_t index1 = std::find(forward_matmul_unique_id_list.begin(), forward_matmul_unique_id_list.end(), id1) -
+                      forward_matmul_unique_id_list.begin();
+      size_t index2 = std::find(forward_matmul_unique_id_list.begin(), forward_matmul_unique_id_list.end(), id2) -
+                      forward_matmul_unique_id_list.begin();
+      return index1 > index2;
+    });
 }
 }  // namespace
 
@@ -137,23 +162,42 @@ void OverlapGradMatmulAndGradAllreduce(const FuncGraphPtr &graph) {
     return;
   }
   auto manager = graph->manager();
-  std::list<CNodePtr> orders = graph->GetOrderedCnodes();
-  std::vector<CNodePtr> origin_nodes_topological(orders.cbegin(), orders.cend());
+
+  FuncGraphPtr forward_graph = graph;
+  FuncGraphPtr backward_graph = graph;
+  for (const auto &each_graph : manager->func_graphs()) {
+    if (IsCellReuseForwardGraph(each_graph)) {
+      forward_graph = each_graph;
+      backward_graph = GetCellReuseBackwardGraph(forward_graph);
+      if (backward_graph == nullptr) {
+        MS_LOG(WARNING)
+          << "Failed to find backward cell reuse graph, skip pass 'overlap_gradmatmul_and_gradallreduce'.";
+        return;
+      }
+      break;
+    }
+  }
+
+  std::list<CNodePtr> forward_orders = forward_graph->GetOrderedCnodes();
+  std::vector<CNodePtr> forward_origin_nodes_topological(forward_orders.cbegin(), forward_orders.cend());
+  std::list<CNodePtr> backward_orders = backward_graph->GetOrderedCnodes();
+  std::vector<CNodePtr> backward_origin_nodes_topological(backward_orders.cbegin(), backward_orders.cend());
   std::vector<std::string> forward_comm_node_unique_id_list;
   std::vector<std::string> forward_matmul_unique_id_list;
-  std::vector<CNodePtr> back_comm_node_list;
-  std::vector<CNodePtr> back_matmul_list;
-  ExtractForwardNodes(origin_nodes_topological, &forward_comm_node_unique_id_list, &forward_matmul_unique_id_list);
-  ExtractBackwardNodes(origin_nodes_topological, forward_comm_node_unique_id_list, forward_matmul_unique_id_list,
-                       &back_comm_node_list, &back_matmul_list);
-  if (back_comm_node_list.size() != back_matmul_list.size() || back_comm_node_list.empty()) {
-    MS_LOG(INFO) << "back_comm_node_list.size():" << back_comm_node_list.size()
-                 << ", back_matmul_list.size():" << back_matmul_list.size();
+  std::vector<CNodePtr> backward_comm_node_list;
+  std::vector<CNodePtr> backward_matmul_list;
+  ExtractForwardNodes(forward_origin_nodes_topological, &forward_comm_node_unique_id_list,
+                      &forward_matmul_unique_id_list);
+  ExtractBackwardNodes(backward_origin_nodes_topological, forward_comm_node_unique_id_list,
+                       forward_matmul_unique_id_list, &backward_comm_node_list, &backward_matmul_list);
+  if (backward_comm_node_list.size() != backward_matmul_list.size() || backward_comm_node_list.empty()) {
+    MS_LOG(INFO) << "backward_comm_node_list.size():" << backward_comm_node_list.size()
+                 << ", backward_matmul_list.size():" << backward_matmul_list.size();
     return;
   }
-  for (size_t i = 0; i < back_matmul_list.size() - 1; ++i) {
-    auto matmul_i = back_matmul_list[i];
-    auto comm_i1 = back_comm_node_list[i + 1];
+  for (size_t i = 0; i < backward_matmul_list.size() - 1; ++i) {
+    auto matmul_i = backward_matmul_list[i];
+    auto comm_i1 = backward_comm_node_list[i + 1];
     if (matmul_i->HasPrimalAttr(MICRO) || comm_i1->HasPrimalAttr(MICRO)) {
       if (!(matmul_i->HasPrimalAttr(MICRO) && comm_i1->HasPrimalAttr(MICRO))) {
         continue;
