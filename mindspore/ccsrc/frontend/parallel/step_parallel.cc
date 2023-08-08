@@ -63,7 +63,7 @@ using mindspore::tensor::Tensor;
 namespace mindspore {
 namespace parallel {
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
-static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL};
+static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL, STANDARD_NORMAL};
 const uint32_t MAX_BFS_DEPTH = 7;
 
 static void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool do_mirror, bool accu_flag) {
