@@ -26,7 +26,7 @@
     .. note::
         .. include:: mindspore.ops.comm_note.rst
 
-        该样例需要在多卡环境下运行。
+        该样例需要在2卡环境下运行。
     
     教程样例：
         - `分布式集合通信原语 - AllReduce

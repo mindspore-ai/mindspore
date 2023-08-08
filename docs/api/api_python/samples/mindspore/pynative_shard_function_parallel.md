@@ -225,7 +225,7 @@ class Net(nn.Cell):
 >
 > 即通过该方式启动时，`shard`内部的模型并行产生的通信只能发生在`world group`内部，所以指定的切分策略目前只能支持切一个维度。
 
-上述代码需要在配置分布式变量后才可以运行。Ascend环境需要配置RANK_TABLE_FILE、RANK_ID和DEVICE_ID。配置的过程请参考[此处](https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_ascend.html#配置分布式环境变量)。
+上述代码需要在配置分布式变量后才可以运行。Ascend环境需要配置RANK_TABLE_FILE、RANK_ID和DEVICE_ID。配置的过程请参考[rank table启动](https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/rank_table.html)。
 
 Ascend分布式相关的环境变量有：
 

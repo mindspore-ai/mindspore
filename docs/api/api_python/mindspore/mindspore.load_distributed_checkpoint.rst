@@ -17,3 +17,11 @@ mindspore.load_distributed_checkpoint
     异常：
         - **TypeError** - 输入类型不符合要求。
         - **ValueError** - 无法加载checkpoint文件到网络。
+
+    样例：
+
+    .. note::
+        - 运行以下样例之前，需要配置好通信环境变量。
+        - 针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `rank table启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/rank_table.html>`_ 。
+        - 针对GPU设备，用户需要准备host文件和mpi，详见 `mpirun启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/mpirun.html>`_ 。
+        - 该样例需要在多卡环境下运行。

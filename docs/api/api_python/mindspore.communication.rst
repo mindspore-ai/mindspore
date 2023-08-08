@@ -4,17 +4,17 @@ mindspore.communication
 
 注意，集合通信接口需要先配置好通信环境变量。
 
-针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `Ascend指导文档 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_ascend.html#准备环节>`_ 。
+针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `rank table启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/rank_table.html>`_ 。
 
-针对GPU设备，用户需要准备host文件和mpi，详见 `GPU指导文档 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#准备环节>`_ 。
+针对GPU设备，用户需要准备host文件和mpi，详见 `mpirun启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/mpirun.html>`_ 。
 
 
 .. py:class:: mindspore.communication.GlobalComm
 
     GlobalComm 是一个储存通信信息的全局类。成员包含： ``BACKEND`` 、 ``WORLD_COMM_GROUP`` 。
 
-    - ``BACKEND`` ：使用的通信库，HCCL、NCCL或者MCCL。
-    - ``WORLD_COMM_GROUP`` ：全局通信域。
+    - ``BACKEND`` ：使用的通信库， ``"hccl"`` 、 ``"nccl"`` 或者 ``"mccl"`` 。 ``"hccl"`` 代表华为集合通信库HCCL， ``"nccl"`` 代表英伟达集合通信库NCCL， ``"mccl"`` 代表MindSpore集合通信库MCCL。
+    - ``WORLD_COMM_GROUP`` ：全局通信域， ``"hccl_world_group"`` 、 ``"nccl_world_group"`` 或者 ``"mccl_world_group"`` 。
 
 .. py:function:: mindspore.communication.init(backend_name=None)
 
@@ -26,7 +26,7 @@ mindspore.communication
         - MCCL的全称是MindSpore集合通信库（MindSpore Collective Communication Library）。
 
     参数：
-        - **backend_name** (str) - 分布式后端的名称，可选 ``"HCCL"`` 、 ``"NCCL"`` 或者 ``"MCCL"`` 。在Ascend硬件平台下，应使用 ``"HCCL"`` ，在GPU硬件平台下，应使用 ``"NCCL"`` ，在CPU硬件平台下，应使用 ``"MCCL"`` 。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值： ``None`` 。
+        - **backend_name** (str) - 分布式后端的名称，可选 ``"hccl"`` 、 ``"nccl"`` 或者 ``"mccl"`` 。在Ascend硬件平台下，应使用 ``"hccl"`` ，在GPU硬件平台下，应使用 ``"nccl"`` ，在CPU硬件平台下，应使用 ``"mccl"`` 。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值： ``None`` 。
 
     异常：
         - **TypeError** - 参数 `backend_name` 不是字符串。
@@ -104,7 +104,7 @@ mindspore.communication
 
     .. note::
         - GPU 版本的MindSpore不支持此方法。
-        - 参数 `group` 不能是 `hccl_world_group`。
+        - 参数 `group` 不能是 ``"hccl_world_group"``。
         - `get_world_rank_from_group_rank` 方法应该在 `init` 方法之后使用。
 
     参数：
@@ -116,7 +116,7 @@ mindspore.communication
 
     异常：
         - **TypeError** - 参数 `group` 不是字符串或参数 `group_rank_id` 不是数字。
-        - **ValueError** - 参数 `group` 是 `hccl_world_group` 或后台不可用。
+        - **ValueError** - 参数 `group` 是 ``"hccl_world_group"`` 或后台不可用。
         - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
 
     样例：
@@ -130,7 +130,7 @@ mindspore.communication
 
     .. note::
         - GPU 版本的MindSpore不支持此方法。
-        - 参数 `group` 不能是 `hccl_world_group`。
+        - 参数 `group` 不能是 ``"hccl_world_group"``。
         - `get_group_rank_from_world_rank` 方法应该在 `init` 方法之后使用。
 
     参数：
@@ -142,7 +142,7 @@ mindspore.communication
 
     异常：
         - **TypeError** - 在参数 `group_rank_id` 不是数字或参数 `group` 不是字符串时抛出。
-        - **ValueError** - 在参数 `group` 是 `hccl_world_group` 或后台不可用时抛出。
+        - **ValueError** - 在参数 `group` 是 ``"hccl_world_group"`` 或后台不可用时抛出。
         - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
 
     样例：
@@ -229,7 +229,7 @@ mindspore.communication
 
     .. note::
         - GPU 版本的MindSpore不支持此方法。
-        - 参数 `group` 不能是 `hccl_world_group`。
+        - 参数 `group` 不能是 ``"hccl_world_group"``。
         - `destroy_group` 方法应该在 `init` 方法之后使用。
 
     参数：
@@ -237,13 +237,18 @@ mindspore.communication
 
     异常：
         - **TypeError** - 在参数 `group` 不是字符串时抛出。
-        - **ValueError** - 在参数 `group` 是 `hccl_world_group` 或后台不可用时抛出。
+        - **ValueError** - 在参数 `group` 是 ``"hccl_world_group"`` 或后台不可用时抛出。
         - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
+
+    样例：
+
+    .. note::
+        .. include:: ops/mindspore.ops.comm_note.rst
 
 .. py:data:: mindspore.communication.HCCL_WORLD_COMM_GROUP
 
-    "hccl_world_group"字符串，指的是由HCCL创建的默认通信组。
+    ``"hccl_world_group"`` 字符串，指的是由HCCL创建的默认通信组。在Ascend硬件平台下，初始化通信服务后该字符串与 ``GlobalComm.WORLD_COMM_GROUP`` 等价，推荐使用 ``GlobalComm.WORLD_COMM_GROUP`` 获取当前全局通信组。
 
 .. py:data:: mindspore.communication.NCCL_WORLD_COMM_GROUP
 
-    "nccl_world_group"字符串，指的是由NCCL创建的默认通信组。
+    ``"nccl_world_group"`` 字符串，指的是由NCCL创建的默认通信组。在GPU硬件平台下，初始化通信服务后该字符串与 ``GlobalComm.WORLD_COMM_GROUP`` 等价，推荐使用 ``GlobalComm.WORLD_COMM_GROUP`` 获取当前全局通信组。

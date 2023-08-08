@@ -93,17 +93,18 @@ def _check_parallel_envs():
 
 def init(backend_name=None):
     """
-    Initialize distributed backends required by communication services, e.g. HCCL/NCCL/MCCL. It is usually used in
-    distributed parallel scenarios and set before using communication services.
+    Initialize distributed backends required by communication services, e.g. ``"hccl"`` / ``"nccl"`` / ``"mccl"``.
+    It is usually used in distributed parallel scenarios and set before using communication services.
 
     Note:
-        - The full name of HCCL is Huawei Collective Communication Library.
-        - The full name of NCCL is NVIDIA Collective Communication Library.
-        - The full name of MCCL is MindSpore Collective Communication Library.
+        - The full name of ``"hccl"`` is Huawei Collective Communication Library(HCCL).
+        - The full name of ``"nccl"`` is NVIDIA Collective Communication Library(NCCL).
+        - The full name of ``"mccl"`` is MindSpore Collective Communication Library(MCCL).
 
     Args:
-        backend_name (str): Backend, using HCCL/NCCL/MCCL. HCCL should be used for Ascend hardware platforms,
-                            NCCL for GPU hardware platforms and MCCL for CPU hardware platforms.
+        backend_name (str): Backend, using ``"hccl"`` / ``"nccl"`` / ``"mccl"``.
+                            ``"hccl"`` should be used for Ascend hardware platforms,
+                            ``"nccl"`` for GPU hardware platforms and ``"mccl"`` for CPU hardware platforms.
                             If not set, inference is automatically made based on the hardware
                             platform type (device_target). Default: ``None`` .
 
@@ -299,7 +300,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
 
         >>> import mindspore as ms
-        >>> from mindspore.communication.management import init, get_rank, get_local_rank
+        >>> from mindspore.communication import init, get_rank, get_local_rank
         >>> ms.set_context(device_target="Ascend")
         >>> ms.set_auto_parallel_context(device_num=16) # 2 server, each server with 8 NPU.
         >>> init()
@@ -349,7 +350,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
 
         >>> import mindspore as ms
-        >>> from mindspore.communication.management import init, get_group_size
+        >>> from mindspore.communication import init, get_group_size
         >>> ms.set_auto_parallel_context(device_num=8)
         >>> init()
         >>> group_size = get_group_size()
@@ -398,7 +399,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
 
         >>> import mindspore as ms
-        >>> from mindspore.communication.management import init, get_local_rank_size
+        >>> from mindspore.communication import init, get_local_rank_size
         >>> ms.set_context(device_target="Ascend")
         >>> ms.set_auto_parallel_context(device_num=16) # 2 server, each server with 8 NPU.
         >>> init()
@@ -449,15 +450,17 @@ def get_world_rank_from_group_rank(group, group_rank_id):
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
 
+        >>> import mindspore as ms
         >>> from mindspore import set_context
-        >>> from mindspore.communication.management import init, create_group, get_world_rank_from_group_rank
-        >>> set_context(device_target="Ascend")
+        >>> from mindspore.communication import init, create_group, get_world_rank_from_group_rank, get_rank
+        >>> set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         >>> init()
         >>> group = "0-4"
         >>> rank_ids = [0,4]
-        >>> create_group(group, rank_ids)
-        >>> world_rank_id = get_world_rank_from_group_rank(group, 1)
-        >>> print("world_rank_id is: ", world_rank_id)
+        >>> if get_rank() in rank_ids:
+        >>>     create_group(group, rank_ids)
+        >>>     world_rank_id = get_world_rank_from_group_rank(group, 1)
+        >>>     print("world_rank_id is: ", world_rank_id)
         world_rank_id is: 4
     """
     if not isinstance(group, str):
@@ -503,15 +506,17 @@ def get_group_rank_from_world_rank(world_rank_id, group):
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
 
+        >>> import mindspore as ms
         >>> from mindspore import set_context
-        >>> from mindspore.communication.management import init, create_group, get_group_rank_from_world_rank
-        >>> set_context(device_target="Ascend")
+        >>> from mindspore.communication import init, create_group, get_group_rank_from_world_rank, get_rank
+        >>> set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         >>> init()
         >>> group = "0-4"
         >>> rank_ids = [0,4]
-        >>> create_group(group, rank_ids)
-        >>> group_rank_id = get_group_rank_from_world_rank(4, group)
-        >>> print("group_rank_id is: ", group_rank_id)
+        >>> if get_rank() in rank_ids:
+        >>>     create_group(group, rank_ids)
+        >>>     group_rank_id = get_group_rank_from_world_rank(4, group)
+        >>>     print("group_rank_id is: ", group_rank_id)
         group_rank_id is: 1
     """
     if not isinstance(group, str):
@@ -554,15 +559,17 @@ def create_group(group, rank_ids):
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
 
+        >>> import mindspore as ms
         >>> from mindspore import set_context
         >>> import mindspore.ops as ops
-        >>> from mindspore.communication.management import init, create_group
-        >>> set_context(device_target="Ascend")
+        >>> from mindspore.communication import init, create_group, get_rank
+        >>> set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         >>> init()
-        >>> group = "0-8"
-        >>> rank_ids = [0,8]
-        >>> create_group(group, rank_ids)
-        >>> allreduce = ops.AllReduce(group)
+        >>> group = "0-7"
+        >>> rank_ids = [0,7]
+        >>> if get_rank() in rank_ids:
+        >>>     create_group(group, rank_ids)
+        >>>     allreduce = ops.AllReduce(group)
     """
     if not isinstance(group, str):
         raise TypeError("For 'create_group', the argument 'group' must be type of string, "
@@ -589,6 +596,30 @@ def destroy_group(group):
 
     Supported Platforms:
         ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table startup
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun startup
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/mpirun.html>`_ .
+
+        >>> import mindspore as ms
+        >>> from mindspore import set_context
+        >>> import mindspore.ops as ops
+        >>> from mindspore.communication import init, create_group, destroy_group, get_rank
+        >>> set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
+        >>> init()
+        >>> group = "0-2"
+        >>> rank_ids = [0,2]
+        >>> if get_rank() in rank_ids:
+        >>>     create_group(group, rank_ids)
+        >>>     destroy_group(group)
     """
     if not isinstance(group, str):
         raise TypeError("For 'destroy_group', the argument 'group' must be type of string, "
