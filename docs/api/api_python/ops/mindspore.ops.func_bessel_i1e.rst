@@ -13,7 +13,7 @@ mindspore.ops.bessel_i1e
             {\infty} \frac{x^{2m+1}}{2^{2m+1} m ! (m+1) !}
         \end{array}
 
-    其中I_{1}是第一类一阶修正Bessel函数。
+    其中 :math:`I_{1}` 是第一类一阶修正Bessel函数。
 
     参数：
         - **x** (Tensor) - Tensor的输入。数据类型应为float16，float32或float64。

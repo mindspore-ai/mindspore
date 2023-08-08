@@ -13,7 +13,7 @@ mindspore.ops.bessel_k1
             I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
 
-    其中I_{1}是第一类一阶修正Bessel函数。
+    其中 :math:`I_{1}` 是第一类一阶修正Bessel函数。
 
     参数：
         - **x** (Tensor) - Tensor的输入。数据类型应为float16，float32或float64。

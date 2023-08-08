@@ -12,7 +12,7 @@ mindspore.ops.BesselY0
             Y_{0}(x)=\lim_{n \to 0} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
         \end{array}
 
-    其中J_{n0}第一类零阶的Bessel函数。
+    其中 :math:`J_{0}` 第一类零阶的Bessel函数。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
