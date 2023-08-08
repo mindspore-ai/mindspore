@@ -80,13 +80,15 @@ class AclConverter {
   bool is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
 
   std::string DebugString() const;
-  static aclDataType ConvertType(TypeId type);
 
   void Run(void *stream_ptr);
 
   std::vector<std::vector<int64_t>> SyncData() { return runner_.SyncData(); }
 
   void Reset();
+
+  static aclDataType ConvertType(TypeId type);
+  static aclFormat ConvertFormat(const std::string &format);
 
  private:
   friend class AttrConverter;
@@ -98,8 +100,6 @@ class AclConverter {
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
                                                                      AclDumpString *dump_str) const;
-
-  static aclFormat ConvertFormat(const std::string &format);
 
   template <typename T>
   void AclRunnerAddAttr(const std::string &attrName, T value);
@@ -121,9 +121,10 @@ using AclConverterPtr = std::shared_ptr<AclConverter>;
 template <typename ConvertType>
 class AttrHelper {
  public:
-  void ConvertValueToRealType(const ValuePtr &value, const std::string &attr_name, AclConverter *acl_converter,
-                              TensorParams *param = nullptr);
-  void ConvertListAttr(const ValuePtr &value, AclConverter *acl_converter, TensorParams *param = nullptr);
+  template <typename T>
+  void ConvertValueToRealType(const ValuePtr &value, const std::string &attr_name, T trans_struct);
+  template <typename T>
+  void ConvertListAttr(const ValuePtr &value, T trans_struct);
 
   void GetValueSequenceDataTypeAndShape(const ValuePtrList &value_sequence, TypePtr *data_type, ShapeVector *shape);
 
@@ -149,29 +150,27 @@ class AttrHelper {
 class AttrConverter : public AttrHelper<AttrConverter> {
  public:
   template <typename T>
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, AclConverter *acl_converter, TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, AclConverter *acl_converter) {
     auto real_val = GetValue<T>(value);
     MS_EXCEPTION_IF_NULL(acl_converter);
     acl_converter->AclRunnerAddAttr(attr_name_, real_val);
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &, AclConverter *acl_converter, TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &, AclConverter *acl_converter) {
     auto real_val = static_cast<int64_t>(GetValue<int32_t>(value));
     MS_EXCEPTION_IF_NULL(acl_converter);
     acl_converter->AclRunnerAddAttr(attr_name_, real_val);
   }
 
   template <typename T>
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<T>> &, AclConverter *acl_converter,
-                    TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<T>> &, AclConverter *acl_converter) {
     std::vector<T> array_list;
     ConvertValueSequenceToList(value, &array_list);
     MS_EXCEPTION_IF_NULL(acl_converter);
     acl_converter->AclRunnerAddAttr(attr_name_, array_list);
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int32_t>> &, AclConverter *acl_converter,
-                    TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int32_t>> &, AclConverter *acl_converter) {
     std::vector<int32_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
     std::vector<int64_t> array_list_int64;
@@ -183,7 +182,7 @@ class AttrConverter : public AttrHelper<AttrConverter> {
 
   template <typename T>
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<std::vector<T>>> &, const ShapeVector &shape,
-                    AclConverter *acl_converter, TensorParams *) {
+                    AclConverter *acl_converter) {
     std::vector<T> array_list;
     ConvertValueSequenceToList(value, &array_list);
     std::vector<std::vector<int64_t>> array_list_int64(shape[0], std::vector<int64_t>(shape[1], 0));
@@ -200,20 +199,20 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
   const tensor::TensorPtr &GetTensor() const { return tensor_; }
 
   template <typename T>
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, AclConverter *, TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, TensorParams *) {
     tensor_ = std::make_shared<tensor::Tensor>(GetValue<T>(value));
     MS_EXCEPTION_IF_NULL(tensor_);
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::string> &, AclConverter *, TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::string> &, TensorParams *) {
     MS_LOG(EXCEPTION) << "Unsupported convert from string to input.";
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<::ge::DataType> &, AclConverter *, TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<::ge::DataType> &, TensorParams *) {
     MS_LOG(EXCEPTION) << "Unsupported convert from ::ge::DataType to input.";
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<int64_t> &, AclConverter *, TensorParams *param) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<int64_t> &, TensorParams *param) {
     MS_EXCEPTION_IF_NULL(param);
     auto real_val = static_cast<int32_t>(GetValue<int64_t>(value));
     tensor_ = std::make_shared<tensor::Tensor>(real_val);
@@ -222,24 +221,22 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
   }
 
   template <typename T>
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<T>> &, AclConverter *, TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<T>> &, TensorParams *) {
     std::vector<T> array_list;
     ConvertValueSequenceToList(value, &array_list);
     tensor_ = std::make_shared<tensor::Tensor>(array_list);
     MS_EXCEPTION_IF_NULL(tensor_);
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<std::string>> &, AclConverter *,
-                    TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<std::string>> &, TensorParams *) {
     MS_LOG(EXCEPTION) << "Unsupported convert from list_string to input.";
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<float>> &, AclConverter *, TensorParams *) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<float>> &, TensorParams *) {
     MS_LOG(EXCEPTION) << "Unsupported convert from list_float to input.";
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<uint8_t>> &, AclConverter *,
-                    TensorParams *param) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<uint8_t>> &, TensorParams *param) {
     MS_EXCEPTION_IF_NULL(param);
     std::vector<uint8_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
@@ -251,8 +248,7 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
     MS_EXCEPTION_IF_NULL(tensor_);
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int64_t>> &, AclConverter *,
-                    TensorParams *param) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int64_t>> &, TensorParams *param) {
     MS_EXCEPTION_IF_NULL(param);
     std::vector<int64_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
@@ -266,7 +262,7 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
 
   template <typename T>
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<std::vector<T>>> &, const ShapeVector &shape,
-                    AclConverter *, TensorParams *) {
+                    TensorParams *) {
     std::vector<T> array_list;
     ConvertValueSequenceToList(value, &array_list);
     tensor_ = std::make_shared<tensor::Tensor>(kNumberTypeInt64, shape);
