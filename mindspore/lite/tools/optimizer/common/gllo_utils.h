@@ -99,6 +99,8 @@ AnfNodePtr GetTupleGetItemRealInput(const CNodePtr &tuple_get_item);
 
 size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
 
+size_t GetListGetItemOutIndex(const CNodePtr &list_get_item);
+
 tensor::TensorPtr GetTensorInfo(const AnfNodePtr &node);
 
 AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index);
