@@ -561,8 +561,8 @@ class Parameter(Tensor_):
                 If `init` is a `Tensor` or `numbers.Number`, clone a new parameter with the same shape
                 and dtype, and the data of the new parameter will be set according to `init`. If `init`
                 is a `str`, the `init` should be the alias of the class inheriting from `Initializer`.
-                For example, if `init` is 'same', clone a new parameter with the same data, shape, and
-                dtype. Default: 'same'.
+                For example, if `init` is ``'same'``, clone a new parameter with the same data, shape, and
+                dtype. Default: ``'same'``.
 
         Returns:
             Parameter, a new parameter.
@@ -604,8 +604,8 @@ class Parameter(Tensor_):
         """
         Get the layerwise parallel status(bool) of the parameter.
 
-        When layerwise_parallel is true in `DATA_PARALLEL` and `HYBRID_PARALLEL` parallel mode, broadcast and gradients
-        communication would not be applied to parameters.
+        When `layerwise_parallel` is ``True`` in `DATA_PARALLEL` and `HYBRID_PARALLEL` parallel mode,
+        broadcast and gradients communication would not be applied to parameters.
 
         Examples:
             >>> from mindspore import Tensor, Parameter
@@ -815,7 +815,7 @@ class Parameter(Tensor_):
 
         Args:
             data (Union[Tensor, int, float]): New data.
-            slice_shape (bool): If slice the parameter is set to true, the shape is not checked for consistency.
+            slice_shape (bool): If slice the parameter is set to ``True``, the shape is not checked for consistency.
                                 Default: ``False``.
 
         Returns:
@@ -948,12 +948,12 @@ class ParameterTuple(tuple):
         It is used to store the parameters of the network into the parameter tuple collection.
 
     Examples:
-            >>> from mindspore import Tensor, Parameter, ParameterTuple
-            >>> import numpy as np
-            >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
-            >>> y = Parameter(Tensor(np.array([[5, 6], [7, 8]], dtype=np.float32)), name="param1")
-            >>> pt = ParameterTuple([x, y])
-            >>> pt1 = pt.clone(prefix="new")
+        >>> from mindspore import Tensor, Parameter, ParameterTuple
+        >>> import numpy as np
+        >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
+        >>> y = Parameter(Tensor(np.array([[5, 6], [7, 8]], dtype=np.float32)), name="param1")
+        >>> pt = ParameterTuple([x, y])
+        >>> pt1 = pt.clone(prefix="new")
     """
 
     def __new__(cls, iterable):
@@ -983,13 +983,13 @@ class ParameterTuple(tuple):
                 in parametertuple.
 
             init (Union[Tensor, str, numbers.Number]): Clone the shape and dtype of Parameters in ParameterTuple and
-                set  data according to `init`. Default: 'same'.
+                set  data according to `init`. Default: ``'same'``.
 
                 - If `init` is a `Tensor` , set the new Parameter data to the input Tensor.
                 - If `init` is `numbers.Number` , set the new Parameter data to the input number.
                 - If `init` is a `str`, data will be set according to the initialization method of the same name in
-                  the `Initializer`.
-                - If `init` is 'same', the new Parameter has the same value with the original Parameter.
+                  the `Initializer`. When it is ``'same'``, the new Parameter will have the same value
+                  with the original Parameter.
 
         Returns:
             Tuple, the new Parameter tuple.

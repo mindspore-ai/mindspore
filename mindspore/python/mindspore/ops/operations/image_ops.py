@@ -285,7 +285,7 @@ class CropAndResize(Primitive):
               pixels, computed using bilinear interpolation. This method produces smoother results compared
               to nearest neighbor interpolation.
             - ``"bilinear_v2"``: The optimized variant of
-              "bilinear"``, it may achieve better result(higher precision and speed) in some cases.
+              ``"bilinear"``, it may achieve better result(higher precision and speed) in some cases.
 
         extrapolation_value (float, optional): An optional float value used extrapolation, if applicable.
             Default: ``0.0`` .
