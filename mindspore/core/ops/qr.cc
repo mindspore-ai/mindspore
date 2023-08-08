@@ -56,30 +56,30 @@ abstract::TupleShapePtr QrInferShape(const PrimitivePtr &primitive, const std::v
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{unknow_rank_ptr, unknow_rank_ptr});
   }
-  // support dynamic shape
-  if (IsDynamic(x_shape)) {
-    ShapeVector shape_out;
-    for (size_t i = 0; i < x_shape.size(); ++i) {
-      shape_out.push_back(abstract::Shape::kShapeDimAny);
-    }
-    auto unknow_shape_ptr = std::make_shared<abstract::Shape>(shape_out);
-    return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr});
-  }
 
   (void)CheckAndConvertUtils::CheckInteger("rank of argument[x]", SizeToLong(x_shape.size()), kGreaterEqual,
                                            kDimLeastNum, primitive->name());
-
   bool full_matrices_attr = GetValue<bool>(primitive->GetAttr("full_matrices"));
   std::vector<int64_t> out_q_dims(x_shape.begin(), x_shape.end());
   std::vector<int64_t> out_r_dims(x_shape.begin(), x_shape.end());
   if (full_matrices_attr) {
     out_q_dims[out_q_dims.size() - 1] = out_q_dims[out_q_dims.size() - kDimPenultimateNum];
   } else {
-    auto p = std::min(x_shape[x_shape.size() - kDimPenultimateNum], x_shape[x_shape.size() - 1]);
-    out_q_dims[out_q_dims.size() - 1] = p;
-    out_r_dims[out_r_dims.size() - kDimPenultimateNum] = p;
+    // input [m, n]
+    // if m or n is kShapeDimAny and full_matrices_attr = false
+    // then q.shape = [m, -1] r.shape = [-1, n]
+    auto m = x_shape[x_shape.size() - 1];
+    auto n = x_shape[x_shape.size() - kDimPenultimateNum];
+    if (IsDynamicShape({m, n})) {
+      out_q_dims[out_q_dims.size() - 1] = abstract::Shape::kShapeDimAny;
+      out_r_dims[out_q_dims.size() - kDimPenultimateNum] = abstract::Shape::kShapeDimAny;
+    } else {
+      auto p = std::min(x_shape[x_shape.size() - kDimPenultimateNum], x_shape[x_shape.size() - 1]);
+      out_q_dims[out_q_dims.size() - 1] = p;
+      out_r_dims[out_r_dims.size() - kDimPenultimateNum] = p;
+    }
   }
+
   abstract::ShapePtr q_shape = std::make_shared<abstract::Shape>(out_q_dims);
   abstract::ShapePtr r_shape = std::make_shared<abstract::Shape>(out_r_dims);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{q_shape, r_shape});
