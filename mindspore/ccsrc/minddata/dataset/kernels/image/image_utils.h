@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,26 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
 
-#include <setjmp.h>
+#if defined(_WIN32) || defined(_WIN64)
+#undef HAVE_STDDEF_H
+#undef HAVE_STDLIB_H
+#elif __APPLE__
+#include <sys/mount.h>
+#include <sys/param.h>
+#endif
 
+#include <csetjmp>
 #include <memory>
 #include <random>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
-#if defined(_WIN32) || defined(_WIN64)
-#undef HAVE_STDDEF_H
-#undef HAVE_STDLIB_H
-#elif __APPLE__
-#include <sys/param.h>
-#include <sys/mount.h>
-#endif
+
 #include "./jpeglib.h"
 #include "./jerror.h"
 #include <opencv2/imgproc/imgproc.hpp>
+
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
@@ -189,7 +191,7 @@ Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 /// \brief Swaps the channels in the image, i.e. converts HWC to CHW
 /// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
 /// \param output: Tensor of shape <C,H,W> or <H,W> and same input type.
-Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
+Status HwcToChw(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
 /// \brief Masks the given part of the input image with a another image (sub_mat)
 /// \param[in] sub_mat The image we want to mask with

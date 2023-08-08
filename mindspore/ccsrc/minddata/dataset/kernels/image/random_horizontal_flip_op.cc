@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
+
+#include <vector>
 
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -48,7 +50,7 @@ Status RandomHorizontalFlipOp::Compute(const TensorRow &input, TensorRow *output
         // split [N, H, W, C] to N [H, W, C], and flip N [H, W, C]
         std::vector<std::shared_ptr<Tensor>> input_vector_hwc, output_vector_hwc;
         RETURN_IF_NOT_OK(BatchTensorToTensorVector(input[i], &input_vector_hwc));
-        for (auto input_hwc : input_vector_hwc) {
+        for (const auto &input_hwc : input_vector_hwc) {
           std::shared_ptr<Tensor> flip;
           RETURN_IF_NOT_OK(HorizontalFlip(input_hwc, &flip));
           output_vector_hwc.push_back(flip);

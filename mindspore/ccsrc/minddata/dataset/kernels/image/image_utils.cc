@@ -32,13 +32,11 @@
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/affine_op.h"
-#include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #include "minddata/dataset/kernels/image/invert_op.h"
 #include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/kernels/image/posterize_op.h"
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
 #include "minddata/dataset/kernels/image/sharpness_op.h"
-#include "minddata/dataset/kernels/image/solarize_op.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 
@@ -129,10 +127,10 @@ Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<dsize_t> *siz
     (*size)[0] = image->shape()[0];
     (*size)[1] = image->shape()[1];
   } else {
-    const int32_t kHeightIndex = -3;
-    const int32_t kWidthIndex = -2;
-    (*size)[0] = image->shape()[kHeightIndex];
-    (*size)[1] = image->shape()[kWidthIndex];
+    const int32_t kHeightIndexFromBack = -3;
+    const int32_t kWidthIndexFromBack = -2;
+    (*size)[0] = image->shape()[kHeightIndexFromBack];
+    (*size)[1] = image->shape()[kWidthIndexFromBack];
   }
   return Status::OK();
 }
@@ -273,16 +271,16 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int>::max() / kResizeShapeLimits) > in_image.cols,
                                "Resize: in_image cols out of bounds.");
   if (output_height > in_image.rows * kResizeShapeLimits || output_width > in_image.cols * kResizeShapeLimits) {
-    std::string err_msg =
+    RETURN_STATUS_ERROR(
+      StatusCode::kMDShapeMisMatch,
       "Resize: the resizing width or height is too big, it's 1000 times bigger than the original image, got output "
       "height: " +
-      std::to_string(output_height) + ", width: " + std::to_string(output_width) +
-      ", and original image size:" + std::to_string(in_image.rows) + ", " + std::to_string(in_image.cols);
-    return Status(StatusCode::kMDShapeMisMatch, err_msg);
+        std::to_string(output_height) + ", width: " + std::to_string(output_width) +
+        ", and original image size:" + std::to_string(in_image.rows) + ", " + std::to_string(in_image.cols));
   }
   if (output_height == 0 || output_width == 0) {
-    std::string err_msg = "Resize: the input value of 'resize' is invalid, width or height is zero.";
-    return Status(StatusCode::kMDShapeMisMatch, err_msg);
+    RETURN_STATUS_ERROR(StatusCode::kMDShapeMisMatch,
+                        "Resize: the input value of 'resize' is invalid, width or height is zero.");
   }
 
   if (mode == InterpolationMode::kCubicPil) {
@@ -447,7 +445,7 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
   while (cinfo->output_scanline < static_cast<unsigned int>(max_scanlines_to_read)) {
     int num_lines_read = 0;
     try {
-      num_lines_read = jpeg_read_scanlines(cinfo, &scanline_ptr, 1);
+      num_lines_read = static_cast<int>(jpeg_read_scanlines(cinfo, &scanline_ptr, 1));
       RETURN_IF_NOT_OK(CheckJpegExit(cinfo));
     } catch (std::runtime_error &e) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] Decode: image decode failed.");
@@ -515,18 +513,18 @@ void JpegErrorExitCustom(j_common_ptr cinfo) {
   (*(cinfo->err->format_message))(cinfo, jpeg_error_msg);
   // we encounter core dump when execute jpeg_start_decompress at arm platform,
   // so we collect Status instead of throwing exception.
-  jpeg_status.push_back(
+  jpeg_status.emplace_back(
     STATUS_ERROR(StatusCode::kMDUnexpectedError, "Error raised by libjpeg: " + std::string(jpeg_error_msg)));
 }
 
 Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int crop_x, int crop_y,
                          int crop_w, int crop_h) {
-  struct jpeg_decompress_struct cinfo;
+  struct jpeg_decompress_struct cinfo {};
   auto DestroyDecompressAndReturnError = [&cinfo](const std::string &err) {
     jpeg_destroy_decompress(&cinfo);
     RETURN_STATUS_UNEXPECTED(err);
   };
-  struct JpegErrorManagerCustom jerr;
+  struct JpegErrorManagerCustom jerr {};
   cinfo.err = jpeg_std_error(&jerr.pub);
   jerr.pub.error_exit = JpegErrorExitCustom;
   try {
@@ -546,8 +544,8 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
                                "JpegCropAndDecode: addition(crop y and crop height) out of bounds, got crop y:" +
                                  std::to_string(crop_y) + ", and crop height:" + std::to_string(crop_h));
   if (crop_x == 0 && crop_y == 0 && crop_w == 0 && crop_h == 0) {
-    crop_w = cinfo.output_width;
-    crop_h = cinfo.output_height;
+    crop_w = static_cast<int>(cinfo.output_width);
+    crop_h = static_cast<int>(cinfo.output_height);
   } else if (crop_w == 0 || static_cast<unsigned int>(crop_w + crop_x) > cinfo.output_width || crop_h == 0 ||
              static_cast<unsigned int>(crop_h + crop_y) > cinfo.output_height) {
     return DestroyDecompressAndReturnError(
@@ -574,18 +572,18 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   TensorShape ts = TensorShape({crop_h, crop_w, kOutNumComponents});
   std::shared_ptr<Tensor> output_tensor;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(ts, DataType(DataType::DE_UINT8), &output_tensor));
-  const int buffer_size = output_tensor->SizeInBytes();
+  const int buffer_size = static_cast<int>(output_tensor->SizeInBytes());
   JSAMPLE *buffer = reinterpret_cast<JSAMPLE *>(&(*output_tensor->begin<uint8_t>()));
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - skipped_scanlines) > crop_h,
                                "JpegCropAndDecode: addition out of bounds.");
-  const int max_scanlines_to_read = skipped_scanlines + crop_h;
+  const int max_scanlines_to_read = static_cast<int>(skipped_scanlines) + crop_h;
   // stride refers to output tensor, which has 3 components at most
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / crop_w) > kOutNumComponents,
                                "JpegCropAndDecode: multiplication out of bounds.");
   const int stride = crop_w * kOutNumComponents;
   // offset is calculated for scanlines read from the image, therefore
   // has the same number of components as the image
-  int minius_value = crop_x - crop_x_aligned;
+  int minius_value = crop_x - static_cast<int>(crop_x_aligned);
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / minius_value) > cinfo.output_components,
                                "JpegCropAndDecode: multiplication out of bounds.");
   const int offset = minius_value * cinfo.output_components;
@@ -686,7 +684,7 @@ Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   }
 }
 
-Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
+Status HwcToChw(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
     if (input->Rank() == kMinImageRank) {
       // If input tensor is 2D, we assume we have hw dimensions
@@ -738,7 +736,7 @@ Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Te
         "sub_mat shape doesn't match <H,W,C> format, got shape:" +
         (*input)->shape().ToString());
     }
-    int number_of_channels = (*input)->shape()[kChannelIndexHWC];
+    int number_of_channels = static_cast<int>((*input)->shape()[kChannelIndexHWC]);
     for (int i = 0; i < crop_width; i++) {
       for (int j = 0; j < crop_height; j++) {
         for (int c = 0; c < number_of_channels; c++) {
@@ -759,7 +757,7 @@ Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Te
         "sub_mat shape doesn't match <C,H,W> format, got shape:" +
         (*input)->shape().ToString());
     }
-    int number_of_channels = (*input)->shape()[0];
+    int number_of_channels = static_cast<int>((*input)->shape()[0]);
     for (int i = 0; i < crop_width; i++) {
       for (int j = 0; j < crop_height; j++) {
         for (int c = 0; c < number_of_channels; c++) {
@@ -884,10 +882,11 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       TensorShape new_shape = TensorShape({target_height, target_width, 3});
       RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
       uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-      imOut.Init(target_width, target_height, input_cv->shape()[kChannelIndexHWC], reinterpret_cast<void *>(buffer),
-                 LDataType::UINT8);
-      imIn.Init(input_image->shape()[1], input_image->shape()[0], input_image->shape()[kChannelIndexHWC],
-                input_image->mat().data, LDataType::UINT8);
+      int input_channel = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
+      imOut.Init(target_width, target_height, input_channel, reinterpret_cast<void *>(buffer), LDataType::UINT8);
+      int input_height = static_cast<int>(input_image->shape()[0]);
+      int input_width = static_cast<int>(input_image->shape()[1]);
+      imIn.Init(input_width, input_height, input_channel, input_image->mat().data, LDataType::UINT8);
       if (ResizeCubic(imIn, imOut, target_width, target_height) == false) {
         RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
       }
@@ -934,8 +933,8 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     float fx = 0, fy = 0;
     if (center.empty()) {
       // default to center of image
-      fx = (input_img.cols - 1) * kHalf;
-      fy = (input_img.rows - 1) * kHalf;
+      fx = (static_cast<float>(input_img.cols) - 1.0F) * kHalf;
+      fy = (static_cast<float>(input_img.rows) - 1.0F) * kHalf;
     } else {
       fx = center[0];
       fy = center[1];
@@ -1192,7 +1191,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
                                input->shape().ToString());
     }
     if (input->Rank() > 2) {
-      num_channels = input->shape()[-1];
+      num_channels = static_cast<int>(input->shape()[-1]);
     }
     if (num_channels != 1 && num_channels != 3) {
       RETURN_STATUS_UNEXPECTED("AdjustGamma: channel of input image should be 1 or 3, but got: " +
@@ -1215,7 +1214,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
       uchar LUT[256] = {};
       auto kMaxPixelValueFloat = static_cast<float>(kMaxBitValue);
       for (int i = 0; i <= kMaxBitValue; i++) {
-        float f = i / kMaxPixelValueFloat;
+        float f = static_cast<float>(i) / kMaxPixelValueFloat;
         f = pow(f, gamma);
         LUT[i] =
           static_cast<uchar>(floor(std::min(f * (kMaxPixelValueFloat + 1.f - 1e-3f) * gain, kMaxPixelValueFloat)));
@@ -1304,10 +1303,10 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
           table.push_back(i);
         }
       } else {
-        const float scale = static_cast<float>(kMaxBitValue) / (hi - lo);
-        const float offset = -1 * lo * scale;
+        const float scale = static_cast<float>(kMaxBitValue) / static_cast<float>(hi - lo);
+        const float offset = static_cast<float>(-1 * lo) * scale;
         for (int32_t i = 0; i < 256; i++) {
-          int32_t ix = static_cast<int32_t>(i * scale + offset);
+          auto ix = static_cast<int32_t>(static_cast<float>(i) * scale + offset);
           ix = std::max(ix, 0);
           ix = std::min(ix, kMaxBitValue);
           table.push_back(ix);
@@ -1365,13 +1364,13 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
     cv::Mat output_img;
     cv::cvtColor(input_img, output_img, CV_RGB2HSV_FULL);
-    for (int y = 0; y < output_img.cols; y++) {
-      for (int x = 0; x < output_img.rows; x++) {
-        uint8_t cur1 = output_img.at<cv::Vec3b>(cv::Point(y, x))[0];
+    for (int x = 0; x < output_img.cols; x++) {
+      for (int y = 0; y < output_img.rows; y++) {
+        uint8_t cur1 = output_img.at<cv::Vec3b>(cv::Point(x, y))[0];
         uint8_t h_hue = 0;
         h_hue = static_cast<uint8_t>(hue * kMaxBitValue);
         cur1 += h_hue;
-        output_img.at<cv::Vec3b>(cv::Point(y, x))[0] = cur1;
+        output_img.at<cv::Vec3b>(cv::Point(x, y))[0] = cur1;
       }
     }
     cv::cvtColor(output_img, output_cv->mat(), CV_HSV2RGB_FULL);
@@ -1407,9 +1406,9 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     cv::split(image, planes);
     // Equalize each channel separately
     std::vector<cv::Mat> image_result;
-    for (std::size_t layer = 0; layer < planes.size(); layer++) {
+    for (auto &plane : planes) {
       cv::Mat channel_result;
-      cv::equalizeHist(planes[layer], channel_result);
+      cv::equalizeHist(plane, channel_result);
       image_result.push_back(channel_result);
     }
     cv::Mat result;
@@ -1494,10 +1493,10 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     uint8_t type_size = input_cv->type().SizeInBytes();
     // for random color
     std::normal_distribution<double> normal_distribution(0, 1);
-    std::uniform_int_distribution<int> height_distribution_bound(0, image_h - box_height);
-    std::uniform_int_distribution<int> width_distribution_bound(0, image_w - box_width);
-    std::uniform_int_distribution<int> height_distribution_unbound(0, image_h + box_height);
-    std::uniform_int_distribution<int> width_distribution_unbound(0, image_w + box_width);
+    std::uniform_int_distribution<int> height_distribution_bound(0, static_cast<int>(image_h) - box_height);
+    std::uniform_int_distribution<int> width_distribution_bound(0, static_cast<int>(image_w) - box_width);
+    std::uniform_int_distribution<int> height_distribution_unbound(0, static_cast<int>(image_h) + box_height);
+    std::uniform_int_distribution<int> width_distribution_unbound(0, static_cast<int>(image_w) + box_width);
 
     if (fill_colors.empty()) {
       fill_colors = std::vector<uint8_t>(num_channels, 0);
@@ -1523,7 +1522,7 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
       if (is_hwc) {
         uchar *buffer = GetPtr(input_cv);
-        int64_t num_bytes = type_size * num_channels * (max_width - w_start);
+        int64_t num_bytes = type_size * static_cast<int64_t>(num_channels) * (max_width - w_start);
         for (int x = h_start; x < max_height; x++) {
           auto ret = memset_s(buffer + (x * image_w + w_start) * num_channels * type_size, num_bytes, 0, num_bytes);
           if (ret != EOK) {
@@ -1575,8 +1574,8 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     h_start = (h_start < 0) ? 0 : h_start;
     w_start = (w_start < 0) ? 0 : w_start;
 
-    int32_t max_width = (w_start + width > image_w) ? image_w : w_start + width;
-    int32_t max_height = (h_start + height > image_h) ? image_h : h_start + height;
+    int32_t max_width = (w_start + width > image_w) ? static_cast<int32_t>(image_w) : w_start + width;
+    int32_t max_height = (h_start + height > image_h) ? static_cast<int32_t>(image_h) : h_start + height;
     int32_t true_width = max_width - w_start;
     int32_t true_height = max_height - h_start;
 
@@ -1650,8 +1649,8 @@ Status Perspective(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
     cv::Point2f cv_src_point[kListSize];
     cv::Point2f cv_dst_point[kListSize];
     for (int i = 0; i < kListSize; i++) {
-      cv_src_point[i] = cv::Point2f(start_points[i][0], start_points[i][1]);
-      cv_dst_point[i] = cv::Point2f(end_points[i][0], end_points[i][1]);
+      cv_src_point[i] = cv::Point2f(static_cast<float>(start_points[i][0]), static_cast<float>(start_points[i][1]));
+      cv_dst_point[i] = cv::Point2f(static_cast<float>(end_points[i][0]), static_cast<float>(end_points[i][1]));
     }
 
     // Perspective Operation
@@ -1701,9 +1700,9 @@ Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     float pca_b = eig[2][0] * rnd_r + eig[2][1] * rnd_g + eig[2][2] * rnd_b;
     for (int row = 0; row < input_img.rows; row++) {
       for (int col = 0; col < input_img.cols; col++) {
-        float r = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[0]);
-        float g = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[1]);
-        float b = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[2]);
+        auto r = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[0]);
+        auto g = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[1]);
+        auto b = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[2]);
         input_img.at<cv::Vec3b>(row, col)[kRIndex] = cv::saturate_cast<uchar>(r + pca_r);
         input_img.at<cv::Vec3b>(row, col)[kGIndex] = cv::saturate_cast<uchar>(g + pca_g);
         input_img.at<cv::Vec3b>(row, col)[kBIndex] = cv::saturate_cast<uchar>(b + pca_b);
@@ -1723,7 +1722,7 @@ Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
 Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
     RETURN_IF_NOT_OK(ValidateImage(input, "RgbaToRgb", {3, 5, 11}));
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (input_cv->shape().Size() != kDefaultImageChannel || input_cv->shape()[kChannelIndexHWC] != kMaxImageChannel) {
       std::string err_msg =
         "RgbaToRgb: rank of image is not: " + std::to_string(kDefaultImageChannel) +
@@ -1745,7 +1744,7 @@ Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
     RETURN_IF_NOT_OK(ValidateImage(input, "RgbaToBgr", {3, 5, 11}));
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (input_cv->shape().Size() != kDefaultImageChannel || input_cv->shape()[kChannelIndexHWC] != kMaxImageChannel) {
       std::string err_msg =
         "RgbaToBgr: rank of image is not: " + std::to_string(kDefaultImageChannel) +
@@ -1781,8 +1780,8 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     cv::Mat image = input_cv->mat().clone();
     if (input_type == DataType::DE_FLOAT16 || input_type == DataType::DE_INT16 || input_type == DataType::DE_UINT16) {
       for (int i = 0; i < input_cv->mat().rows; ++i) {
-        cv::Vec3s *p1 = input_cv->mat().ptr<cv::Vec3s>(i);
-        cv::Vec3s *p2 = image.ptr<cv::Vec3s>(i);
+        auto *p1 = input_cv->mat().ptr<cv::Vec3s>(i);
+        auto *p2 = image.ptr<cv::Vec3s>(i);
         for (int j = 0; j < input_cv->mat().cols; ++j) {
           p2[j][kBIndex] = p1[j][kRIndex];
           p2[j][kGIndex] = p1[j][kGIndex];
@@ -1791,8 +1790,8 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       }
     } else if (input_type == DataType::DE_FLOAT32 || input_type == DataType::DE_INT32) {
       for (int i = 0; i < input_cv->mat().rows; ++i) {
-        cv::Vec3f *p1 = input_cv->mat().ptr<cv::Vec3f>(i);
-        cv::Vec3f *p2 = image.ptr<cv::Vec3f>(i);
+        auto *p1 = input_cv->mat().ptr<cv::Vec3f>(i);
+        auto *p2 = image.ptr<cv::Vec3f>(i);
         for (int j = 0; j < input_cv->mat().cols; ++j) {
           p2[j][kBIndex] = p1[j][kRIndex];
           p2[j][kGIndex] = p1[j][kGIndex];
@@ -1801,8 +1800,8 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       }
     } else if (input_type == DataType::DE_FLOAT64) {
       for (int i = 0; i < input_cv->mat().rows; ++i) {
-        cv::Vec3d *p1 = input_cv->mat().ptr<cv::Vec3d>(i);
-        cv::Vec3d *p2 = image.ptr<cv::Vec3d>(i);
+        auto *p1 = input_cv->mat().ptr<cv::Vec3d>(i);
+        auto *p2 = image.ptr<cv::Vec3d>(i);
         for (int j = 0; j < input_cv->mat().cols; ++j) {
           p2[j][kBIndex] = p1[j][kRIndex];
           p2[j][kGIndex] = p1[j][kGIndex];
@@ -1826,7 +1825,7 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
     RETURN_IF_NOT_OK(ValidateImage(input, "RgbToGray", {3, 5, 11}));
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (input_cv->Rank() != kDefaultImageRank || input_cv->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("RgbToGray: image shape is not <H,W,C> or channel is not 3, got rank: " +
                                std::to_string(input_cv->Rank()) + ", and shape: " + input_cv->shape().ToString());
@@ -1857,8 +1856,8 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
     jpeg_destroy_decompress(&cinfo);
     RETURN_STATUS_UNEXPECTED(e.what());
   }
-  *img_height = cinfo.output_height;
-  *img_width = cinfo.output_width;
+  *img_height = static_cast<int>(cinfo.output_height);
+  *img_width = static_cast<int>(cinfo.output_width);
   jpeg_destroy_decompress(&cinfo);
   return Status::OK();
 }
@@ -1893,8 +1892,8 @@ Status GetAffineMatrix(const std::shared_ptr<Tensor> &input, std::vector<float_t
   // Thus, the affine matrix is M = T * C * RSS * C^-1
 
   // image is hwc, rows = shape()[0]
-  float_t cx = ((input->shape()[1] - 1) / 2.0);
-  float_t cy = ((input->shape()[0] - 1) / 2.0);
+  float_t cx = static_cast<float_t>(input->shape()[1] - 1) / 2.0F;
+  float_t cy = static_cast<float_t>(input->shape()[0] - 1) / 2.0F;
 
   CHECK_FAIL_RETURN_UNEXPECTED(cos(shear_y) != 0.0, "AffineOp: cos(shear_y) should not be zero.");
 
@@ -2121,7 +2120,7 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     RETURN_IF_NOT_OK(
       CVTensor::CreateEmpty(TensorShape{num_channels, height, width}, DataType(DataType::DE_FLOAT32), &output_cv));
     // Rescale tensor by dividing by 255
-    const float kMaxBitValueinFloat = static_cast<float>(kMaxBitValue);
+    const auto kMaxBitValueinFloat = static_cast<float>(kMaxBitValue);
     for (int i = 0; i < num_channels; ++i) {
       cv::Mat mat_t;
       cv::extractChannel(input_cv->mat(), mat_t, i);
@@ -2144,7 +2143,6 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
 // round half to even
 float Round(float value) {
-  float kHalf = 0.5;
   const int32_t kEven = 2;
   float rnd = round(value);
   float rnd_l = floor(value);
@@ -2163,9 +2161,9 @@ float Round(float value) {
 
 std::vector<float> Linspace(float start, float end, int n, float scale, float offset, bool round) {
   std::vector<float> linear(n);
-  float step = (n == 1) ? 0 : ((end - start) / (n - 1));
+  float step = (n == 1) ? 0 : (end - start) / static_cast<float>(n - 1);
   for (size_t i = 0; i < linear.size(); ++i) {
-    linear[i] = (start + i * step) * scale + offset;
+    linear[i] = (start + static_cast<float>(i) * step) * scale + offset;
     if (round) {
       linear[i] = Round(linear[i]);
     }
@@ -2176,19 +2174,19 @@ std::vector<float> Linspace(float start, float end, int n, float scale, float of
 Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::string &op_name,
                     float magnitude, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value) {
   if (op_name == "ShearX") {
-    float_t shear = magnitude * 180 / CV_PI;
+    float_t shear = magnitude * 180.F / CV_PI;
     AffineOp affine(0.0, {0, 0}, 1.0, {shear, 0.0}, interpolation, fill_value);
     RETURN_IF_NOT_OK(affine.Compute(input, output));
   } else if (op_name == "ShearY") {
-    float_t shear = magnitude * 180 / CV_PI;
+    float_t shear = magnitude * 180.F / CV_PI;
     AffineOp affine(0.0, {0, 0}, 1.0, {0.0, shear}, interpolation, fill_value);
     RETURN_IF_NOT_OK(affine.Compute(input, output));
   } else if (op_name == "TranslateX") {
-    float_t translate = static_cast<int>(magnitude);
+    float_t translate = magnitude;
     AffineOp affine(0.0, {translate, 0}, 1.0, {0.0, 0.0}, interpolation, fill_value);
     RETURN_IF_NOT_OK(affine.Compute(input, output));
   } else if (op_name == "TranslateY") {
-    float_t translate = static_cast<int>(magnitude);
+    float_t translate = magnitude;
     AffineOp affine(0.0, {0, translate}, 1.0, {0.0, 0.0}, interpolation, fill_value);
     RETURN_IF_NOT_OK(affine.Compute(input, output));
   } else if (op_name == "Rotate") {
@@ -2233,7 +2231,7 @@ Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> 
   }
 
   TensorShape shape = image->shape();
-  int rank = shape.Rank();
+  int rank = static_cast<int>(shape.Rank());
   if (rank < kMinImageRank || rank > kDefaultImageRank) {
     err_msg = "EncodeJpeg: The image has invalid dimensions. It should have two or three dimensions, but got ";
     err_msg += std::to_string(rank) + " dimensions.";
@@ -2241,7 +2239,7 @@ Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> 
   }
   int channels;
   if (rank == kDefaultImageRank) {
-    channels = shape[kMinImageRank];
+    channels = static_cast<int>(shape[kMinImageRank]);
     if (channels != kMinImageChannel && channels != kDefaultImageChannel) {
       err_msg = "EncodeJpeg: The image has invalid channels. It should have 1 or 3 channels, but got ";
       err_msg += std::to_string(channels) + " channels.";
@@ -2296,7 +2294,7 @@ Status EncodePng(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *
   }
 
   TensorShape shape = image->shape();
-  int rank = shape.Rank();
+  int rank = static_cast<int>(shape.Rank());
   if (rank < kMinImageRank || rank > kDefaultImageRank) {
     err_msg = "EncodePng: The image has invalid dimensions. It should have two or three dimensions, but got ";
     err_msg += std::to_string(rank) + " dimensions.";
@@ -2304,7 +2302,7 @@ Status EncodePng(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *
   }
   int channels;
   if (rank == kDefaultImageRank) {
-    channels = shape[kMinImageRank];
+    channels = static_cast<int>(shape[kMinImageRank]);
     if (channels != kMinImageChannel && channels != kDefaultImageChannel) {
       err_msg = "EncodePng: The image has invalid channels. It should have 1 or 3 channels, but got ";
       err_msg += std::to_string(channels) + " channels.";
@@ -2416,7 +2414,7 @@ Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &dat
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     TensorShape shape = data->shape();
-    int rank = shape.Rank();
+    int rank = static_cast<int>(shape.Rank());
     if (rank != kMinImageChannel) {
       err_msg = "WriteFile: The data has invalid dimensions. It should have only one dimension, but got ";
       err_msg += std::to_string(rank) + " dimensions.";
@@ -2461,7 +2459,7 @@ Status WriteJpeg(const std::string &filename, const std::shared_ptr<Tensor> &ima
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   TensorShape shape = image->shape();
-  int rank = shape.Rank();
+  int rank = static_cast<int>(shape.Rank());
   if (rank < kMinImageRank || rank > kDefaultImageRank) {
     err_msg = "WriteJpeg: The image has invalid dimensions. It should have two or three dimensions, but got ";
     err_msg += std::to_string(rank) + " dimensions.";
@@ -2469,7 +2467,7 @@ Status WriteJpeg(const std::string &filename, const std::shared_ptr<Tensor> &ima
   }
   int channels;
   if (rank == kDefaultImageRank) {
-    channels = shape[kMinImageRank];
+    channels = static_cast<int>(shape[kMinImageRank]);
     if (channels != kMinImageChannel && channels != kDefaultImageChannel) {
       err_msg = "WriteJpeg: The image has invalid channels. It should have 1 or 3 channels, but got ";
       err_msg += std::to_string(channels) + " channels.";
@@ -2541,7 +2539,7 @@ Status WritePng(const std::string &filename, const std::shared_ptr<Tensor> &imag
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   TensorShape shape = image->shape();
-  int rank = shape.Rank();
+  int rank = static_cast<int>(shape.Rank());
   if (rank < kMinImageRank || rank > kDefaultImageRank) {
     err_msg = "WritePng: The image has invalid dimensions. It should have two or three dimensions, but got ";
     err_msg += std::to_string(rank) + " dimensions.";
@@ -2549,7 +2547,7 @@ Status WritePng(const std::string &filename, const std::shared_ptr<Tensor> &imag
   }
   int channels;
   if (rank == kDefaultImageRank) {
-    channels = shape[kMinImageRank];
+    channels = static_cast<int>(shape[kMinImageRank]);
     if (channels != kMinImageChannel && channels != kDefaultImageChannel) {
       err_msg = "WritePng: The image has invalid channels. It should have 1 or 3 channels, but got ";
       err_msg += std::to_string(channels) + " channels.";
@@ -2595,7 +2593,7 @@ Status WritePng(const std::string &filename, const std::shared_ptr<Tensor> &imag
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("WritePng: Invalid file path, " + filename + " failed to get the real path.");
   }
-  struct stat sb;
+  struct stat sb {};
   stat(realpath.value().c_str(), &sb);
   if (S_ISREG(sb.st_mode) == 0) {
     RETURN_STATUS_UNEXPECTED("WritePng: Invalid file path, " + filename + " is not a regular file.");
@@ -2623,7 +2621,7 @@ constexpr dsize_t kTiffMagicLen = 2;
 Status DumpImageAndAppendStatus(const std::shared_ptr<Tensor> &image, const Status &status) {
   Status local_status = status;
   std::string file_name = "./abnormal_image.";
-  std::string file_suffix = "";
+  std::string file_suffix;
   std::string error_info = local_status.GetErrDescription();
   if (image->SizeInBytes() == 0) {
     return local_status;
@@ -2663,7 +2661,7 @@ Status CheckUnsupportedImage(const std::shared_ptr<Tensor> &image) {
   bool unsupport_flag = false;
 
   std::string file_name = "./unsupported_image.";
-  std::string file_suffix = "";
+  std::string file_suffix;
   if (image->SizeInBytes() == 0) {
     RETURN_STATUS_UNEXPECTED("Image file size is 0.");
   }

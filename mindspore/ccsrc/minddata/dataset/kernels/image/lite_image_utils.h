@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_LITE_IMAGE_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_LITE_IMAGE_UTILS_H_
 
@@ -30,6 +31,7 @@
 
 #include "./jpeglib.h"
 #include "./jerror.h"
+
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -172,7 +174,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 /// \param[in] input Input Tensor
 /// \param[out] output Rotated Tensor
 /// \param[in] orientation The orientation of EXIF
-Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const uint64_t orientation);
+Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, uint64_t orientation);
 
 /// \brief Get an affine matrix that applies affine transformation
 /// \param[in] input Input Tensor
@@ -231,7 +233,7 @@ Status ValidateImageRank(const std::string &op_name, int32_t rank);
 /// \brief Swaps the channels in the image, i.e. converts HWC to CHW
 /// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
 /// \param output: Tensor of shape <C,H,W> or <H,W> and same input type.
-Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
+Status HwcToChw(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_LITE_IMAGE_UTILS_H_

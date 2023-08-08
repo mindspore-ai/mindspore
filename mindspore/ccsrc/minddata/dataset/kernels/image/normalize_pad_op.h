@@ -28,8 +28,7 @@ namespace mindspore {
 namespace dataset {
 class NormalizePadOp : public TensorOp {
  public:
-  NormalizePadOp(const std::vector<float> &mean, const std::vector<float> &std, const std::string dtype = "float32",
-                 bool is_hwc = true);
+  NormalizePadOp(std::vector<float> mean, std::vector<float> std, std::string dtype = "float32", bool is_hwc = true);
 
   ~NormalizePadOp() override = default;
 
@@ -47,5 +46,4 @@ class NormalizePadOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_NORMALIZE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_NORMALIZE_PAD_OP_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ namespace dataset {
 class ToTensorOp : public TensorOp {
  public:
   explicit ToTensorOp(const DataType::Type &output_type) : output_type_(output_type) {}
-  explicit ToTensorOp(const std::string &output_type) { output_type_ = DataType(output_type); }
+
+  explicit ToTensorOp(const std::string &output_type) : output_type_(DataType(output_type)) {}
 
   ~ToTensorOp() override = default;
 
@@ -41,5 +42,4 @@ class ToTensorOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_TO_TENSOR_OP_H_

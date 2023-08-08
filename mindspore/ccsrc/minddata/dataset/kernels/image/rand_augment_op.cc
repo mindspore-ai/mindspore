@@ -15,18 +15,20 @@
  */
 #include "minddata/dataset/kernels/image/rand_augment_op.h"
 
+#include <utility>
+
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {
 namespace dataset {
 RandAugmentOp::RandAugmentOp(int32_t num_ops, int32_t magnitude, int32_t num_magnitude_bins,
-                             InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
+                             InterpolationMode interpolation, std::vector<uint8_t> fill_value)
     : num_ops_(num_ops),
       magnitude_(magnitude),
       num_magnitude_bins_(num_magnitude_bins),
       interpolation_(interpolation),
-      fill_value_(fill_value) {
+      fill_value_(std::move(fill_value)) {
   rnd_.seed(GetSeed());
 }
 
@@ -39,7 +41,7 @@ Status RandAugmentOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   RETURN_IF_NOT_OK(ImageSize(input, &image_size));
   std::shared_ptr<Tensor> img = input;
   Space space = GetSpace(num_magnitude_bins_, image_size);
-  int32_t space_size = space.size();
+  auto space_size = static_cast<int32_t>(space.size());
   std::vector<std::string> op_name_list;
   std::for_each(space.begin(), space.end(),
                 [&op_name_list](const std::map<std::string, std::tuple<std::vector<float>, bool>>::value_type &p) {
@@ -70,14 +72,17 @@ Space RandAugmentOp::GetSpace(int32_t num_bins, const std::vector<dsize_t> &imag
   Space space = {{"Identity", {{0}, false}},
                  {"ShearX", {Linspace(0.0, 0.3, num_bins), true}},
                  {"ShearY", {Linspace(0.0, 0.3, num_bins), true}},
-                 {"TranslateX", {Linspace(0.0, 150.0f / 331 * image_size[1], num_bins), true}},
-                 {"TranslateY", {Linspace(0.0, 150.0f / 331 * image_size[0], num_bins), true}},
+                 {"TranslateX", {Linspace(0.0, 150.0F / 331 * static_cast<float>(image_size[1]), num_bins), true}},
+                 {"TranslateY", {Linspace(0.0, 150.0F / 331 * static_cast<float>(image_size[0]), num_bins), true}},
                  {"Rotate", {Linspace(0.0, 30, num_bins), true}},
                  {"Brightness", {Linspace(0.0, 0.9, num_bins), true}},
                  {"Color", {Linspace(0.0, 0.9, num_bins), true}},
                  {"Contrast", {Linspace(0.0, 0.9, num_bins), true}},
                  {"Sharpness", {Linspace(0.0, 0.9, num_bins), true}},
-                 {"Posterize", {Linspace(0.0, num_bins - 1.f, num_bins, -4.0f / (num_bins - 1.f), 8, true), false}},
+                 {"Posterize",
+                  {Linspace(0.0, static_cast<float>(num_bins) - 1.F, num_bins,
+                            -4.0F / (static_cast<float>(num_bins) - 1.f), 8, true),
+                   false}},
                  {"Solarize", {Linspace(255.0, 0.0, num_bins), false}},
                  {"AutoContrast", {{0}, false}},
                  {"Equalize", {{0}, false}}};

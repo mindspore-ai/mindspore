@@ -13,15 +13,18 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_VDECHELPER_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_VDECHELPER_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_VDEC_HELPER_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_VDEC_HELPER_H_
+
 #include <cstdint>
 #include <iostream>
+#include <memory>
 
 #include "acl/acl.h"
 #include "acl/ops/acl_dvpp.h"
-#include "AclLiteError.h"
-#include "AclLiteType.h"
+
+#include "minddata/dataset/kernels/image/dvpp/utils/AclLiteError.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/AclLiteType.h"
 
 class VdecHelper {
  public:
@@ -35,15 +38,15 @@ class VdecHelper {
   void DestroyResource();
   void DestroyChannel();
 
-  AclLiteError Process(std::shared_ptr<FrameData> frameData, void *userData);
+  AclLiteError Process(const std::shared_ptr<FrameData> &frameData, void *userData);
   AclLiteError SetFormat(uint32_t format);
-  AclLiteError VideoParamCheck();
-  bool IsExit() { return isExit_; }
+  AclLiteError VideoParamCheck() const;
+  bool IsExit() const { return isExit_; }
   aclrtContext GetContext() { return context_; }
 
  private:
   AclLiteError CreateVdecChannelDesc();
-  AclLiteError CreateInputStreamDesc(std::shared_ptr<FrameData> frameData);
+  AclLiteError CreateInputStreamDesc(const std::shared_ptr<FrameData> &frameData);
   AclLiteError CreateOutputPicDesc(size_t size);
   void UnsubscribReportThread();
 
@@ -69,17 +72,17 @@ class VdecHelper {
   uint32_t outputPicSize_;
   void *outputPicBuf_;
   aclvdecCallback callback_;
-  aclrtContext context_;
-  aclrtStream stream_;
+  aclrtContext context_{};
+  aclrtStream stream_{};
 
   aclvdecChannelDesc *vdecChannelDesc_;
   acldvppStreamDesc *inputStreamDesc_;
   acldvppPicDesc *outputPicDesc_;
 
-  pthread_t subscribeThreadId_;
+  pthread_t subscribeThreadId_{};
   bool isExit_;
   bool isReleased_;
   bool isChannelExit_;
 };
 
-#endif
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_VDEC_HELPER_H_

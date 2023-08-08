@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_NORMALIZE_JPEG_OP_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_NORMALIZE_JPEG_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_NORMALIZE_JPEG_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_NORMALIZE_JPEG_OP_H_
 
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include "minddata/dataset/core/device_tensor.h"
+
 #include "minddata/dataset/core/device_resource.h"
+#include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
@@ -31,8 +32,7 @@ namespace mindspore {
 namespace dataset {
 class DvppNormalizeOp : public TensorOp {
  public:
-  explicit DvppNormalizeOp(std::vector<float> mean, std::vector<float> std)
-      : mean_(std::move(mean)), std_(std::move(std)) {}
+  DvppNormalizeOp(std::vector<float> mean, std::vector<float> std) : mean_(std::move(mean)), std_(std::move(std)) {}
 
   ~DvppNormalizeOp() = default;
 
@@ -46,8 +46,6 @@ class DvppNormalizeOp : public TensorOp {
   std::vector<float> mean_;
   std::vector<float> std_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_NORMALIZE_JPEG_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_NORMALIZE_JPEG_OP_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 #include "minddata/dataset/kernels/image/random_crop_with_bbox_op.h"
-
-#include <utility>
 
 #include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@
 #include <random>
 #include <string>
 #include <vector>
-#include "minddata/dataset/core/tensor.h"
+
 #include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -49,5 +50,4 @@ class RandomCropDecodeResizeOp : public RandomCropAndResizeOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_CROP_DECODE_RESIZE_OP_H_

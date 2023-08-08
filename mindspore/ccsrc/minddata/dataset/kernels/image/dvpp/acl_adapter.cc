@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <libgen.h>
 #endif
+
 #include <algorithm>
+
 #include "utils/ms_context.h"
 
 namespace mindspore {

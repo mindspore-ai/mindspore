@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class RandomAdjustSharpnessOp : public SharpnessOp {
  public:
   // Default values, also used by python_bindings.cc
@@ -56,5 +55,4 @@ class RandomAdjustSharpnessOp : public SharpnessOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_ADJUST_SHARPNESS_OP_H_

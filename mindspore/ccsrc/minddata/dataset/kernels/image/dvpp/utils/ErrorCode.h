@@ -1,10 +1,11 @@
-/*
- * Copyright (c) 2020.Huawei Technologies Co., Ltd. All rights reserved.
+/**
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,8 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef ERROR_CODE_H
-#define ERROR_CODE_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ERROR_CODE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ERROR_CODE_H_
+
 #include <string>
 
 using APP_ERROR = int;
@@ -140,6 +142,7 @@ enum {
   APP_ERR_QUEUE_END,  // Not an error code, define the range of blocking queue
   // error code
 };
+
 const std::string APP_ERR_ACL_LOG_STRING[] = {
   "Success",                            // APP_ERR_OK
   "ACL: invalid parameter",             // APP_ERR_ACL_INVALID_PARAM
@@ -247,11 +250,11 @@ const std::string APP_ERR_FACE_LOG_STRING[] = {
   "no face detected",          // 5
 };
 
-std::string GetAppErrCodeInfo(const APP_ERROR err);
-void AssertErrorCode(const int code, const std::string file, const std::string function, const int line);
-void CheckErrorCode(const int code, const std::string file, const std::string function, const int line);
+std::string GetAppErrCodeInfo(APP_ERROR err);
+void AssertErrorCode(int code, const std::string &file, const std::string &function, int line);
+void CheckErrorCode(int code, const std::string &file, const std::string &function, int line);
 
 #define RtAssert(code) AssertErrorCode(code, DATASET_SRC_FILE_NAME, __FUNCTION__, __LINE__);
 #define RtCheckError(code) CheckErrorCode(code, DATASET_SRC_FILE_NAME, __FUNCTION__, __LINE__);
 
-#endif  // ERROR_CODE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ERROR_CODE_H_

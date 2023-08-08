@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ Status RandomEqualizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
   // Check input
   RETURN_IF_NOT_OK(ValidateImageRank("RandomEqualize", input->Rank()));
   if (input->Rank() == kDefaultImageRank) {
-    int num_channels = input->shape()[kChannelIndexHWC];
+    int num_channels = static_cast<int>(input->shape()[kChannelIndexHWC]);
     if (num_channels != kMinImageChannel && num_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("RandomEqualize: input image is not in channel of 1 or 3, but got: " +
                                std::to_string(input->shape()[kChannelIndexHWC]));

@@ -27,12 +27,10 @@ Status ResizedCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
 
   std::vector<dsize_t> input_size;
   RETURN_IF_NOT_OK(ImageSize(input, &input_size));
-  int32_t input_h = input_size[kHeightIndex];
-  int32_t input_w = input_size[kWidthIndex];
+  auto input_h = static_cast<int32_t>(input_size[kHeightIndex]);
+  auto input_w = static_cast<int32_t>(input_size[kWidthIndex]);
   int32_t size1 = size_[kHeightIndex];
   int32_t size2 = size_[kWidthIndex];
-  int32_t output_h = 0;
-  int32_t output_w = 0;
 
   // crop check
   CHECK_FAIL_RETURN_UNEXPECTED(top_ + height_ <= input_h,
@@ -42,13 +40,17 @@ Status ResizedCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
                                "ResizedCrop: the sum of left and width: " + std::to_string(left_ + width_) +
                                  " exceeds image width: " + std::to_string(input_w));
 
+  int32_t output_h;
+  int32_t output_w;
   if (size2 == 0) {
     if (input_h < input_w) {
       output_h = size1;
-      output_w = static_cast<int>(std::lround((static_cast<float>(width_) / height_) * output_h));
+      output_w = static_cast<int>(
+        roundf(static_cast<float>(width_) / static_cast<float>(height_) * static_cast<float>(output_h)));
     } else {
       output_w = size1;
-      output_h = static_cast<int>(std::lround((static_cast<float>(height_) / width_) * output_w));
+      output_h = static_cast<int>(
+        roundf(static_cast<float>(height_) / static_cast<float>(width_) * static_cast<float>(output_w)));
     }
   } else {
     output_h = size1;
@@ -75,19 +77,17 @@ Status ResizedCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
   }
 
   TensorShape out = TensorShape{output_h, output_w};
-  TensorShape input_shape = inputs.front();
+  const TensorShape &input_shape = inputs.front();
   if (input_shape.Rank() == kMinImageRank) {
     (void)outputs.emplace_back(out);
   }
   if (input_shape.Rank() == kDefaultImageRank) {
     (void)outputs.emplace_back(out.AppendDim(input_shape[input_shape.Size() - 1]));
   }
-  if (!outputs.empty()) {
-    return Status::OK();
-  }
-  return Status(StatusCode::kMDUnexpectedError,
-                "ResizedCrop: input tensor is not in shape of <H,W> or <H,W,C>, but got rank: " +
-                  std::to_string(input_shape.Rank()));
+  CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(),
+                               "ResizedCrop: input tensor is not in shape of <H,W> or <H,W,C>, but got rank: " +
+                                 std::to_string(input_shape.Rank()));
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

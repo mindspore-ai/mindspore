@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ACL_ADAPTER_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ACL_ADAPTER_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ACL_ADAPTER_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ACL_ADAPTER_H_
 
 #include <map>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
+
 #include "minddata/dataset/kernels/image/dvpp/utils/acl_plugin.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/AclLiteError.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
@@ -129,4 +130,4 @@ class AclAdapter {
   aclrtMemcpyFunObj aclrt_memcpy_fun_obj_;
 };
 }  // namespace mindspore::dataset
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ACL_ADAPTER_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ACL_ADAPTER_H_

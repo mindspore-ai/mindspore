@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 using Subpolicy = std::vector<std::pair<std::shared_ptr<TensorOp>, double>>;
 
 class RandomSelectSubpolicyOp : public TensorOp {
@@ -75,5 +74,4 @@ class RandomSelectSubpolicyOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_SELECT_SUBPOLICY_OP_

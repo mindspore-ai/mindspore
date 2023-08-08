@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 #include "minddata/dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
-
-#include <utility>
 
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/bounding_box.h"
@@ -35,8 +33,8 @@ Status RandomHorizontalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow
 
   if (distribution_(rnd_)) {
     // To test bounding boxes algorithm, create random bboxes from image dims
-    size_t num_of_boxes = input[1]->shape()[0];      // set to give number of bboxes
-    float img_center = (input[0]->shape()[1] / 2.);  // get the center of the image
+    size_t num_of_boxes = input[1]->shape()[0];                         // set to give number of bboxes
+    float img_center = static_cast<float>(input[0]->shape()[1]) / 2.F;  // get the center of the image
     for (int i = 0; i < num_of_boxes; i++) {
       std::shared_ptr<BoundingBox> bbox;
       RETURN_IF_NOT_OK(BoundingBox::ReadFromTensor(input[1], i, &bbox));
@@ -50,9 +48,9 @@ Status RandomHorizontalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow
     }
     (*output).resize(2);
     // move input to output pointer of bounding boxes
-    (*output)[1] = std::move(input[1]);
+    (*output)[1] = input[1];
     // perform HorizontalFlip on the image
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input[0]));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input[0]);
     return HorizontalFlip(std::static_pointer_cast<Tensor>(input_cv), &(*output)[0]);
   }
   *output = input;

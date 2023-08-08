@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/slice_patches_op.h"
+
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 
@@ -34,7 +35,7 @@ Status SlicePatchesOp::Compute(const TensorRow &input, TensorRow *output) {
     "size of input should be 1, which means 'input_columns' should be 1 when call this operator, but got:" +
       std::to_string(input.size()));
 
-  auto in_tensor = input[0];
+  const auto &in_tensor = input[0];
   auto in_type = in_tensor->type();
   auto in_shape = in_tensor->shape();
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/util/status.h"
+#include "minddata/dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
+
 #include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
-#include "minddata/dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -40,7 +41,8 @@ Status RandomVerticalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow *
       RETURN_IF_NOT_OK(BoundingBox::ReadFromTensor(input[1], i, &bbox));
 
       // subtract (curCorner + height) from (max) for new Corner position
-      BoundingBox::bbox_float newBoxCorner_y = (imHeight - 1.0) - ((bbox->y() + bbox->height()) - 1.0);
+      BoundingBox::bbox_float newBoxCorner_y =
+        (static_cast<float>(imHeight) - 1.0F) - ((bbox->y() + bbox->height()) - 1.0F);
       bbox->SetY(newBoxCorner_y);
       RETURN_IF_NOT_OK(bbox->WriteToTensor(input[1], i));
     }

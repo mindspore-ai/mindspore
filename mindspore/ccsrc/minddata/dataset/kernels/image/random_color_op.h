@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_COLOR_OP_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_COLOR_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_COLOR_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_COLOR_OP_H_
 
 #include <memory>
 #include <random>
-#include <vector>
 #include <string>
+#include <vector>
+
 #include <opencv2/imgproc/imgproc.hpp>
-#include "minddata/dataset/core/tensor.h"
+
 #include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
 /// \class RandomColorOp random_color_op.h
 /// \brief Blends an image with its grayscale version with random weights
 ///        t and 1 - t generated from a given range.
@@ -40,16 +41,19 @@ class RandomColorOp : public TensorOp {
  public:
   RandomColorOp() = default;
 
-  ~RandomColorOp() = default;
+  ~RandomColorOp() override = default;
+
   /// \brief Constructor
   /// \param[in] t_lb lower bound for the random weights
   /// \param[in] t_ub upper bound for the random weights
   RandomColorOp(float t_lb, float t_ub);
+
   /// \brief the main function performing computations
   /// \param[in] in 2- or 3- dimensional tensor representing an image
   /// \param[out] out 2- or 3- dimensional tensor representing an image
   /// with the same dimensions as in
   Status Compute(const std::shared_ptr<Tensor> &in, std::shared_ptr<Tensor> *out) override;
+
   /// \brief returns the name of the op
   std::string Name() const override { return kRandomColorOp; }
 
@@ -61,4 +65,4 @@ class RandomColorOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_COLOR_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_RANDOM_COLOR_OP_H_

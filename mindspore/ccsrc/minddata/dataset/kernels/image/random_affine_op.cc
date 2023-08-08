@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <cmath>
 #include <limits>
+#include <utility>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -29,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const std::vector<float_t> RandomAffineOp::kDegreesRange = {0.0, 0.0};
 const std::vector<float_t> RandomAffineOp::kTranslationPercentages = {0.0, 0.0, 0.0, 0.0};
 const std::vector<float_t> RandomAffineOp::kScaleRange = {1.0, 1.0};
@@ -40,12 +40,12 @@ const std::vector<uint8_t> RandomAffineOp::kFillValue = {0, 0, 0};
 RandomAffineOp::RandomAffineOp(std::vector<float_t> degrees, std::vector<float_t> translate_range,
                                std::vector<float_t> scale_range, std::vector<float_t> shear_ranges,
                                InterpolationMode interpolation, std::vector<uint8_t> fill_value)
-    : degrees_range_(degrees),
-      translate_range_(translate_range),
-      scale_range_(scale_range),
-      shear_ranges_(shear_ranges),
+    : degrees_range_(std::move(degrees)),
+      translate_range_(std::move(translate_range)),
+      scale_range_(std::move(scale_range)),
+      shear_ranges_(std::move(shear_ranges)),
       interpolation_(interpolation),
-      fill_value_(fill_value) {
+      fill_value_(std::move(fill_value)) {
   rnd_.seed(GetSeed());
   is_deterministic_ = false;
 }
@@ -68,10 +68,10 @@ Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
                                "RandomAffineOp: multiplication out of bounds.");
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() / std::abs(translate_range_[3])) > height,
                                "RandomAffineOp: multiplication out of bounds.");
-  float_t min_dx = translate_range_[0] * width;
-  float_t max_dx = translate_range_[1] * width;
-  float_t min_dy = translate_range_[2] * height;
-  float_t max_dy = translate_range_[3] * height;
+  float_t min_dx = translate_range_[0] * static_cast<float_t>(width);
+  float_t max_dx = translate_range_[1] * static_cast<float_t>(width);
+  float_t min_dy = translate_range_[2] * static_cast<float_t>(height);
+  float_t max_dy = translate_range_[3] * static_cast<float_t>(height);
   float_t degrees = 0.0;
   RETURN_IF_NOT_OK(GenerateRealNumber(degrees_range_[0], degrees_range_[1], &rnd_, &degrees));
   float_t translation_x = 0.0;
@@ -85,11 +85,9 @@ Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   float_t shear_y = 0.0;
   RETURN_IF_NOT_OK(GenerateRealNumber(shear_ranges_[2], shear_ranges_[3], &rnd_, &shear_y));
   // assign to base class variables
-  degrees = fmod(degrees, 360.0);
-  std::vector<float_t> translation(2);
-  translation = {translation_x, translation_y};
-  std::vector<float_t> shear(2);
-  shear = {shear_x, shear_y};
+  degrees = fmod(degrees, 360.0F);
+  std::vector<float_t> translation = {translation_x, translation_y};
+  std::vector<float_t> shear = {shear_x, shear_y};
   return Affine(input, output, degrees, translation, scale, shear, interpolation_, fill_value_);
 }
 }  // namespace dataset

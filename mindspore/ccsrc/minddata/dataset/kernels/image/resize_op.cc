@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,19 +35,21 @@ Status ResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   RETURN_IF_NOT_OK(ValidateImage(input, "Resize", {1, 2, 3, 4, 5, 6, 10, 11, 12}));
   std::vector<dsize_t> size;
   RETURN_IF_NOT_OK(ImageSize(input, &size));
-  int32_t input_h = size[kHeightIndex];
-  int32_t input_w = size[kWidthIndex];
+  auto input_h = static_cast<int32_t>(size[kHeightIndex]);
+  auto input_w = static_cast<int32_t>(size[kWidthIndex]);
   int32_t output_h;
   int32_t output_w;
   if (size2_ == 0) {
     if (input_h < input_w) {
       CHECK_FAIL_RETURN_UNEXPECTED(input_h != 0, "Resize: the input height cannot be 0.");
       output_h = size1_;
-      output_w = static_cast<int>(std::floor(static_cast<float>(input_w) / input_h * output_h));
+      output_w = static_cast<int>(
+        std::floor(static_cast<float>(input_w) / static_cast<float>(input_h) * static_cast<float>(output_h)));
     } else {
       CHECK_FAIL_RETURN_UNEXPECTED(input_w != 0, "Resize: the input width cannot be 0.");
       output_w = size1_;
-      output_h = static_cast<int>(std::floor(static_cast<float>(input_h) / input_w * output_w));
+      output_h = static_cast<int>(
+        std::floor(static_cast<float>(input_h) / static_cast<float>(input_w) * static_cast<float>(output_w)));
     }
   } else {
     output_h = size1_;
@@ -70,7 +72,7 @@ Status ResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     // split [N, H, W, C] to N [H, W, C], and Resize N [H, W, C]
     std::vector<std::shared_ptr<Tensor>> input_vector_hwc, output_vector_hwc;
     RETURN_IF_NOT_OK(BatchTensorToTensorVector(input, &input_vector_hwc));
-    for (auto input_hwc : input_vector_hwc) {
+    for (const auto &input_hwc : input_vector_hwc) {
       std::shared_ptr<Tensor> output_img;
       RETURN_IF_NOT_OK(Resize(input_hwc, &output_img, output_h, output_w, 0, 0, interpolation_));
       output_vector_hwc.push_back(output_img);
@@ -93,6 +95,7 @@ Status ResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
     outputH = size1_;
     outputW = size2_;
   }
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "Resize: inputs cannot be empty.");
   if (inputs[0].Rank() < kMinImageRank) {
     std::string err_msg =
       "Resize: input tensor should have at least 2 dimensions, but got: " + std::to_string(inputs[0].Rank());
@@ -108,11 +111,11 @@ Status ResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
 }
 
 TensorShape ResizeOp::ComputeOutputShape(const TensorShape &input, int32_t output_h, int32_t output_w) {
-  const int kHeightIndex = -3, kWidthIndex = -2;
+  const int kHeightIndexFromBack = -3, kWidthIndexFromBack = -2;
   auto out_shape_vec = input.AsVector();
   auto size = out_shape_vec.size();
-  out_shape_vec[size + kHeightIndex] = output_h;
-  out_shape_vec[size + kWidthIndex] = output_w;
+  out_shape_vec[size + kHeightIndexFromBack] = output_h;
+  out_shape_vec[size + kWidthIndexFromBack] = output_w;
   TensorShape out = TensorShape(out_shape_vec);
   return out;
 }

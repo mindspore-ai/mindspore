@@ -51,7 +51,7 @@ class TrivialAugmentWideOp : public TensorOp {
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
  private:
-  Space GetSpace(int32_t num_bins) const;
+  static Space GetSpace(int32_t num_bins);
 
   int32_t RandInt(int32_t low, int32_t high);
 

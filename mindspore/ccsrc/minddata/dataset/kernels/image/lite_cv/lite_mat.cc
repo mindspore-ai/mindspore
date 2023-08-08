@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 #include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
 
-#include <limits>
 #include <algorithm>
 #include <cmath>
+#include <limits>
+
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
 
 namespace mindspore {
 namespace dataset {
-
 LiteMat::LiteMat() {
   data_ptr_ = nullptr;
   elem_size_ = 0;
@@ -146,7 +146,7 @@ LiteMat::LiteMat(const LiteMat &m) {
   }
 }
 
-void LiteMat::setSteps(int c0, int c1, int c2) {
+void LiteMat::setSteps(size_t c0, size_t c1, size_t c2) {
   steps_[0] = c0;
   steps_[1] = c1;
   steps_[2] = c2;
@@ -312,7 +312,7 @@ void *LiteMat::AlignMalloc(unsigned int size) {
   void *p_raw = reinterpret_cast<void *>(malloc(size + length));
   if (p_raw) {
     release_flag_ = true;
-    void **p_algin = reinterpret_cast<void **>(((size_t)(p_raw) + length) & ~(kAlign - 1));
+    void **p_algin = reinterpret_cast<void **>((reinterpret_cast<size_t>(p_raw) + length) & ~(kAlign - 1));
     p_algin[-1] = p_raw;
     return p_algin;
   }
@@ -329,7 +329,7 @@ void LiteMat::AlignFree(void *ptr) {
 
 inline void LiteMat::InitElemSize(LDataType data_type) { elem_size_ = data_type.SizeInBytes(); }
 
-bool LiteMat::CheckLiteMat() {
+bool LiteMat::CheckLiteMat() const {
   if (width_ <= 0 || height_ <= 0 || channel_ <= 0 || elem_size_ <= 0) {
     return false;
   }
@@ -442,9 +442,11 @@ bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
 
   if (dst->IsEmpty()) {
     dst->Init(src_a.width_, src_a.height_, src_a.channel_, src_a.data_type_);
-  } else if (src_a.width_ != dst->width_ || src_a.height_ != dst->height_ || src_a.channel_ != dst->channel_) {
+  }
+  if (src_a.width_ != dst->width_ || src_a.height_ != dst->height_ || src_a.channel_ != dst->channel_) {
     return false;
-  } else if (src_a.data_type_ != dst->data_type_) {
+  }
+  if (src_a.data_type_ != dst->data_type_) {
     return false;
   }
 
@@ -563,7 +565,7 @@ inline void DivideImpl(const uint8_t *src0, const uint8_t *src1, uint8_t *dst, i
   }
 #endif
   for (; x < total_size; x++) {
-    int32_t val = src1[x] ? std::round(src0[x] / src1[x]) : 0;
+    int32_t val = src1[x] ? static_cast<int32_t>(std::round(src0[x] / src1[x])) : 0;
     dst[x] = std::max<int32_t>(std::numeric_limits<uint8_t>::min(),
                                std::min<int32_t>(std::numeric_limits<uint8_t>::max(), val));
   }
@@ -572,7 +574,7 @@ inline void DivideImpl(const uint8_t *src0, const uint8_t *src1, uint8_t *dst, i
 template <>
 inline void DivideImpl(const uint16_t *src0, const uint16_t *src1, uint16_t *dst, int64_t total_size) {
   for (size_t i = 0; i < total_size; i++) {
-    int32_t val = src1[i] ? std::round(src0[i] / src1[i]) : 0;
+    int32_t val = src1[i] ? static_cast<int32_t>(std::round(src0[i] / src1[i])) : 0;
     dst[i] = std::max<int32_t>(std::numeric_limits<uint16_t>::min(),
                                std::min<int32_t>(std::numeric_limits<uint16_t>::max(), val));
   }
@@ -581,7 +583,7 @@ inline void DivideImpl(const uint16_t *src0, const uint16_t *src1, uint16_t *dst
 template <>
 inline void DivideImpl(const uint32_t *src0, const uint32_t *src1, uint32_t *dst, int64_t total_size) {
   for (size_t i = 0; i < total_size; i++) {
-    int64_t val = src1[i] ? std::round(src0[i] / src1[i]) : 0;
+    int64_t val = src1[i] ? static_cast<int64_t>(std::round(src0[i] / src1[i])) : 0;
     dst[i] = std::max<int64_t>(std::numeric_limits<uint32_t>::min(),
                                std::min<int64_t>(std::numeric_limits<uint32_t>::max(), val));
   }

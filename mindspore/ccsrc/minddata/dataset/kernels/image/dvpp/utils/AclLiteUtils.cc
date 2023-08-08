@@ -1,5 +1,5 @@
 /**
-* Copyright 2022 Huawei Technologies Co., Ltd
+* Copyright 2022-2023 Huawei Technologies Co., Ltd
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "AclLiteUtils.h"
-#include <map>
-#include <iostream>
-#include <fstream>
-#include <unistd.h>
+#include "minddata/dataset/kernels/image/dvpp/utils/AclLiteUtils.h"
+
 #include <dirent.h>
+#include <sys/stat.h>
+
+#include <fstream>
+#include <iostream>
+#include <map>
 #include <regex>
 #include <vector>
-#include <sys/stat.h>
-#include <sys/types.h>
+
 #include "acl/acl.h"
 #include "acl/ops/acl_dvpp.h"
 
@@ -54,14 +55,7 @@ const std::string kRegexVideoFile = "^.+\\.(mp4|h264|h265)$";
 const std::string kRegexRtsp = "^rtsp://.*";
 }  // namespace
 
-bool IsDigitStr(const std::string &str) {
-  for (uint32_t i = 0; i < str.size(); i++) {
-    if (!isdigit(str[i])) {
-      return false;
-    }
-  }
-  return true;
-}
+bool IsDigitStr(const std::string &str) { return std::all_of(str.begin(), str.end(), isdigit); }
 
 bool IsPathExist(const std::string &path) {
   std::ifstream file(path);
@@ -89,15 +83,15 @@ bool IsIpAddrWithPort(const std::string &addrStr) {
 }
 
 void ParseIpAddr(std::string &ip, std::string &port, const std::string &addr) {
-  std::string::size_type pos = addr.find(":");
+  std::string::size_type pos = addr.find(':');
 
-  ip.assign(addr.substr(0, pos));
-  port.assign(addr.substr(pos + 1));
+  (void)ip.assign(addr.substr(0, pos));
+  (void)port.assign(addr.substr(pos + 1));
 }
 
 bool IsDirectory(const std::string &path) {
   // get path stat
-  struct stat buf;
+  struct stat buf {};
   if (stat(path.c_str(), &buf) != kStatSuccess) {
     return false;
   }
@@ -109,16 +103,15 @@ bool IsDirectory(const std::string &path) {
 void SplitPath(const std::string &path, std::vector<std::string> &pathVec) {
   char *imageFile = strtok(const_cast<char *>(path.c_str()), kImagePathSeparator.c_str());
   while (imageFile) {
-    pathVec.emplace_back(imageFile);
+    (void)pathVec.emplace_back(imageFile);
     imageFile = strtok(nullptr, kImagePathSeparator.c_str());
   }
 }
 
 void GetPathFiles(const std::string &path, std::vector<std::string> &fileVec) {
-  struct dirent *direntPtr = nullptr;
-  DIR *dir = nullptr;
   if (IsDirectory(path)) {
-    dir = opendir(path.c_str());
+    DIR *dir = opendir(path.c_str());
+    struct dirent *direntPtr;
     while ((direntPtr = readdir(dir)) != nullptr) {
       // skip . and ..
       if (direntPtr->d_name[0] == '.') {
@@ -132,11 +125,11 @@ void GetPathFiles(const std::string &path, std::vector<std::string> &fileVec) {
         GetPathFiles(fullPath, fileVec);
       } else {
         // put file
-        fileVec.emplace_back(fullPath);
+        (void)fileVec.emplace_back(fullPath);
       }
     }
   } else {
-    fileVec.emplace_back(path);
+    (void)fileVec.emplace_back(path);
   }
 }
 
@@ -145,7 +138,7 @@ void GetAllFiles(const std::string &pathList, std::vector<std::string> &fileVec)
   std::vector<std::string> pathVec;
   SplitPath(pathList, pathVec);
 
-  for (std::string everyPath : pathVec) {
+  for (const std::string &everyPath : pathVec) {
     // check path exist or not
     if (!IsPathExist(pathList)) {
       ACLLITE_LOG_ERROR("Failed to deal path=%s. Reason: not exist or can not access.", everyPath.c_str());
@@ -192,18 +185,28 @@ void FreeMemory(void *mem, MemoryType memType) {
     ACLLITE_LOG_ERROR("Invalid mem");
     return;
   }
+  aclError ret = ACL_SUCCESS;
   switch (memType) {
     case MemoryType::MEMORY_NORMAL:
-      delete[]((uint8_t *)mem);
+      delete[](reinterpret_cast<uint8_t *>(mem));
       break;
     case MemoryType::MEMORY_HOST:
-      aclrtFreeHost(mem);
+      ret = aclrtFreeHost(mem);
+      if (ret != ACL_SUCCESS) {
+        ACLLITE_LOG_ERROR("aclrtFreeHost failed, errorno: %d", ret);
+      }
       break;
     case MemoryType::MEMORY_DEVICE:
-      aclrtFree(mem);
+      ret = aclrtFree(mem);
+      if (ret != ACL_SUCCESS) {
+        ACLLITE_LOG_ERROR("aclrtFree failed, errorno: %d", ret);
+      }
       break;
     case MemoryType::MEMORY_DVPP:
-      acldvppFree(mem);
+      ret = acldvppFree(mem);
+      if (ret != ACL_SUCCESS) {
+        ACLLITE_LOG_ERROR("acldvppFree failed, errorno: %d", ret);
+      }
       break;
     default:
       ACLLITE_LOG_ERROR("Invalid memory type %d", memType);
@@ -346,7 +349,7 @@ AclLiteError CopyImageToDevice(ImageData &destImage, ImageData &srcImage, aclrtR
 }
 
 AclLiteError ReadBinFile(const std::string &fileName, void *&data, uint32_t &size) {
-  struct stat sBuf;
+  struct stat sBuf {};
   int fileStatus = stat(fileName.data(), &sBuf);
   if (fileStatus == -1) {
     ACLLITE_LOG_ERROR("failed to get file");
@@ -357,12 +360,12 @@ AclLiteError ReadBinFile(const std::string &fileName, void *&data, uint32_t &siz
     return ACLLITE_ERROR_INVALID_FILE;
   }
   std::ifstream binFile(fileName, std::ifstream::binary);
-  if (binFile.is_open() == false) {
+  if (!binFile.is_open()) {
     ACLLITE_LOG_ERROR("open file %s failed", fileName.c_str());
     return ACLLITE_ERROR_OPEN_FILE;
   }
 
-  binFile.seekg(0, binFile.end);
+  (void)binFile.seekg(0, std::ifstream::end);
   uint32_t binFileBufferLen = binFile.tellg();
   if (binFileBufferLen == 0) {
     ACLLITE_LOG_ERROR("binfile is empty, filename is %s", fileName.c_str());
@@ -370,15 +373,15 @@ AclLiteError ReadBinFile(const std::string &fileName, void *&data, uint32_t &siz
     return ACLLITE_ERROR_INVALID_FILE;
   }
 
-  binFile.seekg(0, binFile.beg);
+  (void)binFile.seekg(0, std::ifstream::beg);
 
-  uint8_t *binFileBufferData = new (std::nothrow) uint8_t[binFileBufferLen];
+  auto *binFileBufferData = new (std::nothrow) uint8_t[binFileBufferLen];
   if (binFileBufferData == nullptr) {
     ACLLITE_LOG_ERROR("malloc binFileBufferData failed");
     binFile.close();
     return ACLLITE_ERROR_MALLOC;
   }
-  binFile.read((char *)binFileBufferData, binFileBufferLen);
+  (void)binFile.read(reinterpret_cast<char *>(binFileBufferData), binFileBufferLen);
   binFile.close();
 
   data = binFileBufferData;
@@ -391,15 +394,25 @@ AclLiteError ReadJpeg(ImageData &image, const std::string &fileName) {
   uint32_t size = 0;
   void *buf = nullptr;
 
-  ReadBinFile(fileName, buf, size);
+  auto lite_ret = ReadBinFile(fileName, buf, size);
+  if (lite_ret != ACLLITE_OK) {
+    delete[](reinterpret_cast<uint8_t *>(buf));
+    return lite_ret;
+  }
 
   int32_t ch = 0;
-  acldvppJpegGetImageInfo(buf, size, &(image.width), &(image.height), &ch);
-  if (image.width == 0 || image.height == 0) {
-    ACLLITE_LOG_ERROR("unsupported format, only Baseline JPEG");
+  auto ret = acldvppJpegGetImageInfo(buf, size, &(image.width), &(image.height), &ch);
+  if (ret != ACL_SUCCESS) {
+    ACLLITE_LOG_ERROR("acldvppJpegGetImageInfo failed, errorno: %d", ret);
+    delete[](reinterpret_cast<uint8_t *>(buf));
     return ACLLITE_ERROR;
   }
-  image.data.reset((uint8_t *)buf, [](uint8_t *p) { delete[](p); });
+  if (image.width == 0 || image.height == 0) {
+    ACLLITE_LOG_ERROR("unsupported format, only Baseline JPEG");
+    delete[](reinterpret_cast<uint8_t *>(buf));
+    return ACLLITE_ERROR;
+  }
+  image.data.reset(reinterpret_cast<uint8_t *>(buf), [](const uint8_t *p) { delete[](p); });
   image.size = size;
 
   return ACLLITE_OK;
@@ -411,10 +424,10 @@ void SaveBinFile(const std::string &filename, const void *data, uint32_t size) {
     ACLLITE_LOG_ERROR("Save file %s failed for open error", filename.c_str());
     return;
   }
-  fwrite(data, 1, size, outFileFp);
+  (void)fwrite(data, 1, size, outFileFp);
 
-  fflush(outFileFp);
-  fclose(outFileFp);
+  (void)fflush(outFileFp);
+  (void)fclose(outFileFp);
 }
 
 bool IsSpace(char c) { return (c == BLANK_SPACE_CHAR || c == TABLE_CHAR); }
@@ -423,7 +436,7 @@ void Trim(std::string &str) {
   if (str.empty()) {
     return;
   }
-  uint32_t i, start_pos, end_pos;
+  int32_t i, start_pos, end_pos;
   for (i = 0; i < str.size(); ++i) {
     if (!IsSpace(str[i])) {
       break;
@@ -452,16 +465,17 @@ bool AnalyseLine(const std::string &line, std::string &key, std::string &value) 
   }
 
   int start_pos = 0;
-  int end_pos = line.size() - 1;
-  int pos = 0;
-  if ((pos = line.find(COMMENT_CHAR)) != -1) {
+  auto end_pos = line.size() - 1;
+  int pos = line.find(COMMENT_CHAR);
+  if (pos != std::string::npos) {
     if (pos == 0) {  // the first charactor is #
       return false;
     }
     end_pos = pos - 1;
   }
   std::string new_line = line.substr(start_pos, start_pos + 1 - end_pos);  // delete comment
-  if ((pos = new_line.find(EQUALS_CHAR)) == -1) {                          // has no =
+  pos = new_line.find(EQUALS_CHAR);
+  if (pos == std::string::npos) {  // has no =
     return false;
   }
 
@@ -494,7 +508,7 @@ bool ReadConfig(std::map<std::string, std::string> &config, const char *configFi
 }
 
 void PrintConfig(const std::map<std::string, std::string> &config) {
-  std::map<std::string, std::string>::const_iterator mIter = config.begin();
+  auto mIter = config.begin();
   for (; mIter != config.end(); ++mIter) {
     std::cout << mIter->first << "=" << mIter->second << std::endl;
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 
 #include "minddata/dataset/kernels/image/sharpness_op.h"
+
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
 const float SharpnessOp::kDefAlpha = 1.0;
 
 Status SharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
@@ -52,8 +52,8 @@ Status SharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
     cv::Mat result = cv::Mat();
     cv::filter2D(input_img, result, -1, filter);
 
-    int height = input_cv->shape()[0];
-    int width = input_cv->shape()[1];
+    auto height = static_cast<int>(input_cv->shape()[0]);
+    auto width = static_cast<int>(input_cv->shape()[1]);
 
     /// restoring the edges
     input_img.row(0).copyTo(result.row(0));

@@ -15,13 +15,18 @@
  */
 #include "minddata/dataset/kernels/image/pad_to_size_op.h"
 
+#include <utility>
+
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
 namespace dataset {
-PadToSizeOp::PadToSizeOp(const std::vector<int32_t> &size, const std::vector<int32_t> &offset,
-                         const std::vector<uint8_t> &fill_value, BorderType padding_mode)
-    : size_(size), offset_(offset), fill_value_(fill_value), boarder_type_(padding_mode) {}
+PadToSizeOp::PadToSizeOp(std::vector<int32_t> size, std::vector<int32_t> offset, std::vector<uint8_t> fill_value,
+                         BorderType padding_mode)
+    : size_(std::move(size)),
+      offset_(std::move(offset)),
+      fill_value_(std::move(fill_value)),
+      boarder_type_(padding_mode) {}
 
 template <typename T>
 std::string SizeToString(const std::vector<T> &size) {
@@ -47,8 +52,8 @@ Status PadToSizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
       SizeToString(size_) + " and original size " + SizeToString(image_size) + ".");
   int32_t pad_top, pad_bottom, pad_left, pad_right;
   if (offset_.empty()) {
-    pad_top = static_cast<double>((size_[0] - image_size[0])) * kHalf;
-    pad_left = static_cast<double>((size_[1] - image_size[1])) * kHalf;
+    pad_top = static_cast<int32_t>(static_cast<float>(size_[0] - image_size[0]) * kHalf);
+    pad_left = static_cast<int32_t>(static_cast<float>(size_[1] - image_size[1]) * kHalf);
   } else if (offset_.size() == 1) {
     pad_top = offset_[0];
     pad_left = offset_[0];
@@ -56,8 +61,8 @@ Status PadToSizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
     pad_top = offset_[0];
     pad_left = offset_[1];
   }
-  pad_bottom = size_[0] - image_size[0] - pad_top;
-  pad_right = size_[1] - image_size[1] - pad_left;
+  pad_bottom = size_[0] - static_cast<int32_t>(image_size[0]) - pad_top;
+  pad_right = size_[1] - static_cast<int32_t>(image_size[1]) - pad_left;
   CHECK_FAIL_RETURN_SYNTAX_ERROR(pad_bottom >= 0 && pad_right >= 0,
                                  "PadToSize: the sum of offset and original image size should be no more than the "
                                  "target size to pad, but got offset " +

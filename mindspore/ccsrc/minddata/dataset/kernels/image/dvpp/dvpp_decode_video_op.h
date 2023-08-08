@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_DECODE_VIDEO_OP_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_DECODE_VIDEO_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_DECODE_VIDEO_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_DECODE_VIDEO_OP_H_
 
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "mindspore/core/utils/log_adapter.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_resource.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
+#include "mindspore/core/utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
@@ -38,7 +38,7 @@ class DvppDecodeVideoOp : public TensorOp {
   static const char kDefOutput[];
 
   DvppDecodeVideoOp(uint32_t width, uint32_t height, VdecStreamFormat type,
-                    VdecOutputFormat out_format = kDefVdecOutputFormat, const std::string output = kDefOutput)
+                    VdecOutputFormat out_format = kDefVdecOutputFormat, const std::string &output = kDefOutput)
       : width_(width), height_(height), format_(out_format), en_type_(type), output_(output) {}
 
   /// \brief Destructor
@@ -52,7 +52,6 @@ class DvppDecodeVideoOp : public TensorOp {
 
  private:
   uint32_t width_;
-
   uint32_t height_;
 
   /* 1：YUV420 semi-planner（nv12）
@@ -66,10 +65,8 @@ class DvppDecodeVideoOp : public TensorOp {
    * 3：H264 high level
    */
   VdecStreamFormat en_type_;
-
   std::string output_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_DECODE_VIDEO_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_DECODE_VIDEO_OP_H_

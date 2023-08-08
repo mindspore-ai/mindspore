@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 #include "minddata/dataset/kernels/image/pad_op.h"
 
-#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -46,15 +46,14 @@ Status PadOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<Te
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
   TensorShape out({-1, -1, 3});  // we don't know what is output image size, but we know it should be 3 channels
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "Pad: inputs cannot be empty.");
   if (inputs[0].Rank() == 1) {
     outputs.emplace_back(out);
   }
-  if (!outputs.empty()) {
-    return Status::OK();
-  }
-  return Status(
-    StatusCode::kMDUnexpectedError,
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    !outputs.empty(),
     "Pad: invalid input shape, expected 1D input, but got input dimension is:" + std::to_string(inputs[0].Rank()));
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

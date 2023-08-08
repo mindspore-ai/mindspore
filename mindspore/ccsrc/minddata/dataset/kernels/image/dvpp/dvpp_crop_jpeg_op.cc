@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/kernels/image/dvpp/dvpp_crop_jpeg_op.h"
+
 #include <string>
 #include <vector>
-#include <iostream>
-#include "include/api/context.h"
+
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
@@ -38,7 +39,7 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::
     if (ret != APP_ERR_OK) {
       ret = AclAdapter::GetInstance().ReleaseAclProcess(processor_.get());
       CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release memory failed.");
-      std::string error = "Error in dvpp crop processing:" + std::to_string(ret);
+      std::string error = "Error in dvpp crop processing: " + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     DvppDataInfo *CropOut = AclAdapter::GetInstance().GetCropedDeviceData(processor_.get());
@@ -52,7 +53,7 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::
       RETURN_STATUS_UNEXPECTED(error);
     }
   } catch (const std::exception &e) {
-    std::string error = "[ERROR] Fail in DvppCropJpegOp:" + std::string(e.what());
+    std::string error = "[ERROR] Fail in DvppCropJpegOp: " + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();
@@ -65,7 +66,7 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   }
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetBuffer() != nullptr, "The input image buffer is empty.");
-    unsigned char *buffer = const_cast<unsigned char *>(input->GetBuffer());
+    auto *buffer = const_cast<unsigned char *>(input->GetBuffer());
     DvppDataInfo imageinfo;
     imageinfo.dataSize = input->SizeInBytes();
     imageinfo.data = static_cast<uint8_t *>(buffer);
@@ -82,7 +83,7 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
     APP_ERROR ret = AclAdapter::GetInstance().InitResource(&resource);
     if (ret != APP_ERR_OK) {
       AclAdapter::GetInstance().Release();
-      std::string error = "Error in Init D-chip:" + std::to_string(ret);
+      std::string error = "Error in Init D-chip: " + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     int deviceId = *(resource.deviceIds.begin());
@@ -94,19 +95,19 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
     ret = AclAdapter::GetInstance().InitAclProcess(process.get());
     if (ret != APP_ERR_OK) {
       AclAdapter::GetInstance().Release();
-      std::string error = "Error in Init resource:" + std::to_string(ret);
+      std::string error = "Error in Init resource: " + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
     ret = AclAdapter::GetInstance().JPEG_C_WITH_DATA(process.get(), imageinfo);
     if (ret != APP_ERR_OK) {
       AclAdapter::GetInstance().Release();
-      std::string error = "Error in dvpp crop processing:" + std::to_string(ret);
+      std::string error = "Error in dvpp crop processing: " + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
     // Third part end where we execute the core function of dvpp
-    unsigned char *ret_ptr = static_cast<unsigned char *>(AclAdapter::GetInstance().GetMemoryData(process.get()));
+    auto *ret_ptr = static_cast<unsigned char *>(AclAdapter::GetInstance().GetMemoryData(process.get()));
     DvppDataInfo *CropOut(AclAdapter::GetInstance().GetCropedDeviceData(process.get()));
     dsize_t dvpp_length = CropOut->dataSize;
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
@@ -127,7 +128,7 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release host memory failed.");
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
   } catch (const std::exception &e) {
-    std::string error = "[ERROR] Fail in DvppCropJpegOp:" + std::string(e.what());
+    std::string error = "[ERROR] Fail in DvppCropJpegOp: " + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();
@@ -137,27 +138,22 @@ Status DvppCropJpegOp::OutputShape(const std::vector<TensorShape> &inputs, std::
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
   TensorShape out({-1, 1, 1});  // we don't know what is output image size, but we know it should be 1 channels
-  if (inputs.size() < 1) {
-    RETURN_STATUS_UNEXPECTED("DvppCropJpegOp::OutputShape inputs is null");
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "DvppCropJpeg: inputs cannot be empty.");
   if (inputs[0].Rank() == 1) {
     (void)outputs.emplace_back(out);
   }
-  if (!outputs.empty()) {
-    return Status::OK();
-  }
-  return Status(StatusCode::kMDUnexpectedError, "Input has a wrong shape");
+  CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(), "DvppCropJpeg: Invalid input shape.");
+  return Status::OK();
 }
 
 Status DvppCropJpegOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
   processor_ = resource->GetInstance();
   if (!processor_) {
-    RETURN_STATUS_UNEXPECTED("Resource initialize fail, please check your env");
+    RETURN_STATUS_UNEXPECTED("Resource initialize fail, please check your env.");
   }
   APP_ERROR ret = AclAdapter::GetInstance().SetCropParas(processor_.get(), crop_width_, crop_height_);
   CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "SetCropParas failed.");
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

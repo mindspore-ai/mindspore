@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,12 @@ static int16_t IntCastShort(const int &value) {
                                 : value > 0 ? SHRT_MAX : SHRT_MIN);
 }
 
-static int16_t FloatToShort(float value) { return IntCastShort(round(value)); }
+static int16_t FloatToShort(float value) { return IntCastShort(static_cast<int>(roundf(value))); }
 
 static void InitWBlockInter(float *wBlock, int wBlockSz) {
-  float scale = 1.f / wBlockSz;
+  float scale = 1.f / static_cast<float>(wBlockSz);
   for (int i = 0; i < wBlockSz; i++, wBlock += 2) {
-    float value = (i * scale);
+    float value = static_cast<float>(i) * scale;
     wBlock[0] = 1.f - value;
     wBlock[1] = value;
   }
@@ -73,7 +73,7 @@ static const void *InitWBlock() {
   iWBlock = BWBlock_i[0][0];
 
   if (!initWB) {
-    float *_wblock = new float[8 * kTabSz];
+    auto *_wblock = new float[8 * kTabSz];
     int i, j, h1, h2;
     InitWBlockInter(_wblock, kTabSz);
     for (i = 0; i < kTabSz; i++) {
@@ -202,10 +202,10 @@ static void RemapBilinearNotCurMoreC(int dx, const int16_t *HW, const uint16_t *
   }
 }
 
-static void RemapBilinearCur1C(LiteMat _src, int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
-                               size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr, PaddBorderType borderType,
-                               const std::vector<uint8_t> &borderValue) {
-  if (borderValue.size() == 0) {
+static void RemapBilinearCur1C(const LiteMat &_src, int dx, const int16_t *HW, const uint16_t *FHW,
+                               const int16_t *wblock, size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr,
+                               PaddBorderType borderType, const std::vector<uint8_t> &borderValue) {
+  if (borderValue.empty()) {
     return;
   }
   int shx = HW[dx * 2];
@@ -231,12 +231,13 @@ static void RemapBilinearCur1C(LiteMat _src, int dx, const int16_t *HW, const ui
   }
 }
 
-static void RemapBilinearCurMoreC(LiteMat _src, int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
-                                  size_t src_step, int cn, const uint8_t *src_ptr, uint8_t *dst_ptr,
-                                  PaddBorderType borderType, const std::vector<uint8_t> &borderValue) {
+static void RemapBilinearCurMoreC(const LiteMat &_src, int dx, const int16_t *HW, const uint16_t *FHW,
+                                  const int16_t *wblock, size_t src_step, int cn, const uint8_t *src_ptr,
+                                  uint8_t *dst_ptr, PaddBorderType borderType,
+                                  const std::vector<uint8_t> &borderValue) {
   int shx = HW[dx * 2];
   int shy = HW[dx * 2 + 1];
-  if (borderValue.size() < cn || borderValue.size() == 0) {
+  if (borderValue.size() < cn || borderValue.empty()) {
     return;
   }
   if (borderType == PADD_BORDER_CONSTANT && (shx >= _src.width_ || shx + 1 < 0 || shy >= _src.height_ || shy + 1 < 0)) {
@@ -269,14 +270,14 @@ static void RemapBilinear(const LiteMat &_src, LiteMat &_dst, const LiteMat &_hw
                           const void *_wblock, const PaddBorderType borderType,
                           const std::vector<uint8_t> &borderValue) {
   const int cn = _src.channel_;
-  const int16_t *wblock = (const int16_t *)_wblock;
+  const auto *wblock = (const int16_t *)_wblock;
   const uint8_t *src_ptr = _src.ptr<uint8_t>(0);
   size_t src_step = _src.steps_[0];
   unsigned src_width = std::max(_src.width_ - 1, 0);
   unsigned src_height = std::max(_src.height_ - 1, 0);
 
   for (int dy = 0; dy < _dst.height_; dy++) {
-    uint8_t *dst_ptr = _dst.ptr<uint8_t>(dy);
+    auto *dst_ptr = _dst.ptr<uint8_t>(dy);
     const int16_t *HW = _hw.ptr<int16_t>(dy);
     const uint16_t *FHW = _fhw.ptr<uint16_t>(dy);
     int tt = 0;
@@ -360,7 +361,7 @@ static void Remap(const LiteMat &src, LiteMat &dst, LiteMat &map1, const LiteMat
       _ablock.GetROI(0, 0, bwidth, bheight, a_ptr);
 
       for (y1 = 0; y1 < bheight; y1++) {
-        uint16_t *t_a_ptr = a_ptr.ptr<uint16_t>(y1);
+        auto *t_a_ptr = a_ptr.ptr<uint16_t>(y1);
 
         map1.GetROI(x, y, bwidth, bheight, xy_ptr);
 
@@ -420,13 +421,13 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
   int *a = &_a[0], *b = a + dst.width_;
   const int SCALE = 1 << 10;
   const int B_SIZE = 64;
-  int16_t *WH = new int16_t[B_SIZE * B_SIZE * 2];
+  auto *WH = new int16_t[B_SIZE * B_SIZE * 2];
   int16_t A_Ptr[B_SIZE * B_SIZE];
   int r_delta = SCALE / kTabSz / 2;
   int x, y, x1, y1;
   for (x = 0; x < dst.width_; x++) {
-    a[x] = round(IM[0] * x * SCALE);
-    b[x] = round(IM[3] * x * SCALE);
+    a[x] = static_cast<int>(round(IM[0] * x * SCALE));
+    b[x] = static_cast<int>(round(IM[3] * x * SCALE));
   }
   int t_bh0 = std::min(B_SIZE / 2, dst.height_);
   int t_bw0 = std::min(B_SIZE * B_SIZE / t_bh0, dst.width_);
@@ -441,9 +442,9 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
       dst.GetROI(x, y, t_bw, t_bh, lite_part);
 
       for (y1 = 0; y1 < t_bh; y1++) {
-        int16_t *t_xy = WH + y1 * t_bw * 2;
-        int X0 = round((IM[1] * (y + y1) + IM[2]) * SCALE) + r_delta;
-        int Y0 = round((IM[4] * (y + y1) + IM[5]) * SCALE) + r_delta;
+        int16_t *t_xy = WH + static_cast<ptrdiff_t>(y1 * t_bw * 2);
+        int X0 = static_cast<int>(round((IM[1] * (y + y1) + IM[2]) * SCALE) + r_delta);
+        int Y0 = static_cast<int>(round((IM[4] * (y + y1) + IM[5]) * SCALE) + r_delta);
         int16_t *t_a = A_Ptr + y1 * t_bw;
         x1 = 0;
         for (; x1 < t_bw; x1++) {
@@ -554,11 +555,11 @@ bool WarpPerspectiveBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M,
         int16_t *t_a = TA + y1 * tw;
         for (int x1 = 0; x1 < tw; x1++) {
           double W = WV + IM[6] * x1;
-          W = W ? kTabSz / W : 0;
+          W = (W != 0) ? kTabSz / W : 0;
           double fX = std::max((double)INT_MIN, std::min((double)INT_MAX, (XV + IM[0] * x1) * W));  // NOLINT
           double fY = std::max((double)INT_MIN, std::min((double)INT_MAX, (YV + IM[3] * x1) * W));  // NOLINT
-          int X = round(fX);
-          int Y = round(fY);
+          int X = static_cast<int>(round(fX));
+          int Y = static_cast<int>(round(fY));
 
           xy[x1 * 2] = IntCastShort(X >> kBits);
           xy[x1 * 2 + 1] = IntCastShort(Y >> kBits);

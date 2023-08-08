@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,31 @@
  */
 
 #include "minddata/dataset/kernels/image/random_color_op.h"
-#include "minddata/dataset/kernels/image/image_utils.h"
+
 #include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
+
 namespace mindspore {
 namespace dataset {
-
 RandomColorOp::RandomColorOp(float t_lb, float t_ub) : rnd_(GetSeed()), dist_(t_lb, t_ub), t_lb_(t_lb), t_ub_(t_ub) {
   is_deterministic_ = false;
 }
 
-Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &in, std::shared_ptr<Tensor> *out) {
-  IO_CHECK(in, out);
-  if (in->Rank() != 3 || in->shape()[2] != 3) {
+Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
+  if (input->Rank() != kDefaultImageRank || input->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
     RETURN_STATUS_UNEXPECTED("RandomColor: image shape is not <H,W,C> or channel is not 3, got rank: " +
-                             std::to_string(in->Rank()) + ", and channel: " + std::to_string(in->shape()[2]));
+                             std::to_string(input->Rank()) + ", and channel: " + std::to_string(input->shape()[2]));
   }
   // 0.5 pixel precision assuming an 8 bit image
   const auto eps = 0.00195;
   const auto t = dist_(rnd_);
   if (abs(t - 1.0) < eps) {
     // Just return input? Can we do it given that input would otherwise get consumed in CVTensor constructor anyway?
-    *out = in;
+    *output = input;
     return Status::OK();
   }
-  auto cvt_in = CVTensor::AsCVTensor(in);
+  auto cvt_in = CVTensor::AsCVTensor(input);
   auto m1 = cvt_in->mat();
   cv::Mat gray;
   // gray is allocated without using the allocator
@@ -51,7 +52,7 @@ Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &in, std::shared_ptr
   RETURN_IF_NOT_OK(CVTensor::CreateFromMat(cv_out, cvt_in->Rank(), &cvt_out));
   if (abs(t - 0.0) < eps) {
     // return grayscale
-    *out = std::static_pointer_cast<Tensor>(cvt_out);
+    *output = std::static_pointer_cast<Tensor>(cvt_out);
     return Status::OK();
   }
   try {
@@ -60,9 +61,8 @@ Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &in, std::shared_ptr
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("RandomColorOp: cv::addWeighted " + std::string(e.what()));
   }
-  *out = std::static_pointer_cast<Tensor>(cvt_out);
+  *output = std::static_pointer_cast<Tensor>(cvt_out);
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

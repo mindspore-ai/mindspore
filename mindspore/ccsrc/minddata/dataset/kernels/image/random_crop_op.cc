@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 
 #include <random>
-#include <tuple>
 
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -76,8 +75,8 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
     (*pad_image)->shape().Size() >= 2,
     "RandomCrop: invalid shape of image after pad, got rank: " + std::to_string((*pad_image)->shape().Size()));
 
-  *padded_image_h = (*pad_image)->shape()[0];
-  *padded_image_w = (*pad_image)->shape()[1];
+  *padded_image_h = static_cast<int32_t>((*pad_image)->shape()[0]);
+  *padded_image_w = static_cast<int32_t>((*pad_image)->shape()[1]);
 
   if (*padded_image_h == crop_height_ && *padded_image_w == crop_width_) {
     *crop_further = false;  //  no need for further crop
@@ -99,8 +98,8 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
       t_pad_left += ((ptrdiff_t)crop_width_ - *padded_image_w);
       t_pad_right += ((ptrdiff_t)crop_width_ - *padded_image_w);
     }
-    *padded_image_h = (*pad_image)->shape()[0];
-    *padded_image_w = (*pad_image)->shape()[1];
+    *padded_image_h = static_cast<int32_t>((*pad_image)->shape()[0]);
+    *padded_image_w = static_cast<int32_t>((*pad_image)->shape()[1]);
   }
 
   if (crop_height_ == 0 || crop_width_ == 0) {
@@ -148,7 +147,7 @@ Status RandomCropOp::RandomCropImg(const std::shared_ptr<Tensor> &input, std::sh
   return Status::OK();
 }
 
-Status RandomCropOp::ConstructShape(const TensorShape &in_shape, std::shared_ptr<TensorShape> *out_shape) {
+Status RandomCropOp::ConstructShape(const TensorShape &in_shape, std::shared_ptr<TensorShape> *out_shape) const {
   auto in_shape_vec = in_shape.AsVector();
   const int h_index = -3, w_index = -2;
   in_shape_vec[in_shape_vec.size() + h_index] = crop_height_;
@@ -162,10 +161,10 @@ Status RandomCropOp::ConstructShape(const TensorShape &in_shape, std::shared_ptr
 Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
 
-  for (size_t i = 0; i < input.size(); i++) {
-    if (input[i]->shape().Rank() < kMinImageRank) {
+  for (const auto &image : input) {
+    if (image->shape().Rank() < kMinImageRank) {
       std::string err_msg =
-        "RandomCropOp: input tensor should have at least 2 dimensions, but got: " + std::to_string(input[i]->Rank());
+        "RandomCropOp: input tensor should have at least 2 dimensions, but got: " + std::to_string(image->Rank());
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }

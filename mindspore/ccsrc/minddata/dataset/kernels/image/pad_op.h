@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_PAD_OP_H_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -50,6 +50,7 @@ class PadOp : public TensorOp {
   ~PadOp() override = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
   std::string Name() const override { return kPadOp; }
@@ -66,5 +67,4 @@ class PadOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_PAD_OP_H_

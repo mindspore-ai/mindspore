@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include "minddata/dataset/kernels/image/dvpp/dvpp_normalize_op.h"
+
+#include <algorithm>
 
 namespace mindspore {
 namespace dataset {
@@ -36,6 +37,5 @@ Status DvppNormalizeOp::Compute(const std::shared_ptr<DeviceTensor> &input, std:
 }
 
 Status DvppNormalizeOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) { return Status::OK(); }
-
 }  // namespace dataset
 }  // namespace mindspore

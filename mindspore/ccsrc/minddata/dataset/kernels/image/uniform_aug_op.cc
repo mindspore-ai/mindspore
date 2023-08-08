@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ Status UniformAugOp::Compute(const TensorRow &input, TensorRow *output) {
       first = false;
     } else {
       TensorRow tmp;
-      RETURN_IF_NOT_OK(tensor_op->Compute(std::move(*output), &tmp));
+      RETURN_IF_NOT_OK(tensor_op->Compute(*output, &tmp));
       *output = std::move(tmp);
     }
   }

@@ -55,5 +55,4 @@ class RandomEqualizeOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_EQUALIZE_OP_H_

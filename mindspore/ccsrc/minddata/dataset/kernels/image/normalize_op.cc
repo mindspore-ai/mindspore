@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #include "minddata/dataset/kernels/image/normalize_op.h"
 
 #include <random>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/kernels/data/data_utils.h"
@@ -28,8 +29,8 @@
 
 namespace mindspore {
 namespace dataset {
-NormalizeOp::NormalizeOp(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc)
-    : mean_(mean), std_(std), is_hwc_(is_hwc) {}
+NormalizeOp::NormalizeOp(std::vector<float> mean, std::vector<float> std, bool is_hwc)
+    : mean_(std::move(mean)), std_(std::move(std)), is_hwc_(is_hwc) {}
 
 Status NormalizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
@@ -55,7 +56,7 @@ Status NormalizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
     // split [N, H, W, C] to N [H, W, C], and normalize N [H, W, C]
     std::vector<std::shared_ptr<Tensor>> input_vector_hwc, output_vector_hwc;
     RETURN_IF_NOT_OK(BatchTensorToTensorVector(input, &input_vector_hwc));
-    for (auto input_hwc : input_vector_hwc) {
+    for (const auto &input_hwc : input_vector_hwc) {
       std::shared_ptr<Tensor> normalize;
 #ifndef ENABLE_ANDROID
       RETURN_IF_NOT_OK(Normalize(input_hwc, &normalize, mean_, std_, is_hwc_));

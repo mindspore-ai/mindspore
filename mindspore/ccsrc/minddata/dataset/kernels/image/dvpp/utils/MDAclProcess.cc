@@ -1,10 +1,11 @@
-/*
- * Copyright (c) 2020-2021.Huawei Technologies Co., Ltd. All rights reserved.
+/**
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,17 +16,20 @@
 
 #include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
 
+#include <sys/stat.h>
+
 #include <chrono>
 #include <thread>
-#include <sys/stat.h>
-#include "minddata/dataset/include/dataset/constants.h"
+#include <vector>
+
 #include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 
 namespace {
 const int BUFFER_SIZE = 2048;
-const mode_t DEFAULT_FILE_PERMISSION = 0077;
+const mode_t DEFAULT_FILE_PERMISSION = 0077U;
 }  // namespace
 
 mode_t SetFileDefaultUmask() { return umask(DEFAULT_FILE_PERMISSION); }
@@ -40,8 +44,8 @@ std::vector<double> RunTimeUtil::GetRunTime() {
 
   auto us_duration = std::chrono::duration_cast<std::chrono::microseconds>(this->end - this->start);
   int64_t us = us_duration.count();
-  double cost_ms = static_cast<double>(SEC2MS * sec + us / SEC2MS);
-  double fps = static_cast<double>(1.0 * SEC2MS / cost_ms);
+  auto cost_ms = static_cast<double>(SEC2MS * static_cast<float>(sec) + static_cast<float>(us) / SEC2MS);
+  auto fps = static_cast<double>(1.0 * SEC2MS / cost_ms);
   std::vector<double> run_time = {cost_ms, fps};
   return run_time;
 }
@@ -188,11 +192,11 @@ APP_ERROR MDAclProcess::H2D_Sink(const std::shared_ptr<mindspore::dataset::Tenso
     return ret;
   }
 
-  RawData imageinfo;
+  RawData imageinfo{};
   uint32_t filesize = input->SizeInBytes();
 
   imageinfo.lenOfByte = filesize;
-  unsigned char *buffer = const_cast<unsigned char *>(input->GetBuffer());
+  auto *buffer = const_cast<unsigned char *>(input->GetBuffer());
   imageinfo.data = static_cast<void *>(buffer);
 
   // Transfer RawData(Raw image) from host to device, which we call sink
@@ -562,7 +566,7 @@ APP_ERROR MDAclProcess::JPEG_C_(const DvppDataInfo &ImageInfo) {
   DvppCropInputInfo cropInfo;
   cropInfo.dataInfo = *resized_image;
   // Define crop area
-  CropRoiConfig cropCfg;
+  CropRoiConfig cropCfg{};
   CropConfigFilter(cropCfg, cropInfo, *resized_image);
   ret = dvppCommon_->CombineCropProcess(cropInfo, cropOut, true);
   if (ret != APP_ERR_OK) {
@@ -596,7 +600,7 @@ APP_ERROR MDAclProcess::JPEG_C_(const std::string &last_step) {
   DvppCropInputInfo cropInfo;
   cropInfo.dataInfo = *input_image;
   // Define crop area
-  CropRoiConfig cropCfg;
+  CropRoiConfig cropCfg{};
   CropConfigFilter(cropCfg, cropInfo, *input_image);
   APP_ERROR ret = dvppCommon_->CombineCropProcess(cropInfo, cropOut, true);
   if (ret != APP_ERR_OK) {
@@ -826,7 +830,7 @@ APP_ERROR MDAclProcess::JPEG_DRC_(const RawData &ImageInfo) {
   DvppCropInputInfo cropInfo;
   cropInfo.dataInfo = *resizeOutData;
   // Define crop area
-  CropRoiConfig cropCfg;
+  CropRoiConfig cropCfg{};
   CropConfigFilter(cropCfg, cropInfo, resizeOut);
   ret = dvppCommon_->CombineCropProcess(cropInfo, cropOut, true);
   if (ret != APP_ERR_OK) {
@@ -940,7 +944,7 @@ APP_ERROR MDAclProcess::JPEG_DR_(const RawData &ImageInfo) {
   return APP_ERR_OK;
 }
 
-void MDAclProcess::CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropinfo, DvppDataInfo &resizeinfo) {
+void MDAclProcess::CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropinfo, DvppDataInfo &resizeinfo) const {
   if (resizeHeight_ != 0) {
     cfg.up = (resizeHeight_ - cropHeight_) / 2;
     if (cfg.up % 2 != 0) {
@@ -993,10 +997,10 @@ APP_ERROR MDAclProcess::ResizeConfigFilter(DvppDataInfo &resizeinfo, const uint3
     if (pri_h_ >= pri_w_) {
       resizeinfo.width = resizeHeight_;
       resizeinfo.widthStride = DVPP_ALIGN_UP(resizeinfo.width, VPC_STRIDE_WIDTH);
-      resizeinfo.height = uint32_t(resizeHeight_ * pri_h_ / pri_w_);
+      resizeinfo.height = static_cast<uint32_t>(resizeHeight_ * pri_h_ / pri_w_);
       resizeinfo.heightStride = DVPP_ALIGN_UP(resizeinfo.height, VPC_STRIDE_HEIGHT);
     } else {
-      resizeinfo.width = uint32_t(resizeHeight_ * pri_w_ / pri_h_);
+      resizeinfo.width = static_cast<uint32_t>(resizeHeight_ * pri_w_ / pri_h_);
       resizeinfo.widthStride = DVPP_ALIGN_UP(resizeinfo.width, VPC_STRIDE_WIDTH);
       resizeinfo.height = resizeHeight_;
       resizeinfo.heightStride = DVPP_ALIGN_UP(resizeinfo.height, VPC_STRIDE_HEIGHT);
@@ -1039,8 +1043,8 @@ APP_ERROR MDAclProcess::device_memory_release() {
 std::vector<uint32_t> MDAclProcess::Get_Primary_Shape() {
   std::vector<uint32_t> pri_shape;
   if (dvppCommon_) {
-    pri_shape.emplace_back(dvppCommon_->GetDecodedImage()->heightStride);
-    pri_shape.emplace_back(dvppCommon_->GetDecodedImage()->widthStride);
+    (void)pri_shape.emplace_back(dvppCommon_->GetDecodedImage()->heightStride);
+    (void)pri_shape.emplace_back(dvppCommon_->GetDecodedImage()->widthStride);
   }
   return pri_shape;
 }

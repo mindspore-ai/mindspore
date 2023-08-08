@@ -46,7 +46,7 @@ class RotateOp : public TensorOp {
 
   ~RotateOp() override = default;
 
-  TensorShape ConstructShape(const TensorShape &in_shape);
+  TensorShape ConstructShape(const TensorShape &in_shape) const;
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 

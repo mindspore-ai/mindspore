@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_OP_H_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -54,7 +54,7 @@ class ResizeOp : public TensorOp {
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
-  TensorShape ComputeOutputShape(const TensorShape &input, int32_t output_h, int32_t output_w);
+  static TensorShape ComputeOutputShape(const TensorShape &input, int32_t output_h, int32_t output_w);
 
   std::string Name() const override { return kResizeOp; }
 
@@ -65,5 +65,4 @@ class ResizeOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_OP_H_

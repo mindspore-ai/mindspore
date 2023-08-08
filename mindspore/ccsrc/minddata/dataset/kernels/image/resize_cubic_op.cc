@@ -15,6 +15,9 @@
  */
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
 
+#include <cmath>
+#include <limits>
+
 namespace mindspore {
 namespace dataset {
 // using 8 bits for result
@@ -97,12 +100,12 @@ int calc_coeff(int input_size, int out_size, int input0, int input1, const struc
     double mm = 0.0, ss = 1.0 / interp_scale;
     int x;
     // Round for x_min
-    int x_min = static_cast<int>((center - threshold) + 0.5);
+    int x_min = static_cast<int>(lround(center - threshold));
     if (x_min < 0) {
       x_min = 0;
     }
     // Round for x_max
-    int x_max = static_cast<int>((center + threshold + 0.5));
+    int x_max = static_cast<int>(lround(center + threshold));
     if (x_max > input_size) {
       x_max = input_size;
     }
@@ -136,7 +139,7 @@ void normalize_coeff(int out_size, int kernel_size, const std::vector<double> &p
     if (prekk[x] < 0) {
       kk[x] = static_cast<int>((-0.5 + prekk[x] * (1 << PrecisionBits)));
     } else {
-      kk[x] = static_cast<int>((0.5 + prekk[x] * (1 << PrecisionBits)));
+      kk[x] = static_cast<int>(lround(prekk[x] * (1 << PrecisionBits)));
     }
   }
 }
@@ -150,7 +153,7 @@ Status ImagingHorizontalInterp(LiteMat &output, LiteMat input, int offset, int k
   std::vector<int> kk(prekk.begin(), prekk.end());
   normalize_coeff(output.width_, kernel_size, prekk, kk);
   uint8_t *input_ptr = input;
-  uint8_t *output_ptr = output;
+  auto *output_ptr = reinterpret_cast<uint8_t *>(output.data_ptr_);
   int32_t input_width = input.width_ * 3;
   int32_t output_width = output.width_ * 3;
 
@@ -177,7 +180,7 @@ Status ImagingHorizontalInterp(LiteMat &output, LiteMat input, int offset, int k
   return Status::OK();
 }
 
-Status ImagingVerticalInterp(LiteMat &output, LiteMat input, int kernel_size, const std::vector<int> &regions,
+Status ImagingVerticalInterp(const LiteMat &output, LiteMat input, int kernel_size, const std::vector<int> &regions,
                              const std::vector<double> &prekk) {
   int ss0, ss1, ss2;
 
@@ -185,7 +188,7 @@ Status ImagingVerticalInterp(LiteMat &output, LiteMat input, int kernel_size, co
   std::vector<int> kk(prekk.begin(), prekk.end());
   normalize_coeff(output.height_, kernel_size, prekk, kk);
   uint8_t *input_ptr = input;
-  uint8_t *output_ptr = output;
+  auto *output_ptr = reinterpret_cast<uint8_t *>(output.data_ptr_);
   const int32_t input_width = input.width_ * 3;
   const int32_t output_width = output.width_ * 3;
 

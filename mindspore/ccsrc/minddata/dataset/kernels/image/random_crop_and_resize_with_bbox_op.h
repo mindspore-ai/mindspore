@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_CROP_AND_RESIZE_WITH_BBOX_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_CROP_AND_RESIZE_WITH_BBOX_OP_H_
 
-#include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include <string>
+
+#include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 
 namespace mindspore {
 namespace dataset {
-
 class RandomCropAndResizeWithBBoxOp : public RandomCropAndResizeOp {
  public:
   //  Constructor for RandomCropAndResizeWithBBoxOp, with default value and passing to base class constructor
@@ -45,5 +45,4 @@ class RandomCropAndResizeWithBBoxOp : public RandomCropAndResizeOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_CROP_AND_RESIZE_WITH_BBOX_OP_H_

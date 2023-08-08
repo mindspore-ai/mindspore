@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_CUBIC_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_CUBIC_OP_H_
 
-#include <float.h>
-#include <string.h>
-#include <vector>
-#include <utility>
+#include <cfloat>
+#include <cstring>
 #include <random>
+#include <utility>
+#include <vector>
+
 #include "lite_cv/lite_mat.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
@@ -54,5 +55,4 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
 bool ResizeCubic(const LiteMat &input, const LiteMat &dst, int dst_w, int dst_h);
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_CUBIC_OP_H_

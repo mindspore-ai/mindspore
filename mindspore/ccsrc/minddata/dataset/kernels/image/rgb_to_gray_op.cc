@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/rgb_to_gray_op.h"
+
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
 #else
@@ -22,11 +23,9 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status RgbToGrayOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   return RgbToGray(input, output);
 }
-
 }  // namespace dataset
 }  // namespace mindspore

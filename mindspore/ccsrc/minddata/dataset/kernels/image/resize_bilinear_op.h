@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <random>
 #include <string>
 #include <vector>
+
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -46,11 +47,10 @@ class ResizeBilinearOp : public ResizeOp {
 
   // Name: Destructor
   // Description: Destructor
-  ~ResizeBilinearOp() = default;
+  ~ResizeBilinearOp() override = default;
 
   std::string Name() const override { return kResizeBilinearOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_BILINEAR_OP_H_

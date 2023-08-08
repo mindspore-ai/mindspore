@@ -13,29 +13,38 @@
  * limitations under the License.
  */
 
-#ifndef RESOURCEMANAGER_H
-#define RESOURCEMANAGER_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_RESOURCE_MANAGER_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_RESOURCE_MANAGER_H_
+
+#include <sys/stat.h>
 
 #include <climits>
+#include <memory>
 #include <mutex>
 #include <set>
-#include <sys/stat.h>
+#include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "acl/acl.h"
+
 #ifndef BUILD_LITE
 #include "mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.h"
-using AclEnvGuard = mindspore::AclEnvGuard;
-using AclInitAdapter = mindspore::AclInitAdapter;
 #else
 #include "mindspore/lite/src/extendrt/kernel/ascend/model/acl_env_guard.h"
-using AclEnvGuard = mindspore::kernel::acl::AclEnvGuard;
-using AclInitAdapter = mindspore::kernel::acl::AclInitAdapter;
 #endif
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/resouce_info.h"
 #include "minddata/dataset/util/log_adapter.h"
-#include "acl/acl.h"
+
+#ifndef BUILD_LITE
+using AclEnvGuard = mindspore::AclEnvGuard;
+using AclInitAdapter = mindspore::AclInitAdapter;
+#else
+using AclEnvGuard = mindspore::kernel::acl::AclEnvGuard;
+using AclInitAdapter = mindspore::kernel::acl::AclInitAdapter;
+#endif
 
 APP_ERROR ExistFile(const std::string &filePath);
 
@@ -68,4 +77,4 @@ class ResourceManager {
   std::shared_ptr<AclEnvGuard> acl_env_;
 };
 
-#endif
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_RESOURCE_MANAGER_H_

@@ -1,10 +1,11 @@
-/*
- * Copyright (c) 2020-2021.Huawei Technologies Co., Ltd. All rights reserved.
+/**
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,13 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef DVPP_COMMON_H
-#define DVPP_COMMON_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_DVPP_COMMON_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_DVPP_COMMON_H_
 
-#include "CommonDataType.h"
-#include "ErrorCode.h"
-#include "resouce_info.h"
+#include <memory>
+#include <vector>
+
 #include "acl/ops/acl_dvpp.h"
+
+#include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/resouce_info.h"
 
 const int MODULUS_NUM_2 = 2;
 const uint32_t ODD_NUM_1 = 1;
@@ -36,8 +41,8 @@ struct VdecConfig {
   acldvppPixelFormat outFormat = PIXEL_FORMAT_YUV_SEMIPLANAR_420;  // output format renference acldvppPixelFormat
   uint32_t channelId = 0;                                          // user define channelId: 0-15
   uint32_t deviceId = 0;
-  pthread_t threadId = 0;          // thread for callback
-  aclvdecCallback callback = {0};  // user define how to process vdec out data
+  pthread_t threadId = 0;                // thread for callback
+  aclvdecCallback callback = {nullptr};  // user define how to process vdec out data
   bool runflag = true;
 };
 
@@ -110,9 +115,9 @@ class DvppCommon {
   explicit DvppCommon(aclrtContext dvppContext, aclrtStream dvppStream);
   explicit DvppCommon(const VdecConfig &vdecConfig);  // Need by vdec
   ~DvppCommon();
-  APP_ERROR Init(void);
+  APP_ERROR Init();
   APP_ERROR InitVdec();  // Needed by vdec
-  APP_ERROR DeInit(void);
+  APP_ERROR DeInit();
 
   static APP_ERROR GetVpcDataSize(uint32_t widthVpc, uint32_t heightVpc, acldvppPixelFormat format, uint32_t &vpcSize);
   static APP_ERROR GetVpcInputStrideSize(uint32_t width, uint32_t height, acldvppPixelFormat format,
@@ -170,7 +175,7 @@ class DvppCommon {
   APP_ERROR CombinePngdProcess(const RawData &imageInfo, acldvppPixelFormat format, bool withSynchronize);
 
   // The following interface can be called only when the DvppCommon object is initialized with InitVdec
-  APP_ERROR CombineVdecProcess(const std::shared_ptr<DvppDataInfo> data, void *userData);
+  APP_ERROR CombineVdecProcess(const std::shared_ptr<DvppDataInfo> &data, void *userData);
 
   // Get the private member variables which are assigned in the interfaces which are started with "Combine"
   std::shared_ptr<DvppDataInfo> GetInputImage();
@@ -241,4 +246,4 @@ class DvppCommon {
   acldvppPicDesc *picOutputDesc_ = nullptr;
   VdecConfig vdecConfig_;
 };
-#endif
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_DVPP_COMMON_H_
