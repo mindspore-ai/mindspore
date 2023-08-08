@@ -45,7 +45,12 @@ int GetJitSyntaxLevel() {
   // Get jit_syntax_level from environment variable 'MS_DEV_JIT_SYNTAX_LEVEL'.
   std::string env_level_str = common::GetEnv("MS_DEV_JIT_SYNTAX_LEVEL");
   if (env_level_str.size() == 1) {
-    int env_level = std::stoi(env_level_str);
+    int env_level = -1;
+    try {
+      env_level = std::stoi(env_level_str);
+    } catch (const std::invalid_argument &ia) {
+      MS_LOG(EXCEPTION) << "Invalid argument: " << ia.what() << " when parse " << env_level_str;
+    }
     if (env_level >= kStrict && env_level <= kLax) {
       return env_level;
     }
