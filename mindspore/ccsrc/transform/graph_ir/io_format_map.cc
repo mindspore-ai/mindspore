@@ -34,7 +34,9 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"Ba
                                                                             {"ExtractImagePatches", "NCHW"},
                                                                             {"Conv3D", "format"},
                                                                             {"MaxPool3D", "NCDHW"},
+                                                                            {"MaxPool3DGrad", "NCDHW"},
                                                                             {"AvgPool3D", "NCDHW"},
+                                                                            {"AvgPool3DGrad", "NCDHW"},
                                                                             {"Conv3DBackpropFilter", "format"},
                                                                             {"Conv3DBackpropInput", "format"},
                                                                             {"Conv3DTranspose", "format"}};
