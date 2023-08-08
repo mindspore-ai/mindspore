@@ -67,10 +67,6 @@ class TFRecordToMR:
     """
     A class to transform from TFRecord to MindRecord.
 
-    Note:
-        For details about Examples, please refer to `Converting TFRecord Dataset <https://
-        www.mindspore.cn/tutorials/en/r2.0/advanced/dataset/record.html#converting-tfrecord-dataset>`_ .
-
     Args:
         source (str): TFRecord file to be transformed.
         destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
