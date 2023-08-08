@@ -1338,7 +1338,7 @@ void GradExecutor::ClearRes() {
   bprop_cell_list_.clear();
   grad_operation_.clear();
   already_run_top_cell_.clear();
-  dynamic_shape_ = nullptr;
+  dynamic_shape()->Clear();
   std::stack<InputArgsInfoPtr>().swap(input_args_info_stack_);
   std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);
   std::stack<TopCellInfoPtr>().swap(high_order_stack_);

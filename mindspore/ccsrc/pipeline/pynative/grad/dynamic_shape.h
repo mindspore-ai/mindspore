@@ -53,6 +53,7 @@ class NodeDynamicDetect {
  public:
   NodeDynamicDetect() = default;
   ~NodeDynamicDetect() = default;
+  void Clear() { cell_id_with_dynamic_detect_nodes_.clear(); }
   bool CheckNodeDynamic(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs,
                         const DynamicDetectNodeInfoPtr &node);
   bool IsNeedSaveDynamicDetectNodes(const TopCellInfoPtr &top_cell, bool use_dynamic_shape_process);
@@ -70,20 +71,20 @@ using NodeDynamicDetectPtr = std::shared_ptr<NodeDynamicDetect>;
 
 class DynamicShape {
  public:
-  DynamicShape() : dynamic_structure_ptr_(std::make_shared<NodeDynamicDetect>()) {}
+  DynamicShape() : node_dynamic_detect_ptr_(std::make_shared<NodeDynamicDetect>()) {}
   ~DynamicShape() = default;
 
   bool CheckNodeDynamic(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs,
                         const DynamicDetectNodeInfoPtr &node) {
-    return dynamic_structure_ptr_->CheckNodeDynamic(top_cell, inputs, node);
+    return node_dynamic_detect_ptr_->CheckNodeDynamic(top_cell, inputs, node);
   }
   bool IsNeedSaveDynamicDetectNodes(const TopCellInfoPtr &top_cell, bool use_dynamic_shape_process) {
-    return dynamic_structure_ptr_->IsNeedSaveDynamicDetectNodes(top_cell, use_dynamic_shape_process);
+    return node_dynamic_detect_ptr_->IsNeedSaveDynamicDetectNodes(top_cell, use_dynamic_shape_process);
   }
-  bool IsGraphDynamic() { return false; }
+  void Clear() { node_dynamic_detect_ptr_->Clear(); }
 
  private:
-  NodeDynamicDetectPtr dynamic_structure_ptr_{nullptr};
+  NodeDynamicDetectPtr node_dynamic_detect_ptr_{nullptr};
 };
 using DynamicShapePtr = std::shared_ptr<DynamicShape>;
 }  // namespace pynative
