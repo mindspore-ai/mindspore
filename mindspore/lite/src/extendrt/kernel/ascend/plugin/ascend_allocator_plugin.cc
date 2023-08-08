@@ -108,6 +108,10 @@ void *AscendAllocatorPlugin::Malloc(size_t size, int device_id) {
     MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
     return nullptr;
   }
+  if (device_id < -1) {
+    MS_LOG(ERROR) << "device id must more than 0";
+    return nullptr;
+  }
   if (ascend_allocator_plugin_impl_ == nullptr) {
     MS_LOG(ERROR) << "ascend_allocator_plugin_impl_ is nullptr.";
     return nullptr;
@@ -161,6 +165,10 @@ Status AscendAllocatorPlugin::CopyDeviceDataToDevice(void *src_device, void *dst
   if (!is_registered_) {
     MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
     return kLiteMemoryFailed;
+  }
+  if (src_device_id < -1 || dst_device_id < -1) {
+    MS_LOG(ERROR) << "device id is wrong, src device id: " << src_device_id << ", dst device id: " << dst_device_id;
+    return kLiteError;
   }
   if (dst_device == nullptr || src_device == nullptr) {
     MS_LOG(INFO) << "device data is nullptr.";
