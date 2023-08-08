@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ops_info/uniform_real_info.h"
+#include "frontend/parallel/ops_info/random_distribute_info.h"
 
-#include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -25,13 +24,12 @@
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#include "pipeline/jit/resource.h"
 
 namespace mindspore {
 namespace parallel {
-int64_t UniformRealInfo::SEED_NUM = 1;
+int64_t RandomDistributeInfo::SEED_NUM = 1;
 
-Status UniformRealInfo::InferAttrs() {
+Status RandomDistributeInfo::InferAttrs() {
   if (infer_attrs_completed_) {
     return SUCCESS;
   }
@@ -44,7 +42,7 @@ Status UniformRealInfo::InferAttrs() {
   return SUCCESS;
 }
 
-Status UniformRealInfo::GetAttrs() {
+Status RandomDistributeInfo::GetAttrs() {
   seed_ = GetIntAttr(SEED);
   if (seed_ < 0) {
     MS_LOG(ERROR) << name_ << ": Seed must be greater or equal to zero, bug got " << seed_;
@@ -58,7 +56,7 @@ Status UniformRealInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status UniformRealInfo::CheckStrategy(const StrategyPtr &strategy) {
+Status RandomDistributeInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
@@ -73,7 +71,7 @@ Status UniformRealInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status UniformRealInfo::InferDevMatrixShape() {
+Status RandomDistributeInfo::InferDevMatrixShape() {
   MS_EXCEPTION_IF_NULL(strategy_);
   std::vector<Dimensions> stra = strategy_->GetInputDim();
   if (stra.empty()) {
@@ -85,7 +83,7 @@ Status UniformRealInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status UniformRealInfo::InferTensorMap() {
+Status RandomDistributeInfo::InferTensorMap() {
   TensorMap input_tensor_map;
   TensorMap output_tensor_map;
   std::vector<Dimensions> stra = strategy_->GetInputDim();
@@ -101,9 +99,11 @@ Status UniformRealInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status UniformRealInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+Status RandomDistributeInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
+  return SetCostUnderStrategyBase(strategy);
+}
 
-std::vector<StrategyPtr> UniformRealInfo::GenerateOpStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> RandomDistributeInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
@@ -117,7 +117,7 @@ std::vector<StrategyPtr> UniformRealInfo::GenerateOpStrategies(int64_t stage_id)
   return sp_vector;
 }
 
-void UniformRealInfo::UpdateShape(const CNodePtr &cnode) {
+void RandomDistributeInfo::UpdateShape(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_node = cnode->input(1)->cast<ValueNodePtr>();
   std::vector<int64_t> input_shape = GetValue<std::vector<int64_t>>(input_node->value());
@@ -134,7 +134,7 @@ void UniformRealInfo::UpdateShape(const CNodePtr &cnode) {
   cnode->set_input(kIndex1, val);
 }
 
-void UniformRealInfo::ReplaceNodeInputOrAttrs() {
+void RandomDistributeInfo::ReplaceNodeInputOrAttrs() {
   for (auto &cnode : cnodes_) {
     // Replace input 'shape' to slice shape
     UpdateShape(cnode);
@@ -160,13 +160,16 @@ void UniformRealInfo::ReplaceNodeInputOrAttrs() {
   }
 }
 
-void UniformRealInfo::ResetInputsShape() {
+void RandomDistributeInfo::ResetInputsShape() {
   ValueTuplePtr shape_value = input_value_[0]->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
   inputs_shape_.push_back(GetValue<Shape>(shape_value));
   is_parameter_.push_back(false);
 }
 
-REGISTER(UniformRealInfo);
+Status RandomDistributeInfo::InferMirrorOps() { return SUCCESS; }
+
+REGISTER2(UniformRealInfo, RandomDistributeInfo);
+REGISTER2(StandardNormalInfo, RandomDistributeInfo);
 }  // namespace parallel
 }  // namespace mindspore

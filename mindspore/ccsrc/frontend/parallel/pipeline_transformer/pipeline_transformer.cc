@@ -232,6 +232,9 @@ bool PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph) {
     if (!IsPipelineCareNode(cnode)) {
       continue;
     }
+    if (IsPrimitiveCNode(cnode, prim::kPrimAdd) || IsPrimitiveCNode(cnode, prim::kPrimAddV2)) {
+      continue;
+    }
     if (NeedGrad(cnode)) {
       auto prim = GetCNodePrimitive(cnode);
       if (enable_share_cell_) {
