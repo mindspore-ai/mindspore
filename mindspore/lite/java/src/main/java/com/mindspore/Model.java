@@ -23,7 +23,6 @@ import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.TrainCfg;
 
 import java.nio.MappedByteBuffer;
-import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -332,7 +331,7 @@ public class Model {
      */
     public boolean exportWeightsCollaborateWithMicro(String weightFile, boolean isInference,
                                  boolean enableFp16, List<String> changeableWeightNames) {
-        if (StringUtils.isEmpty(weightFile)) {
+        if (weightFile == null || weightFile.length() == 0) {
             LOGGER.severe("Input params invalid.");
             return false;
         }

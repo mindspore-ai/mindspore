@@ -28,8 +28,6 @@ dependencies {
     testImplementation 'junit:junit:4.13'
 
     implementation fileTree(dir: "libs", include: ["*.jar"])
-
-    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
 }
 
 archivesBaseName = 'mindspore-lite-java'
