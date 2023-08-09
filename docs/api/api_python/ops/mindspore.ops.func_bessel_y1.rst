@@ -12,7 +12,7 @@ mindspore.ops.bessel_y1
             Y_{1}(x)=\lim_{n \to 1} \frac{J_{n}(x) \cos n \pi-J_{-n}(x)}{\sin n \pi}
         \end{array}
 
-    其中J_{1}第一类一阶的Bessel函数。
+    其中 :math:`J_{1}` 第一类一阶的Bessel函数。
 
     参数：
         - **x** (Tensor) - 输入Tensor。数据类型应为float16，float32或float64。

@@ -810,8 +810,8 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
   // note that the return type might be different from input type
   MS_EXCEPTION_IF_NULL(type);
   if (!type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input argument[" << type_name
-                            << "] must be a Tensor but got " << type->ToString() << ".";
+    MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the type of input argument[" << type_name
+                            << "] must be Tensor but got " << type->ToString() << ".";
   }
   auto tensor_type = type->cast<TensorTypePtr>();
   auto element = tensor_type->element();
