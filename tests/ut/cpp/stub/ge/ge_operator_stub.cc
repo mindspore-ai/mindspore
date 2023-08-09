@@ -43,6 +43,7 @@ void Operator::AttrRegister(const std::string &name, int64_t attr_value) {}
 void Operator::AttrRegister(const char *name, int64_t attr_value) {}
 void Operator::RequiredAttrRegister(const std::string &name) {}
 void Operator::RequiredAttrRegister(const char *name) {}
+void Operator::RequiredAttrWithTypeRegister(const char_t *name, const char_t *type) {}
 
 OperatorCreatorRegister::OperatorCreatorRegister(const std::string &operator_type, OpCreator const &op_creator) {}
 OperatorCreatorRegister::OperatorCreatorRegister(char const *,
