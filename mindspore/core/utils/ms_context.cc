@@ -34,7 +34,7 @@ namespace {
 std::map<std::string, MsBackendPolicy> kPolicyMap = {{"ge", kMsBackendGePrior},     {"bisheng", kMsBackendBishengPrior},
                                                      {"vm", kMsBackendVmOnly},      {"ms", kMsBackendMsPrior},
                                                      {"ge_only", kMsBackendGeOnly}, {"vm_prior", kMsBackendVmPrior}};
-std::map<std::string, AscendSocVersion> kAscendSocVersion = {{"Ascend910", k910AAscendVersion},
+std::map<std::string, AscendSocVersion> kAscendSocVersion = {{"ascend910", k910AAscendVersion},
                                                              {"ascend910b", k910BAscendVersion}};
 
 constexpr auto kDeviceTargetSize2 = 2;

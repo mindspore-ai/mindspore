@@ -158,7 +158,7 @@ DeprecatedInterface *AscendDeviceContext::GetDeprecatedInterface() {
 #ifdef WITH_BACKEND
 namespace {
 void SetContextSocVersion(MsContext *ctx) {
-  constexpr auto k910AAscendVersion = "Ascend910";
+  constexpr auto k910AAscendVersion = "ascend910";
   constexpr auto k910BAscendVersion = "ascend910b";
   const std::map<std::string, std::string> kAscendSocVersions = {
     {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
