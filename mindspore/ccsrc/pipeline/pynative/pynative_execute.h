@@ -26,6 +26,8 @@
 #include "pybind11/pybind11.h"
 #include "frontend/operator/composite/composite.h"
 
+#include "mindrt/include/fork_utils.h"
+
 namespace mindspore::pynative {
 namespace py = pybind11;
 
@@ -81,9 +83,15 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   bool IsFirstCell() const;
   void WorkerJoin();
   void SetJitCompileStatus(bool is_compiling, const std::string &phase) const;
+  void ReinitAfterFork();
 
  private:
-  PyNativeExecutor() = default;
+  PyNativeExecutor() {
+    // Register fork event callbacks.
+    ForkUtils::GetInstance().RegisterCallbacks(this, static_cast<void (PyNativeExecutor::*)()>(nullptr),
+                                               static_cast<void (PyNativeExecutor::*)()>(nullptr),
+                                               &PyNativeExecutor::ReinitAfterFork);
+  }
   static std::shared_ptr<PyNativeExecutor> executor_;
   static std::mutex instance_lock_;
   static ForwardExecutorPtr forward_executor_;
