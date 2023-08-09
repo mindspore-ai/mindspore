@@ -457,6 +457,7 @@ constexpr const char kNameTfIdfVectorizer[] = "TfIdfVectorizer";
 constexpr const char kNameMVNV2[] = "MVNV2";
 constexpr const char kNameCommonGRU[] = "CommonGRU";
 constexpr const char kNameTril[] = "Tril";
+constexpr const char kNameConv2DTransposeV2[] = "Conv2DTransposeV2";
 
 class OpAdapterDesc;
 

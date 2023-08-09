@@ -289,4 +289,21 @@ INPUT_MAP(WkvGrad) = {
 ATTR_MAP(WkvGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(WkvGrad) = {{0, OUTPUT_DESC(gw)}, {1, OUTPUT_DESC(gu)}, {2, OUTPUT_DESC(gk)}, {3, OUTPUT_DESC(gv)}};
 REG_ADPT_DESC(WkvGrad, kNameWKVGrad, ADPT_DESC(WkvGrad))
+
+// Conv2DTranspose for tf onnx inference
+INPUT_MAP(Conv2DTranspose) = {{1, INPUT_DESC(input_size)},
+                              {2, INPUT_DESC(x)},
+                              {3, INPUT_DESC(filter)},
+                              {4, INPUT_DESC(bias)},
+                              {5, INPUT_DESC(offset_w)}};
+ATTR_MAP(Conv2DTranspose) = {
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"data_format", ATTR_DESC(data_format, AnyTraits<string>())},
+  {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
+  {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"output_paddings", ATTR_DESC(output_padding, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"offset", ATTR_DESC(offset_x, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Conv2DTranspose) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Conv2DTransposeV2, kNameConv2DTransposeV2, ADPT_DESC(Conv2DTranspose))
 }  // namespace mindspore::transform
