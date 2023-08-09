@@ -1,6 +1,6 @@
 # 分布式集合通信原语
 
-<a href="https://gitee.com/mindspore/mindspore/tree/r2.1/docs/api/api_python/samples/ops/communicate_ops.md" target="_blank"><img src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/r2.1/resource/_static/logo_source.png"></a>
+<a href="https://gitee.com/mindspore/mindspore/blob/r2.1/docs/api/api_python/samples/ops/communicate_ops.md" target="_blank"><img src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/r2.1/resource/_static/logo_source.png"></a>
 
 在分布式训练中涉及例如`AllReduce`、`ReduceScatter`、`AllGather`和`Broadcast`等通信操作进行数据传输，我们将在下述的章节分别阐述其含义和示例代码。
 
