@@ -33,6 +33,13 @@
 namespace mindspore {
 namespace expander {
 namespace {
+void AddDebugInfo(const FuncGraphPtr &fg, const py::object &obj) {
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::object name = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MS_CLASS_NAME, obj);
+  auto cls_name = "TR-" + py::cast<std::string>(name);
+  fg->debug_info()->set_name(cls_name);
+}
+
 void UpdateRecomputeScope(const FuncGraphPtr &fg, const py::object &obj) {
   py::object scope_str =
     python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_SCOPE_NAME, obj);
@@ -62,6 +69,7 @@ void GraphDropout(const FuncGraphPtr &fg) {
 
 void UpdateFuncGraphInBegin(const FuncGraphPtr &fg, const py::object &obj) {
   if (!obj.is_none()) {
+    AddDebugInfo(fg, obj);
     parse::data_converter::SetFuncGraphByCellObj(fg, obj);
     parse::UpdateFuncGraphFlags(obj, fg, true);
   }

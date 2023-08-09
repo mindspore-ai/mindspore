@@ -15,12 +15,18 @@
 
 import numpy as np
 import pytest
+import os
+import random
 
+from mindspore.common import set_seed
 import mindspore as ms
 from mindspore import nn, Tensor
 from mindspore.ops._tracefunc import trace
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore._extends import cell_attr_register
+from mindspore.nn import TrainOneStepCell, WithLossCell
+from mindspore.nn.optim import Momentum
 
 
 @pytest.mark.level0
@@ -96,3 +102,100 @@ def test_trace_python_infer_cell():
     output = net(x, y)
     expect = np.array([[9, 4], [4, 9]])
     assert np.allclose(output.asnumpy(), expect)
+
+class CellDense(nn.Cell):
+    @cell_attr_register
+    def __init__(self, enable_trace):
+        super(CellDense, self).__init__()
+        self.fc = nn.Dense(10, 10)
+        self.enable_trace = enable_trace
+
+    @trace
+    def t1(self, input_x):
+        out = self.fc(input_x)
+        return out
+
+    def t2(self, input_x):
+        out = self.fc(input_x)
+        return out
+
+    def construct(self, input_x):
+        if self.enable_trace:
+            out = self.t1(input_x)
+        else:
+            out = self.t2(input_x)
+        return out
+
+
+class MLP(nn.Cell):
+    def __init__(self, enable_trace):
+        super(MLP, self).__init__()
+        self.batch_size = 1
+        self.fc = nn.Dense(20, 10)
+
+        layers = []
+        for _ in range(2):
+            layer = CellDense(enable_trace)
+            layers.append(layer)
+
+        self.layers = nn.CellList(layers)
+
+    def construct(self, out):
+        out = self.fc(out)
+        for layer_module in self.layers:
+            out = layer_module(out)
+        return out
+
+
+def train(net, data, label):
+    learning_rate = 0.05
+    momentum = 0.9
+
+    optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+    net_with_criterion = WithLossCell(net, criterion)
+    train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
+    train_network.set_train()
+    res_list = []
+    for _ in range(3):
+        res = train_network(data, label)
+        res_list.append(res[0].asnumpy())
+    return res_list
+
+
+def seed_set():
+    set_seed(1)
+    np.random.seed(1)
+    random.seed(1)
+
+
+def get_mlp_cell_reuse_loss(enable_trace):
+    ms.set_context(mode=ms.GRAPH_MODE)
+    os.environ['MS_DEV_CELL_REUSE'] = '1'
+
+    # gen data
+    seed_set()
+    data = Tensor(np.random.random([1, 20]).astype(np.float32) * 0.01)
+    label = Tensor(np.array(np.random.randint(10, size=[1]), dtype=np.int32))
+
+    # cell reuse
+    net = MLP(enable_trace)
+    loss_list = train(net, data, label)
+    del os.environ['MS_DEV_CELL_REUSE']
+
+    return loss_list
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_mlp_cell_reuse_trace():
+    """
+    Feature: cell reuse.
+    Description: MLP with cell reuse.
+    Expectation: No exception.
+    """
+    loss_trace = get_mlp_cell_reuse_loss(True)
+    loss_no_trace = get_mlp_cell_reuse_loss(False)
+    assert np.allclose(loss_trace, loss_no_trace, 0.001, 0.001)
