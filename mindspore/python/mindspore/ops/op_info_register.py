@@ -140,7 +140,7 @@ class RegOp:
     Base class for op info register.
 
     Args:
-        op_name (str): Name of op.
+        op_name (str): Name of operator.
     """
 
     def __init__(self, op_name=""):
@@ -446,10 +446,10 @@ class AkgCpuRegOp(AkgRegOp):
 
 class AiCPURegOp(CpuRegOp):
     r"""
-    Class for AiCPU operator information register.
+    Class for AiCPU operator information registration.
 
     Args:
-        op_name (str):kernel name.
+        op_name (str): Name of operator.
 
     Examples:
         >>> from mindspore.ops import AiCPURegOp, DataType
@@ -481,10 +481,11 @@ class AiCPURegOp(CpuRegOp):
 
 class TBERegOp(RegOp):
     r"""
-    Class for TBE operator information register.
+    Class for TBE operator information registration. TBE (Tensor Boost Engine) is the Ascend operator development
+    tool, which is extended on the basis of the TVM framework to develop custom operators.
 
     Args:
-        op_name (str):kernel name.
+        op_name (str): Name of operator.
 
     Examples:
         >>> import mindspore.ops as ops

@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.TBERegOp(op_name)
 
-    注册TBE算子信息的类。
+    注册TBE算子信息的类。TBE(Tensor Boost Engine)是Ascend算子开发工具，在TVM框架基础上扩展，进行自定义算子开发。
 
     参数：
         - **op_name** (str) - 表示算子名称。
