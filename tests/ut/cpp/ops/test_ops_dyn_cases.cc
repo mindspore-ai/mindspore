@@ -30,4 +30,25 @@ auto EltwiseDynShapeTestCases =
                   EltwiseOpShapeParams{{-1, -1, 2, -1}, {-1, -1, 2, -1}},   /* dynamic shape */
                   EltwiseOpShapeParams{{-2}, {-2}}                          /* dynamic rank */
   );
+
+auto BroadcastOpShapeScalarTensorCases = testing::Values(
+  /* y is number */
+  BroadcastOpShapeParams{{10}, {}, {10}}, BroadcastOpShapeParams{{10, 1, 2}, {}, {10, 1, 2}},
+  BroadcastOpShapeParams{{10, 4, 2}, {}, {10, 4, 2}}, BroadcastOpShapeParams{{10, 1, -1}, {}, {10, 1, -1}},
+  BroadcastOpShapeParams{{-2}, {}, {-2}},
+  /* x is number */
+  BroadcastOpShapeParams{{}, {10}, {10}}, BroadcastOpShapeParams{{}, {10, 1, 2}, {10, 1, 2}},
+  BroadcastOpShapeParams{{}, {10, 4, 2}, {10, 4, 2}}, BroadcastOpShapeParams{{}, {10, 1, -1}, {10, 1, -1}},
+  BroadcastOpShapeParams{{}, {-2}, {-2}});
+
+auto BroadcastOpShapeTensorTensorCases = testing::Values(
+  /* x and y both tensor */
+  BroadcastOpShapeParams{{4, 5}, {2, 3, 4, 5}, {2, 3, 4, 5}},
+  BroadcastOpShapeParams{{2, 1, 4, 5, 6, 9}, {9}, {2, 1, 4, 5, 6, 9}},
+  BroadcastOpShapeParams{{2, 3, 4, -1}, {2, 3, 4, 5}, {2, 3, 4, 5}},
+  BroadcastOpShapeParams{{2, 3, 4, -1}, {-1, -1, 4, 5}, {2, 3, 4, 5}},
+  BroadcastOpShapeParams{{2, 1, 4, -1}, {-1, -1, 4, 5}, {2, -1, 4, 5}},
+  BroadcastOpShapeParams{{2, 1, 4, 5, 6, 9}, {-2}, {-2}}, BroadcastOpShapeParams{{2, 1, 4, 5, -1, 9}, {-2}, {-2}},
+  BroadcastOpShapeParams{{-2}, {2, 1, 4, 5, 6, 9}, {-2}}, BroadcastOpShapeParams{{-2}, {2, 1, 4, 5, -1, 9}, {-2}},
+  BroadcastOpShapeParams{{-2}, {-2}, {-2}});
 }  // namespace mindspore::ops
