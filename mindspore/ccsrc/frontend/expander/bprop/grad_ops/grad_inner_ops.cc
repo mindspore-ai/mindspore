@@ -157,7 +157,7 @@ REG_BPROP_BUILDER("ParallelResizeBilinear").SetUnusedInputs({i2}).SetBody(BODYFU
   return {dx, ib->OutZeros(size)};
 });
 
-REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto shp = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);

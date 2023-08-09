@@ -16,25 +16,19 @@
 
 #include "plugin/device/ascend/optimizer/ge/expander_fallback.h"
 #include <vector>
-#include "backend/common/graph_kernel/adapter/expander.h"
+#include "backend/common/expander/fallback/expander_fallback.h"
 #include "include/transform/graph_ir/utils.h"
 
 namespace mindspore {
 namespace opt {
 bool ExpanderFallback::Run(const FuncGraphPtr &graph) {
-  auto mng = graph->manager();
   bool changed = false;
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (!transform::ConvertCheck(node)) {
-      auto cnode = graphkernel::TryExpandCNode(node, [](const CNodePtr &n) { return true; });
-      if (cnode) {
-        (void)mng->Replace(node, cnode);
-        auto expand_fg = GetCNodeFuncGraph(cnode);
-        graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
-        changed = true;
-      }
+      auto f = [](const CNodePtr &n) { return true; };
+      changed = expander::TryExpandCNode(node, f) || changed;
     }
   }
   return changed;

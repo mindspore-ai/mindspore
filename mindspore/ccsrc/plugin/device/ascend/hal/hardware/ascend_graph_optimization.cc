@@ -29,7 +29,7 @@
 #include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
-#include "backend/common/graph_kernel/adapter/expander.h"
+#include "backend/common/expander/fallback/expander_fallback.h"
 #include "backend/common/graph_kernel/value_graph_binder.h"
 #include "plugin/device/ascend/hal/hardware/ascend_auto_monad.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
@@ -163,6 +163,43 @@ AnfNodePtr DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_f
     graph->AddRefCorrespondPairs(final_pair, new_origin_pair);
   }
   return cloner[func_graph->output()];
+}
+
+bool TryExpandFallback(const KernelGraphPtr &graph, const CNodePtr &node,
+                       const std::pair<std::string, ExceptionType> &failure_info) {
+  auto f = [&graph, ori_node = node, &failure_info](const CNodePtr &n) mutable {
+    auto [status, msg, etype] = device::ascend::SelectKernelInfoWithMsg(n);
+    MS_LOG(DEBUG) << "Node " << n->fullname_with_scope() << " select kernel status: " << status;
+    if (msg.empty()) {
+      // select ascend kernel success.
+      return true;
+    }
+    // select ascend kernel failed, first try to use CPU kernel for original op.
+    if (ori_node != nullptr) {
+      MS_LOG(DEBUG) << "The basic op " << n->fullname_with_scope()
+                    << " select kernel failed. Try to backoff on CPU for original op "
+                    << ori_node->fullname_with_scope();
+      if (TryBackoffCpu(graph, ori_node, failure_info).empty()) {
+        // original node use cpu kernel, stop expanding.
+        MS_LOG(DEBUG) << "Original op " << ori_node->fullname_with_scope() << " use CPU kernel.";
+        return false;
+      } else {
+        MS_LOG(DEBUG) << "Failed to backoff on CPU for original op " << ori_node->fullname_with_scope()
+                      << ", try to backoff on CPU for basic op " << n->fullname_with_scope();
+      }
+      // only try once for original node.
+      ori_node = nullptr;
+    } else {
+      MS_LOG(DEBUG) << "The basic op " << n->fullname_with_scope() << " select kernel failed, try to backoff on CPU";
+    }
+    // Original op cannot backoff on CPU, try to use CPU kernel for current op.
+    if (TryBackoffCpu(graph, n, std::make_pair(msg, etype)).empty()) {
+      MS_LOG(DEBUG) << "The basic op " << n->fullname_with_scope() << " use CPU kernel";
+      return true;
+    }
+    return false;
+  };
+  return expander::TryExpandCNode(node, f);
 }
 }  // namespace
 
@@ -690,22 +727,14 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
       }
       MS_LOG(DEBUG) << "Select ApplyKernel: " << node->DebugString();
     } else {
-      auto f = [](const CNodePtr &n) {
-        auto res = device::ascend::SelectKernelInfoWithMsg(n);
-        constexpr int one = 1;
-        return std::get<one>(res).empty();
-      };
-      auto cnode = graphkernel::TryExpandCNode(node, f);
-      if (cnode == nullptr) {
+      bool expand_ret = TryExpandFallback(graph, node, std::make_pair(msg, etype));
+      if (expand_ret) {
+        MS_LOG(INFO) << msg << " but expand success.";
+        do_expand = true;
+      } else {
         std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
         device::ascend::HandleKernelSelectFailure(graph, node, failure_info);
-        continue;
       }
-      (void)mng->Replace(node, cnode);
-      MS_LOG(INFO) << msg << " but expand success.";
-      auto expand_fg = GetCNodeFuncGraph(cnode);
-      graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
-      do_expand = true;
     }
   }
   if (do_expand) {

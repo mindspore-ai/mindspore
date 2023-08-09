@@ -51,7 +51,7 @@
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
 #include "backend/common/pass/dynamic_sequence_ops_adaptation.h"
 #include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
-#include "backend/common/graph_kernel/adapter/expander.h"
+#include "backend/common/expander/fallback/expander_fallback.h"
 #include "backend/common/graph_kernel/value_graph_binder.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -357,16 +357,13 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
         auto res = SetKernelInfoWithMsg(n);
         return res.first.empty();
       };
-      auto cnode = graphkernel::TryExpandCNode(node, f);
-      if (cnode == nullptr) {
+      auto expand_ret = expander::TryExpandCNode(node, f);
+      if (!expand_ret) {
         constexpr auto recursive_level = 2;
         MS_EXCEPTION(etype) << "#umsg#Kernel select failed:#umsg#" << msg
                             << "\nnode: " << node->DebugString(recursive_level);
       }
-      (void)mng->Replace(node, cnode);
       MS_LOG(INFO) << msg << " but expand success.";
-      auto expand_fg = GetCNodeFuncGraph(cnode);
-      graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
       do_expand = true;
     } else {
       SetControlOpInfo(node);

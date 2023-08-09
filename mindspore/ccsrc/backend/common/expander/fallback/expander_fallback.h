@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-#include "backend/common/graph_kernel/expanders/op_desc_registry.h"
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_EXPANDER_FALLBACK_EXPANDER_FALLBACK_H_
+#define MINDSPORE_CCSRC_BACKEND_COMMON_EXPANDER_FALLBACK_EXPANDER_FALLBACK_H_
 
-namespace mindspore::graphkernel::expanders {
-class SiLU : public OpDesc {
- public:
-  SiLU() = default;
-  ~SiLU() = default;
+#include <functional>
+#include "ir/anf.h"
+#include "include/backend/visible.h"
 
- protected:
-  NodePtrList Expand(const NodePtrList &inputs) override {
-    const auto &input_x = inputs[0];
-    auto y = gb.Emit("Sigmoid", {input_x}, {});
-    return {gb.Mul(input_x, y)};
-  }
-};
-EXPANDER_OP_DESC_REGISTER("SiLU", SiLU);
-}  // namespace mindspore::graphkernel::expanders
+namespace mindspore {
+namespace expander {
+BACKEND_EXPORT bool TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &)> &func);
+}  // namespace expander
+}  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_EXPANDER_FALLBACK_EXPANDER_FALLBACK_H_

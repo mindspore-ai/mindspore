@@ -37,10 +37,6 @@
 
 namespace mindspore {
 namespace expander {
-namespace deprecated {
-using ShapeFunc = std::function<ShapeArray(const ShapeArray &)>;
-using InferFunc = std::function<ShapeVector(const ShapeArray &, const std::unordered_set<size_t> &)>;
-}  // namespace deprecated
 using ShapeValidFunc = std::function<bool(size_t, const ShapeVector &)>;
 
 class COMMON_EXPORT Emitter {
@@ -53,162 +49,151 @@ class COMMON_EXPORT Emitter {
   virtual ~Emitter() = default;
 
   /// \brief Emit a primitive CNode
-  NodePtr Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs = {}) const;
+  NodePtr Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs = {});
 
   /// \brief Emit a ValueNode
-  NodePtr EmitValue(const ValuePtr &value) const;
+  NodePtr EmitValue(const ValuePtr &value);
 
-  NodePtr MakeTuple(const NodePtrList &inputs) const { return EmitOp(prim::kPrimMakeTuple, inputs); }
-  NodePtr MakeList(const NodePtrList &inputs) const { return EmitOp(prim::kPrimMakeList, inputs); }
-  NodePtr TupleGetItem(const NodePtr &input, size_t i) const {
+  NodePtr MakeTuple(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeTuple, inputs); }
+  NodePtr MakeList(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeList, inputs); }
+  NodePtr TupleGetItem(const NodePtr &input, size_t i) {
     return Emit(mindspore::kTupleGetItemOpName, {input, Value(static_cast<int64_t>(i))});
   }
 
-  NodePtr Cast(const NodePtr &node, const TypePtr &type) const;
-  NodePtr Cast(const NodePtr &node, TypeId type_id) const { return Cast(node, TypeIdToType(type_id)); }
+  NodePtr Cast(const NodePtr &node, const TypePtr &type);
+  NodePtr Cast(const NodePtr &node, TypeId type_id) { return Cast(node, TypeIdToType(type_id)); }
 
-  NodePtr Reshape(const NodePtr &node, const NodePtr &shape) const;
-  NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) const { return Reshape(node, Value(shape)); }
-  NodePtr ExpandDims(const NodePtr &node, int64_t axis) const { return Emit(kExpandDimsOpName, {node, Value(axis)}); }
-  NodePtr Abs(const NodePtr &node) const { return Emit(mindspore::kAbsOpName, {node}); }
-  NodePtr Neg(const NodePtr &node) const { return Emit(mindspore::kNegOpName, {node}); }
-  NodePtr Reciprocal(const NodePtr &node) const { return Emit(mindspore::kReciprocalOpName, {node}); }
-  NodePtr Square(const NodePtr &node) const { return Emit(mindspore::kSquareOpName, {node}); }
-  NodePtr Sign(const NodePtr &node) const { return Emit(prim::kPrimSign->name(), {node}); }
-  NodePtr Exp(const NodePtr &x) const;
-  NodePtr Log(const NodePtr &x) const;
-  NodePtr Transpose(const NodePtr &node, const NodePtr &perm) const;
-  NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) const { return Transpose(node, Value(perm)); }
-  NodePtr Tile(const NodePtr &node, const NodePtr &multiples) const;
-  NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) const { return Tile(node, Value(multiples)); }
-  NodePtr Concat(const NodePtrList &inputs, int64_t axis) const {
+  NodePtr Reshape(const NodePtr &node, const NodePtr &shape);
+  NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) { return Reshape(node, Value(shape)); }
+  NodePtr ExpandDims(const NodePtr &node, int64_t axis) { return Emit(kExpandDimsOpName, {node, Value(axis)}); }
+  NodePtr Abs(const NodePtr &node) { return Emit(mindspore::kAbsOpName, {node}); }
+  NodePtr Neg(const NodePtr &node) { return Emit(mindspore::kNegOpName, {node}); }
+  NodePtr Reciprocal(const NodePtr &node) { return Emit(mindspore::kReciprocalOpName, {node}); }
+  NodePtr Square(const NodePtr &node) { return Emit(mindspore::kSquareOpName, {node}); }
+  NodePtr Sign(const NodePtr &node) { return Emit(prim::kPrimSign->name(), {node}); }
+  NodePtr Exp(const NodePtr &x);
+  NodePtr Log(const NodePtr &x);
+  NodePtr Transpose(const NodePtr &node, const NodePtr &perm);
+  NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) { return Transpose(node, Value(perm)); }
+  NodePtr Tile(const NodePtr &node, const NodePtr &multiples);
+  NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) { return Tile(node, Value(multiples)); }
+  NodePtr Concat(const NodePtrList &inputs, int64_t axis) {
     return Emit(kConcatOpName, {MakeTuple(inputs)}, {{kAttrAxis, MakeValue(axis)}});
   }
 
-  NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) const {
-    return UnifyDtypeAndEmit(mindspore::kAddOpName, lhs, rhs);
-  }
-  NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) const {
-    return UnifyDtypeAndEmit(mindspore::kSubOpName, lhs, rhs);
-  }
-  NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) const {
-    return UnifyDtypeAndEmit(mindspore::kMulOpName, lhs, rhs);
-  }
-  NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kDivOpName, lhs, rhs); }
-  NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const {
+  NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(mindspore::kAddOpName, lhs, rhs); }
+  NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(mindspore::kSubOpName, lhs, rhs); }
+  NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(mindspore::kMulOpName, lhs, rhs); }
+  NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(kDivOpName, lhs, rhs); }
+  NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) {
     return UnifyDtypeAndEmit(mindspore::kRealDivOpName, lhs, rhs);
   }
-  NodePtr Mod(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("Mod", lhs, rhs); }
-  NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kPowOpName, lhs, rhs); }
-  NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
-  NodePtr BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
-  NodePtr Maximum(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kMaximumOpName, lhs, rhs); }
-  NodePtr Minimum(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kMinimumOpName, lhs, rhs); }
-  NodePtr FloorDiv(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("FloorDiv", lhs, rhs); }
-  NodePtr FloorMod(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("FloorMod", lhs, rhs); }
-  NodePtr DivNoNan(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("DivNoNan", lhs, rhs); }
-  NodePtr MulNoNan(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("MulNoNan", lhs, rhs); }
-  NodePtr Xdivy(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("Xdivy", lhs, rhs); }
-  NodePtr Xlogy(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("Xlogy", lhs, rhs); }
+  NodePtr Mod(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("Mod", lhs, rhs); }
+  NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(kPowOpName, lhs, rhs); }
+  NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false);
+  NodePtr BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false);
+  NodePtr Maximum(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(kMaximumOpName, lhs, rhs); }
+  NodePtr Minimum(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(kMinimumOpName, lhs, rhs); }
+  NodePtr FloorDiv(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("FloorDiv", lhs, rhs); }
+  NodePtr FloorMod(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("FloorMod", lhs, rhs); }
+  NodePtr DivNoNan(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("DivNoNan", lhs, rhs); }
+  NodePtr MulNoNan(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("MulNoNan", lhs, rhs); }
+  NodePtr Xdivy(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("Xdivy", lhs, rhs); }
+  NodePtr Xlogy(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("Xlogy", lhs, rhs); }
 
-  NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
+  NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) {
     auto [a, b] = UnifyDtype2(lhs, rhs);
     return Emit(kSelectOpName, {cond, a, b});
   }
-  NodePtr Less(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+  NodePtr Less(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
     return CmpOpWithCast(kLessOpName, lhs, rhs, dst_type);
   }
-  NodePtr LessEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+  NodePtr LessEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
     return CmpOpWithCast(kLessEqualOpName, lhs, rhs, dst_type);
   }
-  NodePtr Greater(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+  NodePtr Greater(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
     return CmpOpWithCast(kGreaterOpName, lhs, rhs, dst_type);
   }
-  NodePtr GreaterEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+  NodePtr GreaterEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
     return CmpOpWithCast(kGreaterEqualOpName, lhs, rhs, dst_type);
   }
-  NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+  NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
     return CmpOpWithCast(kEqualOpName, lhs, rhs, dst_type);
   }
-  NodePtr NotEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
+  NodePtr NotEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
     return CmpOpWithCast("NotEqual", lhs, rhs, dst_type);
   }
-  NodePtr LogicalAnd(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalAnd", {lhs, rhs}); }
-  NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalOr", {lhs, rhs}); }
+  NodePtr LogicalAnd(const NodePtr &lhs, const NodePtr &rhs) { return Emit("LogicalAnd", {lhs, rhs}); }
+  NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) { return Emit("LogicalOr", {lhs, rhs}); }
 
-  NodePtr OnesLike(const NodePtr &x) const { return Emit("OnesLike", {x}); }
-  NodePtr UnsortedSegmentSum(const NodePtr &x, const NodePtr &segment_ids, const NodePtr &num_segments) const {
+  NodePtr OnesLike(const NodePtr &x) { return Emit("OnesLike", {x}); }
+  NodePtr UnsortedSegmentSum(const NodePtr &x, const NodePtr &segment_ids, const NodePtr &num_segments) {
     return Emit("UnsortedSegmentSum", {x, segment_ids, num_segments});
   }
-  NodePtr GatherNd(const NodePtr &input_x, const NodePtr &indices) const {
-    return Emit("GatherNd", {input_x, indices});
-  }
-  NodePtr ScatterNd(const NodePtr &indices, const NodePtr &update, const NodePtr &shape) const {
+  NodePtr GatherNd(const NodePtr &input_x, const NodePtr &indices) { return Emit("GatherNd", {input_x, indices}); }
+  NodePtr ScatterNd(const NodePtr &indices, const NodePtr &update, const NodePtr &shape) {
     return Emit("ScatterNd", {indices, update, shape});
   }
-  NodePtr Stack(const NodePtr &x, const ValuePtr &axis) const { return Emit("Stack", {x}, {{"axis", axis}}); }
-  NodePtr Stack(const NodePtrList &x, int64_t axis) const { return Stack(MakeTuple(x), MakeValue(axis)); }
-  NodePtr TensorScatterUpdate(const NodePtr &input_x, const NodePtr &indices, const NodePtr &updates) const {
+  NodePtr Stack(const NodePtr &x, const ValuePtr &axis) { return Emit("Stack", {x}, {{"axis", axis}}); }
+  NodePtr Stack(const NodePtrList &x, int64_t axis) { return Stack(MakeTuple(x), MakeValue(axis)); }
+  NodePtr TensorScatterUpdate(const NodePtr &input_x, const NodePtr &indices, const NodePtr &updates) {
     return Emit("TensorScatterUpdate", {input_x, indices, updates});
   }
-  NodePtr Slice(const NodePtr &x, const NodePtr &begin, const NodePtr &size) const {
-    return Emit("Slice", {x, begin, size});
-  }
-  NodePtr Squeeze(const NodePtr &x, const ValuePtr &axis) const { return Emit("Squeeze", {x}, {{"axis", axis}}); }
-  NodePtr Sqrt(const NodePtr &x) const { return Emit("Sqrt", {x}); }
-  NodePtr MatrixSetDiagV3(const NodePtr &x, const NodePtr &diagonal, const NodePtr &k, const ValuePtr &align) const {
+  NodePtr Slice(const NodePtr &x, const NodePtr &begin, const NodePtr &size) { return Emit("Slice", {x, begin, size}); }
+  NodePtr Squeeze(const NodePtr &x, const ValuePtr &axis) { return Emit("Squeeze", {x}, {{"axis", axis}}); }
+  NodePtr Sqrt(const NodePtr &x) { return Emit("Sqrt", {x}); }
+  NodePtr MatrixSetDiagV3(const NodePtr &x, const NodePtr &diagonal, const NodePtr &k, const ValuePtr &align) {
     const auto diag_max_length = 200000000;
     return Emit("MatrixSetDiagV3", {x, diagonal, k},
                 {{"max_length", MakeValue<int64_t>(diag_max_length)}, {"align", align}});
   }
-  NodePtr MatrixDiagPartV3(const NodePtr &x, const NodePtr &diagonal, const NodePtr &k, const ValuePtr &align) const {
+  NodePtr MatrixDiagPartV3(const NodePtr &x, const NodePtr &diagonal, const NodePtr &k, const ValuePtr &align) {
     const auto diag_max_length = 200000000;
     return Emit("MatrixDiagPartV3", {x, diagonal, k},
                 {{"max_length", MakeValue<int64_t>(diag_max_length)}, {"align", align}});
   }
-  NodePtr LinSpace(const NodePtr &start, const NodePtr &stop, const NodePtr &num) const {
+  NodePtr LinSpace(const NodePtr &start, const NodePtr &stop, const NodePtr &num) {
     return Emit("LinSpace", {start, stop, num});
   }
 
   // complex
-  NodePtr Conj(const NodePtr &input) const {
+  NodePtr Conj(const NodePtr &input) {
     TypeId type_id = input->dtype()->type_id();
     if (type_id == kNumberTypeComplex64 || type_id == kNumberTypeComplex128) {
       return Emit("Conj", {input});
     }
     return input;
   }
-  NodePtr Complex(const NodePtr &real, const NodePtr &imag) const { return Emit("Complex", {real, imag}); }
+  NodePtr Complex(const NodePtr &real, const NodePtr &imag) { return Emit("Complex", {real, imag}); }
 
-  NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) const {
+  NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) {
     return Emit("CumProd", {x, axis}, {{"exclusive", exclusive}, {"reverse", reverse}});
   }
-  NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const bool &exclusive, const bool &reverse) const {
+  NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const bool &exclusive, const bool &reverse) {
     return CumProd(x, axis, MakeValue(exclusive), MakeValue(reverse));
   }
-  NodePtr CumSum(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) const {
+  NodePtr CumSum(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) {
     return Emit("CumSum", {x, axis}, {{"exclusive", exclusive}, {"reverse", reverse}});
   }
-  NodePtr CumSum(const NodePtr &x, const NodePtr &axis, const bool &exclusive, const bool &reverse) const {
+  NodePtr CumSum(const NodePtr &x, const NodePtr &axis, const bool &exclusive, const bool &reverse) {
     return CumSum(x, axis, MakeValue(exclusive), MakeValue(reverse));
   }
-  NodePtr CSR2COO(const NodePtr &indptr, const NodePtr &nnz) const { return Emit("CSR2COO", {indptr, nnz}); }
+  NodePtr CSR2COO(const NodePtr &indptr, const NodePtr &nnz) { return Emit("CSR2COO", {indptr, nnz}); }
 
   std::pair<bool, ShapeVector> NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis, bool keep_dim,
                                           bool skip_mode = false) const;
-  std::pair<bool, NodePtr> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim,
-                                      bool skip_mode = false) const;
-  NodePtr ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims = false, bool skip_mode = false) const;
-  NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false) const;
+  std::pair<bool, NodePtr> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim, bool skip_mode = false);
+  NodePtr ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims = false, bool skip_mode = false);
+  NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false);
 
-  NodePtr ZerosLike(const NodePtr &node) const;
-  NodePtr Depend(const NodePtr &value, const NodePtr &expr) const {
+  NodePtr ZerosLike(const NodePtr &node);
+  NodePtr Depend(const NodePtr &value, const NodePtr &expr) {
     return Emit("Depend", {value, expr}, {{"side_effect_propagate", MakeValue(1)}});
   }
-  NodePtr Fill(double value, const ShapeVector &shape, TypeId data_type) const;
-  NodePtr Fill(int64_t value, const ShapeVector &shape, TypeId data_type) const;
+  NodePtr Fill(double value, const ShapeVector &shape, TypeId data_type);
+  NodePtr Fill(int64_t value, const ShapeVector &shape, TypeId data_type);
   template <typename T>
-  NodePtr Fill(const T &value, const NodePtr &shape, TypeId data_type) const {
+  NodePtr Fill(const T &value, const NodePtr &shape, TypeId data_type) {
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->isa<ValueNode>()) {
       auto value_node = shape->get<ValueNodePtr>();
@@ -221,7 +206,7 @@ class COMMON_EXPORT Emitter {
     return Emit("DynamicBroadcastTo", {value_tensor, shape});
   }
 
-  NodePtr Shape(const NodePtr &node, bool tensor = false) const {
+  NodePtr Shape(const NodePtr &node, bool tensor = false) {
     auto shape = node->shape();
     if (tensor) {
       return IsDynamic(shape) ? Emit("TensorShape", {node}) : Tensor(shape);
@@ -230,33 +215,33 @@ class COMMON_EXPORT Emitter {
     }
   }
 
-  NodePtr Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims = 0) const;
-  NodePtr Gather(const NodePtr &params, const NodePtr &indices, const NodePtr &axis, int64_t batch_dims = 0) const;
-  NodePtr GatherD(const NodePtr &x, const NodePtr &dim, const NodePtr &index) const {
+  NodePtr Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims = 0);
+  NodePtr Gather(const NodePtr &params, const NodePtr &indices, const NodePtr &axis, int64_t batch_dims = 0);
+  NodePtr GatherD(const NodePtr &x, const NodePtr &dim, const NodePtr &index) {
     return Emit("GatherD", {x, dim, index});
   }
 
   /// \brief Emit a value node
   template <typename T>
-  NodePtr Value(const T &value) const {
+  NodePtr Value(const T &value) {
     return EmitValue(MakeValue(value));
   }
 
   /// \brief Emit a Tensor node.
   template <typename T>
-  NodePtr Tensor(T data, TypePtr type_ptr = nullptr) const {
+  NodePtr Tensor(T data, TypePtr type_ptr = nullptr) {
     auto tensor_ptr = std::make_shared<tensor::Tensor>(data, type_ptr);
     return EmitValue(tensor_ptr);
   }
 
   /// \brief Emit a tensor node.
-  NodePtr Tensor(TypeId data_type, const ShapeVector &shape, void *data, TypeId src_data_type) const {
+  NodePtr Tensor(TypeId data_type, const ShapeVector &shape, void *data, TypeId src_data_type) {
     auto tensor_ptr = std::make_shared<tensor::Tensor>(data_type, shape, data, src_data_type);
     return EmitValue(tensor_ptr);
   }
 
   /// \brief get the ExpanderInferPtr
-  ExpanderInferPtr infer() const { return infer_; }
+  const ExpanderInferPtr &infer() const { return infer_; }
 
   /// \brief Shape calculation. This interface is used to unify the code between static-shape and dynamic-shape
   /// situation, the output type is depend on types of inputs.
@@ -268,10 +253,9 @@ class COMMON_EXPORT Emitter {
   /// \return NodePtrList, the outputs shape list. When inputs are all static-shape tensors, shape vectors are returned.
   /// otherwise CNode tensors are returned.
   NodePtrList ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
-                        const std::vector<int64_t> &value_depend = {},
-                        const ShapeValidFunc &valid_func = nullptr) const;
+                        const std::vector<int64_t> &value_depend = {}, const ShapeValidFunc &valid_func = nullptr);
 
-  using BlockFunc = std::function<NodePtrList(const Emitter *)>;
+  using BlockFunc = std::function<NodePtrList(Emitter *)>;
   /// \brief Generate a conditional block.
   ///
   /// \param[in] cond condition node, it should be a tensor of Bool.
@@ -281,7 +265,7 @@ class COMMON_EXPORT Emitter {
   /// \note The overloaded operators (like a+b) should not be used for captured variables in the true_case/false_case
   /// functions, use the function argument `Emitter` instead, like `emitter->Add(a, b)`. The output list of two branches
   /// should match the join rules of control flow.
-  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) const;
+  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case);
 
   /// \brief Generate a while-loop block.
   ///
@@ -292,17 +276,17 @@ class COMMON_EXPORT Emitter {
   /// \note The overloaded operators (like `a+b`) should not be used for captured variables in the body function, use
   /// the function argument `Emitter` instead, like `emitter->Add(a, b)`. The length and node order of the output list
   /// of the body function should match init_list.
-  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) const;
+  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list);
 
  protected:
-  virtual NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const;
-  NodePtr NewNode(const AnfNodePtr &anfnode) const { return std::make_shared<Node>(anfnode, this); }
-  NodePtr CmpOpWithCast(const std::string &op, const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) const {
+  virtual NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs);
+  NodePtr NewNode(const AnfNodePtr &anfnode) { return std::make_shared<Node>(anfnode, this); }
+  NodePtr CmpOpWithCast(const std::string &op, const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) {
     auto node = UnifyDtypeAndEmit(op, lhs, rhs);
     return dst_type == nullptr ? node : Cast(node, dst_type);
   }
-  std::tuple<NodePtr, NodePtr> UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) const;
-  NodePtr UnifyDtypeAndEmit(const std::string &op, const NodePtr &a, const NodePtr &b, const DAttr &attrs = {}) const {
+  std::tuple<NodePtr, NodePtr> UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs);
+  NodePtr UnifyDtypeAndEmit(const std::string &op, const NodePtr &a, const NodePtr &b, const DAttr &attrs = {}) {
     auto [lhs, rhs] = UnifyDtype2(a, b);
     return Emit(op, {lhs, rhs}, attrs);
   }
@@ -337,6 +321,48 @@ COMMON_EXPORT NodePtr operator-(const NodePtr &lhs, const NodePtr &rhs);
 COMMON_EXPORT NodePtr operator*(const NodePtr &lhs, const NodePtr &rhs);
 COMMON_EXPORT NodePtr operator/(const NodePtr &lhs, const NodePtr &rhs);
 COMMON_EXPORT NodePtr operator-(const NodePtr &node);
+
+class PureShapeCalc : public ShapeCalcFunctor {
+ public:
+  using CalcFunc = ShapeArray (*)(const ShapeArray &);
+  using InferFunc = std::vector<int64_t> (*)(const ShapeArray &, const HashSet<size_t> &);
+  explicit PureShapeCalc(const std::string &name) : ShapeCalcFunctor(name) {
+    FunctorRegistry::Instance().Register(name, [this]() { return shared_from_base<Functor>(); });
+  }
+  PureShapeCalc(const PureShapeCalc &) = delete;
+  PureShapeCalc(PureShapeCalc &&) = delete;
+  PureShapeCalc &operator=(const PureShapeCalc &) = delete;
+  PureShapeCalc &operator=(PureShapeCalc &&) = delete;
+  ~PureShapeCalc() override = default;
+  MS_DECLARE_PARENT(PureShapeCalc, ShapeCalcFunctor)
+
+  ValuePtr ToValue() const override { return nullptr; }
+  void FromValue(const ValuePtr &) override {}
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    MS_EXCEPTION_IF_CHECK_FAIL(calc_func_ != nullptr, "The calc_func of " + name() + " is nullptr");
+    return calc_func_(inputs);
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) const override {
+    MS_EXCEPTION_IF_CHECK_FAIL(infer_func_ != nullptr, "The infer_func of " + name() + " is nullptr");
+    return infer_func_(inputs, unknown_inputs);
+  }
+
+  PureShapeCalc &SetCalc(const CalcFunc &calc_func) {
+    calc_func_ = calc_func;
+    return *this;
+  }
+  std::shared_ptr<PureShapeCalc> SetInfer(const InferFunc &infer_func) {
+    infer_func_ = infer_func;
+    return shared_from_base<PureShapeCalc>();
+  }
+
+  CalcFunc calc_func_{nullptr};
+  InferFunc infer_func_{nullptr};
+};
+
+#define DEF_PURE_SHAPE_CALC(name) \
+  static const std::shared_ptr<PureShapeCalc> name = (*(std::make_shared<PureShapeCalc>("ShapeCalc_" #name)))
+
 }  // namespace expander
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_EMITTER_H_

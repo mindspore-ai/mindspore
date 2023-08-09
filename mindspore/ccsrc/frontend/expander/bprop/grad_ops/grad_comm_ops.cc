@@ -21,7 +21,7 @@
 
 namespace mindspore::expander::bprop {
 REG_BPROP_BUILDERS_BEGIN(GradCommOps)
-REG_BPROP_BUILDER("AllReduce").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("AllReduce").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -51,7 +51,7 @@ REG_BPROP_BUILDER("AllReduce").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   }
 });
 
-REG_BPROP_BUILDER("AllGather").SetUnusedInputs({i0, i1}).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("AllGather").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit(kReduceScatterOpName, {dout},
                      {{"op", MakeValue("sum")},
@@ -74,7 +74,7 @@ REG_BPROP_BUILDER("AllGather").SetUnusedInputs({i0, i1}).SetBody([](const BpropI
   return {dx};
 });
 
-REG_BPROP_BUILDER("_MirrorOperator").SetUnusedInputs({i0, i1}).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("_MirrorOperator").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto dev_num = GetValue<int64_t>(ib->GetAttr("dev_num"));
   bool mean_flag = GetValue<bool>(ib->GetAttr("mean_flag"));

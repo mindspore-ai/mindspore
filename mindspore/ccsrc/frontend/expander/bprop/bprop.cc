@@ -43,7 +43,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
   }
   ~PynativeIRBuilder() = default;
 
-  NodePtr OutZeros(const NodePtr &node) const override {
+  NodePtr OutZeros(const NodePtr &node) override {
     need_infer_ = false;
     auto ret = Emit(kZerosLikeOpName, {node});
     need_infer_ = true;
@@ -51,7 +51,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
   }
 
  protected:
-  NodePtr EmitGetItemValue(const NodePtrList &inputs) const {
+  NodePtr EmitGetItemValue(const NodePtrList &inputs) {
     auto real_input = inputs[0]->get<ValueNodePtr>();
     if (real_input != nullptr) {
       auto real_input_value = real_input->value()->cast<ValueSequeuePtr>();
@@ -65,7 +65,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
     return nullptr;
   }
 
-  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const override {
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override {
     if (prim->name() == prim::kPrimShapeCalc->name()) {
       // temporary solution, remove this after input parameter's value is set.
       throw ShapeCalcException("ShapeCalc is not supported in pynative mode.");
@@ -108,7 +108,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
 
   UserMap *users_;
   AnfNodePtr dout_;
-  mutable bool need_infer_{true};
+  bool need_infer_{true};
 };
 
 bool BpropExpander::Run(const CNodePtr &cnode, const std::vector<ValuePtr> &input_values) {
@@ -339,7 +339,7 @@ class GraphModeBuilder : public BpropIRBuilder {
   }
 
  protected:
-  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const override {
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override {
     if (prim->name() == "Switch") {
       has_ctrl_flow_ = true;
     }
@@ -359,7 +359,7 @@ class GraphModeBuilder : public BpropIRBuilder {
     return node;
   }
 
-  mutable bool has_ctrl_flow_{false};
+  bool has_ctrl_flow_{false};
 };
 
 bool ExpandBpropInGraphMode(const BpropHandle *handle, const PrimitivePtr &prim, const FuncGraphPtr &graph) {
