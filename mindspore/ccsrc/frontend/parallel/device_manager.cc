@@ -436,24 +436,8 @@ Status DeviceManager::CreateGroup(const std::string &group_name,
   return SUCCESS;
 }
 
-Status DeviceManager::CreateGlobalGroup(const std::string &group_name, const std::vector<Device> &devices,
-                                        Group *const comm_group) {
-  RankList rank_list;
-  (void)std::transform(devices.begin(), devices.end(), std::back_inserter(rank_list),
-                       [](const Device &device) { return device.rank(); });
-  if (CheckDeviceList(rank_list) != SUCCESS) {
-    MS_LOG(ERROR) << "Create communication group failed, the rank list is: " << rank_list;
-    return FAILED;
-  }
-  if (gm_.CreateGlobalGroup(group_name, devices, comm_group) != SUCCESS) {
-    return FAILED;
-  }
-  group_to_rank_[group_name] = RankListName(rank_list);
-  return SUCCESS;
-}
-
 // Create the group with only the given devices' ranks.
-Status DeviceManager::CreateGroup(const RankList &dev_ranks, Group *const comm_group, bool is_world_group) {
+Status DeviceManager::CreateGroup(const RankList &dev_ranks, Group *const comm_group) {
   mindspore::HashSet<int64_t> rank_set(dev_ranks.begin(), dev_ranks.end());
   if (dev_ranks.size() != rank_set.size()) {
     MS_LOG(ERROR) << "Invalid dev ranks(" << dev_ranks << "), it has the Duplicate elements in list";
@@ -465,9 +449,6 @@ Status DeviceManager::CreateGroup(const RankList &dev_ranks, Group *const comm_g
   }
   std::string group_name = GenerateGroupNameByRanks(dev_ranks);
   auto dev_list = CreateDeviceListByRankList(dev_ranks);
-  if (is_world_group) {
-    return CreateGlobalGroup(group_name, dev_list, comm_group);
-  }
   return CreateGroup(group_name, dev_list, comm_group);
 }
 
