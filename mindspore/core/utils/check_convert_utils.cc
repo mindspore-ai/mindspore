@@ -403,6 +403,10 @@ bool CheckElementAbstractUnSupport(const AbstractBasePtr abs) {
   if (abs->isa<abstract::AbstractAny>()) {
     return true;
   }
+  auto abs_type = abs->BuildType();
+  if (abs_type != nullptr && abs_type->isa<External>()) {
+    return true;
+  }
   return false;
 }
 
