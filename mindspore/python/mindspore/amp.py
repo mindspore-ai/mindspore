@@ -15,11 +15,13 @@
 """ms function for mixed precision."""
 from __future__ import absolute_import
 
+import os
 from abc import ABC, abstractmethod
 from mindspore.common import mutable
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloatStatusV2
 from mindspore import _checkparam as validator
+from mindspore._c_expression import MSContext
 from .common import dtype as mstype
 from . import context
 from . import ops
@@ -37,8 +39,13 @@ _partial = ops.Partial()
 
 
 @constexpr
-def _ascend_target():
-    return context.get_context("device_target") == "Ascend"
+def _ascend_910A_target():
+    return MSContext.get_instance().get_ascend_soc_version() == "ascend910"
+
+
+@constexpr
+def _ascend_910B_target():
+    return MSContext.get_instance().get_ascend_soc_version() == "ascend910b"
 
 
 @constexpr
@@ -72,9 +79,10 @@ def _overflow(inputs):
 
 
 @jit
-def _all_finite(inputs):
+def _all_finite(inputs, check_overflow_mode):
     """all finite check"""
-    if _ascend_target():
+    if (_ascend_910A_target()) or \
+       (_ascend_910B_target() and check_overflow_mode != "INFNAN_MODE"):
         status = Tensor([0] * 8, mstype.int32)
         status = ops.depend(status, inputs)
         get_status = _get_cache_prim(NPUGetFloatStatusV2)()(status)
@@ -120,7 +128,8 @@ def all_finite(inputs):
           <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
     """
     inputs = mutable(inputs)
-    return _all_finite(inputs)
+    _check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
+    return _all_finite(inputs, _check_overflow_mode)
 
 
 @jit_class

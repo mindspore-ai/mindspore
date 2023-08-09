@@ -15,6 +15,7 @@
 """Loss scale cell for loss scale training."""
 from __future__ import absolute_import
 
+import os
 import mindspore.context as context
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_enable_parallel_optimizer
@@ -30,6 +31,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit
+from mindspore._c_expression import MSContext
 
 _grad_scale = C.MultitypeFuncGraph("grad_scale")
 reciprocal = P.Reciprocal()
@@ -58,6 +60,28 @@ def _tensor_grad_overflow(grad):
 @_grad_overflow.register("RowTensor")
 def _tensor_grad_overflow_row_tensor(grad):
     return grad_overflow(grad.values)
+
+
+_ascend_grad_overflow = C.MultitypeFuncGraph("_ascend_grad_overflow")
+ascend_grad_overflow = P.IsFinite()
+
+
+@_ascend_grad_overflow.register("Tensor")
+def _tensor_ascend_grad_overflow(grad):
+    status = ascend_grad_overflow(grad)
+    base = Tensor(1.0, dtype=mstype.float32)
+    output = base - status.all()
+    output = P.Reshape()(output, ((1,)))
+    return output
+
+
+@_ascend_grad_overflow.register("RowTensor")
+def _tensor_ascend_grad_overflow_row_tensor(grad):
+    status = ascend_grad_overflow(grad.values)
+    base = Tensor(1.0, dtype=mstype.float32)
+    output = base - status.all()
+    output = P.Reshape()(output, ((1,)))
+    return output
 
 
 class DynamicLossScaleUpdateCell(Cell):
@@ -343,7 +367,12 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         self.allreduce = P.AllReduce()
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.gpu_target = (context.get_context("device_target") == "GPU")
+        self.ascend_910a_target = (MSContext.get_instance().get_ascend_soc_version() == 'ascend910')
+        self.ascend_910b_target = (MSContext.get_instance().get_ascend_soc_version() == 'ascend910b')
         self.loss_scaling_manager = None
+        self._ascend910b_check_overflow_status_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
+
+
         if isinstance(scale_sense, Cell):
             self.loss_scaling_manager = scale_sense
             self.scale_sense = Parameter(Tensor(scale_sense.get_loss_scale(), dtype=mstype.float32),
@@ -420,12 +449,67 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             is cleaned up when the function returns.
         """
         status = Tensor([0] * 8, mstype.int32)
-        if not self.gpu_target:
+        if self.ascend_910a_target or (self.ascend_910b_target and \
+                                       self._ascend910b_check_overflow_status_mode != "INFNAN_MODE"):
             status = F.depend(status, pre_cond)
             # clear overflow buffer
             clear_status = NPUClearFloatStatusV2()(status)
             compute_input = F.depend(compute_input, clear_status)
         return status, compute_input
+
+    def _check_overflow_status_on_infnan_mode(self, grad_overflow_check_func, compute_output):
+        """check overflow status on infnan mode."""
+        flag_sum = self.hyper_map(F.partial(grad_overflow_check_func), compute_output)
+        flag_sum = P.AddN()(flag_sum)
+        # convert flag_sum to scalar
+        flag_sum = P.Reshape()(flag_sum, (()))
+        return flag_sum
+
+    def _get_distributed_overflow_status_on_infnan_mode(self, grad_overflow_check_func, compute_output):
+        """converge the distributed overflow status on infnan mode."""
+        flag_sum = self._check_overflow_status_on_infnan_mode(grad_overflow_check_func, compute_output)
+
+        if self.is_distributed:
+            # sum overflow flag over devices
+            flag_reduce = self.allreduce(flag_sum)
+            overflow = self.less_equal(self.base, flag_reduce)
+        else:
+            overflow = self.less_equal(self.base, flag_sum)
+        return overflow
+
+    def _get_gpu_overflow_status(self, compute_output):
+        """get overflow status of gpu."""
+        overflow = self._get_distributed_overflow_status_on_infnan_mode(_grad_overflow, compute_output)
+        return overflow
+
+    def _get_ascend_overflow_status_on_infnan_mode(self, compute_output):
+        """get overflow status of ascend on infnan mode."""
+        overflow = self._get_distributed_overflow_status_on_infnan_mode(_ascend_grad_overflow, compute_output)
+        return overflow
+
+    def _get_ascend_overflow_status_on_saturation_mode(self, status, compute_output):
+        """get overflow status of ascend on saturation mode"""
+        status = F.depend(status, compute_output)
+        get_status = NPUGetFloatStatusV2()(status)
+
+        if self.is_distributed:
+            # sum overflow flag over devices
+            flag_reduce = self.allreduce(get_status)
+            # get_status not equal to [0]*8 means overflow
+            flag = self.equal(self.base0, flag_reduce)
+            status = F.depend(status, flag)
+            # distributed needs to skip allreduce to avoid its overflow affecting the next step
+            clear_status = NPUClearFloatStatusV2()(status)
+            flag = F.depend(flag, clear_status)
+            overall_finite = self.reduce_all(flag)
+        else:
+            status = F.depend(status, get_status)
+            clear_status = NPUClearFloatStatusV2()(status)
+            get_status = F.depend(get_status, clear_status)
+            flag = self.equal(self.base0, get_status)
+            overall_finite = self.reduce_all(flag)
+        overflow = self.logic_not(overall_finite)
+        return overflow
 
     @jit
     def get_overflow_status(self, status, compute_output):
@@ -444,39 +528,15 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         Returns:
             bool, whether the overflow occurs or not.
         """
-        if not self.gpu_target:
-            status = F.depend(status, compute_output)
-            get_status = NPUGetFloatStatusV2()(status)
-
-            if self.is_distributed:
-                # sum overflow flag over devices
-                flag_reduce = self.allreduce(get_status)
-                # get_status not equal to [0]*8 means overflow
-                flag = self.equal(self.base0, flag_reduce)
-                status = F.depend(status, flag)
-                # distributed needs to skip allreduce to avoid its overflow affecting the next step
-                clear_status = NPUClearFloatStatusV2()(status)
-                flag = F.depend(flag, clear_status)
-                overall_finite = self.reduce_all(flag)
+        if self.gpu_target:
+            overflow = self._get_gpu_overflow_status(compute_output)
+        elif self.ascend_910b_target:
+            if self._ascend910b_check_overflow_status_mode != "INFNAN_MODE":
+                overflow = self._get_ascend_overflow_status_on_saturation_mode(status, compute_output)
             else:
-                status = F.depend(status, get_status)
-                clear_status = NPUClearFloatStatusV2()(status)
-                get_status = F.depend(get_status, clear_status)
-                flag = self.equal(self.base0, get_status)
-                overall_finite = self.reduce_all(flag)
-            overflow = self.logic_not(overall_finite)
-        else:
-            flag_sum = self.hyper_map(F.partial(_grad_overflow), compute_output)
-            flag_sum = P.AddN()(flag_sum)
-            # convert flag_sum to scalar
-            flag_sum = P.Reshape()(flag_sum, (()))
-
-            if self.is_distributed:
-                # sum overflow flag over devices
-                flag_reduce = self.allreduce(flag_sum)
-                overflow = self.less_equal(self.base, flag_reduce)
-            else:
-                overflow = self.less_equal(self.base, flag_sum)
+                overflow = self._get_ascend_overflow_status_on_infnan_mode(compute_output)
+        else:  # ascend_910a_target
+            overflow = self._get_ascend_overflow_status_on_saturation_mode(status, compute_output)
         return overflow
 
     def process_loss_scale(self, overflow):

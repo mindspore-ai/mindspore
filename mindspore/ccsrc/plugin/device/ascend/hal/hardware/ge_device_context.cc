@@ -63,6 +63,22 @@ void GeDeviceContext::Initialize() {
     return;
   }
 
+  MS_LOG(DEBUG) << "Start initialize...";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  // set overflow mode in ascend910b
+  const auto &soc_version = ms_context->ascend_soc_version();
+  if (soc_version == "ascend910b") {
+    bool is_infnan = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "INFNAN_MODE");
+    if (is_infnan) {
+      auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
+      auto ret = aclrtSetDeviceSatMode(mode);
+      if (ret != ACL_SUCCESS) {
+        MS_LOG(EXCEPTION) << "aclrtSetDeviceSatMode failed";
+      }
+    }
+  }
+
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
   if (common::IsEnableRefMode()) {
@@ -75,8 +91,6 @@ void GeDeviceContext::Initialize() {
     GetKernelExecutor(true)->Initialize();
   }
 
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
   int32_t is_heterogenous = 0;
   (void)rtGetIsHeterogenous(&is_heterogenous);
