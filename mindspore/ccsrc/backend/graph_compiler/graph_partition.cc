@@ -33,6 +33,9 @@
 namespace mindspore {
 namespace compile {
 namespace {
+constexpr const char kNodeCloseFollowing[] = "node_close_following";
+constexpr const char kNodeWithoutOutput[] = "node_without_output";
+
 std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -615,6 +618,66 @@ void NodesToSegments(const std::vector<AnfNodePtr> &segment_nodes, std::vector<G
   }
   SplitDynamicNodeSegment(segment_nodes, segments, node_to_segment, dynamic_nodes_set);
 }
+
+void ProcessCloseFollowing(const FuncGraphPtr &graph, const AnfNodePtr &cut_node,
+                           mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> *close_following) {
+  static const bool is_enable_ge = (common::GetEnv("MS_ENABLE_GE") == "1");
+  static const bool is_cell_reuse =
+    (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
+  if (!is_enable_ge || !is_cell_reuse) {
+    return;
+  }
+  auto cnode = dyn_cast_ptr<CNode>(cut_node);
+  if (cnode == nullptr || !cnode->HasPrimalAttr(kNodeWithoutOutput)) {
+    return;
+  }
+
+  auto manager = graph->manager();
+  if (manager == nullptr) {
+    return;
+  }
+  auto &node_user = manager->node_users();
+  if (node_user[cut_node].size() != 1) {
+    MS_LOG(EXCEPTION) << "Error Node without output: " << cut_node->fullname_with_scope() << ", node user must be 1";
+  }
+
+  std::vector<AnfNodePtr> follow_set;
+  auto seen = NewSeenGeneration();
+  std::queue<AnfNodePtr> node_queue;
+  node_queue.push(cut_node);
+
+  while (!node_queue.empty()) {
+    auto top_node = node_queue.front();
+    node_queue.pop();
+    top_node->seen_ = seen;
+    follow_set.push_back(top_node);
+    for (auto &next : node_user[top_node]) {
+      auto next_node = next.first;
+      if (next_node->seen_ == seen) {
+        continue;
+      }
+      auto next_cnode = dyn_cast_ptr<CNode>(next_node);
+      if (next_cnode != nullptr && next_cnode->HasPrimalAttr(kNodeCloseFollowing)) {
+        node_queue.push(next_node);
+      }
+    }
+    if (top_node == cut_node) {
+      continue;
+    }
+    auto top_cnode = dyn_cast_ptr<CNode>(top_node);
+    if (top_cnode == nullptr) {
+      continue;
+    }
+    for (auto &next : top_cnode->inputs()) {
+      if (next->seen_ == seen) {
+        continue;
+      }
+      node_queue.push(next);
+    }
+  }
+
+  (*close_following)[cut_node] = follow_set;
+}
 }  // namespace
 
 GraphPartition::GraphPartition(const std::vector<PrimitivePtr> &cut_list, const std::string &backend_name)
@@ -686,9 +749,34 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
   std::vector<AnfNodePtr> segment_nodes;
   std::map<AnfNodePtr, GraphSegmentPtr> node_to_segment;
   std::string last_target;
+  mindspore::HashSet<AnfNodePtr> has_cut;
+  mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> close_following;
+
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
+    if (has_cut.find(node) != has_cut.end()) {
+      continue;
+    }
+    has_cut.insert(node);
+    ProcessCloseFollowing(graph, node, &close_following);
     if (IsCut(node)) {
+      std::vector<AnfNodePtr> need_in_segement;
+      for (auto &seg_node : segment_nodes) {
+        auto iter = close_following.find(seg_node);
+        if (iter == close_following.end()) {
+          continue;
+        }
+        for (auto &succ : iter->second) {
+          if (has_cut.find(succ) == has_cut.end()) {
+            has_cut.insert(succ);
+            need_in_segement.push_back(succ);
+          }
+        }
+      }
+      for (auto &succ : need_in_segement) {
+        MS_LOG(INFO) << "Find succ push to segment: " << succ->DebugString();
+        segment_nodes.push_back(succ);
+      }
       NodesToSegments(segment_nodes, &segments, &node_to_segment);
       segment_nodes.clear();
       segment_nodes.emplace_back(node);
