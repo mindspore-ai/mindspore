@@ -66,6 +66,7 @@ bool HeavisideGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
 bool HeavisideGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Heaviside>(base_operator);
+  MS_ERROR_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
@@ -73,6 +74,7 @@ bool HeavisideGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
+  MS_ERROR_IF_NULL(helper_ptr_);
   return true;
 }
 
@@ -80,6 +82,7 @@ int HeavisideGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   for (const auto &input : inputs) {
+    MS_ERROR_IF_NULL_W_RET_VAL(input, KRET_RESIZE_FAILED);
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -87,6 +90,8 @@ int HeavisideGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     }
   }
 
+  auto output = outputs.at(kIndex0);
+  MS_ERROR_IF_NULL_W_RET_VAL(output, KRET_RESIZE_FAILED);
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inpx_shape =
@@ -94,7 +99,7 @@ int HeavisideGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   std::vector<int64_t> inpy_shape =
     inputs.at(kIndex1)->GetShapeVector().empty() ? std::vector<int64_t>({1}) : inputs.at(kIndex1)->GetShapeVector();
   std::vector<int64_t> out_shape =
-    outputs.at(kIndex0)->GetShapeVector().empty() ? std::vector<int64_t>({1}) : outputs.at(kIndex0)->GetShapeVector();
+    output->GetShapeVector().empty() ? std::vector<int64_t>({1}) : output->GetShapeVector();
   input_shapes.emplace_back(inpx_shape);
   input_shapes.emplace_back(inpy_shape);
   output_shapes.emplace_back(out_shape);
