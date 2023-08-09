@@ -1656,8 +1656,11 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr},
     {prim::kPrimPrint, &ThisClass::ConvertPrint}};
 
-  static inline const HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> convert_seq_prims_{prim::kPrimInSequence,
-                                                                                                prim::kPrimSequenceMul};
+  static inline const HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> convert_seq_prims_{
+    prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,   prim::kPrimSequenceIndex,
+    prim::kPrimSequenceLen,     prim::kPrimListEqual,         prim::kPrimTupleEqual,      prim::kPrimTupleGreaterThan,
+    prim::kPrimListLessEqual,   prim::kPrimTupleLessThan,     prim::kPrimListLessThan,    prim::kPrimTupleLessEqual,
+    prim::kPrimListGreaterThan, prim::kPrimTupleGreaterEqual, prim::kPrimListGreaterEqual};
 
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
   AnfNodePtr ConvertNoneToPyExecute(const FuncGraphPtr &func_graph) {
@@ -1862,7 +1865,7 @@ class AfterOptARewriter : public BaseRewriter {
 
     auto prim = GetValueNode<PrimitivePtr>(inputs[0]);
     MS_EXCEPTION_IF_NULL(prim);
-    const auto prim_name = prim->name();
+    const auto &prim_name = prim->name();
 
     const auto &fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
