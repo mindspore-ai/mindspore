@@ -192,6 +192,9 @@ do
     case $1 in
     --install-path=*)
         INSTALL_PATH=$(echo $1 | cut -d"=" -f2-)
+        if [ "${INSTALL_PATH}" != "/" ]; then
+            INSTALL_PATH="${INSTALL_PATH%/}"
+        fi
         break
     ;;
     --help)
