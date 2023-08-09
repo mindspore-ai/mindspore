@@ -104,6 +104,30 @@ std::vector<StrategyPtr> DropoutInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
+Status Softmax::CheckLayoutConfig() {
+  for (auto &element : axis_) {
+    int64_t axis_index = element;
+    if (element < 0) {
+      size_t input_dim = inputs_shape_[0].size();
+      axis_index = SizeToLong(input_dim) + element;
+    }
+
+    int64_t tensor_map = inputs_tensor_map_[0][LongToSize(axis_index)];
+    if (tensor_map == MAP_NONE) {
+      continue;
+    }
+    int64_t axis_strategy = dev_matrix_shape_[dev_matrix_shape_.size() - LongToSize(tensor_map) - 1];
+    // Dimension corresponding to axis is un-splittable
+    if (axis_strategy != MIN_SLICE_NUM) {
+      MS_LOG(ERROR) << name_ << " : The strategy corresponding to axis dimension is not 1, the axis is " << axis_
+                    << ", dev_matrix is " << dev_matrix_shape_ << ", input tensor map is " << inputs_tensor_map_;
+      return FAILED;
+    }
+  }
+
+  return SUCCESS;
+}
+
 Status Softmax::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
@@ -340,6 +364,11 @@ Status ActivationBase::InferTensorMap() {
 
   inputs_tensor_map_.push_back(tensor_map_index);
   outputs_tensor_map_.push_back(tensor_map_index);
+  return SUCCESS;
+}
+
+Status ActivationBase::InferOutputTensorMap() {
+  outputs_tensor_map_.push_back(inputs_tensor_map_[0]);
   return SUCCESS;
 }
 

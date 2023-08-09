@@ -40,6 +40,7 @@ class ActivationBase : public OperatorInfo {
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorMap() override;
+  Status InferOutputTensorMap() override;
   Status InferDevMatrixShape() override;
 };
 
@@ -113,6 +114,7 @@ class Softmax : public ActivationBase {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status CheckLayoutConfig() override;
   Status GetAttrs() override;
   std::vector<int64_t> axis_;
 };

@@ -188,9 +188,7 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
 void OperatorInfo::ResetQueueMember() {
   inputs_tensor_info_.clear();
   outputs_tensor_info_.clear();
-  inputs_tensor_map_.clear();
   outputs_tensor_map_.clear();
-  dev_matrix_shape_.clear();
   out_dev_matrix_shape_.clear();
   forward_op_.clear();
   mirror_ops_.clear();
@@ -198,6 +196,149 @@ void OperatorInfo::ResetQueueMember() {
   replace_op_.clear();
   replace_op_info_.clear();
   virtual_div_op_.clear();
+  if (!is_layout_config_) {
+    inputs_tensor_map_.clear();
+    dev_matrix_shape_.clear();
+  }
+}
+
+Status OperatorInfo::CheckLayoutConfigBase() {
+  // size
+  if (inputs_tensor_map_.size() != inputs_shape_.size()) {
+    MS_LOG(ERROR) << name_
+                  << ": the size of inputs tensor map and inputs shape must be equal, but the inputs tensor map is "
+                  << inputs_tensor_map_ << ", and the inputs shape is " << inputs_shape_;
+    return FAILED;
+  }
+
+  for (size_t i = 0; i < inputs_shape_.size(); ++i) {
+    if (inputs_shape_[i].size() != inputs_tensor_map_[i].size()) {
+      MS_LOG(ERROR) << name_
+                    << ": the size of input tensor map and input shape must be equal, but the inputs tensor map is "
+                    << inputs_tensor_map_ << ", and the inputs shape is " << inputs_shape_ << ", the " << i
+                    << "th is not equal";
+      return FAILED;
+    }
+  }
+
+  size_t dev_matrix_size = dev_matrix_shape_.size();
+  strategy_from_layout_.clear();
+
+  for (size_t j = 0; j < inputs_tensor_map_.size(); ++j) {
+    Shape tmp_strategy;
+    for (size_t k = 0; k < inputs_tensor_map_[j].size(); ++k) {
+      auto map = inputs_tensor_map_[j][k];
+
+      // range
+      if (map == MAP_NONE) {
+        tmp_strategy.push_back(NO_SPLIT_STRATEGY);
+        continue;
+      }
+
+      if (map < 0 || map >= SizeToLong(dev_matrix_size)) {
+        MS_LOG(ERROR) << name_ << ": the range of tensor_map's value is [-1, " << (dev_matrix_size - 1)
+                      << "], but the inputs tensor map is " << inputs_tensor_map_;
+        return FAILED;
+      }
+
+      // divisible
+      auto shard_num = dev_matrix_shape_[dev_matrix_size - LongToSize(map) - 1];
+      if (inputs_shape_[j][k] % shard_num != 0) {
+        MS_LOG(ERROR) << name_ << ": the shape is not divisible by layout, the input shape is " << inputs_shape_
+                      << ", the dev matrix is " << dev_matrix_shape_ << ", and the tensor map is "
+                      << inputs_tensor_map_;
+        return FAILED;
+      }
+
+      // if shard_num is 1, reset the map to -1
+      if (shard_num == NO_SPLIT_STRATEGY) {
+        inputs_tensor_map_[j][k] = MAP_NONE;
+      }
+      tmp_strategy.push_back(shard_num);
+    }
+    strategy_from_layout_.push_back(tmp_strategy);
+  }
+
+  MS_LOG(INFO) << name_ << ": the strategy from layout is " << strategy_from_layout_;
+  return SUCCESS;
+}
+
+Status OperatorInfo::GetLayoutConfig() {
+  auto layout_iter = attrs_.find(LAYOUT);
+  if (layout_iter == attrs_.end()) {
+    return SUCCESS;
+  }
+
+  MS_EXCEPTION_IF_NULL(layout_iter->second);
+  auto layout = layout_iter->second;
+  if (!layout->isa<ValueDictionary>()) {
+    MS_LOG(ERROR) << name_ << ": the layout is not a dict";
+    return FAILED;
+  }
+
+  auto dict = layout->cast<ValueDictionaryPtr>();
+  for (const auto &kv : dict->value()) {
+    ValuePtr key_ptr = kv.first;
+    ValuePtr value_ptr = kv.second;
+    MS_EXCEPTION_IF_NULL(key_ptr);
+    MS_EXCEPTION_IF_NULL(value_ptr);
+    if (!key_ptr->isa<StringImm>()) {
+      MS_LOG(EXCEPTION) << name_ << ": the value of key is not string";
+    }
+
+    std::string key = key_ptr->cast<StringImmPtr>()->value();
+
+    if (key == DEV_MATRIX) {
+      if (!value_ptr->isa<ValueTuple>()) {
+        MS_LOG(ERROR) << name_ << ": the type of dev matrix is not tuple";
+        return FAILED;
+      }
+
+      dev_matrix_shape_ = GetValue<std::vector<int64_t>>(value_ptr);
+      auto used_devices =
+        std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+      if (used_devices != stage_device_size_) {
+        MS_LOG(ERROR) << name_
+                      << ": the product of dev matrix must be equal to the stage divece size, but the dev matrix is "
+                      << dev_matrix_shape_ << ", but the stage device size is " << stage_device_size_;
+        return FAILED;
+      }
+      continue;
+    }
+
+    if (key == INPUT_TENSOR_MAP) {
+      auto var = value_ptr->cast<ValueTuplePtr>();
+      if (!value_ptr->isa<ValueTuple>()) {
+        MS_LOG(ERROR) << name_ << ": the type of input_tensor_map is not tuple";
+        return FAILED;
+      }
+
+      std::vector<ValuePtr> elements = var->value();
+      for (const auto &ele : elements) {
+        Shape tensor_map;
+        if (ele->isa<ValueSequence>()) {
+          auto value_tuple = ele->cast<ValueTuplePtr>();
+          std::vector<ValuePtr> value_vector = value_tuple->value();
+          (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(tensor_map),
+                               [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+          inputs_tensor_map_.push_back(tensor_map);
+        } else {
+          MS_LOG(ERROR) << name_ << ": the format of input tensor map is wrong! Need ValueSequence";
+          return FAILED;
+        }
+      }
+      continue;
+    }
+
+    MS_LOG(ERROR) << name_ << ": the invalid key for layout: " << key;
+    return FAILED;
+  }
+
+  MS_LOG(INFO) << name_ << ": the dev matrix is " << dev_matrix_shape_ << ", the tensor map is " << inputs_tensor_map_;
+
+  is_layout_config_ = true;
+
+  return CheckLayoutConfigBase();
 }
 
 Status OperatorInfo::InferAttrs() {
@@ -208,6 +349,15 @@ Status OperatorInfo::InferAttrs() {
   if (GetAttrs() != SUCCESS) {
     return FAILED;
   }
+
+  if (GetLayoutConfig() != SUCCESS) {
+    return FAILED;
+  }
+
+  if (is_layout_config_ && CheckLayoutConfig() != SUCCESS) {
+    return FAILED;
+  }
+
   infer_attrs_completed_ = true;
   return SUCCESS;
 }
@@ -871,55 +1021,63 @@ Status OperatorInfo::InitForCostModel(const StrategyPtr &in_strategy, const Stra
 // auto insert repeated_calculation_num for dev_matrix_shape when repeated_calculation_num > 1
 Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy,
                                                         const StrategyPtr &out_strategy) {
-  if (in_strategy == nullptr) {
+  if (!is_layout_config_ && in_strategy == nullptr) {
     MS_LOG(ERROR) << name_ << ": The strategy is null, the inputs shape is " << inputs_shape_;
     return FAILED;
   }
+
+  // need to clear queues before Init(),
+  // because Init() may be called multiple times by cost model
+  ResetQueueMember();
 
   if (InferAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": InferAttrs failed.";
     return FAILED;
   }
 
-  // must be after InferAttrs()
-  if (CheckStrategy(in_strategy) != SUCCESS) {
-    FILTER_LOG(is_auto_parallel_) << name_ << ": CheckStrategy failed.";
-    return FAILED;
+  // if layout is configured, no need to check strategy and infer dev matrix
+  if (!is_layout_config_) {
+    // must be after InferAttrs()
+    if (CheckStrategy(in_strategy) != SUCCESS) {
+      FILTER_LOG(is_auto_parallel_) << name_ << ": CheckStrategy failed.";
+      return FAILED;
+    }
+    strategy_ = in_strategy;
+
+    if (out_strategy && CheckOutputStrategy(out_strategy) != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": The output strategy is invalid";
+      return FAILED;
+    }
+    out_strategy_ = out_strategy;
+
+    if (InferDevMatrixShape() != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": InferDevMatrixShape failed.";
+      return FAILED;
+    }
+
+    used_devices_ = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+
+    // must be after InferDevMatrixShape
+    if (InferRepeatedCalcInfo() != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": InferRepeatedCalcInfo failed.";
+      return FAILED;
+    }
+
+    // if repeated calculation, need to set the repeated_calc_num as the last dimension of dev-matrix for layout
+    SetRepeatedCalcDevMatrix();
+
+    if (InferTensorMap() != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": InferTensorMap failed.";
+      return FAILED;
+    }
+
+    ResetTensorMapIfRepeatedCalc();
+  } else {
+    if (InferOutputTensorMap() != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": InferOutputTensorMap failed.";
+      return FAILED;
+    }
   }
-  strategy_ = in_strategy;
-
-  if (out_strategy && CheckOutputStrategy(out_strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": The output strategy is invalid";
-    return FAILED;
-  }
-  out_strategy_ = out_strategy;
-
-  // need to clear queues before Init(),
-  // because Init() may be called multiple times by cost model
-  ResetQueueMember();
-
-  if (InferDevMatrixShape() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferDevMatrixShape failed.";
-    return FAILED;
-  }
-
-  used_devices_ = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
-
-  // must be after InferDevMatrixShape
-  if (InferRepeatedCalcInfo() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferRepeatedCalcInfo failed.";
-    return FAILED;
-  }
-
-  // if repeated calculation, need to set the repeated_calc_num as the last dimension of dev-matrix for layout
-  SetRepeatedCalcDevMatrix();
-
-  if (InferTensorMap() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferTensorMap failed.";
-    return FAILED;
-  }
-
-  ResetTensorMapIfRepeatedCalc();
 
   if (InferTensorInfo() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": InferTensorInfo failed.";
