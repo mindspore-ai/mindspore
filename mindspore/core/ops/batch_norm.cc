@@ -40,6 +40,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "ops/batch_norm.h"
+#include "ops/op_utils.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -150,21 +151,24 @@ class BatchNormInfer : public abstract::OpInferBase {
     const auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, 0, prim_name);
     auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+    auto x_shape = ConvertBaseShapeToTensorShape(x_shape_ptr);
     auto scale_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(scale_shape_ptr)[kShape];
-    auto bias_shape_ptr = input_args[kInputIndex2]->BuildShape();
-    auto bias_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(bias_shape_ptr)[kShape];
-    auto mean_shape_ptr = input_args[kInputIndex3]->BuildShape();
-    auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(mean_shape_ptr)[kShape];
-    auto variance_shape_ptr = input_args[kInputIndex4]->BuildShape();
-    auto variance_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(variance_shape_ptr)[kShape];
+    auto scale_shape = ConvertBaseShapeToTensorShape(scale_shape_ptr);
+    auto bias_shape = GetShapeFromTensor(input_args[kInputIndex2]);
+    auto mean_shape = GetShapeFromTensor(input_args[kInputIndex3]);
+    auto variance_shape = GetShapeFromTensor(input_args[kInputIndex4]);
 
-    (void)CheckAndConvertUtils::CheckInteger("rank of scale", SizeToLong(scale_shape.size()), kEqual, 1, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("rank of bias", SizeToLong(bias_shape.size()), kEqual, 1, prim_name);
+    auto is_training = GetValue<bool>(primitive->GetAttr(kIsTraining));
 
-    if (!x_shape_ptr->IsDynamic() && !scale_shape_ptr->IsDynamic()) {
-      CheckAndConvertUtils::CheckInRange("rank of images", SizeToLong(x_shape.size()), kIncludeBoth, {2, 4}, prim_name);
+    MS_CHECK_VALUE(scale_shape.size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                              "rank of scale", SizeToLong(scale_shape.size()), kEqual, 1, primitive));
+    MS_CHECK_VALUE(scale_shape.size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                              "rank of bias", SizeToLong(bias_shape.size()), kEqual, 1, primitive));
+
+    if (!IsDynamic(x_shape) && !IsDynamic(scale_shape)) {
+      MS_CHECK_VALUE(2 <= x_shape.size() && x_shape.size() <= 4,
+                     CheckAndConvertUtils::FormatCheckInRangeMsg("rank of images", SizeToLong(x_shape.size()),
+                                                                 kIncludeBoth, {2, 4}, primitive));
       auto format = get_format_in_infer(primitive);
       auto channel = format == "NHWC" ? x_shape.back() : x_shape[1];
       if (scale_shape[kInputIndex0] != channel) {
@@ -174,17 +178,18 @@ class BatchNormInfer : public abstract::OpInferBase {
       }
     }
 
-    if (!mean_shape_ptr->IsDynamic() && !variance_shape_ptr->IsDynamic() && !bias_shape_ptr->IsDynamic() &&
-        !scale_shape_ptr->IsDynamic()) {
+    if (!IsDynamic(mean_shape) && !IsDynamic(variance_shape) && !IsDynamic(bias_shape) && !IsDynamic(scale_shape)) {
       if (scale_shape[0] != bias_shape[0]) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'scale' and 'bias' should have the same size, but got "
                                  << scale_shape[0] << ", " << bias_shape[0] << '.';
       }
       if (MeanAndVarianceValid(input_args)) {
-        (void)CheckAndConvertUtils::CheckInteger("rank of mean", SizeToLong(mean_shape.size()), kEqual, 1, prim_name);
-        (void)CheckAndConvertUtils::CheckInteger("rank of variance", SizeToLong(variance_shape.size()), kEqual, 1,
-                                                 prim_name);
-        if (mean_shape[0] != variance_shape[0] || variance_shape[0] != scale_shape[0]) {
+        MS_CHECK_VALUE(mean_shape.size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                                 "rank of mean", SizeToLong(mean_shape.size()), kEqual, 1, primitive));
+        MS_CHECK_VALUE(variance_shape.size() == 1,
+                       CheckAndConvertUtils::FormatCheckIntegerMsg(
+                         "rank of variance", SizeToLong(variance_shape.size()), kEqual, 1, primitive));
+        if (!is_training && (mean_shape[0] != variance_shape[0] || variance_shape[0] != scale_shape[0])) {
           MS_EXCEPTION(ValueError)
             << "For '" << prim_name
             << "', 'scale', 'bias', 'mean', and 'variance' should have the same size during training, but got "
@@ -193,11 +198,8 @@ class BatchNormInfer : public abstract::OpInferBase {
       }
     }
 
-    abstract::ShapePtr y_shape_ptr = std::make_shared<abstract::Shape>(x_shape);
-    abstract::ShapePtr channel_shape_ptr = std::make_shared<abstract::Shape>(scale_shape);
-
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
-      y_shape_ptr, channel_shape_ptr, channel_shape_ptr, channel_shape_ptr, channel_shape_ptr});
+      x_shape_ptr, scale_shape_ptr, scale_shape_ptr, scale_shape_ptr, scale_shape_ptr});
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

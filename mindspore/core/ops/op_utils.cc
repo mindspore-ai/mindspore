@@ -46,64 +46,48 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
   if (x_shape == y_shape) {
     return x_shape;
   }
+
   constexpr int dynamic_rank_len = 1;
   constexpr int dynamic_rank_value = -2;
   if ((x_shape.size() == dynamic_rank_len && x_shape[0] == dynamic_rank_value) ||
       (y_shape.size() == dynamic_rank_len && y_shape[0] == dynamic_rank_value)) {
     return std::vector<int64_t>({dynamic_rank_value});
   }
-  auto x_length = static_cast<int64_t>(x_shape.size());
-  auto y_length = static_cast<int64_t>(y_shape.size());
-  auto length = x_length < y_length ? x_length : y_length;
+
   std::vector<int64_t> broadcast_shape;
-  if (x_length == length) {
-    (void)std::copy(y_shape.begin(), y_shape.end() - length, std::back_inserter(broadcast_shape));
-  } else {
-    (void)std::copy(x_shape.begin(), x_shape.end() - length, std::back_inserter(broadcast_shape));
-  }
-  for (int64_t i = -length; i < 0; i++) {
-    if (x_shape[LongToSize(x_length + i)] == 1) {
-      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
-    } else if (y_shape[LongToSize(y_length + i)] == 1) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if (x_shape[LongToSize(x_length + i)] == y_shape[LongToSize(y_length + i)]) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::kShapeDimAny) &&
-               (y_shape[LongToSize(y_length + i)] > 1)) {
-      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
-    } else if ((x_shape[LongToSize(x_length + i)] > 1) &&
-               (y_shape[LongToSize(y_length + i)] == abstract::Shape::kShapeDimAny)) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::kShapeDimAny) ||
-               (y_shape[LongToSize(y_length + i)] == abstract::Shape::kShapeDimAny)) {
-      broadcast_shape.push_back(abstract::Shape::kShapeDimAny);
-    } else {
+  auto x_length = x_shape.size();
+  auto y_length = y_shape.size();
+  auto res = x_length > y_length;
+  size_t max_len = res ? x_length : y_length;
+  size_t min_len = res ? y_length : x_length;
+  const std::vector<int64_t> &max_shape = res ? x_shape : y_shape;
+  const std::vector<int64_t> &min_shape = res ? y_shape : x_shape;
+
+  broadcast_shape = max_shape;
+  auto miss = max_len - min_len;
+  for (size_t i = 0; i < min_len; i++) {
+    auto dst_i = miss + i;
+    if (max_shape[dst_i] == 1) {
+      broadcast_shape[dst_i] = min_shape[i];
+    } else if (MS_UNLIKELY(max_shape[dst_i] == -1)) {
+      if (min_shape[i] != 1) {
+        broadcast_shape[dst_i] = min_shape[i];
+      }
+    } else if (MS_UNLIKELY(max_shape[dst_i] != min_shape[i] && min_shape[i] != -1 && min_shape[i] != 1)) {
       MS_EXCEPTION(ValueError) << "For '" << op_name
                                << "', x.shape and y.shape need to broadcast. The value of x.shape["
-                               << std::to_string(LongToSize(x_length + i)) << "] or y.shape["
-                               << std::to_string(LongToSize(y_length + i))
+                               << std::to_string(x_length + i) << "] or y.shape[" << std::to_string(y_length + i)
                                << "] must be 1 or -1 when they are not the same, but got x.shape = " << x_shape
                                << " and y.shape = " << y_shape;
     }
   }
   return broadcast_shape;
 }
+
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args) {
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack());
-  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack());
-  auto x_shape = x_shape_map[kShape];
-  auto y_shape = y_shape_map[kShape];
+  auto x_shape = GetShapeFromTensor(input_args[0]);
+  auto y_shape = GetShapeFromTensor(input_args[1]);
 
-  // ToSupport Dynamic rank
-  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
-  }
-
-  if (x_shape == y_shape) {
-    return std::make_shared<abstract::Shape>(x_shape);
-  }
   auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }
@@ -280,9 +264,7 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args,
                                         const std::string &prim_name) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  auto x_shape = shape_ptr->shape();
+  auto x_shape = GetShapeFromTensor(input_args[0]);
   bool skip_mode = false;
   if (primitive->HasAttr(kSkipMode)) {
     auto skip_mode_value_ptr = primitive->GetAttr(kSkipMode);

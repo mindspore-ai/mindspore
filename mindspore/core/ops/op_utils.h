@@ -28,6 +28,23 @@
 #include "mindapi/base/shared_ptr.h"
 #include "mindspore/core/ops/math_ops.h"
 
+#ifndef MS_UNLIKELY
+#ifdef _MSC_VER
+#define MS_UNLIKELY(x) (x)
+#define MS_LIKELY(x) (x)
+#else
+#define MS_LIKELY(x) __builtin_expect(!!(x), 1)
+#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#endif
+#endif
+#define MS_CHECK_VALUE(cond, msg)        \
+  {                                      \
+    if (MS_UNLIKELY(!(cond))) {          \
+      MS_EXCEPTION(ValueError) << (msg); \
+    }                                    \
+  }                                      \
+  while (0)
+
 namespace mindspore::ops {
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
@@ -81,6 +98,17 @@ bool ObscureShapeEqual(const ShapeVector &lhs, const ShapeVector &rhs);
 // from input which represents shape by invoking this function
 // Do not support input with type of AbstractTuple of AbstractTensor
 ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg);
+
+inline ShapeVector ConvertBaseShapeToTensorShape(const BaseShapePtr &base) {
+  auto shape_ptr = base->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  return shape_ptr->shape();
+}
+
+inline ShapeVector GetShapeFromTensor(const AbstractBasePtr &abs) {
+  auto base_shape = abs->BuildShape();
+  return ConvertBaseShapeToTensorShape(base_shape);
+}
 
 // Infer shape value of make-shape op that only transform shapes, e.g. Concat, Stack, StridedSlice
 // Do not support op with multiple outputs for now

@@ -40,14 +40,15 @@ MIND_API_OPERATOR_IMPL(ReduceMin, Reduce);
 MIND_API_OPERATOR_IMPL(ReduceSum, Reduce);
 MIND_API_OPERATOR_IMPL(ReduceProd, Reduce);
 MIND_API_OPERATOR_IMPL(ReduceMean, Reduce);
+
 class ReduceArithmeticInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     const int64_t input_num = 1;
-    MS_EXCEPTION_IF_NULL(primitive);
-    CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
-                                       primitive->name());
+    MS_CHECK_VALUE(input_args.size() > input_num,
+                   CheckAndConvertUtils::FormatCheckIntegerMsg("input size", input_args.size(), kGreaterEqual,
+                                                               input_num, primitive));
     return ReduceBaseInferShape(primitive, input_args, kNameReduceAll);
   }
 

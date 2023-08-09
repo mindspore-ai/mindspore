@@ -50,14 +50,19 @@ inline size_t SizeOf(const ShapeVector &shape) {
 }
 
 inline bool IsDynamicRank(const ShapeVector &shape) {
-  if ((shape.size() == abstract::Shape::kDynamicRankLen) && (shape[0] == abstract::Shape::kShapeRankAny)) {
-    return true;
+  for (auto &s : shape) {
+    if (s > abstract::Shape::kShapeRankAny) {
+      continue;
+    }
+
+    if (shape.size() == abstract::Shape::kDynamicRankLen) {
+      return true;
+    } else {
+      MS_EXCEPTION(ValueError) << "Shape should have only one -2 or no -2 at all but got ("
+                               << ShapeVectorToString(shape) << ").";
+    }
   }
-  if (std::any_of(shape.cbegin(), shape.cend(),
-                  [](ShapeValueDType s) { return s == abstract::Shape::kShapeRankAny; })) {
-    MS_EXCEPTION(ValueError) << "Shape should have only one -2 or no -2 at all but got (" << ShapeVectorToString(shape)
-                             << ").";
-  }
+
   return false;
 }
 
@@ -67,11 +72,20 @@ inline bool IsDynamicShape(const ShapeVector &shape) {
 }
 
 inline bool IsDynamic(const ShapeVector &shape) {
-  if (std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < abstract::Shape::kShapeRankAny; })) {
-    MS_EXCEPTION(ValueError) << "Shape should not have values less than -2 but got (" << ShapeVectorToString(shape)
-                             << ").";
+  for (auto &s : shape) {
+    if (s > abstract::Shape::kShapeDimAny) {
+      continue;
+    }
+
+    if (s < abstract::Shape::kShapeRankAny) {
+      MS_EXCEPTION(ValueError) << "Shape should not have values less than -2 but got (" << ShapeVectorToString(shape)
+                               << ").";
+    }
+
+    return true;
   }
-  return IsDynamicRank(shape) || IsDynamicShape(shape);
+
+  return false;
 }
 
 inline bool IsShapeEmpty(const ShapeVector &shape) {

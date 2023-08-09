@@ -125,6 +125,30 @@ class MS_CORE_API CheckAndConvertUtils {
   static int64_t CheckInteger(const std::string &arg_name, int64_t arg_value, CompareEnum compare_operator,
                               int64_t match_value, const std::string &prim_name = "");
 
+  static std::string FormatCheckIntegerMsg(const std::string &arg_name, int64_t arg_value, CompareEnum compare_operator,
+                                           int64_t match_value, const PrimitivePtr &prim);
+
+  template <typename T>
+  static std::string FormatCheckInRangeMsg(const std::string &arg_name, T arg_value, CompareRange compare_operator,
+                                           const std::pair<T, T> &range, const PrimitivePtr &prim) {
+    std::ostringstream buffer;
+    if (prim == nullptr) {
+      buffer << "The attribute[" << arg_name << "] must be ";
+    } else {
+      auto prim_name = prim->name();
+      buffer << "For primitive[" << prim_name << "], the " << arg_name << " must be ";
+    }
+    auto iter_to_string = kCompareRangeToString.find(compare_operator);
+    if (iter_to_string == kCompareRangeToString.end()) {
+      MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
+                                   << " cannot find in the compare string map";
+    }
+    auto range_strng = iter_to_string->second;
+    buffer << range_strng.first << range.first << "," << range.second << range_strng.second << ", but got " << arg_value
+           << ".";
+    return buffer.str();
+  }
+
   template <typename T>
   static std::vector<T> CheckPositiveVectorExcludeZero(const std::string &arg_name, const std::vector<T> &arg_value,
                                                        const std::string &prim_name) {
