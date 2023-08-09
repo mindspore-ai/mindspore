@@ -831,9 +831,7 @@ Status ShardAxisImpl::InferGroup() {
   }
 
   MS_LOG(INFO) << name_ << ": The group ranks is " << group_devices;
-  auto is_global_group = group_devices.size() == g_device_manager->GetDeviceListInThisStage().size();
-  MS_LOG(INFO) << name_ << ": is_global_group " << is_global_group << group_devices.size();
-  if (g_device_manager->CreateGroup(group_devices, &group_, is_global_group) != SUCCESS) {
+  if (g_device_manager->CreateGroup(group_devices, &group_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": create reduce group failed in table row split.";
     return FAILED;
   }
