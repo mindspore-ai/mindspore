@@ -715,17 +715,22 @@ def get_avgpool_vmap_rule(prim, axis_size):
     """VmapRule for `AvgPool`."""
     chw_reverse_index = -3
 
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, kernel_size_bdim, strides_bdim, pad_mode_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, kernel_size_bdim, strides_bdim, pad_mode_bdim,
+                                                      data_format_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
+        kernel_size, _ = kernel_size_bdim
+        strides, _ = strides_bdim
+        pad_mode, _ = pad_mode_bdim
+        data_format, _ = data_format_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
         x_shape = F.shape(x)
         input_shape = (-1,) + x_shape[chw_reverse_index:]
         x = F.reshape(x, input_shape)
-        out = prim(x)
+        out = prim(x, kernel_size, strides, pad_mode, data_format)
         out_shape = F.shape(out)
         real_out_shape = x_shape[:chw_reverse_index] + out_shape[chw_reverse_index:]
         out = F.reshape(out, real_out_shape)

@@ -997,20 +997,22 @@ REG_BPROP_BUILDER("AvgPool").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto format = GetValue<std::string>(ib->GetAttr("format"));
-  auto kernel_size = GetValue<ShapeVector>(ib->GetAttr("kernel_size"));
-  auto strides = GetValue<ShapeVector>(ib->GetAttr("strides"));
-  if (format == "NHWC") {
-    kernel_size = PoolToNHWC(kernel_size);
-    strides = PoolToNHWC(strides);
-  }
-  auto dx = ib->Emit("AvgPoolGrad", {x, out, dout},
-                     {{"kernel_size", MakeValue(kernel_size)},
-                      {"strides", MakeValue(strides)},
-                      {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"data_format", ib->GetAttr("format")},
-                      {"format", ib->GetAttr("format")}});
-  return {dx};
+  auto kernel_size = ib->GetInput(kIndex3);
+  auto strides = ib->GetInput(kIndex4);
+  auto pad_mode = ib->GetInput(kIndex5);
+  auto format = ib->GetInput(kIndex6);
+  auto true_branch = [&kernel_size, &strides](const Emitter *e) -> NodePtrList {
+    auto new_kernel = PoolToNHWCBlock(e, kernel_size);
+    auto new_strides = PoolToNHWCBlock(e, strides);
+    return {new_kernel, new_strides};
+  };
+  auto false_branch = [&kernel_size, &strides](const Emitter *e) -> NodePtrList { return {kernel_size, strides}; };
+  auto cond = ib->Equal(format, ib->Value<int64_t>(NHWC));
+  auto cond_block = ib->Conditional(cond, true_branch, false_branch);
+  auto dx =
+    ib->Emit("AvgPoolGrad",
+             {x, out, ib->TensorGetItem(cond_block, 0), ib->TensorGetItem(cond_block, 1), pad_mode, format, dout}, {});
+  return {dx, ib->OutZeros(kernel_size), ib->OutZeros(strides), ib->OutZeros(pad_mode), ib->OutZeros(format)};
 });
 
 REG_BPROP_BUILDER("AvgPool3D").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
