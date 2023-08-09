@@ -551,12 +551,6 @@ int MatmulBasePrepare(struct KernelBase *self) {
   NNACL_CHECK_FALSE(matmul->base_.in_[FIRST_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(matmul->base_.in_[SECOND_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_INPUT_TENSOR_ERROR);
 
-  if (matmul->base_.in_size_ == THREE_TENSOR) {
-    NNACL_CHECK_TRUE_RET(matmul->base_.in_[THIRD_INPUT]->data_type_ == kNumberTypeFloat32, NNACL_MATMUL_BIAS_INVALID);
-    NNACL_CHECK_TRUE_RET(IsConst(self->in_[THIRD_INPUT]) || matmul->matrix_c_.origin_ptr_ != NULL,
-                         NNACL_MATMUL_BIAS_INVALID);
-  }
-
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(
     param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6,
@@ -575,8 +569,11 @@ int MatmulBasePrepare(struct KernelBase *self) {
     NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
     matmul->matrix_b_.has_packed_ = true;
   }
-  if (!matmul->infer_shape_) {
-    if (matmul->base_.in_size_ == FOURTH_INPUT && !matmul->base_.train_session_) {
+
+  if (matmul->base_.in_size_ == THREE_TENSOR) {
+    /* deal with const bias */
+    bool bias_const = IsConst(self->in_[THIRD_INPUT]);
+    if (!matmul->infer_shape_ && bias_const && !matmul->base_.train_session_ && matmul->matrix_c_.origin_ptr_ == NULL) {
       ret = MatmulBaseBackupConstMatrix(matmul, &matmul->matrix_c_, THIRD_INPUT);
       NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
     }
