@@ -45,6 +45,8 @@ AnfNodePtr CreateFP32Tensor(float value);
 AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr);
 AnfNodePtr CreateTuple(const std::vector<int64_t> &tuple);
 std::string HashInstanceName(const std::string &name);
+void InsertVirtualPipelineEndNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager, size_t index,
+                                  std::string end_flag = "pipeline_end");
 
 class GenerateGraph {
  public:

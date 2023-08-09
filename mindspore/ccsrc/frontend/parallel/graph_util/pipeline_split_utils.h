@@ -62,6 +62,7 @@ void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
                       const FuncGraphPtr &root);
 void SetStridedSliceStrategy(const AnfNodePtr &node);
 void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
+bool IsValidNode(const AnfNodePtr &node, const AnfNodePtr &return_node, const NodeUsersMap &node_user_map);
 ValuePtr Micro(const CNodePtr &cnode, NodeUsersMap *node_users_map, size_t max_depth);
 void CheckBorderNode(const PipelinePair &forward_start_pair, const PipelinePair &forward_end_pair,
                      const PipelinePair &backward_start_pair, const PipelinePair &backward_end_pair, size_t micro_size);

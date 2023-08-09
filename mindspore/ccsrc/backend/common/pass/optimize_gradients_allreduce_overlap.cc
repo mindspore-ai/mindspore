@@ -21,6 +21,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -414,6 +415,10 @@ bool OptimizeGradientsAllReduceOverlap::Run(const FuncGraphPtr &graph) {
     return false;
   }
   if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    return false;
+  }
+  auto is_enable_grad_comm_opt = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_GRAD_COMM_OPT);
+  if (is_enable_grad_comm_opt) {
     return false;
   }
   mindspore::HashMap<std::string, std::vector<CNodePtr>> fusion_allreduce_list_map;
