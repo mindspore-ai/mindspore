@@ -35,7 +35,10 @@
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_base.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
 #include "mindspore/core/ops/op_name.h"
-
+#include "src/fastertransformer/layers/ms_layers/encoder.h"
+#include "src/fastertransformer/layers/ms_layers/BaseLayer.h"
+#include "src/fastertransformer/layers/ms_layers/attention.h"
+#include "src/fastertransformer/layers/ms_layers/ffn.h"
 namespace mindspore::lite {
 namespace {
 constexpr std::size_t kTwo = 2;
@@ -49,9 +52,14 @@ int EncoderTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
   auto use_past = GetValue<bool>(base_operator->GetAttr(ops::kUsePast));
   auto query_layer = GetValue<bool>(base_operator->GetAttr(ops::kQueryLayer));
   auto moe = GetValue<bool>(base_operator->GetAttr(ops::kMoe));
+  auto embedding_layer = GetValue<bool>(base_operator->GetAttr(ops::kEmbeddingLayer));
+
   size_t in_num = C8NUM;  // if mask=false in_num should be 6, mask default = true
   if (use_past) in_num += C4NUM;
-  if (query_layer) in_num += C3NUM;
+  if (embedding_layer && use_past) {
+    in_num += C2NUM;
+  }
+  if (query_layer) in_num += C5NUM;
   if (moe) in_num += C1NUM;
   if (layer_norm) {
     if (position_bias)
@@ -139,66 +147,45 @@ int EncoderTensorRT::AddVsl(int encoder_input_idx, int input_number, TensorRTCon
   return RET_OK;
 }
 
-int EncoderTensorRT::InitParam(fastertransformer::encoderParamRun *params) {
-  auto encoder_op = AsOps<ops::EncoderLayer>();
-  if (encoder_op == nullptr) {
-    MS_LOG(ERROR) << "op action convert failed";
-    return RET_ERROR;
-  }
-  cublasHandle_t cublas_handle = GetCublasHandle();
-  // update commonparam
-  params->common_param.eft = false;
-  params->common_param.cublas_handle = cublas_handle;
-  params->common_param.head_num = encoder_op->get_head_num();
-  params->common_param.head_size = encoder_op->get_head_size();
-  params->common_param.rank_id = 0;
-  params->common_param.rank_num = 1;
-#ifdef LITE_CUDA_DISTRIBUTION
-  params->common_param.rank_id = GetRankID();
-  params->common_param.rank_num = GetGPUGroupSize();
-#endif
-  params->ffn_param.is_moe = encoder_op->get_moe();
-  params->common_param.use_past = encoder_op->get_use_past();
-  params->common_param.query_layer = encoder_op->get_query_layer();
-  // connect commonparam to attention and ffn
-  params->common_param.hidden_size =
-    params->common_param.head_num * params->common_param.head_size * params->common_param.rank_num;
-  // update encoder_param_
-  params->encoder.is_layernorm = encoder_op->get_layer_norm();
-  params->encoder.layernorm_post = encoder_op->get_post_layernorm();
-  params->encoder.eps1 = encoder_op->get_eps_layernorm1();
-  params->encoder.eps2 = encoder_op->get_eps_layernorm2();
-  params->encoder.eps3 = encoder_op->get_eps_layernorm3();
-  params->ffn_param.ffn_param.ffn_hidden_size = encoder_op->get_ffn_hidden_size();
-  params->ffn_param.ffn_param.expert_num = encoder_op->get_expert_num();
-  params->ffn_param.ffn_param.expert_offset = encoder_op->get_expert_offset_id();
-  params->ffn_param.ffn_param.capacity_factor = encoder_op->get_capacity_factor();
-  params->ffn_param.ffn_param.ffn_fp16 = runtime_->GetTransformerFfnFp16();
-  params->ffn_param.ffn_param.has_beta = !params->attn.attn.position_bias;
-  params->attn.attn.is_cross = params->common_param.query_layer ? true : false;
-  params->attn.attn.position_bias = encoder_op->get_position_bias();
-  params->attn.attn.projection_bias = !params->attn.attn.position_bias;
-  params->attn.attn.qkv_bias = !params->attn.attn.position_bias;
-  params->encoder.has_beta = !params->attn.attn.position_bias;
-  params->ffn_param.ffn_param.ffn_bias = !params->attn.attn.position_bias;
-  params->attn.attn.mask = true;
-  if (encoder_op->get_act_type() == ActType::ActType_Gelu) {
-    params->ffn_param.ffn_param.act_type = fastertransformer::ActType_Gelu;
-  } else if (encoder_op->get_act_type() == ActType::ActType_Relu) {
-    params->ffn_param.ffn_param.act_type = fastertransformer::ActType_Relu;
-  } else if (encoder_op->get_act_type() == ActType::ActType_No) {
-    params->ffn_param.ffn_param.act_type = fastertransformer::ActType_No;
+int EncoderTensorRT::AddVslByBatchValidLength(int input_number, TensorRTContext *ctx, nvinfer1::ITensor **inputTensors,
+                                              const char *name) {
+  if (runtime_->GetVslEncoderPluginId() == -1) {
+    auto vsl_plugin = std::make_shared<VslCompressPlugin>(name, device_id_, runtime_->IsTransformerOptimizeSigma());
+    CHECK_NULL_RETURN(vsl_plugin);
+    nvinfer1::ITensor *inputPosition = ctx->network()->getInput(C2NUM);
+    nvinfer1::ITensor *inputBatchValid = ctx->network()->getInput(C3NUM);
+    nvinfer1::ITensor *inputs[C2NUM] = {inputPosition, inputBatchValid};
+    auto vsl_compress_layer = ctx->network()->addPluginV2(inputs, C2NUM, *vsl_plugin);
+
+    if (vsl_compress_layer == nullptr) {
+      MS_LOG(ERROR) << " create vsl compress layer failed for: ";
+      return RET_ERROR;
+    }
+    auto plugin_id = static_cast<int>(ctx->network()->getNbLayers() - 1);
+    runtime_->SetVslEncoderPluginId(plugin_id);
+    vsl_compress_layer->setName("plugin_vsl_compress");
+    int out_number = vsl_compress_layer->getNbOutputs();
+    for (int i = 0; i < out_number; i++) {
+      nvinfer1::ITensor *vsl_output_tensor = vsl_compress_layer->getOutput(i);
+      ctx->RegisterTensor(ITensorHelper{vsl_output_tensor, Format::NCHW, true},
+                          "vsl_compress_output_" + std::to_string(i));
+      inputTensors[input_number + i] = vsl_output_tensor;
+    }
   } else {
-    params->ffn_param.ffn_param.act_type = static_cast<fastertransformer::ActType>(encoder_op->get_act_type());
+    auto vsl_compress_layer = ctx->network()->getLayer(runtime_->GetVslEncoderPluginId());
+    int out_number = vsl_compress_layer->getNbOutputs();
+    for (int i = 0; i < out_number; i++) {
+      nvinfer1::ITensor *vsl_output_tensor = vsl_compress_layer->getOutput(i);
+      inputTensors[input_number + i] = vsl_output_tensor;
+    }
   }
-  params->attn.attn.scale = encoder_op->get_scale();
   return RET_OK;
 }
 
-void EncoderTensorRT::CastFfnTensors(fastertransformer::encoderParamRun *params, TensorRTContext *ctx) {
-  size_t start_fp16 = (params->encoder.layernorm_post) ? C7NUM : C9NUM;
-  size_t end_fp16 = (params->encoder.layernorm_post) ? C11NUM : C13NUM;
-  if (params->attn.attn.position_bias) {
+void EncoderTensorRT::CastFfnTensors(std::shared_ptr<mindspore::ops::EncoderLayer> encoder_op, TensorRTContext *ctx) {
+  size_t start_fp16 = (encoder_op->get_post_layernorm()) ? C7NUM : C9NUM;
+  size_t end_fp16 = (encoder_op->get_post_layernorm()) ? C11NUM : C13NUM;
+  if (encoder_op->get_position_bias()) {
     start_fp16 = C6NUM;
     end_fp16 = C9NUM;
   }
@@ -245,17 +232,20 @@ int EncoderTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
-  fastertransformer::encoderParamRun params;
-  if (InitParam(&params) != RET_OK) {
-    MS_LOG(ERROR) << "Init param in encoder tensorrt failed.";
+
+  auto encoder_op = AsOps<ops::EncoderLayer>();
+  if (encoder_op == nullptr) {
+    MS_LOG(ERROR) << "op action convert failed";
     return RET_ERROR;
   }
+  cublasHandle_t cublas_handle = GetCublasHandle();
+  bool eft = false;
   int encoder_input_idx = runtime_->GetTransformerEncoderInputIdx();
   if (IsWeightInputHanledInner()) {
-    if (params.common_param.use_past) {
+    if (encoder_op->get_use_past()) {
       BuildUsePastTensors(ctx);
     } else if (IsFfnMixPrecision()) {
-      CastFfnTensors(&params, ctx);
+      CastFfnTensors(encoder_op, ctx);
     } else {
       BuildEncoderTensors(ctx);
     }
@@ -263,17 +253,29 @@ int EncoderTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
   nvinfer1::ITensor *input_tensor = input(ctx, 0).trt_tensor_;
   const int input_number = inputs().size();
-  const int vsl_input_number = (encoder_input_idx == -1) ? 0 : 1;
+  const int vsl_input_number = runtime_->IsTransformerOptimizeSigma() ? C3NUM : ((encoder_input_idx == -1) ? 0 : C1NUM);
+
   nvinfer1::ITensor *inputTensors[input_number + vsl_input_number];
   for (int i = 0; i < input_number; i++) {
     inputTensors[i] = input(ctx, i).trt_tensor_;
   }
-  if (encoder_input_idx != -1 && params.common_param.use_past == false) {
-    params.common_param.eft = true;
+
+  if (encoder_op->get_embedding_layer()) {
+    nvinfer1::ITensor *tmp = inputTensors[0];
+    inputTensors[0] = inputTensors[C5NUM];
+    inputTensors[C5NUM] = tmp;
+  }
+
+  if (encoder_input_idx != -1 && encoder_op->get_use_past() == false) {
+    eft = true;
     AddVsl(encoder_input_idx, input_number, ctx, inputTensors, input_tensor->getName());
   }
+  if (runtime_->IsTransformerOptimizeSigma()) {
+    AddVslByBatchValidLength(input_number - 1, ctx, inputTensors, input_tensor->getName());
+  }
   auto compute_type = runtime_->GetRuntimePrecisionMode();
-  auto plugin = std::make_shared<EncoderPlugin>(input_tensor->getName(), compute_type, params, device_id_);
+  auto plugin = std::make_shared<EncoderPlugin>(input_tensor->getName(), compute_type, encoder_op, cublas_handle, eft,
+                                                runtime_->GetTransformerFfnFp16(), device_id_);
   nvinfer1::IPluginV2Layer *encoder_layer =
     ctx->network()->addPluginV2(inputTensors, (input_number + vsl_input_number), *plugin);
 
@@ -326,113 +328,165 @@ template <typename T>
 int EncoderPlugin::RunCudaEncoder(const nvinfer1::PluginTensorDesc *inputDesc,
                                   const nvinfer1::PluginTensorDesc *outputDesc, const void *const *inputs,
                                   void *const *outputs, void *workspace, cudaStream_t stream, cublasGemmAlgo_t algoId) {
-  params_.common_param.algo = algoId;
-  params_.common_param.stream = stream;
-  params_.common_param.all_gather_func = nullptr;
-  params_.common_param.all_reduce_sum_func = nullptr;
+  encoder_layer_->SetParallelFunc(nullptr, nullptr);
 #ifdef LITE_CUDA_DISTRIBUTION
-  if (params_.common_param.rank_num > 1) {
-    params_.common_param.all_gather_func = allGatherFunc;
-    params_.common_param.all_reduce_sum_func = allReduceSumFunc;
+  if (encoder_layer_->GetRankNum() > 1) {
+    encoder_layer_->SetParallelFunc(allGatherFunc, allReduceSumFunc);
   }
 #endif
-  void *inputs_forward[num_of_inputs_];
+  encoder_layer_->SetWSOffset(0);
+  encoder_layer_->SetAlgo(algoId);
+  std::vector<void *> inputs_forward;
   for (int i = 0; i < num_of_inputs_; i++) {
-    inputs_forward[i] = const_cast<void *>(inputs[i]);
+    inputs_forward.push_back(const_cast<void *>(inputs[i]));
   }
-  void *outputs_forward[] = {outputs[0]};
-  fastertransformer::forwardEncoder<T>(inputs_forward, num_of_inputs_, outputs_forward, num_of_outputs_, &params_,
-                                       workspace);
+  if (encoder_op_->get_embedding_layer()) {
+    void *tmp = inputs_forward[0];
+    inputs_forward[0] = inputs_forward[C5NUM];
+    inputs_forward[C5NUM] = tmp;
+  }
+  std::vector<void *> outputs_forward = {const_cast<void *>(outputs[0])};
+  encoder_layer_->forward(inputs_forward, outputs_forward, workspace, cublas_handle_, stream);
   return RET_OK;
 }
 
 bool EncoderPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                               int nbOutputs) noexcept {
   auto type = (compute_type_ == RuntimePrecisionMode_FP16) ? nvinfer1::DataType::kHALF : nvinfer1::DataType::kFLOAT;
-
-  if (params_.common_param.eft && pos == (nbInputs - C1NUM)) {
-    bool res = (tensorsDesc[pos].type == nvinfer1::DataType::kINT32) ? true : false;
-    return res;
-  }
-  if (params_.common_param.use_past && pos == (nbInputs - C1NUM)) {
-    bool res = (tensorsDesc[pos].type == nvinfer1::DataType::kINT32) ? true : false;
+  bool res = (tensorsDesc[pos].type == nvinfer1::DataType::kINT32);
+  if (eft_ && pos == (nbInputs - C1NUM)) {
     return res;
   }
 
-  if (params_.common_param.use_past && pos == (nbInputs - C2NUM)) {
-    bool res = (tensorsDesc[pos].type == nvinfer1::DataType::kINT32) ? true : false;
-    return res;
-  }
+  if (encoder_op_->get_use_past()) {
+    // last tensors are VSL + position ids
+    if ((pos >= (nbInputs - C5NUM)) && (pos <= (nbInputs - C1NUM))) {
+      return (tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR) && res;
+    }
+    // input ids is the 5 tensor
+    if (encoder_op_->get_embedding_layer() && (pos == C5NUM)) {
+      return (tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR) && res;
+    }
 
-  if (params_.ffn_param.is_moe) {
-    int expert_id = C7NUM;
-    if (params_.common_param.query_layer)
-      expert_id++;
-    else if (params_.encoder.is_layernorm)
-      expert_id += C2NUM;
-    if (pos == (nbInputs - expert_id)) {
-      bool res = (tensorsDesc[pos].type == nvinfer1::DataType::kINT32) ? true : false;
+    if (encoder_op_->get_query_layer() && (pos == (nbInputs - C6NUM) || pos == C5NUM)) {
+      return (tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR) && res;
+    }
+  }
+  if (encoder_op_->get_moe()) {
+    int expert_id = C12NUM;
+    if (encoder_op_->get_query_layer()) expert_id += C2NUM;
+    if (pos == (expert_id)) {
       return res;
     }
   }
-
-  bool res = (tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR) && (tensorsDesc[pos].type == type);
+  res = (tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR) && (tensorsDesc[pos].type == type);
   return res;
 }
 
+template <typename T>
+int EncoderPlugin::InitEncoder(size_t batch_size, size_t seq_len, size_t emmbeding_size) {
+  size_t h_token_num = batch_size * seq_len;
+  size_t head_num = encoder_op_->get_head_num();
+  size_t head_size = encoder_op_->get_head_size();
+  fastertransformer::FfnBase::ActType act_type;
+  if (encoder_op_->get_act_type() == ActType::ActType_FastGelu) {
+    act_type = fastertransformer::FfnBase::ActType::FastGelu;
+  } else if (encoder_op_->get_act_type() == ActType::ActType_Gelu) {
+    act_type = fastertransformer::FfnBase::ActType::Gelu;
+  } else if (encoder_op_->get_act_type() == ActType::ActType_Relu) {
+    act_type = fastertransformer::FfnBase::ActType::Relu;
+  } else {
+    act_type = static_cast<fastertransformer::FfnBase::ActType>(encoder_op_->get_act_type());
+  }
+  int rank_id = 0;
+  int rank_num = 1;
+#ifdef LITE_CUDA_DISTRIBUTION
+  rank_id = GetRankID();
+  rank_num = GetGPUGroupSize();
+#endif
+  size_t hidden_size = head_num * head_size * rank_num;
+  encoder_layer_ =
+    std::make_shared<fastertransformer::Encoder<T>>(batch_size, seq_len, head_num, head_size, hidden_size);
+  encoder_layer_->SetFfnParam(ffn_fp16_, encoder_op_->get_ffn_hidden_size(), act_type,
+                              !encoder_op_->get_position_bias());
+  encoder_layer_->SetIsLayerNorm(encoder_op_->get_layer_norm(), encoder_op_->get_eps_layernorm3());
+  encoder_layer_->SetT5(encoder_op_->get_position_bias());
+  encoder_layer_->SetVSL(eft_);
+  encoder_layer_->SetQueryLayer(encoder_op_->get_query_layer());
+  encoder_layer_->SetEps(encoder_op_->get_eps_layernorm1(), encoder_op_->get_eps_layernorm2(),
+                         encoder_op_->get_eps_layernorm3());
+  encoder_layer_->SetScaleAttn(encoder_op_->get_scale());
+  encoder_layer_->SetUsePast(encoder_op_->get_use_past());
+  encoder_layer_->SetLayerNormPost(encoder_op_->get_post_layernorm());
+  encoder_layer_->SetMoeParam(encoder_op_->get_moe(), encoder_op_->get_expert_num(),
+                              encoder_op_->get_expert_offset_id(), encoder_op_->get_capacity_factor(), act_type);
+  encoder_layer_->SetRankParam(rank_num, rank_id);
+  encoder_layer_->SetHTokenNum(h_token_num, h_token_num);
+  encoder_layer_->SetEmmbedingSize(emmbeding_size);
+  encoder_layer_->SetFirstLayer(encoder_op_->get_embedding_layer());
+  encoder_layer_->SetAlgo(CUBLAS_GEMM_DEFAULT_TENSOR_OP);
+  return RET_OK;
+}
 void EncoderPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
                                     const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {
-  int request_batch_size = static_cast<int>(in[0].desc.dims.d[0]);
-  int request_src_seq_len = static_cast<int>(in[0].desc.dims.d[1]);
+  int input_idx = (encoder_op_->get_embedding_layer()) ? C5NUM : 0;
+  int request_batch_size = static_cast<int>(in[input_idx].desc.dims.d[0]);
+  int request_src_seq_len = static_cast<int>(in[input_idx].desc.dims.d[1]);
   int embedding_size = -1;
-  if (params_.common_param.query_layer) {
-    request_batch_size = C1NUM;
-    request_src_seq_len = static_cast<int>(in[0].desc.dims.d[0]);
-    embedding_size = static_cast<int>(in[nbInputs - C3NUM].desc.dims.d[0]);
+  if (encoder_op_->get_query_layer()) {
+    request_batch_size = static_cast<int>(in[nbInputs - C5NUM].desc.dims.d[0]);
+    request_src_seq_len = static_cast<int>(in[input_idx].desc.dims.d[0]) / request_batch_size;
+    embedding_size = static_cast<int>(in[nbInputs - C8NUM].desc.dims.d[0]);
   }
-  int request_tgt_seq_len = request_src_seq_len;
-  params_.common_param.batch_size = request_batch_size;
-  params_.common_param.src_seq_len = request_src_seq_len;
-  params_.common_param.tgt_seq_len = request_tgt_seq_len;
-  params_.common_param.h_token_num = request_batch_size * request_src_seq_len;
-  params_.common_param.embedding_size = embedding_size;
   num_of_inputs_ = nbInputs;
   num_of_outputs_ = nbOutputs;
+  int result;
+  if (compute_type_ == RuntimePrecisionMode_FP16) {
+    result = InitEncoder<half>(request_batch_size, request_src_seq_len, embedding_size);
+  } else {
+    result = InitEncoder<float>(request_batch_size, request_src_seq_len, embedding_size);
+  }
+  if (result != RET_OK) {
+    MS_LOG(ERROR) << "Init encoder_layer in encoder tensorrt failed.";
+  }
+  workspace_size_ = encoder_layer_->GetWorkspaceSize();
 }
 
 size_t EncoderPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int nbInputs,
                                        const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept {
-  if (compute_type_ == RuntimePrecisionMode_FP16) {
-    return fastertransformer::GetEncoderLayerWorkspaceSize<half>(&params_);
-  } else {
-    return fastertransformer::GetEncoderLayerWorkspaceSize<float>(&params_);
+  if (workspace_size_ != 0) {
+    return workspace_size_;
   }
+  size_t workspace_size = encoder_layer_->GetWorkspaceSize();
+  return workspace_size;
 }
 
 nvinfer1::DimsExprs EncoderPlugin::getOutputDimensions(int32_t index, const nvinfer1::DimsExprs *inputs,
                                                        int nbInputDims, nvinfer1::IExprBuilder &exprBuilder) noexcept {
   nvinfer1::DimsExprs dims;
+  int input_idx = (encoder_op_->get_embedding_layer()) ? C5NUM : 0;
   if (index == 0) {
-    if (params_.encoder.is_layernorm) {
-      int num_dims = C2NUM;
-      dims.nbDims = num_dims;
-      for (int i = 0; i < num_dims; i++) {
-        dims.d[i] = exprBuilder.constant(inputs[index].d[i + 1]->getConstantValue());
-      }
-    } else if (params_.common_param.query_layer) {
-      int num_dims = inputs[0].nbDims;
-      dims.nbDims = num_dims;
-      for (int i = 0; i < num_dims - 1; i++) {
-        dims.d[i] = exprBuilder.constant(inputs[index].d[i]->getConstantValue());
-      }
-      int embeeding_id = nbInputDims - C3NUM;
-      dims.d[num_dims - 1] = exprBuilder.constant(inputs[embeeding_id].d[0]->getConstantValue());
+    dims.nbDims = inputs[input_idx].nbDims;
+    std::vector<int> dims_value;
+    dims_value.push_back(inputs[input_idx].d[0]->getConstantValue());
+    dims_value.push_back(inputs[input_idx].d[C1NUM]->getConstantValue());
+    if (encoder_op_->get_query_layer()) {
+      dims.nbDims = C2NUM;
+      dims_value[0] = inputs[nbInputDims - C5NUM].d[0]->getConstantValue();
+      int embeeding_id = nbInputDims - C8NUM;
+      dims_value[C1NUM] = inputs[embeeding_id].d[0]->getConstantValue();
+    } else if (encoder_op_->get_use_past() && encoder_op_->get_embedding_layer()) {
+      dims.nbDims = C3NUM;
+      dims_value.push_back(inputs[nbInputDims - C7NUM].d[C1NUM]->getConstantValue());
+    } else if (encoder_op_->get_use_past() && encoder_op_->get_layer_norm()) {
+      dims.nbDims = C2NUM;
+      dims_value[0] = inputs[input_idx].d[0]->getConstantValue() * inputs[input_idx].d[C1NUM]->getConstantValue();
+      dims_value[C1NUM] = inputs[input_idx].d[C2NUM]->getConstantValue();
     } else {
-      int num_dims = inputs[0].nbDims;
-      dims.nbDims = num_dims;
-      for (int i = 0; i < num_dims; i++) {
-        dims.d[i] = exprBuilder.constant(inputs[index].d[i]->getConstantValue());
-      }
+      dims_value.push_back(inputs[input_idx].d[C2NUM]->getConstantValue());
+    }
+    for (int i = 0; i < dims.nbDims; i++) {
+      dims.d[i] = exprBuilder.constant(dims_value[i]);
     }
   }
   return dims;
@@ -445,18 +499,18 @@ nvinfer1::IPluginV2DynamicExt *EncoderPlugin::clone() const noexcept {
     return nullptr;
   }
   plugin->setPluginNamespace(name_space_.c_str());
-  plugin->params_.attn.common_param = &plugin->params_.common_param;
-  plugin->params_.ffn_param.common_param = &plugin->params_.common_param;
   return plugin;
 }
 
 size_t EncoderPlugin::getSerializationSize() const noexcept {
-  return sizeof(int) + sizeof(fastertransformer::encoderParamRun);
+  return sizeof(int) + sizeof(bool) + sizeof(bool) + sizeof(mindspore::ops::EncoderLayer);
 }
 
 void EncoderPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &compute_type_, sizeof(int));
-  SerializeValue(&buffer, &params_, sizeof(fastertransformer::encoderParamRun));
+  SerializeValue(&buffer, encoder_op_.get(), sizeof(mindspore::ops::EncoderLayer));
+  SerializeValue(&buffer, &eft_, sizeof(bool));
+  SerializeValue(&buffer, &ffn_fp16_, sizeof(bool));
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameEncoderLayer, EncoderTensorRT)
 }  // namespace mindspore::lite

@@ -122,6 +122,7 @@ static const char *const kTransformerSection = "transformer_context";
 static const char *const kEncoderInputKey = "encoder_input";
 static const char *const kDecoderInputKey = "decoder_input";
 static const char *const kFfnFp16Key = "ffn_fp16";
+static const char *const kOptimizeTransformer = "optimize_transformer";
 // lite inner group
 static const char *const kLiteInnerGroupSection = "lite_inner_group";
 static const char *const kLiteInnerGroupId = "group_id";

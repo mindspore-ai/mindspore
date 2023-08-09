@@ -19,12 +19,14 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cudnn_utils.h"
 #include "src/fastertransformer/layers/ms_layers/decoder.h"
+#include "src/fastertransformer/layers/ms_layers/ffn.h"
 #include "src/extendrt/delegate/tensorrt/op/vsl_compress_tensorrt.h"
-
+#include "ops/decoder_layer.h"
 namespace mindspore::lite {
 class DecoderTensorRT : public TensorRTOp {
  public:
@@ -45,38 +47,39 @@ class DecoderTensorRT : public TensorRTOp {
   nvinfer1::ITensor *CastTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor, const std::string &op_name);
   int AddVsl(int encoder_input_idx, int decoder_input_idx, int input_number, TensorRTContext *ctx,
              nvinfer1::ITensor **inputTensors, const char *name);
-  void CastFfnTensors(fastertransformer::decoderParamRun *params, TensorRTContext *ctx);
-  int InitParam(fastertransformer::decoderParamRun *params);
+  void CastFfnTensors(std::shared_ptr<mindspore::ops::DecoderLayer> decoder_op, TensorRTContext *ctx);
 };
 
 constexpr auto DECODER_PLUGIN_NAME{"DecoderPlugin"};
 class DecoderPlugin : public TensorRTPlugin {
  public:
-  DecoderPlugin(const std::string name, int compute_type, fastertransformer::decoderParamRun params, uint32_t device_id)
+  DecoderPlugin(const std::string name, int compute_type,
+                const std::shared_ptr<mindspore::ops::DecoderLayer> decoder_op, cublasHandle_t cublas_handle, bool eft,
+                bool ffn_fp16, uint32_t device_id)
       : TensorRTPlugin(name, std::string(DECODER_PLUGIN_NAME), device_id), compute_type_(compute_type) {
-    params_ = params;
-    params_.attn1.common_param = &params_.common_param;
-    params_.attn2.common_param = &params_.common_param;
-    params_.ffn_param.common_param = &params_.common_param;
+    decoder_op_ = decoder_op;
+    cublas_handle_ = cublas_handle;
+    eft_ = eft;
+    ffn_fp16_ = ffn_fp16;
   }
 
   DecoderPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(DECODER_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
     compute_type_ = static_cast<const int *>(fields[0].data)[0];
-    params_ = static_cast<const fastertransformer::decoderParamRun *>(fields[1].data)[0];
-    params_.attn1.common_param = &params_.common_param;
-    params_.attn2.common_param = &params_.common_param;
-    params_.ffn_param.common_param = &params_.common_param;
+    decoder_op_ = std::make_shared<mindspore::ops::DecoderLayer>(
+      static_cast<const mindspore::ops::DecoderLayer *>(fields[1].data)[0]);
+    eft_ = static_cast<const bool *>(fields[2].data)[0];
+    ffn_fp16_ = static_cast<const bool *>(fields[3].data)[0];
   }
 
   DecoderPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(DECODER_PLUGIN_NAME)) {
+    decoder_op_ = std::make_shared<mindspore::ops::DecoderLayer>();
     DeserializeValue(&serialData, &serialLength, &compute_type_, sizeof(int));
-    DeserializeValue(&serialData, &serialLength, &params_, sizeof(fastertransformer::decoderParamRun));
-    params_.attn1.common_param = &params_.common_param;
-    params_.attn2.common_param = &params_.common_param;
-    params_.ffn_param.common_param = &params_.common_param;
+    DeserializeValue(&serialData, &serialLength, decoder_op_.get(), sizeof(mindspore::ops::DecoderLayer));
+    DeserializeValue(&serialData, &serialLength, &eft_, sizeof(bool));
+    DeserializeValue(&serialData, &serialLength, &ffn_fp16_, sizeof(bool));
   }
 
   DecoderPlugin() = delete;
@@ -84,6 +87,8 @@ class DecoderPlugin : public TensorRTPlugin {
   ~DecoderPlugin() override {}
 
   nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
+  template <typename T>
+  int InitDecoder(size_t batch_size, size_t src_seq_len, size_t tgt_seq_len);
   int enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
               const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) noexcept override;
   size_t getSerializationSize() const noexcept override;
@@ -100,9 +105,14 @@ class DecoderPlugin : public TensorRTPlugin {
  private:
   std::string name_space_;
   int compute_type_;
-  mutable fastertransformer::decoderParamRun params_;
+  std::shared_ptr<mindspore::ops::DecoderLayer> decoder_op_;
+  cublasHandle_t cublas_handle_;
+  bool eft_;
+  bool ffn_fp16_;
   int num_of_inputs_;
   int num_of_outputs_;
+  std::shared_ptr<fastertransformer::DecoderBase> decoder_layer_;
+  size_t workspace_size_{0};
   template <typename T>
   int RunCudaDecoder(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
                      const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream,

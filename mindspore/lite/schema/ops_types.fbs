@@ -80,7 +80,8 @@ enum ActivationType : byte {
     SIGN = 17,
     SWISH = 18,
     GELU = 19,
-    UNKNOWN = 20
+    FAST_GELU = 20,
+    UNKNOWN = 21
 }
 
 enum ReduceMode : byte {

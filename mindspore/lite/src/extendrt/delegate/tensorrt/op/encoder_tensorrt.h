@@ -19,12 +19,14 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cudnn_utils.h"
 #include "src/fastertransformer/layers/ms_layers/encoder.h"
+#include "src/fastertransformer/layers/ms_layers/ffn.h"
 #include "src/extendrt/delegate/tensorrt/op/vsl_compress_tensorrt.h"
-
+#include "ops/encoder_layer.h"
 namespace mindspore::lite {
 class EncoderTensorRT : public TensorRTOp {
  public:
@@ -46,42 +48,49 @@ class EncoderTensorRT : public TensorRTOp {
   nvinfer1::ITensor *CastTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor, const std::string &op_name);
   int AddVsl(int encoder_input_idx, int input_number, TensorRTContext *ctx, nvinfer1::ITensor **inputTensors,
              const char *name);
-  int InitParam(fastertransformer::encoderParamRun *params);
-  void CastFfnTensors(fastertransformer::encoderParamRun *params, TensorRTContext *ctx);
+  int AddVslByBatchValidLength(int input_number, TensorRTContext *ctx, nvinfer1::ITensor **inputTensors,
+                               const char *name);
+  void CastFfnTensors(std::shared_ptr<mindspore::ops::EncoderLayer> encoder_op, TensorRTContext *ctx);
   void BuildUsePastTensors(TensorRTContext *ctx);
   void BuildEncoderTensors(TensorRTContext *ctx);
 };
 constexpr auto ENCODER_PLUGIN_NAME{"EncoderPlugin"};
 class EncoderPlugin : public TensorRTPlugin {
  public:
-  EncoderPlugin(const std::string name, int compute_type, fastertransformer::encoderParamRun params, uint32_t device_id)
+  EncoderPlugin(const std::string name, int compute_type,
+                const std::shared_ptr<mindspore::ops::EncoderLayer> encoder_op, cublasHandle_t cublas_handle, bool eft,
+                bool ffn_fp16, uint32_t device_id)
       : TensorRTPlugin(name, std::string(ENCODER_PLUGIN_NAME), device_id), compute_type_(compute_type) {
-    params_ = params;
-    params_.attn.common_param = &params_.common_param;
-    params_.ffn_param.common_param = &params_.common_param;
+    encoder_op_ = encoder_op;
+    cublas_handle_ = cublas_handle;
+    eft_ = eft;
+    ffn_fp16_ = ffn_fp16;
   }
 
   EncoderPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(ENCODER_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
     compute_type_ = static_cast<const int *>(fields[0].data)[0];
-    params_ = static_cast<const fastertransformer::encoderParamRun *>(fields[1].data)[0];
-    params_.attn.common_param = &params_.common_param;
-    params_.ffn_param.common_param = &params_.common_param;
+    encoder_op_ = std::make_shared<mindspore::ops::EncoderLayer>(
+      static_cast<const mindspore::ops::EncoderLayer *>(fields[C1NUM].data)[0]);
+    eft_ = static_cast<const bool *>(fields[C2NUM].data)[0];
+    ffn_fp16_ = static_cast<const bool *>(fields[C3NUM].data)[0];
   }
 
   EncoderPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(ENCODER_PLUGIN_NAME)) {
     DeserializeValue(&serialData, &serialLength, &compute_type_, sizeof(int));
-    DeserializeValue(&serialData, &serialLength, &params_, sizeof(fastertransformer::encoderParamRun));
-    params_.attn.common_param = &params_.common_param;
-    params_.ffn_param.common_param = &params_.common_param;
+    encoder_op_ = std::make_shared<mindspore::ops::EncoderLayer>();
+    DeserializeValue(&serialData, &serialLength, encoder_op_.get(), sizeof(mindspore::ops::EncoderLayer));
+    DeserializeValue(&serialData, &serialLength, &eft_, sizeof(bool));
+    DeserializeValue(&serialData, &serialLength, &ffn_fp16_, sizeof(bool));
   }
+
   EncoderPlugin() = delete;
-
   ~EncoderPlugin() override {}
-
   nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
+  template <typename T>
+  int InitEncoder(size_t batch_size, size_t seq_len, size_t emmbeding_size);
   int enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
               const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) noexcept override;
   size_t getSerializationSize() const noexcept override;
@@ -98,10 +107,14 @@ class EncoderPlugin : public TensorRTPlugin {
  private:
   std::string name_space_;
   int compute_type_;
-  mutable fastertransformer::encoderParamRun params_;
+  std::shared_ptr<mindspore::ops::EncoderLayer> encoder_op_;
+  cublasHandle_t cublas_handle_;
+  bool eft_;
+  bool ffn_fp16_;
   int num_of_inputs_;
   int num_of_outputs_;
-
+  std::shared_ptr<fastertransformer::EncoderBase> encoder_layer_;
+  size_t workspace_size_{0};
   template <typename T>
   int RunCudaEncoder(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
                      const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream,

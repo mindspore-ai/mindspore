@@ -21,20 +21,24 @@
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cudnn_utils.h"
-
+#include "src/fastertransformer/layers/ms_layers/debug_utils.h"
 namespace mindspore::lite {
 constexpr auto VSL_COMPRESS_PLUGIN_NAME{"VslCompressPlugin"};
 class VslCompressPlugin : public TensorRTPlugin {
  public:
-  VslCompressPlugin(const char *name, uint32_t device_id)
-      : TensorRTPlugin(name, std::string(VSL_COMPRESS_PLUGIN_NAME), device_id) {}
-  VslCompressPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
-      : TensorRTPlugin(std::string(name), std::string(VSL_COMPRESS_PLUGIN_NAME)) {}
+  VslCompressPlugin(const char *name, uint32_t device_id, bool is_optimize_pangu_sigma = false)
+      : TensorRTPlugin(name, std::string(VSL_COMPRESS_PLUGIN_NAME), device_id),
+        is_optimize_pangu_sigma_(is_optimize_pangu_sigma) {}
+  VslCompressPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc, bool is_optimize_pangu_sigma = false)
+      : TensorRTPlugin(std::string(name), std::string(VSL_COMPRESS_PLUGIN_NAME)),
+        is_optimize_pangu_sigma_(is_optimize_pangu_sigma) {}
 
-  VslCompressPlugin(const char *name, const void *serialData, size_t serialLength)
-      : TensorRTPlugin(std::string(name), std::string(VSL_COMPRESS_PLUGIN_NAME)) {
+  VslCompressPlugin(const char *name, const void *serialData, size_t serialLength, bool is_optimize_pangu_sigma = false)
+      : TensorRTPlugin(std::string(name), std::string(VSL_COMPRESS_PLUGIN_NAME)),
+        is_optimize_pangu_sigma_(is_optimize_pangu_sigma) {
     DeserializeValue(&serialData, &serialLength, &seq_len_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &batch_size_, sizeof(int));
+    DeserializeValue(&serialData, &serialLength, &is_optimize_pangu_sigma_, sizeof(bool));
   }
   VslCompressPlugin() = delete;
 
@@ -46,6 +50,9 @@ class VslCompressPlugin : public TensorRTPlugin {
                                           nvinfer1::IExprBuilder &exprBuilder) noexcept override;
   void configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
                        const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept override;
+  bool supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
+                                 int nbOutputs) noexcept override;
+  int getNbOutputs() const noexcept override { return C4NUM; }
   nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
   size_t getSerializationSize() const noexcept override;
   void serialize(void *buffer) const noexcept override;
@@ -53,6 +60,7 @@ class VslCompressPlugin : public TensorRTPlugin {
  private:
   int batch_size_;
   int seq_len_;
+  bool is_optimize_pangu_sigma_;
 };
 class VslCompressPluginCreater : public TensorRTPluginCreater<VslCompressPlugin> {
  public:

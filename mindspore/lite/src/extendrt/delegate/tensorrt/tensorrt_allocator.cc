@@ -80,9 +80,9 @@ void *TensorRTAllocator::GetDevicePtr(const std::string &tensor_name) {
 }
 
 int TensorRTAllocator::SyncMemHostToDevice(const tensor::Tensor &host_tensor, const std::string &device_tensor_name,
-                                           bool sync) {
-  return SyncMemInHostAndDevice(const_cast<void *>(host_tensor.data_c()), device_tensor_name, host_tensor.Size(), true,
-                                sync);
+                                           bool sync, size_t size) {
+  size = (size == 0) ? host_tensor.Size() : size;
+  return SyncMemInHostAndDevice(const_cast<void *>(host_tensor.data_c()), device_tensor_name, size, true, sync);
 }
 
 int TensorRTAllocator::SyncMemDeviceToHost(tensor::Tensor *host_tensor, const std::string &device_tensor_name,
