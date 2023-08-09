@@ -35,14 +35,36 @@ int LstmMindirFp32CPUKernel::ReSize() {
   // determine FB origin
   gpu_orig_state_ = false;
   auto weight_t = in_tensors_.at(kWeightsIndex);
-  int cw_size = (lstm_param_->input_size_ * lstm_param_->hidden_size_);
-  int hh_size = (lstm_param_->hidden_size_ * lstm_param_->hidden_size_);
-  int b_size = (lstm_param_->hidden_size_);
-  bool has_bias = (weight_segment_num_ * (cw_size + hh_size) < weight_t->ElementsNum()) ? true : false;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(lstm_param_->hidden_size_, lstm_param_->input_size_, lite::RET_ERROR);
+  int hi_unit_size = lstm_param_->hidden_size_ * lstm_param_->input_size_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_segment_num_, hi_unit_size, lite::RET_ERROR);
+  int hi_whole_size = weight_segment_num_ * hi_unit_size;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(lstm_param_->hidden_size_, lstm_param_->output_size_, lite::RET_ERROR);
+  int hh_unit_size = lstm_param_->hidden_size_ * lstm_param_->output_size_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_segment_num_, hh_unit_size, lite::RET_ERROR);
+  int hh_whole_size = weight_segment_num_ * hh_unit_size;
+  int scale = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(lstm_param_->hidden_size_, lstm_param_->project_size_, lite::RET_ERROR);
+  int hp_unit_size = lstm_param_->hidden_size_ * lstm_param_->project_size_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(scale, hp_unit_size, lite::RET_ERROR);
+  int hp_whole_size = scale * hp_unit_size;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_segment_num_ * C2NUM, lstm_param_->hidden_size_, lite::RET_ERROR);
+  int bias_whole_size = weight_segment_num_ * C2NUM * lstm_param_->hidden_size_;
+  auto whole_size = weight_t->ElementsNum();
+  bool has_bias = (hi_whole_size + hh_whole_size + hp_whole_size < whole_size) ? true : false;
   // if bias exist we can determine the gpu_orig_state_
   if (has_bias) {
-    gpu_orig_state_ =
-      (weight_segment_num_ * (cw_size + hh_size + C2NUM * b_size) == weight_t->ElementsNum()) ? true : false;
+    gpu_orig_state_ = (hi_whole_size + hh_whole_size + hp_whole_size + bias_whole_size == whole_size) ? true : false;
+  } else {
+    bias_whole_size = 0;
+  }
+  if (gpu_orig_state_) {
+    return lite::RET_OK;
+  }
+  bias_whole_size /= C2NUM;
+  if (hi_whole_size + hh_whole_size + hp_whole_size + bias_whole_size != whole_size) {
+    MS_LOG(ERROR) << "LstmMindir is invalid when original model exports from CPU.";
+    return lite::RET_INPUT_TENSOR_ERROR;
   }
   return lite::RET_OK;
 }
@@ -56,14 +78,13 @@ int LstmMindirFp32CPUKernel::InitInputWeightBias() {
     weight_segment_num_ * lstm_param_->input_col_align_ * lstm_param_->input_size_ * sizeof(float)));
   MS_CHECK_TRUE_MSG(weight_i_ptr_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc weight_i_ptr_ failed.");
   running_buffer_.push_back(weight_i_ptr_);
-  auto weight_i = in_tensors_.at(kWeightsIndex);
-  auto weight_i_data = reinterpret_cast<float *>(weight_i->data());
-  CHECK_NULL_RETURN(weight_i_data);
+  auto weight_data = reinterpret_cast<float *>(in_tensors_.at(kWeightsIndex)->data());
+  CHECK_NULL_RETURN(weight_data);
 
-  int cw_size = lstm_param_->input_size_ * lstm_param_->hidden_size_;
-  int hh_size = lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
-  int stride = (gpu_orig_state_) ? kGateNum * (cw_size + hh_size) : kGateNum * (cw_size);
-  PackLstmWeightWithStride(weight_i_ptr_, weight_i_data, weight_segment_num_, lstm_param_->input_size_,
+  int hi_unit_size = lstm_param_->input_size_ * lstm_param_->hidden_size_;
+  int hh_unit_size = lstm_param_->hidden_size_ * lstm_param_->output_size_;
+  int stride = (gpu_orig_state_) ? kGateNum * (hi_unit_size + hh_unit_size) : kGateNum * hi_unit_size;
+  PackLstmWeightWithStride(weight_i_ptr_, weight_data, weight_segment_num_, lstm_param_->input_size_,
                            lstm_param_->hidden_size_, lstm_param_->input_col_align_, lstm_param_->bidirectional_,
                            stride, kWeightsOrderMap);
   // input bias
@@ -72,16 +93,15 @@ int LstmMindirFp32CPUKernel::InitInputWeightBias() {
   MS_CHECK_TRUE_MSG(input_bias_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc input_bias_ failed.");
   memset(input_bias_, 0, bias_size);
   running_buffer_.push_back(input_bias_);
-
-  int offset = weight_segment_num_ * (cw_size + hh_size);
-  float *bias_data =
-    (weight_segment_num_ * (cw_size + hh_size) < weight_i->ElementsNum()) ? weight_i_data + offset : nullptr;
-  if (bias_data == nullptr) {
+  if (!lstm_param_->has_bias_) {
     return RET_OK;
   }
-  int b_stride = (gpu_orig_state_)
-                   ? kGateNum * ((lstm_param_->bidirectional_ ? C2NUM : C1NUM) * lstm_param_->hidden_size_)
-                   : kGateNum * (lstm_param_->hidden_size_);
+  int scale = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
+  int offset = weight_segment_num_ * (hi_unit_size + hh_unit_size) +
+               scale * lstm_param_->project_size_ * lstm_param_->hidden_size_;
+  float *bias_data = weight_data + offset;
+  int b_stride =
+    (gpu_orig_state_) ? kGateNum * (scale * lstm_param_->hidden_size_) : kGateNum * (lstm_param_->hidden_size_);
   PackLstmBiasWithStride(input_bias_, bias_data, weight_segment_num_, lstm_param_->hidden_size_,
                          lstm_param_->input_col_align_, lstm_param_->bidirectional_, b_stride, kWeightsOrderMap);
   return RET_OK;
@@ -92,43 +112,35 @@ int LstmMindirFp32CPUKernel::InitStateWeightBias() {
   // state -- row: batch; col: hidden_size
   // weight -- row: hidden_size; col: hidden_size, need transpose
   // result -- row: batch; col: hidden_size
-  int weight_i_size = weight_segment_num_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
-  auto weight_h = in_tensors_.at(kWeightsIndex);
-  auto weight_h_data = (reinterpret_cast<float *>(weight_h->data()));
-  CHECK_NULL_RETURN(weight_h_data);
+  auto weight_data = (reinterpret_cast<float *>(in_tensors_.at(kWeightsIndex)->data()));
+  CHECK_NULL_RETURN(weight_data);
 
-  int cw_size = lstm_param_->input_size_ * lstm_param_->hidden_size_;
-  int hh_size = lstm_param_->hidden_size_ * lstm_param_->output_size_;
-  int stride = (gpu_orig_state_) ? kGateNum * (cw_size + hh_size) : kGateNum * (hh_size);
+  int hi_unit_size = lstm_param_->input_size_ * lstm_param_->hidden_size_;
+  int hh_unit_size = lstm_param_->hidden_size_ * lstm_param_->output_size_;
+  int stride = (gpu_orig_state_) ? kGateNum * (hi_unit_size + hh_unit_size) : kGateNum * hh_unit_size;
 
-  if (gpu_orig_state_) {
-    weight_h_data += kGateNum * cw_size;
-  } else {
-    weight_h_data += weight_i_size;
-  }
+  auto weight_h_data = weight_data + (gpu_orig_state_ ? kGateNum * hi_unit_size : weight_segment_num_ * hi_unit_size);
 
-  auto weight_pack_size =
-    weight_segment_num_ * lstm_param_->state_col_align_ * lstm_param_->output_size_ * sizeof(float);
+  auto weight_unit_pack_size = sizeof(float) * lstm_param_->state_col_align_ * lstm_param_->output_size_;
+  auto weight_pack_size = weight_segment_num_ * weight_unit_pack_size;
+  weight_h_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(weight_pack_size));
+  MS_CHECK_TRUE_MSG(weight_h_ptr_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc weight_h_ptr_ failed.");
+  running_buffer_.push_back(weight_h_ptr_);
   if (lstm_param_->batch_ != 1) {
-    weight_h_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(weight_pack_size));
-    MS_CHECK_TRUE_MSG(weight_h_ptr_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc weight_h_ptr_ failed.");
-    running_buffer_.push_back(weight_h_ptr_);
     PackLstmWeightWithStride(weight_h_ptr_, weight_h_data, weight_segment_num_, lstm_param_->output_size_,
                              lstm_param_->hidden_size_, lstm_param_->state_col_align_, lstm_param_->bidirectional_,
                              stride, kWeightsOrderMap);
   } else {
-#ifdef ENABLE_AVX
-    weight_h_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(weight_pack_size));
-    MS_CHECK_TRUE_MSG(weight_h_ptr_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc weight_h_ptr_ failed.");
-    running_buffer_.push_back(weight_h_ptr_);
     for (int i = 0; i < weight_segment_num_; i++) {
       const float *src_batch = weight_h_data + i * lstm_param_->hidden_size_ * lstm_param_->output_size_;
-      float *dst_batch = weight_h_ptr_ + i * lstm_param_->state_col_align_ * lstm_param_->output_size_;
+      float *dst_batch =
+        weight_h_ptr_ + kWeightsOrderMap[i] * lstm_param_->state_col_align_ * lstm_param_->output_size_;
+#ifdef ENABLE_AVX
       RowMajor2Col32Major(src_batch, dst_batch, lstm_param_->hidden_size_, lstm_param_->output_size_);
-    }
 #else
-    weight_h_ptr_ = weight_h_data;
+      (void)memcpy(dst_batch, src_batch, weight_unit_pack_size);
 #endif
+    }
   }
 
   // state bias
@@ -137,24 +149,59 @@ int LstmMindirFp32CPUKernel::InitStateWeightBias() {
   MS_CHECK_TRUE_MSG(state_bias_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc state_bias_ failed.");
   memset(state_bias_, 0, bias_pack_size);
   running_buffer_.push_back(state_bias_);
-  int weight_h_size = weight_segment_num_ * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
-  int bias_size = weight_segment_num_ * lstm_param_->hidden_size_;
-  if (weight_h->ElementsNum() - weight_i_size - weight_h_size - C2NUM * bias_size != 0) {
-    return lite::RET_OK;
+  if (!lstm_param_->has_bias_ || !gpu_orig_state_) {
+    return RET_OK;
   }
+
+  int hi_whole_size = weight_segment_num_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
+  int hh_whole_size = weight_segment_num_ * lstm_param_->hidden_size_ * lstm_param_->output_size_;
+  int proj_size =
+    (lstm_param_->bidirectional_ ? C2NUM : C1NUM) * lstm_param_->project_size_ * lstm_param_->hidden_size_;
   // mindir from device "GPU", secend bias is also present order IFOG
-  int dir_mul = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
-  int b_size = lstm_param_->hidden_size_;
-  int bias_offset = (gpu_orig_state_) ? kGateNum * ((dir_mul - C1NUM) * cw_size + dir_mul * hh_size + b_size)
-                                      : weight_h_size + bias_size;
-  float *state_bias = weight_h_data + bias_offset;
-  int b_stride = (gpu_orig_state_) ? kGateNum * (b_size * C2NUM) : kGateNum * b_size;
+  int bias_offset = hi_whole_size + hh_whole_size + proj_size + lstm_param_->hidden_size_ * kGateNum;
+  float *state_bias = weight_data + bias_offset;
+  int b_stride = kGateNum * lstm_param_->hidden_size_ * C2NUM;
   PackLstmBiasWithStride(state_bias_, state_bias, weight_segment_num_, lstm_param_->hidden_size_,
                          lstm_param_->state_col_align_, lstm_param_->bidirectional_, b_stride, kWeightsOrderMap);
   return RET_OK;
 }
 
-int LstmMindirFp32CPUKernel::InitProjectWeight() { return lite::RET_OK; }
+int LstmMindirFp32CPUKernel::InitProjectWeight() {
+  if (lstm_param_->project_size_ == 0) {
+    return RET_OK;
+  }
+  auto weight_data = (reinterpret_cast<float *>(in_tensors_.at(kWeightsIndex)->data()));
+  CHECK_NULL_RETURN(weight_data);
+  int hi_whole_size = weight_segment_num_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
+  int hh_whole_size = weight_segment_num_ * lstm_param_->hidden_size_ * lstm_param_->output_size_;
+  auto weight_proj_data = weight_data + hi_whole_size + hh_whole_size;
+  int batch = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
+  auto pack_size = batch * lstm_param_->hidden_size_ * lstm_param_->proj_col_align_ * sizeof(float);
+  if (lstm_param_->batch_ != 1) {
+    weight_project_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_size));
+    MS_CHECK_TRUE_MSG(weight_project_ptr_ != nullptr, lite::RET_NULL_PTR,
+                      "LstmNonMindirCPUKernel malloc weight_project_ptr_ failed.");
+    running_buffer_.push_back(weight_project_ptr_);
+    PackLstmWeightWithStride(weight_project_ptr_, weight_proj_data, batch, lstm_param_->hidden_size_,
+                             lstm_param_->output_size_, lstm_param_->proj_col_align_, lstm_param_->bidirectional_,
+                             lstm_param_->hidden_size_ * lstm_param_->output_size_, nullptr);
+  } else {
+#ifdef ENABLE_AVX
+    weight_project_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_size));
+    MS_CHECK_TRUE_MSG(weight_project_ptr_ != nullptr, lite::RET_NULL_PTR,
+                      "LstmNonMindirCPUKernel malloc weight_project_ptr_ failed.");
+    running_buffer_.push_back(weight_project_ptr_);
+    for (int i = 0; i < batch; ++i) {
+      const float *src_batch = weight_proj_data + i * lstm_param_->hidden_size_ * lstm_param_->output_size_;
+      float *dst_batch = weight_project_ptr_ + i * lstm_param_->hidden_size_ * lstm_param_->proj_col_align_;
+      RowMajor2Col32Major(src_batch, dst_batch, lstm_param_->output_size_, lstm_param_->hidden_size_);
+    }
+#else
+    weight_project_ptr_ = weight_proj_data;
+#endif
+  }
+  return RET_OK;
+}
 
 void LstmMindirFp32CPUKernel::LstmUnidirectional(float *output, const float *weight_h, const float *state_bias,
                                                  float *hidden_state, float *cell_state, const float *weight_project,

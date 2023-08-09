@@ -33,6 +33,9 @@ OpParameter *PopulateLstmOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
   param->bidirectional_ = op->get_bidirectional();
+  param->has_bias_ = op->get_has_bias();
+  param->input_size_ = op->get_input_size();
+  param->hidden_size_ = op->get_hidden_size();
   param->zoneout_cell_ = op->get_zoneout_cell();
   param->zoneout_hidden_ = op->get_zoneout_hidden();
   return reinterpret_cast<OpParameter *>(param);
