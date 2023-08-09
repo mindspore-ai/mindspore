@@ -37,6 +37,7 @@ class AclAllocator : public AscendAllocatorPluginImpl {
 
  private:
   uint32_t GetDeviceCount();
+  void ResetDeviceId(int device_id);
   uint32_t device_count_ = 0;
   std::mutex acl_allocator_mutex_;
 };
