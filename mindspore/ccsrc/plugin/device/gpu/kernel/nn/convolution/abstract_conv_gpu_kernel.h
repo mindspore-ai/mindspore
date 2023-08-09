@@ -191,7 +191,10 @@ static bool MatchDepthWiseGpuKernel(const ConvolutionArgs &conv_args) {
   if (in_channel != out_channel || in_channel != group) {
     return false;
   }
-
+  const int marjor_sm = GET_MAJOR_SM;
+  if (marjor_sm < AMPER_ARCH_SM) {
+    return false;
+  }
   if (conv_args.pad_mode != kPadPadModeUpperCase && conv_args.pad_mode != kPadPadModeLowerCase) {
     return false;
   }
