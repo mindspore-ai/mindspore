@@ -49,7 +49,7 @@ def test_attr_ref():
     Expectation: No exception
     """
     with pytest.raises(TypeError, match="The inputs types of the outermost network 'Net.construct' support bool, int, "
-                                        "float, None, Tensor, Parameter, mstype.Number"):
+                                        "float, None, Tensor, Parameter, string, mstype.Number"):
         x = Tensor(4, mindspore.float32)
         net_y = Net()
         net = Net()
