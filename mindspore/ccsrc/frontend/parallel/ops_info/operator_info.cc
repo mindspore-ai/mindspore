@@ -607,7 +607,7 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
   }
 
   Group g;
-  if (g_device_manager->CreateGroup(group_devices, &g, is_assigned_parallel_) != SUCCESS) {
+  if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Create communication group by tensor_map failed, the rank_list is: " << group_devices
                   << ", the input strategy is " << strategy_->GetInputDim()
                   << ", the full_name of node is: " << cnode_->fullname_with_scope();
@@ -652,7 +652,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
       group_devices.begin() + index / optimizer_weight_shard_size * optimizer_weight_shard_size,
       group_devices.begin() + (index / optimizer_weight_shard_size + 1) * optimizer_weight_shard_size);
     Group allgather_group;
-    if (g_device_manager->CreateGroup(new_group_devices, &allgather_group, is_assigned_parallel_) != SUCCESS) {
+    if (g_device_manager->CreateGroup(new_group_devices, &allgather_group) != SUCCESS) {
       MS_LOG(ERROR) << name_
                     << ": Create communication group for allgather in optimizer parallel failed,"
                        " the rank_list is: "
@@ -673,7 +673,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
       return FAILED;
     }
     Group mirror_group;
-    if (g_device_manager->CreateGroup(mirror_group_devices, &mirror_group, is_assigned_parallel_) != SUCCESS) {
+    if (g_device_manager->CreateGroup(mirror_group_devices, &mirror_group) != SUCCESS) {
       MS_LOG(ERROR) << name_
                     << ": Create communication group for mirror in optimizer parallel failed,"
                        " the rank_list is: "
@@ -688,7 +688,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
     // fully use opt shard
     // create allgather group
     Group allgather_group;
-    if (g_device_manager->CreateGroup(group_devices, &allgather_group, is_assigned_parallel_) != SUCCESS) {
+    if (g_device_manager->CreateGroup(group_devices, &allgather_group) != SUCCESS) {
       MS_LOG(ERROR) << name_
                     << ": Create communication group for allgather in optimizer parallel failed,"
                        " the rank_list is: "
@@ -740,7 +740,7 @@ Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
     return SUCCESS;
   }
   Group g;
-  if (g_device_manager->CreateGroup(group_devices, &g, is_assigned_parallel_) != SUCCESS) {
+  if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Create communication group by dim failed, the rank_list is: " << group_devices
                   << ", the input strategy is " << strategy_->GetInputDim()
                   << ", the full_name of node is: " << cnode_->fullname_with_scope();

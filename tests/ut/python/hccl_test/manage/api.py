@@ -67,7 +67,7 @@ def get_rank_id(group=None):
 
 def get_rank_size(group=None):
     hccl = Hccl()
-    if group is None or "hccl_world_group" in group:
+    if group is None or "hccl_world_group" in group or "nccl_world_group" in group:
         if auto_parallel_context().get_device_num_is_set() is False:
             return 1
         return auto_parallel_context().get_device_num()
