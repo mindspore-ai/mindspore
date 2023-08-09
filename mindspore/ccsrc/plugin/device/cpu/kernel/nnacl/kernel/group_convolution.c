@@ -126,7 +126,7 @@ int GroupConvCreatorSetShapeOfTensors(GroupConvolutionStruct *group_conv) {
 
   new_conv_param->input_channel_ = group_conv->sub_in_c_;
   new_conv_param->output_channel_ = group_conv->sub_out_c_;
-  new_conv_param->group_ = 1;
+  new_conv_param->group_ = origin_conv_param->group_;
 
   return NNACL_OK;
 }
