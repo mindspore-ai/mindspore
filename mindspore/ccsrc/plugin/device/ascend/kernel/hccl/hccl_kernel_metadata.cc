@@ -45,7 +45,7 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
     return kOpFormat_DEFAULT;
   }
   if (op_name == kReceiveOpName || op_name == kSendOpName || op_name == kAllToAllvOpName ||
-      op_name == kMuxReceiveOpName) {
+      op_name == kMuxReceiveOpName || op_name == kBarrierOpName) {
     return kOpFormat_DEFAULT;
   }
   auto format = AnfAlgo::GetPrevNodeOutputFormat(kernel_node, index);
@@ -77,7 +77,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   if (op_name != kAllGatherOpName && op_name != kAllReduceOpName && op_name != kBroadcastOpName &&
       op_name != kReduceScatterOpName && op_name != kSendOpName && op_name != kReceiveOpName &&
       op_name != kAllToAllvOpName && op_name != kMuxReceiveOpName && op_name != kMuxSendOpName &&
-      op_name != kReduceOpName) {
+      op_name != kReduceOpName && op_name != kBarrierOpName) {
     MS_LOG(DEBUG) << "Hccl does not have op [" << op_name << "]";
     return;
   }

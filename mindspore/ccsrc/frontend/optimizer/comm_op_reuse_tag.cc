@@ -32,12 +32,17 @@ namespace mindspore {
 namespace opt {
 namespace {
 inline bool is_comm_ops(const AnfNodePtr &node) {
-  static const std::vector<PrimitivePtr> kCommunicationOpsPrim = {
-    prim::kPrimAllReduce,          prim::kPrimReduce,
-    prim::kPrimAllGather,          prim::kPrimReduceScatter,
-    prim::kPrimAllToAll,           prim::kPrimAllSwap,
-    prim::kPrimAllToAllv,          prim::kPrimNeighborExchange,
-    prim::kPrimNeighborExchangeV2, prim::kPrimNeighborExchangeV2Grad};
+  static const std::vector<PrimitivePtr> kCommunicationOpsPrim = {prim::kPrimAllReduce,
+                                                                  prim::kPrimReduce,
+                                                                  prim::kPrimAllGather,
+                                                                  prim::kPrimReduceScatter,
+                                                                  prim::kPrimAllToAll,
+                                                                  prim::kPrimAllSwap,
+                                                                  prim::kPrimAllToAllv,
+                                                                  prim::kPrimNeighborExchange,
+                                                                  prim::kPrimNeighborExchangeV2,
+                                                                  prim::kPrimNeighborExchangeV2Grad,
+                                                                  prim::kPrimBarrier};
 
   for (const auto &prim : kCommunicationOpsPrim) {
     if (IsPrimitiveCNode(node, prim)) {

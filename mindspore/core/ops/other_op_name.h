@@ -48,6 +48,7 @@ constexpr auto kAllReduceOpName = "AllReduce";
 constexpr auto kReduceOpName = "Reduce";
 constexpr auto kReduceScatterOpName = "ReduceScatter";
 constexpr auto kAllToAllvOpName = "AllToAllv";
+constexpr auto kBarrierOpName = "Barrier";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_OTHER_OP_NAME_H_

@@ -90,6 +90,7 @@ class HcclAdapter {
                       HcclComm comm) const;
   HcclResult HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params, HcclDataType dataType,
                           const aclrtStream stream, HcclComm comm) const;
+  HcclResult HcclBarrier(const aclrtStream stream, HcclComm comm) const;
 
   // for enqueue op
   HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
@@ -140,6 +141,7 @@ class HcclAdapter {
   HcclAllGatherFunObj launch_hccl_all_gather_ = nullptr;
   HcclSendFunObj launch_hccl_send_ = nullptr;
   HcclRecvFunObj launch_hccl_recv_ = nullptr;
+  HcclBarrierFunObj launch_hccl_barrier_ = nullptr;
   HcclGetRankIdFunObj single_op_hccl_get_rank_id_ = nullptr;
   HcclGetRankSizeFunObj single_op_hccl_get_rank_size_ = nullptr;
   HcclAlltoAllVFunObj launch_hccl_all_to_allv_ = nullptr;

@@ -42,6 +42,7 @@ static constexpr char kGeOpNameHcclAllGather[] = "HcomAllGather";
 static constexpr char kGeOpNameHcclBroadcast[] = "HcomBroadcast";
 static constexpr char kGeOpNameHcclReduceScatter[] = "HcomReduceScatter";
 static constexpr char kGeOpNameHcclAllToAllV[] = "HcomAllToAllV";
+static constexpr char kGeOpNameHcclBarrier[] = "Barrier";
 static constexpr char kGeNodeAttrUsedStreamNum[] = "used_stream_num";
 static constexpr char kGeNodeAttrSendCounts[] = "send_counts";
 static constexpr char kGeNodeAttrSendDispls[] = "send_displacements";
