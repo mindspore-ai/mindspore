@@ -656,11 +656,6 @@ void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes) {
     auto slice_prim = GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(slice_prim);
     if (slice_prim->HasAttr(FUNC_GRAPH_FLAG_STRIDED_SLICE)) {
-      if (slice_prim->HasAttr(INTERLEAVED_NUM) &&
-          GetValue<int64_t>(slice_prim->GetAttr(INTERLEAVED_NUM)) == MICRO_INTERLEAVED_SIZE) {
-        ParallelContext::GetInstance()->set_enable_micro_interleaved(true);
-        cnode->AddAttr(INTERLEAVED_NUM, slice_prim->GetAttr(INTERLEAVED_NUM));
-      }
       SetStridedSliceStrategy(cnode);
     }
   }
@@ -968,6 +963,31 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
     return cnode->in_forward_flag();
   }
   return IsParallelCareNode(cnode) && IsSplittableOperator(prim->name());
+}
+
+void UpdateMicroBatchInterleavedStatus(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!IsPrimitiveCNode(cnode, prim::kPrimStridedSlice)) {
+      continue;
+    }
+    auto slice_prim = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(slice_prim);
+    if (!slice_prim->HasAttr(FUNC_GRAPH_FLAG_STRIDED_SLICE)) {
+      continue;
+    }
+    if (!slice_prim->HasAttr(INTERLEAVED_NUM)) {
+      continue;
+    }
+    if (GetValue<int64_t>(slice_prim->GetAttr(INTERLEAVED_NUM)) == MICRO_INTERLEAVED_SIZE) {
+      ParallelContext::GetInstance()->set_enable_micro_interleaved(true);
+      cnode->AddAttr(INTERLEAVED_NUM, slice_prim->GetAttr(INTERLEAVED_NUM));
+    }
+  }
 }
 
 std::string GetDisOpName(const std::string &prim_name) {
