@@ -456,6 +456,7 @@ Tensor创建
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.eps
     mindspore.ops.eye
     mindspore.ops.fill
     mindspore.ops.full

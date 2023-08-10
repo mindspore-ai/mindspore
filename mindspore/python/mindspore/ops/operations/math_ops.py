@@ -6555,13 +6555,13 @@ class Invert(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class Eps(PrimitiveWithInfer):
+class Eps(Primitive):
     """
     Create a Tensor with the same data type and shape as input, and the element value is the minimum value that the
-    corresponding data type can be expressed.
+    corresponding data type can express.
 
     Inputs:
-        - **x** (Tensor) - Tensor of any dimension used to obtain the minimum value that its data type can be expressed.
+        - **x** (Tensor) - Tensor of any dimension used to obtain the minimum value that its data type can express.
           The data type must be float16, float32 or float64.
 
     Outputs:
@@ -6569,7 +6569,8 @@ class Eps(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If data type of `x` is neither float16 nor float32.
+        TypeError: If data type of `x` is neither float16, float32, nor float64.
+    Refer to :func:`mindspore.ops.eps` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6580,33 +6581,13 @@ class Eps(PrimitiveWithInfer):
         >>> x = Tensor([4, 1, 2, 3], mindspore.float32)
         >>> output = ops.Eps()(x)
         >>> print(output)
-        [1.5258789e-05 1.5258789e-05 1.5258789e-05 1.5258789e-05]
+        [1.1920929e-07 1.1920929e-07 1.1920929e-07 1.1920929e-07]
     """
 
     @prim_attr_register
     def __init__(self):
         """Initialize Eps"""
-        self.init_prim_io_names(inputs=['input_x'], outputs=['y'])
-
-    def __infer__(self, input_x):
-        valid_dtypes = [mstype.float16, mstype.float32, mstype.float64]
-        validator.check_tensor_dtype_valid('input_x', input_x['dtype'], valid_dtypes, self.name)
-
-        x_nptype = mstype.dtype_to_nptype(input_x['dtype'].element_type())
-        if x_nptype == np.float16:
-            min_val = 2 ** (-14)
-        elif x_nptype == np.float32:
-            min_val = 2 ** (-16)
-        else:
-            min_val = 2 ** (-52)
-
-        res = np.full(input_x['shape'], min_val, x_nptype)
-        out = {
-            'value': Tensor(res),
-            'shape': input_x['shape'],
-            'dtype': input_x['dtype'],
-        }
-        return out
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
 class LinSpace(Primitive):

@@ -188,6 +188,7 @@ cumsum_ = P.CumSum()
 shape_ = P.Shape()
 reshape_ = P.Reshape()
 dtype_ = P.DType()
+eps_ = P.Eps()
 
 #####################################
 # Element-wise Operation Functions.
@@ -3321,6 +3322,7 @@ def erfc(input):
     return erfc_(input)
 
 
+
 def bessel_j0(x):
     r"""
     Computes Bessel function of the first kind, order 0 element-wise.
@@ -3623,6 +3625,36 @@ def bessel_y1(x):
         [-1.47147239  -0.78121282  -0.10703243  0.39792571]
     """
     return bessel_y1_(x)
+
+
+def eps(x):
+    r"""
+    Create a Tensor with the same data type and shape as input, and the element value is the minimum value that the
+    corresponding data type can express.
+
+    Args:
+        - x (Tensor) - Tensor of any dimension used to obtain the minimum value that its data type can express.
+          The data type must be float16, float32 or float64.
+
+    Returns:
+        Tensor, has the same type and shape as `x`, but filled with `x` dtype minimum val.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If data type of `x` is neither float16, float32, nor float64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor([4, 1, 2, 3], mindspore.float32)
+        >>> output = ops.eps(x)
+        >>> print(output)
+        [1.1920929e-07 1.1920929e-07 1.1920929e-07 1.1920929e-07]
+    """
+    return eps_(x)
 
 
 def linspace(start, end, steps):
@@ -13721,5 +13753,6 @@ __all__ = [
     'vecdot',
     'dot',
     'batch_dot',
+    'eps'
 ]
 __all__.sort()
