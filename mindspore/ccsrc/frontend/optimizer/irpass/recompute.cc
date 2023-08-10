@@ -92,7 +92,8 @@ bool IsGradNode(const AnfNodePtr &node) {
 }
 
 bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, const AnfNodePtr &origin_primal,
-                      const AnfNodePtr &new_primal, bool recompute_cell = false) {
+                      const AnfNodePtr &new_primal, bool recompute_cell,
+                      std::unordered_map<AnfNodePtr, AnfNodePtr> *origin_to_new_primal) {
   bool changed = false;
   auto node_users = manager->node_users()[origin_primal];
   for (auto &node_and_idx : node_users) {
@@ -103,9 +104,34 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
       // Make new tuple_getitem to get corresponding output.
       auto new_primal_getitem = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), new_primal,
                                               user->cast_ptr<CNode>()->input(kInputNodeOutputIndexInTupleGetItem)});
-      changed = AddNewPrimalNode(manager, fg, user, new_primal_getitem, recompute_cell) || changed;
+      changed =
+        AddNewPrimalNode(manager, fg, user, new_primal_getitem, recompute_cell, origin_to_new_primal) || changed;
       continue;
     }
+    // The op like concat will have a make_tuple input.
+    if (IsPrimitiveCNode(user, prim::kPrimMakeTuple) && (!IsGradNode(user) || recompute_cell)) {
+      auto iter = origin_to_new_primal->find(user);
+      if (iter != origin_to_new_primal->end()) {
+        // The new make_tuple has been created, just set its inputs.
+        manager->SetEdge(iter->second, node_and_idx.second, new_primal);
+        continue;
+      }
+      // Create a new primal make_tuple.
+      auto user_cnode = user->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(user_cnode);
+      std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
+      for (size_t i = 1; i < user_cnode->size(); ++i) {
+        // Create value_node 0 as a placeholder.
+        (void)make_tuple_inputs.emplace_back(NewValueNode(0));
+      }
+      auto new_primal_make_tuple = fg->NewCNode(make_tuple_inputs);
+      new_primal_make_tuple->set_input(node_and_idx.second, new_primal);
+      (void)origin_to_new_primal->emplace(user, new_primal_make_tuple);
+      changed =
+        AddNewPrimalNode(manager, fg, user, new_primal_make_tuple, recompute_cell, origin_to_new_primal) || changed;
+      continue;
+    }
+
     // Set edge to not recomputed primal nodes.
     if (recompute_cell || (!IsRecomputeKGraphCaller(user) && !IsGradNode(user))) {
       MS_LOG(DEBUG) << "Set edge to user: " << user->DebugString() << ", new primal: " << new_primal->DebugString();
@@ -437,12 +463,17 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
   for (const auto &final_node : final_nodes) {
     auto new_k_fg_caller = MoveKCallerToBprop(manager, bprop_fg, final_node, depend_nodes, &origin_to_new_nodes);
     new_k_fg_caller->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
-    auto forward_getter = GetForwardGetter(manager, final_node);
+  }
+  for (auto &iter : origin_to_new_nodes) {
+    if (!IsRecomputeKGraphCaller(iter.first)) {
+      continue;
+    }
+    auto forward_getter = GetForwardGetter(manager, iter.first);
     if (forward_getter == nullptr) {
-      (void)manager->Replace(final_node, new_k_fg_caller);
+      (void)manager->Replace(iter.first, iter.second);
     } else {
-      auto new_forward_getter = bprop_fg->NewCNode(
-        {NewValueNode(prim::kPrimTupleGetItem), new_k_fg_caller, NewValueNode(static_cast<int64_t>(0))});
+      auto new_forward_getter =
+        bprop_fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), iter.second, NewValueNode(static_cast<int64_t>(0))});
       ReplaceFinalForwardGetter(manager, bprop_fg, forward_getter, new_forward_getter);
     }
   }
@@ -456,12 +487,51 @@ void AddDuplicatedAttr(const FuncGraphPtr &k_fg) {
     node->cast_ptr<CNode>()->AddAttr(kAttrDuplicated, MakeValue(true));
   }
 }
+
+void AddCseAttr(const FuncGraphPtr &root, bool changed) {
+  if (!changed) {
+    return;
+  }
+  auto all_node = TopoSort(root->get_return(), SuccDeeperSimple, AlwaysInclude);
+  for (const auto &node : all_node) {
+    if (WithRecomputedScope(node)) {
+      node->cast<CNodePtr>()->AddAttr(kAttrNeedCseAfterRecompute, MakeValue(true));
+    }
+  }
+}
+
+AnfNodePtr GetPrimal(const FuncGraphPtr &k_fg, bool *recompute_cell) {
+  auto primal_iter = k_fg->transforms().find("primal");
+  if (primal_iter == k_fg->transforms().end()) {
+    return nullptr;
+  }
+  AnfNodePtr primal = nullptr;
+  auto primal_fg = primal_iter->second.func_graph();
+  if (primal_fg != nullptr) {
+    primal = NewValueNode(primal_fg);
+    *recompute_cell = true;
+  } else {
+    auto primal_primitive = primal_iter->second.primitive();
+    if (primal_primitive != nullptr) {
+      primal = NewValueNode(primal_primitive);
+    }
+  }
+  return primal;
+}
 }  // namespace
 
 bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
   if (!EnableGraphReuse()) {
     return false;
   }
+#ifdef ENABLE_DUMP_IR
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool enable_save_graphs = context->CanDump(kIntroductory);
+  if (enable_save_graphs) {
+    DumpIR("before_recompute_root.ir", root);
+  }
+#endif
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(opt);
   auto manager = opt->manager();
@@ -481,22 +551,8 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
     if (k_fg == nullptr || !k_fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)) {
       continue;
     }
-    auto primal_iter = k_fg->transforms().find("primal");
-    if (primal_iter == k_fg->transforms().end()) {
-      continue;
-    }
-    AnfNodePtr primal = nullptr;
     bool recompute_cell = false;
-    auto primal_fg = primal_iter->second.func_graph();
-    if (primal_fg != nullptr) {
-      primal = NewValueNode(primal_fg);
-      recompute_cell = true;
-    } else {
-      auto primal_primitive = primal_iter->second.primitive();
-      if (primal_primitive != nullptr) {
-        primal = NewValueNode(primal_primitive);
-      }
-    }
+    auto primal = GetPrimal(k_fg, &recompute_cell);
     if (primal == nullptr) {
       continue;
     }
@@ -508,7 +564,8 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
     auto fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     auto new_primal = fg->NewCNodeInOrder(inputs);
-    bool change = AddNewPrimalNode(manager, fg, node, new_primal, recompute_cell);
+    std::unordered_map<AnfNodePtr, AnfNodePtr> origin_to_new_primal;
+    bool change = AddNewPrimalNode(manager, fg, node, new_primal, recompute_cell, &origin_to_new_primal);
     changed = change || changed;
     if (change && recompute_cell) {
       k_fg_caller_cnode->set_user_data("primal_fg_caller", new_primal);
@@ -521,15 +578,13 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
 
     MS_LOG(DEBUG) << "Not has recomputed input k_fg_caller_cnode: " << k_fg_caller_cnode->DebugString();
     AddDependNodes(manager, fg, k_fg_caller_cnode);
+    AddCseAttr(root, changed);
   }
-  if (changed) {
-    all_node = TopoSort(root->get_return(), SuccDeeperSimple, AlwaysInclude);
-    for (const auto &node : all_node) {
-      if (WithRecomputedScope(node)) {
-        node->cast<CNodePtr>()->AddAttr(kAttrNeedCseAfterRecompute, MakeValue(true));
-      }
-    }
+#ifdef ENABLE_DUMP_IR
+  if (enable_save_graphs) {
+    DumpIR("after_recompute_root.ir", root);
   }
+#endif
   return changed;
 }
 }  // namespace irpass
