@@ -1,0 +1,12 @@
+#operator equal
+equal:
+  args:
+    x:
+      dtype: tensor
+      type_cast: scalar
+    y:
+      dtype: tensor
+      type_cast: scalar
+  returns:
+    output:
+      dtype: tensor

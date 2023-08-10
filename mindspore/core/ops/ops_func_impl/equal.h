@@ -14,30 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_EQUAL_H_
-#define MINDSPORE_CORE_OPS_EQUAL_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_EQUAL_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_EQUAL_H_
+
 #include <memory>
 #include <vector>
-
 #include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEqual = "Equal";
-/// \brief Computes the equivalence between two tensors element-wise.
-/// Refer to Python API @ref mindspore.ops.Equal for more details.
-class MIND_API Equal : public BaseOperator {
+class MIND_API EqualFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(Equal);
-  /// \brief Constructor.
-  Equal() : BaseOperator(kNameEqual) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Equal for the inputs.
-  void Init() const {}
+  std::vector<ShapeVector> InferShape(const Primitive *primitive,
+                                      const std::vector<OpArgBase *> &input_args) const override;
+  TypePtr InferType(const Primitive *primitive, const std::vector<OpArgBase *> &input_args) const override;
 };
-
-MIND_API abstract::AbstractBasePtr EqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

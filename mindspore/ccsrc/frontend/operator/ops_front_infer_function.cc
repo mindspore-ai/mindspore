@@ -43,7 +43,6 @@
 #include "ops/real_div.h"
 #include "ops/add.h"
 #include "ops/arg_min.h"
-#include "ops/equal.h"
 #include "ops/greater_equal.h"
 #include "ops/greater.h"
 #include "ops/not_equal.h"

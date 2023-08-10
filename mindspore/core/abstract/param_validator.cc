@@ -145,6 +145,13 @@ void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base,
   return;
 }
 
+inline void CheckDtypeSame(const std::string &op, const TypePtr &type1, const TypePtr &type2) {
+  if (*type1 != *type2) {
+    MS_EXCEPTION(TypeError) << "For '" << op << "', the dtype of two args should be same, but the first arg dtype "
+                            << type1->ToString() << " are not consistent with second arg dtype " << type2->ToString();
+  }
+}
+
 TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor_base);
   auto base_elem = tensor_base->element();
@@ -156,11 +163,7 @@ TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_ba
   TypePtr type = tensor_elem->BuildType();
   MS_EXCEPTION_IF_NULL(type_base);
   MS_EXCEPTION_IF_NULL(type);
-  if (*type != *type_base) {
-    MS_EXCEPTION(TypeError) << "For '" << op << "', the dtype of two args should be same, but the first arg dtype "
-                            << type_base->ToString() << " are not consistent with second arg dtype "
-                            << type->ToString();
-  }
+  CheckDtypeSame(op, type_base, type);
   return type_base;
 }
 

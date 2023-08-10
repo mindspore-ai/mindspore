@@ -19,10 +19,9 @@
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
-#include "ops/equal.h"
+#include "ops/ops_func_impl/equal.h"
 #include "ops/test_ops_dyn_cases.h"
 #include "include/backend/optimizer/helper.h"
-#include "ops/test_value_utils.h"
 
 namespace mindspore {
 namespace ops {

@@ -14,28 +14,40 @@
  * limitations under the License.
  */
 
-#include "ops/equal.h"
-
-#include <algorithm>
-#include <complex>
-#include <functional>
-#include <limits>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <vector>
-
-#include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
-#include "mindspore/core/ops/comparison_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "ops/op_utils.h"
+#include "ops/ops_func_impl/equal.h"
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
-namespace {
+std::vector<ShapeVector> EqualFuncImpl::InferShape(const Primitive *primitive,
+                                                   const std::vector<OpArgBase *> &input_args) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
+  return BroadCastInferShape(primitive->name(), input_args);
+}
+
+TypePtr EqualFuncImpl::InferType(const Primitive *primitive, const std::vector<OpArgBase *> &input_args) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
+
+  auto prim_name = primitive->name();
+  auto x_dtype = input_args[kIndex0]->GetType();
+  auto y_dtype = input_args[kIndex1]->GetType();
+
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, all_types, prim_name);
+  mindspore::abstract::CheckDtypeSame(prim_name, x_dtype, y_dtype);
+
+  return std::make_shared<TensorType>(kBool);
+}
+
+/*
+ *
+ * todo infervalue
+ *
+ *
 ShapeVector GetOffsetVec(const ShapeVector &shape) {
   ShapeVector offsets;
   for (size_t i = 0; i < shape.size(); i++) {
@@ -157,27 +169,6 @@ bool IsBroadCast(const ShapeVector &x1_shape, const ShapeVector &x2_shape, Shape
   return need_broad_cast;
 }
 
-abstract::ShapePtr EqualInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  return BroadCastInferShape(op_name, input_args);
-}
-
-TypePtr EqualInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 0);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 1);
-  (void)abstract::CheckDtypeSame(prim->name(), x, y);
-  const std::set<TypePtr> valid_types = {kInt8,    kInt16,     kInt32,      kInt64,   kUInt8,
-                                         kUInt16,  kUInt32,    kUInt64,     kFloat16, kFloat,
-                                         kFloat64, kComplex64, kComplex128, kBool,    kBFloat16};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("y", input_args[1]->BuildType(), valid_types, prim->name());
-  return std::make_shared<TensorType>(kBool);
-}
-
 ValuePtr EqualInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   constexpr auto kX1Index = 0;
   constexpr auto kX2Index = 1;
@@ -275,36 +266,6 @@ ValuePtr EqualInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
   }
   return result_tensor;
 }
-}  // namespace
-
-MIND_API_OPERATOR_IMPL(Equal, BaseOperator);
-AbstractBasePtr EqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args) {
-  auto shape = EqualInferShape(primitive, input_args);
-  auto type = EqualInferType(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
-}
-
-// AG means auto generated
-class MIND_API AGEqualInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return EqualInferShape(primitive, input_args);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return EqualInferType(primitive, input_args);
-  }
-  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return EqualInferValue(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return EqualInfer(engine, primitive, input_args);
-  }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(Equal, prim::kPrimEqual, AGEqualInfer, true);
+ */
 }  // namespace ops
 }  // namespace mindspore

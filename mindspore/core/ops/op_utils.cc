@@ -91,6 +91,15 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }
+
+std::vector<ShapeVector> BroadCastInferShape(const std::string &op_name, const std::vector<OpArgBase *> &input_args) {
+  auto x_shape = input_args[kIndex0]->GetShape().front();
+  auto y_shape = input_args[kIndex1]->GetShape().front();
+
+  auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
+  return {ShapeVector(broadcast_shape)};
+}
+
 void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t> *axis, const size_t dim) {
   MS_EXCEPTION_IF_NULL(axis);
   int64_t dim_ = static_cast<int64_t>(dim);

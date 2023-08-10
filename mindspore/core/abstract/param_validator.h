@@ -45,6 +45,8 @@ TypePtr CheckScalarType(const AbstractScalarPtr &scalar, const TypePtrList &acce
 
 void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor);
 
+inline void CheckDtypeSame(const std::string &op, const TypePtr &type1, const TypePtr &type2);
+
 TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor);
 
 MS_CORE_API int64_t CheckAxis(const std::string &op, const std::string &args_name, const ValuePtr &axis, int64_t min,
