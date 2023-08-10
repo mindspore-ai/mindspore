@@ -71,8 +71,7 @@ class DeviceManager {
   std::vector<Device> CreateDeviceListByRankList(RankList ranks) const;
   std::string GenerateGroupNameByRanks(RankList ranks);
   Status CreateGroup(const std::string &group_name, const std::vector<Device> &devices, Group *const comm_group);
-  Status CreateGlobalGroup(const std::string &group_name, const std::vector<Device> &devices, Group *const comm_group);
-  Status CreateGroup(const RankList &dev_ranks, Group *const comm_group, bool is_world_group = false);
+  Status CreateGroup(const RankList &dev_ranks, Group *const comm_group);
 
   size_t DeviceNum() const { return devices_.size(); }
   int64_t stage_num() const { return stage_num_; }
