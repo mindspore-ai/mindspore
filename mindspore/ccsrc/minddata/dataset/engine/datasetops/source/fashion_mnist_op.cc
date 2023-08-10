@@ -55,11 +55,11 @@ Status FashionMnistOp::CountTotalRows(const std::string &dir, const std::string 
 
   for (size_t i = 0; i < op->image_names_.size(); ++i) {
     std::ifstream image_reader;
-    image_reader.open(op->image_names_[i], std::ios::binary);
+    image_reader.open(op->image_names_[i], std::ios::in | std::ios::binary);
     CHECK_FAIL_RETURN_UNEXPECTED(image_reader.is_open(), "Invalid file, failed to open " + op->image_names_[i] +
                                                            ": the image file is damaged or permission denied.");
     std::ifstream label_reader;
-    label_reader.open(op->label_names_[i], std::ios::binary);
+    label_reader.open(op->label_names_[i], std::ios::in | std::ios::binary);
     CHECK_FAIL_RETURN_UNEXPECTED(label_reader.is_open(), "Invalid file, failed to open " + op->label_names_[i] +
                                                            ": the label file is damaged or permission denied.");
     uint32_t num_images;

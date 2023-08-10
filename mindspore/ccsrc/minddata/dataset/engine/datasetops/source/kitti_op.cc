@@ -179,7 +179,7 @@ Status KITTIOp::ParseAnnotationBbox(const std::string &path) {
   CHECK_FAIL_RETURN_UNEXPECTED(Path(path).Exists(), "Invalid path, " + path + " does not exist.");
   Annotation annotation;
   std::ifstream in_file;
-  in_file.open(path);
+  in_file.open(path, std::ifstream::in);
   if (in_file.fail()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + path);
   }

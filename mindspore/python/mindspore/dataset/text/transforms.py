@@ -335,7 +335,7 @@ class JiebaTokenizer(TextTensorOperation):
             raise ValueError(
                 "user dict file {} is not exist.".format(file_path))
         real_file_path = os.path.realpath(file_path)
-        file_dict = open(real_file_path)
+        file_dict = open(real_file_path, "r")
         data_re = re.compile('^\\s*([^\\s*]+?)\\s*([0-9]+)?\\s*$', re.U)
         words_list = []
         for item in file_dict:

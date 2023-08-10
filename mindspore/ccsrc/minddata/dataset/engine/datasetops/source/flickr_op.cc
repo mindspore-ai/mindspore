@@ -81,7 +81,7 @@ Status FlickrOp::PrepareData() {
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + file_path_ + " does not exist.");
   }
 
-  std::ifstream file_handle(real_file_path.value());
+  std::ifstream file_handle(real_file_path.value(), std::ios::in);
   if (!file_handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid annotation file, failed to open " + file_path_ +
                              " : the file is damaged or permission denied.");

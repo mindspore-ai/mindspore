@@ -17,7 +17,6 @@
 #include "minddata/dataset/engine/datasetops/source/penn_treebank_op.h"
 
 #include <algorithm>
-#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>

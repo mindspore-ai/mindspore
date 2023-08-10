@@ -86,7 +86,7 @@ Status Serdes::SaveJSONToFile(const nlohmann::json &json_string, const std::stri
     std::optional<std::string> whole_path = "";
     FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
 
-    std::ofstream file(whole_path.value());
+    std::ofstream file(whole_path.value(), std::ios::out);
     if (pretty) {
       file << std::setw(field_width);
     }
@@ -104,7 +104,7 @@ Status Serdes::SaveJSONToFile(const nlohmann::json &json_string, const std::stri
 Status Serdes::Deserialize(const std::string &json_filepath, std::shared_ptr<DatasetNode> *ds) {
   nlohmann::json json_obj;
   CHECK_FAIL_RETURN_UNEXPECTED(json_filepath.size() != 0, "Json path is null");
-  std::ifstream json_in(json_filepath);
+  std::ifstream json_in(json_filepath, std::ios::in);
   CHECK_FAIL_RETURN_UNEXPECTED(json_in, "Invalid file, failed to open json file: " + json_filepath);
   try {
     json_in >> json_obj;

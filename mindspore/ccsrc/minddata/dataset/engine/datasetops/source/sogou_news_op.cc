@@ -16,7 +16,6 @@
 
 #include "minddata/dataset/engine/datasetops/source/sogou_news_op.h"
 
-#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>

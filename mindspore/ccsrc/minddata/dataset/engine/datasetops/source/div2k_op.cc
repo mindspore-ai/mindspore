@@ -16,7 +16,6 @@
 #include "minddata/dataset/engine/datasetops/source/div2k_op.h"
 
 #include <algorithm>
-#include <fstream>
 #include <iomanip>
 #include <set>
 #include <utility>

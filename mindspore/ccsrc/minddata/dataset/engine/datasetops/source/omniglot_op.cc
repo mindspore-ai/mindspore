@@ -16,7 +16,6 @@
 
 #include "minddata/dataset/engine/datasetops/source/omniglot_op.h"
 
-#include <fstream>
 #include <unordered_set>
 
 #include "minddata/dataset/core/config_manager.h"

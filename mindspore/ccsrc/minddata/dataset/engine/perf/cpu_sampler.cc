@@ -30,6 +30,7 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/path.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -105,7 +106,7 @@ Status SystemInfo::ParseRunningProcess(const std::string &str) {
 
 Status SystemInfo::SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemStat *previous_stat) {
   RETURN_UNEXPECTED_IF_NULL(previous_stat);
-  std::ifstream file("/proc/stat");
+  std::ifstream file("/proc/stat", std::ios::in);
   if (!file.is_open()) {
     MS_LOG(INFO) << "Failed to open /proc/stat file.";
     return {StatusCode::kMDUnexpectedError, "Failed to open /proc/stat file."};
@@ -117,7 +118,11 @@ Status SystemInfo::SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemStat
   while (getline(file, line)) {
     if (first_line) {
       first_line = false;
-      RETURN_IF_NOT_OK(ParseCpuInfo(line));
+      s = ParseCpuInfo(line);
+      if (s != Status::OK()) {
+        file.close();
+        return s;
+      }
       s = ParseCpuInfo(line);
       if (s.IsError()) {
         file.close();
@@ -125,7 +130,11 @@ Status SystemInfo::SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemStat
       }
     }
     if (line.find("ctxt") != std::string::npos) {
-      RETURN_IF_NOT_OK(ParseCtxt(line));
+      s = ParseCtxt(line);
+      if (s != Status::OK()) {
+        file.close();
+        return s;
+      }
       s = ParseCtxt(line);
       if (s.IsError()) {
         file.close();
@@ -133,7 +142,11 @@ Status SystemInfo::SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemStat
       }
     }
     if (line.find("procs_running") != std::string::npos) {
-      RETURN_IF_NOT_OK(ParseRunningProcess(line));
+      s = ParseRunningProcess(line);
+      if (s != Status::OK()) {
+        file.close();
+        return s;
+      }
       s = ParseRunningProcess(line);
       if (s.IsError()) {
         file.close();
@@ -151,7 +164,7 @@ Status SystemInfo::SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemStat
 }
 
 Status SystemInfo::SampleSystemMemInfo() {
-  std::ifstream file("/proc/meminfo");
+  std::ifstream file("/proc/meminfo", std::ios::in);
   if (!file.is_open()) {
     MS_LOG(INFO) << "Unable to open /proc/meminfo. Continue processing.";
     last_mem_sampling_failed_ = true;
@@ -271,7 +284,7 @@ TaskUtil TaskCpuInfo::GetLatestCpuUtil() const {
 }
 
 Status ProcessInfo::SampleMemInfo() {
-  std::ifstream file("/proc/" + std::to_string(pid_) + "/smaps");
+  std::ifstream file("/proc/" + std::to_string(pid_) + "/smaps", std::ios::in);
   if (!file.is_open()) {
     MS_LOG(INFO) << "Unable to open /proc/" << pid_ << "/smaps file. Continue processing.";
     last_mem_sampling_failed_ = true;
@@ -318,7 +331,7 @@ Status ProcessInfo::SampleMemInfo() {
 }
 
 Status ProcessInfo::Sample(uint64_t total_time_elapsed) {
-  std::ifstream file("/proc/" + std::to_string(pid_) + "/stat");
+  std::ifstream file("/proc/" + std::to_string(pid_) + "/stat", std::ios::in);
   if (!file.is_open()) {
     MS_LOG(INFO) << "Unable to open /proc/" << pid_ << "/stat file. Continue processing.";
     last_sampling_failed_ = true;
@@ -354,7 +367,7 @@ Status ThreadCpuInfo::Sample(uint64_t total_time_elapsed) {
     // thread is probably terminated
     return Status::OK();
   }
-  std::ifstream file("/proc/" + std::to_string(pid_) + "/task/" + std::to_string(tid_) + "/stat");
+  std::ifstream file("/proc/" + std::to_string(pid_) + "/task/" + std::to_string(tid_) + "/stat", std::ios::in);
   if (!file.is_open()) {
     MS_LOG(INFO) << "Unable to open /proc/" << pid_ << "/task/" << tid_ << "/stat file. Continue processing.";
     last_sampling_failed_ = true;
@@ -564,10 +577,7 @@ void CpuSampler::Clear() {
 Status CpuSampler::ChangeFileMode(const std::string &dir_path, const std::string &rank_id) {
   Path path = GetFileName(dir_path, rank_id);
   std::string file_path = path.ToString();
-  if (chmod(common::SafeCStr(file_path), S_IRUSR | S_IWUSR) == -1) {
-    std::string err_str = "Change file mode failed," + file_path;
-    return Status(StatusCode::kMDUnexpectedError, err_str);
-  }
+  mindspore::ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
   return Status::OK();
 }
 
@@ -624,9 +634,11 @@ Status CpuSampler::SaveToFile(const std::string &dir_path, const std::string &ra
                                   {"used_sys_memory_mbytes", mem_used}};
 
   // Discard the content of the file when opening.
-  std::ofstream os(file_path, std::ios::trunc);
+  std::ofstream os(file_path, std::ios::out | std::ios::trunc);
   os << output;
   os.close();
+
+  mindspore::ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
 
   return Status::OK();
 }

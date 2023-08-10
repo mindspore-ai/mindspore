@@ -105,7 +105,7 @@ Status TedliumOp::ReadStmFolderRows(const Path &stm_folder, const std::string &r
   while (dirItr->HasNext()) {
     Path file = dirItr->Next();
     if (file.Extension() == ".stm") {
-      std::ifstream handle(file.ToString());
+      std::ifstream handle(file.ToString(), std::ios::in);
       if (!handle.is_open()) {
         RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file.ToString());
       }
@@ -127,7 +127,7 @@ Status TedliumOp::ReadStmFolderRows(const Path &stm_folder, const std::string &r
 Status TedliumOp::ReadStm(const Path &file_stm_path, int32_t row_line, std::string *talk_id, std::string *speaker_id,
                           std::string *start_time, std::string *end_time, std::string *identifier,
                           std::string *transcript) {
-  std::ifstream handle(file_stm_path.ToString().c_str());
+  std::ifstream handle(file_stm_path.ToString().c_str(), std::ios::in);
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file_stm_path.ToString());
   }

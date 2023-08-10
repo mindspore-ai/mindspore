@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_VECTORS_H_
 
 #include <algorithm>
-#include <fstream>
 #include <limits>
 #include <memory>
 #include <string>

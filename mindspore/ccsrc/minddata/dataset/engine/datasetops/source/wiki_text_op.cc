@@ -17,7 +17,6 @@
 #include "minddata/dataset/engine/datasetops/source/wiki_text_op.h"
 
 #include <algorithm>
-#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>
