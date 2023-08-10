@@ -64,7 +64,7 @@ Status SemeionOp::PrepareData() {
 
   MS_LOG(INFO) << "Semeion file found: " << file_path << ".";
 
-  std::ifstream handle(file_path.ToString());
+  std::ifstream handle(file_path.ToString(), std::ios::in);
 
   CHECK_FAIL_RETURN_UNEXPECTED(handle.is_open(), "Invalid file, failed to open file: " + file_path.ToString());
 

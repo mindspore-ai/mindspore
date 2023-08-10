@@ -32,11 +32,11 @@
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
 
-#define CLOSE_FILE(attr_file, pairition_file) \
+#define CLOSE_FILE(attr_file, partition_file) \
   do {                                        \
     attr_file.close();                        \
-    if (pairition_file.is_open()) {           \
-      pairition_file.close();                 \
+    if (partition_file.is_open()) {           \
+      partition_file.close();                 \
     }                                         \
   } while (false)
 

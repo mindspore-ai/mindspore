@@ -58,10 +58,11 @@ const std::string kRegexRtsp = "^rtsp://.*";
 bool IsDigitStr(const std::string &str) { return std::all_of(str.begin(), str.end(), isdigit); }
 
 bool IsPathExist(const std::string &path) {
-  std::ifstream file(path);
+  std::ifstream file(path, std::ios::in);
   if (!file) {
     return false;
   }
+  file.close();
   return true;
 }
 
@@ -359,7 +360,7 @@ AclLiteError ReadBinFile(const std::string &fileName, void *&data, uint32_t &siz
     ACLLITE_LOG_ERROR("%s is not a file, please enter a file", fileName.c_str());
     return ACLLITE_ERROR_INVALID_FILE;
   }
-  std::ifstream binFile(fileName, std::ifstream::binary);
+  std::ifstream binFile(fileName, std::ifstream::in | std::ifstream::binary);
   if (!binFile.is_open()) {
     ACLLITE_LOG_ERROR("open file %s failed", fileName.c_str());
     return ACLLITE_ERROR_OPEN_FILE;
@@ -492,7 +493,7 @@ bool AnalyseLine(const std::string &line, std::string &key, std::string &value) 
 
 bool ReadConfig(std::map<std::string, std::string> &config, const char *configFile) {
   config.clear();
-  std::ifstream infile(configFile);
+  std::ifstream infile(configFile, std::ifstream::in);
   if (!infile) {
     return false;
   }

@@ -169,7 +169,7 @@ class ImageNetToMR:
             raise IOError("map file {} not exists".format(self.map_file))
 
         label_dict = {}
-        with open(real_file_path) as fp:
+        with open(real_file_path, "r") as fp:
             line = fp.readline()
             while line:
                 labels = line.split(" ")

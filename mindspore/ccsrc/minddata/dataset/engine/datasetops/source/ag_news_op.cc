@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/source/ag_news_op.h"
 
-#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>

@@ -16,7 +16,6 @@
 #include "minddata/dataset/engine/datasetops/source/yahoo_answers_op.h"
 
 #include <algorithm>
-#include <fstream>
 #include <iomanip>
 #include <stdexcept>
 

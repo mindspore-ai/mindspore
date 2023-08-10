@@ -313,7 +313,7 @@ Status TFReaderOp::SendRecordBytesRow(const std::string &filename, const std::st
 Status TFReaderOp::HelperLoadNonCompFile(const std::string &filename, int64_t start_offset, int64_t end_offset,
                                          int32_t worker_id, const std::string &realpath_value) {
   std::ifstream reader;
-  reader.open(realpath_value);
+  reader.open(realpath_value, std::ios::in);
   if (!reader) {
     RETURN_STATUS_UNEXPECTED("Invalid file, " + filename + " open failed: permission denied!");
   }
@@ -339,13 +339,18 @@ Status TFReaderOp::HelperLoadNonCompFile(const std::string &filename, int64_t st
     (void)reader.read(&serialized_example[0], record_length);
 
     if (start_offset == kInvalidOffset || (rows_total >= start_offset && rows_total < end_offset)) {
-      RETURN_IF_NOT_OK(SendRecordBytesRow(filename, serialized_example, worker_id));
+      auto s = SendRecordBytesRow(filename, serialized_example, worker_id);
+      if (s != Status::OK()) {
+        reader.close();
+        return s;
+      }
     }
 
     // ignore crc footer
     (void)reader.ignore(static_cast<std::streamsize>(kTFRecordHeadFootSize));
     rows_total++;
   }
+  reader.close();
   return Status::OK();
 }
 
@@ -388,6 +393,7 @@ Status TFReaderOp::HelperLoadCompGZIPFile(const std::string &filename, int64_t s
 
       // invalid tfrecord file
       if (masked_crc != generated_crc) {
+        (void)gzclose(file);
         RETURN_STATUS_UNEXPECTED("Invalid TFRecord file: " + filename);
       }
     } else {
@@ -401,7 +407,11 @@ Status TFReaderOp::HelperLoadCompGZIPFile(const std::string &filename, int64_t s
     (void)gzread(file, &serialized_example[0], static_cast<unsigned int>(record_length));
 
     if (start_offset == kInvalidOffset || (rows_total >= start_offset && rows_total < end_offset)) {
-      RETURN_IF_NOT_OK(SendRecordBytesRow(filename, serialized_example, worker_id));
+      auto s = SendRecordBytesRow(filename, serialized_example, worker_id);
+      if (s != Status::OK()) {
+        (void)gzclose(file);
+        return s;
+      }
       rows_read++;
     }
     // ignore crc footer
@@ -426,13 +436,14 @@ Status TFReaderOp::HelperLoadCompZLIBFile(const std::string &filename, int64_t s
                                           int32_t worker_id, const std::string &realpath_value) {
   // ZLIB stream setup (based on zlib.h tutorial)
   ZLIBStreamInf zlib_stream;
-  std::ifstream reader(realpath_value, std::ios::binary);
+  std::ifstream reader(realpath_value, std::ios::in | std::ios::binary);
   if (!reader) {
     RETURN_STATUS_UNEXPECTED("Invalid file, " + filename + " open failed: permission denied!");
   }
 
   zlib_stream.inflate_status = inflateInit(&zlib_stream.strm);
   if (zlib_stream.inflate_status != Z_OK) {
+    reader.close();
     RETURN_STATUS_UNEXPECTED("Failed to initialize inflate stream for ZLIB for file " + filename + "!");
   }
 
@@ -465,14 +476,21 @@ Status TFReaderOp::HelperLoadCompZLIBFile(const std::string &filename, int64_t s
       }
 
       // inflate the stream
-      RETURN_IF_NOT_OK(HelperInflateZLIB(&zlib_stream, filename));
+      auto s = HelperInflateZLIB(&zlib_stream, filename);
+      if (s != Status::OK()) {
+        reader.close();
+        return s;
+      }
       if (zlib_stream.left_to_read != 0) {
         break;
       }
 
       // Process inflated data depending on read flag
-      RETURN_IF_NOT_OK(
-        HelperProcessZLIBData(&zlib_stream, &rows_read, &rows_total, filename, start_offset, end_offset, worker_id));
+      s = HelperProcessZLIBData(&zlib_stream, &rows_read, &rows_total, filename, start_offset, end_offset, worker_id);
+      if (s != Status::OK()) {
+        reader.close();
+        return s;
+      }
       zlib_stream.read_flag = (zlib_stream.read_flag + 1) %
                               (static_cast<int>(ZLIBReadFlag::Footer) + 1);  // resets flag to reading record length
     } while (zlib_stream.strm.avail_out == 0);
@@ -480,10 +498,12 @@ Status TFReaderOp::HelperLoadCompZLIBFile(const std::string &filename, int64_t s
 
   (void)inflateEnd(&zlib_stream.strm);
   if (zlib_stream.inflate_status != Z_STREAM_END && rows_read < end_offset) {
+    reader.close();
     RETURN_STATUS_UNEXPECTED("Decompression of ZLIB file failed for file " + filename + "!");
   }
 
   if (compression_type_ == CompressionType::ZLIB && rows_read < end_offset) {
+    reader.close();
     std::string errMsg = "This tfrecord file: " + filename +
                          ", does not meet minimum rows per shard requirement: " + std::to_string(total_rows_) +
                          " and " + std::to_string(static_cast<int>(total_rows_ / num_devices_)) +
@@ -491,6 +511,7 @@ Status TFReaderOp::HelperLoadCompZLIBFile(const std::string &filename, int64_t s
                          " number of rows in this file.";
     RETURN_STATUS_UNEXPECTED(errMsg);
   }
+  reader.close();
   return Status::OK();
 }
 
@@ -893,7 +914,7 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *const serialized_example,
                                           const std::string &filename) const {
   if (compression_type_ == CompressionType::NONE) {
     std::ifstream reader;
-    reader.open(realpath_value);
+    reader.open(realpath_value, std::ios::in);
 
     // read length
     int64_t record_length = 0;
@@ -905,6 +926,7 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *const serialized_example,
     // read serialized Example
     (*serialized_example).resize(static_cast<size_t>(record_length));
     (void)reader.read(&(*serialized_example)[0], static_cast<std::streamsize>(record_length));
+    reader.close();
   }
 #if !defined(_WIN32) && !defined(_WIN64)
   if (compression_type_ == CompressionType::GZIP || compression_type_ == CompressionType::GZIP_WITH_COUNT) {
@@ -925,9 +947,10 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *const serialized_example,
     // ZLIB stream setup (based on zlib.h tutorial)
     ZLIBStreamInf zlib_stream;
 
-    std::ifstream reader(realpath_value.c_str(), std::ios::binary);
+    std::ifstream reader(realpath_value.c_str(), std::ios::in | std::ios::binary);
     zlib_stream.inflate_status = inflateInit(&zlib_stream.strm);
     if (zlib_stream.inflate_status != Z_OK) {
+      reader.close();
       RETURN_STATUS_UNEXPECTED("Failed to initialize inflate stream for ZLIB for file " + filename + "!");
     }
 
@@ -939,7 +962,11 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *const serialized_example,
 
       // run inflate() on input until output buffer not full
       do {
-        RETURN_IF_NOT_OK(HelperInflateZLIB(&zlib_stream, filename));
+        auto s = HelperInflateZLIB(&zlib_stream, filename);
+        if (s != Status::OK()) {
+          reader.close();
+          return s;
+        }
         if (zlib_stream.left_to_read != 0) {
           break;
         }
@@ -960,8 +987,11 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *const serialized_example,
 
     (void)inflateEnd(&zlib_stream.strm);
     if (zlib_stream.inflate_status != Z_STREAM_END && zlib_stream.read_flag < static_cast<int>(ZLIBReadFlag::Footer)) {
+      reader.close();
       RETURN_STATUS_UNEXPECTED("Decompression of ZLIB file failed for file " + filename + "!");
     }
+
+    reader.close();
   }
 #endif
 
@@ -1057,7 +1087,7 @@ int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &file
 void TFReaderOp::HelperCountNonCompRows(const std::string &realpath_value, const std::string &filename,
                                         int64_t *rows_read) {
   std::ifstream reader;
-  reader.open(realpath_value);
+  reader.open(realpath_value, std::ios::in);
   if (!reader) {
     MS_LOG(DEBUG) << "TFReader operator failed to open file " << filename << ".";
   }
@@ -1077,6 +1107,7 @@ void TFReaderOp::HelperCountNonCompRows(const std::string &realpath_value, const
     (void)reader.ignore(static_cast<std::streamsize>(kTFRecordHeadFootSize));
     (*rows_read)++;
   }
+  reader.close();
 }
 
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -1114,7 +1145,7 @@ void TFReaderOp::HelperCountZLIBRows(const std::string &realpath_value, const st
   // ZLIB stream setup (based on zlib.h tutorial)
   ZLIBStreamInf zlib_stream;
 
-  std::ifstream reader(realpath_value.c_str(), std::ios::binary);
+  std::ifstream reader(realpath_value.c_str(), std::ios::in | std::ios::binary);
 
   if (!reader) {
     MS_LOG(DEBUG) << "TFReader operator failed to open file " << filename << " with ZLIB.";
@@ -1122,6 +1153,7 @@ void TFReaderOp::HelperCountZLIBRows(const std::string &realpath_value, const st
 
   zlib_stream.inflate_status = inflateInit(&zlib_stream.strm);
   if (zlib_stream.inflate_status != Z_OK) {
+    reader.close();
     MS_LOG(DEBUG) << "Failed to initialize inflate stream for ZLIB when counting rows for file " << filename << "!";
   }
 
@@ -1177,6 +1209,8 @@ void TFReaderOp::HelperCountZLIBRows(const std::string &realpath_value, const st
   if (zlib_stream.inflate_status != Z_STREAM_END) {
     MS_LOG(DEBUG) << "Decompression of ZLIB file failed when counting rows for file " << filename << "!";
   }
+
+  reader.close();
 }
 
 #endif
