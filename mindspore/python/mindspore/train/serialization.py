@@ -1315,8 +1315,7 @@ def _warm_up_host_cache_enabled(parameter_dict):
         return True
     for key in parameter_dict.keys():
         if key.find(".__param_key__") != -1:
-            raise ValueError("Parameter cache is not enabled, but configuration of checkpoint is cache enabled."
-                             " Please enable parameter cache and retry.")
+            return True
     return False
 
 
@@ -1324,7 +1323,8 @@ def _warm_up_host_cache(parameter_dict, net):
     """Warm up host cache."""
     ms_role = os.getenv("MS_ROLE")
     is_worker = ms_role == "MS_WORKER"
-    warm_up_dict = {}
+    param_key_dict = {}
+    # Traverse key, value in parameter_dict, warm up param key and record param key into param_key_dict.
     if is_worker:
         net.init_parameters_data()
         net_dict = {}
@@ -1334,7 +1334,7 @@ def _warm_up_host_cache(parameter_dict, net):
             pos = param_name.find(".__param_key__")
             if pos != -1:
                 net_param_name = param_name[:pos]
-                warm_up_dict[param_name] = net_param_name
+                param_key_dict[param_name] = net_param_name
                 net_value = None
                 if net_param_name not in net_dict:
                     logger.warning("net param name : %s is not in net", net_param_name)
@@ -1357,10 +1357,14 @@ def _warm_up_host_cache(parameter_dict, net):
             pos = param_name.find(".__param_key__")
             if pos != -1:
                 net_param_name = param_name[:pos]
-                warm_up_dict[param_name] = net_param_name
-    for key, value in warm_up_dict.items():
-        parameter_dict[value] = parameter_dict[key]
-        parameter_dict.pop(key)
+                param_key_dict[param_name] = net_param_name
+    # Split param key from parameter_dict since worker cannot load param key.
+    warm_up_dict = {}
+    for key, value in param_key_dict.items():
+        if is_worker:
+            warm_up_dict[value] = parameter_dict.pop(key)
+        else:
+            parameter_dict[value] = parameter_dict.pop(key)
     return (is_worker, parameter_dict, warm_up_dict)
 
 
