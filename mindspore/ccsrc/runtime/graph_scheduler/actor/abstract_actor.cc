@@ -39,7 +39,8 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
                 << ", origin ref count:" << input_data->data_->original_ref_count()
                 << ", current ref count:" << input_data->data_->ref_count()
                 << ", dynamic ref count:" << input_data->data_->dynamic_ref_count()
-                << ", flag:" << input_data->data_->flag();
+                << ", flag:" << input_data->data_->flag() << " user data:" << input_data->data_->user_data();
+
   if (is_run) {
     Run(context);
   }
@@ -196,39 +197,42 @@ void AbstractActor::InitOutputData() {
   }
 }
 
-void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
-
+void AbstractActor::SendOutputData(
+  OpContext<DeviceTensor> *const context, const std::vector<AnfNodePtr> &output_data_nodes,
+  const std::vector<DataArrowPtr> output_data_arrows,
+  const std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, size_t>> &output_data_list,
+  const mindspore::HashMap<DataArrow *, size_t> &data_arrow_to_fusion_actor_indexs,
+  mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> *batch_output_data) {
   MS_EXCEPTION_IF_NULL(context);
-  // Must be the execution order: send data --> send control, avoid the illegal timing problem.
-  // 1.Send output data.
+  MS_EXCEPTION_IF_NULL(batch_output_data);
+
   if (((output_data_arrows_.size() != output_data_.size()) ||
        (output_data_arrows_.size() != output_data_nodes_.size())) &&
       (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output data arrows is not equal to the output data.");
   }
-
-  size_t output_data_arrow_index = 0;
-  for (auto &output_data : output_data_) {
+  for (size_t output_data_arrow_index = 0; output_data_arrow_index < output_data_list.size();
+       ++output_data_arrow_index) {
+    auto &output_data = output_data_list[output_data_arrow_index];
     MS_EXCEPTION_IF_NULL(output_data.first);
     auto &to_op_id = output_data.first->op_id_;
-    auto &output_data_arrow = output_data_arrows_[output_data_arrow_index];
-    UpdateOutputData(output_data.first.get(), output_data_arrow, output_data_nodes_[output_data_arrow_index], context);
+    auto &output_data_arrow = output_data_arrows[output_data_arrow_index];
+    UpdateOutputData(output_data.first.get(), output_data_arrow, output_data_nodes[output_data_arrow_index], context);
     // The index of output data will be modified the real actor input index in the fusion actor, so need recovery the
     // fusion actor index before sending output data to the fusion actor.
     if (TEST_FLAG(output_data.second, kOutputDataFlagToFusion)) {
-      output_data.first->index_ = SizeToInt(data_arrow_to_fusion_actor_indexs_.at(output_data_arrow.get()));
+      output_data.first->index_ = SizeToInt(data_arrow_to_fusion_actor_indexs.at(output_data_arrow.get()));
     }
 
     if (TEST_FLAG(output_data.second, kOutputDataFlagLastBatch)) {
       // Send batch output data. As the data need update, so all data must be collected completely before sending.
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
-        ActorDispatcher::SendSync(to_actor, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()],
+        ActorDispatcher::SendSync(to_actor, &AbstractActor::RunBatchOpData, &((*batch_output_data)[to_op_id.Name()]),
                                   context);
       } else {
-        ActorDispatcher::Send(to_op_id, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()], context);
+        ActorDispatcher::Send(to_op_id, &AbstractActor::RunBatchOpData, &((*batch_output_data)[to_op_id.Name()]),
+                              context);
       }
     } else if (TEST_FLAG(output_data.second, kOutputDataFlagToStack)) {
       // Create a new op data for stack actor.
@@ -237,6 +241,7 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
       (void)to_stack_data_.emplace_back(std::move(to_stack_data));
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
+        MS_EXCEPTION_IF_NULL(to_actor);
         ActorDispatcher::SendSync(to_actor, &OpActor::RunOpData, to_stack_data_.back().get(), context);
       } else {
         ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
@@ -250,8 +255,18 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
         ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
       }
     }
-    ++output_data_arrow_index;
   }
+}
+
+void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
+
+  MS_EXCEPTION_IF_NULL(context);
+  // Must be the execution order: send data --> send control, avoid the illegal timing problem.
+  // 1.Send output data.
+  SendOutputData(context, output_data_nodes_, output_data_arrows_, output_data_, data_arrow_to_fusion_actor_indexs_,
+                 &batch_output_data_);
 
   // 2.Send output control.
   if (output_control_arrows_.size() > 0) {

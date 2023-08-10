@@ -71,13 +71,15 @@ TEST_F(GraphCompilerTest, CompileGraph) {
   func_graph->set_return(return_node);
 
   std::vector<AnfNodePtr> nodes{add_node, reshape_node, sub_node};
+  std::vector<AnfNodePtr> inputs;
   std::vector<AnfNodePtr> outputs{sub_node};
   auto segment = std::make_shared<GraphSegment>(nodes, false);
 
   auto compiler = std::make_shared<GraphCompiler>();
   DeviceContextKey device_context_key{"CPU", 0};
   auto device_context = std::make_shared<TestDeviceContext>(device_context_key);
-  auto graph_id = compiler->CompileGraph(segment, outputs, device_context.get(), device::RunMode::kKernelMode, false);
+  auto graph_id = compiler->CompileGraph(segment, std::make_pair(inputs, outputs), device_context.get(),
+                                         device::RunMode::kKernelMode, false);
   const auto &kernel_graph = compiler->Fetch(graph_id);
   ASSERT_EQ(2, kernel_graph->execution_order().size());
 }

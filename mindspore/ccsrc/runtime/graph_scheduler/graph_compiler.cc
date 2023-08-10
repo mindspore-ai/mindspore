@@ -346,9 +346,62 @@ void UseCacheToCompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext
     profiler_manage_inst->SetNetDynamicShapeStatus();
   }
 }
+
+GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrList &outputs,
+                                 const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(graph);
+  for (const auto &input : graph->inputs()) {
+    MS_LOG(DEBUG) << "input node:" << input->DebugString()
+                  << " abstract:" << (input->abstract() == nullptr ? "null" : input->abstract()->ToString());
+  }
+  MS_LOG(DEBUG) << "Pre construct any type input kernel graph:" << graph->ToString();
+  graph->set_is_any_type_input(true);
+  graph->SetInputNodes();
+  for (const auto &input : graph->input_nodes()) {
+    MS_LOG(DEBUG) << "input node:" << input->DebugString() << " abstract:" << input->abstract()->ToString();
+  }
+  auto backend_output = graph->output();
+  MS_EXCEPTION_IF_NULL(backend_output);
+  graph->CacheGraphOutputToFrontNodeWithIndex({backend_output}, outputs);
+  DeviceAddressUtils::CreateParameterDeviceAddress(device_context, graph);
+
+  auto output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+  for (const auto &output_with_index : output_with_indexs) {
+    const auto &output = output_with_index.first;
+    MS_EXCEPTION_IF_NULL(output);
+    if (common::AnfAlgo::IsBpropCutOpExecInBackend(output) || HasAbstractMonad(output)) {
+      continue;
+    }
+    if (output->kernel_info() == nullptr) {
+      output->set_kernel_info(std::make_shared<device::KernelInfo>());
+    }
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(output->kernel_info());
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    // select_kernel_build_info() has checked whether return pointer is null
+    auto build_info = kernel_info->select_kernel_build_info();
+    if (build_info != nullptr) {
+      continue;
+    }
+    size_t output_num = 1;
+    if (output->abstract() != nullptr) {
+      output_num = common::AnfAlgo::GetOutputNumByAbstract(output->abstract());
+    }
+    kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+    builder.SetOutputsFormat(std::vector<std::string>(output_num, kOpFormat_DEFAULT));
+    builder.SetOutputsDeviceType(std::vector<TypeId>(output_num, kTypeUnknown));
+    builder.SetOutputsKernelObjectType(
+      std::vector<kernel::KernelObjectType>(output_num, kernel::KernelObjectType::TENSOR));
+    AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), output.get());
+    MS_LOG(DEBUG) << "Set kernel build info for node:" << output->DebugString() << " output num:" << output_num;
+  }
+
+  DeviceAddressUtils::CreateGraphOutputDeviceAddress(device_context, graph);
+  return graph->graph_id();
+}
 }  // namespace
 
-GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
+GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment,
+                                    const std::pair<AnfNodePtrList, AnfNodePtrList> &io_nodes,
                                     const DeviceContext *device_context, device::RunMode run_mode,
                                     bool run_in_pynative) {
   MS_EXCEPTION_IF_NULL(session_);
@@ -357,12 +410,17 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   MS_LOG(INFO) << "Status record: start compile graph.";
   auto nodes = segment->nodes_;
   auto device_target = device_context->GetDeviceType();
+  const auto &outputs = io_nodes.second;
   // Generate kernel graph.
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageConstructKernelGraph, 1, 0, 0);
   KernelGraphPtr graph =
     session_->ConstructKernelGraph(nodes, outputs, device_target, true, IsEnableZeroCopy(run_in_pynative));
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageConstructKernelGraph, 1, 0, 1);
   MS_EXCEPTION_IF_NULL(graph);
+  const auto &inputs = io_nodes.first;
+  if (!run_in_pynative && common::GetEnv("MS_RUNTIME_COMPILE") == "1" && common::AnfAlgo::IsAnyTypeInput(inputs)) {
+    return CompileAnyTypeInputGraph(graph, outputs, device_context);
+  }
   SetRunGraphBySingleOpFlag(graph);
   SetGraphDependency(graph, segment);
   graph->UpdateGraphAquireGilAttr();

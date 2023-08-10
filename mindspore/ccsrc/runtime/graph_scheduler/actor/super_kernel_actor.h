@@ -42,9 +42,9 @@ struct OutputMemoryInfo {
 class SuperKernelActor : public DebugAwareActor {
  public:
   SuperKernelActor(const std::string &name, const KernelGraphPtr &graph, const DeviceContext *device_context,
-                   const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid)
-      : DebugAwareActor(name, KernelTransformType::kSuperKernelActor, recorder_aid, memory_manager_aid, debug_aid),
-        graph_(graph) {
+                   const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
+                   KernelTransformType type = KernelTransformType::kSuperKernelActor)
+      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid), graph_(graph) {
     (void)device_contexts_.emplace_back(device_context);
     input_device_tensors_.resize(graph->input_nodes().size());
   }
@@ -67,6 +67,8 @@ class SuperKernelActor : public DebugAwareActor {
  protected:
   void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
+  // The input device tensors for launch.
+  std::vector<DeviceTensor *> input_device_tensors_;
 
  private:
   friend class GraphScheduler;
@@ -92,8 +94,6 @@ class SuperKernelActor : public DebugAwareActor {
   // The received input device type and format may be different from the formal parameter in the control flow scenarios,
   // so it needs to be copied from the input data to real data that graph launch needs.
   std::vector<DeviceTensorPtr> copy_input_device_tensors_;
-  // The input device tensors for launch.
-  std::vector<DeviceTensor *> input_device_tensors_;
   // Record the device address to the output node of graph.
   std::map<DeviceAddress *, OutputMemoryInfo> device_address_to_node_;
 };

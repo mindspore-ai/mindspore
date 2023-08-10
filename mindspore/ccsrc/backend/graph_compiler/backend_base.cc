@@ -576,7 +576,9 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
                      << ", debug name:" << cnode->DebugString();
       }
 
-      SetPyExecuteSyncAttr(cnode);
+      if (common::GetEnv("MS_RUNTIME_COMPILE") != "1") {
+        SetPyExecuteSyncAttr(cnode);
+      }
     }
   }
 }
@@ -646,8 +648,8 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
     if (root_graph_->has_flag(kFlagEnableRunGraphBySingleOp)) {
       graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context);
     } else {
-      graph_id =
-        graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, ms_execution_mode_ == kPynativeMode);
+      graph_id = graph_compiler_->CompileGraph(segment, std::make_pair(inputs, outputs), device_context, run_mode,
+                                               ms_execution_mode_ == kPynativeMode);
       if (graph_compiler_->Fetch(graph_id)->has_flag(kFlagEnableRunGraphBySingleOp)) {
         MS_LOG(INFO)
           << "Set kFlagEnableRunGraphBySingleOp: require the root_graph and subgraph to have the same markings ";
@@ -1171,9 +1173,16 @@ std::shared_ptr<GraphCompilerInfo> MindRTBackendBase::ConstructGraphCompilerInfo
   if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
     strategy = runtime::GraphExecutionStrategy::kPipelineWithExecutionOrder;
   }
+  auto compile_func = [graph_compiler = this->graph_compiler_](
+                        const GraphSegmentPtr &segment, const std::pair<AnfNodePtrList, AnfNodePtrList> &io_nodes,
+                        const DeviceContext *device_context, device::RunMode run_mode) -> KernelGraphPtr {
+    auto graph_id = graph_compiler->CompileGraph(segment, io_nodes, device_context, run_mode, false);
+    return graph_compiler->Fetch(graph_id);
+  };
+
   return std::make_shared<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
                                              root_graph->parameters(), parser, outputs_order, outputs_num, name, false,
-                                             strategy);
+                                             strategy, compile_func);
 }
 
 void MindRTBackendBase::ParseControlNodes(const GraphCompilerInfo &graph_compile_info) {

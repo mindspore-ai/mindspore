@@ -595,7 +595,7 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
         MS_EXCEPTION_IF_NULL(front_node);
         MS_LOG(DEBUG) << "Prepare data for value node:" << value_node->fullname_with_scope()
                       << ", debug name:" << value_node->DebugString()
-                      << ", front node:" << front_node->fullname_with_scope();
+                      << ", front node:" << front_node->fullname_with_scope() << " for graph:" << graph->ToString();
         PrepareDataForValueNode(value_node, front_node, device_context, context);
       }
     }

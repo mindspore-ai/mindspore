@@ -409,6 +409,8 @@ void GraphScheduler::Initialize() {
   (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kKernelActor, &GraphScheduler::LinkDataArrowForKernelActor);
   (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kSuperKernelActor,
                                       &GraphScheduler::LinkDataArrowForBaseActor);
+  (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kAnyTypeKernelActor,
+                                      &GraphScheduler::LinkDataArrowForBaseActor);
   (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kDeviceTensorStore,
                                       &GraphScheduler::LinkDataArrowForDeviceTensorStore);
   (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kInternalParameter,
@@ -495,6 +497,15 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
     (void)actor_manager->Spawn(base_debug_actor, true);
   }
 #endif
+}
+
+std::vector<AbstractActorPtr> GraphScheduler::TransformForAnyTypeActor(const KernelGraphPtr &model_graph,
+                                                                       const KernelGraphPtr &real_graph,
+                                                                       const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(model_graph);
+  MS_EXCEPTION_IF_NULL(real_graph);
+  std::vector<AbstractActorPtr> actors;
+  return actors;
 }
 
 ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info) {
@@ -786,6 +797,7 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   actor_set->custom_actors_ = BuildCustomActor(graph_compiler_info);
   actor_set->kernel_actors_ = BuildKernelActor(graph_compiler_info);
   actor_set->super_kernel_actors_ = BuildSuperKernelActor(graph_compiler_info);
+  actor_set->any_type_kernel_actors_ = BuildAnyTypeKernelActor(graph_compiler_info);
   actor_set->loop_count_actor_ = BuildLoopCountActor(graph_compiler_info);
   actor_set->output_actor_ = BuildOutputActor(graph_compiler_info);
   actor_set->data_prepare_actor_ =
@@ -948,7 +960,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
       MS_LOG(INFO) << "The graph " << graph->graph_id() << " is an empty graph and skips linking.";
       continue;
     }
-    if (graph->is_graph_run_mode()) {
+    if (graph->is_graph_run_mode() || graph->is_any_type_input()) {
       LinkDataArrowInSinkMode(graph, graph_compiler_info, &auto_monad_actors);
     } else {
       // In the control flow, the communication nodes need to be guaranteed to be executed in order. The order
@@ -1108,7 +1120,7 @@ std::vector<CustomActorPtr> GraphScheduler::BuildCustomActor(const GraphCompiler
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     const auto &graph = graph_compiler_info.graphs_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (graph->is_graph_run_mode()) {
+    if (graph->is_graph_run_mode() || graph->is_any_type_input()) {
       continue;
     }
 
@@ -1137,7 +1149,7 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (graph->is_graph_run_mode()) {
+    if (graph->is_graph_run_mode() || graph->is_any_type_input()) {
       continue;
     }
 
@@ -1186,7 +1198,7 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (!graph->is_graph_run_mode()) {
+    if ((!graph->is_graph_run_mode()) || graph->is_any_type_input()) {
       continue;
     }
 
@@ -1203,6 +1215,50 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
     (void)super_kernel_actors.emplace_back(super_kernel_actor);
   }
   return super_kernel_actors;
+}
+
+std::vector<AnyTypeKernelActorPtr> GraphScheduler::BuildAnyTypeKernelActor(
+  const GraphCompilerInfo &graph_compiler_info) {
+  std::vector<AnyTypeKernelActorPtr> any_type_kernel_actors;
+
+  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+    const auto &graph = graph_compiler_info.graphs_[i];
+    const auto &device_context = graph_compiler_info.device_contexts_[i];
+    MS_EXCEPTION_IF_NULL(graph);
+    if (!graph->is_any_type_input()) {
+      continue;
+    }
+    if (graph->execution_order().empty()) {
+      MS_LOG(INFO) << "The graph " << graph->graph_id() << " is an empty graph and skips building.";
+      continue;
+    }
+
+    auto actor_name = graph->ToString() + kAnyTypeKernelActorNameSuffix;
+    auto any_type_kernel_actor =
+      std::make_shared<AnyTypeKernelActor>(actor_name, graph, device_context, memory_manager_aid_, debug_aid_, nullptr);
+    any_type_kernel_actor->compile_func_ = graph_compiler_info.compile_func_;
+    any_type_kernel_actor->transform_func_ = [this](const KernelGraphPtr &model_graph, const KernelGraphPtr &real_graph,
+                                                    const DeviceContext *device_context) {
+      return TransformForAnyTypeActor(model_graph, real_graph, device_context);
+    };
+    any_type_kernel_actor->schedule_func_ = [this](const std::vector<AbstractActorPtr> &actors) {
+      auto actor_manager = ActorMgr::GetActorMgrRef();
+      MS_EXCEPTION_IF_NULL(actor_manager);
+      for (auto actor : actors) {
+        MS_EXCEPTION_IF_NULL(actor);
+        // The sub actors in the fusion actor do not participate in message interaction.
+        if (actor->parent_fusion_actor_ == nullptr) {
+          (void)actor_manager->Spawn(actor);
+        } else {
+          actor->Init();
+        }
+      }
+    };
+    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
+    InsertActor(any_type_kernel_actor.get());
+    (void)any_type_kernel_actors.emplace_back(any_type_kernel_actor);
+  }
+  return any_type_kernel_actors;
 }
 
 LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info) {
@@ -1432,6 +1488,9 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
                                              std::vector<AbstractActor *> *const auto_monad_actors) {
   MS_EXCEPTION_IF_NULL(graph);
   auto to_actor_name = graph->ToString() + kSuperKernelActorNameSuffix;
+  if (graph->is_any_type_input()) {
+    to_actor_name = graph->ToString() + kAnyTypeKernelActorNameSuffix;
+  }
   auto to_actor = FetchActor(to_actor_name);
   MS_EXCEPTION_IF_NULL(to_actor);
   const auto &parser = graph_compiler_info.control_node_parser_;
@@ -1627,7 +1686,8 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
       common::AnfAlgo::IsDynamicShape(real_from_kernel_with_output_idx.first)) {
     AbstractActor *dynamic_shape_actor = nullptr;
     auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_kernel_with_output_idx.first);
-    if (AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(real_from_kernel_with_output_idx.first)) {
+    if (real_from_actor->type() == KernelTransformType::kAnyTypeKernelActor ||
+        AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(real_from_kernel_with_output_idx.first)) {
       dynamic_shape_actor = real_from_actor;
     } else {
       dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
@@ -2312,36 +2372,48 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
     return;
   }
 
+  auto is_no_output_actor = [](const AbstractActorPtr &actor) {
+    return (actor->output_data_arrows_.size() == 0) && (actor->output_control_arrows_.size() == 0);
+  };
+
   // Collect the actors which have no output.
   std::vector<AbstractActor *> no_output_actors;
   for (auto &super_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_actor);
-    if ((super_actor->output_data_arrows_.size() == 0) && (super_actor->output_control_arrows_.size() == 0)) {
+    if (is_no_output_actor(super_actor)) {
       (void)no_output_actors.emplace_back(super_actor.get());
     }
   }
+
+  for (auto &actor : actor_set->any_type_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(actor);
+    if (is_no_output_actor(actor)) {
+      (void)no_output_actors.emplace_back(actor.get());
+    }
+  }
+
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     // The no output kernel control side in subgraph needs to be connected to the corresponding output switch actor.
-    if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0)) {
+    if (is_no_output_actor(kernel_actor)) {
       (void)no_output_actors.emplace_back(kernel_actor.get());
     }
   }
   for (auto &data_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_actor);
-    if ((data_actor->output_data_arrows_.size() == 0) && (data_actor->output_control_arrows_.size() == 0)) {
+    if (is_no_output_actor(data_actor)) {
       (void)no_output_actors.emplace_back(data_actor.get());
     }
   }
   for (auto &copy_actor : copy_actors_) {
     MS_EXCEPTION_IF_NULL(copy_actor);
-    if ((copy_actor->output_data_arrows_.size() == 0) && (copy_actor->output_control_arrows_.size() == 0)) {
+    if (is_no_output_actor(copy_actor)) {
       (void)no_output_actors.emplace_back(copy_actor.get());
     }
   }
   for (auto &custom_actor : actor_set->custom_actors_) {
     MS_EXCEPTION_IF_NULL(custom_actor);
-    if ((custom_actor->output_data_arrows_.size() == 0) && (custom_actor->output_control_arrows_.size() == 0)) {
+    if (is_no_output_actor(custom_actor)) {
       (void)no_output_actors.emplace_back(custom_actor.get());
     }
   }

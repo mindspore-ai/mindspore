@@ -310,7 +310,9 @@ KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const Kerne
   if (kernel_graph == nullptr) {
     return KernelTransformType::kUnknown;
   }
-
+  if (kernel_graph->is_any_type_input() && node != nullptr && node->isa<CNode>()) {
+    return KernelTransformType::kAnyTypeKernelActor;
+  }
   // In sink mode, the data exchange between child graphs is expressed as parameters. These parameters are stored
   // in the graph and should be obtained from the super kernel actor.
   if (kernel_graph->is_graph_run_mode() &&
@@ -364,6 +366,9 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
   switch (kernel_type) {
     case KernelTransformType::kSuperKernelActor:
       actor_name = kernel_graph->ToString() + kSuperKernelActorNameSuffix;
+      break;
+    case KernelTransformType::kAnyTypeKernelActor:
+      actor_name = kernel_graph->ToString() + kAnyTypeKernelActorNameSuffix;
       break;
     case KernelTransformType::kDeviceDataSourceActor:
       actor_name = actor_set_name + kDeviceDSActorNameSuffix + "_" + std::to_string(kernel_graph->graph_id());

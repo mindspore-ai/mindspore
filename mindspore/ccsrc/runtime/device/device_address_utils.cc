@@ -310,9 +310,42 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
       if (is_from_persistent_mem) {
         device_address->set_from_persistent_mem(true);
       }
+      if (find(outputs.begin(), outputs.end(), kernel) != outputs.end()) {
+        device_address->SetNodeIndex(kernel, i);
+      }
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
                     << " addr:" << device_address;
       AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
+    }
+  }
+}
+
+void DeviceAddressUtils::CreateGraphOutputDeviceAddress(const DeviceContext *device_context,
+                                                        const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(graph);
+  auto output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+  for (const auto &output_with_index : output_with_indexs) {
+    const auto &output = output_with_index.first;
+    MS_EXCEPTION_IF_NULL(output);
+    if (common::AnfAlgo::IsBpropCutOpExecInBackend(output) || HasAbstractMonad(output)) {
+      continue;
+    }
+    auto output_size = AnfAlgo::GetOutputAddressNum(output);
+    for (size_t i = 0; i < output_size; ++i) {
+      if (AnfAlgo::OutputAddrExist(output, i)) {
+        continue;
+      }
+
+      const auto &real_device_context = device::FetchRealDeviceContext(output, device_context);
+      MS_EXCEPTION_IF_NULL(real_device_context);
+      auto output_format = AnfAlgo::GetOutputFormat(output, i);
+      auto output_type = AnfAlgo::GetOutputDeviceDataType(output, i);
+      auto address_size = AnfAlgo::GetOutputTensorMemSize(output, i);
+      auto device_address = real_device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, address_size, output_format, output_type, trans::GetRuntimePaddingShape(output, i));
+      MS_LOG(DEBUG) << "Create addr for node:" << output->DebugString() << " addr:" << device_address;
+      AnfAlgo::SetOutputAddr(device_address, i, output.get());
     }
   }
 }

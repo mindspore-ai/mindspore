@@ -934,7 +934,9 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
     } else {
       abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type), shape->cast<abstract::BaseShapePtr>());
     }
-    parameter->set_abstract(abstract);
+    if (!parameter->abstract()->isa<abstract::AbstractAny>()) {
+      parameter->set_abstract(abstract);
+    }
   }
 }
 
