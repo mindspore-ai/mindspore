@@ -52,9 +52,11 @@ std::string ShapesToString(const ShapeArray &shapes) {
 }
 
 bool IsGeTrain() {
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  auto env_training = common::GetEnv("MS_GE_TRAIN");
-  if (env_ge == "1" && env_training == "1") {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool enable_ge = context->backend_policy() == "ge";
+  bool enable_training = GetPhasePrefix() == "train";
+  if (enable_ge && enable_training) {
     return true;
   }
   return false;

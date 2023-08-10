@@ -418,12 +418,13 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
   }
 
   // set up init sub graph
-  bool is_eval_after_train = common::GetEnv("MS_GE_TRAIN") == "1" && phase_prefix_ != "train";
-  if (init_input->size() != 0 && !is_eval_after_train) {
+  static bool is_inited = false;
+  if (init_input->size() != 0 && !is_inited) {
     // init sub graph needs no input
     MS_LOG(INFO) << "Build data init subgraph.";
     (void)init_graph->SetInputs(*init_input);
     this->init_graph_ = init_graph;
+    is_inited = true;
   } else {
     this->init_graph_ = nullptr;
   }
@@ -456,15 +457,15 @@ void DfGraphConvertor::SetupParamInitSubGraph() {
   }
 
   // set up init sub graph
-
-  bool is_eval_after_train = common::GetEnv("MS_GE_TRAIN") == "1" && phase_prefix_ != "train";
   std::vector<::ge::Operator> init_input;
   InitLoopVar(&init_input);
-  if (!init_input.empty() && !is_eval_after_train) {
+  static bool is_inited = false;
+  if (!init_input.empty() && !is_inited) {
     // init sub graph needs no input
     MS_LOG(INFO) << "Build data init subgraph.";
     (void)init_graph->SetInputs(init_input);
     this->init_graph_ = init_graph;
+    is_inited = true;
   } else {
     this->init_graph_ = nullptr;
   }

@@ -1668,7 +1668,7 @@ void GraphExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server
 
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
                      const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
-                     const std::vector<int64_t> &input_indexes, const std::string &, bool need_run) {
+                     const std::vector<int64_t> &input_indexes, const std::string &phase, bool need_run) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string name = ms_context->backend_policy();
@@ -1689,10 +1689,12 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
     if (iter_num == -1) {
       iter_num = INT32_MAX;
     }
-    return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
+    PhaseManager::GetInstance().set_phase(phase);
+    bool status = InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
+    PhaseManager::GetInstance().ClearPhase();
+    return status;
 #endif
   }
-
   return name == "ge" ? true : false;
 }
 
@@ -1748,8 +1750,10 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   compile::SetMindRTEnable();
   auto backend = compile::CreateBackend();
   MS_EXCEPTION_IF_NULL(backend);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   // The data set graph compiling and running of mindRT.
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
 #if defined(__linux__) && defined(WITH_BACKEND)
     if (ps::PSContext::instance()->is_worker() && ps::PSContext::instance()->cache_enable()) {
       ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
@@ -1761,7 +1765,8 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
     SetRunMode(func_graph, mindrt_backend.get());
     auto &actor_info = mindrt_backend->CompileGraphs(func_graph);
     VectorRef args;
-    if (need_run) {
+    bool is_enable_ge = context_ptr->backend_policy() == "ge";
+    if (!is_enable_ge && need_run) {
       VectorRef outputs;
       mindrt_backend->RunGraph(actor_info, args, &outputs);
     }
