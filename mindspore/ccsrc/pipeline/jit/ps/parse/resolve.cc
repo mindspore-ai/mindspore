@@ -272,11 +272,13 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     MS_LOG(ERROR) << "Convert data failed";
     return nullptr;
   }
-  if (ContainsParameterConstants(convert_result)) {
-    MS_LOG(WARNING)
-      << "The Parameter in obj '" << py::str(obj)
-      << "' with nested structure is resolved to a constant because we only support single Parameter or tuple/list "
-         "Parameters. Or do you want to use Tensor instead?";
+  if (IS_OUTPUT_ON(mindspore::kInfo)) {
+    if (ContainsParameterConstants(convert_result)) {
+      MS_LOG(INFO)
+        << "The Parameter in obj '" << py::str(obj)
+        << "' with nested structure is resolved to a constant because we only support single Parameter or tuple/list "
+           "Parameters. Or do you want to use Tensor instead?";
+    }
   }
 
   bool interpret_without_internal =
@@ -316,42 +318,62 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
   return output;
 }
 
-bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func_graph,
-                                  const ValuePtr &value, AnfNodePtr *const transformed) {
+AnfNodePtr TransformFuncValueNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func_graph,
+                                  const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  const auto &value_vec = GetValue<ValuePtrList>(value);
-  if (value_vec.empty()) {
-    return false;
+  if (value->isa<FuncGraph>()) {
+    auto fg = value->cast<FuncGraphPtr>();
+    manager->AddFuncGraph(fg);
+    return NewValueNode(fg);
   }
-  std::vector<AnfNodePtr> nodes;
-  (void)nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-  bool is_all_func = true;
-  for (auto &elem : value_vec) {
-    MS_EXCEPTION_IF_NULL(elem);
-    AnfNodePtr node = nullptr;
-    if (elem->isa<ValueTuple>() || elem->isa<ValueList>()) {
-      is_all_func = is_all_func && TransformVectorFuncValueNode(manager, func_graph, elem, &node);
-    } else if (elem->isa<FuncGraph>()) {
-      FuncGraphPtr new_fg = elem->cast<FuncGraphPtr>();
-      manager->AddFuncGraph(new_fg);
-      node = NewValueNode(new_fg);
-    } else if (elem->isa<Primitive>()) {
-      node = NewValueNode(elem);
-    } else {
-      is_all_func = false;
+  if (value->isa<Primitive>()) {
+    return NewValueNode(value);
+  }
+  // (1) The CellList or CellDict will be parsed as value_sequence or value_dict of const graph in it,
+  // So if there is graph in list, try to replace the node with make_tuple or make_dict of graph value node.
+  // We do this because the graph manager won't investigate the graph inside value_sequence or value_dict,
+  // change the vector of graph to be make_tuple or make_dict of graph value node.
+  // (2) the primitive value_tuple or value_sequence or value_dict may encounter to abstract error, make it all
+  // independent nodes.
+  if (value->isa<ValueSequence>()) {
+    std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
+    bool is_all_func = true;
+    auto value_sequence = value->cast<ValueSequencePtr>();
+    if (value_sequence->size() == 0) {
+      return nullptr;
     }
-    (void)nodes.emplace_back(node);
+    for (auto &elem : value_sequence->value()) {
+      auto node = TransformFuncValueNode(manager, func_graph, elem);
+      if (node == nullptr) {
+        is_all_func = false;
+      }
+      (void)inputs.emplace_back(node);
+    }
+    if (is_all_func) {
+      return func_graph->NewCNode(std::move(inputs));
+    }
+    return nullptr;
   }
-  if (is_all_func) {
-    // (1) The celllist or ordered_cell will be parsed as valuetuple of const graph in it,
-    // So if has graph in list, try to replace the node with make tuple of graph value node.
-    // We do this because the graph manager won't investigate the graph inside valuetuple,
-    // change the vector of graph to be make_tuple of graph value node.
-    // (2) the primitive valuetuple or valuelist may encounter to abstract error, make it all
-    // independent nodes.
-    *transformed = func_graph->NewCNode(std::move(nodes));
+  if (value->isa<ValueDictionary>()) {
+    std::vector<AnfNodePtr> keys{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> values{NewValueNode(prim::kPrimMakeTuple)};
+    bool is_all_func = true;
+    for (auto &elem : value->cast<ValueDictionaryPtr>()->value()) {
+      (void)keys.emplace_back(NewValueNode(elem.first));
+      auto node = TransformFuncValueNode(manager, func_graph, elem.second);
+      if (node == nullptr) {
+        is_all_func = false;
+      }
+      (void)values.emplace_back(node);
+    }
+    if (is_all_func) {
+      return func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), func_graph->NewCNode(std::move(keys)),
+                                   func_graph->NewCNode(std::move(values))});
+    }
+    return nullptr;
   }
-  return is_all_func;
+
+  return nullptr;
 }
 
 // Resolve the python obj, and if the resovled node is valuenode with graphs, add the graphs to manager.
@@ -370,9 +392,12 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
   }
 
   // If the constant node is constant of vector of graph, add graph to manager.
-  if (IsValueNode<ValueTuple>(resolved_node) || IsValueNode<ValueList>(resolved_node)) {
+  if (IsValueNode<ValueSequence>(resolved_node) || IsValueNode<ValueDictionary>(resolved_node)) {
     auto value = resolved_node->cast<ValueNodePtr>()->value();
-    (void)TransformVectorFuncValueNode(manager, node->func_graph(), value, &resolved_node);
+    auto new_node = TransformFuncValueNode(manager, node->func_graph(), value);
+    if (new_node != nullptr) {
+      resolved_node = new_node;
+    }
   }
   return resolved_node;
 }
