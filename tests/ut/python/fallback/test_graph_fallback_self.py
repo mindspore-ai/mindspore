@@ -111,3 +111,47 @@ def test_fallback_self_method():
     out = net()
     expect = np.array([4, 6, 8])
     assert np.all(out.asnumpy() == expect)
+
+
+def test_fallback_self_variable():
+    """
+    Feature: JIT Fallback
+    Description: Use self as variable name
+    Expectation: No exception
+    """
+    class Network(nn.Cell):
+        def __init__(self):
+            super(Network, self).__init__()
+            self.value = 5
+
+        def construct(self):
+            x = self.value
+            self = 10 # pylint: disable=W0642
+            return x, Tensor(self)
+
+    net = Network()
+    out_x, out_self = net()
+    assert out_x == 5
+    assert out_self == 10
+
+
+def test_fallback_self_variable_with_get_attr():
+    """
+    Feature: JIT Fallback
+    Description: Use self as variable name
+    Expectation: No exception
+    """
+    class Network(nn.Cell):
+        def __init__(self):
+            super(Network, self).__init__()
+            self.value = 5
+
+        def construct(self):
+            x = getattr(self, 'value')
+            self = 10 # pylint: disable=W0642
+            return x, Tensor(self)
+
+    net = Network()
+    out_x, out_self = net()
+    assert out_x == 5
+    assert out_self == 10

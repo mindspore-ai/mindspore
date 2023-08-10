@@ -279,10 +279,6 @@ AnfNodePtr FunctionBlock::MakeResolveAstOpNameSpace(const py::tuple &namespace_v
 AnfNodePtr FunctionBlock::MakeResolveClassMemberOrSelf(const std::string &attr_or_self) {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
-  if (!global_py_params().contains("self")) {
-    py::object self_namespace = ast->CallParseModFunction(PYTHON_MOD_GET_ATTR_NAMESPACE_SYMBOL, ast->obj());
-    AddGlobalPyParam("self", self_namespace);
-  }
 
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
