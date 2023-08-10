@@ -31,7 +31,6 @@ from mindspore.nn.wrap import *
 from mindspore.nn.grad import Jvp, Vjp
 from mindspore.nn.sparse import *
 from mindspore.nn.reinforcement import *
-from mindspore.nn.lr_scheduler import *
 
 __all__ = ["Cell", "GraphCell"]
 __all__.extend(layer.__all__)
@@ -44,6 +43,5 @@ __all__.extend(sparse.__all__)
 __all__.extend(learning_rate_schedule.__all__)
 __all__.extend(dynamic_lr.__all__)
 __all__.extend(reinforcement.__all__)
-__all__.extend(lr_scheduler.__all__)
 
 __all__.sort()

@@ -5,8 +5,8 @@ import torch
 import mindspore
 from mindspore import nn
 from mindspore import Tensor, context
-from mindspore.nn.optim_ex import AdamW
-from mindspore.nn.lr_scheduler import StepLR
+from mindspore.experimental.optim import AdamW
+from mindspore.experimental.optim.lr_scheduler import StepLR
 
 
 class Network(nn.Cell):
