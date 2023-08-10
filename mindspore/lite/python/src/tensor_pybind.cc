@@ -177,7 +177,8 @@ bool SetTensorNumpyData(const MSTensorPtr &tensor_ptr, const py::array &input) {
                   << tensor.Shape() << ", got shape " << py_buffer_info.shape;
     return false;
   }
-  auto tensor_impl = std::make_shared<TensorNumpyImpl>(tensor.Name(), std::move(py_buffer_info), tensor.Shape());
+  auto tensor_impl = std::make_shared<TensorNumpyImpl>(tensor.Name(), std::move(py_buffer_info), tensor.Shape(),
+                                                       static_cast<mindspore::DataType>(py_data_type));
   tensor = MSTensor(tensor_impl);
   return true;
 }

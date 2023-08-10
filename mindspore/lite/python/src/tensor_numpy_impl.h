@@ -33,8 +33,9 @@ namespace py = pybind11;
 namespace mindspore {
 class TensorNumpyImpl : public MutableTensorImpl {
  public:
-  TensorNumpyImpl(const std::string &name, py::buffer_info &&buffer, const std::vector<int64_t> &ms_shape)
-      : name_(name), buffer_(std::move(buffer)), ms_shape_(ms_shape) {}
+  TensorNumpyImpl(const std::string &name, py::buffer_info &&buffer, const std::vector<int64_t> &ms_shape,
+                  mindspore::DataType data_type)
+      : name_(name), buffer_(std::move(buffer)), ms_shape_(ms_shape), data_type_(data_type) {}
   ~TensorNumpyImpl() {
     {
       py::gil_scoped_acquire acquire;
@@ -46,7 +47,7 @@ class TensorNumpyImpl : public MutableTensorImpl {
     MS_LOG(ERROR) << "Cannot call SetShape for numpy tensor";
   }
 
-  enum DataType DataType() const override { return GetDataType(buffer_); }
+  enum DataType DataType() const override { return data_type_; }
   void SetDataType(mindspore::DataType data_type) override {
     MS_LOG(ERROR) << "Cannot call SetDataType for numpy tensor";
   }
@@ -142,6 +143,9 @@ class TensorNumpyImpl : public MutableTensorImpl {
 
   py::buffer_info buffer_;
   std::vector<int64_t> ms_shape_;
+
+ private:
+  mindspore::DataType data_type_;
 };
 }  // namespace mindspore
 
