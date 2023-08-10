@@ -228,7 +228,7 @@ int LstmFp32BaseCPUKernel::MallocRunBuffer(bool is_double) {
   segments.push_back(segment);
   whole_size += segment * scale;
 
-  if (in_tensors_.size() == C7NUM) {
+  if (in_tensors_.size() == C7NUM || lstm_param_->project_size_ != 0) {
     segment = lstm_param_->batch_ == 1 ? 0 : lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * scale;
     segments.push_back(segment);  // 6: project-layer input
     whole_size += segment;
