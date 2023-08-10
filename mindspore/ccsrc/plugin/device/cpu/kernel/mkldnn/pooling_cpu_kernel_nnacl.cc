@@ -26,13 +26,16 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kDepthOffset = 2;
-constexpr size_t kPadListLen = 6;
+constexpr size_t kHeightIdx4D = 2;
+constexpr int64_t kMinChannelBlock = 4;
 enum kAxisIdx : int { kD = 2, kH, kW };
-const size_t dimN = 0;
-const size_t dimC = 1;
-const size_t dimD = 2;
-const size_t dimH = 3;
-const size_t dimW = 4;
+
+void GetAxisPad(int64_t hw, int64_t kernel, int64_t stride, int64_t *pad_l, int64_t *pad_r) {
+  int64_t tail = hw % stride;
+  auto pad = std::max((tail > 0 ? kernel - tail : kernel - stride), (int64_t)0);
+  *pad_l = std::floor(pad >> 1);
+  *pad_r = pad - *pad_l;
+}
 
 int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index) {
   int64_t result = 1;
@@ -40,6 +43,20 @@ int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index) {
     result *= shape[i];
   }
   return result;
+}
+
+void PoolingCpuKernelNnaclMod::GetPadList(size_t src_dim, size_t padlist_len) {
+  // pad_mode has been capitalized in front end.
+  if (pad_mode_ == PAD_MODE_UPPER_VALID) {
+    (void)pad_list_.insert(pad_list_.begin(), padlist_len, 0);
+  } else if (pad_mode_ == PAD_MODE_UPPER_SAME) {
+    for (size_t i = kHeightIdx4D; i < src_dim; i++) {
+      int64_t pad_l, pad_r;
+      GetAxisPad(in_size_[i], kernel_size_[i], stride_size_[i], &pad_l, &pad_r);
+      (void)pad_list_.emplace_back(pad_l);
+      (void)pad_list_.emplace_back(pad_r);
+    }
+  }
 }
 
 void PoolingCpuKernelNnaclMod::InitPooling3DParams() {
@@ -75,9 +92,9 @@ bool PoolingCpuKernelNnaclMod::Init(const BaseOperatorPtr &base_operator, const 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   kernel_name_ = base_operator->name();
-  if (kernel_name_ == kAvgPool3DOpName) {
+  if (kernel_name_ == kAvgPool3DOpName || kernel_name_ == kAvgPoolOpName) {
     pool_mode_ = MEAN_POOLING;
-  } else if (kernel_name_ == kMaxPool3DOpName) {
+  } else if (kernel_name_ == kMaxPool3DOpName || kernel_name_ == kMaxPoolOpName) {
     pool_mode_ = MAX_POOLING;
   } else {
     MS_LOG(ERROR) << "Pooling only supports Avg or Max, but got " << kernel_name_;
@@ -88,10 +105,12 @@ bool PoolingCpuKernelNnaclMod::Init(const BaseOperatorPtr &base_operator, const 
   pad_mode_ = GetValue<std::string>(base_operator->GetAttr(PAD_MODE));
   kernel_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(KERNEL_SIZE));
   stride_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(STRIDES));
-  ceil_mode_ = pool_mode_ == MEAN_POOLING ? GetValue<bool>(base_operator->GetAttr(CEIL_MODE))
-                                          : (GetValue<int64_t>(base_operator->GetAttr(CEIL_MODE)) == 1);
-  count_include_pad_ = GetValue<bool>(base_operator->GetAttr(COUNT_INCLUDE_PAD));
-  divisor_override_ = GetValue<int64_t>(base_operator->GetAttr(DIVISOR_OVERRIDE));
+  if (base_operator->HasAttr(COUNT_INCLUDE_PAD)) {
+    count_include_pad_ = GetValue<bool>(base_operator->GetAttr(COUNT_INCLUDE_PAD));
+  }
+  if (base_operator->HasAttr(DIVISOR_OVERRIDE)) {
+    divisor_override_ = GetValue<int64_t>(base_operator->GetAttr(DIVISOR_OVERRIDE));
+  }
   return true;
 }
 
@@ -104,26 +123,51 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
   in_size_ = inputs[0]->GetDeviceShapeAdaptively();
   out_size_ = outputs[0]->GetDeviceShapeAdaptively();
   auto src_dim = in_size_.size();
-  if (src_dim != SHAPE_5D || out_size_.size() != SHAPE_5D) {
-    MS_LOG(ERROR) << "Pooling only supports 5D input/output, but got input " << src_dim << "D, "
+  if (!(src_dim == SHAPE_4D && out_size_.size() == SHAPE_4D) &&
+      !(src_dim == SHAPE_5D && out_size_.size() == SHAPE_5D)) {
+    MS_LOG(ERROR) << "Pooling only supports 4D or 5D input/output, but got input " << src_dim << "D, "
                   << "output " << out_size_.size() << "D!";
     return KRET_RESIZE_FAILED;
   }
-  if (kernel_size_.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
-                      << kernel_size_.size() << "D!";
-  }
-  if (stride_size_.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires strides must be " << src_dim << "D, but got " << stride_size_.size()
-                      << "D!";
+
+  // In dynamic shape + PyNative mode scenario, Resize() will be called twice, in addition,
+  // kernel_size_/stride_size_/pad_list_ in 4D will be extended to 5D later, so here we need to reset
+  // kernel_size_/stride_size_/pad_list_ before the extending.
+  if (src_dim == SHAPE_4D) {
+    kernel_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(KERNEL_SIZE));
+    stride_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(STRIDES));
+    pad_list_.clear();
   }
 
-  pad_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(PAD_LIST));
-  if (pad_list_.size() != kPadListLen) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires length of pad_list must be " << kPadListLen << ", but got "
+  if (kernel_size_.size() != src_dim || stride_size_.size() != src_dim) {
+    MS_LOG(EXCEPTION) << kernel_name_ << " requires kernels and strides to be " << src_dim << "D, but got "
+                      << kernel_size_.size() << "D, " << stride_size_.size() << " D!";
+  }
+
+  size_t padlist_len = src_dim == SHAPE_4D ? 4 : 6;
+  if (src_dim == SHAPE_4D) {
+    GetPadList(src_dim, padlist_len);
+  } else {
+    // PAD_LIST has been calculated during infer shape, so it can be directly obtained here
+    pad_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(PAD_LIST));
+  }
+
+  if (pad_list_.size() != padlist_len) {
+    MS_LOG(EXCEPTION) << kernel_name_ << " requires length of pad_list must be " << padlist_len << ", but got "
                       << pad_list_.size() << "!";
   }
-  auto pad_size = pad_list_.size() / 2;
+
+  // In order to reuse the 5D computing kernel, 4D is equivalently extended to 5D.
+  if (src_dim == SHAPE_4D) {
+    (void)in_size_.insert(in_size_.begin() + D_INDEX, 1);
+    (void)out_size_.insert(out_size_.begin() + D_INDEX, 1);
+    (void)kernel_size_.insert(kernel_size_.begin() + D_INDEX, 1);
+    (void)stride_size_.insert(stride_size_.begin() + D_INDEX, 1);
+    (void)pad_list_.insert(pad_list_.begin(), 2, 0);
+    count_include_pad_ = false;  // must set false in Pooling2D
+  }
+
+  auto pad_size = pad_list_.size() >> 1;
   padding_l_.resize(pad_size);
   padding_r_.resize(pad_size);
   for (size_t i = 0; i < padding_l_.size(); ++i) {
@@ -131,18 +175,18 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
     padding_r_[i] = pad_list_[(i << 1) + 1];
   }
 
-  input_stride_n_ = ComputeStride(in_size_, dimN);
-  input_stride_c_ = ComputeStride(in_size_, dimC);
-  input_stride_d_ = ComputeStride(in_size_, dimD);
-  input_stride_h_ = ComputeStride(in_size_, dimH);
-  input_stride_w_ = ComputeStride(in_size_, dimW);
+  input_stride_n_ = ComputeStride(in_size_, N_INDEX);
+  input_stride_c_ = ComputeStride(in_size_, C_INDEX);
+  input_stride_d_ = ComputeStride(in_size_, D_INDEX);
+  input_stride_h_ = ComputeStride(in_size_, H_INDEX);
+  input_stride_w_ = ComputeStride(in_size_, W_INDEX);
   batches_ = in_size_[0];
   channels_ = in_size_[1];
   output_num_ = batches_ * channels_ * out_size_[kD] * out_size_[kH] * out_size_[kW];
   auto in_dtype_size = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
   auto out_dtype_size = GetTypeByte(TypeIdToType(outputs[0]->GetDtype()));
 
-  use_channel_last_ = dtype_ == kNumberTypeFloat32 && channels_ >= 4;
+  use_channel_last_ = src_dim == SHAPE_5D && dtype_ == kNumberTypeFloat32 && channels_ >= kMinChannelBlock;
   if (use_channel_last_) {
     InitPooling3DParams();
     size_t ws_size = batches_ * channels_ * in_size_[kD] * in_size_[kH] * in_size_[kW] * in_dtype_size;
@@ -154,6 +198,14 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
 
 std::vector<KernelAttr> PoolingCpuKernelNnaclMod::GetOpSupport() {
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
+    {kMaxPoolOpName,
+     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}},
+    {kAvgPoolOpName,
+     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}},
     {kMaxPool3DOpName,
      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
@@ -338,6 +390,10 @@ bool PoolingCpuKernelNnaclMod::Launch(const std::vector<kernel::AddressPtr> &inp
   return true;
 }
 
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool,
+                                 []() { return std::make_shared<PoolingCpuKernelNnaclMod>(kMaxPoolOpName); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool,
+                                 []() { return std::make_shared<PoolingCpuKernelNnaclMod>(kAvgPoolOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool3D,
                                  []() { return std::make_shared<PoolingCpuKernelNnaclMod>(kAvgPool3DOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool3D,

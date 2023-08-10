@@ -251,10 +251,5 @@ bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   }
   return true;
 }
-
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool,
-                                 []() { return std::make_shared<PoolingCpuKernelMod>(kMaxPoolOpName); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool,
-                                 []() { return std::make_shared<PoolingCpuKernelMod>(kAvgPoolOpName); });
 }  // namespace kernel
 }  // namespace mindspore
