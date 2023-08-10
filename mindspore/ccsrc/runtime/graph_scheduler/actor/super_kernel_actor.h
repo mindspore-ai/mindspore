@@ -33,6 +33,11 @@ namespace runtime {
 using mindspore::device::DeviceAddress;
 using mindspore::device::DeviceContext;
 
+struct OutputMemoryInfo {
+  size_t size;
+  std::string node_full_name;
+};
+
 // The Super kernel actor is used to represent the sink executing of graph which is the combination of kernels.
 class SuperKernelActor : public DebugAwareActor {
  public:
@@ -89,6 +94,8 @@ class SuperKernelActor : public DebugAwareActor {
   std::vector<DeviceTensorPtr> copy_input_device_tensors_;
   // The input device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;
+  // Record the device address to the output node of graph.
+  std::map<DeviceAddress *, OutputMemoryInfo> device_address_to_node_;
 };
 
 using SuperKernelActorPtr = std::shared_ptr<SuperKernelActor>;

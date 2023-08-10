@@ -71,6 +71,12 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
     DumpDynamicMemPoolStateInfo();
   }
 
+  if (common::IsNeedProfileMemory()) {
+    MS_LOG(WARNING) << "Need Profile Memory, Memory pool alloc, total mem: " << TotalMemStatistics()
+                    << ", peak mem: " << UsedMemPeakStatistics() << ", in use mem: " << TotalUsedMemStatistics()
+                    << ", device address addr: " << device_addr << ", size: " << size;
+  }
+
   MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
                 << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
@@ -263,6 +269,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
 
 size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size, bool from_persistent_mem) {
   auto device_free_mem_size = free_mem_size();
+  if (device_free_mem_size < size && common::IsNeedProfileMemory()) {
+    device_free_mem_size = size;
+  }
   if (device_free_mem_size < size) {
     MS_LOG(WARNING) << "Memory not enough: current free memory size[" << device_free_mem_size
                     << "] is smaller than required size[" << size << "].";
@@ -375,6 +384,13 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
   }
   auto mem_buf = iter->second;
   MS_EXCEPTION_IF_NULL(mem_buf);
+
+  if (common::IsNeedProfileMemory()) {
+    MS_LOG(WARNING) << "Need Profile Memory, Memory pool free, total mem: " << TotalMemStatistics()
+                    << ", peak mem: " << UsedMemPeakStatistics() << ", in use mem: " << TotalUsedMemStatistics()
+                    << ", device address addr: " << device_addr << ", size: " << mem_buf->size_;
+  }
+
   if (mem_buf->status_ != DynamicMemBufStatus::kMemBufUsed) {
     DumpDynamicMemPoolDebugInfo();
     MS_LOG(EXCEPTION) << "Find the mem_buf is not used, mem_buf_address[" << mem_buf->device_addr_ << "].";

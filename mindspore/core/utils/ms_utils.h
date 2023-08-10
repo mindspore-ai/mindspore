@@ -186,6 +186,12 @@ inline bool IsDoubleEqual(const double &a, const double &b) {
 inline bool IsStrNumeric(const std::string &str) {
   return std::all_of(str.begin(), str.end(), [](char c) { return std::isdigit(c); });
 }
+
+inline bool IsNeedProfileMemory() {
+  static const char kLaunchSkippedEnv[] = "MS_KERNEL_LAUNCH_SKIP";
+  static auto launch_skipped = GetEnv(kLaunchSkippedEnv);
+  return launch_skipped == "all" || launch_skipped == "ALL";
+}
 }  // namespace common
 }  // namespace mindspore
 

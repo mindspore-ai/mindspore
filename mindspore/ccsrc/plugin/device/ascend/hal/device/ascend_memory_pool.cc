@@ -63,6 +63,9 @@ void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
 
 size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_mem) {
   auto device_free_mem_size = free_mem_size();
+  if (device_free_mem_size < size && common::IsNeedProfileMemory()) {
+    device_free_mem_size = size;
+  }
   if (device_free_mem_size < size) {
     MS_LOG(INFO) << "The dynamic memory pool total size is "
                  << device::ascend::AscendMemoryPool::GetInstance().TotalMemStatistics() / kMBToByte
