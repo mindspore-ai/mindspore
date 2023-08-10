@@ -145,6 +145,11 @@ class COMMON_EXPORT ParallelContext {
   }
   bool enable_reduce_scatter_fusion() const { return enable_reduce_scatter_fusion_; }
 
+  void set_ops_strategy_json_config(const std::string &type, const std::string &path, const std::string &mode);
+  std::string strategy_json_config_file_type() const { return strategy_json_config_file_type_; }
+  std::string strategy_json_config_file_path() const { return strategy_json_config_file_path_; }
+  std::string strategy_json_config_file_mode() const { return strategy_json_config_file_mode_; }
+
   void set_strategy_ckpt_load_file(const std::string &strategy_ckpt_load_file);
   std::string strategy_ckpt_load_file() const { return strategy_ckpt_load_file_; }
   void set_strategy_ckpt_save_file(const std::string &strategy_ckpt_save_file);
@@ -229,6 +234,9 @@ class COMMON_EXPORT ParallelContext {
 
   std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_indices_;
   std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_sizes_;
+  std::string strategy_json_config_file_type_;
+  std::string strategy_json_config_file_path_;
+  std::string strategy_json_config_file_mode_;
   std::string strategy_ckpt_load_file_;
   std::string strategy_ckpt_save_file_;
   std::string group_ckpt_save_file_;

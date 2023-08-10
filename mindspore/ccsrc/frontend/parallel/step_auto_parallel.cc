@@ -62,6 +62,12 @@ namespace mindspore {
 namespace parallel {
 void SearchParallelStrategy(const std::string &strategy_search_mode, const FuncGraphPtr &root,
                             const std::vector<AnfNodePtr> &all_nodes) {
+  if (StrategyCheckpoint::GetInstance().LoadAutoOpStrategyOn()) {
+    if (LoadStrategyFromFile(root, all_nodes) == SUCCESS) {
+      MS_LOG(INFO) << "Load strategies success, jump searching strategy.";
+      return;
+    }
+  }
   if ((strategy_search_mode == kDynamicProgramming) || (strategy_search_mode == kShardingPropagation)) {
     if (ParallelStrategySearch(all_nodes, root) != SUCCESS) {
       MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using " << strategy_search_mode
@@ -73,6 +79,9 @@ void SearchParallelStrategy(const std::string &strategy_search_mode, const FuncG
     }
   } else {
     MS_LOG(EXCEPTION) << "Auto-parallel strategy searching mode unexpected: " << strategy_search_mode;
+  }
+  if (StrategyCheckpoint::GetInstance().SaveAutoOpStrategyOn()) {
+    SaveStrategyToFile();
   }
 }
 
@@ -1430,6 +1439,82 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   ignore_candidate_.clear();
 
   return SUCCESS;
+}
+
+Status LoadStrategyFromFile(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
+  InitCostGraph();
+  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
+                (ParallelContext::GetInstance()->sharding_propagation());
+  if (CostModelContext::GetInstance()->is_multi_subgraphs() || use_sp) {
+    if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
+  } else {
+    if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
+  }
+
+  ReshapeCostCompute(all_nodes);
+  // load strategy map from json
+  StrategyMap stra_map;
+  StrategyPtr strategy = nullptr;
+  if ((StrategyCheckpoint::GetInstance().LoadAutoOpStrategy(&stra_map) != SUCCESS)) {
+    return FAILED;
+  }
+  for (auto &op : entire_costgraph->GetOperators()) {
+    std::string strategy_key_name = op->cnodes()[0]->fullname_with_scope();
+    bool load_strategy_from_json = stra_map.find(strategy_key_name) != stra_map.end();
+    if (!load_strategy_from_json) {
+      MS_LOG(INFO) << "not found strategy for " << strategy_key_name;
+      return FAILED;
+    }
+    strategy = stra_map[strategy_key_name];
+    op->SetSelectedStrategy(strategy, 0);
+  }
+  if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
+    MS_LOG(INFO) << "Init selected strategy succeeded.";
+  } else {
+    MS_LOG(INFO) << "Init selected strategy failed.";
+    return FAILED;
+  }
+
+  // print the selected strategy
+  for (auto &op : entire_costgraph->GetOperators()) {
+    StrategyPtr s_strategy = op->selected_strategy();
+    if (s_strategy != nullptr) {
+      MS_LOG(INFO) << op->name() << ": The strategy is: " << s_strategy->ToString();
+    }
+  }
+  (void)IgnoreOperatorsInCostGraph();
+  ops_in_a_loop_.clear();
+  configured_stra_ops_.clear();
+  ignore_candidate_.clear();
+
+  MS_LOG(INFO) << "End load strategies from file";
+  return SUCCESS;
+}
+
+void SaveStrategyToFile() {
+  StrategyMap stra_map;
+  TensorInfoMap tensor_info_map;
+  ManualShapeMap manual_shape_map;
+
+  for (auto &op : entire_costgraph->GetOperators()) {
+    StrategyPtr s_strategy = op->selected_strategy();
+    std::string strategy_key_name = op->cnodes()[0]->fullname_with_scope();
+    stra_map[strategy_key_name] = s_strategy;
+  }
+  if (StrategyCheckpoint::GetInstance().SaveAutoOpStrategy(stra_map, tensor_info_map, manual_shape_map) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Save strategy checkpoint failed";
+  }
+  MS_LOG(INFO) << "Success save strategies to file.";
 }
 }  // namespace parallel
 }  // namespace mindspore

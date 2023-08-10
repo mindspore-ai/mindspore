@@ -32,7 +32,7 @@ void StrategyCheckpointInfo::set_manual_shape_map(const ManualShapeMap &manual_s
   manual_shape_map_ = manual_shape_map;
 }
 
-void StrategyCheckpointInfo::from_json(const nlohmann::json &stra_ckpt_info_j) {
+void StrategyCheckpointInfo::FromJson(const nlohmann::json &stra_ckpt_info_j) {
   current_stage_ = stra_ckpt_info_j.at("current_stage").get<int64_t>();
   for (const auto &stra_j : stra_ckpt_info_j.at("parallel_strategy_item").items()) {
     auto node_name = stra_j.key();
@@ -174,6 +174,14 @@ straspb::ParallelStrategyMap StrategyCheckpointInfo::to_protobuf() const {
     }
   }
   return parallel_strategy_map;
+}
+void StrategyJsonInfo::FromJson(const nlohmann::json &stra_json_info_j) {
+  for (const auto &stra_j : stra_json_info_j.at("parallel_strategy_item").items()) {
+    auto node_name = stra_j.key();
+    auto stage = stra_j.value().at("stage").get<int64_t>();
+    auto stra = stra_j.value().at("parallel_strategy").get<std::vector<std::vector<int64_t>>>();
+    strategy_map_[node_name] = std::make_shared<Strategy>(stage, stra);
+  }
 }
 }  // namespace parallel
 }  // namespace mindspore
