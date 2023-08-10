@@ -369,6 +369,21 @@ STATUS ToFormatBase::DealConv2dTransposeFusionNode(const FuncGraphPtr &func_grap
   return lite::RET_OK;
 }
 
+void SetCNodeFormat(const CNodePtr &cnode, mindspore::Format dst_format) {
+  MS_ASSERT(cnode != nullptr);
+  // update the format of cnode.
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_RET_VOID(prim != nullptr);
+  auto format_value = prim->GetAttr(ops::kOriginalFormat);
+  if (prim->GetAttr(ops::kFormat) == nullptr && format_value != nullptr) {
+    auto format = GetValue<int64_t>(format_value);
+    if (format == dst_format) {
+      prim->AddAttr(ops::kFormat, format_value);
+    }
+  }
+  return;
+}
+
 STATUS ToFormatBase::HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ERROR_IF_NULL_W_RET_VAL(func_graph, lite::RET_ERROR);
   MS_ERROR_IF_NULL_W_RET_VAL(cnode, lite::RET_ERROR);
@@ -378,15 +393,15 @@ STATUS ToFormatBase::HandleGraphNode(const FuncGraphPtr &func_graph, const CNode
     return lite::RET_ERROR;
   }
   if (trans_info.pre_ == opt::kNONE || trans_info.post_ == opt::kNONE) {
+    SetCNodeFormat(cnode, format_);
     return lite::RET_NO_CHANGE;
   }
   auto before_perm = trans_info.pre_ == opt::kNHWC2NCHW ? kNH2NC : kNC2NH;
   auto after_perm = trans_info.post_ == opt::kNCHW2NHWC ? kNC2NH : kNH2NC;
-  if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
-    if (DealConv2dTransposeFusionNode(func_graph, cnode, before_perm) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Deal conv2d transpose fusion attr: input_size failed." << cnode->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion) &&
+      DealConv2dTransposeFusionNode(func_graph, cnode, before_perm) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Deal conv2d transpose fusion attr: input_size failed." << cnode->fullname_with_scope();
+    return lite::RET_ERROR;
   }
   if (InsertPreTransNode(func_graph, cnode, before_perm) != lite::RET_OK) {
     MS_LOG(ERROR) << "insert pre node failed." << cnode->fullname_with_scope();
