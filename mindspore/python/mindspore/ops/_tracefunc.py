@@ -17,6 +17,7 @@ import functools
 import types
 import textwrap
 import inspect
+import os
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore._c_expression import PackExpander, PackNode
@@ -219,5 +220,7 @@ def trace(fn):
                 setattr(fn, "pack", pack_func)
         return pack_func(*args, **kwargs)
 
+    if "MS_DEV_DISABLE_TRACE" in os.environ and os.environ["MS_DEV_DISABLE_TRACE"] == "on":
+        return fn
     _trace_wrap.pack_fn = fn
     return _trace_wrap
