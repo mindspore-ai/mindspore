@@ -21,6 +21,7 @@ from enum import Enum
 class TypeCastKind(Enum):
     INT_TO_TUPLE = 1
     INT_OR_TUPLE_TO_LIST = 2
+    SCALAR_TO_TENSOR = 3
 
 
 def type_it(src_data, cast_type):
@@ -48,6 +49,15 @@ def type_it(src_data, cast_type):
         if isinstance(src_data, tuple):
             dst_list = [item for item in src_data]
             return dst_list
+
+        raise TypeError(f'{src_data} is the wrong data type.')
+
+    if cast_type == TypeCastKind.SCALAR_TO_TENSOR:
+        if isinstance(src_data, tensor):
+            return src_data
+
+        if isinstance(src_data, scalar):
+            return Tensor(input_data=src_data, shape=None, dtype=src_data.dtype)
 
         raise TypeError(f'{src_data} is the wrong data type.')
 

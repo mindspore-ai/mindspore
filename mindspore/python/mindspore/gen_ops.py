@@ -103,8 +103,10 @@ def generate_py_primitive(yaml_data):
 
                 if 'int' in type_cast_set:
                     type_cast_list.append('INT')
-                if 'tuple[int]' in type_cast_list:
+                if 'tuple[int]' in type_cast_set:
                     type_cast_list.append('TUPLE')
+                if 'scalar' in type_cast_set:
+                    type_cast_list.append('SCALAR')
                 #add more type cast kind here
 
                 assign_str += 'TypeCastKind.' + '_OR_'.join(ct for ct in type_cast_list)
@@ -112,6 +114,8 @@ def generate_py_primitive(yaml_data):
                     assign_str += '_TO_TUPLE)'
                 if dtype == 'list[int]':
                     assign_str += '_TO_LIST)'
+                if dtype == 'tensor':
+                    assign_str += '_TO_TENSOR)'
             else:
                 assign_str += arg_name
             args_assign.append(assign_str)
