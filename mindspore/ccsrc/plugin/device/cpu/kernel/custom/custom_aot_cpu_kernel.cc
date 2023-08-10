@@ -47,6 +47,17 @@ bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   const auto &exec_info = GetValue<std::string>(base_operator->GetPrim()->GetAttr("func_name"));
   if (auto pos = exec_info.find(":"); pos != std::string::npos) {
     auto path = exec_info.substr(0, pos);
+    if (base_operator->GetPrim()->HasAttr("path_from_env") &&
+        GetValue<bool>(base_operator->GetPrim()->GetAttr("path_from_env"))) {
+      const char *path_in_env = std::getenv(path.c_str());
+      if (path_in_env == nullptr) {
+        MS_LOG(WARNING) << "For '" << kernel_name_ << "' on CPU, the attr path_from_env is set but the env var ["
+                        << path << "] is empty. Use [" << path << "] as the path to the library instead.";
+
+      } else {
+        path = std::string(path_in_env);
+      }
+    }
     auto real_path = FileUtils::GetRealPath(path.c_str());
     if (!real_path.has_value()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on CPU, couldn't find the AOT binary file: " << path;
@@ -57,8 +68,12 @@ bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     constexpr auto kWhiteList = "MS_CUSTOM_AOT_WHITE_LIST";
     const char *value = std::getenv(kWhiteList);
     if (value == nullptr) {
-      MS_LOG(WARNING) << "For '" << kernel_name_ << "' on CPU, no white list is set and it might cause problems. "
-                      << "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST";
+      static bool print_cpu_warning_once = true;
+      if (print_cpu_warning_once) {
+        MS_LOG(WARNING) << "For '" << kernel_name_ << "' on CPU, no white list is set and it might cause problems. "
+                        << "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST.";
+        print_cpu_warning_once = false;
+      }
     } else {
       auto white_list = FileUtils::GetRealPath(value);
       if (!white_list.has_value()) {
