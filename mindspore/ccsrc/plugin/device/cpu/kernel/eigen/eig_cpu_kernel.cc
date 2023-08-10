@@ -26,6 +26,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+#define EIG_KERNEL_CPU_REGISTER(IN_DT, OUT_DT, IN_T, OUT_T)                                                   \
+  KernelAttr().AddInputAttr(IN_DT).AddInputAttr(kNumberTypeBool).AddOutputAttr(OUT_DT).AddOutputAttr(OUT_DT), \
+    &EigCpuKernelMod::LaunchKernel<IN_T, OUT_T>
+
 constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 2;
 }  // namespace
@@ -109,26 +113,10 @@ bool EigCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
 }
 
 std::vector<std::pair<KernelAttr, EigCpuKernelMod::EigFunc>> EigCpuKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &EigCpuKernelMod::LaunchKernel<float, float_complex>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &EigCpuKernelMod::LaunchKernel<double, double_complex>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &EigCpuKernelMod::LaunchKernel<float_complex, float_complex>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &EigCpuKernelMod::LaunchKernel<double_complex, double_complex>}};
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeComplex64, float, float_complex)},
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeComplex128, double, double_complex)},
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeComplex64, float, float_complex)},
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeComplex128, double, double_complex)}};
 
 std::vector<KernelAttr> EigCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

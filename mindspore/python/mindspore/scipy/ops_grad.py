@@ -21,6 +21,7 @@ from ..ops import operations as P
 from ..ops import functional as F
 from ..ops.operations.linalg_ops import Eigh
 from ..ops._grad_experimental.grad_base import bprop_getters
+from ..ops.composite import multitype_ops as C
 from ..common import dtype as mstype
 
 _matmul = P.MatMul(False, False)
@@ -59,9 +60,7 @@ def _batch_eyes(a):
 @bprop_getters.register(Eig)
 def get_bprpo_eig(self):
     """Grad definition for `Eig` operation."""
-    is_compute_v = self.compute_eigenvectors
-
-    def bprop(a, out, dout):
+    def bprop(a, is_compute_v, out, dout):
         w, v, grad_w, grad_v = out[0], out[1], dout[0], dout[1]
         if not is_compute_v:
             gw_vh = F.expand_dims(grad_w, -1) * _adjoint(v)
@@ -74,7 +73,7 @@ def get_bprpo_eig(self):
             f = _compute_f(w)
             grad_a = _diag(grad_w) + f * vh_gv
             grad_a = _matrix_solve(vh, _matmul(grad_a, vh))  # not support
-        return (grad_a,)
+        return (grad_a, C.zeros_like(is_compute_v))
 
     return bprop
 
