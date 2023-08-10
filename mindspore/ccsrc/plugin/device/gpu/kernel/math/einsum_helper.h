@@ -507,20 +507,18 @@ class EinsumHelper {
     // operate_info: input_axis
     const size_t dims = inp_shape.size();
     const size_t operate_dims = operate_info.size();
-    if (dims > TRANSPOSE_MAX_DIMENSION || operate_dims > TRANSPOSE_MAX_DIMENSION) {
-      MS_LOG(EXCEPTION) << "For 'Transpose', the dimension of output cannot be greater than " << TRANSPOSE_MAX_DIMENSION
+    if (dims > transpose_max_dimension || operate_dims > transpose_max_dimension) {
+      MS_LOG(EXCEPTION) << "For 'Transpose', the dimension of output cannot be greater than " << transpose_max_dimension
                         << ", but got " << dims;
     }
     size_t size = 1;
     TransposeInfo info;
     for (size_t i = 0; i < dims; ++i) {
       size *= inp_shape[i];
-      info.shape[i] = static_cast<int>(inp_shape[i]);
+      info.input_shape.push_back(static_cast<int64_t>(inp_shape[i]));
+      info.perm.push_back(static_cast<int32_t>(operate_info[i]));
     }
-    for (size_t i = 0; i < operate_dims; ++i) {
-      info.perm[i] = static_cast<int>(operate_info[i]);
-    }
-    (void)CalTranspose<T>(size, input_ptr, info, dims, output_ptr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    (void)CalTranspose<T, true>(size, input_ptr, info, output_ptr, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   bool SegLeftEquation(const std::string &left_equation, const std::vector<std::vector<int64_t>> &input_shapes) {
     size_t cur_element = 0;

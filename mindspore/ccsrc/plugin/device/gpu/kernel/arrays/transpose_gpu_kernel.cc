@@ -84,45 +84,28 @@ bool TransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
 
-  // input_shape and input_perm
-  TransposeInfo info;
-  for (size_t i = 0; i < shape_size_; ++i) {
-    info.shape[i] = static_cast<int>(input_shape_[i]);
-    info.perm[i] = static_cast<int>(input_perm_[i]);
-  }
-
   size_t size = SizeOf(input_shape_);
-  int64_t *h_input_shape = &input_shape_[0];
-  int64_t *h_input_axis = &input_perm_[0];
-  cudaError_t status = cudaErrorNotReady;
-  if (shape_size_ == kDimSize4 && h_input_axis[kAxisIndexZero] == kAxisZero &&
-      h_input_axis[kAxisIndex1st] == kAxis3rd && h_input_axis[kAxisIndex2nd] == kAxis1st &&
-      h_input_axis[kAxisIndex3rd] == kAxis2nd) {
-    // nhwc->nchw: 0,3,1,2
-    status = CalNHWC2NCHWInterface(size, shape_size_, input, h_input_shape, h_input_axis, info, output,
-                                   reinterpret_cast<cudaStream_t>(stream_ptr_));
-  } else if (shape_size_ == kDimSize4 && h_input_axis[kAxisIndexZero] == kAxisZero &&
-             h_input_axis[kAxisIndex1st] == kAxis2nd && h_input_axis[kAxisIndex2nd] == kAxis3rd &&
-             h_input_axis[kAxisIndex3rd] == kAxis1st) {
-    // nchw->nhwc: 0,2,3,1
-    status = CalNCHW2NHWCInterface(size, shape_size_, input, h_input_shape, h_input_axis, info, output,
-                                   reinterpret_cast<cudaStream_t>(stream_ptr_));
-  } else {
-    status = CalTranspose(size, input, info, shape_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  if (is_copy_) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output, input, size * sizeof(T), cudaMemcpyDeviceToDevice,
+                                                       reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                       "For '" << kernel_name_ << "', cudaMemcpyAsync input to output failed.");
+    return true;
   }
+  auto status = CalTranspose<T, false>(size, input, info_, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 
-void TransposeGpuKernelMod::GetPermValue(const std::vector<int64_t> &perm) {
-  input_perm_.clear();
+void TransposeGpuKernelMod::GetPermValue(const std::vector<int64_t> &perm, std::vector<int32_t> *input_perm) {
+  input_perm->clear();
   for (size_t j = 0; j < perm.size(); j++) {
     auto p = (perm[j] >= 0) ? perm[j] : (perm.size() + perm[j]);
     if (p < 0) {
       MS_LOG(EXCEPTION) << "the perm value must be in [-" << perm.size() << ", " << (perm.size() - 1) << "], but got "
                         << perm;
     }
-    input_perm_.push_back(p);
+    input_perm->push_back(p);
   }
 }
 
@@ -144,6 +127,11 @@ bool TransposeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
+bool TransposeGpuKernelMod::IsCopy(const std::vector<int32_t> &perm) {
+  int32_t index = 0;
+  return !(std::any_of(perm.begin(), perm.end(), [&](int32_t x) { return x != index++; }));
+}
+
 int TransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
@@ -151,16 +139,20 @@ int TransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return ret;
   }
   std::vector<int64_t> perm;
+  std::vector<int32_t> input_perm;
   if (TryGetIntValue(inputs, kAxisIndex1st, kernel_name_, &perm)) {
-    GetPermValue(perm);
+    GetPermValue(perm, &input_perm);
   }
-  input_shape_ = inputs[kAxisIndexZero]->GetDeviceShapeAdaptively();
-  shape_size_ = input_shape_.size();
-  if (shape_size_ > TRANSPOSE_MAX_DIMENSION) {
+  auto input_shape = inputs[kAxisIndexZero]->GetDeviceShapeAdaptively();
+  shape_size_ = input_shape.size();
+  if (shape_size_ > transpose_max_dimension) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be greater than "
-                      << TRANSPOSE_MAX_DIMENSION << ", but got " << shape_size_;
+                      << transpose_max_dimension << ", but got " << shape_size_;
   }
-
+  SimplifyTranspose(input_shape, input_perm, &input_shape_, &input_perm_);
+  info_.input_shape = input_shape_;
+  info_.perm = input_perm_;
+  is_copy_ = IsCopy(input_perm_);
   return KRET_OK;
 }
 

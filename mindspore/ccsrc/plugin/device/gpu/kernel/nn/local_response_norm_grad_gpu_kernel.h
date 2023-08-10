@@ -32,7 +32,6 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t k3DSize = 3;
 constexpr size_t k4DSize = 4;
-constexpr auto kDim3 = 3;
 const unsigned int kCoef = 2;
 
 template <typename T>
@@ -62,32 +61,29 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
       T *ws_dx = GetDeviceAddress<T>(workspace, kIndex3);
       float *ws_scale = GetDeviceAddress<float>(workspace, kIndex4);
 
-      std::vector<int64_t> to_nhwc_axis = {0, kIndex2, kIndex3, 1};
-      std::vector<int64_t> to_nchw_axis = {0, kIndex3, 1, kIndex2};
       TransposeInfo InInfo, OutInfo;
-      for (size_t i = 0; i < k4DSize; ++i) {
-        InInfo.shape[i] = static_cast<int>(input_shape_[i]);
-        InInfo.perm[i] = static_cast<int>(to_nhwc_axis[i]);
-        OutInfo.shape[i] = static_cast<int>(transpose_shape_[i]);
-        OutInfo.perm[i] = static_cast<int>(to_nchw_axis[i]);
-      }
+      InInfo.input_shape = input_shape_;
+      InInfo.perm = std::vector<int32_t>{0, 2, 3, 1};
+      OutInfo.input_shape = transpose_shape_;
+      OutInfo.perm = std::vector<int32_t>{0, 3, 1, 2};
 
-      auto status = CalNCHW2NHWCInterface(num_elements_, k4DSize, dy, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_dy,
-                                          reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto status = CalTranspose<T, true>(num_elements_, dy, InInfo, ws_dy, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
+
+      status = CalTranspose<T, true>(num_elements_, x, InInfo, ws_x, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
+
+      status = CalTranspose<T, true>(num_elements_, y, InInfo, ws_y, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
+
+      status = CalLocalResponseNormGradNHWC(ws_dy, ws_x, ws_y, depth_radius_, bias_, alpha_, beta_, transpose_shape_[3],
+                                            num_elements_, ws_scale, ws_dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+
       CHECK_CUDA_STATUS(status, kernel_name_);
-      status = CalNCHW2NHWCInterface(num_elements_, k4DSize, x, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_x,
-                                     reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_STATUS(status, kernel_name_);
-      status = CalNCHW2NHWCInterface(num_elements_, k4DSize, y, &input_shape_[0], &to_nhwc_axis[0], InInfo, ws_y,
-                                     reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_STATUS(status, kernel_name_);
-      status =
-        CalLocalResponseNormGradNHWC(ws_dy, ws_x, ws_y, depth_radius_, bias_, alpha_, beta_, transpose_shape_[kDim3],
-                                     num_elements_, ws_scale, ws_dx, reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_STATUS(status, kernel_name_);
-      status = CalNHWC2NCHWInterface(num_elements_, k4DSize, ws_dx, &transpose_shape_[0], &to_nchw_axis[0], OutInfo, dx,
-                                     reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_STATUS(status, kernel_name_);
+
+      status = CalTranspose<T, true>(num_elements_, ws_dx, OutInfo, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
+
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnLRNCrossChannelBackward(handle_, norm_desc_, lrn_mode_, &alpha, y_desc_, y, dy_desc_, dy, x_desc_, x,

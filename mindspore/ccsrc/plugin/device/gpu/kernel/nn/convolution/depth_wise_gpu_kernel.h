@@ -59,11 +59,11 @@ class ConvolutionDepthWiseGpuKernel : public AbstractConvolutionGpuKernel {
   bool LaunchFilterGrad(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
                         void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) override;
 
-  void CallTransposeToNHWC(const ConvolutionArgs &conv_args, const size_t output_size, const int64_t *input_shape,
-                           const void *input_addr, TransposeInfo info, void *output_addr, void *stream_ptr);
+  void CallTransposeToNHWC(const size_t output_size, const void *input_addr, TransposeInfo info, void *output_addr,
+                           void *stream_ptr);
 
-  void CallTransposeToNCHW(const ConvolutionArgs &conv_args, const size_t output_size, const int64_t *input_shape,
-                           const void *input_addr, TransposeInfo info, void *output_addr, void *stream_ptr);
+  void CallTransposeToNCHW(const size_t output_size, const void *input_addr, TransposeInfo info, void *output_addr,
+                           void *stream_ptr);
 
   template <enum ConvolutionOpType op>
   bool CallDepthWiseKernel(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
@@ -178,22 +178,20 @@ class ConvolutionDepthWiseGpuKernel : public AbstractConvolutionGpuKernel {
 };
 
 template <typename T>
-void ConvolutionDepthWiseGpuKernel<T>::CallTransposeToNHWC(const ConvolutionArgs &conv_args, const size_t output_size,
-                                                           const int64_t *input_shape, const void *input_addr,
+void ConvolutionDepthWiseGpuKernel<T>::CallTransposeToNHWC(const size_t output_size, const void *input_addr,
                                                            TransposeInfo info, void *output_addr, void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
 
-  CalNCHW2NHWCInterface(output_size, kConv2dInputDimSize, static_cast<T *>(const_cast<void *>(input_addr)), input_shape,
-                        &to_nhwc_axis[0], info, static_cast<T *>(output_addr), cuda_stream);
+  CalTranspose<T, true>(output_size, static_cast<T *>(const_cast<void *>(input_addr)), info,
+                        static_cast<T *>(output_addr), cuda_stream);
 }
 
 template <typename T>
-void ConvolutionDepthWiseGpuKernel<T>::CallTransposeToNCHW(const ConvolutionArgs &conv_args, const size_t output_size,
-                                                           const int64_t *input_shape, const void *input_addr,
+void ConvolutionDepthWiseGpuKernel<T>::CallTransposeToNCHW(const size_t output_size, const void *input_addr,
                                                            TransposeInfo info, void *output_addr, void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-  CalNHWC2NCHWInterface(output_size, kConv2dInputDimSize, static_cast<T *>(const_cast<void *>(input_addr)), input_shape,
-                        &to_nchw_axis[0], info, static_cast<T *>(output_addr), cuda_stream);
+  CalTranspose<T, true>(output_size, static_cast<T *>(const_cast<void *>(input_addr)), info,
+                        static_cast<T *>(output_addr), cuda_stream);
 }
 
 template <typename T>
@@ -244,24 +242,21 @@ bool ConvolutionDepthWiseGpuKernel<T>::LaunchFilterGrad(const ConvolutionArgs &c
     std::vector<int64_t> tx_shape = conv_args.tensor1_shape;
     std::vector<int64_t> t_dw_shape = {conv_args.tensor2_shape[kIndex0], conv_args.tensor2_shape[kIndex3],
                                        conv_args.tensor2_shape[kIndex1], conv_args.tensor2_shape[kIndex2]};
-    TransposeInfo dy_info;
-    TransposeInfo x_info;
-    TransposeInfo dw_info;
-    for (size_t i = 0; i < kConv2dInputDimSize; ++i) {
-      dy_info.shape[i] = static_cast<int>(dy_shape[i]);
-      dy_info.perm[i] = static_cast<int>(to_nchw_axis[i]);
+    TransposeInfo dy_info, x_info, dw_info;
+    dy_info.input_shape = dy_shape;
+    dy_info.perm = to_nchw_axis;
 
-      x_info.shape[i] = static_cast<int>(tx_shape[i]);
-      x_info.perm[i] = static_cast<int>(to_nchw_axis[i]);
+    x_info.input_shape = tx_shape;
+    x_info.perm = to_nchw_axis;
 
-      dw_info.shape[i] = static_cast<int>(t_dw_shape[i]);
-      dw_info.perm[i] = static_cast<int>(to_nhwc_axis[i]);
-    }
-    CallTransposeToNCHW(conv_args, SizeOf(dy_shape), &dy_shape[0], dy_addr, dy_info, workspace0_addr, stream_ptr);
-    CallTransposeToNCHW(conv_args, SizeOf(tx_shape), &tx_shape[0], x_addr, x_info, workspace1_addr, stream_ptr);
+    dw_info.input_shape = t_dw_shape;
+    dw_info.perm = to_nhwc_axis;
+
+    CallTransposeToNCHW(SizeOf(dy_shape), dy_addr, dy_info, workspace0_addr, stream_ptr);
+    CallTransposeToNCHW(SizeOf(tx_shape), x_addr, x_info, workspace1_addr, stream_ptr);
     CallDepthWiseKernel<ConvolutionOpType::kConv2dDepthWiseFilterGradNCHW>(conv_args, workspace0_addr, workspace1_addr,
                                                                            workspace2_addr, stream_ptr);
-    CallTransposeToNHWC(conv_args, SizeOf(t_dw_shape), &t_dw_shape[0], workspace2_addr, dw_info, dw_addr, stream_ptr);
+    CallTransposeToNHWC(SizeOf(t_dw_shape), workspace2_addr, dw_info, dw_addr, stream_ptr);
 
     return true;
   }

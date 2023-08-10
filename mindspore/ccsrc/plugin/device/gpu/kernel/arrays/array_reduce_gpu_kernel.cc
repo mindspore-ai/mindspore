@@ -328,10 +328,8 @@ std::vector<size_t> ArrayReduceGpuKernelMod::SetOriginalShape() {
 TransposeInfo ArrayReduceGpuKernelMod::GetTransposeInfo() {
   TransposeInfo transpose_info;
   for (size_t i = 0; i < origin_shape_.size(); i++) {
-    transpose_info.shape[i] = static_cast<int>(origin_shape_[i]);
-  }
-  for (size_t i = 0; i < transpose_perm_.size(); i++) {
-    transpose_info.perm[i] = static_cast<int>(transpose_perm_[i]);
+    transpose_info.input_shape.push_back(static_cast<int64_t>(origin_shape_[i]));
+    transpose_info.perm.push_back(static_cast<int32_t>(transpose_perm_[i]));
   }
   return transpose_info;
 }
@@ -404,9 +402,8 @@ bool ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> 
     T *temp = GetDeviceAddress<T>(workspace, kIndex0);
     if (need_transpose_) {
       T *input_transposed = GetDeviceAddress<T>(workspace, kIndex1);
-      auto dims = origin_shape_.size();
-      auto transpose_status = CalTranspose(input_num_, input_addr, transpose_info_, dims, input_transposed,
-                                           reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto transpose_status = CalTranspose<T, true>(input_num_, input_addr, transpose_info_, input_transposed,
+                                                    reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(transpose_status, "Transpose called by " + kernel_name_);
       input = input_transposed;
     }
@@ -441,9 +438,8 @@ bool ArrayReduceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     T *temp = GetDeviceAddress<T>(workspace, kIndex0);
     if (need_transpose_) {
       T *input_transposed = GetDeviceAddress<T>(workspace, kIndex1);
-      auto dims = origin_shape_.size();
-      auto transpose_status = CalTranspose(input_num_, input_addr, transpose_info_, dims, input_transposed,
-                                           reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto transpose_status = CalTranspose<T, true>(input_num_, input_addr, transpose_info_, input_transposed,
+                                                    reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(transpose_status, "Transpose called by " + kernel_name_);
       input = input_transposed;
     }

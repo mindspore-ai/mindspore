@@ -168,21 +168,19 @@ std::vector<std::vector<int>> ComputeUniqueConsecutiveByAxis(const T *input, int
                thrust::device_pointer_cast(output));
   // Do transpose.
   size_t shape_size = input_shape.size();
-  cudaMemcpyAsync(dev_input_shape, input_shape.data(), sizeof(size_t) * shape_size, cudaMemcpyHostToDevice,
-                  cuda_stream);
   // Used for transpose: dev_input_axis={0, 1, ..., axis, ...} -> dev_input_axis[0]=axis, dev_input_axis[axis]=0
   TransposeInfo info;
   for (size_t i = 0; i < input_shape.size(); ++i) {
-    info.shape[i] = static_cast<int>(input_shape[i]);
+    info.input_shape.push_back(static_cast<int64_t>(input_shape[i]));
     if (i == 0) {
-      info.perm[i] = static_cast<int>(axis);
+      info.perm.push_back(static_cast<int32_t>(axis));
     } else if (i == static_cast<size_t>(axis)) {
-      info.perm[i] = static_cast<int>(0);
+      info.perm.push_back(static_cast<int32_t>(0));
     } else {
-      info.perm[i] = static_cast<int>(i);
+      info.perm.push_back(static_cast<int32_t>(i));
     }
   }
-  (void)CalTranspose(num_elements, input, info, shape_size, indices_data, cuda_stream);
+  (void)CalTranspose<T, true>(num_elements, input, info, indices_data, cuda_stream);
 
   // Inverse indices.
   int64_t num_inp = input_shape[axis];

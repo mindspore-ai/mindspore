@@ -37,14 +37,13 @@ inline void MatrixTransposeND(const T *src, const std::vector<size_t> &host_shap
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', size of host_shape and host_axis mismatch: " << host_shape.size()
                       << " != " << host_axis.size();
   }
-  const auto dims = host_shape.size();
   const size_t src_size = std::accumulate(host_shape.begin(), host_shape.end(), size_t(1), std::multiplies{});
   TransposeInfo info;
   for (size_t i = 0; i < host_shape.size(); ++i) {
-    info.shape[i] = static_cast<int>(host_shape[i]);
-    info.perm[i] = static_cast<int>(host_axis[i]);
+    info.input_shape.push_back(static_cast<int64_t>(host_shape[i]));
+    info.perm.push_back(static_cast<int32_t>(host_axis[i]));
   }
-  (void)CalTranspose(src_size, src, info, dims, dst, cuda_stream);
+  (void)CalTranspose<T, true>(src_size, src, info, dst, cuda_stream);
 }
 template <>
 inline void MatrixTransposeND(const cuComplex *src, const std::vector<size_t> &host_shape,

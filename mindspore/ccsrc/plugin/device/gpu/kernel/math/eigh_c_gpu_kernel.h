@@ -98,7 +98,6 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                 "CublasSetStream failed");
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(cusolver_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                   "CusolverDnSetStream failed");
-    cudaError_t status = cudaErrorNotReady;
     // Matrix A, input or output(eigenvector)
     auto inout_A_addr = GetDeviceAddress<T>(inputs, kDim0);
     if (lower_) {
@@ -127,16 +126,13 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                cudaMemcpyAsync(output_v_addr, inout_A_addr, m_ * m_ * sizeof(T),
                                                cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Copy input matrix failed");
-    size_t input_shape[kShape2dDims] = {m_, m_};
-    size_t input_axis[kShape2dDims] = {1, 0};
+
     TransposeInfo info;
-    for (size_t i = 0; i < kShape2dDims; ++i) {
-      info.shape[i] = static_cast<int>(input_shape[i]);
-      info.perm[i] = static_cast<int>(input_axis[i]);
-    }
-    status =
-      CalTranspose(m_ * m_, output_v_addr, info, kShape2dDims, w_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
+    info.input_shape = std::vector<int64_t>{m_, m_};
+    info.perm = std::vector<int32_t>{1, 0};
+    auto s1 =
+      CalTranspose<T, false>(m_ * m_, output_v_addr, info, w_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(s1, "Transpose called by " + kernel_name_);
 
     int lwork = 0;
     void *d_work = nullptr;
@@ -163,13 +159,12 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Copy eigenvalue from workspace to host failed");
     // Convert real scalar to complex
-    status = RealToComplex(m_, reinterpret_cast<D *>(w_w_c_addr), reinterpret_cast<D *>(output_w_addr),
-                           reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_STATUS(status, kernel_name_);
+    RealToComplex(m_, reinterpret_cast<D *>(w_w_c_addr), reinterpret_cast<D *>(output_w_addr),
+                  reinterpret_cast<cudaStream_t>(stream_ptr));
     if (compute_eigen_vectors_) {
-      status =
-        CalTranspose(m_ * m_, w_v_addr, info, kShape2dDims, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
+      auto s2 =
+        CalTranspose<T, false>(m_ * m_, w_v_addr, info, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_STATUS(s2, "Transpose called by " + kernel_name_);
     }
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
     int info_gpu = 0;
@@ -205,7 +200,7 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  size_t m_{1};
+  int64_t m_{1};
   TypeId dtype_{kNumberTypeFloat32};
   cublasHandle_t blas_handle_{nullptr};
   cusolverDnHandle_t cusolver_handle_{nullptr};

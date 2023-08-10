@@ -145,21 +145,16 @@ void QrGpuKernelMod::RunQr(T *d_input, T *d_A, T *d_tau, int *dev_info, T *d_out
 template <typename T>
 void QrGpuKernelMod::LaunchQr(T *d_input, T *d_A, T *d_tau, T *d_output_q, T *d_output_r, int *dev_info,
                               T *d_output_r_t, T *output_r) {
-  size_t transpose_shape[2] = {n_, m_};
-  size_t transpose_axis[2] = {1, 0};
   TransposeInfo info;
-  const size_t kValue2 = 2;
-  for (size_t i = 0; i < kValue2; ++i) {
-    info.shape[i] = static_cast<int>(transpose_shape[i]);
-    info.perm[i] = static_cast<int>(transpose_axis[i]);
-  }
+  info.input_shape = std::vector<int64_t>{n_, m_};
+  info.perm = std::vector<int32_t>{1, 0};
   for (size_t batch = 0; batch < batch_size_; ++batch) {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
     RunQr(d_input + batch * m_ * n_, d_A + batch * m_ * s_, d_tau + batch * n_, dev_info + batch,
           d_output_q + batch * m_ * p_, d_output_r + batch * m_ * n_);
     auto status =
-      CalTranspose(m_ * n_, d_output_r + batch * m_ * n_, info, kNum2, d_output_r_t + batch * m_ * n_, stream);
-    CHECK_CUDA_STATUS(status, kernel_name_);
+      CalTranspose<T, true>(m_ * n_, d_output_r + batch * m_ * n_, info, d_output_r_t + batch * m_ * n_, stream);
+    CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
     status =
       CalTriu(p_ * n_, d_output_r_t + batch * m_ * n_, 0, p_, n_, output_r + batch * p_ * n_, device_id_, stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
@@ -186,16 +181,16 @@ bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
 
   TransposeInfo x_info, y_info;
   for (size_t i = 0; i < input_dims_; ++i) {
-    x_info.shape[i] = static_cast<int>(transpose_input_shape_[i]);
-    x_info.perm[i] = static_cast<int>(transpose_input_axis_[i]);
-    y_info.shape[i] = static_cast<int>(transpose_q_shape_[i]);
-    y_info.perm[i] = static_cast<int>(transpose_input_axis_[i]);
+    x_info.input_shape.push_back(static_cast<int64_t>(transpose_input_shape_[i]));
+    x_info.perm.push_back(static_cast<int>(transpose_input_axis_[i]));
+    y_info.input_shape.push_back(static_cast<int64_t>(transpose_q_shape_[i]));
+    y_info.perm.push_back(static_cast<int>(transpose_input_axis_[i]));
   }
 
-  auto s1 = CalTranspose(total_size_, input, x_info, input_dims_, d_input, stream);
+  auto s1 = CalTranspose<T, true>(total_size_, input, x_info, d_input, stream);
   CHECK_CUDA_STATUS(s1, "Transpose called by " + kernel_name_);
   LaunchQr(d_input, d_A, d_tau, d_output_q, d_output_r, dev_info, d_output_r_t, output_r);
-  auto s2 = CalTranspose(batch_size_ * m_ * p_, d_output_q, y_info, input_dims_, output_q, stream);
+  auto s2 = CalTranspose<T, true>(batch_size_ * m_ * p_, d_output_q, y_info, output_q, stream);
   CHECK_CUDA_STATUS(s2, "Transpose called by " + kernel_name_);
   return true;
 }

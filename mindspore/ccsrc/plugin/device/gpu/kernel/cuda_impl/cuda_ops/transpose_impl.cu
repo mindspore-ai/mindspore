@@ -23,94 +23,61 @@
 #include <vector>
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
-__global__ void TransposeKernel(const size_t size, const T *input, const TransposeInfo info, const size_t shape_size,
-                                T *output) {
-  size_t pos_size;
-  size_t temp_pos;
-  size_t newpos;
-  size_t newpos_size;
-  size_t pos_array[TRANSPOSE_MAX_DIMENSION];
-  const int *input_shape = info.shape;
-  const int *input_perm = info.perm;
-  // for example 4-D: pos = posArray[0] * input_shape[1] * input_shape[2] * input_shape[3] +
-  //                        posArray[1] * input_shape[2] * input_shape[3] +
-  //                        posArray[2] * input_shape[3] +
-  //                        posArray[3]
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    temp_pos = pos;
-    pos_size = size / input_shape[0];
-    pos_array[0] = temp_pos / pos_size;
-    for (size_t i = 1; i < shape_size; i++) {
-      temp_pos -= pos_array[i - 1] * pos_size;
-      pos_size = pos_size / input_shape[i];
-      pos_array[i] = temp_pos / pos_size;
+__global__ void TransposeKernel(const T *__restrict__ input, const size_t size, const TransposeInfoDevice info,
+                                const int ndims, T *__restrict__ output) {
+  const int32_t *in_strides = info.transpose_info_device;
+  const int32_t *out_strides = info.transpose_info_device + stride_ndims;
+  const int32_t *perm = info.transpose_info_device + stride_ndims * 2;
+  for (int output_pos = blockDim.x * blockIdx.x + threadIdx.x; output_pos < size;
+       output_pos += blockDim.x * gridDim.x) {
+    int32_t input_pos = 0;
+    int32_t temp = output_pos;
+    for (int i = 0; i < ndims; ++i) {
+      const int32_t ratio = temp / out_strides[i];
+      temp -= ratio * out_strides[i];
+      input_pos += ratio * in_strides[perm[i]];
     }
-
-    newpos = pos_array[input_perm[shape_size - 1]];
-    newpos_size = 1;
-    for (int64_t j = shape_size - 2; j >= 0; j--) {
-      newpos_size *= input_shape[input_perm[j + 1]];
-      newpos += pos_array[input_perm[j]] * newpos_size;
-    }
-
-    output[newpos] = input[pos];
+    output[output_pos] = input[input_pos];
   }
 }
 
 template <typename T>
-cudaError_t CalTranspose(const size_t size, const T *input, const TransposeInfo &info, const size_t shape_size,
-                         T *output, cudaStream_t cuda_stream) {
-  TransposeKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, info, shape_size, output);
-  return GetCudaStatus();
+bool TransposeUsingTile(const T *input, const std::vector<int64_t> &shape, const std::vector<int32_t> &perm, T *output,
+                        cudaStream_t cuda_stream) {
+  int dims = shape.size();
+  if (dims < 2 || dims > 3) {
+    return false;
+  }
+  switch (dims) {
+    case 2:
+      if (perm[0] == 1 && perm[1] == 0) {
+        Swap3DTensorLast2Dim(input, (int64_t)1, shape[0], shape[1], output, cuda_stream);
+        return true;
+      }
+      break;
+    case 3:
+      if (perm == std::vector<int32_t>{0, 2, 1}) {
+        Swap3DTensorLast2Dim(input, shape[0], shape[1], shape[2], output, cuda_stream);
+        return true;
+      } else if (perm == std::vector<int32_t>{2, 1, 0}) {
+        Swap3DTensorDim0and2(input, shape[0], shape[1], shape[2], output, cuda_stream);
+        return true;
+      } else {
+        // Do not support other 3D Transpose.
+        return false;
+      }
+      break;
+    default:
+      return false;
+  }
+  return false;
 }
-
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<bool>(const size_t size, const bool *input, const TransposeInfo &info,
-                                                        const size_t shape_size, bool *output,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<double>(const size_t size, const double *input,
-                                                          const TransposeInfo &info, const size_t shape_size,
-                                                          double *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<float>(const size_t size, const float *input,
-                                                         const TransposeInfo &info, const size_t shape_size,
-                                                         float *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<half>(const size_t size, const half *input, const TransposeInfo &info,
-                                                        const size_t shape_size, half *output,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<int64_t>(const size_t size, const int64_t *input,
-                                                           const TransposeInfo &info, const size_t shape_size,
-                                                           int64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<int>(const size_t size, const int *input, const TransposeInfo &info,
-                                                       const size_t shape_size, int *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<int16_t>(const size_t size, const int16_t *input,
-                                                           const TransposeInfo &info, const size_t shape_size,
-                                                           int16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<int8_t>(const size_t size, const int8_t *input,
-                                                          const TransposeInfo &info, const size_t shape_size,
-                                                          int8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<uint64_t>(const size_t size, const uint64_t *input,
-                                                            const TransposeInfo &info, const size_t shape_size,
-                                                            uint64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<uint32_t>(const size_t size, const uint32_t *input,
-                                                            const TransposeInfo &info, const size_t shape_size,
-                                                            uint32_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<uint16_t>(const size_t size, const uint16_t *input,
-                                                            const TransposeInfo &info, const size_t shape_size,
-                                                            uint16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<uint8_t>(const size_t size, const uint8_t *input,
-                                                           const TransposeInfo &info, const size_t shape_size,
-                                                           uint8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<Complex<float>>(const size_t size, const Complex<float> *input,
-                                                                  const TransposeInfo &info, const size_t shape_size,
-                                                                  Complex<float> *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTranspose<Complex<double>>(const size_t size, const Complex<double> *input,
-                                                                   const TransposeInfo &info, const size_t shape_size,
-                                                                   Complex<double> *output, cudaStream_t cuda_stream);
 
 // Optimize nchw2nhwc && nhwc2nchw with tiling and shared memory.
 // Firstly, combined 2 dims hw together, treat input and output as 3D tensor.
@@ -123,39 +90,6 @@ template CUDA_LIB_EXPORT cudaError_t CalTranspose<Complex<double>>(const size_t 
 // because of the shared mem usage, The access to both input and output memory can be coalesced.
 
 // SimpleTransposeKernel for small matrix
-template <typename T>
-__global__ void SimpleTransposeKernel(const size_t size, const T *input, const TransposeInfo info,
-                                      const size_t shape_size, T *output) {
-  size_t pos_size;
-  size_t temp_pos;
-  size_t newpos;
-  size_t newpos_size;
-  size_t pos_array[4];
-  const int *input_shape = info.shape;
-  const int *input_perm = info.perm;
-  // for example 4-D: pos = posArray[0] * input_shape[1] * input_shape[2] * input_shape[3] +
-  //                        posArray[1] * input_shape[2] * input_shape[3] +
-  //                        posArray[2] * input_shape[3] +
-  //                        posArray[3]
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    temp_pos = pos;
-    pos_size = size / input_shape[0];    // C * H * W
-    pos_array[0] = temp_pos / pos_size;  // i / (CHW)
-    for (size_t i = 1; i < shape_size; i++) {
-      temp_pos -= pos_array[i - 1] * pos_size;
-      pos_size = pos_size / input_shape[i];
-      pos_array[i] = temp_pos / pos_size;
-    }
-    newpos = pos_array[input_perm[shape_size - 1]];
-    newpos_size = 1;
-    for (int64_t j = shape_size - 2; j >= 0; j--) {
-      newpos_size *= input_shape[input_perm[j + 1]];
-      newpos += pos_array[input_perm[j]] * newpos_size;
-    }
-    output[newpos] = *(input + pos);
-  }
-  return;
-}
 
 __forceinline__ __device__ int TensorIdxToOneDimIdx(int ndims, const int *idx, const int *dims) {
   int flat_idx = idx[0];
@@ -164,6 +98,7 @@ __forceinline__ __device__ int TensorIdxToOneDimIdx(int ndims, const int *idx, c
   }
   return flat_idx;
 }
+
 __forceinline__ __device__ void OneDimIdxToTensorIdx(int ndims, int idx, const int *dims, int *out_tensor_idx) {
   for (int i = ndims - 1; i >= 0; i--) {
     int new_idx = idx / dims[i];
@@ -172,9 +107,30 @@ __forceinline__ __device__ void OneDimIdxToTensorIdx(int ndims, int idx, const i
   }
 }
 
+template <typename T, int perm0, int perm1, int perm2>
+__global__ void Transpose3DTensorSimple(const T *__restrict__ input, const size_t size, const int64_t dim0,
+                                        const int64_t dim1, const int64_t dim2, T *__restrict__ output) {
+  int output_shape[3]{0, 0, 0};
+  output_shape[perm0] = dim0;
+  output_shape[perm1] = dim1;
+  output_shape[perm2] = dim2;
+  for (int output_pos = blockIdx.x * blockDim.x + threadIdx.x; output_pos < size;
+       output_pos += gridDim.x * blockDim.x) {
+    int output_tensor_index[3]{0, 0, 0};
+    OneDimIdxToTensorIdx(3, output_pos, output_shape, output_tensor_index);
+    int input_tensor_index[3]{0, 0, 0};
+    int input_shape[3]{static_cast<int>(dim0), static_cast<int>(dim1), static_cast<int>(dim2)};
+    input_tensor_index[0] = output_tensor_index[perm0];
+    input_tensor_index[1] = output_tensor_index[perm1];
+    input_tensor_index[2] = output_tensor_index[perm2];
+    int input_pos = TensorIdxToOneDimIdx(3, input_tensor_index, input_shape);
+    output[output_pos] = input[input_pos];
+  }
+}
+
 template <typename T>
-__global__ void Swap3DTensorLast2DimKernel_shared(const T *input, int NumThreads, int TileHeight, int TileWidth,
-                                                  int input_dims_0, int input_dims_1, int input_dims_2, T *output) {
+__global__ void Swap3DTensorLast2DimKernel(const T *input, int NumThreads, int TileHeight, int TileWidth,
+                                           int input_dims_0, int input_dims_1, int input_dims_2, T *output) {
   extern __shared__ unsigned char sdata_uchar[];
   // shm_tile[TileHeight][TileWidth + 1]: to avoid bank conflict in write-to-output period
   T *shm_tile = reinterpret_cast<T *>(sdata_uchar);
@@ -222,7 +178,7 @@ __global__ void Swap3DTensorLast2DimKernel_shared(const T *input, int NumThreads
           input[input_idx];       // each thread load one input data into shared mem
         input_idx += input_step;  // calculate the next input idx this thread should load
       }
-    } else {  // boundary process: thread blocks responses for edge tiles
+    } else {                      // boundary process: thread blocks responses for edge tiles
       if (shm_col_id < tile_width) {
         for (int row_id = shm_row_id; row_id < (tile_height); row_id += NumRowsPerLoadLoop) {
           // shm_tile[row_id][shm_col_id]
@@ -265,13 +221,56 @@ __global__ void Swap3DTensorLast2DimKernel_shared(const T *input, int NumThreads
   }
 }
 
+template <typename T, int perm0, int perm1, int perm2>
+__global__ void Transpose3DTensorSimpleVector(const T *__restrict__ input, size_t size, const int64_t dim0,
+                                              const int64_t dim1, const int64_t dim2, T *__restrict__ output) {
+  int output_shape[3]{0, 0, 0};
+  output_shape[perm0] = dim0;
+  output_shape[perm1] = dim1;
+  output_shape[perm2] = dim2;
+
+  const int stride = blockDim.x * gridDim.x * kUnroll;
+  const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+  T vec[kUnroll];
+  int output_pos;
+  for (output_pos = tid * kUnroll; output_pos + kUnroll - 1 < size; output_pos += stride) {
+#pragma unroll
+    for (int i = 0; i < kUnroll; ++i) {
+      int outpos_pos_i = output_pos + i;
+      int output_tensor_index[3]{0, 0, 0};
+      OneDimIdxToTensorIdx(3, outpos_pos_i, output_shape, output_tensor_index);
+      int input_tensor_index[3]{0, 0, 0};
+      int input_shape[3]{static_cast<int>(dim0), static_cast<int>(dim1), static_cast<int>(dim2)};
+      input_tensor_index[0] = output_tensor_index[perm0];
+      input_tensor_index[1] = output_tensor_index[perm1];
+      input_tensor_index[2] = output_tensor_index[perm2];
+      int input_pos_i = TensorIdxToOneDimIdx(3, input_tensor_index, input_shape);
+      vec[i] = input[input_pos_i];
+    }
+    float2 *out = reinterpret_cast<float2 *>(output + output_pos);
+    *out = *reinterpret_cast<float2 *>(vec);
+  }
+
+  for (; output_pos < size; ++output_pos) {
+    int output_tensor_index[3]{0, 0, 0};
+    OneDimIdxToTensorIdx(3, output_pos, output_shape, output_tensor_index);
+    int input_tensor_index[3]{0, 0, 0};
+    int input_shape[3]{static_cast<int>(dim0), static_cast<int>(dim1), static_cast<int>(dim2)};
+    input_tensor_index[0] = output_tensor_index[perm0];
+    input_tensor_index[1] = output_tensor_index[perm1];
+    input_tensor_index[2] = output_tensor_index[perm2];
+    int input_pos = TensorIdxToOneDimIdx(3, input_tensor_index, input_shape);
+    output[output_pos] = input[input_pos];
+  }
+}
+
 template <typename T>
-void Swap3DTensorLast2Dim(const size_t size, const size_t shape_size, int *combined_dims, const T *d_input,
-                          const TransposeInfo &info, T *d_output, cudaStream_t cuda_stream) {
+void Swap3DTensorLast2Dim(const T *input, const int64_t dim0, const int64_t dim1, const int64_t dim2, T *output,
+                          cudaStream_t cuda_stream) {
   static const int kMinDimensionToUseTiles = 16;
   static const int kMinDimensionToUseRectTiles = 96;
-  auto short_side = std::min(combined_dims[1], combined_dims[2]);
-  auto long_side = std::max(combined_dims[1], combined_dims[2]);
+  auto short_side = std::min(dim1, dim2);
+  auto long_side = std::max(dim1, dim2);
   // large matrix
   // Both dims are greater than 16 && cuda blocks have enough shared mem.
   constexpr int kTileSizeLargeMat = 32;
@@ -287,170 +286,113 @@ void Swap3DTensorLast2Dim(const size_t size, const size_t shape_size, int *combi
   bool is_narrow_matrix = short_side < kMinDimensionToUseTiles && long_side >= kMinDimensionToUseRectTiles &&
                           ShmemReqNarrowMat <= SHARED_MEM_PER_BLOCK;
   if (is_large_matrix) {
-    int input_dims_in_tiles[3] = {combined_dims[0], (combined_dims[1] + kTileSizeLargeMat - 1) / kTileSizeLargeMat,
-                                  (combined_dims[2] + kTileSizeLargeMat - 1) / kTileSizeLargeMat};
+    int64_t input_dims_in_tiles[3]{dim0, (dim1 + kTileSizeLargeMat - 1) / kTileSizeLargeMat,
+                                   (dim2 + kTileSizeLargeMat - 1) / kTileSizeLargeMat};
     int TotalNumTiles = input_dims_in_tiles[0] * input_dims_in_tiles[1] * input_dims_in_tiles[2];
-    Swap3DTensorLast2DimKernel_shared<T><<<TotalNumTiles, kNumThreadsLargeMat, ShmemReqLargeMat, cuda_stream>>>(
-      d_input, kNumThreadsLargeMat, kTileSizeLargeMat, kTileSizeLargeMat, combined_dims[0], combined_dims[1],
-      combined_dims[2], d_output);
+    Swap3DTensorLast2DimKernel<T><<<TotalNumTiles, kNumThreadsLargeMat, ShmemReqLargeMat, cuda_stream>>>(
+      input, kNumThreadsLargeMat, kTileSizeLargeMat, kTileSizeLargeMat, dim0, dim1, dim2, output);
   } else if (is_narrow_matrix) {
-    int input_dims_in_tiles[3] = {combined_dims[0], 1,
-                                  (long_side + kTileSizeNarrowMatLongSide - 1) / kTileSizeNarrowMatLongSide};
+    int64_t input_dims_in_tiles[3]{dim0, 1, (long_side + kTileSizeNarrowMatLongSide - 1) / kTileSizeNarrowMatLongSide};
     int TotalNumTiles = input_dims_in_tiles[0] * input_dims_in_tiles[1] * input_dims_in_tiles[2];
     int TileHeight, TileWidth;
-    if (long_side == combined_dims[1]) {
+    if (long_side == dim1) {
       TileHeight = kTileSizeNarrowMatLongSide;
       TileWidth = short_side;
     } else {
       TileHeight = short_side;
       TileWidth = kTileSizeNarrowMatLongSide;
     }
-    Swap3DTensorLast2DimKernel_shared<T><<<TotalNumTiles, kNumThreadsNarrowMat, ShmemReqNarrowMat, cuda_stream>>>(
-      d_input, kNumThreadsNarrowMat, TileHeight, TileWidth, combined_dims[0], combined_dims[1], combined_dims[2],
-      d_output);
+    Swap3DTensorLast2DimKernel<T><<<TotalNumTiles, kNumThreadsNarrowMat, ShmemReqNarrowMat, cuda_stream>>>(
+      input, kNumThreadsNarrowMat, TileHeight, TileWidth, dim0, dim1, dim2, output);
   } else {
-    SimpleTransposeKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, d_input, info, shape_size, d_output);
+    size_t size = static_cast<size_t>(dim0 * dim1 * dim2);
+    Transpose3DTensorSimple<T, 0, 2, 1>
+      <<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, size, dim0, dim1, dim2, output);
   }
   return;
 }
-// specific for NHWC -> NCHW
+
 template <typename T>
-cudaError_t CalNHWC2NCHWInterface(const size_t size, const size_t shape_size, const T *d_input,
-                                  const int64_t *input_shape, const int64_t *input_axis, const TransposeInfo &info,
-                                  T *d_output, cudaStream_t cuda_stream) {
-  int combined_dims[3];
-  combined_dims[0] = static_cast<int>(input_shape[0]);  // N
-  combined_dims[1] = static_cast<int>(input_shape[1]);  // HW
-  for (size_t i = 2; i < shape_size - 1; i++) {
-    combined_dims[1] *= static_cast<int>(input_shape[i]);
+void Swap3DTensorDim0and2(const T *input, const int64_t dim0, const int64_t dim1, const int64_t dim2, T *output,
+                          cudaStream_t cuda_stream) {
+  size_t size = dim0 * dim1 * dim2;
+  auto out_ptr = reinterpret_cast<uintptr_t>(output);
+  bool aligned = (out_ptr % 16 == 0);  // Is aligned with 16 bits(2 bytes)?
+  bool use_vector{false}, is_custom{false};
+  if ((dim0 <= 128 && dim2 <= 128) || dim0 * dim1 <= 128 || dim1 * dim2 <= 8) {
+    use_vector = is_custom = true;
+  } else if (dim1 * dim2 <= 16384) {
+    use_vector = true;
   }
-  combined_dims[2] = static_cast<int>(input_shape[shape_size - 1]);  // C
-  Swap3DTensorLast2Dim(size, shape_size, combined_dims, d_input, info, d_output, cuda_stream);
+  if (sizeof(T) == 2 && aligned && use_vector) {
+    int grid_size;
+    if (is_custom) {
+      grid_size = (size + GET_THREADS - 1) / GET_THREADS;
+    } else {
+      grid_size = GET_BLOCKS(size);
+    }
+    Transpose3DTensorSimpleVector<T, 2, 1, 0>
+      <<<grid_size, GET_THREADS / kUnroll, 0, cuda_stream>>>(input, size, dim0, dim1, dim2, output);
+  } else {
+    Transpose3DTensorSimple<T, 2, 1, 0>
+      <<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, size, dim0, dim1, dim2, output);
+  }
+
+  return;
+}
+
+template <typename T, bool need_simplify>
+cudaError_t CalTranspose(const size_t size, const T *input, const TransposeInfo &info, T *output,
+                         cudaStream_t cuda_stream) {
+  std::vector<int64_t> new_shape{0};
+  std::vector<int32_t> new_perm{0};
+
+  if (need_simplify) {
+    SimplifyTranspose(info.input_shape, info.perm, &new_shape, &new_perm);
+  } else {
+    new_shape = info.input_shape;
+    new_perm = info.perm;
+  }
+
+  if (TransposeUsingTile(input, new_shape, new_perm, output, cuda_stream)) {
+    return GetCudaStatus();
+  }
+
+  TransposeInfoDevice transpose_info_device;
+  int32_t input_stride[kDimSize];
+  int32_t output_stride[kDimSize];
+  ComputeInputStride(new_shape, input_stride);
+  ComputeOutputStride(new_shape, new_perm, output_stride);
+
+  for (size_t i = 0; i < new_shape.size(); ++i) {
+    transpose_info_device.transpose_info_device[i] = input_stride[i];
+    transpose_info_device.transpose_info_device[i + stride_ndims] = output_stride[i];
+    transpose_info_device.transpose_info_device[i + stride_ndims * 2] = new_perm[i];
+  }
+  TransposeKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, size, transpose_info_device,
+                                                                     new_shape.size(), output);
   return GetCudaStatus();
 }
-// specific for NCHW -> NHWC
-template <typename T>
-cudaError_t CalNCHW2NHWCInterface(const size_t size, const size_t shape_size, const T *d_input,
-                                  const int64_t *input_shape, const int64_t *input_axis, const TransposeInfo &info,
-                                  T *d_output, cudaStream_t cuda_stream) {
-  int combined_dims[3];
-  combined_dims[0] = static_cast<int>(input_shape[0]);  // N
-  combined_dims[1] = static_cast<int>(input_shape[1]);  // C
-  combined_dims[2] = static_cast<int>(input_shape[2]);  // HW
-  for (size_t i = 3; i < shape_size; ++i) {
-    combined_dims[2] *= static_cast<int>(input_shape[i]);
-  }
-  Swap3DTensorLast2Dim(size, shape_size, combined_dims, d_input, info, d_output, cuda_stream);
-  return GetCudaStatus();
-}
 
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<Complex<float>>(
-  const size_t size, const size_t shape_size, const Complex<float> *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, Complex<float> *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<Complex<double>>(
-  const size_t size, const size_t shape_size, const Complex<double> *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, Complex<double> *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<bool>(const size_t size, const size_t shape_size,
-                                                                 const bool *d_input, const int64_t *input_shape,
-                                                                 const int64_t *input_axis, const TransposeInfo &info,
-                                                                 bool *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<double>(const size_t size, const size_t shape_size,
-                                                                   const double *d_input, const int64_t *input_shape,
-                                                                   const int64_t *input_axis, const TransposeInfo &info,
-                                                                   double *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<float>(const size_t size, const size_t shape_size,
-                                                                  const float *d_input, const int64_t *input_shape,
-                                                                  const int64_t *input_axis, const TransposeInfo &info,
-                                                                  float *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<half>(const size_t size, const size_t shape_size,
-                                                                 const half *d_input, const int64_t *input_shape,
-                                                                 const int64_t *input_axis, const TransposeInfo &info,
-                                                                 half *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<int64_t>(const size_t size, const size_t shape_size,
-                                                                    const int64_t *d_input, const int64_t *input_shape,
-                                                                    const int64_t *input_axis,
-                                                                    const TransposeInfo &info, int64_t *d_output,
-                                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<int>(const size_t size, const size_t shape_size,
-                                                                const int *d_input, const int64_t *input_shape,
-                                                                const int64_t *input_axis, const TransposeInfo &info,
-                                                                int *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<int16_t>(const size_t size, const size_t shape_size,
-                                                                    const int16_t *d_input, const int64_t *input_shape,
-                                                                    const int64_t *input_axis,
-                                                                    const TransposeInfo &info, int16_t *d_output,
-                                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<int8_t>(const size_t size, const size_t shape_size,
-                                                                   const int8_t *d_input, const int64_t *input_shape,
-                                                                   const int64_t *input_axis, const TransposeInfo &info,
-                                                                   int8_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<uint64_t>(
-  const size_t size, const size_t shape_size, const uint64_t *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, uint64_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<uint32_t>(
-  const size_t size, const size_t shape_size, const uint32_t *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, uint32_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<uint16_t>(
-  const size_t size, const size_t shape_size, const uint16_t *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, uint16_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNHWC2NCHWInterface<uint8_t>(const size_t size, const size_t shape_size,
-                                                                    const uint8_t *d_input, const int64_t *input_shape,
-                                                                    const int64_t *input_axis,
-                                                                    const TransposeInfo &info, uint8_t *d_output,
-                                                                    cudaStream_t cuda_stream);
+#define REGISTER_CALTRANSPOSE(T, NEED_SIMPLIFY)                        \
+  template CUDA_LIB_EXPORT cudaError_t CalTranspose<T, NEED_SIMPLIFY>( \
+    const size_t size, const T *input, const TransposeInfo &info, T *output, cudaStream_t cuda_stream)
 
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<Complex<float>>(
-  const size_t size, const size_t shape_size, const Complex<float> *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, Complex<float> *d_output, cudaStream_t cuda_stream);
+#define REGISTER_BOTH_CALTRANSPOSE(T) \
+  REGISTER_CALTRANSPOSE(T, true);     \
+  REGISTER_CALTRANSPOSE(T, false)
 
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<Complex<double>>(
-  const size_t size, const size_t shape_size, const Complex<double> *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, Complex<double> *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<bool>(const size_t size, const size_t shape_size,
-                                                                 const bool *d_input, const int64_t *input_shape,
-                                                                 const int64_t *input_axis, const TransposeInfo &info,
-                                                                 bool *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<double>(const size_t size, const size_t shape_size,
-                                                                   const double *d_input, const int64_t *input_shape,
-                                                                   const int64_t *input_axis, const TransposeInfo &info,
-                                                                   double *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<float>(const size_t size, const size_t shape_size,
-                                                                  const float *d_input, const int64_t *input_shape,
-                                                                  const int64_t *input_axis, const TransposeInfo &info,
-                                                                  float *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<half>(const size_t size, const size_t shape_size,
-                                                                 const half *d_input, const int64_t *input_shape,
-                                                                 const int64_t *input_axis, const TransposeInfo &info,
-                                                                 half *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<int64_t>(const size_t size, const size_t shape_size,
-                                                                    const int64_t *d_input, const int64_t *input_shape,
-                                                                    const int64_t *input_axis,
-                                                                    const TransposeInfo &info, int64_t *d_output,
-                                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<int>(const size_t size, const size_t shape_size,
-                                                                const int *d_input, const int64_t *input_shape,
-                                                                const int64_t *input_axis, const TransposeInfo &info,
-                                                                int *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<int16_t>(const size_t size, const size_t shape_size,
-                                                                    const int16_t *d_input, const int64_t *input_shape,
-                                                                    const int64_t *input_axis,
-                                                                    const TransposeInfo &info, int16_t *d_output,
-                                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<int8_t>(const size_t size, const size_t shape_size,
-                                                                   const int8_t *d_input, const int64_t *input_shape,
-                                                                   const int64_t *input_axis, const TransposeInfo &info,
-                                                                   int8_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<uint64_t>(
-  const size_t size, const size_t shape_size, const uint64_t *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, uint64_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<uint32_t>(
-  const size_t size, const size_t shape_size, const uint32_t *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, uint32_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<uint16_t>(
-  const size_t size, const size_t shape_size, const uint16_t *d_input, const int64_t *input_shape,
-  const int64_t *input_axis, const TransposeInfo &info, uint16_t *d_output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalNCHW2NHWCInterface<uint8_t>(const size_t size, const size_t shape_size,
-                                                                    const uint8_t *d_input, const int64_t *input_shape,
-                                                                    const int64_t *input_axis,
-                                                                    const TransposeInfo &info, uint8_t *d_output,
-                                                                    cudaStream_t cuda_stream);
+REGISTER_BOTH_CALTRANSPOSE(bool);
+REGISTER_BOTH_CALTRANSPOSE(int8_t);
+REGISTER_BOTH_CALTRANSPOSE(int16_t);
+REGISTER_BOTH_CALTRANSPOSE(int32_t);
+REGISTER_BOTH_CALTRANSPOSE(int64_t);
+REGISTER_BOTH_CALTRANSPOSE(uint8_t);
+REGISTER_BOTH_CALTRANSPOSE(uint16_t);
+REGISTER_BOTH_CALTRANSPOSE(uint32_t);
+REGISTER_BOTH_CALTRANSPOSE(uint64_t);
+REGISTER_BOTH_CALTRANSPOSE(half);
+REGISTER_BOTH_CALTRANSPOSE(float);
+REGISTER_BOTH_CALTRANSPOSE(double);
+REGISTER_BOTH_CALTRANSPOSE(Complex<double>);
+REGISTER_BOTH_CALTRANSPOSE(Complex<float>);

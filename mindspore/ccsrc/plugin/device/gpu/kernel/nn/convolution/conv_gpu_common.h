@@ -77,8 +77,8 @@ struct ConvolutionArgs {
 };
 
 static const std::unordered_map<std::string, size_t> kFormatIndexMap = {{"NCHW", 2}, {"HWCN", 0}, {"NHWC", 1}};
-static const std::vector<int64_t> to_nhwc_axis = {0, 2, 3, 1};
-static const std::vector<int64_t> to_nchw_axis = {0, 3, 1, 2};
+static const std::vector<int32_t> to_nhwc_axis = {0, 2, 3, 1};
+static const std::vector<int32_t> to_nchw_axis = {0, 3, 1, 2};
 
 constexpr auto kConvNormalAlgoName = "normal";
 constexpr auto kConvPerformanceAlgoName = "performance";

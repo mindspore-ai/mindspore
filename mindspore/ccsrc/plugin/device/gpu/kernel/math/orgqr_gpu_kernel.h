@@ -96,9 +96,9 @@ class OrgqrGpuKernelMod : public NativeGpuKernelMod {
   size_t k_{0};
   size_t batch_size_{0};
   bool is_null_input_;
-  size_t transpose_input_x_shape_[TRANSPOSE_MAX_DIMENSION] = {0};
-  size_t transpose_input_x_axis_[TRANSPOSE_MAX_DIMENSION] = {0};
-  size_t transpose_output_y_shape_[TRANSPOSE_MAX_DIMENSION] = {0};
+  size_t transpose_input_x_shape_[transpose_max_dimension] = {0};
+  size_t transpose_input_x_axis_[transpose_max_dimension] = {0};
+  size_t transpose_output_y_shape_[transpose_max_dimension] = {0};
   cusolverDnHandle_t handle_{nullptr};
   void *cuda_stream_{nullptr};
 };

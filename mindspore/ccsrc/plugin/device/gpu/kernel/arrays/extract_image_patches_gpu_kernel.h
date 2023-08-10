@@ -66,29 +66,27 @@ class ExtractImagePatchesKernelMod : public NativeGpuKernelMod, public MatchKern
     T *output = GetDeviceAddress<T>(outputs, 0);
     T *t_input = GetDeviceAddress<T>(workspace, 0);
     T *t_output = GetDeviceAddress<T>(workspace, 1);
-    TransposeInfo InInfo;
-    TransposeInfo OutInfo;
-    std::vector<int64_t> to_nhwc_axis = {0, 2, 3, 1};
-    std::vector<int64_t> to_nchw_axis = {0, 3, 1, 2};
-    const size_t kValue4 = 4;
-    for (size_t i = 0; i < kValue4; ++i) {
-      InInfo.shape[i] = static_cast<int>(input_shape_[i]);
-      InInfo.perm[i] = static_cast<int>(to_nhwc_axis[i]);
-      OutInfo.shape[i] = static_cast<int>(t_output_shape_[i]);
-      OutInfo.perm[i] = static_cast<int>(to_nchw_axis[i]);
-    }
-    auto status = CalNCHW2NHWCInterface(input_size_, kValue4, input, &input_shape_[0], &to_nhwc_axis[0], InInfo,
-                                        t_input, reinterpret_cast<cudaStream_t>(stream_ptr_));
-    CHECK_CUDA_STATUS(status, kernel_name_);
-    status = CalExtractImagePatchesNHWC(output_size_, stride_row_, stride_col_, rate_row_, rate_col_, output_cols_,
-                                        need_batch_, row_stride_, patch_stride_, other_stride_, input_row_size_,
-                                        input_col_size_, row_padding_top_, col_padding_left_, col_input_stride_,
-                                        row_input_stride_, patch_input_stride_, output_depth_, t_input, t_output,
-                                        reinterpret_cast<cudaStream_t>(stream_ptr_));
-    CHECK_CUDA_STATUS(status, kernel_name_);
-    status = CalNHWC2NCHWInterface(output_size_, kValue4, t_output, &t_output_shape_[0], &to_nchw_axis[0], OutInfo,
-                                   output, reinterpret_cast<cudaStream_t>(stream_ptr_));
-    CHECK_CUDA_STATUS(status, kernel_name_);
+
+    TransposeInfo InInfo, OutInfo;
+    InInfo.input_shape = input_shape_;
+    OutInfo.input_shape = t_output_shape_;
+    InInfo.perm = std::vector<int32_t>{0, 2, 3, 1};
+    OutInfo.perm = std::vector<int32_t>{0, 3, 1, 2};
+
+    auto status1 =
+      CalTranspose<T, true>(input_size_, input, InInfo, t_input, reinterpret_cast<cudaStream_t>(stream_ptr_));
+
+    CHECK_CUDA_STATUS(status1, kernel_name_);
+    auto status2 = CalExtractImagePatchesNHWC(output_size_, stride_row_, stride_col_, rate_row_, rate_col_,
+                                              output_cols_, need_batch_, row_stride_, patch_stride_, other_stride_,
+                                              input_row_size_, input_col_size_, row_padding_top_, col_padding_left_,
+                                              col_input_stride_, row_input_stride_, patch_input_stride_, output_depth_,
+                                              t_input, t_output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_STATUS(status2, kernel_name_);
+    auto status3 =
+      CalTranspose<T, true>(output_size_, t_output, OutInfo, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+
+    CHECK_CUDA_STATUS(status3, kernel_name_);
     return true;
   }
 

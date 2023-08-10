@@ -50,20 +50,24 @@ class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
 
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
+  bool IsCopy(const std::vector<int32_t> &perm);
+
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
 
-  void GetPermValue(const std::vector<int64_t> &perm);
+  void GetPermValue(const std::vector<int64_t> &perm, std::vector<int32_t> *input_perm);
 
   void *stream_ptr_{nullptr};
   std::vector<int64_t> input_shape_;
-  std::vector<int64_t> input_perm_;
+  std::vector<int32_t> input_perm_;
+  TransposeInfo info_;
 
   size_t shape_size_{0};
   bool is_null_input_;
   bool is_dynamic_perm_{false};
+  bool is_copy_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
