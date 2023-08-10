@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <algorithm>
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -28,9 +29,7 @@ const size_t kInputSizeThree = 3;
 }
 STATUS OnnxDeConvParser::ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t *group, mindspore::PadMode *pad_mode,
                                        std::vector<int64_t> *output_paddings) {
-  MS_ASSERT(group != nullptr);
-  MS_ASSERT(pad_mode != nullptr);
-  MS_ASSERT(output_paddings != nullptr);
+  MS_CHECK_TRUE_RET(group != nullptr && pad_mode != nullptr && output_paddings != nullptr, RET_NULL_PTR);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
       *group = onnx_node_attr.i();

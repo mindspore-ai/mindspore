@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ constexpr const char *DELIM_BLANK = " ";
 
 int CheckCanConvertToMatmul(const std::string &first_dims, const std::string &second_dims,
                             const std::string &output_dims, bool *trans_a, bool *trans_b, bool *trans_out) {
-  MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_RET(trans_a != nullptr && trans_b != nullptr && trans_out != nullptr, RET_NULL_PTR);
   // dimensions other than the last two dimensions and not common dimension from the right should be the same.
   // e.g. "bdn,bdm->bnm"/"bnm,bdm->bdn"/"bhid,bhjd->bhij"/"bhid,hjd->dhij"
   auto first_subdims = first_dims.substr(0, first_dims.length() - DIMENSION_2D);
@@ -119,7 +119,7 @@ bool OnnxEinsumAdjust::Adjust(const FuncGraphPtr &func_graph) {
     // check can convert to scale. e.g. "bdn,d->bdn"
     if (output_dims == first_dims && first_dims.find(second_dims) != std::string::npos) {
       auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-      MS_ASSERT(value_node != nullptr);
+      MS_CHECK_TRUE_RET(value_node != nullptr, false);
       ops::ScaleFusion scale_node;
       auto scale_prim = scale_node.GetPrim();
       MS_CHECK_TRUE_MSG(scale_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
@@ -138,7 +138,7 @@ bool OnnxEinsumAdjust::Adjust(const FuncGraphPtr &func_graph) {
       return false;
     }
     auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-    MS_ASSERT(value_node != nullptr);
+    MS_CHECK_TRUE_RET(value_node != nullptr, false);
     ops::MatMulFusion matmul_node;
     auto scale_prim = matmul_node.GetPrim();
     MS_CHECK_TRUE_MSG(scale_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");

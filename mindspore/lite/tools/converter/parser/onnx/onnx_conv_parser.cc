@@ -26,8 +26,7 @@
 namespace mindspore::lite {
 STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, int64_t group,
                       int64_t *channel_out, int64_t *channel_in) {
-  MS_ASSERT(channel_out != nullptr);
-  MS_ASSERT(channel_in != nullptr);
+  MS_CHECK_TRUE_RET(channel_out != nullptr && channel_in != nullptr, RET_NULL_PTR);
   MS_CHECK_GE(onnx_node.input_size(), kInputSize1, RET_ERROR);
   const auto &onnx_conv_weight = onnx_node.input(kWeightIndex);
   if (onnx_node.op_type() == "Conv") {

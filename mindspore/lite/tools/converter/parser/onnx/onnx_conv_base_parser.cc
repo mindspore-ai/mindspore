@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <string>
 #include "ops/fusion/conv2d_fusion.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::lite {
 namespace {
@@ -32,7 +33,7 @@ constexpr int kEndIndex1 = 2;
 constexpr int kEndIndex2 = 3;
 }  // namespace
 STATUS ParseDilations(std::vector<int64_t> *dilation, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
-  MS_ASSERT(dilation != nullptr && conv1d != nullptr);
+  MS_CHECK_TRUE_RET(dilation != nullptr && conv1d != nullptr, RET_NULL_PTR);
   switch (onnx_node_attr.ints().size()) {
     case kNumDim1:
       *conv1d = true;
@@ -51,7 +52,7 @@ STATUS ParseDilations(std::vector<int64_t> *dilation, bool *conv1d, const onnx::
 }
 
 STATUS ParseKernels(std::vector<int64_t> *kernels, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
-  MS_ASSERT(kernels != nullptr && conv1d != nullptr);
+  MS_CHECK_TRUE_RET(kernels != nullptr && conv1d != nullptr, RET_NULL_PTR);
   switch (onnx_node_attr.ints().size()) {
     case kNumDim1:
       *conv1d = true;
@@ -112,7 +113,7 @@ STATUS ParsePads(std::vector<int64_t> *pads, bool *conv1d, const onnx::Attribute
 }
 
 STATUS ParseStrides(std::vector<int64_t> *strides, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
-  MS_ASSERT(strides != nullptr && conv1d != nullptr);
+  MS_CHECK_TRUE_RET(strides != nullptr && conv1d != nullptr, RET_NULL_PTR);
   switch (onnx_node_attr.ints().size()) {
     case kNumDim1:
       *conv1d = true;
@@ -133,11 +134,8 @@ STATUS ParseStrides(std::vector<int64_t> *strides, bool *conv1d, const onnx::Att
 STATUS OnnxConvBaseParser::ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kernels,
                                         std::vector<int64_t> *strides, std::vector<int64_t> *dilation,
                                         std::vector<int64_t> *pads, bool *conv1d) {
-  MS_ASSERT(kernels != nullptr);
-  MS_ASSERT(strides != nullptr);
-  MS_ASSERT(dilation != nullptr);
-  MS_ASSERT(pads != nullptr);
-  MS_ASSERT(conv1d != nullptr);
+  MS_CHECK_TRUE_RET(kernels != nullptr && strides != nullptr && dilation != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(pads != nullptr && conv1d != nullptr, RET_NULL_PTR);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "dilations") {
       auto ret = ParseDilations(dilation, conv1d, onnx_node_attr);

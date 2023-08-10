@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,11 +66,13 @@ PrimitiveCPtr OnnxQuantizeLinearParser::Parse(const onnx::GraphProto &onnx_graph
     return nullptr;
   }
   TypeId zp_data_type = onnx_zero_point_data->Dtype()->type_id();
+  void *zp_data = onnx_zero_point_data->data_c();
+  MS_CHECK_TRUE_RET(zp_data != nullptr, nullptr);
   int zero_point = 0;
   if (zp_data_type == mindspore::kNumberTypeUInt8) {
-    zero_point = *(static_cast<const uint8_t *>(onnx_zero_point_data->data_c())) - 128;
+    zero_point = *(static_cast<const uint8_t *>(zp_data)) - 128;
   } else if (zp_data_type == mindspore::kNumberTypeInt8) {
-    zero_point = *(static_cast<const int *>(onnx_zero_point_data->data_c()));
+    zero_point = *(static_cast<const int *>(zp_data));
   } else {
     MS_LOG(ERROR) << "Invalid zero point data type: " << zp_data_type;
   }
