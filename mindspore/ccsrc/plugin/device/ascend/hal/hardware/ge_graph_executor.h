@@ -53,12 +53,13 @@ class GeGraphExecutor : public GraphExecutor {
   static FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map,
                                    bool export_air);
   void PreprocessBeforeRun(const KernelGraphPtr &graph);
+  size_t GetGraphFeatureMemory(const FuncGraphPtr &graph) const override;
 
  private:
   bool RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) const;
   void AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const;
   void AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) const;
-  void AllocConstMemory(const transform::RunOptions &options, size_t memory_size) const;
+  void AllocConstMemory(const transform::RunOptions &options, const KernelGraphPtr &graph, size_t memory_size) const;
   void AllocFeatureMemory(const transform::RunOptions &options, size_t memory_size) const;
   void AllocParameterMemory(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *memo = nullptr) const;
   void BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph);

@@ -56,6 +56,8 @@ namespace device {
 namespace ascend {
 namespace {
 const std::set<std::string> kIgnoreGEShapeOps = {kSoftMarginLossOpName};
+mindspore::HashMap<std::string, size_t> feature_memorys;
+mindspore::HashMap<std::string, size_t> streams;
 
 void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me_types) {
   MS_EXCEPTION_IF_NULL(cnode_data);
@@ -441,12 +443,20 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
   }
 }
 
-void GeGraphExecutor::AllocConstMemory(const transform::RunOptions &options, size_t memory_size) const {
+void GeGraphExecutor::AllocConstMemory(const transform::RunOptions &options, const KernelGraphPtr &graph,
+                                       size_t memory_size) const {
   if (memory_size == 0) {
     return;
   }
   MS_LOG(INFO) << "Start AllocConstMemory, memory_size: " << memory_size;
   auto memory = ResManager()->AllocateMemory(memory_size);
+  if (memory == nullptr) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed, memory size:" << memory_size << ", graph: " << graph->ToString();
+  }
+  if (common::IsNeedProfileMemory()) {
+    MS_LOG(WARNING) << "Need Profile Memory, alloc type: ConstMemory, size: " << memory_size
+                    << ", graph: " << graph->ToString() << ", device address addr: " << memory;
+  }
   auto graph_runner = transform::GetGraphRunner();
   MS_EXCEPTION_IF_NULL(graph_runner);
   auto ret = graph_runner->SetConstMemory(options, memory, memory_size);
@@ -640,10 +650,14 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph,
     auto shapes = trans::GetRuntimePaddingShape(output_node, real_index);
     auto tensor_size =
       shapes.empty() ? type_size : std::accumulate(shapes.begin(), shapes.end(), type_size, std::multiplies<size_t>());
+    bool need_not_alloc = kernel_graph->has_flag(kFlagEnableZeroCopyInGraph) && !output_node->isa<ValueNode>();
     // When ValueNode is a graph output, runtime does not manage this memory
-    void *mem = kernel_graph->has_flag(kFlagEnableZeroCopyInGraph) && !output_node->isa<ValueNode>()
-                  ? nullptr
-                  : ResManager()->AllocateMemory(tensor_size);
+    void *mem = need_not_alloc ? nullptr : ResManager()->AllocateMemory(tensor_size);
+    if (common::IsNeedProfileMemory() && !need_not_alloc) {
+      MS_LOG(WARNING) << "Need Profile Memory, alloc type: ValueNodeOutput, size:" << tensor_size
+                      << ", graph: " << kernel_graph->ToString() << ", node: " << output_node->fullname_with_scope()
+                      << ", device address addr: " << mem;
+    }
     auto output_device_addr = std::make_shared<AscendDeviceAddress>(mem, tensor_size, kOpFormat_DEFAULT, output_type_id,
                                                                     kAscendDevice, device_id);
     output_device_addr->set_is_ptr_persisted(true);
@@ -694,7 +708,9 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   }
   GraphSummary summary(ge_graph_summary);
   MS_LOG(INFO) << "Graph " << run_options.name << " summary: " << summary.ToString();
-  AllocConstMemory(run_options, summary.const_memory_size);
+  feature_memorys[run_options.name] = summary.feature_memory_size;
+  streams[run_options.name] = summary.stream_num;
+  AllocConstMemory(run_options, graph, summary.const_memory_size);
   AllocFeatureMemory(run_options, summary.feature_memory_size);
   AllocParameterMemory(graph);
   AllocOutputMemory(graph, summary.output_shapes);
@@ -772,6 +788,21 @@ void SetOutputs(const std::vector<KernelWithIndex> &graph_outputs,
     auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
     UpdateOutputNodeShape(output_node, idx, me_types[i], actual_shapes);
   }
+}
+
+size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto graph_name = GetGraphName(graph);
+  auto iter = feature_memorys.find(graph_name);
+  if (iter == feature_memorys.end()) {
+    MS_LOG(EXCEPTION) << "Graph " << graph_name << " feature memory not found.";
+  }
+  auto stream_iter = streams.find(graph_name);
+  if (stream_iter == streams.end()) {
+    MS_LOG(EXCEPTION) << "Graph " << graph_name << " stream not found.";
+  }
+  MS_LOG(WARNING) << "Need Profile Memory, graph: " << graph_name << ", stream: " << stream_iter->second;
+  return iter->second;
 }
 
 bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) const {
@@ -954,6 +985,11 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       auto memory = ResManager()->AllocateMemory(memory_size);
       output_addr->set_ptr(memory);
       output_addr->SetSize(memory_size);
+      if (common::IsNeedProfileMemory()) {
+        MS_LOG(WARNING) << "Need Profile Memory, alloc type: UnusedInput, size:" << memory_size
+                        << ", graph: " << kernel_graph->ToString() << ", node: " << kv.first->fullname_with_scope()
+                        << ", device address addr: " << memory;
+      }
     }
     if (kv.second >= ge_inputs.size()) {
       MS_LOG(EXCEPTION) << kv.first->DebugString() << ", index: " << kv.second << " is greater than "

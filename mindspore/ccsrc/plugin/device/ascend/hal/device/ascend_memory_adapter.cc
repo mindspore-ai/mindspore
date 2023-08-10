@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 
 #include <algorithm>
+#include <set>
 #include "ir/func_graph.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
@@ -27,6 +28,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+
 constexpr uint64_t kAscendMemAlignSize = 512;
 constexpr double kMSMemoryRatio = 0.9375;           // 15/16
 constexpr double kReservedMemoryRatio = 0.0625;     // 1/16
@@ -123,6 +125,9 @@ bool AscendMemAdapter::DeInitialize() {
   auto ret = FreeToRts(device_mem_base_addr_);
   if (ret) {
     MS_LOG(INFO) << " Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
+    if (common::IsNeedProfileMemory()) {
+      MS_LOG(WARNING) << " Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
+    }
     device_hbm_total_size_ = 0;
     device_hbm_free_size_ = 0;
     max_available_ms_hbm_size_ = 0;
@@ -145,14 +150,15 @@ bool AscendMemAdapter::DeInitialize() {
 uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
   size = GetRoundUpAlignSize(size);
-  if (static_mem_offset_ < size || (static_mem_offset_ - size) < max_dynamic_mem_offset_) {
+  if (!common::IsNeedProfileMemory() && (static_mem_offset_ < static_cast<int64_t>(size) ||
+                                         (static_mem_offset_ - static_cast<int64_t>(size)) < max_dynamic_mem_offset_)) {
     MS_LOG(INFO) << DevMemDetailInfo();
     MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Out of Memory!!! Request memory size: " << size
                       << "B, Memory Statistic:" << DevMemStatistics()
                       << "\nPlease try to reduce 'batch_size' or check whether exists extra large shape. For more "
                          "details, please refer to 'Out of Memory' at https://www.mindspore.cn .";
   }
-  auto new_static_offset = static_mem_offset_ - size;
+  int64_t new_static_offset = static_mem_offset_ - static_cast<int64_t>(size);
   auto memory_block_ptr = device_mem_base_addr_ + new_static_offset;
   static_mem_offset_ = new_static_offset;
   static_memory_block_list_.push_back(std::make_shared<MemoryBlock>(memory_block_ptr, size, tag));
@@ -162,8 +168,8 @@ uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &ta
 uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
   size = GetRoundUpAlignSize(size);
-  auto new_dynamic_offset = cur_dynamic_mem_offset_ + size;
-  if (new_dynamic_offset > static_mem_offset_) {
+  int64_t new_dynamic_offset = cur_dynamic_mem_offset_ + static_cast<int64_t>(size);
+  if (!common::IsNeedProfileMemory() && new_dynamic_offset > static_mem_offset_) {
     MS_LOG(INFO) << DevMemDetailInfo();
     MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Out of Memory!!! Request memory size: " << size
                       << "B, Memory Statistic:" << DevMemStatistics()
