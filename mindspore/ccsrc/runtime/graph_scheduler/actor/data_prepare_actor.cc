@@ -97,10 +97,19 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   const bool taken_over_by_swap_manager = IsDataTakenOverByMemOffload(device_context);
   auto allocator_type = node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), allocator_type, 0);
-  if (!taken_over_by_swap_manager && (device_tensor->GetPtr() == nullptr) &&
-      (!device_context->device_res_manager_->AllocateMemory(device_tensor.get()))) {
+  bool need_alloc_memory = !taken_over_by_swap_manager && (device_tensor->GetPtr() == nullptr);
+  if (need_alloc_memory && (!device_context->device_res_manager_->AllocateMemory(device_tensor.get()))) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, *context, *device_context, node->fullname_with_scope(),
                                                 device_tensor->GetSize());
+  }
+
+  if (common::IsNeedProfileMemory() && need_alloc_memory) {
+    auto output_address = reinterpret_cast<std::uintptr_t>(device_tensor.get());
+    auto graph_str = (node->func_graph() == nullptr) ? "" : node->func_graph()->ToString();
+    MS_LOG(WARNING) << "Need Profile Memory, alloc type: SyncTensorData, device address class ptr: " << output_address
+                    << ", node: " << node->fullname_with_scope() << ", graph: " << graph_str
+                    << ", device address size: " << device_tensor->GetSize()
+                    << ", device address addr: " << device_tensor->GetPtr();
   }
 
   auto get_tensor_by_index = [&host_tensor](size_t index) {
@@ -772,6 +781,15 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
                                                 device_tensor->GetSize());
   }
 
+  if (common::IsNeedProfileMemory()) {
+    auto output_address = reinterpret_cast<uintptr_t>(device_tensor.get());
+    auto graph_str = (node->func_graph() == nullptr) ? "" : node->func_graph()->ToString();
+    MS_LOG(WARNING) << "Need Profile Memory, alloc type: PrepareDataForControlValueNode, device address class ptr: "
+                    << output_address << ", node: " << node->fullname_with_scope() << ", graph: " << graph_str
+                    << ", device address size: " << device_tensor->GetSize()
+                    << ", device address addr: " << device_tensor->GetPtr();
+  }
+
   if (tensor->data_ptr() == nullptr && device_tensor->GetSize() == 0) {
     MS_LOG(INFO) << "Empty tuple sync";
     return;
@@ -815,6 +833,14 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
                                                   node->fullname_with_scope(), device_tensor->GetSize());
     }
+    if (common::IsNeedProfileMemory()) {
+      auto output_address = reinterpret_cast<uintptr_t>(device_tensor.get());
+      auto graph_str = (node->func_graph() == nullptr) ? "" : node->func_graph()->ToString();
+      MS_LOG(WARNING) << "Need Profile Memory, alloc type: PrepareDataForValueNode, device address class ptr: "
+                      << output_address << ", device address size: " << device_tensor->GetSize()
+                      << ", node: " << node->fullname_with_scope() << ", graph: " << graph_str
+                      << ", device address addr: " << device_tensor->GetPtr();
+    }
 
     // Copy data from value to device.
     auto value = GetValue<std::string>(node_value);
@@ -849,11 +875,22 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
     MS_EXCEPTION_IF_NULL(another_device_context);
     auto type = backend_node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(backend_node->fullname_with_scope(), type, 0);
-    if ((another_device_tensor->GetPtr() == nullptr) &&
+    bool need_alloc_memory = (another_device_tensor->GetPtr() == nullptr);
+    if (need_alloc_memory &&
         (!another_device_context->device_res_manager_->AllocateMemory(another_device_tensor.get()))) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *another_device_context,
                                                   backend_node->fullname_with_scope(),
                                                   another_device_tensor->GetSize());
+    }
+
+    if (common::IsNeedProfileMemory() && need_alloc_memory) {
+      auto output_address = reinterpret_cast<uintptr_t>(another_device_tensor.get());
+      auto graph_str = (backend_node->func_graph() == nullptr) ? "" : backend_node->func_graph()->ToString();
+      MS_LOG(WARNING) << "Need Profile Memory, alloc type: CopyDataFromDeviceTensorStore, device address class ptr: "
+                      << output_address << ", device address size: " << another_device_tensor->GetSize()
+                      << ", device address addr: " << another_device_tensor->GetPtr()
+                      << ", node: " << backend_node->fullname_with_scope() << ", graph: " << graph_str
+                      << ", frontnode: " << front_node->DebugString();
     }
 
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->fullname_with_scope()

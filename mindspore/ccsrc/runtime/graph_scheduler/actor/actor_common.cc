@@ -30,8 +30,6 @@ bool ActorDispatcher::is_multi_thread_execution_ = true;
 bool ActorDispatcher::is_memory_allocation_sync_ = true;
 bool ActorDispatcher::is_memory_free_sync_ = true;
 
-constexpr char kLaunchSkippedEnv[] = "MS_KERNEL_LAUNCH_SKIP";
-
 bool IsRunningFailed(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   return (context->error_info_ != "");
@@ -195,6 +193,7 @@ bool IsMemoryActor(KernelTransformType actor_type) {
 bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph) {
   static std::string launch_skipped = "";
   static bool first_get_launch_skipped_env = true;
+  static const char kLaunchSkippedEnv[] = "MS_KERNEL_LAUNCH_SKIP";
   if (first_get_launch_skipped_env) {
     launch_skipped = common::GetEnv(kLaunchSkippedEnv);
     first_get_launch_skipped_env = false;

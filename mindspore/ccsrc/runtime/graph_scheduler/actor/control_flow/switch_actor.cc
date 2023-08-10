@@ -40,6 +40,10 @@ void SwitchActor::FetchInput(OpContext<DeviceTensor> *const context) {
 
   ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   size_t index = GetIndex(context);
+  if (common::IsNeedProfileMemory()) {
+    // dry run switch index is always 0.
+    index = 0;
+  }
   if (!output_partial_arrows_.empty()) {
     if (index + kSwitchCondPos >= input_partials_.size()) {
       MS_EXCEPTION(IndexError) << "Given index " << std::to_string(index)
