@@ -51,9 +51,7 @@ STATUS ParseKernelSize(std::vector<int64_t> *kernel_size, const onnx::GraphProto
 
 STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *strides, std::vector<int64_t> *dilation,
                     std::vector<int64_t> *padding) {
-  MS_ASSERT(strides != nullptr);
-  MS_ASSERT(dilation != nullptr);
-  MS_ASSERT(padding != nullptr);
+  MS_CHECK_TRUE_RET(strides != nullptr && dilation != nullptr && padding != nullptr, RET_NULL_PTR);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "dilation") {
       if (onnx_node_attr.ints().size() < DIMENSION_2D) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ STATUS ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, PrimitiveCP
 }
 
 STATUS ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, PrimitiveCPtr prim, const std::vector<int> &shape) {
-  MS_ASSERT(prim != nullptr);
+  CHECK_NULL_RETURN(prim);
   int data_count = 1;
   for (size_t i = 0; i < shape.size(); i++) {
     MS_CHECK_GE(shape.at(i), 0, RET_ERROR);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,6 +284,10 @@ jlong CheckAndConvertSharedPtrToPtr(JNIEnv *env, jobject thiz, jlong model_ptr) 
   if (is_shared) {
     std::shared_ptr<mindspore::Model> *model_shared_ptr =
       reinterpret_cast<std::shared_ptr<mindspore::Model> *>(model_ptr);
+    if (model_shared_ptr == nullptr) {
+      MS_LOG(ERROR) << "Model_shared_ptr nullptr.";
+      return jlong(nullptr);
+    }
     model_ptr_local = reinterpret_cast<jlong>((*model_shared_ptr).get());
   }
   return model_ptr_local;

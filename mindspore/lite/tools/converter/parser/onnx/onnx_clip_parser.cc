@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ STATUS ParseAttr(const google::protobuf::internal::RepeatedPtrIterator<const onn
           MS_LOG(ERROR) << "element size is incorrect.";
           return RET_ERROR;
         }
+        CHECK_NULL_RETURN(node_iter->raw_data().data());
         *value = *reinterpret_cast<const float *>(node_iter->raw_data().data());
       }
       break;
@@ -56,6 +57,7 @@ STATUS ParseAttr(const google::protobuf::internal::RepeatedPtrIterator<const onn
           MS_LOG(ERROR) << "element size is incorrect.";
           return RET_ERROR;
         }
+        CHECK_NULL_RETURN(node_iter->raw_data().data());
         *value = static_cast<float>(*reinterpret_cast<const int32_t *>(node_iter->raw_data().data()));
       }
       break;
@@ -68,6 +70,7 @@ STATUS ParseAttr(const google::protobuf::internal::RepeatedPtrIterator<const onn
           MS_LOG(ERROR) << "element size is incorrect.";
           return RET_ERROR;
         }
+        CHECK_NULL_RETURN(node_iter->raw_data().data());
         *value = static_cast<float>(*reinterpret_cast<const int64_t *>(node_iter->raw_data().data()));
       }
       break;

@@ -289,6 +289,7 @@ STATUS OnnxNodeParser::LoadOnnxExternalTensorData(const onnx::TensorProto &onnx_
 }
 
 STATUS OnnxNodeParser::SetExternalTensorFile(const std::string &model_file, std::string *external_tensor_dir) {
+  CHECK_NULL_RETURN(external_tensor_dir);
   auto i_end_index = model_file.find_last_of('/');
   if (i_end_index == std::string::npos) {
     i_end_index = model_file.find_last_of('\\');
