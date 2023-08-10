@@ -125,8 +125,24 @@ class MS_CORE_API CheckAndConvertUtils {
   static int64_t CheckInteger(const std::string &arg_name, int64_t arg_value, CompareEnum compare_operator,
                               int64_t match_value, const std::string &prim_name = "");
 
-  static std::string FormatCheckIntegerMsg(const std::string &arg_name, int64_t arg_value, CompareEnum compare_operator,
-                                           int64_t match_value, const PrimitivePtr &prim);
+  template <class T, class U>
+  static std::string FormatCheckIntegerMsg(const std::string &arg_name, T arg_value, CompareEnum compare_operator,
+                                           U match_value, const PrimitivePtr &prim) {
+    std::ostringstream buffer;
+    if (prim == nullptr) {
+      buffer << "The argument[" << arg_name << "] must ";
+    } else {
+      auto prim_name = prim->name();
+      buffer << "For primitive[" << prim_name << "], the " << arg_name << " must ";
+    }
+    auto iter_to_string = kCompareToString.find(compare_operator);
+    if (iter_to_string == kCompareToString.end()) {
+      MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
+                                   << " cannot find in the compare string map";
+    }
+    buffer << iter_to_string->second << match_value << ", but got " << arg_value << ".";
+    return buffer.str();
+  }
 
   static std::string FormatCheckMsg(const std::string &arg_name, const std::vector<int64_t> &arg_value,
                                     CompareEnum compare_type, const std::vector<int64_t> &value,

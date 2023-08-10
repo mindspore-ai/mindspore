@@ -18,6 +18,7 @@
 
 #include "common/common_test.h"
 #include "gtest/internal/gtest-param-util.h"
+#include "ops/test_ops.h"
 
 namespace mindspore::ops {
 extern testing::internal::ValueArray<

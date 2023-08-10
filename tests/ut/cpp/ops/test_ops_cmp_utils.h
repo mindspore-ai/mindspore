@@ -49,6 +49,14 @@ void TestOpFuncImplWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const
   }
 
 #define OP_FUNC_IMPL_TEST_CASES(op_name, cases) INSTANTIATE_TEST_CASE_P(TestOpsFuncImpl, Test##op_name, cases);
+
+static auto eltwise_op_default_cases = testing::Values(
+  EltwiseOpParams{{2, 3}, kFloat16, {2, 3}, kFloat16}, EltwiseOpParams{{2, -1}, kFloat16, {2, -1}, kFloat16},
+  EltwiseOpParams{{-1, -1}, kFloat16, {-1, -1}, kFloat16}, EltwiseOpParams{{-2}, kFloat16, {-2}, kFloat16});
+
+#define ELTWISE_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(op_name) \
+  OP_FUNC_IMPL_TEST_DECLARE(op_name, EltwiseOpParams)         \
+  OP_FUNC_IMPL_TEST_CASES(op_name, eltwise_op_default_cases);
 }  // namespace ops
 }  // namespace mindspore
 
