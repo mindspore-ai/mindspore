@@ -40,26 +40,26 @@ def generate_py_op_func(yaml_data, doc_data):
 
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
         func_args = []
-        primitive_init_args = []
+        init_args = []
         input_args = []
         for arg_name, arg_info in args.items():
             dtype = arg_info.get('dtype')
             init_value = arg_info.get('init')
-            if init_value:
+            if init_value is None:
+                func_args.append(arg_name)
+                input_args.append(arg_name)
+            else:
                 if dtype == 'str':
                     init_value = '"' + init_value + '"'
                 func_args.append(f"""{arg_name}={init_value}""")
-                primitive_init_args.append(arg_name)
-            else:
-                func_args.append(arg_name)
-                input_args.append(arg_name)
+                init_args.append(arg_name)
 
         function_code = f"""
 def {func_name}({', '.join(arg for arg in func_args)}):
     \"\"\"
     {description}
     \"\"\"
-    {operator_name}_op = _get_cache_prim(P.{class_name})({', '.join(arg_name for arg_name in primitive_init_args)})
+    {operator_name}_op = _get_cache_prim(P.{class_name})({', '.join(arg_name for arg_name in init_args)})
     return {operator_name}_op({', '.join(arg_name for arg_name in input_args)})
 """
         gen_py += function_code
@@ -74,10 +74,6 @@ def generate_py_primitive(yaml_data):
     gen_py = ''
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
-        func_name = operator_data.get('func_name')
-        if func_name is None:
-            func_name = operator_name
-
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
 
         init_args_with_default = []
@@ -144,10 +140,6 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
         returns = operator_data.get('returns')
-        func_name = operator_data.get('func_name')
-        if func_name is None:
-            func_name = operator_name
-
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
         opdef_map_str += f"""
     {{"{operator_name}", &g{class_name}}},"""
