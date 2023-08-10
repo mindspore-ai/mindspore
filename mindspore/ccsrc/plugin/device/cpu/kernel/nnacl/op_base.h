@@ -416,7 +416,7 @@ enum PrimType {
   PrimType_MaximumGrad = 91,
   PrimType_MaxPoolFusion = 92,
   PrimType_MaxPoolGrad = 93,
-  PrimType_Merge = 94,
+  PrimType_SwitchLayer = 94,
   PrimType_Mfcc = 95,
   PrimType_Minimum = 96,
   PrimType_MinimumGrad = 97,

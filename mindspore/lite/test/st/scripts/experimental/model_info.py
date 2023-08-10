@@ -117,15 +117,16 @@ class ModelInfo:
             args.append(f"--weightFile={self.weight_file}")
         if input_shapes:
             args.append(f"--inputShape={input_shapes}")
-        self.converted_model_file += ".mindir"
         return context.converter_file, args
 
     def benchmark_accuracy_cmd(self, input_shapes="", acc_threshold=0.5):
         context = Context.instance()
         input_bin_str = ModelInfo._input_data_str(self.input_file, self.input_num)
         if not self.converted_model_file:
-            self.converted_model_file = os.path.join(context.work_dir, self.model_name + ".mindir")
-        args = [f"--enableParallelPredict=false", f"--modelFile={self.converted_model_file}",
+            self.converted_model_file = os.path.join(context.work_dir, self.model_name)
+        if not os.path.exists(f"{self.converted_model_file}.mindir"):
+            self.converted_model_file += "_graph"  # when FuncGraph split-export
+        args = [f"--enableParallelPredict=false", f"--modelFile={self.converted_model_file}.mindir",
                 f"--inDataFile={input_bin_str}", f"--benchmarkDataFile={self.output_file}",
                 f"--inputShapes={input_shapes}", f"--accuracyThreshold={acc_threshold}", f"--provider=mindrt",
                 f"--device=CPU"]
@@ -134,8 +135,10 @@ class ModelInfo:
     def benchmark_performance_cmd(self, input_shapes="", warmup_loop=3, loop=10, num_threads=2):
         context = Context.instance()
         if not self.converted_model_file:
-            self.converted_model_file = os.path.join(context.work_dir, self.model_name + ".mindir")
-        args = [f"--enableParallelPredict=false", f"--modelFile={self.converted_model_file}",
+            self.converted_model_file = os.path.join(context.work_dir, self.model_name)
+        if not os.path.exists(f"{self.converted_model_file}.mindir"):
+            self.converted_model_file += "_graph"  # when FuncGraph split-export
+        args = [f"--enableParallelPredict=false", f"--modelFile={self.converted_model_file}.mindir",
                 f"--inputShapes={input_shapes}", f"--warmUpLoopCount={warmup_loop}", f"--loopCount={loop}",
                 f"--numThreads={num_threads}", f"--provider=mindrt", f"--device=CPU"]
         return context.benchmark_file, args

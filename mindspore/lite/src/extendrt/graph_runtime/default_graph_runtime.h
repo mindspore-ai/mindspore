@@ -20,11 +20,12 @@
 #include <memory>
 
 #include "infer/graph_runtime.h"
+#include "src/common/draw/drawer.h"
 
 namespace mindspore {
 class DefaultGraphRuntime : public mindspore::infer::abstract::GraphRuntime {
  public:
-  DefaultGraphRuntime() = default;
+  DefaultGraphRuntime() { InitDotDrawer(); }
   virtual ~DefaultGraphRuntime() = default;
 
   Status Prepare(std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan) override;

@@ -169,13 +169,6 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
 )
 
-if(MSLITE_ENABLE_DUMP)
-    set(LITE_SRC ${LITE_SRC}
-            ${SRC_DIR}/common/draw/graphviz_graph.cc
-            ${SRC_DIR}/common/draw/graphviz_graph_builder.cc
-            )
-endif()
-
 if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
     set(LITE_SRC
             ${LITE_SRC}
@@ -387,6 +380,10 @@ target_link_libraries(mindspore_converter
         coder_mid
         mindir_serializer_mid
         )
+
+if(MSLITE_EXPORT_COMPUTE_IR)
+    target_link_libraries(mindspore_converter mindspore_lite_drawer)
+endif()
 
 if(SUPPORT_TRAIN)
     target_link_libraries(mindspore_converter train_cpu_kernel_mid)

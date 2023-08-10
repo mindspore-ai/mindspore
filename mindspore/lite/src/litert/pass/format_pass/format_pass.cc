@@ -17,6 +17,7 @@
 #include "src/litert/pass/format_pass/format_pass.h"
 #include "src/litert/pass/format_pass/insert_transpose.h"
 #include "src/litert/pass/format_pass/eliminate_transpose.h"
+#include "src/common/draw/drawer.h"
 
 namespace mindspore::lite::pass {
 int FormatOptimize::AddPass(FormatPassPtr pass) {
@@ -34,6 +35,7 @@ int FormatOptimize::RunPass(kernel::SubGraphKernel *graph, std::vector<Tensor *>
       MS_LOG(ERROR) << "Run pass failed";
       return status;
     }
+    DrawDot(graph, pass->name());
   }
   return RET_OK;
 }

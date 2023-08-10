@@ -185,14 +185,6 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   }
   std::vector<TensorC *> in_tensors;
   std::vector<TensorC *> out_tensors;
-  if (parameter->type_ == static_cast<int>(schema::PrimitiveType_PartialFusion) ||
-      parameter->type_ == static_cast<int>(schema::PrimitiveType_Switch) ||
-      parameter->type_ == static_cast<int>(schema::PrimitiveType_Call) ||
-      parameter->type_ == static_cast<int>(schema::PrimitiveType_SwitchLayer)) {
-    MS_LOG(INFO) << "no need infer shape.";
-    return RET_OK;
-  }
-
   int ret = GenerateInTensorC(inputs, &in_tensors, allocator);
   if (ret != RET_OK) {
     FreeInTensorC(&in_tensors, allocator);

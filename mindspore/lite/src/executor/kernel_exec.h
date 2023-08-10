@@ -325,15 +325,14 @@ class KernelExec {
     }
   }
 
-  size_t FindInTensorIndex(const lite::Tensor *tensor) {
-    size_t index = 0;
+  std::vector<size_t> FindAllInTensorIndex(const lite::Tensor *tensor) {
+    std::vector<size_t> indexes;
     for (size_t i = 0; i < in_tensors().size(); i++) {
       if (tensor == in_tensors().at(i)) {
-        index = i;
-        break;
+        indexes.emplace_back(i);
       }
     }
-    return index;
+    return indexes;
   }
 
   size_t FindOutTensorIndex(const lite::Tensor *tensor) {

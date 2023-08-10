@@ -57,6 +57,10 @@ else()
     endif()
 endif()
 
+if(MSLITE_EXPORT_COMPUTE_IR)
+    set(BENCHMARK_LINK_LIB ${BENCHMARK_LINK_LIB} mindspore_lite_drawer)
+endif()
+
 include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
 set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc

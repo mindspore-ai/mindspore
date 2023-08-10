@@ -18,21 +18,23 @@
 #include "src/common/log_util.h"
 #include "src/common/tensor_util.h"
 #include "src/extendrt/graph_compiler/infershape_helper.h"
-#include "src/extendrt/kernel/kernel_lib.h"
 #include "src/extendrt/kernel/kernel_selector/kernel_selector.h"
 #include "src/litert/kernel_registry.h"
 #include "src/litert/pass/format_pass/format_pass.h"
 #include "tools/optimizer/graph/node_infershape.h"
+#include "src/common/draw/drawer.h"
 
 namespace mindspore {
 namespace lite {
 InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
+  DrawDot(node_list.get(), "start_schedule");
   // infer shape
   auto infer_ret = FallBackInferShape(node_list, compile_option_->graph_format, context_.get());
   if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
     MS_LOG(ERROR) << "InferShape CompileResult node failed.";
     return nullptr;
   }
+  DrawDot(node_list.get(), "fallback_infershape");
 
   execution_flow_ = std::make_shared<infer::ExecutionFlow>();
   MSLITE_CHECK_PTR_RETURN(execution_flow_, nullptr);
@@ -59,6 +61,7 @@ InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
     MS_LOG(ERROR) << "Construct subgraph kernel failed.";
     return nullptr;
   }
+  DrawDot(reinterpret_cast<kernel::SubGraphKernel *>(kernel), "select_kernel");
 
   std::vector<kernel::KernelExec *> subkernels = {kernel};
   auto ret = OptimizeTranspose(&subkernels);
@@ -66,12 +69,13 @@ InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
     MS_LOG(ERROR) << "Optimize format of executionplan failed.";
     return nullptr;
   }
+
   infer_ret = kernel->InferShape();
   if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
     MS_LOG(ERROR) << "InferShape SubGraph kernel failed.";
     return nullptr;
   }
-
+  DrawDot(reinterpret_cast<kernel::SubGraphKernel *>(kernel), "kernel_infershape");
   return kernel;
 }
 

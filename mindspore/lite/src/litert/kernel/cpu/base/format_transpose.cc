@@ -32,7 +32,7 @@ int FormatTransposeCPUKernel::Run() {
   auto output = out_tensors_.at(0);
   CHECK_NULL_RETURN(input);
   CHECK_NULL_RETURN(output);
-  if (input->format() == output->format()) {
+  if (input->shape().size() != DIMENSION_4D || input->format() == output->format()) {
     memcpy(output->data(), input->data(), input->Size());
     return RET_OK;
   }

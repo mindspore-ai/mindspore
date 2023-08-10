@@ -67,6 +67,22 @@ int GetAndCheckPerm(const TensorC *perm_tensor, const int perms_num, int *perm, 
   return NNACL_OK;
 }
 
+void Handle4DPerm(const TensorC *input, TensorC *output, int *perm, size_t *perm_size) {
+  const int nchw2nhwc[4] = {Index0, Index2, Index3, Index1};
+  const int nhwc2nchw[4] = {Index0, Index3, Index1, Index2};
+  const int trans3d[3] = {Index0, Index2, Index1};
+  if (input->format_ == Format_NCHW && CheckPermTransFormat(perm, nchw2nhwc, PERM_NUM_FOUR)) {
+    output->format_ = Format_NHWC;
+  } else if ((input->format_ == Format_NHWC || input->format_ == Format_KHWC) &&
+             CheckPermTransFormat(perm, nhwc2nchw, PERM_NUM_FOUR)) {
+    output->format_ = Format_NCHW;
+  }
+  // though the perm is 4d in default, the input can be a 3d tensor. The op implementation must be adapted to this.
+  if (input->shape_size_ == DIMENSION_3D) {
+    ShapeSet(perm, perm_size, trans3d, DIMENSION_3D);
+  }
+}
+
 int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
@@ -87,6 +103,8 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (perms_num != 0 && perm_tensor->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
+  TransposeParameter *transpose_param = (TransposeParameter *)parameter;
+  transpose_param->perm_size_ = perms_num;
   int perm[MAX_TRANSPOSE_DIM_SIZE] = {0};
   size_t perm_size = 0;
   int ret = GetAndCheckPerm(perm_tensor, perms_num, perm, &perm_size);
@@ -95,19 +113,7 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   }
 
   if (perms_num == PERM_NUM_FOUR) {
-    const int nchw2nhwc[4] = {0, 2, 3, 1};
-    const int nhwc2nchw[4] = {0, 3, 1, 2};
-    const int trans3d[3] = {0, 2, 1};
-    if (input->format_ == Format_NCHW && CheckPermTransFormat(perm, nchw2nhwc, perms_num)) {
-      output->format_ = Format_NHWC;
-    } else if ((input->format_ == Format_NHWC || input->format_ == Format_KHWC) &&
-               CheckPermTransFormat(perm, nhwc2nchw, perms_num)) {
-      output->format_ = Format_NCHW;
-    }
-    // though the perm is 4d in default, the input can be a 3d tensor. The op implementation must be adapted to this.
-    if (input->shape_size_ == 3) {
-      ShapeSet(perm, &perm_size, trans3d, 3);
-    }
+    Handle4DPerm(input, output, perm, &perm_size);
   }
   int kPermIndex0 = 0;
   int kPermIndex2 = 2;

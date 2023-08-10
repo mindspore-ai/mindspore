@@ -419,7 +419,7 @@ StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr
   if (utils::isa<AbstractSequencePtr>(abstract)) {
     auto elements = utils::cast<AbstractSequencePtr>(abstract)->elements();
     for (auto &element : elements) {
-      auto tensor = TensorAdapter::Convert2Tensor(element, "", format);
+      auto tensor = TensorAdapter::Convert2Tensor(element, format);
       if (tensor == nullptr) {
         MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << element;
         return kLiteError;
@@ -430,7 +430,7 @@ StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr
   }
   // single output abstract
   if (utils::isa<AbstractTensorPtr>(abstract)) {
-    auto tensor = TensorAdapter::Convert2Tensor(abstract, "", format);
+    auto tensor = TensorAdapter::Convert2Tensor(abstract, format);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
       return kLiteError;

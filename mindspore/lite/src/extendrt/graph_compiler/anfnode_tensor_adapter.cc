@@ -28,47 +28,43 @@ using AbstractTensorPtr = mindspore::abstract::AbstractTensorPtr;
 
 namespace mindspore {
 namespace lite {
-InferTensor *TensorAdapter::Convert2Tensor(const ParameterPtr &param_node, const std::string &tensor_name,
-                                           Format format) {
+InferTensor *TensorAdapter::Convert2Tensor(const ParameterPtr &param_node, Format format) {
   auto adapter = TensorAdapter::Create(param_node, format);
   if (adapter == nullptr) {
     MS_LOG(ERROR) << "Create tensor-adapter from parameter failed, parameter : " << param_node;
     return nullptr;
   }
-  return adapter->ToTensor(tensor_name);
+  return adapter->ToTensor();
 }
 
-InferTensor *TensorAdapter::Convert2Tensor(const ValueNodePtr &value_node, const std::string &tensor_name,
-                                           Format format) {
+InferTensor *TensorAdapter::Convert2Tensor(const ValueNodePtr &value_node, Format format) {
   auto adapter = TensorAdapter::Create(value_node, format);
   if (adapter == nullptr) {
     MS_LOG(ERROR) << "Create tensor-adapter from value-node failed, value-node : " << value_node;
     return nullptr;
   }
-  return adapter->ToTensor(tensor_name);
+  return adapter->ToTensor();
 }
 
-InferTensor *TensorAdapter::Convert2Tensor(const AbstractTensorPtr &abstract, const std::string &tensor_name,
-                                           Format format) {
+InferTensor *TensorAdapter::Convert2Tensor(const AbstractTensorPtr &abstract, Format format) {
   auto adapter = TensorAdapter::Create(abstract, format);
   if (adapter == nullptr) {
     MS_LOG(ERROR) << "Create tensor-adapter from abstracttensor failed, abstract : " << abstract;
     return nullptr;
   }
-  return adapter->ToTensor(tensor_name);
+  return adapter->ToTensor();
 }
 
-InferTensor *TensorAdapter::Convert2Tensor(const AbstractBasePtr &abstract, const std::string &tensor_name,
-                                           Format format) {
+InferTensor *TensorAdapter::Convert2Tensor(const AbstractBasePtr &abstract, Format format) {
   auto adapter = TensorAdapter::Create(abstract, format);
   if (adapter == nullptr) {
     MS_LOG(ERROR) << "Create tensor-adapter from abstractbase failed, abstract : " << abstract;
     return nullptr;
   }
-  return adapter->ToTensor(tensor_name);
+  return adapter->ToTensor();
 }
 
-InferTensor *TensorAdapter::ToTensor(const std::string &tensor_name) {
+InferTensor *TensorAdapter::ToTensor() {
   std::vector<int32_t> int32_shape;
   if (std::any_of(shape_.begin(), shape_.end(),
                   [](const ShapeValueDType &dim) { return dim == abstract::Shape::kShapeRankAny; })) {
@@ -79,7 +75,7 @@ InferTensor *TensorAdapter::ToTensor(const std::string &tensor_name) {
       int32_shape[i] = static_cast<int32_t>(shape_[i]);
     }
   }
-  auto tensor = InferTensor::CreateTensor(tensor_name, data_type_, int32_shape, data_, data_len_);
+  auto *tensor = InferTensor::CreateTensor(name_, data_type_, int32_shape, data_, data_len_);
   if (tensor == nullptr) {
     return nullptr;
   }
@@ -106,7 +102,12 @@ TensorAdapterPtr TensorAdapter::Create(const ParameterPtr &param_node, Format fo
     MS_LOG(ERROR) << "Not support kObjectTypeString type DefaultParam.";
     return nullptr;
   }
-  auto adapter = std::make_shared<TensorAdapter>();
+  auto abstract = param_node->abstract();
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr.";
+    return nullptr;
+  }
+  auto adapter = std::make_shared<TensorAdapter>(abstract->name());
   adapter->data_type_ = data_type;
   adapter->shape_ = shape_vector;
   adapter->format_ = format;
@@ -120,19 +121,22 @@ TensorAdapterPtr TensorAdapter::Create(const ParameterPtr &param_node, Format fo
     return nullptr;
   }
   adapter->compress_type_ = tensor_info->compression_type();
-  adapter->data_ = malloc(tensor_info->Size());
-  if (adapter->data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc const tensor data failed.";
-    return nullptr;
+  auto data_size = tensor_info->Size();
+  if (data_size > 0) {
+    adapter->data_ = malloc(data_size);
+    if (adapter->data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc const tensor data failed.";
+      return nullptr;
+    }
+    auto ret = memcpy_s(adapter->data_, data_size, tensor_info->data_c(), data_size);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
+      free(adapter->data_);
+      return nullptr;
+    }
+    adapter->data_len_ = data_size;
+    adapter->own_data_ = true;
   }
-  auto ret = memcpy_s(adapter->data_, tensor_info->Size(), tensor_info->data_c(), tensor_info->Size());
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
-    free(adapter->data_);
-    return nullptr;
-  }
-  adapter->data_len_ = tensor_info->Size();
-  adapter->own_data_ = true;
   return adapter;
 }
 
@@ -160,25 +164,28 @@ TensorAdapterPtr TensorAdapter::CreateFromTensorValueNode(const ValueNodePtr &va
     MS_LOG(ERROR) << "Value of tensor-type value-node is not a Tensor, " << value_node->fullname_with_scope();
     return nullptr;
   }
-  adapter->data_ = malloc(data->Size());
-  if (adapter->data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc const tensor data failed.";
-    return nullptr;
+  auto data_size = data->Size();
+  if (data_size > 0) {
+    adapter->data_ = malloc(data_size);
+    if (adapter->data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc const tensor data failed.";
+      return nullptr;
+    }
+    auto ret = memcpy_s(adapter->data_, data_size, data->data_c(), data_size);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
+      free(adapter->data_);
+      return nullptr;
+    }
+    adapter->data_len_ = data_size;
+    adapter->own_data_ = true;
   }
-  auto ret = memcpy_s(adapter->data_, data->Size(), data->data_c(), data->Size());
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
-    free(adapter->data_);
-    return nullptr;
-  }
-  adapter->data_len_ = data->Size();
-  adapter->own_data_ = true;
   return adapter;
 }
 
 TensorAdapterPtr TensorAdapter::CreateFromInt32ImmValue(const ValueNodePtr &value_node) {
   MS_ASSERT(value_node != nullptr);
-  auto adapter = std::make_shared<TensorAdapter>();
+  auto adapter = std::make_shared<TensorAdapter>(value_node->fullname_with_scope());
   adapter->is_const_ = true;
   adapter->data_type_ = kNumberTypeInt32;
   adapter->shape_ = {1};
@@ -201,7 +208,7 @@ TensorAdapterPtr TensorAdapter::CreateFromInt32ImmValue(const ValueNodePtr &valu
 
 TensorAdapterPtr TensorAdapter::CreateFromInt64ImmValue(const ValueNodePtr &value_node) {
   MS_ASSERT(value_node != nullptr);
-  auto adapter = std::make_shared<TensorAdapter>();
+  auto adapter = std::make_shared<TensorAdapter>(value_node->fullname_with_scope());
   adapter->is_const_ = true;
   adapter->data_type_ = kNumberTypeInt64;
   adapter->shape_ = {1};
@@ -224,7 +231,7 @@ TensorAdapterPtr TensorAdapter::CreateFromInt64ImmValue(const ValueNodePtr &valu
 
 TensorAdapterPtr TensorAdapter::CreateFromBoolImmValue(const ValueNodePtr &value_node) {
   MS_ASSERT(value_node != nullptr);
-  auto adapter = std::make_shared<TensorAdapter>();
+  auto adapter = std::make_shared<TensorAdapter>(value_node->fullname_with_scope());
   adapter->is_const_ = true;
   adapter->data_type_ = kNumberTypeBool;
   adapter->shape_ = {1};
@@ -252,7 +259,7 @@ TensorAdapterPtr TensorAdapter::CreateFromBoolImmValue(const ValueNodePtr &value
 
 TensorAdapterPtr TensorAdapter::CreateFromNumberTypeValue(const ValueNodePtr &value_node) {
   MS_ASSERT(value_node != nullptr);
-  auto adapter = std::make_shared<TensorAdapter>();
+  auto adapter = std::make_shared<TensorAdapter>(value_node->fullname_with_scope());
   adapter->is_const_ = true;
   adapter->data_type_ = kNumberTypeInt32;
   adapter->shape_ = {1};
@@ -287,7 +294,7 @@ TensorAdapterPtr TensorAdapter::CreateFromIntSequenceValue(const ValueNodePtr &v
                   << value_node->fullname_with_scope();
     return nullptr;
   }
-  auto adapter = std::make_shared<TensorAdapter>();
+  auto adapter = std::make_shared<TensorAdapter>(value_node->fullname_with_scope());
   adapter->is_const_ = true;
   if (!value_seq->value().empty()) {
     if (value_seq->value().front()->type()->number_type() == kNumberTypeInt32 ||
@@ -393,7 +400,7 @@ TensorAdapterPtr TensorAdapter::Create(const AbstractTensorPtr &abs_tensor, Form
     MS_LOG(ERROR) << "Get data type and shape from value node failed.";
     return nullptr;
   }
-  auto adapter = std::make_shared<TensorAdapter>();
+  auto adapter = std::make_shared<TensorAdapter>(abs_tensor->name());
   adapter->data_type_ = data_type;
   adapter->shape_ = shape_vector;
   adapter->format_ = format;

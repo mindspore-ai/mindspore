@@ -227,7 +227,8 @@ Status DefaultGraphCompiler::CreateExecPlanOutputs(const FuncGraphPtr &func_grap
     auto output_tensor = graph_output_tensors[i];
     auto it = anf_tensor_map_.find(output_node);
     if (it != anf_tensor_map_.end()) {
-      MS_LOG(ERROR) << "";
+      MS_LOG(ERROR) << "Can not find corresponding tensor for graph output node: "
+                    << output_node->fullname_with_scope();
       return kLiteError;
     }
     anf_tensor_map_[output_node] = output_tensor;
@@ -306,7 +307,7 @@ InferTensor *DefaultGraphCompiler::CreateTensor(const AnfNodePtr &node) {
       return nullptr;
     }
     if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
-      auto tensor = TensorAdapter::Convert2Tensor(abstract, abstract->name());
+      auto tensor = TensorAdapter::Convert2Tensor(abstract);
       if (tensor == nullptr) {
         MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
         return nullptr;
@@ -404,7 +405,7 @@ std::vector<InferTensor *> DefaultGraphCompiler::CreateTensors(const std::vector
         auto elements = abstract_tuple->elements();
         for (const auto &element : elements) {
           if (utils::isa<mindspore::abstract::AbstractTensorPtr>(element)) {
-            auto tensor = TensorAdapter::Convert2Tensor(element, element->name());
+            auto tensor = TensorAdapter::Convert2Tensor(element);
             if (tensor == nullptr) {
               MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
               return {};

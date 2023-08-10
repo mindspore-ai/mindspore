@@ -158,7 +158,7 @@ int AkgKernel::Prepare() {
   auto akg_lib_ptr = akg_lib_tensor->data();
   auto akg_kernel_so = kernel_name_ + ".so";
   std::string kernle_meta = "akg_kernel_meta_runtime";
-  if (lite::CreateDir(&kernle_meta) != RET_OK) {
+  if (lite::CreateDir(kernle_meta) != RET_OK) {
     MS_LOG(ERROR) << "cannot create dir " << kernle_meta;
     return lite::RET_ERROR;
   }

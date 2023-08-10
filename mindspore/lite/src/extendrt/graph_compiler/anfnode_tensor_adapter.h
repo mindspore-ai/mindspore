@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_ANFNODE_TENSOR_ADAPTER_H_
 #include <string>
 #include <memory>
+#include <utility>
 #include <unordered_map>
 #include <vector>
 #include "src/infer/tensor.h"
@@ -31,14 +32,14 @@ class TensorAdapter;
 using TensorAdapterPtr = std::shared_ptr<TensorAdapter>;
 class TensorAdapter {
  public:
-  TensorAdapter() = default;
+  explicit TensorAdapter(std::string name) : name_(std::move(name)) {}
   virtual ~TensorAdapter() {
     if (own_data_) {
       free(data_);
     }
   }
 
-  InferTensor *ToTensor(const std::string &tensor_name = "");
+  InferTensor *ToTensor();
 
   static TensorAdapterPtr Create(const ParameterPtr &param_node, Format format = DEFAULT_FORMAT);
   static TensorAdapterPtr Create(const ValueNodePtr &value_node, Format format = DEFAULT_FORMAT);
@@ -46,14 +47,12 @@ class TensorAdapter {
                                  Format format = DEFAULT_FORMAT);
   static TensorAdapterPtr Create(const mindspore::abstract::AbstractBasePtr &abstract, Format format = DEFAULT_FORMAT);
 
-  static InferTensor *Convert2Tensor(const ParameterPtr &param_node, const std::string &tensor_name = "",
-                                     Format format = DEFAULT_FORMAT);
-  static InferTensor *Convert2Tensor(const ValueNodePtr &value_node, const std::string &tensor_name = "",
-                                     Format format = DEFAULT_FORMAT);
+  static InferTensor *Convert2Tensor(const ParameterPtr &param_node, Format format = DEFAULT_FORMAT);
+  static InferTensor *Convert2Tensor(const ValueNodePtr &value_node, Format format = DEFAULT_FORMAT);
   static InferTensor *Convert2Tensor(const mindspore::abstract::AbstractTensorPtr &abstract,
-                                     const std::string &tensor_name = "", Format format = DEFAULT_FORMAT);
+                                     Format format = DEFAULT_FORMAT);
   static InferTensor *Convert2Tensor(const mindspore::abstract::AbstractBasePtr &abstract,
-                                     const std::string &tensor_name = "", Format format = DEFAULT_FORMAT);
+                                     Format format = DEFAULT_FORMAT);
 
   static StatusCode GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract, TypeId *data_type,
                                               ShapeVector *shape_vector);
@@ -89,6 +88,7 @@ class TensorAdapter {
   void *data_{nullptr};
   size_t data_len_{0};
   bool own_data_{true};
+  std::string name_;
 };
 }  // namespace lite
 }  // namespace mindspore

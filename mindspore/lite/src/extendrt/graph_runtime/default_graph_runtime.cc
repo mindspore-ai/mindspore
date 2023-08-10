@@ -183,6 +183,7 @@ bool DefaultGraphRuntime::ResizeKernels() {
           isolate_output_map->at(output)->set_format(output->format());
         }
       }
+      DrawDot(sub_graph_kernel, "resize");
     }
     if (ret == lite::RET_INFER_INVALID) {
       MS_LOG(WARNING) << "DefaultGraphRuntime::ResizeKernels  InferShape is interrupted";

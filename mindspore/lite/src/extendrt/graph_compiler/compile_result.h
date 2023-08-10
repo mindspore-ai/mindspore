@@ -105,7 +105,6 @@ class CompileResult {
   void Assemble() { this->assembled_ = true; }
 
   std::string Dump(int indent = 0) const;
-  void Draw(const std::string &path, const std::string &file_name) const;
 
  private:
   bool assembled_ = false;

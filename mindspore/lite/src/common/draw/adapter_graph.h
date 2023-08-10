@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_COMMON_DRAWER_ADAPTER_GRAPH_H_
-#define MINDSPORE_LITE_SRC_COMMON_DRAWER_ADAPTER_GRAPH_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_DRAW_ADAPTER_GRAPH_H_
+#define MINDSPORE_LITE_SRC_COMMON_DRAW_ADAPTER_GRAPH_H_
 
 #include <utility>
 #include <vector>
@@ -52,4 +52,4 @@ class AdapterGraph {
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_COMMON_DRAWER_ADAPTER_GRAPH_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_DRAW_ADAPTER_GRAPH_H_

@@ -234,30 +234,30 @@ std::string RealPath(const char *path) {
   return res;
 }
 
-int CreateDir(std::string *file_path) {
-  if (file_path->empty()) {
+int CreateDir(const std::string &file_path) {
+  if (file_path.empty()) {
     MS_LOG(ERROR) << "input file path is empty.";
     return RET_ERROR;
-  } else if (file_path->size() >= PATH_MAX) {
+  } else if (file_path.size() >= PATH_MAX) {
     MS_LOG(ERROR) << "input file path is too long";
     return RET_ERROR;
   }
 
-  for (size_t i = 0; i < file_path->size(); i++) {
-    if ((*file_path).at(i) == '\\' || (*file_path).at(i) == '/') {
-      if (AccessFile(file_path->substr(0, i + 1), F_OK) != 0) {
-        int ret = Mkdir(file_path->substr(0, i + 1));
+  for (size_t i = 0; i < file_path.size(); i++) {
+    if (file_path.at(i) == '\\' || file_path.at(i) == '/') {
+      if (AccessFile(file_path.substr(0, i + 1), F_OK) != 0) {
+        int ret = Mkdir(file_path.substr(0, i + 1));
         if (ret != RET_OK) {
-          MS_LOG(ERROR) << "mkdir failed. " << file_path->substr(0, i + 1);
+          MS_LOG(ERROR) << "mkdir failed. " << file_path.substr(0, i + 1);
           return RET_ERROR;
         }
       }
     }
   }
 
-  if (file_path->back() != '\\' && file_path->back() != '/') {
-    if (AccessFile(*file_path, F_OK) != 0) {
-      int ret = Mkdir(*file_path);
+  if (file_path.back() != '\\' && file_path.back() != '/') {
+    if (AccessFile(file_path, F_OK) != 0) {
+      int ret = Mkdir(file_path);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "mkdir failed. " << file_path;
         return RET_ERROR;
@@ -268,7 +268,7 @@ int CreateDir(std::string *file_path) {
 }
 
 int CreateOutputDir(std::string *file_path) {
-  if (CreateDir(file_path) != RET_OK) {
+  if (CreateDir(*file_path) != RET_OK) {
     MS_LOG(ERROR) << "Create file dir failed";
     return RET_ERROR;
   }

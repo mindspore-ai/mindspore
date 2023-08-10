@@ -55,6 +55,7 @@ GVNode *GVNode::CreateCNode(const std::string &id, const std::string &label, siz
   auto node = new GVNode(id, label, kNodeTypeCNode, input_size, output_names.size(), highlight);
   node->prefix_ = "Node_";
   node->shape_ = "plaintext";
+  node->color_ = "cornsilk";
   node->Init(output_names, output_infos);
   return node;
 }
@@ -82,6 +83,7 @@ GVNode *GVNode::CreateWeight(const std::string &id, const std::string &label,
   auto node = new GVNode(id, label, kNodeTypeWeight, 0, output_names.size(), highlight);
   node->prefix_ = "Weight_";
   node->shape_ = "octagon";
+  node->color_ = "paleturquoise";
   node->Init(output_names, output_infos);
   return node;
 }
@@ -128,7 +130,7 @@ size_t GVNode::FindCols() const {
 std::string GVNode::Code() const {
   std::ostringstream oss;
   if (type_ == kNodeTypeCNode) {
-    auto bgcolor = highlight_ ? "red" : "cornsilk";
+    auto bgcolor = highlight_ ? "red" : color_;
     oss << "\t"
         << "\t"
         << "\t"
@@ -158,7 +160,11 @@ std::string GVNode::Code() const {
   auto label = oss.str();
   oss.str("");
   oss << prefix_ << id_ << " [shape=" << shape_;
-  oss << ", label=" << label << "];";
+  oss << ", label=" << label;
+  if (type_ != kNodeTypeCNode) {
+    oss << ", style=filled, fillcolor=" << color_;
+  }
+  oss << "];";
   return oss.str();
 }
 

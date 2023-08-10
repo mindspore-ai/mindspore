@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/slice_parameter.h"
 #include "ops/fusion/slice_fusion.h"
 using mindspore::ops::kNameSliceFusion;
@@ -33,9 +34,9 @@ OpParameter *PopulateSliceOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
 
-  auto axes = op->get_axes();
+  auto axes = GetAttrWithDefault<std::vector<int64_t>>(base_operator, ops::kAxes, {});
   // if begin is not const input, then axis can not be decided in converter
-  if (axes.size() != 0) {
+  if (!axes.empty()) {
     if (axes.size() > DIMENSION_8D) {
       MS_LOG(ERROR) << "Invalid axes size: " << axes.size();
       free(param);
