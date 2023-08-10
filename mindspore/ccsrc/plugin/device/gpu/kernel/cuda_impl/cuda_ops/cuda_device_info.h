@@ -117,6 +117,7 @@ class GPUdeviceInfo {
 
 #define MINIUM_SM 6
 #define RECOMMEND_SM 7
+#define AMPER_ARCH_SM 8
 #define SUPPORTED_CAP 5.3
 }  // namespace gpu
 }  // namespace device
