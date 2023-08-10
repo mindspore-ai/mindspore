@@ -261,7 +261,9 @@ bool NodeDynamicDetect::IsNodeDynamic(const TopCellInfoPtr &top_cell, const Valu
 
   if (IsDynamicDetectPrimChange(old_node_info->op_prim, node->op_prim)) {
     MS_LOG(DEBUG) << "Graph is dynamic, old node prim: " << old_node_info->op_prim->name()
-                  << " new node prim: " << (node->op_prim != nullptr ? node->op_prim->name() : "")
+                  << ", attr: " << old_node_info->op_prim->GetAttrsText() << " new node prim: "
+                  << (node->op_prim != nullptr ? node->op_prim->name() + ", attr: " + node->op_prim->GetAttrsText()
+                                               : "")
                   << " node_idx: " << node_idx;
     return true;
   }
