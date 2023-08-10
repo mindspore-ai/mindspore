@@ -49,6 +49,7 @@ from mindspore._checkparam import is_stub_tensor
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
+from mindspore.common.auto_dynamic_shape import _AutoIdentifyDynamicShape
 
 # Store ms_function class compiled pipeline cache.
 ms_compile_cache = set()
@@ -285,195 +286,6 @@ def _get_args_for_run(obj, args, kwargs):
     return new_args
 
 
-class _AutoIdentifyDynamicShape:
-
-    """
-    Represents a function auto identify dynamic shape.
-    """
-    def __init__(self):
-        self.all_shape_cache = {}
-
-
-    @staticmethod
-    def get_input_tensor_shape(args_list):
-        """get input tensor shape and type save as tensor, and make it value to 1"""
-        tensor_list = []
-        for arg in args_list:
-            if isinstance(arg, Tensor):
-                tmp_shape = arg.shape
-                tmp_type = arg.dtype
-                tensor_list.append(PythonTensor(np.ones(tmp_shape), dtype=tmp_type))
-            else:
-                tensor_list.append(arg)
-
-        return tuple(tensor_list)
-
-
-    @staticmethod
-    def check_input_args(args_list):
-        """check input args"""
-        if not args_list:
-            return False
-
-        for elem in args_list:
-            if elem is None:
-                return False
-
-            if isinstance(elem, ms.Parameter):
-                return False
-
-            if not isinstance(elem, Tensor):
-                return False
-
-            if elem.const_arg:
-                return False
-
-        return True
-
-
-    @staticmethod
-    def _is_tensor_equal(input_tensor, cache_tensor):
-        """check two tensor is equal"""
-        if input_tensor.dtype != cache_tensor.dtype:
-            return False
-
-        if input_tensor.shape != cache_tensor.shape:
-            return False
-
-        if len(input_tensor.shape) != len(cache_tensor.shape):
-            return False
-
-        return True
-
-
-    @staticmethod
-    def _is_all_input_shape_generalize(input_shape_tuple):
-        """check all input shapes need generalize"""
-        for elem in input_shape_tuple:
-            if not is_shape_unknown(elem.shape):
-                return False
-        return True
-
-
-    def auto_dynamic_generate_compile_args(self, args_list):
-        """generate compile args in auto dynamic shape"""
-        if not self._is_enable_auto_identify_shape(args_list):
-            return args_list
-
-        args_len = len(args_list)
-        tensor_tuple = self.get_input_tensor_shape(args_list)
-        shape_cache_list = self.all_shape_cache.get(args_len)
-        # step1: init real_shape_cache, part_generalize_shape_cache, all_generalize_shape_cache.
-        if shape_cache_list is None:
-            shape_cache_list = []
-            real_shape_cache = set()
-            real_shape_cache.add(tensor_tuple)
-            shape_cache_list.append(real_shape_cache)
-            part_generalize_shape_cache = set()
-            shape_cache_list.append(part_generalize_shape_cache)
-            all_generalize_shape_cache = set()
-            shape_cache_list.append(all_generalize_shape_cache)
-            self.all_shape_cache[args_len] = shape_cache_list
-            logger.info((f'The real shape cache is empty, add it into real_shape_cache.'))
-            return tensor_tuple
-
-        # step2: find cache in real_shape_cache.
-        real_shape_cache = shape_cache_list[0]
-        is_real_shape_exist, real_shape_input = self._find_compile_args_in_shape_cache(real_shape_cache, tensor_tuple,
-                                                                                       "real")
-        if is_real_shape_exist and real_shape_input is not None:
-            return real_shape_input
-
-        # step3: if can not find cache in real_shape_cache, then generate it
-        is_generalize_shape, compile_args = self._do_generalize_shape(real_shape_cache, tensor_tuple)
-
-        # step4: if input type change or rank change, save shape into real_shape_cache and then return
-        if not is_generalize_shape and compile_args is None:
-            real_shape_cache.add(tensor_tuple)
-            return tensor_tuple
-
-        # step5: check whether all input tensor need generalize
-        all_generalize_shape_cache = shape_cache_list[2]
-        if self._is_all_input_shape_generalize(compile_args):
-            if not all_generalize_shape_cache:
-                all_generalize_shape_cache.add(compile_args)
-            logger.info((f'return all generalize shape cache.'))
-            return compile_args
-
-        # step6: find compile_args in part_generalize_shape_cache
-        part_generalize_shape_cache = shape_cache_list[1]
-        if not part_generalize_shape_cache:
-            part_generalize_shape_cache.add(compile_args)
-        else:
-            is_generalize_shape_exist, _ = self._find_compile_args_in_shape_cache(part_generalize_shape_cache,
-                                                                                  compile_args, "part generalize")
-            if not is_generalize_shape_exist:
-                logger.info((f'Can not find cache in part_generalize_shape_cache, add it into'
-                             ' part_generalize_shape_cache.'))
-                part_generalize_shape_cache.add(compile_args)
-
-        return compile_args
-
-
-    def _is_all_tensor_equal(self, input_shape_tuple, cache_shape_tuple):
-        """check two tuple is equal"""
-        for i, elem in enumerate(cache_shape_tuple):
-            res = self._is_tensor_equal(input_shape_tuple[i], elem)
-            if not res:
-                return False
-        return True
-
-
-    def _is_enable_auto_identify_shape(self, args_list):
-        """is enable auto identify shape"""
-        enable_auto_identify = os.getenv('MS_AUTO_DYNAMIC_SHAPE_ENABLE')
-        if not enable_auto_identify:
-            enable_auto_identify = False
-        if ((enable_auto_identify is False or enable_auto_identify == "0")) or not self.check_input_args(args_list):
-            return False
-        return True
-
-
-    def _find_compile_args_in_shape_cache(self, shape_cache, compile_args, cache_type):
-        """find compile args in real or part generalize shape cache"""
-        is_exist = False
-        for shapes in shape_cache:
-            is_exist = self._is_all_tensor_equal(compile_args, shapes)
-            if is_exist:
-                logger.info((f'Find cache in {cache_type} shape cache.'))
-                return is_exist, shapes
-        logger.info((f'Can not find cache in {cache_type} shape cache.'))
-        return is_exist, None
-
-
-    def _do_generalize_shape(self, real_shape_cache, tensor_tuple):
-        """do generalize shape"""
-        is_generalize_shape = False
-        for real_shape in real_shape_cache:
-            generalize_shape = []
-            for i, elem in enumerate(real_shape):
-                if len(elem.shape) != len(tensor_tuple[i].shape) or elem.dtype != tensor_tuple[i].dtype:
-                    generalize_shape.clear()
-                    break
-                if (not is_shape_unknown(elem.shape)) and self._is_tensor_equal(tensor_tuple[i], elem):
-                    generalize_shape.append(tensor_tuple[i])
-                else:
-                    shape_value = []
-                    for _ in range(len(elem.shape)):
-                        shape_value.append(-1)
-                    shape_tuple = tuple(shape_value)
-                    generalize_shape.append(PythonTensor(Tensor(shape=shape_tuple, dtype=tensor_tuple[i].dtype)))
-                    logger.info((f'The {i} input tensor shape is {tensor_tuple[i].shape}, type is '
-                                 f'{tensor_tuple[i].dtype}; in real cache shape is {elem.shape}, type is '
-                                 f'{elem.dtype}, the {i} input shape not equal, may generalize to {shape_tuple}.'))
-
-            if len(generalize_shape) == len(real_shape):
-                is_generalize_shape = True
-                return is_generalize_shape, tuple(generalize_shape)
-
-        return is_generalize_shape, None
-
-
 class _MindsporeFunctionExecutor:
     """
     Represents a function compiled by graph compiler.
@@ -579,6 +391,7 @@ class _MindsporeFunctionExecutor:
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(self.fn, compile_args, kwargs, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
+        self.auto_identify_dynamic_shape.update_phase_and_compile_args(compile_args, phase, False)
         if phase in ms_compile_cache:
             return phase
 
@@ -659,7 +472,7 @@ class _MindsporeFunctionExecutor:
                 if not verify_inputs_signature(self.input_signature, args_list):
                     raise ValueError("The input args is incompatible with the args in `input_signature`!")
         else:
-            compile_args = self.auto_identify_dynamic_shape.auto_dynamic_generate_compile_args(args_list)
+            compile_args = self.auto_identify_dynamic_shape.auto_dynamic_generate_compile_args(args_list, False)
         return compile_args
 
     def _generate_run_args(self, args_list, kwargs):
@@ -1495,6 +1308,7 @@ class _CellGraphExecutor:
         self._graph_executor = GraphExecutor_.get_instance()
         self._graph_executor.set_py_exe_path(sys.executable)
         self._graph_executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
+        self.auto_identify_dynamic_shape = _AutoIdentifyDynamicShape()
 
     def init_dataset(self, queue_name, dataset_size, batch_size, dataset_types, dataset_shapes,
                      input_indexs, phase='dataset', need_run=True):
@@ -1593,10 +1407,11 @@ class _CellGraphExecutor:
             self.enable_tuple_broaden = obj.enable_tuple_broaden
 
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
+        args = self.auto_identify_dynamic_shape.auto_dynamic_generate_compile_args(args, False)
         key = self._graph_executor.generate_arguments_key(obj, args, kwargs, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
-
+        self.auto_identify_dynamic_shape.update_phase_and_compile_args(args, phase, False)
         if phase in obj.compile_cache and self.has_compiled(phase):
             logger.debug("%r graph has existed.", phase)
             return phase, False
