@@ -17,10 +17,12 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_ADAPTER_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_ADAPTER_H_
 
+#include <algorithm>
 #include <mutex>
 #include <string>
 #include <memory>
 #include <vector>
+#include <limits>
 #include "utils/ms_context.h"
 #include "ir/anf.h"
 
@@ -45,7 +47,7 @@ class AscendMemAdapter {
 
   static size_t GetRoundUpAlignSize(size_t input_size);
 
-  [[nodiscard]] uint64_t FreeDevMemSize() const { return static_mem_offset_ - max_dynamic_mem_offset_; }
+  [[nodiscard]] uint64_t FreeDevMemSize() const { return std::max(static_mem_offset_ - max_dynamic_mem_offset_, 0L); }
   [[nodiscard]] uint64_t MaxHbmSizeForMs() const { return max_available_ms_hbm_size_; }
   [[nodiscard]] uint64_t GetMsUsedHbmSize() const { return ms_used_hbm_size_; }
   std::string DevMemStatistics() const;
@@ -79,16 +81,16 @@ class AscendMemAdapter {
   size_t device_hbm_free_size_{0};
   size_t max_available_ms_hbm_size_{0};
   uint8_t *device_mem_base_addr_{nullptr};
-  uint64_t ms_used_hbm_size_{0};
+  int64_t ms_used_hbm_size_{0};
 
   // dynamic memory info, from a low address to a high address
-  uint64_t cur_dynamic_mem_offset_{0};
+  int64_t cur_dynamic_mem_offset_{0};
   // Maximum dynamic memory have already allocated, dynamically updated
-  uint64_t max_dynamic_mem_offset_{0};
+  int64_t max_dynamic_mem_offset_{0};
   std::vector<std::shared_ptr<MemoryBlock>> dynamic_memory_block_list_;
 
   // static memory info, from a high address to a low address
-  uint64_t static_mem_offset_{0};
+  int64_t static_mem_offset_{0};
   std::vector<std::shared_ptr<MemoryBlock>> static_memory_block_list_;
   static size_t GetRoundDownAlignSize(size_t input_size);
 };
