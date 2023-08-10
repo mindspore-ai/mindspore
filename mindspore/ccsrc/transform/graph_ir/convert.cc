@@ -79,6 +79,7 @@ constexpr size_t kSwitchInputSize = 4;
 constexpr size_t kSwitchBodyIndex = 2;
 constexpr size_t kSwitchAfterIndex = 3;
 constexpr size_t kAfterIndexInCache = 2;
+constexpr size_t kCnodeInputSizeOne = 1;
 constexpr size_t kDataInputIndex = 1;
 constexpr size_t kReturnInputSize = 2;
 constexpr size_t kMergeInputSize = 2;
@@ -1694,6 +1695,27 @@ void DfGraphConvertor::BuildInitDataGraph(const std::string &name) {
   MS_LOG(INFO) << "End BuildInitDataGraph.";
 }
 
+void DfGraphConvertor::FillEmptyInputsWithNoInputOp(std::vector<Operator> *inputs) {
+  MS_LOG(INFO) << "Fill empty graph inputs with cnode whose inputs are empty.";
+  auto nodes = GetOrderedCNodes(anf_graph_);
+  for (auto &it : nodes) {
+    if (!it->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = it->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->inputs().size() == kCnodeInputSizeOne) {
+      auto cnode_op = op_cache_.find(it.get());
+      if (cnode_op != op_cache_.end()) {
+        (void)inputs->push_back(*(cnode_op->second));
+        break;
+      } else {
+        MS_LOG(EXCEPTION) << "Can not find the operator of node: " << it->fullname_with_scope();
+      }
+    }
+  }
+}
+
 DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   MS_LOG(INFO) << "Start BuildGraph, graph: " << anf_graph_->ToString();
 
@@ -1753,6 +1775,10 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   MS_LOG(INFO) << "Graph const input size: " << graph_const_inputs_.size();
   (void)std::transform(graph_const_inputs_.begin(), graph_const_inputs_.end(), std::back_inserter(inputs),
                        [](const OperatorPtr &x) { return *x; });
+
+  if (inputs.empty()) {
+    FillEmptyInputsWithNoInputOp(&inputs);
+  }
 
   MS_LOG(INFO) << "Set graph input num: " << inputs.size();
   (void)df_graph_->SetInputs(inputs);

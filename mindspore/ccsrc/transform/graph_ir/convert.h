@@ -261,6 +261,7 @@ class DfGraphConvertor {
   void SetNodeControlInput(const AnfNodePtr &node, const AnfNodePtr &input);
   void SetGraphOutputs(bool is_main_graph = false);
   std::vector<OutHandler> GetInputHandles(const AnfNodePtr &node, const AnfNodePtr &input);
+  void FillEmptyInputsWithNoInputOp(std::vector<Operator> *);
 
   // Identity Optimization
   void IdentityOptimization();
