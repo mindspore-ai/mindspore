@@ -442,9 +442,53 @@ enum KernelErrorCode : int { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_UNKNOWN_S
 
 class BACKEND_EXPORT KernelMod {
  public:
+  // ===========================New interface==========================================================
+  KernelMod(const std::string &fullname, const PrimitivePtr &primitive) : fullname_(fullname), primitive_(primitive) {}
+  virtual ~KernelMod() = default;
+
+  virtual std::vector<KernelAttr> GetOpSupport() = 0;
+
+  virtual bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    return true;
+  }
+
+  // Resize() is for validating input/output shape and calculating the workspace size, framework will invoke this
+  // routine after infer shape.
+  virtual int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+
+  virtual bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+    return true;
+  }
+
+  // Some kernels, e.g., Unique, can only get its output shape after its computing finished.
+  virtual bool IsNeedUpdateOutputShapeAndSize() { return false; }
+  virtual void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {}
+
+  // Some kernels, e.g., Shape/Reshape, don't use some input addresses in the kernel launch.
+  virtual std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const { return {}; }
+
+  void SetDevicedId(uint32_t device_id) { device_id_ = device_id; }
+  virtual enum KernelModType GetKernelModType() const { return KernelModType::KernelMod; }
+
+  virtual void SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
+  virtual void SetOutputSizeList(const std::vector<size_t> &size_list) { output_size_list_ = size_list; }
+  virtual void SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
+  virtual const std::vector<size_t> &GetInputSizeList() const { return input_size_list_; }
+  virtual const std::vector<size_t> &GetOutputSizeList() const { return output_size_list_; }
+  virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
+
+  const std::vector<AddressPtr> &GetInputsAddr() const { return inputs_addr_; }
+  const std::vector<AddressPtr> &GetWorkSpacesAddr() const { return workspaces_addr_; }
+  const std::vector<AddressPtr> &GetOutputsAddr() const { return outputs_addr_; }
+  void set_inputs_addr(const std::vector<AddressPtr> &addr) { inputs_addr_ = addr; }
+  void set_workspaces_addr(const std::vector<AddressPtr> &addr) { workspaces_addr_ = addr; }
+  void set_outputs_addr(const std::vector<AddressPtr> &addr) { outputs_addr_ = addr; }
+
+  // =======================Old interface, will deleted after all kernel modified used new interface=================
   KernelMod() {}
   explicit KernelMod(const BaseOperatorPtr &op) : op_(op) {}
-  virtual ~KernelMod() = default;
   // Initialization for the kernel mod.
   inline bool Init_(const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs,
                     const std::vector<KernelTensorPtr> &outputs) {
@@ -456,17 +500,11 @@ class BACKEND_EXPORT KernelMod {
   }
   inline std::vector<KernelTensorPtr> &GetInputs() { return inputs_; }
   inline std::vector<KernelTensorPtr> &GetOutputs() { return outputs_; }
-  virtual void SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
-  virtual void SetOutputSizeList(const std::vector<size_t> &size_list) { output_size_list_ = size_list; }
-  virtual void SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
-  virtual const std::vector<size_t> &GetInputSizeList() const { return input_size_list_; }
-  virtual const std::vector<size_t> &GetOutputSizeList() const { return output_size_list_; }
-  virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
+
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void GenAtomicInitInfo(AtomicInitInfo *info) {}
-  virtual std::vector<KernelAttr> GetOpSupport() = 0;
   // Resize() is for validating input/output shape and calculating the workspace size, framework will invoke this
   // routine after infer shape.
   virtual int Resize(
@@ -480,24 +518,17 @@ class BACKEND_EXPORT KernelMod {
     SyncOutputShape();
     return outputs_;
   }
-  // Some kernels, e.g., Shape/Reshape, don't use some input addresses in the kernel launch.
-  virtual std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const { return {}; }
+
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
   void set_is_monad(bool is_monad) { is_monad_ = is_monad; }
-  void set_inputs_addr(const std::vector<AddressPtr> &addr) { inputs_addr_ = addr; }
-  void set_workspaces_addr(const std::vector<AddressPtr> &addr) { workspaces_addr_ = addr; }
-  void set_outputs_addr(const std::vector<AddressPtr> &addr) { outputs_addr_ = addr; }
+
   // User data is the extra dat-a required when the kernel is launched, It will be set before launch by runtime.
   virtual void set_input_user_data(UserData *user_data, size_t input_index) {}
   virtual void set_output_user_data(UserData *user_data, size_t output_index) {}
   // If output of kernel has a user_data, it needs to return true, and the framework will create user_data for it.
   virtual bool need_user_data() const { return false; }
-  const std::vector<AddressPtr> &GetInputsAddr() const { return inputs_addr_; }
-  const std::vector<AddressPtr> &GetWorkSpacesAddr() const { return workspaces_addr_; }
-  const std::vector<AddressPtr> &GetOutputsAddr() const { return outputs_addr_; }
-  void SetDevicedId(uint32_t device_id) { device_id_ = device_id; }
-  virtual enum KernelModType GetKernelModType() const { return KernelModType::KernelMod; }
+
   bool Launch(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
     return Launch(kernel_launch_address.inputs_, kernel_launch_address.workspaces_, kernel_launch_address.outputs_,
                   stream_ptr);
@@ -526,19 +557,23 @@ class BACKEND_EXPORT KernelMod {
   virtual void SyncOutputShape() {}
 
  protected:
-  std::string kernel_name_;
-  std::string unique_name_;
+  // ===========================New member==========================================================
   std::string fullname_;
-  bool is_monad_{false};
+  PrimitivePtr primitive_;
+  uint32_t device_id_ = 0;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  bool is_need_retrieve_output_shape_ = false;
-  uint32_t device_id_ = 0;
-  int32_t task_id_ = -1;
   std::vector<AddressPtr> inputs_addr_;
   std::vector<AddressPtr> workspaces_addr_;
   std::vector<AddressPtr> outputs_addr_;
+
+  // =======================Old member, will deleted after all kernel modified used new interface=================
+  std::string kernel_name_;
+  std::string unique_name_;
+  bool is_monad_{false};
+  bool is_need_retrieve_output_shape_ = false;
+  int32_t task_id_ = -1;
   BaseOperatorPtr op_;
   std::vector<KernelTensorPtr> inputs_;
   std::vector<KernelTensorPtr> outputs_;
