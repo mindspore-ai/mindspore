@@ -125,8 +125,8 @@ std::string GetGroupCkptSavePath() {
   return GetGraphCacheDir() + "/" + kGroupCkptFileName;
 }
 
-std::string GetQueueNameCachePath() {
-  std::string queue_name_cache_path = GetGraphCacheDir() + "/" + GetRole() + kQueueNameCacheFileName;
+std::string GetDataQueueNameCachePath() {
+  std::string queue_name_cache_path = GetGraphCacheDir() + "/" + GetRole() + kDataQueueNameCacheFileName;
   return queue_name_cache_path;
 }
 
@@ -241,17 +241,10 @@ bool ExportDepFilesHash(const std::string &compile_cache_dep_files_hash) {
   return true;
 }
 
-bool ExportSharedName(const string &shared_name) {
-  const string &queue_name_cached_file_path = GetQueueNameCachePath();
-  std::ofstream fout(queue_name_cached_file_path);
-  if (!fout) {
-    MS_LOG(WARNING) << "Open the queue name cached file " << queue_name_cached_file_path << " failed."
-                    << ErrnoToString(errno);
-    return false;
-  }
-  fout << shared_name;
-  fout.close();
-  return true;
+bool ExportDataQueueName(const string &queue_name) {
+  const auto &filename = GetDataQueueNameCachePath();
+  nlohmann::json queue_name_json = queue_name;
+  return Common::SaveStringToFile(filename, queue_name_json.dump());
 }
 
 bool CreateParallelGroupsByCkptFile() {
@@ -271,34 +264,47 @@ bool CreateParallelGroupsByCkptFile() {
   return parallel::CreateGroupsByCkptFile(group_ckpt_save_path);
 }
 
-std::string GetSharedName(const FuncGraphPtr &fg) {
+std::string GetDataQueueName(const FuncGraphPtr &fg) {
   auto cnodes = fg->GetOrderedCnodes();
-  std::string cached_queue_name("");
+  std::string queue_name;
   for (const auto &cnode : cnodes) {
     auto prim = GetValuePtr<Primitive>(cnode->input(0));
     if (prim != nullptr && prim->HasAttr("shared_name")) {
       StringImmPtr queue_name_ptr = std::dynamic_pointer_cast<StringImm>(prim->GetAttr("shared_name"));
-      cached_queue_name = queue_name_ptr->value();
+      queue_name = queue_name_ptr->value();
       break;
     }
   }
-  return cached_queue_name;
+  return queue_name;
 }
 }  // namespace
 
-std::string CompileCacheManager::GetCachedSharedName() {
-  std::string queue_name("");
+std::string CompileCacheManager::GetCachedDataQueueName() {
+  std::string queue_name;
   if (!CompileCacheEnable()) {
     return queue_name;
   }
-  std::string queue_name_cache_path = GetQueueNameCachePath();
-  std::ifstream fin(queue_name_cache_path);
-  if (!fin) {
-    MS_LOG(WARNING) << "Can\'t open the queue name cache file " << queue_name_cache_path;
+  const auto &filename = GetDataQueueNameCachePath();
+  std::ifstream json_fs(filename);
+  if (!json_fs.good()) {
     return queue_name;
   }
-  fin >> queue_name;
-  fin.close();
+  nlohmann::json name_json;
+  try {
+    json_fs >> name_json;
+    json_fs.close();
+  } catch (std::exception &e) {
+    MS_LOG(INFO) << "Parse json file error: " << filename << ", sleep 500ms and retry again.";
+    json_fs.close();
+    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryIntervalMilliSeconds));
+    std::ifstream retry_tmp(filename);
+    if (!retry_tmp.good()) {
+      MS_LOG(EXCEPTION) << "Open json file: " << filename << " error.";
+    }
+    retry_tmp >> name_json;
+    retry_tmp.close();
+  }
+  queue_name = name_json;
   return queue_name;
 }
 
@@ -308,9 +314,9 @@ void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraph
     return;
   }
 
-  std::string shared_name = GetSharedName(fg);
-  if (!ExportSharedName(shared_name)) {
-    MS_LOG(ERROR) << "Failed to cache shared_name: " << shared_name;
+  const auto &queue_name = GetDataQueueName(fg);
+  if (!ExportDataQueueName(queue_name)) {
+    MS_LOG(ERROR) << "Failed to cache data queue name: " << queue_name;
     return;
   }
 
