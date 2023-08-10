@@ -62,8 +62,9 @@ abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
   auto length_size = length_shape.size();
   const int64_t length_dim = 1;
   CheckAndConvertUtils::CheckInteger("length dim", length_size, kEqual, length_dim, primitive->name());
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<ValueAny>() &&
-      !input_args[0]->BuildValue()->isa<None>()) {
+  auto value = input_args[0]->BuildValue();
+  MS_EXCEPTION_IF_NULL(value);
+  if (input_args[0]->isa<abstract::AbstractTensor>() && !value->isa<ValueAny>() && !value->isa<None>()) {
     auto length = input_args[0]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(length);
     auto length_value_ptr = length->BuildValue();
