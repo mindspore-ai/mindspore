@@ -182,7 +182,6 @@ def test_sequence_mul_with_irregular_sequence_2():
     assert ret == [(1, 1), 1, ["m", "n"], (1, 1), 1, ["m", "n"]]
 
 
-@pytest.mark.skip(reason="Tuple with PyInterpretObject is not converted to PyExecute")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -626,7 +625,6 @@ def test_sequence_index_with_operation_4():
     assert ret == 0
 
 
-@pytest.mark.skip(reason="Tuple with PyInterpretObject is not converted to PyExecute")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -648,7 +646,6 @@ def test_sequence_index_with_operation_5():
     assert ret == 0
 
 
-@pytest.mark.skip(reason="Tuple with PyInterpretObject is not converted to PyExecute")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -664,9 +661,9 @@ def test_sequence_index_with_operation_6():
     def foo(x, y):
         x_np = x.asnumpy()
         y_np = y.asnumpy()
-        m = [(y_np, x_np), np.array([1, 1, 1]), 10, "a"]
-        return m.index((np.array([2, 3, 4]), np.array([3, 2, 1])))
+        m = [(y_np, x_np), (x_np, y_np), 10, "a"]
+        return m.index((np.array([2]), np.array([3])))
 
 
-    ret = foo(Tensor([3, 2, 1]), Tensor([2, 3, 4]))
+    ret = foo(Tensor([3]), Tensor([2]))
     assert ret == 0

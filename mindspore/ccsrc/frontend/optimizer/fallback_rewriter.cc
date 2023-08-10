@@ -1656,11 +1656,16 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr},
     {prim::kPrimPrint, &ThisClass::ConvertPrint}};
 
-  static inline const HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> convert_seq_prims_{
+  static inline const PrimitiveSet seq_prim_set_{
     prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,   prim::kPrimSequenceIndex,
     prim::kPrimSequenceLen,     prim::kPrimListEqual,         prim::kPrimTupleEqual,      prim::kPrimTupleGreaterThan,
     prim::kPrimListLessEqual,   prim::kPrimTupleLessThan,     prim::kPrimListLessThan,    prim::kPrimTupleLessEqual,
     prim::kPrimListGreaterThan, prim::kPrimTupleGreaterEqual, prim::kPrimListGreaterEqual};
+
+  static inline const PrimitiveSet inplace_prim_set_{
+    prim::kPrimPyExecute,         prim::kPrimListInplaceAppend, prim::kPrimListInplaceReverse,
+    prim::kPrimListInplaceExtend, prim::kPrimListInplaceInsert, prim::kPrimListInplacePop,
+  };
 
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
   AnfNodePtr ConvertNoneToPyExecute(const FuncGraphPtr &func_graph) {
@@ -1807,11 +1812,8 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return;
     }
-    const PrimitiveSet convert_prim_set{
-      prim::kPrimPyExecute,         prim::kPrimListInplaceAppend, prim::kPrimListInplaceReverse,
-      prim::kPrimListInplaceExtend, prim::kPrimListInplaceInsert, prim::kPrimListInplacePop,
-    };
-    if (AnfUtils::IsRealKernel(cnode) && !IsOneOfPrimitiveCNode(cnode, convert_prim_set)) {
+    if (AnfUtils::IsRealKernel(cnode) && !IsOneOfPrimitiveCNode(cnode, inplace_prim_set_) &&
+        !IsOneOfPrimitiveCNode(cnode, seq_prim_set_)) {
       return;
     }
     const auto &inputs = cnode->inputs();
@@ -1908,7 +1910,7 @@ class AfterOptARewriter : public BaseRewriter {
       // Call converter.
       return (this->*(iter->second))(cnode);
     }
-    if (convert_seq_prims_.find(prim) != convert_seq_prims_.end()) {
+    if (seq_prim_set_.find(prim) != seq_prim_set_.end()) {
       return ConvertSequenceOps(cnode);
     }
     return nullptr;
