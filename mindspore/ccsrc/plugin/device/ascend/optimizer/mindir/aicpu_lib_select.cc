@@ -373,7 +373,8 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kBesselI0OpName,
   mindspore::kLuOpName,
   mindspore::kIndexPutOpName,
-  mindspore::kReverseSequenceOpName};
+  mindspore::kReverseSequenceOpName,
+  mindspore::kEpsOpName};
 
 bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";

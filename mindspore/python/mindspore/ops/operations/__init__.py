@@ -129,7 +129,8 @@ from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamm
                          ParameterizedTruncatedNormal, RandomPoisson, MultinomialWithReplacement, RandomShuffle,
                          RandpermV2)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
-from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd, SparseSlice)
+from .sparse_ops import (
+    SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd, SparseSlice)
 from .spectral_ops import (BartlettWindow, BlackmanWindow)
 
 __all__ = [

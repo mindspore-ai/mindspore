@@ -1932,5 +1932,10 @@ REG_BPROP_BUILDER("BatchMatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return BinopGradCommonWithShift(ib, x, w, dx, dw, 2);
 });
 
+REG_BPROP_BUILDER("Eps").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  return {ib->OutZeros(x)};
+});
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

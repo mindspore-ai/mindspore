@@ -66,6 +66,7 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.ApproximateEqual)
 @vmap_rules_getters.register(P.TruncateDiv)
 @vmap_rules_getters.register(P.TruncateMod)
+
 def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     """VmapRule for binary operations with broadcasting, such as `Add` and `Sub`."""
 
@@ -900,3 +901,4 @@ get_unop_vmap_rule = vmap_rules_getters.register(BesselK1e)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Trunc)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.PopulationCount)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Square)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.Eps)(get_unop_vmap_rule)

@@ -66,6 +66,7 @@
 "mindspore/mindspore/python/mindspore/ops/function/array_func.py"                                                        "redefined-outer-name"
 "mindspore/mindspore/python/mindspore/ops/function/clip_func.py"                                                         "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/function/math_func.py"                                                         "redefined-builtin"
+"mindspore/mindspore/python/mindspore/ops/function/math_func.py"                                                         "redefined-outer-name"
 "mindspore/mindspore/python/mindspore/ops/functional.py"                                                                 "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/functional.py"                                                                 "wildcard-import"
 "mindspore/mindspore/python/mindspore/ops/functional.py"                                                                 "unused-wildcard-import"

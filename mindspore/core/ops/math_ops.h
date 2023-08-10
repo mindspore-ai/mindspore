@@ -242,6 +242,7 @@ GVAR_DEF(PrimitivePtr, kPrimMatrixTriangularSolve, std::make_shared<Primitive>(k
 GVAR_DEF(PrimitivePtr, kPrimSelfAdjointEig, std::make_shared<Primitive>("SelfAdjointEig"));
 GVAR_DEF(PrimitivePtr, kPrimOrmqr, std::make_shared<Primitive>("Ormqr"));
 GVAR_DEF(PrimitivePtr, kPrimRoll, std::make_shared<Primitive>(kRollOpName));
+GVAR_DEF(PrimitivePtr, kPrimEps, std::make_shared<Primitive>(kEpsOpName));
 }  // namespace prim
 }  // namespace mindspore
 
