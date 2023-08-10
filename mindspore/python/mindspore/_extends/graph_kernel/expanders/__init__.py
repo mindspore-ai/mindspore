@@ -20,13 +20,5 @@ from .equal_count import EqualCount
 from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
 from .reduce_mean import ReduceMean
-from .sigmoid_cross_entropy_with_logits import SigmoidCrossEntropyWithLogits
-from .sigmoid_grad import SigmoidGrad
-from .softmax_cross_entropy_with_logits import SoftmaxCrossEntropyWithLogits
-from .softmax_grad_ext import SoftmaxGradExt
-from .sqrt_grad import SqrtGrad
-from .squared_difference import SquaredDifference
 from .square_sum_v1 import SquareSumV1
-from .square_sum_all import SquareSumAll
-from .tanh_grad import TanhGrad
 from .softsign import Softsign
