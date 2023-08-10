@@ -369,3 +369,5 @@ class _AutoIdentifyDynamicShape:
         keys.sort(key=lambda x: (x[0], x[1]))
         index = keys[0]
         return unknown_shape_dict.get(index)
+
+_auto_dynamic_shape = _AutoIdentifyDynamicShape()

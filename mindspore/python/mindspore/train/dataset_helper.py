@@ -29,6 +29,7 @@ from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_t
     _to_full_shapes, _get_pipeline_stages
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.ops import operations as P
+from mindspore.common.auto_dynamic_shape import _auto_dynamic_shape
 
 
 def _send_data(dataset, epoch_num):
@@ -240,8 +241,10 @@ def connect_network_with_dataset(network, dataset_helper):
     if _dynamic_sink_scenario(dataset, dataset_iter, is_dynamic):
         dataset_types, dataset_shapes = dataset_helper.get_data_info()
         dataset_types = [pytype_to_dtype(x) for x in dataset_types]
-
+        if not is_dynamic:
+            dataset_shapes = _auto_dynamic_shape.auto_dynamic_generate_compile_args(dataset_shapes, True)
         key = str(dataset_types) + str(dataset_shapes)
+        _auto_dynamic_shape.update_phase_and_compile_args(dataset_shapes, key, True, aux)
         if hasattr(aux, '__network_manage__') and key in aux.__network_manage__:
             network = aux.__network_manage__[key]
         else:
