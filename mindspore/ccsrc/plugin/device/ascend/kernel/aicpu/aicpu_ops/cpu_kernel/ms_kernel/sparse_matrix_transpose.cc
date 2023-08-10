@@ -153,12 +153,24 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(CpuKernelC
   indiceT *x_row_pointers = static_cast<indiceT *>(ctx.Input(2)->GetData());
   indiceT *x_col_indices = static_cast<indiceT *>(ctx.Input(3)->GetData());
   valueT *x_values = static_cast<valueT *>(ctx.Input(4)->GetData());
+  KERNEL_CHECK_NULLPTR(x_dense_shape, KERNEL_STATUS_PARAM_INVALID, "Get x_dense_shape failed.");
+  KERNEL_CHECK_NULLPTR(x_batch_pointers, KERNEL_STATUS_PARAM_INVALID, "Get x_batch_pointers failed.");
+  KERNEL_CHECK_NULLPTR(x_row_pointers, KERNEL_STATUS_PARAM_INVALID, "Get x_row_pointers failed.");
+  KERNEL_CHECK_NULLPTR(x_col_indices, KERNEL_STATUS_PARAM_INVALID, "Get x_col_indices failed.");
+  KERNEL_CHECK_NULLPTR(x_values, KERNEL_STATUS_PARAM_INVALID, "Get x_values failed.");
+
   bool conjugate = (ctx.GetAttr("conjugate") == nullptr) ? false : ctx.GetAttr("conjugate")->GetBool();
   indiceT *y_dense_shape = static_cast<indiceT *>(ctx.Output(0)->GetData());
   indiceT *y_batch_pointers = static_cast<indiceT *>(ctx.Output(1)->GetData());
   indiceT *y_row_pointers = static_cast<indiceT *>(ctx.Output(2)->GetData());
   indiceT *y_col_indices = static_cast<indiceT *>(ctx.Output(3)->GetData());
   valueT *y_values = static_cast<valueT *>(ctx.Output(4)->GetData());
+  KERNEL_CHECK_NULLPTR(y_dense_shape, KERNEL_STATUS_PARAM_INVALID, "Get y_dense_shape failed.");
+  KERNEL_CHECK_NULLPTR(y_batch_pointers, KERNEL_STATUS_PARAM_INVALID, "Get y_batch_pointers failed.");
+  KERNEL_CHECK_NULLPTR(y_row_pointers, KERNEL_STATUS_PARAM_INVALID, "Get y_row_pointers failed.");
+  KERNEL_CHECK_NULLPTR(y_col_indices, KERNEL_STATUS_PARAM_INVALID, "Get y_col_indices failed.");
+  KERNEL_CHECK_NULLPTR(y_values, KERNEL_STATUS_PARAM_INVALID, "Get y_values failed.");
+
   auto rank = ctx.Input(0)->NumElements();
   if (rank == krankwithbatch) {
     y_dense_shape[0] = x_dense_shape[0];

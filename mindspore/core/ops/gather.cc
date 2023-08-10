@@ -100,15 +100,15 @@ ShapeVector CalcuateGatherWithBatchDimsOutputShape(int64_t batch_dims, int64_t a
 
 abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 3;
   const std::string &op_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   auto params_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
   // Dynamic rank.
   if (params_shape_ptr->IsDimUnknown() || indices_shape_ptr->IsDimUnknown()) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
-  const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   abstract::AbstractTensorPtr indices =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
   abstract::AbstractTensorPtr params =

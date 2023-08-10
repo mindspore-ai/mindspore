@@ -216,8 +216,9 @@ def get_lerp_vamp_rule(prim, axis_size):
         # Both broadcast end and weight to start.
         else:
             weight_shape = F.shape(weight)
-            if (start_dim == end_dim and start_dim == weight_dim) and (
-                    start_shape == end_shape and start_shape == weight_shape):
+            is_dim_ok = start_dim == end_dim and start_dim == weight_dim
+            is_shape_ok = start_shape == end_shape and start_shape == weight_shape
+            if is_dim_ok and is_shape_ok:
                 out = prim(start, end, weight)
                 return out, start_dim
             start, end = broadcast_a_b_shape(start_bdim, end_bdim)

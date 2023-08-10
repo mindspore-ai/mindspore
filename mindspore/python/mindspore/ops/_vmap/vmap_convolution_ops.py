@@ -190,8 +190,8 @@ def _reshape_expand_dims(src_dim, dst_size, target, prim_name):
 @_primexpr
 def _get_new_size_by_index(input_size, batch_size, index):
     """Get the new size of input_size by multiplying input_size[index] by batch_size."""
-    new_size = ()
     if input_size is None:
+        new_size = ()
         return new_size
     new_size = list(input_size)
     new_size[index] *= batch_size

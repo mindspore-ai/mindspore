@@ -325,9 +325,10 @@ def get_bce_with_logits_loss_vamp_rule(prim, axis_size):
         # If rank is larger than 1, we need to reduce result when reduction != 'none'
         if max_rank > 1:
             reduce_indexes = tuple(range(1, max_rank))
-        if logits_dim == label_dim and F.shape(logits) == F.shape(label) \
-                and logits_dim == weight_dim and F.shape(logits) == F.shape(weight) \
-                and logits_dim == pos_weight_dim and F.shape(logits) == F.shape(pos_weight):
+        logits_dim_ok = logits_dim == label_dim and logits_dim == weight_dim and logits_dim == pos_weight_dim
+        shape = F.shape(logits)
+        shape_ok = shape == F.shape(label) and shape == F.shape(weight) and shape == F.shape(pos_weight)
+        if logits_dim_ok and shape_ok:
             if prim_reduction == 'none':
                 output = prim(logits, label, weight, pos_weight)
             elif prim_reduction in ('mean', 'sum'):
@@ -798,7 +799,8 @@ def get_instance_norm_rule(prim, axis_size):
             output_x, updated_moving_mean, updated_moving_variance = prim(input_x, gamma, beta, mean, variance, u_monad)
             return (output_x, None), (updated_moving_mean, None), (updated_moving_variance, None)
 
-        if gamma_dim != 0 or beta_dim != gamma_dim or mean_dim != gamma_dim or variance_dim != gamma_dim:
+        precondition = gamma_dim != 0 or beta_dim != gamma_dim or mean_dim != gamma_dim or variance_dim != gamma_dim
+        if precondition:
             # pylint: disable=too-many-format-args
             raise ValueError(
                 "For `{}`, the source axis of `var` must be equal to `accum` and `accum_update`, and not equal to 0, "
@@ -1679,7 +1681,8 @@ def get_rmsprop_vmap_rule(prim, axis_size):
             res = prim(var, mean_square, moment, lr, grad, decay, momentum, epsilon,
                        u_monad)  # low dimensional operator;
             return (res, None)
-        if var_dim != 0 or var_dim != mean_square_dim or var_dim != moment_dim or var_dim != grad_dim:
+        precondition = var_dim != 0 or var_dim != mean_square_dim or var_dim != moment_dim or var_dim != grad_dim
+        if precondition:
             raise ValueError(
                 f"For '{prim_name}', the source axis of 'var' must be equal to 'mean_square_dim' "
                 f"and 'moment_dim' and 'grad_dim' and not equal to 0, "
@@ -1735,8 +1738,8 @@ def get_apply_centered_rmsprop_vmap_rule(prim, axis_size):
             var = prim(var, mean_grad, mean_square,
                        mom, grad, lr, rho, momentum, eps, u_monad)
             return (var, None)
-
-        if var_dim != 0 or var_dim != mean_grad_dim or var_dim != mean_square_dim or var_dim != mom_dim:
+        precondition = var_dim != 0 or var_dim != mean_grad_dim or var_dim != mean_square_dim or var_dim != mom_dim
+        if precondition:
             raise ValueError(
                 f"For '{prim_name}', the source axis of 'var' must be equal to 'mean_grad_dim' "
                 f"and 'mean_square_dim' and 'mom_dim' and not equal to 0, "
