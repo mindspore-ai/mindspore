@@ -27,6 +27,7 @@ from mindspore.ops import operations as P
 from mindspore._extends import cell_attr_register
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
+from mindspore.nn.optim import Adam
 
 
 @pytest.mark.level0
@@ -102,6 +103,7 @@ def test_trace_python_infer_cell():
     output = net(x, y)
     expect = np.array([[9, 4], [4, 9]])
     assert np.allclose(output.asnumpy(), expect)
+
 
 class CellDense(nn.Cell):
     @cell_attr_register
@@ -199,3 +201,58 @@ def test_mlp_cell_reuse_trace():
     loss_trace = get_mlp_cell_reuse_loss(True)
     loss_no_trace = get_mlp_cell_reuse_loss(False)
     assert np.allclose(loss_trace, loss_no_trace, 0.001, 0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_adam_trace(mode):
+    """
+    Feature: trace grad and mixed_precision
+    Description: Verify if the loss is converged with trace
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+
+    class NetAdam(nn.Cell):
+        def __init__(self):
+            super(NetAdam, self).__init__()
+            self.batch_size = 1
+            self.reshape = P.Reshape()
+            weight = Tensor(np.ones([10, 16]).astype(np.float32) * 0.01)
+            self.fc1 = nn.Dense(16, 10, weight_init=weight, bias_init="zeros", activation="relu").to_float(ms.float16)
+            self.add = P.Add()
+            self.cast = P.Cast()
+
+        def construct(self, input_x):
+            output = self.reshape(input_x, (self.batch_size, -1))
+            output = self.fc1(output)
+            output = self.add(output, 0.1)
+            output = self.cast(output, ms.float32)
+            return output
+
+    class NetAdamTrace(NetAdam):
+        @trace
+        def construct(self, input_x):
+            return super().construct(input_x)
+
+    def get_loss(net):
+        epoch = 3
+        optimizer = Adam(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate=0.01)
+        criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+        net_with_criterion = WithLossCell(net, criterion)
+        train_network = TrainOneStepCell(net_with_criterion, optimizer)
+        train_network.set_train()
+
+        losses2 = []
+        for _ in range(epoch):
+            data = Tensor(np.arange(0, 16).reshape((1, 1, 4, 4)).astype(np.float32) * 0.01)
+            label = Tensor(np.array([0]).astype(np.int32))
+            loss = train_network(data, label)
+            losses2.append(loss.asnumpy())
+        return losses2
+
+    loss = get_loss(NetAdam())
+    trace_loss = get_loss(NetAdamTrace())
+    assert np.allclose(loss, trace_loss, 1e-4, 1e-4)

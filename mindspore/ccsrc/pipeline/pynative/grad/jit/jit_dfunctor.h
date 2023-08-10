@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace pynative {
-bool IsRealOp(const AnfNodePtr &cnode);
 void ReplaceEquivOut(const CNodePtr &k_app, const CNodePtr &cnode_morph);
 }  // namespace pynative
 }  // namespace mindspore

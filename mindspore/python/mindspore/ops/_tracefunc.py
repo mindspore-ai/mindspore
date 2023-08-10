@@ -23,7 +23,7 @@ from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore._c_expression import PackExpander, PackNode
 from mindspore.common._stub_tensor import StubTensor
 from mindspore.common._register_for_tensor import tensor_operator_registry
-from mindspore.common.api import _handle_func_args
+from mindspore.common.api import _handle_func_args, _pynative_executor
 
 
 class _PackTensor(StubTensor):
@@ -81,7 +81,13 @@ class PackFunc(Primitive):
                 args = (self.cell_obj, *args)
             return self.func(*args, **kwargs)
         self.kwargs = kwargs
-        return super().__call__(*args)
+        output = super().__call__(*args)
+        if self.is_pynative_mode and self.grad_attach_num > 0:
+            output_num = len(output) - self.grad_attach_num
+            if output_num == 1:
+                return output[0]
+            return output[:output_num]
+        return output
 
     def __expand__(self, args):
         old = PackFunc.current
@@ -203,24 +209,33 @@ def trace(fn):
 
     @functools.wraps(fn)
     def _trace_wrap(*args, **kwargs):
-        if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
+        pynative_grad_flag = _pynative_executor.grad_flag()
+        grad_flag_expr = "1" if pynative_grad_flag else "0"
+        if _trace_wrap.has_obj is None:
+            if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
+                _trace_wrap.has_obj = True
+            else:
+                _trace_wrap.has_obj = False
+        if _trace_wrap.has_obj:
             obj, args = args[0], args[1:]
-            pack_func_name = fn.__name__ + "pack"
+            pack_func_name = "".join((fn.__name__, "pack", grad_flag_expr))
             pack_func = getattr(obj, pack_func_name, None)
             if pack_func is None:
-                pack_func = PackFunc(fn, f"{id(obj)}_{id(fn)}", obj, True)
+                pack_func = PackFunc(fn, f"{id(obj)}_{id(fn)}_{grad_flag_expr}", obj, True)
                 setattr(obj, pack_func_name, pack_func)
         else:
             # Similar processing has been done in the __call__ of Cell,
             # so only when obj is None, there is need to do `_handle_func_args`.
             args, kwargs = _handle_func_args(fn, *args, **kwargs)
-            pack_func = getattr(fn, "pack", None)
+            pack_func_name = "pack" + grad_flag_expr
+            pack_func = getattr(fn, pack_func_name, None)
             if pack_func is None:
-                pack_func = PackFunc(fn, f"{id(fn)}", None, True)
-                setattr(fn, "pack", pack_func)
+                pack_func = PackFunc(fn, f"{id(fn)}_{grad_flag_expr}", None, True)
+                setattr(fn, pack_func_name, pack_func)
         return pack_func(*args, **kwargs)
 
     if "MS_DEV_DISABLE_TRACE" in os.environ and os.environ["MS_DEV_DISABLE_TRACE"] == "on":
         return fn
     _trace_wrap.pack_fn = fn
+    _trace_wrap.has_obj = None
     return _trace_wrap

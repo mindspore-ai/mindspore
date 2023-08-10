@@ -17,7 +17,6 @@
 #include "pipeline/pynative/predict_out_type_map.h"
 #include <string>
 #include <vector>
-#include "ops/framework_op_name.h"
 
 namespace mindspore {
 namespace pynative {
