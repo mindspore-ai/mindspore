@@ -21,6 +21,8 @@
 #include <memory>
 #include "ops/nn_op_name.h"
 #include "ops/dense.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/math/matmul/matmul_wrapper.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,24 +60,6 @@ bool DenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-#if CUDA_VERSION >= 11000
-cublasComputeType_t DenseGpuKernelMod::GetComputeType() {
-  cublasComputeType_t compute_type = CUBLAS_COMPUTE_16F;
-  if (dtype_a_ == CUDA_R_16F && dtype_c_ == CUDA_R_16F) {
-    compute_type = CUBLAS_COMPUTE_32F;
-  } else if (dtype_a_ == CUDA_R_8I && dtype_c_ == CUDA_R_32I) {
-    compute_type = CUBLAS_COMPUTE_32I;
-  } else if (dtype_a_ == CUDA_R_16F || dtype_a_ == CUDA_R_32F || (dtype_a_ == CUDA_R_8I && dtype_c_ == CUDA_R_32F)) {
-    compute_type = CUBLAS_COMPUTE_32F;
-  } else if ((dtype_a_ == CUDA_R_32F && dtype_b_ == CUDA_R_32F) || (dtype_a_ == CUDA_C_32F && dtype_b_ == CUDA_C_32F)) {
-    compute_type = CUBLAS_COMPUTE_32F;
-  } else if ((dtype_a_ == CUDA_R_64F && dtype_b_ == CUDA_R_64F) || (dtype_a_ == CUDA_C_64F && dtype_b_ == CUDA_C_64F)) {
-    compute_type = CUBLAS_COMPUTE_64F;
-  }
-  return compute_type;
-}
-#endif
-
 int DenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs,
                               const std::map<uint32_t, tensor::TensorPtr> &) {
@@ -108,26 +92,7 @@ int DenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   ldb_ = SizeToInt(k_);
   ldc_ = SizeToInt(n_);
 
-#if CUDA_VERSION >= 11000
-  compute_type_ = GetComputeType();
-  if (compute_type_ == CUBLAS_COMPUTE_32I) {
-    constexpr size_t bytes = 4;
-    if (lda_ % bytes != 0 || ldb_ % bytes != 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "' the lda and ldb must be multiples of 4 when the compute_type_ is CUBLAS_COMPUTE_32I."
-                           "But got lda:"
-                        << lda_ << ", got ldb:" << ldb_;
-    }
-  }
-
-  auto math_mode = static_cast<cublasMath_t>(CUBLAS_DEFAULT_MATH | CUBLAS_MATH_DISALLOW_REDUCED_PRECISION_REDUCTION);
-  CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetMathMode(handle_, math_mode), "cublasSetMathMode failed.");
-#else
-  compute_type_ = (dtype_a_ == CUDA_R_64F) ? CUDA_R_64F : CUDA_R_32F;
-  if (dtype_a_ == CUDA_C_32F || dtype_a_ == CUDA_C_64F) {
-    compute_type_ = dtype_a_;
-  }
-#endif
+  compute_type_ = GetComputeType(dtype_a_);
 
   return KRET_OK;
 }
@@ -156,15 +121,22 @@ bool DenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   return true;
 }
 
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 std::map<std::string, std::vector<std::pair<KernelAttr, DenseGpuKernelMod::DenseFunc>>>
   DenseGpuKernelMod::kernel_attr_map_ = {
     {kDenseOpName,
-     {{KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       &DenseGpuKernelMod::LaunchKernel<double, double>},
+     {{KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &DenseGpuKernelMod::LaunchKernel<half, float>},
       {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &DenseGpuKernelMod::LaunchKernel<float, float>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &DenseGpuKernelMod::LaunchKernel<half, float>}}}};
+      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &DenseGpuKernelMod::LaunchKernel<double, double>},
+      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &DenseGpuKernelMod::LaunchKernel<Complex<float>, Complex<float>>},
+      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &DenseGpuKernelMod::LaunchKernel<Complex<double>, Complex<double>>}}}};
 
 std::vector<KernelAttr> DenseGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_name_);
