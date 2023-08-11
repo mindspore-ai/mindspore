@@ -106,7 +106,7 @@ Status Places365Op::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids
 Status Places365Op::GetFileContent(const std::string &info_file, std::string *ans) {
   RETURN_UNEXPECTED_IF_NULL(ans);
   std::ifstream reader;
-  reader.open(info_file, std::ios::in);
+  reader.open(info_file);
   CHECK_FAIL_RETURN_UNEXPECTED(
     !reader.fail(), "Invalid file, failed to open " + info_file + ": Places365 file is damaged or permission denied.");
   reader.seekg(0, std::ios::end);
@@ -147,7 +147,7 @@ Status Places365Op::LoadCategories(const std::string &category_meta_name) {
   uint32_t label;
   // Category meta info is read into string s in the format: "category1 label1 category2 label2 category3 label3 ...".
   // Use blank space delimiter to split the string and process each substring.
-  // Like state matching, the type of each substring needs to be switched.
+  // Like state matchine, the type of each substring needs to be switched.
   enum ColType { CATEGORY, LABEL };
   std::size_t pos = 0;
   ColType col_idx = CATEGORY;
@@ -198,7 +198,7 @@ Status Places365Op::LoadFileLists(const std::string &filelists_meta_name) {
   uint32_t label;
   // Category meta info is read into string s in the format: "path1 label1 path2 label2 path2 label3 ...".
   // Use blank space delimiter to split the string and process each substring.
-  // Like state matching, the type of each substring needs to be switched.
+  // Like state matchine, the type of each substring needs to be switched.
   enum ColType { PATH, LABEL };
   std::size_t pos = 0;
   ColType col_idx = PATH;

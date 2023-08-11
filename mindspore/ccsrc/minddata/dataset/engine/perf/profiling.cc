@@ -32,13 +32,6 @@
 #include "utils/ms_context.h"
 #endif
 #include "utils/ms_utils.h"
-#ifndef BUILD_LITE
-#include "mindspore/core/utils/file_utils.h"
-namespace platform = mindspore;
-#else
-#include "mindspore/lite/src/common/file_utils.h"
-namespace platform = mindspore::lite;
-#endif
 
 namespace mindspore {
 namespace dataset {
@@ -70,7 +63,7 @@ Status Tracing::SaveToFile(const std::string &dir_path, const std::string &rank_
   std::string file_path = path.ToString();
 
   MS_LOG(INFO) << "Start to save profiling data for a tracing node.";
-  std::ofstream handle(file_path, std::ios::out | std::ios::trunc);
+  std::ofstream handle(file_path, std::ios::trunc);
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Profiling file can not be opened.");
   }
@@ -78,8 +71,6 @@ Status Tracing::SaveToFile(const std::string &dir_path, const std::string &rank_
     handle << value << "\n";
   }
   handle.close();
-
-  platform::ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
 
   return Status::OK();
 }

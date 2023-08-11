@@ -142,7 +142,7 @@ Status VOCOp::ParseImageIds() {
   }
 
   std::ifstream in_file;
-  in_file.open(realpath.value(), std::ios::in);
+  in_file.open(realpath.value());
   if (in_file.fail()) {
     RETURN_STATUS_UNEXPECTED("Invalid ImageSets file, failed to open ImageSets file: " + image_sets_file +
                              ", the file is damaged or permission denied.");

@@ -24,7 +24,6 @@ from multiprocessing.managers import SyncManager
 import os
 import queue
 import random
-import stat
 import sys
 import time
 
@@ -115,9 +114,6 @@ def _wait_remove_datset(num_shards, shard_id, epoch_num):
     sync_file = os.path.join(sync_dir, 'ready_' + str(shard_id))
     with open(sync_file, 'w') as f:
         f.write('ok')
-
-    if os.path.exists(sync_file):
-        os.chmod(sync_file, stat.S_IRUSER | stat.S_IWUSER)
 
     while True:
         if os.path.exists(sync_dir) and not os.listdir(sync_dir):

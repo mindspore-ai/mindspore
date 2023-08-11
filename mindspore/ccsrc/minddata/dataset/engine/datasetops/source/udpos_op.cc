@@ -118,7 +118,7 @@ Status UDPOSOp::LoadFile(const std::string &file, int64_t start_offset, int64_t 
     MS_LOG(ERROR) << "Invalid file path, " + DatasetName() + " dataset dir: " << file << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + DatasetName() + " dataset dir: " + file + " does not exist.");
   }
-  std::ifstream handle(realpath.value(), std::ios::in);
+  std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + ": " + file);
   }
@@ -134,11 +134,7 @@ Status UDPOSOp::LoadFile(const std::string &file, int64_t start_offset, int64_t 
     // If read to the end offset of this file, break.
     if (rows_total >= end_offset) {
       if (word_column.size() != 0) {
-        auto s = Load(word_column, universal_column, stanford_column, file, worker_id);
-        if (s != Status::OK()) {
-          handle.close();
-          return s;
-        }
+        RETURN_IF_NOT_OK(Load(word_column, universal_column, stanford_column, file, worker_id));
       }
       std::vector<std::string>().swap(word_column);
       std::vector<std::string>().swap(universal_column);
@@ -153,11 +149,7 @@ Status UDPOSOp::LoadFile(const std::string &file, int64_t start_offset, int64_t 
     line = Strip(line);
     if (line.empty() && rows_total >= start_offset) {
       if (word_column.size() != 0) {
-        auto s = Load(word_column, universal_column, stanford_column, file, worker_id);
-        if (s != Status::OK()) {
-          handle.close();
-          return s;
-        }
+        RETURN_IF_NOT_OK(Load(word_column, universal_column, stanford_column, file, worker_id));
       }
       std::vector<std::string>().swap(word_column);
       std::vector<std::string>().swap(universal_column);

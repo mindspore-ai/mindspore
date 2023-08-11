@@ -644,8 +644,6 @@ Status ShardHeader::PagesToFile(const std::string dump_file_name) {
     page_out_handle << shard_pages << "\n";
   }
   page_out_handle.close();
-
-  ChangeFileMode(realpath.value(), S_IRUSR | S_IWUSR);
   return Status::OK();
 }
 
@@ -657,16 +655,12 @@ Status ShardHeader::FileToPages(const std::string dump_file_name) {
   CHECK_FAIL_RETURN_UNEXPECTED_MR(realpath.has_value(),
                                   "[Internal ERROR] Failed to get the realpath of Pages file, path: " + dump_file_name);
   // attempt to open the file contains the page in json
-  std::ifstream page_in_handle(realpath.value(), std::ios::in);
+  std::ifstream page_in_handle(realpath.value());
   CHECK_FAIL_RETURN_UNEXPECTED_MR(page_in_handle.good(),
                                   "[Internal ERROR] Pages file does not exist, path: " + dump_file_name);
   std::string line;
   while (std::getline(page_in_handle, line)) {
-    auto s = ParsePage(json::parse(line), -1, true);
-    if (s != Status::OK()) {
-      page_in_handle.close();
-      return s;
-    }
+    RETURN_IF_NOT_OK_MR(ParsePage(json::parse(line), -1, true));
   }
   page_in_handle.close();
   return Status::OK();

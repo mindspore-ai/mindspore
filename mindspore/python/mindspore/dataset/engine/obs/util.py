@@ -19,7 +19,6 @@ This dataset module provides internal utility function for OBSMindDataset API.
 import fcntl
 import os
 import shutil
-import stat
 import sys
 import sqlite3
 import time
@@ -273,8 +272,6 @@ def exclusive_lock(func):
                     time.sleep(config.RETRY_DELTA_TIME)
                 finally:
                     fcntl.flock(fd, fcntl.LOCK_UN)
-        if os.path.exists(lock_file):
-            os.chmod(lock_file, stat.S_IRUSER | stat.S_IWUSER)
         return result
     return wrapped_func
 

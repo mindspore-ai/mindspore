@@ -102,7 +102,7 @@ Status SUN397Op::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) c
 Status SUN397Op::GetFileContent(const std::string &info_file, std::string *ans) {
   RETURN_UNEXPECTED_IF_NULL(ans);
   std::ifstream reader;
-  reader.open(info_file, std::ios::in);
+  reader.open(info_file);
   CHECK_FAIL_RETURN_UNEXPECTED(
     !reader.fail(), "Invalid file, failed to open " + info_file + ": SUN397 file is damaged or permission denied.");
   reader.seekg(0, std::ios::end);

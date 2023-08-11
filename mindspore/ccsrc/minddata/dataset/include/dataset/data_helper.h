@@ -29,13 +29,6 @@
 
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
-#ifndef BUILD_LITE
-#include "mindspore/core/utils/file_utils.h"
-namespace platform = mindspore;
-#else
-#include "mindspore/lite/src/common/file_utils.h"
-namespace platform = mindspore::lite;
-#endif
 
 namespace mindspore {
 namespace dataset {
@@ -342,7 +335,6 @@ class DATASET_API DataHelper {
       return Status(kMDUnexpectedError, "Failed to write file: " + in_file);
     }
     ofs.close();
-    platform::ChangeFileMode(in_file, S_IRUSR | S_IWUSR);
     return Status::OK();
   }
 
@@ -367,7 +359,6 @@ class DATASET_API DataHelper {
       return Status(kMDUnexpectedError, "Failed to write file: " + in_file);
     }
     ofs.close();
-    platform::ChangeFileMode(in_file, S_IRUSR | S_IWUSR);
     return Status::OK();
   }
 

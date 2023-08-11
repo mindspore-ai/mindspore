@@ -18,6 +18,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_STATISTICS_H
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_STATISTICS_H
 
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>

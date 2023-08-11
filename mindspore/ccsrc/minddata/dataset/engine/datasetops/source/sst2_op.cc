@@ -114,26 +114,21 @@ Status SST2Op::LoadFile(const std::string &file, int64_t start_offset, int64_t e
       if (err != 0) {
         // if error code is -2, the returned error is interrupted
         if (err == -2) {
-          ifs.close();
           return Status(kMDInterrupted);
         }
-        ifs.close();
         RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse csv file: " + file + " at line " +
                                  std::to_string(csv_parser.GetTotalRows() + 1) +
                                  ". Error message: " + csv_parser.GetErrorMessage());
       }
     }
   } catch (std::invalid_argument &ia) {
-    ifs.close();
     std::string err_row = std::to_string(csv_parser.GetTotalRows() + 1);
     RETURN_STATUS_UNEXPECTED("Invalid csv, csv file: " + file + " parse failed at line " + err_row +
                              ", type does not match.");
   } catch (std::out_of_range &oor) {
-    ifs.close();
     std::string err_row = std::to_string(csv_parser.GetTotalRows() + 1);
     RETURN_STATUS_UNEXPECTED("Invalid csv, " + file + " parse failed at line " + err_row + " : value out of range.");
   }
-  ifs.close();
   return Status::OK();
 }
 }  // namespace dataset

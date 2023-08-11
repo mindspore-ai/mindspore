@@ -320,7 +320,7 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
   (*row) = TensorRow(row_id, {});
   MS_LOG(INFO) << "Image row file: " << file << ".";
 
-  std::ifstream file_handle(folder_path_ + file, std::ios::in);
+  std::ifstream file_handle(folder_path_ + file);
   if (!file_handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid json file, " + folder_path_ + file + " does not exist or permission denied.");
   }
@@ -336,11 +336,8 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
 
       // loop over each column descriptor, this can optimized by switch cases
       for (int32_t i = 0; i < columns; i++) {
-        auto s = loadColumnData(file, i, js, row);
-        if (s != Status::OK()) {
-          file_handle.close();
-          return s;
-        }
+        file_handle.close();
+        RETURN_IF_NOT_OK(loadColumnData(file, i, js, row));
       }
     } catch (const std::exception &err) {
       file_handle.close();

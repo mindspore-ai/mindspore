@@ -195,7 +195,7 @@ Status ShardWriter::OpenForAppend(const std::string &path) {
 
 Status ShardWriter::Commit() {
   // Read pages file
-  std::ifstream page_file(pages_file_.c_str(), std::ios::in);
+  std::ifstream page_file(pages_file_.c_str());
   if (page_file.good()) {
     page_file.close();
     RETURN_IF_NOT_OK_MR(shard_header_->FileToPages(pages_file_));

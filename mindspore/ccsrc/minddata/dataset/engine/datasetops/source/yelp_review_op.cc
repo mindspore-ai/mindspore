@@ -16,6 +16,7 @@
 
 #include "minddata/dataset/engine/datasetops/source/yelp_review_op.h"
 
+#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>

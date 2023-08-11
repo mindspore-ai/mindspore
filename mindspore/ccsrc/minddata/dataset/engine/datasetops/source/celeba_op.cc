@@ -82,7 +82,7 @@ Status CelebAOp::ParseAttrFile() {
                              " does not exist.");
   }
 
-  std::ifstream attr_file(realpath.value(), std::ios::in);
+  std::ifstream attr_file(realpath.value());
   if (!attr_file.is_open()) {
     std::string attr_file_name = (folder_path / "list_attr_celeba.txt").ToString();
     RETURN_STATUS_ERROR(StatusCode::kMDFileNotExist,
@@ -106,11 +106,9 @@ Status CelebAOp::ParseAttrFile() {
   try {
     num_rows_in_attr_file_ = static_cast<int64_t>(std::stoul(rows_num));  // First line is rows number in attr file
   } catch (std::invalid_argument &e) {
-    CLOSE_FILE(attr_file, partition_file_);
     RETURN_STATUS_UNEXPECTED("Invalid rows_num, failed to convert rows_num: " + rows_num + " to unsigned long in " +
                              attr_file_ + ".");
   } catch (std::out_of_range &e) {
-    CLOSE_FILE(attr_file, partition_file_);
     RETURN_STATUS_UNEXPECTED("Invalid rows_num, rows_num in " + attr_file_ + " is out of range, rows_num is " +
                              rows_num + ".");
   }

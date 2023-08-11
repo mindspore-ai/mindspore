@@ -170,7 +170,7 @@ Status SQuADOp::LoadTensorFromVector(const std::vector<T> &vector_item, TensorRo
 }
 
 Status SQuADOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  std::ifstream handle(file, std::ios::in);
+  std::ifstream handle(file);
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }
@@ -291,7 +291,7 @@ Status SQuADOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
 
 Status SQuADOp::CountTensorRowsPreFile(const std::string &file, int64_t *count) {
   RETURN_UNEXPECTED_IF_NULL(count);
-  std::ifstream handle(file, std::ios::in);
+  std::ifstream handle(file);
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }

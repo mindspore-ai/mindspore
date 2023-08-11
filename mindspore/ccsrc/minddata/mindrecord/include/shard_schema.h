@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SCHEMA_H_
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SCHEMA_H_
 
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>

@@ -17,6 +17,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2017_node.h"
 
 #include <algorithm>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>

@@ -58,7 +58,7 @@ Status EnWik9Op::LoadFile(const std::string &file, int64_t start_offset, int64_t
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + file + " does not exist.");
   }
 
-  std::ifstream handle(realpath.value(), std::ios::in);
+  std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file +
                              ". Check if the file is damaged or permission denied.");
@@ -83,20 +83,11 @@ Status EnWik9Op::LoadFile(const std::string &file, int64_t start_offset, int64_t
 
     TensorRow tRow(1, nullptr);
     tRow.setPath({file});
-    auto s = LoadTensor(line, &tRow);
-    if (s != Status::OK()) {
-      handle.close();
-      return s;
-    }
-    s = jagged_rows_connector_->Add(worker_id, std::move(tRow));
-    if (s != Status::OK()) {
-      handle.close();
-      return s;
-    }
+    RETURN_IF_NOT_OK(LoadTensor(line, &tRow));
+    RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(tRow)));
 
     rows_total++;
   }
-  handle.close();
 
   return Status::OK();
 }
@@ -108,7 +99,7 @@ int64_t EnWik9Op::CountTotalRows(const std::string &file) {
     return 0;
   }
 
-  std::ifstream handle(realpath.value(), std::ios::in);
+  std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " << file
                   << ". Check if the file is damaged or permission denied.";
@@ -120,7 +111,6 @@ int64_t EnWik9Op::CountTotalRows(const std::string &file) {
   while (getline(handle, line)) {
     count++;
   }
-  handle.close();
 
   return count;
 }
