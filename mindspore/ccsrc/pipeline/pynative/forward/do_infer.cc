@@ -23,6 +23,7 @@
 #include "ops/nn_op_name.h"
 #include "ops/framework_op_name.h"
 #include "frontend/expander/pack/packfunc.h"
+#include "frontend/expander/pack/packfunc_grad.h"
 
 namespace mindspore {
 namespace pynative {
@@ -110,6 +111,23 @@ void AddWeightsToInput(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphP
   }
   op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
 }
+
+void SetGradInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &graph) {
+  const auto &graph_id = graph->debug_info()->get_id();
+  op_run_info->op_grad_info->grad_graph_id = graph_id;
+  // SetInputUnusedInBprop
+  static mindspore::HashMap<int64_t, std::vector<bool>> graph_unused_inputs;
+  if (graph_unused_inputs.find(graph_id) != graph_unused_inputs.end()) {
+    op_run_info->input_unused_in_bprop = graph_unused_inputs[graph_id];
+    return;
+  }
+  const auto &unused_inputs = expander::GetUnusedInputs(graph);
+  op_run_info->input_unused_in_bprop.resize(op_run_info->input_size, false);
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    op_run_info->input_unused_in_bprop[i] = (unused_inputs.find(i) != unused_inputs.end());
+  }
+  graph_unused_inputs[graph_id] = op_run_info->input_unused_in_bprop;
+}
 }  // namespace
 
 void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const {
@@ -152,11 +170,15 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
     eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
   if (op_run_info->base_op_run_info.abstract == nullptr) {
     if (prim->name() == kPackFuncOpName) {
-      const auto &func_graph = expander::ExpandPackFunc(prim, op_run_info->op_grad_info->input_abs);
+      const auto &func_graph =
+        expander::ExpandPackFunc(prim, op_run_info->op_grad_info->input_abs, op_run_info->requires_grad);
       MS_EXCEPTION_IF_NULL(func_graph);
       op_run_info->base_op_run_info.abstract = func_graph->output()->abstract();
       prim->set_attr("recent_graph", func_graph);
       AddWeightsToInput(op_run_info, func_graph);
+      if (op_run_info->requires_grad) {
+        SetGradInfo(op_run_info, func_graph);
+      }
     }
   }
   MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);

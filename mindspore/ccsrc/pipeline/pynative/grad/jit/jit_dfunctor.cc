@@ -19,33 +19,12 @@
 #include <memory>
 #include <string>
 
-#include "ops/sequence_op_name.h"
-#include "ops/structure_ops.h"
-#include "ops/other_ops.h"
-#include "ops/framework_ops.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/pynative/pynative_utils.h"
 
 namespace mindspore {
 namespace pynative {
 namespace {
-const mindspore::HashSet<std::string> kNotRealOP{
-  kMakeTupleOpName,
-  kMakeListNewOpName,
-  kTupleGetItemOpName,
-  kStopGradientOpName,
-  kUpdateStateOpName,
-  kLoadOpName,
-  kDependOpName,
-  kReturnOpName,
-  kNPUAllocFloatStatusOpName,
-  kNPUGetFloatStatusOpName,
-  kNPUClearFloatStatusOpName,
-  kMirrorOperatorOpName,
-  kSequenceSliceOpName,
-  kSequenceMulOpName,
-};
-
 tensor::TensorPtr GenNewTensorInner(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {
   MS_EXCEPTION_IF_NULL(type_elem);
   MS_EXCEPTION_IF_NULL(shape_elem);
@@ -204,7 +183,7 @@ void GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNodePtr *forward_nod
 std::vector<AnfNodePtr> RunOutputReplace(const CNodePtr &forward_node, const FuncGraphPtr &bprop_graph,
                                          const FuncGraphPtr &fprop_graph, const CNodePtr &cnode_morph) {
   MS_EXCEPTION_IF_NULL(cnode_morph);
-  if (!IsRealOp(cnode_morph)) {
+  if (!PyNativeAlgo::GradCommon::IsRealOp(cnode_morph)) {
     return {};
   }
   // Use manager to get the link relation among nodes.
@@ -252,7 +231,8 @@ std::vector<AnfNodePtr> RunInputReplace(const FuncGraphPtr &bprop_graph, const F
     const auto &input_node = cnode_morph->input(i + 1);
     MS_EXCEPTION_IF_NULL(input_node);
     // Parameter, ValueNode and StopGradient CNode no need to replace.
-    if (input_node->isa<Parameter>() || input_node->isa<ValueNode>() || !IsRealOp(input_node)) {
+    if (input_node->isa<Parameter>() || input_node->isa<ValueNode>() ||
+        !PyNativeAlgo::GradCommon::IsRealOp(input_node)) {
       continue;
     }
     // Replace forward input node by its output value.
@@ -279,15 +259,6 @@ std::vector<AnfNodePtr> RunInputReplace(const FuncGraphPtr &bprop_graph, const F
   return used_input_nodes;
 }
 }  // namespace
-
-bool IsRealOp(const AnfNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &prim = GetCNodePrimitive(cnode);
-  if (prim == nullptr) {
-    return false;
-  }
-  return kNotRealOP.find(prim->name()) == kNotRealOP.end();
-}
 
 void ReplaceEquivOut(const CNodePtr &k_app, const CNodePtr &cnode_morph) {
   MS_EXCEPTION_IF_NULL(cnode_morph);

@@ -31,6 +31,10 @@
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/stub_tensor.h"
 #include "frontend/expander/bprop/bprop.h"
+#include "pipeline/pynative/grad/jit/jit_grad.h"
+#include "ops/sequence_op_name.h"
+#include "ops/structure_ops.h"
+#include "ops/other_ops.h"
 
 namespace mindspore {
 namespace pynative {
@@ -133,6 +137,23 @@ void PlantTupleParam(const FuncGraphPtr &bprop_graph, const abstract::AbstractSe
     }
   }
 }
+
+const mindspore::HashSet<std::string> kNotRealOP{
+  kMakeTupleOpName,
+  kMakeListNewOpName,
+  kTupleGetItemOpName,
+  kStopGradientOpName,
+  kUpdateStateOpName,
+  kLoadOpName,
+  kDependOpName,
+  kReturnOpName,
+  kNPUAllocFloatStatusOpName,
+  kNPUGetFloatStatusOpName,
+  kNPUClearFloatStatusOpName,
+  kMirrorOperatorOpName,
+  kSequenceSliceOpName,
+  kSequenceMulOpName,
+};
 }  // namespace
 
 AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
@@ -1074,6 +1095,59 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
   ReplaceValueNodeWithParameter(op_run_info);
   ReplaceReduceAxis(op_run_info);
   AddDynInputsSizesAttr(op_run_info);
+}
+
+bool GradCommon::IsRealOp(const AnfNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &prim = GetCNodePrimitive(cnode);
+  if (prim == nullptr) {
+    return false;
+  }
+  return kNotRealOP.find(prim->name()) == kNotRealOP.end();
+}
+
+void GradCommon::SetForward(const AnfNodePtrList &node_list) {
+  for (const auto &cn : node_list) {
+    auto out = Common::CreatOutputTensorValueByAbstract(cn->abstract());
+    const auto &c_node = cn->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(c_node);
+    c_node->set_forward(Common::CreateValueNodeByValue(out, cn->abstract()), "");
+  }
+}
+
+void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore::HashSet<size_t> &unused_inputs,
+                                          AnfNodePtrList *node_list) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(node_list);
+  // Check input used in single op bprop graph. For example,
+  // A = a * b;
+  // B = A * c;
+  // So, A can also replace by its output
+  size_t input_num = cnode->size() - 1;
+  for (size_t i = 0; i < input_num; ++i) {
+    if (unused_inputs.find(i) == unused_inputs.end() && cnode->input(i + 1)->isa<CNode>()) {
+      // Input used by bprop graph, and it is a cnode have produce real output
+      const auto &input_c = cnode->input(i + 1)->cast<CNodePtr>();
+      if (IsPrimitive(input_c, prim::kPrimMakeTuple)) {
+        size_t tuple_input_num = input_c->size() - 1;
+        for (size_t j = 0; j < tuple_input_num; ++j) {
+          if (auto f_node = common::AnfAlgo::VisitKernel(input_c, j).first;
+              f_node->isa<CNode>() && PyNativeAlgo::GradCommon::IsRealOp(f_node)) {
+            (void)node_list->emplace_back(f_node);
+          }
+        }
+      } else {
+        if (auto f_node = common::AnfAlgo::VisitKernel(input_c, 0).first;
+            f_node->isa<CNode>() && PyNativeAlgo::GradCommon::IsRealOp(f_node)) {
+          (void)node_list->emplace_back(f_node);
+        }
+      }
+    }
+  }
+  // Check output used in single op bprop graph
+  if (unused_inputs.find(cnode->size() - 1) == unused_inputs.end()) {
+    (void)node_list->emplace_back(cnode);
+  }
 }
 }  // namespace PyNativeAlgo
 }  // namespace pynative

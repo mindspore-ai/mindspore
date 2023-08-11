@@ -135,39 +135,6 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   func_graph->ClearUsedForwardNodes();
 }
 
-void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore::HashSet<size_t> &unused_inputs,
-                              AnfNodePtrList *node_list) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(node_list);
-  // Check input used in single op bprop graph. For example,
-  // A = a * b;
-  // B = A * c;
-  // So, A can also replace by its output
-  size_t input_num = cnode->size() - 1;
-  for (size_t i = 0; i < input_num; ++i) {
-    if (unused_inputs.find(i) != unused_inputs.end() && cnode->input(i + 1)->isa<CNode>()) {
-      // Input used by bprop graph, and it is a cnode have produce real output
-      const auto &input_c = cnode->input(i + 1)->cast<CNodePtr>();
-      if (IsPrimitive(input_c, prim::kPrimMakeTuple)) {
-        size_t tuple_input_num = input_c->size() - 1;
-        for (size_t j = 0; j < tuple_input_num; ++j) {
-          if (auto f_node = common::AnfAlgo::VisitKernel(input_c, j).first; f_node->isa<CNode>() && IsRealOp(f_node)) {
-            (void)node_list->emplace_back(f_node);
-          }
-        }
-      } else {
-        if (auto f_node = common::AnfAlgo::VisitKernel(input_c, 0).first; f_node->isa<CNode>() && IsRealOp(f_node)) {
-          (void)node_list->emplace_back(f_node);
-        }
-      }
-    }
-  }
-  // Check output used in single op bprop graph
-  if (unused_inputs.find(cnode->size()) == unused_inputs.end()) {
-    (void)node_list->emplace_back(cnode);
-  }
-}
-
 CNodePtr GetAddedNode(const FuncGraphPtr &jit_forward_graph) {
   MS_EXCEPTION_IF_NULL(jit_forward_graph);
   if (!jit_forward_graph->modify_output()) {
@@ -532,7 +499,7 @@ FuncGraphPtr Jit::GetJitForwardGraphCNodeInfo(const FuncGraphPtr &jit_forward_gr
     if (prim == nullptr) {
       MS_LOG(EXCEPTION) << "Should be primitive, but: " << node->DebugString();
     }
-    if (!IsRealOp(cnode)) {
+    if (!PyNativeAlgo::GradCommon::IsRealOp(cnode)) {
       continue;
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString();
@@ -543,18 +510,13 @@ FuncGraphPtr Jit::GetJitForwardGraphCNodeInfo(const FuncGraphPtr &jit_forward_gr
       jit_compile_info_[graph_phase_].is_control_flow_ = true;
       return nullptr;
     }
-    GetUsedCNodeInBpropGraph(cnode, unused_inputs, &node_list);
+    pynative::PyNativeAlgo::GradCommon::GetUsedCNodeInBpropGraph(cnode, unused_inputs, &node_list);
   }
   if (node_list.empty()) {
     MS_LOG(DEBUG) << "No need do replace";
     return jit_forward_graph;
   }
-  for (const auto &cn : node_list) {
-    auto out = pynative::PyNativeAlgo::Common::CreatOutputTensorValueByAbstract(cn->abstract());
-    const auto &c_node = cn->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(c_node);
-    c_node->set_forward(PyNativeAlgo::Common::CreateValueNodeByValue(out, cn->abstract()), "");
-  }
+  pynative::PyNativeAlgo::GradCommon::SetForward(node_list);
   // jit_forward_graph will be changed output
   auto clone_graph = BasicClone(jit_forward_graph);
   jit_forward_graph->set_used_forward_nodes(node_list);

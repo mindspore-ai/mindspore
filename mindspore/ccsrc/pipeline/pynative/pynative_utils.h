@@ -104,6 +104,14 @@ struct DataConvert {
   static bool RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
                                            size_t input_index);
 };
+
+// Some common functions used in both jit and PackFunc grad
+struct GradCommon {
+  static bool IsRealOp(const AnfNodePtr &cnode);
+  static void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore::HashSet<size_t> &unused_inputs,
+                                       AnfNodePtrList *node_list);
+  static void SetForward(const AnfNodePtrList &node_list);
+};
 };  // namespace PyNativeAlgo
 }  // namespace pynative
 }  // namespace mindspore
