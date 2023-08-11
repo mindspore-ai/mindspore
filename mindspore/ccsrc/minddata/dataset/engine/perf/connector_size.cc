@@ -23,13 +23,6 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/path.h"
-#ifndef BUILD_LITE
-#include "mindspore/core/utils/file_utils.h"
-namespace platform = mindspore;
-#else
-#include "mindspore/lite/src/common/file_utils.h"
-namespace platform = mindspore::lite;
-#endif
 
 using json = nlohmann::json;
 namespace mindspore {
@@ -103,11 +96,9 @@ Status ConnectorSize::SaveToFile(const std::string &dir_path, const std::string 
   }
 
   // Discard the content of the file when opening.
-  std::ofstream os(file_path, std::ios::out | std::ios::trunc);
+  std::ofstream os(file_path, std::ios::trunc);
   os << output;
   os.close();
-  platform::ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
-
   return Status::OK();
 }
 

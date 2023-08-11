@@ -29,13 +29,6 @@
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
-#ifndef BUILD_LITE
-#include "mindspore/core/utils/file_utils.h"
-namespace platform = mindspore;
-#else
-#include "mindspore/lite/src/common/file_utils.h"
-namespace platform = mindspore::lite;
-#endif
 
 namespace mindspore {
 namespace dataset {
@@ -79,7 +72,7 @@ class JsonHelper {
       if (in.Exists()) {
         RETURN_IF_NOT_OK(RealPath(in_file));
         try {
-          std::ifstream in_stream(in_file, std::ios::in);
+          std::ifstream in_stream(in_file);
           MS_LOG(INFO) << "Filename: " << in_file << ".";
           in_stream >> js;
           in_stream.close();
@@ -91,15 +84,13 @@ class JsonHelper {
       js[key] = value;
 
       if (out_file == "") {
-        std::ofstream o(in_file, std::ofstream::out | std::ofstream::trunc);
+        std::ofstream o(in_file, std::ofstream::trunc);
         o << js;
         o.close();
-        platform::ChangeFileMode(in_file, S_IRUSR | S_IWUSR);
       } else {
-        std::ofstream o(out_file, std::ofstream::out | std::ofstream::trunc);
+        std::ofstream o(out_file, std::ofstream::trunc);
         o << js;
         o.close();
-        platform::ChangeFileMode(out_file, S_IRUSR | S_IWUSR);
       }
     }
     // Catch any exception and convert to Status return code
@@ -130,7 +121,7 @@ class JsonHelper {
       if (in.Exists()) {
         RETURN_IF_NOT_OK(RealPath(in_file));
         try {
-          std::ifstream in_stream(in_file, std::ios::in);
+          std::ifstream in_stream(in_file);
           MS_LOG(INFO) << "Filename: " << in_file << ".";
           in_stream >> js;
           in_stream.close();
@@ -142,15 +133,13 @@ class JsonHelper {
       js[key] = value;
       MS_LOG(INFO) << "Write outfile is: " << js << ".";
       if (out_file == "") {
-        std::ofstream o(in_file, std::ofstream::out | std::ofstream::trunc);
+        std::ofstream o(in_file, std::ofstream::trunc);
         o << js;
         o.close();
-        platform::ChangeFileMode(in_file, S_IRUSR | S_IWUSR);
       } else {
-        std::ofstream o(out_file, std::ofstream::out | std::ofstream::trunc);
+        std::ofstream o(out_file, std::ofstream::trunc);
         o << js;
         o.close();
-        platform::ChangeFileMode(out_file, S_IRUSR | S_IWUSR);
       }
     }
     // Catch any exception and convert to Status return code
@@ -167,17 +156,13 @@ class JsonHelper {
   template <typename T>
   Status WriteBinFile(const std::string &in_file, const std::vector<T> &data) {
     try {
-      std::string real_in_file;
-      RETURN_IF_NOT_OK(Path::RealPath(in_file, real_in_file));
-      std::ofstream o(real_in_file, std::ios::binary | std::ios::out);
+      std::ofstream o(in_file, std::ios::binary | std::ios::out);
       if (!o.is_open()) {
         RETURN_STATUS_UNEXPECTED("Error opening Bin file to write");
       }
       size_t length = data.size();
       o.write(reinterpret_cast<const char *>(&data[0]), std::streamsize(length * sizeof(T)));
       o.close();
-
-      platform::ChangeFileMode(real_in_file, S_IRUSR | S_IWUSR);
     }
     // Catch any exception and convert to Status return code
     catch (const std::exception &err) {
@@ -202,8 +187,6 @@ class JsonHelper {
       }
       o.write(reinterpret_cast<const char *>(data), std::streamsize(length * sizeof(T)));
       o.close();
-
-      platform::ChangeFileMode(real_in_file, S_IRUSR | S_IWUSR);
     }
     // Catch any exception and convert to Status return code
     catch (const std::exception &err) {

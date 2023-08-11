@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/engine/ir/datasetops/source/semeion_node.h"
 
+#include <fstream>
 #include <utility>
 
 #include "minddata/dataset/engine/datasetops/source/semeion_op.h"

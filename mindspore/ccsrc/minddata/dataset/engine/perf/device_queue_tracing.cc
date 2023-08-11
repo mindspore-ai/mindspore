@@ -15,6 +15,7 @@
  */
 
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
+#include <fstream>
 #include <string>
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/path.h"

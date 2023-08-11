@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/engine/datasetops/source/fake_image_op.h"
 
+#include <fstream>
 #include <iomanip>
 #include <set>
 

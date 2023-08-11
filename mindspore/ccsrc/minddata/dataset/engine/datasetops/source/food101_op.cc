@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <iomanip>
 #include <regex>
-#include <utility>
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/data_schema.h"
@@ -135,7 +134,7 @@ Status Food101Op::CountTotalRows(int64_t *count) {
 }
 
 Status Food101Op::GetAllImageList(const std::string &file_path) {
-  std::ifstream handle(file_path, std::ios::in);
+  std::ifstream handle(file_path);
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open text:" + file_path +
                              ", the file is damaged or permission denied.");
@@ -147,7 +146,6 @@ Status Food101Op::GetAllImageList(const std::string &file_path) {
       all_img_lists_.push_back(line);
     }
   }
-  handle.close();
   return Status::OK();
 }
 

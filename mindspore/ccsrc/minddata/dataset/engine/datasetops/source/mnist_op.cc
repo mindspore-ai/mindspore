@@ -209,8 +209,8 @@ Status MnistOp::PrepareData() {
   // t10k-images-idx3-ubyte  t10k-labels-idx1-ubyte  train-images-idx3-ubyte  train-labels-idx1-ubyte
   for (size_t i = 0; i < image_names_.size(); ++i) {
     std::ifstream image_reader, label_reader;
-    image_reader.open(image_names_[i], std::ios::in | std::ios::binary);
-    label_reader.open(label_names_[i], std::ios::in | std::ios::binary);
+    image_reader.open(image_names_[i], std::ios::binary);
+    label_reader.open(label_names_[i], std::ios::binary);
 
     Status s = ReadImageAndLabel(&image_reader, &label_reader, i);
     // Close the readers
@@ -289,31 +289,18 @@ Status MnistOp::CountTotalRows(const std::string &dir, const std::string &usage,
 
   for (size_t i = 0; i < op->image_names_.size(); ++i) {
     std::ifstream image_reader;
-    image_reader.open(op->image_names_[i], std::ios::in | std::ios::binary);
+    image_reader.open(op->image_names_[i], std::ios::binary);
     std::ifstream label_reader;
-    label_reader.open(op->label_names_[i], std::ios::in | std::ios::binary);
+    label_reader.open(op->label_names_[i], std::ios::binary);
 
     uint32_t num_images;
-    auto s = op->CheckImage(op->image_names_[i], &image_reader, &num_images);
-    if (s != Status::OK()) {
-      image_reader.close();
-      label_reader.close();
-      return s;
-    }
+    RETURN_IF_NOT_OK(op->CheckImage(op->image_names_[i], &image_reader, &num_images));
     uint32_t num_labels;
-    s = op->CheckLabel(op->label_names_[i], &label_reader, &num_labels);
-    if (s != Status::OK()) {
-      image_reader.close();
-      label_reader.close();
-      return s;
-    }
-    if (num_images != num_labels) {
-      image_reader.close();
-      label_reader.close();
-      RETURN_STATUS_UNEXPECTED("Invalid " + op->DatasetName() +
-                               " file, num of images should be equal to num of labels, but got num of images: " +
-                               std::to_string(num_images) + ", num of labels: " + std::to_string(num_labels) + ".");
-    }
+    RETURN_IF_NOT_OK(op->CheckLabel(op->label_names_[i], &label_reader, &num_labels));
+    CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
+                                 "Invalid " + op->DatasetName() +
+                                   " file, num of images should be equal to num of labels, but got num of images: " +
+                                   std::to_string(num_images) + ", num of labels: " + std::to_string(num_labels) + ".");
     *count = *count + num_images;
 
     // Close the readers

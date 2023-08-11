@@ -2448,7 +2448,6 @@ Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &dat
     }
   }
   fs.close();
-  ChangeFileMode(realpath.value(), S_IRUSR | S_IWUSR);
   return Status::OK();
 }
 
@@ -2529,7 +2528,6 @@ Status WriteJpeg(const std::string &filename, const std::shared_ptr<Tensor> &ima
     RETURN_STATUS_UNEXPECTED("WriteJpeg: Failed to write the file " + filename);
   }
   fs.close();
-  ChangeFileMode(realpath.value(), S_IRUSR | S_IWUSR);
   return Status::OK();
 }
 
@@ -2610,7 +2608,6 @@ Status WritePng(const std::string &filename, const std::shared_ptr<Tensor> &imag
     RETURN_STATUS_UNEXPECTED("WritePng: Failed to write the file " + filename);
   }
   fs.close();
-  ChangeFileMode(realpath.value(), S_IRUSR | S_IWUSR);
   return Status::OK();
 }
 

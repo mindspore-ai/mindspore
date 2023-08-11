@@ -16,6 +16,7 @@
 
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 
+#include <fstream>
 #include <unordered_set>
 
 #include "utils/ms_utils.h"

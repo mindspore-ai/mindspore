@@ -315,19 +315,9 @@ Status Tensor::CreateFromFile(const std::string &path, std::shared_ptr<Tensor> *
   fs.open(path, std::ios::binary | std::ios::in);
   CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Failed to open file: " + path);
   int64_t num_bytes = fs.seekg(0, std::ios::end).tellg();
-  if (num_bytes >= kDeMaxDim) {
-    fs.close();
-    RETURN_STATUS_UNEXPECTED("Invalid file to allocate tensor memory, check path: " + path);
-  }
-  if (!fs.seekg(0, std::ios::beg).good()) {
-    fs.close();
-    RETURN_STATUS_UNEXPECTED("Failed to find size of file, check path: " + path);
-  }
-  auto s = Tensor::CreateEmpty(TensorShape{num_bytes}, DataType(DataType::DE_UINT8), out);
-  if (s != Status::OK()) {
-    fs.close();
-    return s;
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(num_bytes < kDeMaxDim, "Invalid file to allocate tensor memory, check path: " + path);
+  CHECK_FAIL_RETURN_UNEXPECTED(fs.seekg(0, std::ios::beg).good(), "Failed to find size of file, check path: " + path);
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape{num_bytes}, DataType(DataType::DE_UINT8), out));
   int64_t written_bytes = fs.read(reinterpret_cast<char *>((*out)->GetMutableBuffer()), num_bytes).gcount();
   if (!(written_bytes == num_bytes && fs.good())) {
     fs.close();

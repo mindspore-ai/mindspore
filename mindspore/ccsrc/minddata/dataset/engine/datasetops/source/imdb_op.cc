@@ -200,7 +200,7 @@ Status IMDBOp::GetNumClasses(int64_t *num_classes) {
 Status IMDBOp::LoadFile(const std::string &file, std::shared_ptr<Tensor> *out_row) {
   RETURN_UNEXPECTED_IF_NULL(out_row);
 
-  std::ifstream handle(file, std::ios::in);
+  std::ifstream handle(file);
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }

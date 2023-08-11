@@ -341,15 +341,11 @@ Status DataSchema::ColumnLoad(nlohmann::json column_child_tree, const std::strin
 Status DataSchema::LoadSchemaFile(const std::string &schema_file_path,
                                   const std::vector<std::string> &columns_to_load) {
   try {
-    std::ifstream in(schema_file_path, std::ifstream::in);
+    std::ifstream in(schema_file_path);
 
     nlohmann::json js;
     in >> js;
-    auto s = PreLoadExceptionCheck(js);
-    if (s != Status::OK()) {
-      in.close();
-      return s;
-    }
+    RETURN_IF_NOT_OK(PreLoadExceptionCheck(js));
     try {
       num_rows_ = js.at("numRows").get<int64_t>();
     } catch (nlohmann::json::out_of_range &e) {
