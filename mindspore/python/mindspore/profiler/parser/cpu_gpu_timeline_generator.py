@@ -231,7 +231,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 gpu_start_time = int(lines[1].strip().split(':')[-1])
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         time_diff = gpu_start_time - host_monotonic_start_time
         for idx, time_item in enumerate(timeline_list):
@@ -258,7 +258,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                             communication_info.append(line_list)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when load operator timeline data intermediate file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return op_timeline_list, communication_info
 
@@ -324,7 +324,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                     step_num += 1
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return step_time_list
 
@@ -443,7 +443,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel, "Gpu", self._device_id)
         except (IOError, OSError) as err:
             logger.warning(err)
-            raise ProfilerIOException
+            raise ProfilerIOException from err
 
         res_timeline = []
         res_timeline.extend(comm_not_overlapped_timeline)

@@ -222,7 +222,7 @@ class FlopsParser:
                 all_log_struct = aicore_file.read(self.AICORE_LOG_SIZE * read_count)
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {aicore_file_path} file: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return read_count, all_log_struct
 
@@ -246,7 +246,7 @@ class FlopsParser:
                 peak_flops = device_frequency * 1e6 * ai_core_num * 4096 * 2
         except (IOError, OSError, json.JSONDecodeError) as err:
             logger.critical(f'Error occurred when read {info_json_file_path} file: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return peak_flops
 
@@ -304,7 +304,7 @@ class FlopsParser:
                     op_avg_time_dict[op_name] = avg_time
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {optime_file_path} file: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return op_avg_time_dict
 
@@ -396,7 +396,7 @@ class FlopsParser:
             os.chmod(output_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when writing {output_file_path} file: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         for key in self._flops_summary:
             self._flops_summary[key] = round(self._flops_summary[key], 3)
@@ -406,7 +406,7 @@ class FlopsParser:
             os.chmod(output_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when write {output_summary_file_path} file: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         try:
             with open(output_flops_scope_file_path, 'w') as json_file:
@@ -414,7 +414,7 @@ class FlopsParser:
             os.chmod(output_flops_scope_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when write {output_flops_scope_file_path} file: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
     def _get_aicore_files(self, profiler_dir):
         """Get aicore files."""

@@ -71,6 +71,6 @@ class AscendFPBPGenerator:
                 json.dump(self.points, json_file)
         except (IOError, OSError) as err:
             logging.critical('Errot occurred when write step trace point info file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         if os.path.exists(step_trace_point_info_path):
             os.chmod(step_trace_point_info_path, stat.S_IREAD | stat.S_IWRITE)

@@ -113,7 +113,7 @@ class AscendMsprofExporter:
         try:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE, text=True)
         except (FileNotFoundError, PermissionError, CalledProcessError) as exc:
-            raise RuntimeError(exc)
+            raise RuntimeError(exc) from exc
         try:
             outs, errs = proc.communicate(timeout=self._time_out)
         except TimeoutExpired:
@@ -121,7 +121,7 @@ class AscendMsprofExporter:
             msg = "The possible cause is that too much data is collected " \
                 "and the export time is too long."
             logger.error(msg)
-            raise TimeoutError(msg)
+            raise TimeoutError(msg) from TimeoutExpired
         logger.info(outs)
         if raise_error and errs != self._null_info:
             raise RuntimeError(errs)

@@ -89,6 +89,6 @@ class AscendStepTraceGenerator:
                 writer.writerows(self.steptrace_detail.tolist())
         except (IOError, OSError) as err:
             logging.critical('Errot occurred when write step trace file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         if os.path.exists(step_trace_intermediate_file_path):
             os.chmod(step_trace_intermediate_file_path, stat.S_IREAD | stat.S_IWRITE)

@@ -216,7 +216,7 @@ class BaseTimelineGenerator:
             return self._timeline_meta
         except (IOError, OSError) as err:
             logger.critical('Error occurred when write timeline display file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
     def write_timeline_summary(self):
         """Write timeline summary to json."""
@@ -233,7 +233,7 @@ class BaseTimelineGenerator:
                 json.dump(self._timeline_summary, json_file)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when write timeline summary file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         if os.path.exists(timeline_summary_file_path):
             os.chmod(timeline_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
 

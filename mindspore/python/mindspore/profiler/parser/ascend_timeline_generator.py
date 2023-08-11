@@ -276,7 +276,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 break
         except (IOError, OSError) as err:
             logger.critical('Error occurred when read dev_start.log: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         if host_monotonic == 0 or dev_cntvct == 0:
             logger.error('Error occurred when read host_monotonic or dev_cntvct time')
 
@@ -434,7 +434,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel, "Ascend", self._rank_id)
         except (IOError, OSError) as err:
             logger.warning(err)
-            raise ProfilerIOException
+            raise ProfilerIOException from err
 
     def _compute_time_inside_step(self, metric_timeline, step_time_list):
         """Compute per step time of metric_timeline."""

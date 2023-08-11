@@ -94,7 +94,7 @@ class AscendOPGenerator:
                     writer.writerows(self.op_detail.tolist())
             except (IOError, OSError) as err:
                 logging.critical('Errot occurred when write aicore detail file: %s', err)
-                raise ProfilerIOException()
+                raise ProfilerIOException() from err
             if os.path.exists(aicore_intermediate_detail_path):
                 os.chmod(aicore_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 
@@ -109,7 +109,7 @@ class AscendOPGenerator:
                     writer.writerows(self.op_type.tolist())
             except (IOError, OSError) as err:
                 logging.critical('Errot occurred when write aicore type file: %s', err)
-                raise ProfilerIOException()
+                raise ProfilerIOException() from err
             if os.path.exists(aicore_intermediate_type_path):
                 os.chmod(aicore_intermediate_type_path, stat.S_IREAD | stat.S_IWRITE)
 
@@ -139,7 +139,7 @@ class AscendOPGenerator:
                     writer.writerows(self.framework_raw.tolist())
             except (IOError, OSError) as err:
                 logging.critical('Errot occurred when write framework file: %s', err)
-                raise ProfilerIOException()
+                raise ProfilerIOException() from err
             if os.path.exists(framework_raw_path):
                 os.chmod(framework_raw_path, stat.S_IREAD | stat.S_IWRITE)
 
@@ -154,7 +154,7 @@ class AscendOPGenerator:
                     writer.writerows(self.output_timeline_data.tolist())
             except (IOError, OSError) as err:
                 logging.critical('Error occurred when write output timeline data file: %s', err)
-                raise ProfilerIOException()
+                raise ProfilerIOException() from err
             if os.path.exists(aicpu_intermediate_detail_path):
                 os.chmod(aicpu_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 

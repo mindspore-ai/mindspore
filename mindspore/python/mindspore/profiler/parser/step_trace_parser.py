@@ -246,7 +246,7 @@ class BaseStepTraceParser:
             os.chmod(self._output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             log.warning('Failed to save step trace raw info. %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException from err
 
 
 class GpuStepTraceParser(BaseStepTraceParser):
@@ -288,7 +288,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
                 self.get_fp_bp(f_obj, all_step_fp, all_step_bp)
         except (IOError, OSError) as err:
             log.warning(f'Failed to read {self._source_file_path}', err)
-            raise ProfilerIOException
+            raise ProfilerIOException from err
 
         for fp_name, bp_name in zip(all_step_fp, all_step_bp):
             if self._is_training_mode:
@@ -311,7 +311,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
             os.chmod(output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             log.warning('Failed to save point info. %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException from err
 
         return all_step_points[0]
 
@@ -351,7 +351,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
                 step_trace_info_all.insert(iter_start, iter_start_info)
         except (IOError, OSError) as err:
             log.warning(f'Failed to read {source_file}', err)
-            raise ProfilerIOException
+            raise ProfilerIOException from err
         finally:
             pass
 
@@ -423,7 +423,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
 
         except (IOError, OSError) as err:
             log.warning(f'Failed to read {self._source_file_path}', err)
-            raise ProfilerIOException
+            raise ProfilerIOException from err
 
         self._record_average_info()
         log.info("Finish to parse step trace file.")
