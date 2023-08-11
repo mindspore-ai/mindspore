@@ -15,6 +15,7 @@
  */
 
 #include "utils/system/file_system.h"
+#include "utils/file_utils.h"
 
 #if defined(SYSTEM_ENV_POSIX)
 #include <sys/stat.h>
@@ -42,6 +43,7 @@ WriteFilePtr PosixFileSystem::CreateWriteFile(const string &file_name, const cha
     MS_LOG(ERROR) << "Open the write file(" << file_name << ") failed.";
     return nullptr;
   }
+  ChangeFileMode(file_name, S_IWUSR | S_IRUSR);
   return fp;
 }
 
@@ -120,6 +122,7 @@ WriteFilePtr WinFileSystem::CreateWriteFile(const string &file_name, const char 
     MS_LOG(ERROR) << "Open the write file(" << file_name << ") failed.";
     return nullptr;
   }
+  ChangeFileMode(file_name, S_IWUSR | S_IRUSR);
   return fp;
 }
 
