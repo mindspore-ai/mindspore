@@ -198,7 +198,7 @@ class FlashAttention(Cell):
                 "query, key, value seq_len must be a multiple of 16, and key seq_len, value seq_len must be the same.")
         if self.dropout_rate > 1e-5:
             drop_mask_bits = self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob)
-            tensor_shape = Tensor((bsz, head_num, seq_len, seq_len), mstype.int32)
+            tensor_shape = (bsz, head_num, seq_len, seq_len)
             ones = self.fill_v2(tensor_shape, self.tensor_one)
             ones = self.depend(ones, query)
             drop_mask = self.do_dropout(ones, drop_mask_bits, self.keep_prob)
