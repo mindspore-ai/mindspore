@@ -14,8 +14,11 @@
 # ============================================================================
 """Parse ast.ClassDef which is subclass of Cell to SymbolTree."""
 import sys
-import ast
+import os
 import inspect
+from typing import Union
+import ast
+import astunparse
 from mindspore import log as logger
 from mindspore.nn import Cell
 from mindspore._extends.parse.namespace import CellNamespace
@@ -24,6 +27,7 @@ from ..parser import Parser
 from ..parser_register import ParserRegister, reg_parser
 from ..ast_helpers import AstReplacer
 from ..common import error_str
+from ..parsers.module_parser import ModuleParser
 
 
 class AstScopeChecker:
@@ -112,19 +116,36 @@ class ClassDefParser(Parser):
         self._cell_namespace = CellNamespace('mindspore.nn')
 
     @staticmethod
-    def _is_super_expr(expr: ast.AST) -> bool:
-        """Check whether ast node is super().__init__()"""
-        if not isinstance(expr, ast.Expr):
-            return False
-        if not isinstance(expr.value, ast.Call):
-            return False
-        if not isinstance(expr.value.func, ast.Attribute):
-            return False
-        if expr.value.func.attr != "__init__" or not isinstance(expr.value.func.value, ast.Call):
-            return False
-        if not isinstance(expr.value.func.value.func, ast.Name) or expr.value.func.value.func.id != "super":
-            return False
-        return True
+    def _process_init_func_ast(init_ast: ast.FunctionDef, father_classes: list, class_name: str):
+        """Process init func"""
+        ClassDefParser._modify_arguments_of_init_func(init_ast)
+        new_bodies = ClassDefParser._create_bodys_of_init_func(father_classes, class_name)
+        init_ast.body = new_bodies
+
+    @staticmethod
+    def _create_bodys_of_init_func(father_classes: [], class_name: str):
+        """Modify bodys of init func."""
+        new_bodies = []
+        # update father class init in new class
+        father_class_init_bodies = ClassDefParser._father_class_init_process(father_classes)
+        new_bodies.extend(father_class_init_bodies)
+        # copy instance variables into new class
+        ast_copy_attr = ast.parse(
+            "for key, value in obj.__dict__.items(): setattr(self, key, value)").body[0]
+        new_bodies.append(ast_copy_attr)
+        return new_bodies
+
+    @staticmethod
+    def _father_class_init_process(father_classes: []) -> [ast.AST]:
+        """Add father class init ast bodies."""
+        father_class_init_bodies = []
+        for father_class in father_classes:
+            if father_class == "Cell" or ".Cell" in father_class:
+                father_class_init_ast = ast.parse("super().__init__()").body[0]
+            else:
+                father_class_init_ast = ast.parse(f"{father_class}.__init__(self, obj)").body[0]
+            father_class_init_bodies.append(father_class_init_ast)
+        return father_class_init_bodies
 
     @staticmethod
     def _modify_arguments_of_init_func(ast_init_fn: ast.FunctionDef):
@@ -134,6 +155,131 @@ class ClassDefParser(Parser):
         ast_init_fn.args = ast.arguments(args=[arg_self, arg_global_vars], posonlyargs=[], kwonlyargs=[],
                                          kw_defaults=[], defaults=[], vararg=None, kwarg=None)
         ast.fix_missing_locations(ast_init_fn)
+
+    @staticmethod
+    def get_ast_name(ast_node: Union[ast.Name, ast.Attribute]) -> str:
+        """Get ast id name"""
+        if isinstance(ast_node, ast.Name):
+            return ast_node.id
+        if isinstance(ast_node, ast.Attribute):
+            return ast_node.attr
+        return ""
+
+    @staticmethod
+    def _process_class_variables_name(stree: SymbolTree, var_name_ast: ast.Name, class_def: type):
+        """Process name type of class variables"""
+        # find class variables with type of variable name.
+        var_name = ClassDefParser.get_ast_name(var_name_ast.value)
+        if not var_name:
+            logger.error(f"For MindSpore Rewrite, during process class variables, get variable name from "
+                         f"{astunparse.unparse(var_name_ast)} failed")
+            return
+        # get class source code
+        father_class_file = inspect.getfile(class_def)
+        if not os.path.exists(father_class_file):
+            logger.error(f"For MindSpore Rewrite, during process class variables, class code file "
+                         f"{father_class_name}:{father_class_file} not exist")
+            return
+        try:
+            with open(father_class_file, "r", encoding="utf-8") as f:
+                source_code = f.read()
+        except RuntimeError as err:
+            logger.error(f"For MindSpore Rewrite, during process class variables, read source code "
+                         f"from file {father_class_name}:{father_class_file} failed: {err}")
+            return
+        # find definition of variables in class source file.
+        ast_module: ast.Module = ast.parse(source_code)
+        for body in ast_module.body:
+            # variable is defined by assign statement.
+            if isinstance(body, ast.Assign):
+                for target in body.targets:
+                    target_name = ClassDefParser.get_ast_name(target)
+                    if target_name and var_name == target_name:
+                        stree.get_external_ast().append(body)
+                        return
+            # variable is type of function.
+            if isinstance(body, ast.FunctionDef):
+                if var_name == body.name:
+                    stree.get_external_ast().append(body)
+                    return
+        logger.info(f"For MindSpore Rewrite, during process class variables, get source code "
+                    f"of class variable {var_name} from {astunparse.unparse(var_name_ast)} failed.")
+        return
+
+    @staticmethod
+    def _process_class_variables(stree: SymbolTree, class_ast: ast.ClassDef, class_def: type):
+        """Process class_variables of class"""
+        class_bodies = []
+        class_bodies.extend(class_ast.body)
+        while class_bodies:
+            body = class_bodies.pop()
+            if isinstance(body, ast.Assign) and isinstance(body.value, ast.Name):
+                ClassDefParser._process_class_variables_name(stree, body, class_def)
+            elif isinstance(body, (ast.If, ast.IfExp)):
+                # Process bodies in ast.If and ast.IfExp
+                class_bodies.extend(body.body)
+                class_bodies.extend(body.orelse)
+
+    @staticmethod
+    def _need_add_init_func(cls_ast: ast.ClassDef) -> bool:
+        """If the class don't have init func, we need to add an init func"""
+        for body in cls_ast.body:
+            if isinstance(body, ast.FunctionDef) and body.name == '__init__':
+                return False
+        return True
+
+    @staticmethod
+    def _add_init_func(cls_ast: ast.ClassDef):
+        """Add init func with super().__init__()"""
+        init_func_ast = ast.parse("def __init__(self): super().__init__()").body[0]
+        cls_ast.body.insert(0, init_func_ast)
+        ast.fix_missing_locations(cls_ast)
+
+    @staticmethod
+    def _process_father_classes(stree, node: ast.ClassDef) -> bool:
+        """Process father class."""
+        father_classes = []
+        for base in node.bases:
+            parser: Parser = ParserRegister.instance().get_parser(type(base))
+            father_class_name = parser.process(stree, base)
+            father_classes.append(father_class_name)
+            if father_class_name == "Cell" or ".Cell" in father_class_name:
+                continue
+            for k, m in sys.modules.items():
+                if k in ("_ast", "ast"):
+                    continue
+                if hasattr(m, father_class_name):
+                    father_class_def = getattr(m, father_class_name)
+                    if not inspect.isclass(father_class_def):
+                        continue
+                    ClassDefParser._process_one_father_class(stree, father_class_def, father_class_name)
+                    break
+            else:
+                logger.error(f"Get instance of father_class {father_class_name} failed during parsing ast.ClassDef.")
+        return father_classes
+
+    @staticmethod
+    def _process_one_father_class(stree: SymbolTree, father_class_def: type, father_class_name: str):
+        """Process one father class"""
+        # save father class's file path and imports into symbol tree
+        net_path = inspect.getfile(father_class_def)
+        ModuleParser.save_file_path_to_sys(stree, 0, net_path)
+        ModuleParser.save_imports_from_file(stree, net_path)
+        # get father class's ast
+        source_code = inspect.getsource(father_class_def)
+        father_class_ast: ast.ClassDef = ast.parse(source_code).body[0]
+        # process father class's father classes
+        father_classes = ClassDefParser._process_father_classes(stree, father_class_ast)
+        # process father class's class variables
+        ClassDefParser._process_class_variables(stree, father_class_ast, father_class_def)
+        # process father class's __init__ function
+        if ClassDefParser._need_add_init_func(father_class_ast):
+            ClassDefParser._add_init_func(father_class_ast)
+        for body in father_class_ast.body:
+            if isinstance(body, ast.FunctionDef) and body.name == "__init__":
+                ClassDefParser._process_init_func_ast(body, father_classes, father_class_ast.name)
+        # save father class's ast into symbol tree
+        stree.get_father_class_ast().append(father_class_ast)
 
     def target(self):
         """Parse target type"""
@@ -147,19 +293,25 @@ class ClassDefParser(Parser):
             stree ([SymbolTree]): Symbol Tree under parsing.
             node ([ast.ClassDef]): An ast.ClassDef node.
         """
+        # Update network's class name from xxx to xxxOpt in ast
         replacer = AstReplacer(node)
         replacer.replace_all(stree.get_ori_cls_name(), stree.get_opt_cls_name())
 
-        stree.set_class_ast(node)
-        has_father_class = self._handle_father_class(stree, node)
+        # process network's class variables
+        ClassDefParser._process_class_variables(stree, node, type(stree.get_origin_network()))
 
-        if self._need_add_init_func(stree, node):
-            self._add_init_func(node)
+        # process network's father classes
+        stree.set_class_ast(node)
+        father_classes = ClassDefParser._process_father_classes(stree, node)
+
+        # add __init__ function to network if necessary
+        if isinstance(stree.get_origin_network(), Cell) and ClassDefParser._need_add_init_func(node):
+            ClassDefParser._add_init_func(node)
 
         for body in node.body:
             if isinstance(body, ast.FunctionDef):
                 if body.name == "__init__":
-                    self._process_init_func_ast(body, has_father_class)
+                    ClassDefParser._process_init_func_ast(body, father_classes, stree.get_opt_cls_name())
                     stree.set_init_func_ast(body)
                 elif body.name == "construct":
                     parser: Parser = ParserRegister.instance().get_parser(ast.FunctionDef)
@@ -170,93 +322,5 @@ class ClassDefParser(Parser):
                         body.name)
             else:
                 logger.info("Ignoring unsupported node(%s) in ast.ClassDef.", type(body).__name__)
-
-    def _is_subtree_field(self, ori_net, field) -> bool:
-        op = getattr(ori_net, field)
-        return not type(op).__name__ in self._cell_namespace
-
-    def _process_init_func_ast(self, init_ast: ast.FunctionDef, has_father_class: bool):
-        """Process init func"""
-        ClassDefParser._modify_arguments_of_init_func(init_ast)
-        new_bodies = self._replace_ori_field_of_init_func(init_ast.body, has_father_class)
-        init_ast.body = new_bodies
-
-    def _need_add_init_func(self, stree: SymbolTree, cls_ast: ast.ClassDef) -> bool:
-        """If class is child class of nn.Cell but not have init func, then we need to add init func"""
-        if not isinstance(stree.get_origin_network(), Cell):
-            return False
-        for body in cls_ast.body:
-            if isinstance(body, ast.FunctionDef) and body.name == '__init__':
-                return False
-        return True
-
-    def _add_init_func(self, cls_ast: ast.ClassDef):
-        """Add init func with super().__init__()"""
-        init_func_ast = ast.parse("def __init__(self): super().__init__()").body[0]
-        cls_ast.body.insert(0, init_func_ast)
-        ast.fix_missing_locations(cls_ast)
-
-    def _replace_ori_field_of_init_func(self, bodies: [], has_father_class: bool):
-        """
-        Replace original field in init func to self.XX = getattr(self._handler, "XX").
-        Only keep following two kinds of ast nodes in bodies right now:
-            1. Ast.If and test is self.XX.
-            2. Ast.Assign and target is self.XX.
-
-        Args:
-            bodies ([]): bodied of init ast.FunctionDef.
-            has_father_class (bool): whether class has father class that is subclass of nn.Cell
-
-        Raises:
-            RuntimeError: Not support multi-targets in assign.
-            RuntimeError: Only support target.value in [ast.Name] in assign node.
-        """
-        new_bodies = []
-        for body in bodies:
-            if self._is_super_expr(body):
-                if has_father_class:
-                    body.value.args = [ast.Name(id='obj', ctx=ast.Load())]
-                    body.value.keywords = []
-                new_bodies.append(body)
-                continue
-        ast_copy_attr = ast.parse(
-            "for key, value in obj.__dict__.items(): setattr(self, key, value)").body[0]
-        new_bodies.append(ast_copy_attr)
-        return new_bodies
-
-    def _handle_father_class(self, stree, node: ast.ClassDef) -> bool:
-        """Handle father class."""
-        has_father_class = False
-        for base in node.bases:
-            parser: Parser = ParserRegister.instance().get_parser(type(base))
-            father_class = parser.process(stree, base)
-            if "Cell" not in father_class:
-                for k, m in sys.modules.items():
-                    if k in ("_ast", "ast"):
-                        continue
-                    if hasattr(m, father_class):
-                        cls_def = getattr(m, father_class)
-                        if not inspect.isclass(cls_def):
-                            continue
-                        source_code = inspect.getsource(cls_def)
-                        father_class_ast: ast.Module = ast.parse(source_code)
-                        self._father_class_process_init_func_ast(stree, father_class_ast)
-                        stree._father_class_ast.append(father_class_ast) # pylint: disable=protected-access
-                        if issubclass(cls_def, Cell):
-                            has_father_class = True
-                        break
-        return has_father_class
-
-    def _father_class_process_init_func_ast(self, stree: SymbolTree, father_class_ast: ast.Module):
-        father_class_stree: SymbolTree = SymbolTree(stree.get_origin_network(), father_class_ast)
-        for ast_body in father_class_ast.body:
-            if isinstance(ast_body, ast.ClassDef):
-                has_father_class = self._handle_father_class(stree, ast_body)
-                if self._need_add_init_func(father_class_stree, ast_body):
-                    self._add_init_func(ast_body)
-                for body in ast_body.body:
-                    if isinstance(body, ast.FunctionDef) and body.name == "__init__":
-                        self._process_init_func_ast(body, has_father_class)
-
 
 g_classdef_parser = reg_parser(ClassDefParser())

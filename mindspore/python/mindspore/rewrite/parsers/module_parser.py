@@ -69,17 +69,15 @@ class ModuleParser(Parser):
         return import_nodes
 
     @staticmethod
-    def _save_net_file_path(stree, level_num):
+    def save_file_path_to_sys(stree, level_num, file_path):
         """
-        Save net file path into stree._import_asts. `level_num` is used when level exist in ast.ImportFrom.
+        Save file path into stree._import_asts. `level_num` is used when level exist in ast.ImportFrom.
 
         When level_num = 0(e.g. from xxx import yyy), current path will be saved.
         When level_num = 1(e.g. from .xxx import yyy), current path will be saved.
         When level_num = 2(e.g. from ..xxx import yyy), the path one level above the current path will be saved.
         """
-        origin_net_file = inspect.getfile(type(stree.get_origin_network()))
-        file_full_path = os.path.abspath(origin_net_file)
-        file_path = os.path.dirname(file_full_path)
+        file_path = os.path.dirname(os.path.abspath(file_path))
         if level_num > 1:
             for _ in range(level_num - 1):
                 file_path = os.path.dirname(file_path)
@@ -97,14 +95,18 @@ class ModuleParser(Parser):
                                                       names=[ast.alias(name='Cell', asname=None)], level=0))
         stree.get_import_asts().append(ast.ImportFrom(module='mindspore.ops',
                                                       names=[ast.alias(name='functional', asname='F')], level=0))
-        ModuleParser._save_net_file_path(stree, 0)
         origin_net = stree.get_origin_network()
-        origin_net_source_code_file = inspect.getfile(type(origin_net))
-        if not os.path.exists(origin_net_source_code_file):
-            raise RuntimeError("For MindSpore Rewrite, in module parser, File ", origin_net_source_code_file,
-                               " not exist")
+        net_path = inspect.getfile(type(origin_net))
+        ModuleParser.save_file_path_to_sys(stree, 0, net_path)
+        ModuleParser.save_imports_from_file(stree, net_path)
+
+    @staticmethod
+    def save_imports_from_file(stree, file_path):
+        """Save imports from file"""
+        if not os.path.exists(file_path):
+            raise RuntimeError(f"For MindSpore Rewrite, in module parser, file {file_path} not exist.")
         try:
-            with open(origin_net_source_code_file, "r", encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 source_code = f.read()
                 import_nodes = ModuleParser._get_import_node(ast.parse(source_code))
         except RuntimeError as err:
@@ -115,7 +117,7 @@ class ModuleParser(Parser):
                     if import_node.level > 1:
                         # For ImportFrom with dots(e.g. from ..file import abc), dot will be removed.
                         # The corresponding path will be saved into sys.path according to `import_node.level`.
-                        ModuleParser._save_net_file_path(stree, import_node.level)
+                        ModuleParser.save_file_path_to_sys(stree, import_node.level, file_path)
                     import_node.level = 0
                 stree.get_import_asts().append(import_node)
 

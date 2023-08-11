@@ -339,7 +339,8 @@ class AssignParser(Parser):
         new_ast = ast.parse(new_code).body[0]
         stree.get_init_func_ast().body.append(new_ast)
 
-    def _cell_container_process(self, ast_node, stree, targets, func, call_args, call_kwargs, op_name, container_obj):
+    @staticmethod
+    def cell_container_process(ast_node, stree, targets, func, call_args, call_kwargs, op_name, container_obj):
         """ parse cell container object."""
         cell_container = CellContainer(ast_node, targets, func, call_args, call_kwargs, op_name, container_obj)
         cell_container.set_belong_symbol_tree(stree)
@@ -365,28 +366,27 @@ class AssignParser(Parser):
                 sub_node.set_arg_providers(0, (cell_container.node_list[i-1], 0))
         return cell_container
 
-    def _process_external_function(self, stree, func_name):
+    @staticmethod
+    def process_external_function(stree, func_name, file_path):
         """
         Process external function.
-        Only external function defined in origin_net's file will be saved.
+        Only external function defined in specifical file_path will be saved.
         """
-        origin_net = stree.get_origin_network()
-        origin_net_source_code_file = inspect.getfile(type(origin_net))
-        if not os.path.exists(origin_net_source_code_file):
-            raise RuntimeError("For MindSpore Rewrite, in assign parser, File ", origin_net_source_code_file,
-                               " not exist")
         for k, m in sys.modules.items():
             if k in ("_ast", "ast"):
                 continue
             if hasattr(m, func_name):
                 func = getattr(m, func_name)
+                if not inspect.isfunction(func):
+                    continue
                 func_source_code_file = inspect.getfile(func)
-                if func_source_code_file != origin_net_source_code_file:
-                    return None, None
+                if func_source_code_file != file_path:
+                    continue
                 source_code = inspect.getsource(func)
                 ast_root: ast.Module = ast.parse(source_code)
-                stree.get_external_func_ast().append(ast_root.body[0]) # pylint: disable=protected-access
+                stree.get_external_ast().append(ast_root.body[0])
                 return func, ast_root.body[0]
+        logger.error(f"Get ast of function {func_name} from {file_path} failed.")
         return None, None
 
     def _process_internal_function(self, stree: SymbolTree, func_name):
@@ -442,12 +442,16 @@ class AssignParser(Parser):
                 node = self._create_func_subtree(func, targets, father_ast_node, ast_node, call_args, call_kwargs,
                                                  func_name)
             else:
-                func, ast_node = self._process_external_function(stree, func_name)
+                origin_net_file = inspect.getfile(type(stree.get_origin_network()))
+                if not os.path.exists(origin_net_file):
+                    raise RuntimeError(f"For MindSpore Rewrite, in assign parser, origin_net_file "
+                                       f"{origin_net_file} not exist")
+                func, ast_node = AssignParser.process_external_function(stree, func_name, origin_net_file)
                 raise RuntimeError("External function rewrite not supported, fallback to python node.")
             return node
         if isinstance(op, SequentialCell):
-            node = self._cell_container_process(father_ast_node, stree, targets, func, call_args, call_kwargs,
-                                                func_name, op)
+            node = AssignParser.cell_container_process(father_ast_node, stree, targets, func, call_args, call_kwargs,
+                                                       func_name, op)
             return node
         if isinstance(op, Primitive):
             return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, call_kwargs, func_name)
