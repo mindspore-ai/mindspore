@@ -78,7 +78,7 @@ class AscendFlopsGenerator:
                 writer.writerows(self.flops.tolist())
         except (IOError, OSError) as err:
             logging.critical('Errot occurred when write flops file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         if os.path.exists(flops_path):
             os.chmod(flops_path, stat.S_IREAD | stat.S_IWRITE)
 
@@ -89,6 +89,6 @@ class AscendFlopsGenerator:
                 json.dump(self.flops_summary, json_file)
         except (IOError, OSError) as err:
             logging.critical('Errot occurred when write step trace point info file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         if os.path.exists(flops_summary_path):
             os.chmod(flops_summary_path, stat.S_IREAD | stat.S_IWRITE)

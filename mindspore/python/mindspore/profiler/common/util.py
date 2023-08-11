@@ -23,6 +23,7 @@ import os
 import re
 import stat
 
+from mindspore import log as logger
 
 def to_int(param, param_name):
     """
@@ -80,9 +81,9 @@ def fwrite_format(output_data_path, data_source=None, is_print=False, is_start=F
                 if isinstance(raw_data, (list, tuple)):
                     raw_data = map(str, raw_data)
                     raw_data = " ".join(raw_data)
-                print(raw_data)
+                logger.info(raw_data)
         else:
-            print(data_source)
+            logger.info(data_source)
 
 
 def get_log_slice_id(file_name):

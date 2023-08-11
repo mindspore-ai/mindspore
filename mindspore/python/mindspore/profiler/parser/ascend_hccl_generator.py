@@ -173,7 +173,7 @@ class AscendHCCLGenerator:
                 writer.writerows(self.hccl_raw)
         except (IOError, OSError) as err:
             logging.critical('Errot occurred when write aicore detail file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         if os.path.exists(hccl_raw_path):
             os.chmod(hccl_raw_path, stat.S_IREAD | stat.S_IWRITE)
 
