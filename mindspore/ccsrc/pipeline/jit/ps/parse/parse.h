@@ -383,14 +383,22 @@ class Parser {
   bool CheckUnaryOpConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
   bool CheckCompareConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
   bool CheckBoolOpConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
-  bool CompareIs(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
-  bool CompareIsNot(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
-  bool CompareEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
-  bool CompareNotEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
-  bool CompareGreater(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
-  bool CompareGreaterEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
-  bool CompareLess(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
-  bool CompareLessEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
+  bool CompareIs(const FunctionBlockPtr &, const py::object &left_obj, const py::object &comparator_obj,
+                 bool *bool_res) const;
+  bool CompareIsNot(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
+                    bool *bool_res) const;
+  bool CompareEqual(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
+                    bool *bool_res) const;
+  bool CompareNotEqual(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
+                       bool *bool_res) const;
+  bool CompareGreater(const FunctionBlockPtr &, const py::object &left_obj, const py::object &comparator_obj,
+                      bool *bool_res) const;
+  bool CompareGreaterEqual(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
+                           bool *bool_res) const;
+  bool CompareLess(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
+                   bool *bool_res) const;
+  bool CompareLessEqual(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
+                        bool *bool_res) const;
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
@@ -409,8 +417,8 @@ class Parser {
   std::vector<FunctionBlockPtr> func_block_list_;
   using StmtFunc = FunctionBlockPtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
   using ExprFunc = AnfNodePtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
-  using CompareFunc = bool (Parser::*)(const py::object &left_obj, const py::object &comparator_obj,
-                                       bool *bool_res) const;
+  using CompareFunc = bool (Parser::*)(const FunctionBlockPtr &block, const py::object &left_obj,
+                                       const py::object &comparator_obj, bool *bool_res) const;
   using ConditionFunc = bool (Parser::*)(const FunctionBlockPtr &block, const py::object &test_node,
                                          bool *is_true_cond) const;
   // Define the function map to parse ast Statement.

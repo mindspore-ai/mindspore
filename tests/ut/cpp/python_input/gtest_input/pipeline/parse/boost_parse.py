@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+from mindspore import Tensor
+
 
 class FnDict:
     def __init__(self):
@@ -53,7 +55,7 @@ def test_compare(tag):
         return x + x
 
     @fns
-    def equal(x, y):
+    def equal_num(x, y):
         z = 1
         if z == 1:
             x = x + y
@@ -62,8 +64,35 @@ def test_compare(tag):
         return x + x
 
     @fns
-    def not_equal(x, y):
+    def equal_str(x, y):
+        z = "abc"
+        if z == "abc":
+            x = x + y
+        else:
+            x = x - y
+        return x + x
+
+    @fns
+    def equal_tensor(x, y):
+        z = Tensor(2)
+        if z == Tensor(2):
+            x = x + y
+        else:
+            x = x - y
+        return x + x
+
+    @fns
+    def not_equal_num1(x, y):
         z = 2
+        if z != 1:
+            x = x + y
+        else:
+            x = x - y
+        return x + x
+
+    @fns
+    def not_equal_num2(x, y):
+        z = None
         if z != 1:
             x = x + y
         else:

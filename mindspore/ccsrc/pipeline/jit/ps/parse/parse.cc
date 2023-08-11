@@ -1360,10 +1360,9 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   return {};
 }
 
-namespace {
-bool HandleIs(const std::shared_ptr<ParseFunctionAst> &ast, const py::object &left_obj,
-              const py::object &comparator_obj, bool *bool_res) {
-  auto comparator_type_name = ast->GetNodeType(comparator_obj)->node_name();
+bool Parser::CompareIs(const FunctionBlockPtr &, const py::object &left_obj, const py::object &comparator_obj,
+                       bool *bool_res) const {
+  auto comparator_type_name = ast_->GetNodeType(comparator_obj)->node_name();
   if (comparator_type_name != "NameConstant") {
     return false;
   }
@@ -1380,13 +1379,28 @@ bool HandleIs(const std::shared_ptr<ParseFunctionAst> &ast, const py::object &le
   return false;
 }
 
-bool HandleEqual(const std::shared_ptr<ParseFunctionAst> &ast, const py::object &left_obj,
-                 const py::object &comparator_obj, bool *bool_res) {
-  auto comparator_type_name = ast->GetNodeType(comparator_obj)->node_name();
-  if (comparator_type_name != "Num" && comparator_type_name != "Str") {
+bool Parser::CompareIsNot(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
+                          bool *bool_res) const {
+  if (!CompareIs(block, left_obj, comparator_obj, bool_res)) {
     return false;
   }
-  if (comparator_type_name == "Num" && (py::isinstance<py::int_>(left_obj) || py::isinstance<py::float_>(left_obj))) {
+  *bool_res = !(*bool_res);
+  return true;
+}
+
+bool Parser::CompareEqual(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
+                          bool *bool_res) const {
+  auto left_obj_type_name = ast_->GetNodeType(left_obj)->node_name();
+  if (left_obj_type_name == "Tensor" || left_obj_type_name == "Parameter") {
+    return false;
+  }
+  auto comparator_type_name = ast_->GetNodeType(comparator_obj)->node_name();
+  MS_LOG(DEBUG) << "comparator_type_name: " << comparator_type_name;
+  if (comparator_type_name == "Num") {
+    if (!py::isinstance<py::int_>(left_obj) && !py::isinstance<py::float_>(left_obj)) {
+      *bool_res = false;
+      return true;
+    }
     py::object num_value = python_adapter::GetPyObjAttr(comparator_obj, "n");
     MS_LOG(DEBUG) << "num_value: " << py::str(num_value);
     if (!py::isinstance<py::int_>(num_value) && !py::isinstance<py::float_>(num_value)) {
@@ -1395,18 +1409,49 @@ bool HandleEqual(const std::shared_ptr<ParseFunctionAst> &ast, const py::object 
     *bool_res = left_obj.equal(num_value);
     return true;
   }
-  if (py::isinstance<py::str>(left_obj)) {
+  if (comparator_type_name == "Str") {
+    if (!py::isinstance<py::str>(left_obj)) {
+      *bool_res = false;
+      return true;
+    }
     py::object str_value = python_adapter::GetPyObjAttr(comparator_obj, "s");
     auto left_obj_str = left_obj.cast<std::string>();
     *bool_res = (left_obj_str == str_value.cast<std::string>());
     return true;
   }
+  if (comparator_type_name == "NameConstant") {
+    py::object name_constant_value = python_adapter::GetPyObjAttr(comparator_obj, "value");
+    MS_LOG(DEBUG) << "name_constant_value: " << py::str(name_constant_value);
+    if (!py::isinstance<py::none>(name_constant_value)) {
+      return false;
+    }
+    *bool_res = py::isinstance<py::none>(left_obj);
+    return true;
+  }
+  if (comparator_type_name == "Attribute") {
+    bool is_constant;
+    auto attr_cond = GetPyObjForAstAttr(block, comparator_obj, &is_constant);
+    if (!is_constant) {
+      return false;
+    }
+    *bool_res = left_obj.equal(attr_cond);
+    return true;
+  }
   return false;
 }
 
-bool HandleGreater(const std::shared_ptr<ParseFunctionAst> &ast, const py::object &left_obj,
-                   const py::object &comparator_obj, bool *bool_res) {
-  auto comparator_type_name = ast->GetNodeType(comparator_obj)->node_name();
+bool Parser::CompareNotEqual(const FunctionBlockPtr &block, const py::object &left_obj,
+                             const py::object &comparator_obj, bool *bool_res) const {
+  if (!CompareEqual(block, left_obj, comparator_obj, bool_res)) {
+    return false;
+  }
+  *bool_res = !(*bool_res);
+  return true;
+}
+
+bool Parser::CompareGreater(const FunctionBlockPtr &, const py::object &left_obj, const py::object &comparator_obj,
+                            bool *bool_res) const {
+  auto comparator_type_name = ast_->GetNodeType(comparator_obj)->node_name();
   if (comparator_type_name != "Num" || (!py::isinstance<py::int_>(left_obj) && !py::isinstance<py::float_>(left_obj))) {
     return false;
   }
@@ -1419,41 +1464,13 @@ bool HandleGreater(const std::shared_ptr<ParseFunctionAst> &ast, const py::objec
   *bool_res = (left_obj > num_value);
   return true;
 }
-}  // namespace
 
-bool Parser::CompareIs(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
-  return HandleIs(ast_, left_obj, comparator_obj, bool_res);
-}
-
-bool Parser::CompareIsNot(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
-  if (!HandleIs(ast_, left_obj, comparator_obj, bool_res)) {
-    return false;
-  }
-  *bool_res = !(*bool_res);
-  return true;
-}
-
-bool Parser::CompareEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
-  return HandleEqual(ast_, left_obj, comparator_obj, bool_res);
-}
-
-bool Parser::CompareNotEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
-  if (!HandleEqual(ast_, left_obj, comparator_obj, bool_res)) {
-    return false;
-  }
-  *bool_res = !(*bool_res);
-  return true;
-}
-
-bool Parser::CompareGreater(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
-  return HandleGreater(ast_, left_obj, comparator_obj, bool_res);
-}
-
-bool Parser::CompareGreaterEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+bool Parser::CompareGreaterEqual(const FunctionBlockPtr &block, const py::object &left_obj,
+                                 const py::object &comparator_obj, bool *bool_res) const {
   bool greater = false;
   bool equal = false;
-  if (!HandleGreater(ast_, left_obj, comparator_obj, &greater) ||
-      !HandleEqual(ast_, left_obj, comparator_obj, &equal)) {
+  if (!CompareGreater(block, left_obj, comparator_obj, &greater) ||
+      !CompareEqual(block, left_obj, comparator_obj, &equal)) {
     return false;
   }
   if (greater || equal) {
@@ -1464,11 +1481,12 @@ bool Parser::CompareGreaterEqual(const py::object &left_obj, const py::object &c
   return true;
 }
 
-bool Parser::CompareLess(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+bool Parser::CompareLess(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
+                         bool *bool_res) const {
   bool greater = false;
   bool equal = false;
-  if (!HandleGreater(ast_, left_obj, comparator_obj, &greater) ||
-      !HandleEqual(ast_, left_obj, comparator_obj, &equal)) {
+  if (!CompareGreater(block, left_obj, comparator_obj, &greater) ||
+      !CompareEqual(block, left_obj, comparator_obj, &equal)) {
     return false;
   }
   if (greater || equal) {
@@ -1479,9 +1497,10 @@ bool Parser::CompareLess(const py::object &left_obj, const py::object &comparato
   return true;
 }
 
-bool Parser::CompareLessEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+bool Parser::CompareLessEqual(const FunctionBlockPtr &block, const py::object &left_obj,
+                              const py::object &comparator_obj, bool *bool_res) const {
   bool greater = false;
-  if (!HandleGreater(ast_, left_obj, comparator_obj, &greater)) {
+  if (!CompareGreater(block, left_obj, comparator_obj, &greater)) {
     return false;
   }
   if (greater) {
@@ -1540,8 +1559,7 @@ bool Parser::GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::ob
   if (comparators.size() != 1) {
     return false;
   }
-
-  return (this->*(func_iter->second))(left_obj, comparators[0], bool_res);
+  return (this->*(func_iter->second))(block, left_obj, comparators[0], bool_res);
 }
 
 py::object Parser::GetPyObjForAstAttr(const FunctionBlockPtr &block, const py::object &attr_ast_node,
@@ -1583,17 +1601,14 @@ py::object Parser::GetPyObjForAstAttr(const FunctionBlockPtr &block, const py::o
     }
     py_obj_attr_value = ast_->obj();
   }
-  if (!py::isinstance<py::none>(py_obj_attr_value)) {
-    auto attr_obj =
-      python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_ATTR_FROM_OBJ, py_obj_attr_value, py::str(attr_name));
-    if (!py::isinstance<py::none>(attr_obj)) {
-      *is_constant = true;
-      return attr_obj;
-    }
+  if (py::isinstance<py::none>(py_obj_attr_value) || !py::hasattr(py_obj_attr_value, py::str(attr_name))) {
+    MS_LOG(DEBUG) << "Not found object for attribute, attr_ast_node: " << py::str(attr_ast_node);
+    *is_constant = false;
+    return py::none();
   }
-  MS_LOG(DEBUG) << "Not found object for attribute, attr_ast_node: " << py::str(attr_ast_node);
-  *is_constant = false;
-  return py::none();
+  *is_constant = true;
+  return python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_ATTR_FROM_OBJ, py_obj_attr_value,
+                                     py::str(attr_name));
 }
 
 // Process function call, eg : f1(x, y) ...
