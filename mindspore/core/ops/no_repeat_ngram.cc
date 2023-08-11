@@ -61,6 +61,9 @@ abstract::ShapePtr NoRepeatNGramInferShape(const PrimitivePtr &primitive,
   constexpr int64_t kIndex0 = 0;
   constexpr int64_t kIndex1 = 1;
   constexpr int64_t kIndex2 = 2;
+  if (input_args.size() < 2) {
+    MS_LOG(EXCEPTION) << "The size of input_args is expected to be `2`, but found " << input_args.size();
+  }
   auto state_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto state_shape = state_shape_map[kShape];
   auto log_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());

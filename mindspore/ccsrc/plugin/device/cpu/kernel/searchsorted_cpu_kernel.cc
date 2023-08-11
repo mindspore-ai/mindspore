@@ -37,6 +37,7 @@ bool SearchSortedCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSearchSortedInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
   auto op_prim = std::dynamic_pointer_cast<ops::SearchSorted>(base_operator);
+  MS_ERROR_IF_NULL(op_prim);
   right_ = op_prim->get_right();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

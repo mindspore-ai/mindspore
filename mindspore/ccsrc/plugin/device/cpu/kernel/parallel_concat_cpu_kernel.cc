@@ -57,6 +57,9 @@ int ParallelConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     is_null_input_ = true;
   }
   input_num_ = inputs.size();
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input tensor is empty, which is not expected.";
+  }
   auto x_shape = inputs[0]->GetShapeVector();
   for (size_t i = 0; i < input_num_; i++) {
     if (x_shape != inputs[i]->GetShapeVector()) {

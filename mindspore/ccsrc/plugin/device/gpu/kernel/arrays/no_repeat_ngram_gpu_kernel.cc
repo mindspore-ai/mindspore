@@ -26,9 +26,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kNoRepeatNGramDim = 3;
 constexpr size_t kNoRepeatNGramInputNum = 2;
-constexpr int64_t kNoRepeatNGramParamValue = 1;
 }  // namespace
 bool NoRepeatNGramGpuKernelMode::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
