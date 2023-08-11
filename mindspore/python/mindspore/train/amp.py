@@ -19,8 +19,8 @@ import mindspore as ms
 from mindspore import nn
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
-from mindspore.nn.wrap.cell_wrapper import _TrainPipelineAccuStepCell
-from mindspore.nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
+from mindspore.nn.wrap.cell_wrapper import _TrainGradAccuStepCell
+from mindspore.nn.wrap.loss_scale import _TrainGradAccuWithLossScaleCell
 from mindspore.ops import functional as F
 from mindspore.parallel._utils import _get_pipeline_stages
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager
@@ -451,6 +451,13 @@ def _add_loss_network(network, loss_fn, cast_model_type):
         network = nn.WithLossCell(network, loss_fn)
     return network
 
+def _is_grad_accumulation(mcell):
+    if mcell.cls_name == "GradAccumulationCell":
+        return True
+    for cell in mcell.cells():
+        if _is_grad_accumulation(cell):
+            return True
+    return False
 
 def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs):
     """
@@ -551,8 +558,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
                 raise ValueError("Only `loss_scale_manager=None` or "
                                  "`loss_scale_manager=FixedLossScaleManager(drop_overflow_update=False)`"
                                  "are supported on device `CPU`. ")
-            if _get_pipeline_stages() > 1:
-                network = _TrainPipelineWithLossScaleCell(network, optimizer,
+            if _get_pipeline_stages() > 1 or _is_grad_accumulation(network):
+                network = _TrainGradAccuWithLossScaleCell(network, optimizer,
                                                           scale_sense=update_cell).set_train()
             elif enable_boost:
                 network = boost.BoostTrainOneStepWithLossScaleCell(network, optimizer,
@@ -561,8 +568,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
                 network = nn.TrainOneStepWithLossScaleCell(network, optimizer,
                                                            scale_sense=update_cell).set_train()
             return network
-    if _get_pipeline_stages() > 1:
-        network = _TrainPipelineAccuStepCell(network, optimizer).set_train()
+    if _get_pipeline_stages() > 1 or _is_grad_accumulation(network):
+        network = _TrainGradAccuStepCell(network, optimizer).set_train()
     elif enable_boost:
         network = boost.BoostTrainOneStepCell(network, optimizer, loss_scale).set_train()
     else:

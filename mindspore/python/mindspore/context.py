@@ -642,8 +642,8 @@ def _context():
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
-                 all_reduce_fusion_config=list, pipeline_stages=int, grad_accumulation_step=int,
-                 parallel_optimizer_config=dict, comm_fusion=dict, strategy_ckpt_config=dict)
+                 all_reduce_fusion_config=list, pipeline_stages=int, parallel_optimizer_config=dict,
+                 comm_fusion=dict, strategy_ckpt_config=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
     Set auto parallel context, only data parallel supported on CPU.
@@ -668,8 +668,7 @@ def set_auto_parallel_context(**kwargs):
     all_reduce_fusion_config     strategy_ckpt_save_file
     enable_parallel_optimizer    dataset_strategy
     parallel_optimizer_config    pipeline_stages
-    enable_alltoall              grad_accumulation_step
-               \                 auto_parallel_search_mode
+    enable_alltoall              auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config
     ===========================  ===========================
@@ -738,8 +737,7 @@ def set_auto_parallel_context(**kwargs):
                         distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
                         stages.
                         Default: ``1`` .
-        grad_accumulation_step (int): Set the accumulation steps of gradients in auto and semi auto parallel mode.
-                        This should be a positive int. Default: ``1`` .
+        grad_accumulation_step (int): This interface is deprecated. Default: ``1`` .
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
                         configure. The configure provides more detailed behavior control about parallel training
                         when parallel optimizer is enabled. Currently it supports the key `gradient_accumulation_shard`.

@@ -715,12 +715,12 @@ def _pipeline_clear_grad(accu_grad, grad):
     return F.assign(accu_grad, zeros)
 
 
-class _TrainPipelineAccuStepCell(TrainOneStepCell):
+class _TrainGradAccuStepCell(TrainOneStepCell):
     """
     Wraps the network with an optimizer in pipeline mode.
     """
     def __init__(self, network, optimizer, sens=None):
-        super(_TrainPipelineAccuStepCell, self).__init__(network, optimizer, sens)
+        super(_TrainGradAccuStepCell, self).__init__(network, optimizer, sens)
         self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
         self.hyper_map = ops.HyperMap()
         self.opt_shard = _get_enable_parallel_optimizer()
