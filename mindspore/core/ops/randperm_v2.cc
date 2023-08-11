@@ -91,21 +91,23 @@ abstract::ShapePtr RandpermV2InferShape(const PrimitivePtr &primitive, const std
   auto seed_value = input_args[kInputIndex1]->BuildValue();
   auto offset_value = input_args[kInputIndex2]->BuildValue();
 
-  if (!seed_value->isa<ValueAny>() && !seed_value->isa<None>()) {
-    auto seed = CheckAndConvertUtils::CheckTensorIntValue("seed", seed_value, prim_name)[0];
-    if (seed < 0 && seed != -1) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name
-                               << "', the input seed must be greater than 0 or equal to 0 or -1, but got data: " << seed
-                               << ".";
+  if (!n_value->isa<ValueAny>() && !n_value->isa<None>()) {
+    if (!seed_value->isa<ValueAny>() && !seed_value->isa<None>()) {
+      auto seed = CheckAndConvertUtils::CheckTensorIntValue("seed", seed_value, prim_name)[0];
+      if (seed < 0 && seed != -1) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', the input seed must be greater than 0 or equal to 0 or -1, but got data: "
+                                 << seed << ".";
+      }
     }
-  }
 
-  if (!offset_value->isa<ValueAny>() && !offset_value->isa<None>()) {
-    auto offset = CheckAndConvertUtils::CheckTensorIntValue("offset", offset_value, prim_name)[0];
-    if (offset < 0) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name
-                               << "', the input offset must be greater than or equal to 0, but got data: " << offset
-                               << ".";
+    if (!offset_value->isa<ValueAny>() && !offset_value->isa<None>()) {
+      auto offset = CheckAndConvertUtils::CheckTensorIntValue("offset", offset_value, prim_name)[0];
+      if (offset < 0) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', the input offset must be greater than or equal to 0, but got data: " << offset
+                                 << ".";
+      }
     }
   }
 
