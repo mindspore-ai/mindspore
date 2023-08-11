@@ -92,9 +92,9 @@ Status Multi30kOp::LoadFile(const std::string &file_en, int64_t start_offset, in
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + DatasetName() + " Dataset file: " + file_de + " does not exist.");
   }
 
-  std::ifstream handle_en(realpath_en.value());
+  std::ifstream handle_en(realpath_en.value(), std::ios::in);
   CHECK_FAIL_RETURN_UNEXPECTED(handle_en.is_open(), "Invalid file, failed to open en file: " + file_en);
-  std::ifstream handle_de(realpath_de.value());
+  std::ifstream handle_de(realpath_de.value(), std::ios::in);
   CHECK_FAIL_RETURN_UNEXPECTED(handle_de.is_open(), "Invalid file, failed to open de file: " + file_de);
 
   // Set path for path in class TensorRow.

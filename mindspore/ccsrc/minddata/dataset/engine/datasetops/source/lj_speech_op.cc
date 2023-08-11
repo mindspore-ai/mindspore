@@ -44,7 +44,7 @@ Status LJSpeechOp::PrepareData() {
   Path metadata_file_path = root_folder / "metadata.csv";
   CHECK_FAIL_RETURN_UNEXPECTED(metadata_file_path.Exists() && !metadata_file_path.IsDirectory(),
                                "Invalid file, failed to find LJSpeech metadata file: " + metadata_file_path.ToString());
-  std::ifstream csv_reader(metadata_file_path.ToString());
+  std::ifstream csv_reader(metadata_file_path.ToString(), std::ios::in);
   CHECK_FAIL_RETURN_UNEXPECTED(csv_reader.is_open(),
                                "Invalid file, failed to open LJSpeech metadata file: " + metadata_file_path.ToString() +
                                  ", make sure file not damaged or permission denied.");
@@ -126,7 +126,7 @@ Status LJSpeechOp::CountTotalRows(const std::string &dir, int64_t *count) {
   Path metadata_file_path = root_folder / "metadata.csv";
   CHECK_FAIL_RETURN_UNEXPECTED(metadata_file_path.Exists() && !metadata_file_path.IsDirectory(),
                                "Invalid file, failed to find metadata file: " + metadata_file_path.ToString());
-  std::ifstream csv_reader(metadata_file_path.ToString());
+  std::ifstream csv_reader(metadata_file_path.ToString(), std::ios::in);
   CHECK_FAIL_RETURN_UNEXPECTED(csv_reader.is_open(),
                                "Invalid file, failed to open metadata file: " + metadata_file_path.ToString() +
                                  ", make sure file not damaged or permission denied.");

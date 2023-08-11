@@ -17,7 +17,6 @@
 #include "minddata/dataset/engine/ir/datasetops/source/multi30k_node.h"
 
 #include <algorithm>
-#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>

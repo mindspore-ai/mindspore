@@ -16,7 +16,6 @@
 
 #include "minddata/dataset/engine/datasetops/source/gtzan_op.h"
 
-#include <fstream>
 #include <iomanip>
 #include <set>
 

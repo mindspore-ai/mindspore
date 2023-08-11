@@ -129,7 +129,7 @@ class MnistToMR:
     def _extract_images(self, filename):
         """Extract the images into a 4D tensor [image index, y, x, channels]."""
         real_file_path = os.path.realpath(filename)
-        with gzip.open(real_file_path) as bytestream:
+        with gzip.open(real_file_path, "rb") as bytestream:
             bytestream.read(16)
             buf = bytestream.read()
             data = np.frombuffer(buf, dtype=np.uint8)
@@ -139,7 +139,7 @@ class MnistToMR:
     def _extract_labels(self, filename):
         """Extract the labels into a vector of int64 label IDs."""
         real_file_path = os.path.realpath(filename)
-        with gzip.open(real_file_path) as bytestream:
+        with gzip.open(real_file_path, "rb") as bytestream:
             bytestream.read(8)
             buf = bytestream.read()
             labels = np.frombuffer(buf, dtype=np.uint8).astype(np.int64)

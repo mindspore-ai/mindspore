@@ -85,7 +85,7 @@ Status IWSLTOp::LoadTensor(const std::string &line, TensorRow *out_row, size_t i
 }
 
 Status IWSLTOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  std::ifstream handle(file);
+  std::ifstream handle(file, std::ifstream::in);
   std::string line;
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + " file: " + file);
@@ -111,13 +111,33 @@ Status IWSLTOp::LoadFile(const std::string &file, int64_t start_offset, int64_t 
     tRow.setPath({file, file});
 
     // Remove the newline character.
-    RETURN_IF_NOT_OK(Trim(&line, "\n"));
-    RETURN_IF_NOT_OK(Trim(&line, "\r"));
+    auto s = Trim(&line, "\n");
+    if (s != Status::OK()) {
+      handle.close();
+      return s;
+    }
+    s = Trim(&line, "\r");
+    if (s != Status::OK()) {
+      handle.close();
+      return s;
+    }
     std::vector<std::string> sentence_list = Split(line, "#*$");
     if (!sentence_list.empty() && sentence_list.size() == kColumnSize) {
-      RETURN_IF_NOT_OK(LoadTensor(sentence_list[0], &tRow, 0));
-      RETURN_IF_NOT_OK(LoadTensor(sentence_list[1], &tRow, 1));
-      RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(tRow)));
+      s = LoadTensor(sentence_list[0], &tRow, 0);
+      if (s != Status::OK()) {
+        handle.close();
+        return s;
+      }
+      s = LoadTensor(sentence_list[1], &tRow, 1);
+      if (s != Status::OK()) {
+        handle.close();
+        return s;
+      }
+      s = jagged_rows_connector_->Add(worker_id, std::move(tRow));
+      if (s != Status::OK()) {
+        handle.close();
+        return s;
+      }
       rows_total++;
     }
   }
@@ -194,7 +214,7 @@ void IWSLTOp::Print(std::ostream &out, bool show_all) const {
 }
 
 int64_t IWSLTOp::CountFileRows(const std::string &file) {
-  std::ifstream handle(file);
+  std::ifstream handle(file, std::ifstream::in);
   if (!handle.is_open()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
     return 0;
@@ -303,7 +323,7 @@ Status IWSLTOp::CleanXmlFile(const std::string &src_file_path, const std::string
   RETURN_IF_NOT_OK(LoadXmlDocument(&xml_document1, src_file_path, &src_doc));
   RETURN_IF_NOT_OK(LoadXmlDocument(&xml_document2, target_file_path, &target_doc));
   std::string src_content, target_content;
-  std::ofstream new_file(new_file_path);
+  std::ofstream new_file(new_file_path, std::ofstream::out);
   CHECK_FAIL_RETURN_UNEXPECTED(new_file.is_open(), "Invalid file, failed to open file: " + new_file_path);
 
   while (src_doc != nullptr && target_doc != nullptr) {
@@ -312,8 +332,16 @@ Status IWSLTOp::CleanXmlFile(const std::string &src_file_path, const std::string
     while (src_seg != nullptr && target_seg != nullptr) {
       src_content = src_seg->GetText();
       target_content = target_seg->GetText();
-      RETURN_IF_NOT_OK(Trim(&src_content, " "));
-      RETURN_IF_NOT_OK(Trim(&target_content, " "));
+      auto s = Trim(&src_content, " ");
+      if (s != Status::OK()) {
+        new_file.close();
+        return s;
+      }
+      s = Trim(&target_content, " ");
+      if (s != Status::OK()) {
+        new_file.close();
+        return s;
+      }
       src_seg = src_seg->NextSiblingElement();
       target_seg = target_seg->NextSiblingElement();
       new_file << (src_content + "#*$" + target_content + "\n");
@@ -323,6 +351,9 @@ Status IWSLTOp::CleanXmlFile(const std::string &src_file_path, const std::string
   }
 
   new_file.close();
+
+  ChangeFileMode(new_file_path, S_IRUSR | S_IWUSR);
+
   return Status::OK();
 }
 
@@ -342,22 +373,37 @@ bool IWSLTOp::IsContainTags(const std::string &content) {
 
 Status IWSLTOp::CleanTagFile(const std::string &src_file_path, const std::string &target_file_path,
                              const std::string &new_file_path) {
-  std::ifstream src_handle(src_file_path);
-  std::ifstream target_handle(target_file_path);
+  std::ifstream src_handle(src_file_path, std::ifstream::in);
+  std::ifstream target_handle(target_file_path, std::ifstream::in);
 
-  std::ofstream new_file(new_file_path, std::ios::trunc);
+  std::ofstream new_file(new_file_path, std::ios::out | std::ios::trunc);
   std::string src_content, target_content;
   while (getline(src_handle, src_content)) {
     while (getline(target_handle, target_content)) {
       if (!IsContainTags(src_content) && !IsContainTags(target_content)) {
-        RETURN_IF_NOT_OK(Trim(&src_content, " "));
-        RETURN_IF_NOT_OK(Trim(&target_content, " "));
+        auto s = Trim(&src_content, " ");
+        if (s != Status::OK()) {
+          src_handle.close();
+          target_handle.close();
+          new_file.close();
+          return s;
+        }
+        s = Trim(&target_content, " ");
+        if (s != Status::OK()) {
+          src_handle.close();
+          target_handle.close();
+          new_file.close();
+          return s;
+        }
         new_file << (src_content + "#*$" + target_content + "\n");
       }
       break;
     }
   }
   new_file.close();
+
+  ChangeFileMode(new_file_path, S_IRUSR | S_IWUSR);
+
   src_handle.close();
   target_handle.close();
   return Status::OK();

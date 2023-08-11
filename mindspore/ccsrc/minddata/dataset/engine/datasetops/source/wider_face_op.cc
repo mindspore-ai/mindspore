@@ -147,7 +147,7 @@ Status WIDERFaceOp::GetTraValAnno(const std::string &list_path, const std::strin
   int32_t num_boxes = 0, box_counter = 0;
   std::string image_path;
   std::vector<int32_t> image_labels;
-  std::ifstream file_reader(list_path);
+  std::ifstream file_reader(list_path, std::ios::in);
   while (getline(file_reader, line)) {
     if (file_name_line) {
       box_counter = 0;
@@ -167,7 +167,11 @@ Status WIDERFaceOp::GetTraValAnno(const std::string &list_path, const std::strin
     } else if (box_annotation_line) {
       box_counter += 1;
       std::vector<int32_t> labels;
-      RETURN_IF_NOT_OK(Split(line, &labels));
+      auto s = Split(line, &labels);
+      if (s != Status::OK()) {
+        file_reader.close();
+        return s;
+      }
       image_labels.insert(image_labels.end(), labels.begin(), labels.end());
       if (box_counter >= num_boxes) {
         box_annotation_line = false;

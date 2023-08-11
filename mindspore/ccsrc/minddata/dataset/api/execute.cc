@@ -29,6 +29,13 @@
 #include "minddata/dataset/core/ascend_resource.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
+#ifndef BUILD_LITE
+#include "mindspore/core/utils/file_utils.h"
+namespace platform = mindspore;
+#else
+#include "mindspore/lite/src/common/file_utils.h"
+namespace platform = mindspore::lite;
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -634,6 +641,8 @@ std::string Execute::AippCfgGenerator() {
     MS_LOG(WARNING) << "Your runtime environment is not Ascend310, this config file will lead to undefined behavior on "
                        "computing result. Please check that.";
   }
+
+  platform::ChangeFileMode(config_location, S_IRUSR | S_IWUSR);
 #endif
   return config_location;
 }

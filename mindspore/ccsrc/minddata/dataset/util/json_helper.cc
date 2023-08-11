@@ -70,7 +70,7 @@ Status JsonHelper::UpdateArray(const std::string &in_file, const std::string &ke
     nlohmann::json js;
     if (in.Exists()) {
       RETURN_IF_NOT_OK(RealPath(in_file));
-      std::ifstream in_stream(in_file);
+      std::ifstream in_stream(in_file, std::ios::in);
       try {
         MS_LOG(INFO) << "Filename: " << in_file << ".";
         in_stream >> js;
@@ -83,13 +83,15 @@ Status JsonHelper::UpdateArray(const std::string &in_file, const std::string &ke
     }
     js[key] = value;
     if (out_file == "") {
-      std::ofstream o(in_file, std::ofstream::trunc);
+      std::ofstream o(in_file, std::ofstream::out | std::ofstream::trunc);
       o << js;
       o.close();
+      platform::ChangeFileMode(in_file, S_IRUSR | S_IWUSR);
     } else {
-      std::ofstream o(out_file, std::ofstream::trunc);
+      std::ofstream o(out_file, std::ofstream::out | std::ofstream::trunc);
       o << js;
       o.close();
+      platform::ChangeFileMode(out_file, S_IRUSR | S_IWUSR);
     }
   }
   // Catch any exception and convert to Status return code
@@ -111,7 +113,7 @@ Status JsonHelper::RemoveKey(const std::string &in_file, const std::string &key,
     nlohmann::json js;
     if (in.Exists()) {
       RETURN_IF_NOT_OK(RealPath(in_file));
-      std::ifstream in_stream(in_file);
+      std::ifstream in_stream(in_file, std::ios::in);
       try {
         MS_LOG(INFO) << "Filename: " << in_file << ".";
         in_stream >> js;
@@ -125,13 +127,15 @@ Status JsonHelper::RemoveKey(const std::string &in_file, const std::string &key,
     (void)js.erase(key);
     MS_LOG(INFO) << "Write outfile is: " << js << ".";
     if (out_file == "") {
-      std::ofstream o(in_file, std::ofstream::trunc);
+      std::ofstream o(in_file, std::ios::out | std::ofstream::trunc);
       o << js;
       o.close();
+      platform::ChangeFileMode(in_file, S_IRUSR | S_IWUSR);
     } else {
-      std::ofstream o(out_file, std::ofstream::trunc);
+      std::ofstream o(out_file, std::ios::out | std::ofstream::trunc);
       o << js;
       o.close();
+      platform::ChangeFileMode(out_file, S_IRUSR | S_IWUSR);
     }
   }
   // Catch any exception and convert to Status return code

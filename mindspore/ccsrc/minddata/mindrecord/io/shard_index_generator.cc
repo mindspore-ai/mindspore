@@ -171,7 +171,7 @@ Status ShardIndexGenerator::CheckDatabase(const std::string &shard_address, sqli
   std::optional<std::string> whole_path = "";
   FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
 
-  std::ifstream fin(whole_path.value());
+  std::ifstream fin(whole_path.value(), std::ios::in);
   if (!append_ && fin.good()) {
     fin.close();
     RETURN_STATUS_UNEXPECTED_MR(
@@ -512,9 +512,11 @@ Status ShardIndexGenerator::ExecuteTransaction(const int &shard_no, sqlite3 *db,
       shard_address);
   }
   auto sql_code = sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(
-    sql_code == SQLITE_OK,
-    "Execute SQL statement `BEGIN TRANSACTION;` failed, SQLite result code: " + std::to_string(sql_code));
+  if (sql_code != SQLITE_OK) {
+    in.close();
+    RETURN_STATUS_UNEXPECTED_MR("Execute SQL statement `BEGIN TRANSACTION;` failed, SQLite result code: " +
+                                std::to_string(sql_code));
+  }
   for (int raw_page_id : raw_page_ids) {
     std::shared_ptr<std::string> sql_ptr;
     RELEASE_AND_RETURN_IF_NOT_OK_MR(GenerateRawSQL(fields_, &sql_ptr), db, in);
@@ -525,9 +527,12 @@ Status ShardIndexGenerator::ExecuteTransaction(const int &shard_no, sqlite3 *db,
     MS_LOG(INFO) << "Insert " << row_data_ptr->size() << " rows to index db.";
   }
   sql_code = sqlite3_exec(db, "END TRANSACTION;", nullptr, nullptr, nullptr);
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(
-    sql_code == SQLITE_OK,
-    "Execute SQL statement `END TRANSACTION;` failed, SQLite result code: " + std::to_string(sql_code));
+  if (sql_code != SQLITE_OK) {
+    in.close();
+    sqlite3_close(db);
+    RETURN_STATUS_UNEXPECTED_MR("Execute SQL statement `END TRANSACTION;` failed, SQLite result code: " +
+                                std::to_string(sql_code));
+  }
   in.close();
 
   // Close database

@@ -125,7 +125,7 @@ Status ManifestOp::PrepareData() {
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + file_ + " does not exist.");
   }
 
-  std::ifstream file_handle(realpath.value());
+  std::ifstream file_handle(realpath.value(), std::ios::in);
   if (!file_handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + file_ +
                              ": manifest file is damaged or permission denied!");
@@ -144,7 +144,11 @@ Status ManifestOp::PrepareData() {
       }
       // If image is not JPEG/PNG/GIF/BMP, drop it
       bool valid = false;
-      RETURN_IF_NOT_OK(CheckImageType(image_file_path, &valid));
+      auto s = CheckImageType(image_file_path, &valid);
+      if (s != Status::OK()) {
+        file_handle.close();
+        return s;
+      }
       if (!valid) {
         continue;
       }

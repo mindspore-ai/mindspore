@@ -16,7 +16,6 @@
 #include "minddata/dataset/engine/datasetops/source/dbpedia_op.h"
 
 #include <algorithm>
-#include <fstream>
 #include <iomanip>
 #include <stdexcept>
 

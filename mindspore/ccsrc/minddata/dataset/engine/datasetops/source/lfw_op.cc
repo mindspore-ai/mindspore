@@ -102,7 +102,7 @@ Status LFWOp::GetClassIndexing() {
   Path path(real_folder_path_);
   Path lfw_names_file = path / (std::string(kAnnotationNames) + std::string(kAnnotationExtension));
   std::ifstream in_file;
-  in_file.open(lfw_names_file.ToString());
+  in_file.open(lfw_names_file.ToString(), std::ios::in);
   if (in_file.fail()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + path.ToString());
   }
@@ -232,7 +232,7 @@ Status LFWOp::ParsePairsImageIds(const std::vector<std::vector<std::string>> &an
 
 std::vector<std::vector<std::string>> LFWOp::ReadFile(const std::string &annotation_file_path) const {
   std::ifstream in_file;
-  in_file.open(annotation_file_path);
+  in_file.open(annotation_file_path, std::ios::in);
   if (in_file.fail()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " + annotation_file_path;
   }

@@ -130,7 +130,7 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
                              (folder_path / "list_attr_celeba.txt").ToString());
   }
 
-  std::ifstream attr_file(realpath.value());
+  std::ifstream attr_file(realpath.value(), std::ios::in);
   if (!attr_file.is_open()) {
     std::string attr_file_name = (folder_path / "list_attr_celeba.txt").ToString();
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Celeba attr file: " + attr_file_name);
@@ -141,9 +141,11 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   try {
     num_rows = static_cast<int64_t>(std::stoul(rows_num));  // First line is rows number in attr file
   } catch (std::invalid_argument &e) {
+    attr_file.close();
     RETURN_STATUS_UNEXPECTED(
       "Invalid data, failed to convert rows_num from attr_file to unsigned long, invalid argument: " + rows_num);
   } catch (std::out_of_range &e) {
+    attr_file.close();
     RETURN_STATUS_UNEXPECTED(
       "Invalid data, failed to convert rows_num from attr_file to unsigned long, out of range: " + rows_num);
   }
@@ -159,6 +161,7 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
         if (usage_ == "test") {
           usage_type = '2';
         } else {
+          attr_file.close();
           RETURN_STATUS_UNEXPECTED("Invalid usage.");
         }
       }
@@ -166,13 +169,14 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
     if (!partition_file.is_open()) {
       auto realpath_eval = FileUtils::GetRealPath((folder_path / "list_eval_partition.txt").ToString().c_str());
       if (!realpath_eval.has_value()) {
+        attr_file.close();
         MS_LOG(ERROR) << "Invalid file, get real path failed, path="
                       << (folder_path / "list_eval_partition.txt").ToString();
         RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" +
                                  (folder_path / "list_eval_partition.txt").ToString());
       }
 
-      partition_file.open(realpath_eval.value());
+      partition_file.open(realpath_eval.value(), std::ios::in);
     }
     if (partition_file.is_open()) {
       while (getline(partition_file, line)) {
@@ -182,6 +186,7 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
         }
       }
     } else {
+      attr_file.close();
       std::string partition_file_name = "list_eval_partition.txt";
       RETURN_STATUS_UNEXPECTED("Invalid file, failed to open CelebA partition file: " + partition_file_name);
     }
@@ -189,12 +194,24 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   }
 
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
-  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+  auto s = sampler_->SamplerBuild(&sampler_rt);
+  if (s != Status::OK()) {
+    attr_file.close();
+    partition_file.close();
+    return s;
+  }
   sample_size = sampler_rt->CalculateNumSamples(num_rows);
   if (sample_size == -1) {
-    RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), &sample_size));
+    s = size_getter->DryRun(shared_from_this(), &sample_size);
+    if (s != Status::OK()) {
+      attr_file.close();
+      partition_file.close();
+      return s;
+    }
   }
   *dataset_size = sample_size;
+  attr_file.close();
+  partition_file.close();
   return Status::OK();
 }
 
