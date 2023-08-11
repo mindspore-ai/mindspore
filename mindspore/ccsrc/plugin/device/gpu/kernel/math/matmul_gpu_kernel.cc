@@ -23,6 +23,7 @@
 #include "ops/batch_matmul.h"
 #include "ops/math_op_name.h"
 #include "utils/ms_context.h"
+#include "plugin/device/gpu/kernel/math/matmul/matmul_wrapper.h"
 
 namespace mindspore {
 namespace kernel {
@@ -124,31 +125,10 @@ int MatMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', init k_ via input1_shape failed.";
   }
 
+  compute_type_ = GetComputeType(dtype_a_);
+
   return KRET_OK;
 }
-
-#if CUDA_VERSION >= 11000
-cublasComputeType_t MatMulGpuKernelMod::GetComputeType() {
-  cublasComputeType_t compute_type = CUBLAS_COMPUTE_16F;
-  if (dtype_a_ == CUDA_R_16F && dtype_c_ == CUDA_R_16F) {
-    compute_type = CUBLAS_COMPUTE_32F;
-  } else if (dtype_a_ == CUDA_R_8I && dtype_c_ == CUDA_R_32I) {
-    compute_type = CUBLAS_COMPUTE_32I;
-  } else if (dtype_a_ == CUDA_R_16F || (dtype_a_ == CUDA_R_8I && dtype_c_ == CUDA_R_32F)) {
-    compute_type = CUBLAS_COMPUTE_32F;
-  } else if (dtype_a_ == CUDA_R_32F || dtype_a_ == CUDA_C_32F) {
-    compute_type = CUBLAS_COMPUTE_32F;
-    auto context_ptr = MsContext::GetInstance();
-    auto matmul_allow_tf32 = context_ptr->get_param<bool>(MS_CTX_MATMUL_ALLOW_TF32);
-    if (matmul_allow_tf32) {
-      compute_type = CUBLAS_COMPUTE_32F_FAST_TF32;
-    }
-  } else if (dtype_a_ == CUDA_R_64F || dtype_a_ == CUDA_C_64F) {
-    compute_type = CUBLAS_COMPUTE_64F;
-  }
-  return compute_type;
-}
-#endif
 
 template <typename T, typename S>
 bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -173,30 +153,12 @@ bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
       beta = static_cast<S>(1.0f);
     }
 
-#if CUDA_VERSION >= 11000
-    cublasComputeType_t compute_type = GetComputeType();
-    if (compute_type == CUBLAS_COMPUTE_32I) {
-      constexpr size_t bytes = 4;
-      if (lda % bytes != 0 || ldb % bytes != 0) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                          << "' the lda and ldb must be multiples of 4 when the compute_type is CUBLAS_COMPUTE_32I."
-                             "But got lda:"
-                          << lda << ", got ldb:" << ldb;
-      }
-    }
-#else
-    cudaDataType_t compute_type = (dtype_a_ == CUDA_R_64F) ? CUDA_R_64F : CUDA_R_32F;
-    if (dtype_a_ == CUDA_C_32F || dtype_a_ == CUDA_C_64F) {
-      compute_type = dtype_a_;
-    }
-#endif
-
     // Use cublasGemmEx to get high performance when batch_ is 1
     if (batch_ == 1) {
       CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
         cublasGemmEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_), &alpha,
                      input2_addr, dtype_b_, ldb, input1_addr, dtype_a_, lda, &beta, output_addr, dtype_c_, ldc,
-                     compute_type, algo_),
+                     compute_type_, algo_),
         "cublasGemmEx failed. Possible reasons: the GPU is occupied by other processes.");
     } else {
       auto stride_a = SizeToLong(m_ * k_);
@@ -205,7 +167,7 @@ bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
       CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
         cublasGemmStridedBatchedEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_),
                                    &alpha, input2_addr, dtype_b_, ldb, stride_b, input1_addr, dtype_a_, lda, stride_a,
-                                   &beta, output_addr, dtype_c_, ldc, stride_c, batch_, compute_type, algo_),
+                                   &beta, output_addr, dtype_c_, ldc, stride_c, batch_, compute_type_, algo_),
         "cublasGemmStridedBatchedEx failed. Possible reasons: the GPU is occupied by other processes.");
     }
   } catch (const std::exception &e) {

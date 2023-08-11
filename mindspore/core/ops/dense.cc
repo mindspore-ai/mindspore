@@ -77,11 +77,6 @@ class DenseInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(ret_shape);
     }
 
-    if (IsDynamic(x_shp) || IsDynamic(w_shp)) {
-      ShapeVector ret_shape{abstract::Shape::kShapeRankAny};
-      return std::make_shared<abstract::Shape>(ret_shape);
-    }
-
     const size_t W_SHAPE_SIZE = 2;
     if (w_shp.size() != W_SHAPE_SIZE) {
       MS_EXCEPTION(ValueError) << "The size of w should be equal to 2.";
@@ -93,14 +88,10 @@ class DenseInfer : public abstract::OpInferBase {
     ValuePtr has_bias_ptr = primitive->GetAttr("has_bias");
     bool has_bias = GetValue<bool>(has_bias_ptr);
     if (has_bias) {
-      auto b = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
+      auto b = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kDenseIndex2);
       MS_EXCEPTION_IF_NULL(b);
       MS_EXCEPTION_IF_NULL(b->shape());
       auto b_shp = b->shape()->shape();
-      if (IsDynamicRank(b_shp)) {
-        ShapeVector ret_shape{abstract::Shape::kShapeRankAny};
-        return std::make_shared<abstract::Shape>(ret_shape);
-      }
       const size_t B_SHAPE_SIZE = 1;
       if (b_shp.size() != B_SHAPE_SIZE) {
         MS_EXCEPTION(ValueError) << "The size of b should be equal to 1.";
@@ -109,7 +100,7 @@ class DenseInfer : public abstract::OpInferBase {
 
     auto x_col = x_shp[x_shp.size() - 1];
     auto w_row = w_shp[1];
-    if (x_col != w_row && x_col >= 0 && w_row >= 0) {
+    if (x_col != -1 && w_row != -1 && x_col != w_row && x_col >= 0 && w_row >= 0) {
       MS_EXCEPTION(ValueError) << "Dense shape error, got x_col: " << x_col << ", w_row: " << w_row
                                << ". In Dense x_col and w_row should be equal.";
     }
@@ -122,40 +113,21 @@ class DenseInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto op_name = primitive->name();
-    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kDenseIndex0);
-    auto w = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kDenseIndex1);
-    TypePtr x_type = x->element()->GetTypeTrack();
-    TypePtr w_type = w->element()->GetTypeTrack();
-    auto x_type_id = x_type->type_id();
-    auto w_type_id = w_type->type_id();
-    if (x_type_id != w_type_id) {
-      MS_EXCEPTION(TypeError) << "The type of `x` and `w` must be same, but got " << x_type->ToString() << " and "
-                              << w_type->ToString();
-    }
-    if (x_type_id != TypeId::kNumberTypeFloat16 && x_type_id != TypeId::kNumberTypeFloat32 &&
-        x_type_id != TypeId::kNumberTypeFloat64) {
-      MS_EXCEPTION(TypeError) << "The type of `x` must be float16, float32 or float64, but got " << x_type->ToString();
-    }
+    const std::set valid_types = {kUInt8,   kInt16,   kInt32,     kInt64,     kFloat16,
+                                  kFloat32, kFloat64, kComplex64, kComplex128};
+    std::map<std::string, TypePtr> types;
+    (void)types.emplace("x", input_args[kDenseIndex0]->BuildType());
+    (void)types.emplace("w", input_args[kDenseIndex1]->BuildType());
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+
     ValuePtr has_bias_ptr = primitive->GetAttr("has_bias");
     bool has_bias = GetValue<bool>(has_bias_ptr);
     if (has_bias) {
       auto b = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kDenseIndex2);
-      TypePtr b_type = b->element()->GetTypeTrack();
-      auto b_type_id = b_type->type_id();
-      if (x_type_id != b_type_id) {
-        MS_EXCEPTION(TypeError) << "The type of `x` and `b` must be same, but got " << x_type->ToString() << " and "
-                                << b_type->ToString();
-      }
+      (void)types.emplace("b", b->BuildType());
+      (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
     }
-    if (primitive->HasAttr("cast_type")) {
-      auto out_type = primitive->GetAttr("cast_type");
-      MS_EXCEPTION_IF_NULL(out_type);
-      if (!out_type->isa<Type>()) {
-        MS_EXCEPTION(ValueError) << "Dense cast_type must be a `Type`";
-      }
-      x_type = out_type->cast<TypePtr>();
-    }
-    return x_type;
+    return input_args[kDenseIndex0]->BuildType();
   }
 };
 

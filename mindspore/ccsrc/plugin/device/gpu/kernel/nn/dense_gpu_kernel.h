@@ -62,10 +62,6 @@ class DenseGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
-#if CUDA_VERSION >= 11000
-  cublasComputeType_t GetComputeType();
-#endif
-
   using DenseFunc = std::function<bool(DenseGpuKernelMod *, const std::vector<AddressPtr> &,
                                        const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
   DenseFunc kernel_func_{};

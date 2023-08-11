@@ -205,3 +205,24 @@ def test_matmul_dtypes():
         else:
             with pytest.raises(TypeError):
                 matmul(x_ms, y_ms)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_matmul_fp16():
+    """
+    Feature: Test matmul fp16 results.
+    Description: Test matmul fp16 for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_np = np.random.randn(256, 512).astype(np.float16)
+    y_np = np.random.randn(512, 1024).astype(np.float16)
+    matmul = P.MatMul()
+    x_ms = Tensor(x_np)
+    y_ms = Tensor(y_np)
+    out_ms = matmul(x_ms, y_ms).asnumpy()
+    out_np = np.matmul(x_np, y_np)
+    assert np.abs(out_ms - out_np).mean() < 1e-4
+    assert out_ms.dtype == np.float16

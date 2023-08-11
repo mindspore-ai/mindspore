@@ -80,10 +80,6 @@ class MatMulGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
-#if CUDA_VERSION >= 11000
-  cublasComputeType_t GetComputeType();
-#endif
-
   using MatMulFunc = std::function<bool(MatMulGpuKernelMod *, const std::vector<AddressPtr> &,
                                         const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
   MatMulFunc kernel_func_{};
@@ -102,6 +98,12 @@ class MatMulGpuKernelMod : public NativeGpuKernelMod {
   cudaDataType_t dtype_b_;
   cudaDataType_t dtype_c_;
   cublasGemmAlgo_t algo_;
+
+#if CUDA_VERSION >= 11000
+  cublasComputeType_t compute_type_{CUBLAS_COMPUTE_32F};
+#else
+  cudaDataType_t compute_type_{CUDA_R_32F};
+#endif
 
   bool is_fused_matmul_biasadd_;
 };
