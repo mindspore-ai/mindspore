@@ -32,13 +32,28 @@ def generate_py_op_func(yaml_data, doc_data):
         op_desc_dict[operator_name] = desc
 
     for operator_name, operator_data in yaml_data.items():
+        func_def = operator_data.get('function')
+        func_name = operator_name
+        func_disable = False
+        if func_def:
+            item = func_def.get("disable")
+            if item:
+                func_disable = True
+
+            if func_disable:
+                continue
+            item = func_def.get("name")
+            if item:
+                func_name = item
+
         description = op_desc_dict.get(operator_name)
         args = operator_data.get('args')
-        func_name = operator_data.get('func_name')
-        if func_name is None:
-            func_name = operator_name
-
+        class_def = operator_data.get('function')
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
+        if class_def:
+            item = func_def.get("name")
+            if item:
+                class_name = item
         func_args = []
         init_args = []
         input_args = []

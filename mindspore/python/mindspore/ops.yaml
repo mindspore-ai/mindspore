@@ -5,7 +5,7 @@
 #         input_x: 
 #             dtype: tensor
 #         bias: 
-#             dtype: tensor, tuple[int]
+#             dtype: tensor
 #         data_format: 
 #             dtype: str
 #             #mark it if this is a primitive init arg.
@@ -13,13 +13,14 @@
 #     returns:
 #         output_x: 
 #             dtype: tensor
-#     #if func_name is not set, operator name will be use as operator function name. 
-#     func_name: _example_ 
-# 
+#     function: #optional
+#          name: _sample_op_ #if function name is not set, operator name will be use as operator function name.
+#          disable: true 
+#     class: #optional
+#          name: SampleOp_ #if class name is not set, operator name with upper camel format will be use as class name.
+#
 #operator args support one or multiple kind of below dtype:
-#bool, int, float, tensor, str,
-#tuple[bool], tuple[int], tuple[float], tuple[tensor], tuple[str]
-#list[bool], list[int], list[float], list[tensor], list[str]
+#bool, int, float, tensor, str, tuple, list
 
 #operator bias_add
 bias_add:
@@ -35,7 +36,11 @@ bias_add:
         output_x: 
             dtype: tensor
     #if func_name is not set, operator name will be use as operator function name.
-    func_name: _bias_add  
+    function: 
+        name: _bias_add
+    #     disable: true
+    # class:
+    #     name: BiasAdd       
 
 #operator batch_norm
 batch_norm:
