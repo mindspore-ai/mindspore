@@ -47,6 +47,11 @@ bool LstmGradDataGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   num_layers_ = kernel_ptr->get_num_layers();
   has_bias_ = kernel_ptr->get_has_bias();
   dropout_ = kernel_ptr->get_dropout();
+  auto proj_size = kernel_ptr->get_proj_size();
+  if (proj_size != 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', 'proj_size' could only be 0 in GPU, but got proj_size=" << proj_size;
+  }
   return true;
 }
 

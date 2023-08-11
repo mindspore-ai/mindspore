@@ -88,6 +88,13 @@ void LSTMGradWeight::set_zoneout_hidden(float zoneout_hidden) {
 
 float LSTMGradWeight::get_zoneout_hidden() const { return GetValue<float>(this->GetAttr(kZoneoutHidden)); }
 
+void LSTMGradWeight::set_proj_size(const int64_t proj_size) {
+  (void)CheckAndConvertUtils::CheckInteger(kProjection_size, proj_size, kGreaterThan, 0, this->name());
+  (void)AddAttr(kProjection_size, api::MakeValue(proj_size));
+}
+
+int64_t LSTMGradWeight::get_proj_size() const { return GetValue<int64_t>(GetAttr(kProjection_size)); }
+
 void LSTMGradWeight::Init(const int64_t input_size, const int64_t hidden_size, const int64_t num_layers,
                           const bool has_bias, const float dropout, const bool bidirectional, const float zoneout_cell,
                           const float zoneout_hidden) {
