@@ -99,7 +99,6 @@ class MS_CORE_API Primitive : public Named {
   Primitive &operator=(const Primitive &other);
   MS_DECLARE_PARENT(Primitive, Named);
   abstract::AbstractBasePtr ToAbstract() override;
-  abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);
   std::string ToString() const override { return name(); }
   /// \brief Ready to recording the attribute if the attribute needs to be added when deducing shape and type.
   /// This attributes has been recorded needs to add in infer cache.

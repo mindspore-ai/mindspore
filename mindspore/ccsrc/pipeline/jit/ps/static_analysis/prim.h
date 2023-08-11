@@ -195,6 +195,19 @@ class SwitchLayerEvaluator final : public Evaluator {
   }
 };
 
+class PrimitiveTransformEvaluator : public TransitionPrimEvaluator {
+ public:
+  explicit PrimitiveTransformEvaluator(const PrimitivePtr primitive)
+      : TransitionPrimEvaluator("PrimitiveTransformEvaluator"), prim_(primitive) {}
+  ~PrimitiveTransformEvaluator() override = default;
+  MS_DECLARE_PARENT(PrimitiveTransformEvaluator, TransitionPrimEvaluator)
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+
+ private:
+  PrimitivePtr prim_;
+};
+
 class ConstexprEvaluator : public TransitionPrimEvaluator {
  public:
   explicit ConstexprEvaluator(const PrimitivePyPtr primitive)

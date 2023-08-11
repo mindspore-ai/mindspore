@@ -80,6 +80,7 @@ const char PYTHON_MOD_GET_ATTR_FROM_OBJ[] = "get_attr_from_object";
 const char PYTHON_MOD_GET_PARSE_METHOD[] = "get_parse_method_of_class";
 const char PYTHON_MOD_GET_BPROP_METHOD[] = "get_bprop_method_of_class";
 const char PYTHON_MOD_GET_OBJECT_DESCRIPTION[] = "get_object_description";
+const char PYTHON_MOD_GET_INIT_ARGS[] = "get_init_args";
 const char PYTHON_MOD_IS_CELL_LIST[] = "is_cell_list";
 const char PYTHON_MOD_CONVERT_CELL_LIST_TO_SEQUENCE[] = "convert_cell_list_to_sequence";
 const char PYTHON_MOD_GET_ITEM_FROM_SEQUENCE[] = "get_obj_from_sequence";

@@ -807,6 +807,25 @@ py::object PrimitivePyAdapter::GetUserData(const py::str &key) const {
   return primitive_data->obj;
 }
 
+abstract::AbstractBasePtr PrimitiveFunction::ToAbstract() {
+  return std::make_shared<abstract::PrimitiveAbstractClosure>(shared_from_base<PrimitiveFunction>(), nullptr);
+}
+
+bool PrimitiveFunction::operator==(const Value &other) const {
+  if (other.isa<PrimitiveFunction>()) {
+    auto other_prim = static_cast<const PrimitiveFunction &>(other);
+    return *this == other_prim;
+  }
+  return false;
+}
+
+bool PrimitiveFunction::operator==(const PrimitiveFunction &other) const {
+  if (name() != other.name()) {
+    return false;
+  }
+  return common::IsAttrsEqual(attrs_, other.attrs_);
+}
+
 void RegPrimitive(const py::module *m) {
   (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
     .value("unknown", PrimType::kPrimTypeUnknown)

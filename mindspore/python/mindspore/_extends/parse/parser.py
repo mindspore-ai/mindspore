@@ -673,6 +673,12 @@ def get_operation_namespace_symbol(var: str):
     logger.debug("get operation ops info: %r", ops_info)
     return ops_info
 
+def get_init_args(obj):
+    """Get initialzation arguments of object."""
+    if not hasattr(obj, "__init__"):
+        return []
+    sig = inspect.signature(obj.__init__)
+    return {name : getattr(obj, name) for name, _ in sig.parameters.items()}
 
 def get_ast_type(node):
     """Get the ast type."""

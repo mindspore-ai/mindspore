@@ -909,6 +909,11 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return std::make_shared<SwitchEvaluator>();
   }
 
+  // Convert Primitive to PrimitiveFunction.
+  if (!prim->isa<PrimitiveFunction>()) {
+    return std::make_shared<PrimitiveTransformEvaluator>(prim);
+  }
+
   // Find prim infer function in the prim function map return a standard evaluator
   auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
   if (eval_impl_opt.has_value()) {

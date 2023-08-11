@@ -2270,6 +2270,47 @@ TypePtr GetLocalArgsUniqueDtype(const AnfNodePtr &node, const AbstractBasePtrLis
 }
 }  // namespace
 
+EvalResultPtr PrimitiveTransformEvaluator::EvalPrim(const AnalysisEnginePtr &engine,
+                                                    const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                                                    const AnfNodeConfigPtr &out_conf) {
+  // Convert Primitive to PrimitiveFunction.
+  MS_EXCEPTION_IF_NULL(out_conf);
+  auto cnode = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto fg = out_conf->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+
+  auto prim_func = std::make_shared<PrimitiveFunction>(prim_);
+  AnfNodePtrList new_inputs{NewValueNode(prim_func)};
+  for (size_t i = 1; i < cnode->size(); i++) {
+    (void)new_inputs.emplace_back(cnode->input(i));
+  }
+  // Append PrimitivePy arguments to the inputs.
+  if (prim_->isa<PrimitivePy>()) {
+    auto prim_py = prim_->cast<PrimitivePyPtr>();
+    py::dict init_args =
+      python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_INIT_ARGS, prim_py->GetPyObj());
+    for (const auto &arg : init_args) {
+      auto arg_name = arg.first.cast<std::string>();
+      py::object arg_value = init_args[arg.first];
+      ValuePtr converted_ret = nullptr;
+      bool converted = parse::ConvertData(arg_value, &converted_ret);
+      if (!converted) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Cannot convert initialization arg: " << arg_name << " in Primitive '"
+                                   << prim_->name() << "'.";
+      }
+      (void)CheckAndConvertUtils::ConvertAttrValueToInt(prim_->name(), arg_name, &converted_ret);
+      (void)new_inputs.emplace_back(NewValueNode(converted_ret));
+    }
+  }
+
+  auto new_cnode = fg->NewCNodeInOrder(new_inputs);
+  auto new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+  MS_LOG(DEBUG) << "Transform Primitive: " << prim_->ToString() << ", node: " << cnode->DebugString()
+                << ", new cnode:" << new_cnode->DebugString();
+  return engine->ForwardConfig(out_conf, new_conf);
+}
+
 EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                                            const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   // Consider all primitive implemented python infer() real use the tuple/list arguments.

@@ -39,6 +39,10 @@ using PrimitivePyWeakPtr = std::weak_ptr<PrimitivePy>;
 class PrimitivePyAdapter;
 using PrimitivePyAdapterPtr = std::shared_ptr<PrimitivePyAdapter>;
 
+class PrimitiveFunction;
+using PrimitiveFunctionPtr = std::shared_ptr<PrimitiveFunction>;
+using PrimitiveFunctionWeakPtr = std::weak_ptr<PrimitiveFunction>;
+
 class PrimitivePy : public Primitive {
  public:
   explicit PrimitivePy(const std::string &name);
@@ -154,6 +158,16 @@ class PrimitivePyAdapter {
   std::vector<Signature> signatures_;
   std::map<int, py::function> backward_hook_fn_;
   UserData user_data_;
+};
+
+class PrimitiveFunction : public Primitive {
+ public:
+  PrimitiveFunction(const PrimitivePtr &prim) : Primitive(*prim){};
+  ~PrimitiveFunction() override = default;
+  MS_DECLARE_PARENT(PrimitiveFunction, Primitive);
+  bool operator==(const Value &other) const override;
+  bool operator==(const PrimitiveFunction &other) const;
+  abstract::AbstractBasePtr ToAbstract() override;
 };
 
 /// \brief OpPrimPyRegister defines the singleton to save primitivepy which has no attrs.
