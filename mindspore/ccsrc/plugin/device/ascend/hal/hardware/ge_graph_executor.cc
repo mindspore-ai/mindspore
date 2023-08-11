@@ -322,10 +322,10 @@ struct GraphSummary {
   }
 };
 
-std::map<std::string, ParameterPtr> FilterAllParameters(const KernelGraphPtr &kernel_graph) {
+std::multimap<std::string, ParameterPtr> FilterAllParameters(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  std::map<std::string, ParameterPtr> ret;
-  std::vector<AnfNodePtr> todo = kernel_graph->inputs();
+  std::multimap<std::string, ParameterPtr> ret;
+  std::vector<AnfNodePtr> todo = kernel_graph->input_nodes();
   (void)todo.insert(todo.end(), kernel_graph->child_graph_result().begin(), kernel_graph->child_graph_result().end());
   for (const auto &node : todo) {
     MS_EXCEPTION_IF_NULL(node);
@@ -574,6 +574,13 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     if (auto data = std::dynamic_pointer_cast<Data>(op); data != nullptr) {
       while (HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
         cur_inputs_index++;
+      }
+      auto abs = cur_inputs.at(cur_inputs_index)->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      while (abs->isa<abstract::AbstractSequence>()) {
+        cur_inputs_index++;
+        abs = cur_inputs.at(cur_inputs_index)->abstract();
+        MS_EXCEPTION_IF_NULL(abs);
       }
       node = cur_inputs.at(cur_inputs_index);
       cur_inputs_index++;

@@ -1623,8 +1623,10 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, std::vector
     auto name = std::static_pointer_cast<Parameter>(it)->name();
     //  the parameters which has not been converted to var
     if (vars_.find(name) == vars_.end()) {
-      if (HasAbstractMonad(it)) {
-        MS_LOG(INFO) << it->DebugString() << " is a monad parameter, skip.";
+      auto abs = it->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      if (HasAbstractMonad(it) || abs->isa<abstract::AbstractSequence>()) {
+        MS_LOG(INFO) << it->DebugString() << " is a monad or tuple/list parameter, skip.";
         continue;
       }
       auto op = Convert(it);

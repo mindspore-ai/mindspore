@@ -20,8 +20,10 @@
 #include <vector>
 #include "include/backend/kernel_graph.h"
 #include "runtime/hardware/device_context.h"
+#include "runtime/graph_scheduler/graph_compiler.h"
 
 namespace mindspore::pynative {
+using GraphCompilerInfo = runtime::GraphCompilerInfo;
 class GraphAdapter {
  public:
   static void UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
@@ -34,6 +36,8 @@ class GraphAdapter {
   static void RemoveUnusedValueNodes(const KernelGraphPtr &graph);
   static void HandleHeterogeneousTensors(const std::vector<std::vector<tensor::TensorPtr>> &tensors,
                                          const std::vector<device::DeviceContext *> &device_contexts);
+  static bool IsPynativeGeGraphSink(const GraphCompilerInfo &graph_compiler_info);
+  static bool IsPynativeGeGraphSink(const FuncGraphPtr &func_graph);
   static bool PyNativeEnableTaskSink(const FuncGraphPtr &func_graph);
   static bool IsAutoParallel();
   static void UpdateDynamicValueNodeAbstract(const KernelGraphPtr &graph);
