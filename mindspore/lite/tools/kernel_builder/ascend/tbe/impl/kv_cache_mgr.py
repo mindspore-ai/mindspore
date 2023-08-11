@@ -26,19 +26,22 @@ from tbe.common.utils import para_check
 def check_supported(past, cur, index, out, kernel_name="kv_cache_mgr"):
     """check data type and shape"""
     # check data type
-    past_dtype = past.get("dtype")
-    cur_dtype = cur.get("dtype")
-    out_dtype = out.get("dtype")
+    past_dtype = past.get("dtype").lower()
+    cur_dtype = cur.get("dtype").lower()
+    out_dtype = out.get("dtype").lower()
 
     if past_dtype != cur_dtype or past_dtype != out_dtype:
         reason = "past_dtype is %s, cur_dtype is %s, out_dtype is %s" % (past_dtype, cur_dtype, out_dtype)
         return False, reason
-    if past_dtype != "float16":
-        reason = "past_dtype(%s) is not float16" % (past_dtype)
+
+    support_dtype_list = ["float32", "int32", "uint32",
+                          "float16", "int16", "uint16",
+                          "int8", "uint8"]
+    if past_dtype not in support_dtype_list:
+        reason = "past_dtype(%s) is not support" % (past_dtype)
         return False, reason
 
-    index_dtype = index.get("dtype")
-
+    index_dtype = index.get("dtype").lower()
     if index_dtype != "int32":
         reason = "index_dtype is %s, not int32" % (index_dtype)
         return False, reason
@@ -81,9 +84,6 @@ class TilingHelper:
     """Tiling parameter"""
     def __init__(self, past, cur, index, out, kernel_name="kv_cache_mgr"):
         self.kernel_name = kernel_name
-        self.fp16_size = 2
-        self.int32_size = 4
-        self.int8_size = 1
 
         # sys info
         self.core_num = tbe_platform.get_soc_spec(tbe_platform.CORE_NUM)
@@ -93,12 +93,18 @@ class TilingHelper:
         self.cur_shape = cur.get("shape")
         self.index_shape = index.get("shape")
 
-        self.gm_type = past.get("dtype")  # only support float16
+        self.gm_type = past.get("dtype").lower()
         self.ub_type = self.gm_type
-        self.index_ub_type = "int32"  # or uint32
-        self.init_flag_ub_type = "int8"  # set bool to int8
-        self.fp16_size = 2
+        self.index_ub_type = "int32"
         self.int32_size = 4
+
+        self.gm_dtype_size = 2
+        if self.gm_type in ["int8", "uint8"]:
+            self.gm_dtype_size = 1
+        elif self.gm_type in ["float16", "int16", "uint16"]:
+            self.gm_dtype_size = 2
+        elif self.gm_type in ["float32", "int32", "uint32"]:
+            self.gm_dtype_size = 4
 
         # tiling policy
         self.seq_length = self.past_shape[2]
@@ -141,7 +147,7 @@ class KVCacheImpl(TilingHelper):
                                       scope=tik.scope_ubuf)
         cur_gm_offset = core_idx * self.cur_ub_elements
         self.tik_inst.data_move(cur_ub, self.cur_gm[cur_gm_offset:], 0, 1,
-                                self.cur_ub_elements * self.fp16_size // 32, 0, 0)
+                                self.cur_ub_elements * self.gm_dtype_size // 32, 0, 0)
         return cur_ub
 
     def valid_index_ub_load(self):
@@ -155,7 +161,7 @@ class KVCacheImpl(TilingHelper):
         """KVCacheImpl.valid_pos_update"""
         src_bs_stride = self.update_seq_length * self.size_per_head
         dst_bs_stride = self.seq_length * self.size_per_head
-        burst_len = self.update_seq_length * self.size_per_head * self.fp16_size // 32
+        burst_len = self.update_seq_length * self.size_per_head * self.gm_dtype_size // 32
 
         valid_idx = self.tik_inst.Scalar(dtype="int32")
         with self.tik_inst.for_range(0, each_core_bs_num) as each_core_bs_idx:

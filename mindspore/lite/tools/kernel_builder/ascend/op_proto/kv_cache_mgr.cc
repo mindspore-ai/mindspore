@@ -46,7 +46,9 @@ IMPLEMT_VERIFIER(KVCacheMgr, KVCacheMgrVerify) {
   if (input_type_past != input_type_cur) {
     return GRAPH_FAILED;
   }
-  if (input_type_past != DT_FLOAT16) {
+  if (input_type_past != DT_FLOAT && input_type_past != DT_INT32 && input_type_past != DT_UINT32 &&
+      input_type_past != DT_FLOAT16 && input_type_past != DT_INT16 && input_type_past != DT_UINT16 &&
+      input_type_past != DT_INT8 && input_type_past != DT_UINT8) {
     return GRAPH_FAILED;
   }
   if (input_type_index != DT_INT32) {
