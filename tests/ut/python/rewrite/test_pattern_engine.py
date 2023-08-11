@@ -149,10 +149,10 @@ def test_one_to_multi_chain_pattern():
             # Replacement should ensure target is unique in result
             # Replacement should ensure args and kwargs are well set by topological relation
             conv1 = Conv2d(16, 16, 3)
-            conv_node1 = Node.create_call_cell(conv1, ['x1'], bn_node.get_args(), bn_node.get_kwargs())
+            conv_node1 = Node.create_call_cell(conv1, ['x1'], bn_node.get_args(), bn_node.get_kwargs(), name='new_conv')
             conv2 = Conv2d(16, 16, 5)
             conv_node2 = Node.create_call_cell(conv2, [bn_node.get_targets()[0]],
-                                               [ScopedValue.create_naming_value('x1')], name="new_conv")
+                                               [ScopedValue.create_naming_value('x1')], name="new_conv2")
             return [conv_node1, conv_node2]
 
     class BnReplace(PatternEngine):
@@ -179,8 +179,8 @@ def test_one_to_multi_chain_pattern():
     conv = stree.get_node("conv")
     bn = stree.get_node("bn")
     relu1 = stree.get_node("relu1")
-    new_conv1 = stree.get_node("x1")
-    new_conv2 = stree.get_node("new_conv")
+    new_conv1 = stree.get_node("new_conv")
+    new_conv2 = stree.get_node("new_conv2")
     assert conv is not None
     assert bn is None
     assert relu1 is not None
@@ -275,7 +275,7 @@ def test_tree_pattern():
             new_add2 = Add()
             new_add2_node = Node.create_call_cell(new_add2, [relu_node.get_targets()[0]],
                                                   [ScopedValue.create_naming_value('new_relu_1'),
-                                                   ScopedValue.create_naming_value('new_relu_2')], name="new_add")
+                                                   ScopedValue.create_naming_value('new_relu_2')])
             return [new_add1_node, new_relu1_node, new_relu2_node, new_add2_node]
 
     class AddReluPattern(PatternEngine):
@@ -311,10 +311,10 @@ def test_tree_pattern():
     relu = stree.get_node("relu")
     relu1 = stree.get_node("relu1")
     relu2 = stree.get_node("relu2")
-    new_add = stree.get_node("new_add")
-    new_relu = stree.get_node("new_relu")
-    new_relu_1 = stree.get_node("new_relu_1")
-    new_add_1 = stree.get_node("new_add_1")
+    new_add = stree.get_node("Add")
+    new_relu = stree.get_node("ReLU")
+    new_relu_1 = stree.get_node("ReLU_1")
+    new_add_1 = stree.get_node("Add_1")
 
     assert conv1 is not None
     assert conv2 is not None
@@ -443,7 +443,7 @@ class MultiInputPattern(PatternEngine):
 
             # can not use add_node here
             new_add1 = Add()
-            new_add1_node = Node.create_call_cell(new_add1, ['new_add1'], [arg1, arg2])
+            new_add1_node = Node.create_call_cell(new_add1, ['new_add1'], [arg1, arg2], name="new_add1")
             new_add2 = Add()
             new_add2_node = Node.create_call_cell(new_add2, [addn2_node.get_targets()[0]],
                                                   [ScopedValue.create_naming_value('new_add1'), arg3],

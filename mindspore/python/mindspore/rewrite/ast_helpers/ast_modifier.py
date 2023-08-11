@@ -147,13 +147,6 @@ class AstModifier(ast.NodeTransformer):
             RuntimeError: If 'index_ast' is not contained in 'ast_func'.
         """
         assign = AstModifier.create_call_assign(targets, expr, args, kwargs)
-        arguments: ast.arguments = ast_func.args
-        if arguments.args:
-            for arg in arguments.args:
-                if id(arg) == id(index_ast):
-                    ast_func.body.insert(0, assign)
-                    ast.fix_missing_locations(ast_func)
-                    return assign
         return AstModifier.insert_assign_ast_to_function(ast_func, assign, index_ast, insert_before)
 
     @staticmethod
@@ -177,10 +170,12 @@ class AstModifier(ast.NodeTransformer):
         Raises:
             RuntimeError: If 'index_ast' is not contained in 'ast_func'.
         """
+        # Append ast to function body when index_ast is None
         if index_ast is None:
             ast_func.body.append(ast_assign)
             ast.fix_missing_locations(ast_func)
             return ast_assign
+        # Insert ast at the frontmost position of function body when index_ast is an argument of function
         arguments: ast.arguments = ast_func.args
         if arguments.args:
             for arg in arguments.args:
@@ -188,6 +183,7 @@ class AstModifier(ast.NodeTransformer):
                     ast_func.body.insert(0, ast_assign)
                     ast.fix_missing_locations(ast_func)
                     return ast_assign
+        # Insert ast at position specified by index_ast in function body
         for index in range(0, len(ast_func.body)):
             body = ast_func.body[index]
             if id(body) == id(index_ast):
@@ -241,7 +237,7 @@ class AstModifier(ast.NodeTransformer):
             An instance of ast.Assign which has been appended to 'init_func'.
         """
         return AstModifier.insert_assign_to_function(init_func, targets=targets,
-                                                     expr=ScopedValue(ValueType.NamingValue, "", "setattr"),
+                                                     expr=ScopedValue(ValueType.NamingValue, "", "getattr"),
                                                      args=[ScopedValue(ValueType.NamingValue, "obj"),
                                                            ScopedValue.create_variable_value(field)])
 

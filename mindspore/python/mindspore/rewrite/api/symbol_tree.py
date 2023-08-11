@@ -20,6 +20,7 @@ import mindspore as ms
 from mindspore.nn import Cell
 from mindspore import _checkparam as Validator
 from .node import Node
+from ..node.node import Node as NodeImpl
 from ..symbol_tree_builder import SymbolTreeBuilder
 from ..symbol_tree import Position, SymbolTree as SymbolTreeImpl
 
@@ -102,7 +103,7 @@ class SymbolTree:
         for key, value in kwargs.items():
             if isinstance(value, Node):
                 kwargs[key] = value.get_handler()
-        return Node(self._symbol_tree._create_call_function(func, targets, args_, kwargs)) # pylint: disable=W0212
+        return Node(NodeImpl._create_call_function(func, targets, args_, kwargs)) # pylint: disable=W0212
 
     def get_handler(self) -> SymbolTreeImpl:
         return self._symbol_tree
@@ -244,7 +245,7 @@ class SymbolTree:
         """
         Validator.check_value_type("position", position, [Position], "SymbolTree")
         Validator.check_value_type("node", node, [Node], "SymbolTree")
-        return Node(self._symbol_tree.insert_node(position, node.get_handler()))
+        return Node(self._symbol_tree.insert_node(node.get_handler(), position.node, position.before_node))
 
     def erase(self, node: Union[Node, str]) -> Optional[Node]:
         """
@@ -320,16 +321,20 @@ class SymbolTree:
     def dump(self):
         self._symbol_tree.dump()
 
-    def print_node_tabulate(self):
+    def print_node_tabulate(self, all_nodes: bool = False):
         """
         Print the topology information of nodes in SymbolTree, including node type, node name, node code,
         and node input-output relationship.
         The information is output to the screen using the print interface.
 
+        Args:
+            all_nodes (bool): Print nodes out of construct functions, such as nodes in CallFunction
+                nodes, CellContainer nodes and sub symbol trees.
+
         .. warning::
             This is an experimental API that is subject to change or deletion.
         """
-        self._symbol_tree.print_node_tabulate()
+        self._symbol_tree.print_node_tabulate(all_nodes)
 
     def get_code(self) -> str:
         """

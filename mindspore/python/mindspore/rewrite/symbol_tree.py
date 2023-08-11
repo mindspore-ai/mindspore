@@ -19,24 +19,22 @@ import os
 import sys
 import ast
 import importlib.util
-import types
 import time
 import astunparse
 
 from mindspore.nn import Cell
 from mindspore import log as logger
-from mindspore.rewrite.ast_creator_register import ast_creator_registry
-from .node import Node, TreeNode
+from .node.node import Node, TreeNode
 from .api.node_type import NodeType
-from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder, CheckPropertyIsUsed, AstClassFinder, \
-    AstFunctionFinder
+from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder, AstClassFinder, AstFunctionFinder
 from .api.scoped_value import ScopedValue, ValueType
 from .symbol_tree_dumper import SymbolTreeDumper
-from .topological_manager import TopoManager
+from .node.node_topological_manager import TopoManager
 from .namer import TargetNamer, NodeNamer, ClassNamer
 from .common.observer import Observer
 from .common.observable import Observable
 from .common.event import Event
+from .node.node_manager import NodeManager
 
 
 class Position:
@@ -134,7 +132,7 @@ class IfFixer(ast.NodeTransformer):
         self.generic_visit(node)
 
 
-class SymbolTree(Observer, Observable):
+class SymbolTree(Observer, Observable, NodeManager):
     """
     A symbol-tree usually corresponding to forward method of a network.
 
@@ -147,26 +145,18 @@ class SymbolTree(Observer, Observable):
     """
 
     def __init__(self, origin_network: Cell, module_ast: ast.Module):
-        super().__init__()
+        Observer.__init__(self)
         Observable.__init__(self)
-        origin_network_key = "handler"
+        self._node_namer = NodeNamer()
+        self._node_namer.add_name('obj')
+        NodeManager.__init__(self, self._node_namer)
+        NodeManager.reg_observer(self, observer=self)
         # init unique-namers
         self._target_namer = TargetNamer()
-        self._node_name_namer = NodeNamer()
-        # name or node would use as name of field, so name of origin network handler field should be added into \
-        # _node_name_namer.
-        self._node_name_namer.add_name(origin_network_key)
-        self._topo_mgr = TopoManager(self)
-        self._topo_mgr.reg_observer(self)
-
-        self._nodes: {str, Node} = {}
-        # nodes in _tree_nodes may not be used in construct function.
-        # tree nodes in node containers is not saved in _tree_nodes.
-        self._tree_nodes: [Node] = []
-        # parameters of forward method
-        self._inputs: [Node] = []
+        # input arguments of function
         self._ori_cls_name = type(origin_network).__name__
         self._opt_cls_name = ClassNamer.instance().get_name(self._ori_cls_name)
+        NodeManager.set_manager_name(self, self._opt_cls_name)
         self._origin_network = origin_network
         self._module_ast: ast.Module = module_ast
         self._import_asts: Optional[ast.Ast] = []
@@ -177,16 +167,7 @@ class SymbolTree(Observer, Observable):
         self._deleted_node = []
         self._external_ast = []
         self._father_class_ast = []
-
-        # head node is always point to the first node(in source code order) of SymbolTree
-        self._head = None
-        # tail node is always point to the last node(in source code order) of SymbolTree
-        self._tail = None
-        self._return: Optional[Node] = None
-
         self._modified = False
-        self._node_visitor = None
-
         self._tmp_file_limits = 20
         self._tmp_files = []
         self._saved_file_name = "./network_define.py"
@@ -225,49 +206,6 @@ class SymbolTree(Observer, Observable):
     def finish_build(self):
         """Add Event.TopologicalChangeEvent event when build is finished."""
         self.add_event(Event.TopologicalChangeEvent)
-
-    def create_assign_node(self, targets, func_name, args, kwargs):
-        """
-        Create a ast.Assign type node.
-
-        Args:
-            targets (list): _description_
-            func_name (_type_): _description_
-            args (_type_): _description_
-            kwargs (_type_): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        # create targets
-        ast_targets = [ast_creator_registry.get("Name")(targets)]
-        # create call
-        ast_func = ast_creator_registry.get("Attribute")(func_name)
-        ast_args = ast_creator_registry.get("Args")(args)
-        ast_kwargs = ast_creator_registry.get("KwArgs")(kwargs) if kwargs else []
-        ast_value = ast_creator_registry.get("Call")(func=ast_func, args=ast_args, keywords=ast_kwargs)
-        # create assign
-        ast_node = ast_creator_registry.get("Assign")(targets=ast_targets, value=ast_value)
-        return ast_node
-
-    def inner_create_call_function(self, node_name, ast_node, func_name, func, targets, args, kwargs):
-        '''
-        Instantiate an instance of node whose type is `CallFunction`.
-
-        Args:
-            node_name (str): Name of node.
-            func_name (str): Name of function.
-            ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
-            targets (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            func ([ScopedValue, optional]): An instance of `ScopedValue`. See detail in docstring of Node class.
-            args (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of `ScopedValue`. See detail in docstring of `Node`
-                class.
-        '''
-        logger.info(f"func name: {func_name}; func: {func}; targets: {targets}; args: {args}; kwargs: {kwargs}")
-        node = Node(NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, node_name, func)
-        node.set_belong_symbol_tree(self)
-        return node
 
     def get_ori_cls_name(self) -> str:
         """
@@ -324,6 +262,7 @@ class SymbolTree(Observer, Observable):
                                         corresponding network class.
         """
         self._root_ast = ast_node
+        NodeManager.set_ast_functiondef(self, ast_node)
 
     def get_class_ast(self):
         """
@@ -362,18 +301,6 @@ class SymbolTree(Observer, Observable):
         """
         self._init_func_ast = ast_node
 
-    def get_inputs(self):
-        return self._inputs
-
-    def get_head_node(self):
-        """
-        Getter of `_head` which represents the beginning node while iterating SymbolTree nodes.
-
-        Returns:
-            An instance of node.
-        """
-        return self._head
-
     def get_origin_network(self):
         """
         Getter of `_origin_network`.
@@ -386,6 +313,10 @@ class SymbolTree(Observer, Observable):
     def get_nodes_dict(self):
         """Get dict of nodes"""
         return self._nodes
+
+    def get_node_namer(self):
+        """Get _node_namer"""
+        return self._node_namer
 
     def is_modified(self):
         """
@@ -407,43 +338,6 @@ class SymbolTree(Observer, Observable):
     def get_father_class_ast(self):
         """Get _father_class_ast"""
         return self._father_class_ast
-
-    def nodes(self):
-        """
-        Get generator of nodes of current `SymbolTree`.
-
-        Returns:
-            A generator for iterating Nodes of `SymbolTree`.
-        """
-        # Put nodes in the list to avoid iteration stops caused by node topology being modified
-        nodes = []
-        node = self._head
-        while node is not None:
-            nodes.append(node)
-            node = node.get_next()
-        return iter(nodes)
-
-    def get_tree_nodes(self):
-        """
-        Get tree nodes inserted into symbol tree, include the nodes later deleted by user.
-        So nodes in _tree_nodes may not be used in construct function.
-        Tree nodes in node containers is not saved in _tree_nodes.
-        This function is used when generating codes from symbol tree.
-        """
-        return self._tree_nodes
-
-    def get_node(self, node_name: str) -> Optional[Node]:
-        """
-        Get node of current symbol_tree by `node_name`.
-
-        Args:
-            node_name (str): A str represents name of node as key of query.
-
-        Returns:
-            An instance of Node if found else None.
-        """
-
-        return self._nodes.get(node_name)
 
     def get_node_inputs(self, node_or_name: Union[Node, str]) -> [Node]:
         """
@@ -534,9 +428,11 @@ class SymbolTree(Observer, Observable):
             raise RuntimeError("Node is not belong to current SymbolTree: ", node_or_name)
         return Position.create(node.get_belong_symbol_tree(), node, False)
 
-    def insert_node(self, position: Optional[Position], node: Node, insert_to_ast: bool = True) -> Node:
+    def insert_node(self, new_node: Node, base_node: Node, before_node: bool, node_manager: NodeManager = None,
+                    insert_to_ast: bool = True):
         """
-        Insert a node into SymbolTree.
+        Insert a node before or after base_node.
+
         Note:
             Name of node will be unique while inserting node into SymbolTree.
 
@@ -555,59 +451,79 @@ class SymbolTree(Observer, Observable):
             Topological relation is updated and inputs of corresponding node is updated.
 
         Args:
-            position (Position): A Position indicates an insert position point.
-            node (Node): An instance of node to be inserted in.
-            insert_to_ast (bool): A bool indicates whether to update corresponding ast node at same time, default is
-                True.
+            new_node (Node): Node to be inserted.
+            base_node (Node): New node will be inserted before or after base_node.
+            before_node (bool): Indicate whether new node is inserted before base_node.
+            node_manager (NodeManager): NodeManager those asts belong to. Default: None, means those asts belong to
+                NodeManager of symboltree's construct function.
+            insert_to_ast (bool): Indicate whether ast nodes need to be updated.
 
         Returns:
             An instance of node which has been inserted into SymbolTree.
 
         Raises:
             ValueError: Node in the SymbolTree is inserted into SymbolTree again.
-            RuntimeError: If 'position' is not in current SymbolTree.
             RuntimeError: If corresponding ast node is not an ast.Assign when 'insert_to_ast' is True.
         """
-        if node in self.nodes():
-            raise ValueError(f"Node in the SymbolTree cannot be inserted into SymbolTree again: {node.get_name()}")
-        if position is not None and hasattr(position.node, "container"):
-            cellcontainer = getattr(position.node, "container")
-            index = cellcontainer.node_list.index(position.node)
-            index = index if position.before_node else index + 1
-            cellcontainer.insert(index, node)
-            return node
-        # if position in current SymbolTree
-        if position is not None and position.symbol_tree is not self:
-            raise RuntimeError("Position is not in current SymbolTree:", position)
-        if position is not None and position.node.get_node_type() == NodeType.Input:
+        if new_node.get_belong_symbol_tree():
+            raise ValueError(f"Node in the SymbolTree cannot be inserted into SymbolTree again: {new_node.get_name()}")
+
+        # Check if base_node in current SymbolTree
+        if base_node is not None:
+            stree = base_node.get_belong_symbol_tree()
+            if stree is not None and stree is not self:
+                raise RuntimeError(f"Position is not in current SymbolTree, node:{stree.get_ori_cls_name()}, "
+                                   f"current: {self.get_ori_cls_name()}.")
+
+        # Check if node is inserted between Input node
+        if base_node is not None and base_node.get_node_type() == NodeType.Input:
             valid = True
-            if position.before_node:
+            if before_node:
                 valid = False
-            if position.node.get_next() is not None and position.node.get_next().get_node_type() == NodeType.Input:
+            if base_node.get_next() is not None and base_node.get_next().get_node_type() == NodeType.Input:
                 valid = False
             if not valid:
-                raise RuntimeError("Can not insert a node before or between parameters:", position)
-        # unique node name while insert node into symbol_tree
-        node_name = self._node_name_namer.get_name(node)
-        node.set_name(node_name)
-        # save target name, which is used to provide unique target
-        if node.get_targets():
-            for target in node.get_targets():
-                self._target_namer.add_name(str(target))
-        self._handle_custom_obj_in_normalized_args(node)
-        self._insert_node(position, node)
-        if isinstance(node, TreeNode):
-            # record tree nodes
-            self._tree_nodes.append(node)
-            node.symbol_tree.reg_observer(self)
-        if self._node_visitor:
-            self._node_visitor.append_node(node)
-        # update init-function-ast and construct-function-ast
-        if insert_to_ast:
-            self._insert_to_ast_while_insert_node(node, position)
-        return node
+                raise RuntimeError("Can not insert a node before or between parameters:", base_node.get_name())
 
-    def append_node(self, node: Node, append_to_ast: bool = True) -> Node:
+        # save target name, which is used to provide unique target
+        if new_node.get_targets():
+            for target in new_node.get_targets():
+                self._target_namer.add_name(str(target))
+
+        self._handle_custom_obj_in_normalized_args(new_node)
+
+        # Insert node into NodeManager
+        if node_manager is None:
+            if base_node is None:
+                raise RuntimeError("node_manager and base_node cannot both be None when inserting a node.")
+            node_manager = base_node.get_node_manager()
+
+        if node_manager is self:
+            NodeManager.insert_node(self, new_node, base_node, before_node)
+            if insert_to_ast:
+                # update init-function-ast and construct-function-ast
+                self.insert_to_ast_while_insert_node(new_node, base_node, before_node, self)
+        else:
+            node_manager.insert_node(new_node, base_node, before_node, insert_to_ast)
+
+        # register code changed event observer, which is used to update _modified flag.
+        if new_node.get_node_type() == NodeType.Tree:
+            new_node.symbol_tree.reg_observer(self)
+        elif isinstance(new_node, NodeManager):
+            new_node.reg_observer(self)
+
+        # set node's _belong_symbol_tree
+        new_node.set_belong_symbol_tree(self)
+
+        # print debug log
+        logger.debug(f"[insert]stree: {self.get_opt_cls_name()}, "
+                     f"node_manager: {node_manager.get_manager_name()}, "
+                     f"code: {astunparse.unparse(new_node.get_ast()).strip()}, "
+                     f"node_name:{new_node.get_name()}")
+
+        return new_node
+
+    def append_node(self, node: Node, node_manager: NodeManager = None, append_to_ast: bool = True) -> Node:
         """
         Append a node to SymbolTree.
 
@@ -615,13 +531,17 @@ class SymbolTree(Observer, Observable):
             node (Node): An instance of node to be appended.
             append_to_ast (bool): A bool indicates whether to update corresponding ast node at same time, default is
                 True.
+            node_manager (NodeManager): NodeManager those asts belong to. Default: None, means those asts belong to
+                NodeManager of symboltree's construct function.
 
         Returns:
             An instance of node which has been appended to SymbolTree.
         """
-        return self.insert_node(Position.create(self, self._tail, False), node, append_to_ast)
+        if node_manager is None:
+            node_manager = self
+        return self.insert_node(node, node_manager.get_tail(), False, node_manager, append_to_ast)
 
-    def append_origin_field(self, node: Node) -> Node:
+    def append_origin_field(self, node: Node, node_manager: NodeManager = None) -> Node:
         """
         Append an original field node to SymbolTree. An original field node represents a node created from existing
         statement in forward method, from existing ast node in ast of forward method, so ast node do not need to update
@@ -630,19 +550,16 @@ class SymbolTree(Observer, Observable):
 
         Args:
             node (Node): An instance of node to be appended.
+            node_manager (NodeManager): NodeManager those asts belong to. Default: None, means those asts belong to
+                NodeManager of symboltree's construct function.
 
         Returns:
             An instance of node which has been appended to SymbolTree.
         """
-        if node.get_node_type() == NodeType.Output:
-            self._return = node
-        elif node.get_node_type() == NodeType.Input:
-            self._inputs.append(node)
-        elif node.get_node_type() == NodeType.Tree:
-            pass
-        return self.append_node(node, False)
+        return self.append_node(node, node_manager, False)
 
-    def append_input_node(self, ast_node, param_name: str, default: Optional[ScopedValue] = None):
+    def append_input_node(self, ast_node, param_name: str, default: Optional[ScopedValue] = None,
+                          node_manager: NodeManager = None):
         """
         Append an input node to SymbolTree corresponding to parameter of forward method of network class.
         This method is called while building SymbolTree usually.
@@ -652,13 +569,18 @@ class SymbolTree(Observer, Observable):
             param_name (str): A str represents name of parameter of forward method of network class.
             default (ScopedValue, optional): A ScopedValue represents default value of parameter. Default is None which
                 means parameter has no default value.
+            node_manager (NodeManager): NodeManager those asts belong to. Default: None, means those asts belong to
+                NodeManager of symboltree's construct function.
 
         Returns:
             An instance of input node which has been appended to SymbolTree.
         """
         if param_name == "self":
             return
-        for input_node in self._inputs:
+        # check param_name duplicated
+        if node_manager is None:
+            node_manager = self
+        for input_node in node_manager._inputs:
             targets = input_node.get_targets()
             if len(targets) != 1:
                 raise RuntimeError("targets should have 1 elements")
@@ -671,9 +593,10 @@ class SymbolTree(Observer, Observable):
             if exist_param == param_name:
                 raise RuntimeError("input duplicated:", param_name)
         input_node = Node.create_input_node(ast_node, param_name, default, name=f"input_{param_name}")
-        self.append_origin_field(input_node)
+        self.append_origin_field(input_node, node_manager)
 
-    def try_append_python_node(self, ast_scope: ast.AST, ast_node: ast.AST) -> Optional[Node]:
+    def try_append_python_node(self, ast_scope: ast.AST, ast_node: ast.AST,
+                               node_manager: NodeManager = None) -> Optional[Node]:
         """
         Try appending a python node to SymbolTree if 'ast_node' is not None and 'ast_node' is not Empty if 'ast_node' is
         a list or a dict.
@@ -682,6 +605,8 @@ class SymbolTree(Observer, Observable):
         Args:
             ast_scope (ast.AST): A ast node represents ast node of scope of node.
             ast_node (ast.AST): A ast node represents ast node.
+            node_manager (NodeManager): NodeManager those asts belong to. Default: None, means those asts belong to
+                NodeManager of symboltree's construct function.
 
         Returns:
             An instance of python node if a new node has been appended to SymbolTree else None.
@@ -690,9 +615,9 @@ class SymbolTree(Observer, Observable):
             return None
         if isinstance(ast_node, (list, dict)) and not ast_node:
             return None
-        return self.append_python_node(ast_scope, ast_node)
+        return self.append_python_node(ast_scope, ast_node, node_manager)
 
-    def append_python_node(self, ast_scope: ast.AST, ast_node: ast.AST) -> Node:
+    def append_python_node(self, ast_scope: ast.AST, ast_node: ast.AST, node_manager: NodeManager = None) -> Node:
         """
         Append a python node to SymbolTree.
         This method is called while building SymbolTree usually.
@@ -700,39 +625,50 @@ class SymbolTree(Observer, Observable):
         Args:
             ast_scope (ast.AST): A ast node represents ast node of scope of node.
             ast_node (ast.AST): A ast node represents ast node.
+            node_manager (NodeManager): NodeManager those asts belong to. Default: None, means those asts belong to
+                NodeManager of symboltree's construct function.
 
         Returns:
             An instance of python node which has been appended to SymbolTree.
         """
         logger.info("Ignoring unsupported node (%s) (%s).", type(ast_node).__name__, type(ast_scope).__name__)
-        node_name = self._node_name_namer.get_name(type(ast_node).__name__)
+        node_name = type(ast_node).__name__
         node = Node.create_python_node(ast_node, node_name)
-        self._insert_node(Position.create(self, self._tail, False), node)
+        if node_manager is None or node_manager is self:
+            NodeManager.append_python_node(self, node)
+        else:
+            node_manager.append_python_node(node)
         return node
 
-    def set_output(self, return_value: str, index: int) -> Node:
+    def set_output(self, return_value: str, arg_index: int, return_idx: int = 0,
+                   node_manager: NodeManager = None) -> Node:
         """
         Update return value of return of forward method of network class.
 
         Args:
             return_value (str): A str represents new return value.
-            index (int): A int indicates which return value to be updated.
+            arg_index (int): A int indicates which value in return to be updated.
+            return_idx (int): A int indicates which return node to be updated. Default: 0.
+            node_manager (NodeManager): NodeManager those asts belong to. Default: None, means
+                symboltree's construct function.
 
         Returns:
             An instance of node represents return node after updated.
         """
-        if self._return is None:
-            raise RuntimeError("SymbolTree has no output")
-        self.set_node_arg(self._return, index, return_value)
-        return self._return
+        node_returns = NodeManager.get_returns(self) if node_manager is None else node_manager.get_returns()
+        if not node_returns:
+            raise RuntimeError("Current node_manager has no output")
+        if return_idx >= len(node_returns):
+            raise RuntimeError(f"return_idx {return_idx} should be less than return num {len(node_returns)}.")
+        node_return = node_returns[return_idx]
+        self.set_node_arg(node_return, arg_index, return_value)
+        return node_return
 
     def erase_node(self, node_or_name: Union[Node, str]) -> Node:
         """
         Erase a node from SymbolTree.
-        Note:
-            If node is depended on by other node, RuntimeError will raise.
 
-            Topological relation is updated.
+        Topological relation will be updated.
 
         Args:
             node_or_name (Union[Node, str]): An instance of node or a str represents name of node.
@@ -748,19 +684,21 @@ class SymbolTree(Observer, Observable):
         node = self._get_real_node(node_or_name)
         if node is None:
             raise RuntimeError("Node is not belong to current SymbolTree: ", node_or_name)
-        if hasattr(node, "container"):
-            cellcontainer = getattr(node, "container")
-            cellcontainer.erase(node)
-            return node
-        ret = AstModifier.erase_ast_from_function(self._root_ast, node.get_ast())
-        if not ret:
-            raise RuntimeError("node not in function ast tree.")
-        self._topo_mgr.on_erase_node(node)
-        for key, value in self._nodes.items():
-            if id(value) == id(node):
-                self._nodes.pop(key)
-                value.isolate()
-                break
+        # erase node in NodeManager
+        node_manager = node.get_node_manager()
+
+        logger.debug(f"[earse]stree: {self.get_opt_cls_name()}, "
+                     f"node_manager: {node_manager.get_manager_name()}, "
+                     f"code: {astunparse.unparse(node.get_ast()).strip()}, "
+                     f"node_name:{node.get_name()}")
+
+        if node_manager is self:
+            NodeManager.erase_node(self, node)
+            ret = AstModifier.erase_ast_from_function(self._root_ast, node.get_ast())
+            if not ret:
+                raise RuntimeError(f"erase node failed, node {node.get_name()} not in function ast tree.")
+        else:
+            node_manager.erase_node(node)
         self._deleted_node.append(node.get_name())
         return node
 
@@ -779,26 +717,21 @@ class SymbolTree(Observer, Observable):
             RuntimeError: If 'old_node' is isolated.
             RuntimeError: If 'old_node' is not belong to current SymbolTree.
         """
-
-        if hasattr(old_node, "container"):
-            self._replace_container_node(old_node, new_nodes)
-            return new_nodes[0]
         real_old_node = self._get_real_node(old_node)
         if real_old_node is None:
             raise RuntimeError("Old node is not belong to current SymbolTree:", old_node)
-        # get position
-        next_node: Node = old_node.get_next()
-        prev_node: Node = old_node.get_prev()
-        if prev_node is None and next_node is None:
-            raise RuntimeError("Try replacing a isolated node: ", old_node)
-        if prev_node is None:
-            position = self.before(next_node)
+        # insert new_nodes into node_manager
+        node_manager = real_old_node.get_node_manager()
+        if node_manager is self:
+            # insert new_nodes into NodeManager
+            base_node = old_node
+            for node in new_nodes:
+                self.insert_node(node, base_node, False, self, True)
+                base_node = node
+            self.erase_node(old_node)
         else:
-            position = self.after(prev_node)
-        for node in new_nodes:
-            self.insert_node(position, node, True)
-            position = self.after(node)
-        self.erase_node(old_node)
+            node_manager.replace(old_node, new_nodes)
+
         return new_nodes[-1]
 
     def set_node_arg(self, node: Union[Node, str], index: int, arg: Union[ScopedValue, str]):
@@ -889,8 +822,26 @@ class SymbolTree(Observer, Observable):
         node.set_targets(targets)
         self._topo_mgr.on_update_target(node, index, old_target, target)
 
-    def print_node_tabulate(self):
-        print(self._topo_mgr.dump())
+    def print_node_tabulate(self, all_nodes: bool = False):
+        """
+        Print nodes information and nodes' topological relations.
+
+        Args:
+            all_nodes (bool): Print nodes out of construct functions, such as nodes in CallFunction
+                nodes, CellContainer nodes and sub symbol trees.
+        """
+        print(NodeManager.dump(self, self.get_manager_name()))
+        if all_nodes:
+            node_managers = [self]
+            while node_managers:
+                node_manager = node_managers.pop()
+                for node in node_manager.nodes():
+                    if isinstance(node, NodeManager):
+                        print(node.dump(node.get_manager_name()))
+                        node_managers.append(node)
+            for tree_node in self.get_tree_nodes():
+                stree = tree_node.symbol_tree
+                stree.print_node_tabulate(all_nodes)
 
     def dump(self):
         """Dump graph."""
@@ -921,7 +872,7 @@ class SymbolTree(Observer, Observable):
 
         return False
 
-    def update_class_name_of_unmodified_stree(self, stree, code_bodies) -> str:
+    def update_class_name_of_unmodified_stree(self, stree, code_bodies) -> bool:
         """
         For the unmodified symbol tree, only one definition code remains in the generated code.
         Everywhere else calling this symbol tree will use the class in this definition code.
@@ -1049,194 +1000,61 @@ class SymbolTree(Observer, Observable):
             f.write(source.encode('utf-8'))
             f.flush()
 
-    def _insert_to_ast_while_insert_node(self, node: Node, position: Optional[Position]):
+    def insert_to_ast_while_insert_node(self, new_node: Node, base_node: Node, before_node: bool,
+                                        node_manager: NodeManager):
         """ insert_to_ast_while_insert_node. """
-        node.set_func(ScopedValue.create_naming_value(node.get_name(), "self"))
-        node_ast = node.get_ast()
-        if not isinstance(node_ast, ast.Assign):
-            raise RuntimeError("Only support insert cell op now")
-        if isinstance(node, TreeNode):
-            setattr(self._origin_network, node.get_name(), node.get_instance())
-            args_call = AstModifier.create_call(ScopedValue(ValueType.NamingValue, "", "getattr"),
-                                                [ScopedValue(ValueType.NamingValue, "", "obj"),
-                                                 ScopedValue(ValueType.StringValue, "", node.get_name())])
-            value = ast.Call(func=ast.Name(node.symbol_tree.get_opt_cls_name(), ast.Store(), lineno=0,
-                                           col_offset=0), args=[args_call], keywords=[], lineno=0, col_offset=0)
-
-            ast_target = ast.Name("self." + node.get_name(), ast.Store(), lineno=0, col_offset=0)
-            assign = ast.Assign(targets=[ast_target], value=value, lineno=0, col_offset=0)
-            AstModifier.insert_assign_ast_to_function(self._init_func_ast, assign)
-
-            AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
-                                                      None if position is None else position.node.get_ast(),
-                                                      position.before_node)
+        new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
+        ast_assign = new_node.get_ast()
+        if ast_assign is None:
+            ast_assign = new_node.update_ast_node()
+        if not isinstance(ast_assign, ast.Assign):
+            raise RuntimeError(f"Only support insert ast.Assign now, but get {type(ast_assign)}")
+        # Save instance into _origin_network.
+        setattr(self._origin_network, new_node.get_name(), new_node.get_instance())
+        # Insert ast to __init__ function
+        if isinstance(new_node, TreeNode):
+            init_code = f"self.{new_node.get_name()} = "\
+                        f"{new_node.symbol_tree.get_opt_cls_name()}(obj.{new_node.get_name()})"
         else:
-            AstModifier.insert_assign_to_function(self._init_func_ast,
-                                                  targets=[ScopedValue(ValueType.NamingValue, "self", node.get_name())],
-                                                  expr=ScopedValue(ValueType.NamingValue, "", "getattr"),
-                                                  args=[ScopedValue(ValueType.NamingValue, "", "obj"),
-                                                        ScopedValue(ValueType.StringValue, "", node.get_name())])
-            AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
-                                                      None if position is None else position.node.get_ast(),
-                                                      position.before_node)
-        setattr(self._origin_network, node.get_name(), node.get_instance())
-
-    def _replace_container_node(self, old_node, new_nodes):
-        cellcontainer = getattr(old_node, "container")
-        index = cellcontainer.node_list.index(old_node)
-        for n in reversed(new_nodes):
-            cellcontainer.insert(index, n)
-        index = cellcontainer.node_list.index(old_node)
-        cellcontainer.erase(old_node)
-
-    def _filter_out_to_delete_field(self, to_delete_field):
-        """filter out used field from `to_delete_field`"""
-        for func_def in self._class_ast.body:
-            if not isinstance(func_def, ast.FunctionDef):
-                continue
-            if func_def.name != "__init__":
-                to_delete_to_delete_keys = []
-                property_checker = CheckPropertyIsUsed(func_def)
-                for key, _ in self._deleted_field.items():
-                    if property_checker.check("self", key):
-                        to_delete_to_delete_keys.append(key)
-                        property_checker = CheckPropertyIsUsed(func_def)
-                for key in to_delete_to_delete_keys:
-                    self._deleted_field.pop(key)
-            else:
-                for body in func_def.body:
-                    if not isinstance(body, ast.If):
-                        continue
-                    test = body.test
-                    field_finder = FieldFinder(test)
-                    to_delete_to_delete_keys = []
-                    for key, _ in self._deleted_field.items():
-                        if field_finder.check(key):
-                            to_delete_to_delete_keys.append(key)
-                    for key in to_delete_to_delete_keys:
-                        self._deleted_field.pop(key)
+            init_code = f"self.{new_node.get_name()} = obj.{new_node.get_name()}"
+        init_ast = ast.parse(init_code).body[0]
+        AstModifier.insert_assign_ast_to_function(self._init_func_ast, init_ast)
+        # Insert ast to construct_function/class_internal_function
+        ast_base_node = base_node.get_ast() if base_node else None
+        ast_functiondef = node_manager.get_ast_functiondef()
+        if not ast_functiondef:
+            raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
+                               "when inserting the ast.")
+        AstModifier.insert_assign_ast_to_function(ast_functiondef, ast_assign, ast_base_node, before_node)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, str):
             return self.get_node(node_or_name)
         return node_or_name
 
-    def _insert_tree(self, position: Position, root: Node, insert_to_ast: bool = True) -> Node:
-        """
-        Insert a node-tree into SymbolTree.
-        Note:
-            Inputs of intra sub-tree nodes need to be welly set.
-
-            Inputs of inter sub-tree nodes will be updated by Rewrite automatically.
-
-        Args:
-            position (Position): A Position indicates an insert position point.
-            root (Node): An instance of node as root of node-tree to be inserted in.
-            insert_to_ast (bool): A bool indicates whether to update corresponding ast node at same time, default is
-                True.
-
-        Returns:
-            An instance of node as root node of node-tree which has been inserted into SymbolTree.
-
-        Raises:
-            RuntimeError: If 'position' is not in current SymbolTree.
-        """
-
-        # if position not in current SymbolTree
-        if position.symbol_tree is not self:
-            raise RuntimeError("Position is not in current SymbolTree: ", position)
-
-        queue: [Node] = [root]
-        todos: [] = []
-        inputs_list: [] = []
-        while queue:
-            cur_node = queue.pop(0)
-            if cur_node in todos:
-                continue
-            todos.append(cur_node)
-            node_inputs = cur_node.get_inputs()
-            inputs_list.append(node_inputs)
-            for node_input in node_inputs:
-                if node_input is not None:
-                    queue.append(node_input)
-        todos.reverse()
-        inputs_list.reverse()
-        for index, todo in enumerate(todos):
-            self.insert_node(position, todo, insert_to_ast)
-            position = self.after(todo)
-            # relink input of node
-            original_inputs = inputs_list[index]
-            for arg_idx, original_input in enumerate(original_inputs):
-                if original_input is not None:
-                    self.set_node_arg_by_node(todo, arg_idx, original_input)
-        return root
-
-    def _add_node2nodes(self, node: Node):
-        """
-        Add `node` to `_nodes` dict.
-
-        Args:
-            node (Node): A Node to be added into `_nodes`.
-
-        Raises:
-            RuntimeError: If name of the node is duplicated.
-        """
-        node_name = node.get_name()
-        if self._nodes.get(node_name) is not None:
-            raise RuntimeError("generated duplicated node name", node_name, self._nodes.get(node_name),
-                               node)
-        self._nodes[node_name] = node
-
-    def _insert_node(self, position: Optional[Position], node: Node):
-        """
-        Insert a node into SymbolTree.
-        1. Add `node` to `_nodes`.
-        2. Insert `node` to node list(source code order).
-        3. Update topological relation and update inputs of `node`.
-
-        Args:
-            position ([Position, optional]): Indicates node insert position. Position is None when inserting first node
-                of SymbolTree.
-            node (Node): A Node to be inserted into SymbolTree.
-
-        Raises:
-            RuntimeError: Position is None when _nodes of SymbolTree is not Empty. It means position can not be None
-                unless inserting first node.
-        """
-        if position is None:
-            if self._nodes:
-                raise RuntimeError("self._nodes should be empty")
-            self._head = node
-        else:
-            if position.before_node:
-                position.node.insert_before(node)
-            else:
-                position.node.insert_after(node)
-        self._tail = node
-        self._add_node2nodes(node)
-        self._topo_mgr.on_insert_node(node)
-        node.set_belong_symbol_tree(self)
-
     def _handle_custom_obj_in_normalized_args(self, node: Node):
         """
-        Convert CustomObjValue type argument to NamingValue type argument by storing custom object in global_vars dict.
+        Convert CustomObjValue type argument to NamingValue type argument by storing custom object to obj.
 
         Args:
             node (Node): A Node whose arguments and keyword arguments to be handled.
         """
-        result: {str, ScopedValue} = {}
-        for arg, value in node.get_normalized_args().items():
+        normalized_args: {str, ScopedValue} = {}
+        for key, value in node.get_normalized_args().items():
             if not isinstance(value, ScopedValue):
                 raise TypeError("value should be ScopedValue, got: ", type(value))
             if value.type == ValueType.CustomObjValue:
-                field = self._node_name_namer.get_name(f"var_{type(value.value).__name__}")
-                setattr(self._origin_network, field, value.value)
-                init_targets = [ScopedValue.create_naming_value(field, "self")]
-                AstModifier.append_global_vars_expr_to_init(self._init_func_ast, init_targets, field)
-                result[arg] = init_targets[0]
+                # Save CustomObjValue into _origin_network(i.e. obj): obj.arg_name = CustomObjValue
+                arg_name = self.unique_name(f"arg_{type(value.value).__name__}")
+                setattr(self._origin_network, arg_name, value.value)
+                # Add new code to __init__(): self.arg_name = obj.arg_name
+                new_ast = ast.parse(f"self.{arg_name} = obj.{arg_name}").body[0]
+                self._init_func_ast.body.append(new_ast)
+                # Modify node's normalized_args: CustomObjValue -> self.arg_name
+                normalized_args[key] = ScopedValue.create_naming_value(arg_name, "self")
             else:
-                result[arg] = value
-        node.set_normalized_args(result)
+                normalized_args[key] = value
+        node.set_normalized_args(normalized_args)
 
     def _get_cls_through_file(self):
         """
@@ -1252,7 +1070,7 @@ class SymbolTree(Observer, Observable):
         file_path = os.path.join(file_path, "rewritten_network")
         if not os.path.exists(file_path):
             os.mkdir(file_path)
-        file_name = "{0}_{1}.py".format(self._opt_cls_name, id(self))
+        file_name = f"{self._opt_cls_name}_{id(self)}.py"
         network_file = os.path.join(file_path, file_name)
         with os.fdopen(os.open(network_file, os.O_WRONLY | os.O_CREAT, stat.S_IRWXU), 'wb') as f:
             source = self.get_code()
@@ -1310,43 +1128,3 @@ class SymbolTree(Observer, Observable):
         primitives = self._cal_difference_set(self._origin_network._primitives.keys(), new_net._primitives.keys())
         for p in primitives:
             new_net._primitives[p] = self._origin_network._primitives[p]
-
-    def _create_call_function(self, func, targets, args, kwargs):
-        """
-        Create a Node object and generate the execution code to insert into the source code.
-        The source code calls the 'func' function with 'args' and' kwargs' as parameters.
-
-        Args:
-            func (FunctionType) - The function to be called.
-            targets (list [str]) - indicates the output name. As the output of the node in the source code.
-            args (ParamType) - parameter name of the node. Used as a parameter to a code statement in source
-                code. The default value is None, which means there is no parameter input in the cell.
-            kwargs ({str: ParamType}) - The key type must be str, and the value type must be ParamType. The
-                input parameter name used to describe the formal parameter with a keyword. Enter the name in the source
-                code as the 'kwargs' in the statement expression. The default value is None, which means there is no
-                'kwargs' input.
-
-        Returns:
-            An instance of `Node`.
-        """
-        if not isinstance(func, types.FunctionType):
-            raise TypeError("The 'func' parameter must be a Function, but got ", type(func))
-
-        _package = func.__globals__['__package__']
-        func_name = ".".join([_package, func.__name__]) if _package else func.__name__
-
-        ast_assign = self.create_assign_node(targets, func_name, args, kwargs)
-        scope_targets = [ScopedValue.create_naming_value(targets[0])]
-        scope_func = ScopedValue.create_naming_value(func_name, "")
-        call_args = list()
-        for arg in args:
-            if isinstance(arg, Node):
-                call_args.append(ScopedValue.create_variable_value(arg.get_targets()[0].value))
-            else:
-                call_args.append(ScopedValue.create_variable_value(arg))
-        call_kwargs = {}
-        for k, v in kwargs.items():
-            call_kwargs[k] = ScopedValue.create_variable_value(v)
-        node = self.inner_create_call_function(func_name, ast_assign, scope_func, func, scope_targets, call_args,
-                                               call_kwargs)
-        return node

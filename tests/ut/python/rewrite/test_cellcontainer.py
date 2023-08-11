@@ -19,6 +19,7 @@ from mindspore.ops import operations as P
 
 from mindspore.rewrite import SymbolTree, NodeType, TreeNodeHelper, Node, ScopedValue, PatternEngine, Replacement, \
     PatternNode
+from mindspore.rewrite.node import CellContainer
 
 
 def _conv3x3(in_channel, out_channel, stride=1):
@@ -306,9 +307,9 @@ def test_cellcontainer_replace_node():
                 stree.replace(Node(n), [new_conv_node])
                 break
             assert node.get_handler().node_list[0].get_name() == "new_conv"
-            assert isinstance(node.get_handler().get_instance()._cells["0"], nn.Conv2d)
             break
-
+    new_net = stree.get_network()
+    assert isinstance(new_net.layer1._cells["0"], nn.Conv2d)
 
 def test_cellcontainer_replace_in_subtree():
     """
@@ -358,13 +359,16 @@ def test_cellcontainer_pattern():
             assert not add_pattern.get_inputs()
 
             new_maxpool1 = nn.MaxPool2d()
-            new_maxpool1_node = Node.create_call_cell(new_maxpool1, ['new_maxpool1'], add_node.get_args())
+            new_maxpool1_node = Node.create_call_cell(new_maxpool1, ['new_maxpool1'], add_node.get_args(),
+                                                      name="new_maxpool1")
             new_relu1 = nn.ReLU()
             new_relu1_node = Node.create_call_cell(new_relu1, ['new_relu_1'],
-                                                   [ScopedValue.create_naming_value('new_maxpool1')])
+                                                   [ScopedValue.create_naming_value('new_maxpool1')],
+                                                   name="new_relu")
             new_relu2 = nn.ReLU()
             new_relu2_node = Node.create_call_cell(new_relu2, ['new_relu_2'],
-                                                   [ScopedValue.create_naming_value('new_maxpool1')])
+                                                   [ScopedValue.create_naming_value('new_maxpool1')],
+                                                   name="new_relu2")
             new_maxpool2 = nn.BiDense(1, 1, 2)
             new_maxpool2_node = Node.create_call_cell(new_maxpool2, [bn_node.get_targets()[0]],
                                                       [ScopedValue.create_naming_value('new_relu_1'),
@@ -420,6 +424,6 @@ def test_cellcontainer_first_node_inputs():
             for n in node.get_handler().nodes():
                 inputs = n.get_inputs()
                 assert inputs
-                assert hasattr(n, "container")
-                assert hasattr(n, "valid")
-                assert getattr(n, "valid")
+                node_manager = n.get_node_manager()
+                assert node_manager
+                assert isinstance(node_manager, CellContainer)

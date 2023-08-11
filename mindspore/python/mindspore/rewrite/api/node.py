@@ -19,7 +19,7 @@ from typing import Union, Optional
 from mindspore.nn import Cell
 from mindspore.ops.primitive import Primitive
 from mindspore import _checkparam as Validator
-from ..node import Node as NodeImpl
+from ..node.node import Node as NodeImpl
 from ..symbol_tree import SymbolTree as SymbolTreeImpl
 from .node_type import NodeType
 from .scoped_value import ScopedValue
@@ -70,7 +70,7 @@ class Node:
                 Indicate keyword input names. Used as kwargs of a call expression of an assign statement in source
                 code. Default: ``None`` , which indicates the `cell` has no kwargs inputs.
             name (str): Indicate the name of node. Used as field name in source code. Default is None. Rewrite will
-                generate name from `targets` when name is None. Rewrite will check and ensure the uniqueness of `name`
+                generate name from `cell` when name is None. Rewrite will check and ensure the uniqueness of `name`
                 while node being inserted. Default: ``""`` .
             is_sub_net (bool): Indicate that is `cell` a network. If `is_sub_net` is true, Rewrite will try to parse
                 the `cell` to a TreeNode, otherwise the `cell` is parsed to a CallCell node. Default: ``False`` .
@@ -108,8 +108,7 @@ class Node:
             Validator.check_element_type_of_iterable("args", args, [ScopedValue], "Node")
         if kwargs is not None:
             Validator.check_element_type_of_dict("kwargs", kwargs, [str], [ScopedValue], "Node")
-        return Node(NodeImpl.create_call_op(cell, None, targets, ScopedValue.create_naming_value(name, "self"),
-                                            args, kwargs, name, is_sub_net))
+        return Node(NodeImpl.create_call_op(cell, None, targets, args, kwargs, name, is_sub_net))
 
     def get_handler(self) -> NodeImpl:
         return self._node

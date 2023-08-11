@@ -15,12 +15,12 @@
 """Parse Container in construct function to node of SymbolTree."""
 import ast
 
-from mindspore.rewrite.parser import Parser
+from mindspore.rewrite.parsers.parser import Parser
 from mindspore.rewrite.symbol_tree import SymbolTree
-from mindspore.rewrite.parser_register import ParserRegister
+from mindspore.rewrite.parsers.parser_register import ParserRegister, reg_parser
 
-from mindspore.rewrite.parser_register import reg_parser
 from ..common import error_str
+from ..node.node_manager import NodeManager
 
 
 class ListParser(Parser):
@@ -30,13 +30,14 @@ class ListParser(Parser):
         """Parse target type."""
         return list
 
-    def process(self, stree: SymbolTree, node: list):
+    def process(self, stree: SymbolTree, node: list, node_manager: NodeManager):
         """
         Parse list.
 
         Args:
             stree ([SymbolTree]): Symbol Tree under parsing.
             node ([list]): An list of node.
+            father_node_managernode (NodeManager): NodeManager those asts belong to.
 
         Returns:
             A list of value.
@@ -50,7 +51,7 @@ class ListParser(Parser):
         result = []
         for n in node:
             parser = ParserRegister.instance().get_parser(type(n))
-            value = parser.process(stree, n)
+            value = parser.process(stree, n, node_manager)
             result.append(value)
         return result
 
@@ -62,13 +63,14 @@ class TupleParser(Parser):
         """Parse target type."""
         return tuple
 
-    def process(self, stree: SymbolTree, node: tuple):
+    def process(self, stree: SymbolTree, node: tuple, node_manager: NodeManager):
         """
         Parse tuple.
 
         Args:
             stree ([SymbolTree]): Symbol Tree under parsing.
             node ([tuple]): An tuple of node.
+            node_manager (NodeManager): NodeManager those asts belong to.
 
         Returns:
             A tuple of value.
@@ -79,7 +81,7 @@ class TupleParser(Parser):
         result = []
         for n in node:
             parser = ParserRegister.instance().get_parser(type(n))
-            value = parser.process(stree, n)
+            value = parser.process(stree, n, node_manager)
             result.append(value)
         return tuple(result)
 

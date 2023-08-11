@@ -12,22 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""SymbolTree topological-relationship manager."""
+"""SymbolTree nodes topological relationship manager."""
 from typing import Tuple
-import astunparse
 from mindspore import log as logger
-from .api.scoped_value import ScopedValue
+from ..api.scoped_value import ScopedValue
 from .node import Node
-from .common.observable import Observable
-from .common.event import Event
+from ..common.observable import Observable
+from ..common.event import Event
 
 
 class TopoManager(Observable):
     """SymbolTree topological-relationship manager."""
-    def __init__(self, symbol_tree):
-        super().__init__()
-        # symbol_tree is used for dump() to use nodes(), so it can be symbol tree or cell container.
-        self.symbol_tree = symbol_tree
 
     @staticmethod
     def get_node_users(node: Node) -> [Tuple[Node, int]]:
@@ -103,6 +98,8 @@ class TopoManager(Observable):
         Update node's _target_users by previous node when insert a new node.
         This function is called when target is found in previous nodes, which means a repeat target name is set.
         """
+        # Args of nodes which are between node and provider should not be changed
+        # [last provider] -> no change args -> [insert node] -> need change args -> [next provider] -> no change args
         nodes_before_insert = []
         search_node = provider[0].get_next()
         while search_node is not None:
@@ -111,7 +108,7 @@ class TopoManager(Observable):
                 break
             search_node = search_node.get_next()
         provider_target_users = provider[0].get_target_users(provider[1])
-        for user in provider_target_users:
+        for user in provider_target_users[:]: # copy list by slice to support remove item during iterating
             if user[0] not in nodes_before_insert:
                 node.append_target_users(index, user)
                 provider_target_users.remove(user)
@@ -171,7 +168,7 @@ class TopoManager(Observable):
                 continue
             prev_provider = TopoManager._get_value_provider(node, node.get_targets()[index])
             if not prev_provider:
-                logger.warning(f"Node {node.get_name()}'s target {index} is used in node "
+                logger.warning(f"Node {node.get_name()}'s target {index}({node.get_targets()[index]}) is used in node "
                                f"{target_users[0][0].get_name()}'s arg {target_users[0][1]}, "
                                f"no other node provides this target if node {node.get_name()} is erased.")
                 prev_providers[index] = None
@@ -190,7 +187,7 @@ class TopoManager(Observable):
             if not arg_providers:
                 continue
             provider_target_users = arg_providers[0].get_target_users(arg_providers[1])
-            for target_user in provider_target_users:
+            for target_user in reversed(provider_target_users):
                 if target_user[0] == node:
                     provider_target_users.remove(target_user)
         self.topo_changed()
@@ -210,7 +207,7 @@ class TopoManager(Observable):
         old_provider = TopoManager._get_value_provider(node, old_arg)
         if old_provider:
             old_provider_target_users = old_provider[0].get_target_users(old_provider[1])
-            for target_user in old_provider_target_users:
+            for target_user in reversed(old_provider_target_users):
                 if target_user[0] == node and target_user[1] == arg_idx:
                     old_provider_target_users.remove(target_user)
                     break
@@ -244,33 +241,3 @@ class TopoManager(Observable):
         # Update current node's arg_providers.
         dst_node.set_arg_providers(arg_idx, (src_node, out_idx))
         self.topo_changed()
-
-    def dump(self, title="") -> str:
-        """
-        Dump topological relation.
-
-        title (str): A string as a title will be printed before dumping topological relation.
-        """
-        try:
-            from tabulate import tabulate
-        except ImportError:
-            print("`topologival_manager:dump()` relies on the library `tabulate`, "
-                  "which could not be found on this machine. Run `pip "
-                  "install tabulate` to install the library.")
-            return ""
-        dump_str = "=" * 40 + title + "=" * 40 + '\n'
-        node_specs = [[
-            n.get_node_type(),
-            n.get_name(),
-            astunparse.unparse(n.get_ast()).strip(),
-            [[key, ((value[0].get_name(), value[1]) if value else ())]
-             for key, value in n.get_arg_providers().items()],
-            [[
-                key,
-                [(val[0].get_name(), val[1]) if val else ()
-                 for val in value] if value else []
-            ] for key, value in n.get_target_users().items()]
-        ] for n in self.symbol_tree.nodes()]
-        dump_str += tabulate(node_specs, headers=['node type', 'name', 'codes', 'arg providers', 'target users'])
-        dump_str += '\n' + "=" * (82 + len(title)) + '\n'
-        return dump_str

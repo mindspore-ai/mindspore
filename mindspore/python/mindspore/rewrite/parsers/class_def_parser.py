@@ -23,11 +23,12 @@ from mindspore import log as logger
 from mindspore.nn import Cell
 from mindspore._extends.parse.namespace import CellNamespace
 from ..symbol_tree import SymbolTree
-from ..parser import Parser
-from ..parser_register import ParserRegister, reg_parser
+from .parser import Parser
+from .parser_register import ParserRegister, reg_parser
 from ..ast_helpers import AstReplacer
 from ..common import error_str
 from ..parsers.module_parser import ModuleParser
+from ..node.node_manager import NodeManager
 
 
 class AstScopeChecker:
@@ -240,8 +241,8 @@ class ClassDefParser(Parser):
         """Process father class."""
         father_classes = []
         for base in node.bases:
-            parser: Parser = ParserRegister.instance().get_parser(type(base))
-            father_class_name = parser.process(stree, base)
+            parser: Parser = ParserRegister.instance().get_parser(type(base)) # ast.Name or ast.Attribute
+            father_class_name = parser.process(stree, base, None)
             father_classes.append(father_class_name)
             if father_class_name == "Cell" or ".Cell" in father_class_name:
                 continue
@@ -285,13 +286,14 @@ class ClassDefParser(Parser):
         """Parse target type"""
         return ast.ClassDef
 
-    def process(self, stree: SymbolTree, node: ast.ClassDef):
+    def process(self, stree: SymbolTree, node: ast.ClassDef, node_manager: NodeManager):
         """
         Parse init and construct in ast.ClassDef.
 
         Args:
             stree ([SymbolTree]): Symbol Tree under parsing.
             node ([ast.ClassDef]): An ast.ClassDef node.
+            node_manager (NodeManager): NodeManager those asts belong to.
         """
         # Update network's class name from xxx to xxxOpt in ast
         replacer = AstReplacer(node)
@@ -311,11 +313,12 @@ class ClassDefParser(Parser):
         for body in node.body:
             if isinstance(body, ast.FunctionDef):
                 if body.name == "__init__":
-                    ClassDefParser._process_init_func_ast(body, father_classes, stree.get_opt_cls_name())
                     stree.set_init_func_ast(body)
+                    ClassDefParser._process_init_func_ast(body, father_classes, stree.get_opt_cls_name())
                 elif body.name == "construct":
+                    stree.set_ast_root(body)
                     parser: Parser = ParserRegister.instance().get_parser(ast.FunctionDef)
-                    parser.process(stree, body)
+                    parser.process(stree, body, stree)
                 else:
                     logger.info(
                         "Ignoring ast.FunctionDef in ast.ClassDef except __init__ and construct function: %s",

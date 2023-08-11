@@ -54,6 +54,7 @@ def test_create_by_cell():
         "cool_boy": ScopedValue.create_naming_value('Naroto')
     }
 
+    node.update_ast_node()
     ast_node: ast.Assign = node.get_ast()
     assign_value: ast.Call = ast_node.value
     args_ast = assign_value.args

@@ -21,9 +21,10 @@ from mindspore.rewrite.ast_helpers.ast_modifier import AstModifier
 from mindspore import log as logger
 from mindspore import nn
 from ..symbol_tree import SymbolTree
-from ..parser import Parser
-from ..parser_register import reg_parser
+from .parser import Parser
+from .parser_register import reg_parser
 from ..common.event import Event
+from ..node.node_manager import NodeManager
 
 EVAL_WHITE_LIST = ("self.", "range(", "zip(", "enumerate(", "reversed(")
 
@@ -55,7 +56,7 @@ class ForParser(Parser):
     def target(self):
         return ast.For
 
-    def process(self, stree: SymbolTree, node: ast.For):
+    def process(self, stree: SymbolTree, node: ast.For, node_manager: NodeManager):
         """ Process ast.For node """
         if isinstance(node.target, ast.Name):
             targets = node.target.id
@@ -72,26 +73,30 @@ class ForParser(Parser):
             _info = f"For MindSpore Rewrtie, when eval '{iter_code}' by using JIT Fallback feature, " \
                          f"an error occurred: {str(e)}"
             logger.warning(_info)
-            stree.try_append_python_node(node, node)
+            stree.try_append_python_node(node, node, node_manager)
             return
 
         iter_var_name = iter_code.split(".")[-1]
-        index = stree.get_ast_root().body.index(node) + 1
+        ast_functiondef = node_manager.get_ast_functiondef()
+        if not ast_functiondef:
+            raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
+                               "when parsing 'for' statement.")
+        index = ast_functiondef.body.index(node) + 1
         if isinstance(iter_obj, list):
             for obj in iter_obj:
                 if not isinstance(obj, nn.Cell):
-                    stree.try_append_python_node(node, node)
+                    stree.try_append_python_node(node, node, node_manager)
                     return
             for i, obj in enumerate(iter_obj):
                 ForParser.modify_init_ast(stree, i, obj, iter_var_name)
                 for body in node.body:
                     new_func_name = f"self.{iter_var_name.strip()}_{str(i)}".strip()
                     new_node = ForParser.modify_construct_ast(stree, body, targets, new_func_name)
-                    stree.get_ast_root().body.insert(index, new_node)
+                    ast_functiondef.body.insert(index, new_node)
                     index += 1
             if stree.get_ori_cls_name() == "SequentialCell":
                 stree.on_change(Event.CodeChangeEvent)
-            stree.get_ast_root().body.remove(node)
+            ast_functiondef.body.remove(node)
             return
         if isinstance(iter_obj, range):
             logger.warning("For MindSpore Rewrite, range not support.")
@@ -101,7 +106,7 @@ class ForParser(Parser):
             logger.warning("For MindSpore Rewrite, enumerate not support.")
         else:
             logger.warning(f"For MindSpore Rewrite, not supported type: {type(iter_obj).__name__}")
-        stree.try_append_python_node(node, node)
+        stree.try_append_python_node(node, node, node_manager)
         return
 
 g_for_parser = reg_parser(ForParser())

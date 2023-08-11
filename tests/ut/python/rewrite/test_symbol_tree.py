@@ -116,8 +116,7 @@ def test_insert_node():
                                        [ScopedValue.create_naming_value('x'),
                                         ScopedValue.create_variable_value(input1)], {},
                                        'new_conv')
-    position = stree.before(relu2)
-    node = stree.insert_node(position, node)
+    node = stree.insert_node(node, relu2, True)
     # check nodes size
     assert get_symbol_tree_nodes_count(stree) == 8
     # check args
@@ -179,10 +178,9 @@ def test_insert_node_before_input():
                                         ScopedValue.create_variable_value(input1)], {},
                                        'new_conv')
     input_node = stree.get_inputs()[0]
-    position = stree.before(input_node)
     failed = False
     try:
-        stree.insert_node(position, node)
+        stree.insert_node(node, input_node, True)
     except RuntimeError:
         failed = True
     assert failed
