@@ -45,4 +45,4 @@ def test_invert():
         net = Net()
         ret = net(1)
         print(ret)
-    assert "For Primitive[LogicalNot], the input argument[x] must be a Tensor but got Int64" in str(err)
+    assert "For Primitive[LogicalNot], the type of input argument[x] must be Tensor but got Int64" in str(err)
