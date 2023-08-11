@@ -149,6 +149,76 @@ void ArithmeticBase::ReComputeBatchSplitFlagList() {
   (expand_b_shape.at(0) != 1) ? (split_flag_list_[1] = true) : (split_flag_list_[1] = false);
 }
 
+Status ArithmeticBase::CheckLayoutConfig() {
+  // if the shard_num is 1, the tensor map has reset to -1
+  if (inputs_shape_[0] != inputs_shape_[1] && inputs_tensor_map_[0] == inputs_tensor_map_[1]) {
+    MS_LOG(ERROR) << name_
+                  << ": the input_tensor_map[0] must be equal to input_tensor_map[1], but the inputs_tensor_map is "
+                  << inputs_tensor_map_ << ", and the inputs shape is " << inputs_shape_;
+    return FAILED;
+  }
+
+  // broadcast: such as [a, b, c, d] and [a, -1, c, d],  [a, b, c, d] and [-1, d]
+  size_t len_diff = 0;
+  if (inputs_shape_[0].size() >= inputs_shape_[1].size()) {
+    len_diff = inputs_shape_[0].size() - inputs_shape_[1].size();
+    for (size_t i = 0; i < inputs_tensor_map_[1].size(); ++i) {
+      if (inputs_shape_[0][i + len_diff] == inputs_shape_[1][i] &&
+          inputs_tensor_map_[0][i + len_diff] != inputs_tensor_map_[1][i]) {
+        MS_LOG(ERROR) << name_ << ": invalid tensor map, the inputs_tensor_map is " << inputs_tensor_map_
+                      << ", and the inputs shape is " << inputs_shape_;
+        return FAILED;
+      }
+    }
+  } else {
+    len_diff = inputs_shape_[1].size() - inputs_shape_[0].size();
+    for (size_t i = 0; i < inputs_tensor_map_[0].size(); ++i) {
+      if (inputs_shape_[0][i] == inputs_shape_[1][i + len_diff] &&
+          inputs_tensor_map_[0][i] != inputs_tensor_map_[1][i + len_diff]) {
+        MS_LOG(ERROR) << name_ << ": invalid tensor map, the inputs_tensor_map is " << inputs_tensor_map_
+                      << ", and the inputs shape is " << inputs_shape_;
+        return FAILED;
+      }
+    }
+  }
+
+  return SUCCESS;
+}
+
+Status ArithmeticBase::InferOutputTensorMap() {
+  if (inputs_tensor_map_[0] == inputs_tensor_map_[1]) {
+    outputs_tensor_map_.push_back(inputs_tensor_map_[0]);
+    return SUCCESS;
+  }
+
+  // if the shard_num is 1, the tensor map has reset to -1
+  // broadcast: such as input tensor map : [a, b, c, d] and [-1, d], and output tensor map is [a, b, c, d]
+  size_t len_diff = 0;
+  Shape output_tensor_map;
+  if (inputs_shape_[0].size() >= inputs_shape_[1].size()) {
+    output_tensor_map = inputs_tensor_map_[0];
+    len_diff = inputs_shape_[0].size() - inputs_shape_[1].size();
+    for (size_t i = 0; i < inputs_tensor_map_[1].size(); ++i) {
+      output_tensor_map[i + len_diff] = inputs_tensor_map_[0][i + len_diff] == MAP_NONE
+                                          ? inputs_tensor_map_[1][i]
+                                          : inputs_tensor_map_[0][i + len_diff];
+    }
+  } else {
+    output_tensor_map = inputs_tensor_map_[1];
+    len_diff = inputs_shape_[1].size() - inputs_shape_[0].size();
+    for (size_t i = 0; i < inputs_tensor_map_[0].size(); ++i) {
+      output_tensor_map[i + len_diff] = inputs_tensor_map_[1][i + len_diff] == MAP_NONE
+                                          ? inputs_tensor_map_[0][i]
+                                          : inputs_tensor_map_[1][i + len_diff];
+    }
+  }
+
+  outputs_tensor_map_.push_back(output_tensor_map);
+  MS_LOG(INFO) << name_ << ": the input tensor map is " << inputs_tensor_map_ << ", the output tensor map is "
+               << outputs_tensor_map_;
+  return SUCCESS;
+}
+
 Status ArithmeticBase::InferTensorMap() {
   Shape tensor_map_index;
   Strategies expand_strategy = ExpandStrategy(strategy_);

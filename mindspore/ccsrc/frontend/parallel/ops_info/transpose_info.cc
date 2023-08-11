@@ -109,6 +109,18 @@ Status TransposeInfo::InferTensorMap() {
   return SUCCESS;
 }
 
+Status TransposeInfo::InferOutputTensorMap() {
+  Shape input_tensor_map = inputs_tensor_map_[0];
+  Shape output_tensor_map = input_tensor_map;
+  for (uint64_t i = 0; i < output_tensor_map.size(); i++) {
+    output_tensor_map[i] = input_tensor_map[LongToUlong(axis_v_[i])];
+  }
+  outputs_tensor_map_.push_back(output_tensor_map);
+  MS_LOG(INFO) << name_ << ": the input tensor map is " << inputs_tensor_map_ << ", the output tensor map is "
+               << outputs_tensor_map_;
+  return SUCCESS;
+}
+
 // compute axis_v_ during this method
 Status TransposeInfo::GetAttrs() { return ComputeAxis(); }
 
