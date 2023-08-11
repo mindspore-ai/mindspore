@@ -15,7 +15,7 @@
  */
 
 #include "backend/common/mem_reuse/mem_reuse_checker.h"
-#include <fstream>
+#include "utils/file_utils.h"
 #include "ops/framework_op_name.h"
 #include "utils/trace_base.h"
 
@@ -114,8 +114,8 @@ int64_t MemReuseChecker::CalculOriStatic(const KernelGraph *graph) const {
 int64_t MemReuseChecker::CalculOriDy(const KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   int64_t ori_dy_size = 0;
-  auto kerenls = graph->execution_order();
-  for (auto &kernel : kerenls) {
+  auto kernels = graph->execution_order();
+  for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -130,8 +130,8 @@ int64_t MemReuseChecker::CalculOriDy(const KernelGraph *graph) const {
 int64_t MemReuseChecker::CalculOriWk(const KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   int64_t ori_wk_size = 0;
-  auto kerenls = graph->execution_order();
-  for (auto &kernel : kerenls) {
+  auto kernels = graph->execution_order();
+  for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -166,7 +166,8 @@ void MemReuseChecker::CheckMemReuseIR(const KernelRefCountPtrList &total_refs_li
   total_ori_wkspace_size_ = CalculOriWk(graph);
   std::string graph_id = std::to_string(graph->graph_id());
   std::string filename = "./memreuse_" + graph_id + ".ir";
-  std::ofstream ofs(filename);
+  ChangeFileMode(filename, S_IWUSR);
+  std::ofstream ofs(filename, std::ofstream::app);
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file [" << filename << "] failed!";
     return;
@@ -191,11 +192,13 @@ void MemReuseChecker::CheckMemReuseIR(const KernelRefCountPtrList &total_refs_li
     def_idx++;
   }
   ofs.close();
+  ChangeFileMode(filename, S_IRUSR);
 }
 
 void MemReuseChecker::ExportKernelDependence() {
   std::string filename = "./memreuse_dependence.ir";
-  std::ofstream ofs(filename);
+  ChangeFileMode(filename, S_IWUSR);
+  std::ofstream ofs(filename, std::ofstream::app);
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file [" << filename << "] failed!";
     return;
@@ -214,6 +217,7 @@ void MemReuseChecker::ExportKernelDependence() {
   }
 
   ofs.close();
+  ChangeFileMode(filename, S_IRUSR);
 }
 
 bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph) const {
@@ -309,7 +313,9 @@ int MemReuseChecker::GetTensorIdx(const void *in) const {
 }
 
 void MemReuseChecker::ExportNormalOpIr(const std::vector<CNodePtr> &cnodes) {
-  std::ofstream ofs("./normal_mem.ir");
+  auto filename = "./normal_mem.ir";
+  ChangeFileMode(filename, S_IWUSR);
+  std::ofstream ofs(filename, std::ofstream::app);
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file failed!";
     return;
@@ -352,6 +358,7 @@ void MemReuseChecker::ExportNormalOpIr(const std::vector<CNodePtr> &cnodes) {
     node_idx++;
   }
   ofs.close();
+  ChangeFileMode(filename, S_IRUSR);
 }
 
 void MemReuseChecker::SetTensorFromAndToInfo(const KernelDef *op_def) {
@@ -517,7 +524,8 @@ void MemReuseChecker::ExportEachMembufInfo(std::ofstream &ofs) {
 
 void MemReuseChecker::ExportMembufInfoIR() {
   std::string ir_file_name = "./mem_buf_info.ir";
-  std::ofstream ofs(ir_file_name);
+  ChangeFileMode(ir_file_name, S_IWUSR);
+  std::ofstream ofs(ir_file_name, std::ofstream::app);
   int64_t total_reuse_size = 0;
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file [" << ir_file_name << "] failed!";
@@ -539,11 +547,13 @@ void MemReuseChecker::ExportMembufInfoIR() {
   ofs << "After reuse size:\t" << total_reuse_size << "\n\n";
   ExportEachMembufInfo(ofs);
   ofs.close();
+  ChangeFileMode(ir_file_name, S_IWUSR);
 }
 
 void MemReuseChecker::ExportAddNewMmebufIR() {
   std::string ir_file_name = "./AddNewMembuf.ir";
-  std::ofstream ofs(ir_file_name);
+  ChangeFileMode(ir_file_name, S_IWUSR);
+  std::ofstream ofs(ir_file_name, std::ofstream::app);
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file [" << ir_file_name << "] failed!";
   }
@@ -589,6 +599,7 @@ void MemReuseChecker::ExportAddNewMmebufIR() {
     }
   }
   ofs.close();
+  ChangeFileMode(ir_file_name, S_IRUSR);
 }
 }  // namespace memreuse
 }  // namespace mindspore
