@@ -60,7 +60,7 @@ Status TFRecordNode::ValidateTFRecordFiles(const std::vector<std::string> &filen
       continue;
     }
 
-    std::ifstream reader(realpath.value(), std::ios::binary);
+    std::ifstream reader(realpath.value(), std::ios::in | std::ios::binary);
     // failed to open
     if (!reader) {
       invalid_files.push_back(filename);

@@ -112,7 +112,7 @@ Status ConfigManager::LoadFile(const std::string &settingsFile) {
   // Some settings are mandatory, others are not (with default).  If a setting
   // is optional it will set a default value if the config is missing from the file.
   try {
-    std::ifstream in(settingsFile);
+    std::ifstream in(settingsFile, std::ios::in);
     nlohmann::json js;
     in >> js;
     rc = FromJson(js);

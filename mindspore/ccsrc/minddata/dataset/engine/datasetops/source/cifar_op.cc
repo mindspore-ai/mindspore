@@ -130,14 +130,17 @@ Status CifarOp::ReadCifar10BlockData() {
       }
     }
 
-    std::ifstream in(file, std::ios::binary);
+    std::ifstream in(file, std::ios::in | std::ios::binary);
     CHECK_FAIL_RETURN_UNEXPECTED(
       in.is_open(), "Invalid cifar10 file, failed to open " + file + ", the file is damaged or permission denied.");
 
     for (uint32_t index = 0; index < num_cifar10_records / kCifarBlockImageNum; ++index) {
       (void)in.read(reinterpret_cast<char *>(&(image_data[0])), block_size * sizeof(unsigned char));
-      CHECK_FAIL_RETURN_UNEXPECTED(!in.fail(), "Invalid cifar10 file, failed to read data from: " + file +
-                                                 ", re-download dataset(make sure it is CIFAR-10 binary version).");
+      if (in.fail()) {
+        in.close();
+        RETURN_STATUS_UNEXPECTED("Invalid cifar10 file, failed to read data from: " + file +
+                                 ", re-download dataset(make sure it is CIFAR-10 binary version).");
+      }
       (void)cifar_raw_data_block_->EmplaceBack(image_data);
       // Add file path info
       path_record_.push_back(file);
@@ -180,14 +183,17 @@ Status CifarOp::ReadCifar100BlockData() {
       RETURN_STATUS_UNEXPECTED("Invalid cifar100 file, Cifar100 train/test file is missing in: " + file_name);
     }
 
-    std::ifstream in(file, std::ios::binary);
+    std::ifstream in(file, std::ios::in | std::ios::binary);
     CHECK_FAIL_RETURN_UNEXPECTED(
       in.is_open(), "Invalid cifar100 file, failed to open " + file + ", the file is damaged or permission denied.");
 
     for (uint32_t index = 0; index < num_cifar100_records / kCifarBlockImageNum; index++) {
       (void)in.read(reinterpret_cast<char *>(&(image_data[0])), block_size * sizeof(unsigned char));
-      CHECK_FAIL_RETURN_UNEXPECTED(!in.fail(), "Invalid cifar100 file, failed to read data from: " + file +
-                                                 ", re-download dataset(make sure it is CIFAR-100 binary version).");
+      if (in.fail()) {
+        in.close();
+        RETURN_STATUS_UNEXPECTED("Invalid cifar100 file, failed to read data from: " + file +
+                                 ", re-download dataset(make sure it is CIFAR-100 binary version).");
+      }
       (void)cifar_raw_data_block_->EmplaceBack(image_data);
       // Add file path info
       path_record_.push_back(file);
@@ -334,11 +340,12 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
         }
       }
 
-      std::ifstream in(file, std::ios::binary);
+      std::ifstream in(file, std::ios::in | std::ios::binary);
 
       CHECK_FAIL_RETURN_UNEXPECTED(
         in.is_open(), "Invalid cifar10 file, failed to open " + file + ", the file is damaged or permission denied.");
       *count = *count + num_cifar10_records;
+      in.close();
     }
     return Status::OK();
   } else {
@@ -364,9 +371,10 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
       } else if (file_name.find("train") != std::string::npos) {
         num_cifar100_records += kCifar100RecordsPerTrainFile;
       }
-      std::ifstream in(file, std::ios::binary);
+      std::ifstream in(file, std::ios::in | std::ios::binary);
       CHECK_FAIL_RETURN_UNEXPECTED(
         in.is_open(), "Invalid cifar100 file, failed to open " + file + ", the file is damaged or permission denied.");
+      in.close();
     }
     *count = num_cifar100_records;
     return Status::OK();

@@ -4328,7 +4328,7 @@ class Schema:
             >>> import json
             >>> from mindspore.dataset import Schema
             >>>
-            >>> with open("/path/to/schema_file") as file:
+            >>> with open("/path/to/schema_file", "r") as file:
             ...     json_obj = json.load(file)
             ...     schema = Schema()
             ...     schema.from_json(json_obj)

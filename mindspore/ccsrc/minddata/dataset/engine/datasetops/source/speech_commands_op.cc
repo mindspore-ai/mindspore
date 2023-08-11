@@ -79,7 +79,7 @@ Status SpeechCommandsOp::ParseFileList(const std::string &pf_path, const std::st
   std::string file_list = (pf_usage == "test" ? kTestFiles : kValFiles);
   Path path(pf_path);
   std::string list_path = (Path(pf_path) / Path(file_list)).ToString();
-  std::ifstream file_reader(list_path);
+  std::ifstream file_reader(list_path, std::ios::in);
   while (getline(file_reader, line)) {
     Path file_path(path / line);
     loaded_names.insert(file_path.ToString());

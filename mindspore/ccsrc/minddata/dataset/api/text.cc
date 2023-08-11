@@ -192,7 +192,7 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  std::ifstream ifs(realpath.value());
+  std::ifstream ifs(realpath.value(), std::ios::in);
   if (!ifs) {
     std::string err_msg = "JiebaTokenizer : Fail to load dictionary from the input file, check the file path.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);

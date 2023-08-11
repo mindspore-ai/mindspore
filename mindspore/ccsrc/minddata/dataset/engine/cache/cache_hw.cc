@@ -129,7 +129,7 @@ Status CacheServerHW::GetNumaNodeInfo() {
       RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + f.ToString());
     }
 
-    std::ifstream fs(realpath.value());
+    std::ifstream fs(realpath.value(), std::ifstream::in);
     CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + f.ToString());
     std::string cpu_string;
     cpu_set_t cpuset;
@@ -142,7 +142,10 @@ Status CacheServerHW::GetNumaNodeInfo() {
       while (iter != end) {
         auto match = iter->str();
         auto pos = match.find_first_of('-');
-        CHECK_FAIL_RETURN_UNEXPECTED(pos != std::string::npos, "Failed to parse numa node file");
+        if (pos == std::string::npos) {
+          fs.close();
+          RETURN_STATUS_UNEXPECTED("Failed to parse numa node file");
+        }
         std::string min = match.substr(0, pos);
         std::string max = match.substr(pos + 1);
         cpu_id_t cpu_min = static_cast<cpu_id_t>(strtol(min.data(), nullptr, kDecimal));
@@ -252,7 +255,7 @@ uint64_t CacheServerHW::GetAvailableMemory() {
     return 0;
   }
 
-  std::ifstream mem_file(realpath.value());
+  std::ifstream mem_file(realpath.value(), std::ifstream::in);
   if (mem_file.fail()) {
     MS_LOG(WARNING) << "Fail to open file: " << kMemInfoFileName;
     return 0;

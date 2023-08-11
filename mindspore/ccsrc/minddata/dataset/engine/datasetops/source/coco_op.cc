@@ -331,10 +331,11 @@ Status CocoOp::PrepareData() {
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
 
-    std::ifstream in(realpath.value());
+    std::ifstream in(realpath.value(), std::ios::in);
     CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid annotation file, Coco Dataset annotation file: " +
                                                  annotation_path_ + " open failed, permission denied!");
     in >> js;
+    in.close();
   } catch (const std::exception &err) {
     RETURN_STATUS_UNEXPECTED("Invalid annotation file, Coco Dataset annotation file:" + annotation_path_ +
                              " load failed, error description: " + std::string(err.what()));

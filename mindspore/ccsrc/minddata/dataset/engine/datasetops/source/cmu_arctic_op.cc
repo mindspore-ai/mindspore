@@ -143,7 +143,7 @@ Status CMUArcticOp::PrepareData() {
   Path label_dir = dir / full_name_path / kLabelDirectory / kLabelFileName;
   CHECK_FAIL_RETURN_UNEXPECTED(label_dir.Exists() && !label_dir.IsDirectory(),
                                "Invalid file, failed to find label file: " + label_dir.ToString());
-  std::ifstream label_reader(label_dir.ToString());
+  std::ifstream label_reader(label_dir.ToString(), std::ifstream::in);
   CHECK_FAIL_RETURN_UNEXPECTED(label_reader.is_open(),
                                "Invalid file, failed to open label file: " + label_dir.ToString() +
                                  ", make sure file not damaged or permission denied.");

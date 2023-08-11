@@ -16,8 +16,6 @@
 
 #include "minddata/dataset/engine/datasetops/source/lsun_op.h"
 
-#include <fstream>
-
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"

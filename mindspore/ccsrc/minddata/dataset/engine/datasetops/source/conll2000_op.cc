@@ -120,7 +120,7 @@ Status CoNLL2000Op::LoadFile(const std::string &file, int64_t start_offset, int6
     MS_LOG(ERROR) << "Invalid file path, " << DatasetName() << " dataset dir: " << file << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + DatasetName() + " dataset dir: " + file + " does not exist.");
   }
-  std::ifstream handle(realpath.value());
+  std::ifstream handle(realpath.value(), std::ios::in);
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + ": " + file);
   }

@@ -710,10 +710,11 @@ Status SchemaObj::Init() {
 
     nlohmann::json js;
     try {
-      std::ifstream in(real_path);
+      std::ifstream in(real_path, std::ifstream::in);
       in >> js;
       CHECK_FAIL_RETURN_UNEXPECTED(js.find("columns") != js.end(),
                                    "\"columns\" node is required in the schema json file.");
+      in.close();
     } catch (const std::exception &err) {
       std::string err_msg = "Schema file failed to load: ";
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);

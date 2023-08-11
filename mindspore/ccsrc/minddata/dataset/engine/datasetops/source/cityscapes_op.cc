@@ -54,7 +54,7 @@ Status CityscapesOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   if (task_ != taskSuffix) {
     RETURN_IF_NOT_OK(Tensor::CreateFromFile(data.second, &task));
   } else {
-    std::ifstream file_handle(data.second);
+    std::ifstream file_handle(data.second, std::ifstream::in);
     if (!file_handle.is_open()) {
       RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + data.second +
                                ", the json is damaged or permission denied.");

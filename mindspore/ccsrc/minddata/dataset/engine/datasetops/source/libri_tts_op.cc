@@ -199,7 +199,7 @@ Status LibriTTSOp::GetLabels() {
   const uint32_t ascii_zero = 48;
   const size_t underline_exact = 3;
   for (std::string label_file : label_files_) {
-    std::ifstream label_reader(label_file);
+    std::ifstream label_reader(label_file, std::ios::in);
     while (getline(label_reader, utterance_id_body, '\t')) {
       getline(label_reader, original_text_body, '\t');
       getline(label_reader, normalized_text_body, '\n');
