@@ -271,7 +271,15 @@ void AclRunner::SetDynamicMode() {
 
 void AclRunner::SetPrecisionMode(const AclPrecisionMode mode) {
   int ret = -1;
-  if (mode == ALLOW_FP32_TO_FP16) {
+  static std::string precision_mode = "not_inited";
+  if (precision_mode == "not_inited") {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
+  }
+  if (!precision_mode.empty()) {
+    ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
+  } else if (mode == ALLOW_FP32_TO_FP16) {
     static const std::string allow_fp32_to_fp16 = "allow_fp32_to_fp16";
     ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, allow_fp32_to_fp16.c_str());
   } else if (mode == FORCE_FP32) {
