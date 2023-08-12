@@ -53,7 +53,7 @@ class GeDeviceResManager : public DeviceResManager {
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const ShapeVector &shape, const UserDataPtr &user_data = nullptr) const override;
 
-  static void CreateSessionAndGraphRunner(bool is_training);
+  static void CreateSessionAndGraphRunner();
 
   bool LoadCollectiveCommLib() override {
     collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();

@@ -42,7 +42,6 @@ namespace {
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
-const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
 }  // namespace
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
@@ -110,7 +109,6 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
     return;
   }
 
-  (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
   std::map<std::string, std::string> ge_options;
   GetGeOptions(inst_context, &ge_options);
   {
@@ -179,20 +177,6 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
                                       std::map<std::string, std::string> *ge_options) const {
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
   MS_EXCEPTION_IF_NULL(ge_options);
-  if (ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) != "") {
-    (*ge_options)["ge.exec.precision_mode"] = ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE);
-    MS_LOG(INFO) << "Set precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) << ".";
-  } else if (IsGeTrain()) {
-    auto soc_version = device::ascend::GetSocVersion();
-    if (kAscend910BVersions.count(soc_version) != 0) {
-      MS_LOG(INFO) << "The default value of precision_mode is set by CANN. soc_version is " << soc_version;
-    } else {
-      (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
-      MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16. soc_version is " << soc_version;
-    }
-  } else {
-    (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
-  }
 
   (*ge_options)["ge.topoSortingMode"] = "0";
   (*ge_options)["ge.exec.memoryOptimizationPolicy"] = "MemoryPriority";
@@ -267,12 +251,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     (*ge_options)["ge.DDK_version"] = "1.60.T17.B830";
   }
   (*ge_options)["graphType"] = "1";
-
-  if (IsGeTrain()) {
-    (*ge_options)["ge.graphRunMode"] = "1";
-  } else {
-    (*ge_options)["ge.graphRunMode"] = "0";
-  }
 
   SetDisableReuseMemoryFlag(ge_options);
   SetHcclOptions(ms_context_ptr, ge_options);

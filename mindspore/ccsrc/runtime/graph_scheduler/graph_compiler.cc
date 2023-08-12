@@ -56,6 +56,8 @@
 #endif
 #include "include/common/profiler.h"
 #include "include/common/utils/compile_cache_context.h"
+#include "utils/phase.h"
+#include "pipeline/jit/base.h"
 
 namespace mindspore {
 namespace runtime {
@@ -291,7 +293,13 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
   // If there are auto parallel in graph, the flag should not be set. In parallel, the continue memory in communication
   // ops not support addr change.
   // force zero copy when use ge
-  if (is_parallel_mode && common::GetEnv("MS_GE_TRAIN") != "1") {
+  bool is_enable_ge = ms_context->backend_policy() == "ge";
+  const std::string &phase = PhaseManager::GetInstance().phase();
+  bool is_train = false;
+  if (phase.length() != 0) {
+    is_train = pipeline::GetPhasePrefix(phase) == "train";
+  }
+  if (is_parallel_mode && (!is_enable_ge || !is_train)) {
     return false;
   }
   return true;
@@ -349,7 +357,9 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
   }
-  if (MsContext::GetInstance()->backend_policy() == "ge" && device_target == device::DeviceType::kAscend &&
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->backend_policy() == "ge" && device_target == device::DeviceType::kAscend &&
       !common::IsEnableRefMode()) {
     MS_EXCEPTION_IF_NULL(device_context->graph_executor_);
     if (!device_context->graph_executor_->CompileGraph(graph, {})) {

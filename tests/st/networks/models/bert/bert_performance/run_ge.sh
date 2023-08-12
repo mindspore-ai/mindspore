@@ -16,7 +16,6 @@
 
 #!/bin/bash
 export MS_ENABLE_GE=1
-export MS_GE_TRAIN=1
 pytest_bert()
 {
   echo "###  pytest start ###"

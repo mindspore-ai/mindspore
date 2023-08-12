@@ -174,13 +174,11 @@ def test_ascend_lenet_cell():
     Expectation: the result match with expect
     """
     seed_set()
-    os.environ['MS_GE_TRAIN'] = str(1)
     os.environ['MS_ENABLE_GE'] = str(1)
     os.environ['MS_ENABLE_REF_MODE'] = str(1)
     os.environ['MS_DEV_CELL_REUSE'] = str(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     loss_output = train_ascend_lenet()
-    del os.environ['MS_GE_TRAIN']
     del os.environ['MS_ENABLE_GE']
     del os.environ['MS_ENABLE_REF_MODE']
     del os.environ['MS_DEV_CELL_REUSE']
@@ -199,12 +197,10 @@ def test_ascend_lenet_no_cell():
     Expectation: the result match with expect
     """
     seed_set()
-    os.environ['MS_GE_TRAIN'] = str(1)
     os.environ['MS_ENABLE_GE'] = str(1)
     os.environ['MS_ENABLE_REF_MODE'] = str(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     loss_output = train_ascend_lenet()
-    del os.environ['MS_GE_TRAIN']
     del os.environ['MS_ENABLE_GE']
     del os.environ['MS_ENABLE_REF_MODE']
     assert loss_output.asnumpy() < 0.004

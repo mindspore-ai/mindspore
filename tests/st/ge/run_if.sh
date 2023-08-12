@@ -18,7 +18,6 @@ BASE_PATH=$(cd "$(dirname $0)"; pwd)
 rm -rf ${BASE_PATH}/if
 mkdir ${BASE_PATH}/if
 export MS_ENABLE_GE=1
-export MS_GE_TRAIN=1
 unset SLOG_PRINT_TO_STDOUT
 cd ${BASE_PATH}/if
 echo "start test if with ge backend"
@@ -26,7 +25,6 @@ env > env.log
 python ../run_if.py > test_if.log 2>&1 &
 process_pid=`echo $!`
 wait ${process_pid}
-unset MS_GE_TRAIN
 unset MS_ENABLE_GE
 status=`echo $?`
 if [ "${status}" != "0" ]; then

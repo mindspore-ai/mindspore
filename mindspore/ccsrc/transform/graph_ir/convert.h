@@ -87,9 +87,15 @@ class DfGraphConvertor {
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph, const std::string &phase_prefix)
       : anf_graph_(anf_graph), phase_prefix_(phase_prefix) {
     MS_EXCEPTION_IF_NULL(anf_graph);
-    auto env_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
-    auto env_training = mindspore::common::GetEnv("MS_GE_TRAIN");
-    if (env_ge == "1" && env_training == "1") {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    bool enable_ge = context->backend_policy() == "ge";
+    bool enable_training = phase_prefix_ == "train";
+    static bool is_training = false;
+    if (enable_ge && enable_training) {
+      is_training = true;
+    }
+    if (is_training) {
       training_ = true;
     } else {
       training_ = anf_graph->has_flag("training");

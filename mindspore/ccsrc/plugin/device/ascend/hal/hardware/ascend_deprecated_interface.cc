@@ -154,8 +154,6 @@ bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, i
                                                 const std::vector<TypePtr> &types,
                                                 const std::vector<std::vector<int64_t>> &shapes,
                                                 const std::vector<int64_t> &input_indexes, const std::string &phase) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
   ge_device_context_->Initialize();
   std::vector<int64_t> ge_types;
   (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types), [](const TypePtr &i) -> int64_t {
@@ -168,18 +166,6 @@ bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, i
 
   DatasetGraphParam param(queue_name, size, batch_size, ge_types, shapes, input_indexes);
   ConfigManager::GetInstance().set_dataset_param(param);
-
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  auto env_training = common::GetEnv("MS_GE_TRAIN");
-  bool training = false;
-  if (env_ge == "1" && env_training == "1") {
-    training = true;
-  }
-  if (training) {
-    (void)setenv("GE_TRAIN", "1", 1);
-  } else {
-    (void)setenv("GE_TRAIN", "0", 1);
-  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 
@@ -189,7 +175,7 @@ bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, i
       return false;
     }
 
-    GeDeviceResManager::CreateSessionAndGraphRunner(training);
+    GeDeviceResManager::CreateSessionAndGraphRunner();
 
     MS_LOG(INFO) << "DoExecNonInputGraph:" << phase;
     DoExecNonInputGraph(phase);

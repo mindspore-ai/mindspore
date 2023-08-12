@@ -1036,7 +1036,7 @@ bool HasIncorporateCallNode(const CNodePtr &cnode) {
     if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
         IsValueNode<FuncGraph>(input0)) {
       if (IsCellReuse(input0) && common::IsEnableRefMode()) {
-        MS_LOG(INFO) << "Use cell reuse when MS_ENABLE_GE=1: " << cnode->DebugString();
+        MS_LOG(INFO) << "Use cell reuse when enable ge mode: " << cnode->DebugString();
         return true;
       }
       if (AcceptableReturnValue(cnode, input0)) {
@@ -1173,7 +1173,7 @@ bool SetModeForControlFlow(const FuncGraphPtr &func_graph, const std::vector<Anf
   bool exist_while =
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
   MS_LOG(INFO) << func_graph->ToString() << " exist_while: " << exist_while;
-  static const bool is_enable_ge = (common::GetEnv("MS_ENABLE_GE") == "1");
+  static const bool is_enable_ge = context_ptr->backend_policy() == "ge";
   if (!is_enable_ge && (exist_while || ExistSwitchRef(func_graph, all_nodes))) {
     if (!pynative_mode) {
       MS_LOG(INFO) << "Run graph mode with sub graph sink because graph exist while or switch ref.";

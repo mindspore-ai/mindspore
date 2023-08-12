@@ -64,7 +64,6 @@ def test_ge_resnet50_cifar10_ascend():
     Expectation: Success
     """
     os.environ['MS_ENABLE_GE'] = '1'
-    os.environ['MS_GE_TRAIN'] = '1'
     current_path = os.path.dirname(os.path.abspath(__file__))
     model_path = "{}/../../../../tests/models/official/cv".format(current_path)
     model = "resnet"
