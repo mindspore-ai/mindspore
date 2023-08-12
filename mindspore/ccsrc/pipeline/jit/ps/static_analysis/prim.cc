@@ -265,16 +265,20 @@ AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const Abstrac
       MS_EXCEPTION_IF_NULL(cast);
       target_node = func_graph->NewCNodeAfter(source_node, {NewValueNode(cast), source_node, target_type});
     }
-  } else if (node_type->isa<AbstractTuple>()) {
-    auto x = node_type->cast_ptr<AbstractTuple>();
+  } else if (node_type->isa<AbstractSequence>()) {
+    auto x = node_type->cast_ptr<AbstractSequence>();
     auto &items = x->elements();
     std::vector<AnfNodePtr> nodes;
     (void)nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     int64_t idx = 0;
     for (const auto &item : items) {
-      AnfNodePtr tuple_node =
-        func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), source_node, NewValueNode(idx)});
-      AnfNodePtr node = MixedPrecisionCastHelper(tuple_node, item, target_type, func_graph);
+      AnfNodePtr sequence_node = nullptr;
+      if (node_type->isa<AbstractList>()) {
+        sequence_node = func_graph->NewCNode({NewValueNode(prim::kPrimListGetItem), source_node, NewValueNode(idx)});
+      } else {
+        sequence_node = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), source_node, NewValueNode(idx)});
+      }
+      AnfNodePtr node = MixedPrecisionCastHelper(sequence_node, item, target_type, func_graph);
       (void)nodes.emplace_back(node);
       ++idx;
     }

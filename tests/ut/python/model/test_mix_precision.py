@@ -221,6 +221,27 @@ def test_dict_cast():
     net(x, y)
 
 
+def test_list_cast():
+    """
+    Feature: Test mixed_precision_cast
+    Description: Test mixed_precision_cast with list input
+    Expectation: Success
+    """
+    class Net_Cast(nn.Cell):
+        def construct(self, x):
+            x = F.mixed_precision_cast(mstype.float16, x)
+            return x
+
+    context.set_context(mode=context.GRAPH_MODE)
+    x = [Tensor(1.0, mstype.float32), Tensor(2.0, mstype.float32)]
+    net = Net_Cast()
+    y = net(x)
+    assert isinstance(y, tuple)
+    assert len(y) == 2, f"type(y): {type(y)}, y: {y}"
+    assert y[0].dtype == mstype.float16
+    assert y[1].dtype == mstype.float16
+
+
 def test_kwarg_cast():
     class FirstNet(nn.Cell):
         def __init__(self):
