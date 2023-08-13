@@ -270,6 +270,16 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
         logger.warning("No valid time_stamp is record in file: %s", input_file)
 
 
+def _ascend_graph_msprof_generator(source_path, model_iteration_dict):
+    try:
+        msprof_exporter = AscendMsprofExporter(source_path)
+        msprof_exporter.export(model_iteration_dict)
+    except ProfilerException as err:
+        logger.warning(err.message)
+    finally:
+        pass
+
+
 def _ascend_graph_msprof_analyse(source_path):
     """
     Ascend graph model msprof data analyse.
@@ -415,7 +425,6 @@ class Profiler:
         self._rank_size = 1
         self._rank_id = 0
         self._ascend_profiler = None
-        self._ascend_msprof_exporter = None
         self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
         self._parallel_strategy = True
         _environment_check()
@@ -432,6 +441,7 @@ class Profiler:
         self._sync_enable = True
         self._stop_time = 0
         self._dynamic_status = False
+        self._model_iteration_dict = None
         self._profile_framework = "all"
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
         if self._msprof_enable:
@@ -483,6 +493,25 @@ class Profiler:
             job_start_time = json.load(f).get("collectionTimeBegin")
 
         return job_start_time
+
+    @staticmethod
+    def _parse_info_json(info_file):
+        """
+        Parse info log file, get the rank id and device id of the job.
+        Args:
+             input_file (str): The file path of the parse info log file.
+
+        Returns:
+            rank id, device id
+        """
+        with open(info_file, "r") as f:
+            info_dict = json.load(f)
+
+            rank_id = info_dict.get("rank_id", 0)
+            dev_info = info_dict.get("DeviceInfo", [])
+            dev_id = dev_info[0].get("id", -1)
+
+            return str(rank_id), str(dev_id)
 
     def op_analyse(self, op_name, device_id=None):
         """
@@ -558,7 +587,21 @@ class Profiler:
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
         """
+        self._analyse(offline_path=offline_path)
+
+    def _analyse(self, offline_path=None, model_iteration_dict=None):
+        """
+        Collect and analyze training performance data, support calls during and after training. The example shows above.
+
+        Args:
+            offline_path (Union[str, None], optional): The data path which need to be analysed with offline mode.
+                Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
+                for online mode. Default: ``None``.
+            model_iteration_dict: Dictionary with model id as the key and iteration id as the value, Default: ``None``.
+        """
+        self._model_iteration_dict = model_iteration_dict
         if offline_path:
+            self._ascend_graph_analyse()
             _offline_parse(offline_path)
             return
         if self._msprof_enable:
@@ -971,9 +1014,6 @@ class Profiler:
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
         # export op data before analyse
-        if self._op_time:
-            self._ascend_msprof_exporter = AscendMsprofExporter(self._output_path)
-            self._ascend_msprof_exporter.export(self._start_time, support_step_trace=False)
         self._ascend_graph_analyse()
 
     def _minddata_analyse(self, source_path):
@@ -1077,7 +1117,7 @@ class Profiler:
         finally:
             pass
 
-    def _ascend_timeline_analyse(self, source_path, op_summary, steptrace):
+    def _ascend_timeline_analyse(self, op_summary, steptrace):
         """Analyse timeline info."""
         try:
             logger.info("Profiling: analyzing the timeline data")
@@ -1198,9 +1238,10 @@ class Profiler:
         source_path = os.path.join(self._output_path, job_id)
         self._minddata_analyse(source_path)
         if self._op_time:
+            _ascend_graph_msprof_generator(source_path, self._model_iteration_dict)
             op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path)
             self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status)
-            self._ascend_timeline_analyse(source_path, op_summary, steptrace)
+            self._ascend_timeline_analyse(op_summary, steptrace)
             graph_ids = np.unique(op_summary['Model ID']).tolist()
             points = self._ascend_fpbp_analyse(op_summary, steptrace)
             if len(graph_ids) == 1:
@@ -1400,13 +1441,10 @@ class Profiler:
             return job_id
 
         job_id = ""
-        job_dirs = filter(lambda item: item.startswith('JOB') or item.startswith('PROF') and \
-                                       os.path.isdir(os.path.join(self._output_path, item)),
-                          os.listdir(self._output_path))
+        job_dirs = filter(lambda item: item.startswith('JOB') or item.startswith('PROF') and os.path.isdir(
+            os.path.join(self._output_path, item)), os.listdir(self._output_path))
         sorted_job_dirs = sorted(
-            job_dirs, key=lambda x: os.path.getmtime(os.path.join(self._output_path, x)),
-            reverse=True
-        )
+            job_dirs, key=lambda x: os.path.getmtime(os.path.join(self._output_path, x)), reverse=True)
 
         for dir_name in sorted_job_dirs:
             if dir_name.startswith('PROF'):
@@ -1423,20 +1461,19 @@ class Profiler:
                                "profiler will ignore this job dir.", job_dir)
                 continue
 
-            training_device_id = start_file_path.split('.')[-1]
+            info_file_path = get_file_path(job_dir, "info.json")
+            if info_file_path is None:
+                logger.warning("Find profiling job path %s, but info.json not exist, "
+                               "profiler will ignore this job dir.", job_dir)
+                continue
+
+            _, training_device_id = self._parse_info_json(info_file_path)
+            job_start_time = self._parse_start_log(start_file_path)
+
             if self._dev_id != training_device_id:
                 logger.debug("Find profiling find job path %s, but not current training device id. "
                              "Current training device id %s, but job path device id: %s, "
                              "profiler will ignore this job dir.", job_dir, self._dev_id, training_device_id)
-                continue
-
-            if not os.listdir(os.path.join(job_dir, 'data')):
-                continue
-
-            job_start_time = self._parse_start_log(start_file_path)
-            if not job_start_time:
-                logger.warning("Find profiling job path %s, but fail to get job start info, "
-                               "profiler will ignore this job dir.", job_start_time)
                 continue
 
             if int(job_start_time) < self._start_time:
