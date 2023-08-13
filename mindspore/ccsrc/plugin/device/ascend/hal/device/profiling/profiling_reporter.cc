@@ -244,6 +244,7 @@ uint32_t ProfilingReporter::GetBlockDim(const CNodePtr &node) {
 
 void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_id, uint32_t task_id,
                                    KernelType kernel_type) const {
+  MS_EXCEPTION_IF_NULL(node);
   MsprofGeProfTaskData task_info{};
   task_info.taskType = static_cast<uint32_t>(KernelType2TaskTypeEnum[kernel_type]);
   std::string opType = common::AnfAlgo::GetCNodeName(node);
@@ -266,6 +267,7 @@ void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_i
 
 void ProfilingReporter::ReportNode(const CNodePtr &node, uint32_t stream_id, uint32_t task_id,
                                    uint32_t tensor_type) const {
+  MS_EXCEPTION_IF_NULL(node);
   const std::string tag_name = "tensor_data_info";
 
   size_t total_size = 0;

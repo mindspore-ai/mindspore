@@ -16,6 +16,7 @@
 import csv
 import json
 import os
+import stat
 from decimal import Decimal
 from enum import Enum
 import sys
@@ -155,7 +156,7 @@ class Integrator:
                 op_type_time[1] += op_info[1]
         op_type_file_name = 'aicore_intermediate_' + self._device_id + '_type.csv'
         op_type_file_path = os.path.join(self._profiling_dir, op_type_file_name)
-        with open(op_type_file_path, 'w') as type_file:
+        with os.fdopen(os.open(op_type_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as type_file:
             csv_writer = csv.writer(type_file)
             csv_writer.writerow(self._header_aicore_type)
 
@@ -166,6 +167,7 @@ class Integrator:
                         round((op_type_time_info[0] / total_time) * 100, 2)
                     ]
                 csv_writer.writerow(type_info)
+        os.chmod(op_type_file_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _parse_aicore_detail_time(self):
         """Parse the parsed AICORE operator time file."""
@@ -190,8 +192,8 @@ class Integrator:
                 _ = src_file.readline()
             else:
                 return
-
-            with open(op_detail_file_path, 'w') as detail_file:
+            with os.fdopen(os.open(op_detail_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600),
+                           'w') as detail_file:
                 csv_writer = csv.writer(detail_file)
                 csv_writer.writerow(self._header_aicore_detail)
 
@@ -206,6 +208,7 @@ class Integrator:
                         continue
                     self._op_time_cache[op_infos[0]] = [Decimal(op_infos[1]), int(op_infos[3])]
                     csv_writer.writerow([op_infos[0], op_infos[1], op_infos[3]])
+            os.chmod(op_detail_file_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _parse_aicpu_time(self):
         """Parse the parsed AICPU operator time file."""
@@ -223,7 +226,7 @@ class Integrator:
             row = src_file.readline()
             if not row.startswith('serial_number'):
                 return
-            with open(save_file_path, 'w') as save_file:
+            with os.fdopen(os.open(save_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as save_file:
                 csv_writer = csv.writer(save_file)
                 csv_writer.writerow(self._header_aicpu)
 
@@ -235,6 +238,7 @@ class Integrator:
                     if infos[0] == 'AI':
                         continue
                     csv_writer.writerow(infos)
+            os.chmod(save_file_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _aicore_data_load(self):
         """Load data according to the parsed AICORE operator types file."""

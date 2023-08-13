@@ -198,7 +198,7 @@ class BaseTimelineGenerator:
         display_file_path = validate_and_normalize_path(display_file_path)
 
         try:
-            with os.fdopen(os.open(display_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as json_file:
+            with os.fdopen(os.open(display_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
                 json_file.write('[')
                 for _, item in enumerate(self._timeline_meta):
                     json.dump(item, json_file)
@@ -229,7 +229,7 @@ class BaseTimelineGenerator:
 
         try:
             with os.fdopen(os.open(timeline_summary_file_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as json_file:
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
                 json.dump(self._timeline_summary, json_file)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when write timeline summary file: %s', err)
@@ -450,7 +450,7 @@ class BaseTimelineGenerator:
         )
         cluster_analyse_file_path = validate_and_normalize_path(cluster_analyse_file_path)
 
-        with os.fdopen(os.open(cluster_analyse_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660),
+        with os.fdopen(os.open(cluster_analyse_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600),
                        'w') as file_handle:
             csv_writer = csv.writer(file_handle)
             if is_pipeline_parallel:

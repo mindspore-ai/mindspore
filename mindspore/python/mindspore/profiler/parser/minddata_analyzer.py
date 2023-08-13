@@ -557,21 +557,19 @@ class MinddataProfilingAnalyzer:
         output_csv_path_filename = os.path.join(self._output_path, summary_templatename.format(self._device_id))
 
         # Open file for writing
-        data_file = open(output_csv_path_filename, 'w')
+        with os.fdopen(os.open(output_csv_path_filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600),
+                       'w') as data_file:
 
-        # Create CSV writer object
-        csv_writer = csv.writer(data_file)
+            # Create CSV writer object
+            csv_writer = csv.writer(data_file)
 
-        # Write the dictionary information to CSV file
-        # Create deepcopy of input data_dict so zip processing in this function does NOT change the data_dict
-        temp_dict = copy.deepcopy(data_dict)
-        for data_key, data_value in zip(temp_dict.keys(), temp_dict.values()):
-            # Begin/prefix the data value with the data key
-            data_value.insert(0, data_key)
-            csv_writer.writerow(data_value)
-
-        # Close file for writing
-        data_file.close()
+            # Write the dictionary information to CSV file
+            # Create deepcopy of input data_dict so zip processing in this function does NOT change the data_dict
+            temp_dict = copy.deepcopy(data_dict)
+            for data_key, data_value in zip(temp_dict.keys(), temp_dict.values()):
+                # Begin/prefix the data value with the data key
+                data_value.insert(0, data_key)
+                csv_writer.writerow(data_value)
 
         # Update file permissions
         os.chmod(output_csv_path_filename, stat.S_IREAD | stat.S_IWRITE)
@@ -625,7 +623,7 @@ class MinddataProfilingAnalyzer:
             logger.warning(warning_msg)
 
         # Save summary output dictionary to JSON output file (format#1)
-        with open(self._save_path, 'w') as save_file:
+        with os.fdopen(os.open(self._save_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as save_file:
             json.dump(summary_dict, save_file)
 
         os.chmod(self._save_path, stat.S_IREAD | stat.S_IWRITE)

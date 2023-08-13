@@ -232,7 +232,8 @@ class BaseStepTraceParser:
         if not self._header:
             return
         try:
-            with open(self._output_path, 'w') as file_handle:
+            with os.fdopen(os.open(self._output_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600),
+                           'w') as file_handle:
                 csv_writer = csv.writer(file_handle)
                 if not self._is_training_mode:
                     self._header[fp_duration] = 'fp'
@@ -303,7 +304,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
             all_step_points.append(points)
 
         try:
-            with open(output_path, 'w') as json_file:
+            with os.fdopen(os.open(output_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
                 if self._is_gpu_kernel_async_launch:
                     json.dump(all_step_points, json_file)
                 else:
@@ -529,7 +530,7 @@ class AscendStepTraceParser(BaseStepTraceParser):
         if os.path.exists(output_path):
             return points
         try:
-            with open(output_path, 'w') as json_file:
+            with os.fdopen(os.open(output_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
                 json.dump(points, json_file)
             os.chmod(output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:

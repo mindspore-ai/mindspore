@@ -166,7 +166,7 @@ class MinddataPipelineParser:
                 )
             op_id_info_cache[item.get('op_id')] = item
 
-        with open(self._save_path, 'w') as save_file:
+        with os.fdopen(os.open(self._save_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as save_file:
             csv_writer = csv.writer(save_file)
             csv_writer.writerow(self._col_names)
             self._parse_and_save_op_info(

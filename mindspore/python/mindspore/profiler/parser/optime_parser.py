@@ -205,7 +205,7 @@ class OPComputeTimeParser:
 
         # write to file
         try:
-            with open(file_path, 'w') as f_obj:
+            with os.fdopen(os.open(file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as f_obj:
                 f_obj.write(TIMELINE_FILE_COLUMN_TITLE + '\n')
                 for timeline in timeline_data:
                     timeline = [str(item) for item in timeline]

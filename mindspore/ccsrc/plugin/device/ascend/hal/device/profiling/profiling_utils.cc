@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #include <sys/syscall.h>
 #include <algorithm>
 #include "kernel/kernel.h"
@@ -25,7 +26,6 @@
 #include "nlohmann/json.hpp"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -680,6 +680,7 @@ uint32_t ProfilingUtils::GetBlockDim(const CNodePtr &node) {
 }
 
 void ProfilingUtils::InitReportNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
   ProfNodeAdditionInfo addition_info{};
   MsprofCompactInfo &basic_info = addition_info.node_basic_info;
   basic_info.level = MSPROF_REPORT_NODE_LEVEL;

@@ -17,6 +17,7 @@ import csv
 import glob
 import json
 import os
+import stat
 import re
 import struct
 from collections import defaultdict
@@ -224,10 +225,11 @@ class FrameworkParser:
 
     @staticmethod
     def _write_framework_to_file(all_op_data: List[OpData], output_file):
-        with open(output_file, 'w') as file_handler:
+        with os.fdopen(os.open(output_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as file_handler:
             csv_writer = csv.writer(file_handler)
             csv_writer.writerow(COL_NAMES)
             csv_writer.writerows(all_op_data)
+        os.chmod(output_file, stat.S_IREAD | stat.S_IWRITE)
 
     @staticmethod
     def _get_subgraph_name(full_op_name):
@@ -677,8 +679,9 @@ class GpuFrameWorkParser:
             "kernel_type": kernel_type_step_time,
         }
         dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
-        with os.fdopen(os.open(dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as fp:
+        with os.fdopen(os.open(dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as fp:
             json.dump(result, fp)
+        os.chmod(dynamic_shape_file_path, stat.S_IREAD | stat.S_IWRITE)
 
     def get_graph_ids(self):
         """Get gpu graph ids."""
@@ -800,8 +803,9 @@ class DynamicFrameWorkParser:
                               len(self._op_type_exe_time[op_type]), 4)).tolist()
         self._dynamic_shape_info['op_type'] = self._op_info.get("op_type")
         dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
-        with os.fdopen(os.open(dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as fp:
+        with os.fdopen(os.open(dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as fp:
             json.dump(self._dynamic_shape_info, fp)
+        os.chmod(dynamic_shape_file_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _analyse_op_execute_time(self, op_summary):
         """Obtain the execution time of aicpu operator and aicore operator."""
