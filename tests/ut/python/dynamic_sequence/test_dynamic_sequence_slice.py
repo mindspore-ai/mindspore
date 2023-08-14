@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """test slice operation for dynamic sequence or variable start/stop/step in graph mode"""
-import pytest
 from mindspore.common import mutable
 from mindspore.ops import functional as F
 from mindspore import Tensor
@@ -114,22 +113,3 @@ def test_slice_constant_length_sequence_dynamic_input_3():
     ret1, ret2 = foo()
     assert ret1
     assert ret2
-
-
-def test_slice_constant_length_sequence_dynamic_input_4():
-    """
-    Feature: Slice operation for dynamic length sequence.
-    Description: Slice operation with variable start/stop/step should return dynamic length sequence
-    Expectation: Raise ValueError.
-    """
-
-    @jit
-    def foo():
-        a = (1, 2, Tensor([3]))
-        step = mutable(2)
-        ret = a[:2:step]
-        return ret
-
-    with pytest.raises(ValueError) as ex:
-        foo()
-    assert "The element type do not match, can not convert to dynamic length sequence" in str(ex.value)

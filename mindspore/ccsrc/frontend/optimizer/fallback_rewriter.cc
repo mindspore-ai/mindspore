@@ -1372,6 +1372,68 @@ class AfterOptARewriter : public BaseRewriter {
     return res;
   }
 
+  // TupleGetItem/ListGetItem(sequence, index) -> PyExecute(sequence[index], ...)
+  AnfNodePtr ConvertSequenceGetItem(const CNodePtr &node) const {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+
+    constexpr size_t prim_index = 0;
+    constexpr size_t sequence_index = 1;
+    constexpr size_t target_index = 2;
+    constexpr size_t node_inputs_size = 3;
+    const auto &node_inputs = node->inputs();
+    auto prim = GetValueNode<PrimitivePtr>(node_inputs[prim_index]);
+    MS_EXCEPTION_IF_NULL(prim);
+    const auto &prim_name = prim->name();
+    if (node_inputs.size() != node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to " << prim_name << " should be " << node_inputs_size << " but got "
+                        << node_inputs.size();
+    }
+
+    std::vector<AbstractBasePtr> inputs_abs;
+    for (size_t i = 1; i < node_inputs.size(); ++i) {
+      inputs_abs.push_back(node_inputs[i]->abstract());
+    }
+    auto output_abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(output_abs);
+    if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
+        !output_abs->isa<abstract::AbstractAny>()) {
+      return nullptr;
+    }
+    auto target_node = node_inputs[target_index];
+    auto target_abs = target_node->abstract();
+    MS_EXCEPTION_IF_NULL(target_abs);
+    if (target_abs->BuildValue() != kValueAny) {
+      return nullptr;
+    }
+
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+
+    const std::string internal_sequence_input = "__iternal_sequence_input__";
+    const std::string internal_sequence_target = "__internal_sequence_index__";
+
+    std::stringstream script_buffer;
+    script_buffer << internal_sequence_input << "[" << internal_sequence_target << "]";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_sequence_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_sequence_target));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[sequence_index]);
+    (void)key_value_list.emplace_back(target_node);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    MS_LOG(DEBUG) << "Convert sequence getitem node to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
   // raise(string, keys, values, io) --> PyExecute(string, keys, values, io)
   AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
@@ -1724,6 +1786,8 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimListInplacePop, &ThisClass::ConvertListInplacePop},
     {prim::kPrimListInplaceReverse, &ThisClass::ConvertListInplaceReverse},
     {prim::kPrimListInplaceClear, &ThisClass::ConvertListInplaceClear},
+    {prim::kPrimListGetItem, &ThisClass::ConvertSequenceGetItem},
+    {prim::kPrimTupleGetItem, &ThisClass::ConvertSequenceGetItem},
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
     {prim::kPrimRaise, &ThisClass::ConvertRaise},
     {prim::kPrimScalarCast, &ThisClass::ConvertScalarCast},
@@ -1734,10 +1798,10 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimFormat, &ThisClass::ConvertFormat}};
 
   static inline const PrimitiveSet seq_prim_set_{
-    prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,   prim::kPrimSequenceIndex,
-    prim::kPrimSequenceLen,     prim::kPrimListEqual,         prim::kPrimTupleEqual,      prim::kPrimTupleGreaterThan,
-    prim::kPrimListLessEqual,   prim::kPrimTupleLessThan,     prim::kPrimListLessThan,    prim::kPrimTupleLessEqual,
-    prim::kPrimListGreaterThan, prim::kPrimTupleGreaterEqual, prim::kPrimListGreaterEqual};
+    prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,    prim::kPrimSequenceIndex,
+    prim::kPrimSequenceLen,     prim::kPrimListEqual,         prim::kPrimTupleEqual,       prim::kPrimTupleGreaterThan,
+    prim::kPrimListLessEqual,   prim::kPrimTupleLessThan,     prim::kPrimListLessThan,     prim::kPrimTupleLessEqual,
+    prim::kPrimListGreaterThan, prim::kPrimTupleGreaterEqual, prim::kPrimListGreaterEqual, prim::kPrimSequenceSlice};
 
   static inline const PrimitiveSet inplace_prim_set_{
     prim::kPrimPyExecute,         prim::kPrimListInplaceAppend, prim::kPrimListInplaceReverse,
@@ -1892,6 +1956,22 @@ class AfterOptARewriter : public BaseRewriter {
     if (AnfUtils::IsRealKernel(cnode) && !IsOneOfPrimitiveCNode(cnode, inplace_prim_set_) &&
         !IsOneOfPrimitiveCNode(cnode, seq_prim_set_)) {
       return;
+    }
+    if (IsOneOfPrimitiveCNode(cnode, seq_prim_set_)) {
+      const auto &inputs = cnode->inputs();
+      std::vector<AbstractBasePtr> inputs_abs;
+      for (size_t i = 1; i < inputs.size(); ++i) {
+        inputs_abs.push_back(inputs[i]->abstract());
+      }
+      auto output_abs = cnode->abstract();
+      MS_EXCEPTION_IF_NULL(output_abs);
+      // Only sequence ops with nested sequence input or irregular input (element with different shape/type)
+      // or the output abstract of sequence node is AbstractAny should be converted to PyExecute node later and
+      // their sequence input should be converted to PyExecute.
+      if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
+          !output_abs->isa<abstract::AbstractAny>()) {
+        return;
+      }
     }
     const auto &inputs = cnode->inputs();
     auto cur_func = cnode->func_graph();
@@ -2092,15 +2172,25 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr RebuildValueList(const FuncGraphPtr &fg, const ValueNodePtr &value_node) const {
+    MS_EXCEPTION_IF_NULL(value_node);
     MS_EXCEPTION_IF_NULL(fg);
+
+    auto value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    auto value_list = value->cast<ValueListPtr>();
+    MS_EXCEPTION_IF_NULL(value_list);
+    if (value_list->size() == 0) {
+      // Currently, do not convert empty value list to PyExecute,
+      // since the format is not supported in backend.
+      return value_node;
+    }
 
     auto abs = value_node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     auto list_abs = abs->cast<abstract::AbstractListPtr>();
     MS_EXCEPTION_IF_NULL(list_abs);
 
-    py::list list_object =
-      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(value_node->value());
+    py::list list_object = list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(value);
 
     // Generate PyExecute node: __list_object__
     const std::string list_obj_str_prefix = "__list_py_object_";

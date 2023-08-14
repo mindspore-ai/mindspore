@@ -730,3 +730,116 @@ def test_sequence_getitem_with_tensor_index_3():
     ret1, ret2 = foo(Tensor([3]), Tensor([2]))
     assert ret1 == Tensor([3])
     assert ret2 == Tensor([2])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_getitem_with_index():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x, y):
+        m = [(x, y), "1", x, np.array([0])]
+        n1 = mutable(0)
+        n2 = mutable(1)
+        n3 = mutable(2)
+        n4 = mutable(3)
+        return m[n1], m[n2], m[n3], m[n4]
+
+
+    ret = foo(Tensor([3]), Tensor([2]))
+    assert isinstance(ret, tuple)
+    assert len(ret) == 4
+    assert ret[0] == (Tensor([3]), Tensor([2]))
+    assert ret[1] == "1"
+    assert ret[2] == Tensor([3])
+    assert ret[3] == np.array([0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_getitem_with_index_2():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        m = (x.asnumpy(), "abcd", x+1, np.array([1, 2, 3, 4]))
+        n1 = mutable(0)
+        n2 = mutable(1)
+        n3 = mutable(2)
+        n4 = mutable(3)
+        return m[n1], m[n2], m[n3], m[n4]
+
+
+    ret = foo(Tensor([4, 3, 2, 1]))
+    assert isinstance(ret, tuple)
+    assert len(ret) == 4
+    assert np.all(ret[0] == np.array([4, 3, 2, 1]))
+    assert ret[1] == "abcd"
+    assert np.all(ret[2].asnumpy() == np.array([5, 4, 3, 2]))
+    assert np.all(ret[3] == np.array([1, 2, 3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_getitem_with_slice():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        m = (x.asnumpy(), "abcd", x+1, np.array([1, 2, 3, 4]))
+        n1 = mutable(0)
+        return m[n1:3:2]
+
+
+    ret = foo(Tensor([4, 3, 2, 1]))
+    assert isinstance(ret, tuple)
+    assert len(ret) == 2
+    assert np.all(ret[0] == np.array([4, 3, 2, 1]))
+    assert np.all(ret[1].asnumpy() == np.array([5, 4, 3, 2]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_getitem_with_slice_2():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        m = [x.asnumpy(), "abcd", [1, x+1], np.array([1, 2, 3, 4])]
+        n1 = mutable(0)
+        return m[n1:3:2]
+
+
+    ret = foo(Tensor([4, 3, 2, 1]))
+    assert isinstance(ret, list)
+    assert len(ret) == 2
+    assert np.all(ret[0] == np.array([4, 3, 2, 1]))
+    assert isinstance(ret[1], list)
+    assert len(ret[1]) == 2
+    assert ret[1][0] == 1
+    assert np.all(ret[1][1].asnumpy() == np.array([5, 4, 3, 2]))
