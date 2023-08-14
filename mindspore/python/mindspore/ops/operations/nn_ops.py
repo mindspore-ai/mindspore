@@ -4410,8 +4410,8 @@ class LSTM(Primitive):
         - **c** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
         - **w** (Tensor) - A weight Tensor.
 
-        where:
-            :math:`real\_hidden\_size = proj\_size if proj\_size > 0 else hidden\_size`.
+        If :math:`proj\_size > 0` , :math:`real\_hidden\_size = proj\_size` , otherwise
+        :math:`real\_hidden\_size = hidden\_size` .
 
     Outputs:
         Tuple, a tuple contains `(output, h_n, c_n, reserve, state)`.
@@ -8210,7 +8210,7 @@ class Conv3D(Primitive):
             left and right are the same, equal to `pad`. If `pad` is a tuple with 6 integers, the
             paddings of head, tail, top, bottom, left and right is equal to pad[0],
             pad[1], pad[2], pad[3], pad[4] and pad[5] accordingly. Default: ``0`` .
-        dilation (Union(int, tuple[int]), optional): Specifies the dilation rate to use for dilated convolution.
+        dilation (Union[int, tuple[int]], optional): Specifies the dilation rate to use for dilated convolution.
             It can be a single int or a tuple of 3 integers. A single int means the dilation size is the same
             in the depth, height and width directions. A tuple of 3 ints represents the dilation size in
             the depth, height and width directions, respectively.

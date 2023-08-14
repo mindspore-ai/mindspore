@@ -5882,7 +5882,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     r"""
     Applies a 3D convolution over an input tensor. The input tensor is typically of
     shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`, where :math:`N` is batch size, :math:`C`
-    is channel number, :math:`D` is feature depth,:math:`H` is feature height, :math:`W` is feature width.
+    is channel number, :math:`D` is feature depth, :math:`H` is feature height, :math:`W` is feature width.
 
     The output is calculated based on formula:
 

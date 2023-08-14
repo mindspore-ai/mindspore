@@ -8,7 +8,7 @@ mindspore.shard
     其余算子的并行策略由输入输出指定的策略推导得到。
 
     .. note::
-        需设置执行模式为PyNative模式，同时设置 `set_auto_parallel_context` 中的并行模式为"auto_parallel"且搜索模式(search mode)为"sharding_propagation"。
+        需设置执行模式为PyNative模式，同时设置 `set_auto_parallel_context` 中的并行模式(parallel_mode)为"auto_parallel"且搜索模式(search_mode)为"sharding_propagation"。
         如果输入含有Parameter，其对应的策略应该在 `in_strategy` 里设置。
 
     参数：

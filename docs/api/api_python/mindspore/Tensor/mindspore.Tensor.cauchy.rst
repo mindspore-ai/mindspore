@@ -3,7 +3,7 @@ mindspore.Tensor.cauchy
 
 .. py:method:: mindspore.Tensor.cauchy(median=0.0, sigma=1.0)
 
-    使用cauchy分布生成的数值填充当前Tensor。
+    使用柯西分布生成的数值填充当前Tensor。
 
     .. math::
         f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}

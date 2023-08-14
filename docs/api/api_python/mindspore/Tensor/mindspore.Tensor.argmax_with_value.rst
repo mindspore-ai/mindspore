@@ -8,9 +8,7 @@ mindspore.Tensor.argmax_with_value
     在给定轴上计算输入Tensor的最大值，并且返回最大值和索引。
 
     .. note::
-        在auto_parallel和semi_auto_parallel模式下，不能使用第一个输出索引。
-
-    .. warning::
+        - 在auto_parallel和semi_auto_parallel模式下，不能使用第一个输出索引。
         - 如果有多个最大值，则取第一个最大值的索引。
         - `axis` 的取值范围为[-dims, dims - 1]。`dims` 为输入Tensor的维度长度。
 

@@ -9,7 +9,7 @@ mindspore.RowTensor
 
     其中，参数 `indices` 用于指定 `RowTensor` 从该稠密Tensor的第一维度的哪些位置来进行切片。
 
-    由 `RowTensor` 切片表示的稠密Tensor具有以下属性： `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]` 。
+    由 `RowTensor` 切片表示的稠密Tensor具有以下属性： :math:`dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]` 。
 
     如果 `indices` 是[0]， `values` 是[[1, 2]]， `shape` 是 :math:`(3, 2)` ，那么它对应的稠密Tensor如下：
 

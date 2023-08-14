@@ -2095,9 +2095,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Compute the max value of input Tensor on the specified axis, and return the max value and index.
 
         Note:
-            In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
-
-        .. warning::
+            - In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
             - If there are multiple maximum values, the index of the first maximum value is used.
             - The value range of `axis` is [-dims, dims - 1]. `dims` is the dimension length of this tensor.
 
@@ -2145,9 +2143,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Returns the minimum value with corresponding index.
 
         Note:
-            In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
-
-        .. warning::
+            - In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
             - If there are multiple minimum values, the index of the first minimum value is used.
             - The value range of `axis` is [-dims, dims - 1]. `dims` is the dimension length of this tensor.
 
@@ -2955,7 +2951,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Takes elements from a tensor along an axis.
 
         Args:
-            indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
+            indices (Tensor): The indices with shape :math:`(Nj...)` of the values to extract.
             axis (int, optional): The axis over which to select values. By default,
                 the flattened input tensor is used. Default: ``None`` .
             mode (str, optional): Support ``'raise'``, ``'wrap'``, ``'clip'``.

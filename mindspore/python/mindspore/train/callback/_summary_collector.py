@@ -71,9 +71,9 @@ class LineageMetadata:
 
 class SummaryCollector(Callback):
     """
-    SummaryCollector can help you to collect some common information.
+    SummaryCollector can help you to collect some common information,
+    such as loss, learning late, computational graph and so on.
 
-    It can help you to collect loss, learning late, computational graph and so on.
     SummaryCollector also enables the summary operator to collect data to summary files.
 
     Note:
@@ -107,7 +107,9 @@ class SummaryCollector(Callback):
               <https://www.mindspore.cn/mindinsight/docs/en/master/lineage_and_scalars_comparison.html>`_
               of MindInsight. Default: ``True`` .
             - collect_eval_lineage (bool): Whether to collect lineage data for the evaluation phase,
-              this field will be displayed on the lineage page of MindInsight. Default: ``True`` .
+              this field will be displayed on the `lineage page
+              <https://www.mindspore.cn/mindinsight/docs/en/master/lineage_and_scalars_comparison.html>`_
+              of MindInsight. Default: ``True`` .
             - collect_input_data (bool): Whether to collect dataset for each training.
               Currently only image data is supported.
               If there are multiple columns of data in the dataset, the first column should be image data.
@@ -147,7 +149,8 @@ class SummaryCollector(Callback):
             False: it means that after specified data is set, only the specified data is collected,
             and the others are not collected. Default: ``True`` .
         custom_lineage_data (Union[dict, None]): Allows you to customize the data and present it on the MingInsight
-            lineage page. In the custom data, the type of the key supports str, and the type of value supports str, int
+            `lineage page <https://www.mindspore.cn/mindinsight/docs/en/master/lineage_and_scalars_comparison.html>`_ .
+            In the custom data, the type of the key supports str, and the type of value supports str, int
             and float. Default: ``None`` , it means there is no custom data.
         collect_tensor_freq (Optional[int]): The same semantics as the `collect_freq`, but controls TensorSummary only.
             Because TensorSummary data is too large to be compared with other summary data, this parameter is used to

@@ -172,7 +172,7 @@ mindspore.common.initializer
 
     异常：
         - **ValueError** - 被初始化的Tensor的维度不在[3, 4, 5]的范围内。
-        - **ValueError** - 初始化的Tensor的第一个维度不能被groups整除。
+        - **ValueError** - 被初始化的Tensor的第一个维度不能被groups整除。
 
 .. py:class:: mindspore.common.initializer.Orthogonal(gain=1.)
 

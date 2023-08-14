@@ -282,6 +282,7 @@ def get_algo_parameters(attr_key):
         attr_key (str): The key of the attribute. The keys include: "fully_use_devices",
             "elementwise_op_strategy_follow", "enable_algo_approxi", "algo_approxi_epsilon",
             "tensor_slice_align_enable","tensor_slice_align_size".
+            See :func:`mindspore.set_algo_parameters` for more details about the meaning of the attributes.
 
     Returns:
         Return attribute value according to the key.
