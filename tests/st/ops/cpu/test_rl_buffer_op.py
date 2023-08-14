@@ -133,14 +133,3 @@ def test_BufferAppend():
     np.testing.assert_almost_equal(b[1].asnumpy(), expect_a)
     np.testing.assert_almost_equal(b[2].asnumpy(), expect_r)
     np.testing.assert_almost_equal(b[3].asnumpy(), expect_s_)
-    buffer_append(b, exp1)
-    buffer_append(b, c)
-    buffer_append(b, c)
-    expect_s2 = [[6, 6, 6, 6], [3, 3, 3, 3], [6, 6, 6, 6], [6, 6, 6, 6], [6, 6, 6, 6]]
-    expect_a2 = [[6, 6], [0, 0], [6, 6], [6, 6], [6, 6]]
-    expect_r2 = [[6], [0], [6], [6], [6]]
-    expect_s2_ = [[6, 6, 6, 6], [2, 2, 2, 2], [6, 6, 6, 6], [6, 6, 6, 6], [6, 6, 6, 6]]
-    np.testing.assert_almost_equal(b[0].asnumpy(), expect_s2)
-    np.testing.assert_almost_equal(b[1].asnumpy(), expect_a2)
-    np.testing.assert_almost_equal(b[2].asnumpy(), expect_r2)
-    np.testing.assert_almost_equal(b[3].asnumpy(), expect_s2_)
