@@ -146,7 +146,6 @@ GVAR_DEF(PrimitivePtr, kPrimInv, std::make_shared<Primitive>(kInvOpName));
 GVAR_DEF(PrimitivePtr, kPrimAbsGrad, std::make_shared<Primitive>("AbsGrad"));
 GVAR_DEF(PrimitivePtr, kPrimRint, std::make_shared<Primitive>("Rint"));
 GVAR_DEF(PrimitivePtr, kPrimRound, std::make_shared<Primitive>("Round"));
-GVAR_DEF(PrimitivePtr, kPrimExp, std::make_shared<Primitive>(kExpOpName));
 GVAR_DEF(PrimitivePtr, kPrimLog, std::make_shared<Primitive>(kLogOpName));
 GVAR_DEF(PrimitivePtr, kPrimLogGrad, std::make_shared<Primitive>(kLogGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimLogit, std::make_shared<Primitive>(kLogitOpName));

@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#include "common/common_test.h"
-#include "ops/test_ops_cmp_utils.h"
-#include "ops/test_ops.h"
-#include "ops/ops_func_impl/erfc.h"
+#include "ops/ops_func_impl/exp.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Erfc, EltwiseOpParams);
-OP_FUNC_IMPL_TEST_CASES(Erfc, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                              EltwiseOpParams{{-1, 3}, kFloat32, {-1, 3}, kFloat32},
-                                              EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                              EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+BaseShapePtr ExpFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) const {
+  return input_args[kIndex0]->GetShape()->Clone();
+}
+TypePtr ExpFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  return input_args[kIndex0]->GetType()->Clone();
+}
 }  // namespace ops
 }  // namespace mindspore

@@ -1,0 +1,8 @@
+#operator exp
+exp:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor

@@ -37,7 +37,6 @@
 #include "abstract/ops/infer_functions.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
-#include "ops/exp.h"
 #include "ops/log.h"
 #include "ops/reciprocal.h"
 #include "ops/real_div.h"

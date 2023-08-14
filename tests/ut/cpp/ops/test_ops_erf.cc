@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "common/common_test.h"
-#include "ops/ops_func_impl/erf.h"
 #include "ops/test_ops_cmp_utils.h"
 #include "ops/test_ops.h"
+#include "ops/ops_func_impl/erf.h"
 
 namespace mindspore {
 namespace ops {

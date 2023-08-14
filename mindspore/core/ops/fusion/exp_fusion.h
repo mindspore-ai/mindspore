@@ -16,18 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_EXP_FUSION_H_
 #define MINDSPORE_CORE_OPS_EXP_FUSION_H_
-#include "mindapi/base/types.h"
-#include "ops/exp.h"
+
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExpFusion = "ExpFusion";
 /// \brief ExpFusion defined Exp operator prototype of lite.
-class MIND_API ExpFusion : public Exp {
+class MIND_API ExpFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ExpFusion);
   /// \brief Constructor.
-  ExpFusion() : Exp(kNameExpFusion) { InitIOName({"x"}, {"y"}); }
+  ExpFusion() : BaseOperator(kNameExpFusion) { InitIOName({"x"}, {"y"}); }
 
   /// \brief Method to init the op's attributes.
   ///
