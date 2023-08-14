@@ -315,6 +315,7 @@ void DfGraphConvertor::InitLoopVar(std::vector<::ge::Operator> *init_input) {
   } else {
     MS_LOG(INFO) << "Run with normal(non-sink) mode, the iterator number will always be 1";
     ConfigManager::GetInstance().ResetIterNum();
+    return;
   }
   GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_INT64);
   auto var_iter_num = std::make_shared<Variable>("npu_runconfig/iterations_per_loop");
