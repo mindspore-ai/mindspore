@@ -87,4 +87,12 @@ INPUT_MAP(Dropout) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Dropout) = {{"dropout_ratio", ATTR_DESC(dropout_ratio, AnyTraits<float>())}};
 OUTPUT_MAP(Dropout) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Dropout, prim::kDropout, ADPT_DESC(Dropout))
+
+// RandomUniform
+INPUT_MAP(RandomUniform) = {{1, INPUT_DESC(shape)}};
+ATTR_MAP(RandomUniform) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
+                           {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                           {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+OUTPUT_MAP(RandomUniform) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UniformReal, kNameUniformReal, ADPT_DESC(RandomUniform))
 }  // namespace mindspore::transform

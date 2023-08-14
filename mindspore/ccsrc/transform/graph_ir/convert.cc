@@ -2999,6 +2999,17 @@ void DfGraphConvertor::ConvertAllToAllv(const CNodePtr &node) {
   (void)op->SetAttr("_is_inserted_by_ge", is_inserted);
 }
 
+void DfGraphConvertor::ConvertUniformReal(const CNodePtr &node) {
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+  auto op = adpt->generate(node);
+  MS_EXCEPTION_IF_NULL(op);
+  op_cache_[node.get()] = op;
+  (void)op->SetAttr("dtype", ::ge::DataType::DT_FLOAT);
+}
+
 void DfGraphConvertor::ConvertHcclNode(const CNodePtr &node) {
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
@@ -3156,6 +3167,7 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       {prim::kPrimSend->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimReceive->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimAllToAllv->name(), &DfGraphConvertor::ConvertAllToAllv},
+      {prim::kPrimUniformReal->name(), &DfGraphConvertor::ConvertUniformReal},
     };
 
   if (const auto it = auxiliary_node_converters.find(name); it != auxiliary_node_converters.cend()) {
