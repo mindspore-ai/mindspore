@@ -45,7 +45,12 @@ TypePtr CheckScalarType(const AbstractScalarPtr &scalar, const TypePtrList &acce
 
 void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor);
 
-void CheckDtypeSame(const std::string &op, const TypePtr &type1, const TypePtr &type2);
+inline void CheckDtypeSame(const std::string &op, const TypePtr &type1, const TypePtr &type2) {
+  if (*type1 != *type2) {
+    MS_EXCEPTION(TypeError) << "For '" << op << "', the dtype of two args should be same, but the first arg dtype "
+                            << type1->ToString() << " are not consistent with second arg dtype " << type2->ToString();
+  }
+}
 
 TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor);
 
