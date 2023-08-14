@@ -1,0 +1,84 @@
+# Copyright 2023 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+
+import numpy as np
+import pytest
+
+from mindspore import ops
+from mindspore import Tensor
+import mindspore as ms
+
+
+
+@ms.jit
+def cosh_forward_func(x):
+    return ops.auto_generate.cosh(x)
+
+
+@ms.jit
+def cosh_backward_func(x):
+    return ops.grad(cosh_forward_func, (0,))(x)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+def test_cosh_forward():
+    """
+    Feature: Ops.
+    Description: test op cosh.
+    Expectation: expect correct result.
+    """
+    np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype('float32')
+    x = Tensor(np_array)
+    out = cosh_forward_func(x)
+    expect = np.cosh(np_array)
+    assert np.allclose(out.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+def test_cosh_backward():
+    """
+    Feature: Auto grad.
+    Description: test auto grad of op cosh.
+    Expectation: expect correct result.
+    """
+    np_array = np.array([1, 0.5, -0.5, 0.3]).astype('float32')
+    x = Tensor(np_array)
+    grads = cosh_backward_func(x)
+    expect = np.array([1.17520118e+00, 5.21095276e-01, -5.21095276e-01, 3.04520309e-01]).astype('float32')
+    assert np.allclose(grads.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+def test_cosh_vmap():
+    """
+    Feature: test vmap function.
+    Description: test avgpool op vmap.
+    Expectation: expect correct result.
+    """
+    np_array = np.array([[0.5, 0.4, -0.3, -0.2]]).astype('float32')
+    x = Tensor(np_array)
+    nest_vmap = ops.vmap(ops.vmap(cosh_forward_func, in_axes=0), in_axes=0)
+    out = nest_vmap(x)
+    expect = np.array([[1.127626, 1.0810723, 1.0453385, 1.0200667]]).astype(np.float32)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)

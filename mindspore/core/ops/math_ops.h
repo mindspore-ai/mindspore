@@ -43,7 +43,6 @@ GVAR_DEF(PrimitivePtr, kPrimTanhGrad, std::make_shared<Primitive>("TanhGrad"));
 GVAR_DEF(PrimitivePtr, kPrimTan, std::make_shared<Primitive>("Tan"));
 GVAR_DEF(PrimitivePtr, kPrimSinc, std::make_shared<Primitive>("Sinc"));
 GVAR_DEF(PrimitivePtr, kPrimSinh, std::make_shared<Primitive>("Sinh"));
-GVAR_DEF(PrimitivePtr, kPrimCosh, std::make_shared<Primitive>("Cosh"));
 GVAR_DEF(PrimitivePtr, kPrimTanh, std::make_shared<Primitive>(kTanhOpName));
 GVAR_DEF(PrimitivePtr, kPrimImag, std::make_shared<Primitive>(kImagOpName));
 GVAR_DEF(PrimitivePtr, kPrimCauchy, std::make_shared<Primitive>(kCauchyOpName));
