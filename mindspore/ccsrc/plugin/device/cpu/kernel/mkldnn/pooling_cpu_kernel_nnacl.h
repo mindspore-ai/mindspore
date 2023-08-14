@@ -77,6 +77,8 @@ class PoolingCpuKernelNnaclMod : public NativeCpuKernelMod {
  private:
   std::string kernel_type_{kUnkown};
 
+  void GetPadList(size_t src_dim, size_t padlist_len);
+
   void InitPooling3DParams();
 
   template <typename T>
