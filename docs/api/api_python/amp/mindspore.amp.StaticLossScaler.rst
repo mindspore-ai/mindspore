@@ -13,7 +13,7 @@ mindspore.amp.StaticLossScaler
 
     .. py:method:: adjust(grads_finite)
 
-        `scale_value` 值固定。
+        用于调整 `LossScaler` 中 `loss_value` 的值。`StaticLossScaler` 中，`scale_value` 值固定，因此此方法直接返回False。
 
         参数：
             - **grads_finite** (Tensor) - bool类型的标量Tensor，表示梯度是否为有效值（无溢出）。

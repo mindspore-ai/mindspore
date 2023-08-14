@@ -468,7 +468,7 @@ class LambdaLR(LRScheduler):
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         lr_lambda (Union(function, list)): A function which computes a multiplicative
             factor given an integer parameter epoch, or a list of such
             functions, one for each group in `optimizer.param_groups`.
@@ -519,7 +519,7 @@ class MultiplicativeLR(LRScheduler):
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         lr_lambda (Union(function, list)): A function which computes a multiplicative
             factor given an integer parameter epoch, or a list of such
             functions, one for each group in optimizer.param_groups.
@@ -575,7 +575,7 @@ class MultiStepLR(LRScheduler):
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         milestones (list): List of epoch indices, must be increasing. When epoch/step reach the milestone,
             multiply the learning rate of each parameter group by `gamma`.
         gamma (float, optional): Multiplicative factor of learning rate decay.
@@ -631,7 +631,7 @@ class ConstantLR(LRScheduler):
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#experimental-optimizer>`_ .
 
     Args:
-        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
+        optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         factor (float, optional): The factor number multiplied learning rate. Default: ``1./3``.
         total_iters (int, optional): The number of steps that the scheduler decays the learning rate,
             when the epoch/step reach `total_iters`, restore the learning rate. Default: ``5``.

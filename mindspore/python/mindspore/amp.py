@@ -234,7 +234,8 @@ class StaticLossScaler(LossScaler):
 
     def adjust(self, grads_finite):
         """
-        `scale_value` is fixed.
+        Adjust `scale_value` in `LossScaler`. `scale_value` is fixed in `StaticLossScaler`, so this method
+        return False directly.
 
         Args:
             grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.

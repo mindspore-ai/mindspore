@@ -59,7 +59,7 @@ def piecewise_constant_lr(milestone, learning_rates):
         >>> # learning_rates = 0.05  if 2 < step <= 5
         >>> # learning_rates = 0.01  if 5 < step <= 10
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     validator.check_value_type('milestone', milestone, (tuple, list))
     validator.check_value_type('learning_rates', learning_rates, (tuple, list))
@@ -137,7 +137,7 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         >>> decay_epoch = 1
         >>> lr = nn.exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
 
@@ -192,7 +192,7 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         >>> decay_epoch = 2
         >>> lr = nn.natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
 
@@ -248,7 +248,7 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
         >>> decay_epoch = 1
         >>> lr = nn.inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
 
@@ -303,7 +303,7 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         >>> decay_epoch = 2
         >>> lr = nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     if not isinstance(min_lr, float):
         raise TypeError("For 'cosine_decay_lr', the argument 'min_lr' must be type of float, "
@@ -385,7 +385,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         >>> power = 0.5
         >>> lr = nn.polynomial_decay_lr(lr, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     validator.check_positive_float(learning_rate, 'learning_rate')
     validator.check_is_float(learning_rate, 'learning_rate')
@@ -451,7 +451,7 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
         >>> warmup_epoch = 2
         >>> lr = nn.warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
         >>> net = nn.Dense(2, 3)
-        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
+        >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
     if not isinstance(learning_rate, float):
         raise TypeError("For 'warmup_lr', the argument 'learning_rate' must be type of float, "
