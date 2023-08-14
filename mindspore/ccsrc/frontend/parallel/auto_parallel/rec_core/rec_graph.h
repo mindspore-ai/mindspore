@@ -59,7 +59,9 @@ enum OperatorType {
   kRecUnsortedSegmentOp,
   kRecBatchMatMul,
   kRecFlatten,
-  kRecCum
+  kRecCum,
+  kRecStandAlone,
+  kRecBatchParallel
 };
 
 enum InfoType { kApplication, kConstant };

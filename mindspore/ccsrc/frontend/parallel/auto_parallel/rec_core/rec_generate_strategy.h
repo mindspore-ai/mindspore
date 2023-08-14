@@ -60,6 +60,7 @@ class RecStrategyPropagator {
   size_t GenerateEliminatedOperatorStrategyBackward(size_t min_devices = 1);
   size_t GenerateRemainingOperatorStrategy();
   size_t ModifyParamSharingOpsStrategy();
+  size_t AssignStandaloneAndBatchParallelOpStrategy();
 
   std::map<std::string, std::vector<std::pair<size_t, size_t>>> GetParamUsers();
   void SetParamStrategy();
