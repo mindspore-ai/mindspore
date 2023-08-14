@@ -454,7 +454,9 @@ class BACKEND_EXPORT KernelMod {
 
   // Resize() is for validating input/output shape and calculating the workspace size, framework will invoke this
   // routine after infer shape.
-  virtual int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  virtual int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    return KRET_OK;
+  }
 
   virtual bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
