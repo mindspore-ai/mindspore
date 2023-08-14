@@ -125,15 +125,16 @@ class Parameter(Tensor_):
     the list of its parameters, and will appear, e.g. in `cell.get_parameters()` iterator.
 
     Note:
-        In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
-        a `Tensor`, the type of Parameter will be `Tensor`. `Tensor`
-        will save the shape and type info of a tensor with no memory usage. The shape can be changed while
-        compiling for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
-        If there is an operator in the network that requires part of the inputs to be Parameter,
-        then the Parameters as this part of the inputs are not allowed to be cast.
-        Give each `Parameter` a unique name to facilitate subsequent operations and updates.
-        If there are two or more `Parameter` objects with the same name in a network,
-        will be prompted to set a unique name when defining.
+        - In auto_parallel mode of `SEMI_AUTO_PARALLEL` and `AUTO_PARALLEL`, if init `Parameter` by
+          a `Tensor`, the type of Parameter will be `Tensor`. `Tensor`
+          will save the shape and type info of a tensor with no memory usage.
+        - The shape can be changed while
+          compiling for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
+        - If there is an operator in the network that requires part of the inputs to be Parameter,
+          then the Parameters as this part of the inputs are not allowed to be cast.
+        - Give each `Parameter` a unique name to facilitate subsequent operations and updates.
+          If there are two or more `Parameter` objects with the same name in a network,
+          will be prompted to set a unique name when defining.
 
     Args:
         default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
@@ -174,11 +175,11 @@ class Parameter(Tensor_):
                 self.param_tuple = (self.param_a, self.param_a)
 
         requires_grad (bool): True if the parameter requires gradient. Default: ``True`` .
-        layerwise_parallel (bool): When layerwise_parallel is true in data/hybrid parallel mode,
-            broadcast and gradients communication would not be applied to parameters. Default: ``False`` .
-        parallel_optimizer (bool): It is used to filter the weight shard operation in semi auto or auto parallel
-            mode. It works only when enable parallel optimizer in `mindspore.set_auto_parallel_context()`.
-            Default: ``True`` .
+        layerwise_parallel (bool): When `layerwise_parallel` is true in data/hybrid parallel mode,
+            broadcast and gradients communication would not be applied to the `Parameter`. Default: ``False`` .
+        parallel_optimizer (bool): It is used to filter the weight shard operation in `SEMI_AUTO_PARALLEL` or
+            `AUTO_PARALLEL` mode. It works only when enable parallel optimizer in
+            `mindspore.set_auto_parallel_context()`. Default: ``True`` .
 
     Examples:
         >>> import numpy as np
@@ -482,8 +483,9 @@ class Parameter(Tensor_):
         Get the fusion type (int) for communication operators corresponding to this parameter.
 
         In `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode, some communication operators used for parameters or
-        gradients aggregation are inserted automatically. The value of fusion must be greater than or equal to 0.
-        When the value of fusion is 0, operators will not be fused together.
+        gradients aggregation are inserted automatically.
+        The value of `comm_fusion` must be greater than or equal to 0.
+        When the value of `comm_fusion` is ``0`` , operators will not be fused together.
 
         Examples:
             >>> from mindspore import Tensor, Parameter

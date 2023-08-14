@@ -295,7 +295,8 @@ class Profiler:
     This class to enable the profiling of MindSpore neural networks.
     MindSpore users can import the mindspore.Profiler, initialize the Profiler object to start profiling,
     and use Profiler.analyse() to stop profiling and analyse the results.
-    Users can visualize the results using the MindInsight tool.
+    Users can visualize the results using the `MindSpore Insight
+    <https://www.mindspore.cn/mindinsight/docs/en/master/index.html>`_ tool.
     Now, Profiler supports AICORE operator, AICPU operator, HostCPU operator, memory,
     correspondence, cluster, etc data analysis.
 
@@ -495,8 +496,8 @@ class Profiler:
                 parse. If this interface is used for offline data parsing, Default: ``0`` .
 
         Raises:
-            TypeError: If the op_name parameter type is incorrect.
-            TypeError: If the device_id parameter type is incorrect.
+            TypeError: If the `op_name` parameter type is incorrect.
+            TypeError: If the `device_id` parameter type is incorrect.
             RuntimeError: If MindSpore runs on Ascend, this interface cannot be used.
 
         Supported Platforms:
@@ -610,7 +611,7 @@ class Profiler:
         Raises:
             RuntimeError: If the profiler has already started.
             RuntimeError: If MD profiling has stopped, repeated start action is not supported.
-            RuntimeError: If the start_profile parameter is not set or is set to True.
+            RuntimeError: If the `start_profile` parameter is not set or is set to ``True``.
 
         Examples:
             >>> from mindspore.train import Callback

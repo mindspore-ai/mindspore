@@ -82,11 +82,11 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
         src_strategy_file (str): Name of source sharding strategy file which saved by
-                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
+                                 `mindspore.set_auto_parallel_context(strategy_ckpt_save_file)`.
                                  when the 'src_strategy_file' is None, it means that the source sharding strategy is
                                  without any sharing for each parameter. Default:None.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
-                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
+                                 `mindspore.set_auto_parallel_context(strategy_ckpt_save_file)`.
                                  when the 'dst_strategy_file' is None, it means that the destination sharding strategy
                                  is without any sharing for each parameter. Default:None.
 
