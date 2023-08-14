@@ -1507,18 +1507,25 @@ REG_BPROP_BUILDER("CholeskySolve").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   }
   ShapeVector input_perm = {1, 0};
   NodePtr dx2;
-  auto DealWithUpper = [&upper, &dx2, &ib, &x2](const NodePtr &common_term) {
+  auto DealWithUpper2D = [&upper, &dx2, &ib, &x2](const NodePtr &common_term) {
     if (upper) {
       dx2 = ib->Emit("Neg", {ib->MatMul(x2, common_term, false, false)});
     } else {
       dx2 = ib->Emit("Neg", {ib->MatMul(common_term, x2, false, false)});
     }
   };
+  auto DealWithUpperND = [&upper, &dx2, &ib, &x2](const NodePtr &common_term) {
+    if (upper) {
+      dx2 = ib->Emit("Neg", {ib->BatchMatMul(x2, common_term, false, false)});
+    } else {
+      dx2 = ib->Emit("Neg", {ib->BatchMatMul(common_term, x2, false, false)});
+    }
+  };
   auto dx1 = ib->Emit("CholeskySolve", {dout, x2}, {{"upper", ib->GetAttr("upper")}});
   if (len_x1 == 2) {
     auto common_term = ib->MatMul(dx1, ib->Transpose(out, input_perm), false, false);
     common_term = ib->Add(common_term, (ib->Transpose(common_term, input_perm)));
-    DealWithUpper(common_term);
+    DealWithUpper2D(common_term);
   } else {
     auto x2_dim_size = static_cast<int64_t>(ib->GetShape(x2).size());
     auto target_order = Range(x2_dim_size - 2);
@@ -1526,7 +1533,7 @@ REG_BPROP_BUILDER("CholeskySolve").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
     target_order.push_back(x2_dim_size - 2);
     auto common_term = ib->BatchMatMul(dx1, ib->Transpose(out, target_order), false, false);
     common_term = ib->Add(common_term, (ib->Transpose(common_term, target_order)));
-    DealWithUpper(common_term);
+    DealWithUpperND(common_term);
   }
   if (flag == 1) {
     dx1 = ib->Cast(dx1, kFloat64);
