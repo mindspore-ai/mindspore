@@ -1,0 +1,52 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d6cd3d9..1de452f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -36,6 +36,9 @@ option(TRITON_ENABLE_MALI_GPU "Enable Arm MALI GPU support in backend utilities"
+ option(TRITON_ENABLE_STATS "Include statistics collections in backend utilities" ON)
+ # Default OFF unless backend explicitly request to use provided implementation
+ option(TRITON_ENABLE_MEMORY_TRACKER "Include device memory tracker in backend utilities" OFF)
++option(TRITON_RAPID_JSON_PATH "The rapid json path")
++option(TRITON_CORE_PATH "The rapid json path")
++option(TRITON_COMMON_PATH "The rapid json path")
+ 
+ set(TRITON_COMMON_REPO_TAG "main" CACHE STRING "Tag for triton-inference-server/common repo")
+ set(TRITON_CORE_REPO_TAG "main" CACHE STRING "Tag for triton-inference-server/core repo")
+@@ -49,24 +52,19 @@ if(TRITON_ENABLE_MEMORY_TRACKER AND NOT TRITON_ENABLE_GPU)
+   set(TRITON_ENABLE_MEMORY_TRACKER OFF CACHE BOOL "Device memory tracker disabled" FORCE)
+ endif()
+ 
+-#
+-# Dependencies
+-#
+-include(FetchContent)
++if(TRITON_RAPID_JSON_PATH)
++  include_directories(${TRITON_RAPID_JSON_PATH})
++endif()
++
++
++if(TRITON_CORE_PATH)
++	include_directories(${TRITON_CORE_PATH})
++endif()
++
++if(TRITON_COMMON_PATH)
++	include_directories(${TRITON_COMMON_PATH})
++endif()
+ 
+-FetchContent_Declare(
+-  repo-common
+-  GIT_REPOSITORY https://github.com/triton-inference-server/common.git
+-  GIT_TAG ${TRITON_COMMON_REPO_TAG}
+-  GIT_SHALLOW ON
+-)
+-FetchContent_Declare(
+-  repo-core
+-  GIT_REPOSITORY https://github.com/triton-inference-server/core.git
+-  GIT_TAG ${TRITON_CORE_REPO_TAG}
+-  GIT_SHALLOW ON
+-)
+-FetchContent_MakeAvailable(repo-common repo-core)
+ 
+ #
+ # CUDA
+
