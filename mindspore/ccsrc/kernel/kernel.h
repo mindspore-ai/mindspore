@@ -31,7 +31,6 @@
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/tensor.h"
-#include "base/op_arg_base.h"
 #include "mindspore/core/ops/base_operator.h"
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
@@ -88,6 +87,7 @@ struct Address {
 using AddressPtr = std::shared_ptr<Address>;
 using AddressPtrList = std::vector<AddressPtr>;
 using StreamType = void *;
+using abstract::AbstractBase;
 // The memory info of kernel launch.
 struct KernelLaunchInfo {
   AddressPtrList inputs_;
@@ -135,13 +135,13 @@ struct IsValidContainer {
 // KernelTensor is a generalized Tensor semantics, which can represent not only Tensor, but also the meta-information
 // of Scalar, Tuple, List and other data structures. It saves the shape, type, value and format information required by
 // operators Infer and Launch, and provides related Get/Set interfaces.
-class BACKEND_EXPORT KernelTensor : public OpArgBase {
+class BACKEND_EXPORT KernelTensor : public AbstractBase {
  public:
   KernelTensor() = default;
   ~KernelTensor() = default;
 
   // Constructor of KernelTensor by shape, type, value.
-  KernelTensor(const std::vector<ShapeVector> &shape, const TypePtr &type, const TypePtr &dtype,
+  KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const TypePtr &dtype,
                const ValuePtr &value = nullptr, bool dynamic_len = false)
       : shape_(shape), value_(value), dynamic_len_(dynamic_len) {
     if (type) {
@@ -154,31 +154,19 @@ class BACKEND_EXPORT KernelTensor : public OpArgBase {
     }
   }
 
-  // Constructor of KernelTensor by shape, type, value.
-  KernelTensor(std::vector<ShapeVector> &&shape, const TypePtr &type, const TypePtr &dtype,
-               const ValuePtr &value = nullptr, bool dynamic_len = false)
-      : shape_(std::move(shape)), value_(value), dynamic_len_(dynamic_len) {
-    if (type) {
-      type_ = type;
-      type_id_ = type_->type_id();
-    }
-    if (dtype) {
-      dtype_ = dtype;
-      dtype_id_ = dtype_->type_id();
-    }
-  }
+  MS_DECLARE_PARENT(KernelTensor, AbstractBase);
+
+  // Get the shape vector for Tensor/Sequence/Scalar.
+  const ShapeVector &shape_vector() const { return shape_vector_; }
+
+  // Set the shape vector for Tensor/Sequence/Scalar.
+  void set_shape_vector(const ShapeVector &shape_vector) { shape_vector_ = shape_vector; }
+
+  // Set the shape vector for Tensor/Sequence/Scalar with rvalue.
+  void set_shape_vector(ShapeVector &&shape_vector) { shape_vector_ = std::move(shape_vector); }
 
   // Get the shape for Tensor/Sequence/Scalar.
-  const std::vector<ShapeVector> &shape() const { return shape_; }
-
-  // Set the shape for Tensor/Sequence/Scalar.
-  void set_shape(const std::vector<ShapeVector> &shape) { shape_ = shape; }
-
-  // Set the shape for Tensor/Sequence/Scalar.
-  void set_shape(std::vector<ShapeVector> &&shape) { shape_ = std::move(shape); }
-
-  // Get the shape for Tensor/Sequence/Scalar.
-  const std::vector<ShapeVector> &GetShape() override { return shape(); }
+  abstract::BaseShapePtr GetShape() const override { return shape_; }
 
   // Get the object type of the KernelTensor.
   TypePtr type() const { return type_; }
@@ -278,7 +266,7 @@ class BACKEND_EXPORT KernelTensor : public OpArgBase {
   void set_format(mindspore::Format format) { format_ = format; }
 
   // Get whether the KernelTensor represents a dynamic length sequence.
-  bool dynamic_len() const override { return dynamic_len_; }
+  bool dynamic_len() const { return dynamic_len_; }
 
   // Get pointer to the device side that corresponds to KernelTensor, used in runtime.
   void *device_ptr() const { return device_ptr_; }
@@ -374,16 +362,18 @@ class BACKEND_EXPORT KernelTensor : public OpArgBase {
   void SetDeviceId(int32_t device_id) { device_id_ = device_id; }
 
  private:
+  // BaseShape info of KernelTensor.
+  abstract::BaseShapePtr shape_{nullptr};
+
   // The flatten shape vector for Tensor/Scalar/Tuple/List.
-  // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_ is
-  // std::vector<ShapeVector>{{8, 16}}.
-  // 2. For Scalar type, shape_ contains an empty ShapeVector, i.e. std::vector<ShapeVector>{{}}.
-  // 3. For Tuple/List (all elements must be Tensor and Scalar) type, the shape_ is a list
-  // consists of the shape of all elements in Typle/List. For example, if a Tuple of the structure ((8,16), (8,16))
-  // contains two Tensors of shape (8, 16), then shape_ is std::vector<ShapeVector>{{8, 16}, {8, 16}}. A Tuple
-  // with a structure such as ((), ()) that contains two Scalar, the shape_ of this Tuple is
-  // std::vector<ShapeVector>{{}, {}}.
-  std::vector<ShapeVector> shape_{};
+  // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is {8, 16}.
+  // 2. For Scalar type, shape_vector_ is an empty ShapeVector, i.e. {}.
+  // 3. For Tuple/List (all elements must be Tensor with same shape or Scalar) type, the shape_vector_
+  // consists of the element number and the shape of element in Tuple/List. For example, if a Tuple of the structure
+  // ((8,16), (8,16)) contains two Tensors of shape (8, 16), then shape_vector_ is {2, 8, 16}, 2 means elements number
+  // in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of this Tuple
+  // is {2}.
+  ShapeVector shape_vector_;
 
   // The object type of the KernelTensor.
   TypePtr type_{kTypeNone};

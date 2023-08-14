@@ -148,6 +148,8 @@ const BaseShapePtr &AbstractBase::GetShapeTrack() const { return shape_; }
 
 BaseShapePtr AbstractBase::BuildShape() const { return kNoShape; }
 
+BaseShapePtr AbstractBase::GetShape() const { return BuildShape(); }
+
 TypePtr AbstractBase::GetType() const { return BuildType(); }
 
 ValuePtr AbstractBase::GetValue() const { return BuildValue(); }
@@ -320,8 +322,6 @@ void AbstractScalar::set_is_variable(bool is_variable) { is_variable_ = is_varia
 std::size_t AbstractScalar::hash() const {
   return hash_combine({tid(), GetValueTrack()->hash(), GetTypeTrack()->hash()});
 }
-
-const std::vector<ShapeVector> &AbstractScalar::GetShape() { return shape_vector_; }
 
 TypePtr AbstractScalar::BuildType() const { return GetTypeTrack(); }
 
@@ -553,18 +553,6 @@ const ValuePtr &AbstractTensor::get_max_value() const { return max_value_; }
 void AbstractTensor::set_shape_value(const ValuePtr &shape_value) { shape_value_ = shape_value; }
 
 const ValuePtr &AbstractTensor::get_shape_value() const { return shape_value_; }
-
-const std::vector<ShapeVector> &AbstractTensor::GetShape() {
-  BaseShapePtr shape_ptr = BuildShape();
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  shape_vector_.clear();
-  if (shape_ptr->isa<Shape>()) {
-    shape_vector_.emplace_back(shape_ptr->cast<ShapePtr>()->shape());
-  } else {
-    shape_vector_ = {{}};
-  }
-  return shape_vector_;
-}
 
 std::size_t AbstractTensor::hash() const {
   // We have to exclude value pointer from hash, because CSE (Common Subexpression Elimination)
@@ -1333,35 +1321,6 @@ AbstractBasePtr AbstractSequence::dynamic_len_element_abs() const { return dynam
 void AbstractSequence::set_dyn_len_arg() { dyn_len_arg_ = true; }
 
 bool AbstractSequence::dyn_len_arg() const { return dyn_len_arg_; }
-
-const std::vector<ShapeVector> &AbstractSequence::GetShape() {
-  shape_vector_.clear();
-  if (dynamic_len_ && dynamic_len_element_abs_ != nullptr) {
-    BaseShapePtr base_shape = dynamic_len_element_abs_->BuildShape();
-    MS_EXCEPTION_IF_NULL(base_shape);
-    if (base_shape->isa<Shape>()) {
-      shape_vector_.emplace_back(base_shape->cast<ShapePtr>()->shape());
-    }
-    return shape_vector_;
-  }
-
-  BaseShapePtrList element_shape_list = ElementsShape();
-  shape_vector_.reserve(element_shape_list.size());
-  for (const auto &shape_ptr : element_shape_list) {
-    MS_EXCEPTION_IF_NULL(shape_ptr);
-    if (shape_ptr->isa<Shape>()) {
-      shape_vector_.emplace_back(shape_ptr->cast<ShapePtr>()->shape());
-    } else if (shape_ptr->isa<NoShape>()) {
-      // Push empty shape.
-      shape_vector_.emplace_back();
-    } else {
-      MS_LOG(EXCEPTION) << "Only simple Sequence types support the acquisition of shape vectors. The shape of elements "
-                           "must be 'Shape' or 'NoShape', but got: "
-                        << shape_ptr->ToString();
-    }
-  }
-  return shape_vector_;
-}
 
 AbstractTuple::AbstractTuple(AbstractBasePtrList &&elements, const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes)
     : AbstractSequence(std::move(elements), tuple_nodes) {}

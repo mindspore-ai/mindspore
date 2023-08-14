@@ -29,7 +29,6 @@
 #include "utils/any.h"
 #include "utils/hash_map.h"
 #include "base/base.h"
-#include "base/op_arg_base.h"
 #include "base/user_data.h"
 #include "ir/dtype.h"
 #include "ir/value.h"
@@ -47,7 +46,7 @@ using AbstractBasePtrList = std::vector<AbstractBasePtr>;
 ///
 /// The abstract value is used in evaluator to express
 /// the type, shape and value of an anf node.
-class MS_CORE_API AbstractBase : public Base, public OpArgBase {
+class MS_CORE_API AbstractBase : public Base {
  public:
   using TraceNodeProvider = std::function<void(AnfNodePtr *node)>;
 
@@ -137,6 +136,7 @@ class MS_CORE_API AbstractBase : public Base, public OpArgBase {
 
   /// \brief Try to build a real value from an abstract value.
   ///
+  /// \note This is a deprecated function, please do not call it, use GetValue instead.
   /// \note If the value cannot be built, a default value (ValueAny) is returned.
   ///
   /// \return A pointer to the Value.
@@ -144,39 +144,39 @@ class MS_CORE_API AbstractBase : public Base, public OpArgBase {
 
   /// \brief Build the type of the abstract.
   ///
+  /// \note This is a deprecated function, please do not call it, use GetType instead.
   /// \note Use this function to get the actual type, while track type is not enough accurate.
   ///
   /// \return A pointer to the Type.
-  virtual TypePtr BuildType() const = 0;
+  virtual TypePtr BuildType() const { MS_LOG(EXCEPTION) << "The method 'Clone()' doesn't implement"; }
 
   /// \brief Build the shape of the abstract.
   ///
+  /// \note This is a deprecated function, please do not call it, use GetShape instead.
   /// \note Use this function to get the actual shape, while track shape is not enough accurate.
   ///
   /// \return A pointer to the BaseShape.
   virtual BaseShapePtr BuildShape() const;
 
-  /// \brief Get the flatten shape vector.
+  /// \brief Get or build the shape of AbstractBase.
   ///
-  /// \return The flatten shape vector.
-  const std::vector<ShapeVector> &GetShape() override {
-    MS_LOG(EXCEPTION) << "The method 'shape_vector' doesn't implement";
-  }
+  /// \return The base shape got or built.
+  virtual BaseShapePtr GetShape() const;
 
-  /// \brief Get the object type of the AbstractBase.
+  /// \brief Get or build the object type of the AbstractBase.
   ///
   /// \return The object type.
-  TypePtr GetType() const override;
+  virtual TypePtr GetType() const;
 
-  /// \brief Get the value of the Abstract.
+  /// \brief Get or build the value of the AbstractBase.
   ///
-  /// \return The value of the Abstract if exists, else return kValueAny.
-  ValuePtr GetValue() const override;
+  /// \return The value of the AbstractBase if exists, else return kValueAny.
+  virtual ValuePtr GetValue() const;
 
   /// \brief Clone an abstract from the abstract.
   ///
   /// \return A pointer to the cloned abstract.
-  virtual AbstractBasePtr Clone() const = 0;
+  virtual AbstractBasePtr Clone() const { MS_LOG(EXCEPTION) << "The method 'Clone()' doesn't implement"; }
 
   /// \brief Set the function, which prints the debug info.
   ///
@@ -311,11 +311,6 @@ class MS_CORE_API AbstractScalar final : public AbstractBase {
   /// \param[in] is_variable Boolean value for flag 'is_variable_'.
   void set_is_variable(bool is_variable);
 
-  /// \brief Get the flatten shape vector.
-  ///
-  /// \return The flatten shape vector.
-  const std::vector<ShapeVector> &GetShape() override;
-
   std::size_t hash() const override;
 
   TypePtr BuildType() const override;
@@ -327,8 +322,6 @@ class MS_CORE_API AbstractScalar final : public AbstractBase {
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
 
  private:
-  // For Scalar type, shape_vector_ contains an empty ShapeVector, i.e. std::vector<ShapeVector>{{}}.
-  std::vector<ShapeVector> shape_vector_ = {{}};
   bool is_variable_{false};
 };
 using AbstractScalarPtr = std::shared_ptr<AbstractScalar>;
@@ -708,11 +701,6 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   /// \return A pointer to a value.
   const ValuePtr &get_shape_value() const;
 
-  /// \brief Get the flatten shape vector.
-  ///
-  /// \return The flatten shape vector.
-  const std::vector<ShapeVector> &GetShape() override;
-
   TypePtr BuildType() const override;
 
   BaseShapePtr BuildShape() const override;
@@ -754,10 +742,6 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   ValuePtr max_value_ = nullptr;
   ValuePtr shape_value_ = nullptr;
   bool is_adapter_ = false;
-
-  // For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is
-  // std::vector<ShapeVector>{{8, 16}}.
-  std::vector<ShapeVector> shape_vector_{};
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;
@@ -994,7 +978,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \brief Indicate whether the sequence is dynamic length.
   ///
   /// \return Boolean value indicates whether the sequence is dynamic length.
-  bool dynamic_len() const override;
+  bool dynamic_len() const;
 
   /// \brief Set the sequence to be dynamic length or not.
   ///
@@ -1020,11 +1004,6 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
 
   void set_dyn_len_arg();
   bool dyn_len_arg() const;
-
-  /// \brief Get the flatten shape vector.
-  ///
-  /// \return The flatten shape vector.
-  const std::vector<ShapeVector> &GetShape() override;
 
  protected:
   AbstractBasePtrList elements_;

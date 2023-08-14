@@ -87,6 +87,13 @@ class MS_CORE_API BaseShape : public Base {
 
   /// \brief Broaden the shape.
   virtual void Broaden() {}
+
+  /// \brief Get shape dimensions of BaseShape object.
+  ///
+  /// \return Shape dimensions.
+  virtual const ShapeVector &GetShapeVector() const {
+    MS_LOG(EXCEPTION) << "The method 'GetShapeVector()' doesn't implement";
+  }
 };
 
 /// \brief NoShape defines an invalid shape.
@@ -131,7 +138,12 @@ class MS_CORE_API TensorShape final : public BaseShape {
   /// \param[in] list Initial shape dimensions.
   explicit TensorShape(const ShapeVector &list) : shape_(list) {}
 
-  /// \brief Constructor of TensorShape.
+  /// \brief Constructor of TensorShape with rvalue input.
+  ///
+  /// \param[in] list Initial shape dimensions.
+  explicit TensorShape(ShapeVector &&list) : shape_(std::move(list)) {}
+
+  /// \brief Constructor of Shape.
   ///
   /// \param[in] list Initial shape dimensions.
   /// \param[in] max_shape Maximum shape dimensions of dynamic shape.
@@ -182,6 +194,11 @@ class MS_CORE_API TensorShape final : public BaseShape {
   ///
   /// \return Maximum shape dimensions.
   const ShapeVector &max_shape() const { return max_shape_; }
+
+  /// \brief Get shape dimensions of a tensor shape.
+  ///
+  /// \return Shape dimensions.
+  const ShapeVector &GetShapeVector() const override { return shape_; }
 
   bool IsDynamic() const override;
 
@@ -263,6 +280,11 @@ class MS_CORE_API SequenceShape : public BaseShape {
   ///
   /// \param[in]  shapes All element-shapes.
   explicit SequenceShape(const BaseShapePtrList &shapes) : p_shapes_(shapes) {}
+
+  /// \brief Constructor of SequenceShape with rvalue inputs.
+  ///
+  /// \param[in] shapes All element-shapes.
+  explicit SequenceShape(BaseShapePtrList &&shapes) : p_shapes_(std::move(shapes)) {}
 
   /// \brief Destructor of SequenceShape.
   ~SequenceShape() override = default;

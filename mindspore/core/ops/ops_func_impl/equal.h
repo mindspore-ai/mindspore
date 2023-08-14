@@ -27,9 +27,9 @@ namespace ops {
 constexpr auto kNameEqual = "Equal";
 class MIND_API EqualFuncImpl : public OpFuncImpl {
  public:
-  std::vector<ShapeVector> InferShape(const Primitive *primitive,
-                                      const std::vector<OpArgBase *> &input_args) const override;
-  TypePtr InferType(const Primitive *primitive, const std::vector<OpArgBase *> &input_args) const override;
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore

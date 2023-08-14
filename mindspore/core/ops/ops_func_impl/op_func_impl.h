@@ -20,7 +20,7 @@
 #include <set>
 #include <memory>
 #include "ir/primitive.h"
-#include "base/op_arg_base.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 // The operator input shape and value check status.
@@ -28,6 +28,8 @@ constexpr int32_t OP_CHECK_SUCCESS = 0;
 constexpr int32_t OP_CHECK_RETRY = -1;
 
 namespace ops {
+using abstract::AbstractBasePtr;
+
 /// \brief This class is a collection of functions related to operator, such as InferShape, InferType, Check, etc.
 class OpFuncImpl {
  public:
@@ -35,36 +37,21 @@ class OpFuncImpl {
   virtual ~OpFuncImpl() = default;
 
   /// \brief Infer the output shape for target operator.
-  /// The Infer function of the OpArgBase input type is a higher level abstraction of AbstractBase and KernelTensor with
-  /// better performance.
   ///
   /// \param[in] primitive Operator's primitive.
   /// \param[in] input_args Operator's input arguments pointer list.
   ///
   /// \return The inferred output shape.
-  /// For Tensor type output, return its shape. For example, the shape of output Tensor is (8, 16), return
-  /// std::vector<ShapeVector>{{8, 16}}.
-  ///
-  /// For Scalar type output, return an std::vector<ShapeVector> containing an empty
-  /// ShapeVector, i.e. std::vector<ShapeVector>{{}}.
-  ///
-  /// For Tuple/List (all elements must be Tensor and Scalar) type output, return output shape
-  /// consists of the shape of all elements in Tuple/List. For example, if return a Tuple of the structure ((8,16),
-  /// (8,16)) contains two Tensors of shape (8, 16), then return std::vector<ShapeVector>{{8, 16}, {8, 16}}. If return a
-  /// Tuple type with a structure such as ((), ()) that contains two Scalar, then return std::vector<ShapeVector>{{},
-  /// {}}.
-  virtual std::vector<ShapeVector> InferShape(const Primitive *primitive,
-                                              const std::vector<OpArgBase *> &input_args) const = 0;
+  virtual BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                                  const std::vector<AbstractBasePtr> &input_args) const = 0;
 
   /// \brief Infer the output type for target operator.
-  /// The Infer function of the OpArgBase input type is a higher level abstraction of AbstractBase and KernelTensor
-  /// with better performance.
   ///
   /// \param[in] primitive Operator's primitive.
   /// \param[in] input_args Operator's input arguments pointer list.
   ///
   /// \return The inferred object type, such as TensorType, Tuple, List.
-  virtual TypePtr InferType(const Primitive *primitive, const std::vector<OpArgBase *> &input_args) const = 0;
+  virtual TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const = 0;
 
   /// \brief The operator input shape and value check, the function only carries the check of the
   /// value of InferShape unrelated parameters.
@@ -73,7 +60,7 @@ class OpFuncImpl {
   /// \param[in] input_args Operator's input arguments pointer list.
   ///
   /// \return OP_CHECK_SUCCESS if success, else OP_CHECK_RETRY.
-  virtual int32_t CheckValidation(const Primitive *primitive, const std::vector<OpArgBase *> &input_args) const {
+  virtual int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
     return OP_CHECK_SUCCESS;
   }
 

@@ -20,15 +20,15 @@
 
 namespace mindspore {
 namespace ops {
-std::vector<ShapeVector> EqualFuncImpl::InferShape(const Primitive *primitive,
-                                                   const std::vector<OpArgBase *> &input_args) const {
+BaseShapePtr EqualFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                       const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
-  return BroadcastInferShape(primitive->name(), input_args);
+  return BroadCastInferShape(primitive->name(), input_args);
 }
 
-TypePtr EqualFuncImpl::InferType(const Primitive *primitive, const std::vector<OpArgBase *> &input_args) const {
+TypePtr EqualFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
