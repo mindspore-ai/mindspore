@@ -158,6 +158,7 @@ class Cell(Cell_):
         self.to_float_fp16 = False
         self.ge_init = False
         self.ge_sync_data = False
+        self._is_check_and_refresh = False
 
 
     def __getstate__(self):
@@ -627,7 +628,10 @@ class Cell(Cell_):
         if PackFunc.is_tracing():
             return self._run_tracefunc(*args, **kwargs)
 
-        self.check_names_and_refresh_name()
+        if hasattr(self, '_is_check_and_refresh') and not self._is_check_and_refresh:
+            self.check_names_and_refresh_name()
+            self._is_check_and_refresh = True
+
         # Run in Graph mode.
         if os.getenv("MS_JIT") != '0' and context._get_mode() == context.GRAPH_MODE:
             self._check_construct_args(*args)
