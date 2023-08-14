@@ -35,13 +35,13 @@ void CustomGruFp16(float16_t *output, const float16_t *input, const float16_t *w
   float16_t *hidden_gate = buffer[C3NUM];
   for (int i = 0; i < num_step; ++i) {
     if (batch_size != 1) {
-      RowMajor2ColNMajorFp16(input + i * batch_size * input_size, buffer[0], batch_size, input_size);
+      RowMajor2ColNMajorFp16(input + i * batch_size * input_size, buffer[0], batch_size, input_size, false);
       for (int j = 0; j < C3NUM; ++j) {
         MatmulBaseFp16Neon(buffer[0], weight_input + j * weight_in_offset, input_gate + j * output_size,
                            bias_input + j * col_align, ActType_No, input_size, batch_size, hidden_size, hidden_size,
                            OutType_Nhwc);
       }
-      RowMajor2ColNMajorFp16(init_h, buffer[C2NUM], batch_size, hidden_size);
+      RowMajor2ColNMajorFp16(init_h, buffer[C2NUM], batch_size, hidden_size, false);
       for (int j = 0; j < C3NUM; ++j) {
         MatmulBaseFp16Neon(buffer[C2NUM], weight_hidden + j * weight_hidden_offset, hidden_gate + j * output_size,
                            bias_hidden + j * col_align, ActType_No, hidden_size, batch_size, hidden_size, hidden_size,

@@ -60,6 +60,7 @@ class MatmulBaseFP16CPUKernel : public LiteKernel {
  protected:
   MatMulParameter *params_ = nullptr;
   int row_tile_ = 0;
+  int col_tile_ = 0;
   int a_batch_ = 1;
   int b_batch_ = 1;
   std::vector<int> a_offset_;

@@ -61,9 +61,11 @@ int MatmulFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
-  row_tile_ = C4NUM;
+  row_tile_ = C1NUM;
+  col_tile_ = C4NUM;
 #else
   row_tile_ = C12NUM;
+  col_tile_ = C8NUM;
 #endif
   auto ret = MatmulBaseFP16CPUKernel::Prepare();
   if (ret != RET_OK) {
