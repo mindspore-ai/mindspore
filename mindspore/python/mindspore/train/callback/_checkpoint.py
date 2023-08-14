@@ -62,7 +62,7 @@ def _chg_ckpt_file_name_if_same_exist(directory, prefix, exception=False):
                     suffix_num = max(suffix_num, int(num)+1)
 
     if suffix_num != 0:
-        prefix = prefix + "_" + str(suffix_num)
+        prefix = f'{prefix}_{suffix_num}'
 
     return prefix
 
