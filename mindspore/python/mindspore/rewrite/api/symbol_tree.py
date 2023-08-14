@@ -328,8 +328,8 @@ class SymbolTree:
         The information is output to the screen using the print interface.
 
         Args:
-            all_nodes (bool): Print nodes out of construct functions, such as nodes in CallFunction
-                nodes, CellContainer nodes and sub symbol trees.
+            all_nodes (bool): Print information of all nodes, including nodes in CallFunction
+                node, CellContainer node and sub symbol tree. Default: ``False`` .
 
         .. warning::
             This is an experimental API that is subject to change or deletion.

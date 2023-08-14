@@ -116,13 +116,17 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         返回：
             当前SymbolTree中节点的生成器。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate()
+    .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate(all_nodes: bool = False)
 
         打印SymbolTree里节点的拓扑信息，包括节点类型、节点名称、节点对应代码、节点的输入输出关系等。
         信息通过print接口输出到屏幕上。
 
         .. warning::
             - 这是一个实验性API，后续可能修改或删除。
+
+        参数：
+            - **all_nodes** (bool) - 打印所有节点的信息，包括在CallFunction节点、CellContainer节点和
+              子符号树里面的节点。默认值： ``False`` 。
 
     .. py:method:: mindspore.rewrite.SymbolTree.replace(old_node: Node, new_nodes: [Node])
 
@@ -293,6 +297,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
     - **Input**：输入节点代表SymbolTree的输入，对应方法的参数。
     - **Output**: 输出节点代表SymbolTree的输出，对应方法的 `return` 语句。
     - **Tree**: 树节点代表前向计算中调用了别的网络。
+    - **CellContainer**: `CellContainer` 节点代表在前向计算中调用 :class:`mindspore.nn.SequantialCell` 函数。
     - **MathOps**： 运算符节点代表在前向计算中的一个运算操作，如加法运算或比较运算。
 
 .. py:class:: mindspore.rewrite.ScopedValue(arg_type: ValueType, scope: str = "", value=None)
