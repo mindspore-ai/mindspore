@@ -110,63 +110,84 @@ void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   }
 }
 
-void Memcpy(void *addr, size_t addr_size, void *data, size_t data_size) {
-  const auto &res = memcpy_s(addr, addr_size, data, data_size);
+void Memcpy(void *addr, size_t addr_size, void *data, size_t data_size, size_t offset) {
+  const auto &res = memcpy_s(reinterpret_cast<char *>(addr) + offset * data_size, addr_size, data, data_size);
   if (res != EOK) {
     MS_LOG(EXCEPTION) << "memcpy failed. res: " << res << ", dest size: " << addr_size << ", src size: " << data_size;
   }
 }
 
-void TensorToRawMemory(const tensor::TensorPtr &tensor, const AddressPtr &address) {
+void TensorToRawMemory(const tensor::TensorPtr &tensor, const AddressPtr &address, size_t offset = 0) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(address);
-  const auto &res = memcpy_s(address->addr, address->size, tensor->data_c(), tensor->Size());
-  if (res != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy failed. res: " << res << ", dest size: " << address->size
-                      << ", src size: " << tensor->Size();
-  }
+  Memcpy(address->addr, address->size, tensor->data_c(), tensor->Size(), offset);
 }
 
-void ScalarToRawMemory(const py::object &obj, const AddressPtr &address) {
+void ScalarToRawMemory(const py::object &obj, const AddressPtr &address, size_t offset = 0) {
   if (py::isinstance<py::bool_>(obj)) {
     bool data = py::cast<bool>(obj);
-    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(bool)), EOK, "memcpy failed.");
+    Memcpy(address->addr, address->size, &data, sizeof(bool), offset);
     return;
   }
   if (py::isinstance<py::int_>(obj)) {
     int64_t data = py::cast<int64_t>(obj);
-    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(int64_t)), EOK, "memcpy failed.");
+    Memcpy(address->addr, address->size, &data, sizeof(int64_t), offset);
     return;
   }
   if (py::isinstance<py::float_>(obj)) {
     float data = py::cast<float>(obj);
-    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(float)), EOK, "memcpy failed.");
+    Memcpy(address->addr, address->size, &data, sizeof(float), offset);
     return;
   }
   MS_LOG(INTERNAL_EXCEPTION) << "Scalar to raw memory failed!";
 }
 
-void ListToRawMemory(const py::list &obj, const std::vector<AddressPtr> &outputs) {
-  // Do not consider nested scene yet.
-  // only consider the input is scalar and Tensor.
+void SequenceToWholeRawMemory(const py::sequence &obj, const std::vector<AddressPtr> &outputs) {
+  size_t obj_len = py::len(obj);
+  for (size_t i = 0; i < obj_len; ++i) {
+    auto element_obj = obj[i];
+    if (py::isinstance<tensor::Tensor>(element_obj)) {
+      TensorToRawMemory(element_obj.cast<tensor::TensorPtr>(), outputs[i], i);
+    } else {
+      ScalarToRawMemory(element_obj, outputs[i], i);
+    }
+  }
+}
+
+void SequenceToSeparateMemory(const py::sequence &obj, const std::vector<AddressPtr> &outputs) {
   for (size_t i = 0; i < outputs.size(); ++i) {
     auto element_obj = obj[i];
     if (py::isinstance<tensor::Tensor>(element_obj)) {
       TensorToRawMemory(element_obj.cast<tensor::TensorPtr>(), outputs[i]);
-    } else {
+    } else if (py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {
       ScalarToRawMemory(element_obj, outputs[i]);
     }
   }
 }
+
+void SequenceToRawMemory(const py::sequence &obj, const std::vector<AddressPtr> &outputs) {
+  // The length of sequence and the length of output address have two relationship:
+  //   1. The length is same: it means the abstract of PyExecute in frontend is AbstractSequence.
+  //   2. The length of output address is 1: it means the abstract of PyExecute in frontend is AbstractAny.
+  size_t outputs_len = outputs.size();
+  static const auto allow_sequence_to_whole_memory = common::GetEnv("MS_DEV_FALLBACK_SEQUENCE_TO_WHOLE_MEMORY") == "1";
+  if (allow_sequence_to_whole_memory && outputs_len == 1 && fallback::CheckSequenceToMemory(obj)) {
+    SequenceToWholeRawMemory(obj, outputs);
+    return;
+  }
+  SequenceToSeparateMemory(obj, outputs);
+}
+
 void ToRawMemory(const py::object obj, const std::vector<AddressPtr> &outputs) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     TensorToRawMemory(obj.cast<tensor::TensorPtr>(), outputs[0]);
     return;
   } else if (py::isinstance<py::list>(obj)) {
-    auto output_list = py::list(obj);
+    // Tuple object will to raw memory later.
+    auto output_sequence = py::sequence(obj);
     static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-    if (allow_inplace_ops && fallback::CheckListToMemory(output_list)) {
-      ListToRawMemory(py::list(obj), outputs);
+    if (allow_inplace_ops) {
+      SequenceToRawMemory(output_sequence, outputs);
     }
     return;
   } else if (py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {

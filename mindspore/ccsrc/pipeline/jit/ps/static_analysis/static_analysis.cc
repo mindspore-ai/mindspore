@@ -722,7 +722,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
       return ConvertClassTypeToFunc(cnode, possible_func, conf);
     }
     if (val->isa<parse::InterpretedObject>()) {
-      MS_LOG(ERROR) << "Do not support " << val << " as a function.\n"
+      MS_LOG(ERROR) << "Do not support " << val->ToString() << " as a function.\n"
                     << "If it is a function from a module outside the project root directory and it needs to be run as "
                     << "a static computation graph, try setting: 'export MS_JIT_MODULES=module1_name,module2_name,...'";
     }

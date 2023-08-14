@@ -76,18 +76,37 @@ int GetJitSyntaxLevel() {
   return MsContext::GetInstance()->get_param<int>(MS_CTX_JIT_SYNTAX_LEVEL);
 }
 
-bool CheckListToMemory(const py::list &obj) {
-  // A list object can be passed to raw memory and used by other operator if:
-  //   1. The length of list is not empty.
-  //   2. The list is not nested.
-  //   3. The list only contains Scalar or Tensor elements.
+template <typename T>
+bool CheckSequenceElementSame(const py::sequence &obj) {
+  // Check from second element, the type of first element is determined by T.
+  for (size_t i = 1; i < py::len(obj); ++i) {
+    if (!py::isinstance<T>(obj[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CheckSequenceToMemory(const py::sequence &obj) {
+  // A sequence object can be passed to raw memory and used by other operator if:
+  //   1. The length of sequence is not empty.
+  //   2. The sequence is not nested.
+  //   3. The sequence only contains Scalar or Tensor elements.
+  //   4. All the elements in sequence should be the same.
   if (py::len(obj) == 0) {
     return false;
   }
-  return std::all_of(obj.begin(), obj.end(), [](const auto &element) {
-    return py::isinstance<py::bool_>(element) || py::isinstance<py::int_>(element) ||
-           py::isinstance<py::float_>(element) || py::isinstance<tensor::Tensor>(element);
-  });
+  auto first_obj = obj[0];
+  if (py::isinstance<py::bool_>(first_obj)) {
+    return CheckSequenceElementSame<py::bool_>(obj);
+  } else if (py::isinstance<py::int_>(first_obj)) {
+    return CheckSequenceElementSame<py::int_>(obj);
+  } else if (py::isinstance<py::float_>(first_obj)) {
+    return CheckSequenceElementSame<py::float_>(obj);
+  } else if (py::isinstance<tensor::Tensor>(first_obj)) {
+    return CheckSequenceElementSame<tensor::Tensor>(obj);
+  }
+  return false;
 }
 
 abstract::AbstractListPtr GenerateAbstractList(const BaseShapePtr &base_shape, const TypePtr &type, bool is_dyn_shape) {
