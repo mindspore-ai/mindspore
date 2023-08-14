@@ -95,4 +95,12 @@ ATTR_MAP(RandomUniformInt) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
                               {"seed2", ATTR_DESC(seed, AnyTraits<int64_t>())}};
 OUTPUT_MAP(RandomUniformInt) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RandomUniformInt, kUniformIntOpName, ADPT_DESC(RandomUniformInt))
+
+// RandomUniform
+INPUT_MAP(RandomUniform) = {{1, INPUT_DESC(shape)}};
+ATTR_MAP(RandomUniform) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
+                           {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                           {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+OUTPUT_MAP(RandomUniform) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UniformReal, kNameUniformReal, ADPT_DESC(RandomUniform))
 }  // namespace mindspore::transform
