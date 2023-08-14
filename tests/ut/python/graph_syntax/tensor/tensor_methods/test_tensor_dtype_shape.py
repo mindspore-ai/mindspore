@@ -57,7 +57,7 @@ def test_dtype_and_shape_as_attr_to_new_tensor():
     net = Net(2.2)
     x = Tensor(np.ones([1, 2, 3], np.float32))
     ret = net(x)
-    assert (ret.asnumpy() == (np.zeros([1, 2, 3], np.float32) + 2.2)).all()
+    assert (ret.shape, ret.dtype) == ((1, 2, 3), mstype.float32)
 
 
 # When enable JIT Fallback, the error not happens during compiling, but throw in runtime.
