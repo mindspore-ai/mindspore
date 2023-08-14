@@ -199,6 +199,20 @@ public class MSTensor {
     /**
      * Set the input data of MSTensor.
      *
+     * @param data Input data of ByteBuffer type.
+     * @return whether set data success.
+     */
+    public boolean setData(ByteBuffer data) {
+        if (data == null) {
+            LOGGER.severe("input param null.");
+            return false;
+        }
+        return this.setByteBufferData(this.tensorPtr, data);
+    }
+
+    /**
+     * Set the input data of MSTensor.
+     *
      * @param data Input data of byte[] type.
      * @return whether set data success.
      */

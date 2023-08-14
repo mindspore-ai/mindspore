@@ -447,6 +447,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_runStep(JNIEnv *e
             return (jboolean) false;
         }
         auto &ms_tensor = *static_cast<mindspore::MSTensor *>(tensor_pointer);
+        if (ms_tensor.Data() != nullptr) {
+            continue;
+        }
         jarray jarr = (jarray) env->GetObjectArrayElement(buffer, i);
         jarr_inputs.push_back(jarr);
         void *java_data = env->GetPrimitiveArrayCritical(jarr, nullptr);
