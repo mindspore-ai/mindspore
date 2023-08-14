@@ -1,0 +1,11 @@
+#operator elu
+elu:
+  args:
+    input_x:
+      dtype: tensor
+    alpha:
+      dtype: float
+      init: 1.0
+  returns:
+    output:
+      dtype: tensor

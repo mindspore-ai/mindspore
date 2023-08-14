@@ -1,0 +1,10 @@
+#operator elu_grad
+elu_grad:
+  args:
+    dout:
+      dtype: tensor
+    out:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor

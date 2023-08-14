@@ -18,22 +18,19 @@
 #include <memory>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/math_ops.h"
-#include "ops/elu.h"
+#include "mindspore/core/ops/gen_ops_name.h"
+#include "mindspore/core/ops/op_utils.h"
+
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr auto kReLU6 = "ReLU6";
-constexpr auto kElu = "Elu";
-}  // namespace
-
 std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMod::ActivationFunc>>>
   ActivationFwdGpuKernelMod::kernel_attr_map_ = {
-    {kReLU6,
+    {ops::kNameReLU6,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationFwdGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationFwdGpuKernelMod::LaunchKernel<half>}}},
-    {kElu,
+    {ops::kNameElu,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &ActivationFwdGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -65,7 +62,7 @@ bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
 
   static const std::map<std::string, cudnnActivationMode_t> activation_mode_map = {
-    {kReLU6, CUDNN_ACTIVATION_CLIPPED_RELU}, {kElu, CUDNN_ACTIVATION_ELU}};
+    {ops::kNameReLU6, CUDNN_ACTIVATION_CLIPPED_RELU}, {ops::kNameElu, CUDNN_ACTIVATION_ELU}};
   auto mode_iter = activation_mode_map.find(kernel_name_);
   if (mode_iter == activation_mode_map.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', only support these activations: "
@@ -105,9 +102,7 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   ShapeVector shape;
   double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 6.0 : 0.0;
   if (mode_ == CUDNN_ACTIVATION_ELU) {
-    auto elu_ptr = std::dynamic_pointer_cast<ops::Elu>(base_operator);
-    MS_EXCEPTION_IF_NULL(elu_ptr);
-    float alpha = elu_ptr->get_alpha();
+    auto alpha = inputs[kIndex1]->GetValueWithCheck<float>();
     coef = static_cast<double>(alpha);
   }
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
@@ -175,8 +170,8 @@ bool ActivationFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTen
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, ReLU6,
-                                 []() { return std::make_shared<ActivationFwdGpuKernelMod>(kReLU6); });
+                                 []() { return std::make_shared<ActivationFwdGpuKernelMod>(ops::kNameReLU6); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Elu,
-                                 []() { return std::make_shared<ActivationFwdGpuKernelMod>(kElu); });
+                                 []() { return std::make_shared<ActivationFwdGpuKernelMod>(ops::kNameElu); });
 }  // namespace kernel
 }  // namespace mindspore

@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
-#include "common/common_test.h"
-#include "ops/ops_func_impl/elu.h"
-#include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
+
+#include "ops/ops_func_impl/elu_grad.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Elu, EltwiseOpParams);
-OP_FUNC_IMPL_TEST_CASES(Elu, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                             EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
-                                             EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                             EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+BaseShapePtr EluGradFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) const {
+  return input_args[0]->GetShape()->Clone();
+}
+
+TypePtr EluGradFuncImpl::InferType(const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args) const {
+  return input_args[0]->GetType()->Clone();
+}
 }  // namespace ops
 }  // namespace mindspore

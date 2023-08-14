@@ -29,13 +29,14 @@
 #include "ops/math_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/nn_optimizer_ops.h"
-#include "ops/elu.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/fp32/exp_fp32.h"
+#include "ops/op_utils.h"
+#include "ops/gen_ops_name.h"
 
 namespace mindspore {
 namespace kernel {
@@ -50,7 +51,6 @@ constexpr size_t kOutputsNum = 1;
 constexpr auto kSquare = "Square";
 constexpr auto kNeg = "Neg";
 constexpr auto kSign = "Sign";
-constexpr auto kFloor = "Floor";
 constexpr auto kRint = "Rint";
 constexpr auto kRound = "Round";
 constexpr auto kReciprocal = "Reciprocal";
@@ -75,11 +75,8 @@ constexpr auto kAtanh = "Atanh";
 constexpr auto kAbs = "Abs";
 constexpr auto kSqrt = "Sqrt";
 constexpr auto kRsqrt = "Rsqrt";
-constexpr auto kErf = "Erf";
-constexpr auto kErfc = "Erfc";
 constexpr auto kSoftsign = "Softsign";
 constexpr auto kReLU = "ReLU";
-constexpr auto kElu = "Elu";
 constexpr auto kReLU6 = "ReLU6";
 constexpr auto kSoftplus = "Softplus";
 constexpr auto kMish = "Mish";
@@ -95,6 +92,7 @@ class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
                const std::vector<KernelTensor *> &outputs) override;
 
   BaseOperatorPtr base_op{nullptr};
+  KernelTensorPtr input1{nullptr};
 
  private:
   template <typename T>
@@ -695,9 +693,7 @@ void Mish(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
 
 template <typename T>
 void Elu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Elu>(content->base_op);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  float alpha = kernel_ptr->get_alpha();
+  auto alpha = content->input1->GetValueWithCheck<float>();
   auto task = [in, out, alpha](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float>) {
       (void)::Elu(in + start, SizeToInt(end - start), out + start, alpha);
@@ -767,6 +763,7 @@ void ArithmeticSelfCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   dtype_ = inputs.at(kIndex0)->dtype_id();
   base_op = base_operator;
+  input1 = inputs.at(kIndex1);
 }
 
 bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
@@ -991,7 +988,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
-  {kFloor,
+  {ops::kNameFloor,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kRint,
@@ -1124,11 +1121,11 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
-  {kErf,
+  {ops::kNameErf,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
-  {kErfc,
+  {ops::kNameErfc,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
@@ -1144,7 +1141,9 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc}}},
   {kReLU6, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
-  {kElu, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
+  {ops::kNameElu,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     CreateArithSelfFunc}}},
   {kSoftplus, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kMish, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kSigmoid,
@@ -1257,80 +1256,47 @@ std::vector<KernelAttr> IdentityCpuKernelMod::GetOpSupport() {
   return kernel_attr_list;
 }
 
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Rsqrt,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRsqrt); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Square,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSquare); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Neg,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kNeg); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sign,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSign); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Floor,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kFloor); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Rint,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRint); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Round,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRound); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Reciprocal,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReciprocal); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Inv,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInv); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Invert,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInvert); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, GeLU,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kGeLU); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalNot,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kLogicalNot); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Asin,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAsin); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ACos,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kACos); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atan,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAtan); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sin,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSin); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Cos,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kCos); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tan,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kTan); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Exp,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kExp); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sinh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSinh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Cosh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kCosh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tanh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kTanh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Asinh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAsinh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Acosh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAcosh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atanh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAtanh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Abs,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAbs); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sqrt,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSqrt); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Log,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kLog); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erf,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErf); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erfc,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErfc); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softsign,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSoftsign); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReLU); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU6,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReLU6); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Elu,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kElu); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softplus,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSoftplus); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mish,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kMish); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sigmoid,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSigmoid); });
+#define ARITHMETIC_SELF_CPU_REGISTER(FUNC, OP_NAME)          \
+  MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FUNC, \
+                                   []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(OP_NAME); });
+
+ARITHMETIC_SELF_CPU_REGISTER(Rsqrt, kRsqrt);
+ARITHMETIC_SELF_CPU_REGISTER(Square, kSquare);
+ARITHMETIC_SELF_CPU_REGISTER(Neg, kNeg);
+ARITHMETIC_SELF_CPU_REGISTER(Sign, kSign);
+ARITHMETIC_SELF_CPU_REGISTER(Floor, ops::kNameFloor);
+ARITHMETIC_SELF_CPU_REGISTER(Rint, kRint);
+ARITHMETIC_SELF_CPU_REGISTER(Round, kRound);
+ARITHMETIC_SELF_CPU_REGISTER(Reciprocal, kReciprocal);
+ARITHMETIC_SELF_CPU_REGISTER(Inv, kInv);
+ARITHMETIC_SELF_CPU_REGISTER(Invert, kInvert);
+ARITHMETIC_SELF_CPU_REGISTER(GeLU, kGeLU);
+ARITHMETIC_SELF_CPU_REGISTER(LogicalNot, kLogicalNot);
+ARITHMETIC_SELF_CPU_REGISTER(Asin, kAsin);
+ARITHMETIC_SELF_CPU_REGISTER(ACos, kACos);
+ARITHMETIC_SELF_CPU_REGISTER(Atan, kAtan);
+ARITHMETIC_SELF_CPU_REGISTER(Sin, kSin);
+ARITHMETIC_SELF_CPU_REGISTER(Cos, kCos);
+ARITHMETIC_SELF_CPU_REGISTER(Tan, kTan);
+ARITHMETIC_SELF_CPU_REGISTER(Exp, kExp);
+ARITHMETIC_SELF_CPU_REGISTER(Sinh, kSinh);
+ARITHMETIC_SELF_CPU_REGISTER(Cosh, kCosh);
+ARITHMETIC_SELF_CPU_REGISTER(Tanh, kTanh);
+ARITHMETIC_SELF_CPU_REGISTER(Asinh, kAsinh);
+ARITHMETIC_SELF_CPU_REGISTER(Acosh, kAcosh);
+ARITHMETIC_SELF_CPU_REGISTER(Atanh, kAtanh);
+ARITHMETIC_SELF_CPU_REGISTER(Abs, kAbs);
+ARITHMETIC_SELF_CPU_REGISTER(Sqrt, kSqrt);
+ARITHMETIC_SELF_CPU_REGISTER(Log, kLog);
+ARITHMETIC_SELF_CPU_REGISTER(Erf, ops::kNameErf);
+ARITHMETIC_SELF_CPU_REGISTER(Erfc, ops::kNameErfc);
+ARITHMETIC_SELF_CPU_REGISTER(Softsign, kSoftsign);
+ARITHMETIC_SELF_CPU_REGISTER(ReLU, kReLU);
+ARITHMETIC_SELF_CPU_REGISTER(ReLU6, kReLU6);
+ARITHMETIC_SELF_CPU_REGISTER(Elu, ops::kNameElu);
+ARITHMETIC_SELF_CPU_REGISTER(Softplus, kSoftplus);
+ARITHMETIC_SELF_CPU_REGISTER(Mish, kMish);
+ARITHMETIC_SELF_CPU_REGISTER(Sigmoid, kSigmoid);
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Identity, IdentityCpuKernelMod);
 }  // namespace kernel

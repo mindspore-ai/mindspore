@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_ELUGRAD_H_
-#define MINDSPORE_CORE_OPS_ELUGRAD_H_
-#include <map>
-#include <memory>
-#include <string>
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+
+#include "ops/ops_func_impl/elu.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameEluGrad = "EluGrad";
-class MIND_API EluGrad : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(EluGrad);
-  EluGrad() : BaseOperator(kNameEluGrad) {}
-  void Init() const {}
-};
+BaseShapePtr EluFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) const {
+  return input_args[0]->GetShape()->Clone();
+}
+
+TypePtr EluFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  return input_args[0]->GetType()->Clone();
+}
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_EluGRAD_H_

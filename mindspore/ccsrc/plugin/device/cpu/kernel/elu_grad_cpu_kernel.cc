@@ -19,7 +19,6 @@
 #include <string>
 #include <thread>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/grad/elu_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,9 +29,7 @@ constexpr size_t kEleGradOutputsNum = 1;
 
 bool EluGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::EluGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
+  kernel_name_ = base_operator->name();
   dtype_ = inputs[0]->dtype_id();
   auto dtype_1 = inputs[1]->dtype_id();
   if (dtype_ != dtype_1) {
