@@ -25,14 +25,14 @@
 #include <utility>
 #include "src/common/log_adapter.h"
 #include "mindapi/base/format.h"
-#include "src/extendrt/kernel/primitive_type.h"
+#include "src/infer/primitive_type.h"
 #include "src/infer/kernel.h"
 #include "src/infer/tensor.h"
 #include "src/infer/context.h"
-#include "src/litert/lite_kernel.h"
+#include "src/extendrt/kernel/base_kernel.h"
 #include "ops/base_operator.h"
 #include "kernel/common_utils.h"
-#include "src/executor/kernel_exec.h"
+#include "src/extendrt/kernel/extendrt_kernel_exec.h"
 
 namespace mindspore::kernel {
 struct KernelSpec {
@@ -50,17 +50,17 @@ class KernelLib {
   virtual ~KernelLib() = default;
   virtual bool Support(const PrimitiveType &op_type, const KernelAttr &attr, const std::string &backend,
                        const Format &format = DEFAULT_FORMAT) const = 0;
-  virtual LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+  virtual BaseKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                                    const std::vector<InferTensor *> &outputs, const InferContext *ctx) const = 0;
 
   virtual InferKernel *CreateKernelExec(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                                         const std::vector<InferTensor *> &outputs, const InferContext *ctx) const {
-    auto *lite_kernel = this->CreateKernel(spec, inputs, outputs, ctx);
-    if (lite_kernel == nullptr) {
-      MS_LOG(ERROR) << "Create lite kernel failed. kernel: " << spec.op_type.PBType();
+    auto *base_kernel = this->CreateKernel(spec, inputs, outputs, ctx);
+    if (base_kernel == nullptr) {
+      MS_LOG(ERROR) << "Create base kernel failed. kernel: " << spec.op_type;
       return nullptr;
     }
-    auto *kernel_exec = new (std::nothrow) KernelExec(std::shared_ptr<LiteKernel>(lite_kernel));
+    auto *kernel_exec = new (std::nothrow) ExtendRTKernelExec(std::shared_ptr<BaseKernel>(base_kernel));
     if (kernel_exec == nullptr) {
       MS_LOG(ERROR) << "Create kernel exec failed. kernel: " << spec.op_type;
       return nullptr;

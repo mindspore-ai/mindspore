@@ -62,7 +62,7 @@ class MS_API LiteKernel : public Abstractkernel {
 
   int Execute() override;
 
-  virtual int InferShape();
+  int InferShape() override;
 
   virtual int Run() { return mindspore::lite::RET_ERROR; }
   int ReSize() override { return mindspore::lite::RET_ERROR; }

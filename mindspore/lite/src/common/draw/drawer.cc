@@ -78,7 +78,7 @@ void Drawer::Draw(const kernel::SubGraphKernel *graph, const std::string &name) 
   }
   (void)SaveDotFile(name, gv_graph->Code());
 }
-#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+#ifdef ENABLE_CLOUD_INFERENCE
 void Drawer::Draw(const CompileResult *graph, const std::string &name) {
   if (!enabled_) {
     return;
@@ -106,7 +106,7 @@ inline bool Drawer::SaveDotFile(const std::string &dot_name, const std::string &
 }
 
 void Drawer::Draw(const kernel::SubGraphKernel *graph, const std::string &name) { WARNLOG; }
-#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+#ifdef ENABLE_CLOUD_INFERENCE
 void Drawer::Draw(const CompileResult *graph, const std::string &name) { WARNLOG; }
 #endif
 #endif

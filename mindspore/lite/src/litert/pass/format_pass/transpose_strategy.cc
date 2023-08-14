@@ -67,7 +67,7 @@ bool CheckInTensorsShape(const kernel::KernelExec *kernel, const Format &runtime
   // Only check arithmetic (two input) kernel input tensors.
   // If broadcast for various formats is supported, this function can be deleted.
   // eg: tensor 1 shape(1, 128, 24, 24), tensor 2 shape(1, 128, 1, 1), the NC4HW4 format is not supported now.
-  if (arithmetic_kernel_lists.find(kernel->type()) == arithmetic_kernel_lists.end()) {
+  if (arithmetic_kernel_lists.find(kernel::SchemaType(kernel->type())) == arithmetic_kernel_lists.end()) {
     return true;
   }
   for (const auto &in_tensor : kernel->in_tensors()) {
@@ -105,6 +105,7 @@ int HandleArgMinMaxKernel(const kernel::KernelExec *kernel, const TransInfoPair 
 }
 
 int HandleSoftMaxKernel(const kernel::KernelExec *kernel, const TransInfoPair &trans) {
+  // nnacl need transpose op_parameter but BaseOperator beed transpose Primitive
   auto param = reinterpret_cast<SoftmaxParameter *>(kernel->op_parameter());
   CHECK_NULL_RETURN(param);
   param->axis_ = TransFormAxis(param->axis_, trans);
@@ -341,7 +342,7 @@ static const std::unordered_map<schema::PrimitiveType, TransAxisFunc> kTransAxis
 
 bool TransposeStrategy::CrossKernelFusionPreCheck(const kernel::KernelExec *kernel, TransInfoPair *pre_trans,
                                                   TransInfoPair *post_trans) {
-  if (kTransAxisFuncs.find(kernel->type()) == kTransAxisFuncs.end()) {
+  if (kTransAxisFuncs.find(kernel::SchemaType(kernel->type())) == kTransAxisFuncs.end()) {
     return false;
   }
   auto input_count = GetTransCount(kernel->in_kernels(), pre_trans);
@@ -367,7 +368,7 @@ bool TransposeStrategy::CrossKernelFusionPreCheck(const kernel::KernelExec *kern
   }
 
   if (((!IsSameTranspose(*post_trans, kNCHW2NHWCTrans)) && (!IsSameTranspose(*post_trans, kNHWC2NCHWTrans))) &&
-      kTransAxisFuncs.at(kernel->type())) {
+      kTransAxisFuncs.at(kernel::SchemaType(kernel->type()))) {
     return false;
   }
   if (!CheckInTensorsShape(kernel, (Format)(post_trans->dst_format_))) {
@@ -377,7 +378,7 @@ bool TransposeStrategy::CrossKernelFusionPreCheck(const kernel::KernelExec *kern
 }
 
 int TransposeStrategy::TryTransKernelAxis(kernel::KernelExec *kernel, const TransInfoPair &trans) {
-  auto trans_axis_func = kTransAxisFuncs.find(kernel->type());
+  auto trans_axis_func = kTransAxisFuncs.find(kernel::SchemaType(kernel->type()));
   if (trans_axis_func == kTransAxisFuncs.end() || trans_axis_func->second == nullptr) {
     MS_LOG(ERROR) << "Can't find the axis change function for " << kernel->name();
     return RET_ERROR;

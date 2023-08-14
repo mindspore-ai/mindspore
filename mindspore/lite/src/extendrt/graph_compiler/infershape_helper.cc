@@ -317,7 +317,7 @@ int FallBackInferShape(const CompileResultPtr &node_list, Format format, InferCo
     auto base_operator = node->GetBaseOperator();
     MSLITE_CHECK_PTR_RETURN(base_operator, false);
     auto op_parameter = OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
-    auto iter = FormatAwareOp.find(node->GetType().PBType());
+    auto iter = FormatAwareOp.find(node->GetType().TypeName());
     int infer_ret;
     // Format-not-aware op should infer in format indicated by format attr of mindir.
     if (iter != FormatAwareOp.end()) {

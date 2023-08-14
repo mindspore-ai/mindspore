@@ -15,7 +15,7 @@
  */
 
 #include "src/extendrt/kernel/default/default_kernel_lib.h"
-#include "src/extendrt/kernel/default/lite_kernel_mod.h"
+#include "src/extendrt/kernel/default/kernel_mod_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "src/infer/graph_compiler.h"
@@ -31,7 +31,7 @@ std::shared_ptr<KernelMod> DefaultKernelLib::CreateKernelMod(const PrimitiveType
     MS_LOG(INFO) << "DefaultKernelLib only support NCHW layout, but got " << FormatEnumToString(format);
     return nullptr;
   }
-  auto kernel_mod = Factory<NativeCpuKernelMod>::Instance().Create(op_type.PBType());
+  auto kernel_mod = Factory<NativeCpuKernelMod>::Instance().Create(op_type.TypeName());
   if (kernel_mod == nullptr) {
     MS_LOG(INFO) << "Create kernel mod failed. kernel: " << op_type;
     return nullptr;
@@ -49,14 +49,14 @@ bool DefaultKernelLib::Support(const PrimitiveType &op_type, const KernelAttr &a
   return DefaultKernelLib::CreateKernelMod(op_type, attr, format, backend) != nullptr;
 }
 
-LiteKernel *DefaultKernelLib::CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+BaseKernel *DefaultKernelLib::CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                                            const std::vector<InferTensor *> &outputs, const InferContext *ctx) const {
   auto kernel_mod = DefaultKernelLib::CreateKernelMod(spec.op_type, spec.attr, spec.format, spec.backend);
   if (kernel_mod == nullptr) {
     MS_LOG(ERROR) << "Create kernel mod failed. kernel: " << spec.op_type;
     return nullptr;
   }
-  return new (std::nothrow) LiteKernelMod(kernel_mod, spec.primitive, spec.cnode, inputs, outputs, ctx);
+  return new (std::nothrow) KernelModKernel(kernel_mod, spec.primitive, spec.cnode, inputs, outputs, ctx);
 }
 
 InferKernel *DefaultKernelLib::CreateKernelExec(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,

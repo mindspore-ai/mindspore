@@ -70,8 +70,8 @@ typedef struct KernelsArray {
 class SubGraphKernel : public KernelExec {
  public:
   SubGraphKernel(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
-                 std::vector<KernelExec *> nodes, Kernel *kernel)
-      : KernelExec(std::shared_ptr<Kernel>(kernel)),
+                 std::vector<KernelExec *> nodes, MSKernel *kernel)
+      : KernelExec(std::shared_ptr<MSKernel>(kernel)),
         nodes_(std::move(nodes)),
         in_nodes_(std::move(in_kernels)),
         out_nodes_(std::move(out_kernels)) {
@@ -120,9 +120,9 @@ class SubGraphKernel : public KernelExec {
 
   void DropNode(KernelExec *node);
 
-  std::vector<KernelExec *> in_nodes() { return this->in_nodes_; }
+  std::vector<KernelExec *> in_nodes() const { return this->in_nodes_; }
 
-  std::vector<KernelExec *> out_nodes() { return this->out_nodes_; }
+  std::vector<KernelExec *> out_nodes() const { return this->out_nodes_; }
 
   void SetInNodes(const std::vector<KernelExec *> &in_nodes) { in_nodes_ = in_nodes; }
 
@@ -164,7 +164,7 @@ class SubGraphKernel : public KernelExec {
 class CpuSubGraph : public SubGraphKernel {
  public:
   CpuSubGraph(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
-              std::vector<KernelExec *> nodes, Kernel *kernel)
+              std::vector<KernelExec *> nodes, MSKernel *kernel)
       : SubGraphKernel(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP32SubGraph;
     desc_.arch = kernel::KERNEL_ARCH::kCPU;
@@ -180,7 +180,7 @@ class CpuSubGraph : public SubGraphKernel {
 class CpuFp32SubGraph : public CpuSubGraph {
  public:
   CpuFp32SubGraph(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
-                  std::vector<KernelExec *> nodes, Kernel *kernel)
+                  std::vector<KernelExec *> nodes, MSKernel *kernel)
       : CpuSubGraph(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP32SubGraph;
     static std::atomic_int index = {0};
@@ -194,7 +194,7 @@ class CpuFp32SubGraph : public CpuSubGraph {
 class CpuFp16SubGraph : public CpuSubGraph {
  public:
   CpuFp16SubGraph(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
-                  std::vector<KernelExec *> nodes, Kernel *kernel)
+                  std::vector<KernelExec *> nodes, MSKernel *kernel)
       : CpuSubGraph(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP16SubGraph;
     static std::atomic_int index = 0;
@@ -274,7 +274,7 @@ class CpuFp16SubGraph : public CpuSubGraph {
 class CustomSubGraph : public SubGraphKernel {
  public:
   CustomSubGraph(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
-                 std::vector<KernelExec *> nodes, Kernel *kernel)
+                 std::vector<KernelExec *> nodes, MSKernel *kernel)
       : SubGraphKernel(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCustomSubGraph;
     desc_.arch = kernel::KERNEL_ARCH::kCustom;

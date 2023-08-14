@@ -257,7 +257,7 @@ int PackedMatmulKernelExec(kernel::KernelExec *kernel_exec, const std::vector<Te
   MS_CHECK_TRUE_MSG(kernel_exec->in_tensors().size() >= kInputSize1, lite::RET_ERROR,
                     "kernel doesn't have weight tensor.");
   auto dst_tensor = kernel_exec->in_tensors()[SECOND_INPUT];
-  auto kernel = kernel_exec->kernel();
+  auto kernel = reinterpret_cast<Kernel *>(kernel_exec->kernel());
   MS_CHECK_TRUE_MSG(kernel != nullptr, lite::RET_NULL_PTR, "kernel is nullptr.");
   auto param = reinterpret_cast<MatMulParameter *>(kernel_exec->op_parameter());
   const KernelBase *kernel_base = reinterpret_cast<const nnacl::NNACLKernel *>(kernel_exec->kernel())->Kernel();

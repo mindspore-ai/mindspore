@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 #include "include/api/kernel.h"
+#include "include/errorcode.h"
+#include "src/registry/kernel_interface_registry.h"
+#include "src/common/log_adapter.h"
+
 namespace mindspore::kernel {
 void Kernel::Initialize() {
   if (primitive_ == nullptr) {
@@ -26,5 +30,42 @@ void Kernel::Initialize() {
       SetAttr("type", param->type()->str());
     }
   }
+}
+
+int Kernel::InferShape() {
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+  std::shared_ptr<KernelInterface> kernel_interface = nullptr;
+  if (type() == schema::PrimitiveType_Custom) {
+    kernel_interface = registry::KernelInterfaceRegistry::Instance()->GetKernelInterface("", nullptr, this);
+  } else {
+    auto device_list = const_cast<mindspore::Context *>(context_)->MutableDeviceInfo();
+    for (auto &device : device_list) {
+      MS_CHECK_TRUE_RET(device != nullptr, lite::RET_NULL_PTR);
+      kernel_interface =
+        registry::KernelInterfaceRegistry::Instance()->GetKernelInterface(device->GetProvider(), nullptr, this);
+      if (kernel_interface != nullptr) {
+        break;
+      }
+    }
+  }
+
+  if (kernel_interface == nullptr) {
+    MS_LOG(ERROR) << "op_type: " << schema::EnumNamePrimitiveType(type_) << " can not find infer interface.";
+    return lite::RET_NOT_SUPPORT;
+  }
+  auto ret = kernel_interface->Infer(&inputs_, &outputs_, static_cast<const schema::Primitive *>(primitive_), this);
+  if (ret == kLiteInferInvalid) {
+    for (auto output : outputs_) {
+      output.SetShape({-1});
+    }
+    return lite::RET_INFER_INVALID;
+  }
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "op_type: " << schema::EnumNamePrimitiveType(type_) << " infer fail!ret: " << ret;
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+#endif
+  return lite::RET_NOT_SUPPORT;
 }
 }  // namespace mindspore::kernel

@@ -94,7 +94,7 @@ CompileNode *CompileNode::Create(CNodePtr cnode) {
     primc = utils::cast<ops::PrimitiveCPtr>(primitive);
   } else {
     static auto ops_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-    auto primc_creator_iter = ops_primc_fns.find(node->type_.PBType());
+    auto primc_creator_iter = ops_primc_fns.find(node->type_.TypeName());
     if (primc_creator_iter == ops_primc_fns.end()) {
       MS_LOG(ERROR) << "Can not find primitive_c create function for: " << node->type_;
       delete (node);
@@ -109,7 +109,7 @@ CompileNode *CompileNode::Create(CNodePtr cnode) {
     primc->SetAttrs(primitive->attrs());
   }
   static auto baseops_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-  auto baseops_creator_iter = baseops_fns.find(node->type_.PBType());
+  auto baseops_creator_iter = baseops_fns.find(node->type_.TypeName());
   if (baseops_creator_iter == baseops_fns.end()) {
     MS_LOG(ERROR) << "Can not find base-operator create function for: " << node->type_;
     delete (node);

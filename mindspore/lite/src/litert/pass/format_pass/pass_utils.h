@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 #include "src/executor/kernel_exec.h"
 #include "src/executor/sub_graph_kernel.h"
 
@@ -31,6 +32,10 @@ struct TransInfoPair {
   TransInfoPair(Format src, Format dst) : src_format_(src), dst_format_(dst) {}
 };
 
+using CreateFormatTransposeFunc = std::function<kernel::KernelExec *(
+  InferTensor *input, InferTensor *output, const TransInfoPair &trans_info, const std::string &name,
+  const lite::InnerContext *ctx, const kernel::KernelKey &desc)>;
+
 inline bool IsNCHWFormat(Format format) { return format == NCHW || format == NC4HW4 || format == NC8HW8; }
 
 bool IsNoneTranspose(const TransInfoPair &trans);
@@ -38,10 +43,6 @@ bool IsNoneTranspose(const TransInfoPair &trans);
 bool IsSameTranspose(const TransInfoPair &trans0, const TransInfoPair &trans1);
 
 bool IsOppositiveTranspose(const TransInfoPair &trans0, const TransInfoPair &trans1);
-
-kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const TransInfoPair &trans_info,
-                                          const std::string &name, const lite::InnerContext *ctx,
-                                          const kernel::KernelKey &desc);
 
 template <typename ShapeDT>
 std::vector<ShapeDT> TransShape(const std::vector<ShapeDT> &shape, const TransInfoPair &trans, bool *ret) {
@@ -69,10 +70,11 @@ bool SetShape(const Tensor *src_tensor, Tensor *dst_tensor);
 bool SetShape4D(const Tensor *src_tensor, Tensor *dst_tensor);
 
 int InsertPreTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
-                       const TransInfoPair &trans_info, const size_t &index);
+                       const TransInfoPair &trans_info, const size_t &index, const CreateFormatTransposeFunc &func);
 
 int InsertPostTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel,
-                        std::vector<Tensor *> *all_tensors, const TransInfoPair &trans_info, const size_t &index);
+                        std::vector<Tensor *> *all_tensors, const TransInfoPair &trans_info, const size_t &index,
+                        const CreateFormatTransposeFunc &func);
 
 int GetTransposeInfo(const kernel::KernelExec *kernel, TransInfoPair *trans_info);
 }  // namespace mindspore::lite::pass

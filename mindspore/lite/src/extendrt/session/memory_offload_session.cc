@@ -32,8 +32,8 @@ Status MemoryOffloadInferSession::Init(const std::shared_ptr<Context> &context, 
   return SingleOpInferSession::Init(context, config_info);
 }
 
-kernel::LiteKernelMod *MemoryOffloadInferSession::BuildCustomAscendKernelImpl(const CNodePtr &cnode,
-                                                                              lite::CompileNode *compile_node) {
+kernel::KernelModKernel *MemoryOffloadInferSession::BuildCustomAscendKernelImpl(const CNodePtr &cnode,
+                                                                                lite::CompileNode *compile_node) {
   auto kernel_name = kNameCustomAscend;
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
   if (kernel_mod == nullptr) {
@@ -50,8 +50,8 @@ kernel::LiteKernelMod *MemoryOffloadInferSession::BuildCustomAscendKernelImpl(co
   SetCustomAscendOpAttrs(base_operator);
 
   auto lite_kernel_mod =
-    new (std::nothrow) kernel::LiteKernelMod(kernel_mod, base_operator, compile_node->GetCNode(),
-                                             compile_node->GetInputs(), compile_node->GetOutputs(), nullptr);
+    new (std::nothrow) kernel::KernelModKernel(kernel_mod, base_operator, compile_node->GetCNode(),
+                                               compile_node->GetInputs(), compile_node->GetOutputs(), nullptr);
   if (lite_kernel_mod == nullptr) {
     MS_LOG(ERROR) << "new kernel failed " << kernel_name;
     return nullptr;

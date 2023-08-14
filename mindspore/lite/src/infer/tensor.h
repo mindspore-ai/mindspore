@@ -19,8 +19,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-
-#include "core/type_id.h"
 #include "src/tensor.h"
 
 namespace mindspore {

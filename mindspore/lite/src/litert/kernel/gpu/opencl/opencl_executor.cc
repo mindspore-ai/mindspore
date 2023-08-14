@@ -42,7 +42,7 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
     MS_ASSERT(kernel);
     MSCallBackParam callbackParam;
     callbackParam.node_name = kernel->name();
-    callbackParam.node_type = kernel->type_str();
+    callbackParam.node_type = kernel->type();
     if ((before != nullptr) && !before(kernel->in_tensors(), kernel->out_tensors(), callbackParam)) {
       MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
     }
@@ -71,7 +71,7 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
         }
         if (profiling_tmp) {
           auto execute_time = op_kernel->GetProfilingTimeMs();
-          MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
+          MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type()
                        << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
           callbackParam.execute_time = execute_time;
         }

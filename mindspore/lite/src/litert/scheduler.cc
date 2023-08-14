@@ -484,7 +484,12 @@ int Scheduler::CheckInputParam(const std::vector<kernel::KernelExec *> *dst_kern
 int Scheduler::ReplaceDelegateKernels(std::vector<kernel::KernelExec *> *dst_kernels) {
   std::vector<kernel::Kernel *> kernels;
   for (size_t i = 0; i < dst_kernels->size(); i++) {
-    kernels.push_back((*dst_kernels)[i]->kernel());
+    auto litert_kernel = reinterpret_cast<kernel::Kernel *>((*dst_kernels)[i]->kernel());
+    if (MS_UNLIKELY(litert_kernel == nullptr)) {
+      MS_LOG(ERROR) << "nullptr exist in dst_kernels.";
+      return RET_ERROR;
+    }
+    kernels.push_back(litert_kernel);
   }
 
   ms_inputs_ = LiteTensorsToMSTensors(*inputs_);
@@ -1530,7 +1535,12 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
     }
     kernel->set_is_model_output(IsContain(graph_output_node_indexes_, size_t(node_index)));
     dst_kernels->emplace_back(kernel);
-    primitives_.emplace(kernel->kernel(), static_cast<const schema::Primitive *>(primitive));
+    auto litert_kernel = reinterpret_cast<kernel::Kernel *>(kernel->kernel());
+    if (MS_UNLIKELY(litert_kernel == nullptr)) {
+      MS_LOG(ERROR) << "nullptr exist in scheduler.";
+      return RET_ERROR;
+    }
+    primitives_.emplace(litert_kernel, static_cast<const schema::Primitive *>(primitive));
   }
   if (in_tensors != nullptr) {
     std::transform(subgraph->input_indices_.begin(), subgraph->input_indices_.end(), std::back_inserter(*in_tensors),

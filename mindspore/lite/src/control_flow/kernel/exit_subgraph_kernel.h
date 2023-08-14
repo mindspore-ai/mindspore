@@ -33,11 +33,11 @@
 namespace mindspore::kernel {
 class ExitSubGraphKernel : public SubGraphKernel {
  public:
-  explicit ExitSubGraphKernel(Kernel *kernel) : SubGraphKernel({}, {}, {}, kernel) { subgraph_type_ = kExitSubGraph; }
+  explicit ExitSubGraphKernel(MSKernel *kernel) : SubGraphKernel({}, {}, {}, kernel) { subgraph_type_ = kExitSubGraph; }
 
   ~ExitSubGraphKernel() override = default;
 
-  static SubGraphKernel *Create(Kernel *kernel);
+  static SubGraphKernel *Create(MSKernel *kernel);
 
   int Prepare() override { return RET_OK; };
 

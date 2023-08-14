@@ -48,7 +48,7 @@ static std::set<EltwiseOperator> SupportedOperators = {
 
 bool CheckSupport(KernelExec *node) {
   MS_ASSERT(node);
-  PrimitiveType node_type = node->type();
+  auto node_type = node->type();
   auto operator_ = static_cast<const EltwiseOperator>(node_type);
   auto *op_parameter = reinterpret_cast<OpenCLKernel *>(node->kernel())->GetParameter();
 
@@ -82,7 +82,7 @@ bool CheckSupport(KernelExec *node) {
 FusionEltwiseParameter *CreateParam(KernelExec *node,
                                     const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map = {}) {
   MS_ASSERT(node);
-  PrimitiveType node_type = node->type();
+  auto node_type = node->type();
   auto operator_ = static_cast<const EltwiseOperator>(node_type);
   auto *op_parameter = reinterpret_cast<OpenCLKernel *>(node->kernel())->GetParameter();
   FusionEltwiseParameter *param = nullptr;

@@ -41,22 +41,7 @@ void LiteKernel::FreeWorkspace() {
 }
 
 int LiteKernel::InferShape() {
-  auto ret = lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_, ms_context_->allocator);
-#ifdef Debug
-  std::ostringstream oss;
-  oss << "LiteKernel(" << this->name() << ") InferShape ret: " << ret << ", shape:";
-  bool first_output = true;
-  for (auto &output : out_tensors_) {
-    if (first_output) {
-      first_output = false;
-    } else {
-      oss << ", ";
-    }
-    oss << lite::ShapeVectorToStr(output->shape());
-  }
-  MS_LOG(INFO) << oss.str();
-#endif
-  return ret;
+  return lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_, ms_context_->allocator);
 }
 
 int LiteKernel::PreProcess() {

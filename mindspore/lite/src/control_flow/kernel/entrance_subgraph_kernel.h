@@ -32,13 +32,13 @@
 namespace mindspore::kernel {
 class EntranceSubGraphKernel : public SubGraphKernel {
  public:
-  explicit EntranceSubGraphKernel(Kernel *kernel) : SubGraphKernel({}, {}, {}, kernel) {
+  explicit EntranceSubGraphKernel(MSKernel *kernel) : SubGraphKernel({}, {}, {}, kernel) {
     subgraph_type_ = kEntranceSubGraph;
   }
 
   ~EntranceSubGraphKernel() override = default;
 
-  static SubGraphKernel *Create(Kernel *kernel);
+  static SubGraphKernel *Create(MSKernel *kernel);
 
   int Prepare() override { return RET_OK; };
 

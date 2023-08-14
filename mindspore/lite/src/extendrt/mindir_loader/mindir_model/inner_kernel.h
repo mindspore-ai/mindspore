@@ -54,6 +54,8 @@ class InnerKernel : public Abstractkernel {
 
   int ReSize() override;
 
+  int InferShape() override { return lite::RET_ERROR; }
+
   int Train() override { return mindspore::lite::RET_OK; }
 
   bool IsTrain() const override { return true; }

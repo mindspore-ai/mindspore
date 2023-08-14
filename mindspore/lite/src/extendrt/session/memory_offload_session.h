@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 #include <tuple>
-#include "src/extendrt/kernel/default/lite_kernel_mod.h"
+#include "src/extendrt/kernel/default/kernel_mod_kernel.h"
 #include "src/extendrt/session/single_op_session.h"
 #include "src/extendrt/graph_compiler/compile_result_builder.h"
 #include "src/extendrt/memory_offload/infer_strategy_builder.h"
@@ -37,10 +37,10 @@ class MemoryOffloadInferSession : public SingleOpInferSession {
 
  private:
   Status BuildCustomAscendKernel(const CNodePtr &cnode, lite::CompileNode *compile_node);
-  kernel::LiteKernelMod *BuildCustomAscendKernelImpl(const CNodePtr &cnode, lite::CompileNode *compile_node);
+  kernel::KernelModKernel *BuildCustomAscendKernelImpl(const CNodePtr &cnode, lite::CompileNode *compile_node);
 
   lite::CompileResultPtr compile_result_;
-  std::vector<kernel::LiteKernelMod *> kernels_;
+  std::vector<kernel::KernelModKernel *> kernels_;
   std::shared_ptr<device::SwapContext> swap_context_;
   std::shared_ptr<device::SwapStrategy> strategy_;
   std::shared_ptr<Context> context_;

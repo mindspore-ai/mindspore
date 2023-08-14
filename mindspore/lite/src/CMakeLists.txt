@@ -155,6 +155,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_flow_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/thread_pool_reuse_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/infer/primitive_type.cc
         )
 
 file(GLOB FORMAT_PASS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/format_pass/*.cc")
@@ -316,6 +317,7 @@ set(TRAIN_SRC
         ${API_TRAIN_SRC}
         ${TRAIN_SRC_WITH_MD}
         ${EXPRESSION_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/executor/kernel_exec.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/metrics/accuracy.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/train/model_build.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/train/model_build_impl.cc
