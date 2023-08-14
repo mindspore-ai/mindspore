@@ -161,7 +161,7 @@ class Exponential(Distribution):
         self.cast = P.Cast()
         self.const = P.ScalarToTensor()
         self.dtypeop = P.DType()
-        self.fillv2 = P.FillV2()
+        self.fill = P.Fill()
         self.less = P.Less()
         self.select = P.Select()
         self.shape = P.Shape()
@@ -209,7 +209,7 @@ class Exponential(Distribution):
             MODE(EXP) = 0.
         """
         rate = self._check_param_type(rate)
-        return self.fillv2(self.shape(rate), self.const(0., self.dtype))
+        return self.fill(self.dtype, self.shape(rate), 0.)
 
     def _sd(self, rate=None):
         r"""
@@ -258,10 +258,8 @@ class Exponential(Distribution):
         value = self.cast(value, self.dtype)
         rate = self._check_param_type(rate)
         prob = self.log(rate) - rate * value
-        zeros = self.fillv2(self.shape(prob),
-                            self.const(0.0, self.dtypeop(prob)))
-        neginf = self.fillv2(self.shape(prob),
-                             self.const(-np.inf, self.dtypeop(prob)))
+        zeros = self.fill(self.dtypeop(prob), self.shape(prob), 0.0)
+        neginf = self.fill(self.dtypeop(prob), self.shape(prob), -np.inf)
         comp = self.less(value, zeros)
         return self.select(comp, neginf, prob)
 
@@ -283,8 +281,7 @@ class Exponential(Distribution):
         value = self.cast(value, self.dtype)
         rate = self._check_param_type(rate)
         cdf = 1.0 - self.exp(-1. * rate * value)
-        zeros = self.fillv2(self.shape(cdf),
-                            self.const(0.0, self.dtypeop(cdf)))
+        zeros = self.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
         comp = self.less(value, zeros)
         return self.select(comp, zeros, cdf)
 
@@ -306,7 +303,7 @@ class Exponential(Distribution):
         value = self.cast(value, self.dtype)
         rate = self._check_param_type(rate)
         sf = -1. * rate * value
-        zeros = self.fillv2(self.shape(sf), self.const(0.0, self.dtypeop(sf)))
+        zeros = self.fill(self.dtypeop(sf), self.shape(sf), 0.0)
         comp = self.less(value, zeros)
         return self.select(comp, zeros, sf)
 
