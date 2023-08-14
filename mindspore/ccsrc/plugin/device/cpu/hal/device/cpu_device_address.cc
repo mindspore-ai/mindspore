@@ -87,10 +87,9 @@ void CPUDeviceAddress::ClearUserData() {
   if (user_data_ == nullptr) {
     return;
   }
+
   auto user_data_type = user_data_->get<UserDataType>(kUserDataType);
-  if (user_data_type == nullptr) {
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(user_data_type);
   if (*user_data_type == UserDataType::kUserTypeHashTable) {
     auto key_type = user_data_->get<TypeId>(kHashTableKeyType);
     auto value_type = user_data_->get<TypeId>(kHashTableValueType);
