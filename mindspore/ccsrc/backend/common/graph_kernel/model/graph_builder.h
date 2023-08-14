@@ -67,6 +67,9 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr TensorScatterAdd(const NodePtr &input, const NodePtr &indices, const NodePtr &update) const {
     return Emit("TensorScatterAdd", {input, indices, update});
   }
+  NodePtr CReal(const NodePtr &input) const { return Emit("CReal", {input}); }
+  NodePtr CImag(const NodePtr &input) const { return Emit("CImag", {input}); }
+  NodePtr Complex(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("Complex", {lhs, rhs}); }
   NodePtr Custom(const NodePtrList &inputs, const NodeBase &baseinfo, const std::string &func_name,
                  const std::string &func_type, const std::string &func_source_str, const size_t &inplace_assign_output,
                  const std::string &func_compile_attrs) const {
