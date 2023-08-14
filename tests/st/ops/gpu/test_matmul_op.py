@@ -198,6 +198,9 @@ def test_matmul_dtypes():
     valid_dtypes = (mstype.float16, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128)
     all_dtypes = mstype.all_types
     for dtype in all_dtypes:
+        # bfloat16 is not supported yet
+        if dtype == mstype.bfloat or dtype == mstype.bfloat16:
+            continue
         x_ms = Tensor(x_np).astype(dtype)
         y_ms = Tensor(y_np).astype(dtype)
         if dtype in valid_dtypes:

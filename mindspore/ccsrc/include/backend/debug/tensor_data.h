@@ -22,6 +22,7 @@
 #include <string>
 #include <iostream>
 #include "base/float16.h"
+#include "base/bfloat16.h"
 #include "utils/log_adapter.h"
 #include "mindapi/base/type_id.h"
 #ifndef OFFLINE_DBG_MODE
@@ -91,7 +92,12 @@ typedef enum DbgDataType : unsigned int {
   DT_TYPE = 39,        // type type
   DT_ANY = 40,         // type any
   DT_REFKEY = 41,      // type refkey
-  DT_REF = 42          // type ref
+  DT_REF = 42,         // type ref
+
+  // bfloat type
+  DT_BASE_BFLOAT = 46,  // type generate bfloat
+  DT_BFLOAT16 = 47,     // bfloat16
+  DT_BFLOATS16 = 48     // list of bfloat16
 } DbgDataType;
 
 class TensorData {
@@ -304,6 +310,14 @@ class TensorData {
         this->data_type_ = DbgDataType::DT_BASE_FLOAT;
         this->data_type_size_ = sizeof(uint);
         break;
+      case TypeId::kNumberTypeBFloat:
+        this->data_type_ = DbgDataType::DT_BASE_BFLOAT;
+        this->data_type_size_ = sizeof(bfloat16);
+        break;
+      case TypeId::kNumberTypeBFloat16:
+        this->data_type_ = DbgDataType::DT_BFLOAT16;
+        this->data_type_size_ = sizeof(bfloat16);
+        break;
       default:
         MS_LOG(EXCEPTION) << "Unexpected type id: " << type;
     }
@@ -357,6 +371,10 @@ class TensorData {
     } else if (type_name == "f8") {
       this->data_type_ = DbgDataType::DT_FLOAT64;
       this->data_type_size_ = kFloat64Size;
+      return true;
+    } else if (type_name == "h2") {
+      this->data_type_ = DbgDataType::DT_BFLOAT16;
+      this->data_type_size_ = sizeof(bfloat16);
       return true;
     } else {
       return false;

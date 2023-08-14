@@ -92,10 +92,11 @@ std::unique_ptr<T[]> NewData(const U *input, size_t size) {
   auto data = std::make_unique<T[]>(size);
   if constexpr (!std::is_same<T, U>::value &&
                 (std::is_same<T, float16>::value || std::is_same<U, float16>::value ||
+                 std::is_same<T, bfloat16>::value || std::is_same<U, bfloat16>::value ||
                  std::is_same<T, ComplexStorage<float>>::value || std::is_same<U, ComplexStorage<float>>::value ||
                  std::is_same<T, ComplexStorage<double>>::value || std::is_same<U, ComplexStorage<double>>::value)) {
-    // Because float16 do not support implicit cast from/to other types,
-    // We can not use std::copy() on array of float16, use a loop here.
+    // Because float16 and bfloat16 do not support implicit cast from/to other types,
+    // We can not use std::copy() on array of float16 and bfloat16, use a loop here.
     for (size_t i = 0; i < size; ++i) {
       data[i] = static_cast<T>(input[i]);
     }
@@ -165,6 +166,10 @@ std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, TypeId
       auto buf = static_cast<double *>(data);
       return NewData<T>(buf, size);
     }
+    case kNumberTypeBFloat16: {
+      auto buf = static_cast<bfloat16 *>(data);
+      return NewData<T>(buf, size);
+    }
     case kNumberTypeComplex64: {
       auto buf = static_cast<ComplexStorage<float> *>(data);
       return NewData<T>(buf, size);
@@ -207,7 +212,8 @@ class TensorStringifier {
       std::is_same<T, int16_t>::value || std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value ||
       std::is_same<T, uint16_t>::value || std::is_same<T, uint32_t>::value || std::is_same<T, uint64_t>::value ||
       std::is_same<T, float16>::value || std::is_same<T, float>::value || std::is_same<T, double>::value ||
-      std::is_same<T, ComplexStorage<float>>::value || std::is_same<T, ComplexStorage<double>>::value;
+      std::is_same<T, ComplexStorage<float>>::value || std::is_same<T, ComplexStorage<double>>::value ||
+      std::is_same<T, bfloat16>::value;
     static_assert(valid, "Type is invalid");
     if (data_size_ == 0) {
       return "";
@@ -629,6 +635,8 @@ TensorDataPtr MakeTensorData(TypeId data_type, Args &&... args) {
       return std::make_shared<ImplClass<float>>(std::forward<Args>(args)...);
     case kNumberTypeFloat64:
       return std::make_shared<ImplClass<double>>(std::forward<Args>(args)...);
+    case kNumberTypeBFloat16:
+      return std::make_shared<ImplClass<bfloat16>>(std::forward<Args>(args)...);
     case kNumberTypeComplex64:
       return std::make_shared<ImplClass<ComplexStorage<float>>>(std::forward<Args>(args)...);
     case kNumberTypeComplex128:
@@ -802,6 +810,11 @@ Tensor::Tensor(float input, const TypePtr &data_type)
 
 Tensor::Tensor(float16 input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat16), {}),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
+      id_(MakeId()) {}
+
+Tensor::Tensor(bfloat16 input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeBFloat16), {}),
       data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
 

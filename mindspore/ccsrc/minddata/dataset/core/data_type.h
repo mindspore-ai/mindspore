@@ -27,6 +27,7 @@
 #include "minddata/dataset/core/pybind_support.h"
 namespace py = pybind11;
 #else
+#include "base/bfloat16.h"
 #include "base/float16.h"
 #endif
 #include "minddata/dataset/include/dataset/constants.h"

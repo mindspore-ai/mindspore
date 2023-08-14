@@ -33,12 +33,13 @@ API_MODEL_REG(Ascend310, AclModelMulti);
 
 namespace {
 std::map<DataType, size_t> kDtypeMap = {
-  {DataType::kNumberTypeBool, sizeof(bool)},       {DataType::kNumberTypeInt8, sizeof(int8_t)},
-  {DataType::kNumberTypeInt16, sizeof(int16_t)},   {DataType::kNumberTypeInt32, sizeof(int32_t)},
-  {DataType::kNumberTypeInt64, sizeof(int64_t)},   {DataType::kNumberTypeFloat16, sizeof(float16)},
-  {DataType::kNumberTypeFloat32, sizeof(float)},   {DataType::kNumberTypeFloat64, sizeof(double)},
-  {DataType::kNumberTypeUInt8, sizeof(uint8_t)},   {DataType::kNumberTypeUInt16, sizeof(uint16_t)},
-  {DataType::kNumberTypeUInt32, sizeof(uint32_t)}, {DataType::kNumberTypeUInt64, sizeof(uint64_t)}};
+  {DataType::kNumberTypeBool, sizeof(bool)},        {DataType::kNumberTypeInt8, sizeof(int8_t)},
+  {DataType::kNumberTypeInt16, sizeof(int16_t)},    {DataType::kNumberTypeInt32, sizeof(int32_t)},
+  {DataType::kNumberTypeInt64, sizeof(int64_t)},    {DataType::kNumberTypeFloat16, sizeof(float16)},
+  {DataType::kNumberTypeFloat32, sizeof(float)},    {DataType::kNumberTypeFloat64, sizeof(double)},
+  {DataType::kNumberTypeUInt8, sizeof(uint8_t)},    {DataType::kNumberTypeUInt16, sizeof(uint16_t)},
+  {DataType::kNumberTypeUInt32, sizeof(uint32_t)},  {DataType::kNumberTypeUInt64, sizeof(uint64_t)},
+  {DataType::kNumberTypeBFloat16, sizeof(bfloat16)}};
 
 std::shared_ptr<compile::MsBackend> CreateBackend(const std::shared_ptr<AclModelOptions> &options) {
   MS_EXCEPTION_IF_NULL(options);

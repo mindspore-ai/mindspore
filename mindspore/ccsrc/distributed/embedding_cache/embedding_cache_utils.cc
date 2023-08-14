@@ -461,6 +461,8 @@ const std::map<std::pair<TypeId, TypeId>, std::function<void(int32_t, size_t, si
   {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeFloat16), CreateEmbeddingStorageFunc<int32_t, float16>},
   {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeFloat32), CreateEmbeddingStorageFunc<int32_t, float>},
   {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeFloat64), CreateEmbeddingStorageFunc<int32_t, double>},
+  {std::make_pair(TypeId::kNumberTypeInt32, TypeId::kNumberTypeBFloat16),
+   CreateEmbeddingStorageFunc<int32_t, bfloat16>},
 
   {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeBool), CreateEmbeddingStorageFunc<int64_t, bool>},
   {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt8), CreateEmbeddingStorageFunc<int64_t, int8_t>},
@@ -473,7 +475,9 @@ const std::map<std::pair<TypeId, TypeId>, std::function<void(int32_t, size_t, si
   {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeUInt64), CreateEmbeddingStorageFunc<int64_t, uint64_t>},
   {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat16), CreateEmbeddingStorageFunc<int64_t, float16>},
   {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat32), CreateEmbeddingStorageFunc<int64_t, float>},
-  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat64), CreateEmbeddingStorageFunc<int64_t, double>}};
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat64), CreateEmbeddingStorageFunc<int64_t, double>},
+  {std::make_pair(TypeId::kNumberTypeInt64, TypeId::kNumberTypeBFloat16),
+   CreateEmbeddingStorageFunc<int64_t, bfloat16>}};
 }  // namespace
 
 void CreateEmbeddingStorage(std::pair<TypeId, TypeId> key_value_types, int32_t embedding_key, size_t embedding_dim,

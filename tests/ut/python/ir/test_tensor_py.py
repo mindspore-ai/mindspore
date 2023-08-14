@@ -117,6 +117,18 @@ def test_float():
     assert a.dtype == ms.float16
 
 
+def test_bfloat():
+    """
+    Feature: Test create a tensor with type of bfloat16.
+    Description: Check shape/type/value of tensor with type of bfloat16.
+    Expectation: success.
+    """
+    a = ms.Tensor(np.ones((2, 3)), ms.bfloat16)
+    assert a.shape == (2, 3)
+    assert a.dtype == ms.bfloat16
+    assert a.asnumpy().all() == np.ones((2, 3)).all()
+
+
 def test_tensor_method_sub():
     """test_tensor_method_sub"""
 

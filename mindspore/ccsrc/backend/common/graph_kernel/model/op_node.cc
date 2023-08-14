@@ -317,6 +317,10 @@ NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
       res = CalcByOperator<double>(inputs, attrs);
       break;
     }
+    case TypeId::kNumberTypeBFloat16: {
+      res = CalcByOperator<bfloat16>(inputs, attrs);
+      break;
+    }
     default:
       return nullptr;
   }
@@ -761,6 +765,10 @@ NodePtr GatherOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
       res = CalcGather<double>(inputs, attrs);
       break;
     }
+    case TypeId::kNumberTypeBFloat16: {
+      res = CalcGather<bfloat16>(inputs, attrs);
+      break;
+    }
     default:
       return nullptr;
   }
@@ -855,6 +863,10 @@ NodePtr ConcatOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
     }
     case TypeId::kNumberTypeFloat64: {
       res = CalcConcat<double>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeBFloat16: {
+      res = CalcConcat<bfloat16>(inputs, attrs);
       break;
     }
     default:
@@ -1090,6 +1102,10 @@ NodePtr StridedSliceOnnxOp::InferValue(const NodePtrList &inputs, const DAttrs &
     }
     case TypeId::kNumberTypeFloat64: {
       res = CalcStridedSliceOnnx<double>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeBFloat16: {
+      res = CalcStridedSliceOnnx<bfloat16>(inputs, attrs);
       break;
     }
     default:

@@ -28,6 +28,8 @@ const std::map<TypeId, std::string> type_id_str_maps = {
   {TypeId::kNumberTypeFloat16, "float16"},
   {TypeId::kNumberTypeFloat, "float32"},
   {TypeId::kNumberTypeFloat64, "float64"},
+  {TypeId::kNumberTypeBFloat, "bfloat16"},
+  {TypeId::kNumberTypeBFloat16, "bfloat16"},
   {TypeId::kNumberTypeDouble, "double"},
   {TypeId::kNumberTypeInt, "int"},
   {TypeId::kNumberTypeInt8, "int8"},
@@ -55,13 +57,15 @@ const std::unordered_map<std::string, size_t> type_nbyte_maps = {
   {"uint32", sizeof(int)},          {"uint64", sizeof(int) * 2},
   {"bool", sizeof(char)},           {"int4", sizeof(int) / 4},
   {"complex64", sizeof(float) * 2}, {"complex128", sizeof(double) * 2},
+  {"bfloat16", sizeof(float) / 2},
 };
 
 TypeId DtypeToTypeId(const std::string &dtypes) {
   static const std::map<std::string, TypeId> type_str_id_maps = {
     {"float", TypeId::kNumberTypeFloat32},
     {"float16", TypeId::kNumberTypeFloat16},
-    {"bfloat16", TypeId::kNumberTypeFloat16},
+    {"bfloat", TypeId::kNumberTypeBFloat},
+    {"bfloat16", TypeId::kNumberTypeBFloat16},
     {"float32", TypeId::kNumberTypeFloat32},
     {"float64", TypeId::kNumberTypeFloat64},
     {"double", TypeId::kNumberTypeDouble},

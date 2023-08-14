@@ -27,6 +27,7 @@
 #include "distributed/persistent/storage/constants.h"
 #include "utils/system/env.h"
 #include "base/float16.h"
+#include "base/bfloat16.h"
 
 namespace mindspore {
 namespace distributed {
@@ -441,6 +442,7 @@ template class LocalFile<int32_t, uint64_t>;
 template class LocalFile<int32_t, float16>;
 template class LocalFile<int32_t, float>;
 template class LocalFile<int32_t, double>;
+template class LocalFile<int32_t, bfloat16>;
 
 template class LocalFile<int64_t, bool>;
 template class LocalFile<int64_t, int8_t>;
@@ -454,6 +456,7 @@ template class LocalFile<int64_t, uint64_t>;
 template class LocalFile<int64_t, float16>;
 template class LocalFile<int64_t, float>;
 template class LocalFile<int64_t, double>;
+template class LocalFile<int64_t, bfloat16>;
 }  // namespace storage
 }  // namespace distributed
 }  // namespace mindspore

@@ -240,7 +240,7 @@ MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum Dat
       {DataType::kNumberTypeInt8, 1},    {DataType::kNumberTypeInt16, 2},   {DataType::kNumberTypeInt32, 4},
       {DataType::kNumberTypeInt64, 8},   {DataType::kNumberTypeUInt8, 1},   {DataType::kNumberTypeUInt16, 2},
       {DataType::kNumberTypeUInt32, 4},  {DataType::kNumberTypeUInt64, 8},  {DataType::kNumberTypeFloat16, 2},
-      {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8},
+      {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8}, {DataType::kNumberTypeBFloat16, 2},
     };
 
     if (LongToSize(ret->ElementNum()) * TypeByte[type] != size) {

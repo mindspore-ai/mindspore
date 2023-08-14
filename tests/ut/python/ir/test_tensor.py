@@ -74,6 +74,20 @@ def test_tensor_type_float16():
     assert t_float16.shape == (2, 3)
     assert t_float16.dtype == ms.float16
 
+
+def test_tensor_type_bfloat16():
+    """
+    Feature: Test create a tensor with type of bfloat16.
+    Description: Check shape/type/value of tensor with type of bfloat16.
+    Expectation: success.
+    """
+    t_bfloat16 = ms.Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.bfloat16)
+    assert isinstance(t_bfloat16, ms.Tensor)
+    assert t_bfloat16.shape == (2, 3)
+    assert t_bfloat16.dtype == ms.bfloat16
+    assert t_bfloat16.asnumpy().all() == np.array([[1, 2, 3], [4, 5, 6]]).all()
+
+
 def test_tensor_type_complex64():
     np_input = np.array(
         [[1+0.1j, 2j, 3+0.3j], [4-0.4j, 5, 6]], dtype=np.complex64)

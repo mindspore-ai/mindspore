@@ -63,9 +63,10 @@ TypeId GetOutputDtype(TypeId t1, TypeId t2, bool use_complex = false) {
   static std::unordered_map<TypeId, int> complex_priority_map{
     {kNumberTypeFloat32, 0}, {kNumberTypeFloat32, 1}, {kNumberTypeComplex64, 2}, {kNumberTypeComplex128, 4}};
   static std::unordered_map<TypeId, int> type_priority_map{
-    {kNumberTypeBool, 0},  {kNumberTypeUInt8, 1},   {kNumberTypeInt8, 2},     {kNumberTypeUInt16, 3},
-    {kNumberTypeInt16, 4}, {kNumberTypeUInt32, 5},  {kNumberTypeInt32, 6},    {kNumberTypeUInt64, 7},
-    {kNumberTypeInt64, 8}, {kNumberTypeFloat16, 9}, {kNumberTypeFloat32, 10}, {kNumberTypeFloat64, 11}};
+    {kNumberTypeBool, 0},     {kNumberTypeUInt8, 1},   {kNumberTypeInt8, 2},     {kNumberTypeUInt16, 3},
+    {kNumberTypeInt16, 4},    {kNumberTypeUInt32, 5},  {kNumberTypeInt32, 6},    {kNumberTypeUInt64, 7},
+    {kNumberTypeInt64, 8},    {kNumberTypeFloat16, 9}, {kNumberTypeFloat32, 10}, {kNumberTypeFloat64, 11},
+    {kNumberTypeBFloat16, 12}};
   int priority_1 = 0;
   int priority_2 = 0;
   if (use_complex) {

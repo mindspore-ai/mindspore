@@ -38,5 +38,7 @@ UInt::UInt(const int nbits) : Number(UIntBitsToTypeId(nbits), nbits, false) {}
 
 Float::Float(const int nbits) : Number(FloatBitsToTypeId(nbits), nbits, false) {}
 
+BFloat::BFloat(const int nbits) : Number(BFloatBitsToTypeId(nbits), nbits, false) {}
+
 Complex::Complex(const int nbits) : Number(ComplexBitsToTypeId(nbits), nbits, false) {}
 }  // namespace mindspore

@@ -36,6 +36,7 @@ __dtype__ = [
     "float32", "single",
     "float64", "double",
     "bool_", "float_",
+    "bfloat16", "bfloat",
     "list_", "tuple_",
     "int_", "uint",
     "number", "tensor_type",
@@ -81,6 +82,7 @@ float32 = typing.Float(32)
 single = float32
 float64 = typing.Float(64)
 double = float64
+bfloat16 = typing.BFloat(16)
 complex64 = typing.Complex(64)
 complex128 = typing.Complex(128)
 
@@ -88,6 +90,7 @@ number = typing.Number()
 int_ = typing.Int()
 uint = typing.UInt()
 float_ = typing.Float()
+bfloat = typing.BFloat()
 string = typing.String()
 list_ = typing.List()
 tuple_ = typing.Tuple()
@@ -136,6 +139,7 @@ number_type = (int8,
                float16,
                float32,
                float64,
+               bfloat16,
                complex64,
                complex128,)
 
@@ -144,9 +148,9 @@ uint_type = (uint8, uint16, uint32, uint64,)
 float_type = (float16, float32, float64,)
 signed_type = (int8, byte, int16, short, int32, intc, int64,
                intp, float16, half, float32, single, float64,
-               double, complex64, complex128)
+               double, bfloat16, complex64, complex128)
 complex_type = (complex64, complex128,)
-all_types = (bool_, int8, uint8, int16, int32, int64, float16, float32, float64, complex64, complex128)
+all_types = (bool_, int8, uint8, int16, int32, int64, float16, float32, float64, bfloat16, complex64, complex128)
 implicit_conversion_seq = {t: idx for idx, t in enumerate(all_types)}
 
 _simple_types = {
@@ -306,6 +310,8 @@ def dtype_to_pytype(type_):
         float16: float,
         float32: float,
         float64: float,
+        bfloat: float,
+        bfloat16: float,
         list_: list,
         tuple_: tuple,
         string: str,

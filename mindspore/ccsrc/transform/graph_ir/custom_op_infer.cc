@@ -103,7 +103,7 @@ TypeId ConvertGeDataType(const ge::DataType &type) {
     {ge::DataType::DT_INT64, TypeId::kNumberTypeInt64},     {ge::DataType::DT_UINT8, TypeId::kNumberTypeUInt8},
     {ge::DataType::DT_UINT16, TypeId::kNumberTypeUInt16},   {ge::DataType::DT_UINT32, TypeId::kNumberTypeUInt32},
     {ge::DataType::DT_UINT64, TypeId::kNumberTypeUInt64},   {ge::DataType::DT_BOOL, TypeId::kNumberTypeBool},
-    {ge::DataType::DT_STRING, TypeId::kObjectTypeString},   {ge::DataType::DT_FLOAT, TypeId::kNumberTypeFloat}};
+    {ge::DataType::DT_STRING, TypeId::kObjectTypeString},   {ge::DataType::DT_BF16, TypeId::kNumberTypeBFloat16}};
   auto iter = ge_ms_type.find(type);
   if (iter != ge_ms_type.end()) {
     return iter->second;

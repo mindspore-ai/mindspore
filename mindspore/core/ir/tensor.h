@@ -29,6 +29,7 @@
 #include "ir/meta_tensor.h"
 #include "utils/log_adapter.h"
 #include "base/float16.h"
+#include "base/bfloat16.h"
 #include "utils/shape_utils.h"
 #include "utils/ms_exception.h"
 #include "ir/device_event.h"
@@ -351,6 +352,12 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] input [float16] the data for tensor.
   /// \param[in] data_type [TypeId] data type.
   explicit Tensor(float16 input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 0 dimension tensor from a bfloat16 scalar.
+  ///
+  /// \param[in] input [bfloat16] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(bfloat16 input, const TypePtr &data_type = nullptr);
 
   /// \brief Create 0 dimension tensor from a uint64 scalar.
   ///
