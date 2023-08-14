@@ -126,7 +126,7 @@ class AscendMsprofDataGenerator:
         op_summary_dt = np.dtype([value['dtype'] for value in self.op_summary_name.values()])
 
         self.op_summary = np.array(op_summary, dtype=op_summary_dt)
-        self.op_summary['Task Start Time'] = self.op_summary['Task Start Time'] * 1e-6
+        self.op_summary['Task Start Time'] = self.op_summary['Task Start Time'] * 1e-3
         self.op_summary['Task Duration'] = self.op_summary['Task Duration'] * 1e-3
         self.op_summary['Task Wait Time'] = self.op_summary['Task Wait Time'] * 1e-3
 
@@ -179,7 +179,7 @@ class AscendMsprofDataGenerator:
             if index >= len(header)-1:
                 break
 
-        for i in range(index, len(header), 2):
+        for i in range(len(self.steptrace_name), len(header), 2):
             name = f'hccl_{i}'
             self.steptrace_name[name] = {'index': i, 'dtype': (name, float)}
             self.steptrace_name[f'{name} duration'] = {'index': i+1, 'dtype': (f'{name} duration', float)}
