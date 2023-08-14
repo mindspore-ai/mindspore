@@ -580,7 +580,20 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   size_t GetOutputSize(const TypePtr &type) const {
+    // NOTE: sparse tensor is subclass of tuple, the inheritance relationship is
+    //  AbstractTuple
+    //  +-- AbstractSparseTensor
+    //      +--- AbstractCOOTensor    composed of (indices, values, num_row, num_col)
+    //      `--- AbstractCSRTensor    composed of (index_ptr, indices, values, num_row, num_col)
+    constexpr size_t kCOOTensorOutputSize = 4;
+    constexpr size_t kCSRTensorOutputSize = 5;
     if (!type->isa<Tuple>()) {
+      if (type->isa<COOTensorType>()) {
+        return kCOOTensorOutputSize;
+      }
+      if (type->isa<CSRTensorType>()) {
+        return kCSRTensorOutputSize;
+      }
       return (type->isa<MonadType>() || type->isa<TypeNone>() || type->isa<TypeNull>()) ? 0 : 1;
     }
     size_t output_size = 0;
