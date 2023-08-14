@@ -129,6 +129,7 @@ static const std::unordered_set<PrimitivePtr> kNNACLToOpsInfer = {
   prim::kPrimRsqrtGrad,
   prim::kPrimSqrtGrad,
   prim::kPrimSmoothL1LossGrad,
+  prim::kPrimGridSampler2D,
 };
 
 namespace {
