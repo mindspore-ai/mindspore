@@ -288,7 +288,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     (*ge_options)["ge.exec.jobId"] = env_job_id;
   } else {
     (*ge_options)["ge.exec.jobId"] = "0";
-    MS_LOG(WARNING) << "JOB_ID is not set in ENV. Now set to default value 0";
+    MS_LOG(INFO) << "JOB_ID is not set in ENV. Now set to default value 0";
   }
 
   auto env_fe_flag = common::GetEnv("FE_FLAG");
@@ -318,7 +318,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
       (*ge_options)["ge.opsProtoLibPath"] = proto_lib_path;
     }
   } else {
-    MS_LOG(WARNING) << "Set proto lib path failed!";
+    MS_LOG(INFO) << "Set proto lib path failed!";
   }
 
   SetAscendConfig(ms_context_ptr, ge_options);
@@ -350,7 +350,7 @@ void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::strin
     (*ge_options)["ge.exec.disableReuseMemory"] = env_disable_reuse_memory;
   } else {
     (*ge_options)["ge.exec.disableReuseMemory"] = "0";
-    MS_LOG(WARNING) << "DISABLE_REUSE_MEMORY is not set in ENV. Now set to default value 0";
+    MS_LOG(INFO) << "DISABLE_REUSE_MEMORY is not set in ENV. Now set to default value 0";
   }
 }
 
@@ -391,7 +391,7 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     (*ge_options)["ge.exec.deployMode"] = env_deploy_mode;
   } else {
     (*ge_options)["ge.exec.deployMode"] = "0";
-    MS_LOG(WARNING) << "DEPLOY_MODE is not set in ENV. Now set to default value 0";
+    MS_LOG(INFO) << "DEPLOY_MODE is not set in ENV. Now set to default value 0";
   }
 }
 
