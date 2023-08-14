@@ -131,7 +131,6 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (type_ == ops::kNameFloorMod) {
     cal_layer = AddFoorMod(ctx, x_input.trt_tensor_, y_input.trt_tensor_);
   } else {
-    LogicalOpChangeInputType(ctx, &x_input, &y_input);
     cal_layer = ctx->network()->addElementWise(*x_input.trt_tensor_, *y_input.trt_tensor_, element_wise_op_);
   }
 
