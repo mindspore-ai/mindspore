@@ -488,8 +488,8 @@ class TBERegOp(RegOp):
         op_name (str): Name of operator.
 
     Examples:
-        >>> import mindspore.ops as ops
-        >>> op_name_op_info = ops.TBERegOp("OpName") \
+        >>> from mindspore.ops import TBERegOp, DataType
+        >>> op_name_op_info = TBERegOp("OpName") \
         ...    .fusion_type("ELEMWISE") \
         ...    .async_flag(False) \
         ...    .binfile_name("op_name.so") \
@@ -506,14 +506,14 @@ class TBERegOp(RegOp):
         ...    .input(0, "x2", None, "required", None) \
         ...    .input(1, "axis", None, "required", None) \
         ...    .output(0, "y", True, "required", "all") \
-        ...    .real_input_index([1, 0])
-        ...    .input_to_attr_index([2])
-        ...    .unknown_shape_formats(["ND", "ND", "ND", "ND"])
+        ...    .real_input_index([1, 0]) \
+        ...    .input_to_attr_index([2]) \
+        ...    .unknown_shape_formats(["ND", "ND", "ND", "ND"]) \
         ...    .reshape_type("NC") \
         ...    .is_dynamic_format(True) \
-        ...    .dtype_format(DataType.F16_None, DataType.F16_None) \
-        ...    .dtype_format(DataType.F32_None, DataType.F32_None) \
-        ...    .dtype_format(DataType.I32_None, DataType.I32_None) \
+        ...    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None, DataType.F16_None) \
+        ...    .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None, DataType.F32_None) \
+        ...    .dtype_format(DataType.I32_None, DataType.I32_None, DataType.I32_None, DataType.I32_None) \
         ...    .get_op_info()
         >>>
     """
