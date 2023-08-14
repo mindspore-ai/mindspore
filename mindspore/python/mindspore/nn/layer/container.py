@@ -522,25 +522,25 @@ class CellDict(_CellDictBase, Cell):
         >>> from mindspore import Tensor, nn
         >>>
         >>> cell_dict = nn.CellDict({'conv': nn.Conv2d(10, 6, 5),
-        >>>                          'relu': nn.ReLU(),
-        >>>                          'max_pool2d': nn.MaxPool2d(kernel_size=4, stride=4)})
+        ...                          'relu': nn.ReLU(),
+        ...                          'max_pool2d': nn.MaxPool2d(kernel_size=4, stride=4)})
         >>> print(len(cell_dict))
         3
         >>> cell_dict.clear()
         >>> print(len(cell_dict))
         0
         >>> ordered_cells = OrderedDict([('conv', nn.Conv2d(10, 6, 5, pad_mode='valid')),
-        >>>                              ('relu', nn.ReLU()),
-        >>>                              ('max_pool2d', nn.MaxPool2d(kernel_size=4, stride=4))])
+        ...                              ('relu', nn.ReLU()),
+        ...                              ('max_pool2d', nn.MaxPool2d(kernel_size=4, stride=4))])
         >>> cell_dict.update(ordered_cells)
         >>> x = Tensor(np.ones([1, 10, 6, 10]), ms.float32)
         >>> for cell in cell_dict.values():
-        >>>     x = cell(x)
+        ...     x = cell(x)
         >>> print(x.shape)
         (1, 6, 1, 1)
         >>> x = Tensor(np.ones([1, 10, 6, 10]), ms.float32)
         >>> for item in cell_dict.items():
-        >>>     x = item[0](x)
+        ...     x = item[1](x)
         >>> print(x.shape)
         (1, 6, 1, 1)
         >>> print(cell_dict.keys())
