@@ -1,0 +1,8 @@
+#operator log1p
+log1p:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor
