@@ -1,7 +1,7 @@
 mindspore.nn.MultiheadAttention
 ========================================
 
-.. py:class:: mindspore.nn.MultiheadAttention(embed_dim, num_heads, dropout=0., has_bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None, batch_first=False)
+.. py:class:: mindspore.nn.MultiheadAttention(embed_dim, num_heads, dropout=0., has_bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None, batch_first=False, dtype=mstype.float32)
 
     论文 `Attention Is All You Need <https://arxiv.org/pdf/1706.03762v5.pdf>`_ 中所述的多头注意力的实现。给定query向量，key向量和value，注意力计算流程如下：
 
