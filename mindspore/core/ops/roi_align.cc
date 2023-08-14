@@ -96,7 +96,9 @@ class ROIAlignInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(prim);
+    constexpr int64_t kInputNum = 2;
     auto op_name = prim->name();
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
     auto feature_type = input_args[kInputIndex0]->BuildType();
     MS_EXCEPTION_IF_NULL(feature_type);
     auto rois_type = input_args[kInputIndex1]->BuildType();
