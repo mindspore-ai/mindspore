@@ -2997,7 +2997,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(cur_graph);
     if (args_abs_list.empty()) {
       // Process raise.
-      MS_LOG(INTERNAL_EXCEPTION) << "No active exception to re-raise.";
+      MS_LOG(INTERNAL_EXCEPTION) << "No active exception to reraise.";
     }
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
