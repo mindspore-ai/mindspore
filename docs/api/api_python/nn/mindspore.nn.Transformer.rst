@@ -1,7 +1,7 @@
 mindspore.nn.Transformer
 ========================================
 
-.. py:class:: mindspore.nn.Transformer(d_model: int = 512, nhead: int = 8, num_encoder_layers: int = 6, num_decoder_layers: int = 6, dim_feedforward: int = 2048, dropout: float = 0.1, activation: Union[str, Cell, callable] = 'relu', custom_encoder: Optional[Cell] = None, custom_decoder: Optional[Cell] = None, layer_norm_eps: float = 1e-5, batch_first: bool = False, norm_first: bool = False)
+.. py:class:: mindspore.nn.Transformer(d_model: int = 512, nhead: int = 8, num_encoder_layers: int = 6, num_decoder_layers: int = 6, dim_feedforward: int = 2048, dropout: float = 0.1, activation: Union[str, Cell, callable] = 'relu', custom_encoder: Optional[Cell] = None, custom_decoder: Optional[Cell] = None, layer_norm_eps: float = 1e-5, batch_first: bool = False, norm_first: bool = False, dtype=mstype.float32)
 
     Transformer模块，包括编码器和解码器。本模块与原论文的实现不同，原论文在LayerNorm前使用了残差模块。且默认的隐藏层激活函数为 `gelu` 。详情可见 `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_ 。
 
@@ -23,8 +23,8 @@ mindspore.nn.Transformer
     输入：
         - **src** (Tensor) - 源序列。如果源序列没有batch，shape是:math:`(S, E)` ；否则如果 batch_first=False，则shape为 :math:`(S, N, E)` ，如果batch_first=True，则shape为 :math:`(S, N, E)`。 :math:`(S)` 是源序列的长度，:math:`(N)` 是batch个数，:math:`(E)` 是特性个数。数据类型：float16、float32或者float64。
         - **tgt** (Tensor) - 目标序列。如果目标序列没有batch，shape是:math:`(T, E)` ；否则如果 batch_first=False，则shape为 :math:`(T, N, E)` ，如果batch_first=True，则shape为 :math:`(T, N, E)`。 :math:`(T)` 是目标序列的长度。数据类型：float16、float32或者float64。
-        - **src_mask** (Tensor, 可选) - 源序列的掩码矩阵。shape是 :math:`(S, S)` 或 :math:`(N*num_heads, S, S)` 。数据类型：float16、float32或者float64。默认值：``None``。
-        - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。shape是 :math:`(T, T)` 或 :math:`(N*num_heads, T, T)` 。数据类型：float16、float32或者float64。默认值：``None``。
+        - **src_mask** (Tensor, 可选) - 源序列的掩码矩阵。shape是 :math:`(S, S)` 或 :math:`(N*num\_heads, S, S)` 。数据类型：float16、float32或者float64。默认值：``None``。
+        - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。shape是 :math:`(T, T)` 或 :math:`(N*num\_heads, T, T)` 。数据类型：float16、float32或者float64。默认值：``None``。
         - **memory_mask** (Tensor, 可选) - memory序列的掩码矩阵。shape是 :math:`(T, S)` 。数据类型：float16、float32或者float64。默认值：``None``。
         - **src_key_padding_mask** (Tensor, 可选) - 源序列Key矩阵的掩码矩阵。shape是 :math:`(S)` 。数据类型：float16、float32或者float64。默认值：``None``。
         - **tgt_key_padding_mask** (Tensor, 可选) - 目标序列Key矩阵的掩码矩阵。shape是 :math:`(T)` 。数据类型：float16、float32或者float64。默认值：``None``。
