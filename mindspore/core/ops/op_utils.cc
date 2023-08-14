@@ -92,7 +92,7 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }
 
-std::vector<ShapeVector> BroadCastInferShape(const std::string &op_name, const std::vector<OpArgBase *> &input_args) {
+std::vector<ShapeVector> BroadcastInferShape(const std::string &op_name, const std::vector<OpArgBase *> &input_args) {
   auto x_shape = input_args[kIndex0]->GetShape().front();
   auto y_shape = input_args[kIndex1]->GetShape().front();
 

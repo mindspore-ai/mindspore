@@ -25,7 +25,7 @@ std::vector<ShapeVector> EqualFuncImpl::InferShape(const Primitive *primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
-  return BroadCastInferShape(primitive->name(), input_args);
+  return BroadcastInferShape(primitive->name(), input_args);
 }
 
 TypePtr EqualFuncImpl::InferType(const Primitive *primitive, const std::vector<OpArgBase *> &input_args) const {
