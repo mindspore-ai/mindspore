@@ -6560,6 +6560,8 @@ class Eps(Primitive):
     Create a Tensor with the same data type and shape as input, and the element value is the minimum value that the
     corresponding data type can express.
 
+    Refer to :func:`mindspore.ops.eps` for more detail.
+
     Inputs:
         - **x** (Tensor) - Tensor of any dimension used to obtain the minimum value that its data type can express.
           The data type must be float16, float32 or float64.
@@ -6570,7 +6572,6 @@ class Eps(Primitive):
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If data type of `x` is neither float16, float32, nor float64.
-    Refer to :func:`mindspore.ops.eps` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

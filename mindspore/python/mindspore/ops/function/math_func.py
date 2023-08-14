@@ -3633,8 +3633,8 @@ def eps(x):
     corresponding data type can express.
 
     Args:
-        - x (Tensor) - Tensor of any dimension used to obtain the minimum value that its data type can express.
-          The data type must be float16, float32 or float64.
+        x (Tensor): Tensor of any dimension used to obtain the minimum value that its data type can express.
+            The data type must be float16, float32 or float64.
 
     Returns:
         Tensor, has the same type and shape as `x`, but filled with `x` dtype minimum val.
