@@ -71,7 +71,7 @@ class BaseModel:
                 raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
             for i, element in enumerate(outputs):
                 if not isinstance(element, Tensor):
-                    raise TypeError(f"inputs element must be Tensor, but got "
+                    raise TypeError(f"outputs element must be Tensor, but got "
                                     f"{type(element)} at index {i}.")
                 # pylint: disable=protected-access
                 _outputs.append(element._tensor)

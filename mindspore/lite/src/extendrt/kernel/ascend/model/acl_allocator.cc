@@ -38,6 +38,15 @@ uint32_t AclAllocator::GetDeviceCount() {
   return device_count_;
 }
 
+void AclAllocator::ResetDeviceId(int device_id) {
+  auto ret = aclrtSetDevice(device_id);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "aclrt Set device failed.";
+    return;
+  }
+  return;
+}
+
 int AclAllocator::GetCurrentDeviceId() {
   int32_t current_device_id;
   auto ret = aclrtGetDevice(&current_device_id);
@@ -53,14 +62,12 @@ void *AclAllocator::Malloc(size_t size, int device_id) {
     MS_LOG(WARNING) << "malloc device data size is zero.";
     return nullptr;
   }
-  int32_t current_device_id = GetCurrentDeviceId();
+  bool need_reset = false;
+  int origin_device_id = -1;
+  auto current_device_id = GetCurrentDeviceId();
   if (current_device_id == -1) {
-    auto ret = aclrtSetDevice(0);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "aclrt Set device failed.";
-      return nullptr;
-    }
-    current_device_id = 0;
+    MS_LOG(ERROR) << "get current device id failed.";
+    return nullptr;
   }
   if (device_id == -1) {
     device_id = current_device_id;
@@ -76,12 +83,20 @@ void *AclAllocator::Malloc(size_t size, int device_id) {
       MS_LOG(ERROR) << "aclrt Set device failed.";
       return nullptr;
     }
+    need_reset = true;
+    origin_device_id = current_device_id;
   }
   void *device_data = nullptr;
   auto acl_ret = aclrtMalloc(&device_data, size, ACL_MEM_MALLOC_HUGE_FIRST);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
+    if (need_reset) {
+      ResetDeviceId(origin_device_id);
+    }
     return nullptr;
+  }
+  if (need_reset) {
+    ResetDeviceId(origin_device_id);
   }
   return device_data;
 }
@@ -128,8 +143,12 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
                   << ", dst device id: " << dst_device_id << ", device count: " << device_count;
     return kLiteError;
   }
+  bool need_reset = false;
+  int origin_device_id = -1;
   auto current_device_id = GetCurrentDeviceId();
   if (src_device_id != current_device_id) {
+    origin_device_id = current_device_id;
+    need_reset = true;
     auto ret = aclrtSetDevice(src_device_id);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrt Set device failed.";
@@ -140,17 +159,29 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
   auto ret = aclrtDeviceCanAccessPeer(&can_access_peer, src_device_id, dst_device_id);
   if (ret != ACL_ERROR_NONE || can_access_peer != 1) {
     MS_LOG(ERROR) << "ret: " << ret << ", can_access_peer: " << can_access_peer;
+    if (need_reset) {
+      ResetDeviceId(origin_device_id);
+    }
     return kLiteError;
   }
   ret = aclrtDeviceEnablePeerAccess(dst_device_id, 0);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrtDeviceEnablePeerAccess failed.";
+    if (need_reset) {
+      ResetDeviceId(origin_device_id);
+    }
     return kLiteError;
   }
   ret = aclrtMemcpy(dst_device_data, data_size, src_device_data, data_size, ACL_MEMCPY_DEVICE_TO_DEVICE);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrtMemcpy failed.";
+    if (need_reset) {
+      ResetDeviceId(origin_device_id);
+    }
     return kLiteError;
+  }
+  if (need_reset) {
+    ResetDeviceId(origin_device_id);
   }
   return kSuccess;
 }
