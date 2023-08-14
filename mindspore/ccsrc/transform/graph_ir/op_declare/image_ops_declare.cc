@@ -135,6 +135,14 @@ ATTR_MAP(GridSampler2D) = {{"interpolation_mode", ATTR_DESC(interpolation_mode, 
 OUTPUT_MAP(GridSampler2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GridSampler2D, kNameGridSampler2D, ADPT_DESC(GridSampler2D))
 
+// GridSampler3D
+INPUT_MAP(GridSampler3D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grid)}};
+ATTR_MAP(GridSampler3D) = {{"interpolation_mode", ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
+                           {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                           {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(GridSampler3D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GridSampler3D, kNameGridSampler3D, ADPT_DESC(GridSampler3D))
+
 // NonMaxSuppressionV3
 INPUT_MAP(NonMaxSuppressionV3) = {{1, INPUT_DESC(boxes)},
                                   {2, INPUT_DESC(scores)},

@@ -120,6 +120,18 @@ bool GridSampler3D::get_align_corners() const {
   return GetValue<bool>(value_ptr);
 }
 
+void GridSampler3D::set_interpolation_mode(const std::string &interpolation_mode) {
+  (void)this->AddAttr("interpolation_mode", api::MakeValue(interpolation_mode));
+}
+
+void GridSampler3D::set_padding_mode(const std::string &padding_mode) {
+  (void)this->AddAttr(kPaddingMode, api::MakeValue(padding_mode));
+}
+
+void GridSampler3D::set_align_corners(bool align_corners) {
+  (void)this->AddAttr(kAlignCorners, api::MakeValue(align_corners));
+}
+
 // AG means auto generated
 class MIND_API AGGridSampler3DInfer : public abstract::OpInferBase {
  public:

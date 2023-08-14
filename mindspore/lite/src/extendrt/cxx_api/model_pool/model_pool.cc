@@ -1183,14 +1183,18 @@ Status ModelPool::ParseDeviceIds(const std::shared_ptr<RunnerConfig> &runner_con
         return kLiteNullptr;
       }
       auto device_infos = config->context->MutableDeviceInfo();
+      bool has_ascend_or_gpu = false;
       for (auto &device_info : device_infos) {
         if (device_info->GetDeviceType() == kAscend) {
+          has_ascend_or_gpu = true;
           device_info->Cast<AscendDeviceInfo>()->SetDeviceID(id);
         } else if (device_info->GetDeviceType() == kGPU) {
+          has_ascend_or_gpu = true;
           device_info->Cast<GPUDeviceInfo>()->SetDeviceID(id);
-        } else {
-          MS_LOG(WARNING) << "Device is not Ascend or GPU can't set device id.";
         }
+      }
+      if (!has_ascend_or_gpu) {
+        MS_LOG(WARNING) << "Device is not Ascend or GPU can't set device id.";
       }
     }
   }

@@ -34,6 +34,7 @@
 #include "ops/tuple_get_item.h"
 #include "ops/layer_norm.h"
 #include "ops/fusion/layer_norm_fusion.h"
+#include "ops/argmax_with_value.h"
 
 namespace mindspore {
 namespace lite {
@@ -41,9 +42,9 @@ namespace {
 constexpr size_t kCnodeInputMinNum = 2;
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kNamewiEltwise = "Eltwise";
-const std::set<std::string> kCNodeWithMultiOutputs = {ops::kNameBatchNorm, ops::kNameFusedBatchNorm,
-                                                      ops::kNameInstanceNorm, ops::kNameLayerNorm,
-                                                      ops::kNameLayerNormFusion};
+const std::set<std::string> kCNodeWithMultiOutputs = {ops::kNameBatchNorm,       ops::kNameFusedBatchNorm,
+                                                      ops::kNameInstanceNorm,    ops::kNameLayerNorm,
+                                                      ops::kNameLayerNormFusion, ops::kNameArgMaxWithValue};
 const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack,
                                                       acl::kNameConcatV2};
 }  // namespace
