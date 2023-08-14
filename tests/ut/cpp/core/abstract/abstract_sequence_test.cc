@@ -120,12 +120,16 @@ TEST_F(DynamicSequenceTestUtils, test_dynamic_length_list_build_value) {
 /// Expectation: No exception.
 TEST_F(DynamicSequenceTestUtils, test_dynamic_length_list_build_shape) {
   auto abs_empty_list = BuildDynamicAbstractList(AbstractBasePtrList{});
-  ASSERT_TRUE(abs_empty_list->BuildShape() == kDynamicSequenceShape);
+  ASSERT_TRUE(abs_empty_list->BuildShape()->isa<DynamicSequenceShape>());
+  auto dyn_seq_shape = abs_empty_list->BuildShape()->cast<DynamicSequenceShapePtr>();
+  ASSERT_TRUE(dyn_seq_shape->element_shape() == nullptr);
   AbstractScalarPtr int_num1 = std::make_shared<AbstractScalar>(1);
   AbstractScalarPtr int_num2 = std::make_shared<AbstractScalar>(2);
   AbstractBasePtrList elements1{int_num1, int_num2};
   auto abs_list = BuildDynamicAbstractList(elements1);
-  ASSERT_TRUE(abs_list->BuildShape() == kDynamicSequenceShape);
+  ASSERT_TRUE(abs_list->BuildShape()->isa<DynamicSequenceShape>());
+  dyn_seq_shape = abs_list->BuildShape()->cast<DynamicSequenceShapePtr>();
+  ASSERT_TRUE(dyn_seq_shape->element_shape()->isa<NoShape>());
 }
 
 /// Feature: AbstractList with dynamic length.
@@ -226,12 +230,16 @@ TEST_F(DynamicSequenceTestUtils, test_dynamic_length_tuple_build_value) {
 /// Expectation: No exception.
 TEST_F(DynamicSequenceTestUtils, test_dynamic_length_tuple_build_shape) {
   auto abs_empty_tuple = BuildDynamicAbstractTuple(AbstractBasePtrList{});
-  ASSERT_TRUE(abs_empty_tuple->BuildShape() == kDynamicSequenceShape);
+  ASSERT_TRUE(abs_empty_tuple->BuildShape()->isa<DynamicSequenceShape>());
+  auto dyn_seq_shape = abs_empty_tuple->BuildShape()->cast<DynamicSequenceShapePtr>();
+  ASSERT_TRUE(dyn_seq_shape->element_shape() == nullptr);
   AbstractScalarPtr int_num1 = std::make_shared<AbstractScalar>(1);
   AbstractScalarPtr int_num2 = std::make_shared<AbstractScalar>(2);
   AbstractBasePtrList elements1{int_num1, int_num2};
   auto abs_tuple = BuildDynamicAbstractTuple(elements1);
-  ASSERT_TRUE(abs_tuple->BuildShape() == kDynamicSequenceShape);
+  ASSERT_TRUE(abs_tuple->BuildShape()->isa<DynamicSequenceShape>());
+  dyn_seq_shape = abs_tuple->BuildShape()->cast<DynamicSequenceShapePtr>();
+  ASSERT_TRUE(dyn_seq_shape->element_shape()->isa<NoShape>());
 }
 
 /// Feature: AbstractTuple with dynamic length.
