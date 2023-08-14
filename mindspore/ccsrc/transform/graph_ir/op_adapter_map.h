@@ -27,6 +27,7 @@ constexpr const char kNameCustomOp[] = "Custom";
 constexpr const char kNameConst[] = "Const";
 constexpr const char kNameParam[] = "parameter";
 constexpr const char kNameRandomUniform[] = "RandomUniform";
+constexpr const char kNameUniformReal[] = "UniformReal";
 constexpr const char kNameSimpleMean[] = "SimpleMean";
 constexpr const char kNameSimpleMeanGrad[] = "SimpleMeanGrad";
 constexpr const char kNameAllReduce[] = "AllReduce";
