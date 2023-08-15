@@ -2587,7 +2587,6 @@ def _limit_stat_length(stat_length, shape):
     return tuple((min(stat_pair[0], shape[i]), min(stat_pair[1], shape[i])) for i, stat_pair in enumerate(stat_length))
 
 
-@constexpr
 def _convert_pad_to_nd(pad_values, ndim):
     """broadcasts the pad_values to (ndim * 2)"""
     if not isinstance(pad_values, (int, list, tuple, Tensor)):
