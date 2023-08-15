@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/expm1_cpu_kernel.h"
 #include <cmath>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/expm1.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,9 +27,7 @@ constexpr size_t kExpm1OutputsNum = 1;
 
 bool Expm1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Expm1>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
+  kernel_name_ = base_operator->name();
   input_dtype_ = inputs[0]->GetDtype();
   if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat64 &&
       input_dtype_ != kNumberTypeComplex64 && input_dtype_ != kNumberTypeComplex128) {

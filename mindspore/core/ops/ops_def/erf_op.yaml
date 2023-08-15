@@ -1,0 +1,8 @@
+#operator erf
+erf:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor

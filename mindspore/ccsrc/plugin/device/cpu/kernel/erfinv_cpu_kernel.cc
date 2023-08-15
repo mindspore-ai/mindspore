@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/erfinv_cpu_kernel.h"
-#include "mindspore/core/ops/erfinv.h"
 #include <cmath>
 #include <limits>
 
@@ -29,12 +28,7 @@ constexpr double PI = 3.14159265358979323846264338327950288;
 
 bool ErfinvCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Erfinv>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Erfinv ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+  kernel_name_ = base_operator->name();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 

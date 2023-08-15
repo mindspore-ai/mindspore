@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_EXPM1_H_
-#define MINDSPORE_CORE_OPS_EXPM1_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ERFINV_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ERFINV_H_
 #include <memory>
 #include <vector>
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameExpm1 = "Expm1";
-class MIND_API Expm1 : public BaseOperator {
+class MIND_API ErfinvFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(Expm1);
-  Expm1() : BaseOperator(kNameExpm1) { InitIOName({"x"}, {"output"}); }
-  void Init() const {}
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-MIND_API abstract::AbstractBasePtr Expm1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
-using kPrimExpm1Ptr = std::shared_ptr<Expm1>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_EXPM1_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ERFINV_H_
