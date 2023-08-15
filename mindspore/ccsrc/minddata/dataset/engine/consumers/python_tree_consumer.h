@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "minddata/dataset/engine/consumers/tree_consumer.h"
-#include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
+
 #include "pybind11/pybind11.h"
+
+#include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
+#include "minddata/dataset/engine/consumers/tree_consumer.h"
 
 namespace mindspore::dataset {
 
@@ -34,6 +36,7 @@ class PythonIteratorConsumer : public IteratorConsumer {
   explicit PythonIteratorConsumer(int32_t num_epochs = -1) : IteratorConsumer(num_epochs) {}
 
   ~PythonIteratorConsumer() = default;
+
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
   /// \return Status error code
@@ -52,6 +55,7 @@ class PythonPullBasedIteratorConsumer : public PullBasedIteratorConsumer {
   explicit PythonPullBasedIteratorConsumer(int32_t num_epochs = -1) : PullBasedIteratorConsumer(num_epochs) {}
 
   ~PythonPullBasedIteratorConsumer() = default;
+
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
   /// \return Status error code
@@ -71,18 +75,23 @@ class PythonBuildVocabConsumer : public BuildVocabConsumer {
 class PythonSaveToDisk : public SaveToDisk {
  public:
   PythonSaveToDisk(const std::string &datasetPath, int32_t numFiles, const std::string &datasetType);
+
   ~PythonSaveToDisk() = default;
+
   Status Save() override;
 };
 
 class PythonTreeGetters : public TreeGetters {
  public:
   Status GetRow(TensorRow *const r) override;
+
   ~PythonTreeGetters() = default;
 };
+
 class PythonDatasetSizeGetter : public DatasetSizeGetter {
  public:
   Status GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *r) override;
+
   ~PythonDatasetSizeGetter() = default;
 };
 }  // namespace mindspore::dataset

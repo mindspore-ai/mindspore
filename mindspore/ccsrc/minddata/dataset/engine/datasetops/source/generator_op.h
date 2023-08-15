@@ -46,7 +46,7 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
               std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
               std::shared_ptr<SamplerRT> sampler, int32_t num_parallel_workers);
 
-  ~GeneratorOp() = default;
+  ~GeneratorOp();
 
   /// A print method typically used for debugging
   /// \param out - The output stream to write output to

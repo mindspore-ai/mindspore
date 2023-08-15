@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ class TreeAdapter {
 
   // This function performs syntax checking, semantics checking, optimizes, and then builds
   // the Execution tree.
-  Status Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs = -1, int64_t step = 0,
-                 const int64_t epoch_num = 0);
+  Status Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs = -1, int64_t global_step = 0,
+                 int64_t init_epoch = 0);
 
   // Return the root node of the IR after cloned from the parsed IR tree
   std::shared_ptr<DatasetNode> RootIRNode() const { return root_ir_; }
@@ -107,19 +107,19 @@ class TreeAdapter {
 
  protected:
   // Run the mandatory pass checking the syntax and semantics of the IR tree
-  Status PrePass(std::shared_ptr<DatasetNode> ir);
+  Status PrePass(const std::shared_ptr<DatasetNode> &ir);
 
   // Run the optional optimization pass on the IR tree
-  Status Optimize(std::shared_ptr<DatasetNode> ir);
+  static Status Optimize(const std::shared_ptr<DatasetNode> &ir);
 
   // Run the mandatory pass augmenting the IR tree
-  Status PostPass(std::shared_ptr<DatasetNode> ir);
+  Status PostPass(const std::shared_ptr<DatasetNode> &ir);
 
   // Build an Execution tree
-  Status Build(std::shared_ptr<DatasetNode> root_ir, const int64_t epoch_num = 0);
+  Status Build(const std::shared_ptr<DatasetNode> &root_ir, int64_t init_epoch = 0);
 
   // This RECURSIVE function walks the (optimized) IR tree in DFS to build its corresponding Execution tree.
-  Status BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);
+  Status BuildExecutionTreeRecur(const std::shared_ptr<DatasetNode> &ir, std::shared_ptr<DatasetOp> *op);
 
   // Adjust the pipeline (eg, move rng_ forward) if in reset mode
   Status AdjustReset(const int64_t epoch_num);

@@ -44,10 +44,18 @@ class TreeConsumer {
 
   /// \brief Destructor
   virtual ~TreeConsumer() = default;
+
   /// Initializes the consumer, this involves constructing and preparing the tree.
-  /// \param d The dataset node that represent the root of the IR tree.
-  /// \return Status error code.
-  virtual Status Init(std::shared_ptr<DatasetNode> d);
+  /// \param root The dataset node that represent the root of the IR tree.
+  /// \return Status code.
+  virtual Status Init(const std::shared_ptr<DatasetNode> &root);
+
+  /// Initializes the consumer, this involves constructing and preparing the tree.
+  /// \param root The dataset node that represent the root of the IR tree.
+  /// \param global_step The global step to initialize from.
+  /// \param init_epoch The epoch to initialize from.
+  /// \return Status code.
+  virtual Status Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t init_epoch);
 
   /// Internal function to perform the termination
   /// \return Status error code
@@ -62,7 +70,7 @@ class TreeConsumer {
   /// \param step the step to reset the pipeline to.
   /// \param epoch_num the epoch to reset the pipeline to.
   /// \return Status error code
-  virtual Status Reset(int64_t step, const int64_t epoch_num);
+  virtual Status Reset(int64_t step, int64_t epoch_num);
 
   /// Function to stop the consumer.
   /// \return Status error code
@@ -123,7 +131,7 @@ class IteratorConsumer : public TreeConsumer {
 
   ~IteratorConsumer() = default;
 
-  Status Init(std::shared_ptr<DatasetNode> d) override;
+  Status Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step = 0, int64_t init_epoch = 0) override;
 
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
@@ -159,10 +167,11 @@ class SaveToDisk : public TreeConsumer {
   /// \param dataset_path path the the dataset
   /// \param num_files number of files. Default to 1
   /// \param dataset_type The format of the dataset. Default to "mindrecod".
-  explicit SaveToDisk(std::string dataset_path, int32_t num_files = 1, std::string dataset_type = "mindrecord")
+  explicit SaveToDisk(const std::string &dataset_path, int32_t num_files = 1,
+                      const std::string &dataset_type = "mindrecord")
       : TreeConsumer(), dataset_path_(dataset_path), num_files_(num_files), dataset_type_(dataset_type) {}
 
-  ~SaveToDisk() = default;
+  ~SaveToDisk() override = default;
 
   /// \brief Parameters validation
   /// \return Status Status::OK() if all the parameters are valid
@@ -215,9 +224,9 @@ class ToDevice : public TreeConsumer {
  public:
   explicit ToDevice(int32_t num_epochs = -1) : TreeConsumer(num_epochs) {}
 
-  ~ToDevice() = default;
+  ~ToDevice() override = default;
 
-  Status Init(std::shared_ptr<DatasetNode> d) override;
+  Status Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step = 0, int64_t init_epoch = 0) override;
 
   Status RegisterProfilingManager() override;
 
@@ -253,8 +262,11 @@ class ToDevice : public TreeConsumer {
 class DatasetSizeGetter : public TreeConsumer, public std::enable_shared_from_this<DatasetSizeGetter> {
  public:
   DatasetSizeGetter() : dataset_size_(-1) {}
-  ~DatasetSizeGetter() = default;
-  Status Init(std::shared_ptr<DatasetNode> d) override;
+
+  ~DatasetSizeGetter() override = default;
+
+  Status Init(const std::shared_ptr<DatasetNode> &root) override;
+
   Status Terminate() override;
 
   /// \brief Function to get the dataset size
@@ -265,12 +277,13 @@ class DatasetSizeGetter : public TreeConsumer, public std::enable_shared_from_th
   Status GetDatasetSize(int64_t *size, bool estimate = false);
 
   virtual Status GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *row);
+
   std::string Name() override { return "DatasetSizeGetter"; }
 
   /// \brief Gets the dataset size by iterating over the entire dataset on a sub tree starting from ir_node
   /// param[in] ir_node The node that marks the top most of the sub tree on which we want to iterate
   /// \return Status - The status code return
-  Status DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *dataset_size);
+  Status DryRun(const std::shared_ptr<DatasetNode> &ir_node, int64_t *dataset_size);
 
  private:
   std::shared_ptr<DatasetNode> root_;
@@ -283,9 +296,9 @@ class BuildVocabConsumer : public TreeConsumer {
   /// BuildVocabConsumer Constructor which will call the base class default constructor.
   BuildVocabConsumer() = default;
 
-  ~BuildVocabConsumer() = default;
+  ~BuildVocabConsumer() override = default;
 
-  Status Init(std::shared_ptr<DatasetNode> d) override;
+  Status Init(const std::shared_ptr<DatasetNode> &root) override;
 
   /// Start consuming
   /// \return  Status error code
@@ -296,6 +309,5 @@ class BuildVocabConsumer : public TreeConsumer {
   /// \return string
   std::string Name() override { return "BuildVocab"; }
 };
-
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CONSUMERS_TREE_CONSUMER_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,13 +53,19 @@ TreeConsumer::TreeConsumer(int32_t num_epochs) : num_epochs_(num_epochs) {
   tree_adapter_ = std::make_unique<TreeAdapter>();
 }
 
-Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) {
-  RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d)));
+Status TreeConsumer::Init(const std::shared_ptr<DatasetNode> &root) {
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(root));
 #ifndef ENABLE_SECURITY
   profiling_manager_ = GlobalContext::profiling_manager();
   RETURN_IF_NOT_OK(RegisterProfilingManager());
 #endif
   return Status::OK();
+}
+
+Status TreeConsumer::Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t init_epoch) {
+  MS_LOG(WARNING) << "TreeConsumer does not support initializing from intermediate epoch or step, change to "
+                     "initialize from the beginning.";
+  return Init(root);
 }
 
 Status TreeConsumer::Terminate() {
@@ -162,8 +168,11 @@ Status TreeConsumer::InitAutoTune() {
 std::string TreeConsumer::GetOffload() { return (tree_adapter_->GetOffloadJson()).dump(); }
 
 // IteratorConsumer
-Status IteratorConsumer::Init(std::shared_ptr<DatasetNode> d) {
-  RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d), num_epochs_));
+Status IteratorConsumer::Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t init_epoch) {
+  if (global_step != 0) {
+    tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeReset);
+  }
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(root, num_epochs_, global_step, init_epoch));
 #ifndef ENABLE_SECURITY
   profiling_manager_ = GlobalContext::profiling_manager();
   if (profiling_manager_->IsProfiling()) {
@@ -294,8 +303,11 @@ Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string,
 }
 
 // ToDevice
-Status ToDevice::Init(std::shared_ptr<DatasetNode> d) {
-  RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d), num_epochs_));
+Status ToDevice::Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t init_epoch) {
+  if (global_step != 0) {
+    tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeReset);
+  }
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(root, num_epochs_, global_step, init_epoch));
 #ifndef ENABLE_SECURITY
   profiling_manager_ = GlobalContext::profiling_manager();
   if (profiling_manager_->IsProfiling()) {
@@ -385,12 +397,7 @@ Status TreeConsumer::Reset(int64_t step, const int64_t epoch_num) {
   MS_LOG(INFO) << "Terminating pipeline with UUID:" << tree_adapter_->tree_->GetUniqueId();
   std::shared_ptr<DatasetNode> old_root = tree_adapter_->input_ir_;
   RETURN_IF_NOT_OK(this->Stop());
-  {
-#ifdef ENABLE_PYTHON
-    py::gil_scoped_release gil_release;  // release GIL to allow python threads to terminate.
-#endif
-    RETURN_IF_NOT_OK(this->Terminate());
-  }
+  RETURN_IF_NOT_OK(this->Terminate());
 #ifdef WITH_BACKEND
   RETURN_UNEXPECTED_IF_NULL(MsContext::GetInstance());
   if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
@@ -796,7 +803,7 @@ Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &
 }
 #endif
 
-Status BuildVocabConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d), 1); }
+Status BuildVocabConsumer::Init(const std::shared_ptr<DatasetNode> &root) { return tree_adapter_->Compile(root, 1); }
 
 Status BuildVocabConsumer::Start() {
   RETURN_IF_NOT_OK(CollectPipelineInfoStart("BuildVocabConsumer", "Start"));
@@ -817,11 +824,13 @@ Status DatasetSizeGetter::GetDatasetSize(int64_t *size, bool estimate) {
   *size = dataset_size_;
   return Status::OK();
 }
-Status DatasetSizeGetter::Init(std::shared_ptr<DatasetNode> d) {
-  root_ = std::move(d);
+
+Status DatasetSizeGetter::Init(const std::shared_ptr<DatasetNode> &root) {
+  root_ = root;
   return Status::OK();
 }
-Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *dataset_size) {
+
+Status DatasetSizeGetter::DryRun(const std::shared_ptr<DatasetNode> &ir_node, int64_t *dataset_size) {
   RETURN_UNEXPECTED_IF_NULL(dataset_size);
   std::shared_ptr<TreeAdapter> tree_adapter = std::make_shared<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
   tree_adapters_.push_back(tree_adapter);
@@ -836,10 +845,12 @@ Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *
   *dataset_size = row_cnt;
   return Status::OK();
 }
+
 Status DatasetSizeGetter::GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   return tree_adapter->GetNext(row);
 }
+
 Status DatasetSizeGetter::Terminate() {
   for (const auto &tree : tree_adapters_) {
     RETURN_UNEXPECTED_IF_NULL(tree);

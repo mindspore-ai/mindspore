@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ class MindData:
         self._output_shapes = output_shapes
         self._input_indexs = input_indexs
         self._iter_num = 0
+        self._global_step = 0
 
     def get_dataset_size(self):
         return self._size
@@ -97,3 +98,6 @@ class MindData:
 
     def reset(self):
         self._iter_num = 0
+
+    def get_init_step(self):
+        return self._global_step

@@ -352,6 +352,7 @@ class Dataset:
         self._repeat_count = None
         self._class_indexing = None
         self._sync = False
+        self._global_step = None
 
     @staticmethod
     def _get_operator_id(dataset):
@@ -2042,6 +2043,18 @@ class Dataset:
             ir_node = ir_node.set_num_workers(self.num_parallel_workers)
 
         return ir_node
+
+    def set_init_step(self, init_step):
+        self._global_step = init_step
+
+    def get_init_step(self):
+        if self._global_step is not None:
+            return self._global_step
+        if len(self.children) == 1:
+            return self.children[0].get_init_step()
+        # When there are multiple children, we cannot tell from which child to get the initial step,
+        # so we initialize from the beginning
+        return 0
 
 
 class VisionBaseDataset(Dataset):
@@ -4128,7 +4141,12 @@ class _ToDevice:
         self._runtime_context = cde.PythonRuntimeContext()
         self._runtime_context.Init()
         self._to_device = cde.ToDevice(num_epochs)
-        self._to_device.Init(ir_tree)
+        if dataset.get_init_step() != 0:
+            dataset_size = dataset.get_dataset_size()
+            init_epoch = dataset.get_init_step() // dataset_size
+            self._to_device.Init(ir_tree, dataset.get_init_step(), init_epoch)
+        else:
+            self._to_device.Init(ir_tree, 0, 0)
         self._runtime_context.AssignConsumer(self._to_device)
 
         ITERATORS_LIST.append(weakref.ref(self))

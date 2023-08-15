@@ -76,11 +76,18 @@ class Iterator:
 
         self._runtime_context = cde.PythonRuntimeContext()
         self._runtime_context.Init()
+        if dataset.get_init_step() == 0:
+            init_step = 0
+            init_epoch = 0
+        else:
+            init_step = dataset.get_init_step()
+            init_epoch = init_step // dataset.get_dataset_size()
         if get_debug_mode():
             consumer = cde.PythonPullBasedIteratorConsumer(num_epochs)
+            consumer.Init(self.ir_tree)
         else:
             consumer = cde.PythonIteratorConsumer(num_epochs)
-        consumer.Init(self.ir_tree)
+            consumer.Init(self.ir_tree, init_step, init_epoch)
         self._runtime_context.AssignConsumer(consumer)
         self._iterator = self._runtime_context.GetConsumer()
         self._output_numpy = output_numpy

@@ -16,17 +16,17 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CONSUMERS_PULL_BASED_TREE_CONSUMER_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CONSUMERS_PULL_BASED_TREE_CONSUMER_H_
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <cstddef>
-#include "minddata/dataset/engine/tree_adapter_lite.h"
+
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
+#include "minddata/dataset/engine/tree_adapter_lite.h"
 
 namespace mindspore::dataset {
-
 class TreeAdapterLite;
 class TensorRow;
 
@@ -35,13 +35,12 @@ class PullBasedIteratorConsumer : public TreeConsumer {
  public:
   /// Constructor
   /// \param num_epochs number of epochs. Default: 1.
-  explicit PullBasedIteratorConsumer(int32_t num_epochs = 1) : TreeConsumer(num_epochs) {
-    tree_adapter_lite_ = std::make_unique<TreeAdapterLite>();
-  }
+  explicit PullBasedIteratorConsumer(int32_t num_epochs = 1)
+      : TreeConsumer(num_epochs), tree_adapter_lite_(std::make_unique<TreeAdapterLite>()) {}
 
-  ~PullBasedIteratorConsumer() = default;
+  ~PullBasedIteratorConsumer() override = default;
 
-  Status Init(std::shared_ptr<DatasetNode> root) override;
+  Status Init(const std::shared_ptr<DatasetNode> &root) override;
 
   /// \brief Returns the next row in a vector format
   /// \note This is currently a placeholder function
@@ -69,7 +68,7 @@ class PullBasedIteratorConsumer : public TreeConsumer {
   /// \param step the step to reset the pipeline to.
   /// \param epoch_num the epoch to reset the pipeline to.
   /// \return Status error code
-  Status Reset(int64_t step, const int64_t epoch_num) {
+  Status Reset(int64_t step, const int64_t epoch_num) override {
     RETURN_STATUS_UNEXPECTED(
       "Failover reset is not supported for pull-based iterators (including when Debug mode is enabled).");
   }
@@ -89,9 +88,9 @@ class TreeGetters : public PullBasedIteratorConsumer {
  public:
   TreeGetters();
 
-  ~TreeGetters() = default;
+  ~TreeGetters() override = default;
 
-  Status Init(std::shared_ptr<DatasetNode> root) override;
+  Status Init(const std::shared_ptr<DatasetNode> &root) override;
 
   Status GetOutputTypes(std::vector<DataType> *types);
 
@@ -115,7 +114,6 @@ class TreeGetters : public PullBasedIteratorConsumer {
   Status GetFirstRowShapeAndType();
 
   std::shared_ptr<DatasetNode> root_;
-  int64_t dataset_size_;
   std::vector<DataType> first_row_type_;
   std::vector<TensorShape> first_row_shape_;
   std::vector<TensorShape> estimated_row_shape_;
