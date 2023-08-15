@@ -153,7 +153,7 @@ mindspore.common.initializer
 
 .. py:class:: mindspore.common.initializer.Sparse(sparsity, sigma=0.01)
 
-    生成一个二维的稀疏矩阵用于初始化Tensor。矩阵非0的位置的值服从正态分布 :math:`{N}(0, 0.01)` 。
+    生成一个二维的稀疏矩阵用于初始化Tensor。矩阵非0的位置的值服从正态分布 :math:`{N}(0, sigma)` 。
 
     参数：
         - **sparsity** (float) - 矩阵每列中元素被置0的比例。
@@ -164,11 +164,10 @@ mindspore.common.initializer
 
 .. py:class:: mindspore.common.initializer.Dirac(groups=1)
 
-    利用Dirac delta函数生成一个矩阵用于初始化Tensor。这种初始化方式将会保留卷积层的输入。对于group
-    卷积，通道的每个分组会被分别保留。
+    利用Dirac delta函数生成一个矩阵用于初始化Tensor。Dirac初始化方式通常用于卷积层，会尽可能多的保留输入的特性。
 
     参数：
-        - **groups** (int) - 卷积层中的分组，默认值： ``1`` 。
+        - **groups** (int) - 卷积层中的分组数量，每个组执行相同的初始化。默认值： ``1`` 。
 
     异常：
         - **ValueError** - 被初始化的Tensor的维度不在[3, 4, 5]的范围内。
