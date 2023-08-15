@@ -41,7 +41,8 @@ abstract::ShapePtr AddV2InferShape(const PrimitivePtr &primitive, const std::vec
   if (!is_gpu) {
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape())[kShape];
     auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->BuildShape())[kShape];
-    CheckAndConvertUtils::Check("input_shape", x_shape, kEqual, y_shape, primitive->name(), ValueError);
+    MS_CHECK_VALUE(x_shape == y_shape,
+                   CheckAndConvertUtils::FormatCheckMsg("input_shape", x_shape, kEqual, y_shape, primitive));
   }
   return BroadCastInferShape(primitive->name(), input_args);
 }

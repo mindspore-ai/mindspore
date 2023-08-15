@@ -608,6 +608,33 @@ std::string CheckAndConvertUtils::FormatCheckIntegerMsg(const std::string &arg_n
   return buffer.str();
 }
 
+std::string CheckAndConvertUtils::FormatCheckMsg(const std::string &arg_name, const std::vector<int64_t> &arg_value,
+                                                 CompareEnum compare_type, const std::vector<int64_t> &value,
+                                                 const PrimitivePtr &prim) {
+  std::ostringstream buffer;
+  if (prim == nullptr) {
+    buffer << "The attribute[" << arg_name << "]:";
+  } else {
+    buffer << "For primitive[" << prim->name() << "], the " << arg_name << ":";
+  }
+  auto iter_to_string = kCompareToString.find(compare_type);
+  if (iter_to_string == kCompareToString.end()) {
+    MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_type << " cannot find in the compare string map";
+  }
+
+  buffer << " [";
+  for (auto item : arg_value) {
+    buffer << item << ",";
+  }
+  buffer << "]";
+  buffer << " must " << iter_to_string->second << "[";
+  for (auto item : value) {
+    buffer << item << ",";
+  }
+  buffer << "]";
+  return buffer.str();
+}
+
 void CheckAndConvertUtils::CheckInputArgs(const std::vector<AbstractBasePtr> &input_args,
                                           const CompareEnum compare_operator, const int64_t match_value,
                                           const std::string &prim_name) {

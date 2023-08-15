@@ -128,6 +128,10 @@ class MS_CORE_API CheckAndConvertUtils {
   static std::string FormatCheckIntegerMsg(const std::string &arg_name, int64_t arg_value, CompareEnum compare_operator,
                                            int64_t match_value, const PrimitivePtr &prim);
 
+  static std::string FormatCheckMsg(const std::string &arg_name, const std::vector<int64_t> &arg_value,
+                                    CompareEnum compare_type, const std::vector<int64_t> &value,
+                                    const PrimitivePtr &prim);
+
   template <typename T>
   static std::string FormatCheckInRangeMsg(const std::string &arg_name, T arg_value, CompareRange compare_operator,
                                            const std::pair<T, T> &range, const PrimitivePtr &prim) {
