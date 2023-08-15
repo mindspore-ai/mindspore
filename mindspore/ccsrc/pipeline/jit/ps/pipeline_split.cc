@@ -257,12 +257,6 @@ bool PipelineSplit(const ResourcePtr &res) {
   if (!HasVirtualDataset(all_nodes)) {
     InsertVirtualDataset(root, all_nodes);
   }
-  auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
-  if (stage_num <= 1) {
-    MS_LOG(INFO) << "The parameter 'stage_num' is: " << stage_num << ". No need Pipeline split.";
-    return true;
-  }
-
   auto global_rank = GetRank();
   auto world_group = GetWorldGroup();
   uint32_t world_rank_size = 0;
@@ -287,8 +281,21 @@ bool PipelineSplit(const ResourcePtr &res) {
                      "but got the value of global_rank: "
                   << global_rank;
   }
-  auto stage = InferStage(global_rank, stage_num, device_num);
   static const auto gen_mask_not_fusion = (common::GetEnv("GENMASK_NOT_FUSION") == "1");
+  auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+  if (stage_num <= 1) {
+    MS_LOG(INFO) << "The parameter 'stage_num' is: " << stage_num << ". No need Pipeline split.";
+    auto tmp_transformer = std::make_shared<parallel::PipelineTransformer>(manager, 0, root, global_rank, global_rank);
+    if (!tmp_transformer->MainGraph()) {
+      return true;
+    }
+    if (!gen_mask_not_fusion) {
+      tmp_transformer->LabelGenMaskFusion();
+    }
+    return true;
+  }
+
+  auto stage = InferStage(global_rank, stage_num, device_num);
   auto per_stage_rank_num = device_num / stage_num;
   if (parallel::ParallelInit() != parallel::SUCCESS) {
     MS_LOG(EXCEPTION) << "parallel init failed.";
@@ -297,7 +304,10 @@ bool PipelineSplit(const ResourcePtr &res) {
     std::make_shared<parallel::PipelineTransformer>(manager, stage, root, global_rank, per_stage_rank_num);
   // step1: Do color graph
   transformer->Coloring();
-  transformer->MainGraph();
+  if (!transformer->MainGraph()) {
+    MS_LOG(EXCEPTION) << "Cannot find main graph with virtual_dataset in pipeline parallel";
+  }
+
   // step2: Do color broadcast
   transformer->BroadCastColoring();
   if (!gen_mask_not_fusion) {

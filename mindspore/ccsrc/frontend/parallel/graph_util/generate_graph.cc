@@ -149,6 +149,22 @@ std::string HashInstanceName(const std::string &name) {
   return instance_name;
 }
 
+void InsertVirtualPipelineEndNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager, size_t index,
+                                  std::string end_flag) {
+  auto pre_cnode = cnode->input(index)->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(pre_cnode);
+  auto graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  OperatorAttrs attrs_;
+  auto op = CreateOpInstance(attrs_, "_VirtualPipelineEnd", "end_node");
+  auto value_node = NewValueNode(op);
+  auto virtual_end = graph->NewCNode({value_node, pre_cnode});
+  virtual_end->set_abstract(pre_cnode->abstract());
+  virtual_end->AddPrimalAttr(end_flag, pre_cnode->GetPrimalAttr(MICRO));
+  virtual_end->AddPrimalAttr(MICRO, pre_cnode->GetPrimalAttr(MICRO));
+  manager->SetEdge(cnode, SizeToInt(index), virtual_end);
+}
+
 Status GenerateGraph::Init(const CNodePtr &cnode) {
   if (!cnode) {
     MS_LOG(ERROR) << "Init:cnode is nullptr";

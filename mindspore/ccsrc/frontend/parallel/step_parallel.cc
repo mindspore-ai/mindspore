@@ -41,6 +41,7 @@
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
+#include "frontend/parallel/graph_util/grad_accumulation_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/ops_info/matmul_info.h"
@@ -65,20 +66,6 @@ namespace parallel {
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL, STANDARD_NORMAL};
 const uint32_t MAX_BFS_DEPTH = 7;
-
-static void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool do_mirror, bool accu_flag) {
-  if (new_node_input.empty()) {
-    return;
-  }
-  auto prim_anf_node = new_node_input[0]->cast<ValueNodePtr>();
-  auto prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-  MS_EXCEPTION_IF_NULL(prim);
-
-  auto attrs = prim->attrs();
-  attrs[DO_MIRROR] = MakeValue<bool>(do_mirror);
-  attrs[ADD_ACCU] = MakeValue<bool>(accu_flag);
-  (void)prim->SetAttrs(attrs);
-}
 
 static void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_input, const CNodePtr &node) {
   if (new_node_input.empty()) {
@@ -157,14 +144,8 @@ static std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const
   if (grad_accumulation_step > 1 || split_stage_num > 1) {
     auto parameters = root->parameters();
     grad_accu = GetAccuGrad(parameters, weight_name);
-    if (!grad_accu) {
-      if (op_name == MIRROR_MINI_STEP_OPERATOR) {
-        op_name = MIRROR_OPERATOR;
-        arg_forward.first.pop_back();
-      } else if (op_name == MINI_STEP_ALL_GATHER || op_name == MIRROR_MICRO_STEP_OPERATOR ||
-                 op_name == MICRO_STEP_ALL_GATHER) {
-        MS_LOG(EXCEPTION) << "You should define `accu_grads` when use " << op_name << " parameter:" << weight_name;
-      }
+    if (!grad_accu && op_name == MICRO_STEP_ALL_GATHER) {
+      MS_LOG(EXCEPTION) << "You should define `accu_grads` when use " << op_name << " parameter:" << weight_name;
     }
   }
 
@@ -193,12 +174,6 @@ static std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const
 
   // if the op have 'group' attr, set the rank list name for the op
   SetCommunicationOpGroupLabel(new_node_input);
-  // gradient accumulation
-  if (grad_accumulation_step > 1) {
-    bool add_accu = root->has_flag(kAccumulation);
-    // MiniStep need to do mirror at each micro step as we use the gradient accumulation sharding,
-    SetMiniStepOpDoMirrorLabel(new_node_input, !add_accu, !add_accu);
-  }
   return new_node_input;
 }
 
@@ -1328,9 +1303,7 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
   Operator op;
   CNodePtr allgather;
   auto param_name = node->cast<ParameterPtr>()->name();
-  if (op_name == MINI_STEP_ALL_GATHER) {
-    op = CreateMiniStepAllGatherOp(group);
-  } else if (op_name == MICRO_STEP_ALL_GATHER) {
+  if (op_name == MICRO_STEP_ALL_GATHER) {
     op = CreateMicroStepAllGatherOp(group);
   } else {
     op = CreateAllGatherOp(group);
@@ -1436,9 +1409,7 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   std::string op_name = ALL_GATHER;
   if (root->has_flag(kTraining)) {
-    if (grad_accumulation_step > 1) {
-      op_name = MINI_STEP_ALL_GATHER;
-    } else if (split_stage_num > 1 && ParameterRequireGrad(parameter)) {
+    if ((grad_accumulation_step > 1 || split_stage_num > 1) && ParameterRequireGrad(parameter)) {
       op_name = MICRO_STEP_ALL_GATHER;
     }
   }
@@ -2590,6 +2561,27 @@ static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphMan
   }
 }
 
+static void ReorderForGradAccumulation(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+  if (!root->has_flag(BACKWARD) && ParallelContext::GetInstance()->grad_accumulation_step() > 1) {
+    root->set_flag(BACKWARD, true);
+    const auto &cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+    const bool enable_cell_reuse = cell_reuse_env == "1" || cell_reuse_env == "2";
+    DumpGraph(root, "before_reorder");
+    if (IsTraining(manager)) {
+      if (enable_cell_reuse) {
+        TagMicroBatchBpEndInCellShare(root, manager);
+      }
+      std::unordered_map<int64_t, std::vector<CNodePtr>> forward_start;
+      std::unordered_map<int64_t, std::vector<CNodePtr>> backward_end;
+      ExtractMicroBatchBorderNodes(root, &forward_start, &backward_end);
+      ReorderGradAccumulation(root, forward_start, backward_end);
+      DumpGraph(root, "after_reorder");
+    } else {
+      MS_LOG(EXCEPTION) << "Current not support predict with grad_accu";
+    }
+  }
+}
+
 static void HandleDataParallel() {
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   if (parallel_mode == kDataParallel) {
@@ -2609,21 +2601,36 @@ static void HandleDataParallel() {
   }
 }
 
-static void PipelinePreProcess(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager,
-                               const std::vector<AnfNodePtr> &all_nodes) {
+static void MicroBatchPreProcess(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager,
+                                 const std::vector<AnfNodePtr> &all_nodes) {
   auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
   if (pipeline_stages > 1) {
     HandleMicroBatch(all_nodes, manager);
     ParameterStartNode(all_nodes, manager);
     LastStageEndNode(all_nodes, manager, root);
+    return;
+  }
+  TagMicroBatchStart(manager, all_nodes);
+  TagMicroBatchEnd(manager, all_nodes);
+  const auto &cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+  const bool enable_cell_reuse = cell_reuse_env == "1" || cell_reuse_env == "2";
+  bool enable_grad_accu = ParallelContext::GetInstance()->grad_accumulation_step() > 1;
+  if (!enable_cell_reuse && enable_grad_accu) {
+    TagMicroBatchBpEndPrim(root);
+    TagMicroBatchBpEnd(root);
   }
 }
 
-static void PipelinePostProcess(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
+static void MicroBatchPostProcess(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
   if (pipeline_stages > 1) {
     AddVirtualAssignAdd(root);
     HandleReceiveParam(root, all_nodes);
+    LabelGenMaskMicro(root);
+    return;
+  }
+  if (ParallelContext::GetInstance()->grad_accumulation_step() > 1) {
+    AddVirtualAssignAdd(root);
     LabelGenMaskMicro(root);
   }
 }
@@ -2900,7 +2907,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
       root->set_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY, true);
     }
     ReorderForPipelineSplit(root, manager, pipeline_stages);
-
+    ReorderForGradAccumulation(root, manager);
     return changes;
   }
 
@@ -2916,8 +2923,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   if (pipeline_stages <= 1 && parallel_mode != kAutoParallel && ParallelInit() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Parallel init failed";
   }
-
-  PipelinePreProcess(root, manager, all_nodes);
+  MicroBatchPreProcess(root, manager, all_nodes);
   // mark the forward cnodes, parallel only care these nodes
   MarkForwardCNode(root);
   UpdateMicroBatchInterleavedStatus(all_nodes);
@@ -2975,13 +2981,10 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
   }
 
-  PipelinePostProcess(root, all_nodes);
+  MicroBatchPostProcess(root, all_nodes);
 
   auto comm_group = FindCommonMirrorGroup(root);
   StrategyCheckpoint::GetInstance().set_common_mirror_group(comm_group);
-  // handle full split parameters in grad accumulation, do not contain optimizer-sharding's parameter
-  HandleFullySplitParameters(root);
-
   HandleGlobalNormScale(root, manager);
   MoveMicroMirrorOutCallFunc(root);
   DumpGraph(root, std::string(STEP_PARALLEL_END));

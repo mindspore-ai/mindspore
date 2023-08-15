@@ -1614,9 +1614,7 @@ std::string MirrorOpName() {
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   int64_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   std::string mirror_op_name;
-  if (grad_accumulation_step > 1) {
-    mirror_op_name = MIRROR_MINI_STEP_OPERATOR;
-  } else if (split_stage_num > 1) {
+  if (split_stage_num > 1 || grad_accumulation_step > 1) {
     mirror_op_name = MIRROR_MICRO_STEP_OPERATOR;
   } else {
     mirror_op_name = MIRROR_OPERATOR;

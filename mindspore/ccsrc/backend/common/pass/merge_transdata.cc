@@ -39,7 +39,8 @@ bool MergeTransData::Run(const FuncGraphPtr &func_graph) {
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto stages = parallel_context->pipeline_stage_split_num();
-  if (stages <= 1) {
+  auto grad_accu_num = parallel_context->grad_accumulation_step();
+  if (stages <= 1 && grad_accu_num <= 1) {
     return false;
   }
 

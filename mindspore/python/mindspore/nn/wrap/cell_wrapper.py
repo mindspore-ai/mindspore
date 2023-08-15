@@ -667,6 +667,47 @@ class PipelineCell(Cell):
                 ret = output
         return ret
 
+class GradAccumulationCell(Cell):
+    """
+    Wrap the network with Micro Batch.
+
+    Args:
+        network (Cell): The target network to wrap.
+        micro_size (int): MicroBatch size.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> net = Net()
+        >>> net = GradAccumulationCell(net, 4)
+    """
+    def __init__(self, network, micro_size):
+        super(GradAccumulationCell, self).__init__(auto_prefix=False)
+        self.network = network
+        self.micro_inputs = nn.CellList()
+        self.micro_size = micro_size
+        self.add_list = []
+        for i in range(micro_size):
+            micro_input = _MicroBatch(micro_size)
+            micro_input.strided_slice.add_prim_attr("grad_accu_num", micro_size)
+            self.micro_inputs.append(micro_input)
+            self.add = P.Add().add_prim_attr("forward_end", i)
+            self.add_list.append(self.add)
+        if isinstance(network, Cell) and network.jit_config_dict:
+            self._jit_config_dict = network.jit_config_dict
+
+    def construct(self, *inputs):
+        ret = None
+        for i in range(self.micro_size):
+            micro_input = self.micro_inputs[i](i, *inputs)
+            output = self.network(*micro_input)
+            if ret is not None:
+                ret = self.add_list[i](ret, output)
+            else:
+                ret = output
+        return ret
+
 
 def _pipeline_clear_grad(accu_grad, grad):
     accu_grad = F.depend(accu_grad, grad)
