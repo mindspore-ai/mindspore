@@ -6,7 +6,7 @@ mindspore.Tensor.take
     在指定维度上获取Tensor中的元素。
 
     参数：
-        - **indices** (Tensor) - 待提取的值的shape为 `(Nj...)` 的索引。
+        - **indices** (Tensor) - 待提取的值的shape为 :math:`(Nj...)` 的索引。
         - **axis** (int, 可选) - 在指定维度上选择值。默认情况下，使用展开的输入数组。默认值： ``None`` 。
         - **mode** (str, 可选) - 支持 ``'raise'`` 、 ``'wrap'`` 、 ``'clip'`` 。
 

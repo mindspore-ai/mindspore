@@ -25,7 +25,7 @@ mindspore.COOTensor
     参数：
         - **indices** (Tensor) - shape为 :math:`(N, ndims)` 的二维整数Tensor，其中N和ndims分别表示稀疏Tensor中 `values` 的数量和COOTensor维度的数量。目前 `ndims` 只能为2。请确保indices的值在所给shape范围内。支持的数据类型为int16， int32和int64。默认值： ``None`` 。
         - **values** (Tensor) - shape为 :math:`(N)` 的一维Tensor，用来给 `indices` 中的每个元素提供数值。默认值： ``None`` 。
-        - **shape** (tuple(int)) - shape为ndims的整数元组，用来指定稀疏矩阵的稠密shape。默认值： ``None`` 。
+        - **shape** (tuple(int)) - shape为 :math:`(ndims)` 的整数元组，用来指定稀疏矩阵的稠密shape。默认值： ``None`` 。
         - **coo_tensor** (COOTensor) - COOTensor对象，用来初始化新的COOTensor。默认值： ``None`` 。
 
     返回：

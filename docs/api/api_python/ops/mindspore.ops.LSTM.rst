@@ -22,8 +22,8 @@ mindspore.ops.LSTM
         - **c** (tuple) - shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 的Tensor。
         - **w** (Tensor) - 权重。
 
-        其中:
-            :math:`real\_hidden\_size = proj\_size if proj\_size > 0 else hidden\_size`。
+        如果 :math:`proj\_size > 0` , :math:`real\_hidden\_size = proj\_size` , 否则
+        :math:`real\_hidden\_size = hidden\_size` 。
 
     输出：
         tuple，tuple包含 `(output, h\_n, c\_n, reserve, state)` 。

@@ -8,8 +8,8 @@ mindspore.export
     .. note::
         - 当导出文件格式为AIR、ONNX时，单个Tensor的大小不能超过2GB。
         - 当 `file_name` 没有后缀时，系统会根据 `file_format` 自动添加后缀。
-        - 现已支持将 `jit` 修饰的函数导出成MINDIR格式文件。
-        - 当导出 `jit` 修饰的函数时，函数内不能包含有类属性参与的计算。
+        - 现已支持将 :func:`mindspore.jit` 修饰的函数导出成MINDIR格式文件。
+        - 当导出 :func:`mindspore.jit` 修饰的函数时，函数内不能包含有类属性参与的计算。
 
     参数：
         - **net** (Union[Cell, function]) - MindSpore网络结构。

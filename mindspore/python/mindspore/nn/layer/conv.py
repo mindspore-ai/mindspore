@@ -229,7 +229,8 @@ class Conv2d(_Conv):
             divisible by `group`. If the group is equal to `in_channels` and `out_channels`,
             this 2D convolution layer also can be called 2D depthwise convolution layer. Default: ``1`` .
         has_bias (bool, optional): Whether the Conv2d layer has a bias parameter. Default: ``False`` .
-        weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
+        weight_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of
+            weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
@@ -237,7 +238,7 @@ class Conv2d(_Conv):
             lowercase are both acceptable. Refer to the values of
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
-        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
+        bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
@@ -668,7 +669,7 @@ class Conv3d(_Conv):
             If `padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, `padding[3]`, `padding[4]` and `padding[5]`
             respectively. The value should be greater than or equal to 0. Default: ``0`` .
-        dilation (Union(int, tuple[int]), optional): Specifies the dilation rate to use for dilated convolution.
+        dilation (Union[int, tuple[int]], optional): Specifies the dilation rate to use for dilated convolution.
             It can be a single int or a tuple of 3 integers. A single int means the dilation size is the same
             in the depth, height and width directions. A tuple of 3 ints represents the dilation size in
             the depth, height and width directions, respectively.

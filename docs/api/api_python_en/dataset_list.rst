@@ -417,6 +417,14 @@ Others
     :exclude-members: parse_tree, create_ir_tree, create_runtime_obj
     :members:
 
+{% elif '.' in objname and objname.lower() != objname %}
+
+{{ fullname | underline }}
+
+.. autoclass:: {{ fullname }}
+    :exclude-members: parse_tree, create_ir_tree, create_runtime_obj
+    :members:
+
 {% else %}
 {{ fullname | underline }}
 

@@ -151,7 +151,7 @@ class SparseTensor(COOTensor_):
 
     Note:
         The interface is deprecated from version 1.7 and will be removed in a future version.
-        Please use 'COOTensor' instead.
+        Please use :class:`mindspore.COOTensor` instead.
 
     Args:
         indices (Tensor): A 2-D integer Tensor of shape :math:`(N, ndims)`,
@@ -159,7 +159,7 @@ class SparseTensor(COOTensor_):
             the SparseTensor, respectively.
         values (Tensor): A 1-D tensor of any type and shape :math:`(N)`, which
             supplies the values for each element in `indices`.
-        shape (tuple(int)): An integer tuple of size `ndims`,
+        shape (tuple(int)): An integer tuple of size :math:`(ndims)`,
             which specifies the shape of the sparse tensor.
 
     Returns:

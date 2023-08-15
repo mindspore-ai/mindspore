@@ -159,8 +159,8 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
 
     Note:
         You need to set the execution mode to PyNative mode,
-        set the parallel mode in `set_auto_parallel_context` to "auto_parallel"
-        and the search mode to "sharding_propagation".
+        set the parallel mode in `set_auto_parallel_context` (parallel_mode) to "auto_parallel"
+        and the search mode (search_mode) to "sharding_propagation".
         If the input contain Parameter, its strategy should be set in `in_strategy`.
 
     Args:

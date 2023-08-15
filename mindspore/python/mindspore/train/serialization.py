@@ -1481,9 +1481,9 @@ def export(net, *inputs, file_name, file_format, **kwargs):
     Note:
         1. When exporting AIR, ONNX format, the size of a single tensor can not exceed 2GB.
         2. When file_name does not have a suffix, the system will automatically add one according to the file_format.
-        3. Exporting functions decorated with 'jit' to mindir format is supported.
-        4. When exporting a function decorated with 'jit', the function should not involve class properties in
-           calculations.
+        3. Exporting functions decorated with :func:`mindspore.jit` to mindir format is supported.
+        4. When exporting a function decorated with :func:`mindspore.jit`, the function should not involve
+           class properties in calculations.
 
     Args:
         net (Union[Cell, function]): MindSpore network.
