@@ -136,6 +136,15 @@ struct InputArgsInfo {
   size_t grad_order = 0;
   std::vector<std::string> input_arg_id_vec;
   std::vector<ValuePtr> input_arg_value_vec;
+  // Used for dynamic shape auto detect
+  std::vector<abstract::BaseShapePtr> input_arg_base_shape_vec;
+
+  // Free memory
+  void Reset() {
+    custom_bprop_prim = nullptr;
+    out_value = nullptr;
+    input_arg_value_vec.clear();
+  }
 };
 using InputArgsInfoPtr = std::shared_ptr<InputArgsInfo>;
 }  // namespace pynative

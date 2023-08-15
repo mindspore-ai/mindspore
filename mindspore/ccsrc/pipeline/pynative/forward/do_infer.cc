@@ -17,7 +17,6 @@
 #include "pipeline/pynative/forward/do_infer.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "frontend/operator/ops_front_infer_function.h"
-#include "backend/operator/ops_backend_infer_function.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/profiler.h"
 #include "ops/nn_op_name.h"
@@ -372,6 +371,12 @@ void InferOperation::SaveSpecifiedOutputToCache(const std::string &op_name, cons
 
 void InferOperation::SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs) {
   SetNodeAbsById(id, PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs));
+}
+
+void InferOperation::UpdateNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs) {
+  std::unique_lock lock(abs_mutex_);
+  (void)node_abs_cache_.erase(id);
+  node_abs_cache_[id] = abs;
 }
 
 AbstractBasePtr InferOperation::GetNodeAbsById(const std::string &id) const {

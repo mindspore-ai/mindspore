@@ -244,6 +244,71 @@ std::string Common::GetIdByValue(const ValuePtr &v) {
   return v->ToString();
 }
 
+std::string Common::GetCellId(const std::string &obj_id, const std::vector<std::string> &input_arg_id_vec,
+                              const std::vector<ValuePtr> &input_arg_value_vec) {
+  auto cell_id = obj_id;
+  auto fn = [&cell_id](const abstract::AbstractBasePtr &abs) {
+    MS_EXCEPTION_IF_NULL(abs);
+    auto shape = abs->BuildShape();
+    auto type = abs->BuildType();
+    cell_id += "_" + shape->ToString();
+    cell_id += type->ToString();
+  };
+
+  const auto &forward = GetPyNativeExecutor()->forward_executor();
+  for (size_t i = 0; i < input_arg_id_vec.size(); ++i) {
+    const auto &arg_id = input_arg_id_vec[i];
+    // Find in step process
+    auto cache_abs = forward->GetNodeAbsById(arg_id);
+    if (cache_abs != nullptr) {
+      fn(cache_abs);
+    } else {
+      fn(SetAbstractValueToAnyValue(input_arg_value_vec[i]->ToAbstract()));
+    }
+  }
+  return cell_id;
+}
+
+void Common::SplitString(const std::string &str, std::vector<std::string> *id_vec) {
+  constexpr char colon_delim = ':';
+  constexpr char angle_bracket_left_delim = '<';
+  constexpr char angle_bracket_right_delim = '>';
+  auto paren_pos = str.find_first_of(angle_bracket_left_delim);
+  if (paren_pos == std::string::npos) {
+    MS_LOG(EXCEPTION) << "Get wrong str " << str;
+  }
+  size_t str_size = str.size();
+  const auto &sub_str = str.substr(paren_pos + 1, str_size - paren_pos - 2);
+  MS_LOG(DEBUG) << "Ori str " << str << ", get sub str " << sub_str;
+  size_t begin = 0;
+  size_t angle_bracket_left = 0;
+  size_t angle_bracket_right = 0;
+  size_t sub_str_size = sub_str.size();
+  for (size_t i = 0; i < sub_str_size; ++i) {
+    switch (sub_str[i]) {
+      case colon_delim:
+        if (i != 0 && angle_bracket_left == angle_bracket_right) {
+          (void)id_vec->emplace_back(sub_str.substr(begin, i - begin));
+          begin = i + 1;
+          angle_bracket_left = 0;
+          angle_bracket_right = 0;
+        }
+        break;
+      case angle_bracket_left_delim:
+        ++angle_bracket_left;
+        break;
+      case angle_bracket_right_delim:
+        ++angle_bracket_right;
+        break;
+      default: {
+      }
+    }
+  }
+  if (angle_bracket_left == angle_bracket_right) {
+    (void)id_vec->emplace_back(sub_str.substr(begin, sub_str_size - begin));
+  }
+}
+
 bool Common::ValueHasDynamicShape(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
@@ -272,7 +337,7 @@ bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
       }
       // All value are tensor
       return std::all_of(v_seq->value().begin(), v_seq->value().end(),
-                         [](const ValuePtr &e) { return PyNativeAlgo::Common::IsTensor(e, true); });
+                         [](const ValuePtr &e) { return IsTensor(e, true); });
     } else {
       return false;
     }
@@ -360,7 +425,7 @@ ShapeVector Common::GetShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
 
 ValuePtr Common::CreatOutputTensorValueByAbstract(const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
-  auto type_id = pynative::PyNativeAlgo::Common::GetTypeFromAbstract(abs);
+  auto type_id = GetTypeFromAbstract(abs);
   if (abs->isa<abstract::AbstractMonad>()) {
     return std::make_shared<tensor::Tensor>(0);
   }
@@ -397,7 +462,7 @@ void Common::ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph) {
   }
   tr.Commit();
   bprop_graph->ClearUsedForwardNodes();
-  PyNativeAlgo::Common::DumpGraphIR("replace_cnode_with_valuenode.ir", bprop_graph);
+  DumpGraphIR("replace_cnode_with_valuenode.ir", bprop_graph);
 }
 
 ValuePtr StubNodeToValueInner(const ValuePtr &v) {
@@ -520,7 +585,7 @@ TensorGradType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfo
     }
     auto_grad_meta_data->set_grad_type(grad_type);
     tensor_value->set_auto_grad_meta_data(auto_grad_meta_data);
-    if (top_cell != nullptr && PyNativeAlgo::Common::IsParam(grad_type)) {
+    if (top_cell != nullptr && IsParam(grad_type)) {
       top_cell->AddParamGradInfo(tensor_value, auto_grad_meta_data);
     }
     return grad_type;
@@ -529,7 +594,7 @@ TensorGradType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfo
     TensorGradType ret_type = grad_type;
     for (const auto &v : value_seq) {
       auto ret = SetValueGradInfo(v, top_cell, grad_type);
-      if (PyNativeAlgo::Common::IsParam(ret)) {
+      if (IsParam(ret)) {
         ret_type = ret;
       }
     }
@@ -584,11 +649,10 @@ void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info
     }
     // Must weight param
     const auto &param = original_params[i]->cast<ParameterPtr>();
-    const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(original_params[i]);
+    const auto tensor_value = GetTensorFromParam(original_params[i]);
     MS_EXCEPTION_IF_NULL(tensor_value);
     (void)op_run_info->op_grad_info->input_value.emplace_back(tensor_value);
-    (void)op_run_info->op_grad_info->input_value_grad_type.emplace_back(
-      PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, top_cell));
+    (void)op_run_info->op_grad_info->input_value_grad_type.emplace_back(SetTensorGradInfo(tensor_value, top_cell));
     (void)op_run_info->op_grad_info->input_abs.emplace_back(param->abstract());
     MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
                   << tensor_value->ToString() << ". Its name is: " << param->name();
@@ -657,6 +721,19 @@ std::string PyParser::GetIdByPyObj(const py::object &obj) {
   return GetObjIdFromPython(obj);
 }
 
+std::pair<std::vector<std::string>, std::vector<ValuePtr>> PyParser::GetArgsIdAndValue(const py::args &args) {
+  size_t arg_size = args.size();
+  std::vector<std::string> input_arg_id_vec;
+  std::vector<ValuePtr> input_arg_value_vec;
+  input_arg_id_vec.reserve(arg_size);
+  input_arg_value_vec.reserve(arg_size);
+  for (size_t i = 0; i < arg_size; ++i) {
+    (void)input_arg_value_vec.emplace_back(DataConvert::PyObjToValue(args[i]));
+    (void)input_arg_id_vec.emplace_back(Common::GetIdByValue(input_arg_value_vec.back()));
+  }
+  return {input_arg_id_vec, input_arg_value_vec};
+}
+
 void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   const auto &adapter = prim_arg.cast<PrimitivePyAdapterPtr>();
@@ -681,7 +758,7 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
   op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
   op_run_info->op_grad_info->input_value.resize(op_run_info->input_size);
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->op_grad_info->input_value[i] = PyNativeAlgo::DataConvert::PyObjToValue(op_inputs[i], stub);
+    op_run_info->op_grad_info->input_value[i] = DataConvert::PyObjToValue(op_inputs[i], stub);
   }
   PrepareOpGradInfo(op_run_info);
 }
@@ -789,7 +866,7 @@ void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<Va
     (void)flatten_v->emplace_back(v);
   }
   if (has_sens) {
-    if (PyNativeAlgo::Common::IsTensor(v_vec[input_size])) {
+    if (Common::IsTensor(v_vec[input_size])) {
       (void)flatten_v->emplace_back(v_vec[input_size]);
     } else if (v_vec[input_size]->isa<ValueSequence>()) {
       FlattenValueSeqArg(v_vec[input_size], flatten_v);
@@ -846,7 +923,7 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
     }
     if (op_run_info->requires_grad) {
       auto grad_type = Common::SetTensorGradInfo(tensor, top_cell);
-      if (PyNativeAlgo::Common::IsParam(grad_type)) {
+      if (Common::IsParam(grad_type)) {
         op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kParameter;
       }
       MS_EXCEPTION_IF_NULL(top_cell);
@@ -937,7 +1014,7 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
     for (int i = 0; i < input_num; ++i) {
       auto iter = op_run_info->base_op_run_info.input_tensor.rbegin() + i;
       auto grad_type = Common::SetTensorGradInfo(*iter, top_cell);
-      if (PyNativeAlgo::Common::IsParam(grad_type)) {
+      if (Common::IsParam(grad_type)) {
         op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kParameter;
       }
     }
@@ -1135,14 +1212,12 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
       if (IsPrimitive(input_c, prim::kPrimMakeTuple)) {
         size_t tuple_input_num = input_c->size() - 1;
         for (size_t j = 0; j < tuple_input_num; ++j) {
-          if (auto f_node = common::AnfAlgo::VisitKernel(input_c, j).first;
-              f_node->isa<CNode>() && PyNativeAlgo::GradCommon::IsRealOp(f_node)) {
+          if (auto f_node = common::AnfAlgo::VisitKernel(input_c, j).first; f_node->isa<CNode>() && IsRealOp(f_node)) {
             (void)node_list->emplace_back(f_node);
           }
         }
       } else {
-        if (auto f_node = common::AnfAlgo::VisitKernel(input_c, 0).first;
-            f_node->isa<CNode>() && PyNativeAlgo::GradCommon::IsRealOp(f_node)) {
+        if (auto f_node = common::AnfAlgo::VisitKernel(input_c, 0).first; f_node->isa<CNode>() && IsRealOp(f_node)) {
           (void)node_list->emplace_back(f_node);
         }
       }

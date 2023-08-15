@@ -46,33 +46,6 @@ const mindspore::HashSet<std::string> kHookOp = {"HookBackward", "CellBackwardHo
 const char kGrad[] = "grad";
 const size_t kContainerRatio = 2;
 
-std::string GetCellId(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info) {
-  auto cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
-  auto fn = [&cell_id](const abstract::AbstractBasePtr &abs) {
-    MS_EXCEPTION_IF_NULL(abs);
-    auto shape = abs->BuildShape();
-    auto type = abs->BuildType();
-    cell_id += "_" + shape->ToString();
-    cell_id += type->ToString();
-  };
-
-  const auto &forward = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor();
-  bool id_not_exist = (input_args_info == nullptr);
-  for (size_t i = 0; i < args.size(); ++i) {
-    const auto &arg_id =
-      id_not_exist ? PyNativeAlgo::PyParser::GetIdByPyObj(args[i]) : input_args_info->input_arg_id_vec[i];
-    // Find in step process
-    auto cache_abs = forward->GetNodeAbsById(arg_id);
-    if (cache_abs != nullptr) {
-      fn(cache_abs);
-    } else {
-      auto abs = PyNativeAlgo::DataConvert::PyObjToValue(args[i])->ToAbstract();
-      fn(abs);
-    }
-  }
-  return cell_id;
-}
-
 void ParsePyArgsToInputArgsInfo(const InputArgsInfoPtr &input_args_info, const py::object &obj, const py::args &args) {
   MS_EXCEPTION_IF_NULL(input_args_info);
   input_args_info->has_custom_bprop = py::hasattr(obj, parse::CUSTOM_BPROP_NAME);
@@ -88,16 +61,26 @@ void ParsePyArgsToInputArgsInfo(const InputArgsInfoPtr &input_args_info, const p
       const auto &id = PyNativeAlgo::PyParser::GetIdByPyObj(args[i]);
       (void)input_args_info->input_arg_id_vec.emplace_back(id);
     }
+    const auto &forward = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor();
     for (size_t i = 0; i < input_args_info->input_size; ++i) {
       input_args_info->input_args_id += input_args_info->input_arg_id_vec[i] + "_";
+      // Get arg value
       if (py::isinstance<py::list>(args[i])) {
         (void)input_args_info->input_arg_value_vec.emplace_back(
           PyNativeAlgo::DataConvert::PyObjToValue(py::cast<py::tuple>(args[i])));
       } else {
         (void)input_args_info->input_arg_value_vec.emplace_back(PyNativeAlgo::DataConvert::PyObjToValue(args[i]));
       }
+
+      // Get arg abstract
+      auto abs = forward->GetNodeAbsById(input_args_info->input_arg_id_vec[i]);
+      if (abs == nullptr) {
+        abs = input_args_info->input_arg_value_vec.back()->ToAbstract();
+      }
+      (void)input_args_info->input_arg_base_shape_vec.emplace_back(abs->BuildShape());
     }
-    input_args_info->cell_id = GetCellId(obj, args, input_args_info);
+    input_args_info->cell_id = PyNativeAlgo::Common::GetCellId(
+      input_args_info->obj_id, input_args_info->input_arg_id_vec, input_args_info->input_arg_value_vec);
     input_args_info->obj_order_id = input_args_info->cell_id + '_' + std::to_string(input_args_info->obj_order);
     MS_LOG(DEBUG) << "Cell_id is " << input_args_info->cell_id << ", is grad top cell " << is_top_cell;
   }
@@ -555,7 +538,7 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
 void GradExecutor::NewGraphInner(const py::object &obj, const py::args &args) {
   const auto input_args_info = GetInputArgsInfo(obj, args);
   PushInputArgsInfoStack(input_args_info);
-  MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << ", cell_id " << GetCellId(obj, args, nullptr)
+  MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << ", cell_id " << PyNativeAlgo::PyParser::GetIdByPyObj(obj)
                 << ", input args info ptr " << input_args_info.get();
   // Make top graph and init resource
   if (input_args_info->is_grad_topest_cell || input_args_info->grad_order > 1) {
@@ -631,6 +614,10 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   top_cell_->set_need_save_dynamic_detect_nodes(
     dynamic_shape()->IsNeedSaveDynamicDetectNodes(top_cell_, use_dynamic_shape_process));
   top_cell_->set_input_args_info(top_input_args_info_);
+  if (dynamic_shape()->enable_unknown_shape()) {
+    dynamic_shape()->TryChangeTopCellToUnknownShape(top_input_args_info_->obj_id,
+                                                    top_input_args_info_->input_arg_base_shape_vec, true);
+  }
   PushHighOrderGraphStack(top_cell_);
   MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << " resource ptr " << resource.get();
 }
@@ -664,7 +651,7 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
   }
   const auto input_args_info = input_args_info_stack_.top();
   MS_EXCEPTION_IF_NULL(input_args_info);
-  MS_LOG(DEBUG) << "EndGraphInner start " << args.size() << ", cell_id " << GetCellId(obj, args, nullptr)
+  MS_LOG(DEBUG) << "EndGraphInner start " << args.size() << ", cell_id " << PyNativeAlgo::PyParser::GetIdByPyObj(obj)
                 << ", input args info ptr " << input_args_info.get();
   if (input_args_info->is_grad_topest_cell) {
     grad_flag_ = false;
@@ -932,7 +919,6 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   AsyncClearTopCell();
   op_num_in_bprop_graph_ = top_cell()->op_index();
   top_cell()->set_grad_operation(grad_operation_);
-  top_cell()->set_input_args_info(nullptr);
   SetBpropGraphJitLevel(obj);
   bool weight_param_is_tuple = true;
   // If current cell's parameter info has been cleared, we need resume its parameter grad info to construct bprop graph.
@@ -945,8 +931,8 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   top_cell()->ClearParamGradInfo();
 }
 
-std::string GradExecutor::GetAlreadyRunCellId(const std::string &cell_id) const {
-  std::string already_run_cell_id(cell_id);
+std::string GradExecutor::GetAlreadyRunCellId(const std::string &obj_id) const {
+  std::string already_run_cell_id(obj_id);
   already_run_cell_id += "_" + std::to_string(grad_order_ == 0 ? 1 : grad_order_);
   already_run_cell_id += "_" + grad_operation_;
   MS_LOG(DEBUG) << "Get already run top cell id " << already_run_cell_id;
@@ -989,8 +975,9 @@ void GradExecutor::GetPreRunTopCell(const prim::GradOperationPtr &grad, const py
   } else {
     args_without_sens = args;
   }
-
-  const auto &cell_id = GetCellId(obj, args_without_sens, nullptr);
+  const auto &id_v = PyNativeAlgo::PyParser::GetArgsIdAndValue(args_without_sens);
+  const auto &cell_id =
+    PyNativeAlgo::Common::GetCellId(PyNativeAlgo::PyParser::GetIdByPyObj(obj), id_v.first, id_v.second);
   MS_LOG(DEBUG) << "Get pre run top cell cell id:" << cell_id;
   const auto &check_already_run_cell_id = GetAlreadyRunCellId(cell_id);
   top_cell_ = GetTopCell(check_already_run_cell_id);
@@ -1139,8 +1126,9 @@ void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args,
   }
 }
 
-FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr, const vector<tensor::TensorPtr> &w_args,
-                                         const vector<size_t> &p_args) {
+FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
+                                         const std::vector<tensor::TensorPtr> &w_args,
+                                         const std::vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   FuncGraphPtr bprop_graph = top_cell()->auto_grad_cell_ptr()->Finish(w_args, p_args, grad_attr);
 
@@ -1209,7 +1197,8 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
   // check whether need to run forward process
   bool forward_run = false;
   if (input_args_info_stack_.empty() && top_cell_ != nullptr) {
-    auto cell_id = GetCellId(obj, args, nullptr);
+    const auto &id_v = PyNativeAlgo::PyParser::GetArgsIdAndValue(args);
+    auto cell_id = PyNativeAlgo::Common::GetCellId(obj_id, id_v.first, id_v.second);
     const auto &check_already_run_cell_id = GetAlreadyRunCellId(cell_id);
     auto find_top_cell = GetTopCell(check_already_run_cell_id);
     if (find_top_cell != nullptr) {
@@ -1404,6 +1393,7 @@ void GradExecutor::ClearGradRes() {
                                       [](const auto &elem) { return elem.second->is_high_order_top_cell(); });
   // Custom bprop nested, top cell reset by first time, second time no need clean
   if (top_cell_ != nullptr) {
+    top_cell_->input_args_info()->Reset();
     // High order must no clean
     if (!has_higher_order) {
       top_cell_->ClearDeviceMemory();
@@ -1912,10 +1902,12 @@ void GradExecutor::SetBpropGraphJitLevel(const py::object &obj) const {
   graph_executor->SetJitConfig(jit_config_dict);
 }
 
-void GradExecutor::SaveDynamicInputsCells(const py::object &cell) {
-  const auto &cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(cell);
-  MS_LOG(INFO) << "SaveDynamicInputsCells:" << cell_id;
-  dynamic_inputs_cells_.insert(cell_id);
+void GradExecutor::SaveDynamicInputsCells(const py::object &obj, const py::args &args) {
+  const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
+  MS_LOG(INFO) << "SaveDynamicInputsCells: "
+               << (py::isinstance<Cell>(obj) ? obj_id + " " + obj.cast<CellPtr>()->ToString()
+                                             : py::getattr(obj, "__name__").cast<std::string>());
+  dynamic_inputs_cells_.insert(obj_id);
 }
 
 void GradExecutor::SetTopCellDynamicAttr(const py::object &cell) {

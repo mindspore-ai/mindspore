@@ -625,7 +625,7 @@ void ForwardExecutor::PrintPyObjInfo(const py::object &obj, const std::string &s
   MS_LOG(DEBUG) << str << " run python function " << py::getattr(obj, "__name__").cast<std::string>();
 }
 
-void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj) {
+void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::args &args) {
   if (IsFirstCell()) {
     ReInit();
   }
@@ -645,6 +645,7 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj) {
 #endif
     }
   }
+  grad()->dynamic_shape()->UpdateArgsAbsToUnknownShapeAbs(obj, args);
 }
 
 void ForwardExecutor::ProcessAfterNewGraph(const py::object &obj) const { grad()->SetTopCellDynamicAttr(obj); }

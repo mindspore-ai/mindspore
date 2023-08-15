@@ -82,6 +82,7 @@ class GradExecutor {
     return top_input_args_info_;
   }
 
+  inline bool TopCellHasNotBeenCreate() const { return top_cell_ == nullptr; }
   inline void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   inline bool grad_flag() const { return grad_flag_; }
   inline void set_grad_flag(bool flag) { grad_flag_ = flag; }
@@ -91,6 +92,7 @@ class GradExecutor {
   // Construct grad graph for jit
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
   inline AsyncHqueuePtr async_executor() const { return async_executor_; }
+  mindspore::OrderedMap<std::string, TopCellInfoPtr> &already_run_top_cell() { return already_run_top_cell_; }
   void SetHookChanged(const py::object &cell) const;
   void GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                     const py::object &grad_position, const py::args &args);
@@ -118,7 +120,7 @@ class GradExecutor {
   void AsyncClearTopCell();
   void AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell);
   void WorkerJoin() { async_executor_->WorkerJoin(); }
-  void SaveDynamicInputsCells(const py::object &cell);
+  void SaveDynamicInputsCells(const py::object &obj, const py::args &args);
   void SetTopCellDynamicAttr(const py::object &cell);
   bool use_dynamic_shape_process() const {
     if (top_cell_ == nullptr) {
@@ -141,6 +143,7 @@ class GradExecutor {
   inline bool is_cell_has_dynamic_inputs(const std::string &obj_id) const {
     return dynamic_inputs_cells_.count(obj_id) > 0;
   }
+  std::string GetAlreadyRunCellId(const std::string &obj_id) const;
 
  private:
   ForwardExecutorPtr forward() const;
@@ -155,7 +158,6 @@ class GradExecutor {
   void SetBpropGraphJitLevel(const py::object &obj) const;
   void ClearGlobalRes() const;
   void ClearGradRes();
-  std::string GetAlreadyRunCellId(const std::string &cell_id) const;
 
   // Higher derivative
   inline bool IsNestedGrad() const { return grad_order_ > 1; }
@@ -195,8 +197,8 @@ class GradExecutor {
   void CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info);
   void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
                     const std::vector<size_t> &p_args);
-  FuncGraphPtr GetBpropGraph(const autograd::GradAttr &grad_attr, const vector<tensor::TensorPtr> &w_args,
-                             const vector<size_t> &p_args);
+  FuncGraphPtr GetBpropGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+                             const std::vector<size_t> &p_args);
   std::vector<tensor::TensorPtr> GetWeightsArgs(const py::object &weights, bool *weight_param_is_tuple) const;
   std::vector<tensor::TensorPtr> GetDefaultWeights() const;
   void CheckParamShapeAndType(const ParameterPtr &param_node, const abstract::AbstractBasePtr &input_abs,

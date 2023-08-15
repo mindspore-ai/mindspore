@@ -238,9 +238,9 @@ FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph, const Gr
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_func_graph);
   auto after_opt_bg = pipeline::JitBpropGraphPass(resource, true);
-  auto is_control_flow =
+  auto is_dynamic_shape_control_flow =
     grad_param->is_jit_graph && grad_param->use_dynamic_shape_process && grad_param->is_control_flow;
-  if (is_control_flow) {
+  if (is_dynamic_shape_control_flow) {
     for (const auto &g : manager->func_graphs()) {
       g->set_flag(kFlagJitCallGraph, true);
     }

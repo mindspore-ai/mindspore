@@ -57,14 +57,13 @@ using GraphInfoPtr = std::shared_ptr<PyNGraphInfo>;
 class TopCellInfo {
  public:
   ~TopCellInfo() = default;
-  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, const std::string &obj_id_with_grad_order,
-              std::string cellid, const std::string &already_run_cell_id, pipeline::ResourcePtr r, FuncGraphPtr fg,
-              size_t reserve_size)
+  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, std::string obj_id_with_grad_order, std::string cellid,
+              std::string already_run_cell_id, pipeline::ResourcePtr r, FuncGraphPtr fg, size_t reserve_size)
       : is_high_order_top_cell_(is_high_order_top_cell),
         grad_order_(grad_order),
-        obj_id_with_grad_order_(obj_id_with_grad_order),
+        obj_id_with_grad_order_(std::move(obj_id_with_grad_order)),
         cell_id_(std::move(cellid)),
-        already_run_cell_id_(already_run_cell_id),
+        already_run_cell_id_(std::move(already_run_cell_id)),
         resource_(std::move(r)),
         fg_(std::move(fg)) {
     param_grad_info_.reserve(reserve_size);
@@ -102,8 +101,10 @@ class TopCellInfo {
   }
   inline const bool &has_call_graph() const { return has_call_graph_; }
   inline void set_has_call_graph(bool has_call_graph) { has_call_graph_ = has_call_graph; }
-  inline const bool &has_control_flow() const { return has_control_flow_; }
+  inline const bool has_control_flow() const { return has_control_flow_; }
   inline void set_has_control_flow(bool has_control_flow) { has_control_flow_ = has_control_flow; }
+  inline const bool is_unknown_shape() const { return is_unknown_shape_; }
+  inline void set_is_unknown_shape(bool is_unknown_shape) { is_unknown_shape_ = is_unknown_shape; }
   inline void set_fg(const FuncGraphPtr &fg) { fg_ = fg; }
   inline const std::string &cell_id() const { return cell_id_; }
   inline const std::string &obj_id_with_grad_order() const { return obj_id_with_grad_order_; }
@@ -130,7 +131,7 @@ class TopCellInfo {
   inline size_t op_index() const { return op_index_; }
   inline void IncreaseOpIndex() { ++op_index_; }
   const TensorReplaceInfo &replace_info() { return replace_info_; }
-  inline const InputArgsInfoPtr input_args_info() { return input_args_info_; }
+  inline InputArgsInfoPtr input_args_info() { return input_args_info_; }
   inline void set_input_args_info(const InputArgsInfoPtr &input_args_info) { input_args_info_ = input_args_info; }
   void DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) const;
   void SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param, bool is_weight = false) const;
@@ -149,11 +150,12 @@ class TopCellInfo {
     use_dynamic_shape_process_ = use_dynamic_shape_process;
   }
   inline void set_resume_flag(bool resume_flag) { resume_flag_ = resume_flag; }
-  const bool resume_flag() const { return resume_flag_; }
+  bool resume_flag() const { return resume_flag_; }
   void SaveTensorIdWithOpInfo(const std::string &op_info, const ValuePtr &v) {
     SetIdWithOpInfo(v, op_info, kIndex0, &(replace_info_.id_with_op_info));
   }
   void SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph);
+  void ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_shape);
 
  private:
   void SetMultipleOutputToGraphInfoMap(const string &id, const AnfNodePtr &node) const;
@@ -173,6 +175,7 @@ class TopCellInfo {
   bool is_need_save_dynamic_detect_nodes_{false};
   bool has_call_graph_{false};
   bool has_control_flow_{false};
+  bool is_unknown_shape_{false};
   size_t grad_order_{0};
   size_t op_index_{0};
   std::string obj_id_with_grad_order_;
@@ -192,7 +195,7 @@ class TopCellInfo {
   CellIdWithBackwardHookOp cell_backward_hook_op_;
   TensorReplaceInfo replace_info_;
   mindspore::OrderedMap<tensor::TensorPtr, AutoGradMetaDataPtr> param_grad_info_;
-  InputArgsInfoPtr input_args_info_;
+  InputArgsInfoPtr input_args_info_{nullptr};
   bool use_dynamic_shape_process_{false};
   // Judge whether need resume param grad info.
   bool resume_flag_{false};

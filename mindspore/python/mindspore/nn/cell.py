@@ -910,7 +910,7 @@ class Cell(Cell_):
         self._dynamic_shape_inputs = inputs
         self._check_construct_args(*inputs)
         if context._get_mode() == context.PYNATIVE_MODE:
-            _pynative_executor.set_dynamic_input(self)
+            _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
 
     def get_inputs(self):
         """
