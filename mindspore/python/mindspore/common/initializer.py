@@ -487,7 +487,7 @@ class Identity(Initializer):
 class Sparse(Initializer):
     """
     Generates a 2 dimension sparse matrix array in order to initialize a tensor. The non-zero positions
-    will be filled with the value sampled from the normal distribution :math:`{N}(0, 0.01)`.
+    will be filled with the value sampled from the normal distribution :math:`{N}(0, sigma)`.
 
     Args:
          sparsity (float): The fraction of elements being set to zero in each column.
@@ -525,11 +525,11 @@ class Sparse(Initializer):
 class Dirac(Initializer):
     """
     Generates an array with the Dirac delta function in order to initialize a tensor.
-    It tries to preserves the identity of input for convolution layers.
-    For group convolution, each group of channels will be preserved respectively.
+    It's usually used in convolution layers, preserves as many identities of the inputs as possible.
 
     Args:
-        groups (int): The number of group in convolution layer. Default: ``1`` .
+        groups (int): The number of groups in convolution layer. Each group applies the same initialization.
+            Default: ``1`` .
 
     Raises:
         ValueError: If the dimension of the initialized tensor is not in [3, 4, 5].
