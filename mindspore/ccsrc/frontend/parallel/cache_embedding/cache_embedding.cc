@@ -199,7 +199,7 @@ void BindAndInitCacheTensor(const ParamMap &param_pair_list, const ParameterPtr 
                                       host_data_max_size, cache_data_max_size, LongToSize(hashmap_size),
                                       LongToSize(host_shape[1]));
     } else if (hashmap_data_type == TypeId::kNumberTypeInt64) {
-      MemCopyFromHostToCache<int32_t>(hashmap_tensor->data_c(), host_tensor->data_c(), cache_tensor->data_c(),
+      MemCopyFromHostToCache<int64_t>(hashmap_tensor->data_c(), host_tensor->data_c(), cache_tensor->data_c(),
                                       host_data_max_size, cache_data_max_size, LongToSize(hashmap_size),
                                       LongToSize(host_shape[1]));
     } else {
@@ -613,6 +613,9 @@ void CacheEmbeddingForTrain(const FuncGraphPtr &graph, bool is_pipe, const CNode
   MS_EXCEPTION_IF_NULL(manager);
   size_t cnodes_size = cnodes.size();
   auto cache_host_params_map = AddCacheParameters(graph, param_cache_enable_set);
+  if (cache_host_params_map.empty()) {
+    MS_LOG(EXCEPTION) << "host's cache parameter map is empty!";
+  }
   auto param_set = MapKeysToSet(cache_host_params_map);
   ReplaceCacheParams(graph, cache_host_params_map);
   graph->set_flag(GRAPH_FLAG_CACHE_ENABLE, true);
