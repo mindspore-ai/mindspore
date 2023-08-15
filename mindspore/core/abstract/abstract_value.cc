@@ -359,22 +359,6 @@ std::string AbstractType::ToString() const {
   return buffer.str();
 }
 
-AbstractBasePtr AbstractClass::Clone() const { return std::make_shared<AbstractClass>(GetValueTrack()); }
-
-bool AbstractClass::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  return tid() == other.tid() && IsEqual(GetValueTrack(), other.GetValueTrack());
-}
-
-std::string AbstractClass::ToString() const {
-  std::ostringstream buffer;
-  ValuePtr val = GetValueTrack();
-  buffer << type_name() << "(" << val->ToString() << ")";
-  return buffer.str();
-}
-
 TypePtr AbstractType::BuildType() const { return std::make_shared<TypeType>(); }
 
 AbstractBasePtr AbstractType::Broaden() const { return Clone(); }
