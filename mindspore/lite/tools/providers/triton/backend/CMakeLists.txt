@@ -10,6 +10,8 @@ project(triton-mslite-backend LANGUAGES C CXX)
 #
 option(TRITON_ENABLE_GPU "Enable GPU support in backend" OFF)
 option(TRITON_ENABLE_STATS "Include statistics collections in backend" ON)
+option(TRITON_ENABLE_GITEE "Enable to fetch triton from gitee" OFF)
+option(TRITON_RAPID_JSON_PATH "Enable to fetch triton from gitee" OFF)
 
 set(TRITON_BACKEND_REPO_TAG "main" CACHE STRING "Tag for triton-inference-server/backend repo")
 set(TRITON_CORE_REPO_TAG "main" CACHE STRING "Tag for triton-inference-server/core repo")
@@ -24,33 +26,9 @@ if(DEFINED ENV{MINDSPORE_LITE_PKG_ROOT_PATH})
 else()
   message(FATAL_ERROR "Set the MindSpore Lite package path by the environment MINDSPORE_LITE_PKG_ROOT_PATH")
 endif()
-
-# Dependencies
-#
-# FetchContent's composability isn't very good. We must include the
-# transitive closure of all repos so that we can override the tag.
-#
-include(FetchContent)
-
-FetchContent_Declare(
-  repo-common
-  GIT_REPOSITORY https://github.com/triton-inference-server/common.git
-  GIT_TAG ${TRITON_COMMON_REPO_TAG}
-  GIT_SHALLOW ON
-)
-FetchContent_Declare(
-  repo-core
-  GIT_REPOSITORY https://github.com/triton-inference-server/core.git
-  GIT_TAG ${TRITON_CORE_REPO_TAG}
-  GIT_SHALLOW ON
-)
-FetchContent_Declare(
-  repo-backend
-  GIT_REPOSITORY https://github.com/triton-inference-server/backend.git
-  GIT_TAG ${TRITON_BACKEND_REPO_TAG}
-  GIT_SHALLOW ON
-)
-FetchContent_MakeAvailable(repo-common repo-core repo-backend)
+if(DEFINED ENV{TRITON_ENABLE_GITEE})
+  set(TRITON_ENABLE_GITEE $ENV{TRITON_ENABLE_GITEE})
+endif()
 
 #
 # Shared library implementing the Triton Backend API
@@ -67,6 +45,51 @@ add_library(
   TritonMSLiteBackend::triton-mslite-backend ALIAS triton-mslite-backend
 )
 
+
+# Dependencies
+if(NOT ${TRITON_ENABLE_GITEE})
+  include(FetchContent)
+
+  FetchContent_Declare(
+    repo-common
+    GIT_REPOSITORY https://github.com/triton-inference-server/common.git
+    GIT_TAG ${TRITON_COMMON_REPO_TAG}
+    GIT_SHALLOW ON
+  )
+  FetchContent_Declare(
+    repo-core
+    GIT_REPOSITORY https://github.com/triton-inference-server/core.git
+    GIT_TAG ${TRITON_CORE_REPO_TAG}
+    GIT_SHALLOW ON
+  )
+  FetchContent_Declare(
+    repo-backend
+    GIT_REPOSITORY https://github.com/triton-inference-server/backend.git
+    GIT_TAG ${TRITON_BACKEND_REPO_TAG}
+    GIT_SHALLOW ON
+  )
+  FetchContent_MakeAvailable(repo-common repo-core repo-backend)
+else()
+  string(REPLACE "/mindspore/lite/tools/providers/triton/backend" "" TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+  find_package(Patch)
+  if(NOT Patch_FOUND)
+    message(FATAL_ERROR "Patch not found, please set environment variable MS_PATCH_PATH to path "
+            "where Patch is located, usually found in GIT_PATH/usr/bin on Windows")
+  endif()
+
+  if(TRITON_RAPID_JSON_PATH)
+    set(TRITON_RAPID_JSON_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${TRITON_RAPID_JSON_PATH})
+  endif()
+
+  include(${TOP_DIR}/cmake/utils.cmake)
+  include(${TOP_DIR}/cmake/external_libs/triton_backend.cmake)
+  target_include_directories(
+    triton-mslite-backend
+    PRIVATE
+    ${TRITON_RAPID_JSON_PATH}
+  )
+endif()
+
 target_include_directories(
   triton-mslite-backend
   PRIVATE
@@ -81,17 +104,32 @@ target_compile_options(
     -Wall -Wextra -Wno-unused-parameter -Werror>
 )
 
+if(NOT ${TRITON_ENABLE_GITEE})
+  target_link_libraries(
+    triton-mslite-backend
+    PRIVATE
+      triton-core-serverstub  # from repo-core
+      triton-backend-utils    # from repo-backend
+  )
+else()
+  target_link_libraries(
+    triton-mslite-backend
+    PRIVATE
+      mindspore::tritonasyncworkqueue  # from repo-common
+      mindspore::tritonserver          # from repo-core
+      mindspore::tritonbackendutils    # from repo-backend
+  )
+endif()
+
 target_link_directories(
   triton-mslite-backend
   PRIVATE
-  ${MINDSPORE_LITE_PKG_ROOT_PATH}/runtime/lib
+    ${MINDSPORE_LITE_PKG_ROOT_PATH}/runtime/lib
 )
 
 target_link_libraries(
   triton-mslite-backend
   PRIVATE
-    triton-core-serverstub  # from repo-core
-    triton-backend-utils    # from repo-backend
     mindspore-lite
     pthread
     dl
@@ -139,8 +177,7 @@ configure_package_config_file(
 )
 
 install(
-  FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/TritonMSLiteBackendConfig.cmake
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/TritonMSLiteBackendConfig.cmake
   DESTINATION ${INSTALL_CONFIGDIR}
 )
 

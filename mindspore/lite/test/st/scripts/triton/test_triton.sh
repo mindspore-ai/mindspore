@@ -25,15 +25,15 @@ while getopts "r:m:l:" opt; do
     esac
 done
 
-x86_path=${release_path}/centos_x86/cloud_fusion
+pkg_path=${release_path}/linux_aarch64/cloud_fusion/python37/triton
 
-cd ${x86_path} || exit 1
-file_name=$(ls *linux-x64.tar.gz)
+cd ${pkg_path} || exit 1
+file_name=$(ls *linux-aarch64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
-tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-export LD_LIBRARY_PATH=mindspore-lite-${version}-linux-x64/tools/converter/lib:${LD_LIBRARY_PATH}
-export LD_LIBRARY_PATH=mindspore-lite-${version}-linux-x64/runtime/lib:${LD_LIBRARY_PATH}
+tar -zxf mindspore-lite-${version}-linux-aarch64.tar.gz || exit 1
+export LD_LIBRARY_PATH=mindspore-lite-${version}-linux-aarch64/tools/converter/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=mindspore-lite-${version}-linux-aarch64/runtime/lib:${LD_LIBRARY_PATH}
 cd - || exit 1
 
 # Set models config filepath
@@ -43,7 +43,7 @@ if [[ ${level} == "level1" ]]; then
 fi
 models_triton_config=${basepath}/../${config_folder}/models_triton.cfg
 
-backend_directory=${x86_path}/mindspore-lite-${version}-linux-x64/tools/providers/triton/backend/
+backend_directory=${pkg_path}/mindspore-lite-${version}-linux-aarch64/tools/providers/triton/backend/
 # Set ms models output path
 model_repository=${models_path}/triton_models/
 
