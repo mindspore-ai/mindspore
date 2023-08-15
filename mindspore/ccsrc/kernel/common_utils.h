@@ -206,6 +206,8 @@ BACKEND_EXPORT KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
 BACKEND_EXPORT bool IsFoldKernelBuildInfo(const KernelBuildInfoPtr &kernel_build_info);
 BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                                    const std::vector<KernelTensorPtr> &outputs);
+BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs);
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs);
 Format GetFormatFromStrToEnum(const std::string &format_str);
 BACKEND_EXPORT std::string GetFormatFromEnumToStr(Format format);
@@ -251,6 +253,7 @@ class MatchKernelHelper {
                          [](const std::pair<KernelAttr, KernelRunFunc> &pair) { return pair.first; });
     return support_list;
   }
+  // Delete after KernelMod rectified.
   bool MatchKernelFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                        const std::vector<KernelTensorPtr> &outputs) {
     auto kernel_name = base_operator->name();
@@ -264,6 +267,19 @@ class MatchKernelHelper {
     kernel_func_ = func_list[index].second;
     return true;
   }
+  bool MatchKernelFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+                       const std::vector<KernelTensor *> &outputs) {
+    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+    auto &func_list = static_cast<Derived *>(this)->GetFuncList();
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, OpSupport());
+    if (!is_match) {
+      MS_LOG(ERROR) << "The kernel '" << kernel_name << "' does not support this kernel data type: " << kernel_attr;
+      return false;
+    }
+    kernel_func_ = func_list[index].second;
+    return true;
+  }
+
   KernelRunFunc kernel_func_;
 };
 

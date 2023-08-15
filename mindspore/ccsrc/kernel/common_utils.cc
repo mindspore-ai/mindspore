@@ -732,6 +732,7 @@ std::string GetFormatFromEnumToStr(Format format) {
   return format_str;
 }
 
+// Delete after KernelMod rectified.
 KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs) {
   KernelAttr kernel_attr;
@@ -740,6 +741,18 @@ KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
   }
   for (auto tensor : outputs) {
     (void)kernel_attr.AddOutputAttr(tensor->GetDtype(), GetFormatFromEnumToStr(tensor->GetFormat()));
+  }
+  return kernel_attr;
+}
+
+KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  KernelAttr kernel_attr;
+  for (auto tensor : inputs) {
+    (void)kernel_attr.AddInputAttr(tensor->dtype_id(), GetFormatFromEnumToStr(tensor->format()));
+  }
+  for (auto tensor : outputs) {
+    (void)kernel_attr.AddOutputAttr(tensor->dtype_id(), GetFormatFromEnumToStr(tensor->format()));
   }
   return kernel_attr;
 }

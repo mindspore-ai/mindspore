@@ -20,7 +20,6 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
-#include "mindspore/core/mindapi/base/macros.h"
 #include "ir/dtype/type_id.h"
 namespace mindspore::ops {
 
@@ -52,6 +51,6 @@ struct OpDef {
 
 using OpDefPtr = OpDef *;
 
-MS_CORE_API OpDefPtr GetOpDef(const std::string &op_name);
+OpDefPtr GetOpDef(const std::string &op_name);
 }  // namespace mindspore::ops
 #endif

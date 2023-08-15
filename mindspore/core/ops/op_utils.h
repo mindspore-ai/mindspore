@@ -180,7 +180,7 @@ TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std
 
 bool IsValueKnown(const ValuePtr &value);
 
-size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name);
+MS_CORE_API size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name);
 
 constexpr auto kCSRAvgRows = "csr_avg_rows";
 constexpr auto kIsCSR = "is_csr";

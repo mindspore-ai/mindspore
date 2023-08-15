@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CORE_UTILS_ANF_UTILS_H_
 #define MINDSPORE_CORE_UTILS_ANF_UTILS_H_
 #include <functional>
+#include <optional>
 #include <set>
 #include <vector>
 #include <string>
@@ -98,6 +99,21 @@ class MS_CORE_API AnfUtils {
   static AbstractScope GetAbstractLock(const AnfNode *node);
   static void OpenAbstractLock();
   static void CloseAbstractLock();
+  // Get input value by index
+  template <typename T>
+  static std::optional<T> GetInputValueByIndex(const AnfNodePtr &node, const size_t index) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), index);
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_node->isa<ValueNode>()) {
+      auto value_node = input_node->cast<ValueNodePtr>();
+      ValuePtr value = value_node->value();
+      return mindspore::GetValue<T>(value);
+    } else {
+      MS_LOG(INFO) << "The " << index << "th input in Node " << node->ToString() << " is not a ValueNode.";
+    }
+    return std::nullopt;
+  }
 
   // Custom actor node is for dynamic shape.
   // Generate a Init custom actor node.
