@@ -130,6 +130,11 @@ function Convert() {
           quant_type="PostTraining"
           output_file=${output_file}"_posttraining"
           config_file="${quant_config_path}/${model_name}_${cfg_file_name:7:-4}.config"
+          QUANT_TRAINING_DIR=$2/../../quantTraining
+          if [ ! -d quantTraining ]; then
+            echo "link remote QUANT_TRAINING_DIR: ${QUANT_TRAINING_DIR}"
+            ln -s ${QUANT_TRAINING_DIR} quantTraining
+          fi
         elif [[ ${cfg_file_name} =~ "dynamic_quant" || ${cfg_file_name} =~ "posttraining_cloud" ]]; then
           quant_type="DynamicQuant"
           output_file=${output_file}"_dynamic_quant"
