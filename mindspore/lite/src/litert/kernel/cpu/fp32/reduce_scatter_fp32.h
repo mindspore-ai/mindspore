@@ -27,11 +27,21 @@ class ReduceScatterCPUKernel : public LiteKernel {
  public:
   ReduceScatterCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {
+    param_ = reinterpret_cast<ReduceScatterParameter *>(parameter);
+  }
   ~ReduceScatterCPUKernel() override = default;
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+
+ private:
+  int DoReduceScatter(void *in_data, void *reduce_data, size_t data_size);
+  void InitReduceData(void *in_data, size_t data_num);
+
+ private:
+  ReduceScatterParameter *param_;
+  TypeId data_type_;
 };
 }  // namespace mindspore::kernel
 
