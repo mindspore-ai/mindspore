@@ -195,7 +195,10 @@ Status ModelWorker::CopyOutputTensor(std::vector<MSTensor> model_outputs, std::v
       MS_LOG(ERROR) << "model thread copy output tensor failed.";
       return kLiteError;
     }
-    copy_tensor->SetDeviceData(user_output.GetDeviceData());
+    auto device_data = user_output.GetDeviceData();
+    if (device_data != nullptr) {
+      copy_tensor->SetDeviceData(device_data);
+    }
     new_outputs.push_back(*copy_tensor);
     delete copy_tensor;
   }
@@ -241,7 +244,9 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
       /* user set graph-output-tensor from outside */
       model_output[i].SetShape(output.Shape());
       model_output[i].SetData(output.MutableData(), false);
-      model_output[i].SetDeviceData(output.GetDeviceData());
+      if (output.GetDeviceData() != nullptr) {
+        model_output[i].SetDeviceData(output.GetDeviceData());
+      }
       model_output[i].SetAllocator(nullptr);
       need_copy_output = false;
     }
@@ -249,8 +254,16 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
     model_input[i].SetShape(input.Shape());
-    model_input[i].SetData(const_cast<MSTensor &>(input).MutableData(), false);
-    model_input[i].SetDeviceData(const_cast<MSTensor &>(input).GetDeviceData());
+    auto host_data = const_cast<MSTensor &>(input).Data();
+    auto device_data = const_cast<MSTensor &>(input).GetDeviceData();
+    if (host_data != nullptr) {
+      model_input[i].SetData(const_cast<MSTensor &>(input).MutableData(), false);
+    } else if (device_data != nullptr) {
+      model_input[i].SetDeviceData(const_cast<MSTensor &>(input).GetDeviceData());
+    } else {
+      MS_LOG(ERROR) << "Input Data is nullptr";
+      return kLiteError;
+    }
   }
   auto status = model_->Predict(model_input, &model_output, before, after);
   for (size_t i = 0; i < model_input.size(); i++) {
