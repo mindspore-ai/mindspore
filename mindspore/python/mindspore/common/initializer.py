@@ -350,8 +350,8 @@ class HeUniform(Initializer):
     .. math::
         boundary = \text{gain} \times \sqrt{\frac{3}{fan\_mode}}
 
-    where :math:`gain` is an optional scaling factor. If :math:`fan\_mode` is 'fan_in', it is the number of input units
-    of the weight tensor. If :math:`fan\_mode` is 'fan_out',
+    where :math:`gain` is an optional scaling factor. If :math:`fan\_mode` is ``'fan_in'``,
+    it is the number of input units of the weight tensor. If :math:`fan\_mode` is ``'fan_out'``,
     it is the number of output units of the weight tensor.
 
     For details of HeUniform algorithm, please check
@@ -628,11 +628,11 @@ class VarianceScaling(Initializer):
     Generates an random array with scaling in order to initialize a tensor.
     When `distribution` is 'truncated_normal' or 'untruncated_normal', the value will be sampled from truncated or
     untruncated normal distribution with a mean of 0 and a scaled standard deviation
-    :math:`stddev = \sqrt{\frac{scale}{n}}`. :math:`n` will be the number of input units if `mode` is 'fan_in',
+    :math:`stddev = \sqrt{\frac{scale}{n}}`. :math:`n` will be the number of input units if `mode` is ``'fan_in'``,
     while :math:`n` will be
-    the number of output units if `mode` is 'fan_out'. :math:`n` will be the average of 'fan_in' and 'fan_out'
-    if `mode` is 'fan_avg'.
-    When `distribution` is 'uniform', the value will be sampled from a uniform distribution within the limit of
+    the number of output units if `mode` is ``'fan_out'``. :math:`n` will be the average of ``'fan_in'``
+    and ``'fan_out'`` if `mode` is ``'fan_avg'``.
+    When `distribution` is ``'uniform'``, the value will be sampled from a uniform distribution within the limit of
     :math:`[-\sqrt{\frac{3*scale}{n}}, \sqrt{\frac{3*scale}{n}}]`.
 
     Args:
@@ -643,8 +643,8 @@ class VarianceScaling(Initializer):
 
     Raises:
         ValueError: If `scale` is not greater than 0.
-        ValueError: If `mode` is not 'fan_in', 'fan_out' or 'fan_avg'.
-        ValueError: If `distribution` is not 'uniform', 'truncated_normal' or 'untruncated_normal'.
+        ValueError: If `mode` is not ``'fan_in'``, ``'fan_out'`` or ``'fan_avg'``.
+        ValueError: If `distribution` is not ``'uniform'``, ``'truncated_normal'`` or ``'untruncated_normal'``.
 
     Examples:
         >>> import mindspore

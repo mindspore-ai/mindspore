@@ -6,7 +6,7 @@
     `Parameter` 是 `Tensor` 的子类，当它们被绑定为Cell的属性时，会自动添加到其参数列表中，并且可以通过Cell的某些方法获取，例如 `cell.get_parameters()` 。
 
     .. note::
-        - 在 `SEMI_AUTO_PARALLEL` 和 `AUTO_PARALLEL` 的并行模式下，如果使用 `Initializer` 模块初始化参数，参数的类型将为 `Tensor` 。`Tensor` 仅保存张量的形状和类型信息，而不占用内存来保存实际数据。
+        - 在 `SEMI_AUTO_PARALLEL` 和 `AUTO_PARALLEL` 的自动并行模式下，如果使用 `Initializer` 模块初始化参数，参数的类型将为 `Tensor` 。`Tensor` 仅保存张量的形状和类型信息，而不占用内存来保存实际数据。
         - 并行场景下存在参数的形状发生变化的情况，用户可以调用 `Parameter` 的 `init_data` 方法得到原始数据。
         - 如果网络中存在需要部分输入为 `Parameter` 的算子，则不允许这部分输入的 `Parameter` 进行转换。
 
@@ -14,8 +14,8 @@
         - **default_input** (Union[Tensor, int, float, numpy.ndarray, list]) - 初始化参数的输入值。
         - **name** (str) - 参数的名称。默认值： ``None`` 。如果一个网络中存在两个及以上相同名称的 `Parameter` 对象，在定义时将提示设置一个特有的名称。
         - **requires_grad** (bool) - 是否需要微分求梯度。默认值： ``True`` 。
-        - **layerwise_parallel** (bool) - 在数据/混合并行模式下，`layerwise_parallel` 配置为 ``True`` 时，参数广播和梯度聚合时会过滤掉该参数。默认值： ``False`` 。
-        - **parallel_optimizer** (bool) - 用于在 `semi_auto_parallel` 或 `auto_parallel` 并行模式下区分参数是否进行优化器切分。仅在 `mindspore.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值： ``True`` 。
+        - **layerwise_parallel** (bool) - 在数据/混合并行模式下， `layerwise_parallel` 配置为 ``True`` 时，参数广播和梯度聚合时会过滤掉该 `Parameter` 。默认值： ``False`` 。
+        - **parallel_optimizer** (bool) - 用于在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 并行模式下区分该参数是否进行优化器切分。仅在 `mindspore.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值： ``True`` 。
 
     .. py:method:: cache_enable
         :property:
@@ -42,7 +42,7 @@
 
         获取此参数的通信算子的融合类型（int）。
 
-        在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下，一些用于参数或梯度聚合的通信算子将自动插入。fusion的值必须大于等于0。当fusion的值为0时，算子不会融合在一起。
+        在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下，一些用于参数或梯度聚合的通信算子将自动插入。 `comm_fusion` 的值必须大于等于0。当 `comm_fusion` 为 ``0`` 时，算子不会融合在一起。
 
     .. py:method:: copy
 

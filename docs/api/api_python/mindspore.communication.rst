@@ -26,7 +26,7 @@ mindspore.communication
         - MCCL的全称是MindSpore集合通信库（MindSpore Collective Communication Library）。
 
     参数：
-        - **backend_name** (str) - 分布式后端的名称，可选HCCL或NCCL。在Ascend硬件平台下，应使用HCCL，在GPU硬件平台下，应使用NCCL。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值： ``None`` 。
+        - **backend_name** (str) - 分布式后端的名称，可选 ``"HCCL"`` 或 ``"NCCL"`` 。在Ascend硬件平台下，应使用 ``"HCCL"`` ，在GPU硬件平台下，应使用 ``"NCCL"`` 。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值： ``None`` 。
 
     异常：
         - **TypeError** - 参数 `backend_name` 不是字符串。
@@ -135,7 +135,7 @@ mindspore.communication
 
     参数：
         - **world_rank_id** (`int`) - 通信集群内的全局rank ID。
-        - **group** (`str`) - 指定通信组实例（由 create_group 方法创建）的名称。
+        - **group** (`str`) - 指定通信组实例（由 `create_group` 方法创建）的名称。
 
     返回：
         当前通信组内的rank_ID，数据类型为int。
@@ -167,7 +167,7 @@ mindspore.communication
 
     异常：
         - **TypeError** - 参数 `group_rank_id` 不是数字或参数 `group` 不是字符串。
-        - **ValueError** - 列表rank_ids的长度小于1，或列表rank_ids内有重复数据，以及后台无效。
+        - **ValueError** - 列表rank_ids的长度小于1，或列表 `rank_ids` 内有重复数据，以及后台无效。
         - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
 
     样例：

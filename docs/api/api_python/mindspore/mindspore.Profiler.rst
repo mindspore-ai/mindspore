@@ -3,7 +3,7 @@ mindspore.Profiler
 
 .. py:class:: mindspore.Profiler(**kwargs)
 
-    MindSpore用户能够通过该类对神经网络的性能进行采集。可以通过导入 `mindspore.Profiler` 然后初始化Profiler对象以开始分析，使用 `Profiler.analyse()` 停止收集并分析结果。可通过Mindinsight工具可视化分析结果。目前，Profiler支持AICORE算子、AICPU算子、HostCPU算子、内存、设备通信、集群等数据的分析。
+    MindSpore用户能够通过该类对神经网络的性能进行采集。可以通过导入 `mindspore.Profiler` 然后初始化Profiler对象以开始分析，使用 `Profiler.analyse()` 停止收集并分析结果。可通过 `MindSpore Insight <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/index.html>`_ 工具可视化分析结果。目前，Profiler支持AICORE算子、AICPU算子、HostCPU算子、内存、设备通信、集群等数据的分析。
 
     参数：
         - **output_path** (str, 可选) - 表示输出数据的路径。默认值： ``"./data"`` 。
@@ -51,8 +51,8 @@ mindspore.Profiler
             - **device_id** (int, 可选) - 设备卡号，表示指定解析哪张卡的算子性能数据。在网络训练或者推理时使用，该参数可选。基于离线数据解析使用该接口时，默认值： ``0`` 。
 
         异常：
-            - **TypeError** - op_name参数类型不正确。
-            - **TypeError** - device_id参数类型不正确。
+            - **TypeError** - `op_name` 参数类型不正确。
+            - **TypeError** - `device_id` 参数类型不正确。
             - **RuntimeError** - 在Ascend上使用该接口获取性能数据。
 
     .. py:method:: start()
@@ -62,7 +62,7 @@ mindspore.Profiler
         异常：
             - **RuntimeError** - Profiler已经开启。
             - **RuntimeError** - 停止Minddata采集后，不支持重复开启。
-            - **RuntimeError** - 如果start_profile参数未设置或设置为True。
+            - **RuntimeError** - 如果 `start_profile` 参数未设置或设置为 ``True`` 。
 
     .. py:method:: stop()
 
