@@ -56,7 +56,10 @@ elif [[ ${backend} =~ "cloud" ]]; then
     ascend_cfg_file_list=("$models_ascend_config" "$models_ascend_with_config")
     if [[ ${backend} =~ "_ge" ]]; then
         models_ascend_config=${benchmark_test}/models_ascend_ge_cloud.cfg
-        ascend_cfg_file_list=("$models_ascend_config")
+        models_ascend_on_the_fly_quant_config=${benchmark_test}/models_ascend_on_the_fly_quant_ge_cloud.cfg
+        models_ascend_fake_model_on_the_fly_quant_config=${benchmark_test}/models_ascend_fake_model_on_the_fly_quant_ge_cloud.cfg
+        models_ascend_fake_model_full_quant_config=${benchmark_test}/models_ascend_fake_model_full_quant_ge_cloud.cfg
+        ascend_cfg_file_list=("$models_ascend_config" "$models_ascend_on_the_fly_quant_config" "$models_ascend_fake_model_on_the_fly_quant_config" "$models_ascend_fake_model_full_quant_config")
     fi
 fi
 

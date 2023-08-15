@@ -137,6 +137,18 @@ function Convert() {
         elif [[ ${cfg_file_name} =~ "awaretraining" || ${extra_info} =~ "aware_training" ]]; then
           in_dtype="FLOAT"
           out_dtype="FLOAT"
+        elif [[ ${cfg_file_name} =~ "_ascend_on_the_fly_quant_ge_cloud" ]]; then
+          quant_type="ONTHEFLYQuant"
+          output_file=${output_file}"_on_the_fly_quant"
+          config_file="${quant_config_path}/ascend_on_the_fly_quant_ge_cloud.cfg"
+        elif [[ ${cfg_file_name} =~ "_ascend_fake_model_on_the_fly_quant_ge_cloud" ]]; then
+          quant_type="FakeModelONTHEFLYQuant"
+          output_file=${output_file}"_on_the_fly_quant"
+          config_file="${quant_config_path}/ascend_fake_model_on_the_fly_quant_ge_cloud.cfg"
+        elif [[ ${cfg_file_name} =~ "_ascend_fake_model_full_quant_ge_cloud" ]]; then
+          quant_type="FakeModelFullQuant"
+          output_file=${output_file}"_full_quant"
+          config_file="${quant_config_path}/ascend_fake_model_full_quant_ge_cloud.cfg"
         fi
 
         if [[ ${extra_info} =~ "offline_resize" && ${input_shapes} != "" && ${input_names} != "" ]]; then
