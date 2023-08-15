@@ -26,7 +26,8 @@ from mindspore.ops.operations._scalar_ops import bit_or, bit_and
 from mindspore.ops.operations.comm_ops import ReduceOp
 from mindspore.ops import signature as sig
 from mindspore.ops.operations.math_ops import _infer_shape_reduce
-from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, _run_op
+from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive,\
+    _run_op, _check_contains_variable
 from mindspore import context
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import typing
@@ -1947,16 +1948,32 @@ class Format(PrimitiveWithInfer):
     def __init__(self):
         self.init_prim_io_names(inputs=['string', 'args'], outputs=['string'])
 
+
     def __infer__(self, str_, *var):
-        str_value = str_["value"]
+        def check_variable(str_, var):
+            if _check_contains_variable(str_['dtype'], str_['value']):
+                return True
+
+            for item in var:
+                if _check_contains_variable(item['dtype'], item['value']):
+                    return True
+            return False
+
+
+        if check_variable(str_, var):
+            return {'dtype': mstype.string, 'shape': [], 'value': None}
+
+
+        str_value = str_['value']
+        kwargs = dict()
         var_value = list()
-        if str_value is None and str_["dtype"] is not None:
-            raise ValueError("str.format not support to input a variable.")
+
         for item in var:
-            if item["value"] is None and item["dtype"] is not None:
-                raise ValueError("str.format not support to input a variable.")
+            if isinstance(item["dtype"], typing.Keyword):
+                kwargs.update(item["value"])
             var_value.append(item["value"])
-        value = str_value.format(*var_value)
+
+        value = str_value.format(*var_value, **kwargs)
         return {'dtype': mstype.string, 'shape': [], 'value': value}
 
 

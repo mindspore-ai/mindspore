@@ -700,6 +700,25 @@ class BeforeOptARewriter : public BaseRewriter {
   bool is_dict_output_{false};
 };
 
+std::pair<AnfNodePtr, AnfNodePtr> ExtractKwargsNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<ValueNode>()) {
+    auto kwargs = GetValueNode<KeywordArgPtr>(node);
+    if (kwargs != nullptr) {
+      auto key = MakeValue(kwargs->get_key());
+      auto arg = kwargs->get_value();
+      return std::make_pair(NewValueNode(key), NewValueNode(arg));
+    }
+  } else if (node->isa<CNode>() && IsPrimitiveCNode(node, prim::kPrimMakeKeywordArg)) {
+    auto kwarg_node = node->cast_ptr<CNode>();
+    constexpr auto kMakeKwargsKeyIndex = 1;
+    constexpr auto kMakeKwargsArgIndex = 2;
+    return std::make_pair(kwarg_node->input(kMakeKwargsKeyIndex), kwarg_node->input(kMakeKwargsArgIndex));
+  }
+  MS_LOG(EXCEPTION) << "Extract kwargs only can be used to CNode[make_keyword_arg] or ValueNode(KeywordArg), but got "
+                    << node->DebugString();
+}
+
 // ==================================================================
 // AfterOptARewriter converts List, Sparse, RowTensor to Tuple.
 // ==================================================================
@@ -1623,6 +1642,63 @@ class AfterOptARewriter : public BaseRewriter {
     MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << new_pyexecute_node->DebugString();
     return new_pyexecute_node;
   }
+  // Format(str, XXXX) Convert to PyExecute
+  // First Spilt XXXX to dict input when the args is KWargs, otherwise push it to a list.And Then Convert To PyExecute
+  // A = MakeDict(XXXX[KWargs]->keys(), XXXX[KWargs]->values()) --> This Dict will convert to PyExecute use function
+  // ConvertMakeDict. B = Tuple(XXXX - XXXX[KWargs]) ps: this sub operator is set sub. C =
+  // PyExecute("__inner_str__.format(*__format_list_str__, **__format_kwargs__str__)"
+  //        , (__inner_str__, __format_list_str__, __format_kwargs__str__), (str, B, A));
+  // Replace(C -> Format).
+  AnfNodePtr ConvertFormat(const CNodePtr &cnode) const {
+    auto fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+
+    std::vector<AnfNodePtr> format_list = {NewValueNode(prim::kPrimMakeTuple)};
+
+    std::vector<AnfNodePtr> kwargs_keys_node = {NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> kwargs_values_node = {NewValueNode(prim::kPrimMakeTuple)};
+    auto inputs = cnode->inputs();
+    constexpr auto kFormatArgsIndex = 2;
+    constexpr auto kStringArgsIndex = 1;
+    for (size_t i = kFormatArgsIndex; i < inputs.size(); ++i) {
+      auto input = inputs[i];
+      MS_EXCEPTION_IF_NULL(input);
+      auto abs = input->abstract();
+      if (abs != nullptr && abs->isa<abstract::AbstractKeywordArg>()) {
+        auto [key, arg] = ExtractKwargsNode(input);
+        (void)kwargs_keys_node.emplace_back(key);
+        (void)kwargs_values_node.emplace_back(arg);
+      } else {
+        format_list.emplace_back(inputs[i]);
+      }
+    }
+    // Construct kwargs node
+    auto dict_key_node = fg->NewCNode(kwargs_keys_node);
+    dict_key_node->set_debug_info(cnode->debug_info());
+    auto dict_value_node = fg->NewCNode(kwargs_values_node);
+    dict_value_node->set_debug_info(cnode->debug_info());
+    auto dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), dict_key_node, dict_value_node});
+    dict_node->set_debug_info(cnode->debug_info());
+    auto py_exec_dict_node = ConvertMakeDict(dict_node);
+    // Construct list args node
+    auto list_node = fg->NewCNode(format_list);
+    list_node->set_debug_info(cnode->debug_info());
+    // Construct PyExecute node
+    constexpr auto inner_str = "__inner_str__";
+    constexpr auto format_list_str = "__format_list_str__";
+    constexpr auto format_kwargs_str = "__format_kwargs__str__";
+    std::stringstream script_buffer;
+    script_buffer << inner_str << ".format(*" << format_list_str << ", **" << format_kwargs_str << ")";
+
+    std::vector<ValuePtr> key_values = {MakeValue(inner_str), MakeValue(format_list_str), MakeValue(format_kwargs_str)};
+    auto intrepret_node_keys = NewValueNode(std::make_shared<ValueTuple>(key_values));
+    auto intrepert_node_values =
+      fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), inputs.at(kStringArgsIndex), list_node, py_exec_dict_node});
+    intrepert_node_values->set_debug_info(cnode->debug_info());
+    auto convert_node = fallback::CreatePyExecuteCNode(fg, NewValueNode(MakeValue(script_buffer.str())),
+                                                       intrepret_node_keys, intrepert_node_values, cnode->debug_info());
+    return convert_node;
+  }
 
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
   using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
@@ -1654,7 +1730,8 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimMakeSlice, &ThisClass::ConvertMakeSlice},
     {prim::kPrimIsInstance, &ThisClass::ConvertIsInstance},
     {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr},
-    {prim::kPrimPrint, &ThisClass::ConvertPrint}};
+    {prim::kPrimPrint, &ThisClass::ConvertPrint},
+    {prim::kPrimFormat, &ThisClass::ConvertFormat}};
 
   static inline const PrimitiveSet seq_prim_set_{
     prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,   prim::kPrimSequenceIndex,

@@ -173,6 +173,7 @@ GVAR_DEF(PrimitivePtr, kPrimRaise,
 GVAR_DEF(PrimitivePtr, kPrimCallInline, std::make_shared<Primitive>("call_inline"));
 GVAR_DEF(PrimitivePtr, kPrimSwitchLayer, std::make_shared<Primitive>("switch_layer"));
 GVAR_DEF(PrimitivePtr, kPrimLower, std::make_shared<Primitive>(kLowerOpName));
+GVAR_DEF(PrimitivePtr, kPrimFormat, std::make_shared<Primitive>("Format"));
 
 // Pack
 GVAR_DEF(PrimitivePtr, kPrimPackFunc, std::make_shared<Primitive>(kPackFuncOpName));

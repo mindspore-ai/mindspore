@@ -177,5 +177,6 @@ void RegTyping(py::module *m) {
   (void)py::class_<TypeEllipsis, Type, std::shared_ptr<TypeEllipsis>>(m_sub, "TypeEllipsis").def(py::init());
   (void)py::class_<MsClassType, Type, std::shared_ptr<MsClassType>>(m_sub, "TypeMsClassType").def(py::init());
   (void)py::class_<TypeNull, Type, std::shared_ptr<TypeNull>>(m_sub, "TypeNull").def(py::init());
+  (void)py::class_<Keyword, Type, std::shared_ptr<Keyword>>(m_sub, "Keyword").def(py::init());
 }
 }  // namespace mindspore
