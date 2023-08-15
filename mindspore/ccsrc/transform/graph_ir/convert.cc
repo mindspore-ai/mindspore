@@ -519,7 +519,6 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   std::vector<Operator> init_input;
   auto manager = Manage(anf_graph_, true);
   MS_EXCEPTION_IF_NULL(manager);
-  const auto &node_users = manager->node_users();
   auto &infer_need_update_parameter_names =
     Singleton<mindspore::device::ascend::InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   for (auto it : tensors) {
@@ -547,30 +546,6 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       continue;
     }
 
-    bool will_be_update = false;
-    auto user_it = node_users.find(node);
-    if (user_it != node_users.end()) {
-      auto &users = user_it->second;
-      for (auto &user_node : users) {
-        if (user_node.first && NodeInputKeepUpdate(user_node.first)) {
-          will_be_update = true;
-        }
-      }
-    }
-    if (!training_ && !will_be_update) {
-      auto adpt_const = FindAdapter(kNameConst, training_);
-      if (adpt_const == nullptr) {
-        continue;
-      }
-      auto const_op = adpt_const->generate(name + "_const");
-      (void)adpt_const->setAttr(const_op, "value", it.second);
-      (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*desc);
-      const_op_to_value_[const_op] = it.second;
-      vars_[name] = const_op;
-      op_itor->second = const_op;
-      continue;
-    }
-
     if (common::IsEnableRefMode()) {
       auto variable = std::make_shared<RefData>(name);
       (void)variable->update_output_desc_y(*desc);
@@ -582,6 +557,30 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       op_itor->second = variable;  // replace parameter with variable
       vars_[name] = variable;      // prevent the variable operator from being freed
     } else {
+      const auto &node_users = manager->node_users();
+      bool will_be_update = false;
+      auto user_it = node_users.find(node);
+      if (user_it != node_users.end()) {
+        auto &users = user_it->second;
+        for (auto &user_node : users) {
+          if (user_node.first && NodeInputKeepUpdate(user_node.first)) {
+            will_be_update = true;
+          }
+        }
+      }
+      if (!training_ && !will_be_update) {
+        auto adpt_const = FindAdapter(kNameConst, training_);
+        if (adpt_const == nullptr) {
+          continue;
+        }
+        auto const_op = adpt_const->generate(name + "_const");
+        (void)adpt_const->setAttr(const_op, "value", it.second);
+        (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*desc);
+        const_op_to_value_[const_op] = it.second;
+        vars_[name] = const_op;
+        op_itor->second = const_op;
+        continue;
+      }
       // we need three variable ops for each graph with same name
       // build init subgraph
       auto adpt = FindAdapter(kNameParam, training_);
