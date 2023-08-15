@@ -45,6 +45,7 @@ class MatMulFP32BaseCoder : public OperatorCoder {
   virtual int CollectFilesForTarget(CoderContext *const context);
   virtual int Init();
   virtual void InitParameter();
+  void CalculateOutBatchSize();
 
  private:
   int InitMatrixA(const float *src_ptr);

@@ -29,8 +29,7 @@ int MatMulFP16Coder::InitAShape() {
   for (size_t i = 0; i < a_shape.size() - DIMENSION_2D; ++i) {
     batch *= a_shape.at(i);
   }
-  a_batch_ = batch;
-  params_.batch = batch;
+  params_.a_batch_ = batch;
   params_.row_ = params_.a_transpose_ ? a_shape[a_shape.size() - C1NUM] : a_shape[a_shape.size() - C2NUM];
   params_.deep_ = params_.a_transpose_ ? a_shape[a_shape.size() - C2NUM] : a_shape[a_shape.size() - C1NUM];
   params_.row_16_ = UP_ROUND(params_.row_, row_tile_);
@@ -44,8 +43,7 @@ int MatMulFP16Coder::InitBShape() {
   for (size_t i = 0; i < b_shape.size() - DIMENSION_2D; ++i) {
     batch *= b_shape[i];
   }
-  b_batch_ = batch;
-  params_.batch = batch;
+  params_.b_batch_ = batch;
   params_.col_ = params_.b_transpose_ ? b_shape[b_shape.size() - C2NUM] : b_shape[b_shape.size() - C1NUM];
   params_.col_8_ = UP_ROUND(params_.col_, C8NUM);
   params_.deep_ = params_.b_transpose_ ? b_shape[b_shape.size() - C1NUM] : b_shape[b_shape.size() - C2NUM];
@@ -53,6 +51,7 @@ int MatMulFP16Coder::InitBShape() {
 }
 
 int MatMulFP16Coder::Prepare(CoderContext *const context) {
+  CalculateOutBatchSize();
   if (input_tensor_->data_type() != kNumberTypeFloat16) {
     MS_LOG(INFO) << "Input tensor data type is invalid";
     return RET_INPUT_PARAM_INVALID;

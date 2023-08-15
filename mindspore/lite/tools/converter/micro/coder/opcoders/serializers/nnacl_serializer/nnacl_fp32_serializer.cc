@@ -64,7 +64,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SoftmaxParam
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const int *list, int size) {
-  code << "int " << name << "[] = {";
+  code << "int32_t " << name << "[] = {";
   for (int i = 0; i < size - 1; i++) {
     code << list[i] << ",";
   }
@@ -85,15 +85,15 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParamete
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const MicroMatmulParameter &micro_matmul_parameter) {
-  CodeBaseStruct<false>("MicroMatmulParameter", name, micro_matmul_parameter.act_type_,
-                        micro_matmul_parameter.thread_num_, micro_matmul_parameter.row_, micro_matmul_parameter.col_,
-                        micro_matmul_parameter.row_4_, micro_matmul_parameter.row_6_, micro_matmul_parameter.row_12_,
-                        micro_matmul_parameter.row_16_, micro_matmul_parameter.row_align_,
-                        micro_matmul_parameter.col_4_, micro_matmul_parameter.col_8_, micro_matmul_parameter.col_align_,
-                        micro_matmul_parameter.deep_, micro_matmul_parameter.deep_4_, micro_matmul_parameter.deep_16_,
-                        micro_matmul_parameter.deep_align_, micro_matmul_parameter.batch,
-                        micro_matmul_parameter.a_transpose_, micro_matmul_parameter.b_transpose_,
-                        micro_matmul_parameter.a_const_, micro_matmul_parameter.b_const_);
+  CodeBaseStruct<false>(
+    "MicroMatmulParameter", name, micro_matmul_parameter.act_type_, micro_matmul_parameter.thread_num_,
+    micro_matmul_parameter.row_, micro_matmul_parameter.col_, micro_matmul_parameter.row_4_,
+    micro_matmul_parameter.row_6_, micro_matmul_parameter.row_12_, micro_matmul_parameter.row_16_,
+    micro_matmul_parameter.row_align_, micro_matmul_parameter.col_4_, micro_matmul_parameter.col_8_,
+    micro_matmul_parameter.col_align_, micro_matmul_parameter.deep_, micro_matmul_parameter.deep_4_,
+    micro_matmul_parameter.deep_16_, micro_matmul_parameter.deep_align_, micro_matmul_parameter.a_batch_,
+    micro_matmul_parameter.b_batch_, micro_matmul_parameter.batch, micro_matmul_parameter.a_transpose_,
+    micro_matmul_parameter.b_transpose_, micro_matmul_parameter.a_const_, micro_matmul_parameter.b_const_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ScaleStruct &scale_struct) {

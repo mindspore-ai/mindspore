@@ -61,6 +61,8 @@ int FullConnectionFP32Coder::Init() {
     params_.deep_ = b_shape.at(1);
   }
   params_.batch = 1;
+  params_.a_batch_ = 1;
+  params_.b_batch_ = 1;
   params_.a_transpose_ = false;
   params_.b_transpose_ = true;
   MS_CHECK_RET_CODE(MatMulFP32BaseCoder::Init(), "MatMulFP32BaseCoder init failed");

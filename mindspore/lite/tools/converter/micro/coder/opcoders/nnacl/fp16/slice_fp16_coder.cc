@@ -40,6 +40,7 @@ int SliceFP16Coder::Prepare(CoderContext *const context) {
     MS_LOG(ERROR) << "Tensor data type is invalid";
     return lite::RET_INPUT_PARAM_INVALID;
   }
+  MS_CHECK_TRUE_MSG(SliceFP32Coder::Prepare(context) == RET_OK, RET_ERROR, "prepare slice fp16 coder failed!");
   return RET_OK;
 }
 

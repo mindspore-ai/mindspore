@@ -34,7 +34,7 @@ int MatMulFP32Coder::InitShapeA() {
   for (int i = 0; i < a_shape_size - DIMENSION_2D; ++i) {
     batch *= a_shape.at(i);
   }
-  params_.batch = batch;
+  params_.a_batch_ = batch;
   params_.row_ = params_.a_transpose_ ? a_shape.at(a_shape_size - 1) : a_shape.at(a_shape_size - DIMENSION_2D);
   params_.deep_ = params_.a_transpose_ ? a_shape.at(a_shape_size - DIMENSION_2D) : a_shape.at(a_shape_size - 1);
   return RET_OK;
@@ -51,7 +51,7 @@ int MatMulFP32Coder::InitShapeB() {
   for (int i = 0; i < b_shape_size - DIMENSION_2D; ++i) {
     batch *= b_shape.at(i);
   }
-  params_.batch = batch;
+  params_.b_batch_ = batch;
   params_.col_ = params_.b_transpose_ ? b_shape.at(b_shape_size - DIMENSION_2D) : b_shape.at(b_shape_size - 1);
   params_.deep_ = params_.b_transpose_ ? b_shape.at(b_shape_size - 1) : b_shape.at(b_shape_size - DIMENSION_2D);
   return RET_OK;
@@ -65,6 +65,7 @@ int MatMulFP32Coder::ReSize() {
 }
 
 int MatMulFP32Coder::Prepare(CoderContext *const context) {
+  CalculateOutBatchSize();
   MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(parameter_);
   params_.act_type_ = matmul_param->act_type_;
   params_.thread_num_ = matmul_param->op_parameter_.thread_num_;
