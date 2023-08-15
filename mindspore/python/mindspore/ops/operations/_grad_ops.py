@@ -1522,10 +1522,6 @@ class LSTMGrad(Primitive):
 
     @prim_attr_register
     def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout, proj_size=0):
-        device_target = context.get_context("device_target")
-        if device_target != "CPU" and proj_size != 0:
-            raise ValueError(f"For '{self.name}', the 'proj_size' is only supported in CPU target, "
-                             f"but got the 'proj_size' is {proj_size} and the platform is {device_target}.")
         self.input_size = validator.check_positive_int(input_size, 'input_size', self.name)
         self.hidden_size = validator.check_positive_int(hidden_size, 'hidden_size', self.name)
         self.proj_size = validator.check_int_range(proj_size, 0, hidden_size, validator.INC_LEFT,

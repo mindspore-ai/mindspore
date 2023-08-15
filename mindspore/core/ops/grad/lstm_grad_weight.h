@@ -52,6 +52,8 @@ class MIND_API LSTMGradWeight : public BaseOperator {
   void set_zoneout_hidden(float zoneout_hidden);
   float get_zoneout_hidden() const;
   int64_t get_good_ld(const int64_t dim, const int64_t type_size);
+  void set_proj_size(const int64_t proj_size);
+  int64_t get_proj_size() const;
 };
 MIND_API abstract::AbstractBasePtr LstmGradWeightInfer(const abstract::AnalysisEnginePtr &,
                                                        const PrimitivePtr &primitive,
