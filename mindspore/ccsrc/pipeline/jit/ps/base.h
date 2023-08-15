@@ -41,6 +41,9 @@ struct ExecutorInfo {
 using ExecutorInfoPtr = std::shared_ptr<ExecutorInfo>;
 
 inline std::string GetPhasePrefix(const std::string &phase) {
+  if (phase == "dataset") {
+    return phase;
+  }
   auto pos = phase.find('.');
   if (pos == std::string::npos) {
     MS_LOG(INTERNAL_EXCEPTION) << "Phase has no . for prefix" << phase;

@@ -25,6 +25,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/other_ops.h"
 #include "ops/framework_ops.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::opt {
 namespace {
@@ -212,7 +213,9 @@ void AddSendClosureDepend(const FuncGraphPtr &graph) {
 }  // namespace
 
 void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
-  static const bool is_enable_ge = (common::GetEnv("MS_ENABLE_GE") == "1");
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const bool is_enable_ge = (context->backend_policy() == "ge");
   static const bool is_cell_reuse =
     (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
   if (!is_enable_ge || !is_cell_reuse) {

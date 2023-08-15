@@ -321,6 +321,9 @@ const bool SelectAscendPlugin = []() -> bool {
   if (iter->second != std::string(EXPECT_ASCEND_VERSION)) {
     exit(0);
   }
+  if (iter->second == k910BAscnedVersion) {
+    common::SetEnv("MS_ENABLE_GE", "1");
+  }
   return true;
 }();
 #endif

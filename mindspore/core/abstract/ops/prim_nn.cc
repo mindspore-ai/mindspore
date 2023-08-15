@@ -18,6 +18,7 @@
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace abstract {
@@ -125,6 +126,8 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   // Training inputs: 6 (x, gamma, beta, mean, variance, Umonad).
   constexpr auto batch_norm_infer_input_num = 5;
   constexpr auto batch_norm_train_input_num = 6;
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
   const std::string op_name = primitive->name();
   MS_EXCEPTION_IF_CHECK_FAIL(
     args_abs_list.size() == batch_norm_infer_input_num || args_abs_list.size() == batch_norm_train_input_num,
@@ -141,8 +144,8 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   // In GE process, the input of mean and variance is None
   constexpr size_t num_of_valid_input_ge = 3;
   constexpr size_t num_of_valid_input_vm = 5;
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  size_t args_abs_list_size = env_ge == "1" ? num_of_valid_input_ge : num_of_valid_input_vm;
+  bool enable_ge = context->backend_policy() == "ge";
+  size_t args_abs_list_size = enable_ge ? num_of_valid_input_ge : num_of_valid_input_vm;
   for (size_t i = 1; i < args_abs_list_size; ++i) {
     auto param = CheckArg<AbstractTensor>(op_name, args_abs_list, i);
     tensorPtrList.push_back(param);

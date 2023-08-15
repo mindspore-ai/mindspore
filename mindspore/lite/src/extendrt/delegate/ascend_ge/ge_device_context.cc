@@ -328,16 +328,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     (*ge_options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
   }
 
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  auto training = common::GetEnv("MS_GE_TRAIN");
   (*ge_options)["ge.graphRunMode"] = "0";
-  if (env_ge == "1" && training == "1") {
-    (*ge_options)["ge.graphRunMode"] = "1";
-  }
-  auto graph_run_mode = common::GetEnv("MS_GE_GRAPH_RUN_MODE");
-  if (graph_run_mode == "1") {
-    (*ge_options)["ge.graphRunMode"] = "1";
-  }
 
   SetDisableReuseMemoryFlag(ge_options);
   SetHcclOptions(context, ge_options, config_info);
@@ -373,11 +364,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     MS_LOG(WARNING) << "Set proto lib path failed!";
   }
 
-  if (training == "1") {
-    (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
-  } else {
-    (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
-  }
+  (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
 
   // Disable the global variable acc, only enable it while adding training graph in pipeline
   (*ge_options)["ge.exec.variable_acc"] = "0";

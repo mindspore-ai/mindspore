@@ -35,6 +35,9 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph);
 bool IsGeTrain();
 inline std::string GetPhasePrefix() {
   const std::string &phase = PhaseManager::GetInstance().phase();
+  if (phase == "dataset") {
+    return phase;
+  }
   auto pos = phase.find('.');
   if (pos != std::string::npos) {
     return phase.substr(0, pos);

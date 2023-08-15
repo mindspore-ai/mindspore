@@ -854,13 +854,12 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
 
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-
-  if (env_ge == "1") {
-    auto env_train = common::GetEnv("MS_GE_TRAIN");
-    if (env_train == "1" && device::ascend::GetPhasePrefix() == "train") {
+  bool enable_ge = ms_context->backend_policy() == "ge";
+  if (enable_ge) {
+    bool enable_training = device::ascend::GetPhasePrefix() == "train";
+    if (enable_training) {
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond1>());
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond2>());
     } else {

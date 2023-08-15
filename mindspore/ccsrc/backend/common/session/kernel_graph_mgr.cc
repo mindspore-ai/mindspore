@@ -44,10 +44,11 @@ constexpr size_t kMaxDepth = 128;
 constexpr size_t kFirstIndex = 1;
 constexpr int64_t kPairIdx1 = 1;
 
-const auto env_ge = common::GetEnv("MS_ENABLE_GE");
-
 bool IsGeReturnNode(const AnfNodePtr &node) {
-  if (env_ge != "1") {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const bool enable_ge = context->backend_policy() == "ge";
+  if (!enable_ge) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(node);
@@ -1062,6 +1063,9 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
   MS_EXCEPTION_IF_NULL(cnode_inputs);
   auto origin_inputs = cnode->inputs();
   const bool is_depend = IsPrimitiveCNode(cnode, prim::kPrimDepend);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const bool enable_ge = context->backend_policy() == "ge";
   // if has multiple depends,only select first depend as parameter
   for (size_t input_idx = 1; input_idx < origin_inputs.size(); input_idx++) {
     auto anf = origin_inputs[input_idx];
@@ -1070,7 +1074,7 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
       (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
-    } else if ((is_depend && input_idx > kRealInputIndexInDepend && env_ge != "1")) {
+    } else if ((is_depend && input_idx > kRealInputIndexInDepend && !enable_ge)) {
       cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
       continue;
     } else if (other_graph_cnode->find(anf) != other_graph_cnode->end()) {

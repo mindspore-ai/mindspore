@@ -18,7 +18,6 @@ BASE_PATH=$(cd "$(dirname $0)"; pwd)
 rm -rf ${BASE_PATH}/if_by_if
 mkdir ${BASE_PATH}/if_by_if
 export MS_ENABLE_GE=1
-export MS_GE_TRAIN=1
 export MS_DEV_FORCE_ACL=1
 unset SLOG_PRINT_TO_STDOUT
 cd ${BASE_PATH}/if_by_if
@@ -27,7 +26,6 @@ env > env.log
 python ../run_if_by_if.py > test_if_by_if.log 2>&1 &
 process_pid=`echo $!`
 wait ${process_pid}
-unset MS_GE_TRAIN
 unset MS_ENABLE_GE
 unset MS_DEV_FORCE_ACL
 status=`echo $?`
