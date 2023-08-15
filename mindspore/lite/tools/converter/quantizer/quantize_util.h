@@ -88,6 +88,9 @@ int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
 
 bool CheckControlFlowType(const AnfNodePtr &node);
 
+bool CheckFollowedNodeInSet(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                            const std::set<PrimitivePtr> &support_primitive_types);
+
 int CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                    FuncGraphPtr *func_graph_bak);
 

@@ -221,7 +221,8 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Convert make_list to MakeTuple failed.";
     return lite::RET_ERROR;
   }
-  if (!lite::RunOptimizerPass(func_graph, {kScalarOpPass, kRemoveRedundantOpPass, kRemoveUnusedAddNodePass})) {
+  if (!lite::RunOptimizerPass(func_graph, {kScalarOpPass, kRemoveRedundantOpPass, kRemoveUnusedAddNodePass,
+                                           kCustomOpFusionForFlashAttention})) {
     MS_LOG(ERROR) << "Remove redundant op pass failed.";
     return lite::RET_ERROR;
   }
@@ -559,10 +560,6 @@ STATUS AclPassImpl::AdjustInvalidCnodeName(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
-  if (!lite::RunOptimizerPass(func_graph, {kRemoveUnusedAddNodePass, kCustomOpFusionForFlashAttention})) {
-    MS_LOG(ERROR) << "OptimizeGraph failed.";
-    return RET_ERROR;
-  }
   auto status = AdjustInvalidCnodeName(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "AdjustInvalidCnodeName failed.";
