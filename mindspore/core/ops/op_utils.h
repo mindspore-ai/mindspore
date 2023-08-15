@@ -39,12 +39,11 @@
 #endif
 #endif
 #define MS_CHECK_VALUE(cond, msg)        \
-  {                                      \
+  do {                                   \
     if (MS_UNLIKELY(!(cond))) {          \
       MS_EXCEPTION(ValueError) << (msg); \
     }                                    \
-  }                                      \
-  while (0)
+  } while (0)
 
 namespace mindspore::ops {
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
