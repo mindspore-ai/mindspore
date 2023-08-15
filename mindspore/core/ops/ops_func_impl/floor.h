@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FLOOR_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FLOOR_H_
+
+#include <map>
 #include <memory>
-#include "common/common_test.h"
-#include "ops/ops_func_impl/floor.h"
-#include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
+#include <string>
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Floor, EltwiseOpParams);
-INSTANTIATE_TEST_CASE_P(TestFloor, TestFloor,
-                        testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                        EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
-                                        EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                        EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+class MIND_API FloorFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FLOOR_H_

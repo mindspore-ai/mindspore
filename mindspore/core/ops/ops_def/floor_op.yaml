@@ -1,0 +1,8 @@
+#operator floor
+floor:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor

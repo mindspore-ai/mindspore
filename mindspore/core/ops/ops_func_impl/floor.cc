@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-#include <memory>
-#include "common/common_test.h"
 #include "ops/ops_func_impl/floor.h"
-#include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Floor, EltwiseOpParams);
-INSTANTIATE_TEST_CASE_P(TestFloor, TestFloor,
-                        testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                        EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
-                                        EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                        EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+BaseShapePtr FloorFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                       const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+  auto x_shape = input_args[kIndex0]->GetShape();
+  MS_EXCEPTION_IF_NULL(x_shape);
+  return x_shape->Clone();
+}
+
+TypePtr FloorFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+  auto x_type = input_args[kIndex0]->GetType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  return x_type->Clone();
+}
 }  // namespace ops
 }  // namespace mindspore
