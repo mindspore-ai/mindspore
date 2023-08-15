@@ -126,12 +126,15 @@ class Parameter(Tensor_):
 
     Note:
         - In auto_parallel mode of `SEMI_AUTO_PARALLEL` and `AUTO_PARALLEL`, if init `Parameter` by
-          a `Tensor`, the type of Parameter will be `Tensor`. `Tensor`
-          will save the shape and type info of a tensor with no memory usage.
+          a `Tensor`, the type of Parameter will be `Tensor`. `Tensor` will save the shape and type info of a tensor
+          with no memory usage.
+
         - The shape can be changed while
           compiling for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
+
         - If there is an operator in the network that requires part of the inputs to be Parameter,
           then the Parameters as this part of the inputs are not allowed to be cast.
+
         - Give each `Parameter` a unique name to facilitate subsequent operations and updates.
           If there are two or more `Parameter` objects with the same name in a network,
           will be prompted to set a unique name when defining.
@@ -817,8 +820,9 @@ class Parameter(Tensor_):
 
         Args:
             data (Union[Tensor, int, float]): New data.
-            slice_shape (bool): If slice the parameter is set to ``True``, the shape is not checked for consistency.
-                                Default: ``False``.
+            slice_shape (bool): If slice the parameter is set to ``True``, the shape consistency will not be checked.
+                                Default: ``False``. When `slice_shape` is ``True``, and the shapes are not consistent, a
+                                ValueError will be thrown.
 
         Returns:
             Parameter, the parameter after set data.
