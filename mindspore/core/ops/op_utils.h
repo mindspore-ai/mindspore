@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,6 +152,8 @@ T GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
 TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std::string &op_name);
 
 bool IsValueKnown(const ValuePtr &value);
+
+size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name);
 
 constexpr auto kCSRAvgRows = "csr_avg_rows";
 constexpr auto kIsCSR = "is_csr";

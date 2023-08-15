@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@
 #include "mindapi/src/helper.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "ops/op_def.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/shape_utils.h"
@@ -857,5 +858,18 @@ bool IsValueKnown(const ValuePtr &value) {
 
   return true;
 }
+
+size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  MS_EXCEPTION_IF_NULL(op_def);
+  auto ks_iter = op_def->indexes_.find(input_name);
+  if (ks_iter != op_def->indexes_.end()) {
+    size_t index = ks_iter->second;
+    MS_LOG(WARNING) << "Find " << input_name << "in " << index << "th input of OP " << op_name;
+    return index;
+  }
+  MS_LOG(EXCEPTION) << "Not Find " << input_name << "in OP " << op_name;
+}
+
 }  // namespace ops
 }  // namespace mindspore

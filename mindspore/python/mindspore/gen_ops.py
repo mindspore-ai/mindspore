@@ -168,14 +168,18 @@ OpDef g{class_name} = {{
     .name_ = "{operator_name}","""
         opdef_cc += f"""
     .args_ = {{"""
+        cc_index_str = f"""
+    .indexes_ = {{"""
 
-        for arg_name, arg_info in args.items():
+        for i, (arg_name, arg_info) in enumerate(args.items()):
             dtype = arg_info.get('dtype')
             init = arg_info.get('init')
             if init is None:
                 init = 0
             else:
                 init = 1
+            cc_index_str += f"""
+                {{"{arg_name}", {i}}},"""
             cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').replace('tuple', 'array').replace(
                 'list', 'array').upper()
             cc_dtype_str.replace('TUPLE', 'ARRAY').replace('LIST', 'ARRAY')
@@ -196,6 +200,10 @@ OpDef g{class_name} = {{
 
         opdef_cc += f"""
     }},"""
+
+        cc_index_str += f"""
+    }},"""
+        opdef_cc += cc_index_str
 
         opdef_cc += f"""
 }};"""
