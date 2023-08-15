@@ -575,7 +575,6 @@ class Model:
             initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
                                  Default: 0.
         """
-        epoch = Validator.check_positive_int(epoch)
         if self._parameter_broadcast:
             self._train_network.set_broadcast_flag()
 
@@ -1038,7 +1037,7 @@ class Model:
         self._check_sink_mode_for_ds_debug_mode(dataset_sink_mode)
 
         Validator.check_is_int(sink_size)
-        Validator.check_non_negative_int(epoch)
+        Validator.check_positive_int(epoch)
         Validator.check_non_negative_int(initial_epoch)
         if initial_epoch >= epoch:
             raise ValueError(f"For 'Model.train', the parameter 'epoch' must bigger than parameter 'initial_epoch',"
@@ -1186,7 +1185,7 @@ class Model:
                              .format(train_dataset._warmup_epoch, epoch))
 
         Validator.check_is_int(sink_size)
-        Validator.check_non_negative_int(epoch)
+        Validator.check_positive_int(epoch)
         Validator.check_non_negative_int(initial_epoch)
         if initial_epoch >= epoch:
             raise ValueError(f"For 'Model.fit', the parameter 'epoch' must bigger than parameter 'initial_epoch',"
@@ -1260,6 +1259,7 @@ class Model:
             >>> model.build(dataset, epoch=2)
             >>> model.train(2, dataset)
         """
+        epoch = Validator.check_positive_int(epoch)
         self._init(train_dataset, valid_dataset, sink_size, epoch)
 
     def _eval_in_fit(self, valid_dataset, callbacks=None, dataset_sink_mode=True, cb_params=None):
