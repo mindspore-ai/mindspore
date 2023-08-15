@@ -48,8 +48,8 @@ AffineOp::AffineOp(float_t degrees, const std::vector<float_t> &translation, flo
 Status AffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(
-    input->shape().Size() >= kDefaultImageRank,
-    "Affine: input tensor is not in shape of <H,W,C>, but got rank: " + std::to_string(input->shape().Size()));
+    input->shape().Size() == kMinImageRank || input->shape().Size() == kDefaultImageRank,
+    "Affine: input tensor is not in shape of <H,W,C> or <H,W>, but got rank: " + std::to_string(input->shape().Size()));
   dsize_t height = input->shape()[0];
   dsize_t width = input->shape()[1];
   float_t translation_x = translation_[0] * static_cast<float>(width);
