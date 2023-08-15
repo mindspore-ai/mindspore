@@ -39,6 +39,14 @@ bool LogUniformCandidateSamplerCpuKernel::Init(const BaseOperatorPtr &base_opera
   this->unique_ = op->get_unique();
   this->seed_ = op->get_seed();
   this->range_max_ = op->get_range_max();
+  kernel_name_ = base_operator->name();
+  constexpr int32_t ZERO = 0;
+  if (range_max_ == ZERO) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the 'range_max' must be greater than 0, but got range_max=" << range_max_
+                  << ". 'Range_max' integer overflow causes this error.";
+    return false;
+  }
   this->log_range_ = log1p(range_max_);
   if (unique_ && range_max_ < num_sampled_) {
     MS_LOG(ERROR) << "When unique is True, range_max must be greater than or equal to num_sampled";
