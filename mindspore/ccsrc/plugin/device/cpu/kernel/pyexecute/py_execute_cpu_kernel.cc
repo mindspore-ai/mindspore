@@ -79,11 +79,8 @@ void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   const auto &py_output = std::make_shared<PyExecuteOutputUserData>();
-  constexpr auto kPyExecuteOutIndex = 0;
   py_output->obj = py_res;
   // Set Python data for kernel node.
-  auto out_user_data = output_user_data_.at(kPyExecuteOutIndex);
-  out_user_data->set(PyExecuteOutputUserData::key, py_output);
   kernel_node_->set_user_data<PyExecuteOutputUserData>(py_output);
 
   // Set Python data for front node.

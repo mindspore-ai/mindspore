@@ -147,9 +147,7 @@ void FillUserData(const UserDataPtr &user_data, DeviceAddress *device_address) {
   device_address->set_user_data(user_data);
 
   const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
-  if (user_data_type == nullptr) {
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(user_data_type);
   if (*user_data_type == UserDataType::kUserTypeHashTable) {
     auto key_type = user_data->get<TypeId>(kHashTableKeyType);
     auto value_type = user_data->get<TypeId>(kHashTableValueType);

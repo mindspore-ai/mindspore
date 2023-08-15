@@ -221,7 +221,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     if (!is_dynamic_shapes_[i]) {
       new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
-        input_device_tensor->host_shape(), input_device_tensor->user_data());
+        input_device_tensor->host_shape());
     } else {
       // If there is a dynamic shape, the shape in the kernel should be used.
       MS_LOG(DEBUG) << "Update dynamic shape in kernel output:" << node_with_index.first->DebugString()
@@ -229,7 +229,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       const auto &host_shape = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
       new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
-        host_shape, input_device_tensor->user_data());
+        host_shape);
     }
     MS_EXCEPTION_IF_NULL(new_device_tensor);
     const auto &swap_manager = device_context->device_res_manager_->swap_manager();
