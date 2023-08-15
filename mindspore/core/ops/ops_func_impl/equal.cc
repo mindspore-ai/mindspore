@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,16 @@
  */
 
 #include "ops/ops_func_impl/equal.h"
-#include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 BaseShapePtr EqualFuncImpl::InferShape(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
   return BroadCastInferShape(primitive->name(), input_args);
 }
 
 TypePtr EqualFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
-
-  auto prim_name = primitive->name();
-  auto x_dtype = input_args[kIndex0]->GetType();
-  auto y_dtype = input_args[kIndex1]->GetType();
-
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, all_types, prim_name);
-  mindspore::abstract::CheckDtypeSame(prim_name, x_dtype, y_dtype);
-
   return std::make_shared<TensorType>(kBool);
 }
 

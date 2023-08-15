@@ -23,7 +23,6 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <utility>
 #include "./op_name.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/base/shape_vector.h"
@@ -140,7 +139,7 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
                                        const std::string &op_name, const std::string &op_x_name = "input1",
                                        const std::string &op_y_name = "input2");
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args); /* old infer */
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 BaseShapePtr EltwiseGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 TypePtr EltwiseGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t> *axis, const size_t dim);

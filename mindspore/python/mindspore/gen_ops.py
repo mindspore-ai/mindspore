@@ -19,6 +19,71 @@ import sys
 import os
 import yaml
 
+def generate_py_op_signature(args_signature):
+    """
+    generate __mindspore_signature__
+    """
+    if args_signature is None:
+        return ''
+
+    signature_code = f"""__mindspore_signature__ = """
+
+    writable = args_signature.get('writable')
+    same_type = args_signature.get('same_type')
+
+    if writable is None:
+        signature_code += '(sig.sig_dtype.T, sig.sig_dtype.T)'
+        return signature_code
+
+    # deal with writable
+    writable = writable.replace(' ', '')
+    same_type = same_type.replace(' ', '')
+
+    signature_code += f""" (
+"""
+    same_type_list = []
+    same_type_parsed = same_type.split("(")
+    for item in same_type_parsed:
+        if ')' in item:
+            parsed = item.split(")")
+            same_type_list.append(parsed[0])
+
+    writable_items = writable.split(",")
+    writable_items_used = [False for i in range(len(writable_items))]
+
+    i = 0
+    dtype = ''
+    for same_type_team in same_type_list:
+        if i == 0:
+            dtype = f"""T"""
+        else:
+            dtype = f"""T{i}"""
+        i = i + 1
+        same_type_items = same_type_team.split(",")
+        for same_type_i in same_type_items:
+            find_writable = False
+            for writable_index, item_name in enumerate(writable_items):
+                if item_name == same_type_i:
+                    find_writable = True
+                    writable_items_used[writable_index] = True
+                    signature_code += f"""     sig.make_sig('{item_name}', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.{dtype}),
+"""
+                    break
+            if not find_writable:
+                signature_code += f"""     sig.make_sig('{same_type_i}', dtype=sig.sig_dtype.{dtype}),
+"""
+
+    # item has writable but do not has same_type
+    for used_index, used_item in enumerate(writable_items_used):
+        if not used_item:
+            item_name = writable_items[used_index]
+            signature_code += f"""     sig.make_sig('{item_name}', sig.sig_rw.RW_WRITE),
+"""
+
+    signature_code += f"""    )"""
+
+    return signature_code
+
 
 def generate_py_op_func(yaml_data, doc_data):
     """
@@ -145,6 +210,8 @@ def generate_py_primitive(yaml_data):
     """
     gen_py = ''
     for operator_name, operator_data in yaml_data.items():
+        signature_code = generate_py_op_signature(operator_data.get('args_signature'))
+
         args = operator_data.get('args')
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
         class_def = operator_data.get('class')
@@ -157,6 +224,7 @@ def generate_py_primitive(yaml_data):
         args_assign = '\n'.join(assign for assign in args_assign)
         primitive_code = f"""
 class {class_name}(Primitive):
+    {signature_code}
     @prim_attr_register
     def __init__(self, {', '.join(init_args_with_default) if init_args_with_default else ''}):
 {args_assign if args_assign else '        pass'}
@@ -400,6 +468,7 @@ if __name__ == "__main__":
 from mindspore.ops.primitive import Primitive, prim_attr_register
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops import signature as sig
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.arg_dtype_cast import TypeCastKind, type_it
 """

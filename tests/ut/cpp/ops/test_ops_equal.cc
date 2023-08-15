@@ -31,16 +31,17 @@ class TestEqual : public TestOps,
 TEST_P(TestEqual, dyn_shape) {
   const auto &shape_param = std::get<0>(GetParam());
   const auto &dtype_param = std::get<1>(GetParam());
+  EqualFuncImpl equal_infer_obj;
+  auto prim = std::make_shared<Primitive>("Equal");
+
   auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
-  ASSERT_NE(x, nullptr);
   auto y = std::make_shared<abstract::AbstractTensor>(dtype_param.y_type, shape_param.y_shape);
-  ASSERT_NE(y, nullptr);
   auto expect = std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape);
-  ASSERT_NE(expect, nullptr);
-  auto prim = std::make_shared<Primitive>(kNameEqual);
-  auto out_abstract = opt::CppInferShapeAndType(prim, {x, y});
-  ASSERT_NE(out_abstract, nullptr);
-  ASSERT_TRUE(*out_abstract == *expect);
+
+  auto out_shape = equal_infer_obj.InferShape(prim, {x, y});
+  ASSERT_TRUE(*out_shape == *expect->GetShape());
+  auto out_dtype = equal_infer_obj.InferType(prim, {x, y});
+  ASSERT_TRUE(*out_dtype == *expect->GetType());
 }
 
 auto EqualOpTypeCases = testing::ValuesIn({
