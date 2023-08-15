@@ -145,3 +145,22 @@ def test_create_multitype_funcgraph_instance():
         x = Tensor([1])
         net = Net()
         net(x)
+
+
+def test_raise_empty():
+    """
+    Feature: test raise error use
+    Description: raise error use.
+    Expectation: RuntimeError No active exception to reraise.
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            if x == 1:
+                raise
+            return x
+
+    with pytest.raises(RuntimeError) as e:
+        net = Net()
+        net(1)
+    assert "No active exception to reraise" in str(e.value)

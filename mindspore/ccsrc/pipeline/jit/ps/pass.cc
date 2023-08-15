@@ -995,7 +995,7 @@ bool AddEmbeddingCachePass(const ResourcePtr &resource) {
 std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExecutePass},
                                    {"rewriter_before_opt_a", RewriterBeforeOptAPass},
                                    {"opt_a", OptPassAGroup},
-                                   {"py_interpret_to_execute", PyInterpretToExecutePass},
+                                   {"py_interpret_to_execute_after_opt_a", PyInterpretToExecutePass},
                                    {"slice_cell_reuse_recomputed_activation", SliceReuseRecomputedActivationPass},
                                    {"rewriter_after_opt_a", RewriterAfterOptAPass},
                                    {"convert_pyexecute_list_input", ConvertPyExecuteListInputPass},
