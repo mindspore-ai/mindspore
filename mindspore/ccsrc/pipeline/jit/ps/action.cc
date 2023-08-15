@@ -649,7 +649,6 @@ bool MetaUnpackPrepareAction(const ResourcePtr &resource) {
   return MetaUnpackPreparePass(resource);
 }
 
-namespace {
 // Get abstract of the default value in the given parameter.
 AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param) {
   auto value = param->default_param();
@@ -667,6 +666,7 @@ AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param) {
   return std::make_shared<abstract::AbstractRefTensor>(abs_tensor, ref_key);
 }
 
+namespace {
 abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
   FuncGraphPtr func_graph = resource->func_graph();
   abstract::AbstractBasePtrList args_abs = resource->args_abs();

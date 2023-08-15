@@ -24,10 +24,12 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "pipeline/jit/ps/parse/resolve.h"
+#include "pipeline/jit/ps/action.h"
 #include "pipeline/jit/ps/static_analysis/prim.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/parallel_context.h"
 #include "include/common/utils/stub_tensor.h"
 
 namespace mindspore {
@@ -359,7 +361,16 @@ AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
     py::object node = py::getattr(arg, stub::PY_ATTR_STUB);
     return node.cast<std::shared_ptr<PackNode>>()->Get();
   } else if (py::hasattr(arg, "__parameter__") && py::isinstance<tensor::MetaTensor>(arg)) {
-    return parse::ResolveParameterObj(graphs_.top(), arg);
+    auto node = parse::ResolveParameterObj(graphs_.top(), arg);
+    auto param_node = node->cast<ParameterPtr>();
+    if (param_node->has_default()) {
+      auto context = parallel::ParallelContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context);
+      auto param_abs = pipeline::GetDefaultValueAbstract(param_node);
+      context->ParallelParameterContextRestoreShape(graphs_.top(), param_node, param_abs);
+      node->set_abstract(param_abs);
+    }
+    return node;
   } else {
     auto val = parse::data_converter::PyDataToValue(arg);
     MS_EXCEPTION_IF_NULL(val);
