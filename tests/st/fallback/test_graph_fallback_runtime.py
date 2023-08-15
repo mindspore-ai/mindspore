@@ -726,3 +726,29 @@ def test_tensor_func():
     exp_np = np.array(2, dtype=np.float32)
     assert np.allclose(result_ms_np, exp_np)
     assert result_ms_np.dtype == exp_np.dtype
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_self_variable_as_func_args():
+    """
+    Feature: JIT Fallback
+    Description: Use self as variable name
+    Expectation: No exception
+    """
+
+    class Network(nn.Cell):
+        def __init__(self):
+            super(Network, self).__init__()
+            self.value = 5
+
+        def construct(self, x, y):
+            return Network.func(self, x, y)
+
+        def func(self, x, y):
+            return x + y
+
+    net = Network()
+    out = net(Tensor([1], dtype=ms.float32), Tensor([2], dtype=ms.float32))
+    assert np.allclose(out.asnumpy(), np.array([3], dtype=np.float32))

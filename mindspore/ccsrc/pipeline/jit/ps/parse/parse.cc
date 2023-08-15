@@ -3834,6 +3834,13 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
       (void)filter_values.emplace_back(val_node);
     }
   }
+  constexpr auto self_text = "self";
+  if (keys.find(self_text) == keys.end() && script_text.find(self_text) != std::string::npos) {
+    py::object self_namespace = ast()->CallParseModFunction(PYTHON_MOD_GET_ATTR_NAMESPACE_SYMBOL, ast()->obj());
+    auto self_value = std::make_shared<InterpretedObject>(self_namespace);
+    (void)filter_keys.emplace_back(NewValueNode(MakeValue(self_text)));
+    (void)filter_values.emplace_back(NewValueNode(self_value));
+  }
 
   auto local_dict_node = ParseDictByKeysAndValues(block, filter_keys, filter_values);
   // Update the valued node if it need interpreting.
