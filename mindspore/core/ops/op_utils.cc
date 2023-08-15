@@ -871,5 +871,76 @@ size_t GetInputIndexByName(const std::string &op_name, const std::string &input_
   MS_LOG(EXCEPTION) << "Not Find " << input_name << "in OP " << op_name;
 }
 
+template <typename T>
+T GetScalarValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  return GetValue<T>(value);
+}
+
+template int64_t GetScalarValue(const ValuePtr &value);
+template int32_t GetScalarValue(const ValuePtr &value);
+template int16_t GetScalarValue(const ValuePtr &value);
+template int8_t GetScalarValue(const ValuePtr &value);
+template uint64_t GetScalarValue(const ValuePtr &value);
+template uint32_t GetScalarValue(const ValuePtr &value);
+template uint16_t GetScalarValue(const ValuePtr &value);
+template uint8_t GetScalarValue(const ValuePtr &value);
+template double GetScalarValue(const ValuePtr &value);
+template float GetScalarValue(const ValuePtr &value);
+template bool GetScalarValue(const ValuePtr &value);
+template std::string GetScalarValue(const ValuePtr &value);
+
+// This interface is only used to convert values of type Sequence or Tensor to std::vector.
+template <typename T>
+ArrayValue<T> GetArrayValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  ArrayValue<T> array_value;
+  if (value->isa<ValueSequence>()) {
+    // Sequence structure: Data is stored discretely.
+    auto value_seq = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(value_seq);
+
+    const auto &element_values = value_seq->value();
+    size_t element_size = element_values.size();
+    array_value.data_.reserve(element_size);
+    for (size_t i = 0; i < element_size; i++) {
+      const auto &element = element_values[i];
+      MS_EXCEPTION_IF_NULL(element);
+      if (element == kValueAny) {
+        array_value.data_.push_back(static_cast<T>(0));
+        array_value.unknown_value_indexes.insert(i);
+        continue;
+      }
+
+      array_value.data_.push_back(GetValue<T>(element));
+    }
+  } else if (value->isa<tensor::Tensor>()) {
+    // Tensor structure: Data is stored continuously.
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    size_t element_size = tensor->DataSize();
+    array_value.data_.reserve(element_size);
+    void *data = tensor->data_c();
+    auto ret = memcpy_s(array_value.data_.data(), array_value.data_.size() * sizeof(T), data, element_size * sizeof(T));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s, errno[" << ret << "].";
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "Failed to get array value, expect sequence or tensor type, but got: " << value->ToString();
+  }
+  return array_value;
+}
+
+template ArrayValue<int64_t> GetArrayValue(const ValuePtr &value);
+template ArrayValue<int32_t> GetArrayValue(const ValuePtr &value);
+template ArrayValue<int16_t> GetArrayValue(const ValuePtr &value);
+template ArrayValue<int8_t> GetArrayValue(const ValuePtr &value);
+template ArrayValue<uint64_t> GetArrayValue(const ValuePtr &value);
+template ArrayValue<uint32_t> GetArrayValue(const ValuePtr &value);
+template ArrayValue<uint16_t> GetArrayValue(const ValuePtr &value);
+template ArrayValue<uint8_t> GetArrayValue(const ValuePtr &value);
+template ArrayValue<double> GetArrayValue(const ValuePtr &value);
+template ArrayValue<float> GetArrayValue(const ValuePtr &value);
+template ArrayValue<std::string> GetArrayValue(const ValuePtr &value);
 }  // namespace ops
 }  // namespace mindspore

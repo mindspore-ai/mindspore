@@ -48,6 +48,33 @@
 namespace mindspore::ops {
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
+// ArrayValue uses std::vector<T> to hold the contents of the Sequence or Tensor flattened elements and provides an
+// interface to determine whether each element is ValueAny.
+template <typename T>
+struct ArrayValue {
+  // Use vector to hold the contents parsed from Sequence or Tensor Value.
+  std::vector<T> data_;
+  // Records the index whose value is unknown (ValueAny) in the data_ vector.
+  std::set<bool> unknown_value_indexes;
+
+  // Get data as a vector.
+  const std::vector<T> &data() const { return data_; }
+
+  // Access the value of Array at the index position.
+  const T &operator[](size_t index) const { return data_[index]; }
+
+  // Verify that the value at position index in data_ is valid.
+  bool IsValueUnknown(size_t index) { return unknown_value_indexes.find(index) != unknown_value_indexes.end(); }
+};
+
+// This interface is only used to get value for scalar data.
+template <typename T>
+T GetScalarValue(const ValuePtr &value);
+
+// This interface is only used to convert values of type Sequence or Tensor to std::vector.
+template <typename T>
+ArrayValue<T> GetArrayValue(const ValuePtr &value);
+
 
 const std::set<TypePtr> common_valid_types_with_bool = {
   kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool, kBFloat16};
