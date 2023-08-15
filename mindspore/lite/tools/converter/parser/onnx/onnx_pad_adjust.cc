@@ -88,8 +88,10 @@ bool AdjstVariablePadding(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   return true;
 }
 
-bool AdjstConstPadding(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node) {
-  MS_ASSERT(func_graph != nullptr && input_node != nullptr);
+bool AdjstConstPadding(const CNodePtr &cnode, const AnfNodePtr &input_node) {
+  MS_ASSERT(cnode != nullptr && input_node != nullptr);
+  auto func_graph = cnode->func_graph();
+  MS_ASSERT(func_graph != nullptr);
   auto tensor_info = opt::GetTensorInfo(input_node);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "get tensor info from parameter failed.";
@@ -104,13 +106,13 @@ bool AdjstConstPadding(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
     padding.at(i * DIMENSION_2D) = *(data + i);
     padding.at(i * DIMENSION_2D + 1) = *(data + data_size / DIMENSION_2D + i);
   }
-  if (memcpy_s(data, tensor_info->Size(), padding.data(), padding.size() * sizeof(int)) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    return false;
+  std::vector<std::vector<int32_t>> padding2d(DIMENSION_2D);
+  for (size_t i = 0; i < data_size / DIMENSION_2D; i++) {
+    padding2d[Index0].push_back(padding[i]);
+    padding2d[Index1].push_back(padding[i + data_size / DIMENSION_2D]);
   }
-
-  std::vector<int64_t> new_shape = {static_cast<int64_t>(data_size) / DIMENSION_2D, DIMENSION_2D};
-  tensor_info->set_shape(new_shape);
+  auto param_node = opt::BuildIntVec2DParameterNode(func_graph, padding2d, cnode->fullname_with_scope() + "_pads");
+  cnode->set_input(Index2, param_node);
   return true;
 }
 }  // namespace
@@ -129,7 +131,7 @@ bool OnnxPadAdjust::Adjust(const FuncGraphPtr &func_graph) {
     MS_CHECK_TRUE_RET(input_node != nullptr, false);
     auto param_input = input_node->cast<ParameterPtr>();
     if (param_input != nullptr && param_input->has_default()) {
-      if (!AdjstConstPadding(func_graph, input_node)) {
+      if (!AdjstConstPadding(cnode, input_node)) {
         MS_LOG(ERROR) << "Adjust paddings for node: " << cnode->fullname_with_scope() << " failed.";
         return false;
       } else {

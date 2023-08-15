@@ -275,4 +275,21 @@ ATTR_MAP(DeformableConv2D) = {
 };
 OUTPUT_MAP(DeformableConv2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DeformableConv2D, kDeformableConv2dOpName, ADPT_DESC(DeformableConv2D))
+
+// Conv2DTranspose for tf onnx inference
+INPUT_MAP(Conv2DTranspose) = {{1, INPUT_DESC(input_size)},
+                              {2, INPUT_DESC(x)},
+                              {3, INPUT_DESC(filter)},
+                              {4, INPUT_DESC(bias)},
+                              {5, INPUT_DESC(offset_w)}};
+ATTR_MAP(Conv2DTranspose) = {
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"data_format", ATTR_DESC(data_format, AnyTraits<string>())},
+  {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
+  {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"output_paddings", ATTR_DESC(output_padding, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"offset", ATTR_DESC(offset_x, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Conv2DTranspose) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Conv2DTransposeV2, kNameConv2DTransposeV2, ADPT_DESC(Conv2DTranspose))
 }  // namespace mindspore::transform

@@ -453,6 +453,7 @@ constexpr const char kNameReduceLogSum[] = "ReduceLogSum";
 constexpr const char kNameSize[] = "Size";
 constexpr const char kNameTfIdfVectorizer[] = "TfIdfVectorizer";
 constexpr const char kNameGridSampler3D[] = "GridSampler3D";
+constexpr const char kNameConv2DTransposeV2[] = "Conv2DTransposeV2";
 
 class OpAdapterDesc;
 
