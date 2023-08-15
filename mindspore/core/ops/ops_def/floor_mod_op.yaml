@@ -1,0 +1,12 @@
+#operator floor_mod
+floor_mod:
+  args:
+    x:
+      dtype: tensor
+      type_cast: scalar
+    y:
+      dtype: tensor
+      type_cast: scalar
+  returns:
+    output:
+      dtype: tensor
