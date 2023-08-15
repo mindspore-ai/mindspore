@@ -28,15 +28,15 @@
 # Finally the `cmake` command exit with status `1`.
 
 
-echo "find_package(LLVM 12 QUIET)" > akg_llvm_tmp.cmake
+echo "find_package(LLVM QUIET)" > akg_llvm_tmp.cmake
 cmake -P akg_llvm_tmp.cmake > /dev/null 2>&1
 result=$?
 rm akg_llvm_tmp.cmake
 
 if [  ${result} -eq 0 ]; then
-    echo "off" 
+    echo "off"
 else
-    echo "on" 
+    echo "on"
 fi
 
 
