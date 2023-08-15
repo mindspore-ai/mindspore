@@ -302,6 +302,8 @@ class COMMON_EXPORT AnfAlgo {
   static std::string GetJitLevel(const FuncGraphPtr &func_graph);
 
   static bool IsDynamicSequence(const AnfNodePtr &node);
+  static bool IsAnyTypeOutput(const AnfNodePtr &node);
+  static bool IsAnyTypeInput(const std::vector<AnfNodePtr> &inputs);
   static bool HasTupleInput(const CNodePtr &node);
   static bool HasDynamicTupleInput(const CNodePtr &node);
   static bool IsReduceOp(const std::string &op_name);

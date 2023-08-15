@@ -46,6 +46,7 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static void UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph);
   static device::DeviceAddressPtr CloneEmptyDeviceAddress(const device::DeviceAddressPtr &old_device_address,
                                                           const DeviceContext *device_context);
+  static void CreateGraphOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
 };
 device::DeviceAddressPtr GetInputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info);
 device::DeviceAddressPtr GetOutputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info,

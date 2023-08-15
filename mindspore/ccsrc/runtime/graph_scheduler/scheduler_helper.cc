@@ -27,6 +27,36 @@ namespace mindspore {
 namespace runtime {
 size_t SchedulerHelper::fusion_actor_index_ = 0;
 
+namespace {
+void CollectControlActors(const ActorSet *actor_set, std::vector<AbstractActorPtr> *actors) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  MS_EXCEPTION_IF_NULL(actors);
+  if (actor_set->control_actors_ != nullptr) {
+    const auto &control_actor_set = actor_set->control_actors_;
+    for (auto &switch_actor : control_actor_set->switch_actors_) {
+      MS_EXCEPTION_IF_NULL(switch_actor);
+      (void)actors->emplace_back(static_cast<AbstractActorPtr>(switch_actor));
+    }
+    for (auto &gather_actor : control_actor_set->gather_actors_) {
+      MS_EXCEPTION_IF_NULL(gather_actor);
+      (void)actors->emplace_back(static_cast<AbstractActorPtr>(gather_actor));
+    }
+    for (auto &entrance_actor : control_actor_set->entrance_actors_) {
+      MS_EXCEPTION_IF_NULL(entrance_actor);
+      (void)actors->emplace_back(static_cast<AbstractActorPtr>(entrance_actor));
+    }
+    for (auto &exit_actor : control_actor_set->exit_actors_) {
+      MS_EXCEPTION_IF_NULL(exit_actor);
+      (void)actors->emplace_back(static_cast<AbstractActorPtr>(exit_actor));
+    }
+    for (auto &stack_actor : control_actor_set->stack_actors_) {
+      MS_EXCEPTION_IF_NULL(stack_actor);
+      (void)actors->emplace_back(static_cast<AbstractActorPtr>(stack_actor));
+    }
+  }
+}
+}  // namespace
+
 std::vector<AbstractActorPtr> SchedulerHelper::CollectActors(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
   std::vector<AbstractActorPtr> actors;
@@ -49,6 +79,10 @@ std::vector<AbstractActorPtr> SchedulerHelper::CollectActors(const ActorSet *act
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(super_kernel_actor));
+  }
+  for (auto &any_type_kernel_actor : actor_set->any_type_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(any_type_kernel_actor));
   }
   for (auto &memory_actor : actor_set->memory_actors_) {
     MS_EXCEPTION_IF_NULL(memory_actor);
@@ -75,30 +109,7 @@ std::vector<AbstractActorPtr> SchedulerHelper::CollectActors(const ActorSet *act
   if (actor_set->output_actor_ != nullptr) {
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(actor_set->output_actor_));
   }
-  if (actor_set->control_actors_ != nullptr) {
-    const auto &control_actor_set = actor_set->control_actors_;
-    for (auto &switch_actor : control_actor_set->switch_actors_) {
-      MS_EXCEPTION_IF_NULL(switch_actor);
-      (void)actors.emplace_back(static_cast<AbstractActorPtr>(switch_actor));
-    }
-    for (auto &gather_actor : control_actor_set->gather_actors_) {
-      MS_EXCEPTION_IF_NULL(gather_actor);
-      (void)actors.emplace_back(static_cast<AbstractActorPtr>(gather_actor));
-    }
-    for (auto &entrance_actor : control_actor_set->entrance_actors_) {
-      MS_EXCEPTION_IF_NULL(entrance_actor);
-      (void)actors.emplace_back(static_cast<AbstractActorPtr>(entrance_actor));
-    }
-    for (auto &exit_actor : control_actor_set->exit_actors_) {
-      MS_EXCEPTION_IF_NULL(exit_actor);
-      (void)actors.emplace_back(static_cast<AbstractActorPtr>(exit_actor));
-    }
-    for (auto &stack_actor : control_actor_set->stack_actors_) {
-      MS_EXCEPTION_IF_NULL(stack_actor);
-      (void)actors.emplace_back(static_cast<AbstractActorPtr>(stack_actor));
-    }
-  }
-
+  CollectControlActors(actor_set, &actors);
   return actors;
 }
 
@@ -259,7 +270,7 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   to_actor->input_datas_num_++;
   (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), data_arrow.get()));
 
-  if (from_kernel == nullptr) {
+  if (from_kernel == nullptr || from_actor->type() == KernelTransformType::kAnyTypeKernelActor) {
     return;
   }
   // Update the reference count of from_kernel.
@@ -295,8 +306,14 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
     (void)from_actor->output_data_nodes_.insert(from_actor->output_data_nodes_.begin(), from_kernel);
     to_actor->input_datas_num_++;
     (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), result_arrow.get()));
+    if (from_actor->type() == KernelTransformType::kAnyTypeKernelActor) {
+      if (from_actor->device_contexts().empty() || from_actor->device_contexts()[0] == nullptr) {
+        MS_LOG(EXCEPTION) << "Failed to get device context for actor:" << from_actor->GetAID();
+      }
+      to_actor->device_contexts_[output_position] = from_actor->device_contexts()[0];
+      return;
+    }
   }
-
   if (!AnfAlgo::OutputAddrExist(from_kernel, from_output_index, false)) {
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << from_kernel->DebugString()
                                << " device address does not exist";
@@ -960,6 +977,7 @@ void SchedulerHelper::DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs
   DumpDSActors(actor_set->data_source_actors_, ofs);
   DumpKernelActors(actor_set->kernel_actors_, ofs);
   DumpSuperKernelActors(actor_set->super_kernel_actors_, ofs);
+  DumpAnyTypeKernelActors(actor_set->any_type_kernel_actors_, ofs);
   // The on input kernel actors are taken over by control actor in the control flow scene.
   if (actor_set->control_actors_ == nullptr) {
     DumpNoInputKernelActors(actor_set->no_input_kernel_actors_, ofs);

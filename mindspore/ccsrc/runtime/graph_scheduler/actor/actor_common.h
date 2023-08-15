@@ -45,6 +45,8 @@ using tensor::TensorPtr;
 using DeviceTensor = mindspore::device::DeviceAddress;
 using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
+using CompileFunc = std::function<KernelGraphPtr(
+  const GraphSegmentPtr &, const std::pair<AnfNodePtrList, AnfNodePtrList> &, const DeviceContext *, device::RunMode)>;
 
 // The execution result of actor.
 constexpr int kSuccess = 0;
@@ -65,6 +67,7 @@ const char kDataPrepareActorNameSuffix[] = "_DataPrepareActor";
 const char kHostDSActorNameSuffix[] = "_HostDSActor";
 const char kDeviceDSActorNameSuffix[] = "_DeviceDSActor";
 const char kSuperKernelActorNameSuffix[] = "_SuperKernelActor";
+const char kAnyTypeKernelActorNameSuffix[] = "_AnyTypeKernelActor";
 const char kLoopCountActorNameSuffix[] = "_LoopCountActor";
 const char kOutputActorNameSuffix[] = "_OutputActor";
 const char kEntranceActorNameSuffix[] = "_EntranceActor";
@@ -87,6 +90,8 @@ enum class KernelTransformType {
   kCustomActor,
   // Super kernel actor represents the sink executing of graph which is the combination of kernels.
   kSuperKernelActor,
+  // Any type kernel actor represents the graph which has an any type input.
+  kAnyTypeKernelActor,
   kCopyActor,
   kLoopCountActor,
   kOutputActor,

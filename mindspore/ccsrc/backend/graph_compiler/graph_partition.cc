@@ -722,6 +722,13 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
   return false;
 }
 
+namespace {
+bool IsAnyTypeCut(const AnfNodePtr &node) {
+  return common::GetEnv("MS_RUNTIME_COMPILE") == "1" &&
+         common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute) && common::AnfAlgo::IsAnyTypeOutput(node);
+}
+}  // namespace
+
 std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph, bool *multi_target) {
   MS_EXCEPTION_IF_NULL(graph);
   auto nodes = TopoSort(graph->get_return());
@@ -751,7 +758,6 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
   std::string last_target;
   mindspore::HashSet<AnfNodePtr> has_cut;
   mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> close_following;
-
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (has_cut.find(node) != has_cut.end()) {
@@ -784,15 +790,17 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
       segments.push_back(segment);
       segment_nodes.clear();
     } else if (node->isa<CNode>()) {
-      if (contain_multi_target) {
-        std::string cur_target = GetCNodeTarget(node);
-        if (cur_target != last_target && !last_target.empty()) {
-          NodesToSegments(segment_nodes, &segments, &node_to_segment);
-          segment_nodes.clear();
-        }
-        last_target = cur_target;
+      std::string cur_target = GetCNodeTarget(node);
+      if (cur_target != last_target && !last_target.empty()) {
+        NodesToSegments(segment_nodes, &segments, &node_to_segment);
+        segment_nodes.clear();
       }
+      last_target = cur_target;
       segment_nodes.emplace_back(node);
+      if (IsAnyTypeCut(node)) {
+        NodesToSegments(segment_nodes, &segments, &node_to_segment);
+        segment_nodes.clear();
+      }
     }
   }
   MS_LOG(DEBUG) << "Segment size:" << segments.size();

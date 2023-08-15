@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <utility>
 #include <map>
 #include <set>
 #include "utils/hash_map.h"
@@ -82,7 +83,7 @@ struct BACKEND_EXPORT GraphCompilerInfo {
                     const std::vector<AnfNodePtr> &control_nodes,
                     const std::vector<AnfNodePtr> &origin_parameters_order, const ControlNodeParserPtr &parser,
                     const KernelMapPosition &origin_outputs_order, const size_t outputs_num, const std::string &name,
-                    bool need_erase, GraphExecutionStrategy strategy)
+                    bool need_erase, GraphExecutionStrategy strategy, CompileFunc comile_func)
       : graphs_(graphs),
         device_contexts_(device_contexts),
         tensors_mask_(tensors_mask),
@@ -94,7 +95,8 @@ struct BACKEND_EXPORT GraphCompilerInfo {
         outputs_num_(outputs_num),
         name_(name),
         need_erase_(need_erase),
-        strategy_(strategy) {}
+        strategy_(strategy),
+        compile_func_(comile_func) {}
   ~GraphCompilerInfo();
   std::vector<KernelGraphPtr> graphs_;
   std::vector<DeviceContext *> device_contexts_;
@@ -108,6 +110,7 @@ struct BACKEND_EXPORT GraphCompilerInfo {
   std::string name_;
   bool need_erase_;
   mutable GraphExecutionStrategy strategy_;
+  CompileFunc compile_func_;
 };
 
 class GraphCompiler {
@@ -117,7 +120,7 @@ class GraphCompiler {
 
   // Construct kernel graph from anf nodes list and compile kernel graph in Graph mode,
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
-  GraphId CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
+  GraphId CompileGraph(const GraphSegmentPtr &segment, const std::pair<AnfNodePtrList, AnfNodePtrList> &io_nodes,
                        const DeviceContext *device_context, device::RunMode run_mode, bool run_in_pynative = false);
 
   GraphId CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,

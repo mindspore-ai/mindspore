@@ -464,6 +464,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   void set_is_from_single_op(bool is_from_single_op) { is_from_single_op_ = is_from_single_op; }
   bool is_from_single_op() const { return is_from_single_op_; }
+  void set_is_any_type_input(bool is_any_type_input) { is_any_type_input_ = is_any_type_input; }
+  bool is_any_type_input() const { return is_any_type_input_; }
   void set_run_mode(device::RunMode run_mode) { run_mode_ = run_mode; }
   device::RunMode RunMode() const { return run_mode_; }
   bool is_graph_run_mode() const { return run_mode_ == device::RunMode::kGraphMode; }
@@ -503,6 +505,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   const std::map<size_t, size_t> &somas_merged_blocks_map() const { return somas_info_->merged_blocks_map_; }
 
   void set_graph_info(const std::string &graph_info) { graph_info_ = graph_info; }
+  // Infer cnode abstract by parameter.
+  void InferType();
 
  private:
   // remove value node form graph
@@ -615,7 +619,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   // Indicate whether the kernel graph is constructed from single op in function graph
   bool is_from_single_op_{false};
-
+  // Indicate whether the kernel graph has an any type input.
+  bool is_any_type_input_{false};
   // Indicate whether the kernel graph sink will run on graph executor or kernel executor
   device::RunMode run_mode_{device::RunMode::kUnknown};
 

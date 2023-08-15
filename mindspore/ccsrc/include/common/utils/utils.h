@@ -314,6 +314,7 @@ constexpr auto kAttrPreKernelGraph = "pre_kernel_graph";
 constexpr auto kAttrNeedInline = "need_inline";
 constexpr auto kAttrOriFusionName = "ori_fusion_name";
 constexpr auto kAttrDynamicLenName = "is_dynamic_len";
+constexpr auto kAttrAnyOutputName = "is_any_output";
 constexpr auto kAttrForFormatChange = "for_format_change";
 constexpr auto kAttrReplaceRealKernelInBackend = "replace_real_kernel_in_backend";
 constexpr auto kAttrRefNodeMonadOutputIdx = "ref_node_monad_output_idx";

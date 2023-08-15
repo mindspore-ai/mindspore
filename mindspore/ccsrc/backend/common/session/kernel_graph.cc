@@ -1377,5 +1377,68 @@ KernelGraph::~KernelGraph() {
     MS_LOG(ERROR) << "KernelGraph call destructor failed";
   }
 }
+
+void KernelGraph::InferType() {
+  MS_LOG(DEBUG) << "Start infer type for graph:" << ToString();
+  std::vector<AnfNodePtr> nodes = TopoSort(get_return());
+  for (const auto &node : nodes) {
+    if (node == nullptr || (!node->isa<CNode>())) {
+      continue;
+    }
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->inputs().empty() || (!IsValueNode<Primitive>(cnode->input(0))) ||
+        common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimPyExecute)) {
+      continue;
+    }
+    cnode->set_abstract(nullptr);
+    MS_LOG(DEBUG) << "Infer abstract for node:" << node->fullname_with_scope();
+
+    // Fetch input abstracts.
+    std::vector<abstract::AbstractBasePtr> abstracts;
+    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      const auto &input = cnode->inputs()[i];
+      MS_EXCEPTION_IF_NULL(input);
+      const auto &abstract = input->abstract();
+      if (abstract == nullptr) {
+        MS_LOG(EXCEPTION) << "Invalid abstract for input:" << input->DebugString()
+                          << " for node:" << cnode->fullname_with_scope() << " input index:" << i;
+      }
+      MS_LOG(DEBUG) << "Add abstract:" << abstract->ToString() << " for input:" << input->DebugString();
+      abstracts.emplace_back(abstract);
+    }
+
+    // Fetch infer function.
+    std::optional<abstract::StandardPrimitiveImplReg> eval_impl;
+    const auto &primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto find = abstract::GetPrimitiveInferImpl(primitive);
+    if (find.has_value()) {
+      eval_impl = find.value();
+    }
+    if (!eval_impl.has_value()) {
+      MS_LOG(EXCEPTION) << "Failed to get eval impl for primitive:" << primitive->ToString()
+                        << " in node:" << cnode->fullname_with_scope();
+    }
+
+    // Infer value.
+    if (eval_impl->IsImplInferValue()) {
+      auto value = eval_impl->InferValue(primitive, abstracts);
+      if (value != nullptr && !value->isa<ValueAny>()) {
+        cnode->set_abstract(value->ToAbstract());
+        continue;
+      }
+    }
+
+    // Infer shape and type for cnode.
+    auto abstract = eval_impl->InferShapeAndType(nullptr, primitive, abstracts);
+    if (abstract == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to infer for primitive:" << primitive->ToString()
+                        << " in node:" << cnode->fullname_with_scope();
+    }
+    MS_LOG(INFO) << "Set abstract:" << abstract->ToString() << " for node:" << cnode->DebugString();
+    cnode->set_abstract(abstract);
+  }
+}
 }  // namespace session
 }  // namespace mindspore

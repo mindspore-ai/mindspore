@@ -672,7 +672,7 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
     if (tuple_shape->size() == 0) {
       return ShapeVector();
     }
-    if (IsDynamicSequence(node) || is_real_squence_output) {
+    if (IsDynamicSequence(node) || is_real_squence_output || IsAnyTypeOutput(node)) {
       const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
       MS_EXCEPTION_IF_NULL(sequence_abs);
       auto element_abs = sequence_abs->dynamic_len_element_abs();
@@ -2093,6 +2093,41 @@ bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {
     }
   } else if (node->isa<ValueNode>()) {
     return is_dynamic_len_func();
+  }
+  return false;
+}
+
+bool AnfAlgo::IsAnyTypeOutput(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<CNode>()) {
+    if (IsCallNode(node)) {
+      if (node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractAny>()) {
+        return true;
+      }
+      return false;
+    }
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->HasAttr(kAttrAnyOutputName)) {
+      return GetValue<bool>(cnode->GetAttr(kAttrAnyOutputName));
+    } else {
+      bool is_any_output = (node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractAny>());
+      cnode->AddAttr(kAttrAnyOutputName, MakeValue(is_any_output));
+      return is_any_output;
+    }
+  }
+  return false;
+}
+
+bool AnfAlgo::IsAnyTypeInput(const std::vector<AnfNodePtr> &inputs) {
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->abstract() == nullptr) {
+      continue;
+    }
+    if (input->abstract()->isa<abstract::AbstractAny>()) {
+      return true;
+    }
   }
   return false;
 }

@@ -297,6 +297,20 @@ void DumpSuperKernelActor(const SuperKernelActor *actor, std::ofstream &ofs) {
   ofs << "\n";
 }
 
+void DumpAnyTypeKernelActor(const AnyTypeKernelActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  const auto &graph = actor->graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  ofs << "\t\tgraph_id:" << graph->graph_id() << "\tgraphl_name:" << graph->ToString()
+      << "\tis_graph_run_mode:" << graph->is_graph_run_mode() << "\tis_loop_count_sink:" << graph->is_loop_count_sink()
+      << "\tinputs_num:" << (graph->input_nodes()).size() << "\tkernels_num:" << (graph->execution_order()).size()
+      << "\tis enable zero copy:" << graph->has_flag(kFlagEnableZeroCopyInGraph) << "\n";
+
+  DumpAbstractActor(actor, ofs);
+  ofs << "\n";
+}
+
 void DumpMemoryActor(const MemoryAwareActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
@@ -713,6 +727,13 @@ void DumpSuperKernelActors(const std::vector<SuperKernelActorPtr> &actors, std::
   ofs << "\n\n[Super kernel actors:" << actors.size() << "]\n";
   for (const auto &super_kernel_actor : actors) {
     DumpSuperKernelActor(super_kernel_actor.get(), ofs);
+  }
+}
+
+void DumpAnyTypeKernelActors(const std::vector<AnyTypeKernelActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n[Any Type kernel actors:" << actors.size() << "]\n";
+  for (const auto &actor : actors) {
+    DumpAnyTypeKernelActor(actor.get(), ofs);
   }
 }
 
