@@ -1,0 +1,15 @@
+#operator eye
+eye:
+  args:
+    n:
+      dtype: int
+    m:
+      dtype: int
+    dtype:
+      dtype: int
+      arg_handler: dtype_to_enum
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: eye_

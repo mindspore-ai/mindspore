@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-#include "ops/ops_func_impl/equal.h"
-#include "ops/op_utils.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_EYE_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_EYE_H_
+
+#include <vector>
+#include <set>
+#include "ops/ops_func_impl/op_func_impl.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr EqualFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args) const {
-  return BroadCastInferShape(primitive->name(), input_args);
-}
-
-TypePtr EqualFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  return std::make_shared<TensorType>(kBool);
-}
+class MIND_API EyeFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  std::set<int64_t> GetValueDependArgIndices() const override { return {kInputIndex0, kInputIndex1, kInputIndex2}; };
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_EYE_H_

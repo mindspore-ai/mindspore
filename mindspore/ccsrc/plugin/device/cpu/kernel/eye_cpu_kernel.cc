@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/eye.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,11 +28,6 @@ constexpr size_t kEyeOutputsNum = 1;
 bool EyeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                            const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::Eye>(base_operator->GetPrim());
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Eye ops failed!";
-    return false;
-  }
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 

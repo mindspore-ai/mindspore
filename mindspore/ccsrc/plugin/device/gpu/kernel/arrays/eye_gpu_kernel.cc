@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <memory>
 
-#include "mindspore/core/ops/eye.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/eye_impl.cuh"
@@ -35,11 +34,6 @@ bool EyeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
                            const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::Eye>(base_operator->GetPrim());
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Eye ops failed!";
-    return false;
-  }
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
