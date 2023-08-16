@@ -894,7 +894,9 @@ template std::string GetScalarValue(const ValuePtr &value);
 template <typename T>
 ArrayValue<T> GetArrayValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  ArrayValue<T> array_value;
+  std::vector<T> array_data;
+  std::set<bool> unknown_value_indexes;
+
   if (value->isa<ValueSequence>()) {
     // Sequence structure: Data is stored discretely.
     auto value_seq = value->cast<ValueSequencePtr>();
@@ -902,33 +904,34 @@ ArrayValue<T> GetArrayValue(const ValuePtr &value) {
 
     const auto &element_values = value_seq->value();
     size_t element_size = element_values.size();
-    array_value.data_.reserve(element_size);
+    array_data.reserve(element_size);
     for (size_t i = 0; i < element_size; i++) {
       const auto &element = element_values[i];
       MS_EXCEPTION_IF_NULL(element);
       if (element == kValueAny) {
-        array_value.data_.push_back(static_cast<T>(0));
-        array_value.unknown_value_indexes.insert(i);
+        array_data.push_back(static_cast<T>(0));
+        unknown_value_indexes.insert(i);
         continue;
       }
 
-      array_value.data_.push_back(GetValue<T>(element));
+      array_data.push_back(GetValue<T>(element));
     }
   } else if (value->isa<tensor::Tensor>()) {
     // Tensor structure: Data is stored continuously.
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     size_t element_size = tensor->DataSize();
-    array_value.data_.reserve(element_size);
+    array_data.reserve(element_size);
     void *data = tensor->data_c();
-    auto ret = memcpy_s(array_value.data_.data(), array_value.data_.size() * sizeof(T), data, element_size * sizeof(T));
+    auto ret = memcpy_s(array_data.data(), array_data.size() * sizeof(T), data, element_size * sizeof(T));
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "Failed to memcpy_s, errno[" << ret << "].";
     }
   } else {
     MS_LOG(EXCEPTION) << "Failed to get array value, expect sequence or tensor type, but got: " << value->ToString();
   }
-  return array_value;
+
+  return ArrayValue<T>(std::move(array_data), std::move(unknown_value_indexes));
 }
 
 template ArrayValue<int64_t> GetArrayValue(const ValuePtr &value);

@@ -51,20 +51,37 @@ const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64
 // ArrayValue uses std::vector<T> to hold the contents of the Sequence or Tensor flattened elements and provides an
 // interface to determine whether each element is ValueAny.
 template <typename T>
-struct ArrayValue {
+class ArrayValue {
+ public:
+  ArrayValue(std::vector<T> &&data, std::set<bool> &&unknown_value_indexes)
+      : data_(std::move(data)), unknown_value_indexes_(std::move(unknown_value_indexes)) {}
+  ~ArrayValue() = default;
+
+  // Access the value of Array at the index position.
+  const T &operator[](size_t index) const {
+    if (index >= data_.size()) {
+      MS_LOG(EXCEPTION) << "The index[" << index << "] is out of range, element size is: " << data_.size();
+    }
+    if (IsValueUnknown(index)) {
+      MS_LOG(EXCEPTION) << "Try to get unknown value.";
+    }
+    return data_[index];
+  }
+
+  // Verify that the value at position index in data_ is valid.
+  bool IsValueUnknown(size_t index) const { return unknown_value_indexes_.find(index) != unknown_value_indexes_.end(); }
+
+  // Verify whether exist unknown value in ArrayValue.
+  bool HasUnknownValue() const { return !unknown_value_indexes_.empty(); }
+
+  // Get element number in ArrayValue.
+  size_t size() const { return data_.size(); }
+
+ private:
   // Use vector to hold the contents parsed from Sequence or Tensor Value.
   std::vector<T> data_;
   // Records the index whose value is unknown (ValueAny) in the data_ vector.
-  std::set<bool> unknown_value_indexes;
-
-  // Get data as a vector.
-  const std::vector<T> &data() const { return data_; }
-
-  // Access the value of Array at the index position.
-  const T &operator[](size_t index) const { return data_[index]; }
-
-  // Verify that the value at position index in data_ is valid.
-  bool IsValueUnknown(size_t index) { return unknown_value_indexes.find(index) != unknown_value_indexes.end(); }
+  std::set<bool> unknown_value_indexes_;
 };
 
 // This interface is only used to get value for scalar data.
