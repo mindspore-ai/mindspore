@@ -236,7 +236,8 @@ void ModelParallelRunnerPyBind(const py::module &m) {
   (void)py::class_<ModelParallelRunner, std::shared_ptr<ModelParallelRunner>>(m, "ModelParallelRunnerBind")
     .def(py::init<>())
     .def("init",
-         py::overload_cast<const std::string &, const std::shared_ptr<RunnerConfig> &>(&ModelParallelRunner::Init))
+         py::overload_cast<const std::string &, const std::shared_ptr<RunnerConfig> &>(&ModelParallelRunner::Init),
+         py::call_guard<py::gil_scoped_release>())
     .def("get_inputs", &PyModelParallelRunnerGetInputs)
     .def("get_outputs", &PyModelParallelRunnerGetOutputs)
     .def("predict", &PyModelParallelRunnerPredict, py::call_guard<py::gil_scoped_release>());
