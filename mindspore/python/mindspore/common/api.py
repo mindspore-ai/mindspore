@@ -55,6 +55,8 @@ from mindspore.common.auto_dynamic_shape import _AutoIdentifyDynamicShape
 ms_compile_cache = set()
 # Store cell compiled pipeline cache.
 cells_compile_cache = {}
+# Store function compiled times information.
+function_phases = dict()
 
 BROADCAST_PHASE = "_broadcast_"
 _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
@@ -303,7 +305,6 @@ class _MindsporeFunctionExecutor:
     Returns:
         The result of pipeline running in graph mode.
     """
-
     def __init__(self, fn, ms_create_time, input_signature=None, obj=None, jit_config=None):
         init_pipeline()
         if not isinstance(fn, (types.FunctionType, types.MethodType)):
@@ -360,13 +361,15 @@ class _MindsporeFunctionExecutor:
         compile_args = self._generate_compile_args(args)
         # Restore the mutable attr for every arg.
         compile_args = _restore_mutable_attr(args, compile_args)
-        generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-            str(self.fn.__code__.co_firstlineno)
+        generate_name = self.fn.__code__.co_filename + ".line" + \
+            str(self.fn.__code__.co_firstlineno) + "." + self.fn.__name__
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
         if _is_pynative_parallel():
             generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
-
+        # The full Function name
+        full_function_name = generate_name
+        create_time = ''
         # Add key with obj
         if self.obj is not None:
             if self.obj.__module__ != self.fn.__module__:
@@ -376,13 +379,18 @@ class _MindsporeFunctionExecutor:
             self.obj.__parse_method__ = method_name
             if isinstance(self.obj, ms.nn.Cell):
                 generate_name = generate_name + '.' + str(self.obj.create_time)
+                create_time = str(self.obj.create_time)
             else:
                 generate_name = generate_name + '.' + str(self._create_time)
+                create_time = str(self._create_time)
+
             generate_name = generate_name + '.' + str(id(self.obj))
+            full_function_name = generate_name
         else:
             # Different instance of same class may use same memory(means same obj_id) at diff times.
             # To avoid unexpected phase matched, add create_time to generate_name.
             generate_name = generate_name + '.' + str(self._create_time)
+            create_time = str(self._create_time)
 
         self.enable_tuple_broaden = False
         if hasattr(self.obj, "enable_tuple_broaden"):
@@ -394,6 +402,33 @@ class _MindsporeFunctionExecutor:
         self.auto_identify_dynamic_shape.update_phase_and_compile_args(compile_args, phase, False)
         if phase in ms_compile_cache:
             return phase
+
+        if full_function_name in function_phases:
+            warning_times = 3
+            if len(function_phases[full_function_name]) % 10 == warning_times:
+                def analysize(log):
+                    time_set = set()
+                    key_set = set()
+                    tips = "For more details, get instructions about `jit` at " \
+                           "https://www.mindspore.cn/search?inputValue=jit. "
+                    for item in log:
+                        time_set.add(item[0])
+                        key_set.add(item[1])
+
+                    if len(key_set) >= warning_times:
+                        return "The args of the function ware always changed, " + \
+                               "please make sure the shape or the type of args are not variable. " + \
+                               tips
+                    if len(time_set) >= warning_times:
+                        return "If the function is @jit, try to use @jit(compile_once=True) with risk. " + \
+                               tips
+                    return tips
+
+                logger.warning(f"The function '{full_function_name}' has been compiled for "
+                               f"{len(function_phases[full_function_name])} times. "
+                               f"{analysize(function_phases[full_function_name])} ")
+        else:
+            function_phases[full_function_name] = list()
 
         # If enable compile cache, get the dependency files list and set to graph executor.
         self._set_compile_cache_dep_files()
@@ -413,6 +448,8 @@ class _MindsporeFunctionExecutor:
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
         ms_compile_cache.add(phase)
+        function_phases[full_function_name].append((create_time, key))
+        logger.info(f"Compile the function '{full_function_name}' create time={create_time} ,key={key}")
         return phase
 
     @staticmethod
@@ -514,7 +551,7 @@ def _get_jit_hash(hash_input):
     return _get_obj_id(hash_input)
 
 
-def jit(fn=None, input_signature=None, hash_args=None, jit_config=None):
+def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_once=False):
     """
     Create a callable MindSpore graph from a Python function.
 
@@ -591,11 +628,25 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None):
         >>> inputs = Tensor(np.ones([10, 10, 10]).astype(np.float32))
         >>> for i in range(10):
         ...     closure_fn(inputs, func)
+        ...
+        ... # Set compile_once = True, otherwise the train_step will be compiled again.
+        >>> def train(x):
+        ...     @jit(compile_once = True)
+        ...     def train_step(x):
+        ...         return ops.exp(x)
+        ...     for i in range(10):
+        ...         train_step(x)
+        ...
+        >>> inputs = Tensor(np.ones([10, 10, 10]).astype(np.float32))
+        >>> for i in range(10):
+        ...     train(inputs)
     """
 
     def wrap_mindspore(func):
         if hash_args:
             hash_obj = _get_jit_hash(hash_args)
+        elif compile_once:
+            hash_obj = 0
         else:
             hash_obj = int(time.time() * 1e9)
 
@@ -643,6 +694,8 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
             like functions or objects of class defined outside `fn`. Calling `fn` again with change of `hash_args`
             will trigger recompilation. Default: ``None`` .
         jit_config (JitConfig): Jit config for compile. Default: ``None`` .
+        compile_once(bool): The function would be compiled only once with risk even if the free variables were changed.
+            Default: ``False`` .
 
     Returns:
         Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
