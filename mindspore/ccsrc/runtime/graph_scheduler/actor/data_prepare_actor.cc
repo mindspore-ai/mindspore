@@ -450,6 +450,7 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
   if (device_address->is_ptr_persisted() || (tensor_address->GetDeviceType() != device_address->GetDeviceType()) ||
       (!AnfAlgo::IsEquivalentFormat(tensor_address->format(), device_address->format())) ||
       (tensor_address->type_id() != device_address->type_id())) {
+    MS_LOG(DEBUG) << "Cannot update address of " << input_node->DebugString();
     return;
   }
 
@@ -457,6 +458,7 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
   (void)address_modified_input_nodes_.insert(input_node.get());
   tensor_address->set_flag(device_address->flag());
   AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
+  MS_LOG(DEBUG) << "Update device address of " << input_node->DebugString() << " to " << tensor_address.get();
   tensor_address->SetNodeIndex(input_node, 0);
   tensor_address->set_original_ref_count(SIZE_MAX);
   tensor_address->ResetRefCount();

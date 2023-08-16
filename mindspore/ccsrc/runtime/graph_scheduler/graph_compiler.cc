@@ -618,6 +618,7 @@ KernelGraphPtr GraphCompiler::ConstructKernelGraphForGraphRunMode(const FuncGrap
     MS_EXCEPTION_IF_NULL(manager);
     for (const auto &graph : *all_graphs) {
       MS_EXCEPTION_IF_NULL(graph);
+      graph->set_flag(kFlagEnableZeroCopyInGraph, true);
       manager->AddFuncGraph(graph);
       graph->set_manager(manager);
       graph->SetInputNodes();

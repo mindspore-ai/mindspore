@@ -88,6 +88,10 @@ bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
   if (!is_parameter_data) {
     return false;
   }
+  // Need to be updated every step.
+  if (node->has_user_data(kForwardOutput)) {
+    return true;
+  }
 
   if (strategy == GraphExecutionStrategy::kStep) {
     MS_EXCEPTION_IF_NULL(graph);
