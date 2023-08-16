@@ -75,7 +75,16 @@ class TensorNumpyImpl : public MutableTensorImpl {
   int64_t ElementNum() const override { return buffer_.size; }
   size_t DataSize() const override { return buffer_.size * buffer_.itemsize; }
 
-  void SetDeviceData(void *data) override { device_data_ = data; }
+  void SetDeviceData(void *data) override {
+#ifdef ENABLE_CLOUD_INFERENCE
+    if (device_data_ != nullptr) {
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_);
+    }
+    device_data_ = data;
+    return;
+#endif
+    MS_LOG(ERROR) << "not support.";
+  }
 
   void *GetDeviceData() override { return device_data_; }
 
