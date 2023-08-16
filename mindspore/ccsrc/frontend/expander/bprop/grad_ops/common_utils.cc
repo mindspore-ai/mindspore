@@ -721,4 +721,24 @@ ShapeVector GetShapeByRange(const ShapeVector &v, int64_t begin, int64_t end) {
   ShapeVector res(v.begin() + real_begin, v.begin() + real_end);
   return res;
 }
+
+NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
+  auto shape = ib->GetShape(x);
+  if (IsDynamicRank(shape)) {
+    MS_LOG_EXCEPTION << "MatrixTranspose doesn't support dynamic rank now";
+  }
+  auto dim = shape.size();
+  if (dim < kDim2) {
+    MS_LOG_EXCEPTION << "To do MatrixTranspose for input a's ndim is not greater or equal to 2, which is invalid: "
+                     << dim;
+  }
+  std::vector<int64_t> perm(dim);
+  for (size_t i = 0; i < dim; i++) {
+    perm[i] = static_cast<int64_t>(i);
+  }
+  std::swap(perm[dim - kIndex2], perm[dim - kIndex1]);
+  return ib->Transpose(x, perm);
+}
+
+NodePtr Adjoint(BpropIRBuilder *ib, const NodePtr &x) { return MatrixTranspose(ib, ib->Conj(x)); }
 }  // namespace mindspore::expander::bprop

@@ -20,23 +20,6 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
-  auto shape = ib->GetShape(x);
-  auto dim = shape.size();
-  if (dim < kDim2) {
-    MS_LOG_EXCEPTION << "To do MatrixTranspose for input a's ndim is not greater or equal to 2, which is invalid: "
-                     << dim;
-  }
-  std::vector<int64_t> perm;
-  for (int64_t i = 0; i < SizeToLong(dim); i++) {
-    perm.push_back(i);
-  }
-  std::swap(perm[dim - kIndex2], perm[dim - kIndex1]);
-  return ib->Transpose(x, perm);
-}
-
-NodePtr Adjoint(BpropIRBuilder *ib, const NodePtr &x) { return MatrixTranspose(ib, ib->Conj(x)); }
-
 NodePtr MatrixDiag(BpropIRBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
   auto row = shape[shape.size() - 1];
