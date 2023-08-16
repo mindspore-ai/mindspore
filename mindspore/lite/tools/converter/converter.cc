@@ -491,7 +491,10 @@ int ConverterImpl::ParseParam(lite::ConfigFileParser *config_parser, const std::
     // parse ascend_context in config file, the priority is higher
     if (maps.find("ascend_context") != maps.end()) {
       auto map = maps.at("ascend_context");
-      config_parser->SetParamByConfigfile(param, map);
+      if (!config_parser->SetParamByConfigfile(param, map)) {
+        MS_LOG(ERROR) << "Failed to parse config item ascend_context";
+        return RET_ERROR;
+      }
     }
     if (!param->config_file.empty()) {
       (void)CheckOfflineParallelConfig(param->config_file, &param->parallel_split_config);

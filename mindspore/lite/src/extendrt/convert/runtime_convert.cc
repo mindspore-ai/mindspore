@@ -171,7 +171,10 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
       if (config_info.find("ascend_context") != config_info.end()) {
         std::map<std::string, std::string> ascend_map = config_info.at("ascend_context");
         mindspore::lite::ConfigFileParser config_parser;
-        config_parser.SetParamByConfigfile(param, ascend_map);
+        if (!config_parser.SetParamByConfigfile(param, ascend_map)) {
+          MS_LOG(ERROR) << "Failed to parse config item ascend_context";
+          return RET_ERROR;
+        }
       }
       if (device->GetProvider() == mindspore::lite::kAscendProviderGe) {
         param->provider = mindspore::lite::kAscendProviderGe;
