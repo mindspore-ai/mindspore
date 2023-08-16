@@ -47,17 +47,26 @@ template <typename In0_t, typename In1_t, typename Out_t>
 struct BinaryFunc<BinaryOpType::kPow, In0_t, In1_t, Out_t, typename std::is_integral<Out_t>::type> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
   __device__ __host__ __forceinline__ Out_t operator()(const In0_t &lhs, const In1_t &rhs) const {
-    Out_t ret = 1;
     In0_t base = lhs;
     In1_t exp = rhs;
+    if (exp < 0) {
+      if (base == 1) {
+        return 1;
+      } else if (base == -1) {
+        return ((-exp) % 2 == 1) ? -1 : 1;
+      } else {
+        return 0;
+      }
+    }
+    Out_t result = 1;
     while (exp) {
       if (exp & 1) {
-        ret *= base;
+        result *= base;
       }
+      exp = exp >> 1;
       base *= base;
-      exp /= 2;
     }
-    return ret;
+    return result;
   }
 };
 
