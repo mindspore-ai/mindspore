@@ -33,33 +33,9 @@ mindspore.dataset.MnistDataset
         - `使用数据Pipeline加载 & 处理数据集
           <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
 
-    .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
+    .. note:: 入参 `num_samples` 、 `shuffle` 、 `num_shards` 、 `shard_id` 可用于控制数据集所使用的采样器，其与入参 `sampler` 搭配使用的效果如下。
 
-    .. list-table:: 配置 `sampler` 和 `shuffle` 的不同组合得到的预期排序结果
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - 参数 `sampler`
-         - 参数 `shuffle`
-         - 预期数据顺序
-       * - None
-         - None
-         - 随机排列
-       * - None
-         - True
-         - 随机排列
-       * - None
-         - False
-         - 顺序排列
-       * - `sampler` 实例
-         - None
-         - 由 `sampler` 行为定义的顺序
-       * - `sampler` 实例
-         - True
-         - 不允许
-       * - `sampler` 实例
-         - False
-         - 不允许
+    .. include:: mindspore.dataset.sampler.rst
 
     **关于MNIST数据集：**
     
