@@ -147,6 +147,9 @@ bool SparseMatrixTransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPt
   if (is_null_input_) {
     return true;
   }
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseMatrixTransposeInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseMatrixTransposeOutputsNum, kernel_name_);
   S *csr_dense_shape_addr = GetDeviceAddress<S>(inputs, kIndex0);
   S *csr_batch_pointers_addr = GetDeviceAddress<S>(inputs, kIndex1);
   S *csr_row_pointers_addr = GetDeviceAddress<S>(inputs, kIndex2);

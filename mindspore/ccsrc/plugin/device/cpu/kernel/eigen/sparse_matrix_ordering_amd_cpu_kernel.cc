@@ -52,15 +52,17 @@ using IndicesMap = Eigen::Map<Eigen::Matrix<int32_t, Eigen::Dynamic, Eigen::Dyna
 bool SparseMatrixOrderingAMDCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                                const std::vector<KernelTensorPtr> &inputs,
                                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixOrderingAMD>(base_operator);
   kernel_name_ = kernel_ptr->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+
   x_dense_shape_shape_ = inputs[kIndex0]->GetShapeVector();
   x_batch_pointers_shape_ = inputs[kIndex1]->GetShapeVector();
   x_row_pointers_shape_ = inputs[kIndex2]->GetShapeVector();
   x_col_indices_shape_ = inputs[kIndex3]->GetShapeVector();
   x_values_shape_ = inputs[kIndex4]->GetShapeVector();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

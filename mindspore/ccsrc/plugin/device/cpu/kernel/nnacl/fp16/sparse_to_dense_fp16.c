@@ -18,6 +18,9 @@
 
 int SparseToDenseSetDefaultFp16(float16_t *output, float16_t default_value, SparseToDenseParameter *param,
                                 int task_id) {
+  if (output == NULL || param == NULL) {
+    return NNACL_NULL_PTR;
+  }
   if (param->op_parameter_.thread_num_ == 0) {
     return NNACL_ERR;
   }
@@ -32,6 +35,9 @@ int SparseToDenseSetDefaultFp16(float16_t *output, float16_t default_value, Spar
 
 int SparseToDenseFp16(int *indices_vec, const float16_t *sparse_values, float16_t default_value, float16_t *output,
                       SparseToDenseParameter *param, int task_id) {
+  if (indices_vec == NULL || sparse_values == NULL || output == NULL || param == NULL) {
+    return NNACL_NULL_PTR;
+  }
   if (param->op_parameter_.thread_num_) {
     return NNACL_ERR;
   }

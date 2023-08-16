@@ -17,6 +17,9 @@
 #include "nnacl/errorcode.h"
 
 int SparseToDenseSetDefault(float *output, float default_value, const SparseToDenseParameter *param, int task_id) {
+  if (output == NULL || param == NULL) {
+    return NNACL_NULL_PTR;
+  }
   if (param->op_parameter_.thread_num_ == 0) {
     return NNACL_ERR;
   }
@@ -31,6 +34,9 @@ int SparseToDenseSetDefault(float *output, float default_value, const SparseToDe
 
 int SparseToDense(int32_t *indices_vec, const float *sparse_values, float default_value, float *output,
                   SparseToDenseParameter *param, int task_id) {
+  if (indices_vec == NULL || sparse_values == NULL || output == NULL || param == NULL) {
+    return NNACL_NULL_PTR;
+  }
   if (param->op_parameter_.thread_num_ == 0) {
     return NNACL_ERR;
   }

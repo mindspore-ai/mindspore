@@ -30,7 +30,10 @@ namespace ops {
 namespace {
 abstract::ShapePtr SparseMatrixOrderingAMDInferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  constexpr int inputs_num = 5;
   auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, inputs_num, prim_name);
   auto d_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto b_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto r_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
@@ -67,6 +70,10 @@ abstract::ShapePtr SparseMatrixOrderingAMDInferShape(const PrimitivePtr &primiti
 }
 
 TypePtr SparseMatrixOrderingAMDInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  constexpr int inputs_num = 5;
+  auto prim_name = prim->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, inputs_num, prim_name);
   const std::set<TypePtr> dense_shape_valid_types = {kInt64};
   const std::set<TypePtr> indices_pointer_valid_types = {kInt32};
   const std::set<TypePtr> values_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
