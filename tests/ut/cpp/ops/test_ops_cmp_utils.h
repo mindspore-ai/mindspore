@@ -23,6 +23,21 @@
 
 namespace mindspore {
 namespace ops {
+void ShapeCompare(const abstract::BaseShapePtr &output, const abstract::BaseShapePtr &expect);
+void TypeCompare(const TypePtr &output, const TypePtr &expect);
+
+template <typename T, typename std::enable_if<std::is_base_of<OpFuncImpl, T>::value>::type * = nullptr>
+void DoFuncImplInferAndCompare(const std::string &prim_name, const abstract::AbstractBasePtrList &input_args,
+                               const abstract::BaseShapePtr &expect_shape, const TypePtr &expect_type) {
+  auto infer_impl = std::make_shared<T>();
+  ASSERT_NE(infer_impl, nullptr);
+  auto prim = std::make_shared<Primitive>(prim_name);
+  auto inferred_shape = infer_impl->InferShape(prim, input_args);
+  auto inferred_type = infer_impl->InferType(prim, input_args);
+  ShapeCompare(inferred_shape, expect_shape);
+  TypeCompare(inferred_type, expect_type);
+}
+
 void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
                                        const EltwiseOpParams &param);
 void TestOpFuncImplWithMutiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
@@ -33,8 +48,7 @@ void TestOpFuncImplWithMutiInputOpParams(const OpFuncImplPtr &infer_impl, const 
     TestOpFuncImplWith##param_name(std::make_shared<op_name##FuncImpl>(), #op_name, GetParam()); \
   }
 
-#define OP_FUNC_IMPL_TEST_CASES(op_name, cases) \
-  INSTANTIATE_TEST_CASE_P(TestOpsFuncImpl, Test##op_name, cases);
+#define OP_FUNC_IMPL_TEST_CASES(op_name, cases) INSTANTIATE_TEST_CASE_P(TestOpsFuncImpl, Test##op_name, cases);
 }  // namespace ops
 }  // namespace mindspore
 

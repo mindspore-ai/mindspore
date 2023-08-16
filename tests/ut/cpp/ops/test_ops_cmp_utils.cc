@@ -23,7 +23,9 @@
 
 namespace mindspore {
 namespace ops {
-static void ShapeCompare(const abstract::BaseShapePtr &output, const abstract::BaseShapePtr &expect) {
+void ShapeCompare(const abstract::BaseShapePtr &output, const abstract::BaseShapePtr &expect) {
+  ASSERT_NE(output, nullptr);
+  ASSERT_NE(expect, nullptr);
   if (!(*output == *expect)) {
     MS_LOG(ERROR) << "Shape Compare Failed, start to print error info.";
     MS_LOG(ERROR) << "output [" << output->type_name() << "]: " << output->ToString();
@@ -32,7 +34,9 @@ static void ShapeCompare(const abstract::BaseShapePtr &output, const abstract::B
   }
 }
 
-static void TypeCompare(const TypePtr &output, const TypePtr &expect) {
+void TypeCompare(const TypePtr &output, const TypePtr &expect) {
+  ASSERT_NE(output, nullptr);
+  ASSERT_NE(expect, nullptr);
   if (!(*output == *expect)) {
     MS_LOG(ERROR) << "Type Compare Failed, start to print error info.";
     MS_LOG(ERROR) << "output [" << output->type_name() << "]: " << output->ToString();
@@ -47,7 +51,7 @@ void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const st
   ASSERT_NE(primitive, nullptr);
   auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
   ASSERT_NE(x, nullptr);
-  std::vector<abstract::AbstractBasePtr>input_args{std::move(x)};
+  std::vector<abstract::AbstractBasePtr> input_args{std::move(x)};
 
   ASSERT_NE(infer_impl, nullptr);
   auto infer_shape = infer_impl->InferShape(primitive, input_args);
