@@ -158,24 +158,24 @@ std::string FindInAscendMap(const std::string &key, const std::map<std::string, 
   return "";
 }
 
-void SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
+bool SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
                   const std::map<std::string, std::string> &ascend_map) {
   struct mindspore::ProfileConfigs profile_configs;
   if (!mindspore::ProfileParser::Parse(ascend_map, false, &profile_configs)) {
     MS_LOG(ERROR) << "Parse input_shape and dynamic_dims failed";
-    return;
+    return false;
   }
   const auto &input_infos = profile_configs.input_infos;
   auto it = ascend_map.find("dynamic_dims");
   if (it == ascend_map.end()) {
     MS_LOG(INFO) << "Inputs are not dynamic";
-    return;
+    return true;
   }
   std::vector<std::string> dynamic_dims_strs = mindspore::lite::SplitStringToVector(it->second, ';');
   if (dynamic_dims_strs.size() != input_infos.size()) {
     MS_LOG(ERROR) << "Invalid dynamic_dims, size " << dynamic_dims_strs.size() << " != input size "
                   << input_infos.size();
-    return;
+    return false;
   }
   std::string one_dym_dims;
   size_t dynamic_input_index = 0;
@@ -190,7 +190,7 @@ void SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
     } else if (one_dym_dims != dynamic_dims_strs[i]) {
       MS_LOG(ERROR) << "Do not support different dynamic_dims, one " << one_dym_dims << ", other "
                     << dynamic_dims_strs[i];
-      return;
+      return false;
     }
   }
   int dynamic_type = DynBatchOrDynImage(profile_configs, dynamic_input_index);
@@ -204,10 +204,12 @@ void SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
       break;
     default:
       MS_LOG(ERROR) << "Do not support input shape";
+      return false;
   }
+  return true;
 }
 
-void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::ConverterPara> &param,
+bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::ConverterPara> &param,
                                             const std::map<std::string, std::string> &ascend_map) {
   std::string ascend_string = "";
   auto set_option = [&ascend_map](const std::string &key, std::string *option) {
@@ -245,6 +247,7 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
       param->aclModelOptionCfgParam.device_id = val;
     } else {
       MS_LOG(ERROR) << "Convert device id failed";
+      return false;
     }
   }
 
@@ -261,7 +264,7 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
       MS_LOG(WARNING) << "Unsupported or invalid output_type, using default type";
     }
   }
-  SetDynParams(param, ascend_map);
+  return SetDynParams(param, ascend_map);
 }
 
 int ConfigFileParser::ParseConfigFile(const std::string &config_file_path,
