@@ -17,6 +17,7 @@
 #define MINDSPORE_TESTS_UT_CPP_OPS_TEST_OPS_H_
 
 #include <string>
+#include <vector>
 #include "common/common_test.h"
 #include "utils/ms_context.h"
 #include "mindapi/base/shape_vector.h"
@@ -56,6 +57,13 @@ struct BroadcastOpParams {
   TypePtr y_type;
   ShapeVector out_shape;
   TypePtr out_type;
+};
+
+struct MutiInputOpParams {
+  std::vector<ShapeVector> in_shape_array;
+  std::vector<TypePtr> in_type_list;
+  std::vector<ShapeVector> out_shape_array;
+  std::vector<TypePtr> out_type_list;
 };
 
 struct EltwiseOpShapeParams {

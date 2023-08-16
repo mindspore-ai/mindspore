@@ -63,5 +63,50 @@ void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const st
   ShapeCompare(infer_shape, expect_shape);
   TypeCompare(infer_type, expect_type);
 }
+
+void TestOpFuncImplWithMutiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
+                                         const MutiInputOpParams &param) {
+  auto primitive = std::make_shared<Primitive>(prim_name);
+  ASSERT_NE(primitive, nullptr);
+  ASSERT_TRUE(!param.in_shape_array.empty());
+  ASSERT_TRUE(!param.in_type_list.empty());
+  ASSERT_TRUE(param.in_shape_array.size() == param.in_type_list.size());
+  std::vector<abstract::AbstractBasePtr> input_args;
+  for (size_t idx = 0; idx < param.in_shape_array.size(); ++idx) {
+    auto input = std::make_shared<abstract::AbstractTensor>(param.in_type_list[idx], param.in_shape_array[idx]);
+    input_args.push_back(std::move(input));
+  }
+
+  ASSERT_NE(infer_impl, nullptr);
+  auto infer_shape = infer_impl->InferShape(primitive, input_args);
+  ASSERT_NE(infer_shape, nullptr);
+  auto infer_type = infer_impl->InferType(primitive, input_args);
+  ASSERT_NE(infer_type, nullptr);
+
+  ASSERT_TRUE(!param.out_shape_array.empty());
+  ASSERT_TRUE(!param.out_type_list.empty());
+  ASSERT_TRUE(param.out_shape_array.size() == param.out_type_list.size());
+
+  abstract::BaseShapePtr expect_shape;
+  TypePtr expect_type;
+  if (param.out_shape_array.size() > 1) {
+    std::vector<abstract::BaseShapePtr> shape_list;
+    std::vector<TypePtr> type_list;
+    for (size_t idx = 0; idx < param.out_shape_array.size(); ++idx) {
+      auto shape = std::make_shared<abstract::Shape>(param.out_shape_array[idx]);
+      auto type = std::make_shared<TensorType>(param.out_type_list[idx]);
+      shape_list.push_back(std::move(shape));
+      type_list.push_back(std::move(type));
+    }
+    expect_shape = std::make_shared<abstract::TupleShape>(shape_list);
+    expect_type = std::make_shared<Tuple>(type_list);
+  } else {
+    expect_shape = std::make_shared<abstract::Shape>(param.out_shape_array[0]);
+    expect_type = std::make_shared<TensorType>(param.out_type_list[0]);
+  }
+
+  ShapeCompare(infer_shape, expect_shape);
+  TypeCompare(infer_type, expect_type);
+}
 }  // namespace ops
 }  // namespace mindspore

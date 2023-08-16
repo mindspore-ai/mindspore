@@ -25,13 +25,15 @@ namespace mindspore {
 namespace ops {
 void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
                                        const EltwiseOpParams &param);
-#define ELTWISE_OP_FUNC_IMPL_TEST_DECLARE(op_name)                                                  \
-  class Test##op_name : public TestOps, public testing::WithParamInterface<EltwiseOpParams> {};     \
-  TEST_P(Test##op_name, op_name##_DynamicShape) {                                                   \
-    TestOpFuncImplWithEltwiseOpParams(std::make_shared<op_name##FuncImpl>(), #op_name, GetParam()); \
+void TestOpFuncImplWithMutiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
+                                         const MutiInputOpParams &param);
+#define OP_FUNC_IMPL_TEST_DECLARE(op_name, param_name)                                           \
+  class Test##op_name : public TestOps, public testing::WithParamInterface<param_name> {};       \
+  TEST_P(Test##op_name, op_name##_DynamicShape) {                                                \
+    TestOpFuncImplWith##param_name(std::make_shared<op_name##FuncImpl>(), #op_name, GetParam()); \
   }
 
-#define ELTWISE_OP_FUNC_IMPL_TEST_CASES(op_name, cases) \
+#define OP_FUNC_IMPL_TEST_CASES(op_name, cases) \
   INSTANTIATE_TEST_CASE_P(TestOpsFuncImpl, Test##op_name, cases);
 }  // namespace ops
 }  // namespace mindspore

@@ -15,21 +15,23 @@
  */
 #include <memory>
 #include "common/common_test.h"
-#include "ops/ops_func_impl/log1p.h"
+#include "ops/ops_func_impl/log_matrix_determinant.h"
 #include "ops/test_ops.h"
 #include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Log1p, EltwiseOpParams);
+OP_FUNC_IMPL_TEST_DECLARE(LogMatrixDeterminant, MutiInputOpParams);
 
 OP_FUNC_IMPL_TEST_CASES(
-  Log1p,
+  LogMatrixDeterminant,
   testing::Values(
-    EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-    EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
-    EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-    EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}
+    MutiInputOpParams{{{2, 3, 4, 2, 2}}, {kFloat32}, {{2, 3, 4}, {2, 3, 4}}, {kFloat32, kFloat32}},
+    MutiInputOpParams{{{2, 3, 4, -1, -1}}, {kFloat32}, {{2, 3, 4}, {2, 3, 4}}, {kFloat32, kFloat32}},
+    MutiInputOpParams{{{2, 3, -1, -1, -1}}, {kFloat32}, {{2, 3, -1}, {2, 3, -1}}, {kFloat32, kFloat32}},
+    MutiInputOpParams{{{2, -1, -1, -1, -1}}, {kFloat32}, {{2, -1, -1}, {2, -1, -1}}, {kFloat32, kFloat32}},
+    MutiInputOpParams{{{-1, -1, -1, -1, -1}}, {kFloat32}, {{-1, -1, -1}, {-1, -1, -1}}, {kFloat32, kFloat32}},
+    MutiInputOpParams{{{-2}}, {kFloat32}, {{-2}, {-2}}, {kFloat32, kFloat32}}
   ));
 }  // namespace ops
 }  // namespace mindspore

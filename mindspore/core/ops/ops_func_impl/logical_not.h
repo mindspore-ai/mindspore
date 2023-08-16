@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
-#include "common/common_test.h"
-#include "ops/ops_func_impl/log1p.h"
-#include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
+
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LOGICAL_NOT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LOGICAL_NOT_H_
+
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Log1p, EltwiseOpParams);
-
-OP_FUNC_IMPL_TEST_CASES(
-  Log1p,
-  testing::Values(
-    EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-    EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
-    EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-    EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}
-  ));
+class MIND_API LogicalNotFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LOGICAL_NOT_H_

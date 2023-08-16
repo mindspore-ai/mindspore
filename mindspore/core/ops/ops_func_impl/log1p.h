@@ -30,4 +30,4 @@ class MIND_API Log1pFuncImpl : public OpFuncImpl {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LOG1P_H_

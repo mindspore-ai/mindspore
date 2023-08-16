@@ -15,21 +15,21 @@
  */
 #include <memory>
 #include "common/common_test.h"
-#include "ops/ops_func_impl/log1p.h"
+#include "ops/ops_func_impl/logical_not.h"
 #include "ops/test_ops.h"
 #include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Log1p, EltwiseOpParams);
+OP_FUNC_IMPL_TEST_DECLARE(LogicalNot, EltwiseOpParams);
 
 OP_FUNC_IMPL_TEST_CASES(
-  Log1p,
+  LogicalNot,
   testing::Values(
-    EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-    EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
-    EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-    EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}
+    EltwiseOpParams{{2, 3}, kBool, {2, 3}, kBool},
+    EltwiseOpParams{{2, -1}, kBool, {2, -1}, kBool},
+    EltwiseOpParams{{-1, -1}, kBool, {-1, -1}, kBool},
+    EltwiseOpParams{{-2}, kBool, {-2}, kBool}
   ));
 }  // namespace ops
 }  // namespace mindspore

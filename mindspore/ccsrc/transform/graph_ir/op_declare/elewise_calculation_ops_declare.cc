@@ -361,7 +361,7 @@ REG_ADPT_DESC(Invert, kNameInvert, ADPT_DESC(Invert))
 INPUT_MAP(Log1p) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Log1p) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Log1p) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Log1p, kNameLog1p, ADPT_DESC(Log1p))
+REG_ADPT_DESC(Log1p, "Log1p", ADPT_DESC(Log1p))
 
 // RsqrtGrad
 INPUT_MAP(RsqrtGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
@@ -558,7 +558,7 @@ REG_ADPT_DESC(LogicalOr, kNameLogicalOr, ADPT_DESC(LogicalOr))
 INPUT_MAP(LogicalNot) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(LogicalNot) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogicalNot) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(LogicalNot, kNameLogicalNot, ADPT_DESC(LogicalNot))
+REG_ADPT_DESC(LogicalNot, "LogicalNot", ADPT_DESC(LogicalNot))
 
 // Greater
 INPUT_MAP(Greater) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
