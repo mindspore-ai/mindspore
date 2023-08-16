@@ -75,7 +75,10 @@ int ApplyAdamWithAmsgradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return ret;
   }
   input_elements_ = 0;
-
+  if (inputs.size() <= kIndexGrad) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input size  '" << inputs.size() << " is little than "
+                      << kIndexGrad;
+  }
   std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();
   std::vector<int64_t> m_shape = inputs[kIndexM]->GetShapeVector();
   std::vector<int64_t> v_shape = inputs[kIndexV]->GetShapeVector();

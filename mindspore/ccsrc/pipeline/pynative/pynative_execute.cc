@@ -74,6 +74,7 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
 
 // Tensor may be used before the execution of the asynchronous task.
 void SetCallbackForInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info);
   for (auto &input : op_run_info->op_grad_info->input_value) {
     MS_EXCEPTION_IF_NULL(input);
     if (input->isa<tensor::Tensor>()) {
