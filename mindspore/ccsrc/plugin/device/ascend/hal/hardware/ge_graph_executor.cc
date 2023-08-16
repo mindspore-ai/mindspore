@@ -342,29 +342,36 @@ std::multimap<std::string, ParameterPtr> FilterAllParameters(const KernelGraphPt
 
 void SetKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(node);
-
-  std::vector<TypeId> output_infer_types;
-  std::vector<std::string> output_formats;
-  for (size_t i = 0; i < output_with_indexs.size(); ++i) {
-    (void)output_infer_types.emplace_back(
-      common::AnfAlgo::GetOutputInferDataType(output_with_indexs[i].first, output_with_indexs[i].second));
-    (void)output_formats.emplace_back(kOpFormat_DEFAULT);
-  }
+  // If kernel build info has been set up. skip
   std::shared_ptr<device::KernelInfo> kernel_info =
     std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-  if (kernel_info == nullptr) {
+  kernel::KernelBuildInfoPtr build_info = nullptr;
+  if (kernel_info) {
+    build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+    if (build_info) {
+      return;
+    }
+  }
+
+  if (!kernel_info) {
     kernel_info = std::make_shared<device::KernelInfo>();
+    MS_EXCEPTION_IF_NULL(kernel_info);
     node->set_kernel_info(kernel_info);
   }
-  MS_EXCEPTION_IF_NULL(kernel_info);
-
-  kernel::KernelBuildInfoPtr build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-  if (build_info == nullptr) {
+  if (!build_info) {
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    MS_EXCEPTION_IF_NULL(builder);
     build_info = builder->Build();
   }
-  MS_EXCEPTION_IF_NULL(build_info);
+
+  const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(node);
+  std::vector<TypeId> output_infer_types;
+  std::vector<std::string> output_formats;
+  for (const auto &output_with_index : output_with_indexs) {
+    (void)output_infer_types.emplace_back(
+      common::AnfAlgo::GetOutputInferDataType(output_with_index.first, output_with_index.second));
+    (void)output_formats.emplace_back(kOpFormat_DEFAULT);
+  }
   build_info->SetOutputsDeviceType(output_infer_types);
   build_info->SetOutputsFormat(output_formats);
   kernel_info->set_select_kernel_build_info(build_info);
@@ -549,7 +556,7 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   MS_EXCEPTION_IF_NULL(kernel_graph);
   (void)memo->insert(kernel_graph);
   auto parameters = FilterAllParameters(kernel_graph);
-  for (auto iter : parameters) {
+  for (const auto &iter : parameters) {
     auto parameter = utils::cast<ParameterPtr>(iter.second);
     if (parameter == nullptr) {
       continue;

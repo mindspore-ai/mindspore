@@ -51,6 +51,7 @@
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_desc.h"
 #include "transform/graph_ir/op_adapter_map.h"
+#include "transform/graph_ir/storage_format_convertor.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
@@ -548,15 +549,16 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   MS_EXCEPTION_IF_NULL(manager);
   auto &infer_need_update_parameter_names =
     Singleton<mindspore::device::ascend::InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
-  for (auto it : tensors) {
+  for (const auto &it : tensors) {
     std::string name = it.first;
     auto node_itor = params_.find(name);
     // if name not in params_, create a node in graph
     if (node_itor == params_.end()) {
+      // In lite, param maybe not exist.
       MS_LOG(WARNING) << name << " is not in params, and create a new node.";
       ParameterPtr param = std::make_shared<Parameter>(nullptr);
       if (!common::IsEnableRefMode()) {
-        name = name + "_temp";
+        name += "_temp";
       }
       param->set_name(name);
       (void)ConvertParameter(param);
@@ -574,10 +576,11 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     }
 
     if (common::IsEnableRefMode()) {
+      StorageFormatConvertor::SetupStorageFormat(anf_graph_, node, desc);
       auto variable = std::make_shared<RefData>(name);
       (void)variable->update_output_desc_y(*desc);
       (void)variable->update_input_desc_x(*desc);
-      (void)variable->set_attr_index(ref_datas_.size());
+      (void)variable->set_attr_index(SizeToInt(ref_datas_.size()));
       (void)ref_datas_.emplace_back(variable);
       // do not use read variable while variable sink
       MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << variable->GetName() << ".";
@@ -657,7 +660,7 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
     return *this;
   }
 
-  if (tensors.size() == 0) {
+  if (tensors.empty()) {
     return *this;
   }
 
@@ -832,6 +835,7 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   MS_LOG(INFO) << "Convert all node, graph: " << anf_graph_->ToString();
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_, while_cond_node_);
   if (common::IsEnableRefMode()) {
+    // Ref mode need build all node(cnode && parameter).
     for (auto &p : anf_graph_->parameters()) {
       if (std::find(nodes.begin(), nodes.end(), p) == nodes.end()) {
         MS_LOG(WARNING) << "Parameter " << p->DebugString() << " cannot found in toposort lists.";
@@ -956,6 +960,7 @@ std::shared_ptr<std::vector<Operator>> DfGraphConvertor::GetWhileSubGraphInput()
       (void)std::static_pointer_cast<Data>(op)->set_attr_index(i);
       i++;
     } else {
+      // No need to process ge tensor desc
       auto temp = while_const_input_index_[idx].op;
       auto name = temp->GetName();
       auto value = const_op_to_value_[temp];
@@ -1614,34 +1619,7 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
 void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, std::vector<OperatorPtr> *input_datas) {
   MS_LOG(WARNING) << "IsNormalGraph=" << IsNormalGraph() << ", dataset_mode"
                   << ConfigManager::GetInstance().dataset_mode();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::vector<PrimitivePtr> input_prims;
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-    input_prims = {prim::kPrimQueueData};
-  } else {
-    input_prims = {prim::kPrimGetNext, prim::kPrimDynamicGetNextV2};
-  }
-  OperatorPtr input = nullptr;
-  auto nodes = GetOrderedCNodes(anf_graph_);
-  for (auto &it : nodes) {
-    if (std::any_of(input_prims.begin(), input_prims.end(),
-                    [&it](const PrimitivePtr &prim) { return IsPrimitiveCNode(it, prim); })) {
-      auto it_op = op_cache_.find(it.get());
-      if (it_op != op_cache_.end()) {
-        input = it_op->second;
-        break;
-      } else {
-        MS_LOG(EXCEPTION) << "Can not find the operator of node: " << it->fullname_with_scope();
-      }
-    }
-  }
-  if (IsNormalGraph() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && input != nullptr) {
-    inputs->push_back(*input);
-    MS_EXCEPTION_IF_NULL(anf_graph_);
-    anf_graph_->set_flag(kGraphFlagHasGetNext, true);
-  }
-
+  AddInputInDataSink(inputs);
   auto params = anf_graph_->parameters();
   MS_LOG(INFO) << "Parameters size " << params.size();
   int index = 0;
@@ -1690,6 +1668,37 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, std::vector
     }
   }
   MS_LOG(INFO) << "Input size " << inputs->size();
+}
+
+void DfGraphConvertor::AddInputInDataSink(vector<Operator> *inputs) {
+  MS_EXCEPTION_IF_NULL(inputs);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::vector<PrimitivePtr> input_prims;
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    input_prims = {prim::kPrimQueueData};
+  } else {
+    input_prims = {prim::kPrimGetNext, prim::kPrimDynamicGetNextV2};
+  }
+  OperatorPtr input = nullptr;
+  auto nodes = GetOrderedCNodes(anf_graph_);
+  for (auto &it : nodes) {
+    if (std::any_of(input_prims.begin(), input_prims.end(),
+                    [&it](const PrimitivePtr &prim) { return IsPrimitiveCNode(it, prim); })) {
+      auto it_op = op_cache_.find(it.get());
+      if (it_op != op_cache_.end()) {
+        input = it_op->second;
+        break;
+      } else {
+        MS_LOG(EXCEPTION) << "Can not find the operator of node: " << it->fullname_with_scope();
+      }
+    }
+  }
+  if (IsNormalGraph() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && input != nullptr) {
+    inputs->push_back(*input);
+    MS_EXCEPTION_IF_NULL(anf_graph_);
+    anf_graph_->set_flag(kGraphFlagHasGetNext, true);
+  }
 }
 
 void DfGraphConvertor::BuildInitDataGraph(const std::string &name) {
@@ -1898,6 +1907,7 @@ void DfGraphConvertor::UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr
   auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
   MS_EXCEPTION_IF_NULL(tensor);
   auto const_op_desc = TransformUtil::GetGeTensorDesc(tensor->shape_c(), tensor->data_type(), format);
+  StorageFormatConvertor::SetupStorageFormat(anf_graph_, it, const_op_desc, format);
   if (const_op_desc == nullptr) {
     MS_LOG(WARNING) << "Create parameter " << para->name() << " output descriptor failed!";
     return;
@@ -1942,6 +1952,7 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
     }
   }
   auto desc = TransformUtil::GetGeTensorDesc(shape, me_type, format);
+  StorageFormatConvertor::SetupStorageFormat(anf_graph_, it, desc, format);
   if (desc == nullptr) {
     MS_LOG(ERROR) << "Update data op descriptor failed! TensorDesc is null.";
   } else {
