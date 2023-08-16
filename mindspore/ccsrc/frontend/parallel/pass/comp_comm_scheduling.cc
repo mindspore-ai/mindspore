@@ -1056,15 +1056,9 @@ void CompCommScheduling(const FuncGraphPtr &graph) {
       parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
     return;
   }
-
-  if (!parallel::ParallelContext::GetInstance()->get_frontend_scheduling()) {
+  if (common::GetEnv("MS_ENABLE_FRONTEND_SCHEDULING_OPTIMIZATION") != "1") {
     return;
   }
-
-  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() != 1) {
-    return;
-  }
-
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);

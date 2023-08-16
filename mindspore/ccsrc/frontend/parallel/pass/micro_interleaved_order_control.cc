@@ -297,7 +297,7 @@ void MicroInterleavedOrderControl(const FuncGraphPtr &graph) {
   if (!parallel::ParallelContext::GetInstance()->enable_micro_interleaved()) {
     return;
   }
-  if (!parallel::ParallelContext::GetInstance()->get_micro_scheduling()) {
+  if (common::GetEnv("MS_ENABLE_FRONTEND_SCHEDULING_OPTIMIZATION") == "1") {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);
