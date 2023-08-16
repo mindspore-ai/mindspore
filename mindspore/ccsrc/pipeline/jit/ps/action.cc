@@ -1130,8 +1130,9 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
 
   const bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
   const bool enable_memory_offload = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD);
+  const bool pynative_not_sink = pynative_mode && (jit_level != "O2") && (context_ptr->backend_policy() != "ge");
   // GRAPH | Single Op : KernelByKernel path in MindRT.
-  if (common::GetEnv(kGraphOpRun) == "1" || (pynative_mode && jit_level != "O2") || enable_memory_offload) {
+  if (common::GetEnv(kGraphOpRun) == "1" || pynative_not_sink || enable_memory_offload) {
     MS_LOG(INFO) << "Run graph mode with kernel by kernel because env value GRAPH_OP_RUN is set to 1.";
     set_ctx(false, false, false);
     return;

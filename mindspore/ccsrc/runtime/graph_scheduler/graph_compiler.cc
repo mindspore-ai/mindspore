@@ -573,7 +573,9 @@ KernelGraphPtr GraphCompiler::ConstructKernelGraphForGraphRunMode(const FuncGrap
       MS_EXCEPTION_IF_NULL(graph);
       manager->AddFuncGraph(graph);
       graph->set_manager(manager);
+      graph->SetInputNodes();
     }
+    root_graph->SetInputNodes();
     MS_EXCEPTION_IF_NULL(device_context->graph_executor_);
     if (!device_context->graph_executor_->CompileGraph(root_graph, {})) {
       MS_LOG(EXCEPTION) << "Compile graph failed: " << root_graph->graph_id();

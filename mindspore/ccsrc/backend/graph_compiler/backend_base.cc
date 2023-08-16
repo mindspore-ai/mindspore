@@ -827,7 +827,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
   // There will be more than one kernel graph in heterogeneous scenario in a jit of PyNative Mode.
-  if (ms_execution_mode_ == kPynativeMode) {
+  if (ms_execution_mode_ == kPynativeMode && !pynative::GraphAdapter::IsPynativeGeGraphSink(graph_compiler_info)) {
     RunGraphByCondition(actor_info, graph_compiler_info, args, outputs);
     return;
   }
