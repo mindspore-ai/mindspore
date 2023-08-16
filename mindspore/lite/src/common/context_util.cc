@@ -193,6 +193,8 @@ DeviceType KernelArchToDeviceType(kernel::KERNEL_ARCH kernel_arch) {
       return DT_GPU;
     case kernel::KERNEL_ARCH::kNPU:
       return DT_NPU;
+    case kernel::KERNEL_ARCH::kACL:
+      return DT_ASCEND;
     default:
       return DT_CPU;
   }

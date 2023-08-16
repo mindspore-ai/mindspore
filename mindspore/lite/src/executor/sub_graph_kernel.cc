@@ -619,4 +619,38 @@ int CpuFp16SubGraph::PostProcess() {
   return RET_OK;
 }
 #endif
+
+int AclSubGraph::Prepare() {
+  auto ret = SubGraphKernel::Prepare();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  for (auto node : nodes_) {
+    for (auto tensor : node->out_tensors()) {
+      MS_ASSERT(tensor != nullptr);
+      if (tensor->allocator() == nullptr) {
+        tensor->set_allocator(this->Context()->allocator);
+      }
+    }
+  }
+  for (auto &out : this->out_tensors()) {
+    if (out->allocator() == nullptr) {
+      out->set_allocator(this->Context()->allocator);
+    }
+  }
+  return RET_OK;
+}
+
+int AclSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
+  MS_ASSERT(this->Context()->allocator.get() != nullptr);
+  for (auto *kernel : nodes_) {
+    MS_ASSERT(kernel != nullptr);
+    auto ret = kernel->Execute(before, after);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
+      return ret;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::kernel
