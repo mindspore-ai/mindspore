@@ -8,11 +8,41 @@
     .. note::
         - 在 `SEMI_AUTO_PARALLEL` 和 `AUTO_PARALLEL` 的自动并行模式下，如果使用 `Initializer` 模块初始化参数，参数的类型将为 `Tensor` 。`Tensor` 仅保存张量的形状和类型信息，而不占用内存来保存实际数据。
         - 并行场景下存在参数的形状发生变化的情况，用户可以调用 `Parameter` 的 `init_data` 方法得到原始数据。
-        - 如果网络中存在需要部分输入为 `Parameter` 的算子，则不允许这部分输入的 `Parameter` 进行转换。
+        - 如果网络中存在需要部分输入为 `Parameter` 的算子，则不允许这部分输入的 `Parameter` 进行数据类型转换。
+        - 每一个 `Parameter` 使用唯一的名字可以帮助后续的操作和更新。如果有两个或多个 `Parameter` 在同一个网络中使用了相同的名字，将会提示在定义时使用唯一的名字。
 
     参数：
         - **default_input** (Union[Tensor, int, float, numpy.ndarray, list]) - 初始化参数的输入值。
         - **name** (str) - 参数的名称。默认值： ``None`` 。如果一个网络中存在两个及以上相同名称的 `Parameter` 对象，在定义时将提示设置一个特有的名称。
+          1) 如果一个 `Parameter` 未命名，默认的名字就是变量名。例如，`param_a` 的名字是 `name_a`，`param_b` 的名字是 `param_b` 。
+
+          .. code-block::
+
+              self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
+              self.param_b = Parameter(Tensor([2], ms.float32))
+
+          2) 如果在list或tuple中的 `Parameter` 未命名，将会提供一个唯一值。例如，以下 `Parameter` 的名字是**Parameter$1** and **Parameter$2**。
+
+          .. code-block::
+
+              self.param_list = [Parameter(Tensor([3], ms.float32)),
+                                 Parameter(Tensor([4], ms.float32))]
+
+          3) 如果 `Parameter` 已命名， 并且不同 `Parameter` 间有重复名称，将会抛出异常。例如，"its name 'name_a' already exists."将会抛出。
+
+          .. code-block::
+
+              self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
+              self.param_tuple = (Parameter(Tensor([5], ms.float32), name="name_a"),
+                                  Parameter(Tensor([6], ms.float32)))
+
+          4) 如果一个 `Parameter` 多次出现在list或tuple中，只检查一次他的名字。例如，以下代码将不会抛出异常。
+
+          .. code-block::
+
+              self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
+              self.param_tuple = (self.param_a, self.param_a)
+
         - **requires_grad** (bool) - 是否需要微分求梯度。默认值： ``True`` 。
         - **layerwise_parallel** (bool) - 在数据/混合并行模式下， `layerwise_parallel` 配置为 ``True`` 时，参数广播和梯度聚合时会过滤掉该 `Parameter` 。默认值： ``False`` 。
         - **parallel_optimizer** (bool) - 用于在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 并行模式下区分该参数是否进行优化器切分。仅在 `mindspore.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值： ``True`` 。
@@ -133,7 +163,7 @@
 
         参数：
             - **data** (Union[Tensor, int, float]) - 新数据。
-            - **slice_shape** (bool) - 如果 `slice_shape` 设为 ``True`` ，则不检查 `data` 和当前参数shape的一致性。默认值： ``False`` 。
+            - **slice_shape** (bool) - 如果 `slice_shape` 设为 ``True`` ，则不检查 `data` 和当前参数shape的一致性。默认值： ``False`` 。当 `slice_shape` 设为 ``True`` 时，如果两个shape不一致，会抛出ValueError。
 
         返回：
             完成数据设置的新参数。
