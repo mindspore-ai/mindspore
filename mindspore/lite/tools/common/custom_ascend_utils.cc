@@ -351,10 +351,11 @@ bool CustomAscendUtils::IsCustomFuncGraph(const FuncGraphPtr &func_graph) {
 bool CustomAscendUtils::ParseCustomFuncGraph(const FuncGraphPtr &func_graph, tensor::TensorPtr *model_cache,
                                              std::string *graph_name, std::map<std::string, ValuePtr> *attr_map,
                                              std::vector<std::pair<std::string, tensor::TensorPtr>> *ref_datas) {
-  if (func_graph == nullptr || model_cache == nullptr || graph_name == nullptr || attr_map == nullptr ||
-      ref_datas == nullptr) {
-    return false;
-  }
+  MS_ERROR_IF_NULL_W_RET_VAL(func_graph, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(model_cache, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(graph_name, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(attr_map, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(ref_datas, false);
   auto custom_node = GetCustomNode(func_graph);
   if (custom_node == nullptr) {
     MS_LOG(ERROR) << "Cannot find Custom node, or other real node find in the graph";
@@ -375,8 +376,10 @@ bool CustomAscendUtils::ParseCustomFuncGraph(const FuncGraphPtr &func_graph, ten
     MS_LOG(ERROR) << "Failed to cast parameter value to Tensor";
     return false;
   }
-  *model_cache = tensor;
-  *graph_name = input_last->fullname_with_scope();
+  if (tensor->data_c() == nullptr || tensor->Size() == 0) {
+    MS_LOG(ERROR) << "Custom node tensor data is empty";
+    return false;
+  }
   auto prim = GetValueNode<PrimitivePtr>(custom_node->input(0));
   if (!prim) {
     MS_LOG(ERROR) << "Primitive of cnode " << custom_node->fullname_with_scope() << " cannot be nullptr";
@@ -416,6 +419,8 @@ bool CustomAscendUtils::ParseCustomFuncGraph(const FuncGraphPtr &func_graph, ten
       ref_datas->push_back(std::make_pair(ref_name, ref_tensor));
     }
   }
+  *model_cache = tensor;
+  *graph_name = input_last->fullname_with_scope();
   return true;
 }
 }  // namespace mindspore

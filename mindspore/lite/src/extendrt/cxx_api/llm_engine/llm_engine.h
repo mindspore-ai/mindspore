@@ -28,6 +28,7 @@ struct LLMReq {
   uint64_t req_id = 0;
   uint64_t prompt_length = 0;
   uint64_t prompt_cluster_id = 0;
+  uint64_t decoder_cluster_id = 0;
 };
 
 struct LLMEngineStatus {
@@ -46,6 +47,7 @@ class MS_API LLMEngine {
   ~LLMEngine() = default;
   Status Init(const std::vector<std::string> &model_paths, LLMRole role, uint64_t cluster_id,
               const std::map<std::string, std::string> &options);
+  void Finalize();
   Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
   Status CompleteRequest(const LLMReq &req);
   LLMEngineStatus FetchStatus();

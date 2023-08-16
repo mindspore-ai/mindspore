@@ -312,6 +312,9 @@ build_python_wheel_package() {
       if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libascend_ge_plugin.so" ]; then
         cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libascend_ge_plugin.so package/mindspore_lite/lib/
       fi
+      if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libllm_engine_plugin.so" ]; then
+        cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libllm_engine_plugin.so package/mindspore_lite/lib/
+      fi
     else
       if [[ "X${MSLITE_ENABLE_ACL}" == "Xon" ]]; then
         cp src/litert/kernel/ascend/*.so package/mindspore_lite/lib/
