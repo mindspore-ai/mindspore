@@ -376,6 +376,11 @@ class MS_CORE_API TupleShape final : public SequenceShape {
   /// \param[in] shapes Element-shapes of TupleShape.
   explicit TupleShape(const BaseShapePtrList &shapes) : SequenceShape(shapes) {}
 
+  /// \brief Constructor of TupleShape with rvalue input.
+  ///
+  /// \param[in] shapes Element-shapes of TupleShape.
+  explicit TupleShape(BaseShapePtrList &&shapes) : SequenceShape(std::move(shapes)) {}
+
   /// \brief Destructor of TupleShape.
   ~TupleShape() override = default;
   MS_DECLARE_PARENT(TupleShape, SequenceShape)
@@ -397,6 +402,11 @@ class MS_CORE_API ListShape final : public SequenceShape {
   ///
   /// \param[in] shapes Element-shapes of ListShape.
   explicit ListShape(const BaseShapePtrList &shapes) : SequenceShape(shapes) {}
+
+  /// \brief Constructor of ListShape with rvalue input.
+  ///
+  /// \param[in] shapes Element-shapes of ListShape.
+  explicit ListShape(BaseShapePtrList &&shapes) : SequenceShape(std::move(shapes)) {}
 
   /// \brief Destructor of ListShape.
   ~ListShape() override = default;
