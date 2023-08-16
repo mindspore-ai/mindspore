@@ -309,6 +309,8 @@ std::vector<int> CastToInt(const ValuePtr &value) {
       cur_value.push_back(static_cast<int>(GetValue<int64_t>(value)));
     } else if (data_type == kNumberTypeInt || data_type == kNumberTypeInt32) {
       cur_value.push_back(GetValue<int>(value));
+    } else if (data_type == kNumberTypeBool) {
+      cur_value.push_back(static_cast<int>(GetValue<bool>(value)));
     } else {
       MS_LOG(ERROR) << "the function only process integer data.";
       return {};
