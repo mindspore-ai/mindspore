@@ -91,6 +91,15 @@ bool IsGradNode(const AnfNodePtr &node) {
   return node->fullname_with_scope().compare(0, strlen(kGradientsFlag), kGradientsFlag) == 0;
 }
 
+bool IsFpropReturn(const AnfNodePtr &make_tuple) {
+  auto cnode = make_tuple->cast<CNodePtr>();
+  constexpr size_t fprop_output_size = 2;
+  if (cnode->size() != fprop_output_size + 1) {
+    return false;
+  }
+  return IsValueNode<FuncGraph>(cnode->input(fprop_output_size));
+}
+
 bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, const AnfNodePtr &origin_primal,
                       const AnfNodePtr &new_primal, bool recompute_cell,
                       std::unordered_map<AnfNodePtr, AnfNodePtr> *origin_to_new_primal) {
@@ -109,7 +118,7 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
       continue;
     }
     // The op like concat will have a make_tuple input.
-    if (IsPrimitiveCNode(user, prim::kPrimMakeTuple) && (!IsGradNode(user) || recompute_cell)) {
+    if (IsPrimitiveCNode(user, prim::kPrimMakeTuple) && !IsFpropReturn(user) && (!IsGradNode(user) || recompute_cell)) {
       auto iter = origin_to_new_primal->find(user);
       if (iter != origin_to_new_primal->end()) {
         // The new make_tuple has been created, just set its inputs.
@@ -452,6 +461,10 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
                              return fg->NewCNodeInOrder({NewValueNode(prim::kPrimDepend), input, depend_nodes});
                            });
       auto new_k_fg_caller = fg->NewCNodeInOrder(new_k_fg_caller_inputs);
+      auto primal_fg_caller = k_fg_caller_cnode->user_data<CNode>("primal_fg_caller");
+      if (primal_fg_caller != nullptr) {
+        new_k_fg_caller->set_user_data("primal_fg_caller", primal_fg_caller);
+      }
       (void)manager->Replace(k_fg_caller_cnode, new_k_fg_caller);
       new_k_fg_caller->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
     }
