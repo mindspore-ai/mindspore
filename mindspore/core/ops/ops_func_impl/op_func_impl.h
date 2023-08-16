@@ -71,6 +71,7 @@ class OpFuncImpl {
 };
 
 using OpFuncImplPtr = std::shared_ptr<OpFuncImpl>;
+using OpFuncImplRawPtr = OpFuncImpl *;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_OP_FUNC_IMPL_H

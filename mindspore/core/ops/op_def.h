@@ -21,6 +21,7 @@
 #include <memory>
 #include <unordered_map>
 #include "ir/dtype/type_id.h"
+#include "ops_func_impl/op_func_impl.h"
 namespace mindspore::ops {
 
 enum OP_DTYPE {
@@ -47,6 +48,7 @@ struct OpDef {
   std::vector<OpArg> args_;
   std::vector<OpArg> returns_;
   std::unordered_map<std::string, size_t> indexes_;
+  OpFuncImplRawPtr func_impl_ {nullptr};
 };
 
 using OpDefPtr = OpDef *;

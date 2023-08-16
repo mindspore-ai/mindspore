@@ -232,9 +232,12 @@ def generate_cc_opdef(yaml_data):
     """
     generate OpDef
     """
+    func_suffix_str = 'FuncImpl'
+    func_impl_dir = 'ops_func_impl'
     gen_cc = ''
     opdef_map_str = f"""
 std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
+    gen_include = ''
 
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
@@ -242,8 +245,12 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
         opdef_map_str += f"""
     {{"{operator_name}", &g{class_name}}},"""
+        gen_include += f"""
+#include "{func_impl_dir}/{operator_name}.h\""""
 
         opdef_cc = f"""
+{class_name}{func_suffix_str} g{class_name}{func_suffix_str};"""
+        opdef_cc += f"""
 OpDef g{class_name} = {{
     .name_ = "{operator_name}","""
         opdef_cc += f"""
@@ -285,14 +292,19 @@ OpDef g{class_name} = {{
     }},"""
         opdef_cc += cc_index_str
 
+        cc_func_impl_str = f"""
+    .func_impl_ = &g{class_name}{func_suffix_str},"""
+        opdef_cc += cc_func_impl_str
+
         opdef_cc += f"""
 }};"""
+
         gen_cc += opdef_cc
 
     opdef_map_str += f"""
 }};"""
     gen_cc += opdef_map_str
-    return gen_cc
+    return gen_cc, gen_include
 
 
 if __name__ == "__main__":
@@ -302,6 +314,13 @@ if __name__ == "__main__":
 
     yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops.yaml')
     doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_doc.yaml')
+
+    if len(sys.argv) > 3:
+        yaml_path_root = sys.argv[2]
+        op_name = sys.argv[3]
+        yaml_path = os.path.join(work_path, f'{yaml_path_root}/{op_name}_op.yaml')
+        doc_yaml_path = os.path.join(work_path, f'{yaml_path_root}/{op_name}_doc.yaml')
+
     op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/gen_ops_def.py')
     op_cc_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_def.cc')
     op_name_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_name.h')
@@ -315,7 +334,7 @@ if __name__ == "__main__":
     with open(doc_yaml_path, 'r') as doc_file:
         doc_str = yaml.safe_load(doc_file)
 
-    cc_code = generate_cc_opdef(yaml_str)
+    cc_code, cc_include = generate_cc_opdef(yaml_str)
     cc_code += f"""
 }}  // namespace mindspore::ops"""
 
@@ -361,6 +380,7 @@ from mindspore.ops.arg_dtype_cast import TypeCastKind, type_it
 
     ccheader = f"""
 #include "op_def.h"
+{cc_include}
 namespace mindspore::ops {{
 """
     py_prim = generate_py_primitive(yaml_str)
