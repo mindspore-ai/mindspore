@@ -139,10 +139,10 @@ void FindFollowing(const AnfNodePtr &send_node, std::map<AnfNodePtr, std::set<An
   std::queue<AnfNodePtr> node_queue;
   auto seen = NewSeenGeneration();
   node_queue.push(send_node);
+  send_node->seen_ = seen;
   while (!node_queue.empty()) {
     auto top_node = node_queue.front();
     node_queue.pop();
-    top_node->seen_ = seen;
     if (IsClosure(top_node)) {
       (*clouse_to_send)[top_node].insert(send_node);
     }
@@ -154,6 +154,7 @@ void FindFollowing(const AnfNodePtr &send_node, std::map<AnfNodePtr, std::set<An
       if (next->seen_ == seen) {
         continue;
       }
+      next->seen_ = seen;
       node_queue.push(next);
     }
   }
