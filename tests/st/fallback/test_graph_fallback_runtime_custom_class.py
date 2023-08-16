@@ -473,3 +473,48 @@ def test_getattr_cust_class_const():
     x = 99
     out = net(x)
     assert out == 198
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_custom_class_jit():
+    """
+    Feature: Syntax resolve.
+    Description: Graph syntax resolve support custom class input.
+    Expectation: No error.
+    """
+
+    class InnerNet(ms.nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.value = 10
+
+        @ms.jit
+        def construct(self, x):
+            return self.value + x
+
+    class CustomNet():
+        def __init__(self, model):
+            super().__init__()
+            self.model = model
+
+        def __call__(self, x):
+            return self.model(2 * x)
+
+    class OutNet(ms.nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.net = net
+
+        def construct(self, x):
+            return self.net(x)
+
+    with pytest.raises(RuntimeError) as err:
+        x = ms.Tensor(2)
+        call_net = InnerNet()
+        custom_net = CustomNet(call_net)
+        out_net = OutNet(custom_net)
+        out = out_net(x)
+        print("out:", out)
+    assert "Nested execution during JIT execution for 'InnerNet.construct' is not supported" in str(err.value)
