@@ -73,10 +73,10 @@ bool AscendMemAdapter::Initialize() {
   auto recommend_mem_size_for_others = LongToSize(DoubleToLong(device_hbm_free_size_ * kReservedMemoryRatio));
   size_t reserved_mem_size_for_others;
   if (user_define_ms_size == 0) {
-    ms_used_hbm_size_ = LongToSize(DoubleToLong(device_hbm_free_size_ * kMSMemoryRatio));
+    ms_used_hbm_size_ = DoubleToLong(device_hbm_free_size_ * kMSMemoryRatio);
     // sub the extra reserved 10mb after rounding down the 2mb
     ms_used_hbm_size_ = (ms_used_hbm_size_ / kPerHugePageMemorySize) * kPerHugePageMemorySize - kExtraReservedMemory;
-    reserved_mem_size_for_others = device_hbm_free_size_ - ms_used_hbm_size_;
+    reserved_mem_size_for_others = device_hbm_free_size_ - SizeToLong(ms_used_hbm_size_);
   } else {
     if (user_define_ms_size >= device_hbm_free_size_) {
       MS_LOG(EXCEPTION)
@@ -87,9 +87,9 @@ bool AscendMemAdapter::Initialize() {
         << (SizeToFloat(user_define_ms_size) / kMBToByte)
         << "MB, please set the context key 'variable_memory_max_size'/'max_device_memory' in valid range.";
     }
-    ms_used_hbm_size_ = user_define_ms_size;
+    ms_used_hbm_size_ = SizeToLong(user_define_ms_size);
 
-    reserved_mem_size_for_others = device_hbm_total_size_ - ms_used_hbm_size_;
+    reserved_mem_size_for_others = device_hbm_total_size_ - LongToSize(ms_used_hbm_size_);
     if (reserved_mem_size_for_others < recommend_mem_size_for_others) {
       MS_LOG(WARNING) << "Reserved memory size for other components(" << reserved_mem_size_for_others
                       << ") is less than recommend size(" << recommend_mem_size_for_others
@@ -98,7 +98,7 @@ bool AscendMemAdapter::Initialize() {
     }
   }
 
-  ms_used_hbm_size_ = GetRoundDownAlignSize(ms_used_hbm_size_);
+  ms_used_hbm_size_ = SizeToLong(GetRoundDownAlignSize(ms_used_hbm_size_));
   MS_LOG(INFO) << "Device HBM Size:" << device_hbm_total_size_ / kMBToByte
                << "M, Device free HBM Size:" << device_hbm_free_size_ / kMBToByte
                << "M, Reserved HBM size for Other Components(HCCL/rts/etc.):"

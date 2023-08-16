@@ -322,7 +322,7 @@ const bool SelectAscendPlugin = []() -> bool {
     exit(0);
   }
   if (iter->second == k910BAscnedVersion) {
-    common::SetEnv("MS_ENABLE_GE", "1");
+    (void)common::SetEnv("MS_ENABLE_GE", "1");
   }
   return true;
 }();

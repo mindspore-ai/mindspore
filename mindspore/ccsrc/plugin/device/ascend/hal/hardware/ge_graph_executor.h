@@ -64,7 +64,7 @@ class GeGraphExecutor : public GraphExecutor {
   void AllocParameterMemory(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *memo = nullptr) const;
   void BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph);
   void BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph);
-  void AllocOutputMemory(const KernelGraphPtr &kernel_graph, const std::vector<ShapeVector> &outputs_shape) const;
+  void AllocOutputMemory(const KernelGraphPtr &kernel_graph) const;
   bool CompileGraph(const KernelGraphPtr &graph, const std::map<string, string> &compile_options);
   std::vector<GeTensor> GenerateInputGeTensor(const KernelGraphPtr &kernel_graph) const;
   std::vector<GeTensor> GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) const;
