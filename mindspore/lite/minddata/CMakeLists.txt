@@ -41,16 +41,24 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -Wl,--allow-shlib-undefined -DHALF_ENABLE_CPP11_USER_LITERALS=0 \
       -D_FORTIFY_SOURCE=2")
 endif()
-if(TARGET_AOS_ARM)
-    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -fstack-protector-strong -Wno-attributes \
-      -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -fstack-protector-strong -Wno-attributes \
-      -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    # debug mode do not change flags
 else()
     set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
       -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
       -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+    if(TARGET_AOS_ARM)
+        set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -fstack-protector-strong -Wno-attributes \
+        -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -fstack-protector-strong -Wno-attributes \
+        -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+    else()
+        set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+        -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong \
+        -Wno-attributes -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+    endif()
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-non-virtual-dtor")
