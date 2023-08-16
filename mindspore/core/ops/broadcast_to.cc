@@ -52,6 +52,16 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   auto value_ptr = primitive->GetAttr(kShape);
   auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
   CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(input_x.size()), prim_name);
+  bool is_empty_shape_input =
+    std::any_of(input_x.begin(), input_x.end(), [](const auto &element) { return element == 0; });
+  bool is_empty_shape_x = std::any_of(x_shape.begin(), x_shape.end(), [](const auto &element) { return element == 0; });
+  if (is_empty_shape_input && !is_empty_shape_x) {
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', each dimension pair, input_x shape and target shape must be equal or input dimension is 1 or target "
+         "dimension is -1. But got input_x shape: "
+      << x_shape << ", target shape: " << input_x << ".";
+  }
   if (!x_shape.empty() && x_shape[0] == -2) {
     auto x_shape_ptr = std::make_shared<abstract::Shape>(input_x);
     return x_shape_ptr;
