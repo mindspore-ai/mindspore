@@ -559,6 +559,27 @@ bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support
   return false;
 }
 
+bool CheckFollowedNodeInSet(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                            const std::set<PrimitivePtr> &support_primitive_types) {
+  auto manager = mindspore::Manage(func_graph, true);
+  auto node_users = manager->node_users()[cnode];
+  if (node_users.empty()) {
+    MS_LOG(WARNING) << cnode->fullname_with_scope() << " cnode is isolated.";
+    return false;
+  }
+  for (auto &node_user : node_users) {
+    if (!utils::isa<CNodePtr>(node_user.first)) {
+      MS_LOG(INFO) << "The followed op: " << node_user.first->fullname_with_scope() << " is not cnode";
+      return false;
+    }
+    auto node_user_cnode = utils::cast<CNodePtr>(node_user.first);
+    if (!CheckNodeInSet(node_user_cnode, support_primitive_types)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data) {
   return DeQuantData(reinterpret_cast<const int8_t *>(tensor->Data().get()), tensor->ElementNum(),
                      tensor->QuantParams(), dequant_data);
