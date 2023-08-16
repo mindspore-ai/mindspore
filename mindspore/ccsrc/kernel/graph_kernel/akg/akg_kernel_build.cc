@@ -65,20 +65,20 @@ bool AkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &build_args
 
     auto client = GetClient();
     MS_EXCEPTION_IF_NULL(client);
-    if (!client->AkgStart(PROCESS_NUM, TIME_OUT)) {
+    if (!client->CompilerStart(PROCESS_NUM, TIME_OUT)) {
       MS_LOG(ERROR) << "Akg start failed.";
       return false;
     }
     auto attrs = CollectBuildAttrs();
-    if (!attrs.empty() && !client->AkgSendAttr(attrs)) {
+    if (!attrs.empty() && !client->CompilerSendAttr(attrs)) {
       MS_LOG(ERROR) << "Akg send attr failed.";
       return false;
     }
-    if (!client->AkgSendData(jsons)) {
+    if (!client->CompilerSendData(jsons)) {
       MS_LOG(ERROR) << "Akg send data failed.";
       return false;
     }
-    if (!client->AkgWait()) {
+    if (!client->CompilerWait()) {
       MS_LOG(ERROR) << "Akg compile failed.";
       return false;
     }

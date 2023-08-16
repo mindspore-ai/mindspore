@@ -40,9 +40,9 @@ std::string GetPyExe() {
   return env;
 }
 
-bool KernelBuildClient::AkgStart(int process_num, int wait_time) {
+bool KernelBuildClient::CompilerStart(int process_num, int wait_time) {
   // Start compiling..
-  auto res = SendRequest(kAkgStart);
+  auto res = SendRequest(kCompilerStart);
   if (res != kAck) {
     MS_LOG(ERROR) << "AKG/START failed, res: " << res;
     return false;
@@ -62,30 +62,30 @@ bool KernelBuildClient::AkgStart(int process_num, int wait_time) {
   return true;
 }
 
-bool KernelBuildClient::AkgSendAttr(const std::string &attr) {
-  auto res = SendRequest(kAkgAttr);
+bool KernelBuildClient::CompilerSendAttr(const std::string &attr) {
+  auto res = SendRequest(kCompilerAttr);
   if (res != kAck) {
-    MS_LOG(ERROR) << "AKG/ATTR failed, res: " << res;
+    MS_LOG(ERROR) << "COMPILER/ATTR failed, res: " << res;
     return false;
   }
   res = SendRequest(attr);
   if (res != kAck) {
-    MS_LOG(ERROR) << "AKG/ATTR.. responds failed, res: " << res << ", when sending [" << attr << "]";
+    MS_LOG(ERROR) << "COMPILER/ATTR.. responds failed, res: " << res << ", when sending [" << attr << "]";
     return false;
   }
   return true;
 }
 
-bool KernelBuildClient::AkgSendData(const std::vector<std::string> &jsons) {
-  auto res = SendRequest(kAkgData);
+bool KernelBuildClient::CompilerSendData(const std::vector<std::string> &jsons) {
+  auto res = SendRequest(kCompilerData);
   if (res != kAck) {
-    MS_LOG(ERROR) << "AKG/DATA failed, res: " << res;
+    MS_LOG(ERROR) << "COMPILER/DATA failed, res: " << res;
     return false;
   }
   for (auto &json : jsons) {
     res = SendRequest(json);
     if (res != kAck) {
-      MS_LOG(ERROR) << "AKG/DATA.. responds failed, res: " << res << ", when sending [" << json << "]";
+      MS_LOG(ERROR) << "COMPILER/DATA.. responds failed, res: " << res << ", when sending [" << json << "]";
       return false;
     }
   }
@@ -93,10 +93,10 @@ bool KernelBuildClient::AkgSendData(const std::vector<std::string> &jsons) {
 }
 
 // Fetch the result of AKG compiling.
-bool KernelBuildClient::AkgWait() {
-  auto res = SendRequest(kAkgWait);
+bool KernelBuildClient::CompilerWait() {
+  auto res = SendRequest(kCompilerWait);
   if (res != kTrue) {
-    MS_LOG(ERROR) << "AKG/WAIT failed, res: " << res;
+    MS_LOG(ERROR) << "COMPILER/WAIT failed, res: " << res;
     return false;
   }
   return true;
@@ -118,6 +118,11 @@ AscendKernelBuildClient &AscendKernelBuildClient::Instance() {
 
 AkgKernelBuildClient &AkgKernelBuildClient::Instance() {
   static AkgKernelBuildClient instance{};
+  return instance;
+}
+
+AkgV2KernelBuildClient &AkgV2KernelBuildClient::Instance() {
+  static AkgV2KernelBuildClient instance{};
   return instance;
 }
 }  // namespace kernel

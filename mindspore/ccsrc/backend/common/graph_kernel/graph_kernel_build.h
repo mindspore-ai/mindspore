@@ -21,6 +21,7 @@
 #include <memory>
 #include <sstream>
 #include <unordered_map>
+#include <map>
 #include "ir/anf.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "kernel/framework_utils.h"
@@ -28,6 +29,7 @@
 #include "kernel/kash/kernel_pack.h"
 #include "kernel/graph_kernel/graph_kernel_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_splitter.h"
+#include "backend/common/graph_kernel/adapter/graph_kernel_splitter_with_py.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -51,6 +53,23 @@ class SafeGraphKernelSplitter : public GraphKernelSplitter {
   }
 };
 
+class KernelCompilerGraphKernelSplitter : public GraphKernelSplitter {
+ public:
+  KernelCompilerGraphKernelSplitter() = default;
+  ~KernelCompilerGraphKernelSplitter() = default;
+  std::shared_ptr<SplitSchemer> GetSplitSchema(const std::string &) override {
+    return std::make_shared<SplitByJsonSchemer>(address_node_map_, json_desc_str_);
+  }
+
+  void SetAddressNodeMap(const std::map<std::string, AnfNodePtr> &address_node_map) {
+    address_node_map_ = address_node_map;
+  }
+
+  void SetJson(const std::string &json_desc_str) { json_desc_str_ = json_desc_str; }
+  std::map<std::string, AnfNodePtr> address_node_map_;
+  std::string json_desc_str_;
+};
+
 class GraphKernelBuild : public opt::Pass {
  public:
   GraphKernelBuild() : Pass("graph_kernel_build") {}
@@ -69,6 +88,8 @@ class GraphKernelBuild : public opt::Pass {
   void ParallelBuild(const std::vector<kernel::JsonNodePair> &nodes);
   // Split nodes that compiled failed.
   bool SplitNodes(const std::vector<kernel::JsonNodePair> &nodes);
+  // Split nodes that compiled failed.
+  bool SplitNodesByKernelCompiler(const std::vector<kernel::JsonNodePair> &nodes);
 
   SafeGraphKernelSplitter splitter_;  // used to split nodes that compile failed
   kernel::KernelMeta *bin_map_{nullptr};

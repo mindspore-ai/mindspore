@@ -21,6 +21,7 @@
 #include <string>
 #include <map>
 #include <unordered_set>
+#include <algorithm>
 #include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -114,10 +115,13 @@ void SafeSplitSchemer::SplitNodes(const FuncGraphPtr &func_graph) {
 
 void GraphKernelBuild::Init() {
   // Init KernelMeta.
+  std::string kernel_generator = GraphKernelFlags::GetInstance().kernel_generator;
+  std::transform(kernel_generator.begin(), kernel_generator.end(), kernel_generator.begin(), ::tolower);
+
   if (bin_map_ == nullptr) {
     bin_map_ = kernel::KernelMeta::GetInstance();
     if (!bin_map_->initialized()) {
-      bin_map_->Initialize();
+      bin_map_->Initialize(kernel_generator);
     }
   }
 
@@ -149,10 +153,10 @@ bool GraphKernelBuild::Process(const FuncGraphPtr &func_graph, int iter) {
   // Parallel compile.
   ParallelBuild(need_compile_nodes);
   // Update cache after compiling. Nodes that still not have compile cache means they compiled failed.
+  changed = SplitNodesByKernelCompiler(nodes);
   auto remaining_nodes = CollectNotCachedNodes(need_compile_nodes);
   // Split nodes that compile failed.
-  changed = SplitNodes(remaining_nodes);
-
+  changed = changed || SplitNodes(remaining_nodes);
   return changed;
 }
 
@@ -170,6 +174,7 @@ kernel::JsonNodePair GraphKernelBuild::CollectNode(const AnfNodePtr &node) const
   kernel::GetValidKernelNodes(sub_func_graph, &node_list, &input_list, &output_list);
   DumpOption option;
   option.get_target_info = true;
+  option.save_ptr_address = true;
   GraphKernelJsonGenerator graph_kernel_json_generator(option);
   if (!graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
     MS_EXCEPTION(UnknownError) << "Collect op info file failed. op[" << node->fullname_with_scope() << "].";
@@ -196,6 +201,16 @@ void GraphKernelBuild::CollectNodes(const FuncGraphPtr &func_graph, std::vector<
   }
 }
 
+std::string GetGraphKernelNodeName(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto func_graph = GetCNodeFuncGraph(cnode);
+  if (func_graph->has_attr(kAttrNodeName)) {
+    return GetValue<std::string>(func_graph->get_attr(kAttrNodeName));
+  }
+  return std::string();
+}
+
 std::vector<kernel::JsonNodePair> GraphKernelBuild::CollectNotCachedNodes(
   const std::vector<kernel::JsonNodePair> &nodes) {
   MS_EXCEPTION_IF_NULL(bin_map_);
@@ -207,9 +222,10 @@ std::vector<kernel::JsonNodePair> GraphKernelBuild::CollectNotCachedNodes(
     }
     // Skip node that already set kernel mod(created from compile cache).
     if (AnfAlgo::GetKernelMod(node) != nullptr) {
+      MS_LOG(DEBUG) << "Skip node that already set kernel mod: " << json_generator.kernel_name();
       continue;
     }
-    const auto &kernel_name = json_generator.kernel_name();
+    auto kernel_name = json_generator.kernel_name();
     // Skip node that already has cache.
     if (kernel_pack_.find(kernel_name) != kernel_pack_.end()) {
       kernel_builder_->SetKernelMod(kernel_pack_[kernel_name], json_generator, node);
@@ -217,14 +233,48 @@ std::vector<kernel::JsonNodePair> GraphKernelBuild::CollectNotCachedNodes(
                     << kernel_name << "]";
       continue;
     }
+
+    std::string split_kernel_name = GetGraphKernelNodeName(node);
+    // Check whether node is a split node and already has cache.
+    if (kernel_pack_.find(split_kernel_name) != kernel_pack_.end()) {
+      kernel_builder_->SetKernelMod(kernel_pack_[split_kernel_name], json_generator, node);
+      MS_LOG(DEBUG) << "Set cached kernel for node [" << node->fullname_with_scope() << "] with kernel node name ["
+                    << split_kernel_name << "]";
+      continue;
+    }
+
+    std::string split_result_path = bin_map_->kernel_meta_path() + kernel_name + "_split" + kernel::kJsonSuffix;
+    std::ifstream split_result_json(split_result_path);
+    // Split json file exits, which means the node is split by the kernel compiler.
+    if (split_result_json.is_open()) {
+      // check split result
+      MS_LOG(DEBUG) << "The node is split by the kernel compiler: " << kernel_name;
+      split_result_json.close();
+      continue;
+    }
+
     std::string json_path = bin_map_->kernel_meta_path() + kernel_name + kernel::kJsonSuffix;
     std::ifstream kernel_json(json_path);
     // Json file not exits, which means the node does not have cache.
     if (!kernel_json.is_open()) {
-      (void)res.emplace_back(json_generator, node);
-      continue;
+      std::string split_json_path = bin_map_->kernel_meta_path() + split_kernel_name + kernel::kJsonSuffix;
+      std::ifstream split_kernel_json(split_json_path);
+      if (!split_kernel_json.is_open()) {
+        (void)res.emplace_back(json_generator, node);
+        MS_LOG(DEBUG) << "The node does not have cache as the json [" << node->fullname_with_scope()
+                      << "] with kernel name [" << kernel_name << "] is not found.";
+        continue;
+      } else {
+        MS_LOG(DEBUG) << "The node has cache with split kernel as the json [" << node->fullname_with_scope()
+                      << "] with kernel name [" << split_kernel_name << "] is found.";
+        kernel_name = split_kernel_name;
+        json_path = split_json_path;
+        split_kernel_json.close();
+      }
+    } else {
+      kernel_json.close();
     }
-    kernel_json.close();
+
     // For GPU and CPU, we need to insert json path to bin_map_(KernelMeta) first, otherwise SearchKernelCache will
     // fail.
     (void)bin_map_->Insert(kernel_name, json_path);
@@ -276,6 +326,44 @@ bool GraphKernelBuild::SplitNodes(const std::vector<kernel::JsonNodePair> &nodes
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (!splitter_.TrySplit(cnode)) {
+      // This means the compiled failed node also can not be split.
+      MS_LOG(EXCEPTION) << "Node [" << node->fullname_with_scope() << "] with kernel name [" << kernel_name
+                        << "] compiled failed and can not be split.";
+    }
+    result = true;
+  }
+  return result;
+}
+
+bool GraphKernelBuild::SplitNodesByKernelCompiler(const std::vector<kernel::JsonNodePair> &nodes) {
+  MS_EXCEPTION_IF_NULL(bin_map_);
+  MS_EXCEPTION_IF_NULL(kernel_builder_);
+  bool result = false;
+  KernelCompilerGraphKernelSplitter compiler_splitter_;
+  for (const auto &[json_generator, node] : nodes) {
+    if (node == nullptr) {
+      continue;
+    }
+    const auto &kernel_name = json_generator.kernel_name();
+
+    std::string split_json_path = bin_map_->kernel_meta_path() + kernel_name + "_split" + kernel::kJsonSuffix;
+    std::ifstream kernel_split_json(split_json_path);
+    // Json file not exits, which means the node is not split by the kernel compiler.
+    if (!kernel_split_json.is_open()) {
+      continue;
+    }
+    nlohmann::json js;
+    kernel_split_json >> js;
+    kernel_split_json.close();
+
+    std::map<std::string, AnfNodePtr> address_node_map_ = json_generator.address_node_map();
+    compiler_splitter_.SetAddressNodeMap(address_node_map_);
+    compiler_splitter_.SetJson(js.dump());
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto ori_sub_func_graph = GetCNodeFuncGraph(cnode);
+    ori_sub_func_graph->set_attr(kAttrNodeName, MakeValue(kernel_name));
+    if (!compiler_splitter_.TrySplit(cnode)) {
       // This means the compiled failed node also can not be split.
       MS_LOG(EXCEPTION) << "Node [" << node->fullname_with_scope() << "] with kernel name [" << kernel_name
                         << "] compiled failed and can not be split.";

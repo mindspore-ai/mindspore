@@ -244,7 +244,7 @@ void GraphKernelFlags::CheckSupport() const {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-    if (is_cpu) {
+    if (is_cpu && !(const_cast<GraphKernelFlags *>(this)->enable_dynamic_shape_fusion)) {
       MS_LOG(WARNING)
         << "Graph Kernel Fusion is not supported without LLVM on cpu platform, and it will be turned off now.";
       const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;

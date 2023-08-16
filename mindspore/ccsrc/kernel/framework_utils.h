@@ -34,13 +34,14 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kAkgKernelMeta = "akg_kernel_meta/";
+constexpr auto kKernelMetaSuffix = "_kernel_meta/";
 constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
 
 class BACKEND_EXPORT KernelMeta {
  public:
   KernelMeta() = default;
-  void Initialize();
+  void Initialize(const std::string &backend = "akg");
   std::string Search(const std::string &kernel_name) const;
   bool Insert(const std::string &kernel_name, const std::string &kernel_json);
   std::string kernel_meta_path() const { return kernel_meta_path_; }

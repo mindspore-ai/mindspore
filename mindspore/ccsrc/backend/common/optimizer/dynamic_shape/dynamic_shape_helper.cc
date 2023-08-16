@@ -359,7 +359,6 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
 
 void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
                         const AbstractBasePtrList &args_spec_list) {
-  std::map<AnfNodePtr, AbstractBasePtr> node_abs_spec_map;
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   if (args_spec_list.size() != func_graph->parameters().size()) {
@@ -368,7 +367,7 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
       << args_spec_list.size() << " vs func_graph parameters: " << func_graph->parameters().size();
   }
   for (size_t i = 0; i < args_spec_list.size(); i++) {
-    (void)node_abs_spec_map.emplace(func_graph->parameters()[i], args_spec_list[i]);
+    func_graph->parameters()[i]->set_abstract(args_spec_list[i]->Clone());
   }
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return());
   for (auto &node : nodes) {
@@ -387,24 +386,13 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
       for (size_t i = 1; i < prim_cnode->size(); i++) {
         auto input_node = prim_cnode->input(i);
         MS_EXCEPTION_IF_NULL(input_node);
-        auto para_spec = node_abs_spec_map.find(input_node);
-        if (para_spec != node_abs_spec_map.end()) {
-          (void)cnode_args_spec_list.emplace_back(para_spec->second);
-        } else {
-          (void)cnode_args_spec_list.emplace_back(input_node->abstract());
-        }
+        (void)cnode_args_spec_list.emplace_back(input_node->abstract()->Clone());
       }
-      opt::CppInferShape(cnode_primitive, cnode_args_spec_list, cnode);
-      (void)node_abs_spec_map.emplace(node, cnode->abstract());
+      opt::CppInferShape(cnode_primitive, cnode_args_spec_list, prim_cnode);
     } else {
       auto return_cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(return_cnode);
-      auto return_spec = node_abs_spec_map.find(return_cnode->input(1));
-      if (return_spec == node_abs_spec_map.end()) {
-        MS_LOG(EXCEPTION) << "There is no inferred result for the return value of the node: "
-                          << return_cnode->DebugString();
-      }
-      cnode->set_abstract(return_spec->second);
+      cnode->set_abstract(return_cnode->input(1)->abstract()->Clone());
     }
   }
   return;
