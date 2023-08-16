@@ -59,7 +59,7 @@ ValuePtr CreateZeroScalar(const TypePtr &type) {
 }
 }  // namespace
 
-NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs) const {
+NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs) {
   auto &func = Emitter::primc_func_cache()[op_name];
   if (func == nullptr) {
     const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
@@ -79,7 +79,7 @@ NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, con
   return EmitOp(primc, inputs);
 }
 
-NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const {
+NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
   AnfNodePtrList cnode_inputs = {NewValueNode(prim)};
   cnode_inputs.reserve(inputs.size() + 1);
   (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs), [](const NodePtr &no) {
@@ -95,18 +95,18 @@ NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) con
   return node;
 }
 
-NodePtr Emitter::EmitValue(const ValuePtr &value) const {
+NodePtr Emitter::EmitValue(const ValuePtr &value) {
   auto node = NewNode(NewValueNode(value));
   infer_->Infer(node);
   return node;
 }
 
-NodePtr Emitter::Exp(const NodePtr &x) const {
+NodePtr Emitter::Exp(const NodePtr &x) {
   return Emit(kExpOpName, {x},
               {{"base", MakeValue<float>(-1.0)}, {"scale", MakeValue<float>(1.0)}, {"shift", MakeValue<float>(0.0)}});
 }
 
-NodePtr Emitter::Log(const NodePtr &x) const {
+NodePtr Emitter::Log(const NodePtr &x) {
   return Emit(kLogOpName, {x},
               {{"base", MakeValue<float>(-1.0)},
                {"scale", MakeValue<float>(1.0)},
@@ -114,7 +114,7 @@ NodePtr Emitter::Log(const NodePtr &x) const {
                {"cust_aicpu", MakeValue(kLogOpName)}});
 }
 
-NodePtr Emitter::Cast(const NodePtr &node, const TypePtr &type) const {
+NodePtr Emitter::Cast(const NodePtr &node, const TypePtr &type) {
   // do not emit a node when the dst type is the same as src type
   if (node->dtype()->type_id() == type->type_id()) {
     return node;
@@ -122,7 +122,7 @@ NodePtr Emitter::Cast(const NodePtr &node, const TypePtr &type) const {
   return Emit("Cast", {node, EmitValue(type)});
 }
 
-NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) const {
+NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
   MS_EXCEPTION_IF_NULL(node);
   auto [success, dst_shape] = GetIntList(shape);
   if (!success) {
@@ -140,7 +140,7 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) const {
   return node;
 }
 
-NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) const {
+NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) {
   return UnifyDtypeAndEmit(prim::kPrimMatMul->name(), a, b,
                            {{"transpose_x1", MakeValue(transpose_a)},
                             {"transpose_x2", MakeValue(transpose_b)},
@@ -148,7 +148,7 @@ NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bo
                             {"transpose_b", MakeValue(transpose_b)}});
 }
 
-NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) const {
+NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) {
   return UnifyDtypeAndEmit(prim::kPrimBatchMatMul->name(), a, b,
                            {{"adj_x1", MakeValue(transpose_a)},
                             {"adj_x2", MakeValue(transpose_b)},
@@ -156,7 +156,7 @@ NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_
                             {"transpose_b", MakeValue(transpose_b)}});
 }
 
-NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) const {
+NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) {
   auto [success, perm_list] = GetIntList(perm);
   if (!success) {
     return Emit(kTransposeOpName, {node, perm});
@@ -173,7 +173,7 @@ NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) const {
   return node;
 }
 
-NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) const {
+NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) {
   auto [success, multiples_list] = GetIntList(multiples);
   if (!success) {
     return Emit(kTileOpName, {node, multiples});
@@ -185,7 +185,7 @@ NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) const {
   return Emit(kTileOpName, {node, multiples});
 }
 
-NodePtr Emitter::ZerosLike(const NodePtr &node) const {
+NodePtr Emitter::ZerosLike(const NodePtr &node) {
   if (node->isa<ValueNode>()) {
     if (node->dtype()->type_id() == kMetaTypeNone) {
       return Tensor(0);
@@ -227,13 +227,13 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
   MS_LOG(EXCEPTION) << "Cannot emit ZerosLike for " << node->get()->ToString() << " with abstract " << abs;
 }
 
-NodePtr Emitter::Fill(double value, const ShapeVector &shape, TypeId data_type) const {
+NodePtr Emitter::Fill(double value, const ShapeVector &shape, TypeId data_type) {
   size_t data_num = LongToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
   std::vector<double> data(data_num, value);
   return Tensor(data_type, shape, &data[0], TypeId::kNumberTypeFloat64);
 }
 
-NodePtr Emitter::Fill(int64_t value, const ShapeVector &shape, TypeId data_type) const {
+NodePtr Emitter::Fill(int64_t value, const ShapeVector &shape, TypeId data_type) {
   size_t data_num = LongToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
   std::vector<int64_t> data(data_num, value);
   return Tensor(data_type, shape, &data[0], TypeId::kNumberTypeInt64);
@@ -282,8 +282,7 @@ std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const
   return std::make_pair(need_reduce, out_shape);
 }
 
-std::pair<bool, NodePtr> Emitter::NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim,
-                                             bool skip_mode) const {
+std::pair<bool, NodePtr> Emitter::NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim, bool skip_mode) {
   auto [axis_success, axis_value] = GetIntList(axis);
   if (axis_success && skip_mode && axis_value.empty()) {
     return std::make_pair(false, shape);
@@ -298,7 +297,7 @@ std::pair<bool, NodePtr> Emitter::NeedReduce(const NodePtr &shape, const NodePtr
   return std::make_pair(true, v);
 }
 
-NodePtr Emitter::ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims, bool skip_mode) const {
+NodePtr Emitter::ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims, bool skip_mode) {
   MS_EXCEPTION_IF_NULL(x);
   auto need_reduce = NeedReduce(Shape(x), axis, keep_dims, skip_mode);
   if (!need_reduce.first) {
@@ -308,7 +307,7 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims
               {{"keep_dims", MakeValue(keep_dims)}, {"skip_mode", MakeValue(skip_mode)}});
 }
 
-NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) const {
+NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) {
   MS_EXCEPTION_IF_NULL(x);
   auto real_axis = axis;
 #ifdef WITH_BACKEND
@@ -326,18 +325,18 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
   return ReduceSum(x, Value<ShapeVector>(real_axis), keep_dims, false);
 }
 
-NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, const NodePtr &axis, int64_t batch_dims) const {
+NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, const NodePtr &axis, int64_t batch_dims) {
   MS_EXCEPTION_IF_NULL(params);
   MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(axis);
   return Emit(kGatherOpName, {params, indices, axis}, {{kAttrBatchDims, MakeValue(batch_dims)}});
 }
-NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims) const {
+NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims) {
   return Gather(params, indices, Tensor(axis, kInt64), batch_dims);
 }
 
 NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
-                               const std::vector<int64_t> &value_depend, const ShapeValidFunc &valid_func) const {
+                               const std::vector<int64_t> &value_depend, const ShapeValidFunc &valid_func) {
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "ShapeCalc got empty inputs";
   }
@@ -400,7 +399,7 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtr
   return res;
 }
 
-std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) const {
+std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) {
   auto it1 = type_vector_[lhs->dtype()->type_id()];
   auto it2 = type_vector_[rhs->dtype()->type_id()];
   if (!it1 || !it2 || it1 == it2) {
@@ -414,7 +413,7 @@ std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const Node
 
 class Emitter::CtrlFlowBlock {
  public:
-  explicit CtrlFlowBlock(const Emitter *emitter) : emitter_(emitter) { MS_EXCEPTION_IF_NULL(emitter); }
+  explicit CtrlFlowBlock(Emitter *emitter) : emitter_(emitter) { MS_EXCEPTION_IF_NULL(emitter); }
   ~CtrlFlowBlock() = default;
   NodePtr IfThenElse(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) {
     auto tb = BuildSubgraph(true_case);
@@ -445,7 +444,7 @@ class Emitter::CtrlFlowBlock {
       return param;
     };
 
-    auto empty_body_func = [&init_list](const Emitter *) { return init_list; };
+    auto empty_body_func = [&init_list](Emitter *) { return init_list; };
     auto empty_body_fg_with_inputs = BuildSubgraphOfPartial(empty_body_func);
     for (size_t i = 1; i < empty_body_fg_with_inputs.size(); i++) {
       auto inp = empty_body_fg_with_inputs[i]->get();
@@ -593,7 +592,7 @@ class Emitter::CtrlFlowBlock {
   }
 
   size_t output_num_{0};
-  const Emitter *emitter_;
+  Emitter *emitter_;
   abstract::AbstractBasePtr out_abstract_{nullptr};
 
   class CppInferWithPartial : public CppInfer {
@@ -607,12 +606,12 @@ class Emitter::CtrlFlowBlock {
   };
 };
 
-NodePtr Emitter::Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) const {
+NodePtr Emitter::Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) {
   CtrlFlowBlock cfb(this);
   return cfb.IfThenElse(cond, true_case, false_case);
 }
 
-NodePtr Emitter::While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) const {
+NodePtr Emitter::While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) {
   CtrlFlowBlock cfb(this);
   return cfb.While(cond, body, init_list);
 }

@@ -38,7 +38,7 @@ bool IsLastAxis(const ShapeVector &shape, int64_t axis) {
 }
 }  // namespace
 
-NodePtrList Dropout2DBpropExpander(const BpropIRBuilder *ib) {
+NodePtrList Dropout2DBpropExpander(BpropIRBuilder *ib) {
   auto keep_prob = GetValue<float>(ib->GetAttr("keep_prob"));
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
@@ -54,7 +54,7 @@ NodePtrList Dropout2DBpropExpander(const BpropIRBuilder *ib) {
   return {dy};
 }
 
-NodePtrList GeLUBpropExpander(const BpropIRBuilder *ib) {
+NodePtrList GeLUBpropExpander(BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -62,14 +62,14 @@ NodePtrList GeLUBpropExpander(const BpropIRBuilder *ib) {
   return {dx};
 }
 
-NodePtrList FastGeLUBpropExpander(const BpropIRBuilder *ib) {
+NodePtrList FastGeLUBpropExpander(BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("FastGeLUGrad", {dout, x});
   return {dx};
 }
 
-NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
+NodePtrList Conv2DTransposeBpropExpander(BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto f_sizes = ib->GetInput(kIndex2);
@@ -103,7 +103,7 @@ NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
   return {dx, dw, ib->OutZeros(f_sizes)};
 }
 
-NodePtrList CommonMaxMinGradBprop(const BpropIRBuilder *ib) {
+NodePtrList CommonMaxMinGradBprop(BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex3);

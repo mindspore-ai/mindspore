@@ -70,7 +70,7 @@ class BroadcastGradientArgsShapeCalc : public ShapeCalcFunctor {
 };
 REG_FUNCTOR("ShapeCalc_BroadcastGradientArgs", BroadcastGradientArgsShapeCalc);
 
-NodePtrList BpropIRBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) const {
+NodePtrList BpropIRBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) {
   auto check_shp_valid_func = [shift](size_t, const ShapeVector &shape) -> bool {
     ShapeVector broadcast_shape;
     size_t end_idx = shape.size() - std::min(shape.size(), shift);
@@ -123,7 +123,7 @@ bool BpropIRBuilder::IsGraphMode() const {
   return (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode);
 }
 
-NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) const {
+NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) {
   auto data_shape = GetShape(node);
   auto n = data_shape.size();
   constexpr const size_t kMaxDims = 8;
@@ -150,7 +150,7 @@ NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) const {
      {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
 }
 
-NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) const {
+NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) {
   auto data_shape = GetShape(x);
   auto n = data_shape.size();
   std::vector<int64_t> begin_strides(n, 0);
@@ -190,14 +190,14 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
 DEF_PURE_SHAPE_CALC(g_dyn_size)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray { return {{abstract::ShapeSize(inputs.at(0))}}; })
   .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> ShapeVector { return {1}; });
-NodePtr BpropIRBuilder::DynSize(const NodePtr &node) const {
+NodePtr BpropIRBuilder::DynSize(const NodePtr &node) {
   if (!IsDynamic(GetShape(node))) {
     return Value(GetSize(node));
   }
   return ShapeCalc(g_dyn_size, {node})[0];
 }
 
-NodePtr BpropIRBuilder::TupleToTensor(const NodePtr &node, const TypePtr &dtype) const {
+NodePtr BpropIRBuilder::TupleToTensor(const NodePtr &node, const TypePtr &dtype) {
   if (node->abstract()->isa<abstract::AbstractTuple>()) {
     if (node->isa<ValueNode>()) {
       return Tensor(GetIntList(node), dtype);

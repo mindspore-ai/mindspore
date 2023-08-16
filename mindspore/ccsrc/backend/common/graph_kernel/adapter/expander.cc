@@ -122,11 +122,6 @@ bool CanExpandFallback(const AnfNodePtr &node) {
     {kAllTarget, OpLevel_0, prim::kPrimAdamWeightDecay},
     {kAllTarget, OpLevel_0, prim::kPrimStandardNormal},
     {kAllTarget, OpLevel_0, prim::kPrimAdam},
-    {kAllTarget, OpLevel_0, prim::kPrimVmapStackAssign},
-    {kAllTarget, OpLevel_0, prim::kPrimVmapUnstackAssign},
-    {kAllTarget, OpLevel_0, prim::kPrimSiLU},
-    {kAllTarget, OpLevel_0, prim::kPrimSiLUGrad},
-    {kAllTarget, OpLevel_0, prim::kPrimDense},
     // some ops including custom op are only used expand fallbak on Ascend.
     {kAscendDevice, OpLevel_0, prim::kPrimSolveTriangular},
     {kAscendDevice, OpLevel_0, prim::kPrimLU},

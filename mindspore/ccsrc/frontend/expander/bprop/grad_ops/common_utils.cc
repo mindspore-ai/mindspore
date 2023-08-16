@@ -29,13 +29,13 @@
 
 namespace mindspore::expander::bprop {
 namespace {
-static NodePtr ReduceSumWithReshape(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis,
+static NodePtr ReduceSumWithReshape(BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis,
                                     const ShapeVector &shape_x) {
   auto reduce_x = ib->ReduceSum(dx, axis);
   return ib->Reshape(reduce_x, shape_x);
 }
 
-NodePtrList DynBinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
+NodePtrList DynBinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                                const NodePtr &dy) {
   auto broadcast_axes = ib->BroadcastGradientArgs(x, y);
   auto rx = broadcast_axes[kIndex0];
@@ -47,7 +47,7 @@ NodePtrList DynBinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const
   return {reduce_dx, reduce_dy};
 }
 
-NodePtrList DynBinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
+NodePtrList DynBinopGradCommonWithShift(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                                         const NodePtr &dy, size_t shift) {
   auto broadcast_axes = ib->BroadcastGradientArgs(x, y, shift);
   auto rx = broadcast_axes[kIndex0];
@@ -236,7 +236,7 @@ std::vector<int64_t> GetIntList(const NodePtr &node) {
   return GetIntList(value);
 }
 
-NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
+NodePtrList BinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                             const NodePtr &dy) {
   // Common grad definition for binary operations.
   // The function is usually used in backprop op to reduce additional dimensions
@@ -271,7 +271,7 @@ NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const No
   return DynBinopGradCommon(ib, x, y, reduce_dx, reduce_dy);
 }
 
-NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
+NodePtrList BinopGradCommonWithShift(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                                      const NodePtr &dy, size_t shift) {
   // Common grad definition for binary operations with shift.
   // The function is usually used in backprop op to reduce additional dimensions
@@ -361,7 +361,7 @@ int64_t CheckRange(int64_t idx, int64_t dim_size) {
   return idx < 0 ? (idx + dim_size) : idx;
 }
 
-NodePtr GetEps(const BpropIRBuilder *ib, const TypePtr &type) {
+NodePtr GetEps(BpropIRBuilder *ib, const TypePtr &type) {
   switch (type->type_id()) {
     case kNumberTypeFloat16:
       return ib->Tensor(0.000977, type);
@@ -502,7 +502,7 @@ DEF_PURE_SHAPE_CALC(g_sumgrad_shapecalc)
     int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
     return {x_rank, x_rank};
   });
-NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout) {
+NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout) {
   auto calc_res = ib->ShapeCalc(g_sumgrad_shapecalc, {x, axis}, {1});
   const size_t cal_num = 2;
   if (calc_res.size() != cal_num) {
@@ -526,7 +526,7 @@ DEF_PURE_SHAPE_CALC(g_min_or_max_grad)
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
     return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
   });
-NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
+NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
                      const NodePtr &dout) {
   auto output_shape_kept_dims = ib->ShapeCalc(g_min_or_max_grad, {x, axis}, {1})[0];
   auto y = ib->Reshape(out, output_shape_kept_dims);
@@ -564,7 +564,7 @@ class ArgminOrArgmaxShapeCalc : public ShapeCalcFunctor {
 };
 REG_FUNCTOR("ShapeCalc_ArgminOrArgmax", ArgminOrArgmaxShapeCalc);
 
-NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
+NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max) {
   auto x_shape = ib->GetShape(x);
   int64_t x_axis = axis;
@@ -624,7 +624,7 @@ TypeId PromoteBinaryDtype(TypeId t1, TypeId t2) {
     t1, t2, (complex_types.find(t1) != complex_types.end() || complex_types.find(t2) != complex_types.end()));
 }
 
-NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr LGamma(BpropIRBuilder *ib, const NodePtr &x) {
   auto k_lanczos_gamma = 7;
   auto k_base_lanczos_coeff = 0.9999999999998099;
   double k_lanczos_coefficients[8] = {676.520368121885098567009190444019, -1259.13921672240287047156078755283,

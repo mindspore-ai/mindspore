@@ -46,6 +46,8 @@ void SetAscendKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type);
 // check whether the node has completed the operator selection. If not, the operator
 // selection needs to be performed to set kernel info.
 void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes);
+std::string TryBackoffCpu(const KernelGraphPtr &graph, const CNodePtr &node,
+                          const std::pair<std::string, ExceptionType> &failure_info);
 // Mark the kernel backoff with failure info when setting operator info fails.
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info);

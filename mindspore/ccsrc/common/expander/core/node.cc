@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace expander {
-Node::Node(const AnfNodePtr &node, const Emitter *emitter) : anf_node_(node), emitter_(emitter) {
+Node::Node(const AnfNodePtr &node, Emitter *emitter) : anf_node_(node), emitter_(emitter) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(emitter);
 }

@@ -60,7 +60,7 @@
 #endif
 #include "backend/common/pass/optimize_updatestate.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "backend/common/graph_kernel/adapter/expander.h"
+#include "backend/common/expander/fallback/expander_fallback.h"
 #include "backend/common/graph_kernel/value_graph_binder.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/gpu/hal/device/gpu_pin_mem_pool.h"
@@ -493,25 +493,73 @@ void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) {
   }
 }
 
-// Mark the kernel backoff with failure info when setting operator info fails.
-void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
-                               const std::pair<std::string, ExceptionType> &failure_info) {
+bool CheckSupportBackoff(const KernelGraphPtr &graph, const CNodePtr &node,
+                         const std::pair<std::string, ExceptionType> &failure_info) {
   MS_EXCEPTION_IF_NULL(node);
   // The single op does not support the backoff ability.
   if (!AnfAlgo::IsEnableKernelSelectBackoff(graph)) {
-    MS_EXCEPTION(failure_info.second) << "#umsg#Kernel select failed:#umsg#" << failure_info.first;
+    return false;
   }
-
   const auto &kernel_name = common::AnfAlgo::GetCNodeName(node);
   const auto &kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
   // CPU also doesn't support the kernel.
   if (kernel_attrs.empty() || kernel::IsKernelObjectTypeNotSupportedError(failure_info.first)) {
-    MS_EXCEPTION(failure_info.second) << "#umsg#Kernel select failed:#umsg#" << failure_info.first;
+    return false;
   }
+  return true;
+}
 
-  MS_LOG(INFO) << "GPU doesn't support the kernel " << kernel_name << " and will try to backoff on CPU.";
+void SetBackoffInfo(const CNodePtr &node, const std::pair<std::string, ExceptionType> &failure_info) {
+  MS_LOG(INFO) << "GPU doesn't support the kernel " << common::AnfAlgo::GetCNodeName(node)
+               << " and will try to backoff on CPU.";
   // Mark kernel selection backoff info.
   AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
+}
+
+// Mark the kernel backoff with failure info when setting operator info fails.
+void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
+                               const std::pair<std::string, ExceptionType> &failure_info) {
+  if (!CheckSupportBackoff(graph, node, failure_info)) {
+    MS_EXCEPTION(failure_info.second) << "#umsg#Kernel select failed:#umsg#" << failure_info.first;
+  }
+  SetBackoffInfo(node, failure_info);
+}
+
+bool TryExpandFallback(const KernelGraphPtr &graph, const CNodePtr &node,
+                       const std::pair<std::string, ExceptionType> &failure_info) {
+  auto f = [ori_node = node, &failure_info, &graph](const CNodePtr &n) mutable {
+    auto res = SetKernelInfoWithMsg(n);
+    if (res.first.empty()) {
+      // select gpu kernel success.
+      return true;
+    }
+    // select gpu kernel failed, first try to use CPU kernel for original op.
+    if (ori_node != nullptr) {
+      MS_LOG(DEBUG) << "The basic op " << n->fullname_with_scope()
+                    << " select kernel failed. Try to backoff on CPU for original op "
+                    << ori_node->fullname_with_scope();
+      if (CheckSupportBackoff(graph, ori_node, failure_info)) {
+        // original node use cpu kernel, stop expanding.
+        MS_LOG(DEBUG) << "Original op " << ori_node->fullname_with_scope() << " use CPU kernel.";
+        return false;
+      } else {
+        MS_LOG(DEBUG) << "Failed to backoff on CPU for original op " << ori_node->fullname_with_scope()
+                      << ", try to backoff on CPU for basic op " << n->fullname_with_scope();
+      }
+      // only try once for original node.
+      ori_node = nullptr;
+    } else {
+      MS_LOG(DEBUG) << "The basic op " << n->fullname_with_scope() << " select kernel failed, try to backoff on CPU";
+    }
+    // Original op cannot backoff on CPU, try to use CPU kernel for current op.
+    if (CheckSupportBackoff(graph, n, res)) {
+      AnfAlgo::SetKernelSelectBackoffInfo(n, res);
+      MS_LOG(DEBUG) << "The basic op " << n->fullname_with_scope() << " use CPU kernel.";
+      return true;
+    }
+    return false;
+  };
+  return expander::TryExpandCNode(node, f);
 }
 
 // Before creating the kernel, check whether the node has completed the operator selection. If not, the operator
@@ -701,20 +749,13 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     if (failure_info.first.empty()) {
       continue;
     }
-    auto f = [](const CNodePtr &n) {
-      auto res = SetKernelInfoWithMsg(n);
-      return res.first.empty();
-    };
-    auto cnode = graphkernel::TryExpandCNode(node, f);
-    if (cnode == nullptr) {
+    auto expand_ret = TryExpandFallback(graph, node, failure_info);
+    if (expand_ret) {
+      MS_LOG(INFO) << failure_info.first << " but expand success.";
+      do_expand = true;
+    } else {
       HandleKernelSelectFailure(graph, node, failure_info);
-      continue;
     }
-    (void)mng->Replace(node, cnode);
-    MS_LOG(INFO) << failure_info.first << " but expand success.";
-    auto expand_fg = GetCNodeFuncGraph(cnode);
-    graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
-    do_expand = true;
   }
   if (do_expand) {
     graphkernel::BindValueToGraph().Run(graph);

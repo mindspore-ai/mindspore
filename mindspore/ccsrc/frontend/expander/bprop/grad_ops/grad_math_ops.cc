@@ -23,18 +23,18 @@
 #include "ops/math_ops.h"
 
 namespace mindspore::expander::bprop {
-NodePtrList CheckBpropExpander(const BpropIRBuilder *ib) {
+NodePtrList CheckBpropExpander(BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   return {ib->OutZeros(x)};
 }
 
-NodePtrList CompareBpropExpander(const BpropIRBuilder *ib) {
+NodePtrList CompareBpropExpander(BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   return {ib->OutZeros(x), ib->OutZeros(y)};
 }
 
-NodePtrList AddnGradFunc(const BpropIRBuilder *ib) {
+NodePtrList AddnGradFunc(BpropIRBuilder *ib) {
   auto dout = ib->GetInput(kIndex2);
   auto x_abs = ib->GetInput(kIndex0)->abstract();
   auto x_len = x_abs->cast<abstract::AbstractSequencePtr>()->elements().size();
@@ -45,7 +45,7 @@ NodePtrList AddnGradFunc(const BpropIRBuilder *ib) {
   return {ib->MakeTuple(result)};
 }
 
-NodePtrList IgammaBpropExpanderDyn(const BpropIRBuilder *ib) {
+NodePtrList IgammaBpropExpanderDyn(BpropIRBuilder *ib) {
   auto a = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -63,7 +63,7 @@ NodePtrList IgammaBpropExpanderDyn(const BpropIRBuilder *ib) {
   return {r1, r2};
 }
 
-NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
+NodePtrList IgammaBpropExpander(BpropIRBuilder *ib) {
   auto a = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto sa = ib->GetShape(a);
@@ -95,7 +95,7 @@ NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
 
 inline bool IsScalar(const ShapeVector &shape) { return shape.empty() || (shape.size() == 1 && shape[0] == 1); }
 
-bool IsExpandMinMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
+bool IsExpandMinMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
   auto is_ascend = (ib->GetTargetFromContext() == kAscendDevice);
   if (!is_ascend) {
     return false;
@@ -112,7 +112,7 @@ bool IsExpandMinMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePt
   return (IsScalar(x_shp) != IsScalar(y_shp));
 }
 
-NodePtrList MinimumMaximumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
+NodePtrList MinimumMaximumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
                                bool is_minimum) {
   auto zeros = ib->ZerosLike(dout);
   NodePtr x_mask;
@@ -140,7 +140,7 @@ ShapeVector MatrixDeterminantInferFunc(const ShapeArray &inputs, const HashSet<s
   return {IsDynamicRank(new_shape) ? -1 : SizeToLong(new_shape.size()) + 2};
 }
 
-NodePtrList BpropAddcCommon(const BpropIRBuilder *ib, const std::string &op_name,
+NodePtrList BpropAddcCommon(BpropIRBuilder *ib, const std::string &op_name,
                             const std::unordered_set<TypeId> &type_list) {
   auto input_data = ib->GetInput(kIndex0);
   auto x1 = ib->GetInput(kIndex1);
@@ -1629,7 +1629,7 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
-  auto LeftShift = [](const BpropIRBuilder *ib, NodePtr x) {
+  auto LeftShift = [](BpropIRBuilder *ib, NodePtr x) {
     auto x_shape = ib->GetShape(x);
     std::vector<std::vector<int64_t>> paddings;
     auto rank = x_shape.size();
@@ -1656,7 +1656,7 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
                  {"shrink_axis_mask", MakeValue<int64_t>(0LL)}})},
       {{"paddings", MakeValue(paddings)}});
   };
-  auto RightShift = [](const BpropIRBuilder *ib, NodePtr x) {
+  auto RightShift = [](BpropIRBuilder *ib, NodePtr x) {
     auto x_shape = ib->GetShape(x);
     std::vector<std::vector<int64_t>> paddings;
     auto rank = x_shape.size();
@@ -1683,7 +1683,7 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
                  {"shrink_axis_mask", MakeValue<int64_t>(0)}})},
       {{"paddings", MakeValue(paddings)}});
   };
-  auto MatrixTranspose = [](const BpropIRBuilder *ib, const NodePtr &x) {
+  auto MatrixTranspose = [](BpropIRBuilder *ib, const NodePtr &x) {
     auto x_shape = ib->GetShape(x);
     auto rank = x_shape.size();
     ShapeVector perm;

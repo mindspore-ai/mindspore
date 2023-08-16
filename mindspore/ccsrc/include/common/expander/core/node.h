@@ -30,7 +30,7 @@ using DAttr = mindspore::HashMap<std::string, ValuePtr>;
 
 class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
  public:
-  Node(const AnfNodePtr &node, const Emitter *emitter);
+  Node(const AnfNodePtr &node, Emitter *emitter);
   ~Node() = default;
 
   const AnfNodePtr &get() const { return anf_node_; }
@@ -55,13 +55,13 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
   TypePtr dtype();
   std::vector<TypePtr> dtypes();
 
-  const Emitter *emitter() const { return emitter_; }
+  Emitter *emitter() const { return emitter_; }
 
  protected:
   // the wrapped anfnode.
   AnfNodePtr anf_node_{nullptr};
   // hold the emitter who created this node.
-  const Emitter *emitter_{nullptr};
+  Emitter *emitter_{nullptr};
 
   // cache the output shape after first query
   BaseShapePtr shape_{nullptr};

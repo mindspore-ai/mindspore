@@ -1410,22 +1410,22 @@ void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes) {
   profiler::CollectHostInfo("Ascend", "Operator Compilation", "SelectKernelInfo", 0, 0, 1);
 }
 
-void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
-                               const std::pair<std::string, ExceptionType> &failure_info) {
+std::string TryBackoffCpu(const KernelGraphPtr &graph, const CNodePtr &node,
+                          const std::pair<std::string, ExceptionType> &failure_info) {
   // The Pynative_mode and task_sink does not support the backoff ability.
   if (!AnfAlgo::IsEnableKernelSelectBackoff(graph)) {
-    MS_EXCEPTION(failure_info.second) << failure_info.first;
+    return failure_info.first;
   }
   // Ref op does not support the backoff ability.
   auto op_info = kernel::tbe::TbeDynamicShapeUtil::FindOp(common::AnfAlgo::GetCNodeName(node), node);
   if (op_info != nullptr && op_info->is_ref()) {
-    MS_EXCEPTION(failure_info.second) << failure_info.first;
+    return failure_info.first;
   }
 
   if (graph->is_graph_run_mode()) {
-    MS_EXCEPTION(failure_info.second) << failure_info.first
-                                      << "\nThe operator is not supported in task sink mode. You can try to export "
-                                         "environment variable GRAPH_OP_RUN to 1 to execute this operator.";
+    return failure_info.first +
+           "\nThe operator is not supported in task sink mode. You can try to export "
+           "environment variable GRAPH_OP_RUN to 1 to execute this operator.";
   }
 
   MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
@@ -1439,9 +1439,19 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
     SetTensorDeviceInfo(node);
     AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
   } else {
-    MS_EXCEPTION(failure_info.second) << "Ascend operator selection failed info: " << failure_info.first
-                                      << "\nCPU operator selection failed type: " << cpu_etype
-                                      << ". failed info: " << cpu_msg;
+    std::ostringstream oss;
+    oss << "Ascend operator selection failed info: " << failure_info.first
+        << "\nCPU operator selection failed type: " << cpu_etype << ". failed info: " << cpu_msg;
+    return oss.str();
+  }
+  return "";
+}
+
+void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
+                               const std::pair<std::string, ExceptionType> &failure_info) {
+  auto msg = TryBackoffCpu(graph, node, failure_info);
+  if (!msg.empty()) {
+    MS_EXCEPTION(failure_info.second) << msg;
   }
 }
 }  // namespace ascend

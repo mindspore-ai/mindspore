@@ -20,7 +20,7 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-NodePtr MatrixTranspose(const BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
   auto dim = shape.size();
   if (dim < kDim2) {
@@ -35,9 +35,9 @@ NodePtr MatrixTranspose(const BpropIRBuilder *ib, const NodePtr &x) {
   return ib->Transpose(x, perm);
 }
 
-NodePtr Adjoint(const BpropIRBuilder *ib, const NodePtr &x) { return MatrixTranspose(ib, ib->Conj(x)); }
+NodePtr Adjoint(BpropIRBuilder *ib, const NodePtr &x) { return MatrixTranspose(ib, ib->Conj(x)); }
 
-NodePtr MatrixDiag(const BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr MatrixDiag(BpropIRBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
   auto row = shape[shape.size() - 1];
   auto out = ib->Emit(
@@ -47,7 +47,7 @@ NodePtr MatrixDiag(const BpropIRBuilder *ib, const NodePtr &x) {
   return out;
 }
 
-NodePtr DoMatMul(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
+NodePtr DoMatMul(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
   auto shape = ib->GetShape(x);
   if (shape.size() > kDim2) {
     return ib->BatchMatMul(x, y);
@@ -55,12 +55,12 @@ NodePtr DoMatMul(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
   return ib->MatMul(x, y);
 }
 
-NodePtr SafeReciprocal(const BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr SafeReciprocal(BpropIRBuilder *ib, const NodePtr &x) {
   return ib->Mul(x, ib->Reciprocal(ib->Cast(ib->Add(ib->Square(x), ib->Tensor(1e-20, ib->GetDtype(x))), kFloat32)));
 }
 
 REG_BPROP_BUILDERS_BEGIN(GradLinalgOps)
-REG_BPROP_BUILDER("Svd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Svd").SetBody(BODYFUNC(ib) {
   auto full_matrices = GetValue<bool>(ib->GetAttr("full_matrices"));
   auto compute_uv = GetValue<bool>(ib->GetAttr("compute_uv"));
   auto a = ib->GetInput(kIndex0);
