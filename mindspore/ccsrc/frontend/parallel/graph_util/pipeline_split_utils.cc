@@ -70,7 +70,7 @@ static ValuePtr GetReceiveMicro(const CNodePtr &cnode) {
   while (!que.empty()) {
     auto front = que.front();
     que.pop();
-    visited.insert(front);
+    (void)(visited.insert(front));
     for (size_t i = 1; i < front->inputs().size(); ++i) {
       auto input = front->input(i);
       if (!input->isa<CNode>()) {
@@ -162,31 +162,32 @@ static void SetParameterStartForCellShare(const FuncGraphPtr &root) {
       continue;
     }
     const auto &abs_func = abs->cast<abstract::AbstractFunctionPtr>();
-    if (abs_func->isa<abstract::FuncGraphAbstractClosure>()) {
-      const auto &abs_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
-      auto fg = abs_func_graph->func_graph();
-      if (fg != nullptr && fg == grad_main_graph) {
-        auto micro = GetReceiveMicro(node);
-        MS_EXCEPTION_IF_NULL(micro);
-        auto node_abs = node->abstract();
-        if (node_abs->isa<abstract::AbstractTuple>()) {
-          CNodePtr next = nullptr;
-          const auto &users = node_user_map[node];
-          for (const auto &user : users) {
-            const auto &cuser = user.first->cast<CNodePtr>();
-            MS_EXCEPTION_IF_NULL(cuser);
-            if (IsPrimitiveCNode(cuser, prim::kPrimTupleGetItem) &&
-                IsValidNode(cuser, root->get_return(), node_user_map)) {
-              next = cuser;
-              break;
-            }
-          }
-          node->set_user_data<AnfNode>(CALL_BACKWARD_END_NEXT, next);
-        }
-        node->AddPrimalAttr(MICRO, micro);
-        node->AddPrimalAttr(PARAMETER_START, micro);
-      }
+    if (!abs_func->isa<abstract::FuncGraphAbstractClosure>()) {
+      continue;
     }
+    const auto &abs_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+    auto fg = abs_func_graph->func_graph();
+    if (fg == nullptr || fg != grad_main_graph) {
+      continue;
+    }
+    auto micro = GetReceiveMicro(node);
+    MS_EXCEPTION_IF_NULL(micro);
+    auto node_abs = node->abstract();
+    if (node_abs->isa<abstract::AbstractTuple>()) {
+      CNodePtr next = nullptr;
+      const auto &users = node_user_map[node];
+      for (const auto &user : users) {
+        const auto &cuser = user.first->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cuser);
+        if (IsPrimitiveCNode(cuser, prim::kPrimTupleGetItem) && IsValidNode(cuser, root->get_return(), node_user_map)) {
+          next = cuser;
+          break;
+        }
+      }
+      node->set_user_data<AnfNode>(CALL_BACKWARD_END_NEXT, next);
+    }
+    node->AddPrimalAttr(MICRO, micro);
+    node->AddPrimalAttr(PARAMETER_START, micro);
   }
   return;
 }
