@@ -72,6 +72,10 @@ bool AdamDeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs's size is 0!";
+  }
+  MS_EXCEPTION_IF_NULL(inputs[0]);
   dtype_ = inputs[0]->GetDtype();
   return true;
 }
@@ -82,6 +86,10 @@ int AdamDeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs's size is 0!";
+  }
+  MS_EXCEPTION_IF_NULL(inputs[0]);
   auto delta_shape = outputs[0]->GetDeviceShapeAdaptively();
   if (delta_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'delta' must be at least 1-D, but got empty shape!";
@@ -113,6 +121,7 @@ void AdamDeltaCpuKernelMod::CheckParams(const std::vector<kernel::AddressPtr> &i
   std::vector<std::string> input_names = {"m",     "v",     "beta1_power", "beta2_power", "lr",
                                           "beta1", "beta2", "epsilon",     "grad"};
   for (size_t i = 0; i < kAdamDeltaInputsNum; ++i) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
     if (inputs[i]->size != expect_sizes[i]) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of input '" << input_names[i]
                         << "' must be equal to " << expect_sizes[i] << ", but got address size: " << inputs[i]->size;
