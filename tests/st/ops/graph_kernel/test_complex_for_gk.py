@@ -36,7 +36,7 @@ class ComplexNet(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_complex_gpu():
     """

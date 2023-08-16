@@ -15,7 +15,6 @@
 """expanders init. Deprecated, please add the new operators in the c++ file"""
 
 
-from .complex import CAbs, CAdd, CDiv, CMul, CSub, CRealDiv
 from .equal_count import EqualCount
 from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
