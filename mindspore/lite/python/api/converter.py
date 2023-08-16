@@ -652,6 +652,54 @@ class Converter:
         check_isinstance("weight_fp16", weight_fp16, bool)
         self._converter.set_weight_fp16(weight_fp16)
 
+    @property
+    def device_id(self):
+        """
+        Get device id of device target.
+
+        Returns:
+            int: device id of device target.
+        """
+        return self._converter.get_device_id()
+
+    @device_id.setter
+    def device_id(self, device_id):
+        """
+        Set device id of device target.
+
+        Args:
+            device_id (int): device id of device target.
+
+        Raises:
+            TypeError: `device_id` is not an int.
+        """
+        check_isinstance("device_id", device_id, int)
+        self._converter.set_device_id(device_id)
+
+    @property
+    def rank_id(self):
+        """
+        Get rank id of device target.
+
+        Returns:
+            int: rank id of device target.
+        """
+        return self._converter.get_rank_id()
+
+    @rank_id.setter
+    def rank_id(self, rank_id):
+        """
+        Set rank id of device target.
+
+        Args:
+            rank_id (int): rank id of device target.
+
+        Raises:
+            TypeError: `rank_id` is not an int.
+        """
+        check_isinstance("rank_id", rank_id, int)
+        self._converter.set_rank_id(rank_id)
+
     def convert(self, fmk_type, model_file, output_file, weight_file="", config_file=""):
         """
         Perform conversion, and convert the third-party model to the MindSpore model or MindSpore Lite model.

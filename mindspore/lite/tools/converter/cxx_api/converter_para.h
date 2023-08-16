@@ -25,6 +25,7 @@
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "tools/converter/adapter/acl/common/acl_types.h"
 #include "tools/converter/micro/coder/config.h"
+#include "src/common/config_infos.h"
 
 namespace mindspore {
 enum ParallelSplitType { SplitNo = 0, SplitByUserRatio = 1, SplitByUserAttr = 2 };
@@ -49,8 +50,6 @@ struct AscendGeOptionCfg {
   std::vector<int64_t> inputs_to_variable;
   std::vector<int64_t> outputs_to_variable;
 };
-
-using ConfigInfos = std::map<std::string, std::map<std::string, std::string>>;
 
 struct ConverterPara {
   converter::FmkType fmk_type;

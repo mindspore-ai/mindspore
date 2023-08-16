@@ -118,6 +118,16 @@ void TensorPyBind(const py::module &m) {
         MS_LOG(ERROR) << "Tensor object cannot be nullptr";
         return py::array();
       }
+      auto shape = tensor->Shape();
+      if (std::any_of(shape.begin(), shape.end(), [](auto item) { return item <= 0; })) {
+        MS_LOG(ERROR) << "Tensor shape " << shape << " is invalid";
+        return py::array();
+      }
+      auto elem_num = tensor->ElementNum();
+      if (elem_num <= 0) {
+        MS_LOG(ERROR) << "Tensor element num " << elem_num << " cannot <= 0";
+        return py::array();
+      }
       auto info = GetPyBufferInfo(tensor);
       py::object self = py::cast(tensor->impl());
       return py::array(py::dtype(info), info.shape, info.strides, info.ptr, self);
@@ -263,7 +273,7 @@ bool SetTensorNumpyData(const MSTensorPtr &tensor_ptr, const py::array &input) {
 }
 
 py::buffer_info GetPyBufferInfo(const MSTensorPtr &tensor) {
-  ssize_t item_size = tensor->DataSize() / tensor->ElementNum();
+  ssize_t item_size = static_cast<ssize_t>(tensor->DataSize()) / tensor->ElementNum();
   std::string format = GetPyTypeFormat(tensor->DataType());
   auto lite_shape = tensor->Shape();
   ssize_t ndim = lite_shape.size();

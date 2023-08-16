@@ -111,6 +111,8 @@ static const char *const kPluginCustomOps = "plugin_custom_ops";
 static const char *const kAoeMode = "aoe_mode";
 static const char *const kProvider = "provider";
 static const char *const kAscendProviderGe = "ge";
+static const char *const kParameterAsRefData = "parameter_as_refdata";
+static const char *const kModelCacheMode = "model_cache_mode";
 // ge options
 static const char *const kGeSessionOptionsSection = "ge_session_options";
 static const char *const kGeGraphOptionsSection = "ge_graph_options";
@@ -133,6 +135,16 @@ static const char *const kAoeTuningOptionsSection = "aoe_tuning_options";
 static const char *const kAclOptionParam = "acl_option_cfg_param";
 static const char *const kAclInitOptionParam = "acl_init_options";
 static const char *const kAclBuildOptionParam = "acl_build_options";
+
+static const char *const kNameAttrWeightDir = "weight_dir";
+
+static const char *const kOutputShapes = "outputs_shape";
+static const char *const kNameCustomAscend = "CustomAscend";
+
+static const char *const kNameAttrRefDatas = "ref_datas";
+static const char *const kNameAttrZeroValRefDatas = "zero_val_ref_datas";
+static const char *const kConverterParams = "converter_params";
+static const char *const kConverterOutputFile = "output_file";
 // om converter options
 static const char *const kOMConverterOptionsSection = "om_converter";
 }  // namespace lite

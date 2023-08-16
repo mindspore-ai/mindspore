@@ -56,7 +56,7 @@ class ConverterFuncGraph {
   static bool StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param);
   static void ClearBuiltinPass();
   static STATUS OptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
-  static STATUS RunGeAoeOptimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
+  static STATUS RunGeOfflineConvert(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
   static STATUS RunVariableOptimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
 };
 }  // namespace lite

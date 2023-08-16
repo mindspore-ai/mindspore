@@ -415,14 +415,12 @@ int MindIRSerializer::CreateParameterDir() {
     MS_LOG(ERROR) << "create file system failed.";
     return RET_NULL_PTR;
   }
-
-  if (fs_->FileExist(dir_name_)) {
+  if (fs_->FileExist(dir_name_) && remove_variable_dir_) {
     if (!DeleteDirRecursively(dir_name_)) {
       return RET_ERROR;
     }
   }
-
-  if (!fs_->CreateDir(dir_name_)) {
+  if (!fs_->FileExist(dir_name_) && !fs_->CreateDir(dir_name_)) {
     MS_LOG(ERROR) << "create dir failed.";
     return RET_ERROR;
   }

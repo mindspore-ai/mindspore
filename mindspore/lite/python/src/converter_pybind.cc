@@ -70,6 +70,10 @@ void ConverterPyBind(const py::module &m) {
     .def("get_device", &Converter::GetDevice)
     .def("set_chip_name", py::overload_cast<const std::string &>(&Converter::SetChipName))
     .def("get_chip_name", &Converter::GetChipName)
+    .def("set_device_id", &Converter::SetDeviceId)
+    .def("get_device_id", &Converter::GetDeviceId)
+    .def("set_rank_id", &Converter::SetRankId)
+    .def("get_rank_id", &Converter::GetRankId)
     .def("convert",
          py::overload_cast<converter::FmkType, const std::string &, const std::string &, const std::string &>(
            &Converter::Convert),

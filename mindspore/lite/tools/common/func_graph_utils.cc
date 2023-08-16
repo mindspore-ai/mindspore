@@ -16,6 +16,7 @@
 
 #include "tools/common/func_graph_utils.h"
 #include <algorithm>
+#include <memory>
 #include "tools/common/graph_util.h"
 #include "tools/converter/converter_context.h"
 namespace mindspore {
@@ -28,12 +29,13 @@ AbstractBasePtr FuncGraphUtils::GetAbstractFromNode(const std::pair<AnfNodePtr, 
   }
   auto index = static_cast<size_t>(node.second);
 
-  if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
-    auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract);
+  if (utils::isa<abstract::AbstractSequencePtr>(abstract)) {
+    auto abstract_tuple = utils::cast<abstract::AbstractSequencePtr>(abstract);
     MS_EXCEPTION_IF_NULL(abstract_tuple);
     auto abstract_list = abstract_tuple->elements();
     if (abstract_list.size() <= index) {
-      MS_LOG(WARNING) << "AbstractTuple's size[" << abstract_list.size() << "] is smaller than index " << index << "]";
+      MS_LOG(WARNING) << "AbstractSequence's size[" << abstract_list.size() << "] is smaller than index " << index
+                      << "]";
       return nullptr;
     }
     abstract = abstract_list[index];
@@ -103,5 +105,33 @@ void FuncGraphUtils::SetFuncGraphOutputNames(const FuncGraphPtr &func_graph,
     SetOutputName(outputs[i], output_names[i]);
   }
   return;
+}
+
+tensor::TensorPtr FuncGraphUtils::GetParameterConstValue(const AnfNodePtr &anf_node) {
+  if (anf_node == nullptr) {
+    MS_LOG(ERROR) << "Input argument anf node is nullptr";
+    return nullptr;
+  }
+  auto parameter = anf_node->cast<ParameterPtr>();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "Node " << anf_node->fullname_with_scope() << " is not a Parameter";
+    return nullptr;
+  }
+  auto default_param = parameter->default_param();
+  if (default_param == nullptr) {
+    MS_LOG(ERROR) << "Parameter " << anf_node->fullname_with_scope() << " has not default value";
+    return nullptr;
+  }
+  if (!default_param->isa<tensor::Tensor>()) {
+    MS_LOG(ERROR) << "Parameter " << anf_node->fullname_with_scope()
+                  << " default value is not a tensor::Tensor, real type " << default_param->type_name();
+    return nullptr;
+  }
+  auto tensor = default_param->cast<std::shared_ptr<tensor::Tensor>>();
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Parameter " << anf_node->fullname_with_scope() << " tensor value is nullptr";
+    return nullptr;
+  }
+  return tensor;
 }
 }  // namespace mindspore

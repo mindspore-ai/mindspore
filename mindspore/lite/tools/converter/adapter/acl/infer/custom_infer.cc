@@ -21,6 +21,7 @@
 #include "common/log_adapter.h"
 #include "tools/converter/adapter/acl/common/acl_types.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "mindspore/lite/src/common/common.h"
 
 namespace mindspore {
 namespace lite {
@@ -43,7 +44,7 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
   }
   auto op = primitive->value_as_Custom();
   std::vector<char> buf;
-  if (GetCustomAttr(op, acl::kOutputShapes, &buf) != kSuccess) {
+  if (GetCustomAttr(op, kOutputShapes, &buf) != kSuccess) {
     MS_LOG(ERROR) << "Get custom attr output shape failed.";
     return kLiteError;
   }

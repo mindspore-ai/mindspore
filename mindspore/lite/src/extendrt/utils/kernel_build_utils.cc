@@ -29,6 +29,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "mindspore/lite/src/common/common.h"
 
 namespace mindspore {
 namespace infer {
@@ -37,7 +38,6 @@ using mindspore::kernel::KernelBuildInfo;
 namespace {
 constexpr auto kParamDynamic = "dynamic";
 constexpr auto kInputNum = 3;
-constexpr auto kNameCustomAscend = "CustomAscend";
 constexpr auto kNameTranspose = "Transpose";
 constexpr auto kCustomTypeAscend = "acl_build";
 
@@ -220,7 +220,7 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
   GetOutputFormat(kernel_node, &output_formats);
   builder->SetOutputsDeviceType(output_types);
   builder->SetOutputsFormat(output_formats);
-  if (op_name == kNameCustomAscend || is_akg_op) {
+  if (op_name == lite::kNameCustomAscend || is_akg_op) {
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
   }
 }
@@ -393,7 +393,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
 
 void CopyInputWeights(const CNodePtr &kernel_node, const std::vector<kernel::KernelTensorPtr> &inputs) {
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == kNameCustomAscend || kernel_name == kNameTranspose) {
+  if (kernel_name == lite::kNameCustomAscend || kernel_name == kNameTranspose) {
     auto node_input_size = kernel_node->inputs().size();
     if (node_input_size < kInputNum) {
       MS_LOG(ERROR) << "Input num of custom ascend kernel should larger than " << (kInputNum - 1) << ", real num is "

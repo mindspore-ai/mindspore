@@ -62,7 +62,7 @@ class TensorNumpyImpl : public MutableTensorImpl {
   const std::string &Name() const override { return name_; }
 
   mindspore::Format Format() const override { return format_; }
-  void SetFormat(mindspore::Format format) override { MS_LOG(ERROR) << "Cannot call SetFormat for numpy tensor"; }
+  void SetFormat(mindspore::Format) override { MS_LOG(ERROR) << "Cannot call SetFormat for numpy tensor"; }
 
   void SetAllocator(const std::shared_ptr<Allocator> &allocator) override {
     MS_LOG(ERROR) << "Cannot call SetAllocator for numpy tensor";
@@ -91,7 +91,7 @@ class TensorNumpyImpl : public MutableTensorImpl {
   void *GetDeviceData() override { return device_data_; }
 
   bool IsConst() const override { return false; }
-  void SetIsConst(bool is_const) { MS_LOG(ERROR) << "Cannot call SetIsConst for numpy tensor"; }
+  void SetIsConst(bool) { MS_LOG(ERROR) << "Cannot call SetIsConst for numpy tensor"; }
 
   bool IsDevice() const override { return false; }
 
@@ -100,7 +100,7 @@ class TensorNumpyImpl : public MutableTensorImpl {
     return std::shared_ptr<const void>(data, [](const void *) {});
   }
 
-  void SetData(void *data, bool own_data) override { MS_LOG(ERROR) << "Cannot call SetData for numpy tensor"; }
+  void SetData(void *, bool) override { MS_LOG(ERROR) << "Cannot call SetData for numpy tensor"; }
 
   int GetDeviceId() const override { return device_id_; }
 
@@ -125,33 +125,33 @@ class TensorNumpyImpl : public MutableTensorImpl {
       char format = buf.format.front();
       if (fp_format.find(format) != fp_format.end()) {
         switch (buf.itemsize) {
-          case 2:
+          case sizeof(uint16_t):
             return DataType::kNumberTypeFloat16;
-          case 4:
+          case sizeof(uint32_t):
             return DataType::kNumberTypeFloat32;
-          case 8:
+          case sizeof(uint64_t):
             return DataType::kNumberTypeFloat64;
         }
       } else if (int_format.find(format) != int_format.end()) {
         switch (buf.itemsize) {
-          case 1:
+          case sizeof(int8_t):
             return DataType::kNumberTypeInt8;
-          case 2:
+          case sizeof(int16_t):
             return DataType::kNumberTypeInt16;
-          case 4:
+          case sizeof(int32_t):
             return DataType::kNumberTypeInt32;
-          case 8:
+          case sizeof(int64_t):
             return DataType::kNumberTypeInt64;
         }
       } else if (uint_format.find(format) != uint_format.end()) {
         switch (buf.itemsize) {
-          case 1:
+          case sizeof(uint8_t):
             return DataType::kNumberTypeUInt8;
-          case 2:
+          case sizeof(uint16_t):
             return DataType::kNumberTypeUInt16;
-          case 4:
+          case sizeof(uint32_t):
             return DataType::kNumberTypeUInt32;
-          case 8:
+          case sizeof(uint64_t):
             return DataType::kNumberTypeUInt64;
         }
       } else if (format == '?') {

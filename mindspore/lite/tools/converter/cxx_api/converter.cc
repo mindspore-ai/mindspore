@@ -311,6 +311,32 @@ std::vector<char> Converter::GetDeviceChar() {
   return StringToChar(device);
 }
 
+void Converter::SetDeviceId(int32_t device_id) {
+  if (data_ != nullptr) {
+    data_->aclModelOptionCfgParam.device_id = device_id;
+  }
+}
+
+int32_t Converter::GetDeviceId() {
+  if (data_ != nullptr) {
+    return data_->aclModelOptionCfgParam.device_id;
+  }
+  return 0;
+}
+
+void Converter::SetRankId(int32_t rank_id) {
+  if (data_ != nullptr) {
+    data_->aclModelOptionCfgParam.rank_id = rank_id;
+  }
+}
+
+int32_t Converter::GetRankId() {
+  if (data_ != nullptr) {
+    return data_->aclModelOptionCfgParam.rank_id;
+  }
+  return 0;
+}
+
 void Converter::SetProvider(const std::vector<char> &provider) {
   if (data_ != nullptr) {
     data_->provider = CharToString(provider);

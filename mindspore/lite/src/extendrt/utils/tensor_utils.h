@@ -192,7 +192,13 @@ class TensorTensorImpl : public MutableTensorImpl {
     tensor_->set_user_data("quant_param", std::make_shared<std::vector<QuantParam>>(quant_param));
   }
 
-  size_t DataSize() const override { return ElementNum() * lite::DataTypeSize(static_cast<enum TypeId>(DataType())); }
+  size_t DataSize() const override {
+    auto elem_num = ElementNum();
+    if (elem_num <= 0) {
+      return 0;
+    }
+    return LongToSize(elem_num) * lite::DataTypeSize(static_cast<enum TypeId>(DataType()));
+  }
 
   std::shared_ptr<Impl> Clone() const override { return std::make_shared<TensorTensorImpl>(tensor_); }
 

@@ -30,6 +30,7 @@ namespace acl {
 struct AclModelOptionCfg {
   bool offline;
   int32_t device_id = 0;
+  int32_t rank_id = 0;
   DataType output_type;
   std::vector<size_t> dynamic_batch_size;
   std::map<int32_t, std::vector<int32_t>> input_shape_map;
@@ -56,8 +57,6 @@ struct AclModelOptionCfg {
   std::map<std::string, std::string> aoe_global_options_map;
   std::map<std::string, std::string> aoe_tuning_options_map;
 };
-
-constexpr auto kOutputShapes = "outputs_shape";
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

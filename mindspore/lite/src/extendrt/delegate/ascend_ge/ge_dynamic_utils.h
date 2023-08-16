@@ -25,22 +25,32 @@
 #include "include/transform/graph_ir/types.h"
 #include "extendrt/session/lite_graph_executor.h"
 #include "common/config_infos.h"
+#include "mindspore/lite/src/common/utils.h"
 
 namespace mindspore {
+struct GeDynamicShapeInfo {
+  std::string name;
+  std::string shape_str;
+  std::vector<lite::ShapeDim> shape;
+};
+
 class GeDynamicUtils {
  public:
   static bool IsDynamicInputShapes(const std::vector<ShapeVector> &input_shapes);
   static bool IsDynamicInputShapes(const std::vector<std::pair<std::string, ShapeVector>> &input_shapes);
-  static std::vector<std::pair<std::string, ShapeVector>> GetGraphInputShapes(
-    const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos, std::string *input_shape);
-  static std::vector<std::pair<std::string, ShapeVector>> GetGraphOneRealShapes(
-    const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos, std::string *input_shape);
-  static std::vector<int64_t> GetDynamicBatchSize(const std::shared_ptr<mindspore::Context> &context,
-                                                  const ConfigInfos &config_infos);
-  static std::vector<std::vector<int64_t>> GetDynamicImageSize(const std::shared_ptr<mindspore::Context> &context,
-                                                               const ConfigInfos &config_infos);
-  static std::vector<std::vector<int64_t>> GetDynamicDims(const std::shared_ptr<mindspore::Context> &context,
-                                                          const ConfigInfos &config_infos);
+  static bool GetGraphInputShapes(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos,
+                                  std::vector<GeDynamicShapeInfo> *input_shape, std::string *input_shape_str);
+  static void UpdateGraphInputShapes(const std::shared_ptr<mindspore::Context> &context, ConfigInfos *config_infos,
+                                     const std::string &input_shape);
+  static bool GetGraphOneRealShapes(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos,
+                                    std::vector<std::pair<std::string, ShapeVector>> *input_shape,
+                                    std::string *input_shape_str);
+  static bool GetDynamicBatchSize(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos,
+                                  std::vector<int64_t> *dynamic_batch_size);
+  static bool GetDynamicImageSize(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos,
+                                  std::vector<std::vector<int64_t>> *dynamic_image_size);
+  static bool GetDynamicDims(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos,
+                             std::vector<std::vector<int64_t>> *dynamic_dims);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_GE_GE_DYNAMIC_UTILS_H

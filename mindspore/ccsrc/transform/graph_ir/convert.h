@@ -52,6 +52,12 @@ using HcomBroadcast = ::ge::op::HcomBroadcast;
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
 enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
 enum class DfsVisitFlag { kUnVisited, kVisiting, kVisited };
+enum class RefModeFlag {
+  kRefModeNone,
+  kRefModeVariable,  // Only Variables will be treated as RefData
+  kRefModeAll,       // All Parameter including Variables and Constants will be treated as RefData
+  kRefModeEnv        // depend on MS_ENABLE_REF_MODE, when it's 1, ref mode type will be kRefModeAll
+};
 constexpr char kGraphFlagHasGetNext[] = "graph_has_getnext";
 
 struct InputDataList {
@@ -86,9 +92,18 @@ DfGraphPtr GenExampleGraph(const std::string &name);
 
 class DfGraphConvertor {
  public:
-  explicit DfGraphConvertor(const AnfGraphPtr &anf_graph, const std::string &phase_prefix)
-      : anf_graph_(anf_graph), phase_prefix_(phase_prefix) {
+  explicit DfGraphConvertor(const AnfGraphPtr &anf_graph, const std::string &phase_prefix,
+                            RefModeFlag ref_mode_type = RefModeFlag::kRefModeEnv,
+                            const std::vector<std::string> &extra_variables_names = {})
+      : anf_graph_(anf_graph), extra_variables_names_(extra_variables_names), phase_prefix_(phase_prefix) {
     MS_EXCEPTION_IF_NULL(anf_graph);
+    if (ref_mode_type == RefModeFlag::kRefModeEnv) {
+      ref_mode_ = common::IsEnableRefMode();
+      ref_mode_type_ = RefModeFlag::kRefModeAll;
+    } else {
+      ref_mode_ = (ref_mode_type != RefModeFlag::kRefModeNone);
+      ref_mode_type_ = ref_mode_type;
+    }
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     bool enable_ge = context->backend_policy() == "ge";
@@ -163,7 +178,7 @@ class DfGraphConvertor {
   DfGraphConvertor &GenerateCheckpointGraph();
   DfGraphConvertor &GenerateBroadcastGraph(const TensorOrderMap &tensors);
   void InitParamWithData(const TensorOrderMap &tensors);
-  bool NodeInputKeepUpdate(const AnfNodePtr &node);
+  bool NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, const AnfNodePtr &node);
   OutHandler GetNormalOpInput(const AnfNodePtr &node, const AnfNodePtr &pred);
   void DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pred, size_t i);
   void SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node);
@@ -176,6 +191,7 @@ class DfGraphConvertor {
   DfGraphPtr GetComputeGraph();
   DfGraphPtr GetInitGraph();
   std::vector<std::string> GetInitDataNames() const { return init_data_names_; }
+  std::vector<std::string> GetRefDataNames() const { return ref_data_names_; }
   DfGraphPtr GetSaveCheckpointGraph();
   DfGraphPtr GetBroadcastGraph();
   int ErrCode() const { return static_cast<int>(error_); }
@@ -281,8 +297,14 @@ class DfGraphConvertor {
   void RemoveNoOp(::ge::GNode noop);
   std::shared_ptr<std::vector<DfGraph>> BuildBranchGraphs(const CNodePtr &cnode);
   void BuildInitDataGraph(const std::string &name);
+  bool IsConstantOp(const OperatorPtr &op) const;
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
+  RefModeFlag ref_mode_type_ = RefModeFlag::kRefModeNone;
+  bool ref_mode_ = false;
+  std::vector<std::string> extra_variables_names_;
+  std::vector<std::string> ref_data_names_;
+
   std::shared_ptr<DfGraph> df_graph_{nullptr};
   std::shared_ptr<DfGraph> init_graph_{nullptr};
   std::shared_ptr<DfGraph> save_ckp_graph_{nullptr};

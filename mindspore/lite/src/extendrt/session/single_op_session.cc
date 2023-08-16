@@ -38,10 +38,10 @@
 #include "extendrt/utils/func_graph_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "extendrt/utils/tensor_utils.h"
+#include "mindspore/lite/src/common/common.h"
 
 namespace mindspore {
 const size_t tensor_max_size = 0x1000000;
-constexpr auto kNameCustomAscend = "CustomAscend";
 
 Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context) {
   auto device_list = context->MutableDeviceInfo();
@@ -130,7 +130,7 @@ void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr 
 
 std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::BuildCustomAscendKernelImpl(
   const CNodePtr &cnode) {
-  auto kernel_name = kNameCustomAscend;
+  auto kernel_name = lite::kNameCustomAscend;
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
   if (kernel_mod == nullptr) {
     MS_LOG(ERROR) << "Kernel mod is nullptr, kernel name: " << kernel_name;
@@ -278,14 +278,14 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
       continue;
     }
     std::string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
-    if (kernel_name != kNameCustomAscend) {
-      MS_LOG(ERROR) << "Only support " << kNameCustomAscend << ", but got " << kernel_name << ", node "
+    if (kernel_name != lite::kNameCustomAscend) {
+      MS_LOG(ERROR) << "Only support " << lite::kNameCustomAscend << ", but got " << kernel_name << ", node "
                     << cnode->fullname_with_scope();
       return kLiteError;
     }
     cnode_count += 1;
     if (cnode_count > 1) {
-      MS_LOG(ERROR) << "Only support one " << kNameCustomAscend << " node, but got " << kernel_name << ", node "
+      MS_LOG(ERROR) << "Only support one " << lite::kNameCustomAscend << " node, but got " << kernel_name << ", node "
                     << cnode->fullname_with_scope();
       return kLiteError;
     }

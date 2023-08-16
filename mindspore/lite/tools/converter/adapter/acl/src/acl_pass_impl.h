@@ -51,7 +51,6 @@ class AclPassImpl {
   /* map func graph */
   STATUS DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
   STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);
-  ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om);
 
  private:
   /* pre or post pass */
@@ -70,21 +69,6 @@ class AclPassImpl {
   STATUS SetGraphInputShape(const FuncGraphPtr &func_graph);
   STATUS SetAclModelOptions(const FuncGraphPtr &func_graph);
   STATUS MapperForOrgMindIR(const FuncGraphPtr &func_graph);
-
- private:
-  /* create custom node */
-  CNodePtr CreateCustomNode(const FuncGraphPtr &func_graph);
-  void SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim);
-  STATUS SetCustomOutputs(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
-  STATUS SetMultiOutputs(const CNodePtr &new_cnode, std::vector<TypeId> data_type);
-  STATUS GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph);
-  STATUS TraceOutput(const AnfNodePtr &node);
-
- private:
-  /* modify graph by custom node */
-  CNodePtr CreateMakeTupleGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
-  STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
-                                 const CNodePtr &custom_node);
 
  private: /* Quantization */
   STATUS Quantization(const FuncGraphPtr &func_graph);

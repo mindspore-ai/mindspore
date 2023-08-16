@@ -97,4 +97,19 @@ bool AscendGeExecutorPlugin::AoeTuning(const FuncGraphPtr &graph, const std::sha
   return false;
 #endif
 }
+
+bool AscendGeExecutorPlugin::OfflineBuildGraph(const FuncGraphPtr &graph,
+                                               const std::shared_ptr<mindspore::Context> &context,
+                                               const ConfigInfos &config_infos) {
+#if !defined(_WIN32)
+  if (!is_registered_ || ge_plugin_impl_ == nullptr) {
+    MS_LOG(ERROR) << "The Ascend ge executor is not registered.";
+    return false;
+  }
+  return ge_plugin_impl_->OfflineBuildGraph(graph, context, config_infos);
+#else
+  MS_LOG(ERROR) << "Not Support Windows";
+  return false;
+#endif
+}
 }  // namespace mindspore::lite

@@ -30,7 +30,7 @@ tensor::TensorPtr TensorRtOptimizer::GetParameterValue(const CNodePtr &node, siz
     return nullptr;
   }
   auto parameter = input->cast<ParameterPtr>();
-  if (parameter == nullptr && !parameter->has_default()) {
+  if (parameter == nullptr || !parameter->has_default()) {
     return nullptr;
   }
   auto param_val = parameter->default_param();

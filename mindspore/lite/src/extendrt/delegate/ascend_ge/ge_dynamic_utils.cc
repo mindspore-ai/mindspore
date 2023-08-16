@@ -32,13 +32,19 @@ bool GeDynamicUtils::IsDynamicInputShapes(const std::vector<std::pair<std::strin
   });
 }
 
-std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphInputShapes(
-  const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos, std::string *input_shape_ptr) {
+bool GeDynamicUtils::GetGraphInputShapes(const std::shared_ptr<mindspore::Context> &context,
+                                         const ConfigInfos &config_infos,
+                                         std::vector<GeDynamicShapeInfo> *input_shape_ptr,
+                                         std::string *input_shape_str_ptr) {
+  if (input_shape_ptr == nullptr) {
+    MS_LOG(ERROR) << "Input argument input_shape_ptr is nullptr";
+    return false;
+  }
   // get input shape from AscendDeviceInfo
   auto ascend_info = GeUtils::GetAscendDeviceInfo(context);
   if (ascend_info == nullptr) {
     MS_LOG(ERROR) << "Cannot find AscendDeviceInfo in context";
-    return {};
+    return false;
   }
   auto input_shape_str = ascend_info->GetInputShape();
   if (!input_shape_str.empty()) {
@@ -67,37 +73,94 @@ std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphInputSh
   }
   if (!input_shape_str.empty()) {
     auto input_shape_strs = lite::StrSplit(input_shape_str, ";");
-    std::vector<std::pair<std::string, ShapeVector>> input_shapes;
+    std::vector<GeDynamicShapeInfo> input_shapes;
     for (auto &shape_item_str : input_shape_strs) {
+      GeDynamicShapeInfo dynamic_shape_info;
       auto split_pos = shape_item_str.rfind(":");
       if (split_pos == std::string::npos) {
         MS_LOG(ERROR) << "The input_shape should be in format of name:shape;name:shape, but got " << input_shape_str;
-        return {};
+        return false;
       }
       std::string name = shape_item_str.substr(0, split_pos);
       std::string shape_str = shape_item_str.substr(split_pos + 1);
-      ShapeVector shape;
-      if (!lite::ParseShapeStr(shape_str, &shape)) {
+      if (!lite::ParseShapeStr(shape_str, &dynamic_shape_info.shape)) {
         MS_LOG(ERROR) << "Invalid input shape dims: " << shape_str << ", input_shape: " << input_shape_str;
-        return {};
+        return false;
       }
-      input_shapes.push_back(std::make_pair(name, shape));
+      dynamic_shape_info.name = name;
+      dynamic_shape_info.shape_str = shape_str;
+      input_shapes.push_back(dynamic_shape_info);
     }
-    if (input_shape_ptr != nullptr) {
-      *input_shape_ptr = input_shape_str;
+    if (input_shape_str_ptr != nullptr) {
+      *input_shape_str_ptr = input_shape_str;
     }
-    return input_shapes;
+    *input_shape_ptr = input_shapes;
+    return true;
   }
-  return {};
+  return true;
 }
 
-std::vector<int64_t> GeDynamicUtils::GetDynamicBatchSize(const std::shared_ptr<mindspore::Context> &context,
-                                                         const ConfigInfos &config_infos) {
+void GeDynamicUtils::UpdateGraphInputShapes(const std::shared_ptr<mindspore::Context> &context,
+                                            ConfigInfos *config_infos, const std::string &input_shape) {
+  if (config_infos == nullptr) {
+    return;
+  }
+  // get options from [aoe_tuning_options]
+  auto section_it = config_infos->find(lite::kAoeTuningOptionsSection);
+  if (section_it != config_infos->end()) {
+    auto &options = section_it->second;
+    auto option_it = options.find("input_shape");
+    if (option_it != options.end()) {
+      auto &input_shape_str = option_it->second;
+      if (!input_shape_str.empty()) {
+        MS_LOG(INFO) << "Find input_shape " << input_shape_str << " in " << lite::kAoeTuningOptionsSection
+                     << " and updated to " << input_shape;
+        input_shape_str = input_shape;
+        return;
+      }
+    }
+  }
+  // get options from [ge_graph_options]
+  section_it = config_infos->find(lite::kGeGraphOptionsSection);
+  if (section_it != config_infos->end()) {
+    auto &options = section_it->second;
+    auto option_it = options.find("ge.inputShape");
+    if (option_it != options.end()) {
+      auto &input_shape_str = option_it->second;
+      if (!input_shape_str.empty()) {
+        MS_LOG(INFO) << "Find ge.inputShape " << input_shape_str << " in " << lite::kGeGraphOptionsSection
+                     << " and updated to " << input_shape;
+        input_shape_str = input_shape;
+        return;
+      }
+    }
+  }
   // get input shape from AscendDeviceInfo
   auto ascend_info = GeUtils::GetAscendDeviceInfo(context);
   if (ascend_info == nullptr) {
     MS_LOG(ERROR) << "Cannot find AscendDeviceInfo in context";
-    return {};
+    return;
+  }
+  auto input_shape_str = ascend_info->GetInputShape();
+  if (!input_shape_str.empty()) {
+    MS_LOG(INFO) << "Find input shape " << input_shape_str
+                 << " in AscendDeviceInfo, which may come from [ascend_context] or [acl_option_cfg_param]"
+                 << " and updated to " << input_shape;
+    ascend_info->SetInputShape(input_shape);
+  }
+}
+
+bool GeDynamicUtils::GetDynamicBatchSize(const std::shared_ptr<mindspore::Context> &context,
+                                         const ConfigInfos &config_infos,
+                                         std::vector<int64_t> *dynamic_batch_size_ptr) {
+  if (dynamic_batch_size_ptr == nullptr) {
+    return false;
+  }
+  // get input shape from AscendDeviceInfo
+  auto ascend_info = GeUtils::GetAscendDeviceInfo(context);
+  if (ascend_info == nullptr) {
+    MS_LOG(ERROR) << "Cannot find AscendDeviceInfo in context";
+    return false;
   }
   auto dynamic_batch_size = ascend_info->GetDynamicBatchSize();
   // get options from [acl_option_cfg_param]
@@ -122,24 +185,29 @@ std::vector<int64_t> GeDynamicUtils::GetDynamicBatchSize(const std::shared_ptr<m
   }
   if (dynamic_batch_size.empty()) {
     MS_LOG(INFO) << "Not found dynamic_batch_size in AscendDeviceInfo or config file";
-    return {};
+    return true;
   }
   // parse dynamic_batch_size
   std::vector<int64_t> dynamic_batch_size_nums;
   if (!lite::ParseShapeStr(dynamic_batch_size, &dynamic_batch_size_nums)) {
     MS_LOG(ERROR) << "Invalid dynamic_batch_size " << dynamic_batch_size;
-    return {};
+    return false;
   }
-  return dynamic_batch_size_nums;
+  *dynamic_batch_size_ptr = dynamic_batch_size_nums;
+  return true;
 }
 
-std::vector<std::vector<int64_t>> GeDynamicUtils::GetDynamicImageSize(
-  const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos) {
+bool GeDynamicUtils::GetDynamicImageSize(const std::shared_ptr<mindspore::Context> &context,
+                                         const ConfigInfos &config_infos,
+                                         std::vector<std::vector<int64_t>> *dynamic_image_size_ptr) {
+  if (dynamic_image_size_ptr == nullptr) {
+    return false;
+  }
   // get input shape from AscendDeviceInfo
   auto ascend_info = GeUtils::GetAscendDeviceInfo(context);
   if (ascend_info == nullptr) {
     MS_LOG(ERROR) << "Cannot find AscendDeviceInfo in context";
-    return {};
+    return false;
   }
   auto dynamic_image_size = ascend_info->GetDynamicImageSize();
   // get options from [acl_option_cfg_param]
@@ -164,33 +232,37 @@ std::vector<std::vector<int64_t>> GeDynamicUtils::GetDynamicImageSize(
   }
   if (dynamic_image_size.empty()) {
     MS_LOG(INFO) << "Not found dynamic_image_size in AscendDeviceInfo or config file";
-    return {};
+    return true;
   }
   // parse dynamic_image_size
   auto dynamic_image_strs = lite::StrSplit(dynamic_image_size, ";");
   if (dynamic_image_strs.empty()) {
     MS_LOG(ERROR) << "Invalid dynamic_image_size " << dynamic_image_size;
-    return {};
+    return false;
   }
   std::vector<std::vector<int64_t>> dynamic_image_size_nums;
   for (auto &item : dynamic_image_strs) {
     std::vector<int64_t> real_dims;
     if (!lite::ParseShapeStr(item, &real_dims)) {
       MS_LOG(ERROR) << "Invalid dynamic_image_size " << dynamic_image_size;
-      return {};
+      return false;
     }
     constexpr size_t hw_dim_count = 2;
     if (real_dims.size() != hw_dim_count) {
       MS_LOG(ERROR) << "Invalid dynamic_image_size " << dynamic_image_size;
-      return {};
+      return false;
     }
     dynamic_image_size_nums.push_back(real_dims);
   }
-  return dynamic_image_size_nums;
+  *dynamic_image_size_ptr = dynamic_image_size_nums;
+  return true;
 }
 
-std::vector<std::vector<int64_t>> GeDynamicUtils::GetDynamicDims(const std::shared_ptr<mindspore::Context> &,
-                                                                 const ConfigInfos &config_infos) {
+bool GeDynamicUtils::GetDynamicDims(const std::shared_ptr<mindspore::Context> &, const ConfigInfos &config_infos,
+                                    std::vector<std::vector<int64_t>> *dynamic_dims_ptr) {
+  if (dynamic_dims_ptr == nullptr) {
+    return false;
+  }
   std::string dynamic_dims;
   // get options from [acl_option_cfg_param]
   auto section_it = config_infos.find(lite::kAclOptionParam);
@@ -224,28 +296,29 @@ std::vector<std::vector<int64_t>> GeDynamicUtils::GetDynamicDims(const std::shar
   }
   if (dynamic_dims.empty()) {
     MS_LOG(INFO) << "Not found dynamic_dims in AscendDeviceInfo or config file";
-    return {};
+    return true;
   }
   // parse dynamic_dims
   auto dynamic_dims_strs = lite::StrSplit(dynamic_dims, ";");
   if (dynamic_dims_strs.empty()) {
     MS_LOG(ERROR) << "Invalid dynamic_dims " << dynamic_dims;
-    return {};
+    return false;
   }
   std::vector<std::vector<int64_t>> dynamic_dims_nums;
   for (auto &item : dynamic_dims_strs) {
     std::vector<int64_t> real_dims;
     if (!lite::ParseShapeStr(item, &real_dims)) {
       MS_LOG(ERROR) << "Invalid dynamic_dims " << dynamic_dims;
-      return {};
+      return false;
     }
     if (!dynamic_dims_nums.empty() && dynamic_dims_nums[0].size() != real_dims.size()) {
       MS_LOG(ERROR) << "Invalid dynamic_dims " << dynamic_dims << ", dims count in all dynamic dims should be same";
-      return {};
+      return false;
     }
     dynamic_dims_nums.push_back(real_dims);
   }
-  return dynamic_dims_nums;
+  *dynamic_dims_ptr = dynamic_dims_nums;
+  return true;
 }
 
 static bool CheckDynamicDims(const std::vector<int64_t> &dynamic_batch_size,
@@ -271,38 +344,22 @@ static bool CheckDynamicDims(const std::vector<int64_t> &dynamic_batch_size,
   return true;
 }
 
-std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphOneRealShapes(
-  const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos, std::string *input_shape_ptr) {
-  std::string input_shape_str;
-  auto input_shapes = GetGraphInputShapes(context, config_infos, &input_shape_str);
-  if (input_shape_ptr != nullptr) {
-    *input_shape_ptr = input_shape_str;
-  }
-  if (input_shapes.empty()) {
-    MS_LOG(INFO) << "Not found input shape in AscendDeviceInfo or config file";
-    return {};
-  }
-  if (!IsDynamicInputShapes(input_shapes)) {
-    MS_LOG(INFO) << "The dims number in all of input shapes are more than 0, return input shape in AscendDeviceInfo or "
-                    "config file";
-    return input_shapes;
-  }
-  auto dynamic_batch_size = GetDynamicBatchSize(context, config_infos);
-  auto dynamic_image_size = GetDynamicImageSize(context, config_infos);
-  auto dynamic_dims = GetDynamicDims(context, config_infos);
-  if (!CheckDynamicDims(dynamic_batch_size, dynamic_image_size, dynamic_dims, input_shape_str)) {
-    return {};
-  }
+static bool SetDynamicDimsRealValue(const std::vector<int64_t> &dynamic_batch_size,
+                                    const std::vector<std::vector<int64_t>> &dynamic_image_size,
+                                    const std::vector<std::vector<int64_t>> &dynamic_dims,
+                                    const std::string &input_shape_str,
+                                    std::vector<std::pair<std::string, ShapeVector>> *real_shapes_ptr) {
+  auto &real_shapes = *real_shapes_ptr;
   if (!dynamic_dims.empty()) {
     size_t dyn_count = 0;
-    for (auto &input_shape : input_shapes) {
+    for (auto &input_shape : real_shapes) {
       for (auto &dim : input_shape.second) {
         if (dim == -1) {
           if (dyn_count >= dynamic_dims[0].size()) {
             MS_LOG(ERROR) << "Invalid dynamic_dims " << dynamic_dims
                           << " while dynamic dims in input_shape is more than " << (dyn_count + 1)
                           << ", input shape: " << input_shape_str;
-            return {};
+            return false;
           }
           dim = dynamic_dims[0][dyn_count];
           dyn_count++;
@@ -310,7 +367,7 @@ std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphOneReal
       }
     }
   } else if (!dynamic_image_size.empty()) {
-    for (auto &input_shape : input_shapes) {
+    for (auto &input_shape : real_shapes) {
       size_t dyn_count = 0;
       for (auto &dim : input_shape.second) {
         if (dim == -1) {
@@ -318,7 +375,7 @@ std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphOneReal
             MS_LOG(ERROR) << "Invalid dynamic_image_size " << dynamic_image_size
                           << " while dynamic dims in input_shape is more than " << (dyn_count + 1)
                           << ", input shape: " << input_shape_str;
-            return {};
+            return false;
           }
           dim = dynamic_image_size[0][dyn_count];
           dyn_count++;
@@ -326,7 +383,7 @@ std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphOneReal
       }
     }
   } else {  // dynamic_batch_size
-    for (auto &input_shape : input_shapes) {
+    for (auto &input_shape : real_shapes) {
       size_t dyn_count = 0;
       for (auto &dim : input_shape.second) {
         if (dim == -1) {
@@ -334,7 +391,7 @@ std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphOneReal
             MS_LOG(ERROR) << "Invalid dynamic_batch_size " << dynamic_batch_size
                           << " while dynamic dims in input_shape is more than " << (dyn_count + 1)
                           << ", input shape: " << input_shape_str;
-            return {};
+            return false;
           }
           dim = dynamic_batch_size[0];
           dyn_count++;
@@ -342,6 +399,67 @@ std::vector<std::pair<std::string, ShapeVector>> GeDynamicUtils::GetGraphOneReal
       }
     }
   }
-  return input_shapes;
+  return true;
+}
+
+bool GeDynamicUtils::GetGraphOneRealShapes(const std::shared_ptr<mindspore::Context> &context,
+                                           const ConfigInfos &config_infos,
+                                           std::vector<std::pair<std::string, ShapeVector>> *real_shapes_ptr,
+                                           std::string *input_shape_str_ptr) {
+  if (real_shapes_ptr == nullptr) {
+    MS_LOG(ERROR) << "Argument input_shapes_ptr cannot be nullptr";
+    return false;
+  }
+  std::string input_shape_str;
+  std::vector<GeDynamicShapeInfo> input_shapes;
+  auto ret = GetGraphInputShapes(context, config_infos, &input_shapes, &input_shape_str);
+  if (!ret) {
+    MS_LOG(ERROR) << "Failed to get input shape for AscendDeviceInfo or config file";
+    return false;
+  }
+  if (input_shape_str_ptr != nullptr) {
+    *input_shape_str_ptr = input_shape_str;
+  }
+  if (input_shapes.empty()) {
+    MS_LOG(INFO) << "Not found input shape in AscendDeviceInfo or config file";
+    return true;
+  }
+  std::vector<std::pair<std::string, ShapeVector>> &real_shapes = *real_shapes_ptr;
+  for (auto &item : input_shapes) {
+    std::vector<int64_t> shape;
+    for (auto &dim : item.shape) {
+      if (dim.dim == -1 && dim.min != dim.max) {
+        MS_LOG(ERROR) << "Cannot get one real shape because of shape range, shape: " << input_shape_str;
+        return false;
+      }
+      shape.push_back(dim.dim);
+    }
+    real_shapes.push_back(std::make_pair(item.name, shape));
+  }
+  if (!IsDynamicInputShapes(real_shapes)) {
+    MS_LOG(INFO) << "The dims number in all of input shapes are more than 0, return input shape in AscendDeviceInfo or "
+                    "config file";
+    return true;
+  }
+  std::vector<int64_t> dynamic_batch_size;
+  if (!GetDynamicBatchSize(context, config_infos, &dynamic_batch_size)) {
+    return false;
+  }
+  std::vector<std::vector<int64_t>> dynamic_image_size;
+  if (!GetDynamicImageSize(context, config_infos, &dynamic_image_size)) {
+    return false;
+  }
+  std::vector<std::vector<int64_t>> dynamic_dims;
+  if (!GetDynamicDims(context, config_infos, &dynamic_dims)) {
+    return false;
+  }
+  if (!CheckDynamicDims(dynamic_batch_size, dynamic_image_size, dynamic_dims, input_shape_str)) {
+    return false;
+  }
+  if (!SetDynamicDimsRealValue(dynamic_batch_size, dynamic_image_size, dynamic_dims, input_shape_str,
+                               real_shapes_ptr)) {
+    return false;
+  }
+  return true;
 }
 }  // namespace mindspore

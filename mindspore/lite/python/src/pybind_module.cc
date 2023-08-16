@@ -30,6 +30,7 @@ void LiteInferPyBind(const py::module &m);
 void ModelParallelRunnerPyBind(const py::module &m);
 void ModelGroupPyBind(const py::module &m);
 void TensorPyBind(const py::module &m);
+void LLMEnginePyBind(const py::module &m);
 std::shared_ptr<MSTensor> create_tensor(DataType data_type, const std::vector<int64_t> &shape,
                                         const std::string &device_type, int device_id);
 std::shared_ptr<MSTensor> create_tensor_by_tensor(const MSTensor &tensor, const std::string &device_type,
@@ -49,6 +50,7 @@ PYBIND11_MODULE(_c_lite_wrapper, m) {
   ModelParallelRunnerPyBind(m);
   ModelGroupPyBind(m);
   TensorPyBind(m);
+  LLMEnginePyBind(m);
   m.def("create_tensor", &create_tensor);
   m.def("create_tensor_by_tensor", &create_tensor_by_tensor);
   m.def("create_tensor_by_numpy", &create_tensor_by_numpy);

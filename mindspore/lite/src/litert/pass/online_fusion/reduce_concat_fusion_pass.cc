@@ -136,6 +136,7 @@ int ReduceConcatOnlineFusionPass::CreateReduceConcatCustomNode(LiteGraph::Node *
   auto online_fusion_prim = flatbuffers::GetRoot<schema::Primitive>(prim);
   if (online_fusion_prim == nullptr) {
     MS_LOG(ERROR) << "GetRoot ReduceConcatFusion primitive failed.";
+    free(prim);
     return RET_ERROR;
   }
   fbb.Clear();

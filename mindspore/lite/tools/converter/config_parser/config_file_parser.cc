@@ -75,7 +75,7 @@ int DynBatchOrDynImage(const mindspore::ProfileConfigs &profile, size_t dynamic_
       MS_LOG(ERROR) << "Dynamic input whose shape is not 4-dimensional is not supported, input shape: " << shape;
       return -1;
     }
-    size_t dynamic_dims_count = std::count_if(shape.begin(), shape.end(), [](int64_t dim) { return dim == kdynDim; });
+    auto dynamic_dims_count = std::count_if(shape.begin(), shape.end(), [](int64_t dim) { return dim == kdynDim; });
     if (shape[kIndex0] != kdynDim && dynamic_dims_count == kHWDimNumber) {
       if (dynamic_type != -1 && dynamic_type != kDynImgSize) {
         MS_LOG(ERROR) << "Only dynamic batch or dynamic image size is supported, hybrid scenarios are not supported";

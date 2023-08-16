@@ -28,6 +28,7 @@ from mindspore_lite.converter import FmkType, Converter
 from mindspore_lite.model import ModelType, Model, ModelParallelRunner, ModelGroup, ModelGroupFlag
 from mindspore_lite.tensor import DataType, Format, Tensor
 from mindspore_lite.lite_split import split_network, split_ir
+from mindspore_lite.llm_engine import LLMReq, LLMEngineStatus, LLMRole, LLMEngine
 
 if os.getenv('MSLITE_ENABLE_CLOUD_INFERENCE') == "on":
     from mindspore_lite import lite_infer
@@ -85,3 +86,4 @@ __all__.extend(converter.__all__)
 __all__.extend(model.__all__)
 __all__.extend(tensor.__all__)
 __all__.extend(lite_split.__all__)
+__all__.extend(llm_engine.__all__)
