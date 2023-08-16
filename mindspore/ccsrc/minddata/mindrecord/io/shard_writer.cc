@@ -1162,8 +1162,6 @@ Status ShardWriter::SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &l
   if (last_raw_page_id == -1) {
     return Status::OK();
   }
-  CHECK_FAIL_RETURN_SYNTAX_ERROR_MR(last_raw_page_id >= 0, "[Internal ERROR] 'last_raw_page_id': " +
-                                                             std::to_string(last_raw_page_id) + " should be positive.");
   RETURN_IF_NOT_OK_MR(shard_header_->GetPage(shard_id, last_raw_page_id, &last_raw_page));
   return Status::OK();
 }
@@ -1174,9 +1172,6 @@ Status ShardWriter::SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &
   if (last_blob_page_id == -1) {
     return Status::OK();
   }
-  CHECK_FAIL_RETURN_SYNTAX_ERROR_MR(
-    last_blob_page_id >= 0,
-    "[Internal ERROR] 'last_blob_page_id': " + std::to_string(last_blob_page_id) + " should be positive.");
   RETURN_IF_NOT_OK_MR(shard_header_->GetPage(shard_id, last_blob_page_id, &last_blob_page));
   return Status::OK();
 }
