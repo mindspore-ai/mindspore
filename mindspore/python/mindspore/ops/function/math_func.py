@@ -4208,11 +4208,11 @@ def logit(input, eps=None):
 #####################################
 
 
-def less(x, y):
+def less(input, other):
     r"""
-    Computes the boolean value of :math:`x < y` element-wise.
+    Computes the boolean value of :math:`input < other` element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
@@ -4220,21 +4220,21 @@ def less(x, y):
     .. math::
 
         out_{i} =\begin{cases}
-            & \text{True,    if } x_{i}<y_{i} \\
-            & \text{False,   if } x_{i}>=y_{i}
+            & \text{True,    if } input_{i}<other_{i} \\
+            & \text{False,   if } input_{i}>=other_{i}
             \end{cases}
 
     Args:
-        x (Union[Tensor, Number, bool]): The first input is a number or
+        input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number or
+        other (Union[Tensor, Number, bool]): The second input is a number or
             a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4249,7 +4249,7 @@ def less(x, y):
         >>> print(output)
         [False False True]
     """
-    return tensor_lt(x, y)
+    return tensor_lt(input, other)
 
 
 def lt(input, other):
@@ -4262,28 +4262,29 @@ def lt(input, other):
     return less(input, other)
 
 
-def le(x, y):
+def le(input, other):
     r"""
-    Computes the boolean value of :math:`x <= y` element-wise.
+    Computes the boolean value of :math:`input <= other` element-wise.
 
     .. math::
 
         out_{i} =\begin{cases}
-            & \text{True,    if } x_{i}<=y_{i} \\
-            & \text{False,   if } x_{i}>y_{i}
+            & \text{True,    if } input_{i}<=other_{i} \\
+            & \text{False,   if } input_{i}>other_{i}
             \end{cases}
 
     .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+          consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
-        x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
@@ -4291,7 +4292,7 @@ def le(x, y):
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4306,22 +4307,23 @@ def le(x, y):
         >>> print(output)
         [ True False  True]
     """
-    return tensor_le(x, y)
+    return tensor_le(input, other)
 
 
-def gt(x, y):
+def gt(input, other):
     r"""
-    Compare the value of the input parameters :math:`x,y` element-wise, and the output result is a bool value.
+    Compare the value of the input parameters :math:`input,other` element-wise, and the output result is a bool value.
 
     .. math::
 
         out_{i} =\begin{cases}
-            & \text{True,    if } x_{i}>y_{i} \\
-            & \text{False,   if } x_{i}<=y_{i}
+            & \text{True,    if } input_{i}>other_{i} \\
+            & \text{False,   if } input_{i}<=other_{i}
             \end{cases}
 
     Note:
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+          consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors, dtypes of them cannot be bool at the same time,
           and the shapes of them can be broadcast.
@@ -4331,11 +4333,11 @@ def gt(x, y):
           in another input by copying the value of the dimension.
 
     Args:
-        x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
-        y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
@@ -4343,7 +4345,7 @@ def gt(x, y):
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4359,15 +4361,16 @@ def gt(x, y):
         [False True False]
     """
     _greater = _get_cache_prim(P.Greater)()
-    return _greater(x, y)
+    return _greater(input, other)
 
 
-def ge(x, y):
+def ge(input, other):
     r"""
-    Computes the boolean value of :math:`x >= y` element-wise.
+    Computes the boolean value of :math:`input >= other` element-wise.
 
     Note:
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+          consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors, dtypes of them cannot be bool at the same time,
           and the shapes of them can be broadcast.
@@ -4379,21 +4382,21 @@ def ge(x, y):
     .. math::
 
         out_{i} =\begin{cases}
-            & \text{True,    if } x_{i}>=y_{i} \\
-            & \text{False,   if } x_{i}<y_{i}
+            & \text{True,    if } input_{i}>=other_{i} \\
+            & \text{False,   if } input_{i}<other_{i}
             \end{cases}
 
     Args:
-        x (Union[Tensor, Number, bool]): The first input is a number or
+        input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number or
+        other (Union[Tensor, Number, bool]): The second input is a number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4409,7 +4412,7 @@ def ge(x, y):
         [True True False]
     """
     _greater_equal = _get_cache_prim(P.GreaterEqual)()
-    return _greater_equal(x, y)
+    return _greater_equal(input, other)
 
 
 def eq(input, other):
@@ -4514,12 +4517,13 @@ def equal(input, other):
     return equal_(input, other)
 
 
-def ne(x, y):
+def ne(input, other):
     r"""
     Computes the non-equivalence of two tensors element-wise.
 
     Note:
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+          consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors, the shapes of them could be broadcast.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
@@ -4528,22 +4532,22 @@ def ne(x, y):
     .. math::
 
         out_{i} =\begin{cases}
-        & \text{True,    if } x_{i} \ne y_{i} \\
-        & \text{False,   if } x_{i} = y_{i}
+        & \text{True,    if } input_{i} \ne other_{i} \\
+        & \text{False,   if } input_{i} = other_{i}
         \end{cases}
 
     Args:
-        x (Union[Tensor, Number, bool]): The first input is a number or
+        input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number or
+        other (Union[Tensor, Number, bool]): The second input is a number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4562,7 +4566,7 @@ def ne(x, y):
         >>> print(output)
         [False False  True]
     """
-    return not_equal_(x, y)
+    return not_equal_(input, other)
 
 
 def not_equal(input, other):
@@ -4663,27 +4667,27 @@ def isfinite(x):
     return isfinite_(x)
 
 
-def isnan(x):
+def isnan(input):
     r"""
     Determines which elements are NaN for each position.
 
     .. math::
 
         out_i = \begin{cases}
-          & \ True,\ \text{ if } x_{i} = \text{Nan} \\
-          & \ False,\ \text{ if } x_{i} \ne  \text{Nan}
+          & \ True,\ \text{ if } input_{i} = \text{Nan} \\
+          & \ False,\ \text{ if } input_{i} \ne  \text{Nan}
         \end{cases}
 
     where :math:`Nan` means not a number.
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
 
     Returns:
-        Tensor, has the same shape of input, and the dtype is bool.
+        Tensor, has the same shape of `input`, and the dtype is bool.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4701,34 +4705,34 @@ def isnan(x):
         >>> print(output)
         False
     """
-    return isnan_(x)
+    return isnan_(input)
 
 
-def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
+def isclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
     """
-    Returns a new Tensor with boolean elements representing if each element of `x1`
-    is “close” to the corresponding element of `x2`. Closeness is defined as:
+    Returns a new Tensor with boolean elements representing if each element of `input`
+    is “close” to the corresponding element of `other`. Closeness is defined as:
 
     .. math::
-        ∣x1−x2∣  ≤  atol + rtol × ∣x2∣
+        ∣input−other∣  ≤  atol + rtol × ∣other∣
 
     Args:
-        x1 (Tensor): First Tensor to compare, with data type belongs to float32, float16, int32.
-        x2 (Tensor): Second Tensor to compare, with data type belongs to float32, float16, int32.
+        input (Tensor): First Tensor to compare, with data type belongs to float32, float16, int32.
+        other (Tensor): Second Tensor to compare, with data type belongs to float32, float16, int32.
         rtol (float, optional): Relative tolerance. Default: ``1e-05`` .
         atol (float, optional): Absolute tolerance. Default: ``1e-08`` .
         equal_nan (bool, optional): If True, then two NaNs will be considered equal. Default: ``False`` .
 
     Returns:
-        A bool Tensor, with the shape as broadcasted result of the input `x1` and `x2`.
+        A bool Tensor, with the shape as broadcasted result of the input `input` and `other`.
 
     Raises:
-        TypeError: If either of `x1` and `x2` is not Tensor.
-        TypeError: If either of `x1` and `x2` is not float16, float32 or int32.
+        TypeError: If either of `input` and `other` is not Tensor.
+        TypeError: If either of `input` and `other` is not float16, float32 or int32.
         TypeError: If either of `atol` and `rtol` is not float.
         TypeError: If `equal_nan` is not bool.
-        TypeError: If the dtype of `x1` is not same as the `x2`.
-        ValueError: If `x1` and `x2` can not be broadcast.
+        TypeError: If the dtype of `input` is not same as the `other`.
+        ValueError: If `input` and `other` can not be broadcast.
         ValueError: If either of `atol` and `rtol` is less than zero.
 
     Supported Platforms:
@@ -4745,7 +4749,7 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
         [ True False False False  True]
     """
     is_close = _get_cache_prim(P.IsClose)(rtol=rtol, atol=atol, equal_nan=equal_nan)
-    return is_close(x1, x2)
+    return is_close(input, other)
 
 
 def isreal(input):
@@ -4919,12 +4923,13 @@ def fmax(input, other):
     return fmax_(input, other)
 
 
-def maximum(x, y):
+def maximum(input, other):
     r"""
     Computes the maximum of input tensors element-wise.
 
     Note:
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+          consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
@@ -4934,12 +4939,12 @@ def maximum(x, y):
         - If one of the elements being compared is a NaN, then that element is returned.
 
     .. math::
-        output_i = \max(x_i, y_i)
+        output_i = \max(input_i, other_i)
 
     Args:
-        x (Union[Tensor, Number, bool]): The first input is a number or
+        input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number or
+        other (Union[Tensor, Number, bool]): The second input is a number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Returns:
@@ -4947,8 +4952,8 @@ def maximum(x, y):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        ValueError: If `x` and `y` are not the same shape.
+        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
+        ValueError: If `input` and `other` are not the same shape.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4970,7 +4975,7 @@ def maximum(x, y):
         >>> print(output.dtype)
         Float32
     """
-    return maximum_(x, y)
+    return maximum_(input, other)
 
 
 def fmin(input, other):
@@ -5016,12 +5021,13 @@ def fmin(input, other):
     return fmin_(input, other)
 
 
-def minimum(x, y):
+def minimum(input, other):
     r"""
     Computes the minimum of input tensors element-wise.
 
     Note:
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+          consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors, dtypes of them cannot be bool at the same time.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
@@ -5029,12 +5035,12 @@ def minimum(x, y):
         - If one of the elements being compared is a NaN, then that element is returned.
 
     .. math::
-        output_i = \min(x_i, y_i)
+        output_i = \min(input_i, other_i)
 
     Args:
-        x (Union[Tensor, Number, bool]): The first input is a number or
+        input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number or
+        other (Union[Tensor, Number, bool]): The second input is a number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Returns:
@@ -5042,8 +5048,8 @@ def minimum(x, y):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        ValueError: If `x` and `y` are not the same shape after broadcast.
+        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
+        ValueError: If `input` and `other` are not the same shape after broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5065,7 +5071,7 @@ def minimum(x, y):
         >>> print(output.dtype)
         Float32
     """
-    return minimum_(x, y)
+    return minimum_(input, other)
 
 
 def median(input, axis=-1, keepdims=False):
