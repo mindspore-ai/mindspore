@@ -406,9 +406,40 @@ bool ProfilingUtils::ValidComputeGraph(const session::KernelGraph &kernel_graph)
 }
 
 void ProfilingUtils::ReportAllGraphProfilingData() {
-  for (auto data : report_data_) {
-    ReportProfilingData(data.task_ids_, data.stream_ids_, data.graph_id_, data.rt_model_id);
+  MS_LOG(INFO) << "report event: " << report_event.size();
+  for (auto data : report_event) {
+    auto ret = MsprofReportEvent(static_cast<uint32_t>(false), &data);
+    if (ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "RecordModelLoad failed.";
+    }
   }
+  MS_LOG(INFO) << "report event: " << report_compact_info.size();
+  for (auto data : report_compact_info) {
+    auto compact_ret = MsprofReportCompactInfo(false, &data, sizeof(MsprofCompactInfo));
+    if (compact_ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "MsprofReportCompactInfo failed.";
+    }
+  }
+
+  MS_LOG(INFO) << "report event: " << report_additional_info.size();
+  for (auto data : report_additional_info) {
+    auto addition_ret = MsprofReportAdditionalInfo(false, &data, sizeof(MsprofAdditionalInfo));
+    if (addition_ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
+    }
+  }
+
+  MS_LOG(INFO) << "report event: " << report_api.size();
+  for (auto data : report_api) {
+    auto api_ret = MsprofReportApi(false, &data);
+    if (api_ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
+    }
+  }
+  report_event.clear();
+  report_compact_info.clear();
+  report_additional_info.clear();
+  report_api.clear();
 }
 
 void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
@@ -546,9 +577,13 @@ void ProfilingUtils::RecordModelLoad(const rtModel_t rt_model_handle) {
   model_load_event_.requestId = 0U;
   auto tid = syscall(SYS_gettid);
   model_load_event_.threadId = static_cast<uint32_t>(tid);
-  auto ret = MsprofReportEvent(static_cast<uint32_t>(false), &model_load_event_);
-  if (ret != MSPROF_ERROR_NONE) {
-    MS_LOG(ERROR) << "RecordModelLoad failed.";
+  if (ProfilingManager::GetInstance().IsProfilingStart()) {
+    auto ret = MsprofReportEvent(static_cast<uint32_t>(false), &model_load_event_);
+    if (ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "RecordModelLoad failed.";
+    }
+  } else {
+    report_event.emplace_back(model_load_event_);
   }
 }
 
@@ -573,9 +608,13 @@ void ProfilingUtils::RecordModelExecute(const KernelGraphPtr kernel_graph) {
   const uint64_t prof_time = MsprofSysCycleTime();
   model_execute.timeStamp = prof_time;
   model_execute.requestId = static_cast<uint32_t>(request_id);
-  auto ret = MsprofReportEvent(static_cast<uint32_t>(false), &model_execute);
-  if (ret != MSPROF_ERROR_NONE) {
-    MS_LOG(ERROR) << "RecordModelLoad failed.";
+  if (ProfilingManager::GetInstance().IsProfilingStart()) {
+    auto ret = MsprofReportEvent(static_cast<uint32_t>(false), &model_execute);
+    if (ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "RecordModelLoad failed.";
+    }
+  } else {
+    report_event.emplace_back(model_execute);
   }
 }
 
@@ -640,9 +679,13 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
   auto tid = syscall(SYS_gettid);
   addition_info.node_basic_info.threadId = static_cast<uint32_t>(tid);
 
-  auto compact_ret = MsprofReportCompactInfo(false, &addition_info.node_basic_info, sizeof(MsprofCompactInfo));
-  if (compact_ret != MSPROF_ERROR_NONE) {
-    MS_LOG(ERROR) << "MsprofReportCompactInfo failed.";
+  if (ProfilingManager::GetInstance().IsProfilingStart()) {
+    auto compact_ret = MsprofReportCompactInfo(false, &addition_info.node_basic_info, sizeof(MsprofCompactInfo));
+    if (compact_ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "MsprofReportCompactInfo failed.";
+    }
+  } else {
+    report_compact_info.emplace_back(addition_info.node_basic_info);
   }
   MS_LOG(DEBUG) << "MsprofReportCompactInfo：op_name: " << op_name
                 << ", tensors: " << addition_info.tensor_info_wrappers.size();
@@ -650,18 +693,26 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
   for (auto &tensor_info_wrapper : addition_info.tensor_info_wrappers) {
     tensor_info_wrapper.tensor_info.timeStamp = prof_time;
     tensor_info_wrapper.tensor_info.threadId = static_cast<uint32_t>(tid);
-    auto addition_ret =
-      MsprofReportAdditionalInfo(false, &tensor_info_wrapper.tensor_info, sizeof(MsprofAdditionalInfo));
-    if (addition_ret != MSPROF_ERROR_NONE) {
-      MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
+    if (ProfilingManager::GetInstance().IsProfilingStart()) {
+      auto addition_ret =
+        MsprofReportAdditionalInfo(false, &tensor_info_wrapper.tensor_info, sizeof(MsprofAdditionalInfo));
+      if (addition_ret != MSPROF_ERROR_NONE) {
+        MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
+      }
+    } else {
+      report_additional_info.emplace_back(tensor_info_wrapper.tensor_info);
     }
   }
 
   addition_info.api.endTime = prof_time;
   addition_info.api.threadId = static_cast<uint32_t>(tid);
-  auto api_ret = MsprofReportApi(false, &addition_info.api);
-  if (api_ret != MSPROF_ERROR_NONE) {
-    MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
+  if (ProfilingManager::GetInstance().IsProfilingStart()) {
+    auto api_ret = MsprofReportApi(false, &addition_info.api);
+    if (api_ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
+    }
+  } else {
+    report_api.emplace_back(addition_info.api);
   }
 }
 

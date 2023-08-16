@@ -59,7 +59,7 @@ class ProfilingManager {
   bool IsMsprofiling();
   bool InitProfiling(const std::string &profiling_path, uint32_t device_id);
   bool IsProfilingInitialized() const { return cur_state_ >= kProfilingInit; }
-  inline bool IsProfilingStart() const { return cur_state_ == kProfilingStart && step_start_; }
+  bool IsProfilingStart() const { return cur_state_ == kProfilingStart && step_start_; }
   inline void SetStepStart(const bool start) { step_start_ = start; }
   Status PluginInit() const;
   void PluginUnInit() const;
