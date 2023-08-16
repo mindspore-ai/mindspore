@@ -300,12 +300,28 @@ void UnifyDynamicLen(const pipeline::ResourcePtr &resource) {
 #endif
 }
 
+void CheckAbstractJoinedAny(const abstract::AbstractBasePtr &abs1, const abstract::AbstractBasePtr &abs2) {
+  // Check AbstractJoinedAny error info.
+  abstract::AbstractJoinedAnyPtr joined_any_abs = nullptr;
+  if (abs1->isa<abstract::AbstractJoinedAny>()) {
+    joined_any_abs = abs1->cast<abstract::AbstractJoinedAnyPtr>();
+  } else if (abs2->isa<abstract::AbstractJoinedAny>()) {
+    joined_any_abs = abs2->cast<abstract::AbstractJoinedAnyPtr>();
+  }
+  if (joined_any_abs != nullptr) {
+    joined_any_abs->ThrowException();
+  }
+}
+
 bool ProcessAbstract(const abstract::AbstractBasePtr &abs1, const abstract::AbstractBasePtr &abs2,
                      const UnifyDynamicLenFuncPtr &func) {
   if (abs1 == nullptr || abs2 == nullptr) {
     MS_LOG(WARNING) << "Invaliad check as abstract is null.";
     return true;
   }
+
+  CheckAbstractJoinedAny(abs1, abs2);
+
   if ((!abs1->isa<AbstractSequence>()) && (!abs2->isa<AbstractSequence>())) {
     return true;
   }
