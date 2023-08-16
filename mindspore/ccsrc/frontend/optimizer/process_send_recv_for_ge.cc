@@ -63,7 +63,7 @@ void ProcessNodeWithoutOutput(const FuncGraphPtr &graph, const CNodePtr &node) {
   node->AddPrimalAttr(kNodeWithoutOutput, MakeValue(true));
   depend->AddPrimalAttr(kNodeCloseFollowing, MakeValue(true));
   tensor_move->AddPrimalAttr(kNodeCloseFollowing, MakeValue(true));
-  manager->Replace(node, tensor_move);
+  (void)manager->Replace(node, tensor_move);
 }
 
 void AddAllGatherRecvDepend(const FuncGraphPtr &graph) {
@@ -82,14 +82,14 @@ void AddAllGatherRecvDepend(const FuncGraphPtr &graph) {
       auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
       const auto &instance_name = prim->instance_name();
       if (instance_name.find(kNeedAllGather) != std::string::npos) {
-        all_gather_nodes.emplace_back(cnode);
+        (void)all_gather_nodes.emplace_back(cnode);
       }
     } else if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
       auto cnode = node->cast<CNodePtr>();
       if (cnode->HasPrimalAttr(parallel::PIPELINE_BEGIN)) {
         auto pipeline_begin = GetValue<int64_t>(cnode->GetPrimalAttr(parallel::PIPELINE_BEGIN));
         if (pipeline_begin == 0) {
-          recv_nodes.emplace_back(cnode);
+          (void)recv_nodes.emplace_back(cnode);
         }
       }
     }
@@ -144,7 +144,7 @@ void FindFollowing(const AnfNodePtr &send_node, std::map<AnfNodePtr, std::set<An
     auto top_node = node_queue.front();
     node_queue.pop();
     if (IsClosure(top_node)) {
-      (*clouse_to_send)[top_node].insert(send_node);
+      (void)(*clouse_to_send)[top_node].insert(send_node);
     }
     auto top_cnode = dyn_cast_ptr<CNode>(top_node);
     if (top_cnode == nullptr) {
@@ -205,7 +205,7 @@ void AddSendClosureDepend(const FuncGraphPtr &graph) {
         auto new_depend = graph->NewCNode(input);
         new_depend->set_abstract(before_input->abstract());
         manager->SetEdge(cnode, 1, new_depend);
-        has_processed.insert(send_node);
+        (void)has_processed.insert(send_node);
       }
     }
   }

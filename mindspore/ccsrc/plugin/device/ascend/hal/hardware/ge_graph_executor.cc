@@ -654,8 +654,7 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
   MS_LOG(INFO) << "BuildOutputDataGeTensor finish.";
 }
 
-void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph,
-                                        const std::vector<ShapeVector> &outputs_shape) const {
+void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) const {
   MS_LOG(INFO) << "Start AllocOutputMemory, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto ms_context = MsContext::GetInstance();
@@ -754,7 +753,7 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   AllocConstMemory(run_options, graph, summary.const_memory_size);
   AllocFeatureMemory(run_options, summary.feature_memory_size);
   AllocParameterMemory(graph);
-  AllocOutputMemory(graph, summary.output_shapes);
+  AllocOutputMemory(graph);
   BuildInputDataGeTensor(graph);
   BuildOutputDataGeTensor(graph);
   EnableGraphInputZeroCopy(graph);
