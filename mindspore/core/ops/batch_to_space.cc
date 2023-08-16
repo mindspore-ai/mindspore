@@ -117,10 +117,11 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
     }
     auto block_size_prod = block_size * block_size;
     if (output_shape[0] != abstract::Shape::kShapeDimAny) {
-      if (output_shape[0] % block_size_prod != 0) {
+      if (block_size_prod <= 0 || output_shape[0] % block_size_prod != 0) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name
                                  << "', the shape of output with index 0 must be divided exactly "
-                                 << "by square of 'block_size', but got the shape of output: " << output_shape
+                                 << "by square of 'block_size': " << block_size
+                                 << ", but got the shape of output: " << output_shape
                                  << " and square of 'block_size': " << block_size_prod << ".";
       }
       output_shape[0] = output_shape[0] / block_size_prod;
