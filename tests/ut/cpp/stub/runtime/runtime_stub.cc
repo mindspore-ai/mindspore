@@ -132,6 +132,8 @@ rtError_t rtModelBindStream(rtModel_t model, rtStream_t stream, uint32_t flag) {
 
 rtError_t rtStreamCreateWithFlags(rtStream_t *stream, int32_t priority, uint32_t flags) { return RT_ERROR_NONE; }
 
+rtError_t rtStreamSetMode(rtStream_t stm, const uint64_t stmMode) { return RT_ERROR_NONE; }
+
 rtError_t rtEventCreate(rtEvent_t *event) { return RT_ERROR_NONE; }
 
 rtError_t rtLabelCreate(rtLabel_t *label) { return RT_ERROR_NONE; }

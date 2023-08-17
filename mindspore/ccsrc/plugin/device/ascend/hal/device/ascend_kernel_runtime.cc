@@ -1225,6 +1225,9 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
       }
     }
 #ifndef ENABLE_SECURITY
+    MS_LOG(INFO) << "Set default stream to null.";
+    stream_ = nullptr;
+    communication_stream_ = nullptr;
     PrintDebugInfoAndDumpFailNode(graph);
     DumpDebugInfoFile(graph);
 #endif
