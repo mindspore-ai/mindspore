@@ -212,6 +212,7 @@
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/hcom/add_depend_for_all_gather.h"
+#include "plugin/device/ascend/optimizer/ge/adjust_print_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
 #include "plugin/device/ascend/optimizer/ge/convert_condition_input_to_scalar.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_depend_remover.h"
@@ -645,6 +646,7 @@ void AscendBackendOptimizeGE(const std::shared_ptr<session::KernelGraph> &kernel
   opt_ge_pm->AddPass(std::make_shared<opt::AllToAllvForGE>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<ConvertCondInputToScalar>());
+  opt_ge_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
