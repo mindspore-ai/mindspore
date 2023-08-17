@@ -17,6 +17,7 @@ import glob
 import tempfile
 import numpy as np
 import pytest
+import csv
 
 import mindspore
 import mindspore.context as context
@@ -26,6 +27,7 @@ from mindspore import Model
 from mindspore import Profiler
 from mindspore import Tensor
 from mindspore.ops import operations as P
+import mindspore.common.dtype as mstype
 from tests.security_utils import security_off_wrap
 
 
@@ -60,6 +62,39 @@ class NetWork(nn.Cell):
 def dataset_generator():
     for i in range(1, 10):
         yield (np.ones((32, 2 * i), dtype=np.float32), np.ones((32, 2 * i), dtype=np.float32))
+
+
+class Net1(nn.Cell):
+    def __init__(self):
+        super(Net1, self).__init__()
+        self.select = P.Select()
+        self.reshape = P.Reshape()
+        self.xlogy = P.Xlogy()
+        self.logit = P.Logit(eps=1e-5)
+        self.tril = P.Tril(10)
+        self.hsigmoid = P.HSigmoid()
+        self.cast = P.Cast()
+        self.expand_dims = P.ExpandDims()
+        self.dense = nn.Dense(1, 3, activation='relu')
+        self.flatten = nn.Flatten()
+
+    def construct(self, a):
+        shape = (2, 3)
+        b = Tensor(np.array([4, 4, 5, 5, 6, 6]), mstype.float64)
+        input_cond = Tensor([True, False, True, False, True, False])
+        a = self.select(input_cond, a, b)
+        a = self.reshape(a, shape)
+        b = self.reshape(b, shape)
+        a = self.logit(a)
+        a = self.tril(a)
+        a = self.hsigmoid(a)
+
+        output = self.xlogy(a, b)
+        output = self.expand_dims(output, -1)
+        output = self.cast(output, mstype.float32)
+        output = self.dense(output)
+        output = self.flatten(output)
+        return output
 
 
 @pytest.mark.level0
@@ -123,3 +158,31 @@ def test_shape():
         model.train(1, dataset, dataset_sink_mode=True)
         profiler.analyse()
         assert len(glob.glob(f"{tmpdir}/profiler*/dynamic_shape_*.json")) == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_collect_custom_aicpu():
+    """
+    Feature: Profiling can collect custom aicpu operators
+    Description: Test profiling can collect custom aicpu operators on ascend
+    Expectation: The file aicpu_intermediate_*.csv generated successfully and s1 == s2
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        profiler = Profiler(output_path=tmpdir)
+        net = Net1()
+        net(Tensor(np.random.random((6,)), mstype.float64))
+        profiler.analyse()
+        aicpu_intermediate_file_list = glob.glob(f"{tmpdir}/profiler/aicpu_intermediate_*.csv")
+        assert len(aicpu_intermediate_file_list) == 1
+        s1 = {'Select', 'Logit', 'Tril', 'HSigmoid', 'Xlogy', 'Cast'}
+        s2 = set()
+        with open(aicpu_intermediate_file_list[0], 'r') as fr:
+            reader = csv.DictReader(fr)
+            for row in reader:
+                s2.add(row.get('op_type'))
+        assert s1 == s2
