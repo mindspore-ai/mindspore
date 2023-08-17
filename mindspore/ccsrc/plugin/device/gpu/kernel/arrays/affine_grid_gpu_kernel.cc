@@ -44,8 +44,8 @@ bool PreLaunchKernel4D(const std::vector<int64_t> &theta_shape, const std::vecto
     cudaMemcpyAsync(image_size_h, image_size_d, sizeof(int32_t) * kDim4, cudaMemcpyDeviceToHost, cuda_stream),
     "For '" << kernel_name << "', "
             << "cudaMemcpy input 'size' to host failed.");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "For '" << kernel_name << "', "
-                                                                      << "cudaDeviceSyncFailed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "For '" << kernel_name << "', "
+                                                                                 << "cudaDeviceSyncFailed");
   int32_t N = image_size_h[kIndex0];
   int32_t C = image_size_h[kIndex1];
   int32_t H = image_size_h[kIndex2];
@@ -71,8 +71,8 @@ bool PreLaunchKernel5D(const std::vector<int64_t> &theta_shape, const std::vecto
     cudaMemcpyAsync(image_size_h, image_size_d, sizeof(int32_t) * kDim5, cudaMemcpyDeviceToHost, cuda_stream),
     "For '" << kernel_name << "', "
             << "cudaMemcpy input 'size' to host failed.");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "For '" << kernel_name << "', "
-                                                                      << "cudaDeviceSyncFailed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "For '" << kernel_name << "', "
+                                                                                 << "cudaStreamSyncFailed");
   int32_t N = image_size_h[kIndex0];
   int32_t C = image_size_h[kIndex1];
   int32_t D = image_size_h[kIndex2];

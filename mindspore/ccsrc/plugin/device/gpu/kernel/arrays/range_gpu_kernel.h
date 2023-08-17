@@ -59,7 +59,8 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
       cudaMemcpyAsync(&error_code, error_code_device_address, sizeof(DynamicRangeErrorCode), cudaMemcpyDeviceToHost,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "Failed to copy error code to host.");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "cudaStreamSyncFailed");
 
     // use workspace[0] for actual output shape, we know it must be 1d
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(

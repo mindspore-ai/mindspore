@@ -129,6 +129,10 @@ bool SspaddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(x2.data(), x2_indices, sizeof(S) * x2_values_num_ * kNumTwo, cudaMemcpyDeviceToHost, stream),
     "For SspaddmmGpuKernelMod cudaMemcpyAsync x2_values Fail");
+  if (cudaStreamQuery(stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream),
+                                       "For 'SspaddmmGpuKernelMod', cuda Stream Sync Failed.");
+  }
 
   // cal y_shape
   x1_host_shape[0] = static_cast<int64_t>(x1_devicetohost_shape[0]);

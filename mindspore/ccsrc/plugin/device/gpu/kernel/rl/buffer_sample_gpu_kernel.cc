@@ -88,7 +88,10 @@ bool BufferSampleKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   int k_num = 0;
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                              cudaMemcpyAsync(&k_num, count_addr, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
-                             "sync dev to host failed");
+                             "For 'BufferSample', sync dev to host failed");
+  if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "For 'BufferSample', cudaStreamSyncFailed");
+  }
   // 1 Init curandState for the first time
   if (!states_init_) {
     status = RandInit(unique_ ? capacity_ : batch_size_, seed_, devStates_, cuda_stream);

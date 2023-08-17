@@ -109,10 +109,14 @@ bool SparseSegmentMeanGradGpuKernelMod::LaunchKernel(const std::vector<AddressPt
   segment_ids_host.resize(idx_seg_elements_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(indices_host.data(), indices_ptr, idx_seg_elements_ * sizeof(S), cudaMemcpyDeviceToHost, stream),
-    "cudaMemcpy failed.");
+    "For 'SparseSegmentMeanGrad', cudaMemcpy indices failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(segment_ids_host.data(), segment_ids_ptr,
                                                      idx_seg_elements_ * sizeof(S), cudaMemcpyDeviceToHost, stream),
-                                     "cudaMemcpy failed.");
+                                     "For 'SparseSegmentMeanGrad', cudaMemcpy segment_ids failed.");
+  if (cudaStreamQuery(stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream),
+                                       "For 'SparseSegmentMeanGrad', cudaStreamSyncFailed");
+  }
   for (size_t i = 1; i < idx_seg_elements_; i++) {
     if (segment_ids_host[i] < segment_ids_host[i - 1]) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', segment_ids should be sorted.";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,35 +79,42 @@ int MatrixDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 template <typename DataType>
 bool MatrixDiagV3GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                             const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+                                            const std::vector<AddressPtr> &outputs) {
   if (x_size_ == 0 || y_size_ == 0) {
     return true;
   }
-  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   auto x_ptr = GetDeviceAddress<DataType>(inputs, kIndex0);
   auto k_ptr = GetDeviceAddress<kIntType>(inputs, kIndex1);
   auto padding_value_ptr = GetDeviceAddress<DataType>(inputs, kIndex4);
   auto y_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
   auto any = [](auto &&... args) -> bool { return ((args == nullptr) || ...); };
-  if (any(cuda_stream, x_ptr, k_ptr, padding_value_ptr, y_ptr)) {
+  if (any(cuda_stream_, x_ptr, k_ptr, padding_value_ptr, y_ptr)) {
     return false;
   }
   // Get 'k' and store as [lower_diag_index, upper_diag_index].
   kIntType k_stand;
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&k_stand, k_ptr, sizeof(kIntType), cudaMemcpyDeviceToHost),
-                                     "In MatrixDiagV3 kernel, cudaMemcpy input 'k' to host failed.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&k_stand, k_ptr, sizeof(kIntType), cudaMemcpyDeviceToHost, cuda_stream_),
+    "For '" << kernel_name_ << "', cudaMemcpyAsync input 'k' to host failed.");
+  if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
+  }
   int64_t upper_diag_index, lower_diag_index = IntToLong(k_stand);
   if (k_size_ == 1) {
     upper_diag_index = lower_diag_index;
   } else {
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&k_stand, k_ptr + 1, sizeof(kIntType), cudaMemcpyDeviceToHost),
-                                       "In MatrixDiagV3 kernel, cudaMemcpy input 'k' to host failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(&k_stand, k_ptr + 1, sizeof(kIntType), cudaMemcpyDeviceToHost, cuda_stream_),
+      "For '" << kernel_name_ << "', cudaMemcpyAsync input 'k' to host failed.");
+    if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
+    }
     upper_diag_index = IntToLong(k_stand);
   }
 
   auto status =
     MatrixDiagV3(x_ptr, padding_value_ptr, y_ptr, y_size_, num_rows_, num_cols_, lower_diag_index, upper_diag_index,
-                 max_diag_len_, left_align_super_diag_, left_align_sub_diag_, device_id_, cuda_stream);
+                 max_diag_len_, left_align_super_diag_, left_align_sub_diag_, device_id_, cuda_stream_);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }

@@ -88,7 +88,8 @@ bool UniformCandidateSamplerGpuKernelMod::LaunchKernel(const std::vector<Address
       cudaMemcpyAsync(&array_input[0], input, input_size_ * sizeof(T), cudaMemcpyDeviceToHost,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "UniformCandidateSampler cudaMemcpyAsync sampled_candidates failed");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "UniformCandidateSampler cudaDeviceSyncFailed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "UniformCandidateSampler cudaStreamSyncFailed");
     for (const auto item : array_input) {
       set_input.insert(item);
     }

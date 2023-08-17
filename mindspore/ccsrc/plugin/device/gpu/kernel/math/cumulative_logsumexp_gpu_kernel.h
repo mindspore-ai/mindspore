@@ -37,7 +37,8 @@ class CumulativeLogsumexpGpuKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
+    cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -54,11 +55,11 @@ class CumulativeLogsumexpGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept;
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+                    const std::vector<AddressPtr> &outputs);
 
   using CumulativeLogsumexpLaunchFunc =
     std::function<bool(CumulativeLogsumexpGpuKernelMod *, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, CumulativeLogsumexpLaunchFunc>> func_list_;
   CumulativeLogsumexpLaunchFunc kernel_func_;
   int axis_{0};
@@ -70,6 +71,7 @@ class CumulativeLogsumexpGpuKernelMod : public NativeGpuKernelMod {
   size_t dims_[kMaxDimsSize] = {};
   std::vector<size_t> shape_{};
   bool is_dynamic_shape_{false};
+  cudaStream_t cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

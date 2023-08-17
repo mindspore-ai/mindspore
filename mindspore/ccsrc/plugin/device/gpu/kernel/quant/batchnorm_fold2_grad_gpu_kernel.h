@@ -70,7 +70,8 @@ class BatchNormFold2GradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                               cudaMemcpyAsync(current_step_host, global_step, sizeof(int32_t), cudaMemcpyDeviceToHost,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy gpu memory.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaStreamSyncFailed");
     CHECK_CUDA_RET_WITH_ERROR(
       kernel_node_,
       cudaMemcpyAsync(d_x, dout, x_size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),

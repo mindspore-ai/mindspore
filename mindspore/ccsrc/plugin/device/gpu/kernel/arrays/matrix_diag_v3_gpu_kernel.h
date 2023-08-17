@@ -34,7 +34,8 @@ class MatrixDiagV3GpuKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
+    cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -49,11 +50,10 @@ class MatrixDiagV3GpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept;
   template <typename DataType>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+                    const std::vector<AddressPtr> &outputs);
 
-  using MatrixDiagV3LaunchFunc =
-    std::function<bool(MatrixDiagV3GpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+  using MatrixDiagV3LaunchFunc = std::function<bool(MatrixDiagV3GpuKernelMod *, const std::vector<AddressPtr> &,
+                                                    const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, MatrixDiagV3LaunchFunc>> func_list_;
   MatrixDiagV3LaunchFunc kernel_func_;
   int64_t x_size_;
@@ -65,6 +65,7 @@ class MatrixDiagV3GpuKernelMod : public NativeGpuKernelMod {
   bool left_align_super_diag_;
   bool left_align_sub_diag_;
   std::vector<int64_t> y_shape_;
+  cudaStream_t cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

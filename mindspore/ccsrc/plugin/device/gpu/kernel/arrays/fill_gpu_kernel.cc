@@ -38,7 +38,10 @@ T FillGpuKernelMod::GetInputDataFromDevice(const std::vector<AddressPtr> &inputs
   T original_value;
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&original_value, value_ptr, sizeof(T), cudaMemcpyDeviceToHost, cuda_stream),
-    "cudaMemcpy value variable failed.");
+    "For 'Fill', cudaMemcpyAsync value variable failed.");
+  if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "cuda Stream Sync Failed.");
+  }
   return original_value;
 }
 

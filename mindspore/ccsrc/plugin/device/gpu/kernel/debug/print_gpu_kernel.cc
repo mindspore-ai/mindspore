@@ -66,7 +66,8 @@ bool PrintGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
         cudaMemcpyAsync(offset, input_device_data[tensor_idx], size_to_move, cudaMemcpyDeviceToHost,
                         reinterpret_cast<cudaStream_t>(stream_ptr)),
         error_msg);
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - Print");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                         "cudaStreamSyncFailed - Print");
       auto current_string = GetString(tensor_idx, i, offset);
       std::cout << current_string << std::endl;
       offset += size_to_move;

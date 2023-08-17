@@ -53,14 +53,19 @@ bool TensorArrayWriteKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
   MS_ERROR_IF_NULL(handle_addr);
   MS_ERROR_IF_NULL(index);
   MS_ERROR_IF_NULL(value);
+  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
+  MS_ERROR_IF_NULL(cuda_stream);
   int64_t index_host = 0;
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost,
-                                             reinterpret_cast<cudaStream_t>(stream)),
+                             cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
                              "Get indexd failed");
   int64_t handle = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemcpy(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost),
-                             "Get handle to host failed");
+  CHECK_CUDA_RET_WITH_EXCEPT(
+    kernel_node_, cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+    "For 'TensorArrayWrite', Get handle to host failed");
+  if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "cuda Stream Sync Failed");
+  }
   GPUTensorArrayPtr tensors_ =
     std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle));
   MS_EXCEPTION_IF_NULL(tensors_);
@@ -79,8 +84,7 @@ bool TensorArrayWriteKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
   MS_EXCEPTION_IF_NULL(dev_addr->addr);
   dev_addr->size = value_size_;
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(dev_addr->addr, value, value_size_, cudaMemcpyDeviceToDevice,
-                                             reinterpret_cast<cudaStream_t>(stream)),
+                             cudaMemcpyAsync(dev_addr->addr, value, value_size_, cudaMemcpyDeviceToDevice, cuda_stream),
                              "Copy value failed");
 
   if (tensors_->Write(index_host, dev_addr)) {

@@ -155,6 +155,10 @@ void GeqrfGpuKernelMod::RunGeqrf(const size_t m, const size_t n, T *d_a, int *de
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(d_output_y, d_a, sizeof(T) * m_ * n_, cudaMemcpyDeviceToDevice,
                                                      reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                      "cuda memcpy output A failed!");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "In Geqrf kernel, cuda Stream Sync Failed.");
+  }
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
 }
 

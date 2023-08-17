@@ -368,16 +368,20 @@ bool SparseMatrixSparseMatMulGpuKernelMod::LaunchKernel(const std::vector<Addres
   std::vector<int> h_x2_batch_num(batch_ele);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(h_x1_dense_shape.data(), x1_dense_shape, sizeof(int) * rank, cudaMemcpyDeviceToHost, stream),
-    "cudaMemcpy failed.");
+    "For 'SparseMatrixSparseMatmul', cudaMemcpy failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(h_x2_dense_shape.data(), x2_dense_shape, sizeof(int) * rank, cudaMemcpyDeviceToHost, stream),
-    "cudaMemcpy failed.");
+    "For 'SparseMatrixSparseMatmul', cudaMemcpy failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(h_x1_batch_num.data(), x1_batch_pointers, sizeof(int) * batch_ele, cudaMemcpyDeviceToHost, stream),
-    "cudaMemcpy failed.");
+    "For 'SparseMatrixSparseMatmul', cudaMemcpy failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(h_x2_batch_num.data(), x2_batch_pointers, sizeof(int) * batch_ele, cudaMemcpyDeviceToHost, stream),
-    "cudaMemcpy failed.");
+    "For 'SparseMatrixSparseMatmul', cudaMemcpy failed.");
+  if (cudaStreamQuery(stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream),
+                                       "For 'SparseMatrixSparseMatmul', cuda Stream Sync Failed.");
+  }
   int idx = 0;
   int batch = 1;
   int c_rank = 3;

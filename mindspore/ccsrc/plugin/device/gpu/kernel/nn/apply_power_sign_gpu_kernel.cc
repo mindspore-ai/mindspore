@@ -111,17 +111,21 @@ bool ApplyPowerSignGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(&learning_rate_0, learning_rate, s_elements_ * s_size_, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
-    "cudaMemcpy learning_rate failed");
+    "For 'ApplyPowerSign', cudaMemcpy learning_rate failed");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(&logbase_0, logbase, s_elements_ * s_size_, cudaMemcpyDeviceToHost,
                                                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
-                                    "cudaMemcpy logbase failed");
+                                    "For 'ApplyPowerSign', cudaMemcpy logbase failed");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(&sign_decay_0, sign_decay, s_elements_ * s_size_, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
-    "cudaMemcpy sign_decay failed");
+    "For 'ApplyPowerSign', cudaMemcpy sign_decay failed");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(&beta_0, beta, s_elements_ * s_size_, cudaMemcpyDeviceToHost,
                                                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
-                                    "cudaMemcpy beta failed");
+                                    "For 'ApplyPowerSign', cudaMemcpy beta failed");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                       "For 'ApplyPowerSign', cudaStreamSyncFailed");
+  }
   auto status = ApplyPowerSign(t_elements_, variable, accumulation, learning_rate_0, logbase_0, sign_decay_0, beta_0,
                                gradient, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);

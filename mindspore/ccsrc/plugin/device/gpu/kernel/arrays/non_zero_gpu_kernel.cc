@@ -96,6 +96,9 @@ bool NonZeroGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&real_output_size_, output_size_ptr, sizeof(size_t), cudaMemcpyDeviceToHost, cuda_stream_),
     "NonZero cudaMemcpyAsync failed.");
+  if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "For 'NonZero', cuda Stream Sync Failed.");
+  }
   return true;
 }
 

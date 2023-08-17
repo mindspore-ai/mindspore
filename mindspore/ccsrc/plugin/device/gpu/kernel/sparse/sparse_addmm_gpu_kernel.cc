@@ -123,6 +123,9 @@ bool SparseAddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(&shape, input_shape, sizeof(S) * kNumTwo, cudaMemcpyDeviceToHost, stream),
     "For SparseAddmmGpuKernelMod cudaMemcpyAsync x1_shape Fail");
+  if (cudaStreamQuery(stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "For 'SparseAddmm', cuda Stream Sync Failed.");
+  }
   mat1_row_ = shape[0];
   mat1_col_ = shape[1];
   if (mat1_row_ < 1 || mat1_col_ < 1) {

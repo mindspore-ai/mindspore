@@ -156,8 +156,14 @@ bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   T *log_probability = GetDeviceAddress<T>(outputs, kIndex3);
 
   std::vector<int> seq_host(sequence_shape_[0]);
-  cudaMemcpyAsync(seq_host.data(), sequence_length, sequence_shape_[0] * sizeof(int32_t), cudaMemcpyDeviceToHost,
-                  reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+    cudaMemcpyAsync(seq_host.data(), sequence_length, sequence_shape_[0] * sizeof(int32_t), cudaMemcpyDeviceToHost,
+                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
+    "For 'CTCGreedyDecoder', cudaMemcpy beta failed");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                       "For 'CTCGreedyDecoder', cudaStreamSyncFailed");
+  }
   for (int b = 0; b < sequence_shape_[0]; b++) {
     if (seq_host[b] > static_cast<int>(max_time_)) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', sequence_length[" << b << "] " << seq_host[b]

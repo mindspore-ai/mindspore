@@ -149,6 +149,10 @@ bool MatrixBandPartGpuKernelMod::LaunchKernelNotBroadcast(const T *x_ptr, const 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&upper, upper_ptr, sizeof(LU), cudaMemcpyDeviceToHost,
                                                      reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                      "For 'MatrixBandPart', copying input upper to host failed.");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For 'MatrixBandPart', cuda Stream Sync Failed.");
+  }
 
   lower_ = static_cast<int64_t>(lower);
   upper_ = static_cast<int64_t>(upper);

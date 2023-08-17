@@ -39,7 +39,7 @@ class CumProdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
     if (is_null_input_) {
       return true;
     }
-    cuda_stream_ = stream_ptr;
+    cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -69,8 +69,8 @@ class CumProdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
   size_t dims_[kMaxDimsSize] = {};
   std::vector<size_t> shape_{};
   bool is_dynamic_shape_{false};
-  void *cuda_stream_{nullptr};
   int input_dim_length_{0};
+  cudaStream_t cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

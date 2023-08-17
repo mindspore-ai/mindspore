@@ -44,9 +44,12 @@ bool CumProdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     return false;
   }
   int64_t axis_tmp;
-  cudaStreamSynchronize((cudaStream_t)cuda_stream_);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&axis_tmp, axis_addr, inputs[kIndex1]->size, cudaMemcpyDeviceToHost),
-                                     "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&axis_tmp, axis_addr, inputs[kIndex1]->size, cudaMemcpyDeviceToHost, cuda_stream_),
+    "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
+  if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
+  }
   axis_ = static_cast<int>(axis_tmp);
   if (axis_ >= input_dim_length_) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -56,7 +59,7 @@ bool CumProdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   }
   Reshape();
   auto status = CumProd(input_addr, output_addr, ws_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], stride_,
-                        stride2_, exclusive_, reverse_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+                        stride2_, exclusive_, reverse_, cuda_stream_);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }

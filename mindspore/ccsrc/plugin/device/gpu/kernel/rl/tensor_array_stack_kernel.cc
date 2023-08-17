@@ -96,14 +96,20 @@ bool TensorArrayStackKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
   MS_ERROR_IF_NULL(out_value);
   MS_ERROR_IF_NULL(handle_addr);
 
+  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
+  MS_ERROR_IF_NULL(cuda_stream);
+
   // Set out_value to zeros when TensorArray in static size.
   if (!is_dynamic_) {
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemsetAsync(out_value, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Cudamemset output value failed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemsetAsync(out_value, 0, outputs[0]->size, cuda_stream),
+                               "For 'TensorArrayStack', Cudamemset output value failed");
   }
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemcpy(&handle_, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost),
-                             "Get handle to host failed");
+  CHECK_CUDA_RET_WITH_EXCEPT(
+    kernel_node_, cudaMemcpyAsync(&handle_, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+    "For 'TensorArrayStack', get handle to host failed");
+  if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "cuda Stream Sync Failed");
+  }
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);
   MS_ERROR_IF_NULL(tensors_);
   if (tensors_->GetValidSize() > tensors_->GetRealSize()) {
@@ -112,8 +118,8 @@ bool TensorArrayStackKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
   for (size_t i = 0; i < tensors_->GetValidSize(); i++) {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(out_value + ele_size_ * i, tensors_->GetTensorAddr(i), ele_size_,
-                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Stack value failed");
+                                               cudaMemcpyDeviceToDevice, cuda_stream),
+                               "For 'TensorArrayStack', stack value failed");
   }
   return true;
 }
