@@ -60,7 +60,7 @@ class DenseInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    constexpr auto kInputNum = 3;
+    constexpr auto kInputNum = 2;
     const std::string op_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
                                              op_name);
@@ -85,18 +85,20 @@ class DenseInfer : public abstract::OpInferBase {
       MS_EXCEPTION(ValueError) << "The size of x should be larger than 1.";
     }
 
-    ValuePtr has_bias_ptr = primitive->GetAttr("has_bias");
-    bool has_bias = GetValue<bool>(has_bias_ptr);
-    if (has_bias) {
-      auto b = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kDenseIndex2);
-      MS_EXCEPTION_IF_NULL(b);
-      MS_EXCEPTION_IF_NULL(b->shape());
-      auto b_shp = b->shape()->shape();
-      const size_t B_SHAPE_SIZE = 1;
-      if (b_shp.size() != B_SHAPE_SIZE) {
-        MS_EXCEPTION(ValueError) << "The size of b should be equal to 1.";
+    bool has_bias = false;
+    if (input_args.size() == 3) {
+      auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
+      has_bias = b != nullptr;
+      if (has_bias) {
+        MS_EXCEPTION_IF_NULL(b->shape());
+        auto b_shp = b->shape()->shape();
+        const size_t B_SHAPE_SIZE = 1;
+        if (b_shp.size() != B_SHAPE_SIZE) {
+          MS_EXCEPTION(ValueError) << "The size of b should be equal to 1.";
+        }
       }
     }
+    (void)primitive->SetAttrs({{"has_bias", MakeValue(has_bias)}});
 
     auto x_col = x_shp[x_shp.size() - 1];
     auto w_row = w_shp[1];
@@ -120,13 +122,16 @@ class DenseInfer : public abstract::OpInferBase {
     (void)types.emplace("w", input_args[kDenseIndex1]->BuildType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
 
-    ValuePtr has_bias_ptr = primitive->GetAttr("has_bias");
-    bool has_bias = GetValue<bool>(has_bias_ptr);
-    if (has_bias) {
-      auto b = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kDenseIndex2);
-      (void)types.emplace("b", b->BuildType());
-      (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+    bool has_bias = false;
+    if (input_args.size() == 3) {
+      auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
+      has_bias = b != nullptr;
+      if (has_bias) {
+        (void)types.emplace("b", input_args[kDenseIndex2]->BuildType());
+        (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+      }
     }
+    (void)primitive->SetAttrs({{"has_bias", MakeValue(has_bias)}});
     return input_args[kDenseIndex0]->BuildType();
   }
 };

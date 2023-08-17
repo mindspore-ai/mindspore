@@ -25,6 +25,8 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/backend/kernel_info.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/backend/anf_runtime_algorithm.h"
+
 namespace mindspore {
 namespace expander {
 class InferHostAndDevice : public CppInfer {
@@ -61,6 +63,16 @@ class InferHostAndDevice : public CppInfer {
     } else {
       // virtual cnode or Value node
       node->set_kernel_info(std::make_shared<device::KernelInfo>());
+      auto vnode = node->cast<ValueNodePtr>();
+      if (vnode != nullptr) {
+        auto tensor = vnode->value()->cast<tensor::TensorPtr>();
+        if (tensor != nullptr) {
+          kernel::KernelBuildInfo::KernelBuildInfoBuilder info_builder;
+          info_builder.SetOutputsFormat({kOpFormat_DEFAULT});
+          info_builder.SetOutputsDeviceType({tensor->Dtype()->type_id()});
+          AnfAlgo::SetSelectKernelBuildInfo(info_builder.Build(), node.get());
+        }
+      }
     }
   }
 
