@@ -36,8 +36,8 @@ int ArithmeticGradCPUKernelFp16::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[kX1Idx]);
   CHECK_NULL_RETURN(in_tensors_[kX2Idx]);
   CHECK_NULL_RETURN(in_tensors_[kDyIdx]);
-  CHECK_NULL_RETURN(out_tensors_[0]);
-  CHECK_NULL_RETURN(out_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[C0NUM]);
+  CHECK_NULL_RETURN(out_tensors_[C1NUM]);
   CHECK_NULL_RETURN(arithmeticParameter_);
   return RET_OK;
 }

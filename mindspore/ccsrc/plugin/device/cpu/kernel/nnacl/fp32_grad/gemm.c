@@ -80,9 +80,9 @@ void RowMajor2Row8MajorStride(const float *src_ptr, float *dst_ptr, int row, int
   for (int r = 0; r < row; r++) {
     const float *src = src_ptr + r * lead;
     for (int c = 0; c < col; c++) {
-      int cd8 = c / 8;
-      int cm8 = c % 8;
-      dst_ptr[cd8 * 8 * row + r * 8 + cm8] = src[c];
+      int cd8 = c / C8NUM;
+      int cm8 = c % C8NUM;
+      dst_ptr[cd8 * C8NUM * row + r * C8NUM + cm8] = src[c];
     }
   }
   return;

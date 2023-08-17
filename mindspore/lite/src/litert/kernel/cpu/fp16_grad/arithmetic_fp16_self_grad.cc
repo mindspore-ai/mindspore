@@ -27,24 +27,24 @@ using mindspore::schema::PrimitiveType_LogGrad;
 
 namespace mindspore::kernel {
 int ArithmeticSelfGradFp16CPUKernel::Prepare() {
-  if (in_tensors_.size() != 2) {
+  if (in_tensors_.size() != C2NUM) {
     MS_LOG(ERROR) << "ActivationGrad should have 2 input tensors";
     return RET_ERROR;
   }
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
+  CHECK_NULL_RETURN(in_tensors_.at(C0NUM));
+  CHECK_NULL_RETURN(in_tensors_.at(C1NUM));
+  CHECK_NULL_RETURN(out_tensors_.at(C0NUM));
   return RET_OK;
 }
 
 int ArithmeticSelfGradFp16CPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticSelfGradFp16CPUKernel::DoActivation(int task_id) {
-  auto yt_addr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->MutableData());
-  auto input_addr = reinterpret_cast<float16_t *>(in_tensors_.at(1)->MutableData());
-  auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
-  int length = in_tensors_.at(0)->ElementsNum();
+  auto yt_addr = reinterpret_cast<float16_t *>(in_tensors_.at(C0NUM)->MutableData());
+  auto input_addr = reinterpret_cast<float16_t *>(in_tensors_.at(C1NUM)->MutableData());
+  auto output_addr = reinterpret_cast<float16_t *>(out_tensors_.at(C0NUM)->MutableData());
+  int length = in_tensors_.at(C0NUM)->ElementsNum();
   CHECK_NULL_RETURN(yt_addr);
   CHECK_NULL_RETURN(input_addr);
   CHECK_NULL_RETURN(output_addr);

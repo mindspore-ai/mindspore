@@ -53,7 +53,7 @@ void MaximumByAxes(const float *input0, const float *input1, const float *dy, co
   }
 
   if (same_shape) {
-    int input_iter[8] = {0};
+    int input_iter[C8NUM] = {0};
 
     // Iterate through input_data.
     do {
@@ -65,16 +65,16 @@ void MaximumByAxes(const float *input0, const float *input1, const float *dy, co
     memset(output0, 0, num_output0 * sizeof(float));  // zero output
     memset(output1, 0, num_output1 * sizeof(float));  // zero output
 
-    int input_iter[8] = {0};
-    int axes0[5] = {0};
-    int axes1[5] = {0};
+    int input_iter[C8NUM] = {0};
+    int axes0[C5NUM] = {0};
+    int axes1[C5NUM] = {0};
     int num_axes0 = 0;
     int num_axes1 = 0;
     for (int i = 0; i < num_dims; i++) {
-      if (input0_dims[i] == 1 && num_axes0 < 5) {
+      if (input0_dims[i] == 1 && num_axes0 < C5NUM) {
         axes0[num_axes0++] = i;
       }
-      if (input1_dims[i] == 1 && num_axes1 < 5) {
+      if (input1_dims[i] == 1 && num_axes1 < C5NUM) {
         axes1[num_axes1++] = i;
       }
     }
@@ -103,7 +103,7 @@ void MinimumByAxes(const float *input0, const float *input1, const float *dy, co
   }
 
   if (same_shape) {
-    int input_iter[8] = {0};
+    int input_iter[C8NUM] = {0};
 
     // Iterate through input_data.
     do {
@@ -115,16 +115,16 @@ void MinimumByAxes(const float *input0, const float *input1, const float *dy, co
     memset(output0, 0, num_output0 * sizeof(float));  // zero output
     memset(output1, 0, num_output1 * sizeof(float));  // zero output
 
-    int input_iter[8] = {0};
-    int axes0[5] = {0};
-    int axes1[5] = {0};
+    int input_iter[C8NUM] = {0};
+    int axes0[C5NUM] = {0};
+    int axes1[C5NUM] = {0};
     int num_axes0 = 0;
     int num_axes1 = 0;
     for (int i = 0; i < num_dims; i++) {
-      if (input0_dims[i] == 1 && num_axes0 < 5) {
+      if (input0_dims[i] == 1 && num_axes0 < C5NUM) {
         axes0[num_axes0++] = i;
       }
-      if (input1_dims[i] == 1 && num_axes1 < 5) {
+      if (input1_dims[i] == 1 && num_axes1 < C5NUM) {
         axes1[num_axes1++] = i;
       }
     }

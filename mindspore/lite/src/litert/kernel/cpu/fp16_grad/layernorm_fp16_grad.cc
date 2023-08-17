@@ -45,9 +45,9 @@ int LayerNormGradCPUKernelFp16::ReSize() { return RET_OK; }
 int LayerNormGradCPUKernelFp16::Prepare() {
   auto lngrad_param = reinterpret_cast<LayerNormGradParameter *>(op_parameter_);
   CHECK_NULL_RETURN(lngrad_param);
-  CHECK_LESS_RETURN(in_tensors_.size(), 5);
-  CHECK_LESS_RETURN(out_tensors_.size(), 3);
-  auto *input_x = in_tensors_.at(0);
+  CHECK_LESS_RETURN(in_tensors_.size(), C5NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C3NUM);
+  auto *input_x = in_tensors_.at(FIRST_INPUT);
   CHECK_NULL_RETURN(input_x);
   CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_1));
   CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_2));

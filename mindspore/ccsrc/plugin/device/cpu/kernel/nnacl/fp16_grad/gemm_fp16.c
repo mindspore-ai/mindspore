@@ -226,9 +226,9 @@ static void RowMajor2Col16MajorStrideFp16(const float16_t *src, float16_t *dst, 
 void RowMajor2Row16MajorStrideFp16(const float16_t *src, float16_t *dst, int row, int col, int stride) {
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
-      int c_div16 = c / 16;
-      int c_mod16 = c % 16;
-      dst[c_div16 * 16 * row + r * 16 + c_mod16] = src[r * stride + c];
+      int c_div16 = c / C16NUM;
+      int c_mod16 = c % C16NUM;
+      dst[c_div16 * C16NUM * row + r * C16NUM + c_mod16] = src[r * stride + c];
     }
   }
 }
@@ -284,9 +284,9 @@ void RowMajor2Col12MajorStrideFp16(const float16_t *src, float16_t *dst, size_t 
 void RowMajor2Row12MajorStrideFp16(const float16_t *src, float16_t *dst, int row, int col, int stride) {
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
-      int c_div12 = c / 12;
-      int c_mod12 = c % 12;
-      dst[c_div12 * 12 * row + r * 12 + c_mod12] = src[r * stride + c];
+      int c_div12 = c / C12NUM;
+      int c_mod12 = c % C12NUM;
+      dst[c_div12 * C12NUM * row + r * C12NUM + c_mod12] = src[r * stride + c];
     }
   }
 }
@@ -294,9 +294,9 @@ void RowMajor2Row12MajorStrideFp16(const float16_t *src, float16_t *dst, int row
 static void RowMajor2Col8MajorStrideFp16(const float16_t *src, float16_t *dst, int row, int col, int stride) {
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
-      int r_div8 = r / 8;
-      int r_mod8 = r % 8;
-      dst[r_div8 * 8 * col + c * 8 + r_mod8] = src[r * stride + c];
+      int r_div8 = r / C8NUM;
+      int r_mod8 = r % C8NUM;
+      dst[r_div8 * C8NUM * col + c * C8NUM + r_mod8] = src[r * stride + c];
     }
   }
 }

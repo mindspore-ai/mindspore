@@ -38,20 +38,20 @@ int PoolingGradCPUKernelFp16::ReSize() {
   CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
   CHECK_NULL_RETURN(pool_param);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
+  CHECK_NULL_RETURN(in_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(SECOND_INPUT));
   CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_2));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_NULL_RETURN(out_tensors_.at(FIRST_INPUT));
 
-  auto in_shape = in_tensors_.at(0)->shape();
-  auto out_shape = in_tensors_.at(1)->shape();
+  auto in_shape = in_tensors_.at(FIRST_INPUT)->shape();
+  auto out_shape = in_tensors_.at(SECOND_INPUT)->shape();
   MS_CHECK_TRUE_RET(in_shape.size() == COMM_SHAPE_SIZE, RET_ERROR);
   MS_CHECK_TRUE_RET(out_shape.size() == COMM_SHAPE_SIZE, RET_ERROR);
 
   if (pool_param->pool_mode_ == PoolMode_AvgPool) {
     out_shape = in_tensors_.at(kNumInputDim_2)->shape();
   }
-  int input_h = in_shape.at(1);
+  int input_h = in_shape.at(SECOND_INPUT);
   int input_w = in_shape.at(kNumShapeDim_2);
   MS_CHECK_TRUE_RET(input_h > 0, RET_ERROR);
   MS_CHECK_TRUE_RET(input_w > 0, RET_ERROR);
@@ -92,6 +92,7 @@ int PoolingGradCPUKernelFp16::DoExecute(int task_id) {
               0.f);
     if (pool_param->pool_mode_ == PoolMode_MaxPool) {
       auto dy_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInputDim_2)->data());
+      CHECK_NULL_RETURN(dy_ptr);
       MaxPoolingFp16Grad(input_ptr + task_id * stride * in_batch_size, dy_ptr + task_id * stride * out_batch_size,
                          output_ptr + task_id * stride * in_batch_size, count, pool_param, &compute_);
     } else {

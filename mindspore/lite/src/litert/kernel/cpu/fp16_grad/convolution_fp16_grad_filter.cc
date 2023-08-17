@@ -35,10 +35,10 @@ int ConvolutionGradFilterCPUKernelFp16::ReSize() {
   // x is in input 1
   // dw is output 0
   CHECK_LESS_RETURN(in_tensors_.size(), THIRD_INPUT);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto *x_tensor = in_tensors_.at(1);
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
+  auto *x_tensor = in_tensors_.at(SECOND_INPUT);
   CHECK_NULL_RETURN(x_tensor);
-  auto *dy_tensor = in_tensors_.at(0);
+  auto *dy_tensor = in_tensors_.at(FIRST_INPUT);
   CHECK_NULL_RETURN(dy_tensor);
   CHECK_NULL_RETURN(op_parameter_);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
@@ -82,13 +82,18 @@ int ConvolutionGradFilterCPUKernelFp16::Prepare() { return ReSize(); }
 int ConvolutionGradFilterCPUKernelFp16::DoExecute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   CHECK_NULL_RETURN(conv_param);
-  auto *input_dy = in_tensors_.at(0);
-  auto *input_x = in_tensors_.at(1);
-  auto *out_dw = out_tensors_.at(0);
+  auto *input_dy = in_tensors_.at(FIRST_INPUT);
+  CHECK_NULL_RETURN(input_dy);
+  auto *input_x = in_tensors_.at(SECOND_INPUT);
+  CHECK_NULL_RETURN(input_x);
+  auto *out_dw = out_tensors_.at(FIRST_INPUT);
   CHECK_NULL_RETURN(out_dw);
   auto x_addr = reinterpret_cast<float16_t *>(input_x->data());
+  CHECK_NULL_RETURN(x_addr);
   auto dy_addr = reinterpret_cast<float16_t *>(input_dy->data());
+  CHECK_NULL_RETURN(dy_addr);
   auto dw_addr = reinterpret_cast<float16_t *>(out_dw->data());
+  CHECK_NULL_RETURN(dw_addr);
 
   int nweights = out_dw->ElementsNum();
   int in_ch = conv_param->input_channel_;

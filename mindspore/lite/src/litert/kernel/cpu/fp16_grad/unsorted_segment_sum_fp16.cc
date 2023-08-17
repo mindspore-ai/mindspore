@@ -30,17 +30,17 @@ using mindspore::schema::PrimitiveType_UnsortedSegmentSum;
 
 namespace mindspore::kernel {
 int UnsortedSegmentSumCPUKernelFp16::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
+  CHECK_NULL_RETURN(in_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(SECOND_INPUT));
+  CHECK_NULL_RETURN(out_tensors_.at(FIRST_INPUT));
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  auto input_shape = in_tensors_.at(0)->shape();
-  auto segment_ids_shape = in_tensors_.at(1)->shape();
-  auto output_shape = out_tensors_.at(0)->shape();
+  auto input_shape = in_tensors_.at(FIRST_INPUT)->shape();
+  auto segment_ids_shape = in_tensors_.at(SECOND_INPUT)->shape();
+  auto output_shape = out_tensors_.at(FIRST_INPUT)->shape();
   unit_num_ = 1;
   input_dim1_ = 1;
   for (size_t i = 0; i < input_shape.size(); ++i) {
@@ -49,7 +49,7 @@ int UnsortedSegmentSumCPUKernelFp16::Prepare() {
       input_dim1_ *= input_shape[i];
     }
   }
-  output_dim0_ = output_shape[0];
+  output_dim0_ = output_shape[FIRST_INPUT];
   output_dim1_ = 1;
   for (size_t j = 1; j < output_shape.size(); j++) {
     output_dim1_ *= output_shape[j];

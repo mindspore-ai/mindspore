@@ -44,20 +44,23 @@ int DoStridedSliceFp16Grad(const float16_t *inputs, float16_t *output, const int
   }
 
   for (size_t pos = 0; pos < size; pos++) {
-    size_t i = CalcIndex(param->in_shape_, 6, 0, pos);
-    size_t j = CalcIndex(param->in_shape_, 5, 1, pos);
-    size_t k = CalcIndex(param->in_shape_, 4, 2, pos);
-    size_t l = CalcIndex(param->in_shape_, 3, 3, pos);
-    size_t m = CalcIndex(param->in_shape_, 2, 4, pos);
-    size_t n = CalcIndex(param->in_shape_, 1, 5, pos);
-    size_t o = CalcIndex(param->in_shape_, 0, 6, pos);
+    size_t i = CalcIndex(param->in_shape_, C6NUM, C0NUM, pos);
+    size_t j = CalcIndex(param->in_shape_, C5NUM, C1NUM, pos);
+    size_t k = CalcIndex(param->in_shape_, C4NUM, C2NUM, pos);
+    size_t l = CalcIndex(param->in_shape_, C3NUM, C3NUM, pos);
+    size_t m = CalcIndex(param->in_shape_, C2NUM, C4NUM, pos);
+    size_t n = CalcIndex(param->in_shape_, C1NUM, C5NUM, pos);
+    size_t o = CalcIndex(param->in_shape_, C0NUM, C6NUM, pos);
 
     size_t input_idx =
-      (i * s[0] + b[0]) * dx_shape[1] * dx_shape[2] * dx_shape[3] * dx_shape[4] * dx_shape[5] * dx_shape[6] +
-      (j * s[1] + b[1]) * dx_shape[2] * dx_shape[3] * dx_shape[4] * dx_shape[5] * dx_shape[6] +
-      (k * s[2] + b[2]) * dx_shape[3] * dx_shape[4] * dx_shape[5] * dx_shape[6] +
-      (l * s[3] + b[3]) * dx_shape[4] * dx_shape[5] * dx_shape[6] + (m * s[4] + b[4]) * dx_shape[5] * dx_shape[6] +
-      (n * s[5] + b[5]) * dx_shape[6] + (o * s[6] + b[6]);
+      (i * s[C0NUM] + b[C0NUM]) * dx_shape[C1NUM] * dx_shape[C2NUM] * dx_shape[C3NUM] * dx_shape[C4NUM] *
+        dx_shape[C5NUM] * dx_shape[C6NUM] +
+      (j * s[C1NUM] + b[C1NUM]) * dx_shape[C2NUM] * dx_shape[C3NUM] * dx_shape[C4NUM] * dx_shape[C5NUM] *
+        dx_shape[C6NUM] +
+      (k * s[C2NUM] + b[C2NUM]) * dx_shape[C3NUM] * dx_shape[C4NUM] * dx_shape[C5NUM] * dx_shape[C6NUM] +
+      (l * s[C3NUM] + b[C3NUM]) * dx_shape[C4NUM] * dx_shape[C5NUM] * dx_shape[C6NUM] +
+      (m * s[C4NUM] + b[C4NUM]) * dx_shape[C5NUM] * dx_shape[C6NUM] + (n * s[C5NUM] + b[C5NUM]) * dx_shape[C6NUM] +
+      (o * s[C6NUM] + b[C6NUM]);
     output[input_idx] = inputs[pos];
   }
   return NNACL_OK;

@@ -36,17 +36,17 @@ int LayerNormGradCPUKernel::ReSize() { return RET_OK; }
 int LayerNormGradCPUKernel::Prepare() {
   auto lngrad_param = reinterpret_cast<LayerNormGradParameter *>(op_parameter_);
   CHECK_NULL_RETURN(lngrad_param);
-  CHECK_LESS_RETURN(in_tensors_.size(), 5);
-  CHECK_LESS_RETURN(out_tensors_.size(), 3);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(in_tensors_.at(2));
-  CHECK_NULL_RETURN(in_tensors_.at(3));
-  CHECK_NULL_RETURN(in_tensors_.at(4));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
-  CHECK_NULL_RETURN(out_tensors_.at(1));
-  CHECK_NULL_RETURN(out_tensors_.at(2));
-  auto *input_x = in_tensors_.at(0);
+  CHECK_LESS_RETURN(in_tensors_.size(), C5NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C3NUM);
+  CHECK_NULL_RETURN(in_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(SECOND_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(THIRD_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(FOURTH_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(FIFTH_INPUT));
+  CHECK_NULL_RETURN(out_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(out_tensors_.at(SECOND_INPUT));
+  CHECK_NULL_RETURN(out_tensors_.at(THIRD_INPUT));
+  auto *input_x = in_tensors_.at(FIRST_INPUT);
   std::vector<int> x_shape = input_x->shape();
   int begin_norm_axis = lngrad_param->begin_norm_axis_;
   if (begin_norm_axis < 0) {

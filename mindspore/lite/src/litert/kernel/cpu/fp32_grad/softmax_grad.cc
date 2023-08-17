@@ -59,9 +59,13 @@ int SoftmaxGradCPUKernel::ReSize() { return RET_OK; }
 
 int SoftmaxGradCPUKernel::DoExecute(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
-  auto yt_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  CHECK_NULL_RETURN(input_ptr);
+  auto yt_ptr = reinterpret_cast<float *>(in_tensors_.at(SECOND_INPUT)->MutableData());
+  CHECK_NULL_RETURN(yt_ptr);
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  CHECK_NULL_RETURN(output_ptr);
   float *sum_data_ = static_cast<float *>(workspace());
+  CHECK_NULL_RETURN(sum_data_);
   float *sum_mul_ = sum_data_ + inner_size_;
 
   SoftmaxGrad(input_ptr, yt_ptr, output_ptr, sum_data_, sum_mul_, input_shape_, n_dim_, element_size_,

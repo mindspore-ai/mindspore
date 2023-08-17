@@ -77,13 +77,19 @@ int ConvolutionGradInputCPUKernelFp16::Prepare() { return ReSize(); }
 
 int ConvolutionGradInputCPUKernelFp16::DoExecute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
-  auto *input_dy = in_tensors_.at(0);
-  auto *input_w = in_tensors_.at(1);
-  auto *out_dx = out_tensors_.at(0);
+  auto *input_dy = in_tensors_.at(FIRST_INPUT);
+  CHECK_NULL_RETURN(input_dy);
+  auto *input_w = in_tensors_.at(SECOND_INPUT);
+  CHECK_NULL_RETURN(input_w);
+  auto *out_dx = out_tensors_.at(FIRST_INPUT);
+  CHECK_NULL_RETURN(out_dx);
 
   auto dy_addr = reinterpret_cast<float16_t *>(input_dy->data());
+  CHECK_NULL_RETURN(dy_addr);
   auto w_addr = reinterpret_cast<float16_t *>(input_w->data());
+  CHECK_NULL_RETURN(w_addr);
   auto dx_addr = reinterpret_cast<float16_t *>(out_dx->data());
+  CHECK_NULL_RETURN(dx_addr);
 
   int i;
   int j;
@@ -103,6 +109,7 @@ int ConvolutionGradInputCPUKernelFp16::DoExecute(int task_id) {
   int n = k_w * k_h * in_ch / groups;
   int k = out_ch / groups;
   float16_t *workspace_temp = reinterpret_cast<float16_t *>(workspace()) + task_id * (mat_alloc_ + ws_size_);
+  CHECK_NULL_RETURN(workspace_temp);
   float16_t *mat_workspace = workspace_temp + ws_size_;
   int stride = UP_DIV(batch, thread_num);
   int count = MSMIN(stride, batch - stride * task_id);
@@ -155,7 +162,7 @@ int ConvolutionGradInputCPUKernelFp16::DoExecute(int task_id) {
 }
 
 int ConvolutionGradInputFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  MS_ASSERT(cdata != nullptr);
+  CHECK_NULL_RETURN(cdata);
   auto convinput_kernel = reinterpret_cast<ConvolutionGradInputCPUKernelFp16 *>(cdata);
   auto error_code = convinput_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {

@@ -36,19 +36,19 @@ int NegGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }  // namespace
 
 int NegGradCPUKernelFp16::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_LESS_RETURN(in_tensors_.size(), C1NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
+  CHECK_NULL_RETURN(in_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(out_tensors_.at(FIRST_INPUT));
   return RET_OK;
 }
 
 int NegGradCPUKernelFp16::DoNegGrad(int task_id) {
-  auto dy = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
-  auto dx = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
+  auto dy = reinterpret_cast<float16_t *>(in_tensors_.at(FIRST_INPUT)->data());
+  auto dx = reinterpret_cast<float16_t *>(out_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(dy);
   CHECK_NULL_RETURN(dx);
-  int length = in_tensors_.at(0)->ElementsNum();
+  int length = in_tensors_.at(FIRST_INPUT)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);

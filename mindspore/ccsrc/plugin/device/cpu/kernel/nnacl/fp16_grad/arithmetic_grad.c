@@ -19,6 +19,7 @@
 #include <math.h>
 #include "nnacl/fp32_grad/utils.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
 
 void ElementDivNegSquareFp16(const float16_t *nom, const float16_t *denom, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
@@ -55,7 +56,7 @@ void MaximumByAxesFp16(const float16_t *input0, const float16_t *input1, const f
   }
 
   if (same_shape) {
-    int input_iter[8] = {0};
+    int input_iter[C8NUM] = {0};
 
     // Iterate through input_data.
     do {
@@ -67,9 +68,9 @@ void MaximumByAxesFp16(const float16_t *input0, const float16_t *input1, const f
     memset(output0, 0, num_output0 * sizeof(float16_t));  // zero output
     memset(output1, 0, num_output1 * sizeof(float16_t));  // zero output
 
-    int input_iter[8] = {0};
-    int axes0[5] = {0};
-    int axes1[5] = {0};
+    int input_iter[C8NUM] = {0};
+    int axes0[C5NUM] = {0};
+    int axes1[C5NUM] = {0};
     int num_axes0 = 0;
     int num_axes1 = 0;
     for (int i = 0; i < num_dims; i++) {
@@ -106,7 +107,7 @@ void MinimumByAxesFp16(const float16_t *input0, const float16_t *input1, const f
   }
 
   if (same_shape) {
-    int input_iter[8] = {0};
+    int input_iter[C8NUM] = {0};
 
     // Iterate through input_data.
     do {
@@ -118,9 +119,9 @@ void MinimumByAxesFp16(const float16_t *input0, const float16_t *input1, const f
     memset(output0, 0, num_output0 * sizeof(float16_t));  // zero output
     memset(output1, 0, num_output1 * sizeof(float16_t));  // zero output
 
-    int input_iter[8] = {0};
-    int axes0[5] = {0};
-    int axes1[5] = {0};
+    int input_iter[C8NUM] = {0};
+    int axes0[C5NUM] = {0};
+    int axes1[C5NUM] = {0};
     int num_axes0 = 0;
     int num_axes1 = 0;
     for (int i = 0; i < num_dims; i++) {

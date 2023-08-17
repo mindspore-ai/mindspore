@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32_grad/convolution_grad_input.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
@@ -35,17 +36,17 @@ int ConvDwInputGrad(const float *dy, const float *w, float *dx, int start, int c
   int j = start;
   for (; j <= (end - C4NUM); j += C4NUM) {
     float *c = dx + j;
-    const float *mat_b_0 = w + (j + 0) * k_spatial;
-    const float *mat_b_1 = w + (j + 1) * k_spatial;
-    const float *mat_b_2 = w + (j + 2) * k_spatial;
-    const float *mat_b_3 = w + (j + 3) * k_spatial;
+    const float *mat_b_0 = w + (j + C0NUM) * k_spatial;
+    const float *mat_b_1 = w + (j + C1NUM) * k_spatial;
+    const float *mat_b_2 = w + (j + C2NUM) * k_spatial;
+    const float *mat_b_3 = w + (j + C3NUM) * k_spatial;
 
     for (int si = 0; si < out_spatial; si++) {
       const float *a = dy + j + si * out_ch;
 #ifdef ENABLE_ARM
       float32x4_t mat_a = vld1q_f32(a);
 #else
-      float mat_a[4] = {a[0], a[1], a[2], a[3]};
+      float mat_a[C4NUM] = {a[C0NUM], a[C1NUM], a[C2NUM], a[C3NUM]};
 #endif
       int output_row = (si) / out_w;
       int output_col = (si) % out_w;
@@ -64,10 +65,10 @@ int ConvDwInputGrad(const float *dy, const float *w, float *dx, int start, int c
           mat_c = vmlaq_f32(mat_c, mat_b, mat_a);
           vst1q_f32(c + offset, mat_c);
 #else
-          c[offset + 0] += mat_a[0] * mat_b_0[k];
-          c[offset + 1] += mat_a[1] * mat_b_1[k];
-          c[offset + 2] += mat_a[2] * mat_b_2[k];
-          c[offset + 3] += mat_a[3] * mat_b_3[k];
+          c[offset + C0NUM] += mat_a[C0NUM] * mat_b_0[k];
+          c[offset + C1NUM] += mat_a[C1NUM] * mat_b_1[k];
+          c[offset + C2NUM] += mat_a[C2NUM] * mat_b_2[k];
+          c[offset + C3NUM] += mat_a[C3NUM] * mat_b_3[k];
 #endif
         }
       }
