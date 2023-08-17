@@ -1177,7 +1177,7 @@ def binary_cross_entropy_with_logits(logits, label, weight=None, pos_weight=None
 
     This operator will multiply the output by the corresponding weight.
     The tensor :math:`weight` assigns different weights to each piece of data in the batch,
-    and the tensor :math:`pos_weight` adds corresponding weights to the positive examples of each category.
+    and the tensor :math:`pos\_weight` adds corresponding weights to the positive examples of each category.
 
     In addition, it can trade off recall and precision by adding weights to positive examples.
     In the case of multi-label classification the loss can be described as:
@@ -5197,8 +5197,8 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel_size)`,
-    where :math:`kernel_size` is the width of the kernel.
+    The shape of the convolutional kernel is given by :math:`(kernel\_size)`,
+    where :math:`kernel\_size` is the width of the kernel.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -5346,8 +5346,8 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel_size[0], kernel_size[1])`,
-    where :math:`kernel_size[0]` and :math:`kernel_size[1]` are the height and width of the kernel, respectively.
+    The shape of the convolutional kernel is given by :math:`(kernel\_size[0], kernel\_size[1])`,
+    where :math:`kernel\_size[0]` and :math:`kernel\_size[1]` are the height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -5911,7 +5911,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
     The shape of the convolutional kernel is given by
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`
-    where :math:`kernel_size[0]` , :math:`kernel_size[1]` and :math:`kernel_size[2]` are the depth,
+    where :math:`kernel\_size[0]` , :math:`kernel\_size[1]` and :math:`kernel\_size[2]` are the depth,
     height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]},

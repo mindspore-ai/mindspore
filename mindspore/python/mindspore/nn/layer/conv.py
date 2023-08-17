@@ -169,8 +169,8 @@ class Conv2d(_Conv):
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel_size[0], kernel_size[1])`,
-    where :math:`kernel_size[0]` and :math:`kernel_size[1]` are the height and width of the kernel, respectively.
+    The shape of the convolutional kernel is given by :math:`(kernel\_size[0], kernel\_size[1])`,
+    where :math:`kernel\_size[0]` and :math:`kernel\_size[1]` are the height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -256,17 +256,17 @@ class Conv2d(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[0]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
+                H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[0]}}} \right \rceil \\
+                W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
             \end{array}
 
         pad_mode is ``'valid'``:
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lceil{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                H_{out} = \left \lceil{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
                 {\text{stride[0]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                W_{out} = \left \lceil{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
                 {\text{stride[1]}}} \right \rceil \\
             \end{array}
 
@@ -274,9 +274,9 @@ class Conv2d(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (\text{kernel_size[0]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (\text{kernel_size[0]} - 1) \times
                 \text{dilation[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (\text{kernel_size[1]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (\text{kernel_size[1]} - 1) \times
                 \text{dilation[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -397,8 +397,8 @@ class Conv1d(_Conv):
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel_size)`,
-    where :math:`kernel_size` is the width of the kernel.
+    The shape of the convolutional kernel is given by :math:`(kernel\_size)`,
+    where :math:`kernel\_size` is the width of the kernel.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -621,7 +621,7 @@ class Conv3d(_Conv):
 
     The shape of the convolutional kernel is given by
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`
-    where :math:`kernel_size[0]` , :math:`kernel_size[1]` and :math:`kernel_size[2]` are the depth,
+    where :math:`kernel\_size[0]` , :math:`kernel\_size[1]` and :math:`kernel\_size[2]` are the depth,
     height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]},

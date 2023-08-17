@@ -1043,7 +1043,7 @@ class Unfold(Cell):
 
     Raises:
         TypeError: If `ksizes`, `strides` or `rates` is neither a tuple nor list.
-        ValueError: If shape of `ksizes`, `strides` or `rates` is not :math:`(1, x_row, x_col, 1)`.
+        ValueError: If shape of `ksizes`, `strides` or `rates` is not :math:`(1, x\_row, x\_col, 1)`.
         ValueError: If the second and third element of `ksizes`, `strides` or `rates` is less than 1.
 
     Supported Platforms:

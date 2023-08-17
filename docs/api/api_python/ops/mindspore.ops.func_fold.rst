@@ -21,7 +21,7 @@ mindspore.ops.fold
 
     .. warning::
         - 输入是三维Tensor，其shape为 :math:`(N, C \times \prod(\text{kernel_size}), L)` 。
-        - 输出是四维Tensor，其shape为 :math:`(N, C, output_size[0], output_size[1], ...)` 。
+        - 输出是四维Tensor，其shape为 :math:`(N, C, output\_size[0], output\_size[1], ...)` 。
 
     参数：
         - **input** (Tensor) - 三维Tensor，支持的数据类型: float16、float32、float64、complex64和complex128。

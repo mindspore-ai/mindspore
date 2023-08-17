@@ -180,7 +180,7 @@ class AdjustHue(Primitive):
 
 
 class ExtractGlimpse(Primitive):
-    """
+    r"""
     Extracts glimpses(usually subarea of rectangle) from the input image Tensor and return as windows.
 
     Note:
@@ -209,16 +209,16 @@ class ExtractGlimpse(Primitive):
               ``'zero'`` .
 
     Inputs:
-        - **x** (Tensor) - A 4-D float tensor of shape :math:`(batch_size, height, width, channels)`.
+        - **x** (Tensor) - A 4-D float tensor of shape :math:`(batch\_size, height, width, channels)`.
           Types allowed: float32.
         - **size** (Tensor) - A 1-D tensor of 2 elements containing the size of the glimpses to extract.
           The glimpse height must be specified first, following by the glimpse width. Types allowed: int32.
           The value of size must be greater than zero.
-        - **offsets** (Tensor) - A 2-D integer tensor of shape :math:`(batch_size, 2)` containing the y, x locations
+        - **offsets** (Tensor) - A 2-D integer tensor of shape :math:`(batch\_size, 2)` containing the y, x locations
           of the center of each window. Types allowed: float32.
 
     Outputs:
-        A 4-D tensor of shape :math:`(batch_size, glimpse_height, glimpse_width, channels)` with type: float32.
+        A 4-D tensor of shape :math:`(batch\_size, glimpse\_height, glimpse\_width, channels)` with type: float32.
 
     Raises:
         TypeError: If `centered` is not a bool.
@@ -1122,13 +1122,13 @@ class CombinedNonMaxSuppression(Primitive):
               it exceeds `max_total_size`.
 
     Inputs:
-        - **boxes** (Tensor) - A float32 Tensor with shape :math:`(batch_size, num_boxes, q, 4)`
+        - **boxes** (Tensor) - A float32 Tensor with shape :math:`(batch\_size, num\_boxes, q, 4)`
           representing the bounding box coordinates.
           `q` indicates mapping relationship between boxes and classes.
           If `q` is 1, all classes use the same bounding box. If `q` is equal to the number of classes,
           class-specific boxes are applied.
         - **scores** (Tensor) - A 3-D Tensor of float32 type with the shape
-          :math:`(batch_size, num_boxes, num_classes)`. It contains a score value for each box,
+          :math:`(batch\_size, num\_boxes, num\_classes)`. It contains a score value for each box,
           with each row of `boxes` represented by a single score.
         - **max_output_size_per_class** (Tensor) - The maximum number of boxes that can be selected for each class
           by the non-maximum suppression algorithm, represented by a scalar Tensor of type int32.

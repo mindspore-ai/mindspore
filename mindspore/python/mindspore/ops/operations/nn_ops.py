@@ -1427,8 +1427,8 @@ class Conv2D(Primitive):
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel_size[0], kernel_size[1])`,
-    where :math:`kernel_size[0]` and :math:`kernel_size[1]` are the height and width of the kernel, respectively.
+    The shape of the convolutional kernel is given by :math:`(kernel\_size[0], kernel\_size[1])`,
+    where :math:`kernel\_size[0]` and :math:`kernel\_size[1]` are the height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -8160,7 +8160,7 @@ class Conv3D(Primitive):
 
     The shape of the convolutional kernel is given by
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`
-    where :math:`kernel_size[0]` , :math:`kernel_size[1]` and :math:`kernel_size[2]` are the depth,
+    where :math:`kernel\_size[0]` , :math:`kernel\_size[1]` and :math:`kernel\_size[2]` are the depth,
     height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]},
@@ -11405,22 +11405,22 @@ class WKV(Primitive):
 
     Inputs:
         - **w** (Tensor) - The time_first tensor with data type of float32.
-          Input tensor of shape :math:`(hidden_size,)`.
+          Input tensor of shape :math:`(hidden\_size,)`.
         - **u** (Tensor]) - The time_decay tensor with data type of float32.
-          Input tensor of shape :math:`(hidden_size,)`.
+          Input tensor of shape :math:`(hidden\_size,)`.
         - **k** (Tensor) - The key tensor with data type of float32.
-          Input tensor of shape :math:`(batch_size, seq_length, hidden_size)`.
+          Input tensor of shape :math:`(batch\_size, seq\_length, hidden\_size)`.
         - **v** (Tensor) - The value tensor with data type of float32.
-          Input tensor of shape :math:`(batch_size, seq_length, hidden_size)`.
+          Input tensor of shape :math:`(batch\_size, seq\_length, hidden\_size)`.
         - **sp** (Tensor) - The states_p tensor with data type of float32.
-          Input tensor of shape :math:`(batch_size, seq_length, hidden_size)`.
+          Input tensor of shape :math:`(batch\_size, seq\_length, hidden\_size)`.
         - **sq** (Tensor) - The states_q tensor with data type of float32.
-          Input tensor of shape :math:`(batch_size, hidden_size)`.
+          Input tensor of shape :math:`(batch\_size, hidden\_size)`.
         - **sm** (Tensor) - The states_m tensor with data type of float32.
-          Input tensor of shape :math:`(batch_size, hidden_size)`.
+          Input tensor of shape :math:`(batch\_size, hidden\_size)`.
 
     Outputs:
-        Tensor of shape :math:`(batch_size, seq_length, hidden_size)`.
+        Tensor of shape :math:`(batch\_size, seq\_length, hidden\_size)`.
 
     Supported Platforms:
         ``Ascend``

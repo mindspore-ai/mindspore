@@ -9393,13 +9393,13 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         k] \exp \left(-j \frac{2 \pi \cdot \omega k}{\text { win_length }}\right)
 
     where :math:`m` is the index of the sliding window, and
-    :math:`ω` is the frequency in range :math:`0 \leq \omega < \text{n\_fft}0≤ω<n_fft`.
+    :math:`ω` is the frequency in range :math:`0 \leq \omega < \text{n\_fft}0≤ω<n\_fft`.
 
     Args:
         x (Tensor): Time sequences of stft, must be either a 1-D time tensor or a 2-D tensor.
         n_fft (int): The size of Fourier transform.
         hop_length (int, optional): The distance between neighboring sliding window
-            frames. Default: ``None``(treated as equal to :math:`floor(n_fft / 4)`).
+            frames. Default: ``None``(treated as equal to :math:`floor(n\_fft / 4)`).
         win_length (int, optional): the size of window frame and STFT filter.
             Default: ``None``(treated as equal to `n_fft`).
         window (Tensor, optional): the optional window function, 1-D tensor of size `win_length`.
@@ -9424,14 +9424,14 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
             If `return_complex` is False, it returns a real Tensor with shape :math:`(*, N, T, 2)`.
 
             `N` is size of Fourier transform, it depends on parameter `onesided`:
-            - If `onesided` is False, :math:`N = n_fft`.
-            - If `onesided` is True, :math:`N = n_fft // 2 + 1`.
+            - If `onesided` is False, :math:`N = n\_fft`.
+            - If `onesided` is True, :math:`N = n\_fft // 2 + 1`.
 
             `T` is the total number of frames used, calculated by this formula:
-            :math:`T = 1 + (len - n_fft) / hop_length`, where `len` depends on parameter `center`:
-            - If `center` is False, :math:`len = signal_length`.
-            - If `center` is True, :math:`len = signal_length + (n_fft // 2) * 2`.
-            where :math:`signal_length` is the signal length, it equals to :math:`x.shape[-1]`.
+            :math:`T = 1 + (len - n\_fft) / hop\_length`, where `len` depends on parameter `center`:
+            - If `center` is False, :math:`len = signal\_length`.
+            - If `center` is True, :math:`len = signal\_length + (n\_fft // 2) * 2`.
+            where :math:`signal\_length` is the signal length, it equals to :math:`x.shape[-1]`.
 
     Raises:
         TypeError: If `x` is not a 1-D or 2-D tensor.
