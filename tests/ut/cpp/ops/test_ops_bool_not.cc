@@ -28,7 +28,7 @@ namespace ops {
 class TestBoolNot : public TestOps, public testing::WithParamInterface<EltwiseOpTypeParams> {};
 
 TEST_P(TestBoolNot, bool_not_dyn_shape) {
-  auto primitive = std::make_shared<Primitive>(kNameBoolNot);
+  auto primitive = std::make_shared<Primitive>("BoolNot");
   ASSERT_NE(primitive, nullptr);
   const auto &param = GetParam();
   auto x = std::make_shared<abstract::AbstractScalar>(param.x_type);

@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_BOOL_NOT_H_
-#define MINDSPORE_CORE_OPS_BOOL_NOT_H_
-#include "mindspore/core/ops/comparison_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_COMPLEX_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_COMPLEX_H_
+
+#include <memory>
+#include <vector>
+#include "mindapi/base/types.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief bool_not op is used to calculate the input true or false.
-class MIND_API bool_not : public BaseOperator {
+class MIND_API ComplexFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(bool_not);
-  /// \brief Constructor.
-  bool_not() : BaseOperator(kBoolNotOpName) {}
-  /// \brief Init.
-  void Init() const {}
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_BOOL_NOT_H_
+#endif  // MINDSPORE_CORE_OPS_COMPLEX_H_

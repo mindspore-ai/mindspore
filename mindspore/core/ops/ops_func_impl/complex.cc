@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-#include <set>
-#include "ops/ops_func_impl/ceil.h"
+#include "ops/ops_func_impl/complex.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr CeilFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args) const {
+BaseShapePtr ComplexFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto x_shape = input_args[kIndex0]->GetShape();
-  MS_EXCEPTION_IF_NULL(x_shape);
-  return x_shape->Clone();
+  return BroadCastInferShape(primitive->name(), input_args);
 }
 
-TypePtr CeilFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  // Valid types: kFloat16, kFloat32.
+TypePtr ComplexFuncImpl::InferType(const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args) const {
+  // Valid types: kFloat32, kFloat64.
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto x_type = input_args[kIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
-  return x_type->Clone();
+
+  auto real_input_type = input_args[kIndex0]->GetType();
+  auto real_input_tensor = real_input_type->cast<TensorTypePtr>();
+  TypeId real_input_tensor_id = real_input_tensor->element()->type_id();
+  return real_input_tensor_id == kNumberTypeFloat32 ? std::make_shared<TensorType>(kComplex64)
+                                                    : std::make_shared<TensorType>(kComplex128);
 }
 }  // namespace ops
 }  // namespace mindspore
