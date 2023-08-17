@@ -64,6 +64,7 @@ AnfNodePtr GetBpropCaller(const FuncGraphManagerPtr &manager, const AnfNodePtr &
 
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
+constexpr auto kAttrReplacedWithPrimal = "replaced_with_primal";
 
 bool WithRecomputedScope(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -314,6 +315,9 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
   }
   std::vector<AnfNodePtr> new_inputs;
   if (IsRecomputeKGraphCaller(node)) {
+    if (!node->HasAttr(kAttrReplacedWithPrimal)) {
+      return node;
+    }
     if (!HasRecomputedInput(node)) {
       (void)std::copy(node->inputs().begin(), node->inputs().end(), std::back_inserter(new_inputs));
       new_inputs[1] = bprop_fg->NewCNode({NewValueNode(prim::kPrimDepend), new_inputs[1], depend_nodes});
@@ -344,9 +348,10 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
     }
     auto new_k_fg_caller = bprop_fg->NewCNode(new_inputs);
     new_k_fg_caller->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
-    auto primal_fg_caller = node->user_data<CNode>("primal_fg_caller");
+    new_k_fg_caller->AddAttr(kAttrReplacedWithPrimal, MakeValue(true));
+    auto primal_fg_caller = node->user_data<CNode>(kPrimalFgCallerUserDataKey);
     if (primal_fg_caller != nullptr) {
-      new_k_fg_caller->set_user_data("primal_fg_caller", primal_fg_caller);
+      new_k_fg_caller->set_user_data(kPrimalFgCallerUserDataKey, primal_fg_caller);
     }
     // Replace the bprop getter with the new k graph caller in bprop graph.
     auto origin_bprop_getter = GetBpropGetter(manager, node);
@@ -461,12 +466,13 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
                              return fg->NewCNodeInOrder({NewValueNode(prim::kPrimDepend), input, depend_nodes});
                            });
       auto new_k_fg_caller = fg->NewCNodeInOrder(new_k_fg_caller_inputs);
-      auto primal_fg_caller = k_fg_caller_cnode->user_data<CNode>("primal_fg_caller");
+      auto primal_fg_caller = k_fg_caller_cnode->user_data<CNode>(kPrimalFgCallerUserDataKey);
       if (primal_fg_caller != nullptr) {
-        new_k_fg_caller->set_user_data("primal_fg_caller", primal_fg_caller);
+        new_k_fg_caller->set_user_data(kPrimalFgCallerUserDataKey, primal_fg_caller);
       }
       (void)manager->Replace(k_fg_caller_cnode, new_k_fg_caller);
       new_k_fg_caller->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
+      new_k_fg_caller->AddAttr(kAttrReplacedWithPrimal, MakeValue(true));
     }
     return;
   }
@@ -531,6 +537,12 @@ AnfNodePtr GetPrimal(const FuncGraphPtr &k_fg, bool *recompute_cell) {
   }
   return primal;
 }
+
+bool IsNestedRecomputed(const AnfNodePtr &node) {
+  auto fg = node->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  return fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH);
+}
 }  // namespace
 
 bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
@@ -564,6 +576,12 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
     if (k_fg == nullptr || !k_fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)) {
       continue;
     }
+    if (IsNestedRecomputed(k_fg_caller_cnode)) {
+      MS_LOG(WARNING)
+        << "The node and its graph both have been set recomputed, the node would not be handled. The node: "
+        << k_fg_caller_cnode->DebugString();
+      continue;
+    }
     bool recompute_cell = false;
     auto primal = GetPrimal(k_fg, &recompute_cell);
     if (primal == nullptr) {
@@ -581,8 +599,9 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
     bool change = AddNewPrimalNode(manager, fg, node, new_primal, recompute_cell, &origin_to_new_primal);
     changed = change || changed;
     if (change && recompute_cell) {
-      k_fg_caller_cnode->set_user_data("primal_fg_caller", new_primal);
+      k_fg_caller_cnode->set_user_data(kPrimalFgCallerUserDataKey, new_primal);
     }
+    k_fg_caller_cnode->AddAttr(kAttrReplacedWithPrimal, MakeValue(true));
     // Add duplicated attr to help debugging.
     AddDuplicatedAttr(k_fg);
     if (HasRecomputedInput(k_fg_caller_cnode)) {
