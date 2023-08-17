@@ -33,6 +33,7 @@ namespace opt {
 namespace irpass {
 constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
 constexpr auto kHandledNotRecomputeNodeFlag = "handled_not_recompute_node";
+constexpr auto kPrimalFgCallerUserDataKey = "primal_fg_caller";
 
 bool EnableGraphReuse();
 
@@ -99,7 +100,7 @@ class RemoveNotRecomputeNode : public AnfVisitor {
     }
 
     primal_fg_->set_output(primal_fg_->NewCNode(new_primal_fg_outputs));
-    auto primal_fg_caller = k_fg_caller->user_data<CNode>("primal_fg_caller");
+    auto primal_fg_caller = k_fg_caller->user_data<CNode>(kPrimalFgCallerUserDataKey);
     UpdateForwardResult(manager, primal_fg_caller);
     // Add new arguments to k graph caller.
     return CreateNewKGraphCaller(fg, k_fg_caller, primal_fg_caller, not_recompute_count);
@@ -119,7 +120,7 @@ class RemoveNotRecomputeNode : public AnfVisitor {
       return new_primal_caller;
     }
 
-    auto primal_fg_caller = k_fg_caller->user_data<CNode>("primal_fg_caller");
+    auto primal_fg_caller = k_fg_caller->user_data<CNode>(kPrimalFgCallerUserDataKey);
     UpdateForwardResult(manager, primal_fg_caller);
     return CreateNewKGraphCaller(fg, k_fg_caller, primal_fg_caller, not_recompute_count);
   }
