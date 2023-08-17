@@ -36,6 +36,7 @@ class StrategyCheckpoint {
     load_file_ = "";
     save_file_ = "";
     group_info_save_file_ = "";
+    auto_op_strategy_file_ = "";
   }
   ~StrategyCheckpoint() = default;
 
@@ -53,7 +54,19 @@ class StrategyCheckpoint {
   void set_common_mirror_group(const RankList &comm_group) { common_mirror_group_ = comm_group; }
   RankList common_mirror_group() const { return common_mirror_group_; }
 
+  bool LoadAutoOpStrategyOn() const { return load_auto_op_strategy_on_; }
+  bool SaveAutoOpStrategyOn() const { return save_auto_op_strategy_on_; }
+  Status LoadAutoOpStrategy(StrategyMap *strategy_map);
+  Status SaveAutoOpStrategy(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map,
+                            const ManualShapeMap &manual_shape_map);
+
  private:
+  std::string auto_op_strategy_file_;
+  std::string auto_op_strategy_file_type_;
+  bool load_auto_op_strategy_on_ = false;
+  bool save_auto_op_strategy_on_ = false;
+  StrategyJsonInfo strategy_json_info_;
+
   std::string load_file_;
   std::string save_file_;
   bool load_checkpoint_on_ = false;

@@ -64,6 +64,10 @@ void AddUsersUniqueIdWhenSharingParameter(
 std::vector<std::vector<size_t>> GetIndexOfOpsSharingInputTensor(
   const std::vector<std::vector<std::string>> &param_users_uniqueid_list,
   const std::vector<std::vector<std::string>> &input_tensor_names);
+
+Status LoadStrategyFromFile(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
+
+void SaveStrategyToFile();
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_AUTO_PARALLEL_H_

@@ -363,6 +363,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_sharding_propagation", &ParallelContext::set_sharding_propagation,
          "Set sharding strategy propagation value.")
     .def("get_sharding_propagation", &ParallelContext::sharding_propagation, "Get sharding strategy propagation value.")
+    .def("set_ops_strategy_json_config", &ParallelContext::set_ops_strategy_json_config,
+         "Set ops strategy save&load config.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")

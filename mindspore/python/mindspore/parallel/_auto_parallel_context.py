@@ -890,6 +890,13 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_optimizer_weight_shard_size()
 
+    def set_ops_strategy_json_config(self, type, path, mode):
+        """
+         Set configuration of saving ops strategy in file .json.
+        """
+        self.check_context_handle()
+        self._context_handle.set_ops_strategy_json_config(type, path, mode)
+
     def set_optimizer_weight_shard_aggregated_save(self, optimizer_weight_shard_aggregated_save):
         """
         Set optimizer_weight_shard_aggregated_save.
@@ -1027,8 +1034,28 @@ class _AutoParallelContext:
             self.set_enable_all_gather_fusion(openstate)
             self.set_enable_reduce_scatter_fusion(openstate)
 
+def _set_ops_strategy_json_config(type="SAVE", path="", mode="all"):
+    """
+    Set strategy json configuration.
 
+    Args:
+        type (str): The parameter for choosing save or load .json file.
+        path (str): Path to save or load parallel strategy json.
+        mode (str): The parameter for choosing save all or important operators.
 
+    Raises:
+        KeyError: When type is not 'SAVE' or 'LOAD'.
+        KeyError: When mode is not 'all' or 'principal'.
+    """
+    dir_path = os.path.dirname(path)
+    if dir_path and not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    check_type = ["SAVE", "LOAD"]
+    check_mode = ["all", "principal"]
+    if type in check_type and mode in check_mode:
+        auto_parallel_context().set_ops_strategy_json_config(type, path, mode)
+    else:
+        raise KeyError("Type must be 'SAVE' or 'LOAD' and mode must be 'all' or 'principal'")
 
 _AUTO_PARALLEL_CONTEXT = None
 

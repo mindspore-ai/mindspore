@@ -39,6 +39,12 @@ StrategyCheckpoint &StrategyCheckpoint::GetInstance() {
                                  instance.load_file_.substr(instance.load_file_.size() - JSON_SUFFIX_LENGTH) == ".json";
     instance.save_format_json_ = instance.save_file_.size() >= JSON_SUFFIX_LENGTH &&
                                  instance.save_file_.substr(instance.save_file_.size() - JSON_SUFFIX_LENGTH) == ".json";
+    instance.auto_op_strategy_file_ = ParallelContext::GetInstance()->strategy_json_config_file_path();
+    instance.auto_op_strategy_file_type_ = ParallelContext::GetInstance()->strategy_json_config_file_type();
+    instance.load_auto_op_strategy_on_ = (!ParallelContext::GetInstance()->strategy_json_config_file_path().empty()) &&
+                                         (instance.auto_op_strategy_file_type_.compare("LOAD") == 0);
+    instance.save_auto_op_strategy_on_ = (!ParallelContext::GetInstance()->strategy_json_config_file_path().empty()) &&
+                                         (instance.auto_op_strategy_file_type_.compare("SAVE") == 0);
   }
   return instance;
 }
@@ -114,7 +120,7 @@ Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
     std::fstream input(load_file_, std::ios::in);
     nlohmann::json stra_ckpt_info_j;
     input >> stra_ckpt_info_j;
-    strategy_checkpoint_info_.from_json(stra_ckpt_info_j);
+    strategy_checkpoint_info_.FromJson(stra_ckpt_info_j);
   } else {
     straspb::ParallelStrategyMap parallel_strategy_map;
     std::fstream input(load_file_, std::ios::in | std::ios::binary);
@@ -182,6 +188,41 @@ Status StrategyCheckpoint::SaveGroupInfo(const GroupInfoMap &group_info_map, con
   }
   output.close();
   ChangeFileMode(group_info_save_file_, S_IRUSR | S_IWUSR);
+  return SUCCESS;
+}
+
+Status StrategyCheckpoint::LoadAutoOpStrategy(StrategyMap *strategy_map) {
+  if (strategy_map == nullptr) {
+    MS_LOG(EXCEPTION) << "Failure:strategy_map is nullptr";
+  }
+  if (!CheckPath(auto_op_strategy_file_)) {
+    MS_LOG(EXCEPTION) << "CheckPoint file is invalid";
+    return FAILED;
+  }
+  if (!CheckPointExit(auto_op_strategy_file_)) {
+    MS_LOG(EXCEPTION) << "CheckPoint file is not found";
+    return FAILED;
+  }
+  std::fstream input(auto_op_strategy_file_, std::ios::in);
+  nlohmann::json stra_ckpt_info_j;
+  input >> stra_ckpt_info_j;
+  strategy_json_info_.FromJson(stra_ckpt_info_j);
+  *strategy_map = strategy_json_info_.strategy_map();
+  return SUCCESS;
+}
+
+Status StrategyCheckpoint::SaveAutoOpStrategy(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map,
+                                              const ManualShapeMap &manual_shape_map) {
+  if (!CheckPath(auto_op_strategy_file_)) {
+    MS_LOG(EXCEPTION) << "CheckPoint file is invalid";
+  }
+  strategy_json_info_.Init(strategy_map, tensor_info_map, manual_shape_map, ++current_stage_);
+  auto stra_ckpt_info_j = strategy_json_info_.to_json();
+  std::fstream output(auto_op_strategy_file_, std::ios::out);
+  stra_ckpt_info_j >> output;
+  output.close();
+
+  ChangeFileMode(auto_op_strategy_file_, S_IRUSR | S_IWUSR);
   return SUCCESS;
 }
 }  // namespace parallel

@@ -56,6 +56,9 @@ void ParallelContext::Reset() {
   enable_all_reduce_fusion_ = true;
   enable_all_gather_fusion_ = true;
   enable_reduce_scatter_fusion_ = true;
+  strategy_json_config_file_type_ = "";
+  strategy_json_config_file_path_ = "";
+  strategy_json_config_file_mode_ = "";
   strategy_ckpt_load_file_ = "";
   strategy_ckpt_save_file_ = "";
   enable_parallel_optimizer_ = false;
@@ -162,6 +165,13 @@ bool ParallelContext::set_strategy_search_mode(const std::string &strategy_searc
 void ParallelContext::set_parameter_broadcast(bool parameter_broadcast) {
   parameter_broadcast_ = parameter_broadcast;
   parameter_broadcast_is_set_ = true;
+}
+
+void ParallelContext::set_ops_strategy_json_config(const std::string &type, const std::string &path,
+                                                   const std::string &mode) {
+  strategy_json_config_file_type_ = type;
+  strategy_json_config_file_path_ = path;
+  strategy_json_config_file_mode_ = mode;
 }
 
 void ParallelContext::set_strategy_ckpt_load_file(const std::string &strategy_ckpt_load_file) {

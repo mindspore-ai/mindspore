@@ -40,7 +40,7 @@ using GroupInfoMap = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
 class StrategyCheckpointInfo {
  public:
   StrategyCheckpointInfo() : current_stage_(0) {}
-  ~StrategyCheckpointInfo() = default;
+  virtual ~StrategyCheckpointInfo() = default;
   void Init(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map,
             const ManualShapeMap &manual_shape_map, int64_t current_stage) {
     strategy_map_ = strategy_map;
@@ -56,17 +56,25 @@ class StrategyCheckpointInfo {
   void set_manual_shape_map(const ManualShapeMap &manual_shape_map);
   int64_t current_stage() const { return current_stage_; }
 
-  void from_json(const nlohmann::json &stra_ckpt_info_j);
+  virtual void FromJson(const nlohmann::json &stra_ckpt_info_j);
   nlohmann::json to_json() const;
 
   void from_protobuf(const straspb::ParallelStrategyMap &parallel_strategy_map);
   straspb::ParallelStrategyMap to_protobuf() const;
 
- private:
-  int64_t current_stage_;
+ protected:
   StrategyMap strategy_map_;
+  int64_t current_stage_;
   TensorInfoMap tensor_info_map_;
   ManualShapeMap manual_shape_map_;
+};
+
+class StrategyJsonInfo : public StrategyCheckpointInfo {
+ public:
+  StrategyJsonInfo() : StrategyCheckpointInfo() {}
+  ~StrategyJsonInfo() override = default;
+
+  void FromJson(const nlohmann::json &stra_json_info_j) override;
 };
 }  // namespace parallel
 }  // namespace mindspore
