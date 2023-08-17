@@ -85,18 +85,20 @@ inline std::string Dec2Hex(int i, uint32_t width) {
 inline std::string GenerateIpInOrder(const std::string &ip) {
   rpc::SocketAddress addr;
   std::string ordered_ip = "";
+  uint32_t dec_2_hex_width = 2;
   int result = inet_pton(AF_INET, ip.c_str(), &addr.saIn.sin_addr);
   if (result > 0) {
     for (size_t i = 0; i < sizeof(addr.saIn.sin_addr.s_addr) / sizeof(unsigned char); i++) {
-      ordered_ip += Dec2Hex(*(reinterpret_cast<unsigned char *>(&addr.saIn.sin_addr.s_addr) + i), 2);
+      ordered_ip += Dec2Hex(*(reinterpret_cast<unsigned char *>(&addr.saIn.sin_addr.s_addr) + i), dec_2_hex_width);
     }
     return ordered_ip;
   }
 
   result = inet_pton(AF_INET6, ip.c_str(), &addr.saIn6.sin6_addr);
   if (result > 0) {
-    for (size_t i = 0; i < 16; i++) {
-      ordered_ip += Dec2Hex(addr.saIn6.sin6_addr.s6_addr[i], 2);
+    size_t ipv6_len = 16;
+    for (size_t i = 0; i < ipv6_len; i++) {
+      ordered_ip += Dec2Hex(addr.saIn6.sin6_addr.s6_addr[i], dec_2_hex_width);
     }
     return ordered_ip;
   }
