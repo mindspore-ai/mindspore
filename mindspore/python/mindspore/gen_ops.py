@@ -148,6 +148,86 @@ class {class_name}(Primitive):
     return gen_py
 
 
+def generate_op_name_opdef(yaml_data):
+    """
+    generate op name
+    """
+    op_name_head = f"""
+#ifndef MINDSPORE_CORE_OP_NAME_H_
+#define MINDSPORE_CORE_OP_NAME_H_
+
+namespace mindspore::ops {{
+"""
+
+    op_name_end = f"""}}  // namespace mindspore::ops
+
+#endif  // MINDSPORE_CORE_OP_NAME_H_
+"""
+
+    op_name_gen = ''
+    op_name_gen += op_name_head
+    for operator_name, _ in yaml_data.items():
+        OpName = ''.join(word.capitalize() for word in operator_name.split('_'))
+        op_name_gen += f"""constexpr auto kName{OpName} = "{OpName}";
+"""
+
+    op_name_gen += op_name_end
+    return op_name_gen
+
+
+def generate_op_param_opdef(yaml_data):
+    """
+    generate BaseOperator parameter set and get func
+    """
+    op_param_head = f"""
+#ifndef MINDSPORE_CORE_OP_PARAMETER_H_
+#define MINDSPORE_CORE_OP_PARAMETER_H_
+
+#include "ops/base_operator.h"
+#include "ops/gen_ops_name.h"
+#include "abstract/abstract_value.h"
+
+namespace mindspore::ops {{
+"""
+
+    op_param_end = f"""}}  // namespace mindspore::ops
+#endif  // MINDSPORE_CORE_OP_PARAMETER_H_
+"""
+
+    op_param_gen = ''
+    op_param_gen += op_param_head
+    for operator_name, operator_data in yaml_data.items():
+        OpName = ''.join(word.capitalize() for word in operator_name.split('_'))
+        op_param_gen += f"""class MIND_API {OpName} : public BaseOperator {{
+ public:
+  {OpName}() : BaseOperator(kName{OpName}) {{}}
+"""
+        args = operator_data.get('args')
+        for i, (arg_name, arg_info) in enumerate(args.items()):
+            init = arg_info.get('init')
+            if init is None:
+                continue
+
+            dtype = arg_info.get('dtype')
+            if dtype == "str":
+                dtype = "std::string"
+            if dtype == "tuple[int]":
+                dtype = "std::vector<int64_t>"
+            op_param_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name}) {{
+    (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name}));
+  }}
+"""
+            op_param_gen += f"""  {dtype} get_{arg_name}() const {{
+    return GetValue<{dtype}>(GetAttr("{arg_name}"));
+  }}
+"""
+
+        op_param_gen += f"""}};
+"""
+    op_param_gen += op_param_end
+    return op_param_gen
+
+
 def generate_cc_opdef(yaml_data):
     """
     generate OpDef
@@ -224,6 +304,8 @@ if __name__ == "__main__":
     doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_doc.yaml')
     op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/gen_ops_def.py')
     op_cc_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_def.cc')
+    op_name_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_name.h')
+    op_param_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_param.h')
 
     yaml_str = None
     with open(yaml_path, 'r') as yaml_file:
@@ -290,3 +372,13 @@ namespace mindspore::ops {{
     cc_file = None
     with open(op_cc_path, 'w') as cc_file:
         cc_file.write(cc_license_str + ccheader + cc_code)
+
+    op_param_code = generate_op_param_opdef(yaml_str)
+    op_param_file = None
+    with open(op_param_path, 'w') as op_param_file:
+        op_param_file.write(cc_license_str + op_param_code)
+
+    op_name_code = generate_op_name_opdef(yaml_str)
+    op_name_file = None
+    with open(op_name_path, 'w') as op_name_file:
+        op_name_file.write(cc_license_str + op_name_code)
