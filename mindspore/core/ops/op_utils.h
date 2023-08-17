@@ -53,7 +53,7 @@ const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64
 template <typename T>
 class ArrayValue {
  public:
-  ArrayValue(std::vector<T> &&data, std::set<bool> &&unknown_value_indexes)
+  ArrayValue(std::vector<T> &&data, std::set<size_t> &&unknown_value_indexes)
       : data_(std::move(data)), unknown_value_indexes_(std::move(unknown_value_indexes)) {}
   ~ArrayValue() = default;
 
@@ -81,7 +81,7 @@ class ArrayValue {
   // Use vector to hold the contents parsed from Sequence or Tensor Value.
   std::vector<T> data_;
   // Records the index whose value is unknown (ValueAny) in the data_ vector.
-  std::set<bool> unknown_value_indexes_;
+  std::set<size_t> unknown_value_indexes_;
 };
 
 // This interface is only used to get value for scalar data.

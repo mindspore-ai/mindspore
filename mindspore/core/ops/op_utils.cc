@@ -895,7 +895,7 @@ template <typename T>
 ArrayValue<T> GetArrayValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   std::vector<T> array_data;
-  std::set<bool> unknown_value_indexes;
+  std::set<size_t> unknown_value_indexes;
 
   if (value->isa<ValueSequence>()) {
     // Sequence structure: Data is stored discretely.
