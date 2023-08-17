@@ -548,6 +548,18 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
       acl_option_cfg_string_.build_options_map.emplace(item.first, item.second);
     }
   }
+  if (maps.find(kAoeGlobalOptionsSection) != maps.end()) {
+    const auto &map = maps.at(kAoeGlobalOptionsSection);
+    for (const auto &item : map) {
+      acl_option_cfg_string_.aoe_global_options_map.emplace(item.first, item.second);
+    }
+  }
+  if (maps.find(kAoeTuningOptionsSection) != maps.end()) {
+    const auto &map = maps.at(kAoeTuningOptionsSection);
+    for (const auto &item : map) {
+      acl_option_cfg_string_.aoe_tuning_options_map.emplace(item.first, item.second);
+    }
+  }
   return RET_OK;
 }
 
