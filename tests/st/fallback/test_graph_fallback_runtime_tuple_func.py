@@ -667,3 +667,66 @@ def test_sequence_index_with_operation_6():
 
     ret = foo(Tensor([3]), Tensor([2]))
     assert ret == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_getitem_with_tensor_index():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x, y):
+        m = (1, 2, 3, 4)
+        return m[x], m[y]
+
+    ret1, ret2 = foo(Tensor([3]), Tensor([2]))
+    assert ret1 == 4
+    assert ret2 == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_getitem_with_tensor_index_2():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x, y):
+        m = (1, (2, 5), np.array([1, 2, 3, 4]), 4)
+        return m[x], m[y]
+
+    ret1, ret2 = foo(Tensor([1]), Tensor([2]))
+    assert ret1 == (2, 5)
+    assert np.all(ret2 == np.array([1, 2, 3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_getitem_with_tensor_index_3():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x, y):
+        m = (x, x+1, y, y+1)
+        return m[x], m[y]
+
+    ret1, ret2 = foo(Tensor([3]), Tensor([2]))
+    assert ret1 == Tensor([3])
+    assert ret2 == Tensor([2])

@@ -32,8 +32,10 @@
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/optimizer/opt.h"
 #include "utils/symbolic.h"
+#include "include/common/fallback.h"
 #include "include/common/pybind_api/api_register.h"
 #include "ir/signature.h"
+#include "pipeline/jit/ps/fallback.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "utils/interpret_node_recorder.h"
 #include "utils/ms_context.h"
@@ -1771,10 +1773,51 @@ FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &ar
   abstract::CheckArgsSize(op_name, args_abs_list, inputs_size);
   auto ret_graph = std::make_shared<FuncGraph>();
   ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  auto functions = ret_graph->add_parameter();
+  auto tuple = ret_graph->add_parameter();
   auto index = ret_graph->add_parameter();
 
-  ret_graph->set_output(ret_graph->NewCNodeInOrder({NewValueNode(prim::kPrimSwitchLayer), index, functions}));
+  constexpr size_t tuple_index = 0;
+  auto abs = args_abs_list[tuple_index];
+  MS_EXCEPTION_IF_NULL(abs);
+  auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_abs);
+  if (!tuple_abs->dynamic_len()) {
+    const auto elements = tuple_abs->elements();
+    if (std::all_of(elements.begin(), elements.end(), [](const AbstractBasePtr &e) {
+          MS_EXCEPTION_IF_NULL(e);
+          return e->isa<abstract::FuncGraphAbstractClosure>() || e->isa<abstract::PartialAbstractClosure>();
+        })) {
+      ret_graph->set_output(ret_graph->NewCNodeInOrder({NewValueNode(prim::kPrimSwitchLayer), index, tuple}));
+      return ret_graph;
+    }
+  }
+
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+  if (!allow_fallback_runtime) {
+    MS_EXCEPTION(TypeError) << "When JIT_SYNTAX_LEVEL is STRICT, using Tensor index to get value from tuple requires "
+                            << "that all elements in tuple should be function but got tuple abstract: "
+                            << tuple_abs->ToString();
+  }
+  // Script
+  constexpr auto internal_tuple_input = "__internal_tuple_input__";
+  constexpr auto internal_index_input = "__internal_index_input__";
+  std::stringstream script_buffer;
+  script_buffer << internal_tuple_input << "[" << internal_index_input << "]";
+  const std::string &script = script_buffer.str();
+  const auto script_str = std::make_shared<StringImm>(script);
+  // Key
+  std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)key_value_names_list.emplace_back(NewValueNode(internal_tuple_input));
+  (void)key_value_names_list.emplace_back(NewValueNode(internal_index_input));
+  const auto key_value_name_tuple = ret_graph->NewCNode(key_value_names_list);
+  // Value
+  std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)key_value_list.emplace_back(tuple);
+  (void)key_value_list.emplace_back(index);
+  const auto key_value_tuple = ret_graph->NewCNode(key_value_list);
+  auto res =
+    fallback::CreatePyExecuteCNode(ret_graph, NewValueNode(script_str), key_value_name_tuple, key_value_tuple, nullptr);
+  ret_graph->set_output(res);
   return ret_graph;
 }
 

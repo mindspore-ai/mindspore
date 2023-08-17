@@ -228,7 +228,9 @@ TypePtr HandleContainerTypeForAnnotation(const std::string &dtype_str, const std
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
                               const AnfNodePtr &values, const NodeDebugInfoPtr &debug_info) {
   const auto interpreted_cnode = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), script, keys, values});
-  interpreted_cnode->set_debug_info(debug_info);
+  if (debug_info != nullptr) {
+    interpreted_cnode->set_debug_info(debug_info);
+  }
   // Record the PyExecute node.
   InterpretNodeRecorder::GetInstance().PushPyExecuteNode(interpreted_cnode);
   return interpreted_cnode;
