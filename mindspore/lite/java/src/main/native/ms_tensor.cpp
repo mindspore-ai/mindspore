@@ -441,7 +441,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_MSTensor_elementsNum(JNIEnv
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_MSTensor_free(JNIEnv *env, jobject thiz, jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
-    MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
+    MS_LOG(INFO) << "Tensor pointer from java is nullptr";
     return;
   }
   auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
@@ -452,7 +452,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_MSTensor_tensorName(JNIE
                                                                             jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
-    MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
+    MS_LOG(INFO) << "Tensor pointer from java is nullptr";
     return nullptr;
   }
   auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
