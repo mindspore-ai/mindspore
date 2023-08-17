@@ -42,6 +42,7 @@ OpParameter *PopulateLstmParameter(const void *prim) {
   param->hidden_size_ = value->hidden_size();
   param->zoneout_cell_ = value->zoneout_cell();
   param->zoneout_hidden_ = value->zoneout_hidden();
+  param->project_size_ = value->proj_size();
   return reinterpret_cast<OpParameter *>(param);
 }
 

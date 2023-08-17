@@ -688,6 +688,7 @@ OP_ATTR(num_directions, long)
 OP_ATTR(dropout, float)
 OP_ATTR_WITH_VALUE(zoneout_cell, float, 0)
 OP_ATTR_WITH_VALUE(zoneout_hidden, float, 0)
+OP_ATTR_WITH_VALUE(proj_size, long, 0)
 OP_SCHEMA_DEF_END(LSTM)
 
 OP_SCHEMA_DEF(LSTMGrad)
