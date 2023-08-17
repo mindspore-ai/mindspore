@@ -872,28 +872,35 @@ size_t GetInputIndexByName(const std::string &op_name, const std::string &input_
 }
 
 template <typename T>
-T GetScalarValue(const ValuePtr &value) {
+std::optional<T> GetScalarValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<ValueAny>()) {
+    return std::nullopt;
+  }
   return GetValue<T>(value);
 }
 
-template int64_t GetScalarValue(const ValuePtr &value);
-template int32_t GetScalarValue(const ValuePtr &value);
-template int16_t GetScalarValue(const ValuePtr &value);
-template int8_t GetScalarValue(const ValuePtr &value);
-template uint64_t GetScalarValue(const ValuePtr &value);
-template uint32_t GetScalarValue(const ValuePtr &value);
-template uint16_t GetScalarValue(const ValuePtr &value);
-template uint8_t GetScalarValue(const ValuePtr &value);
-template double GetScalarValue(const ValuePtr &value);
-template float GetScalarValue(const ValuePtr &value);
-template bool GetScalarValue(const ValuePtr &value);
-template std::string GetScalarValue(const ValuePtr &value);
+template std::optional<int64_t> GetScalarValue(const ValuePtr &value);
+template std::optional<int32_t> GetScalarValue(const ValuePtr &value);
+template std::optional<int16_t> GetScalarValue(const ValuePtr &value);
+template std::optional<int8_t> GetScalarValue(const ValuePtr &value);
+template std::optional<uint64_t> GetScalarValue(const ValuePtr &value);
+template std::optional<uint32_t> GetScalarValue(const ValuePtr &value);
+template std::optional<uint16_t> GetScalarValue(const ValuePtr &value);
+template std::optional<uint8_t> GetScalarValue(const ValuePtr &value);
+template std::optional<double> GetScalarValue(const ValuePtr &value);
+template std::optional<float> GetScalarValue(const ValuePtr &value);
+template std::optional<bool> GetScalarValue(const ValuePtr &value);
+template std::optional<std::string> GetScalarValue(const ValuePtr &value);
 
 // This interface is only used to convert values of type Sequence or Tensor to std::vector.
 template <typename T>
-ArrayValue<T> GetArrayValue(const ValuePtr &value) {
+std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<ValueAny>()) {
+    return std::nullopt;
+  }
+
   std::vector<T> array_data;
   std::set<size_t> unknown_value_indexes;
 
@@ -934,16 +941,16 @@ ArrayValue<T> GetArrayValue(const ValuePtr &value) {
   return ArrayValue<T>(std::move(array_data), std::move(unknown_value_indexes));
 }
 
-template ArrayValue<int64_t> GetArrayValue(const ValuePtr &value);
-template ArrayValue<int32_t> GetArrayValue(const ValuePtr &value);
-template ArrayValue<int16_t> GetArrayValue(const ValuePtr &value);
-template ArrayValue<int8_t> GetArrayValue(const ValuePtr &value);
-template ArrayValue<uint64_t> GetArrayValue(const ValuePtr &value);
-template ArrayValue<uint32_t> GetArrayValue(const ValuePtr &value);
-template ArrayValue<uint16_t> GetArrayValue(const ValuePtr &value);
-template ArrayValue<uint8_t> GetArrayValue(const ValuePtr &value);
-template ArrayValue<double> GetArrayValue(const ValuePtr &value);
-template ArrayValue<float> GetArrayValue(const ValuePtr &value);
-template ArrayValue<std::string> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<int64_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<int32_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<int16_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<int8_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<uint64_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<uint32_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<uint16_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<uint8_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<double>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<float>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<std::string>> GetArrayValue(const ValuePtr &value);
 }  // namespace ops
 }  // namespace mindspore

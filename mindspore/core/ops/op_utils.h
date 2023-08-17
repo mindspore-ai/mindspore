@@ -48,8 +48,9 @@
 namespace mindspore::ops {
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
-// ArrayValue uses std::vector<T> to hold the contents of the Sequence or Tensor flattened elements and provides an
-// interface to determine whether each element is ValueAny.
+// ArrayValue functions as a std::vector that verifies unknown values. ArrayValue uses std::vector<T> to hold the
+// contents of the Sequence or Tensor flattened elements and provides an interface to determine whether each element is
+// ValueAny.
 template <typename T>
 class ArrayValue {
  public:
@@ -74,6 +75,29 @@ class ArrayValue {
   // Verify whether exist unknown value in ArrayValue.
   bool HasUnknownValue() const { return !unknown_value_indexes_.empty(); }
 
+  // Convert the ArrayValue to std::vector, only work when there is no unknown value in ArrayValue.
+  const std::vector<T> &ToVector() const {
+    if (HasUnknownValue()) {
+      MS_LOG(EXCEPTION) << "Can not convert vector, there is unknown value in ArrayValue.";
+    }
+    return data_;
+  }
+
+  // Convert the ArrayValue to a string which contains all element in ArrayValue.
+  std::string ToString() const {
+    std::ostringstream oss;
+    size_t element_size = size();
+    oss << "{ ";
+    for (size_t i = 0; i < element_size; i++) {
+      oss << std::to_string(data_[i]);
+      if (i < element_size - 1) {
+        oss << ", ";
+      }
+    }
+    oss << " }";
+    return oss.str();
+  }
+
   // Get element number in ArrayValue.
   size_t size() const { return data_.size(); }
 
@@ -86,11 +110,11 @@ class ArrayValue {
 
 // This interface is only used to get value for scalar data.
 template <typename T>
-T GetScalarValue(const ValuePtr &value);
+std::optional<T> GetScalarValue(const ValuePtr &value);
 
 // This interface is only used to convert values of type Sequence or Tensor to std::vector.
 template <typename T>
-ArrayValue<T> GetArrayValue(const ValuePtr &value);
+std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value);
 
 
 const std::set<TypePtr> common_valid_types_with_bool = {
