@@ -763,7 +763,7 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
     if (has_cut.find(node) != has_cut.end()) {
       continue;
     }
-    has_cut.insert(node);
+    (void)has_cut.insert(node);
     ProcessCloseFollowing(graph, node, &close_following);
     if (IsCut(node)) {
       std::vector<AnfNodePtr> need_in_segement;
@@ -774,7 +774,7 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
         }
         for (auto &succ : iter->second) {
           if (has_cut.find(succ) == has_cut.end()) {
-            has_cut.insert(succ);
+            (void)has_cut.insert(succ);
             need_in_segement.push_back(succ);
           }
         }

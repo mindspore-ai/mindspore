@@ -2211,7 +2211,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
   }
   // construct kernel graph and its params that exist correspond frontend param
   mindspore::HashMap<std::string, AnfNodePtr> name_to_node;
-  std::for_each(name_to_params_.begin(), name_to_params_.end(), [&name_to_node](const auto &ele) {
+  (void)std::for_each(name_to_params_.begin(), name_to_params_.end(), [&name_to_node](const auto &ele) {
     if (!ele.second.expired()) {
       name_to_node[ele.first] = ele.second.lock();
     }
@@ -2261,7 +2261,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
   if (!mindir_loader.LoadMindIR(real_path.value(), graphs_for_load, &name_to_node)) {
     MS_LOG(EXCEPTION) << "Load mindir from " << real_path.value() << " failed.";
   }
-  std::for_each(name_to_node.begin(), name_to_node.end(), [](const auto &ele) {
+  (void)std::for_each(name_to_node.begin(), name_to_node.end(), [](const auto &ele) {
     auto node = ele.second;
     MS_EXCEPTION_IF_NULL(node);
     if (node->template isa<Parameter>()) {

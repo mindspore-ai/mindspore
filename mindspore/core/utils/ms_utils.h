@@ -189,7 +189,7 @@ inline bool IsStrNumeric(const std::string &str) {
 
 inline bool IsNeedProfileMemory() {
   static const char kLaunchSkippedEnv[] = "MS_KERNEL_LAUNCH_SKIP";
-  static auto launch_skipped = GetEnv(kLaunchSkippedEnv);
+  static const auto launch_skipped = GetEnv(kLaunchSkippedEnv);
   return launch_skipped == "all" || launch_skipped == "ALL";
 }
 }  // namespace common
