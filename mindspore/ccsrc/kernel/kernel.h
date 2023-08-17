@@ -259,6 +259,30 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     return std::nullopt;
   }
 
+  // Temp GetValueWithCheck
+  template <typename T>
+  T GetValueWithCheck() {
+    mindspore::abstract::AbstractBasePtr abs = nullptr;
+    if (meta_type_ == kObjectTypeTuple) {
+      // Tuple
+      const TupleInfo &info = std::get<TupleInfo>(meta_);
+      abs = info.base_;
+    } else if (meta_type_ == kObjectTypeNumber) {
+      // Scalar
+      const ScalarInfo &info = std::get<ScalarInfo>(meta_);
+      abs = info.base_;
+    } else if (meta_type_ == kObjectTypeList) {
+      // List
+      const ListInfo &info = std::get<ListInfo>(meta_);
+      abs = info.base_;
+    } else {
+      MS_LOG(EXCEPTION) << "Not support " << meta_type_;
+    }
+    auto value = abs->BuildValue();
+    T v = mindspore::GetValue<T>(value);
+    return v;
+  }
+
   // Get the data format.
   mindspore::Format format() const { return format_; }
 
@@ -551,6 +575,7 @@ class BACKEND_EXPORT KernelMod {
  protected:
   // ===========================New member==========================================================
   std::string fullname_;
+  std::string kernel_name_;
   PrimitivePtr primitive_;
   uint32_t device_id_ = 0;
   std::vector<size_t> input_size_list_;
@@ -561,7 +586,6 @@ class BACKEND_EXPORT KernelMod {
   std::vector<AddressPtr> outputs_addr_;
 
   // =======================Old member, will deleted after all kernel modified used new interface=================
-  std::string kernel_name_;
   std::string unique_name_;
   bool is_monad_{false};
   bool is_need_retrieve_output_shape_ = false;
