@@ -166,6 +166,10 @@ class ConfigFileParser {
   int ParseAscendQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseDynamicQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseGraphKernelString(const std::map<std::string, std::map<std::string, std::string>> &maps);
+  void SetVariableParams(const std::shared_ptr<mindspore::ConverterPara> &param,
+                         const std::map<std::string, std::string> &ascend_map);
+  int ProcessVariableParam(const std::vector<std::string> &variable_param, std::vector<int64_t> &variable_index);
+  int CheckVariableParm(const std::vector<int64_t> &variable_index);
 
  private:
   DataPreProcessString data_pre_process_string_;
@@ -181,6 +185,8 @@ class ConfigFileParser {
   AscendQuantString ascend_quant_string_;
   DynamicQuantString dynamic_quant_string_;
   GraphKernelString graph_kernel_string_;
+  std::vector<int64_t> inputs_variable_index_;
+  std::vector<int64_t> outputs_variable_index_;
 };
 
 }  // namespace lite

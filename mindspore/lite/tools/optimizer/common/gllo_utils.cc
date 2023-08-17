@@ -1562,6 +1562,8 @@ std::vector<KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node) {
   }
   return inputs;
 }
+#else
+std::vector<KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node) { return {}; }
 #endif
 
 bool IsReduceModeMeetOutEqualIn(const PrimitivePtr &prim) {

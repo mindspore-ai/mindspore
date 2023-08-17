@@ -56,13 +56,13 @@ class MS_API ProfileParser {
 
   static std::string GetOption(const std::map<std::string, std::string> &context, const std::string &option,
                                const std::string &default_val = "");
+  static bool ParseRangeStr(const std::string &range_str, int64_t *min_ptr, int64_t *max_ptr);
 
  private:
   static bool ParseOptDims(const std::string &opt_dims_str, ProfileConfigs *profile_configs);
   static bool ParseDynamicDims(const std::string &dynamic_dims_str, ProfileConfigs *profile_configs);
   static bool ParseInputShape(const std::string &input_shapes_str, ProfileConfigs *profile_configs);
 
-  static bool ParseRangeStr(const std::string &range_str, int64_t *min_ptr, int64_t *max_ptr);
   static bool ParseOptDimStr(const std::string &opt_dim_str, int64_t *opt_ptr);
 };
 }  // namespace mindspore

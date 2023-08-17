@@ -209,6 +209,66 @@ bool SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
   return true;
 }
 
+void ConfigFileParser::SetVariableParams(const std::shared_ptr<mindspore::ConverterPara> &param,
+                                         const std::map<std::string, std::string> &ascend_map) {
+  auto it = ascend_map.find("inputs_to_variable");
+  if (it != ascend_map.end()) {
+    std::vector<std::string> inputs_to_variables = mindspore::lite::SplitStringToVector(it->second, ',');
+    ProcessVariableParam(inputs_to_variables, inputs_variable_index_);
+    if (CheckVariableParm(inputs_variable_index_) != RET_OK) {
+      MS_LOG(ERROR) << "Check input variable param failed";
+      return;
+    }
+  }
+  auto output_it = ascend_map.find("outputs_to_variable");
+  if (output_it != ascend_map.end()) {
+    std::vector<std::string> outputs_to_variables = mindspore::lite::SplitStringToVector(output_it->second, ',');
+    ProcessVariableParam(outputs_to_variables, outputs_variable_index_);
+    if (CheckVariableParm(outputs_variable_index_) != RET_OK) {
+      MS_LOG(ERROR) << "Check output variable param failed";
+      return;
+    }
+  }
+  if (!inputs_variable_index_.empty() && !outputs_variable_index_.empty() &&
+      inputs_variable_index_.size() != outputs_variable_index_.size()) {
+    MS_LOG(ERROR) << "Input variable number is not equal output variable number";
+    return;
+  }
+  param->ascendGeOptionCfg.inputs_to_variable = inputs_variable_index_;
+  param->ascendGeOptionCfg.outputs_to_variable = outputs_variable_index_;
+}
+
+int ConfigFileParser::ProcessVariableParam(const std::vector<std::string> &variable_param,
+                                           std::vector<int64_t> &variable_index) {
+  for (auto &it : variable_param) {
+    auto remove_str = RemoveInputShapeBrackets(it);
+    int64_t min_index;
+    int64_t max_index;
+    if (!ProfileParser::ParseRangeStr(remove_str, &min_index, &max_index)) {
+      MS_LOG(ERROR) << "Parser range string " << remove_str << " failed";
+      return RET_ERROR;
+    }
+    if (max_index < min_index) {
+      MS_LOG(ERROR) << "The variable param in not valid" << max_index << "is not larger than" << min_index;
+      return RET_ERROR;
+    }
+    for (int64_t i = min_index; i <= max_index; ++i) {
+      variable_index.emplace_back(i);
+    }
+  }
+  return RET_OK;
+}
+
+int ConfigFileParser::CheckVariableParm(const std::vector<int64_t> &variable_index) {
+  for (size_t i = 1; i < variable_index.size(); ++i) {
+    if (variable_index[i] < variable_index[i - 1]) {
+      MS_LOG(ERROR) << "variable index is not valid" << variable_index[i] << " is less than " << variable_index[i - 1];
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::ConverterPara> &param,
                                             const std::map<std::string, std::string> &ascend_map) {
   std::string ascend_string = "";
@@ -264,6 +324,7 @@ bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
       MS_LOG(WARNING) << "Unsupported or invalid output_type, using default type";
     }
   }
+  SetVariableParams(param, ascend_map);
   return SetDynParams(param, ascend_map);
 }
 
