@@ -4057,7 +4057,7 @@ class DiagPart(PrimitiveWithCheck):
 
     If the `input_x` is a Tensor of shape :math:`[D_1,..., D_k, D_1,..., D_k]`, then the
     output will be a Tensor of rank k of shape :math:`[D_1,..., D_k]` where:
-    :math:`output[i_1,..., i_k] = input_x[i_1,..., i_k, i_1,..., i_k]`.
+    :math:`output[i_1,..., i_k] = input\_x[i_1,..., i_k, i_1,..., i_k]`.
 
     Inputs:
         - **input_x** (Tensor) - The rank of input tensor is 2k(k > 0).
@@ -6310,7 +6310,7 @@ class Meshgrid(PrimitiveWithInfer):
 
 
 class ReverseSequence(PrimitiveWithInfer):
-    """
+    r"""
     Reverses variable length slices.
 
     Args:
@@ -6326,10 +6326,10 @@ class ReverseSequence(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `seq_dim` or `batch_dim` is not an int.
-        ValueError: If :math:`len(seq_lengths) != x.shape[batch_dim]`.
-        ValueError: If :math:`batch_dim == seq_dim`.
-        ValueError: If :math:`seq_dim < 0` or :math:`seq_dim >= len(x.shape)`.
-        ValueError: If :math:`batch_dim < 0` or :math:`batch_dim >= len(x.shape)`.
+        ValueError: If :math:`len(seq\_lengths) != x.shape[batch\_dim]`.
+        ValueError: If :math:`batch\_dim == seq\_dim`.
+        ValueError: If :math:`seq\_dim < 0` or :math:`seq\_dim >= len(x.shape)`.
+        ValueError: If :math:`batch\_dim < 0` or :math:`batch\_dim >= len(x.shape)`.
         RuntimeError: If any value of `seq_lengths` is less than 0.
         RuntimeError: If any value of `seq_lengths` is larger than `x.shape[seq_dim]`.
 

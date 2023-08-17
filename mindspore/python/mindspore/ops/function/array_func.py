@@ -1606,7 +1606,7 @@ def reshape(input, shape):
 
 
 def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
-    """
+    r"""
     Reverses variable length slices.
 
     Args:
@@ -1620,10 +1620,10 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
 
     Raises:
         TypeError: If `seq_dim` or `batch_dim` is not an int.
-        ValueError: If :math:`len(seq_lengths) != x.shape[batch_dim]`.
-        ValueError: If :math:`batch_dim == seq_dim`.
-        ValueError: If :math:`seq_dim < 0` or :math:`seq_dim >= len(x.shape)`.
-        ValueError: If :math:`batch_dim < 0` or :math:`batch_dim >= len(x.shape)`.
+        ValueError: If :math:`len(seq\_lengths) != x.shape[batch\_dim]`.
+        ValueError: If :math:`batch\_dim == seq\_dim`.
+        ValueError: If :math:`seq\_dim < 0` or :math:`seq\_dim >= len(x.shape)`.
+        ValueError: If :math:`batch\_dim < 0` or :math:`batch\_dim >= len(x.shape)`.
         RuntimeError: If any value of `seq_lengths` is less than 0.
         RuntimeError: If any value of `seq_lengths` is larger than `x.shape[seq_dim]`.
 
@@ -6673,7 +6673,7 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         - The input must be a 3-dimensional Tensor with shape
           :math:`(N, C \times \prod(\text{kernel_size}), L)` .
         - The output must be a 4-dimensional Tensor with shape
-          :math:`(N, C, output_size[0], output_size[1], ...)` .
+          :math:`(N, C, output\_size[0], output\_size[1], ...)` .
 
     Args:
         input (Tensor): 3-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.

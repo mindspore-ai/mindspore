@@ -16,9 +16,9 @@ mindspore.ops.reverse_sequence
 
     异常：
         - **TypeError** - `seq_dim` 或 `batch_dim` 不是int。
-        - **ValueError** - 如果 :math:`len(seq_lengths) != x.shape[batch_dim]`。
-        - **ValueError** - 如果 :math:`batch_dim == seq_dim`。
-        - **ValueError** - 如果 :math:`seq_dim < 0` 或 :math:`seq_dim >= len(x.shape)`。
-        - **ValueError** - 如果 :math:`batch_dim < 0` 或 :math:`batch_dim >= len(x.shape)`。
+        - **ValueError** - 如果 :math:`len(seq\_lengths) != x.shape[batch\_dim]`。
+        - **ValueError** - 如果 :math:`batch\_dim == seq\_dim`。
+        - **ValueError** - 如果 :math:`seq\_dim < 0` 或 :math:`seq\_dim >= len(x.shape)`。
+        - **ValueError** - 如果 :math:`batch\_dim < 0` 或 :math:`batch\_dim >= len(x.shape)`。
         - **RuntimeError** - 如果 `seq_lengths` 中的任意一个值小于0。
         - **RuntimeError** - 如果 `seq_lengths` 中的任意一个值大于 `x.shape[seq_dim]` 。

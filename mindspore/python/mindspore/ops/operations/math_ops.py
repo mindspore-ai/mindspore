@@ -8533,11 +8533,11 @@ class FFTWithSize(Primitive):
             satisfied. Default: ``()`` .
 
             - The length of `signal_sizes` is equal to the signal_ndim of the IRFFT:
-              :math:`len(signal_sizes)=signal_ndim`.
+              :math:`len(signal\_sizes)=signal\_ndim`.
             - The last dimension of `signal_sizes` divided by 2 is equal to
-              the last dimension of the IRFFT input: :math:`signal_size[-1]/2+1=x.shape[-1]`.
+              the last dimension of the IRFFT input: :math:`signal\_size[-1]/2+1=x.shape[-1]`.
             - `signal_sizes` has exactly the same dimensions as the input shape
-              except for the last dimension: :math:`signal_sizes[:-1]=x.shape[:-1]`.
+              except for the last dimension: :math:`signal\_sizes[:-1]=x.shape[:-1]`.
 
     Inputs:
         - **x** (Tensor) - The dimension of the input tensor must be greater than or equal to signal_ndim.

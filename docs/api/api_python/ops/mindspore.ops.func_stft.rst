@@ -13,12 +13,12 @@ mindspore.ops.stft
         \text { window }[k] \text { input }[m \times \text { hop_length }+
         k] \exp \left(-j \frac{2 \pi \cdot \omega k}{\text { win_length }}\right)
 
-    其中 :math:`m` 是滑动窗口的索引，:math:`ω` 是频率，其范围在 :math:`0 \leq \omega < \text{n\_fft}0≤ω<n_fft` 。
+    其中 :math:`m` 是滑动窗口的索引，:math:`ω` 是频率，其范围在 :math:`0 \leq \omega < \text{n\_fft}0≤ω<n\_fft` 。
 
     参数：
         - **x** (Tensor) - STFT的时间序列，必须是1-D Tensor或2-D Tensor。
         - **n_fft** (int) - 傅里叶变换的尺寸。
-        - **hop_length** (int，可选) - 相邻滑动窗口之间的距离。如果为 ``None`` ，取值视为 :math:`floor(n_fft / 4)` 。默认值： ``None`` 。
+        - **hop_length** (int，可选) - 相邻滑动窗口之间的距离。如果为 ``None`` ，取值视为 :math:`floor(n\_fft / 4)` 。默认值： ``None`` 。
         - **win_length** (int，可选) - 窗口和STFT过滤器的尺寸。如果为 ``None`` ，取值视为 `n_fft` 。默认值： ``None`` 。
         - **window** (Tensor，可选) - 可选的窗口函数，是一个长度为 `win_length` 的一维Tensor。如果为 ``None`` ，视为所含元素都为1。如果 `win_length` < `n_fft` ，在 `window` 两侧填充1至长度为 `n_fft` 后才生效。默认值： ``None`` 。
         - **center** (bool，可选) - 是否填充 `x` 两侧。默认值： ``True`` 。
@@ -35,12 +35,12 @@ mindspore.ops.stft
           - 如果 `return_complex` 为 ``False`` ，则返回一个实数Tensor，shape为 :math:`(*, N, T, 2)` 。
 
           `N` 为傅立叶变换的尺寸，取值受参数 `onesided` 影响：
-          - 如果 `onesided` 为 ``False`` ， :math:`N = n_fft` 。
-          - 如果 `onesided` 为 ``True`` ， :math:`N = n_fft // 2 + 1` 。
+          - 如果 `onesided` 为 ``False`` ， :math:`N = n\_fft` 。
+          - 如果 `onesided` 为 ``True`` ， :math:`N = n\_fft // 2 + 1` 。
             
-          `T` 为使用的总帧数，计算公式：:math:`T = 1 + (len - n_fft) / hop_length` ，其中 :math:`len` 取值受 `center` 影响：
-          - 如果 `center` 为 ``False`` ，则 :math:`len = signal_length` 。
-          - 如果 `center` 为 ``True`` ，则 :math:`len = signal_length + (n_fft // 2) * 2` 。
+          `T` 为使用的总帧数，计算公式： :math:`T = 1 + (len - n\_fft) / hop\_length` ，其中 :math:`len` 取值受 `center` 影响：
+          - 如果 `center` 为 ``False`` ，则 :math:`len = signal\_length` 。
+          - 如果 `center` 为 ``True`` ，则 :math:`len = signal\_length + (n\_fft // 2) * 2` 。
 
           其中signal_length为信号长度，取值 :math:`x.shape[-1]` 。     
 

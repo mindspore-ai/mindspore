@@ -26,7 +26,7 @@ mindspore.ops.binary_cross_entropy_with_logits
 
     该算子会将输出乘以相应的权重。
     :math:`weight` 表示一个batch中的每条数据分配不同的权重，
-    :math:`pos_weight` 为每个类别的正例子添加相应的权重。
+    :math:`pos\_weight` 为每个类别的正例子添加相应的权重。
 
     此外，它可以通过向正例添加权重来权衡召回率和精度。
     在多标签分类的情况下，损失可以描述为：

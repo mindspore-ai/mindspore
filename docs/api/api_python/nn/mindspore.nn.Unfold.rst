@@ -28,5 +28,5 @@ mindspore.nn.Unfold
 
     异常：
         - **TypeError** - `ksize` ， `strides` 或 `rates` 既不是tuple，也不是list。
-        - **ValueError** - `ksize` ， `strides` 或 `rates` 的shape不是 :math:`(1, x_row, x_col, 1)`。
+        - **ValueError** - `ksize` ， `strides` 或 `rates` 的shape不是 :math:`(1, x\_row, x\_col, 1)`。
         - **ValueError** - `ksize` ， `strides` 或 `rates` 的第二个和第三个元素小于1。

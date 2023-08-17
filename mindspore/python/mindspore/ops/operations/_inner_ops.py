@@ -76,11 +76,11 @@ class ExtractImagePatches(Primitive):
             - valid: Means that the taken patch area must be completely covered in the original image.
 
     Inputs:
-        - **input_x** (Tensor) - A 4-D tensor whose shape is :math:`(in_batch, in_depth, in_row, in_col)`.
+        - **input_x** (Tensor) - A 4-D tensor whose shape is :math:`(in\_batch, in\_depth, in\_row, in\_col)`.
 
     Outputs:
         Tensor, a 4-D tensor whose data type is same as 'input_x', and the shape
-        is :math:`(out_batch, out_depth, out_row, out_col)`,where the out_batch is the same as the in_batch
+        is :math:`(out\_batch, out\_depth, out\_row, out\_col)`,where the out_batch is the same as the in_batch
         and
 
         .. math::
