@@ -157,6 +157,7 @@ class FillInfer : public abstract::OpInferBase {
     TypePtr value_dtype;
     auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
     auto input2_dtype = input_args[2]->BuildType();
+    MS_EXCEPTION_IF_NULL(input2_dtype);
     TypePtr input2_element_dtype;
     if (input2_dtype->isa<TensorType>()) {
       auto tensor_type = input2_dtype->cast<TensorTypePtr>();
