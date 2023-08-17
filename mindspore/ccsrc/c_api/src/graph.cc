@@ -38,6 +38,24 @@ GraphHandle MSFuncGraphCreate(ResMgrHandle res_mgr) {
   return GetRawPtr(res_mgr, fg);
 }
 
+GraphHandle MSFuncGraphLoad(ResMgrHandle res_mgr, const char *file_path) {
+  if (res_mgr == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
+    return nullptr;
+  }
+  try {
+    mindspore::MindIRLoader mind_loader(false, nullptr, 0, "AES-GCM", false);
+    auto fg = mind_loader.LoadMindIR(file_path);
+    if (fg == nullptr) {
+      MS_LOG(ERROR) << "Load funcgraph from MINDIR fail.";
+    }
+    return GetRawPtr(res_mgr, fg);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "FuncGraph load failed. Error info: " << e.what();
+    return nullptr;
+  }
+}
+
 NodeHandle MSFuncGraphGetInput(ResMgrHandle res_mgr, ConstGraphHandle graph, size_t i) {
   if (res_mgr == nullptr || graph == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [cnode] is nullptr.";
@@ -307,6 +325,7 @@ STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph, OptPassID *op
         MS_LOG(WARNING) << "Run optimization pass failed! Pass ID: " << opt_pass[i];
       }
     }
+    context_ptr->set_param<bool>(mindspore::MS_CTX_ENABLE_MINDRT, true);
     auto actor_info = backend->CompileGraphs(func_graph);
     res_mgr_ptr->SetResult(mindspore::pipeline::kOutput, actor_info);
   } catch (const std::exception &e) {

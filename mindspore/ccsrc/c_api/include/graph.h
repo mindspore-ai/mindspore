@@ -35,6 +35,14 @@ extern "C" {
 /// \return The created function graph.
 MIND_C_API GraphHandle MSFuncGraphCreate(ResMgrHandle res_mgr);
 
+/// \brief Load function graph from MINDIR.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] file_path The path of MINDIR.
+///
+/// \return The loaded function graph.
+MIND_C_API GraphHandle MSFuncGraphLoad(ResMgrHandle res_mgr, const char *file_path);
+
 /// \brief Get the input node of the function graph.
 ///
 /// \param[in] res_mgr Resource manager that saves allocated instance resources.
