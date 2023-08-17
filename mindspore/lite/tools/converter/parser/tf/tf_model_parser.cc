@@ -658,6 +658,7 @@ STATUS TFModelParser::ConvertSubgraphInputs(std::map<std::string, const tensorfl
   MSLITE_CHECK_PTR(anf_sub_node_map);
   MSLITE_CHECK_PTR(cnode);
   MSLITE_CHECK_PTR(sub_func_graph);
+  MSLITE_CHECK_PTR(tf_sub_node_map);
   std::vector<ParameterPtr> sub_graph_inputs;
   auto &tf_sub_signature = tf_sub_fuction.signature();
   auto &sub_graph_name = tf_sub_signature.name();
@@ -700,6 +701,7 @@ STATUS TFModelParser::ConvertSubgraphOutputs(std::map<std::string, const tensorf
                                              const tensorflow::FunctionDef &tf_sub_fuction,
                                              const FuncGraphPtr &sub_func_graph) {
   MSLITE_CHECK_PTR(sub_func_graph);
+  MSLITE_CHECK_PTR(tf_sub_node_map);
   auto &tf_sub_signature = tf_sub_fuction.signature();
   auto &sub_graph_name = tf_sub_signature.name();
 
@@ -1371,6 +1373,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
 
 int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs,
                                 std::map<AnfNodePtr, int> *ineffective_if_op_map) {
+  MSLITE_CHECK_PTR(ineffective_if_op_map);
   for (const auto &func_graph : all_func_graphs) {
     if (!TfInputAdjust::Adjust(func_graph)) {
       MS_LOG(ERROR) << "Do TfInputAdjust failed.";
