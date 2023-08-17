@@ -68,8 +68,8 @@ void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const st
   TypeCompare(infer_type, expect_type);
 }
 
-void TestOpFuncImplWithMutiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
-                                         const MutiInputOpParams &param) {
+void TestOpFuncImplWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
+                                          const MultiInputOpParams &param) {
   auto primitive = std::make_shared<Primitive>(prim_name);
   ASSERT_NE(primitive, nullptr);
   ASSERT_TRUE(!param.in_shape_array.empty());

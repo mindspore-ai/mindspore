@@ -21,17 +21,17 @@
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(LogMatrixDeterminant, MutiInputOpParams);
+OP_FUNC_IMPL_TEST_DECLARE(LogMatrixDeterminant, MultiInputOpParams);
 
 OP_FUNC_IMPL_TEST_CASES(
   LogMatrixDeterminant,
   testing::Values(
-    MutiInputOpParams{{{2, 3, 4, 2, 2}}, {kFloat32}, {{2, 3, 4}, {2, 3, 4}}, {kFloat32, kFloat32}},
-    MutiInputOpParams{{{2, 3, 4, -1, -1}}, {kFloat32}, {{2, 3, 4}, {2, 3, 4}}, {kFloat32, kFloat32}},
-    MutiInputOpParams{{{2, 3, -1, -1, -1}}, {kFloat32}, {{2, 3, -1}, {2, 3, -1}}, {kFloat32, kFloat32}},
-    MutiInputOpParams{{{2, -1, -1, -1, -1}}, {kFloat32}, {{2, -1, -1}, {2, -1, -1}}, {kFloat32, kFloat32}},
-    MutiInputOpParams{{{-1, -1, -1, -1, -1}}, {kFloat32}, {{-1, -1, -1}, {-1, -1, -1}}, {kFloat32, kFloat32}},
-    MutiInputOpParams{{{-2}}, {kFloat32}, {{-2}, {-2}}, {kFloat32, kFloat32}}
+    MultiInputOpParams{{{2, 3, 4, 2, 2}}, {kFloat32}, {{2, 3, 4}, {2, 3, 4}}, {kFloat32, kFloat32}},
+    MultiInputOpParams{{{2, 3, 4, -1, -1}}, {kFloat32}, {{2, 3, 4}, {2, 3, 4}}, {kFloat32, kFloat32}},
+    MultiInputOpParams{{{2, 3, -1, -1, -1}}, {kFloat32}, {{2, 3, -1}, {2, 3, -1}}, {kFloat32, kFloat32}},
+    MultiInputOpParams{{{2, -1, -1, -1, -1}}, {kFloat32}, {{2, -1, -1}, {2, -1, -1}}, {kFloat32, kFloat32}},
+    MultiInputOpParams{{{-1, -1, -1, -1, -1}}, {kFloat32}, {{-1, -1, -1}, {-1, -1, -1}}, {kFloat32, kFloat32}},
+    MultiInputOpParams{{{-2}}, {kFloat32}, {{-2}, {-2}}, {kFloat32, kFloat32}}
   ));
 }  // namespace ops
 }  // namespace mindspore

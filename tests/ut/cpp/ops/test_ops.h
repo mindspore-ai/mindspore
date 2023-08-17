@@ -59,7 +59,7 @@ struct BroadcastOpParams {
   TypePtr out_type;
 };
 
-struct MutiInputOpParams {
+struct MultiInputOpParams {
   std::vector<ShapeVector> in_shape_array;
   std::vector<TypePtr> in_type_list;
   std::vector<ShapeVector> out_shape_array;

@@ -28,7 +28,7 @@ BaseShapePtr LogMatrixDeterminantFuncImpl::InferShape(const PrimitivePtr &primit
   MS_EXCEPTION_IF_NULL(x_shape);
   const auto x_shape_vec = x_shape->GetShapeVector();
   if (IsDynamicRank(x_shape_vec)) {
-    auto dyn_shape = std::make_shared<abstract::Shape>(ShapeVector(abstract::Shape::kShapeRankAny));
+    auto dyn_shape = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{dyn_shape, dyn_shape});
   }
   constexpr size_t kMinRank = 2;

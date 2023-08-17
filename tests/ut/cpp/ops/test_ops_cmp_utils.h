@@ -40,8 +40,8 @@ void DoFuncImplInferAndCompare(const std::string &prim_name, const abstract::Abs
 
 void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
                                        const EltwiseOpParams &param);
-void TestOpFuncImplWithMutiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
-                                         const MutiInputOpParams &param);
+void TestOpFuncImplWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
+                                          const MultiInputOpParams &param);
 #define OP_FUNC_IMPL_TEST_DECLARE(op_name, param_name)                                           \
   class Test##op_name : public TestOps, public testing::WithParamInterface<param_name> {};       \
   TEST_P(Test##op_name, op_name##_DynamicShape) {                                                \

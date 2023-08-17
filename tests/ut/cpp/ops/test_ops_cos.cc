@@ -21,11 +21,11 @@
 
 namespace mindspore {
 namespace ops {
-ELTWISE_OP_FUNC_IMPL_TEST_DECLARE(Cos);
+OP_FUNC_IMPL_TEST_DECLARE(Cos, EltwiseOpParams);
 
-ELTWISE_OP_FUNC_IMPL_TEST_CASES(Cos, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                                     EltwiseOpParams{{-1, 3}, kFloat32, {-1, 3}, kFloat32},
-                                                     EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                                     EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+OP_FUNC_IMPL_TEST_CASES(Cos, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
+                                             EltwiseOpParams{{-1, 3}, kFloat32, {-1, 3}, kFloat32},
+                                             EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
+                                             EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
 }  // namespace ops
 }  // namespace mindspore
