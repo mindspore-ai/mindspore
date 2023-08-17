@@ -728,6 +728,7 @@ int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph,
       MS_LOG(ERROR) << "fetch shape failed." << input_node->fullname_with_scope();
       return lite::RET_ERROR;
     }
+
     std::vector<int64_t> shape_vector = {};
     for (size_t i = 0; i < shape.size(); i++) {
       if (i == static_cast<size_t>(axis)) {
