@@ -316,7 +316,6 @@ int QuantizationOptimizer::DoSingleGraphQuantize(const FuncGraphPtr &func_graph,
     auto fusion_pm = std::make_shared<opt::LitePassManager>("fusion pass manager after quant", false);
     CHECK_NULL_RETURN(fusion_pm);
     fusion_pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
     optimizer->AddPassManager(fusion_pm);
     if (optimizer->Optimize(func_graph) == nullptr) {
       MS_LOG(ERROR) << "run cast node fusion failed.";
@@ -356,6 +355,18 @@ int QuantizationOptimizer::Run(const mindspore::FuncGraphPtr &func_graph) {
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do Quantize failed.";
       return status;
+    }
+  }
+  if (param_->fullQuantParam.target_device != ASCEND) {
+    auto optimizer = std::make_shared<opt::GraphOptimizer>();
+    CHECK_NULL_RETURN(optimizer);
+    auto fusion_pm = std::make_shared<opt::LitePassManager>("fusion pass manager after quant", false);
+    CHECK_NULL_RETURN(fusion_pm);
+    fusion_pm->AddPass(std::make_shared<opt::InferShapePass>(param_->fmk_type, param_->train_model));
+    optimizer->AddPassManager(fusion_pm);
+    if (optimizer->Optimize(func_graph) == nullptr) {
+      MS_LOG(ERROR) << "run infershape failed.";
+      return RET_ERROR;
     }
   }
   return RET_OK;
