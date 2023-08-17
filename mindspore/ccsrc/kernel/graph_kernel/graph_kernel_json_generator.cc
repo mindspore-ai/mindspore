@@ -1243,7 +1243,12 @@ bool GetGpuInfo(nlohmann::json *target_info) {
   return true;
 }
 #else
-bool GetGpuInfo(nlohmann::json *) { return false; }
+bool GetGpuInfo(nlohmann::json *target_info) {
+  // only support nvidia v100
+  (*target_info)[kJsonKeyComputeCapability] = "7.0";
+  (*target_info)[kJsonKeySmCount] = 108;
+  return true;
+}
 #endif
 #else
 bool GetGpuInfo(nlohmann::json *target_info) {

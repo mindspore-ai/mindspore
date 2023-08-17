@@ -462,7 +462,12 @@ TensorRTOp *TensorRTExecutor::FindTensorRTOp(const CNodePtr &cnode, const BaseOp
   auto &plugin_factory = TensorRTRegistrationFactory::Get();
   if (node_type == ops::kNameCustom) {
     auto custom_node = std::dynamic_pointer_cast<ops::Custom>(base_operator);
-    node_type = custom_node->get_type();
+    auto attrs = custom_node->get_attr();
+    if (attrs.find("unique_name") != attrs.end()) {
+      auto unique_name = attrs.at("unique_name");
+      node_type =
+        std::string(static_cast<const char *>(static_cast<const void *>(unique_name.data())), unique_name.size());
+    }
   }
   if (plugin_factory.HasKey(node_type)) {
     TensorRTOp *tensorrt_op = plugin_factory.GetCreator(node_type)(base_operator, input_tensors, output_tensors, name);
