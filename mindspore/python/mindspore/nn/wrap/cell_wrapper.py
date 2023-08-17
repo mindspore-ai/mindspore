@@ -667,6 +667,7 @@ class PipelineCell(Cell):
                 ret = output
         return ret
 
+
 class GradAccumulationCell(Cell):
     """
     Wrap the network with Micro Batch.
