@@ -1001,12 +1001,12 @@ REG_BPROP_BUILDER("AvgPool").SetBody(BODYFUNC(ib) {
   auto strides = ib->GetInput(kIndex4);
   auto pad_mode = ib->GetInput(kIndex5);
   auto format = ib->GetInput(kIndex6);
-  auto true_branch = [&kernel_size, &strides](const Emitter *e) -> NodePtrList {
+  auto true_branch = [&kernel_size, &strides](Emitter *e) -> NodePtrList {
     auto new_kernel = PoolToNHWCBlock(e, kernel_size);
     auto new_strides = PoolToNHWCBlock(e, strides);
     return {new_kernel, new_strides};
   };
-  auto false_branch = [&kernel_size, &strides](const Emitter *e) -> NodePtrList { return {kernel_size, strides}; };
+  auto false_branch = [&kernel_size, &strides](Emitter *e) -> NodePtrList { return {kernel_size, strides}; };
   auto cond = ib->Equal(format, ib->Value<int64_t>(NHWC));
   auto cond_block = ib->Conditional(cond, true_branch, false_branch);
   auto dx =
