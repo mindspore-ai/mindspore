@@ -113,6 +113,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     """
     Tensor is a data structure that stores an n-dimensional array.
 
+    Note:
+        If 'init' interface is used to initialize Tensor, the `Tensor.init_data` API needs to be called to load the
+        actual data to `Tensor`.
+
     Args:
         input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): The data to be stored. It can be
             another Tensor, Python number or NumPy ndarray. Default: ``None`` .
@@ -125,10 +129,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             doesn't need to be set; if None not in shape, a tensor of static shape is created, `input_data` or `init`
             must be set. Default: ``None`` .
         init (Initializer): The information of init data.
-            'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to use
-            'init' interface to initialize Tensor in the other conditions. If 'init' interface is used to initialize
-            Tensor, the `Tensor.init_data` API needs to be called to convert `Tensor` to the actual data.
-            Default: ``None`` .
+            'init' is used for delayed initialization in parallel mode, when using init, `dtype` and `shape` must be
+            set. Default: ``None`` .
         internal (bool): Whether it is created by the framework.
             ``'True'`` means that the tensor is created by framework.
             ``'False'`` means that the tensor is created by user.
@@ -2647,7 +2649,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
                 Default: ``None``.
             opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
-                to get one shard of a parameter's slice. Default: ``None``.
+                to get one shard of a parameter's slice. For more information about optimizer parallel, please refer to:
+                `Optimizer Parallel
+                <https://www.mindspore.cn/tutorials/experts/en/master/parallel/optimizer_parallel.html>`_.
+                Default: ``None``.
 
         Returns:
             Initialized Tensor.
