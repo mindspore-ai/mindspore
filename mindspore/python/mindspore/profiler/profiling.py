@@ -167,6 +167,7 @@ def _calculate_dataset_execution_time(input_file, output_file):
         csv_writer.writerow(['Operation', 'Stage', 'Occurrences', 'Avg. time (us)', 'Custom Info'])
         for _, v in execution_time_map.items():
             csv_writer.writerow([v.event, v.stage, v.count, v.average_execution, v.custom_info])
+    os.chmod(output_file, modes)
     logger.info('Successfully calculate the execution time and write it to file: %s.', output_file)
 
 
@@ -236,11 +237,12 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
                 logger.error("Error occur when analyse line: %s, Details is: %s", row, e)
                 continue
     if memory_info:
-        with os.fdopen(os.open(output_memory_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as csv_file:
+        with os.fdopen(os.open(output_memory_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=memory_header)
             csv_writer.writeheader()
             for item in memory_info:
                 csv_writer.writerow(item)
+        os.chmod(output_memory_file, stat.S_IREAD | stat.S_IWRITE)
     else:
         logger.warning("No memory_usage is record in file: %s", input_file)
 
@@ -264,8 +266,9 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
 
     if time_line:
         timeline_file = validate_and_normalize_path(output_timeline_file)
-        with os.fdopen(os.open(timeline_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as json_file:
+        with os.fdopen(os.open(timeline_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
             json.dump(time_line, json_file)
+        os.chmod(timeline_file, stat.S_IREAD | stat.S_IWRITE)
     else:
         logger.warning("No valid time_stamp is record in file: %s", input_file)
 

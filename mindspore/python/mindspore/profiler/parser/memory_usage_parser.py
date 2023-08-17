@@ -163,9 +163,9 @@ class MemoryUsageParser:
         file_path = validate_and_normalize_path(file_path)
 
         try:
-            with open(file_path, 'w') as json_file:
+            with os.fdopen(os.open(file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
                 json.dump(content, json_file)
-                os.chmod(file_path, stat.S_IREAD | stat.S_IWRITE)
+            os.chmod(file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.critical('Fail to write memory file.\n%s', err)
             raise ProfilerIOException from err

@@ -15,6 +15,7 @@
 """Op intermediate files parser."""
 import csv
 import os
+import stat
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException
 from mindspore import log as logger
@@ -97,7 +98,7 @@ class OPIntermediateParser:
 
         op_op_file_path = os.path.join(self._profiling_dir,
                                        self._file_name_op_intermediate_detail.format(self._rank_id))
-        with os.fdopen(os.open(op_op_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as op_file:
+        with os.fdopen(os.open(op_op_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as op_file:
             csv_writer = csv.writer(op_file)
             csv_writer.writerow(self._op_intermediate_op_header)
 
@@ -106,6 +107,7 @@ class OPIntermediateParser:
                     op_name, round(op_name_time_info[1] / op_name_time_info[0], self._ms_decimal_digits)
                 ]
                 csv_writer.writerow(op_info)
+        os.chmod(op_op_file_path, stat.S_IREAD | stat.S_IWRITE)
 
     def parser_pynative_op_type(self):
         """Parse pynative op intermediate type."""
@@ -134,7 +136,7 @@ class OPIntermediateParser:
 
         op_type_file_path = os.path.join(self._profiling_dir,
                                          self._file_name_op_intermediate_type.format(self._rank_id))
-        with os.fdopen(os.open(op_type_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as type_file:
+        with os.fdopen(os.open(op_type_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as type_file:
             csv_writer = csv.writer(type_file)
             csv_writer.writerow(self._op_intermediate_type_header)
 
@@ -144,3 +146,4 @@ class OPIntermediateParser:
                     round((op_type_time_info[1] / sum_avg_time) * 100, self._percent_decimal_digits)
                 ]
                 csv_writer.writerow(type_info)
+        os.chmod(op_type_file_path, stat.S_IREAD | stat.S_IWRITE)
