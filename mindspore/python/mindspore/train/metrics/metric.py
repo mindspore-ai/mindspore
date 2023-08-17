@@ -81,6 +81,42 @@ class Metric(metaclass=ABCMeta):
     Never use this class directly, but instantiate one of its subclasses instead, for examples,
     :class:`mindspore.train.MAE`, :class:`mindspore.train.Recall` etc.
 
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>>
+        >>> class MyMAE(ms.train.Metric):
+        ...     def __init__(self):
+        ...         super(MyMAE, self).__init__()
+        ...         self.clear()
+        ...
+        ...     def clear(self):
+        ...         self._abs_error_sum = 0
+        ...         self._samples_num = 0
+        ...
+        ...     def update(self, *inputs):
+        ...         y_pred = inputs[0].asnumpy()
+        ...         y = inputs[1].asnumpy()
+        ...         abs_error_sum = np.abs(y - y_pred)
+        ...         self._abs_error_sum += abs_error_sum.sum()
+        ...         self._samples_num += y.shape[0]
+        ...
+        ...      def eval(self):
+        ...         return self._abs_error_sum / self._samples_num
+        >>>
+        >>> x = ms.Tensor(np.array([[0.1, 0.2, 0.6, 0.9], [0.1, 0.2, 0.6, 0.9]]), ms.float32)
+        >>> y = ms.Tensor(np.array([[0.1, 0.1, 0.1, 0.1], [0.1, 0.1, 0.1, 0.1]]), ms.float32)
+        >>> y2 = ms.Tensor(np.array([[0.1, 0.25, 0.7, 0.9], [0.1, 0.25, 0.7, 0.9]]), ms.float32)
+        >>> metric = MyMAE()
+        >>> metric.clear()
+        >>> # indexes is [0, 2], using x as logits, y2 as label.
+        >>> metric.update(x, y, y2)
+        >>> accuracy = metric.eval()
+        >>> print(accuracy)
+        1.399999976158142
+        >>> print(metric.indexes)
+        [0, 2]
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
@@ -133,22 +169,6 @@ class Metric(metaclass=ABCMeta):
 
         Raises:
             ValueError: If the type of input 'indexes'  is not a list or its elements are not all int.
-
-        Examples:
-            >>> import numpy as np
-            >>> from mindspore import Tensor
-            >>> from mindspore.train import Accuracy
-            >>>
-            >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
-            >>> y = Tensor(np.array([1, 0, 1]))
-            >>> y2 = Tensor(np.array([0, 0, 1]))
-            >>> metric = Accuracy('classification').set_indexes([0, 2])
-            >>> metric.clear()
-            >>> # indexes is [0, 2], using x as logits, y2 as label.
-            >>> metric.update(x, y, y2)
-            >>> accuracy = metric.eval()
-            >>> print(accuracy)
-            0.3333333333333333
         """
         if not isinstance(indexes, list) or not all(isinstance(i, int) for i in indexes):
             raise ValueError("For 'set_indexes', the argument 'indexes' must be a list and all its elements must "

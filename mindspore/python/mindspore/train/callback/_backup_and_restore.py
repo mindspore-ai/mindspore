@@ -59,16 +59,6 @@ class BackupAndRestore(Callback):
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> backup_ckpt = BackupAndRestore("backup")
-        >>> cb_params = {}
-        >>> cb_params["cur_epoch_num"] = 4
-        >>> cb_params["epoch_num"] = 4
-        >>> cb_params["cur_step_num"] = 2
-        >>> cb_params["batch_num"] = 2
-        >>> cb_params["net_outputs"] = Tensor(2.0)
-        >>> run_context = RunContext(cb_params)
-        >>> backup_ckpt.on_train_begin(run_context)
-        >>> backup_ckpt.on_train_epoch_end(run_context)
-        >>> backup_ckpt.on_train_end(run_context)
         >>> model.train(10, dataset, callbacks=backup_ckpt)
     """
     def __init__(self, backup_dir, save_freq="epoch", delete_checkpoint=True):

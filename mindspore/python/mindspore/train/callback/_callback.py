@@ -123,7 +123,8 @@ class Callback:
     recording current attributes. Users can add custimized attributes to the information.
     Training process can also be stopped by calling `request_stop` method. For details
     of custom Callback, please check
-    `Callback Mechanism <https://www.mindspore.cn/tutorials/en/master/advanced/model/callback.html>`_.
+    `Callback tutorial <https://www.mindspore.cn/tutorials/en/master/advanced/model/
+    callback.html#customized-callback-mechanism>`_.
 
     Examples:
         >>> import numpy as np
