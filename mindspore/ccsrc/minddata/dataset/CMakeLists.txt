@@ -49,6 +49,16 @@ endif()
 # endif()
 
 ########### Set up the include directories ###########################
+# Ascend910B
+if(DEFINED ASCEND_VERSION)
+    if(${ASCEND_VERSION} STREQUAL "910b")
+        add_definitions(-DASCEND910B)
+        set(ASCEND_INC_PATH /usr/local/Ascend/latest/aarch64-linux/include)
+        include_directories(${ASCEND_INC_PATH})
+        set(ASCEND_LIB_PATH /usr/local/Ascend/latest/runtime/lib64)
+        link_directories(${ASCEND_LIB_PATH})
+    endif()
+endif()
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/device/ascend/platform)
 
@@ -239,6 +249,15 @@ target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turb
                                           mindspore::sentencepiece_train ${ICU_LIB})
 
 target_link_libraries(_c_dataengine PRIVATE mindspore_backend)
+
+# Ascend910B DVPP
+if(DEFINED ASCEND_VERSION)
+    if(${ASCEND_VERSION} STREQUAL "910b")
+        target_link_libraries(_c_dataengine PRIVATE nnopbase)
+        target_link_libraries(_c_dataengine PRIVATE acl_dvpp_op)
+        target_link_libraries(_c_dataengine PRIVATE acl_dvpp_mpi)
+    endif()
+endif()
 
 add_dependencies(_c_dataengine _c_mindrecord)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

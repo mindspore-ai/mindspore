@@ -180,6 +180,12 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
 
   std::shared_ptr<PythonMultiprocessingRuntime> python_mp_;  // python multiprocessing instance
 
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+  // Ascend910B
+  device::DeviceContext *device_context_;
+  std::vector<size_t> stream_ids_;
+#endif
+
   // Private function for worker/thread to loop continuously. It comprises the main
   // logic of MapOp: getting the data from previous Op, validating user specified column names,
   // applying a list of TensorOps to each of the data, process the results and then
@@ -192,7 +198,7 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   // @param in_row Input TensorRow
   // @param[out] out_row Generated TensorRow
   Status WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
-                       const std::vector<std::shared_ptr<MapJob>> &job_list);
+                       const std::vector<std::shared_ptr<MapJob>> &job_list, int32_t worker_id);
 
   // Private function that create the final column name to index mapping and
   // get indices of the columns this mapop does not use.

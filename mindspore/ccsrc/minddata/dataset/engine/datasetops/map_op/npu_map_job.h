@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_MAP_OP_CPU_MAP_JOB_H_
-#define DATASET_ENGINE_DATASETOPS_MAP_OP_CPU_MAP_JOB_H_
+#ifndef DATASET_ENGINE_DATASETOPS_MAP_OP_NPU_MAP_JOB_H_
+#define DATASET_ENGINE_DATASETOPS_MAP_OP_NPU_MAP_JOB_H_
 
 #include <memory>
 #include <vector>
@@ -22,32 +22,30 @@
 
 namespace mindspore {
 namespace dataset {
-class CpuMapJob : public MapJob {
+class NpuMapJob : public MapJob {
  public:
   // Constructor
-  CpuMapJob();
+  NpuMapJob();
 
   // Constructor
-  explicit CpuMapJob(std::vector<std::shared_ptr<TensorOp>> operations);
+  explicit NpuMapJob(std::vector<std::shared_ptr<TensorOp>> operations);
 
   // Destructor
-  ~CpuMapJob();
+  ~NpuMapJob();
 
-  // A pure virtual run function to execute a cpu map job
-  Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) override;
+  // A pure virtual run function to execute a npu map job
+  Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) override {
+    RETURN_STATUS_UNEXPECTED("The run operation is not implemneted in NPU platform.");
+  }
 
-#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
   // A pure virtual run function to execute a npu map job for Ascend910B DVPP
   Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out, device::DeviceContext *device_context,
-             const size_t &stream_id) override {
-    RETURN_STATUS_UNEXPECTED("The run operation is not implemneted in CPU platform.");
-  }
-#endif
+             const size_t &stream_id) override;
 
-  MapTargetDevice Type() override { return MapTargetDevice::kCpu; }
+  MapTargetDevice Type() override { return MapTargetDevice::kAscend910B; }
 };
 
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_MAP_OP_CPU_MAP_JOB_H_
+#endif  // DATASET_ENGINE_DATASETOPS_MAP_OP_NPU_MAP_JOB_H_

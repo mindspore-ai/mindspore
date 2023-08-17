@@ -158,6 +158,14 @@ bool AscendDeviceResManager::CreateStream(size_t *stream_id) const {
   return true;
 }
 
+void *AscendDeviceResManager::GetStream(size_t stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return nullptr;
+  }
+  return AscendStreamMng::GetInstance().GetStream(stream_id);
+}
+
 bool AscendDeviceResManager::DestroyStream(size_t stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Bind context to current thread failed";

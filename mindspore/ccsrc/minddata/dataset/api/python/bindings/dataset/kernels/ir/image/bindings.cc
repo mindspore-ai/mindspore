@@ -19,6 +19,9 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+#include "minddata/dataset/kernels/image/dvpp_image_utils.h"
+#endif
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_contrast_ir.h"
@@ -803,8 +806,9 @@ PYBIND_REGISTER(RescaleOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(ResizeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::ResizeOperation, TensorOperation, std::shared_ptr<vision::ResizeOperation>>(
                     *m, "ResizeOperation")
-                    .def(py::init([](const std::vector<int32_t> &size, InterpolationMode interpolation_mode) {
-                      auto resize = std::make_shared<vision::ResizeOperation>(size, interpolation_mode);
+                    .def(py::init([](const std::vector<int32_t> &size, InterpolationMode interpolation_mode,
+                                     std::string device_target) {
+                      auto resize = std::make_shared<vision::ResizeOperation>(size, interpolation_mode, device_target);
                       THROW_IF_ERROR(resize->ValidateParams());
                       return resize;
                     }));

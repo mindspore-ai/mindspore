@@ -7,4 +7,12 @@ set(DATASET_ENGINE_DATASETOPS_MAPOP_SRC_FILES
   gpu_map_job.cc
   )
 
+if(DEFINED ASCEND_VERSION)
+    if(${ASCEND_VERSION} STREQUAL "910b")
+        set(DATASET_ENGINE_DATASETOPS_MAPOP_SRC_FILES
+            ${DATASET_ENGINE_DATASETOPS_MAPOP_SRC_FILES}
+            npu_map_job.cc)
+    endif()
+endif()
+
 add_library(engine-datasetops-mapop OBJECT ${DATASET_ENGINE_DATASETOPS_MAPOP_SRC_FILES})

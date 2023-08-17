@@ -27,6 +27,9 @@
 #include "minddata/dataset/core/tensor_row.h"
 
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+#include "minddata/dataset/engine/datasetops/map_op/npu_map_job.h"
+#endif
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
@@ -54,6 +57,56 @@ MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std
       tensor_operations_.begin(), tensor_operations_.end(), std::back_inserter(tfuncs_[i]),
       [](std::shared_ptr<TensorOperation> operation) -> std::shared_ptr<TensorOp> { return operation->Build(); });
   }
+
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+  // init Ascend910B resource
+  bool dvpp_flag = false;
+  for (auto &op : tfuncs_[0]) {
+    if (op->IsDvppOp()) {
+      dvpp_flag = true;
+      break;
+    }
+  }
+
+  if (dvpp_flag) {
+    auto soc_version = std::string(aclrtGetSocName());
+    if (soc_version.find("Ascend910B") != 0) {
+      std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B";
+      MS_LOG(EXCEPTION) << err_msg;
+      return;
+    }
+
+    MS_LOG(INFO) << "Init resource for Ascend910B.";
+    auto ms_context = MsContext::GetInstance();
+    if (ms_context == nullptr) {
+      MS_LOG(EXCEPTION) << "Get ms context failed by MsContext::GetInstance()";
+      return;
+    }
+    device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    if (device_context_ == nullptr) {
+      MS_LOG(EXCEPTION) << "Get device context failed by ms context";
+      return;
+    }
+    device_context_->Initialize();
+    if (device_context_->device_res_manager_ == nullptr) {
+      MS_LOG(EXCEPTION) << "The device resource manager is null";
+      return;
+    }
+
+    // create stream for every map workers
+    for (int32_t i = 0; i < num_workers; i++) {
+      size_t stream_id = 0;
+      if (device_context_->device_res_manager_->CreateStream(&stream_id) != true) {
+        std::string err_msg = "Create new stream failed on Ascend910B platform.";
+        MS_LOG(EXCEPTION) << err_msg;
+        return;
+      }
+      MS_LOG(INFO) << "Create new stream id: " << std::to_string(stream_id);
+      stream_ids_.push_back(stream_id);
+    }
+  }
+#endif
 
   if (out_columns_.empty() || out_columns_[0].empty()) {
     out_columns_ = in_columns_;
@@ -98,29 +151,53 @@ Status MapOp::FetchNextWork(int32_t worker_id, TensorRow *row, std::vector<std::
 }
 
 Status MapOp::GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job, int32_t worker_id) {
+  // create the map_job by first op
   std::shared_ptr<MapJob> map_job = nullptr;
   MapTargetDevice prev_target = MapTargetDevice::kCpu;
-  for (size_t j = 0; j < tfuncs_[worker_id].size(); j++) {
-    // Currently we only have CPU as the device target
-    // In the future, we will have heuristic or control from user to select target device
+  CHECK_FAIL_RETURN_UNEXPECTED(tfuncs_[worker_id].size() > 0, "[Internal ERROR] Map's operations is null.");
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+  if (tfuncs_[worker_id][0]->IsDvppOp()) {
+    prev_target = MapTargetDevice::kAscend910B;
+    map_job = std::make_shared<NpuMapJob>();
+  } else {
+#endif
+    map_job = std::make_shared<CpuMapJob>();
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+  }
+#endif
+  RETURN_IF_NOT_OK(map_job->AddOperation(tfuncs_[worker_id][0]));
+
+  // continue create job from the second op
+  for (size_t j = 1; j < tfuncs_[worker_id].size(); j++) {
     MapTargetDevice target_device = MapTargetDevice::kCpu;
-
-    // If there is no existing map_job, we will create one.
-    // map_job could be nullptr when we are at the first tensor op or when the target device of the prev op
-    // is different with that of the current op.
-    if (map_job == nullptr) {
-      map_job = std::make_shared<CpuMapJob>();
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+    if (tfuncs_[worker_id][j]->IsDvppOp()) {
+      target_device = MapTargetDevice::kAscend910B;
     }
-    RETURN_IF_NOT_OK(map_job->AddOperation(tfuncs_[worker_id][j]));
+#endif
 
-    // Push map_job into worker_job if one of the two conditions is true:
-    // 1) It is the last tensor operation in tfuncs_
-    // 2) The the target device of the current tensor operation is different with previous one
-    if ((j + 1 == tfuncs_[worker_id].size()) || ((j != 0) && (prev_target != target_device))) {
+    if (target_device != prev_target) {
       (*worker_job)->jobs.push_back(std::move(map_job));
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+      // create a new map_job for different target device operation
+      if (target_device == MapTargetDevice::kAscend910B) {
+        map_job = std::make_shared<NpuMapJob>();
+      } else {
+#endif
+        map_job = std::make_shared<CpuMapJob>();
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+      }
+#endif
+      RETURN_IF_NOT_OK(map_job->AddOperation(tfuncs_[worker_id][j]));
+    } else {
+      RETURN_IF_NOT_OK(map_job->AddOperation(tfuncs_[worker_id][j]));
     }
 
     prev_target = target_device;
+  }
+
+  if (map_job != nullptr) {
+    (*worker_job)->jobs.push_back(std::move(map_job));
   }
 
   return Status::OK();
@@ -226,7 +303,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
       CHECK_FAIL_RETURN_UNEXPECTED(in_row.size() != 0, "[Internal ERROR] MapOp got an empty TensorRow.");
       TensorRow out_row;
       // Perform the compute function of TensorOp(s) and store the result in new_tensor_table.
-      RETURN_IF_NOT_OK(WorkerCompute(in_row, &out_row, job_list));
+      RETURN_IF_NOT_OK(WorkerCompute(in_row, &out_row, job_list, worker_id));
       RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"TensorRowFlags", in_row.FlagName()}}));
       // Push the row onto the connector for next operator to consume.
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(out_row)));
@@ -241,7 +318,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
 }
 
 Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
-                            const std::vector<std::shared_ptr<MapJob>> &job_list) {
+                            const std::vector<std::shared_ptr<MapJob>> &job_list, int32_t worker_id) {
   int32_t num_cols = in_row.size();
 
   std::vector<TensorRow> job_input_table;
@@ -270,7 +347,17 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
   for (size_t i = 0; i < job_list.size(); i++) {
     RETURN_IF_INTERRUPTED();
     // Execute MapWorkerJob.
-    Status rc = job_list[i]->Run(job_input_table, &result_table);
+    Status rc;
+    if (job_list[i]->Type() == MapTargetDevice::kCpu) {
+      rc = job_list[i]->Run(job_input_table, &result_table);
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+    } else if (job_list[i]->Type() == MapTargetDevice::kAscend910B) {
+      rc = job_list[i]->Run(job_input_table, &result_table, device_context_, stream_ids_[worker_id]);
+#endif
+    } else {
+      RETURN_STATUS_UNEXPECTED("The map job type: " + std::to_string(static_cast<int>(job_list[i]->Type())) +
+                               " is not implemented.");
+    }
     if (rc.IsError()) {
       if (GlobalContext::config_manager()->error_samples_mode() == ErrorSamplesMode::kReplace) {
         MS_LOG(WARNING)

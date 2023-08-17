@@ -50,8 +50,30 @@ Status TensorOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::shared
   IO_CHECK(input, output);
   RETURN_STATUS_UNEXPECTED(
     "Wrong Compute() function is called. This is a function for operators which can be executed by"
-    "different device. If so, please implement it in the derived class.");
+    " Ascend310 device. If so, please implement it in the derived class.");
 }
+
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+Status TensorOp::Compute(const std::vector<std::shared_ptr<DeviceTensorAscend910B>> &input,
+                         std::vector<std::shared_ptr<DeviceTensorAscend910B>> *output) {
+  IO_CHECK_VECTOR(input, output);
+  if (OneToOne()) {
+    CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "The op is OneToOne, can only accept one tensor as input.");
+    output->resize(1);
+    return Compute(input[0], &(*output)[0]);
+  }
+
+  RETURN_STATUS_UNEXPECTED("Is this TensorOp oneToOne? If no, please implement this Compute() in the derived class.");
+}
+
+Status TensorOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                         std::shared_ptr<DeviceTensorAscend910B> *output) {
+  IO_CHECK(input, output);
+  RETURN_STATUS_UNEXPECTED(
+    "Wrong Compute() function is called. This is a function for operators which can be executed by"
+    " Ascend910B device. If so, please implement it in the derived class.");
+}
+#endif
 
 Status TensorOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   if (inputs.size() != NumInput()) {

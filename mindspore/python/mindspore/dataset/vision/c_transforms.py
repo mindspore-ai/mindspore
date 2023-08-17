@@ -2275,7 +2275,8 @@ class Resize(ImageTensorOperation):
         self.interpolation = interpolation
 
     def parse(self):
-        return cde.ResizeOperation(self.size, DE_C_INTER_MODE.get(self.interpolation))
+        # deprecated api just support cpu device target
+        return cde.ResizeOperation(self.size, DE_C_INTER_MODE.get(self.interpolation), "CPU")
 
 
 class ResizeWithBBox(ImageTensorOperation):

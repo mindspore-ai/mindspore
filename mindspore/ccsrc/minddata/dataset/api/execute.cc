@@ -18,6 +18,8 @@
 
 #include <algorithm>
 #include <fstream>
+#include <locale>
+#include <string>
 
 #include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
@@ -56,7 +58,8 @@ struct Execute::ExtraInfo {
 };
 
 Status Execute::InitResource(MapTargetDevice device_type, uint32_t device_id) {
-  if (device_type_ == MapTargetDevice::kAscend310) {
+  if (device_type == MapTargetDevice::kAscend310) {
+    MS_LOG(INFO) << "InitResource for Ascend310";
 #if defined(WITH_BACKEND) || defined(ENABLE_ACL)
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource(device_id);
@@ -67,6 +70,32 @@ Status Execute::InitResource(MapTargetDevice device_type, uint32_t device_id) {
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
 #endif
+    device_type_ = device_type;
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+  } else if (device_type == MapTargetDevice::kAscend910B) {
+    MS_LOG(INFO) << "InitResource for Ascend910B";
+    auto soc_version = std::string(aclrtGetSocName());
+    if (soc_version.find("Ascend910B") != 0) {
+      std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+
+    auto ms_context = MsContext::GetInstance();
+    RETURN_UNEXPECTED_IF_NULL(ms_context);
+    device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    RETURN_UNEXPECTED_IF_NULL(device_context_);
+    device_context_->Initialize();
+    RETURN_UNEXPECTED_IF_NULL(device_context_->device_res_manager_);
+    if (device_context_->device_res_manager_->CreateStream(&stream_id_) != true) {
+      std::string err_msg = "Create new stream failed on Ascend910B platform.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+    MS_LOG(INFO) << "Create new stream id: " << std::to_string(stream_id_);
+    device_type_ = device_type;
+#endif
   }
   return Status::OK();
 }
@@ -75,6 +104,14 @@ Execute::Execute(const std::shared_ptr<TensorOperation> &op, MapTargetDevice dev
   (void)ops_.emplace_back(op);
   device_type_ = device_type;
   info_ = std::make_shared<ExtraInfo>();
+
+  // Ascend910B
+  if (op->Type() == MapTargetDevice::kAscend910B) {
+    // Update the device_type
+    device_type = MapTargetDevice::kAscend910B;
+    MS_LOG(INFO) << "Update device type: " << std::to_string(static_cast<int>(device_type));
+  }
+
   (void)InitResource(device_type, device_id);
 }
 
@@ -168,6 +205,13 @@ Execute::~Execute() {
     } else {
       MS_LOG(ERROR) << "Device resource is nullptr which is illegal under case Ascend310";
     }
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+  } else if (device_type_ == MapTargetDevice::kAscend910B) {
+    if (!device_context_->device_res_manager_->DestroyStream(stream_id_)) {
+      std::string err_msg = "DestroyStream stream id: " + std::to_string(stream_id_) + " failed.";
+      MS_LOG(ERROR) << err_msg;
+    }
+#endif
   }
 }
 
@@ -356,38 +400,6 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
   return Status::OK();
 }
 
-Status PyExecute::operator()(const std::shared_ptr<Tensor> &input_tensor, std::shared_ptr<Tensor> *out) {
-  // Validate input tensors
-  CHECK_FAIL_RETURN_UNEXPECTED(input_tensor->Size() > 0, "Input Tensor has no data.");
-  RETURN_UNEXPECTED_IF_NULL(out);
-  CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'CPU'.");
-
-  if (!ops_created) {
-    CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
-    ops_created = true;
-  }
-
-  if (device_type_ == MapTargetDevice::kCpu) {
-    TensorRow de_tensor_list({input_tensor});
-
-    // Apply transforms on tensor
-    for (auto &t : transforms_rt_) {
-      TensorRow de_output_list;
-      RETURN_IF_NOT_OK(t->Compute(de_tensor_list, &de_output_list));
-      // For next transform
-      de_tensor_list = std::move(de_output_list);
-    }
-    CHECK_FAIL_RETURN_UNEXPECTED(de_tensor_list.size() > 0,
-                                 "[Internal] Transformation resulted in a tensor with size=0!");
-    *out = std::move(de_tensor_list.getRow())[0];
-  } else {
-    std::string err_msg = "Your input device is not supported. (Option: CPU)";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  return Status::OK();
-}
-
 Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_tensor_list,
                              std::vector<std::shared_ptr<Tensor>> *out) {
   // Validate input tensor
@@ -416,6 +428,39 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
     }
     *out = std::move(de_tensor_list.getRow());
     CHECK_FAIL_RETURN_UNEXPECTED(!out->empty(), "Output Tensor is not valid.");
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+  } else if (device_type_ == MapTargetDevice::kAscend910B) {
+    // construct the device tensor list by host tensor
+    std::vector<std::shared_ptr<DeviceTensorAscend910B>> device_tensor_list;
+    for (auto &item : input_tensor_list) {
+      std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+      RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(item, device_context_, stream_id_, &device_tensor));
+      device_tensor_list.push_back(std::move(device_tensor));
+    }
+
+    for (auto &t : transforms_rt_) {
+      std::vector<std::shared_ptr<DeviceTensorAscend910B>> device_output_list;
+      RETURN_IF_NOT_OK(t->Compute(device_tensor_list, &device_output_list));
+
+      // release the input device memory
+      for (auto &item : device_tensor_list) {
+        device_context_->device_res_manager_->FreeMemory(item->GetDeviceAddress().get());
+      }
+
+      // For next transform
+      device_tensor_list = std::move(device_output_list);
+    }
+
+    // copy the data from device tensor to host tensor
+    std::vector<std::shared_ptr<Tensor>> host_out(device_tensor_list.size());
+    int32_t i = 0;
+    for (auto &item : device_tensor_list) {
+      CHECK_FAIL_RETURN_UNEXPECTED(item->ToHostTensor(&host_out[i]), "Copy tensor from device to host failed.");
+      i += 1;
+    }
+    *out = std::move(host_out);
+    CHECK_FAIL_RETURN_UNEXPECTED(!out->empty(), "Output Tensor is not valid.");
+#endif
   } else {
     std::string err_msg = "Your input device is not supported. (Option: CPU)";
     MS_LOG(ERROR) << err_msg;
@@ -666,6 +711,10 @@ Status Execute::ParseTransforms() {
     for (auto &transform_ : transforms_) {
       (void)ops_.emplace_back(transform_->Parse(device_type_));
     }
+  } else if (device_type_ == MapTargetDevice::kAscend910B) {
+    for (auto &transform_ : transforms_) {
+      (void)ops_.emplace_back(transform_->Parse(device_type_));
+    }
   } else {
     std::string err_msg = "Your input device is not supported. (Option: CPU or Ascend310)";
     MS_LOG(ERROR) << err_msg;
@@ -677,8 +726,8 @@ Status Execute::ParseTransforms() {
 
 Status Execute::ValidateDevice() {
   if (device_type_ != MapTargetDevice::kCpu && device_type_ != MapTargetDevice::kAscend310 &&
-      device_type_ != MapTargetDevice::kGpu) {
-    std::string err_msg = "Your input device is not supported. (Option: CPU or GPU or Ascend310).";
+      device_type_ != MapTargetDevice::kGpu && device_type_ != MapTargetDevice::kAscend910B) {
+    std::string err_msg = "Your input device is not supported. (Option: CPU or GPU or Ascend310 or Ascend910B).";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }

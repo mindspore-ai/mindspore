@@ -1,5 +1,15 @@
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
+
+# Ascend910B DVPP
+if(DEFINED ASCEND_VERSION)
+    if(${ASCEND_VERSION} STREQUAL "910b")
+        include_directories(${CMAKE_SOURCE_DIR}/graphengine/metadef/inc)
+        include_directories(${CMAKE_SOURCE_DIR}/graphengine/910b/third_party/fwkacllib/inc)
+        include_directories(${CMAKE_SOURCE_DIR}/graphengine/910b/inc/external)
+    endif()
+endif()
+
 if(ENABLE_PYTHON)
     add_library(APItoPython OBJECT
             python/bindings/dataset/audio/bindings.cc
