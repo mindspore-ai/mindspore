@@ -221,6 +221,8 @@
 "mindspore/mindspore/lite/test"                                                                          "missing-docstring"
 "mindspore/mindspore/lite/test"                                                                          "unused-variable"
 "mindspore/mindspore/lite/test/st/python/import_ms_and_mslite/"                                          "unused-import"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/ascendc/cmake/util/insert_simplified_keys.py"      "duplicate-key"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/ascendc/cmake/util/replay_codegen.py"              "bad-continuation"
 # ascend samples
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "wrong-import-order"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "wrong-import-order"

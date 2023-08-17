@@ -1,0 +1,27 @@
+set(CMAKE_CXX_FLAGS_DEBUG "")
+set(CMAKE_CXX_FLAGS_RELEASE "")
+
+if(NOT DEFINED vendor_name)
+  set(vendor_name
+      mslite_ascendc
+      CACHE STRING "")
+endif()
+if(NOT DEFINED ASCEND_CANN_PACKAGE_PATH)
+  set(ASCEND_CANN_PACKAGE_PATH
+      /usr/local/Ascend/latest
+      CACHE PATH "")
+endif()
+if(NOT DEFINED ASCEND_PYTHON_EXECUTABLE)
+  set(ASCEND_PYTHON_EXECUTABLE
+      python3
+      CACHE STRING "")
+endif()
+if(NOT DEFINED ASCEND_COMPUTE_UNIT)
+  message(FATAL_ERROR "ASCEND_COMPUTE_UNIT not set in CMakePreset.json !
+")
+endif()
+set(ASCEND_TENSOR_COMPILER_PATH ${ASCEND_CANN_PACKAGE_PATH}/compiler)
+set(ASCEND_CCEC_COMPILER_PATH ${ASCEND_TENSOR_COMPILER_PATH}/ccec_compiler/bin)
+set(ASCEND_AUTOGEN_PATH ${CMAKE_BINARY_DIR}/autogen)
+set(ASCEND_FRAMEWORK_TYPE tensorflow)
+file(MAKE_DIRECTORY ${ASCEND_AUTOGEN_PATH})

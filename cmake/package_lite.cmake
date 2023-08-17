@@ -13,7 +13,7 @@ endif()
 set(TEST_CASE_DIR ${TOP_DIR}/mindspore/lite/test/build)
 set(EXTENDRT_BUILD_DIR ${TOP_DIR}/mindspore/lite/build/src/extendrt)
 set(EXECUTOR_BUILD_DIR ${TOP_DIR}/mindspore/lite/build/src/extendrt/unified_executor)
-set(ACL_CUSTOM_OPP_DIR ${TOP_DIR}/mindspore/lite/build/tools/kernel_builder/ascend/makepkg/packages)
+set(ACL_CUSTOM_OPP_DIR ${TOP_DIR}/mindspore/lite/build/tools/kernel_builder/ascend/tbe_and_aicpu/makepkg/packages)
 set(ACL_OPP_DST_DIR ${RUNTIME_PKG_NAME}/tools/custom_kernels/ascend)
 
 set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/runtime)
