@@ -61,20 +61,16 @@ ValuePtr CreateZeroScalar(const TypePtr &type) {
 
 NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs) {
   auto &func = Emitter::primc_func_cache()[op_name];
+  PrimitivePtr primc = nullptr;
   if (func == nullptr) {
     const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
     const auto iter = op_primc_fns.find(op_name);
-    if (iter == op_primc_fns.end()) {
-      auto primc = std::make_shared<ops::PrimitiveC>(op_name);
-      (void)primc->SetAttrs(attrs);
-      return EmitOp(primc, inputs);
-    } else {
-      func = iter->second;
-    }
+    primc = iter == op_primc_fns.end() ? std::make_shared<ops::PrimitiveC>(op_name) : (func = iter->second)();
+  } else {
+    primc = func();
   }
-  auto primc = func();
-  for (auto &[k, v] : attrs) {
-    primc->set_attr(k, v);
+  if (!attrs.empty()) {
+    (void)primc->SetAttrs(attrs);
   }
   return EmitOp(primc, inputs);
 }

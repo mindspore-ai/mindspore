@@ -44,7 +44,7 @@ class FallbackIRBuilder : public Emitter {
   S GetAttr(const std::string &attr) const {
     return GetValue<S>(GetAttr(attr));
   }
-  const DAttr &GetAttrs() const { return *attrs_ptr_; }
+  const mindspore::HashMap<std::string, ValuePtr> &GetAttrs() const { return *attrs_ptr_; }
   NodePtr GetInput(size_t i) const {
     if (i >= inputs_.size()) {
       MS_LOG(EXCEPTION) << "For " << name_ << ", the index " << i << " is out of range of inputs size "
@@ -60,7 +60,7 @@ class FallbackIRBuilder : public Emitter {
 
   std::string name_;
   NodePtrList inputs_;
-  const DAttr *attrs_ptr_{nullptr};
+  const mindspore::HashMap<std::string, ValuePtr> *attrs_ptr_{nullptr};
   bool success_{true};
 };
 

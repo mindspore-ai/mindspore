@@ -317,8 +317,8 @@ class GraphModeBuilder : public BpropIRBuilder {
   GraphModeBuilder(const std::string &name, const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer)
       : BpropIRBuilder(name, func_graph, infer) {}
 
-  NodePtrList Build(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle,
-                    const std::string &instance_name) {
+  NodePtrList Build(const NodePtrList &inputs, const mindspore::HashMap<std::string, ValuePtr> &attrs,
+                    const BpropHandle &handle, const std::string &instance_name) {
     auto outputs = Run(inputs, attrs, handle, instance_name);
     auto mt = this->MakeTuple(outputs)->get();
     func_graph_->set_output(mt);

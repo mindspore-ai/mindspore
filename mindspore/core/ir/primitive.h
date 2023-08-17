@@ -23,6 +23,7 @@
 #include <tuple>
 #include <utility>
 #include <shared_mutex>
+#include <initializer_list>
 
 #include "utils/hash_map.h"
 #include "ir/dtype/type.h"
@@ -138,6 +139,30 @@ class MS_CORE_API Primitive : public Named {
   /// \param[in] attrs The attribute map needs to be added in the primitive attribute.
   /// \return The primitive to which attribute has been added.
   Primitive &SetAttrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
+    PrimitiveWriteLock write_lock(shared_mutex_);
+    for (auto &attr : attrs) {
+      attrs_[attr.first] = attr.second;
+    }
+    return *this;
+  }
+  /// \brief Use add attribute by using initializer_list, all elements of the vector will be added in the primitive's
+  /// attribute map.
+  ///
+  /// \param[in] attrs The attribute vector needs to be added in the primitive attribute.
+  /// \return The primitive to which attribute has been added.
+  Primitive &SetAttrs(const std::initializer_list<std::pair<std::string, ValuePtr>> &attrs) {
+    PrimitiveWriteLock write_lock(shared_mutex_);
+    for (auto &attr : attrs) {
+      attrs_[attr.first] = attr.second;
+    }
+    return *this;
+  }
+  /// \brief Use add attribute by using a vector, all elements of the vector will be added in the primitive's attribute
+  /// map.
+  ///
+  /// \param[in] attrs The attribute vector needs to be added in the primitive attribute.
+  /// \return The primitive to which attribute has been added.
+  Primitive &SetAttrs(const std::vector<std::pair<std::string, ValuePtr>> &attrs) {
     PrimitiveWriteLock write_lock(shared_mutex_);
     for (auto &attr : attrs) {
       attrs_[attr.first] = attr.second;
