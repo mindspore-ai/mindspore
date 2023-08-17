@@ -607,6 +607,7 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     auto host_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
     auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(shapes, host_type, kOpFormat_DEFAULT);
     MS_EXCEPTION_IF_NULL(ge_tensor_desc);
+    ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
     GeTensor ge_tensor(*ge_tensor_desc);
     if (output_addr->GetMutablePtr() != nullptr) {
       if (ge_tensor.SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
@@ -650,6 +651,7 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
     auto host_type = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
     auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(shapes, host_type, kOpFormat_DEFAULT);
     MS_EXCEPTION_IF_NULL(ge_tensor_desc);
+    ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
     GeTensor ge_tensor(*ge_tensor_desc);
     (void)ge_outputs.emplace_back(std::move(ge_tensor));
     (void)graph_outputs.emplace_back(output_node, index);
