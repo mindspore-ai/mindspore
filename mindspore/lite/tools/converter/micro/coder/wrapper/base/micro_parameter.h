@@ -36,6 +36,8 @@ typedef struct MicroMatmulParameter {
   int deep_4_;
   int deep_16_;
   int deep_align_;
+  int a_batch_;
+  int b_batch_;
   int batch;
   bool a_transpose_; /* false :  row-major  */
   bool b_transpose_; /* true  :  col-major  */

@@ -47,6 +47,15 @@ int MatMulFP32BaseCoder::ReSize() {
   return RET_OK;
 }
 
+void MatMulFP32BaseCoder::CalculateOutBatchSize() {
+  MS_ASSERT(output_tensor_ != nullptr);
+  auto out_shape = output_tensor_->shape();
+  params_.batch = 1;
+  for (size_t i = 0; i < out_shape.size() - DIMENSION_2D; ++i) {
+    params_.batch *= out_shape.at(i);
+  }
+}
+
 int MatMulFP32BaseCoder::InitBufferForBias() {
   if (input_tensors_.size() == DIMENSION_3D) {
     int max_bias_data = params_.col_align_;
@@ -83,7 +92,8 @@ int MatMulFP32BaseCoder::InitBufferA() {
   if (a_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  a_pack_ptr_size_ = static_cast<size_t>(params_.batch * params_.row_align_ * params_.deep_ * DataTypeSize(data_type_));
+  a_pack_ptr_size_ =
+    static_cast<size_t>(params_.a_batch_ * params_.row_align_ * params_.deep_ * DataTypeSize(data_type_));
   if (params_.a_const_) {
     a_pack_ptr_ = allocator_->GetSharedWeightAddr(input_tensors_.at(0));
     if (a_pack_ptr_ == nullptr) {
@@ -104,7 +114,8 @@ int MatMulFP32BaseCoder::InitBufferB() {
   if (b_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  b_pack_ptr_size_ = static_cast<size_t>(params_.batch * params_.col_align_ * params_.deep_ * DataTypeSize(data_type_));
+  b_pack_ptr_size_ =
+    static_cast<size_t>(params_.b_batch_ * params_.col_align_ * params_.deep_ * DataTypeSize(data_type_));
   if (params_.b_const_) {
     b_pack_ptr_ = allocator_->GetSharedWeightAddr(input_tensors_.at(1));
     if (b_pack_ptr_ == nullptr) {
@@ -270,15 +281,23 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   code << "    for (int i = 0; i < " << params_.batch << "; ++i) {\n";
   if (vec_matmul_) {
     code << "      const float *batch_a_ptr = " << a_pack_str << " + i * " << params_.deep_ << ";\n";
-    code << "      const float *batch_b_ptr = " << b_pack_str << " + i * " << params_.deep_ * params_.col_ << ";\n";
+    if (params_.b_batch_ != 1) {
+      code << "      const float *batch_b_ptr = " << b_pack_str << " + i * " << params_.deep_ * params_.col_ << ";\n";
+    } else {
+      code << "      const float *batch_b_ptr = " << b_pack_str << ";\n";
+    }
     code << "      float *batch_c_ptr = " << c_str << " + i * " << params_.row_ * params_.col_ << ";\n  ";
     code.CodeFunction("MatVecMulFp32", "batch_a_ptr", "batch_b_ptr", "batch_c_ptr", bias_ptr_, params_.act_type_,
                       params_.deep_, cur_oc);
   } else {
     code << "      const float *batch_a_ptr = " << a_pack_str << " + i * " << params_.row_align_ * params_.deep_
          << ";\n";
-    code << "      const float *batch_b_ptr = " << b_pack_str << " + i * " << params_.deep_ * params_.col_align_
-         << ";\n";
+    if (params_.b_batch_ != 1) {
+      code << "      const float *batch_b_ptr = " << b_pack_str << " + i * " << params_.deep_ * params_.col_align_
+           << ";\n";
+    } else {
+      code << "      const float *batch_b_ptr = " << b_pack_str << ";\n";
+    }
     code << "      float *batch_c_ptr = " << c_str << " + i * " << params_.row_ * params_.col_ << ";\n  ";
     code.CodeFunction("MatMulOpt", "batch_a_ptr", "batch_b_ptr", "batch_c_ptr", bias_ptr_, params_.act_type_,
                       params_.deep_, params_.row_, cur_oc, params_.col_, "OutType_Nhwc");

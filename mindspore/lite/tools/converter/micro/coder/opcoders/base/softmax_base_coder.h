@@ -48,7 +48,7 @@ class SoftmaxBaseCoder : public OperatorCoder {
  protected:
   int n_dim_;
   int element_size_;
-  int input_shape_[DIMENSION_5D];
+  int32_t input_shape_[DIMENSION_5D];
   int sum_data_size_;
 };
 }  // namespace mindspore::lite::micro

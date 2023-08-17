@@ -45,7 +45,8 @@ int MatMulFP16BaseCoder::InitBufferA() {
   if (a_pack_ptr_ != nullptr || vec_matmul_) {
     return RET_OK;
   }
-  a_pack_ptr_size_ = static_cast<size_t>(a_batch_ * params_.row_align_ * params_.deep_ * DataTypeSize(data_type_));
+  a_pack_ptr_size_ =
+    static_cast<size_t>(params_.a_batch_ * params_.row_align_ * params_.deep_ * DataTypeSize(data_type_));
   if (params_.a_const_) {
     a_pack_ptr_ = allocator_->GetSharedWeightAddr(input_tensor_);
     if (a_pack_ptr_ == nullptr) {
@@ -99,7 +100,7 @@ std::string MatMulFP16BaseCoder::InitMatrixA(NNaclFp32Serializer *const code, NN
     *w_buf = *w_buf + a_pack_ptr_size_;
   }
   NNaclFp32Serializer &pack_code = params_.a_const_ ? *init_code : *code;
-  if (a_batch_ == 1) {
+  if (params_.a_batch_ == 1) {
     if (params_.a_transpose_) {
       if (target_ == kARM64) {
         pack_code.CodeFunction("RowMajor2RowNMajorFp16", input_a_str, input_a_pack_str, params_.deep_, params_.row_);
@@ -116,7 +117,7 @@ std::string MatMulFP16BaseCoder::InitMatrixA(NNaclFp32Serializer *const code, NN
       }
     }
   } else {
-    pack_code << "  for (int i = 0; i < " << a_batch_ << "; i++) {\n"
+    pack_code << "  for (int i = 0; i < " << params_.a_batch_ << "; i++) {\n"
               << "    float16_t *src = " << input_a_str << " + i * " << params_.deep_ * params_.row_ << ";\n"
               << "    float16_t *dst = " << input_a_pack_str << " + i * " << params_.deep_ * params_.row_align_
               << ";\n";
@@ -154,11 +155,11 @@ std::string MatMulFP16BaseCoder::InitMatrixB(NNaclFp32Serializer *const code, NN
   NNaclFp32Serializer &pack_code = params_.b_const_ ? *init_code : *code;
   if (target_ != kARM64) {
     if (vec_matmul_) {
-      if (b_batch_ == 1) {
+      if (params_.b_batch_ == 1) {
         pack_code.CodeFunction("RowMajor2ColMajorFp16", input_b_str, input_b_pack_str, params_.deep_, params_.col_,
                                false);
       } else {
-        pack_code << "  for (int i = 0; i < " << b_batch_ << "; i++) {\n"
+        pack_code << "  for (int i = 0; i < " << params_.b_batch_ << "; i++) {\n"
                   << "    float16_t *src = " << input_b_str << " + i * " << params_.deep_ * params_.col_ << ";\n"
                   << "    float16_t *dst = " << input_b_pack_str << " + i * " << params_.deep_ * params_.col_ << ";\n"
                   << "    RowMajor2ColMajorFp16(src, dst, " << params_.deep_ << ", " << params_.col_ << ", false);\n"
@@ -168,7 +169,7 @@ std::string MatMulFP16BaseCoder::InitMatrixB(NNaclFp32Serializer *const code, NN
     }
   }
 
-  if (b_batch_ == 1) {
+  if (params_.b_batch_ == 1) {
     if (params_.b_transpose_) {
       pack_code.CodeFunction("RowMajor2Col8MajorFp16", input_b_str, input_b_pack_str, params_.col_, params_.deep_,
                              false);
@@ -177,7 +178,7 @@ std::string MatMulFP16BaseCoder::InitMatrixB(NNaclFp32Serializer *const code, NN
                              false);
     }
   } else {
-    pack_code << "  for (int i = 0; i < " << b_batch_ << "; i++) {\n"
+    pack_code << "  for (int i = 0; i < " << params_.b_batch_ << "; i++) {\n"
               << "    float16_t *src = " << input_b_str << " + i * " << params_.deep_ * params_.col_ << ";\n"
               << "    float16_t *dst = " << input_b_pack_str << " + i * " << params_.deep_ * params_.col_align_
               << ";\n";
@@ -264,8 +265,12 @@ int MatMulFP16BaseCoder::DoCode(CoderContext *const context) {
   code << "    for (int i = 0; i < " << params_.batch << "; ++i) {\n";
   if (vec_matmul_) {
     code << "      const float16_t *batch_a_ptr = " << input_a_str << " + i * " << params_.deep_ << ";\n";
-    code << "      const float16_t *batch_b_ptr = " << input_b_str << " + i * "
-         << params_.deep_ * (target_ == kARM64 ? params_.col_align_ : params_.col_) << ";\n";
+    if (params_.b_batch_ != 1) {
+      code << "      const float16_t *batch_b_ptr = " << input_b_str << " + i * "
+           << params_.deep_ * (target_ == kARM64 ? params_.col_align_ : params_.col_) << ";\n";
+    } else {
+      code << "      const float16_t *batch_b_ptr = " << input_b_str << ";\n";
+    }
     code << "      float16_t *batch_c_ptr = " << output_str << " + i * " << params_.row_ * params_.col_ << ";\n  ";
     code.CodeFunction(target_ == kARM64 ? "VecMatmulFp16" : "MatVecMulFp16", "batch_a_ptr", "batch_b_ptr",
                       "batch_c_ptr", bias_str, params_.act_type_, params_.deep_, params_.col_);
