@@ -17,7 +17,6 @@
 
 #include "kernel/common_utils.h"
 #include "mindspore/core/abstract/utils.h"
-#include "mindspore/core/ops/zeros_like.h"
 #include "plugin/device/gpu/kernel/arrays/zeroslike_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 

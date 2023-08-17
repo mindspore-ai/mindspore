@@ -43,7 +43,7 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         TensorScatterDiv, TensorScatterMax, TensorScatterMin, TensorScatterMul, TensorScatterSub,
                         TensorScatterUpdate, Tile, TopK, TransShape, Transpose, TupleToArray, Unique,
                         UniqueWithPad, UnsortedSegmentMax, UnsortedSegmentMin, UnsortedSegmentProd,
-                        UnsortedSegmentSum, Unstack, UpperBound, Zeros, ZerosLike, AffineGrid, Bincount, CheckNumerics,
+                        UnsortedSegmentSum, Unstack, UpperBound, Zeros, AffineGrid, Bincount, CheckNumerics,
                         HammingWindow, IdentityN, IndexFill, LeftShift, ListDiff, LogSpace, MatrixBandPart,
                         MatrixDiagPartV3, MatrixDiagV3, MatrixSetDiagV3, NonZero, Expand, Col2Im, ConjugateTranspose,
                         FillDiagonal, Fills, ResizeNearestNeighborV2, RightShift, ScatterAddWithAxis,
@@ -139,7 +139,7 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
 from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye,
                              Floor, FloorDiv, FloorMod, Flatten,
-                             Gather, GatherD, GatherNd, Range, TensorShape)
+                             Gather, GatherD, GatherNd, Range, TensorShape, ZerosLike)
 
 __all__ = [
     'HSVToRGB',

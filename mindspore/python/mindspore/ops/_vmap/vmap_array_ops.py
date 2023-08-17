@@ -2084,5 +2084,5 @@ get_unsupported_dynamic_vmap_rule = \
     vmap_rules_getters.register(UniqueConsecutive)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(Col2Im)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(RandomPoisson)(get_unsupported_dynamic_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.ZerosLike)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register("ZerosLike")(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.OnesLike)(get_unop_vmap_rule)
