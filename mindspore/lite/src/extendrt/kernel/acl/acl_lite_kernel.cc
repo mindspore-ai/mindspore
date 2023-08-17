@@ -35,10 +35,6 @@ AclLiteKernel::AclLiteKernel(std::shared_ptr<mindspore::kernel::KernelMod> kerne
 }
 
 int AclLiteKernel::Prepare() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-
   bool ret = kernel_mod_->Init_(this->base_operator_, inputs_, outputs_);
   return ret ? ReSize() : RET_ERROR;
 }
@@ -69,10 +65,7 @@ int AclLiteKernel::InferShape() {
     auto old_input = inputs_.at(i);
 
     auto new_shape = new_input->shape();
-    auto is_dynamic = std::any_of(new_shape.begin(), new_shape.end(), [i](auto dim) {
-      MS_LOG(ERROR) << "infer shape input " << i << " dim " << dim;
-      return dim < 0;
-    });
+    auto is_dynamic = std::any_of(new_shape.begin(), new_shape.end(), [i](auto dim) { return dim < 0; });
     if (is_dynamic) {
       MS_LOG(ERROR) << "New shape of input " << i << " cannot be dynamic, new shape: " << new_shape;
       return lite::RET_NOT_SUPPORT;

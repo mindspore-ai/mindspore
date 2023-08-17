@@ -20,6 +20,7 @@
 namespace mindspore::kernel {
 // kernel library names
 constexpr char kNNACLLibName[] = "NNACL";
+constexpr char kAclKernelLibName[] = "Acl";
 constexpr char kDefaultKernelLibName[] = "Default";
 
 // backend
