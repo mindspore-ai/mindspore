@@ -214,6 +214,7 @@ JIT
     mindspore.ms_function
     mindspore.ms_memory_recycle
     mindspore.mutable
+    mindspore.lazy_inline
 
 Tool
 -----
