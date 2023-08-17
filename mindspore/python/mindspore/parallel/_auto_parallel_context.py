@@ -491,6 +491,9 @@ class _AutoParallelContext:
         Args:
             grad_accumulation_step (int): The grad accumulation step.
         """
+        if grad_accumulation_step > 1:
+            raise ValueError("The interface is deprecated. To use gradient accumulation, "
+                             "please use GradAccumulationCell in mindspore.nn.wrap.cell_wrapper.")
         self.check_context_handle()
         Validator.check_positive_int(grad_accumulation_step)
         self._context_handle.set_grad_accumulation_step(grad_accumulation_step)
