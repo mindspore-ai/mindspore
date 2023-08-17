@@ -180,6 +180,11 @@ class ProfilingUtils {
   inline static std::map<std::string, ProfNodeAdditionInfo> node_addition_info_;
   inline static std::map<std::string, uint64_t> task_launch_begin_;
   inline static bool is_prof_type_registered_ = False;
+
+  inline static std::vector<MsprofEvent> report_event;
+  inline static std::vector<MsprofCompactInfo> report_compact_info;
+  inline static std::vector<MsprofAdditionalInfo> report_additional_info;
+  inline static std::vector<MsprofApi> report_api;
 };
 }  // namespace ascend
 }  // namespace device

@@ -103,10 +103,6 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
   if (acl_config_ == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofCreateConfig function.";
   }
-  aclRet = aclprofStart(acl_config_);
-  if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofStart function.";
-  }
   MS_LOG(INFO) << "Start profiling, options mask is " << mask << " aic_metrics is " << aic_metrics;
 
   init_flag_ = true;
@@ -162,6 +158,10 @@ aclprofAicoreMetrics AscendProfiler::GetAicMetrics() const {
 
 void AscendProfiler::Start() {
   MS_LOG(INFO) << "Begin to profiling.";
+  aclError aclRet = aclprofStart(acl_config_);
+  if (aclRet != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Failed to call aclprofStart function.";
+  }
   (void)ProfilingManager::GetInstance().SetStepStart(true);
 
   MemoryProfiling::GetInstance().StartMemoryProfiling();
