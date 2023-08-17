@@ -110,40 +110,40 @@ class MS_CORE_API NoShape final : public BaseShape {
 
 GVAR_DEF(std::shared_ptr<NoShape>, kNoShape, std::make_shared<NoShape>());
 
-/// \brief Shape defines dimensions of tensor.
-class MS_CORE_API Shape final : public BaseShape {
+/// \brief TensorShape defines dimensions of tensor.
+class MS_CORE_API TensorShape final : public BaseShape {
  public:
   static constexpr ShapeValueDType kShapeDimAny = -1;
   static constexpr ShapeValueDType kShapeRankAny = -2;
   static constexpr ShapeValueDType kShapeError = -3;
   static constexpr size_t kDynamicRankLen = 1;
 
-  /// \brief Constructor of Shape.
-  Shape() : shape_() {}
+  /// \brief Constructor of TensorShape.
+  TensorShape() : shape_() {}
 
-  /// \brief Constructor of Shape.
+  /// \brief Constructor of TensorShape.
   ///
   /// \param[in] list Initial shape dimensions.
-  Shape(const std::initializer_list<ShapeValueDType> &list) : shape_(list) {}
+  TensorShape(const std::initializer_list<ShapeValueDType> &list) : shape_(list) {}
 
-  /// \brief Constructor of Shape.
+  /// \brief Constructor of TensorShape.
   ///
   /// \param[in] list Initial shape dimensions.
-  explicit Shape(const ShapeVector &list) : shape_(list) {}
+  explicit TensorShape(const ShapeVector &list) : shape_(list) {}
 
-  /// \brief Constructor of Shape.
+  /// \brief Constructor of TensorShape.
   ///
   /// \param[in] list Initial shape dimensions.
   /// \param[in] max_shape Maximum shape dimensions of dynamic shape.
-  Shape(const ShapeVector &list, const ShapeVector &max_shape) : shape_(list), max_shape_(max_shape) {}
+  TensorShape(const ShapeVector &list, const ShapeVector &max_shape) : shape_(list), max_shape_(max_shape) {}
 
-  /// \brief Destructor of Shape.
-  ~Shape() override = default;
-  MS_DECLARE_PARENT(Shape, BaseShape)
+  /// \brief Destructor of TensorShape.
+  ~TensorShape() override = default;
+  MS_DECLARE_PARENT(TensorShape, BaseShape)
 
-  /// \brief Calculate the hash value for Shape.
+  /// \brief Calculate the hash value for TensorShape.
   ///
-  /// \return The hash value of Shape.
+  /// \return The hash value of TensorShape.
   std::size_t hash() const override {
     auto hash_code = static_cast<std::size_t>(tid());
     for (auto dim : shape_) {
@@ -152,30 +152,30 @@ class MS_CORE_API Shape final : public BaseShape {
     return hash_code;
   }
 
-  /// \brief Get the description string about the Shape object.
+  /// \brief Get the description string about the TensorShape object.
   ///
-  /// \return The description string about the Shape object.
+  /// \return The description string about the TensorShape object.
   std::string ToString() const override;
 
-  /// \brief Get the debug information about the Shape object.
+  /// \brief Get the debug information about the TensorShape object.
   ///
-  /// \return The debug information about the Shape object.
+  /// \return The debug information about the TensorShape object.
   std::string DumpText() const override;
 
   bool operator==(const BaseShape &other) const override;
 
-  BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_, max_shape_); }
+  BaseShapePtr Clone() const override { return std::make_shared<TensorShape>(shape_, max_shape_); }
 
   void Broaden() override;
 
-  /// \brief Set shape dimensions of Shape object.
+  /// \brief Set shape dimensions of TensorShape object.
   ///
   /// \param[in] shape Dimensions of shape.
   void set_shape(const ShapeVector &shape) { shape_ = shape; }
 
   /// \brief Get shape dimensions.
   ///
-  /// \return Shape dimensions.
+  /// \return TensorShape dimensions.
   const ShapeVector &shape() const { return shape_; }
 
   /// \brief Get maximum shape dimensions.
@@ -195,8 +195,12 @@ class MS_CORE_API Shape final : public BaseShape {
   ShapeVector shape_;      // use kShapeDimAny to implement the any shape in python
   ShapeVector max_shape_;  // record maximum length for each dynamic dimension
 };
-using ShapePtr = std::shared_ptr<Shape>;
-using ShapePtrList = std::vector<ShapePtr>;
+using TensorShapePtr = std::shared_ptr<TensorShape>;
+using TensorShapePtrList = std::vector<TensorShapePtr>;
+// `Shape` is deprecated, which will be removed in the future, please use `TensorShape` instead.
+using Shape = TensorShape;
+using ShapePtr = TensorShapePtr;
+using ShapePtrList = TensorShapePtrList;
 
 /// \brief DynamicSequenceShape defines shape of dynamic sequence.
 class MS_CORE_API DynamicSequenceShape : public BaseShape {
@@ -239,6 +243,8 @@ class MS_CORE_API DynamicSequenceShape : public BaseShape {
   ///
   /// \return The hash value of Shape.
   std::size_t hash() const override;
+
+  BaseShapePtr element_shape() { return element_shape_; }
 
  private:
   // element's shape

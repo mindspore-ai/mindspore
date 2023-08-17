@@ -1317,7 +1317,10 @@ TypePtr AbstractTuple::BuildType() const {
 
 BaseShapePtr AbstractTuple::BuildShape() const {
   if (dynamic_len_) {
-    return kDynamicSequenceShape;
+    if (dynamic_len_element_abs_ == nullptr) {
+      return std::make_shared<DynamicSequenceShape>(nullptr);
+    }
+    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->BuildShape());
   }
   return std::make_shared<TupleShape>(ElementsShape());
 }
@@ -1439,7 +1442,10 @@ TypePtr AbstractList::BuildType() const {
 
 BaseShapePtr AbstractList::BuildShape() const {
   if (dynamic_len_) {
-    return kDynamicSequenceShape;
+    if (dynamic_len_element_abs_ == nullptr) {
+      return std::make_shared<DynamicSequenceShape>(nullptr);
+    }
+    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->BuildShape());
   }
   return std::make_shared<ListShape>(ElementsShape());
 }
