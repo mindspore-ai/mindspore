@@ -133,6 +133,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             communication_info['Task Duration'] = hccl_op['Task Duration']
             communication_info['pid'] = 10000
             communication_info = communication_info.tolist()
+            communication_info.sort(key=lambda x: float(x[self._start_time_idx]))
         else:
             communication_info = []
         if communication_info:
