@@ -148,6 +148,8 @@ void IndexFillCpuKernelMod::DoFill(int32_t data_num, const T *input_x, const int
 template <typename T>
 void IndexFillCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *input_0 = static_cast<T *>(inputs[0]->addr);
   int32_t *input_1 = static_cast<int32_t *>(inputs[1]->addr);
   int32_t *input_2 = static_cast<int32_t *>(inputs[2]->addr);

@@ -83,7 +83,6 @@ bool ExpandCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
       MS_LOG(EXCEPTION) << "For " << kernel_name_
                         << ", the dtype of input `x` must in [float16, float32, int8, int32, uint8] "
                         << "but got " << TypeIdToType(input_x_dtype_)->ToString() << ".";
-      return false;
   }
 }
 
