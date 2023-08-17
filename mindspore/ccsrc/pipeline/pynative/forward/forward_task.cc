@@ -33,6 +33,7 @@ void FrontendTask::SetException(const std::exception_ptr &e) {
   if (op_run_info_ == nullptr) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(op_run_info_->stub_output);
   op_run_info_->stub_output->SetException(e);
 }
 
@@ -46,6 +47,7 @@ void BackendTask::Run() {
 void BackendTask::SetException(const std::exception_ptr &e) {
   if (backend_op_run_info_ != nullptr) {
     for (auto &promise : backend_op_run_info_->device_sync_promises) {
+      MS_EXCEPTION_IF_NULL(promise);
       promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(nullptr, e));
     }
   }
