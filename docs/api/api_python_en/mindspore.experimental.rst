@@ -7,7 +7,7 @@ Experimental Optimizer
 -----------------------
 
 .. msplatformautosummary::
-    :toctree: nn
+    :toctree: experimental/optim
     :nosignatures:
     :template: classtemplate.rst
 

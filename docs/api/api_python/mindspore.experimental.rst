@@ -7,7 +7,7 @@ mindspore.experimental
 ------------
 
 .. mscnplatformautosummary::
-    :toctree: experimental.optim
+    :toctree: experimental/optim
     :nosignatures:
     :template: classtemplate.rst
 
