@@ -243,14 +243,6 @@ ModelImpl::ModelImpl() : graph_(nullptr), session_(nullptr), context_(nullptr) {
 FuncGraphPtr ModelImpl::LoadGraphByBufferImpl(const void *model_buff, size_t model_size, ModelType model_type,
                                               const std::shared_ptr<Context> &model_context,
                                               const std::string &model_path) {
-  if (model_buff == nullptr) {
-    MS_LOG(ERROR) << "The input model buffer is nullptr.";
-    return nullptr;
-  }
-  if (model_size == 0) {
-    MS_LOG(ERROR) << "The input model buffer size is 0.";
-    return nullptr;
-  }
   if (model_type != kMindIR) {
     MS_LOG(ERROR) << "Invalid model type";
     return nullptr;
@@ -340,6 +332,14 @@ void ModelImpl::UpdateProvider() {
 
 Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
+  if (model_buff == nullptr) {
+    MS_LOG(ERROR) << "The input model buffer is nullptr.";
+    return kLiteError;
+  }
+  if (model_size == 0) {
+    MS_LOG(ERROR) << "The input model buffer size is 0.";
+    return kLiteError;
+  }
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (session_) {
     MS_LOG(ERROR) << "Model has been called Build";
