@@ -29,6 +29,11 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
+bool HasBpropExpander(const std::string &prim_name) {
+  const BpropHandle *handle = BpropIRBuilderFactory::Instance().GetBuilder(prim_name);
+  return (handle != nullptr);
+}
+
 class ShapeCalcException : public std::runtime_error {
  public:
   using runtime_error::runtime_error;

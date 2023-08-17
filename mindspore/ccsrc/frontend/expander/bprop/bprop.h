@@ -28,6 +28,8 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
+bool HasBpropExpander(const std::string &prim_name);
+
 using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
 struct UserMap {
   UserType dout_user_;
