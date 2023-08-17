@@ -211,19 +211,12 @@ def trace(fn):
     def _trace_wrap(*args, **kwargs):
         pynative_grad_flag = _pynative_executor.grad_flag()
         grad_flag_expr = "1" if pynative_grad_flag else "0"
-        if _trace_wrap.has_obj is None:
+        if _trace_wrap.is_method is None:
             if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
-                _trace_wrap.has_obj = True
+                _trace_wrap.is_method = False
             else:
-                _trace_wrap.has_obj = False
-        if _trace_wrap.has_obj:
-            obj, args = args[0], args[1:]
-            pack_func_name = "".join((fn.__name__, "pack", grad_flag_expr))
-            pack_func = getattr(obj, pack_func_name, None)
-            if pack_func is None:
-                pack_func = PackFunc(fn, f"{id(obj)}_{id(fn)}_{grad_flag_expr}", obj, True)
-                setattr(obj, pack_func_name, pack_func)
-        else:
+                _trace_wrap.is_method = True
+        if _trace_wrap.is_method:
             # Similar processing has been done in the __call__ of Cell,
             # so only when obj is None, there is need to do `_handle_func_args`.
             args, kwargs = _handle_func_args(fn, *args, **kwargs)
@@ -232,10 +225,17 @@ def trace(fn):
             if pack_func is None:
                 pack_func = PackFunc(fn, f"{id(fn)}_{grad_flag_expr}", None, True)
                 setattr(fn, pack_func_name, pack_func)
+            return pack_func(*args, **kwargs)
+        obj, args = args[0], args[1:]
+        pack_func_name = "".join((fn.__name__, "pack", grad_flag_expr))
+        pack_func = getattr(obj, pack_func_name, None)
+        if pack_func is None:
+            pack_func = PackFunc(fn, f"{id(obj)}_{id(fn)}_{grad_flag_expr}", obj, True)
+            setattr(obj, pack_func_name, pack_func)
         return pack_func(*args, **kwargs)
 
     if "MS_DEV_DISABLE_TRACE" in os.environ and os.environ["MS_DEV_DISABLE_TRACE"] == "on":
         return fn
     _trace_wrap.pack_fn = fn
-    _trace_wrap.has_obj = None
+    _trace_wrap.is_method = None
     return _trace_wrap

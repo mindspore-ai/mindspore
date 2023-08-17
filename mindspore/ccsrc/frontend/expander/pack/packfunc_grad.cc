@@ -20,21 +20,55 @@
 #include <algorithm>
 #include <utility>
 #include <map>
+#include <unordered_map>
 #include "frontend/expander/pack/pack_expander.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/backend/optimizer/helper.h"
 #include "ops/conv_pool_op_name.h"
 #include "ops/math_op_name.h"
+#include "ops/nn_op_name.h"
 
 namespace mindspore {
 namespace expander {
 namespace {
 using grad_common = pynative::PyNativeAlgo::GradCommon;
 
+// For some multi-output nodes, some outputs are not used in bprop, and special processing is required:
+// 1. BatchNorm is a multi-output node, it's out[0] and out[1] in bprop are not used.
+// 2. LayerNorm is a multi-output node, it's out[0] in bprop are not used.
+static const std::unordered_map<std::string, std::vector<std::size_t>> special_op_unused{
+  {kBatchNormOpName, {kIndex0, kIndex1}}, {kLayerNormOpName, {kIndex0}}};
+constexpr auto kForwardUnusedIndexes = "forward_unused_indexes";
+
+void SpecialOpProcess(const AnfNodePtrList &node_list) {
+  std::map<CNodePtr, std::vector<std::size_t>> special_nodes_unused;
+  for (const auto &node : node_list) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &prim = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto op_name = prim->name();
+    const auto iter = special_op_unused.find(op_name);
+    if (iter != special_op_unused.end()) {
+      if (special_nodes_unused.find(cnode) == special_nodes_unused.end()) {
+        special_nodes_unused[cnode] = iter->second;
+      } else {
+        // If the bprop of other operators is also required, no special processing is required
+        special_nodes_unused.erase(cnode);
+      }
+    }
+  }
+  for (const auto &pair : special_nodes_unused) {
+    auto cnode = pair.first;
+    auto unused_indexes = pair.second;
+    cnode->AddAttr(kForwardUnusedIndexes, MakeValue(unused_indexes));
+  }
+}
+
 void GetUsedForwardNodesInBprop(const FuncGraphPtr &func_graph, AnfNodePtrList *node_list) {
+  bool has_special_op = false;
   const auto &order = TopoSort(func_graph->output());
-  mindspore::HashSet<AnfNodePtr> batch_norm_nodes;
   for (const auto &node : order) {
     if (node == nullptr || !node->isa<CNode>()) {
       continue;
@@ -50,8 +84,15 @@ void GetUsedForwardNodesInBprop(const FuncGraphPtr &func_graph, AnfNodePtrList *
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString();
     auto op_name = prim->name();
+    if (special_op_unused.find(op_name) != special_op_unused.end()) {
+      has_special_op = true;
+    }
     auto unused_inputs = BpropExpander::GetUnusedInputs(op_name);
     grad_common::GetUsedCNodeInBpropGraph(cnode, unused_inputs, node_list);
+  }
+  // process for special node
+  if (has_special_op) {
+    SpecialOpProcess(*node_list);
   }
   // remove same node
   mindspore::OrderedSet node_list_set(*node_list);
@@ -98,6 +139,7 @@ static void ModifyOutputNode(const FuncGraphPtr &func_graph, const GraphGradInfo
   size_t output_index = output_nodes.size();
   abstract::AbstractBasePtrList added_abs_list;
   std::vector<size_t> forward_node_output_index;
+  std::vector<size_t> forward_node_output_unused;
   for (const auto &forward_node : func_graph->used_forward_nodes()) {
     MS_EXCEPTION_IF_NULL(forward_node);
     auto cnode = forward_node->cast<CNodePtr>();
@@ -110,6 +152,13 @@ static void ModifyOutputNode(const FuncGraphPtr &func_graph, const GraphGradInfo
     }
     MS_EXCEPTION_IF_NULL(graph_grad_info);
     graph_grad_info->forward_vnodes.emplace_back(forward_vnode, nodes.size());
+    if (cnode->HasAttr(kForwardUnusedIndexes)) {
+      auto unused_indexes = GetValue<std::vector<size_t>>(cnode->GetAttr(kForwardUnusedIndexes));
+      auto base_index = forward_node_output_index.size();
+      std::transform(unused_indexes.begin(), unused_indexes.end(), std::back_inserter(forward_node_output_unused),
+                     [base_index](const size_t index) { return base_index + index; });
+      cnode->EraseAttr(kForwardUnusedIndexes);
+    }
     for (const auto &node : nodes) {
       const auto &kernel_index = common::AnfAlgo::VisitKernel(node, 0);
       const auto iter = node2index.find(kernel_index);
@@ -123,6 +172,7 @@ static void ModifyOutputNode(const FuncGraphPtr &func_graph, const GraphGradInfo
     }
   }
   graph_grad_info->forward_node_output_index = forward_node_output_index;
+  graph_grad_info->forward_node_output_unused = forward_node_output_unused;
   graph_grad_info->added_output_size = output_index - original_output_size;
   func_graph->ClearUsedForwardNodes();
   if (graph_grad_info->added_output_size > 0) {
@@ -226,6 +276,37 @@ const mindspore::HashSet<size_t> GetUnusedInputs(const FuncGraphPtr &func_graph)
     unused_input_index.insert(node_map_index.at(node));
   }
   return unused_input_index;
+}
+
+ValuePtrList GetForwardNodesValue(const ValuePtr &out_value, const expander::GraphGradInfoPtr &graph_grad_info) {
+  ValuePtrList forward_vnodes_values;
+  const auto &forward_node_output_index = graph_grad_info->forward_node_output_index;
+  if (forward_node_output_index.empty()) {
+    return forward_vnodes_values;
+  }
+  if (out_value->isa<ValueSequence>()) {
+    const auto &out_v_tuple = out_value->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(out_v_tuple);
+    const auto &out_v_vec = out_v_tuple->value();
+    for (const auto index : forward_node_output_index) {
+      if (index >= out_v_vec.size()) {
+        MS_LOG_EXCEPTION << "index is greater than out_v_vec.size:" << index << "," << out_v_vec.size();
+      }
+      forward_vnodes_values.push_back(out_v_vec[index]);
+    }
+  } else {
+    forward_vnodes_values.push_back(out_value);
+  }
+  const auto &forward_node_output_unused = graph_grad_info->forward_node_output_unused;
+  for (const auto index_unused : forward_node_output_unused) {
+    if (index_unused >= forward_vnodes_values.size()) {
+      MS_LOG_EXCEPTION << "index_unused is greater than size of forward_vnodes_values:" << index_unused << " vs "
+                       << forward_vnodes_values.size();
+    }
+    forward_vnodes_values[index_unused] =
+      pynative::PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(forward_vnodes_values[index_unused]);
+  }
+  return forward_vnodes_values;
 }
 }  // namespace expander
 }  // namespace mindspore

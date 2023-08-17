@@ -336,38 +336,16 @@ autograd::GradParamPtr CreateOpGradParam(const FrontendOpRunInfoPtr &op_run_info
   return grad_param;
 }
 
-void FreeOutputDeviceAddress(const FrontendOpRunInfoPtr &op_run_info, const expander::GraphGradInfoPtr &graph_grad_info,
-                             ValuePtrList *forward_vnodes_values) {
-  const auto &forward_node_output_index = graph_grad_info->forward_node_output_index;
-  if (forward_node_output_index.size() > 0) {
-    const auto &out_value = op_run_info->op_grad_info->out_value;
-    if (out_value->isa<ValueSequence>()) {
-      const auto &out_v_tuple = out_value->cast<ValueTuplePtr>();
-      MS_EXCEPTION_IF_NULL(out_v_tuple);
-      const auto &out_v_vec = out_v_tuple->value();
-      for (const auto index : forward_node_output_index) {
-        if (index >= out_v_vec.size()) {
-          MS_LOG_EXCEPTION << "index is greater than out_v_vec.size:" << index << "," << out_v_vec.size();
-        }
-        forward_vnodes_values->push_back(out_v_vec[index]);
-      }
-    } else {
-      forward_vnodes_values->push_back(out_value);
-    }
-  }
-  // The required output in the bprop has been saved by the forward_vnodes_values, free all out_value
-  op_run_info->op_grad_info->out_value =
-    PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
-}
-
 autograd::GradParamPtr CreateGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell,
                                        const expander::GraphGradInfoPtr &graph_grad_info,
                                        ValuePtrList *forward_vnodes_values) {
   MS_LOG_DEBUG << "start CreateGradParam";
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->op_grad_info->out_value = op_run_info->real_out;
-  // Free bprop not used output
-  FreeOutputDeviceAddress(op_run_info, graph_grad_info, forward_vnodes_values);
+  *forward_vnodes_values = expander::GetForwardNodesValue(op_run_info->op_grad_info->out_value, graph_grad_info);
+  // The required output in the bprop has been saved by the forward_vnodes_values, free all out_value
+  op_run_info->op_grad_info->out_value =
+    PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
   // original output abs
   op_run_info->op_grad_info->out_abs = graph_grad_info->ori_output_abs;
   auto grad_param = std::make_shared<autograd::GradParam>(
@@ -423,7 +401,7 @@ void KPynativeGraph(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr, con
   grad_param->is_jit_graph = true;
   grad_param->fg = graph_grad_info->graph_set_forward;
   grad_param->source_fg = graph_grad_info->ori_graph;
-  grad_param->graph_cache_key = graph_grad_info->graph_id;
+  grad_param->graph_cache_key = std::to_string(graph_grad_info->graph_id);
   auto_grad_cell_ptr->KPynativeWithFProp(grad_param);
 }
 }  // namespace
