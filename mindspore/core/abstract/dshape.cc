@@ -55,13 +55,13 @@ bool BaseShape::operator==(const BaseShape &other) const { return tid() == other
 
 bool BaseShape::operator!=(const BaseShape &other) const { return !(*this == other); }
 
-std::string Shape::ToString() const {
+std::string TensorShape::ToString() const {
   std::ostringstream buffer;
   buffer << ShapeVectorToStr(shape_);
   return buffer.str();
 }
 
-std::string Shape::DumpText() const {
+std::string TensorShape::DumpText() const {
   std::ostringstream buffer;
   buffer << "[";
   for (size_t i = 0; i < shape_.size(); i++) {
@@ -71,20 +71,20 @@ std::string Shape::DumpText() const {
   return buffer.str();
 }
 
-bool Shape::IsDynamic() const { return mindspore::IsDynamic(shape_); }
+bool TensorShape::IsDynamic() const { return mindspore::IsDynamic(shape_); }
 
-bool Shape::operator==(const BaseShape &other) const {
+bool TensorShape::operator==(const BaseShape &other) const {
   if (tid() != other.tid()) {
     return false;
   }
-  Shape other_shape = static_cast<const Shape &>(other);
+  TensorShape other_shape = static_cast<const TensorShape &>(other);
   if (shape_ != other_shape.shape_) {
     return false;
   }
   return true;
 }
 
-void Shape::Broaden() {
+void TensorShape::Broaden() {
   for (size_t i = 0; i < shape_.size(); i++) {
     shape_[i] = kShapeDimAny;
   }
