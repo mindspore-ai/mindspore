@@ -285,5 +285,21 @@ class CustomSubGraph : public SubGraphKernel {
   int Execute() override { return Execute(nullptr, nullptr); }
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 };
+
+class AclSubGraph : public SubGraphKernel {
+ public:
+  AclSubGraph(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
+              std::vector<KernelExec *> nodes, Kernel *kernel)
+      : SubGraphKernel(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
+    subgraph_type_ = kAclSubGraph;
+    desc_.arch = kernel::KERNEL_ARCH::kACL;
+  }
+
+  ~AclSubGraph() override { delete this->executor_; }
+  int Prepare() override;
+  int SetFp16Attr() override { return SubGraphKernel::SetFp16Attr(); }
+  int Execute() override { return Execute(nullptr, nullptr); }
+  int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
+};
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_SUB_GRAPH_KERNEL_H_

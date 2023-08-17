@@ -46,7 +46,7 @@ using mindspore::infer::Abstractkernel;
 using mindspore::lite::KernelCallBack;
 
 namespace mindspore::kernel {
-enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kDelegate, kKernelArch_MIN = kCPU, kKernelArch_MAX = kAPU };
+enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kDelegate, kACL, kKernelArch_MIN = kCPU, kKernelArch_MAX = kAPU };
 static const char *const kBuiltin = "Builtin";
 
 struct KernelKey {
@@ -74,7 +74,8 @@ enum SubGraphType {
   kCustomSubGraph,
   kEntranceSubGraph,
   kExitSubGraph,
-  kStackSubGraph
+  kStackSubGraph,
+  kAclSubGraph
 };
 
 class KernelExec {
