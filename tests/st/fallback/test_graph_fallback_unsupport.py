@@ -19,7 +19,7 @@ from collections import deque
 import pytest
 import numpy as np
 
-from mindspore import context
+from mindspore import context, nn
 from mindspore import Tensor, jit
 from mindspore.common import mutable
 
@@ -720,3 +720,38 @@ def test_yield_from_in_graph():
     chain_out = list(chain(s, t))
     print("out:", chain_out)
     assert chain_out == ['A', 'B', 'C', 0, 1, 2]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_assign_class_member():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support yield from in graph mode.
+    Expectation: No exception.
+    """
+    class InnerNet(nn.Cell):
+        def __init__(self, x):
+            super(InnerNet, self).__init__()
+            self.x = x
+
+        def construct(self, x):
+            return x + self.x
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.cell_list = nn.CellList()
+            self.net = InnerNet(0)
+            self.cell_list.append(self.net)
+
+        def construct(self, x):
+            self.cell_list[0].x = x
+            return self.cell_list[0].x.shape
+
+    with pytest.raises(RuntimeError, match="In graph mode, only attribute and name of class members can be assigned."):
+        net = Net()
+        x = Tensor([1, 2, 3])
+        out = net(x)
+        print("out:", out)
