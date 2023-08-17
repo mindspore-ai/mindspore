@@ -235,10 +235,10 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args,
   for (size_t i = 0; i < grads.size(); i++) {
     if (py::isinstance<tensor::Tensor>(py_args[i]) || IsStubTensor(py_args[i])) {
       if (!py::isinstance<tensor::Tensor>(grads[i]) && !IsStubTensor(grads[i])) {
-        MS_EXCEPTION(ValueError) << "For user defined method 'bprop' of net '" << bprop_cls_name << "', the " << i
-                                 << "th return value(gradient of the " << i << "th argument) should be Tensor, but got "
-                                 << py::cast<std::string>(grads[i].attr("__class__").attr("__name__"))
-                                 << ", and the value is " << py::cast<py::str>(grads[i]) << ".";
+        MS_EXCEPTION(TypeError) << "For user defined method 'bprop' of net '" << bprop_cls_name << "', the " << i
+                                << "th return value(gradient of the " << i << "th argument) should be Tensor, but got "
+                                << py::cast<std::string>(grads[i].attr("__class__").attr("__name__"))
+                                << ", and the value is " << py::cast<py::str>(grads[i]) << ".";
       }
 
       py::object arg_dtype = py_args[i].attr("dtype");
