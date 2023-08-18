@@ -688,6 +688,7 @@ table LSTM {
     dropout: float;
     zoneout_cell: float = 0;
     zoneout_hidden: float = 0;
+    proj_size: long = 0;
 }
 
 table LSTMGrad {
