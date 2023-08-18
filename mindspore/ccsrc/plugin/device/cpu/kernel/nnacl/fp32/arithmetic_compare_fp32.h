@@ -28,6 +28,7 @@
 extern "C" {
 #endif
 int ElementEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
+int ElementEqualBool(const bool *input0, const bool *input1, uint8_t *output, int element_size);
 int ElementOptEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size, bool first_scalar);
 int ElementEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
 int ElementOptEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
