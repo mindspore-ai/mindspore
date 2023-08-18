@@ -1,0 +1,8 @@
+#operator acos
+acos:
+    args:
+        x: 
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
