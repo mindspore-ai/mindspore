@@ -46,7 +46,7 @@ def install_custom_kernels(install_path=None):
         out = os.popen(cmd_str).read()
         logging.info(out)
         if install_path is not None:
-            env_str = os.path.join(install_path, "mslite")
+            env_str = os.path.join(install_path, "mslite_tbe_and_aicpu")
             print(f"using requirements: when custom module install finished or before you run the custom module,"
                   f" execute the command [ source {env_str}/bin/set_env.bash ] to set the environment path.")
     else:

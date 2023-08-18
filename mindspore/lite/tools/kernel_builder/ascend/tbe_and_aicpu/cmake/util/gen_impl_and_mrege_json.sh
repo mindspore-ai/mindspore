@@ -2,7 +2,7 @@
 
 project_path=$1
 build_path=$2
-vendor_name=mslite
+vendor_name=mslite_tbe_and_aicpu
 if [[ ! -d "$project_path" ]]; then
     echo "[ERROR] No projcet path is provided"
     exit 1
@@ -14,10 +14,10 @@ if [[ ! -d "$build_path" ]]; then
 fi
 
 # copy ai_core operators implements
-tbe_impl_files_num=$(ls $project_path/tbe/impl/* 2> /dev/null | wc -l)
-if [[ "$tbe_impl_files_num" -gt 0 ]];then
-    cp -r ${project_path}/tbe/impl/* ${build_path}/makepkg/packages/vendors/$vendor_name/op_impl/ai_core/tbe/mslite_impl
-    cp -r ${project_path}/tbe/impl/* ${build_path}/makepkg/packages/vendors/$vendor_name/op_impl/vector_core/tbe/mslite_impl
+tbe_impl_files_num=$(ls $project_path/tbe/impl/* 2>/dev/null | wc -l)
+if [[ "$tbe_impl_files_num" -gt 0 ]]; then
+    cp -r ${project_path}/tbe/impl/* ${build_path}/makepkg/packages/vendors/$vendor_name/op_impl/ai_core/tbe/mslite_tbe_and_aicpu_impl
+    cp -r ${project_path}/tbe/impl/* ${build_path}/makepkg/packages/vendors/$vendor_name/op_impl/vector_core/tbe/mslite_tbe_and_aicpu_impl
 fi
 
 # copy aicpu kernel so operators
@@ -54,4 +54,3 @@ if [[ -f "${aicore_filter_file}" ]] && [[ -f "${aicpu_filter_file}" ]]; then
     chmod u-w ${aicpu_filter_file}
     cp $aicpu_filter_file ${build_path}/makepkg/packages/vendors/$vendor_name/framework/tensorflow
 fi
-

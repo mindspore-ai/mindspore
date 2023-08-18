@@ -1,5 +1,5 @@
 #!/bin/bash
-vendor_name=mslite
+vendor_name=mslite_tbe_and_aicpu
 targetdir=/usr/local/Ascend/opp
 
 sourcedir=$PWD/packages
