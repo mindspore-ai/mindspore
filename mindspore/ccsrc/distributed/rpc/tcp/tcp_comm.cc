@@ -454,7 +454,7 @@ bool TCPComm::Connect(const std::string &dst_url, const MemFreeCallback &free_cb
     }
 
     conn->src_ip = SocketOperation::GetIp(sock_fd);
-    dst_url_to_src_ip_.insert(std::make_pair(dst_url, conn->src_ip));
+    (void)dst_url_to_src_ip_.insert(std::make_pair(dst_url, conn->src_ip));
 
     conn->source = conn->src_ip + ":" + std::to_string(SocketOperation::GetPort(sock_fd));
     conn->destination = dst_url;
