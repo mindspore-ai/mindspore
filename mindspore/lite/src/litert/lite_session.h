@@ -113,7 +113,6 @@ class MS_API LiteSession {
                                                 const std::vector<std::string> &changeable_weights_name = {}) {
     return mindspore::lite::RET_ERROR;
   }
-  virtual int UpdateWeights(std::vector<lite::Tensor *> new_weights) { return mindspore::lite::RET_ERROR; }
   virtual std::vector<lite::Tensor *> GetFeatureMaps() const {
     std::vector<lite::Tensor *> features;
     return features;
@@ -139,6 +138,7 @@ class MS_API LiteSession {
   void SetKeepModelBuf(bool keep_model_buf) { keep_model_buf_ = keep_model_buf; }
 
   void SetModelId(std::string id) { model_id_ = id; }
+  int UpdateWeights(std::vector<lite::Tensor *> modify_tensors);
 
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
@@ -181,6 +181,7 @@ class MS_API LiteSession {
   int DelegateInit();
   int InitGPURuntime();
   int InitSharedThreadPool();
+  int ReshapeWeightTensor(lite::Tensor *orig_tensor, lite::Tensor *new_tensor);
 
  private:
   int IsolateOutputTensor();
@@ -241,7 +242,6 @@ class MS_API LiteSession {
   // value is true only in the pure CPU scenario, at the meantime, both of 'is_control_flow_' and 'is_train_session_'
   // are false and 'runtime_allocator_' is a nullptr.
   bool infer_along_running_{true};
-
   int is_infershape_{RET_ERROR};
   bool is_control_flow_ = false;
   bool keep_model_buf_ = false;
@@ -255,6 +255,7 @@ class MS_API LiteSession {
   std::string runner_id_;
   int worker_id_;
   bool is_shared_weight_ = false;
+  bool model_buff_changed_ = false;
 };
 }  // namespace lite
 }  // namespace mindspore
