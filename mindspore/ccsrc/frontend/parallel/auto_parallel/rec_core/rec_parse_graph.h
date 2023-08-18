@@ -35,7 +35,7 @@ static const std::set<OperatorType> ElementWiseOpType = {
   OperatorType::kRecDiv,       OperatorType::kRecSqueeze,    OperatorType::kRecReduce,       OperatorType::kRecCast,
   OperatorType::kRecReshape,   OperatorType::kRecGatherV2,   OperatorType::kRecArgWithValue, OperatorType::kRecSoftmax,
   OperatorType::kRecOneHot,    OperatorType::kRecExpandDims, OperatorType::kRecStridedSlice, OperatorType::kRecCum,
-  OperatorType::kRecLayerNorm};
+  OperatorType::kRecLayerNorm, OperatorType::kRecFlatten};
 
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
@@ -48,7 +48,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {MAX_POOL_WITH_ARGMAX, OperatorType::kRecPooling},
   {SIMPLE_MEAN, OperatorType::kRecPooling},
   {RESHAPE, OperatorType::kRecReshape},
-  {FLATTEN, OperatorType::kRecReshape},
+  {FLATTEN, OperatorType::kRecFlatten},
   {BIAS_ADD, OperatorType::kRecBiasAdd},
   {BATCH_NORM, OperatorType::kRecBatchNorm},
   {LAYER_NORM, OperatorType::kRecLayerNorm},
@@ -104,6 +104,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {LOG_SOFTMAX, OperatorType::kRecSoftmax},
   {CHOLESKY, OperatorType::kRecSoftmax},
   {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmaxCrossEntropyWithLogits},
+  {FLATTEN, OperatorType::kRecFlatten},
   {CUM_SUM, OperatorType::kRecCum},
   {SQRT, OperatorType::kRecElmWiseOp},
   {NEG, OperatorType::kRecElmWiseOp},

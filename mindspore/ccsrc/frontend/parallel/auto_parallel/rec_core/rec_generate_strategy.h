@@ -168,6 +168,8 @@ Dimensions ModifyStrategyIfReduceIncoming(const std::vector<std::shared_ptr<Oper
 Dimensions GetDimListFromAttrs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops);
 Dimensions ModifyStrategyIfArgIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                        const size_t incoming_op_index, Dimensions s);
+Dimensions ModifyStrategyIfFlattenIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                           const size_t incoming_op_index, Dimensions s);
 Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                              const size_t iter_ops, const size_t incoming_op_index);
 Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,

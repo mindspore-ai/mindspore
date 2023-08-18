@@ -1314,6 +1314,37 @@ Dimensions ModifyStrategyIfArgIncoming(const std::vector<std::shared_ptr<Operato
   return s_Arg;
 }
 
+Dimensions ModifyStrategyIfFlattenIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                           const size_t incoming_op_index, Dimensions s) {
+  Dimensions new_strategy;
+  int start_dim = 1, end_dim = s.size() - 1;
+  auto start_dim_iter = ops[incoming_op_index]->attrs().find("start_dim");
+  if (start_dim_iter != ops[incoming_op_index]->attrs().end()) {
+    start_dim = GetValue<int64_t>(start_dim_iter->second);
+  }
+  auto end_dim_iter = ops[incoming_op_index]->attrs().find("end_dim");
+  if (end_dim_iter != ops[incoming_op_index]->attrs().end() && GetValue<int64_t>(end_dim_iter->second) >= 0) {
+    end_dim = GetValue<int64_t>(end_dim_iter->second);
+  }
+
+  for (int idx = 0; idx < start_dim; idx++) {
+    new_strategy.push_back(s[idx]);
+  }
+
+  int flatten_strategy = 1;
+  for (int idx = start_dim; idx < end_dim + 1; idx++) {
+    flatten_strategy *= s[idx];
+  }
+  new_strategy.push_back(flatten_strategy);
+  if (IntToSize(end_dim + 1) < s.size()) {
+    for (size_t idx = end_dim + 1; idx < s.size(); idx++) {
+      new_strategy.push_back(s[idx]);
+    }
+  }
+
+  return new_strategy;
+}
+
 Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                              const size_t iter_ops, const size_t incoming_op_index) {
   Dimensions s;
@@ -1337,6 +1368,9 @@ Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<O
     }
     if (ops[incoming_op_index]->type() == ARGMAXWITHVALUE || ops[incoming_op_index]->type() == ARGMINWITHVALUE) {
       s = ModifyStrategyIfArgIncoming(ops, incoming_op_index, s);
+    }
+    if (ops[incoming_op_index]->type() == FLATTEN) {
+      s = ModifyStrategyIfFlattenIncoming(ops, incoming_op_index, s);
     }
   }
   return s;
@@ -1663,6 +1697,11 @@ Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<O
   Dimensions s;
   // Propagation not implemented for these operators
   if (ops[iter_ops]->type() == ARGMAXWITHVALUE || ops[iter_ops]->type() == ARGMINWITHVALUE) {
+    return s;
+  }
+
+  // Propagation not allowed for these operators
+  if (ops[iter_ops]->type() == FLATTEN) {
     return s;
   }
 
