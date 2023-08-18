@@ -125,11 +125,12 @@ if(MODE_ASCEND_ALL)
     find_library(AICPU_TF_ENGINE aicpu_tf_engine ${ASCEND_CANN_PLUGIN_PATH} ${ASCEND_TOOLKIT_PLUGIN_PATH})
     find_library(AOE_TUNING libaoe_tuning.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(SLICE slice ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(AOE_EXECUTOR aoe_executor ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
     target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
             -Wl,--no-as-needed ${OPTILING} ${OPMASTER_RT2} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE}
             ${PROFILING} ${ACL_OP_COMPILER} ${CANN_KB} ${COMPRESS} ${OPSKERNEL} ${AICPU_ASCEND_ENGINE}
-            ${HOST_CPU_ENGINE} ${AICPU_TF_ENGINE} ${SLICE})
+            ${HOST_CPU_ENGINE} ${AICPU_TF_ENGINE} ${SLICE} ${AOE_EXECUTOR})
     target_link_libraries(mindspore_ascend PRIVATE ${adump_server})
 endif()
 
