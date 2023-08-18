@@ -196,6 +196,8 @@ template <typename T>
 bool ROIAlignCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &workspace,
                                         const std::vector<kernel::AddressPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
   const T *input = static_cast<T *>(inputs[0]->addr);
   const T *rois = static_cast<T *>(inputs[1]->addr);
   auto out_data = static_cast<T *>(outputs[0]->addr);
