@@ -1532,9 +1532,7 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
     MS_LOG(DEBUG) << "Get cnode not primitive " << cnode->DebugString();
     return cnode;
   }
-  mindspore::HashSet<size_t> input_to_attr = {};
-  PyNativeAlgo::Common::GetConstInputToAttr(prim, prim->name(), device_target, is_dynamic_shape, &input_to_attr);
-  if (input_to_attr.empty()) {
+  auto traverse_fn = [this, &device_target, is_dynamic_shape, grad_by_value](const CNodePtr &cnode) {
     for (size_t i = 1; i < cnode->size(); ++i) {
       // Avoidig infinite loops
       if (!cnode->HasAttr(kIsKNode)) {
@@ -1544,6 +1542,11 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
         }
       }
     }
+  };
+  mindspore::HashSet<size_t> input_to_attr = {};
+  PyNativeAlgo::Common::GetConstInputToAttr(prim, prim->name(), device_target, is_dynamic_shape, &input_to_attr);
+  if (input_to_attr.empty()) {
+    traverse_fn(cnode);
     return cnode;
   }
   const auto &input_names = prim->GetAttr(kAttrInputNames);
@@ -1588,14 +1591,7 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
   }
   cnode->set_inputs(new_inputs);
   // If cast input is a cast
-  for (size_t i = 1; i < cnode->size(); ++i) {
-    if (!cnode->HasAttr(kIsKNode)) {
-      if (cnode->input(i)->isa<CNode>()) {
-        cnode->set_input(i, ConvertConstInputToAttr(cnode->input(i)->cast<CNodePtr>(), device_target, grad_by_value,
-                                                    is_dynamic_shape));
-      }
-    }
-  }
+  traverse_fn(cnode);
   return cnode;
 }
 
