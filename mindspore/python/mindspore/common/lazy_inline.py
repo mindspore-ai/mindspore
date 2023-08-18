@@ -21,14 +21,14 @@ from functools import wraps
 
 def lazy_inline(fn=None, attrs=None):
     """
-    Make the cell to be reusable. The function graph will not be inline at first.
+    Make the cell to be reusable. The corresponding sub graph will not be inline at first.
 
-    Registering the decorator of the built-in operator cell __init__
-    function will add save all the parameters of __init__ as operator attributes.
+    Registering the decorator of the built-in function `__init__` of a cell, the decorator
+    will add the parameters of `__init__` according to the `attrs` as the attributes of this cell.
 
     Args:
-        fn (function): __init__ function of cell.
-        attrs (list(string) | string): attr list.
+        fn (function): `__init__` function of a cell.
+        attrs (Union[list[string], string]): The attributes list to add for the cell.
 
     Returns:
         function, original function.
