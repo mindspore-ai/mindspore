@@ -423,9 +423,7 @@ int MatmulBasePackBiasMatrix(MatmulStruct *matmul) {
   NNACL_CHECK_TRUE_RET(bias_num > 0 && matmul->compute_.col_align_ >= bias_num, NNACL_ERR);
 
   matmul->matrix_c_.pack_size_ = matmul->compute_.col_align_;
-  if (matmul->matrix_c_.pack_ptr_ == NULL) {
-    matmul->matrix_c_.pack_ptr_ = (float *)(malloc(matmul->matrix_c_.pack_size_ * sizeof(float)));
-  }
+  matmul->matrix_c_.pack_ptr_ = (float *)(malloc(matmul->matrix_c_.pack_size_ * sizeof(float)));
   NNACL_CHECK_NULL_RETURN_ERR(matmul->matrix_c_.pack_ptr_);
 
   if (bias_num == 1) {
@@ -505,9 +503,7 @@ int MatmulBaseResize(KernelBase *self) {
   if (!matmul->matrix_c_.has_packed_) {
     ret = MatmulBasePackBiasMatrix(matmul);
     NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
-    if (!matmul->bias_need_repack_) {
-      matmul->matrix_c_.has_packed_ = true;
-    }
+    matmul->matrix_c_.has_packed_ = true;
   }
   ret = MatmulBaseInitTmpOutBuffer(matmul);
   NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
@@ -554,10 +550,6 @@ int MatmulBasePrepare(struct KernelBase *self) {
   NNACL_CHECK_FALSE(matmul->base_.out_size_ < 1, NNACL_OUTPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(matmul->base_.in_[FIRST_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(matmul->base_.in_[SECOND_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_INPUT_TENSOR_ERROR);
-
-  if (matmul->base_.in_size_ == THREE_TENSOR) {
-    NNACL_CHECK_TRUE_RET(matmul->base_.in_[THIRD_INPUT]->data_type_ == kNumberTypeFloat32, NNACL_MATMUL_BIAS_INVALID);
-  }
 
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(
@@ -653,7 +645,6 @@ KernelBase *CreateMatmulBase() {
   matmul->pack_opt_ = false;
   matmul->a_const_ = false;
   matmul->b_const_ = false;
-  matmul->bias_need_repack_ = false;
   matmul->out_need_aligned_ = false;
   matmul->a_offset_ = NULL;
   matmul->b_offset_ = NULL;
