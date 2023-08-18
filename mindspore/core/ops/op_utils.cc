@@ -39,6 +39,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/shape_utils.h"
+#include "op_def.h"
 
 namespace mindspore {
 namespace ops {
@@ -952,5 +953,117 @@ template std::optional<ArrayValue<uint8_t>> GetArrayValue(const ValuePtr &value)
 template std::optional<ArrayValue<double>> GetArrayValue(const ValuePtr &value);
 template std::optional<ArrayValue<float>> GetArrayValue(const ValuePtr &value);
 template std::optional<ArrayValue<std::string>> GetArrayValue(const ValuePtr &value);
+
+OP_DTYPE AbstractToDTYPE(const AbstractBasePtr &abs) {
+  if (abs->isa<abstract::AbstractTensor>()) {
+    return DT_TENSOR;
+  }
+
+  if (abs->isa<abstract::AbstractScalar>()) {
+    auto value = abs->BuildValue();
+    if (value->isa<IntegerImm>()) {
+      return DT_INT;
+    }
+
+    if (value->isa<FloatImm>()) {
+      return DT_FLOAT;
+    }
+
+    if (value->isa<BoolImm>()) {
+      return DT_BOOL;
+    }
+
+    if (value->isa<StringImm>()) {
+      return DT_STR;
+    }
+
+    MS_LOG(EXCEPTION) << "Can not convert to OP_DTYPE, where the Abstract is: " << abs->ToString();
+  }
+
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    if (abs_seq->dynamic_len() || abs_seq->size() == 0) {
+      // TODO: return DT_ANY
+      return DT_INT;
+    }
+
+    auto elem0 = abs_seq->elements()[0];
+    if (abs->isa<abstract::AbstractTensor>()) {
+      return DT_ARRAY_TENSOR;
+    }
+
+    if (abs->isa<abstract::AbstractScalar>()) {
+      auto value = abs->BuildValue();
+      if (value->isa<IntegerImm>()) {
+        return DT_ARRAY_INT;
+      }
+
+      if (value->isa<FloatImm>()) {
+        return DT_ARRAY_FLOAT;
+      }
+
+      if (value->isa<BoolImm>()) {
+        return DT_ARRAY_BOOL;
+      }
+
+      if (value->isa<StringImm>()) {
+        return DT_ARRAY_STR;
+      }
+
+      MS_LOG(EXCEPTION) << "Can not convert to OP_DTYPE, where the Abstract is: " << abs->ToString();
+    }
+  }
+
+  MS_LOG(EXCEPTION) << "Can not convert to OP_DTYPE, where the Abstract is: " << abs->ToString();
+}
+
+AbstractBasePtr CheckAndInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto name = primitive->name();
+  auto def = GetOpDef(name);
+
+  // TODO: raise Exception when all ops are register by yaml
+  if (def == nullptr) {
+    auto op_infer = mindspore::abstract::GetPrimitiveInferImpl(primitive);
+
+    if (op_infer.has_value()) {
+      return op_infer.value().InferShapeAndType(nullptr, primitive, input_args);
+    }
+
+    MS_LOG(EXCEPTION) << "For Primitive[" << name << "], the InferShapeAndType is not registed.";
+  }
+
+  auto args_num = def->args_.size();
+  if (args_num != input_args.size()) {
+    MS_LOG(EXCEPTION) << "For Primitive[" << name << "], the input number must be equal to " << args_num << ", but got "
+                      << input_args.size() << ".";
+  }
+
+  for (size_t i = 0; i < input_args.size(); i++) {
+    auto arg_type = AbstractToDTYPE(input_args[i]);
+    // TODO if DT_ANY, skip check
+    if (arg_type != def->args_[i].arg_dtype_) {
+      // TODO convert int to String
+      MS_EXCEPTION(TypeError) << "For Primitive[" << name << "], the type of " << i << "'th input argument must be "
+                              << def->args_[i].arg_dtype_ << " but got " << arg_type << ".";
+    }
+  }
+
+  if (def->func_impl_ == nullptr) {
+    MS_LOG(EXCEPTION) << "For Primitive[" << name << "], the FuncImpl is empty.";
+  }
+
+  (void)def->func_impl_->CheckValidation(primitive, input_args);
+
+  auto op_infer = mindspore::abstract::GetPrimitiveInferImpl(primitive);
+
+  if (op_infer.has_value()) {
+    return op_infer.value().InferAbstract(primitive, input_args);
+  }
+  auto type = def->func_impl_->InferType(primitive, input_args);
+  auto shape = def->func_impl_->InferShape(primitive, input_args);
+
+  return MakeAbstract(shape, type);
+}
 }  // namespace ops
 }  // namespace mindspore

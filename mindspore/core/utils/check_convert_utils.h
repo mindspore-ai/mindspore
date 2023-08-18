@@ -133,6 +133,20 @@ class MS_CORE_API CheckAndConvertUtils {
                                     const PrimitivePtr &prim);
 
   template <typename T>
+  static std::string FormatCommMsg(T arg0) {
+    std::ostringstream buffer;
+    buffer << arg0;
+    return buffer.str();
+  }
+
+  template <typename T, typename... Args>
+  static std::string FormatCommMsg(T arg0, Args... args) {
+    std::ostringstream buffer;
+    buffer << arg0 << FormatCommMsg(args...);
+    return buffer.str();
+  }
+
+  template <typename T>
   static std::string FormatCheckInRangeMsg(const std::string &arg_name, T arg_value, CompareRange compare_operator,
                                            const std::pair<T, T> &range, const PrimitivePtr &prim) {
     std::ostringstream buffer;

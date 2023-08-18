@@ -45,6 +45,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/structure_ops.h"
 #include "ops/array_op_name.h"
+#include "ops/op_utils.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "pipeline/jit/ps/fallback.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
@@ -1198,7 +1199,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   auto py_args = PreparePyInputs(args);
   // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'.
   prim_py->RunCheck(py_args);
-  auto abs = eval_impl_.InferShapeAndType(engine, prim_py, args);
+  auto abs = mindspore::ops::CheckAndInfer(prim_py, args);
   MS_EXCEPTION_IF_NULL(abs);
   prim_py->EndRecordAddAttr();
   auto &added_attrs = prim_py->evaluate_added_attrs();
@@ -1305,7 +1306,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
       return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
     }
   }
-  abs_base = eval_impl_.InferShapeAndType(engine, prim_, args);
+  abs_base = mindspore::ops::CheckAndInfer(prim_, args);
   MS_EXCEPTION_IF_NULL(abs_base);
   prim_->EndRecordAddAttr();
   const auto &added_attrs = prim_->evaluate_added_attrs();

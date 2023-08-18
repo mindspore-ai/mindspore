@@ -914,13 +914,18 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return std::make_shared<PrimitiveTransformEvaluator>(prim);
   }
 
-  // Find prim infer function in the prim function map return a standard evaluator
-  auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
-  if (eval_impl_opt.has_value()) {
-    auto eval_impl = eval_impl_opt.value();
-    if (eval_impl.IsImplInferShapeAndType() && !IsPrimitiveEquals(prim, prim::kPrimMakeTuple) &&
-        !IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
-      return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
+  if (!IsPrimitiveEquals(prim, prim::kPrimMakeTuple) && !IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
+    auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
+    if (eval_impl_opt.has_value()) {
+      // Find prim infer function in the prim function map return a standard evaluator
+      // TODO: this will be deprecated when all ops are defined by yaml
+      auto eval_impl = eval_impl_opt.value();
+      if (eval_impl.IsImplInferShapeAndType()) {
+        return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
+      }
+    } else {
+      // For yaml op, no eval_impl is need
+      return std::make_shared<StandardPrimEvaluator>(prim);
     }
   }
 

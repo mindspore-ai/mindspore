@@ -28,6 +28,7 @@
 #include "ops/arithmetic_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/sequence_ops.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -314,16 +315,10 @@ void SetKernelInfoForValueNode(const ValueNodePtr &value_node) {
 
 abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, const AnfNodePtrList &input_list) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto found = abstract::GetPrimitiveInferImpl(primitive);
-  if (!found.has_value()) {
-    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
-  }
-
   std::vector<AbstractBasePtr> input_args;
   (void)std::for_each(input_list.begin(), input_list.end(),
                       [&input_args](const auto &input) { (void)input_args.emplace_back(input->abstract()); });
-  auto infer_impl = found.value();
-  auto abs = infer_impl.InferShapeAndType(nullptr, primitive, input_args);
+  auto abs = mindspore::ops::CheckAndInfer(primitive, input_args);
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
   return abs;

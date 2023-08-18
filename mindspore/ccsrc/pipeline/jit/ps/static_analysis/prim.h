@@ -34,6 +34,8 @@ class StandardPrimEvaluator final : public TrivialPrimEvaluator {
  public:
   StandardPrimEvaluator(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &eval_impl)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), eval_impl_(eval_impl) {}
+  StandardPrimEvaluator(const PrimitivePtr &primitive)
+      : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive) {}
   ~StandardPrimEvaluator() override = default;
   MS_DECLARE_PARENT(StandardPrimEvaluator, TrivialPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
