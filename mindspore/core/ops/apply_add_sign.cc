@@ -67,8 +67,11 @@ abstract::TupleShapePtr ApplyAddSignInferShape(const PrimitivePtr &primitive,
   auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
   auto grad_shape = input_args[kInputIndex6]->BuildShape();
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(var_shape_ptr);
   auto m_shape_ptr = m_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(m_shape_ptr);
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(grad_shape_ptr);
   if (!m_shape_ptr->IsDynamic() && !var_shape_ptr->IsDynamic()) {
     if (*m_shape != *var_shape) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name

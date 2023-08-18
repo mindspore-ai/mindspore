@@ -427,7 +427,7 @@ ValuePtr StubNodeToValueInner(const ValuePtr &v) {
 }
 
 void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info);
   for (size_t i = 0; i < op_run_info->input_size; i++) {
     op_run_info->op_grad_info->input_value[i] = StubNodeToValueInner(op_run_info->op_grad_info->input_value[i]);
   }
@@ -778,6 +778,9 @@ void DataConvert::FlattenValueSeqArg(const ValuePtr &v, std::vector<ValuePtr> *f
 
 void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens) {
   MS_EXCEPTION_IF_NULL(flatten_v);
+  if (v_vec.empty()) {
+    MS_LOG(EXCEPTION) << "For bprop graph input value size should be greatet than 0, but get empty.";
+  }
   size_t input_size = has_sens ? v_vec.size() - 1 : v_vec.size();
   for (size_t i = 0; i < input_size; ++i) {
     const auto &v = v_vec[i];
@@ -846,6 +849,7 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
       if (PyNativeAlgo::Common::IsParam(grad_type)) {
         op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kParameter;
       }
+      MS_EXCEPTION_IF_NULL(top_cell);
       if (!top_cell->is_high_order_top_cell() && op_run_info->input_unused_in_bprop[index]) {
         (void)fake_tensor_list.emplace_back(Common::CreateFakeTensorWithoutDeviceAddress(tensor));
       }
