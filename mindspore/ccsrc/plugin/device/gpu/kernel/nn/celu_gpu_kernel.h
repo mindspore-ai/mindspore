@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include <string>
 #include <utility>
 #include <map>
-#include "mindspore/core/ops/celu.h"
+#include "mindspore/core/ops/ops_func_impl/celu.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -52,7 +52,6 @@ class CeluGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<Cel
                     const std::vector<KernelTensor *> &outputs);
 
  private:
-  double alpha_;
   size_t unit_size_{1};
   size_t input_elements_{};
   void *cuda_stream_{nullptr};

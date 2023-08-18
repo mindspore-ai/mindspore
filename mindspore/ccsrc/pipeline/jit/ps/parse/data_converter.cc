@@ -623,14 +623,12 @@ ValuePtr ConvertIntegerWithType(const py::object &obj, const TypePtr &dtype = nu
 }
 
 ValuePtr ConvertFloatWithType(const py::object &obj, const TypePtr &dtype = nullptr) {
-  auto obj_float32 = py::cast<float>(obj);
+  auto obj_double = py::cast<double>(obj);
   if (dtype == nullptr) {
-    auto obj_double = py::cast<double>(obj);
-    auto ret = std::make_shared<FP32Imm>(obj_float32);
-    ret->set_prim_value(obj_double);
+    auto ret = std::make_shared<FP64Imm>(obj_double);
     return ret;
   }
-  return ConvertNumberWithType<float>(obj_float32, dtype);
+  return ConvertNumberWithType<float>(obj_double, dtype);
 }
 
 template <typename T, typename U>

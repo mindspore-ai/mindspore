@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@
 #include <memory>
 #include <functional>
 #include <map>
-#include "mindspore/core/ops/celu.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+
 namespace mindspore {
 namespace kernel {
 class CeluCpuKernelMod : public NativeCpuKernelMod {
@@ -45,7 +45,6 @@ class CeluCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  float alpha_ = 1.0;
   size_t unit_size_;
   size_t input_elements_;
 };

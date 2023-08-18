@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,6 @@ namespace mindspore {
 namespace kernel {
 bool CeluGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CeLU>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast celu ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  alpha_ = static_cast<double>(kernel_ptr->get_alpha());
-
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
@@ -55,7 +47,7 @@ int CeluGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != 1) {
+  if (input_size_list_.size() != 2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 1.";
     return KRET_RESIZE_FAILED;
   }
@@ -68,20 +60,21 @@ template <typename T>
 bool CeluGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                     const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
+  double *alpha = GetDeviceAddress<double>(inputs, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   auto status =
-    CalculateCelu(input, input_elements_, alpha_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_STATUS(status, kernel_name_);
+    CalculateCelu(input, input_elements_, alpha, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, this->kernel_name_);
   return true;
 }
 
 const std::vector<std::pair<KernelAttr, CeluGpuKernelMod::KernelRunFunc>> &CeluGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, CeluGpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat16),
      &CeluGpuKernelMod::LaunchKernel<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32),
      &CeluGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &CeluGpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+# pylint: disable=unused-variable
 """nn_ops vmap impl."""
 from __future__ import absolute_import
 
@@ -2055,11 +2056,23 @@ def get_dense_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.CeLU)
+def get_logit_vmap_rule(prim, axis_size):
+    """VmapRule for `CeLU` operation"""
+
+    def vmap_rule(x_bdim, alpha_bdim):
+        x_data, x_dim = x_bdim
+        alpha_data, alpha_dim = alpha_bdim
+        out = F.celu(x_data, alpha_data)
+        return out, x_dim
+
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU6)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.CeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.SeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.HSigmoid)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Softplus)(get_unop_vmap_rule)
