@@ -70,8 +70,8 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
       TransposeInfo InInfo, OutInfo;
       InInfo.input_shape = input_shape_;
       InInfo.perm = std::vector<int32_t>{0, 2, 3, 1};
-      InInfo.input_shape = transpose_shape_;
-      InInfo.perm = std::vector<int32_t>{0, 3, 1, 2};
+      OutInfo.input_shape = transpose_shape_;
+      OutInfo.perm = std::vector<int32_t>{0, 3, 1, 2};
 
       auto status = CalTranspose<T, true>(num_elements_, x, InInfo, ws_x, reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
