@@ -40,6 +40,9 @@ constexpr auto kTransformQuantParam = "transform_quant_param";
 constexpr auto kAscendQuantParam = "ascend_quant_param";
 constexpr auto kDynamicQuantParam = "dynamic_quant_param";
 constexpr auto kGraphKernelParam = "graph_kernel_param";
+constexpr int kNumSize3 = 3;
+constexpr int kNumSize2 = 2;
+
 }  // namespace
 using ShapeVector = std::vector<int64_t>;
 const int kBatchDim = 0;
@@ -214,12 +217,12 @@ STATUS ConfigFileParser::ParseCustomPattern(const std::shared_ptr<mindspore::Con
   std::vector<std::string> custom_pattern_strs = mindspore::lite::SplitStringToVector(custom_pattern_str, ";");
   for (auto custom_pattern : custom_pattern_strs) {
     std::vector<std::string> item = mindspore::lite::SplitStringToVector(custom_pattern, ":");
-    if (item.size() != 3) {
+    if (item.size() != kNumSize3) {
       return RET_ERROR;
     }
     std::string op_type = item[0];
     auto names_list = mindspore::lite::SplitStringToVector(item[1], ",");
-    std::string status = item[2];
+    std::string status = item[kNumSize2];
     if (status == "enable") {
       if (param->aclModelOptionCfgParam.enable_custom_fusion_pattern.find(op_type) !=
           param->aclModelOptionCfgParam.enable_custom_fusion_pattern.end()) {
