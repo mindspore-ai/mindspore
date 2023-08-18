@@ -220,7 +220,12 @@ mindspore::HashSet<mindspore::AnfNodePtr> FetchValueNodesNeedDevicePtr(const Ker
     auto input_num = common::AnfAlgo::GetInputNum(node);
     mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
     if (op_def == nullptr) {
-      MS_LOG(EXCEPTION) << op_name << " is not found in OpDef.";
+      MS_LOG(INFO) << op_name << " is not found in OpDef.";
+      for (size_t i = 0; i < input_num; i++) {
+        auto input = common::AnfAlgo::GetInputNode(node, i);
+        (void)nodes.insert(input);
+      }
+      return nodes;
     }
     auto args = op_def->args_;
     if (input_num != args.size()) {

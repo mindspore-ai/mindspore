@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,8 @@ namespace kernel {
 constexpr size_t kZero = 0;
 constexpr size_t kOne = 1;
 constexpr size_t kDWork = 256;
-bool CholeskyInverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::CholeskyInverse>(base_operator);
-  if (kernel_ptr_ != NULL) {
-    kernel_name_ = kernel_ptr_->name();
-  }
+bool CholeskyInverseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -38,21 +34,13 @@ bool CholeskyInverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  upper_ = kernel_ptr_->get_upper();
-  if (upper_) {
-    uplo_ = CUBLAS_FILL_MODE_LOWER;
-  } else {
-    uplo_ = CUBLAS_FILL_MODE_UPPER;
-  }
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
 
   return true;
 }
-int CholeskyInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+int CholeskyInverseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -94,6 +82,7 @@ bool CholeskyInverseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
                                                const std::vector<KernelTensor *> &workspace,
                                                const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
+  bool *upper_ = GetDeviceAddress<bool>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
   int *dev_info = GetDeviceAddress<int>(workspace, 0);
   T *d_work = GetDeviceAddress<T>(workspace, 1);
@@ -101,7 +90,11 @@ bool CholeskyInverseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
                                 "CusolverDnSetStream failed");
 
   int lwork = kDWork;
-
+  if (upper_) {
+    uplo_ = CUBLAS_FILL_MODE_LOWER;
+  } else {
+    uplo_ = CUBLAS_FILL_MODE_UPPER;
+  }
   if constexpr (std::is_same_v<T, float>) {
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnSpotri_bufferSize(handle_, uplo_, rank_, input, rank_, &lwork),
                                            "cusolver query spotri work size fail");
@@ -133,9 +126,15 @@ bool CholeskyInverseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
   return True;
 }
 std::vector<std::pair<KernelAttr, CholeskyInverseGpuKernelMod::CIfunc>> CholeskyInverseGpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32),
    &CholeskyInverseGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64),
    &CholeskyInverseGpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> CholeskyInverseGpuKernelMod::GetOpSupport() {

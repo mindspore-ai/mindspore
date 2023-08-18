@@ -1472,14 +1472,14 @@ REG_BPROP_BUILDER("Complex").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) 
 });
 
 REG_BPROP_BUILDER("CholeskyInverse").SetBody(BODYFUNC(ib) {
-  auto upper = GetValue<bool>(ib->GetAttr("upper"));
   auto input_x = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto upper = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
   ShapeVector input_perm = {1, 0};
   NodePtr dx;
   auto DealWithUpper = [&upper, &dx, &ib, &input_x](const NodePtr &common_term) {
-    if (upper) {
+    if (ib->Equal(upper, ib->Value<bool>(true))) {
       dx = ib->Emit("Neg", {ib->MatMul(input_x, common_term, false, false)});
     } else {
       dx = ib->Emit("Neg", {ib->MatMul(common_term, input_x, false, false)});
@@ -1494,12 +1494,12 @@ REG_BPROP_BUILDER("CholeskyInverse").SetBody(BODYFUNC(ib) {
     common_term = ib->MatMul(out, ib->MatMul(common_term, out, false, false), false, false);
     DealWithUpper(common_term);
     dx = ib->Cast(dx, kFloat64);
-    return {dx};
+    return {dx, ib->OutZeros(upper)};
   }
   auto common_term = ib->Add(dout, ib->Transpose(dout, input_perm));
   common_term = ib->MatMul(out, ib->MatMul(common_term, out, false, false), false, false);
   DealWithUpper(common_term);
-  return {dx};
+  return {dx, ib->OutZeros(upper)};
 });
 
 REG_BPROP_BUILDER("CholeskySolve").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
