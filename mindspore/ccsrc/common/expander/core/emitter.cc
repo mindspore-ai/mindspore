@@ -57,6 +57,36 @@ ValuePtr CreateZeroScalar(const TypePtr &type) {
   auto tensor = std::make_shared<tensor::Tensor>(0, type);
   return CreateValueFromTensor(tensor);
 }
+
+ShapeVector CalReshapeRealDstShape(const ShapeVector &x_shape, const ShapeVector &dst_shape) {
+  if (!IsDynamicShape(dst_shape)) {
+    return dst_shape;
+  }
+
+  if (IsDynamicRank(dst_shape) || IsDynamic(x_shape)) {
+    MS_LOG(EXCEPTION) << "The source shape(" << x_shape << ") or target shape(" << dst_shape
+                      << ") is invalid for Reshape const infer!";
+  }
+
+  ShapeVector res_shape(dst_shape.begin(), dst_shape.end());
+  if (std::count(dst_shape.begin(), dst_shape.end(), abstract::Shape::kShapeDimAny) != 1) {
+    MS_LOG(EXCEPTION) << "The target shape can only have one -1 for Reshape, bug got " << dst_shape;
+  }
+
+  auto total_size = std::accumulate(x_shape.cbegin(), x_shape.cend(), 1, std::multiplies<int64_t>());
+  size_t target_idx = 0;
+  int64_t dst_size = 1;
+  for (size_t i = 0; i < dst_shape.size(); ++i) {
+    if (dst_shape[i] == abstract::Shape::kShapeDimAny) {
+      target_idx = i;
+      continue;
+    }
+    dst_size *= dst_shape[i];
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(dst_size != 0, "Cannot divide zeros!");
+  res_shape[target_idx] = total_size / dst_size;
+  return res_shape;
+}
 }  // namespace
 
 NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs) {
@@ -128,6 +158,22 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
   if (!success) {
     return Emit(kReshapeOpName, {node, shape});
   }
+
+  auto vnode = node->get<ValueNodePtr>();
+  if (vnode != nullptr) {
+    // If node and shape is both known, return node itself or a new tensor with target shape.
+    auto tensor = vnode->value()->cast<tensor::TensorPtr>();
+    if (tensor != nullptr && tensor->data().const_data() != nullptr) {
+      const auto &tensor_shape = tensor->shape_c();
+      auto update_shape = CalReshapeRealDstShape(tensor_shape, dst_shape);
+      if (tensor_shape == update_shape) {
+        return node;
+      }
+      auto type_id = tensor->data_type();
+      return this->Tensor(type_id, update_shape, tensor->data_c(), type_id);
+    }
+  }
+
   auto node_shape = node->shape();
   if (dst_shape.size() != node_shape.size()) {
     return Emit(kReshapeOpName, {node, shape});
