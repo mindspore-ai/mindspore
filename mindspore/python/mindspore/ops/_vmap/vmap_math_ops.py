@@ -842,6 +842,16 @@ def get_fft_with_size_vmap_rule(prim, axis_size):
 
     return vmap_rule
 
+@vmap_rules_getters.register(math_ops.Logit)
+def get_logit_vmap_rule(prim, axis_size):
+    """VmapRule for `Logit` operation"""
+    def vmap_rule(x_bdim, eps_bdim):
+        x_data, x_dim = x_bdim
+        eps_data, eps_dim = eps_bdim
+        out = F.logit(x_data, eps_data)
+        return out, x_dim
+
+    return vmap_rule
 
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
@@ -868,7 +878,6 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Exp)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Expm1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Floor)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Log)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(math_ops.Logit)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Log1p)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.LogicalNot)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Mish)(get_unop_vmap_rule)

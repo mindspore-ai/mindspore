@@ -52,6 +52,10 @@ void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const st
   auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
   ASSERT_NE(x, nullptr);
   std::vector<abstract::AbstractBasePtr> input_args{std::move(x)};
+  for (auto attr : param.attr_list) {
+    auto attr_abs = attr->ToAbstract();
+    input_args.push_back(std::move(attr_abs));
+  }
 
   ASSERT_NE(infer_impl, nullptr);
   auto infer_shape = infer_impl->InferShape(primitive, input_args);
@@ -59,7 +63,7 @@ void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const st
   auto infer_type = infer_impl->InferType(primitive, input_args);
   ASSERT_NE(infer_type, nullptr);
 
-  auto expect_shape = std::make_shared<abstract::Shape>(param.out_shape);
+  auto expect_shape = std::make_shared<abstract::TensorShape>(param.out_shape);
   ASSERT_NE(expect_shape, nullptr);
   auto expect_type = std::make_shared<TensorType>(param.out_type);
   ASSERT_NE(expect_type, nullptr);
@@ -80,6 +84,10 @@ void TestOpFuncImplWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const
     auto input = std::make_shared<abstract::AbstractTensor>(param.in_type_list[idx], param.in_shape_array[idx]);
     input_args.push_back(std::move(input));
   }
+  for (auto attr : param.attr_list) {
+    auto attr_abs = attr->ToAbstract();
+    input_args.push_back(std::move(attr_abs));
+  }
 
   ASSERT_NE(infer_impl, nullptr);
   auto infer_shape = infer_impl->InferShape(primitive, input_args);
@@ -97,7 +105,7 @@ void TestOpFuncImplWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const
     std::vector<abstract::BaseShapePtr> shape_list;
     std::vector<TypePtr> type_list;
     for (size_t idx = 0; idx < param.out_shape_array.size(); ++idx) {
-      auto shape = std::make_shared<abstract::Shape>(param.out_shape_array[idx]);
+      auto shape = std::make_shared<abstract::TensorShape>(param.out_shape_array[idx]);
       auto type = std::make_shared<TensorType>(param.out_type_list[idx]);
       shape_list.push_back(std::move(shape));
       type_list.push_back(std::move(type));
@@ -105,7 +113,7 @@ void TestOpFuncImplWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const
     expect_shape = std::make_shared<abstract::TupleShape>(shape_list);
     expect_type = std::make_shared<Tuple>(type_list);
   } else {
-    expect_shape = std::make_shared<abstract::Shape>(param.out_shape_array[0]);
+    expect_shape = std::make_shared<abstract::TensorShape>(param.out_shape_array[0]);
     expect_type = std::make_shared<TensorType>(param.out_type_list[0]);
   }
 

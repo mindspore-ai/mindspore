@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/ops_func_impl/log1p.h"
+#include <memory>
+#include "common/common_test.h"
+#include "ops/ops_func_impl/logit.h"
+#include "ops/test_ops.h"
+#include "ops/test_ops_cmp_utils.h"
+#include "ops/test_value_utils.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr Log1pFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto x_shape = input_args[kIndex0]->GetShape();
-  MS_EXCEPTION_IF_NULL(x_shape);
-  return x_shape;
-}
+OP_FUNC_IMPL_TEST_DECLARE(Logit, EltwiseOpParams);
 
-TypePtr Log1pFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto x_type = input_args[kIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
-  return x_type;
-}
+OP_FUNC_IMPL_TEST_CASES(
+  Logit,
+  testing::Values(
+    EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32, {CreateScalar<float>(-1.0)}},
+    EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32, {CreateScalar(kValueAny)}},
+    EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32, {CreateScalar(kValueAny)}},
+    EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32, {CreateScalar(kValueAny)}}
+  ));
 }  // namespace ops
 }  // namespace mindspore

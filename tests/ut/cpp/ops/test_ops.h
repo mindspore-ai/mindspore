@@ -22,6 +22,7 @@
 #include "utils/ms_context.h"
 #include "mindapi/base/shape_vector.h"
 #include "base/base.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore::ops {
 class TestOps : public UT::Common {
@@ -48,6 +49,7 @@ struct EltwiseOpParams {
   TypePtr x_type;
   ShapeVector out_shape;
   TypePtr out_type;
+  std::vector<ValuePtr> attr_list;
 };
 
 struct BroadcastOpParams {
@@ -64,6 +66,7 @@ struct MultiInputOpParams {
   std::vector<TypePtr> in_type_list;
   std::vector<ShapeVector> out_shape_array;
   std::vector<TypePtr> out_type_list;
+  std::vector<ValuePtr> attr_list;
 };
 
 struct EltwiseOpShapeParams {

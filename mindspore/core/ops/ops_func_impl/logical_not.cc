@@ -23,14 +23,14 @@ BaseShapePtr LogicalNotFuncImpl::InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   auto x_shape = input_args[kIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
-  return x_shape->Clone();
+  return x_shape;
 }
 
 TypePtr LogicalNotFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   auto x_type = input_args[kIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
-  return x_type->Clone();
+  return x_type;
 }
 }  // namespace ops
 }  // namespace mindspore

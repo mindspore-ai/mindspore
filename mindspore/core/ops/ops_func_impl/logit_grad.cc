@@ -13,23 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/ops_func_impl/log1p.h"
+#include "ops/ops_func_impl/logit_grad.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr Log1pFuncImpl::InferShape(const PrimitivePtr &primitive,
+BaseShapePtr LogitGradFuncImpl::InferShape(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto x_shape = input_args[kIndex0]->GetShape();
+  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
+  auto grad_shape = input_args[kIndex0]->GetShape();
+  auto x_shape = input_args[kIndex1]->GetShape();
+  MS_EXCEPTION_IF_NULL(grad_shape);
   MS_EXCEPTION_IF_NULL(x_shape);
-  return x_shape;
+  const auto grad_shape_vec = grad_shape->GetShapeVector();
+  const auto x_shape_vec = x_shape->GetShapeVector();
+  if (MS_UNLIKELY((IsDynamic(grad_shape_vec) && !IsDynamic(x_shape_vec)) ||
+                  (IsDynamicRank(grad_shape_vec) && !IsDynamicRank(x_shape_vec)))) {
+    return x_shape;
+  }
+  return grad_shape;
 }
 
-TypePtr Log1pFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr LogitGradFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto x_type = input_args[kIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
-  return x_type;
+  auto grad_type = input_args[kIndex0]->GetType();
+  MS_EXCEPTION_IF_NULL(grad_type);
+  return grad_type;
 }
 }  // namespace ops
 }  // namespace mindspore

@@ -179,10 +179,38 @@ def get_median_grad_vmap_rule(prim, axis_size):
         return x_grad, dim_new
     return vmap_rule
 
+@vmap_rules_getters.register(G.LogitGrad)
+def get_logit_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `LogitGrad`."""
+    def vmap_rule(grad_bdim, x_bdim, eps_bdim):
+        grad, grad_dim = grad_bdim
+        x, x_dim = x_bdim
+        eps, eps_dim = eps_bdim
+        x_shape = F.shape(x)
+        grad_shape = F.shape(grad)
+        if x_dim == grad_dim and x_shape == grad_shape:
+            out = F.logit_grad(grad, x, eps)
+            return (out, x_dim)
+
+        # This branch means (x_dim is None) and (grad_dim is not None).
+        if x_dim is None:
+            x = _broadcast_by_axis(x, grad_dim, axis_size)
+            out_dim = grad_dim
+        # This branch means (x_dim is not None) and (grad_dim is None).
+        elif grad_dim is None:
+            grad = _broadcast_by_axis(grad, x_dim, axis_size)
+            out_dim = x_dim
+        # This branch means (x_dim is not None) and (grad_dim is not None).
+        else:
+            grad = mnp.moveaxis(grad, grad_dim, x_dim)
+            out_dim = x_dim
+        out = F.logit_grad(grad, x, eps)
+        return out, out_dim
+
+    return vmap_rule
 
 # UnaryGrad vmap
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.InvGrad)(get_unary_grad_vmap_rule)
-get_unary_grad_vmap_rule = vmap_rules_getters.register(G.LogitGrad)(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register('AbsGrad')(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register('ReciprocalGrad')(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register('SqrtGrad')(get_unary_grad_vmap_rule)

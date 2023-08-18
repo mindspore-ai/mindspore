@@ -28,7 +28,7 @@ BaseShapePtr LogMatrixDeterminantFuncImpl::InferShape(const PrimitivePtr &primit
   MS_EXCEPTION_IF_NULL(x_shape);
   const auto x_shape_vec = x_shape->GetShapeVector();
   if (IsDynamicRank(x_shape_vec)) {
-    auto dyn_shape = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+    auto dyn_shape = std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
     return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{dyn_shape, dyn_shape});
   }
   constexpr size_t kMinRank = 2;
@@ -38,10 +38,10 @@ BaseShapePtr LogMatrixDeterminantFuncImpl::InferShape(const PrimitivePtr &primit
                  CheckAndConvertUtils::FormatCheckIntegerMsg("x rank", x_rank, kGreaterEqual, kMinRank, primitive));
   auto x_row = x_shape_vec[x_rank - kIndex1];
   auto x_col = x_shape_vec[x_rank - kIndex2];
-  auto shape = std::make_shared<abstract::Shape>(ShapeVector(x_shape_vec.begin(), x_shape_vec.end() - kIndex2));
+  auto shape = std::make_shared<abstract::TensorShape>(ShapeVector(x_shape_vec.begin(), x_shape_vec.end() - kIndex2));
   auto output_shapes = std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{shape, shape});
-  if (x_row == abstract::Shape::kShapeDimAny ||
-      x_col == abstract::Shape::kShapeDimAny) {
+  if (x_row == abstract::TensorShape::kShapeDimAny ||
+      x_col == abstract::TensorShape::kShapeDimAny) {
     return output_shapes;
   }
   MS_CHECK_VALUE(x_row == x_col,
