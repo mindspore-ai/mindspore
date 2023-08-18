@@ -1615,7 +1615,7 @@ class SparseMatrixSoftmax(Primitive):
         if not isinstance(dtype, (type(mstype.float32), type(mstype.single), type(mstype.float64),
                                   type(mstype.double))):
             raise TypeError(
-                "Only float32 and float64 type data are supported, but got {}".format(dtype))
+                f"Only float32 and float64 type data are supported, but got {dtype}")
         self.add_prim_attr("dtype", dtype)
         self.init_prim_io_names(inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers',
                                         'x_col_indices', 'x_values'],

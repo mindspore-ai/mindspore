@@ -84,21 +84,21 @@ def _check_inc_rel(val, lower, upper, rel):
 def _format_str_one_value(value, rel):
     """format string"""
     if rel == EQ:
-        return "= {}".format(value)
+        return f"= {value}"
     if rel == NE:
-        return "!= {}".format(value)
+        return f"!= {value}"
     if rel == LT:
-        return "< {}".format(value)
+        return f"< {value}"
     if rel == LE:
-        return "<= {}".format(value)
+        return f"<= {value}"
     if rel == GT:
-        return "> {}".format(value)
+        return f"> {value}"
     if rel == GE:
-        return ">= {}".format(value)
+        return f">= {value}"
     if rel == IN:
-        return "in {}".format(value)
+        return f"in {value}"
     if rel == NOT_IN:
-        return "not in {}".format(value)
+        return f"not in {value}"
 
     return ""
 
@@ -106,13 +106,13 @@ def _format_str_one_value(value, rel):
 def _format_str_two_value(val1, val2, rel):
     """format string"""
     if rel == INC_NEITHER:
-        return "({}, {})".format(val1, val2)
+        return f"({val1}, {val2})"
     if rel == INC_LEFT:
-        return "[{}, {})".format(val1, val2)
+        return f"[{val1}, {val2})"
     if rel == INC_RIGHT:
-        return "({}, {}]".format(val1, val2)
+        return f"({val1}, {val2}]"
     if rel == INC_BOTH:
-        return "[{}, {}]".format(val1, val2)
+        return f"[{val1}, {val2}]"
 
     return ""
 
@@ -556,8 +556,7 @@ def check_str_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
         reg = r"^\w+[0-9a-zA-Z\_\.]*$"
     if re.match(reg, target, flag) is None:
         prim_name = f"For '{prim_name}', the" if prim_name else "The"
-        raise ValueError("{} '{}' is illegal, it must be match regular'{}' by flags'{}.'".format(
-            prim_name, target, reg, flag))
+        raise ValueError(f"{prim_name} '{target}' is illegal, it must be match regular'{reg}' by flags'{flag}.'")
     return True
 
 
@@ -568,8 +567,7 @@ def check_str_and_none_by_regular(target, reg=None, flag=re.ASCII, prim_name=Non
         reg = r"^\w*[0-9a-zA-Z\_\.]*$"
     if re.match(reg, target, flag) is None:
         prim_name = f"For '{prim_name}', the" if prim_name else "The"
-        raise ValueError("{} '{}' is illegal, it must be match regular'{}' by flags'{}.'".format(
-            prim_name, target, reg, flag))
+        raise ValueError(f"{prim_name} '{target}' is illegal, it must be match regular'{reg}' by flags'{flag}.'")
     return True
 
 
@@ -585,8 +583,7 @@ def check_file_name_by_regular(target, reg=None, prim_name=None):
         reg = r"^[0-9a-zA-Z@\_\-\.\:\/\\]+$"
     if re.match(reg, target) is None:
         prim_name = f"For '{prim_name}', the" if prim_name else "The"
-        raise ValueError("{} '{}' is illegal, it must be match regular '{}'.".format(
-            prim_name, target, reg))
+        raise ValueError(f"{prim_name} '{target}' is illegal, it must be match regular '{reg}'.")
 
     return True
 
@@ -1314,8 +1311,7 @@ def args_type_check(*type_args, **type_kwargs):
             for name, value in argument_dict.items():
                 if name in bound_types:
                     if value is not None and not isinstance(value, bound_types[name]):
-                        raise TypeError("The parameter '{}' must be {}, but got {}"
-                                        .format(name, bound_types[name], type(value)))
+                        raise TypeError(f"The parameter '{name}' must be {bound_types[name]}, but got {type(value)}")
             return func(*args, **kwargs)
 
         return wrapper

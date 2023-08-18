@@ -213,13 +213,13 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
     """
     if not isinstance(seed, Tensor):
         if not isinstance(seed, int):
-            raise TypeError("For multinomial_with_replacement,",
-                            "the input[seed] must be int, but got {}.".format(type(seed)))
+            raise TypeError(f"For multinomial_with_replacement,",
+                            f"the input[seed] must be int, but got {type(seed)}.")
         seed = Tensor(seed, dtype=mstype.int64)
     if not isinstance(offset, Tensor):
         if not isinstance(offset, int):
-            raise TypeError("For multinomial_with_replacement,",
-                            "the input[offset] must be int, but got {}.".format(type(offset)))
+            raise TypeError(f"For multinomial_with_replacement,",
+                            f"the input[offset] must be int, but got {type(offset)}.")
         offset = Tensor(offset, dtype=mstype.int64)
     multinomial_with_replacement_ = P.MultinomialWithReplacement(numsamples=numsamples,
                                                                  replacement=replacement)
@@ -1366,12 +1366,12 @@ def multinomial(input, num_samples, replacement=True, seed=None):
 def _check_shape(input_shape):
     """Check 'shape' value."""
     if not isinstance(input_shape, tuple):
-        const_utils.raise_type_error("Type of 'shape' must be tuple, but got: {}".format(type(input_shape)))
+        const_utils.raise_type_error(f"Type of 'shape' must be tuple, but got: {type(input_shape)}")
     for item in input_shape:
         if not isinstance(item, int):
-            const_utils.raise_type_error("Elements of 'shape' must be int, but got: {}".format(type(item)))
+            const_utils.raise_type_error(f"Elements of 'shape' must be int, but got: {type(item)}")
         if item < 1:
-            const_utils.raise_value_error("Elements of 'shape' must be positive int, but got: {}".format(item))
+            const_utils.raise_value_error(f"Elements of 'shape' must be positive int, but got: {item}")
     return True
 
 
