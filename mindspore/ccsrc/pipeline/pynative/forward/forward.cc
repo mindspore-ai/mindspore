@@ -53,6 +53,7 @@ ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePt
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(value);
   auto tensor_abs = op_run_info->base_op_run_info.abstract;
+  MS_EXCEPTION_IF_NULL(tensor_abs);
   if (tensor_abs->isa<abstract::AbstractRefTensor>()) {
     tensor_abs = tensor_abs->cast<abstract::AbstractRefPtr>()->CloneAsTensor();
   }
@@ -100,6 +101,7 @@ void UpdateOutputStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
     return;
   }
   const auto &abs = op_run_info->base_op_run_info.abstract;
+  MS_EXCEPTION_IF_NULL(abs);
   auto success = op_run_info->stub_output->SetAbstract(abs);
   if (!success) {
     const auto &op_name = op_run_info->base_op_run_info.op_name;
@@ -181,6 +183,7 @@ BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_in
 void TransformOutputValues(const FrontendOpRunInfoPtr &op_run_info) {
   std::vector<ValuePtr> output_values;
   for (auto &output_tensor : op_run_info->output_tensors) {
+    MS_EXCEPTION_IF_NULL(output_tensor);
     if (op_run_info->requires_grad) {
       output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
       output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);

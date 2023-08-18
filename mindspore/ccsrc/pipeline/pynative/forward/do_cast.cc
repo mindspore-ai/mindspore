@@ -283,6 +283,7 @@ PrimitivePtr CastOperation::GetPrimByTypeId(const TypeId &type_id) const {
 
 ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, const TypeId &type_id,
                                    const std::string &op_name, size_t index) const {
+  MS_EXCEPTION_IF_NULL(v);
   // Step 1: Cast scalar value to another scalar value with destination data type.
   // It is used to avoid to call `cast infer value function` or launch cast op to backend.
   ValuePtr dst_value = ScalarToDstDtypeValue(v, type_id);
@@ -292,7 +293,6 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   }
   // When step 1 does not work, creating a cast op to get destination data type value.
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(v);
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   cast_run_info->requires_grad = op_run_info->requires_grad;
@@ -347,6 +347,7 @@ ValuePtr CastOperation::DoParamMixPrecisionCastTuple(const FrontendOpRunInfoPtr 
                                                      size_t index) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(is_cast);
+  MS_EXCEPTION_IF_NULL(value_seq);
   size_t tuple_size = value_seq->size();
   const auto &value_tuple = value_seq->value();
   ValuePtrList result(tuple_size, nullptr);
@@ -376,6 +377,9 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
   const auto &signature = op_run_info->signatures;
   auto &input_args = op_run_info->op_grad_info->input_value;
   size_t input_args_size = input_args.size();
+  if (dtypes.size() != input_args_size) {
+    MS_LOG(EXCEPTION) << "Signature dtypes size " << dtypes << " not equal to input_args_size is " << input_args_size;
+  }
   for (size_t i = 0; i < input_args_size; ++i) {
     // No need to implicit cast if no dtype.
     if (dtypes.empty() || dtypes[i] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
