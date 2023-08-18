@@ -1593,11 +1593,7 @@ REG_BPROP_BUILDER("MultiMarginLoss").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) 
   return {dx, ib->OutZeros(target), ib->OutZeros(weight)};
 });
 
-REG_BPROP_BUILDER("DropoutGenMask").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
-  auto shape = ib->GetInput(kIndex0);
-  auto keep_prob = ib->GetInput(kIndex1);
-  return {ib->OutZeros(shape), ib->OutZeros(keep_prob)};
-});
+REG_BPROP_BUILDER("DropoutGenMask").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("DropoutDoMask").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);

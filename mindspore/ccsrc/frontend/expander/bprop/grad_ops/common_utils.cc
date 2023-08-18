@@ -28,6 +28,20 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
+NodePtrList ReturnZeros(BpropIRBuilder *ib) {
+  const auto &inputs = ib->GetInputs();
+  if (inputs.size() <= kDim2) {
+    MS_LOG(EXCEPTION) << "Bprop's inputs size should be greater than 2 (includes out and dout), but got "
+                      << inputs.size();
+  }
+  auto output_num = inputs.size() - kDim2;
+  NodePtrList outputs(output_num);
+  for (size_t i = 0; i < output_num; ++i) {
+    outputs[i] = ib->OutZeros(inputs[i]);
+  }
+  return outputs;
+}
+
 namespace {
 static NodePtr ReduceSumWithReshape(BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis,
                                     const ShapeVector &shape_x) {

@@ -41,6 +41,7 @@ inline const auto pi = std::acos(-1.0);
 inline const auto log_2 = std::log(2.0);
 inline const auto log_pi = std::log(pi);
 
+NodePtrList ReturnZeros(BpropIRBuilder *ib);
 // normalize the axis to [0, rank)
 int64_t NormalizeAxis(int64_t axis, size_t rank);
 
