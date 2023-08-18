@@ -64,7 +64,7 @@ endif()
 function(__download_pkg pkg_name pkg_url pkg_sha256)
 
     if(LOCAL_LIBS_SERVER)
-        set(REGEX_IP_ADDRESS "^([0-9]{1,3}\\.){3}[0-9]{1,3}$")
+        set(REGEX_IP_ADDRESS "^([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)$")
         get_filename_component(_URL_FILE_NAME ${pkg_url} NAME)
         if(${LOCAL_LIBS_SERVER} MATCHES ${REGEX_IP_ADDRESS})
             set(pkg_url "http://${LOCAL_LIBS_SERVER}:8081/libs/${pkg_name}/${_URL_FILE_NAME}" ${pkg_url})
