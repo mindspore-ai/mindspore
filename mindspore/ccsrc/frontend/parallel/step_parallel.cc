@@ -958,9 +958,7 @@ void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr>
 
 bool InsertMirrorBeforeCast(const CNodePtr &node, size_t index) {
   // only if gradient_fp32_sync is true, pre node is cast and type is not float32 return true
-  if (!ParallelContext::GetInstance()->gradient_fp32_sync()) {
-    return false;
-  }
+  bool is_gradient_fp32_sync = ParallelContext::GetInstance()->gradient_fp32_sync();
   auto pre_node = node->input(index);
   MS_EXCEPTION_IF_NULL(pre_node);
   auto cnode = pre_node->cast<CNodePtr>();
@@ -981,8 +979,11 @@ bool InsertMirrorBeforeCast(const CNodePtr &node, size_t index) {
   auto input_element_type = node_type->cast<mindspore::TensorTypePtr>()->element();
   MS_EXCEPTION_IF_NULL(input_element_type);
   auto type_id = input_element_type->type_id();
+  if (!is_gradient_fp32_sync && type_id != kNumberTypeFloat32) {
+    return false;
+  }
 
-  return (type_id != kNumberTypeFloat32);
+  return true;
 }
 
 static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node, size_t node_size) {

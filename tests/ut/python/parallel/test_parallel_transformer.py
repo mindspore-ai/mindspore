@@ -30,7 +30,7 @@ from mindspore.parallel._transformer import TransformerEncoder, TransformerDecod
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell, TrainOneStepCell
-from mindspore.nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
+from mindspore.nn.wrap.loss_scale import _TrainGradAccuWithLossScaleCell
 from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.train import Model
 from mindspore.parallel import set_algo_parameters
@@ -521,7 +521,7 @@ def pipeline_single_transformer(grad_accumulation_shard=False):
     dataset = Dataset(encoder_input_value, encoder_input_mask, decoder_input_value, decoder_input_mask,
                       memory_mask)
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=1024, scale_factor=2, scale_window=1000)
-    net_with_grad = _TrainPipelineWithLossScaleCell(net, optimizer=optimizer,
+    net_with_grad = _TrainGradAccuWithLossScaleCell(net, optimizer=optimizer,
                                                     scale_sense=update_cell)
     model = Model(net_with_grad)
 

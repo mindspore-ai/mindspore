@@ -519,7 +519,7 @@ def tensor_shard_grad_scale_pipeline(scale, grad, accu_grad):
     return new_grad
 
 
-class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
+class _TrainGradAccuWithLossScaleCell(TrainOneStepCell):
     """
     Append an optimizer to the training network after that the construct
     function can be called to create the backward graph.
@@ -530,7 +530,7 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         scale_sense (Cell): Cell to do the loss scale.
     """
     def __init__(self, network, optimizer, scale_sense):
-        super(_TrainPipelineWithLossScaleCell, self).__init__(network, optimizer, sens=None)
+        super(_TrainGradAccuWithLossScaleCell, self).__init__(network, optimizer, sens=None)
         self.network = network
         self.network.add_flags(defer_inline=True)
         self.weights = optimizer.parameters
