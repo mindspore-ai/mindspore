@@ -28,6 +28,8 @@ trans_data_op_info = TBERegOp("TransData") \
           "DefaultFormat, NC1HWC0, FRACTAL_Z, FRACTAL_NZ, HWCN, C1HWNCoC0, NDHWC, NHWC") \
     .attr("dst_format", "required", "str",
           "DefaultFormat, NC1HWC0, FRACTAL_Z, FRACTAL_NZ, HWCN, C1HWNCoC0, NDHWC, NHWC") \
+    .attr("src_subformat", "optional", "int", "all", "1") \
+    .attr("dst_subformat", "optional", "int", "all", "1") \
     .attr("groups", "optional", "int", "all", "1") \
     .input(0, "src", False, "required", "all") \
     .output(0, "dst", False, "required", "all") \
