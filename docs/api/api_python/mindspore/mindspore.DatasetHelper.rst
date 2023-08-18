@@ -20,10 +20,6 @@ mindspore.DatasetHelper
         
         在epoch开始时继续向设备发送数据。
 
-    .. py:method:: get_data_info()
-        
-        下沉模式下，获取当前批次数据的类型和形状(shape)。通常在数据形状(shape)动态变化的场景使用。
-
     .. py:method:: release()
         
         释放数据下沉资源。

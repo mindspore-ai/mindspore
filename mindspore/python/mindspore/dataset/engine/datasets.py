@@ -2648,10 +2648,13 @@ class BatchInfo(cde.CBatchInfo):
             >>> # Define a callable batch size function and let batch size increase 1 each time.
             >>> import mindspore.dataset as ds
             >>> from mindspore.dataset import BatchInfo
-            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>>
+            >>> dataset = ds.GeneratorDataset([i for i in range(3)], "column1", shuffle=False)
             >>> def add_one(BatchInfo):
             ...     return BatchInfo.get_batch_num() + 1
             >>> dataset = dataset.batch(batch_size=add_one)
+            >>> print(list(dataset))
+            [[Tensor(shape=[1], dtype=Int64, value= [0])], [Tensor(shape=[2], dtype=Int64, value= [1, 2])]]
         """
         return
 
@@ -2664,10 +2667,21 @@ class BatchInfo(cde.CBatchInfo):
             >>> # Define a callable batch size function and let batch size increase 1 each epoch.
             >>> import mindspore.dataset as ds
             >>> from mindspore.dataset import BatchInfo
-            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>>
+            >>> dataset = ds.GeneratorDataset([i for i in range(4)], "column1", shuffle=False)
             >>> def add_one_by_epoch(BatchInfo):
             ...     return BatchInfo.get_epoch_num() + 1
             >>> dataset = dataset.batch(batch_size=add_one_by_epoch)
+            >>>
+            >>> result = []
+            >>> epoch = 2
+            >>> iterator = dataset.create_tuple_iterator(num_epochs=epoch)
+            >>> for i in range(epoch):
+            ...    result.extend(list(iterator))
+            >>> print(result)
+            [[Tensor(shape=[1], dtype=Int64, value= [0])], [Tensor(shape=[1], dtype=Int64, value= [1])],
+             [Tensor(shape=[1], dtype=Int64, value= [2])], [Tensor(shape=[1], dtype=Int64, value= [3])],
+             [Tensor(shape=[2], dtype=Int64, value= [0, 1])], [Tensor(shape=[2], dtype=Int64, value= [2, 3])]]
         """
         return
 

@@ -43,7 +43,11 @@ class LineReader:
         >>> from mindspore.dataset import LineReader
         >>>
         >>> reader = LineReader("/path/to/txt/or/csv/file")
+        >>> # Read the first line of csv file
         >>> reader.readline(1)
+        >>> # Return the row size in csv file
+        >>> reader.len()
+        >>> # Close the handle
         >>> reader.close()
     """
 

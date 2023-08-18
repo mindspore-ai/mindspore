@@ -446,11 +446,10 @@ class DatasetHelper:
         """Reset the dataset to the provided step and epoch."""
         self.iter._reset(step, epoch)  # pylint: disable=protected-access
 
+    # pylint: disable=missing-docstring
     def get_data_info(self):
-        """
-        In sink mode, it returns the types and shapes of the current data.
-        Generally, it works in dynamic shape scenarios.
-        """
+        # In sink mode, it returns the types and shapes of the current data.
+        # Generally, it works in dynamic shape scenarios.
         return self.iter.get_data_info()
 
 
