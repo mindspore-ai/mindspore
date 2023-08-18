@@ -325,7 +325,7 @@ void RecoveryContext::CreateConfigFile(const std::string &config_file_path) {
     return;
   }
 
-  int fd = open(config_file_path.c_str(), O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  int fd = open(config_file_path.c_str(), O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
   if (fd == -1) {
     if (errno != EEXIST) {
       MS_LOG(EXCEPTION) << "Create config file: [" << config_file_path << "] failed, errno: " << errno << ", "

@@ -41,13 +41,13 @@ class FileIOUtils {
   static bool IsFileOrDirExist(const std::string &file);
 
   // Create file.
-  static void CreateFile(const std::string &file_path, mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO);
+  static void CreateFile(const std::string &file_path, mode_t mode = S_IRUSR | S_IWUSR);
 
   // Create directory.
-  static void CreateDir(const std::string &dir_path, mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO);
+  static void CreateDir(const std::string &dir_path, mode_t mode = S_IRUSR | S_IWUSR | S_IXUSR);
 
   // Create directory recursively.
-  static void CreateDirRecursive(const std::string &dir_path, mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO);
+  static void CreateDirRecursive(const std::string &dir_path, mode_t mode = S_IRUSR | S_IWUSR | S_IXUSR);
 };
 }  // namespace storage
 }  // namespace distributed
