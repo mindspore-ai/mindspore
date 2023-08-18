@@ -177,3 +177,21 @@ def test_broadcast_to_dynamic_shape():
     output = broadcast_to_net(input_x)
     expect = np.broadcast_to(input_x_np, shape)
     assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_broadcast_exception():
+    """
+    Feature: Test invalid input and target shape in of BroadcastTo.
+    Description: target shape is empty, but input shape is not empty.
+    Expectation: the result match with expected result.
+    """
+    with pytest.raises(Exception) as info:
+        shape = (0,)
+        x_np = np.random.randint(1, 4)
+        P.BroadcastTo(shape)(Tensor(x_np))
+        assert "ValueError: For 'BroadcastTo', each dimension pair, input_x shape and target shape must be equal or \
+        input dimension is 1 or target dimension is -1. But got input_x shape: [const vector][], target shape: \
+        [const vector][0]." in str(info.value)
