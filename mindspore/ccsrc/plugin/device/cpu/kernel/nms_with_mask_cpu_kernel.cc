@@ -246,6 +246,13 @@ template <typename T>
 bool NMSWithMaskCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &workspace,
                                            const std::vector<kernel::AddressPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(workspace[kIndexDataBuff]);
+  MS_EXCEPTION_IF_NULL(workspace[kIndexIndexBuff]);
+  MS_EXCEPTION_IF_NULL(workspace[kIndexRowMask]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndexOutput]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndexSelIdx]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndexSelBoxes]);
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   auto data_buff = reinterpret_cast<T *>(workspace[kIndexDataBuff]->addr);
   auto index_buff = reinterpret_cast<int *>(workspace[kIndexIndexBuff]->addr);

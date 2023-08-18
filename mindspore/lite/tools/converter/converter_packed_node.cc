@@ -34,6 +34,10 @@ namespace lite {
 void AddCustomAttr(std::vector<std::unique_ptr<mindspore::schema::AttributeT>> *attrs, const std::string &&key,
                    const std::string &&value) {
   auto attr = std::make_unique<schema::AttributeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "attr is nullptr";
+    return;
+  }
   attr->name = key;
   std::vector<uint8_t> attr_data(value.begin(), value.end());
   attr->data = attr_data;
@@ -44,6 +48,10 @@ int AddWeightSumsToInputs(const mindspore::kernel::MatmulDynamicBaseInt8CPUKerne
                           schema::MetaGraphT *meta_graph, const std::unique_ptr<schema::CNodeT> &cnode,
                           size_t weight_sum_size) {
   auto weight_sums_tensor = std::make_unique<schema::TensorT>();
+  if (weight_sums_tensor == nullptr) {
+    MS_LOG(ERROR) << "weight_sums_tensor is nullptr";
+    return RET_ERROR;
+  }
   weight_sums_tensor->nodeType = lite::NodeType_ValueNode;
   weight_sums_tensor->format = schema::Format_NHWC;
   weight_sums_tensor->dataType = TypeId::kNumberTypeInt32;
