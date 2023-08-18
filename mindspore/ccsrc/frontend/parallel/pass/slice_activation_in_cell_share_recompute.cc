@@ -113,6 +113,10 @@ CNodePtr CreateSliceNode(const CNodePtr &activation_cnode, const std::vector<par
     return nullptr;
   }
   int64_t group_deivce_num = SizeToLong(group.GetDevNum());
+  if (group_deivce_num == 0) {
+    MS_LOG(ERROR) << "The dev num of group should not be 0, or function SizeToLong Errors.";
+    return nullptr;
+  }
   std::vector<int64_t> slice_begin(out_shape_element.size(), 0);
   slice_begin[0] = (local_rank_id % group_deivce_num) * (out_shape_element[0] / group_deivce_num);
   std::vector<int64_t> slice_end = out_shape_element;
