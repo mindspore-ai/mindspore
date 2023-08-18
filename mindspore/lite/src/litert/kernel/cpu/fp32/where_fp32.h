@@ -51,6 +51,8 @@ class WhereCPUKernel : public LiteKernel {
  private:
   int RunWithSingleInput();
   int RunWithTripleInputs();
+  int BroadCastForInput(lite::Tensor *condiation, lite::Tensor *x, lite::Tensor *y, void *condition_broadcats_buf,
+                        void *x_broadcats_buf, void *y_broadcats_buf, lite::Tensor *output);
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_WHERE_FP32_H_

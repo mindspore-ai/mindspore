@@ -20,6 +20,7 @@
 #include "src/litert/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/common_func.h"
+#include "nnacl/base/broadcast_to.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -152,6 +153,69 @@ int WhereCPUKernel::RunWithSingleInput() {
   return RET_OK;
 }
 
+int WhereCPUKernel::BroadCastForInput(lite::Tensor *condition, lite::Tensor *x, lite::Tensor *y,
+                                      void *condition_broadcast_buf, void *x_broadcast_buf, void *y_broadcast_buf,
+                                      lite::Tensor *output) {
+  size_t broad_cast_buf_size = output->ElementsNum();
+  if (output->data_type() == kNumberTypeFloat32) {
+    broad_cast_buf_size *= sizeof(float);
+  } else {
+    MS_LOG(ERROR) << "not support data type for output.";
+    return RET_ERROR;
+  }
+  BroadcastShapeInfo condition_info;
+  condition_info.input_shape_size_ = condition->shape().size();
+  condition_info.output_shape_size_ = output->shape().size();
+  memcpy(condition_info.input_shape_, condition->shape().data(), condition->shape().size() * sizeof(int));
+  memcpy(condition_info.output_shape_, output->shape().data(), output->shape().size() * sizeof(int));
+
+  BroadcastShapeInfo x_info;
+  x_info.input_shape_size_ = x->shape().size();
+  x_info.output_shape_size_ = output->shape().size();
+  memcpy(x_info.input_shape_, x->shape().data(), x->shape().size() * sizeof(int));
+  memcpy(x_info.output_shape_, output->shape().data(), output->shape().size() * sizeof(int));
+
+  BroadcastShapeInfo y_info;
+  y_info.input_shape_size_ = y->shape().size();
+  y_info.output_shape_size_ = output->shape().size();
+  memcpy(y_info.input_shape_, y->shape().data(), y->shape().size() * sizeof(int));
+  memcpy(y_info.output_shape_, output->shape().data(), output->shape().size() * sizeof(int));
+
+  condition_broadcast_buf = ms_context_->allocator->Malloc(broad_cast_buf_size);
+  if (condition_broadcast_buf == nullptr) {
+    MS_LOG(ERROR) << "malloc failed.";
+    return RET_ERROR;
+  }
+  BroadcastToSize8(condition->data(), &condition_info, condition_broadcast_buf);
+
+  x_broadcast_buf = ms_context_->allocator->Malloc(broad_cast_buf_size);
+  if (x_broadcast_buf == nullptr) {
+    ms_context_->allocator->Free(condition_broadcast_buf);
+    MS_LOG(ERROR) << "malloc failed.";
+    return RET_ERROR;
+  }
+  BroadcastToSize32(x->data(), &x_info, x_broadcast_buf);
+
+  y_broadcast_buf = ms_context_->allocator->Malloc(broad_cast_buf_size);
+  if (y_broadcast_buf == nullptr) {
+    ms_context_->allocator->Free(y_broadcast_buf);
+    ms_context_->allocator->Free(condition_broadcast_buf);
+    MS_LOG(ERROR) << "malloc failed.";
+    return RET_ERROR;
+  }
+  BroadcastToSize32(y->data(), &y_info, y_broadcast_buf);
+  int max_num = out_tensors_.front()->ElementsNum();
+  condition_ = reinterpret_cast<bool *>(condition_broadcast_buf);
+  x_ = x_broadcast_buf;
+  y_ = y_broadcast_buf;
+  output_data_ = out_tensors_.at(0)->data();
+  where_param_->condition_num_ = max_num;
+  where_param_->x_num_ = max_num;
+  where_param_->y_num_ = max_num;
+  where_param_->max_num_ = max_num;
+  return RET_OK;
+}
+
 int WhereCPUKernel::RunWithTripleInputs() {
   auto condition = in_tensors_.at(0);
   CHECK_NULL_RETURN(condition);
@@ -159,39 +223,64 @@ int WhereCPUKernel::RunWithTripleInputs() {
   CHECK_NULL_RETURN(x);
   auto y = in_tensors_.at(C2NUM);
   CHECK_NULL_RETURN(y);
-  int condition_nums = condition->ElementsNum();
-  int x_num = x->ElementsNum();
-  int y_num = y->ElementsNum();
-  int out_num = out_tensors_.front()->ElementsNum();
+  auto output = out_tensors_.at(0);
+  CHECK_NULL_RETURN(output);
 
-  condition_ = reinterpret_cast<bool *>(condition->data());
-  CHECK_NULL_RETURN(condition_);
-  x_ = x->data();
-  CHECK_NULL_RETURN(x_);
-  y_ = y->data();
-  CHECK_NULL_RETURN(y_);
-  output_data_ = out_tensors_.at(0)->data();
-  int num_max = condition_nums > x_num ? condition_nums : (x_num > y_num ? x_num : y_num);
-  where_param_->condition_num_ = condition_nums;
-  where_param_->x_num_ = x_num;
-  where_param_->y_num_ = y_num;
-  where_param_->max_num_ = num_max;
-
-  CHECK_LESS_RETURN(out_num, num_max);
-
-  if (((condition_nums != 1) && (condition_nums != num_max)) || ((x_num != 1) && (x_num != num_max)) ||
-      ((y_num != 1) && (y_num != num_max))) {
-    MS_LOG(ERROR) << "The length of three inputs are not equal to 1 or length of output, which is unacceptable";
-    return RET_ERROR;
-  }
-  if (num_max <= 0) {
-    MS_LOG(ERROR) << "Error, inputs' length are zero !!!";
-    return RET_ERROR;
+  void *condition_broadcast_buf = nullptr;
+  void *x_broadcast_buf = nullptr;
+  void *y_broadcast_buf = nullptr;
+  // need broad cast
+  if (condition->ElementsNum() != y->ElementsNum() && condition->shape().size() != y->shape().size()) {
+    MS_LOG(INFO) << "need broadcast.";
+    auto ret = BroadCastForInput(condition, x, y, condition_broadcast_buf, x_broadcast_buf, y_broadcast_buf, output);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "BroadCastForInput failed.";
+      return RET_ERROR;
+    }
+  } else {
+    int condition_nums = condition->ElementsNum();
+    int x_num = x->ElementsNum();
+    int y_num = y->ElementsNum();
+    int out_num = out_tensors_.front()->ElementsNum();
+    condition_ = reinterpret_cast<bool *>(condition->data());
+    CHECK_NULL_RETURN(condition_);
+    x_ = x->data();
+    CHECK_NULL_RETURN(x_);
+    y_ = y->data();
+    CHECK_NULL_RETURN(y_);
+    output_data_ = out_tensors_.at(0)->data();
+    int num_max = condition_nums > x_num ? condition_nums : (x_num > y_num ? x_num : y_num);
+    where_param_->condition_num_ = condition_nums;
+    where_param_->x_num_ = x_num;
+    where_param_->y_num_ = y_num;
+    where_param_->max_num_ = num_max;
+    CHECK_LESS_RETURN(out_num, num_max);
+    if (((condition_nums != 1) && (condition_nums != num_max)) || ((x_num != 1) && (x_num != num_max)) ||
+        ((y_num != 1) && (y_num != num_max))) {
+      MS_LOG(ERROR) << "The length of three inputs are not equal to 1 or length of output, which is unacceptable";
+      return RET_ERROR;
+    }
+    if (num_max <= 0) {
+      MS_LOG(ERROR) << "Error, inputs' length are zero !!!";
+      return RET_ERROR;
+    }
   }
   auto ret = ParallelLaunch(this->ms_context_, WhereRun, this, where_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "WhereDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
+  }
+  if (condition_broadcast_buf != nullptr) {
+    ms_context_->allocator->Free(condition_broadcast_buf);
+    condition_broadcast_buf = nullptr;
+  }
+  if (x_broadcast_buf != nullptr) {
+    ms_context_->allocator->Free(x_broadcast_buf);
+    x_broadcast_buf = nullptr;
+  }
+  if (y_broadcast_buf != nullptr) {
+    y_broadcast_buf = nullptr;
+    ms_context_->allocator->Free(y_broadcast_buf);
   }
   return RET_OK;
 }
