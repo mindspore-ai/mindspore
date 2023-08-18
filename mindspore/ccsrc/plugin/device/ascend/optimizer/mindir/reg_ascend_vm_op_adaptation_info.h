@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_VM_OP_ADAPTATION_INFO_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_VM_OP_ADAPTATION_INFO_H_
 
+#include "include/backend/optimizer/op_adaptation_info_factory.h"
+#include "include/common/utils/utils.h"
 #include "ops/arithmetic_op_name.h"
 #include "ops/array_op_name.h"
 #include "ops/ascend_op_name.h"
@@ -29,8 +31,6 @@
 #include "ops/sequence_op_name.h"
 #include "ops/sparse_op_name.h"
 #include "ops/structure_op_name.h"
-#include "include/backend/optimizer/op_adaptation_info_factory.h"
-#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/mindir/reg_ascend_vm_op_adaptation_funcs.h"
 
 namespace mindspore::opt {
@@ -378,6 +378,18 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeBilinearV2OpName)
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeNearestNeighborGradOpName)
   .set_backend_op_name(kResizeNearestNeighborV2GradOpName)
   .set_target_op_name(kResizeNearestNeighborV2GradDOpName)
+  .set_need_tbe_check_supported(true)
+  .set_input_attr_info(1, "listInt");
+
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeNearestNeighborV2GradOpName)
+  .set_backend_op_name(kResizeNearestNeighborV2GradOpName)
+  .set_target_op_name(kResizeNearestNeighborV2GradDOpName)
+  .set_need_tbe_check_supported(true)
+  .set_input_attr_info(1, "listInt");
+
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeNearestNeighborV2OpName)
+  .set_backend_op_name(kResizeNearestNeighborV2OpName)
+  .set_target_op_name(kResizeNearestNeighborV2DOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "listInt");
 
