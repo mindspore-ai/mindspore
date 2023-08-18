@@ -717,6 +717,7 @@ void GraphExecutorPy::SaveCompiledGraph(const std::string &phase) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "Save compiled func graph(" << func_graph->ToString() << ") phase(" << phase << ")!";
   info_[phase]->func_graph = func_graph;
+  func_graph->set_attr("phase", MakeValue(GetPhasePrefix(phase)));
 
   if ((func_graph != nullptr) && parallel::IsAutoParallelCareGraph(func_graph)) {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
