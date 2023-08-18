@@ -79,6 +79,18 @@ struct EltwiseOpTypeParams {
   TypePtr out_type;
 };
 
+struct EltwiseGradOpShapeParams {
+  ShapeVector grad_shape;
+  ShapeVector x_shape;
+  ShapeVector out_shape;
+};
+
+struct EltwiseGradOpTypeParams {
+  TypePtr grad_type;
+  TypePtr x_type;
+  TypePtr out_type;
+};
+
 struct BroadcastOpShapeParams {
   ShapeVector x_shape;
   ShapeVector y_shape;

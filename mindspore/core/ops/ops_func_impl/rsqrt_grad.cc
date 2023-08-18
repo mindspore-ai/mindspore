@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OP_NAME_H_
-#define MINDSPORE_CORE_OP_NAME_H_
 
-namespace mindspore::ops {
-constexpr auto kNameEig = "Eig";
-constexpr auto kNameEqual = "Equal";
-constexpr auto kNameLog1p = "Log1p";
-constexpr auto kNameReLU = "ReLU";
-constexpr auto kNameReLU6 = "ReLU6";
-constexpr auto kNameReLU6Grad = "ReLU6Grad";
-constexpr auto kNameReluGrad = "ReluGrad";
-constexpr auto kNameRsqrt = "Rsqrt";
-constexpr auto kNameRsqrtGrad = "RsqrtGrad";
-}  // namespace mindspore::ops
+#include "ops/ops_func_impl/rsqrt_grad.h"
+#include "ops/op_utils.h"
 
-#endif  // MINDSPORE_CORE_OP_NAME_H_
+namespace mindspore {
+namespace ops {
+BaseShapePtr RsqrtGradFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) const {
+  return EltwiseGradInferShape(primitive, input_args);
+}
+
+TypePtr RsqrtGradFuncImpl::InferType(const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) const {
+  return EltwiseGradInferType(primitive, input_args);
+}
+}  // namespace ops
+}  // namespace mindspore

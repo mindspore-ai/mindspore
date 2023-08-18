@@ -1,0 +1,8 @@
+#operator rsqrt
+rsqrt:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor

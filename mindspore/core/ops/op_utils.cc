@@ -93,6 +93,38 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }
 
+BaseShapePtr EltwiseGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  MS_EXCEPTION_IF_NULL(input_args[0]->GetShape());
+  auto grad_shape = input_args[0]->GetShape()->GetShapeVector();
+  MS_EXCEPTION_IF_NULL(input_args[1]);
+  MS_EXCEPTION_IF_NULL(input_args[1]->GetShape());
+  auto x_shape = input_args[1]->GetShape()->GetShapeVector();
+  if (grad_shape != x_shape) {
+    MS_LOG_EXCEPTION << "For " << primitive
+                     << ", the grad shape must be equal to input shape, but got grad_shape: " << grad_shape
+                     << " and x_type: " << x_shape;
+  }
+  return input_args[0]->GetShape()->Clone();
+}
+
+TypePtr EltwiseGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  MS_EXCEPTION_IF_NULL(input_args[1]);
+  auto grad_type = input_args[0]->GetType();
+  MS_EXCEPTION_IF_NULL(grad_type);
+  auto x_type = input_args[1]->GetType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  if (grad_type->type_id() != x_type->type_id()) {
+    MS_LOG_EXCEPTION << "For " << primitive->name()
+                     << ", the grad type must be same as input type, but got grad_type: " << grad_type->ToString()
+                     << " and x_type: " << x_type->ToString();
+  }
+  return grad_type->Clone();
+}
+
 void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t> *axis, const size_t dim) {
   MS_EXCEPTION_IF_NULL(axis);
   int64_t dim_ = static_cast<int64_t>(dim);

@@ -31,6 +31,19 @@ auto EltwiseDynShapeTestCases =
                   EltwiseOpShapeParams{{-2}, {-2}}                          /* dynamic rank */
   );
 
+auto EltwiseGradDynShapeTestCases =
+  testing::Values(EltwiseGradOpShapeParams{{10}, {10}, {10}},                                     /* 1 dims */
+                  EltwiseGradOpShapeParams{{20, 30}, {20, 30}, {20, 30}},                         /* 2 dims */
+                  EltwiseGradOpShapeParams{{6, 7, 8}, {6, 7, 8}, {6, 7, 8}},                      /* 3 dims */
+                  EltwiseGradOpShapeParams{{2, 3, 4, 5}, {2, 3, 4, 5}, {2, 3, 4, 5}},             /* 4 dims */
+                  EltwiseGradOpShapeParams{{-1, -1}, {-1, -1}, {-1, -1}},                         /* dynamic shape */
+                  EltwiseGradOpShapeParams{{-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}},             /* dynamic shape */
+                  EltwiseGradOpShapeParams{{2, -1}, {2, -1}, {2, -1}},                            /* dynamic shape */
+                  EltwiseGradOpShapeParams{{2, -1, 4, 5, 6}, {2, -1, 4, 5, 6}, {2, -1, 4, 5, 6}}, /* dynamic shape */
+                  EltwiseGradOpShapeParams{{-1, -1, 2, -1}, {-1, -1, 2, -1}, {-1, -1, 2, -1}},    /* dynamic shape */
+                  EltwiseGradOpShapeParams{{-2}, {-2}, {-2}}                                      /* dynamic rank */
+  );
+
 auto BroadcastOpShapeScalarTensorCases = testing::Values(
   /* y is number */
   BroadcastOpShapeParams{{10}, {}, {10}}, BroadcastOpShapeParams{{10, 1, 2}, {}, {10, 1, 2}},
