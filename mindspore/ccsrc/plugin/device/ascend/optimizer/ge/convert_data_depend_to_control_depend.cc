@@ -57,6 +57,7 @@ const AnfNodePtr ConvertDataDependToControlDepend::Process(const FuncGraphPtr &f
 
   auto tensor = std::make_shared<tensor::Tensor>(0.0);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   ValueNodePtr value_node = kernel_graph->NewValueNode(tensor->ToAbstract(), tensor);
   kernel_graph->AddValueNodeToGraph(value_node);
 
