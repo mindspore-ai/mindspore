@@ -37,6 +37,7 @@
 #include "cxx_api/graph/acl/acl_env_guard.h"
 #include "graph/utils/graph_utils_ex.h"
 #include "mindspore/core/utils/singleton.h"
+#include "utils/ms_context.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -53,7 +54,7 @@ namespace device {
 namespace ascend {
 namespace {
 std::mutex g_tsd_mutex;
-void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *const tensors) {
+void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *const tensors, bool is_train) {
   const auto &infer_need_update_parameter_names =
     Singleton<InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   for (auto item : dict) {
@@ -63,10 +64,11 @@ void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *con
     }
     std::shared_ptr<tensor::Tensor> tensor;
     std::string name = py::cast<std::string>(item.first);
-    auto env_ge = common::GetEnv("MS_ENABLE_GE");
-    auto env_training = common::GetEnv("MS_GE_TRAIN");
     bool infer = false;
-    if (env_ge == "1" && env_training != "1") {
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    bool enable_ge = context_ptr->backend_policy() == "ge";
+    if (enable_ge && !is_train) {
       infer = true;
     }
     if (infer && infer_need_update_parameter_names.find(name) == infer_need_update_parameter_names.end()) {
@@ -99,7 +101,12 @@ void GetInputTensor(const FuncGraphPtr &anf_graph, const pybind11::dict &init_pa
                     std::vector<transform::GeTensorPtr> *ge_tensors) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap init_input_map;
-  ConvertObjectToTensors(init_params, &init_input_map);
+  bool is_train = false;
+  if (anf_graph->has_attr("phase")) {
+    std::string phase = anf_graph->get_attr("phase")->ToString();
+    is_train = phase == "train";
+  }
+  ConvertObjectToTensors(init_params, &init_input_map, is_train);
   std::vector<tensor::TensorPtr> init_input;
   (void)std::transform(init_input_map.begin(), init_input_map.end(), std::back_inserter(init_input),
                        [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
@@ -169,8 +176,6 @@ bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, i
                                                 const std::vector<TypePtr> &types,
                                                 const std::vector<std::vector<int64_t>> &shapes,
                                                 const std::vector<int64_t> &input_indexes, const std::string &phase) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
   ge_device_context_->Initialize();
   std::vector<int64_t> ge_types;
   (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types), [](const TypePtr &i) -> int64_t {
@@ -183,18 +188,6 @@ bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, i
 
   DatasetGraphParam param(queue_name, size, batch_size, ge_types, shapes, input_indexes);
   ConfigManager::GetInstance().set_dataset_param(param);
-
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  auto env_training = common::GetEnv("MS_GE_TRAIN");
-  bool training = false;
-  if (env_ge == "1" && env_training == "1") {
-    training = true;
-  }
-  if (training) {
-    (void)setenv("GE_TRAIN", "1", 1);
-  } else {
-    (void)setenv("GE_TRAIN", "0", 1);
-  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 
@@ -204,7 +197,7 @@ bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, i
       return false;
     }
 
-    GeDeviceResManager::CreateSessionAndGraphRunner(training);
+    GeDeviceResManager::CreateSessionAndGraphRunner();
 
     MS_LOG(INFO) << "DoExecNonInputGraph:" << phase;
     DoExecNonInputGraph(phase);
@@ -271,7 +264,12 @@ void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, cons
 FuncGraphPtr AscendDeprecatedInterface::BuildDFGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap init_tensors{};
-  ConvertObjectToTensors(init_params, &init_tensors);
+  bool is_train = false;
+  if (anf_graph->has_attr("phase")) {
+    std::string phase = anf_graph->get_attr("phase")->ToString();
+    is_train = phase == "train";
+  }
+  ConvertObjectToTensors(init_params, &init_tensors, is_train);
   return GeGraphExecutor::BuildDFGraph(anf_graph, init_tensors, true);
 }
 

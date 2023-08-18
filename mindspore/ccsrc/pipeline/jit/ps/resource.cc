@@ -747,7 +747,9 @@ compile::BackendPtr Resource::GetBackend() const {
 
 void Resource::SetBackendAsync(std::function<compile::BackendPtr()> func) {
   static const bool is_enable_async = (common::GetEnv("MS_DEV_ASYNC_BACKEND_INIT") == "1");
-  static const bool is_enable_ge = (common::GetEnv("MS_ENABLE_GE") == "1");
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  static const bool is_enable_ge = context_ptr->backend_policy() == "ge";
   if (!is_enable_async || is_enable_ge) {
     // Disable async backend init if required.
     std::lock_guard<std::mutex> guard(GetBackendInitMutex());

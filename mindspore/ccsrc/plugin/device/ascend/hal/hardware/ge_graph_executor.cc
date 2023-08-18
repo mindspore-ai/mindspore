@@ -394,7 +394,7 @@ bool BuildFakeGraph(const FuncGraphPtr &anf_graph) {
     MS_LOG(ERROR) << "Add fake graph failed";
     return false;
   }
-  GeDeviceResManager::CreateSessionAndGraphRunner(IsGeTrain());
+  GeDeviceResManager::CreateSessionAndGraphRunner();
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(ERROR) << "Can not found GraphRunner";
@@ -745,7 +745,8 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
   }
   // create loop var
-  RunInitGraph(run_options.name);
+  std::string init_graph_name = "init_subgraph." + run_options.name;
+  RunInitGraph(init_graph_name);
   ::ge::CompiledGraphSummaryPtr ge_graph_summary = nullptr;
   {
     // Release GIL before calling into (potentially long-running) C++ code
@@ -778,12 +779,30 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
 
 bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (common::IsEnableRefMode()) {
+  const std::string &phase = PhaseManager::GetInstance().phase();
+  if (phase == "dataset") {
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     MS_EXCEPTION_IF_NULL(kg);
-    return CompileGraph(kg, compile_options);
+    std::map<std::string, ShapeVector> m_origin_shape;
+    auto &compile_cache_context = CompileCacheContext::GetInstance();
+    auto use_compile_cache = compile_cache_context.UseCompileCache();
+    if (use_compile_cache) {
+      MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+      if (!BuildFakeGraph(graph)) {
+        return false;
+      }
+    } else {
+      AscendGraphOptimization::GetInstance().OptimizeGEGraph(kg);
+      (void)BuildDFGraph(kg, GetParams(kg, &m_origin_shape), false);
+    }
+    kg->set_run_mode(RunMode::kGraphMode);
+    if (ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE) {
+      kg->set_is_loop_count_sink(true);
+    }
+  } else if (common::IsEnableRefMode()) {
+    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+    (void)CompileGraph(kg, compile_options);
   } else {
-    MS_EXCEPTION_IF_NULL(graph);
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     MS_EXCEPTION_IF_NULL(kg);
     std::map<std::string, ShapeVector> m_origin_shape;
@@ -809,8 +828,14 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     // copy init weight to device
     RunGEInitGraph(kg);
     RevertOriginShape(kg, m_origin_shape);
-    return true;
   }
+  static bool is_inited_dataset_graph = false;
+  if (!is_inited_dataset_graph && phase != "dataset") {
+    std::string init_data_graph_name = "init_datagraph.";
+    RunInitGraph(init_data_graph_name);
+    is_inited_dataset_graph = true;
+  }
+  return true;
 }
 
 void SetOutputs(const std::vector<KernelWithIndex> &graph_outputs,
@@ -1007,13 +1032,23 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
     DumpIR("anf_graph.ir", anf_graph, true);
   }
 #endif
-  (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
+
+  const std::string &phase = PhaseManager::GetInstance().phase();
+  if (phase == "dataset") {
+    std::string init_dataset_graph = "init_datagraph.";
+    OptionMap options;
+    auto converter = transform::NewConverter(anf_graph, phase);
+    transform::BuildGraph(anf_graph->ToString(), converter, {});
+    (void)transform::AddGraph(init_dataset_graph, transform::GetComputeGraph(converter), options);
+    return anf_graph;
+  }
+
   if (!AddDFGraph(anf_graph, init_inputs_map, export_air)) {
     MS_LOG(ERROR) << "GenConvertor failed";
     return nullptr;
   }
 
-  GeDeviceResManager::CreateSessionAndGraphRunner(IsGeTrain());
+  GeDeviceResManager::CreateSessionAndGraphRunner();
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(ERROR) << "Can not found GraphRunner";
@@ -1105,7 +1140,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
 
 void GeGraphExecutor::RunInitGraph(const std::string &graph_name) const {
   transform::RunOptions run_options;
-  run_options.name = "init_subgraph." + graph_name;
+  run_options.name = graph_name;
   if (transform::GetGraphByName(run_options.name) == nullptr) {
     MS_LOG(WARNING) << "Can not find " << run_options.name
                     << " sub graph, don't need data init subgraph in INFER mode.";
