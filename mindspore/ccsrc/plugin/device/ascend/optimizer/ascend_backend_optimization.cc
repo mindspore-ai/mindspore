@@ -218,6 +218,7 @@
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/optimizer/ge/all_to_all_v_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/expand_dims_for_batchnorm.h"
+#include "plugin/device/ascend/optimizer/ge/uniform_real_dtype_ge.h"
 
 namespace mindspore {
 namespace opt {
@@ -609,6 +610,7 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
   opt_acl_pm->AddPass(std::make_shared<opt::GetNextForGE>());
   opt_acl_pm->AddPass(std::make_shared<SyncBnSplit>());
   opt_acl_pm->AddPass(std::make_shared<SyncBnGradSplit>());
+  opt_acl_pm->AddPass(std::make_shared<opt::UniformRealDtypeGe>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
