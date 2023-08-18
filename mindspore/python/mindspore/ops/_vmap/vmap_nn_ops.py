@@ -2009,7 +2009,6 @@ def get_dense_vmap_rule(prim, axis_size):
     if isinstance(prim, str):
         prim = Primitive(prim)
 
-    has_bias = prim.has_bias
     batch_matmul = P.BatchMatMul(transpose_b=True)
 
     @_primexpr
@@ -2031,7 +2030,7 @@ def get_dense_vmap_rule(prim, axis_size):
         b, b_dim = b_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
         w = _bdim_at_front(w, w_dim, axis_size)
-        if has_bias:
+        if b is not None:
             b = _bdim_at_front(b, b_dim, axis_size)
 
         x_shape = x.shape
@@ -2043,7 +2042,7 @@ def get_dense_vmap_rule(prim, axis_size):
         out_shape = tuple(x_shape[:-1]) + (out.shape[-1],)
         out = out.reshape(out_shape)
 
-        if has_bias:
+        if b is not None:
             b_shape = b.shape
             b_shape = (start,) + (1,) * (len(out_shape) - 2) + (b_shape[-1],)
             b = b.reshape(b_shape)

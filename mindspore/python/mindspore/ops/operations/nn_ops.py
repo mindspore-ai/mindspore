@@ -11352,36 +11352,27 @@ class Dense(Primitive):
         output = x * w + b,
 
     where :math:`x` is the input tensor, :math:`w` is a weight matrix with the same data type as the :math:`x` ,
-    and :math:`b` is a bias vector with the same data type as the :math:`x` (only if `has_bias` is ``True``).
-
-    Args:
-        has_bias (bool, optional): Specifies whether the layer uses a bias vector :math:`b`. Default: ``True``.
+    and :math:`b` is a bias vector with the same data type as the :math:`x` (only if `b` is not ``None``).
 
     Inputs:
-        - **x** (Union[Tensor, Parameter]) - The input tensor with data type of float16, float32 or float64.
-          The shape must meet the following requirement: :math:`len(x.shape)>1` .
-        - **w** (Union[Tensor, Parameter]) - The weight tensor with data type of float16, float32 or float64.
-          The shape must meet the following requirements: :math:`len(w.shape)=2` . :math:`w.shape[0]=x.shape[-2]` ,
-          :math:`w.shape[1]=x.shape[-1]` .
-        - **b** (Union[Tensor, Parameter]) - The bias tensor with data type of float16, float32 or float64.
-          If `has_bias` is ``True``, the shape must meet the following requirements: :math:`len(b.shape)=1` ,
-          :math:`b.shape[0]=x.shape[-2]` .
+        - **x** (Tensor) - The shape must meet the following requirement: :math:`len(x.shape)>1` .
+        - **w** (Tensor) - The shape must meet the following requirements: :math:`len(w.shape)=2` .
+          :math:`w.shape[0]=x.shape[-2]` , :math:`w.shape[1]=x.shape[-1]` .
+        - **b** (Union[Tensor, None]) - If `b` is not ``None``, the shape must meet the following
+          requirements: :math:`len(b.shape)=1` , :math:`b.shape[0]=x.shape[-2]` .
 
     Outputs:
         Tensor of shape :math:`(*x.shape[:-1], w.shape[0])`.
-
-    Raises:
-        TypeError: If `has_bias` is not a bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, ops, Parameter
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.random((4, 5, 6, 7)).astype(np.float32))
-        >>> weight = Parameter(np.random.random((6, 7)).astype(np.float32))
-        >>> bias = Parameter(np.random.random((6,)).astype(np.float32))
+        >>> weight = Tensor(np.random.random((6, 7)).astype(np.float32))
+        >>> bias = Tensor(np.random.random((6,)).astype(np.float32))
         >>> dense = ops.Dense()
         >>> output = dense(x, weight, bias)
         >>> print(output.shape)
@@ -11389,12 +11380,10 @@ class Dense(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, has_bias=True):
+    def __init__(self):
         """Initialize Dense."""
         self.init_prim_io_names(inputs=['x', 'w', 'b'], outputs=["output"])
-        self.has_bias = has_bias
-        self.has_bias = validator.check_bool(has_bias, "has_bias", "Dense")
-        self.add_prim_attr("has_bias", self.has_bias)
+        self.add_prim_attr("has_bias", True)
 
 
 class WKV(Primitive):

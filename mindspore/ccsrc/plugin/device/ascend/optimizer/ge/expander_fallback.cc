@@ -18,6 +18,7 @@
 #include <vector>
 #include "backend/common/expander/fallback/expander_fallback.h"
 #include "include/transform/graph_ir/utils.h"
+#include "backend/common/graph_kernel/value_graph_binder.h"
 
 namespace mindspore {
 namespace opt {
@@ -30,6 +31,9 @@ bool ExpanderFallback::Run(const FuncGraphPtr &graph) {
       auto f = [](const CNodePtr &n) { return true; };
       changed = expander::TryExpandCNode(node, f) || changed;
     }
+  }
+  if (changed) {
+    graphkernel::BindValueToGraph().Run(graph);
   }
   return changed;
 }
