@@ -60,6 +60,20 @@ class FlashAttentionFwd(FlashAttention):
                                              is_atomic_add=True)
         self.m_gm = self.tik_instance.Tensor(FP16, self.m_shape, name="m_gm", scope=GM, is_atomic_add=True)
 
+    def prepare_global_ones(self):
+        """Prepare global ones tensor in L1 for cube impl row_sum"""
+        Bc_aligned = (self.Bc + 15) // 16 * 16
+        last_Bc_aligned = (self.last_Bc + 15) // 16 * 16
+        self.ones_l1 = self.tik_instance.Tensor(FP16, (Bc_aligned, 16), name="ones_l1", scope=L1)
+        self.last_ones_l1 = self.tik_instance.Tensor(FP16, (last_Bc_aligned, 16), name="last_ones_l1", scope=L1)
+        with self.tik_instance.new_stmt_scope(disable_sync=False):
+            ones_ub = self.tik_instance.Tensor(FP16, (Bc_aligned, 16), name="ones_ub", scope=UB)
+            self.tik_instance.h_duplicate(ones_ub, 1.0)
+            self.cont_data_mv_1_bust(dst=self.ones_l1, src=ones_ub, burst=Bc_aligned)
+            last_ones_ub = self.tik_instance.Tensor(FP16, (last_Bc_aligned, 16), name="last_ones_ub", scope=UB)
+            self.tik_instance.h_duplicate(ones_ub, 1.0)
+            self.cont_data_mv_1_bust(dst=self.last_ones_l1, src=last_ones_ub, burst=last_Bc_aligned)
+
     def softmax_compute(self, Sij_ub, mij_ub, lij_ub, m, n):
         """Refer to Algorithm 2 line12"""
         m_aligned = self.tik_ops_utils.up_align_to_K0(m)
@@ -96,7 +110,12 @@ class FlashAttentionFwd(FlashAttention):
         Sij_l1_K1MK0_ed = self.tik_instance.Tensor(FP16, (n_aligned // 16, m_aligned, 16),
                                                    name="Sij_l1_K1MK0_ed", scope=L1)
         self.cont_data_mv_1_bust(dst=Sij_l1_K1MK0_ed, src=Sij_ub, burst=m * n // 16)
-        Sij_row_sum_ub = self.tik_ops_utils.row_sum_cube_impl(Sij_l1_K1MK0_ed, lij_ub, m, n, self.precision_type)
+        if n == self.Bc:
+            Sij_row_sum_ub = self.tik_ops_utils.row_sum_cube_impl(Sij_l1_K1MK0_ed, self.ones_l1,
+                                                                  lij_ub, m, n, self.precision_type)
+        else:
+            Sij_row_sum_ub = self.tik_ops_utils.row_sum_cube_impl(Sij_l1_K1MK0_ed, self.last_ones_l1,
+                                                                  lij_ub, m, n, self.precision_type)
 
         if self.high_precision:
             return Sij_ub_fp32, mij_ub, Sij_row_sum_ub
