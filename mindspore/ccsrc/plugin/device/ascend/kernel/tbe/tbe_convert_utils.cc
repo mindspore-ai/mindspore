@@ -81,6 +81,8 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
     {"complex64", TypeId::kNumberTypeComplex64},
     {"complex128", TypeId::kNumberTypeComplex128},
     {"", TypeId::kMetaTypeNone},
+    // unsupported type
+    {"complex32", TypeId::kMetaTypeNone},
   };
   auto iter = type_str_id_maps.find(dtypes);
   if (iter == type_str_id_maps.end()) {
