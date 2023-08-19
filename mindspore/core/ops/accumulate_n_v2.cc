@@ -31,7 +31,11 @@ namespace ops {
 namespace {
 abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   const auto &prim_name = primitive->name();
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   AbstractBasePtrList elements = input_args;
   if (input_args.size() == 1) {
     if (!input_args[0]->isa<abstract::AbstractSequence>()) {
@@ -76,7 +80,11 @@ abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr AccumulateNV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   const auto &prim_name = prim->name();
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   AbstractBasePtrList elements = input_args;
   if (input_args.size() == 1) {
     if (!input_args[0]->isa<abstract::AbstractSequence>()) {
