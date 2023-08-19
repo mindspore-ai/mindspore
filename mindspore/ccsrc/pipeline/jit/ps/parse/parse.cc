@@ -1398,10 +1398,6 @@ bool Parser::CompareEqual(const FunctionBlockPtr &block, const py::object &left_
   auto comparator_type_name = ast_->GetNodeType(comparator_obj)->node_name();
   MS_LOG(DEBUG) << "comparator_type_name: " << comparator_type_name;
   if (comparator_type_name == "Num") {
-    if (!py::isinstance<py::int_>(left_obj) && !py::isinstance<py::float_>(left_obj)) {
-      *bool_res = false;
-      return true;
-    }
     py::object num_value = python_adapter::GetPyObjAttr(comparator_obj, "n");
     MS_LOG(DEBUG) << "num_value: " << py::str(num_value);
     if (!py::isinstance<py::int_>(num_value) && !py::isinstance<py::float_>(num_value)) {
