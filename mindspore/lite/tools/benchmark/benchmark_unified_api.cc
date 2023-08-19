@@ -445,6 +445,10 @@ void BenchmarkUnifiedApi::InitMSContextForGPU(const std::shared_ptr<mindspore::C
     MS_LOG(INFO) << "GPU device_id = " << device_id;
   }
   gpu_device_info->SetDeviceID(device_id);
+  if (flags_->device_id_ >= 0) {
+    gpu_device_info->SetDeviceID(flags_->device_id_);
+    MS_LOG(INFO) << "GPU device_id = " << flags_->device_id_;
+  }
   if (flags_->enable_gl_texture_) {
     gpu_device_info->SetEnableGLTexture(flags_->enable_gl_texture_);
 
