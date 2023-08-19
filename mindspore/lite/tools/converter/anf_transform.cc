@@ -652,7 +652,6 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
     MS_LOG(ERROR) << "Run convert pass failed.";
     return RET_ERROR;
   }
-
   if (!RunExternalPass(old_graph, registry::POSITION_BEGIN)) {
     MS_LOG(ERROR) << "Run external pass failed, place is BEGIN";
     return RET_ERROR;
@@ -663,7 +662,6 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
     MS_LOG(ERROR) << "RunInt64CastInt32Pass failed.";
     return RET_ERROR;
   }
-
   status = RunConstFoldPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run const fold pass failed.";

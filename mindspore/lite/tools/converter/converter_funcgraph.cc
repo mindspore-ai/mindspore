@@ -66,6 +66,8 @@
 #include "tools/converter/anf_transform_for_ge.h"
 #include "tools/converter/adapter/acl/common/acl_types_utils.h"
 #include "src/extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
+#include "tools/optimizer/graph/input_and_output_variable_pass.h"
+#include "tools/optimizer/graph/output_variable_pass.h"
 
 namespace mindspore {
 namespace lite {
@@ -330,6 +332,12 @@ STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &p
     MS_LOG(ERROR) << "Failed to Run GE Aoe Optimize";
     return ret;
   }
+  ret = RunVariableOptimize(param, func_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Failed to Run variable op optimize";
+    return ret;
+  }
+
   return RET_OK;
 }
 
@@ -544,5 +552,33 @@ bool ConverterFuncGraph::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &
   return true;
 }
 void ConverterFuncGraph::ClearBuiltinPass() { PassStorage::ClearPass(); }
+
+STATUS ConverterFuncGraph::RunVariableOptimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  if (!param->ascendGeOptionCfg.inputs_to_variable.empty() && !param->ascendGeOptionCfg.outputs_to_variable.empty()) {
+    auto input_and_output_variable = std::make_shared<opt::InputAndOutputVariablePass>(
+      param->ascendGeOptionCfg.inputs_to_variable, param->ascendGeOptionCfg.outputs_to_variable);
+    if (input_and_output_variable == nullptr) {
+      MS_LOG(ERROR) << "input_and_output_variable is nullptr";
+      return RET_ERROR;
+    }
+    if (!input_and_output_variable->Run(func_graph)) {
+      MS_LOG(ERROR) << "Run input and output variable pass failed";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+  if (!param->ascendGeOptionCfg.outputs_to_variable.empty()) {
+    auto output_variable = std::make_shared<opt::OutputVariablePass>(param->ascendGeOptionCfg.outputs_to_variable);
+    if (output_variable == nullptr) {
+      MS_LOG(ERROR) << "output_variable is nullptr";
+      return RET_ERROR;
+    }
+    if (!output_variable->Run(func_graph)) {
+      MS_LOG(ERROR) << "Run output variable pass failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore
