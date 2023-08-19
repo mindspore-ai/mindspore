@@ -54,6 +54,17 @@ LocalFile<KeyType, ValueType>::LocalFile(const std::map<std::string, std::string
 }
 
 template <typename KeyType, typename ValueType>
+LocalFile<KeyType, ValueType>::~LocalFile() {
+  for (const auto &file : block_files_) {
+    if (file == nullptr) {
+      continue;
+    }
+    file->Close();
+    ChangeFileMode(file->get_file_name(), S_IRUSR | S_IWUSR);
+  }
+}
+
+template <typename KeyType, typename ValueType>
 void LocalFile<KeyType, ValueType>::Initialize() {
   fs_ = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs_);
@@ -221,7 +232,7 @@ void LocalFile<KeyType, ValueType>::WriteOneBlockFile(size_t block_index, const 
     MS_LOG(EXCEPTION) << "Write to block file[" << block_ptr->block_file_name() << "] failed.";
   }
 
-  ChangeFileMode(block_ptr->block_file_name(), S_IRWXU | S_IRWXG | S_IRWXO);
+  ChangeFileMode(block_ptr->block_file_name(), S_IRUSR | S_IWUSR);
 
   // Generate sha256 hash sequence.
   block_ptr->GenSha256Seq();
@@ -268,6 +279,7 @@ void LocalFile<KeyType, ValueType>::Write(const ConstDataWithLen &keys, const Co
       MS_EXCEPTION_IF_NULL(block_file_ptr);
       MS_EXCEPTION_IF_CHECK_FAIL(block_file_ptr->Trunc(block_size_ * element_len), "Truncate file failed.");
       (void)block_files_.emplace_back(block_file_ptr);
+      ChangeFileMode(block_file_name, S_IRUSR | S_IWUSR);
 
       // Reset offset cursor in block.
       current_offset_in_block_ = 0;
