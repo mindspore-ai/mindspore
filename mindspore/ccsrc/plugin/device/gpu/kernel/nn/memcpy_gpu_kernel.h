@@ -42,7 +42,7 @@ class MemcpyGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
   // The input addresses that are not used in the kernel launch.
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+  // std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  private:
   size_t input_size_{0};

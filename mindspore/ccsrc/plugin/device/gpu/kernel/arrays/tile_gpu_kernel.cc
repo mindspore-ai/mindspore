@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,62 +141,15 @@ std::vector<std::pair<KernelAttr, TileGpuKernelMod::TileLaunchFunc>> TileGpuKern
      .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeBool),
-   &TileGpuKernelMod::LaunchKernel<bool>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &TileGpuKernelMod::LaunchKernel<Complex<float>>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &TileGpuKernelMod::LaunchKernel<Complex<double>>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat64),
-   &TileGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &TileGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &TileGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt16),
-   &TileGpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32),
-   &TileGpuKernelMod::LaunchKernel<int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt64),
-   &TileGpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeUInt32),
-   &TileGpuKernelMod::LaunchKernel<int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeBool)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeBool),
    &TileGpuKernelMod::LaunchKernel<bool>}};
 
 std::vector<KernelAttr> TileGpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, TileGpuKernelMod::TileLaunchFunc> &pair) { return pair.first; });
+  static std::vector<KernelAttr> support_list;
+  if (support_list.empty()) {
+    (void)std::transform(
+      func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+      [](const std::pair<KernelAttr, TileGpuKernelMod::TileLaunchFunc> &pair) { return pair.first; });
+  }
   return support_list;
 }
 

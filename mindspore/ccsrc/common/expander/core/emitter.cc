@@ -41,7 +41,7 @@ std::pair<bool, std::vector<int64_t>> GetIntList(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node->get());
   ValuePtr value_ptr = node->BuildValue();
   if (value_ptr != nullptr) {
-    if (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>()) {
+    if ((value_ptr->isa<ValueSequence>() && !value_ptr->ContainsValueAny()) || value_ptr->isa<Scalar>()) {
       return std::make_pair(true, CheckAndConvertUtils::CheckIntOrTupleInt("value", value_ptr, "GetIntList"));
     }
     if (value_ptr->isa<tensor::Tensor>()) {

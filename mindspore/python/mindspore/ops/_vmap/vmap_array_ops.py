@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -218,11 +218,9 @@ def get_transpose_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.Tile)
+@vmap_rules_getters.register("Tile")
 def get_tile_vmap_rule(prim, axis_size):
     """VmapRule for `P.Tile` operation."""
-    if isinstance(prim, str):
-        prim = Primitive(prim)
 
     @_primexpr
     def _get_batch_multiples(input_shape, dim, multiples):
@@ -251,7 +249,7 @@ def get_tile_vmap_rule(prim, axis_size):
 
         input_shape = F.shape(input_x)
         batch_multiples, out_dim = _get_batch_multiples(input_shape, dim, multiples)
-        repeat_tensor = P.Tile()(input_x, batch_multiples)
+        repeat_tensor = prim(input_x, batch_multiples)
         return repeat_tensor, out_dim
 
     return vmap_rule

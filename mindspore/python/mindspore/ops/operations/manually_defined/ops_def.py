@@ -16,13 +16,15 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import numpy as np
+
 from mindspore.ops import signature as sig
 from mindspore.ops.primitive import Primitive, prim_attr_register
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate import gen_arg_handler as handler
 from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import Tensor as Tensor_
-
+from mindspore.ops._tracefunc import PackFunc
 
 class BatchNorm(Primitive):
     """
@@ -151,6 +153,7 @@ def batch_norm_(input_x,
     batch_norm_op = _get_cache_prim(BatchNorm)(is_training, epsilon, momentum,
                                                data_format)
     return batch_norm_op(input_x, scale, bias, mean, variance)
+
 
 class Rank(Primitive):
     """
@@ -284,3 +287,108 @@ def shape_(input_x):
     """
     shape_op = _get_cache_prim(Shape)()
     return shape_op(input_x)
+
+
+class Tile(Primitive):
+    """
+    Tile.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize."""
+
+    def check_elim(self, *args):
+        base_tensor, multiplier = args
+        if not isinstance(base_tensor, Tensor):
+            raise TypeError(f"For '{self.name}', the type of 'input_x' must be Tensor, "
+                            f"but got {type(base_tensor).__name__}.")
+        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
+            return (False, None)
+        if not isinstance(multiplier, tuple):
+            raise TypeError(f"For '{self.name}', the type of 'multiplier' must be tuple, "
+                            f"but got {type(multiplier).__name__}.")
+
+        if all(v == 1 for v in multiplier) and len(base_tensor.shape) >= len(multiplier):
+            from mindspore.ops.auto_generate.gen_ops_def import Identity
+            ret = Identity()(base_tensor)
+            return (True, ret)
+        return (False, None)
+
+
+def tile(input, multiples):
+    r"""
+    Replicates an input tensor with given multiples times.
+
+    Creates a new tensor by replicating `input` `multiples` times. The i'th dimension of
+    output tensor has `input.shape[i] * multiples[i]` elements, and the values of `input`
+    are replicated `multiples[i]` times along the i'th dimension.
+
+    Note:
+        The length of `multiples` must be greater or equal to the length of dimension in `input`.
+
+    Args:
+        input (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
+            :math:`(x_1, x_2, ..., x_S)` .
+
+        multiples (tuple[int]): The parameter that specifies the number of replications,
+            the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
+            The length of `multiples` cannot be smaller than the length of the shape of `input`.
+            Only constant value is allowed.
+
+    Returns:
+        Tensor, has the same data type as the `input`. Suppose the length of `multiples` is `d`,
+        the dimension of `input` is `input.dim`, and the shape of `input` is :math:`(x_1, x_2, ..., x_S)`.
+
+        - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
+        the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
+        - If `input.dim < d`, fill in multiple 1 in the length of the shape of `input` until their
+        lengths are consistent. Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+        then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
+        :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
+
+    Raises:
+        TypeError: If `multiples` is not a tuple or its elements are not all int.
+        ValueError: If the elements of `multiples` are not all greater than 0.
+        ValueError: If the length of `multiples` are smaller than the length of dimension in `input`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
+        >>> multiples = (2, 3)
+        >>> output = ops.tile(input, multiples)
+        >>> print(output)
+        [[1.  2.  1.  2.  1.  2.]
+         [3.  4.  3.  4.  3.  4.]
+         [1.  2.  1.  2.  1.  2.]
+         [3.  4.  3.  4.  3.  4.]]
+        >>> multiples = (2, 3, 2)
+        >>> output = ops.tile(input, multiples)
+        >>> print(output)
+        [[[1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]]
+         [[1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]]]
+    """
+    tile_op = _get_cache_prim(Tile)()
+    return tile_op(input, multiples)
+
+
+def infer_value_for_Tile(x, multiples):
+    """Infer value for Tile op."""
+    if x is None or multiples is None or None in multiples:
+        return None
+    return Tensor(np.tile(x.asnumpy(), multiples))

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class TileGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+  // std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  private:
   template <typename T>

@@ -15,8 +15,10 @@
  */
 
 #include "ops/ops_func_impl/reduce_arithmetic.h"
+#include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {
@@ -29,30 +31,23 @@ int64_t CalRealAixs(const int64_t &axis, const size_t &x_shape_size, const Primi
 }
 
 BaseShapePtr ReduceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  MS_EXCEPTION_IF_NULL(input_args[0]->GetShape());
-  auto x_shape = input_args[0]->GetShape()->GetShapeVector();
-  MS_EXCEPTION_IF_NULL(input_args[1]);
-  auto axis_value = input_args[1]->GetValue();
-  MS_EXCEPTION_IF_NULL(axis_value);
-  auto axis_array_opt = GetArrayValue<int64_t>(axis_value);
-  MS_EXCEPTION_IF_NULL(input_args[2]);
-  auto keep_dims_value = input_args[2]->GetValue();
-  MS_EXCEPTION_IF_NULL(keep_dims_value);
-  if (keep_dims_value->isa<ValueAny>()) {
-    // The keep_dims is unknown.
+  auto keep_dims_value = input_args[kInputIndex2]->GetValue();
+  auto keep_dims_opt = GetScalarValue<bool>(keep_dims_value);
+  if (MS_UNLIKELY(!keep_dims_opt.has_value())) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
-  MS_CHECK_VALUE(keep_dims_value->isa<BoolImm>(), "The keep_dims input for " + primitive->name() + " must be bool.");
-  bool keep_dims = GetValue<bool>(keep_dims_value);
+  auto keep_dims = keep_dims_opt.value();
 
+  auto axis_value = input_args[kInputIndex1]->GetValue();
+  auto axis_array_opt = GetArrayValue<int64_t>(axis_value);
   if (axis_array_opt.has_value()) {
     // If axis is empty tuple and keep_dims is False, return a zero-dimensional Tensor
     if (axis_array_opt->size() == 0 && !keep_dims) {
       return std::make_shared<abstract::Shape>(ShapeVector({}));
     }
   }
+
+  auto x_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }

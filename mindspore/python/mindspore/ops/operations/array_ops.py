@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero)
-from .manually_defined import Rank, Shape
+from .manually_defined import Rank, Shape, Tile
 
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -1911,157 +1911,6 @@ class ArgMinWithValue(Primitive):
         self.axis = axis
         self.keep_dims = keep_dims
         self.add_prim_attr('dimension', self.axis)
-
-
-class Tile(PrimitiveWithInfer):
-    r"""
-    Replicates an input tensor with given multiples times.
-
-    Refer to :func:`mindspore.ops.tile` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_S)` .
-        - **multiples** (tuple[int]) - The parameter that specifies the number of replications,
-          the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-          The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
-          Only constant value is allowed.
-
-    Outputs:
-        Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
-        the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
-
-        - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
-          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
-        - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
-          lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
-          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-          :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> tile = ops.Tile()
-        >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
-        >>> multiples = (2, 3)
-        >>> output = tile(input_x, multiples)
-        >>> print(output)
-        [[1.  2.  1.  2.  1.  2.]
-         [3.  4.  3.  4.  3.  4.]
-         [1.  2.  1.  2.  1.  2.]
-         [3.  4.  3.  4.  3.  4.]]
-        >>> multiples = (2, 3, 2)
-        >>> output = tile(input_x, multiples)
-        >>> print(output)
-        [[[1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]]
-         [[1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Tile"""
-        self.init_prim_io_names(inputs=['x', 'multiples'], outputs=['output'])
-
-    def check_elim(self, *args):
-        base_tensor, multiplier = args
-        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
-            return (False, None)
-        if not isinstance(base_tensor, Tensor):
-            raise TypeError(f"For '{self.name}', the type of 'input_x' must be Tensor, "
-                            f"but got {type(base_tensor).__name__}.")
-        if not isinstance(multiplier, tuple):
-            raise TypeError(f"For '{self.name}', the type of 'multiplier' must be tuple, "
-                            f"but got {type(multiplier).__name__}.")
-
-        if all(v == 1 for v in multiplier) and len(base_tensor.shape) >= len(multiplier):
-            ret = Identity()(base_tensor)
-            return (True, ret)
-        return (False, None)
-
-    def _get_shape_and_range(self, x, multiples):
-        """calculate tile shape and value"""
-        x_shp = x['shape']
-        if is_dim_unknown(x_shp):
-            return {'shape': x_shp}, None
-        multiples_v = multiples['value']
-        value = None
-        len_sub = len(multiples_v) - len(x_shp)
-        multiples_w = None
-        if len_sub == 0:
-            multiples_w = multiples_v
-        if len_sub > 0:
-            for _ in range(0, len_sub):
-                x_shp.insert(0, 1)
-            multiples_w = multiples_v
-        elif len_sub < 0:
-            raise ValueError(f"For '{self.name}', the length of 'multiples' can not be smaller than "
-                             f"the dimension of 'input_x', but got length of 'multiples': {len(multiples_v)} "
-                             f"and dimension of 'input_x': {len(x_shp)}.")
-
-        for i, a in enumerate(multiples_w):
-            if x_shp[i] >= 0:
-                x_shp[i] *= a
-        if x['value'] is not None:
-            value = Tensor(np.tile(x['value'].asnumpy(), multiples_w))
-        out_shape = {
-            'shape': x_shp
-        }
-        return out_shape, value
-
-    def __infer__(self, x, multiples):
-        multiples_v = multiples['value']
-        if multiples_v is None or None in multiples_v:
-            if 'max_value' not in multiples or 'min_value' not in multiples:
-                if multiples_v is not None:
-                    shape = [len(multiples['shape'])]
-                else:
-                    shape = multiples['shape']
-                if len(shape) != 1:
-                    raise ValueError(f'For \'{self.name}\', the dim of multiples must be 1.')
-                rank = max(len(x['shape']), shape[0])
-                out_shape = [-1] * rank
-                if -2 in x['shape']:
-                    out_shape = [-2]
-                return {
-                    'shape': out_shape,
-                    'dtype': x['dtype'],
-                    'value': None
-                }
-            out_shape, value = self._get_shape_and_range(x, multiples)
-            shape = out_shape.get('shape', None)
-            out = {'shape': shape,
-                   'dtype': x['dtype'],
-                   'value': value}
-            return out
-
-        validator.check_value_type(
-            "multiples", multiples_v, [tuple], self.name)
-        for i, multiple in enumerate(multiples_v):
-            validator.check_positive_int(
-                multiple, "multiples[%d]" % i, self.name)
-        validator.check_value_type(
-            "x[\'dtype\']", x["dtype"], mstype.TensorType, self.name)
-        out_shp, value = self._get_shape_and_range(x, multiples)
-        shp = out_shp.get('shape', None)
-        out = {'shape': shp,
-               'dtype': x['dtype'],
-               'value': value}
-        return out
-
 
 class UnsortedSegmentSum(Primitive):
     r"""

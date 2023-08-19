@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
+#include "ir/cell.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
@@ -78,5 +79,35 @@ class MS_CORE_API RegFrontendFuncImplHelper {
 
 #define REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL(name, func_impl_class) \
   static auto helper_##func_impl_class = RegFrontendFuncImplHelper(name, std::make_shared<func_impl_class>());
+
+using InferValueFunc = std::function<ValuePtr(const std::string &, const AbstractBasePtrList &)>;
+class MS_CORE_API InferValueCallback {
+ public:
+  InferValueCallback(const InferValueCallback &) = delete;
+  InferValueCallback &operator=(const InferValueCallback &) = delete;
+
+  static InferValueCallback &GetInstance();
+
+  void RegImpl(const std::string &impl_type, const InferValueFunc &py_func);
+  ValuePtr CallPyInferValue(const std::string &op_name, const AbstractBasePtrList &input_args);
+  ValuePtr CallKernelInferValue(const std::string &op_name, const AbstractBasePtrList &input_args);
+
+ private:
+  InferValueCallback() = default;
+  ~InferValueCallback() {}
+
+ private:
+  InferValueFunc python_impl_{nullptr};
+  InferValueFunc kernel_impl_{nullptr};
+};
+
+class MS_CORE_API InferValueImplRegister {
+ public:
+  InferValueImplRegister(const std::string &impl_type, const InferValueFunc &fn);
+  ~InferValueImplRegister() = default;
+};
+
+#define INFER_VALUE_IMPL_REGISTER(impl_type, func) \
+  static auto reg_##impl_type##_##func = mindspore::ops::InferValueImplRegister(#impl_type, func)
 }  //  namespace mindspore::ops
 #endif  //  MINDSPORE_CORE_OPS_FRONTEND_FUNC_IMPL_H

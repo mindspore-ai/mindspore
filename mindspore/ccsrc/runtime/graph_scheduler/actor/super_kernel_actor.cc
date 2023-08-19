@@ -323,23 +323,19 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     if (InputDataNoNeedCopy(input_device_tensor, node_device_tensor)) {
       continue;
     }
-<<<<<<< HEAD
     if (type_ != KernelTransformType::kSuperKernelActor || node_device_tensor->GetSize() == 0) {
       // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
       node_device_tensor->SetSize(input_device_tensor->GetSize());
     }
     node_device_tensor->set_user_data(input_device_tensor->user_data());
     node_device_tensor->set_sync_user_data_handler(input_device_tensor->sync_user_data_handler());
-=======
-    // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
-    node_device_tensor->SetSize(input_device_tensor->GetSize());
     // Update Shape.
     const auto &node_device_kernel_tensor = node_device_tensor->kernel_tensor();
     const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
+
     MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
     MS_EXCEPTION_IF_NULL(input_kernel_tensor);
     node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
->>>>>>> Unify CreateDeviceAddress interface
 
     // Copy.
     DeviceTensorPtr copy_device_tensor = nullptr;

@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,6 +60,8 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
+
+from mindspore.ops.operations.manually_defined import tile
 
 tuple_to_tensor_ = TupleToTensor()
 eye_ = P.Eye()
@@ -1076,77 +1078,6 @@ def zeros_like(input, *, dtype=None):
     output = _zeros_like(input)
     output = _cast(output, _dtype)
     return output
-
-
-def tile(input, multiples):
-    r"""
-    Replicates an input tensor with given multiples times.
-
-    Creates a new tensor by replicating `input` `multiples` times. The i'th dimension of
-    output tensor has `input.shape[i] * multiples[i]` elements, and the values of `input`
-    are replicated `multiples[i]` times along the i'th dimension.
-
-    Note:
-        The length of `multiples` must be greater or equal to the length of dimension in `input`.
-
-    Args:
-        input (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
-            :math:`(x_1, x_2, ..., x_S)` .
-
-        multiples (tuple[int]): The parameter that specifies the number of replications,
-            the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-            The length of `multiples` cannot be smaller than the length of the shape of `input`.
-            Only constant value is allowed.
-
-    Returns:
-        Tensor, has the same data type as the `input`. Suppose the length of `multiples` is `d`,
-        the dimension of `input` is `input.dim`, and the shape of `input` is :math:`(x_1, x_2, ..., x_S)`.
-
-        - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
-          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
-        - If `input.dim < d`, fill in multiple 1 in the length of the shape of `input` until their
-          lengths are consistent. Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
-          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-          :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
-
-    Raises:
-        TypeError: If `multiples` is not a tuple or its elements are not all int.
-        ValueError: If the elements of `multiples` are not all greater than 0.
-        ValueError: If the length of `multiples` are smaller than the length of dimension in `input`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
-        >>> multiples = (2, 3)
-        >>> output = ops.tile(input, multiples)
-        >>> print(output)
-        [[1.  2.  1.  2.  1.  2.]
-         [3.  4.  3.  4.  3.  4.]
-         [1.  2.  1.  2.  1.  2.]
-         [3.  4.  3.  4.  3.  4.]]
-        >>> multiples = (2, 3, 2)
-        >>> output = ops.tile(input, multiples)
-        >>> print(output)
-        [[[1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]]
-         [[1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]]]
-    """
-    tile_op = _get_cache_prim(P.Tile)()
-    return tile_op(input, multiples)
 
 
 ##############################

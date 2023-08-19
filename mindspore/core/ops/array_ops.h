@@ -94,7 +94,6 @@ GVAR_DEF(PrimitivePtr, kPrimPadAndShift, std::make_shared<Primitive>("PadAndShif
 GVAR_DEF(PrimitivePtr, kPrimSlice, std::make_shared<Primitive>(kSliceOpName));
 GVAR_DEF(PrimitivePtr, kPrimSliceGrad, std::make_shared<Primitive>("SliceGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSliceFusion, std::make_shared<Primitive>("SliceFusion"));
-GVAR_DEF(PrimitivePtr, kPrimTile, std::make_shared<Primitive>(kTileOpName));
 GVAR_DEF(PrimitivePtr, kPrimTileD, std::make_shared<Primitive>("TileD"));
 GVAR_DEF(PrimitivePtr, kPrimAddN, std::make_shared<Primitive>("AddN"));
 GVAR_DEF(PrimitivePtr, kPrimAccumulateNV2, std::make_shared<Primitive>("AccumulateNV2"));

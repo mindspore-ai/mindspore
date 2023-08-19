@@ -51,7 +51,7 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
       auto value_ptr = input_args[i]->GetValue();
       MS_EXCEPTION_IF_NULL(value_ptr);
       if (CheckAndConvertUtils::IsSequence(input_args[i]) || CheckAndConvertUtils::IsScalar(input_args[i])) {
-        if (IsValueKnown(value_ptr)) {
+        if (!value_ptr->ContainsValueAny()) {
           args[i] = CheckAndConvertUtils::CheckIntOrTupleInt(std::to_string(i), value_ptr, prim_name);
         } else {
           (void)unknown_inputs.insert(i);
@@ -59,7 +59,7 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
       } else if (CheckAndConvertUtils::IsTensor(input_args[i])) {
         if (std::find(value_depend.begin(), value_depend.end(), SizeToLong(i)) != value_depend.end()) {
           // value tensor
-          if (IsValueKnown(value_ptr)) {
+          if (!value_ptr->ContainsValueAny()) {
             args[i] = CheckAndConvertUtils::CheckTensorIntValue(std::to_string(i), value_ptr, prim_name);
           } else {
             (void)unknown_inputs.insert(i);

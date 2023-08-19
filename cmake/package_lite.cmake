@@ -214,7 +214,6 @@ function(__install_white_list_ops)
         #     ${TOP_DIR}/mindspore/core/ops/arg_max.h
             ${TOP_DIR}/mindspore/core/ops/max_pool.h
         #     ${TOP_DIR}/mindspore/core/ops/prelu.h
-            ${TOP_DIR}/mindspore/core/ops/tile.h
             ${TOP_DIR}/mindspore/core/ops/make_tuple.h
             ${TOP_DIR}/mindspore/core/ops/base_operator.h
             ${TOP_DIR}/mindspore/core/ops/return.h

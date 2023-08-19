@@ -15,6 +15,7 @@
  */
 
 #include "ops/ops_frontend_func_impl.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::ops {
 OpsFrontendFuncImplMap *GetOpsFrontendFuncImplMapPtr() {
@@ -34,5 +35,43 @@ OpFrontendFuncImplPtr GetOpFrontendFuncImplPtr(const std::string &name) {
 RegFrontendFuncImplHelper::RegFrontendFuncImplHelper(const std::string &name, const OpFrontendFuncImplPtr &func_impl) {
   const FrontendFuncImplHolder holder{func_impl};
   (void)GetOpsFrontendFuncImplMapPtr()->emplace(name, holder);
+}
+
+InferValueCallback &InferValueCallback::GetInstance() {
+  static InferValueCallback instance{};
+  return instance;
+}
+
+void InferValueCallback::RegImpl(const std::string &impl_type, const InferValueFunc &func) {
+  if (impl_type == "python_impl") {
+    if (python_impl_) {
+      MS_LOG(ERROR) << "InferValueImpl for python_impl is already registered!";
+    }
+    python_impl_ = func;
+  } else if (impl_type == "cpu_kernel_impl") {
+    if (kernel_impl_) {
+      MS_LOG(ERROR) << "InferValueImpl for cpu_kernel_impl is already registered!";
+    }
+    kernel_impl_ = func;
+  } else {
+    MS_LOG(ERROR) << "Unsupported InferValue implement type " << impl_type << "!";
+  }
+}
+
+ValuePtr InferValueCallback::CallPyInferValue(const std::string &op_name, const AbstractBasePtrList &input_args) {
+  if (python_impl_) {
+    return python_impl_(op_name, input_args);
+  }
+  return nullptr;
+}
+ValuePtr InferValueCallback::CallKernelInferValue(const std::string &op_name, const AbstractBasePtrList &input_args) {
+  if (kernel_impl_) {
+    return kernel_impl_(op_name, input_args);
+  }
+  return nullptr;
+}
+
+InferValueImplRegister::InferValueImplRegister(const std::string &impl_type, const InferValueFunc &fn) {
+  InferValueCallback::GetInstance().RegImpl(impl_type, fn);
 }
 }  //  namespace mindspore::ops
