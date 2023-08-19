@@ -17,6 +17,7 @@
 #include <string.h>
 #include <float.h>
 #include "nnacl/fp16_grad/pooling_grad.h"
+#include "nnacl/op_base.h"
 
 void AvgPoolingFp16Grad(const float16_t *input_ptr, float16_t *output_ptr, int count, PoolingParameter *pooling_param,
                         const PoolingComputeParam *pooling_args) {
@@ -49,14 +50,14 @@ void AvgPoolingFp16Grad(const float16_t *input_ptr, float16_t *output_ptr, int c
         int kw_s = MSMAX(0, over_w);
         int kw_e = MSMIN(win_w, in_w + over_w);
         int ic = 0;
-        for (; ic < channel - 4; ic += 4) {
+        for (; ic < channel - C4NUM; ic += C4NUM) {
           int idx = (yw + yh * output_w) * channel + ic;
 #ifdef ENABLE_NEON
           float16x4_t in = vld1_f16(inPtr + idx);
           float16x4_t delta = vmul_f16(in, factor);
 #else
-          float16_t delta[4] = {inPtr[idx], inPtr[idx + 1], inPtr[idx + 2], inPtr[idx + 3]};
-          for (int i = 0; i < 4; i++) delta[i] *= kk;
+          float16_t delta[C4NUM] = {inPtr[idx], inPtr[idx + C1NUM], inPtr[idx + C2NUM], inPtr[idx + C3NUM]};
+          for (int i = 0; i < C4NUM; i++) delta[i] *= kk;
 #endif
           for (int kh = kh_s; kh < kh_e; kh++) {
             int xh = yh * stride_h + kh - pad_h;
@@ -69,7 +70,7 @@ void AvgPoolingFp16Grad(const float16_t *input_ptr, float16_t *output_ptr, int c
               vst1_f16(out_vec, outs);
 #else
 
-              for (int i = 0; i < 4; i++) {
+              for (int i = 0; i < C4NUM; i++) {
                 out[(xw + in_w * xh) * channel + ic + i] += ((float16_t *)&delta)[i];
               }
 #endif
@@ -130,16 +131,16 @@ void MaxPoolingFp16Grad(const float16_t *input_ptr, const float16_t *dy_ptr, flo
         int kw_s = MSMAX(0, over_w);
         int kw_e = MSMIN(win_w, in_w + over_w);
         int ic = 0;
-        for (; ic < (channel & ~3); ic += 4) {
+        for (; ic < (channel & ~3); ic += C4NUM) {
           int idx = (yw + yh * output_w) * channel + ic;
 #ifdef ENABLE_NEON
           uint32x4_t max_idx = vdupq_n_u32(0);
           float16x4_t max_val = vdup_n_f16(-FLT16_MAX);
           float16x4_t delta = vld1_f16(dyPtr + idx);
 #else
-          float16_t delta[4] = {dyPtr[idx], dyPtr[idx + 1], dyPtr[idx + 2], dyPtr[idx + 3]};
-          float16_t max_val[4] = {-FLT16_MAX, -FLT16_MAX, -FLT16_MAX, -FLT16_MAX};
-          uint max_idx[4] = {0};
+          float16_t delta[C4NUM] = {dyPtr[idx], dyPtr[idx + C1NUM], dyPtr[idx + C2NUM], dyPtr[idx + C3NUM]};
+          float16_t max_val[C4NUM] = {-FLT16_MAX, -FLT16_MAX, -FLT16_MAX, -FLT16_MAX};
+          uint max_idx[C4NUM] = {0};
 #endif
           for (int kh = kh_s; kh < kh_e; kh++) {
             int xh = yh * stride_h + kh - pad_h;
@@ -151,8 +152,9 @@ void MaxPoolingFp16Grad(const float16_t *input_ptr, const float16_t *dy_ptr, flo
               float16x4_t in = vld1_f16(inPtr + val_idx);
               max_idx = MaxIndex(in, &max_val, index, max_idx);
 #else
-              float16_t val[4] = {inPtr[val_idx], inPtr[val_idx + 1], inPtr[val_idx + 2], inPtr[val_idx + 3]};
-              for (int i = 0; i < 4; i++) {
+              float16_t val[C4NUM] = {inPtr[val_idx], inPtr[val_idx + C1NUM], inPtr[val_idx + C2NUM],
+                                      inPtr[val_idx + C3NUM]};
+              for (int i = 0; i < C4NUM; i++) {
                 if (val[i] > max_val[i]) {
                   max_val[i] = val[i];
                   max_idx[i] = val_idx + i;
@@ -161,7 +163,7 @@ void MaxPoolingFp16Grad(const float16_t *input_ptr, const float16_t *dy_ptr, flo
 #endif
             }
           }
-          for (int i = 0; i < 4; i++) {
+          for (int i = 0; i < C4NUM; i++) {
             out[((int *)&max_idx)[i]] += ((float16_t *)&delta)[i];
           }
         }

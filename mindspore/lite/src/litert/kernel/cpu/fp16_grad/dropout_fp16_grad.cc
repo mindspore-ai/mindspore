@@ -52,10 +52,10 @@ int DropoutGradCPUKernelFp16::Prepare() {
   }
 
   CHECK_LESS_RETURN(in_tensors_.size(), THIRD_INPUT);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
+  CHECK_NULL_RETURN(in_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(SECOND_INPUT));
+  CHECK_NULL_RETURN(out_tensors_.at(FIRST_INPUT));
   return ReSize();
 }
 
@@ -63,7 +63,7 @@ int DropoutGradCPUKernelFp16::ReSize() { return RET_OK; }
 
 int DropoutGradCPUKernelFp16::DoExecute(int task_id) {
   auto yt_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data());
-  auto mask_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data());
+  auto mask_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(SECOND_INPUT)->data());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data());
   CHECK_NULL_RETURN(yt_ptr);
   CHECK_NULL_RETURN(mask_ptr);

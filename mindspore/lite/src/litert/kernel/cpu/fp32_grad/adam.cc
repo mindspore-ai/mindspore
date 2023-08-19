@@ -129,6 +129,8 @@ int AdamCPUKernel::OptimizerStep() {
   CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(m);
   CHECK_NULL_RETURN(v);
+  CHECK_NULL_RETURN(beta1_power);
+  CHECK_NULL_RETURN(beta2_power);
 
   int ret = RET_OK;
   if (grad_sum_ != nullptr && valid_grad_sum_) {

@@ -46,19 +46,19 @@ constexpr int kNumJobs = 4;
 }  // namespace
 int BNGradCPUKernelFp16::ReSize() {
   CHECK_NULL_RETURN(op_parameter_);
-  CHECK_LESS_RETURN(in_tensors_.size(), 5);
-  CHECK_LESS_RETURN(out_tensors_.size(), 3);
+  CHECK_LESS_RETURN(in_tensors_.size(), C5NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C3NUM);
   CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_0));
   CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_1));
   CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_2));
   CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_3));
   CHECK_NULL_RETURN(in_tensors_.at(kNumInputDim_4));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
-  CHECK_NULL_RETURN(out_tensors_.at(1));
+  CHECK_NULL_RETURN(out_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(out_tensors_.at(SECOND_INPUT));
   CHECK_NULL_RETURN(out_tensors_.at(kNumOutputDim_2));
-  auto *input_x = in_tensors_.at(1);
+  auto *input_x = in_tensors_.at(SECOND_INPUT);
   int channels = input_x->shape().at(kNHWC_C);
-  ws_size_ = 2 * channels;
+  ws_size_ = C2NUM * channels;
   set_workspace_size(ws_size_ * sizeof(float16_t));
   return RET_OK;
 }
@@ -92,8 +92,8 @@ int BNGradCPUKernelFp16::DoExecute(int task_id) {
   float16_t *save_var = reinterpret_cast<float16_t *>(input_var->data());
   CHECK_NULL_RETURN(save_var);
 
-  auto *output_dx = out_tensors_.at(0);
-  auto *output_scale = out_tensors_.at(1);
+  auto *output_dx = out_tensors_.at(FIRST_INPUT);
+  auto *output_scale = out_tensors_.at(SECOND_INPUT);
   auto *output_bias = out_tensors_.at(kNumOutputDim_2);
   int32_t batch = input_x->Batch();
   int32_t channels = input_x->Channel();
@@ -104,11 +104,17 @@ int BNGradCPUKernelFp16::DoExecute(int task_id) {
   float *dxhat_sum = workspace_temp;
   float *dxhathat_sum = dxhat_sum + channels;
   float16_t *x = reinterpret_cast<float16_t *>(input_x->data());
+  CHECK_NULL_RETURN(x);
   float16_t *yt = reinterpret_cast<float16_t *>(input_yt->data());
+  CHECK_NULL_RETURN(yt);
   float16_t *scale = reinterpret_cast<float16_t *>(input_scale->data());
+  CHECK_NULL_RETURN(scale);
   float16_t *dx = reinterpret_cast<float16_t *>(output_dx->data());
+  CHECK_NULL_RETURN(dx);
   float16_t *dbias = reinterpret_cast<float16_t *>(output_bias->data());
+  CHECK_NULL_RETURN(dbias);
   float16_t *dscale = reinterpret_cast<float16_t *>(output_scale->data());
+  CHECK_NULL_RETURN(dscale);
   int total = spatial * batch;
   int stride = UP_DIV(total, thread_num);
   int count = MSMIN(stride, total - stride * task_id);

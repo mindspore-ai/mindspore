@@ -16,6 +16,7 @@
 #include <string.h>
 #include "nnacl/fp32_grad/reduce_grad.h"
 #include "nnacl/fp32_grad/utils.h"
+#include "nnacl/op_base.h"
 
 void ReduceMeanByAxes(const float *input_data, int *input_iter, const int *input_dims, int input_num_dims,
                       const int *axes, int num_axes, float *output_data, const int *output_dims, int output_num_dims) {
@@ -70,11 +71,11 @@ void ReduceSumByAxes(const float *input, const int *input_dims, float *output, c
 
   memset(output, 0, (size_t)(num_outputs) * sizeof(float));  // zero output
 
-  int input_iter[8] = {0};
-  int axes[5] = {0};
+  int input_iter[C8NUM] = {0};
+  int axes[C5NUM] = {0};
   int num_axes = 0;
   for (int i = 0; i < num_dims; i++) {
-    if (output_dims[i] == 1 && num_axes < 5) {
+    if (output_dims[i] == C1NUM && num_axes < C5NUM) {
       axes[num_axes++] = i;
     }
   }
