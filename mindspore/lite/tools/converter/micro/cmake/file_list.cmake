@@ -4,6 +4,8 @@ set(CODER_SRC
         ${MICRO_DIR}/coder/context.cc
         ${MICRO_DIR}/coder/graph.cc
         ${MICRO_DIR}/coder/session.cc
+        ${MICRO_DIR}/coder/shape_info_container.cc
+        ${MICRO_DIR}/coder/dynamic_mem_manager.cc
         ${MICRO_DIR}/coder/utils/coder_utils.cc
         ${MICRO_DIR}/coder/utils/dir_utils.cc
         ${MICRO_DIR}/coder/utils/train_utils.cc

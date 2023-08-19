@@ -199,5 +199,9 @@ size_t Hex2ByteArray(const std::string &hex_str, unsigned char *byte_array, size
   }
   return byte_len;
 }
+
+bool IsUnsignedNumber(const std::string &item) {
+  return !item.empty() && std::all_of(item.begin(), item.end(), ::isdigit);
+}
 }  // namespace lite
 }  // namespace mindspore

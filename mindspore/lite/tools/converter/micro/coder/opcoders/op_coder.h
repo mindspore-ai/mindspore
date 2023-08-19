@@ -71,6 +71,8 @@ class OperatorCoder {
 
   void set_parameter(OpParameter *parameter);
 
+  OpParameter *get_parameter() { return parameter_; }
+
   const LiteGraph::Node *node() const { return this->node_; }
 
   void AddInitialParameters(Tensor *parameter) { initial_parameters_.push_back(parameter); }

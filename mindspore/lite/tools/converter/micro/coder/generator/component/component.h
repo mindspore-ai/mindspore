@@ -26,6 +26,8 @@ constexpr auto kPackWeightOffsetName = "w_offset";
 constexpr auto kPackWeightSizeName = "w_size";
 extern const char *kBufferPrefixName;
 extern const char *kBufferPrefixNameAdd;
+extern const char *kShapePrefixName;
+extern const char *kOffsetPrefixName;
 void FreeGlobalVariable();
 void InitGlobalVariable(int model_index);
 
