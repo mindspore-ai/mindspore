@@ -135,6 +135,7 @@
 #include "src/common/common.h"
 #include "tools/optimizer/graph/miniaturization_pass.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
+#include "tools/optimizer/fusion/tile_matmul_fusion.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -317,7 +318,8 @@ std::vector<opt::PassPtr> InitFusions(const std::shared_ptr<ConverterPara> &para
                                     std::make_shared<opt::MulActivationFusion>(),
                                     std::make_shared<opt::AddActivationFusion>(),
                                     std::make_shared<opt::ExpandDimsReshapeFusion>(),
-                                    std::make_shared<opt::SqueezeExpandDimsFusion>()};
+                                    std::make_shared<opt::SqueezeExpandDimsFusion>(),
+                                    std::make_shared<opt::TileMatMulFusion>()};
   if (param->optimize_transformer) {
     fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
     fusions.push_back(std::make_shared<opt::EncoderLayerFusion>());
