@@ -59,12 +59,27 @@ int ExtractVolumePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  constexpr size_t x_dim_num = 5;
+  constexpr size_t out_dim_num = 5;
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(EXCEPTION) << "Get empty inputs or outputs, inputs size: " << inputs.size()
+                      << ", outputs size: " << outputs.size();
+  }
+
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret != 0) {
     return ret;
   }
   input_shape_ = inputs[0]->GetShapeVector();
+  if (input_shape_.size() != x_dim_num) {
+    MS_LOG(EXCEPTION) << "Incorrect input dim size: " << input_shape_.size() << ", which should be " << x_dim_num;
+  }
+
   output_shape_ = outputs[0]->GetShapeVector();
+  if (output_shape_.size() != out_dim_num) {
+    MS_LOG(EXCEPTION) << "Incorrect output dim size: " << output_shape_.size() << ", which should be " << out_dim_num;
+  }
+
   return static_cast<int>(KRET_OK);
 }
 
