@@ -67,9 +67,14 @@ function Run_Benchmark() {
         extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
 
         input_shapes=""
+        infix=""
         # Without a configuration file, there is no need to set the inputshape
         if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" || ${extra_info} =~ "parallel_predict" ]]; then
           input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+        elif [[ ${cfg_file_name} =~ "_on_the_fly_quant_ge_cloud" ]]; then
+          infix="_on_the_fly_quant"
+        elif [[ ${cfg_file_name} =~ "_full_quant_ge_cloud" ]]; then
+          infix="_full_quant"
         fi
         mode=`echo ${model_info} | awk -F ';' '{print $3}'`
         input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
@@ -80,9 +85,9 @@ function Run_Benchmark() {
         echo "Benchmarking ${model_name} ......"
         model_type=${model_name##*.}
         if [[ ${compile_type} == "cloud" ]]; then
-          model_file=${ms_models_path}'/'${model_name}'.mindir'
+          model_file=${ms_models_path}'/'${model_name}${infix}'.mindir'
         else
-          model_file=${ms_models_path}'/'${model_name}'.ms'
+          model_file=${ms_models_path}'/'${model_name}${infix}'.ms'
         fi
         input_files=""
         output_file=""
@@ -108,8 +113,10 @@ function Run_Benchmark() {
           fi
           output_file=${data_path}'output/'${model_name}'.out'
         fi
-        if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" ]]; then
+        if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" || ${cfg_file_name} =~ "_quant_ge_cloud" ]]; then
           echo "cfg file name: ${cfg_file_name}"
+          input_files=""
+          output_file=""
           if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
             input_files=${data_path}'input/'${model_name}'.bin'
           else
@@ -175,7 +182,10 @@ elif [[ ${backend} =~ "cloud" ]]; then
     ascend_cfg_file_list=("$models_ascend_config" "$models_ascend_with_config")
     if [[ ${backend} =~ "_ge" ]]; then
         models_ascend_config=${benchmark_test}/models_ascend_ge_cloud.cfg
-        ascend_cfg_file_list=("$models_ascend_config")
+        models_ascend_on_the_fly_quant_config=${benchmark_test}/models_ascend_on_the_fly_quant_ge_cloud.cfg
+        models_ascend_fake_model_on_the_fly_quant_config=${benchmark_test}/models_ascend_fake_model_on_the_fly_quant_ge_cloud.cfg
+        models_ascend_fake_model_full_quant_config=${benchmark_test}/models_ascend_fake_model_full_quant_ge_cloud.cfg
+        ascend_cfg_file_list=("$models_ascend_on_the_fly_quant_config" "$models_ascend_config" "$models_ascend_fake_model_on_the_fly_quant_config" "$models_ascend_fake_model_full_quant_config")
     fi
 fi
 model_data_path=/home/workspace/mindspore_dataset/mslite
