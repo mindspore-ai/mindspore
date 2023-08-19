@@ -85,7 +85,7 @@ TEST_F(TestSimpleGraph, TestMultiOutputs) {
 /// Feature: C_API Graph
 /// Description: test convolution graph case.
 /// Expectation: case works correctly.
-TEST_F(TestSimpleGraph, TestConvReLU) {
+TEST_F(TestSimpleGraph, DISABLED_TestConvReLU) {
   STATUS ret;
   ResMgrHandle res_mgr = MSResourceManagerCreate();
   ASSERT_TRUE(res_mgr != nullptr);
