@@ -29,14 +29,10 @@ inplace_index_add_op_info = TBERegOp("InplaceIndexAdd") \
     .input(0, "input_x", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
     .input(2, "input_y", False, "required", "all") \
-    .input(3, "alpha", False, "optional", "all") \
     .output(0, "input_x", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
-                  DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .get_op_info()
 
 

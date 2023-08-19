@@ -488,8 +488,7 @@
     "BNTrainingReduceGrad": "dynamic impl failed",
     "BNTrainingReduce": "dynamic impl failed",
     "BNTrainingUpdateGrad": "dynamic impl failed",
-    "BNTrainingUpdate": "dynamic impl failed",
-    "NonZero": "Implementation errors with float and bool types in AiCore, use AiCPU instead."
+    "BNTrainingUpdate": "dynamic impl failed"
   },
   "SkipNodes": [
     "Im2col",
@@ -532,8 +531,7 @@
     "AvgPool",
     "GatherNd",
     "Eye",
-    "BNInfer",
-    "NonZero"
+    "BNInfer"
   ],
   "FallbackOps": {
     "DeformableOffsets": [
