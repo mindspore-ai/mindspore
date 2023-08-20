@@ -66,10 +66,10 @@ class PipelineTransformer {
   AnfNodePtr GetArgumentsByParameter(const AnfNodePtr &parameter);
   void RemoveMonadNode();
   AnfNodePtr CreateTupleZeroTensor(const AnfNodePtr &node, size_t index);
-  std::vector<AnfNodePtr> GetLoadNodeByParam(const AnfNodePtr &param);
+  std::vector<AnfNodePtr> GetLoadNodeByParam(const AnfNodePtr &param) const;
   AnfNodePtr ActualOp(const AnfNodePtr &node);
   bool IsParameterGraph(const AnfNodePtr &node) const;
-  AnfNodeIndexSet GetActualOpUsers(const std::pair<AnfNodePtr, int> &node_pair, NodeUsersMap *node_users_map);
+  AnfNodeIndexSet GetParameterLoadUsers(const AnfNodePtr &node, const NodeUsersMap &node_users_map) const;
   AnfNodePtr HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage, int64_t user_stage,
                                   const ValuePtr &micro, size_t pos, const std::vector<AnfNodePtr> &ops);
   ValuePtr SetMicroBatch(const AnfNodePtr &node, int64_t micro_size, size_t batch_axis) const;
