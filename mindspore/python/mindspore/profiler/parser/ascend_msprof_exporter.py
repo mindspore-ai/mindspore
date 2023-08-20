@@ -14,14 +14,11 @@
 # ============================================================================
 """msprof PROF data export api file"""
 import os
+from collections import defaultdict
 from subprocess import CalledProcessError, TimeoutExpired
 from subprocess import Popen, PIPE
-from typing import List, Optional
-import json
-from json.decoder import JSONDecodeError
 import csv
-from mindspore import log as logger, context
-from mindspore.communication import get_rank
+from mindspore import log as logger
 from mindspore.profiler.common.util import get_file_path
 
 
@@ -30,7 +27,7 @@ class AscendMsprofExporter:
     msprof exporter. export cann edge profiling data.
 
     args:
-        prof_root_dir: the root path of PROF_* files
+       source_path: the root path of PROF_* files
 
     files under prof_root_dir is like:
         profiler/PROF_*/device_{id}/data/xxx
@@ -42,196 +39,65 @@ class AscendMsprofExporter:
         >> ms_exporter.export(start_time)
     """
 
-    _null_info = ""
-    _csv_header_model_id = "Model ID"
-    _csv_header_iter_id = "Iteration ID"
-    _profiling_prefix = "PROF"
+    _hiai_msprof_tail = "Ascend/latest/tools/profiler/bin"
+    _msprof_cmd = "msprof"
+    _ascend_mark = "Ascend"
     _summary_dir = "summary"
     _step_trace_mark = "step_trace"
     _op_summary_mark = "op_summary"
     _op_statistic_mark = "op_statistic"
-    _device_mark = "device"
-    _msprof_cmd = "msprof"
-    _info_prefix = "info.json"
-    _start_log = "start_info"
-    _rank_id_mark = "rank_id"
-    _dev_info = "DeviceInfo"
-    _dev_index = 0
-    _dev_id = "id"
-    _ascend_mark = "Ascend"
-    _hiai_msprof_tail = "Ascend/latest/tools/profiler/bin"
 
-    def __init__(self, prof_root_dir: str, time_out=3000) -> None:
-        self._prof_root_dir = prof_root_dir
-        self._start_time = 0
-        self._support_step_trace = True
-        self._prof_paths = []
-        self._output_path = None
-        self._device_path = None
-        self._model_ids = []
-        self._iter_ids = []
+    def __init__(self, source_path, time_out=3000):
         self._time_out = time_out
+        self.source_path = source_path
+        self.prof_root_dir = os.path.abspath(os.path.join(self.source_path, os.path.pardir))
+
         self._check_msprof_env()
 
-    @staticmethod
-    def _check_readable(file_path: str):
-        """Check whether the file is readable"""
-        if not os.access(file_path, os.R_OK):
-            msg = "The file {} is not readable.".format(file_path)
-            raise PermissionError(msg)
-
-    @staticmethod
-    def _parse_start_info(input_file: str):
-        """Get profiler start time from start info file."""
-        start_time = -1
-        try:
-            with open(input_file, "r") as f:
-                start_time = json.load(f).get("collectionTimeBegin")
-        except (JSONDecodeError, FileNotFoundError, TypeError, PermissionError) as err:
-            logger.warning(err)
-        return int(start_time)
-
-    def export(self, start_time=0, time_out=3000, support_step_trace=True):
+    def export(self, model_iteration_dict=None):
         """start_time is the time to collect PROF data"""
-        self._start_time = start_time
-        self._time_out = time_out
-        self._support_step_trace = support_step_trace
-        self._init_output_path()
-        if not self._output_path:
-            raise FileNotFoundError("Do not found valid profiling directory")
-        trace_file = self._get_device_trace_file(self._output_path, self._device_path)
-        if trace_file:
-            self._export_whole_prof(self._output_path, trace_file)
-        self._check_export_files(self._device_path, trace_file)
 
-    def get_job_dir(self):
-        """Return matched PROF directory path. Call this function after exporting profiling data."""
-        return self._output_path
+        if not model_iteration_dict:
+            model_iteration_dict = self._generate_step_trace(self.prof_root_dir, self.source_path)
 
-    def _run_cmd(self, cmd: List[str], raise_error=True):
-        """run msprof tool shell command"""
+        if model_iteration_dict:
+            for model_id, value in model_iteration_dict.items():
+                for iteration_id in value:
+                    msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir, model_id, iteration_id)
+                    self._run_cmd(msprof_export_cmd)
+            self._check_export_files(self.source_path, model_iteration_dict)
+
+    def _run_cmd(self, cmd, raise_error=True):
+        """run shell command"""
         try:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE, text=True)
         except (FileNotFoundError, PermissionError, CalledProcessError) as exc:
-            raise RuntimeError(exc) from exc
+            raise RuntimeError(exc)
         try:
             outs, errs = proc.communicate(timeout=self._time_out)
         except TimeoutExpired:
             proc.kill()
             msg = "The possible cause is that too much data is collected " \
-                "and the export time is too long."
+                  "and the export time is too long."
             logger.error(msg)
-            raise TimeoutError(msg) from TimeoutExpired
+            raise TimeoutError(msg)
         logger.info(outs)
-        if raise_error and errs != self._null_info:
+        if raise_error and errs != "":
             raise RuntimeError(errs)
         return outs
 
-    def _export_helper(self, output, model_id=None, iter_id=None):
+    def _msprof_command_generator(self, output, model_id=None, iter_id=None):
         """msprof export helper"""
         export_cmd = [self._msprof_cmd, "--export=on", "--output={}".format(output)]
         if model_id:
             export_cmd.append("--model-id={}".format(model_id))
         if iter_id:
             export_cmd.append("--iteration-id={}".format(iter_id))
-        _ = self._run_cmd(export_cmd)
-
-    def _get_model_iter_ids(self, trace_file: str):
-        """Read the step_trace file and get all the model_ids and iteration_ids"""
-        if self._model_ids and self._iter_ids:
-            return
-        self._check_readable(trace_file)
-        with open(trace_file, "r") as f:
-            reader = csv.reader(f)
-            for idx, row in enumerate(reader):
-                if idx == 0:
-                    model_idx = row.index(self._csv_header_model_id)
-                    iter_idx = row.index(self._csv_header_iter_id)
-                else:
-                    self._model_ids.append(int(row[model_idx]))
-                    self._iter_ids.append(int(row[iter_idx]))
-
-    def _check_export_files(self, device_path: str, trace_file: Optional[str]):
-        """Check the existence of op_summary & op_statistic files."""
-        summary_path = os.path.join(device_path, self._summary_dir)
-        if not os.path.isdir(summary_path):
-            raise RuntimeError("Path {} is not a existing directory.".format(summary_path))
-
-        sumary_filess = os.listdir(summary_path)
-        op_summary = set()
-        op_statistic = set()
-
-        for summary_file in sumary_filess:
-            if summary_file.startswith(self._op_summary_mark):
-                op_summary.add(summary_file)
-            elif summary_file.startswith(self._op_statistic_mark):
-                op_statistic.add(summary_file)
-
-        if not op_summary:
-            raise RuntimeError("The op_summary file was not found, " \
-                               "perhaps the original data was not collected.")
-        if not op_statistic:
-            raise RuntimeError("The op_statistics file was not found, " \
-                               "perhaps the original data was not collected.")
-
-        if not trace_file:
-            return
-
-        dev_id = context.get_context("device_id")
-        self._get_model_iter_ids(trace_file)
-
-        for model_id, iter_id in zip(self._model_ids, self._iter_ids):
-            tag = "_{}_{}_{}.csv".format(dev_id, model_id, iter_id)
-            op_sum_file = self._op_summary_mark + tag
-            op_sta_file = self._op_statistic_mark + tag
-            if op_sum_file not in op_summary:
-                logger.warning("[Profiler]The file {} was not found, " \
-                               "perhaps the original data was not collected.".format(op_sum_file))
-            if op_sta_file not in op_statistic:
-                logger.warning("[Profiler]The file {} was not found, " \
-                               "perhaps the original data was not collected.".format(op_sta_file))
-
-        logger.info("Finish checking files.")
-
-    def _export_whole_prof(self, prof: str, trace_file: str):
-        """export all the data under PROF directory"""
-        self._get_model_iter_ids(trace_file)
-
-        for model_id, iter_id in zip(self._model_ids, self._iter_ids):
-            self._export_helper(prof, model_id, iter_id)
-
-    def _get_device_trace_file(self, prof_path: str, device_path: str):
-        """search the step trace csv file under device directory"""
-
-        summary_path = os.path.join(device_path, self._summary_dir)
-
-        if not os.path.exists(summary_path):
-            self._export_helper(output=prof_path)
-
-        if not os.path.isdir(summary_path):
-            msg = "Path {} is not a existing directory. Make sure there is " \
-                "valid profiling data directory!".format(summary_path)
-            raise FileNotFoundError(msg)
-
-        step_trace_file = get_file_path(summary_path, self._step_trace_mark)
-
-        if not step_trace_file and self._support_step_trace:
-            msg = "Do not found step trace csv file in {}.".format(self._output_path)
-            raise FileNotFoundError(msg)
-
-        return step_trace_file
+        return export_cmd
 
     def _check_msprof_env(self):
         """Check the existence of msprof binary tool"""
-        msprof_cmd = ["which", self._msprof_cmd]
-        outs = self._run_cmd(msprof_cmd, raise_error=False)
-        if outs != self._null_info:
-            return
-        logger.warning("[Profiler]The msprof command was not found. Searching from environment variables...")
-        self._search_and_add()
 
-    def _search_and_add(self):
-        """Search msprof and add it to PATH"""
         def _check_msprof(temp_path: str):
             if not os.path.isdir(temp_path):
                 return False
@@ -239,6 +105,12 @@ class AscendMsprofExporter:
             if self._msprof_cmd in sub_files:
                 return True
             return False
+
+        msprof_cmd = ["which", self._msprof_cmd]
+        outs = self._run_cmd(msprof_cmd, raise_error=False)
+        if outs != "":
+            return
+        logger.warning("[Profiler]The msprof command was not found. Searching from environment variables...")
 
         msprof_path = None
         envs = os.environ
@@ -252,8 +124,7 @@ class AscendMsprofExporter:
             for path in path_list:
                 if self._ascend_mark in path:
                     prefix = path.split(self._ascend_mark)[0]
-                    tail = self._hiai_msprof_tail
-                    temp_path = os.path.join(prefix, tail)
+                    temp_path = os.path.join(prefix, self._hiai_msprof_tail)
                     if _check_msprof(temp_path):
                         msprof_path = temp_path
                         break
@@ -264,98 +135,71 @@ class AscendMsprofExporter:
 
         logger.info("The msprof command has been added to the path!")
 
-    def _init_output_path(self):
-        """find all the directories start with PROF"""
-        self._prof_paths = []
+    def _generate_step_trace(self, prof_path, device_path):
+        """"generate model_id iteration_id dict"""
 
-        if not os.path.isdir(self._prof_root_dir):
-            msg = "Path {} is not an existing directory.".format(self._prof_root_dir)
-            raise RuntimeError(msg)
+        summary_path = os.path.join(device_path, self._summary_dir)
 
-        for loc_root, loc_dirs, _ in os.walk(self._prof_root_dir):
-            for loc_dir in loc_dirs:
-                if loc_dir.startswith(self._profiling_prefix):
-                    self._prof_paths.append(os.path.join(loc_root, loc_dir))
+        msprof_export_cmd = self._msprof_command_generator(prof_path)
+        self._run_cmd(msprof_export_cmd)
 
-        if not self._prof_paths:
-            msg = "Do not found profiling data. Make sure there are directories start with PROF."
+        if not os.path.isdir(summary_path):
+            msg = "Path {} is not a existing directory. Make sure there is " \
+                  "valid profiling data directory!".format(summary_path)
             raise FileNotFoundError(msg)
 
-        # consider there may exists old PROF data, new PROF data have higher priority.
-        self._prof_paths.sort()               # sort by created time
+        step_trace_file = get_file_path(summary_path, self._step_trace_mark)
 
-        device_path = self._search_by_rank_id(self._prof_paths)
-        if device_path:
-            dev_par = os.path.join(device_path, os.path.pardir)
-            abs_dev_par = os.path.abspath(dev_par)
-            self._output_path = abs_dev_par
-            self._device_path = device_path
+        if not step_trace_file:
+            logger.info("Do not found step trace csv file in {} .".format(summary_path))
+            return None
 
-    def _search_by_rank_id(self, prof_paths: str):
-        """search valid device path through rank_id"""
-        device_paths = []
+        step_trace = defaultdict(list)
+        with open(step_trace_file, newline='', mode='r') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            header = next(reader)
+            for index, value in enumerate(header):
+                if value == 'Model ID':
+                    Model_ID = index
+                if value == 'Iteration ID':
+                    Iteration_ID = index
+            for row in reader:
+                step_trace[int(row[Model_ID])].append(int(row[Iteration_ID]))
 
-        for prof_path in prof_paths:
-            if not os.path.isdir(prof_path):
-                continue
-            devices = os.listdir(prof_path)
-            for device in devices:
-                if not device.startswith(self._device_mark):
-                    continue
-                dev_path = os.path.join(prof_path, device)
-                device_paths.append(dev_path)
+        return step_trace
 
-        # search by rank id
-        find_device_path = None
-        rank_id = None
-        device_id = context.get_context("device_id")
+    def _check_export_files(self, source_path, step_trace):
+        """Check the existence of op_summary & op_statistic files."""
+        summary_path = os.path.join(source_path, self._summary_dir)
+        if not os.path.isdir(summary_path):
+            raise RuntimeError("Path {} is not a existing directory.".format(summary_path))
+        summary_file_list = os.listdir(summary_path)
+        op_summary = set()
+        op_statistic = set()
 
-        try:
-            rank_id = get_rank()
-        except RuntimeError:
-            logger.warning("[Profiler]Do not get rank_id in the environment variable, use device_id instead.")
+        for summary_file in summary_file_list:
+            if summary_file.startswith(self._op_summary_mark):
+                op_summary.add(summary_file)
+            elif summary_file.startswith(self._op_statistic_mark):
+                op_statistic.add(summary_file)
 
-        for dev_path in device_paths:
-            if not os.path.isdir(dev_path):
-                continue
-            start_log = get_file_path(dev_path, self._start_log)
-            if not start_log:
-                continue
-            start_time = self._parse_start_info(start_log)
-            if start_time < self._start_time:
-                continue
-            info_json = get_file_path(dev_path, self._info_prefix)
-            if not info_json:
-                continue
-            temp_rank_id, temp_dev_id = self._parse_info_json(info_json)
-            if rank_id is not None and rank_id == temp_rank_id:
-                find_device_path = dev_path
-                break
-            if (rank_id is None or temp_rank_id == -1) and device_id == temp_dev_id:
-                find_device_path = dev_path
+        if not op_summary:
+            raise RuntimeError("The op_summary file was not found, perhaps the original data was not collected.")
+        if not op_statistic:
+            raise RuntimeError("The op_statistics file was not found, perhaps the original data was not collected.")
 
-        return find_device_path
+        device_id = source_path.split('_')[-1].replace("/", "")
 
-    def _parse_info_json(self, info_file: str):
-        """get rank_id from info.json.{device_id} file"""
-        rank_id = -1
-        dev_id = -1
-        info_dict = {}
-        try:
-            with open(info_file, "r") as f:
-                info_dict = json.load(f)
-        except (JSONDecodeError, FileNotFoundError, TypeError, PermissionError) as err:
-            logger.warning(err)
-        if info_dict.get(self._rank_id_mark) is None:
-            msg = "[Profiler]There is no rank_id key in file {}".format(info_file)
-            logger.warning(msg)
-        else:
-            rank_id = info_dict.get(self._rank_id_mark)
+        for model_id, value in step_trace.items():
+            for iteration_id in value:
+                tag = f"_{device_id}_{model_id}_{iteration_id}.csv"
+                op_summary_file_name = self._op_summary_mark + tag
+                op_statistic_file = self._op_statistic_mark + tag
+                if op_summary_file_name not in op_summary:
+                    logger.warning("[Profiler]The file {} was not found, " \
+                                   "perhaps the original data was not collected.".format(op_summary_file_name))
+                if op_statistic_file not in op_statistic:
+                    logger.warning("[Profiler]The file {} was not found, " \
+                                   "perhaps the original data was not collected.".format(op_statistic_file))
 
-        if not info_dict.get(self._dev_info):
-            return rank_id, dev_id
-
-        dev_info = info_dict.get(self._dev_info)
-        dev_id = dev_info[self._dev_index].get(self._dev_id, -1)
-
-        return rank_id, dev_id
+        logger.info("Finish checking files.")
