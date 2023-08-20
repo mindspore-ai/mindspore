@@ -56,6 +56,9 @@ class CharNGram(cde.CharNGram):
         Examples:
             >>> import mindspore.dataset.text as text
             >>> char_n_gram = text.CharNGram.from_file("/path/to/char_n_gram/file", max_vectors=None)
+            >>> to_vectors = text.ToVectors(char_n_gram)
+            >>> # Look up a token into vectors according CharNGram model.
+            >>> word_vector = to_vectors(["word1", "word2"])
         """
 
         max_vectors = max_vectors if max_vectors is not None else 0
@@ -92,6 +95,9 @@ class FastText(cde.FastText):
         Examples:
             >>> import mindspore.dataset.text as text
             >>> fast_text = text.FastText.from_file("/path/to/fast_text/file", max_vectors=None)
+            >>> to_vectors = text.ToVectors(fast_text)
+            >>> # Look up a token into vectors according FastText model.
+            >>> word_vector = to_vectors(["word1", "word2"])
         """
 
         max_vectors = max_vectors if max_vectors is not None else 0
@@ -128,6 +134,9 @@ class GloVe(cde.GloVe):
         Examples:
             >>> import mindspore.dataset.text as text
             >>> glove = text.GloVe.from_file("/path/to/glove/file", max_vectors=None)
+            >>> to_vectors = text.ToVectors(glove)
+            >>> # Look up a token into vectors according GloVe model.
+            >>> word_vector = to_vectors(["word1", "word2"])
         """
 
         max_vectors = max_vectors if max_vectors is not None else 0
@@ -243,6 +252,10 @@ class SentencePieceVocab:
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
             >>> vocab = SentencePieceVocab.from_dataset(dataset, ["text"], 5000, 0.9995,
             ...                                         SentencePieceModel.UNIGRAM, {})
+            >>> # Build tokenizer based on vocab
+            >>> tokenizer = text.SentencePieceTokenizer(vocab, out_type=text.SPieceTokenizerOutType.STRING)
+            >>> txt = "Today is Tuesday."
+            >>> token = tokenizer(txt)
         """
 
         sentence_piece_vocab = cls()
@@ -285,6 +298,10 @@ class SentencePieceVocab:
             >>> from mindspore.dataset.text import SentencePieceVocab, SentencePieceModel
             >>> vocab = SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
             ...                                      SentencePieceModel.UNIGRAM, {})
+            >>> # Build tokenizer based on vocab model
+            >>> tokenizer = text.SentencePieceTokenizer(vocab, out_type=text.SPieceTokenizerOutType.STRING)
+            >>> txt = "Today is Friday."
+            >>> token = tokenizer(txt)
         """
 
         sentence_piece_vocab = cls()
@@ -370,6 +387,9 @@ class Vectors(cde.Vectors):
         Examples:
             >>> import mindspore.dataset.text as text
             >>> vector = text.Vectors.from_file("/path/to/vectors/file", max_vectors=None)
+            >>> to_vectors = text.ToVectors(vector)
+            >>> # Look up a token into vectors according Vector model.
+            >>> word_vector = to_vectors(["word1", "word2"])
         """
 
         max_vectors = max_vectors if max_vectors is not None else 0
@@ -425,7 +445,9 @@ class Vocab:
             >>> vocab = text.Vocab.from_dataset(dataset, "text", freq_range=None, top_k=None,
             ...                                 special_tokens=["<pad>", "<unk>"],
             ...                                 special_first=True)
-            >>> dataset = dataset.map(operations=text.Lookup(vocab, "<unk>"), input_columns=["text"])
+            >>> # Use the vocab to look up string to id
+            >>> lookup = text.Lookup(vocab, "<unk>")
+            >>> id = lookup("text1")
         """
 
         vocab = cls()
@@ -453,6 +475,8 @@ class Vocab:
         Examples:
             >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
+            >>> # look up strings to ids
+            >>> ids = vocab.tokens_to_ids(["w1", "w3"])
         """
 
         if special_tokens is None:
@@ -496,6 +520,9 @@ class Vocab:
             >>>
             >>> # Finally, there are 5 words in the vocab: "<pad>", "<unk>", "apple", "banana", "cat".
             >>> vocabulary = vocab.vocab()
+            >>>
+            >>> # look up strings to ids
+            >>> ids = vocab.tokens_to_ids(["apple", "banana"])
         """
 
         if vocab_size is None:
@@ -522,6 +549,11 @@ class Vocab:
         Examples:
             >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
+            >>>
+            >>> # look up ids to string
+            >>> tokens = vocab.ids_to_tokens([3, 4, 5])
+            >>> print(tokens)
+            ['home', 'the', 'world']
         """
 
         vocab = cls()
@@ -539,6 +571,8 @@ class Vocab:
             >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_list(["word_1", "word_2", "word_3", "word_4"])
             >>> vocabory_dict = vocab.vocab()
+            >>> print(vocabory_dict)
+            {'word_3': 2, 'word_1': 0, 'word_4': 3, 'word_2': 1}
         """
         check_vocab(self.c_vocab)
         return self.c_vocab.vocab()
@@ -559,6 +593,8 @@ class Vocab:
             >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
             >>> ids = vocab.tokens_to_ids(["w1", "w3"])
+            >>> print(ids)
+            [1, 3]
         """
         check_vocab(self.c_vocab)
         if isinstance(tokens, np.ndarray):
@@ -582,7 +618,9 @@ class Vocab:
         Examples:
             >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
-            >>> token = vocab.ids_to_tokens(0)
+            >>> token = vocab.ids_to_tokens(1)
+            >>> print(token)
+            w1
         """
         check_vocab(self.c_vocab)
         if isinstance(ids, np.ndarray):
@@ -610,8 +648,11 @@ def to_bytes(array, encoding='utf8'):
         >>>
         >>> data = np.array([["1", "2", "3"]], dtype=np.str_)
         >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])
+        >>> result = []
         >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     bytes_data = text.to_bytes(item["text"])
+        ...     result.append(text.to_bytes(item["text"]))
+        >>> print(result)
+        [array([b'1', b'2', b'3'], dtype='|S1')]
     """
 
     if not isinstance(array, np.ndarray):
@@ -638,8 +679,11 @@ def to_str(array, encoding='utf8'):
         >>>
         >>> data = np.array([["1", "2", "3"]], dtype=np.bytes_)
         >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])
+        >>> result = []
         >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     str_data = text.to_str(item["text"])
+        ...     result.append(text.to_str(item["text"]))
+        >>> print(result)
+        [array(['1', '2', '3'], dtype='<U1')]
     """
 
     if not isinstance(array, np.ndarray):

@@ -83,6 +83,21 @@ class DatasetCache:
         Get the statistics from a cache. After data pipeline, three types of statistics can be obtained,
         including average number of cache hits (avg_cache_sz), number of caches in memory (num_mem_cached)
         and number of caches in disk (num_disk_cached).
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> # Create a cache instance, in which session_id is generated from command line `cache_admin -g`
+            >>> # In the following code, suppose the session_id is 780643335
+            >>> some_cache = ds.DatasetCache(session_id=780643335, size=0)
+            >>>
+            >>> stat = some_cache.get_stat()
+            >>> # Average cache size
+            >>> cache_sz = stat.avg_cache_sz
+            >>> # Number of rows cached in memory
+            >>> num_mem_cached = stat.num_mem_cached
+            >>> # Number of rows spilled to disk
+            >>> num_disk_cached = stat.num_disk_cached
         """
         return self.cache_client.GetStat()
 

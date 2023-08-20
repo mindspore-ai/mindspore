@@ -47,6 +47,12 @@ class DSCallback:
         ...
         ...     def ds_epoch_end(self, ds_run_context):
         ...         print("callback: epoch end, we are in epoch", ds_run_context.cur_epoch_num, flush=True)
+        ...
+        ...     def ds_step_begin(self, ds_run_context):
+        ...         print("callback: step begin, step", ds_run_context.cur_step_num_in_epoch, flush=True)
+        ...
+        ...     def ds_step_end(self, ds_run_context):
+        ...         print("callback: step end, step", ds_run_context.cur_step_num_in_epoch, flush=True)
         >>>
         >>> dataset = ds.GeneratorDataset([1, 2], "col1", shuffle=False, num_parallel_workers=1)
         >>> dataset = dataset.map(operations=lambda x: x, callbacks=PrintInfo())
@@ -58,8 +64,16 @@ class DSCallback:
         ...         pass
         callback: start dataset pipeline
         callback: epoch begin, we are in epoch 1
+        callback: step begin, step 1
+        callback: step begin, step 2
+        callback: step end, step 1
+        callback: step end, step 2
         callback: epoch end, we are in epoch 1
         callback: epoch begin, we are in epoch 2
+        callback: step begin, step 1
+        callback: step begin, step 2
+        callback: step end, step 1
+        callback: step end, step 2
         callback: epoch end, we are in epoch 2
     """
 
