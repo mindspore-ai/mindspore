@@ -144,7 +144,7 @@ class AscendOPGenerator:
                 os.chmod(framework_raw_path, stat.S_IREAD | stat.S_IWRITE)
 
         # output_timeline_data
-        if self.output_timeline_data.shape[0] != 0:
+        if self.output_timeline_data.shape[0] != 0 and output_timeline_data_path:
             try:
                 with os.fdopen(os.open(output_timeline_data_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),

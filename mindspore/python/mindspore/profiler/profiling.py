@@ -1091,8 +1091,11 @@ class Profiler:
             aicpu_intermediate_detail_path = validate_and_normalize_path(aicpu_intermediate_detail_path)
             framework_raw_path = validate_and_normalize_path(framework_raw_path)
 
-            output_timeline_data_path = os.path.join(self._output_path, f'output_timeline_data_{dev_id}.txt')
-            output_timeline_data_path = validate_and_normalize_path(output_timeline_data_path)
+            if context.get_context("mode") == context.GRAPH_MODE:
+                output_timeline_data_path = os.path.join(self._output_path, f'output_timeline_data_{dev_id}.txt')
+                output_timeline_data_path = validate_and_normalize_path(output_timeline_data_path)
+            else:
+                output_timeline_data_path = None
 
             op_analyser = AscendOPGenerator(op_summary, op_statistic, dynamic_status)
             op_analyser.parse()
@@ -1193,6 +1196,7 @@ class Profiler:
         if self._profile_communication and context.get_context("mode") == context.PYNATIVE_MODE:
             logger.warning("[Profiler]The parameter profile_communication is not supported on Ascend "
                            "PyNative mode currently.")
+            return
         try:
             logger.info("Profiling: analyzing the hccl profiler info.")
             dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
