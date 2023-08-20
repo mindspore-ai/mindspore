@@ -380,12 +380,12 @@ class FTRL(Optimizer):
         optimizer operation.
         """
         if not isinstance(value, str):
-            raise TypeError("For 'FTRL', the property 'target' must be string type, "
-                            "but got type {}.".format(type(value)))
+            raise TypeError(f"For 'FTRL', the property 'target' must be string type, "
+                            f"but got type {type(value)}.")
 
         if value not in ('CPU', 'Ascend', 'GPU'):
-            raise ValueError("For 'FTRL', the property 'target' must be 'CPU', 'Ascend' or 'GPU', "
-                             "but got {}".format(value))
+            raise ValueError(f"For 'FTRL', the property 'target' must be 'CPU', 'Ascend' or 'GPU', "
+                             f"but got {value}.")
 
         if value == 'CPU':
             self.sparse_opt = P.FusedSparseFtrl(self.lr, self.l1, self.l2, self.lr_power, self.use_locking)
