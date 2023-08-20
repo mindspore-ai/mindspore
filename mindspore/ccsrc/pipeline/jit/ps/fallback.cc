@@ -22,6 +22,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
@@ -379,6 +380,27 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVa
     return HandleContainerTypeForAnnotation(dtype_str, container_type_str, format_type_func, node, comment);
   }
   return nullptr;
+}
+
+bool GetJitAnnotationSideEffectFromComment(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
+  const auto &location = debug_info->location();
+  if (location == nullptr) {
+    MS_LOG(DEBUG) << "Location info is null, node: " << node->DebugString();
+    return false;
+  }
+  const auto &comments = location->comments();
+  if (comments.empty()) {
+    return false;
+  }
+  // Only use the last comment.
+  const auto &comment = comments.back();
+  std::regex regex("^#\\s*@jit.typing:\\s*side_effect");
+  if (std::regex_match(comment, regex)) {
+    return true;
+  }
+  return false;
 }
 
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) {
