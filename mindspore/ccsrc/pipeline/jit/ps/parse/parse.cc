@@ -1649,7 +1649,12 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
       // be interpretive executived. Otherwise, call_cnode will be a graph node.
       if (args_context.has_interpret_without_internal) {
         call_cnode->set_interpret(true);
-        call_cnode = HandleInterpret(block, call_cnode, node);
+        if (name_id == "print") {
+          // Ensure the order of print
+          call_cnode = fallback::ConvertCNodeToPyExecuteForPrim(call_cnode->cast<CNodePtr>(), name_id);
+        } else {
+          call_cnode = HandleInterpret(block, call_cnode, node);
+        }
       }
       auto new_expr_src = fallback::GeneratePyExecuteScriptForCallNode(call_cnode, name_id);
       fallback::SetNodeExprSrc(call_cnode, new_expr_src);

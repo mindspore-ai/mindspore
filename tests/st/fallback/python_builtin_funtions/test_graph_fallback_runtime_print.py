@@ -152,3 +152,67 @@ def test_fallback_print_mutable():
 
     patterns = {'2\n'}
     check_output(cap.output, patterns)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_print_pyinterpret():
+    """
+    Feature: JIT Fallback
+    Description: Test print in fallback runtime
+    Expectation: No exception.
+    """
+    @jit
+    def test_print():
+        x = Tensor(np.array([1, 2, 3, 4, 5]))
+        y = Tensor(np.array([1, 2, 3, 4, 5]))
+        tensor_sum = x + y
+        print("tensor_sum: ", tensor_sum)
+        x = np.array([1, 2, 3, 4, 5])
+        y = np.array([1, 2, 3, 4, 5])
+        np_sum = x + y
+        print("np_sum: ", np_sum)
+        return tensor_sum, Tensor(np_sum)
+
+    cap = Capture()
+    with capture(cap):
+        out = test_print()
+        assert (out[0].asnumpy() == out[1]).all()
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'tensor_sum: \nTensor(shape=[5], dtype=Int64, value=[ 2  4  6  8 10])\nnp_sum:  [ 2  4  6  8 10]\n'}
+    check_output(cap.output, patterns)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_np_init():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy defined in init in graph mode.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = np.array([1, 2])
+
+        def construct(self):
+            y = np.array([3, 4])
+            print(self.x)
+            return Tensor(y + self.x)
+
+    cap = Capture()
+    with capture(cap):
+        net = Net()
+        res = net()
+        assert (res.asnumpy() == [4, 6]).all()
+        sys.stdout.flush()
+        time.sleep(0.1)
+    patterns = {'[1 2]\n'}
+    check_output(cap.output, patterns)
