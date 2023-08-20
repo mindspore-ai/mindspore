@@ -206,8 +206,8 @@ class AscendHCCLGenerator:
                     tuple([name, pid, tid, ts, te, dur, ph, task_type, link_info, transport_type, size, -1]))
         hccl_data = np.array(target_data, dtype=self.hccl_data_df)
 
-        hccl_abstract_data = hccl_data[hccl_data['tid'] >= 100]
-        hccl_detail_data = hccl_data[hccl_data['tid'] < 100]
+        hccl_abstract_data = hccl_data[hccl_data['task_type'] == '']
+        hccl_detail_data = hccl_data[hccl_data['task_type'] != '']
 
         hccl_abstract_data = hccl_abstract_data[np.argsort(hccl_abstract_data['ts'])]
         hccl_detail_data = hccl_detail_data[np.argsort(hccl_detail_data['ts'])]
