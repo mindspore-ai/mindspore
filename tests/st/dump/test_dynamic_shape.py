@@ -243,7 +243,15 @@ def test_dump_with_diagnostic_path():
         x = Tensor(np.random.randn(10, 100).astype(np.float32))
         y = Tensor(np.random.randn(10, 100).astype(np.float32))
         add(Tensor(x), Tensor(y))
-        assert len(os.listdir(dump_file_path)) == 8
+        output_name = "Add.Add-op*.0.*.*.output.0.DefaultFormat.npy"
+        output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
+        assert os.path.isfile(output_path)
+        input_name0 = "Add.Add-op*.0.*.*.input.0.DefaultFormat.npy"
+        input_path0 = glob.glob(os.path.join(dump_file_path, input_name0))[0]
+        assert os.path.isfile(input_path0)
+        input_name1 = "Add.Add-op*.0.*.*.input.1.DefaultFormat.npy"
+        input_path1 = glob.glob(os.path.join(dump_file_path, input_name1))[0]
+        assert os.path.isfile(input_path1)
         del os.environ['MINDSPORE_DUMP_CONFIG']
         del os.environ['MS_DIAGNOSTIC_DATA_PATH']
 
