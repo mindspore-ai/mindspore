@@ -274,6 +274,13 @@ void PyNativeExecutor::SetDynamicInput(const py::object &cell) const {
   MS_LOG(INFO) << "Set dynamic shape by set inputs";
 }
 
+void PyNativeExecutor::WaitBeforeFork() {
+  MS_LOG(INFO) << "fork event detected in main process, PyNativeExecutor will wait for async task finish.";
+  runtime::OpExecutor::GetInstance().WaitAll();
+  grad_executor_->async_executor()->Wait();
+  MS_LOG(INFO) << "PyNativeExecutor waits for async task finish done.";
+}
+
 void PyNativeExecutor::ReinitAfterFork() {
   MS_LOG(INFO) << "fork event detected in child process, PyNativeExecutor resources will be reinitialized.";
   // reset ms context after fork
@@ -282,6 +289,7 @@ void PyNativeExecutor::ReinitAfterFork() {
   OpCompiler::GetInstance().ClearAllCache();
   // Reset ForwardExecuteor resources
   forward_executor_->ClearRes();
+  MS_LOG(INFO) << "PyNativeExecutor resources reinitializing done.";
 }
 
 void RegPyNativeExecutor(const py::module *m) {

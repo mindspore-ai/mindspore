@@ -83,12 +83,13 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   bool IsFirstCell() const;
   void WorkerJoin();
   void SetJitCompileStatus(bool is_compiling, const std::string &phase) const;
+  void WaitBeforeFork();
   void ReinitAfterFork();
 
  private:
   PyNativeExecutor() {
     // Register fork event callbacks.
-    ForkUtils::GetInstance().RegisterCallbacks(this, static_cast<void (PyNativeExecutor::*)()>(nullptr),
+    ForkUtils::GetInstance().RegisterCallbacks(this, &PyNativeExecutor::WaitBeforeFork,
                                                static_cast<void (PyNativeExecutor::*)()>(nullptr),
                                                &PyNativeExecutor::ReinitAfterFork);
   }
