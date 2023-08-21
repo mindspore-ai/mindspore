@@ -205,7 +205,7 @@ namespace mindspore::ops {{
   {OpName}() : BaseOperator(kName{OpName}) {{}}
 """
         args = operator_data.get('args')
-        for i, (arg_name, arg_info) in enumerate(args.items()):
+        for _, (arg_name, arg_info) in enumerate(args.items()):
             init = arg_info.get('init')
             if init is None:
                 continue
@@ -316,6 +316,13 @@ if __name__ == "__main__":
 
     yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops.yaml')
     doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_doc.yaml')
+
+
+    if len(sys.argv) < 3:
+        ops_yaml_str = 'echo "#gen ops yaml"> ' + f'{yaml_path}'
+        os.system(ops_yaml_str)
+        append_str = "ls mindspore/core/ops/ops_def/*op.yaml |xargs -i cat {} >> " + f'{yaml_path}'
+        os.system(append_str)
 
     if len(sys.argv) > 3:
         yaml_path_root = sys.argv[2]
