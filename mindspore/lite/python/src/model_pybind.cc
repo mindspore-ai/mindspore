@@ -58,6 +58,9 @@ std::vector<MSTensorPtr> PyModelPredict(Model *model, const std::vector<MSTensor
   if (!model->Predict(inputs, &outputs).IsOk()) {
     return {};
   }
+  if (!outputs_ptr.empty()) {
+    return outputs_ptr;
+  }
   return MSTensorToMSTensorPtr(outputs);
 }
 
