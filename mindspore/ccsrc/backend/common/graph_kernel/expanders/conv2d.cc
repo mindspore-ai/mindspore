@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include "backend/common/graph_kernel/expanders/op_desc_registry.h"
+#include "backend/common/graph_kernel/model/op_node.h"
 
 namespace mindspore::graphkernel::expanders {
 constexpr int M_ALIGN = 32;
@@ -59,25 +60,6 @@ class Conv2D : public OpDesc {
   ~Conv2D() = default;
 
  private:
-  bool CheckNd(const ShapeVector &shape, size_t nd) {
-    if (shape.size() != nd) {
-      MS_LOG(INFO) << "Expect " << nd << "d ShapeVector, but got " << shape;
-      return false;
-    }
-    return true;
-  }
-
-  // Check whether conv need to add pad
-  bool ConvHadPad(const ShapeVector &pad_list, const std::string &pad_mode) {
-    if (pad_list[0] != pad_list[1] || pad_list[2] != pad_list[3]) {
-      return true;
-    }
-    if (pad_mode != "VALID" && pad_mode != "valid") {
-      return std::any_of(pad_list.begin(), pad_list.end(), [](auto a) { return a != 0; });
-    }
-    return false;
-  }
-
   bool OptimizeToMatmul() {
     auto h = shape_1_pad_[kIdxH];
     auto w = shape_1_pad_[kIdxW];
@@ -136,7 +118,10 @@ class Conv2D : public OpDesc {
     auto pad_list = GetAxisList(attrs_["pad_list"]);
     auto shape_0 = inputs_info_[0].shape;
     auto shape_1 = inputs_info_[1].shape;
-    if (!CheckNd(pad_list, 4) || !CheckNd(shape_0, 4) || !CheckNd(shape_0, 4) || !CheckNd(stride_, 4)) {
+    if ((pad_list.size() != 4) || (shape_0.size() != 4) || (shape_1.size() != 4) || (stride_.size() != 4)) {
+      MS_LOG(INFO)
+        << "For 'Conv2D', pad_list, shape of input0, shape of input1 and stride all should be of size 4, but got "
+        << pad_list.size() << ", " << shape_0.size() << ", " << shape_1.size() << ", " << stride_.size();
       return false;
     }
 
@@ -169,7 +154,7 @@ class Conv2D : public OpDesc {
     // n0 pad
     n0 = ((n0 + N0_CHANNEL_ALIGN - 1) / N0_CHANNEL_ALIGN) * N0_CHANNEL_ALIGN;
     // h0, w0 pad
-    has_pad_ = ConvHadPad(pad_list, GetValue<std::string>(attrs_["pad_mode"]));
+    has_pad_ = inner::Conv2dOp::HadPad(pad_list, GetValue<std::string>(attrs_["pad_mode"]));
     if (has_pad_) {
       h0 = h0 + pad_list[0] + pad_list[1];
       w0 = w0 + pad_list[2] + pad_list[3];
@@ -240,7 +225,7 @@ class Conv2D : public OpDesc {
     input_0_pad_after[kIdxN] = shape_0_pad_[kIdxN] - shape_0[kIdxN];
     input_0_pad_after[kIdxC] = shape_0_pad_[kIdxC] - shape_0[kIdxC];
 
-    if (input_0_pad_before != ShapeVector{0, 0, 0, 0} || input_0_pad_before != ShapeVector{0, 0, 0, 0}) {
+    if (input_0_pad_before != ShapeVector{0, 0, 0, 0} || input_0_pad_after != ShapeVector{0, 0, 0, 0}) {
       input_0 = gb.Emit("PadAkg", {input_0},
                         {{"head", MakeValue(input_0_pad_before)},
                          {"tail", MakeValue(input_0_pad_after)},
@@ -261,8 +246,10 @@ class Conv2D : public OpDesc {
       auto a = gb.Reshape(input_0, ShapeVector{m_, k_});
       auto b = gb.Reshape(input_1, ShapeVector{n_, k_});
       auto c = gb.MatMul(a, b, dst_type_, false, true);
-      result =
-        gb.Reshape(c, ShapeVector{shape_0_pad_[kIdxN], shape_0_pad_[kIdxH], shape_0_pad_[kIdxW], shape_1_pad_[kIdxN]});
+      result = gb.Emit(
+        "Reshape",
+        {c, gb.Tensor(ShapeVector{shape_0_pad_[kIdxN], shape_0_pad_[kIdxH], shape_0_pad_[kIdxW], shape_1_pad_[kIdxN]})},
+        {{"format", MakeValue(dst_format_)}});
     } else {
       auto attrs = attrs_;
       attrs["pad_list"] = MakeValue(ShapeVector{0, 0, 0, 0});

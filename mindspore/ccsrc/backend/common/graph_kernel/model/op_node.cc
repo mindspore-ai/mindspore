@@ -574,10 +574,56 @@ std::vector<DShape> UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAtt
   return {output};
 }
 
+bool Conv2dOp::HadPad(const ShapeVector &pad_list, const std::string &pad_mode) {
+  if (pad_list[0] != pad_list[1] || pad_list[2] != pad_list[3]) {
+    return true;
+  }
+  if (pad_mode != "VALID" && pad_mode != "valid") {
+    return std::any_of(pad_list.begin(), pad_list.end(), [](auto a) { return a != 0; });
+  }
+  return false;
+}
+
 std::vector<DShape> Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   // get the output shape when format is NHWC/NCHW
   if (inputs[0]->shape.size() == 4) {
-    return OpaqueOp::InferShape(inputs, attrs);
+    CHECK_ATTR(attrs, "format");
+    if (inputs[0]->format == kOpFormat_NHWC || inputs[1]->format == kOpFormat_NHWC ||
+        GetValue<std::string>(attrs.find("format")->second) == kOpFormat_NHWC) {
+      CHECK_ATTR(attrs, "pad_mode");
+      CHECK_ATTR(attrs, "pad_list");
+      CHECK_ATTR(attrs, "kernel_size");
+      CHECK_ATTR(attrs, "stride");
+      CHECK_ATTR(attrs, "dilation");
+
+      auto x_shape = inputs[0]->shape;
+      auto w_shape = inputs[1]->shape;
+      auto pad_mode = GetValue<std::string>(attrs.find("pad_mode")->second);
+      auto pad_list = GetListInt(attrs.find("pad_list")->second);
+      auto kernel_size = GetListInt(attrs.find("kernel_size")->second);
+      auto stride = GetListInt(attrs.find("stride")->second);
+      auto dilation = GetListInt(attrs.find("dilation")->second);
+
+      if (x_shape.size() != 4 || w_shape.size() != 4 || pad_list.size() != 4 || kernel_size.size() != 2 ||
+          stride.size() != 4 || dilation.size() != 4) {
+        MS_LOG(EXCEPTION) << "For 'Conv2D', got sizes of x_shape, w_shape, pad_list, kernel_size, stride and dilation: "
+                          << x_shape.size() << ", " << w_shape.size() << ", " << pad_list.size() << ", "
+                          << kernel_size.size() << ", " << stride.size() << ", " << dilation.size()
+                          << ". But expect: 4, 4, 4, 2, 4, 4";
+      }
+      auto has_pad = HadPad(pad_list, pad_mode);
+      if (!has_pad) {
+        pad_list = {0, 0, 0, 0};
+      }
+
+      auto k_h = (kernel_size[0] - 1) * dilation[2] + 1;
+      auto k_w = (kernel_size[1] - 1) * dilation[3] + 1;
+      auto out_h = (x_shape[1] + pad_list[0] + pad_list[1] - k_h) / stride[2] + 1;
+      auto out_w = (x_shape[2] + pad_list[2] + pad_list[3] - k_w) / stride[3] + 1;
+      return {{x_shape[0], out_h, out_w, w_shape[3]}};
+    } else {
+      return OpaqueOp::InferShape(inputs, attrs);
+    }
   }
 
   // get the output shape when format is NCHWc
