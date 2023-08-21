@@ -113,6 +113,8 @@ static std::string GetPyTypeFormat(TypeId data_type) {
   switch (data_type) {
     case TypeId::kNumberTypeFloat16:
       return "e";
+    case TypeId::kNumberTypeBFloat16:
+      return "f";
     case TypeId::kNumberTypeFloat32:
       return py::format_descriptor<float>::format();
     case TypeId::kNumberTypeFloat64:
@@ -477,6 +479,13 @@ py::array TensorPy::AsNumpy(const Tensor &tensor) {
   if (data_numpy != nullptr) {
     // Return internal numpy array if tensor data is implemented base on it.
     return data_numpy->py_array(owner);
+  }
+  // Since bfloat16 is not supported in numpy, we copy tensor to a new tensor of type float32 here.
+  if (tensor.data_type() == TypeId::kNumberTypeBFloat || tensor.data_type() == TypeId::kNumberTypeBFloat16) {
+    Tensor tensor_f32 = Tensor(tensor, TypeId::kNumberTypeFloat32);
+    auto info_f32 = GetPyBufferInfo(tensor_f32);
+    py::object owner_f32 = py::cast(tensor_f32.data_ptr());
+    return py::array(py::dtype(info_f32), info_f32.shape, info_f32.strides, info_f32.ptr, owner_f32);
   }
   // Otherwise, create numpy array by buffer protocol.
   auto info = GetPyBufferInfo(tensor);

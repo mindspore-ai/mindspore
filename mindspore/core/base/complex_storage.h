@@ -17,6 +17,7 @@
 #define MINDSPORE_CORE_BASE_COMPLEX_STORAGE_H_
 
 #include "base/float16.h"
+#include "base/bfloat16.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -39,6 +40,7 @@ struct alignas(sizeof(T) * kComplexValueUnit) ComplexStorage {
   inline constexpr ComplexStorage(const T &real, const T &imag = T()) : real_(real), imag_(imag) {}
 #ifndef ENABLE_ARM
   inline explicit constexpr ComplexStorage(const float16 &real) : real_(static_cast<T>(real)), imag_(T()) {}
+  inline explicit constexpr ComplexStorage(const bfloat16 &real) : real_(static_cast<T>(real)), imag_(T()) {}
 #endif
   template <typename U = T>
   explicit ComplexStorage(const std::enable_if_t<std::is_same<U, float>::value, ComplexStorage<double>> &other)
@@ -60,6 +62,7 @@ struct alignas(sizeof(T) * kComplexValueUnit) ComplexStorage {
   inline explicit operator int64_t() const { return static_cast<int64_t>(real_); }
   inline explicit operator uint64_t() const { return static_cast<uint64_t>(real_); }
   inline explicit operator float16() const { return static_cast<float16>(real_); }
+  inline explicit operator bfloat16() const { return static_cast<bfloat16>(real_); }
 };
 
 template <typename T>

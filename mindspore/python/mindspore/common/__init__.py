@@ -18,7 +18,7 @@ from mindspore.common import dtype
 from mindspore.common.api import ms_function, ms_memory_recycle, ms_class, jit, jit_class, _no_grad
 from mindspore.common.dtype import Type, int8, byte, int16, short, int32, intc, int64, intp, \
     uint8, ubyte, uint16, ushort, uint32, uintc, uint64, uintp, float16, half, \
-    float32, single, float64, double, bool_, float_, list_, tuple_, int_, \
+    float32, single, float64, bfloat16, double, bool_, float_, bfloat, list_, tuple_, int_, \
     uint, number, tensor_type, string, type_none, TensorType, Int, \
     complex64, complex128, dtype_to_nptype, _null, _NullType, \
     dtype_to_pytype, pytype_to_dtype, get_py_obj_dtype, QuantDtype
@@ -44,6 +44,7 @@ __all__ = [
     "float16", "half",
     "float32", "single",
     "float64", "double",
+    "bfloat", "bfloat16",
     "bool_", "float_",
     "list_", "tuple_",
     "int_", "uint",

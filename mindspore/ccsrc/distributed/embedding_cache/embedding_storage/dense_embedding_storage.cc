@@ -356,6 +356,7 @@ template class DenseEmbeddingStorage<int32_t, uint64_t>;
 template class DenseEmbeddingStorage<int32_t, float16>;
 template class DenseEmbeddingStorage<int32_t, float>;
 template class DenseEmbeddingStorage<int32_t, double>;
+template class DenseEmbeddingStorage<int32_t, bfloat16>;
 
 template class DenseEmbeddingStorage<int64_t, bool>;
 template class DenseEmbeddingStorage<int64_t, int8_t>;
@@ -369,6 +370,7 @@ template class DenseEmbeddingStorage<int64_t, uint64_t>;
 template class DenseEmbeddingStorage<int64_t, float16>;
 template class DenseEmbeddingStorage<int64_t, float>;
 template class DenseEmbeddingStorage<int64_t, double>;
+template class DenseEmbeddingStorage<int64_t, bfloat16>;
 
 template class DenseEmbeddingStorage<int32_t, float, std::allocator<uint8_t>>;
 template class DenseEmbeddingStorage<int64_t, float, std::allocator<uint8_t>>;

@@ -92,6 +92,11 @@ enum DataType {
   // auto_monad type
   DT_UMONAD = 43;
   DT_IOMONAD = 44;
+
+  // bfloat type
+  DT_BASE_BFLOAT = 46;  // type generate bfloat
+  DT_BFLOAT16 = 47;     // bfloat16
+  DT_BFLOATS16 = 48;    // list of bfloat16
 }
 
 // Value definition for attribute value or parameter default value

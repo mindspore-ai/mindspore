@@ -53,6 +53,8 @@ ValuePtr Cast(S in, const TypeId &dst_type_id) {
       return std::make_shared<tensor::Tensor>(static_cast<uint16_t>(in), kUInt16);
     case kNumberTypeUInt8:
       return std::make_shared<tensor::Tensor>(static_cast<uint8_t>(in), kUInt8);
+    case kNumberTypeBFloat16:
+      return std::make_shared<tensor::Tensor>(static_cast<bfloat16>(in), kBFloat16);
     default:
       MS_LOG(DEBUG) << "Not support cast to dst type: " << TypeIdToType(dst_type_id)->ToString();
       return nullptr;
@@ -122,6 +124,8 @@ ValuePtr CastOperation::GetDstType(const TypeId &type_id) const {
     value = std::make_shared<Float>(k32Bits);
   } else if (type_id == kNumberTypeFloat64) {
     value = std::make_shared<Float>(k64Bits);
+  } else if (type_id == kNumberTypeBFloat16) {
+    value = std::make_shared<BFloat>(k16Bits);
   } else if (type_id == kNumberTypeBool) {
     value = std::make_shared<Bool>();
   } else if (type_id == kNumberTypeInt8) {

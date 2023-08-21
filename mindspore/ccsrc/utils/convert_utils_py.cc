@@ -112,6 +112,10 @@ py::object CheckAndConvertToScalar(const tensor::TensorPtr &tensor, const Abstra
       return py::float_(*reinterpret_cast<const float *>(data));
     case kNumberTypeFloat64:
       return py::float_(*reinterpret_cast<const double *>(data));
+    case kNumberTypeBFloat16: {
+      const Eigen::half_impl::__half_raw data_half(*reinterpret_cast<const uint16_t *>(data));
+      return py::float_(Eigen::half_impl::half_to_float(data_half));
+    }
     default:
       return py::none();
   }

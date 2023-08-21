@@ -93,12 +93,13 @@ std::string NpyHeader::shape_to_str() const {
 
 // dtype description corresponding to tensor type
 const mindspore::HashMap<TypeId, DtypeDescr> type_desc_map = {
-  {kNumberTypeBool, DtypeDescr{'|', 'b', 1}},    {kNumberTypeInt8, DtypeDescr{'|', 'i', 1}},
-  {kNumberTypeInt16, DtypeDescr{'<', 'i', 2}},   {kNumberTypeInt32, DtypeDescr{'<', 'i', 4}},
-  {kNumberTypeInt64, DtypeDescr{'<', 'i', 8}},   {kNumberTypeUInt8, DtypeDescr{'|', 'u', 1}},
-  {kNumberTypeUInt16, DtypeDescr{'<', 'u', 2}},  {kNumberTypeUInt32, DtypeDescr{'<', 'u', 4}},
-  {kNumberTypeUInt64, DtypeDescr{'<', 'u', 8}},  {kNumberTypeFloat16, DtypeDescr{'<', 'f', 2}},
-  {kNumberTypeFloat32, DtypeDescr{'<', 'f', 4}}, {kNumberTypeFloat64, DtypeDescr{'<', 'f', 8}},
+  {kNumberTypeBool, DtypeDescr{'|', 'b', 1}},     {kNumberTypeInt8, DtypeDescr{'|', 'i', 1}},
+  {kNumberTypeInt16, DtypeDescr{'<', 'i', 2}},    {kNumberTypeInt32, DtypeDescr{'<', 'i', 4}},
+  {kNumberTypeInt64, DtypeDescr{'<', 'i', 8}},    {kNumberTypeUInt8, DtypeDescr{'|', 'u', 1}},
+  {kNumberTypeUInt16, DtypeDescr{'<', 'u', 2}},   {kNumberTypeUInt32, DtypeDescr{'<', 'u', 4}},
+  {kNumberTypeUInt64, DtypeDescr{'<', 'u', 8}},   {kNumberTypeFloat16, DtypeDescr{'<', 'f', 2}},
+  {kNumberTypeFloat32, DtypeDescr{'<', 'f', 4}},  {kNumberTypeFloat64, DtypeDescr{'<', 'f', 8}},
+  {kNumberTypeBFloat16, DtypeDescr{'<', 'h', 2}},
 };
 }  // namespace
 

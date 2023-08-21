@@ -41,6 +41,7 @@ namespace mindspore {
 TypeId IntBitsToTypeId(const int nbits);
 TypeId UIntBitsToTypeId(const int nbits);
 TypeId FloatBitsToTypeId(const int nbits);
+TypeId BFloatBitsToTypeId(const int nbits);
 TypeId ComplexBitsToTypeId(const int nbits);
 
 /// \brief Get label of the input TypeId.

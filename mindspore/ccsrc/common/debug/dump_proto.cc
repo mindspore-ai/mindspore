@@ -81,9 +81,11 @@ static std::map<TypeId, irpb::DataType> number_data_type_map = {{kNumberTypeBool
                                                                 {kNumberTypeFloat16, irpb::DT_FLOAT16},
                                                                 {kNumberTypeFloat32, irpb::DT_FLOAT32},
                                                                 {kNumberTypeFloat64, irpb::DT_FLOAT64},
+                                                                {kNumberTypeBFloat16, irpb::DT_BFLOAT16},
                                                                 {kNumberTypeInt, irpb::DT_BASE_INT},
                                                                 {kNumberTypeUInt, irpb::DT_BASE_UINT},
                                                                 {kNumberTypeFloat, irpb::DT_BASE_FLOAT},
+                                                                {kNumberTypeBFloat, irpb::DT_BASE_BFLOAT},
                                                                 {kNumberTypeComplex64, irpb::DT_COMPLEX64},
                                                                 {kNumberTypeComplex128, irpb::DT_COMPLEX128},
                                                                 {kObjectTypeString, irpb::DT_STRING},
@@ -201,6 +203,9 @@ void ProtoExporter::SetValueToProtoBasicTypes(const ValuePtr &val, irpb::ValuePr
   } else if (val->isa<Float>()) {
     value_proto->set_dtype(irpb::DT_TYPE);
     value_proto->mutable_type_val()->set_data_type(irpb::DT_BASE_FLOAT);
+  } else if (val->isa<BFloat>()) {
+    value_proto->set_dtype(irpb::DT_TYPE);
+    value_proto->mutable_type_val()->set_data_type(irpb::DT_BASE_BFLOAT);
   }
 }
 

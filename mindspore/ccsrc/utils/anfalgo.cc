@@ -2014,6 +2014,8 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
     fn(reinterpret_cast<double *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeFloat || dtype->type_id() == kNumberTypeFloat32) {
     fn(reinterpret_cast<float *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeBFloat || dtype->type_id() == kNumberTypeBFloat16) {
+    fn(reinterpret_cast<bfloat16 *>(tensor->data_c()));
   } else {
     MS_LOG(INTERNAL_EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
   }

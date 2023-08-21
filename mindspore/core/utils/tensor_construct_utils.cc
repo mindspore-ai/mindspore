@@ -66,6 +66,8 @@ tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type, co
      [&tensor_data, mem_size]() { SetTensorData<float>(tensor_data, static_cast<float>(1.0), mem_size); }},
     {kNumberTypeFloat64,
      [&tensor_data, mem_size]() { SetTensorData<double>(tensor_data, static_cast<double>(1.0), mem_size); }},
+    {kNumberTypeBFloat16,
+     [&tensor_data, mem_size]() { SetTensorData<bfloat16>(tensor_data, static_cast<bfloat16>(1.0), mem_size); }},
   };
 
   const auto &tensor_type = tensor->data_type();

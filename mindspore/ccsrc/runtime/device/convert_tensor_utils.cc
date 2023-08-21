@@ -123,6 +123,10 @@ void ConvertSameType(void *const dst, const void *src, size_t size, TypeId type)
     auto dst_data = static_cast<double *>(dst);
     auto src_data = static_cast<const double *>(src);
     ConvertSameType(dst_data, src_data, size / sizeof(double));
+  } else if (type == kNumberTypeBFloat16) {
+    auto dst_data = static_cast<bfloat16 *>(dst);
+    auto src_data = static_cast<const bfloat16 *>(src);
+    ConvertSameType(dst_data, src_data, size >> 1);
   } else if (type == kNumberTypeInt8) {
     auto dst_data = static_cast<int8_t *>(dst);
     auto src_data = static_cast<const int8_t *>(src);

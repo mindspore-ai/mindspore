@@ -70,9 +70,9 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
 
 std::string Dtype2ShortType(const std::string &dtype) {
   static const std::unordered_map<std::string, std::string> dtype_shortdtype_map = {
-    {"float16", "f16"}, {"float32", "f32"}, {"float64", "f64"}, {"int8", "i8"},    {"int16", "i16"},  {"int32", "i32"},
-    {"int64", "i64"},   {"uint8", "u8"},    {"uint16", "u16"},  {"uint32", "u32"}, {"uint64", "u64"}, {"bool", "bool"},
-  };
+    {"float16", "f16"}, {"float32", "f32"}, {"float64", "f64"},  {"int8", "i8"},    {"int16", "i16"},
+    {"int32", "i32"},   {"int64", "i64"},   {"uint8", "u8"},     {"uint16", "u16"}, {"uint32", "u32"},
+    {"uint64", "u64"},  {"bool", "bool"},   {"bfloat16", "bf16"}};
 
   auto iter = dtype_shortdtype_map.find(dtype);
   if (iter != dtype_shortdtype_map.end()) {
@@ -84,11 +84,11 @@ std::string Dtype2ShortType(const std::string &dtype) {
 
 size_t GetDtypeNbyte(const std::string &dtype) {
   static const std::unordered_map<std::string, size_t> dtype_nbyte_map = {
-    {"float16", sizeof(float) / 2},  {"float32", sizeof(float)},     {"float64", sizeof(float) * 2},
-    {"int8", sizeof(int) / kQuad},   {"int16", sizeof(int) / 2},     {"int32", sizeof(int)},
-    {"int64", sizeof(int) * 2},      {"uint8", sizeof(int) / kQuad}, {"uint16", sizeof(int) / 2},
-    {"uint32", sizeof(int)},         {"uint64", sizeof(int) * 2},    {"bool", sizeof(char)},
-    {"complex64", sizeof(float) * 2}};
+    {"float16", sizeof(float) / 2},   {"float32", sizeof(float)},     {"float64", sizeof(float) * 2},
+    {"int8", sizeof(int) / kQuad},    {"int16", sizeof(int) / 2},     {"int32", sizeof(int)},
+    {"int64", sizeof(int) * 2},       {"uint8", sizeof(int) / kQuad}, {"uint16", sizeof(int) / 2},
+    {"uint32", sizeof(int)},          {"uint64", sizeof(int) * 2},    {"bool", sizeof(char)},
+    {"complex64", sizeof(float) * 2}, {"bfloat16", sizeof(float) / 2}};
 
   auto iter = dtype_nbyte_map.find(dtype);
   if (iter != dtype_nbyte_map.end()) {
@@ -153,6 +153,8 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
     case kNumberTypeInt16:
     case kNumberTypeUInt16:
     case kNumberTypeFloat16:
+    case kNumberTypeBFloat:
+    case kNumberTypeBFloat16:
       bytes = sizeof(int16_t);
       break;
     case kNumberTypeInt:

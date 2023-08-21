@@ -92,6 +92,11 @@ enum DataType {
   DT_COMPLEX64 = 43;   // list of complex64
   DT_COMPLEX128 = 44;   // list of complex128
   DT_BASE_COMPLEX = 45;   // type generate complex
+
+  // bfloat type
+  DT_BASE_BFLOAT = 46;  // type generate bfloat
+  DT_BFLOAT16 = 47;     // bfloat16
+  DT_BFLOATS16 = 48;    // list of bfloat16
 }
 
 // Value definition for attribute value or parameter default value

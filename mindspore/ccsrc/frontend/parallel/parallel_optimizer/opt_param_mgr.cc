@@ -72,12 +72,13 @@ class OptParamMgrImpl : public OptParamMgr {
   float ComputeMemorySize(const AnfNodePtr &parameter) const {
     // key, value: typeid, bytes
     const std::map<TypeId, size_t> dtype_size_map = {
-      {kNumberTypeBool, sizeof(bool)},       {kNumberTypeInt8, sizeof(int8_t)},
-      {kNumberTypeInt16, sizeof(int16_t)},   {kNumberTypeInt32, sizeof(int32_t)},
-      {kNumberTypeInt64, sizeof(int64_t)},   {kNumberTypeFloat16, sizeof(float16)},
-      {kNumberTypeFloat32, sizeof(float)},   {kNumberTypeFloat64, sizeof(double)},
-      {kNumberTypeUInt8, sizeof(uint8_t)},   {kNumberTypeUInt16, sizeof(uint16_t)},
-      {kNumberTypeUInt32, sizeof(uint32_t)}, {kNumberTypeUInt64, sizeof(uint64_t)}};
+      {kNumberTypeBool, sizeof(bool)},        {kNumberTypeInt8, sizeof(int8_t)},
+      {kNumberTypeInt16, sizeof(int16_t)},    {kNumberTypeInt32, sizeof(int32_t)},
+      {kNumberTypeInt64, sizeof(int64_t)},    {kNumberTypeFloat16, sizeof(float16)},
+      {kNumberTypeFloat32, sizeof(float)},    {kNumberTypeFloat64, sizeof(double)},
+      {kNumberTypeUInt8, sizeof(uint8_t)},    {kNumberTypeUInt16, sizeof(uint16_t)},
+      {kNumberTypeUInt32, sizeof(uint32_t)},  {kNumberTypeUInt64, sizeof(uint64_t)},
+      {kNumberTypeBFloat16, sizeof(bfloat16)}};
 
     int64_t shape_size = ComputeShapeSize(parameter);
     TypeId type_id = parameter->Type()->cast<mindspore::TensorTypePtr>()->element()->type_id();

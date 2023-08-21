@@ -286,6 +286,8 @@ mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/matmul_avx512_mask
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/crop_and_resize_cpu_kernel.cc:mindspore::kernel::CropAndResizeCpuKernelMod::LaunchKernel
 mindspore/mindspore/ccsrc/plugin/device/cpu/hal/device/cpu_device_address.cc:mindspore::device::cpu::CPUDeviceAddress::SyncHostToDevice
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cast_cpu_kernel.cc:mindspore::kernel::Cast  
+mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetPyTypeFormat
+mindspore/mindspore/core/ir/dtype/type.cc:mindspore::NormalizeTypeId
 
 # AICPU migration
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/bias_add_grad.cc:aicpu::BiasAddGradCpuKernel::BiasAddGradCompute
