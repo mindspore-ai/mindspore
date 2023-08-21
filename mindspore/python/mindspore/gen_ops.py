@@ -105,9 +105,15 @@ def generate_py_primitive(yaml_data):
             if init_value is None:
                 continue
 
-            if dtype == 'str':
-                init_value = '"' + init_value + '"'
-            init_args_with_default.append(f"""{arg_name}={init_value}""")
+            if init_value == 'NO_VALUE':
+                init_args_with_default.append(f"""{arg_name}""")
+            elif init_value == 'None':
+                init_args_with_default.append(f"""{arg_name}={init_value}""")
+            else:
+                if dtype == 'str':
+                    init_value = '"' + init_value + '"'
+                init_args_with_default.append(f"""{arg_name}={init_value}""")
+
             init_args.append(arg_name)
 
             assign_str = f"""        self.{arg_name} = """
