@@ -52,7 +52,7 @@ ATTR_MAP(MaxPool3DWithArgmax) = {
   {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
   {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
   {"argmax_type", ATTR_DESC(argmax_type, AnyTraits<std::string>())}};
-OUTPUT_MAP(MaxPool3DWithArgmax) = {{0, OUTPUT_DESC(y)}, {0, OUTPUT_DESC(argmax)}};
+OUTPUT_MAP(MaxPool3DWithArgmax) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
 REG_ADPT_DESC(MaxPool3DWithArgmax, prim::kPrimMaxPool3DWithArgmax->name(), ADPT_DESC(MaxPool3DWithArgmax))
 
 // MaxPool3DGrad
