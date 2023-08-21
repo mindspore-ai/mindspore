@@ -54,7 +54,8 @@ namespace device {
 namespace ascend {
 namespace {
 std::mutex g_tsd_mutex;
-void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *const tensors, bool is_train) {
+void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *const tensors,
+                            const FuncGraphPtr &anf_graph) {
   const auto &infer_need_update_parameter_names =
     Singleton<InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   for (auto item : dict) {
@@ -68,6 +69,11 @@ void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *con
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     bool enable_ge = context_ptr->backend_policy() == "ge";
+    bool is_train = false;
+    if (anf_graph->has_attr("phase")) {
+      std::string phase = anf_graph->get_attr("phase")->ToString();
+      is_train = phase == "train";
+    }
     if (enable_ge && !is_train) {
       infer = true;
     }
@@ -101,12 +107,7 @@ void GetInputTensor(const FuncGraphPtr &anf_graph, const pybind11::dict &init_pa
                     std::vector<transform::GeTensorPtr> *ge_tensors) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap init_input_map;
-  bool is_train = false;
-  if (anf_graph->has_attr("phase")) {
-    std::string phase = anf_graph->get_attr("phase")->ToString();
-    is_train = phase == "train";
-  }
-  ConvertObjectToTensors(init_params, &init_input_map, is_train);
+  ConvertObjectToTensors(init_params, &init_input_map, anf_graph);
   std::vector<tensor::TensorPtr> init_input;
   (void)std::transform(init_input_map.begin(), init_input_map.end(), std::back_inserter(init_input),
                        [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
@@ -264,12 +265,7 @@ void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, cons
 FuncGraphPtr AscendDeprecatedInterface::BuildDFGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap init_tensors{};
-  bool is_train = false;
-  if (anf_graph->has_attr("phase")) {
-    std::string phase = anf_graph->get_attr("phase")->ToString();
-    is_train = phase == "train";
-  }
-  ConvertObjectToTensors(init_params, &init_tensors, is_train);
+  ConvertObjectToTensors(init_params, &init_tensors, anf_graph);
   return GeGraphExecutor::BuildDFGraph(anf_graph, init_tensors, true);
 }
 

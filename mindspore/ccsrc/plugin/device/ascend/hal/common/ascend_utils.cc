@@ -290,8 +290,8 @@ std::string GetErrorMsg(uint32_t rt_error_code) {
 }
 
 #if defined(ASCEND_910) || defined(ASCEND_910B)
-constexpr auto kAscnedVersion = "Ascend910";
-constexpr auto k910BAscnedVersion = "ascend910b";
+constexpr auto k910AAscendVersion = "Ascend910";
+constexpr auto k910BAscendVersion = "ascend910b";
 const std::map<std::string, std::string> kAscendSocVersions = {
   {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
   {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
@@ -303,7 +303,7 @@ const bool SelectAscendPlugin = []() -> bool {
   int32_t is_heterogenous = 0;
   (void)rtGetIsHeterogenous(&is_heterogenous);
   if (is_heterogenous == 1) {
-    if (std::string(EXPECT_ASCEND_VERSION) == k910BAscnedVersion) {
+    if (std::string(EXPECT_ASCEND_VERSION) == k910BAscendVersion) {
       exit(0);
     } else {
       return true;
@@ -311,7 +311,7 @@ const bool SelectAscendPlugin = []() -> bool {
   }
   std::string soc_version = GetSocVersion();
   // if soc_version belongs to 310 or 710, return true
-  if (soc_version.find(kAscnedVersion) == std::string::npos) {
+  if (soc_version.find(k910AAscendVersion) == std::string::npos) {
     return true;
   }
   auto iter = kAscendSocVersions.find(soc_version);
@@ -321,7 +321,7 @@ const bool SelectAscendPlugin = []() -> bool {
   if (iter->second != std::string(EXPECT_ASCEND_VERSION)) {
     exit(0);
   }
-  if (iter->second == k910BAscnedVersion) {
+  if (iter->second == k910BAscendVersion) {
     common::SetEnv("MS_ENABLE_GE", "1");
   }
   return true;

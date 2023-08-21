@@ -24,6 +24,7 @@
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "include/backend/distributed/collective/collective_manager.h"
+#include "runtime/dev.h"
 
 using mindspore::profiler::ascend::AscendProfiler;
 #endif
@@ -150,6 +151,40 @@ DeprecatedInterface *AscendDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
+#ifdef WITH_BACKEND
+namespace {
+void SetContextSocVersion(MsContext *ctx) {
+  constexpr auto k910AAscendVersion = "Ascend910";
+  constexpr auto k910BAscendVersion = "ascend910b";
+  const std::map<std::string, std::string> kAscendSocVersions = {
+    {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
+    {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
+    {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
+  // Get default soc version.
+  static std::string version;
+  if (version.empty()) {
+    const int kSocVersionLen = 50;
+    char soc_version[kSocVersionLen] = {0};
+    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
+    }
+    version = soc_version;
+  }
+  auto iter = kAscendSocVersions.find(version);
+  if (iter == kAscendSocVersions.end()) {
+    MS_LOG(INFO) << "The soc version is not Ascend910 or ascend910b.";
+    return;
+  }
+  if (iter->second == k910BAscendVersion) {
+    ctx->set_ascend_soc_version(k910BAscendVersion);
+  } else if (iter->second == k910AAscendVersion) {
+    ctx->set_ascend_soc_version(k910AAscendVersion);
+  }
+}
+}  // namespace
+#endif
+
 MS_REGISTER_DEVICE(kAscendDevice, AscendDeviceContext);
 MS_REGISTER_DEVICE(kDavinciMultiGraphInferenceDevice, AscendDeviceContext);
 #ifdef WITH_BACKEND
@@ -165,6 +200,7 @@ MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
       (void)ctx->set_backend_policy("ms");
     }
   }
+  SetContextSocVersion(ctx);
 });
 #endif
 }  // namespace ascend

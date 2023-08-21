@@ -135,6 +135,7 @@ void RegMsContext(const py::module *m) {
     .def("set_device_target_inner", &mindspore::MsContext::SetDeviceTargetFromInner, "Set device target inner.")
     .def("get_backend_policy", &mindspore::MsContext::backend_policy, "Get backend policy.")
     .def("set_backend_policy", &mindspore::MsContext::set_backend_policy, "Set backend policy.")
+    .def("get_ascend_soc_version", &mindspore::MsContext::ascend_soc_version, "Get ascend soc version.")
     .def("enable_dump_ir", &mindspore::MsContext::enable_dump_ir, "Get the ENABLE_DUMP_IR.")
     .def("is_ascend_plugin_loaded", &mindspore::MsContext::IsAscendPluginLoaded,
          "Get the status that has ascend plugin been loaded.")
