@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <climits>
 #include <memory>
+#include <utility>
 #include <set>
 #include <string>
 #include <vector>
@@ -60,6 +61,7 @@ class ArrayValue {
   ~ArrayValue() = default;
 
   // Access the value of Array at the index position.
+  // Note: The value at position index can not be unknown, otherwise throw an exception.
   const T &operator[](size_t index) const {
     if (index >= data_.size()) {
       MS_LOG(EXCEPTION) << "The index[" << index << "] is out of range, element size is: " << data_.size();
@@ -70,7 +72,7 @@ class ArrayValue {
     return data_[index];
   }
 
-  // Verify that the value at position index in data_ is valid.
+  // Verify that the value at position index in ArrayValue is unknown.
   bool IsValueUnknown(size_t index) const { return unknown_value_indexes_.find(index) != unknown_value_indexes_.end(); }
 
   // Verify whether exist unknown value in ArrayValue.
