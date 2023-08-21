@@ -180,10 +180,10 @@ TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune
 
   // Change num_parallel_workers and connector_queue_size for some ops
   auto tree_modifier = std::make_unique<TreeModifier>(tree_adapter1.get());
-  tree_modifier->AddChangeRequest(1, std::make_shared<ChangeNumWorkersRequest>(10));
+  tree_modifier->AddChangeRequest(1, std::make_shared<ChangeNumWorkersRequest>(4));
   tree_modifier->AddChangeRequest(1, std::make_shared<ResizeConnectorRequest>(20));
   tree_modifier->AddChangeRequest(0, std::make_shared<ResizeConnectorRequest>(100));
-  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(10));
+  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(4));
 
   std::vector<int32_t> expected_result = {1, 5, 9, 1, 5, 9};
   TensorRow row;
@@ -207,11 +207,11 @@ TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune
 
   // Check that updated values of num_parallel_workers and connector_queue_size are not reflected in the json
   EXPECT_EQ(out_json["op_type"], "Batch");
-  EXPECT_NE(out_json["num_parallel_workers"], 10);
+  EXPECT_NE(out_json["num_parallel_workers"], 4);
   EXPECT_NE(out_json["connector_queue_size"], 100);
 
   EXPECT_EQ(out_json["children"][0]["op_type"], "Map");
-  EXPECT_NE(out_json["children"][0]["num_parallel_workers"], 10);
+  EXPECT_NE(out_json["children"][0]["num_parallel_workers"], 4);
   EXPECT_NE(out_json["children"][0]["connector_queue_size"], 20);
 
   // Create an op_id to dataset op mapping
@@ -228,11 +228,11 @@ TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune
 
   // Check that updated values of num_parallel_workers and connector_queue_size are reflected in the json now
   EXPECT_EQ(out_json["op_type"], "Batch");
-  EXPECT_EQ(out_json["num_parallel_workers"], 10);
+  EXPECT_EQ(out_json["num_parallel_workers"], 4);
   EXPECT_EQ(out_json["connector_queue_size"], 100);
 
   EXPECT_EQ(out_json["children"][0]["op_type"], "Map");
-  EXPECT_EQ(out_json["children"][0]["num_parallel_workers"], 10);
+  EXPECT_EQ(out_json["children"][0]["num_parallel_workers"], 4);
   EXPECT_EQ(out_json["children"][0]["connector_queue_size"], 20);
 
   // Deserialize the above updated serialized optimized IR Tree
