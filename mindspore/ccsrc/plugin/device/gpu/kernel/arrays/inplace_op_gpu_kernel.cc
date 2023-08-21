@@ -108,6 +108,11 @@ template <typename T>
 bool InplaceOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspace,
                                          const std::vector<AddressPtr> &outputs) {
+  if (inputs[kIndex1]->size == 0) {
+    MS_LOG(WARNING) << "For" << kernel_name_ << ", the input 'v' must be greater than 0 dimension,"
+                    << " but got: " << inputs[kIndex1]->size;
+    return true;
+  }
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
   T *input_v = GetDeviceAddress<T>(inputs, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
