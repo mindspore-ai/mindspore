@@ -15,7 +15,6 @@
  */
 
 #include "ops/npu_antiquant.h"
-#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -55,6 +54,11 @@ BaseShapePtr NPUAntiQuantInferShape(const PrimitivePtr &primitive, const std::ve
 
 TypePtr NPUAntiQuantInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  std::map<std::string, TypePtr> types;
+  std::set<TypePtr> valid_types = {kInt8};
+  TypePtr input_x_type = input_args[0]->BuildType();
+  (void)types.emplace("input_x", input_x_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   auto dst_type = primitive->GetAttr(kOutputDType);
   if ((dst_type == nullptr) || (!dst_type->isa<Type>())) {
     MS_EXCEPTION(TypeError) << "Invalid dtype";
