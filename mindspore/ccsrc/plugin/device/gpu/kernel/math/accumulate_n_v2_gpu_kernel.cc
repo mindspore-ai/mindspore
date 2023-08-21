@@ -20,7 +20,12 @@ namespace mindspore {
 namespace kernel {
 bool AccumulateNV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::AccumulateNV2>(base_operator);
+  if (kernel_ptr_ == nullptr) {
+    MS_LOG(ERROR) << "Cast ops::AccumulateNV2 failed!";
+    return false;
+  }
   kernel_name_ = kernel_ptr_->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
