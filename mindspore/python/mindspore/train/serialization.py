@@ -473,6 +473,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 def _convert_list_to_param_list(save_obj, choice_func):
     """Convert a list of Parameter to param_list."""
     param_list = []
+    if not save_obj:
+        return param_list
     if isinstance(save_obj[0], dict):
         param_list = [param for param in save_obj if choice_func is None or choice_func(param["name"])]
     else:
